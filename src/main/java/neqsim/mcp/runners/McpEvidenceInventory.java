@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.30");
+    inventory.addProperty("inventoryVersion", "1.32");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, generateVisualization, and runPlugin are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.30 has no candidate.");
+        "generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, generateVisualization, runPlugin, runCapability, and composeWorkflow are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.32 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: thirty bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records: thirty-two bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -492,6 +492,24 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_plugin_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/PLUGIN_EXECUTION_CONTRACT.md" };
       evidenceBoundary = "Process-local registration, listing, metadata, exact invocation input/output, same-name replacement, cleanup, absent/empty/unknown-action/malformed-input failure handling, plugin-exception normalization, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish plugin provenance, installation, signing, bytecode isolation, sandboxing, resource or tenant isolation, persistence, external IAM, transport security, plugin input/output schema enforcement, scientific accuracy, model validity, convergence, conservation, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "runCapability":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_RUNTIME_CAPABILITY_EXECUTION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/GeneralCapabilityRunner.java",
+          "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_capability_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md" };
+      evidenceBoundary = "Runtime-classpath discovery, deterministic and clamped search, source and execution-route metadata, exact bounded public-static invocation, primitive/enum/string/array conversion, fixed request/argument/result/time limits, normal MCP access enforcement, standard response evidence, packaged transport, and fail-closed invalid or unsafe requests are contract-tested; this does not establish arbitrary-classloader completeness, semantic search completeness, scientific validity, uncertainty, units or operating ranges, purity, thread safety, cooperative interruption, an operating-system or process sandbox, resource quotas, tenant isolation, external IAM or transport security, arbitrary stateful execution, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "composeWorkflow":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_COMPOSED_WORKFLOW_ORCHESTRATION";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/TaskSolverRunner.java",
+          "src/test/java/neqsim/mcp/runners/TaskSolverRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_compose_workflow_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/COMPOSE_WORKFLOW_CONTRACT.md" };
+      evidenceBoundary = "Caller-authored ordered steps, curated runner dispatch, additive shared-fluid normalization, step-specific override precedence, per-step result, timing and success accounting, stop-on-first-failure behavior, structured missing, malformed and unknown-runner errors, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish natural-language planning, arbitrary code, tool or network execution, semantic compatibility or unit conversion between steps, transactionality, rollback, persistence, distributed execution, resource or tenant isolation, numerical fidelity, convergence, conservation, uncertainty, optimization quality, facility completeness, external IAM or transport security, plant or control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

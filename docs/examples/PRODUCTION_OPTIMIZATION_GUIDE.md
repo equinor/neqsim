@@ -138,6 +138,81 @@ does not claim automatic rollback. Successful multi-area, Pareto and scenario wo
 their established path. A snapshot explicitly declaring failed convergence is incomplete even
 when its registry is empty or every constraint is disabled.
 
+### Qualify a shared total-power budget
+
+After the complete isolated candidate has converged, use `PlantSharedResourceEvidence` to collect
+exact participant coverage and create the common snapshot sample. Choose the physical basis first:
+
+- `fromProcessModelShaftPower(...)` and `fromProcessSystemShaftPower(...)` report compressor and
+  pump **shaft power** from the existing process APIs.
+- `fromSolvedEnergyBusRequestedDemand(...)` reports **requested electrical load**, including unmet
+  demand, from a current solved electrical `EnergyBus`.
+
+These bases are deliberately not interchangeable. NeqSim does not infer driver or motor efficiency.
+Declare any unit conversion explicitly in each `PlantConstraintParticipant`.
+
+```java
+PlantConstraintDefinition totalPower = PlantConstraintDefinition
+    .builder("total-power",
+        PlantConstraintScope.sharedResource("Plant", "compression shaft power"))
+    .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+    .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+    .unit("kW")
+    .basis("compressor and pump shaft power")
+    .provenance("approved power budget")
+    .participant(PlantConstraintParticipant.direct(
+        "Compression", "kW", "compressor and pump shaft power"))
+    .build();
+
+PlantSharedResourceEvidence evidence =
+    PlantSharedResourceEvidence.fromProcessModelShaftPower(
+        totalPower, calculationId, 12000.0, model, fullModelConverged,
+        "completed isolated ProcessModel");
+if (!evidence.isComplete()) {
+  throw new IllegalStateException(evidence.getDiagnostics().toString());
+}
+```
+
+Java getters, `toJson()`, and JPype expose the same frozen calculation ID, participants, source and
+converted values, conversion metadata, total cross-check, units, basis, provenance, utilization,
+physical margin, required relief, and diagnostics. Missing observations remain unavailable rather
+than becoming zero utilization. Rebuild evidence after any process, availability, bus, or limit
+change; never reuse it for a different candidate.
+
+### Qualify a common-shaft compressor train
+
+After all casings and their shared `MechanicalShaft` have completed the same isolated candidate,
+freeze the train's common speed, shaft power, driver, gearbox, torque, and casing-map evidence:
+
+```java
+PlantCommonShaftEvidence trainEvidence = PlantCommonShaftEvidence
+    .builder("Plant", "Compression", "export train", calculationId, shaft,
+        "completed isolated candidate")
+    .casing(casingAPort.getParticipantId(), casingA)
+    .casing(casingBPort.getParticipantId(), casingB)
+    .driver(driverPort.getParticipantId(), driver)
+    .gearbox("export-train-gearbox", gearbox)
+    .speedToleranceRpm(1.0)
+    .powerBalanceToleranceKw(1.0e-6)
+    .maximumTorqueNm(8000.0)
+    .convergenceComplete(fullModelConverged)
+    .build();
+
+if (!trainEvidence.isComplete() || !trainEvidence.isFeasible()) {
+  throw new IllegalStateException(trainEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot trainSnapshot =
+    trainEvidence.toPlantUtilizationSnapshot();
+```
+
+`calculationId` is the UUID string stored on every completed casing. Casing power must equal that
+casing's exact shaft-input request. Gearbox input includes its configured idle loss and efficiency.
+The gearbox maximum input power is configured in W, while the driver model and evidence report use
+kW. `maximumTorqueNm` is an independently approved limit, not
+a value estimated by the adapter. A line-up or limit change invalidates the old evidence; solve the
+isolated candidate again and build a new snapshot. Through JPype, use the same callback-free builder
+and `toJson()` rather than supplying Python callbacks.
+
 ---
 
 ## Overview

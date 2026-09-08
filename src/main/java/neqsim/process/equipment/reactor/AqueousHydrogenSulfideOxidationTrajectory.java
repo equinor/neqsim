@@ -581,6 +581,51 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     public double getUpperRateReactedTotalSulfideMolality() {
       return upperRateReactedTotalSulfideMolality;
     }
+
+    /** @return instantaneous inlet loss rate for the lower-rate path [mol/(kg water h)]. */
+    public double getLowerRateInletLossRateMolalityPerHour() {
+      return lowerPseudoFirstOrderRate * lowerRateInletTotalSulfideMolality;
+    }
+
+    /** @return instantaneous outlet loss rate for the lower-rate path [mol/(kg water h)]. */
+    public double getLowerRateOutletLossRateMolalityPerHour() {
+      return lowerPseudoFirstOrderRate * lowerRateOutletTotalSulfideMolality;
+    }
+
+    /** @return local lower-rate retained fraction across this segment. */
+    public double getLowerRateRetentionFactor() {
+      return Math.exp(-lowerRateExposure);
+    }
+
+    /** @return instantaneous inlet loss rate for the nominal path [mol/(kg water h)]. */
+    public double getNominalInletLossRateMolalityPerHour() {
+      return nominalPseudoFirstOrderRate * nominalInletTotalSulfideMolality;
+    }
+
+    /** @return instantaneous outlet loss rate for the nominal path [mol/(kg water h)]. */
+    public double getNominalOutletLossRateMolalityPerHour() {
+      return nominalPseudoFirstOrderRate * nominalOutletTotalSulfideMolality;
+    }
+
+    /** @return local nominal retained fraction across this segment. */
+    public double getNominalRetentionFactor() {
+      return Math.exp(-nominalExposure);
+    }
+
+    /** @return instantaneous inlet loss rate for the upper-rate path [mol/(kg water h)]. */
+    public double getUpperRateInletLossRateMolalityPerHour() {
+      return upperPseudoFirstOrderRate * upperRateInletTotalSulfideMolality;
+    }
+
+    /** @return instantaneous outlet loss rate for the upper-rate path [mol/(kg water h)]. */
+    public double getUpperRateOutletLossRateMolalityPerHour() {
+      return upperPseudoFirstOrderRate * upperRateOutletTotalSulfideMolality;
+    }
+
+    /** @return local upper-rate retained fraction across this segment. */
+    public double getUpperRateRetentionFactor() {
+      return Math.exp(-upperRateExposure);
+    }
   }
 
   /** Immutable result of an exact piecewise exposure trajectory. */

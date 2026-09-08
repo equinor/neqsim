@@ -10,6 +10,7 @@ import java.util.Arrays;
  * The empirical Refutas relation transforms each source kinematic viscosity to a viscosity blending number, mixes those
  * numbers by normalized mass fraction, and applies the analytical inverse. Every contributing viscosity must be
  * resolved at the same caller-supplied temperature. This class does not mutate an assay or thermodynamic system.
+ * Roundoff at a source bound is clamped to that bound, preserving blends of equal-viscosity sources.
  * </p>
  */
 public final class RefineryViscosityBlend implements Serializable {
@@ -64,10 +65,12 @@ public final class RefineryViscosityBlend implements Serializable {
       maximumSourceBlendNumber = Math.max(maximumSourceBlendNumber, sourceBlendNumber);
     }
 
-    if (!Double.isFinite(resolvedBlendNumber) || resolvedBlendNumber < minimumSourceBlendNumber
-        || resolvedBlendNumber > maximumSourceBlendNumber) {
+    if (!Double.isFinite(resolvedBlendNumber)) {
       throw new IllegalArgumentException("Blend viscosity number must be finite and bounded");
     }
+    // Validated non-negative masses make this a convex combination. Summation roundoff
+    // can cross a source bound, especially when all source viscosities are equal.
+    resolvedBlendNumber = Math.max(minimumSourceBlendNumber, Math.min(maximumSourceBlendNumber, resolvedBlendNumber));
 
     double resolvedKinematicViscosity = calculateKinematicViscosityCSt(resolvedBlendNumber);
     massFractions = resolvedMassFractions;

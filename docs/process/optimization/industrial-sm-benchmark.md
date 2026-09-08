@@ -157,8 +157,9 @@ both sources. Candidate solve-time medians are higher in these sequential host o
 the measurements do not isolate the cause or establish a performance improvement. No speedup
 claim is made. The five-fork wall-time totals were 128.385 s before and 116.614 s after; different
 compilation work contributes to those totals. Timing distributions and per-mode execution counts
-remain available in the preserved reports. Large-plant qualification and the shared-power and
-common-shaft transitions remain open roadmap acceptance work.
+remain available in the preserved reports. A later additive evidence-path qualification executes
+the M case's total-shaft-power transition; it does not change or reinterpret these preserved timing
+records. Full large-process qualification and the common-shaft transition remain open roadmap work.
 
 The exact aggregates are stored as deterministic gzip files with an empty filename and `mtime=0`.
 Decompression reproduces the original aggregate bytes, including every fork's raw report and its
@@ -200,7 +201,25 @@ The record marks these metrics unavailable rather than zero:
 - ProcessSystem has no whole-system energy-balance residual API comparable to its mass-balance API.
 
 Execution counts, dirty/dependency scheduling, cache attribution, allocation, and end-to-end
-performance remain coordinated with [#2939](https://github.com/equinor/neqsim/issues/2939). The
-ordered M transition from piping through compressor to separator or total power remains incomplete;
-it depends on the next #3154 stable plant constraint/resource identity increment. No missing metric
-or transition is represented as a passed gate.
+performance remain coordinated with [#2939](https://github.com/equinor/neqsim/issues/2939).
+
+The maintained M test now records exact three-compressor shaft-power coverage and a controlled
+equipment-local compressor to shared total-power bottleneck transition. On the first qualifying run
+from master `ac79c56945b0cdf45a1bcb42e3417dff99e7acbf`, total shaft power was
+`918.164876805159 kW`: the 120% budget left the equipment row limiting, while the 95% budget made
+the shared row limiting with `45.90824384025791 kW` required relief. Restoration differed from the
+cold total by `2.7199348551221192e-8 kW` (relative `2.9623599462728176e-11`), and evidence capture
+did not mutate the process.
+
+The maintained cold/restored power gate is `1e-6 * max(1 kW, cold shaft power)`, or one part per
+million above 1 kW. This matches the relative recalculation thresholds in `Stream`, `Compressor`,
+and `Separator`; the earlier `1e-7` replay assertion demanded finer repeatability than those
+equipment paths provide. Java 21 CI observed a valid `0.0003080296899 kW` difference on
+`918.1651848674367 kW` (relative `3.35e-7`). The JSON restoration record includes both absolute and
+relative tolerances alongside the measured differences. The participant-sum/source-total check
+within a single solved state retains its separate `1e-10` tolerance, and the existing convergence,
+mass-balance and bottleneck-transition gates still apply.
+
+That result qualifies the total-power evidence path only. The full ordered piping, compressor,
+separator and export-quality sequence, full L process fixture, and common-shaft case remain open.
+No missing metric or transition is represented as a passed gate.

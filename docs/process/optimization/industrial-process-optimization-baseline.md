@@ -99,7 +99,7 @@ an explicit limit basis, provenance, applicability, and failure status.
 | Gathering, routing, and export hydraulics | Network actions, boundary evidence, pipe equipment | Composable | One network constraint registry covering pressure, capacity, line-up availability, and line/route identity. |
 | Compressor map envelope | Speed, power, surge margin, stonewall margin, and discharge-temperature constraints | Composable | Installed-map provenance, corrected-flow/head basis, interpolation/extrapolation status, and complete evidence for chartless or out-of-map points. |
 | Compressor driver and total power | Equipment power constraints, `ProcessModel.getPower(unit)`, power-generation capacity | Composable | Shared driver identity, plant total-power budget, fuel/electrical basis, reserve/spinning margin, and load-shed priority. |
-| Common-shaft trains | `MechanicalShaft`, `EnergyBus`, motor-assisted and motor drive trains | Calculation only | Common speed, driver power, torque, gearbox, train availability, and per-casing map constraints evaluated as one resource. |
+| Common-shaft trains | `PlantCommonShaftEvidence`, `MechanicalShaft`, `CompressorDriver`, `Gearbox`, compressor operating points | Optimizer-qualified for declared steady-state train scope | Requires exact casing/driver participant coverage, current calculation identity, explicit limits, complete convergence, and full candidate replay; it does not add machine physics or restore a candidate. |
 | Two-phase separators | Gas load factor and liquid level; mechanical-design retention and internals calculations | Composable | Gas, liquid, residence, settling, carry-over/carry-under, level, inlet momentum, demister, and slug limits in one immutable snapshot. |
 | Three-phase separators | Gas load factor, level, three-phase process and mechanical-design calculations | Composable | Independent oil/water residence and settling, interface/boot/weir limits, oil-in-water, water-in-oil, slug volume, and phase-availability status. |
 | Pumps | Power, NPSH margin, and flow-rate constraints | Composable | Installed curve/basis, operating envelope, minimum continuous stable flow, driver/shared-power identity, and non-calculable NPSH status. |
@@ -236,19 +236,33 @@ It exposes deterministic complete coverage and bottleneck ladders without retain
 mutable process state. Existing installed-equipment and boundary evidence are adapted rather than
 recalculated or duplicated.
 
-This snapshot layer does not aggregate total power, coordinate a common shaft, compute separator or
-piping physics, alter process solving, or accept an optimizer proposal. Those operations remain later
-increments and must provide qualified samples after a complete full-model solve.
+`PlantSharedResourceEvidence` now supplies participant-complete maximum-budget evidence for
+`ProcessSystem`/`ProcessModel` compressor-and-pump shaft power and solved `EnergyBus` requested
+electrical demand. Its aggregate is cross-checked against the existing authoritative total; units,
+basis and conversions remain explicit. Missing, extra, stale, non-finite, unconverged, or ambiguous
+load evidence fails closed. It produces the common snapshot sample without retaining live process
+state.
+
+The maintained 27-unit M fixture qualifies a controlled transition from equipment-local compressor
+power at a 120% total budget to the shared total-shaft-power constraint at a 95% budget, then verifies
+the restored line-up reproduces the cold total power. The same tests exercise an ordered 180-
+participant/six-area evidence ledger with 2 s capture, 64 MB used-heap growth, 500 kB Java
+serialization, and 1 MB JSON budgets. This is evidence-path scale qualification, not the still-open
+full L process-model acceptance fixture or a generic execution speedup claim.
+
+`PlantCommonShaftEvidence` now qualifies case-C evidence for one declared steady-state train. It
+freezes the solved shaft allocation, driver and gearbox configuration, maximum torque, common speed,
+power balance, and every casing map margin as deterministic registry samples. Missing or stale
+participant evidence is unavailable, while finite physical limit violations remain complete and
+infeasible. The adapter does not compute new compressor or gearbox physics, run or restore process
+equipment, alter process solving, or accept an optimizer proposal.
 
 ## Next dependency-ready increments
 
-1. Add first-class total-power/shared-utility evidence, using the complete immutable utilization
-   snapshot without adding execution-layer scheduling or caching.
-2. Add a common-shaft compressor-train
-   resource constraint.
-3. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
+1. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
    and solver orchestration.
-4. Expose the stable result through Java JSON and Python/JPype, then execute M, L, C, B, and R as
+2. Execute the full L fixture, then expose the stable evaluator result through current Java and
+   Python workflows and execute C, B, and R as
    maintained workflows.
 
 Until those increments are merged and measured, this page is the authoritative baseline contract,

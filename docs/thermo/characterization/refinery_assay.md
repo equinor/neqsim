@@ -192,6 +192,11 @@ The double logarithm requires every positive-mass source viscosity to be finite 
 0.2 cSt. A zero-mass source is ignored and may leave its viscosity unresolved. The temperature is
 stored with the immutable result but is not used to extrapolate viscosity.
 
+Equal-viscosity sources are valid when their masses are supplied: blending three equal masses at
+20 cSt returns 20 cSt. Floating-point summation can put the blended VBN just outside the source
+interval, so the result is clamped to that interval after input and finiteness checks. This also
+preserves blends of nearly equal viscosities without rejecting valid recipes.
+
 ```java
 RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(
     new double[] {5000.0, 12000.0},
@@ -232,6 +237,115 @@ blend evidence. This API does not claim physical prediction accuracy, uncertaint
 compliance, dynamic-viscosity conversion, viscosity-temperature extrapolation, non-Newtonian
 behavior, pressure correction, phase behavior, compatibility, multi-source or multi-property
 optimization, economics, or control.
+
+
+## Binary quality-constrained blend envelope
+
+`RefineryBinaryBlendEnvelope` combines the already-qualified bulk-property and viscosity
+screens for exactly two resolved sources. For first-source mass fraction `x`, API gravity,
+sulfur, nitrogen, and VBN are affine in `x`:
+
+$P_{blend}=xP_1+(1-x)P_2$
+
+For API gravity this follows from the ideal-additive-volume relation because
+$API=141.5/SG-131.5$. For viscosity, $P$ is VBN and the final value is obtained through the
+published Refutas inverse. The implementation intersects every inclusive property interval with
+$0\leq x\leq1$ and fails closed when the intersection is empty.
+
+```java
+RefineryBinaryBlendEnvelope envelope =
+    RefineryBinaryBlendEnvelope.fromQualityConstraints(
+        new double[] {0.847, 0.771},
+        new double[] {0.020, 0.005},
+        new double[] {0.0020, 0.0005},
+        new double[] {550.0, 375.0},
+        50.0,
+        35.56021251475798,
+        52.0278858625162,
+        0.014,
+        0.01,
+        411.7708156677767,
+        550.0);
+
+double minimumFirstFraction = envelope.getMinimumFirstSourceMassFraction();
+double maximumFirstFraction = envelope.getMaximumFirstSourceMassFraction();
+RefineryBinaryBlendEnvelope.Plan minimumCost = envelope.planMinimumCost(1.0, 2.0);
+double selectedFirstFraction = minimumCost.getFirstSourceMassFraction();
+double selectedCost = minimumCost.getUnitCostPerMass();
+double selectedApi = minimumCost.getAssayBlend().getApiGravity();
+double selectedViscosity = minimumCost.getViscosityBlend().getKinematicViscosityCSt();
+```
+
+The documented arithmetic case gives a closed first-source interval of 0.25-0.60. With source
+costs 1 and 2 per common mass unit, the unique minimum-cost endpoint is 0.60 and the blended unit
+cost is 1.40. Reversing the costs selects 0.25. Equal costs fail closed when the feasible interval
+contains more than one point; a single-point feasible interval remains valid.
+
+The specific-gravity endpoints 0.847 and 0.771 are preserved public DOE/OEDI assay values used by
+the existing bulk-blend qualification. The viscosities and quality values are arithmetic
+integration evidence, not measured blend data. The viscosity relation retains the Centeno et al.
+provenance, [DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
+
+This bounded analytical planner is not a generic optimizer. It does not predict excess volume,
+viscosity-temperature behavior, phase or asphaltene compatibility, measured product quality,
+uncertainty, nonlinear economics, multi-source feasibility, or control actions. Every source
+property must already be resolved on the documented basis, and costs must use one common
+currency-per-mass basis.
+
+## Multi-source linear blend optimization
+
+`RefineryLinearBlendOptimizer` extends the qualified binary envelope to two or more resolved
+sources. It minimizes a linear source cost on normalized, non-negative mass fractions:
+
+$$\min_x\sum_i c_i x_i,\qquad \sum_i x_i=1,\qquad x_i\geq0$$
+
+API gravity is affine in the fractions because ideal additive volume makes reciprocal specific
+gravity mass-linear. Sulfur and nitrogen are mass-linear. Viscosity constraints are linearized in
+the published Refutas VBN space at one explicit common temperature, then reconstructed through
+`RefineryViscosityBlend`.
+
+```java
+RefineryLinearBlendOptimizer.Result optimum =
+    RefineryLinearBlendOptimizer.optimizeMinimumCost(
+        new double[] {1.0, 2.0, 3.0},
+        new double[] {0.85, 0.80, 0.75},
+        new double[] {0.030, 0.010, 0.002},
+        new double[] {0.003, 0.001, 0.0002},
+        new double[] {600.0, 300.0, 50.0},
+        50.0,
+        30.0,
+        60.0,
+        0.015,
+        0.01,
+        50.0,
+        600.0);
+
+double[] sourceMassFractions = optimum.getSourceMassFractions();
+double unitCost = optimum.getUnitCostPerMass();
+double blendApi = optimum.getAssayBlend().getApiGravity();
+double blendViscosityCSt = optimum.getViscosityBlend().getKinematicViscosityCSt();
+```
+
+The documented analytical case selects source fractions 0.25, 0.75, and 0.0, with unit cost
+1.75 and sulfur exactly at the 0.015 mass-fraction limit. A binary regression reproduces the
+qualified `RefineryBinaryBlendEnvelope` endpoint. Input reversal preserves the physical optimum.
+An infeasible problem, invalid property, non-finite solver result, failed mass closure, or failed
+property reconstruction stops without returning a recipe.
+
+The optimizer uses NeqSim's existing Apache Commons Math simplex dependency. It returns one
+minimum-cost feasible vertex; it does not claim that the recipe is unique when costs or constraints
+are degenerate. Costs must share one currency-per-mass basis, source properties must already be
+resolved on their documented bases, and all viscosities must refer to the supplied common
+temperature.
+
+The SG/API, sulfur, and nitrogen rules retain the existing public DOE/OEDI assay provenance. The
+viscosity rule retains the Centeno et al. provenance,
+[DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028). The numerical examples
+are transparent arithmetic integration cases, not measured multi-crude blend data.
+
+This is a screening optimizer. It does not model excess volume, blend contraction,
+viscosity-temperature extrapolation, phase or asphaltene compatibility, uncertainty, nonlinear or
+integer economics, inventory, scheduling, control actions, or certified product compliance.
 
 ## Per-cut UOP/Watson characterization factor
 

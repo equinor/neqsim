@@ -169,6 +169,34 @@ ordering after different prior depletion. These values are analytical bookkeepin
 dissolved sulfide under the same constant-oxygen assumption. They do not define oxygen
 consumption, sulfur products, stoichiometric source terms, or a pipeline control-volume coupling.
 
+## Endpoint loss-rate evidence
+
+Each segment also reports the instantaneous total-sulfide loss rate at its inlet and outlet for
+the lower-rate, nominal, and upper-rate paths:
+
+$
+r_{r,i,\mathrm{in}} = k_{r,i}[\mathrm{O_2}]_i c_{r,i,\mathrm{in}}, \qquad
+r_{r,i,\mathrm{out}} = k_{r,i}[\mathrm{O_2}]_i c_{r,i,\mathrm{out}}.
+$
+
+The rate unit is mol total sulfide/(kg water h). The local retention factor is
+
+$
+R_{r,i}=\exp\left(-k_{r,i}[\mathrm{O_2}]_i\Delta t_i\right),
+\qquad c_{r,i,\mathrm{out}}=c_{r,i,\mathrm{in}}R_{r,i}.
+$
+
+For a positive-duration segment, the outlet loss rate cannot exceed its inlet loss rate. A
+zero-duration segment gives exactly `R = 1` and equal endpoint rates. Multiplying local retention
+factors across unchanged-state segment subdivisions recovers the unsplit retention and final
+inventory.
+
+These endpoint rates are differential screening evidence evaluated under the source's
+constant-oxygen assumption. They are not a time-averaged control-volume source, a conversion to
+molar flow, oxygen consumption, or product stoichiometry. Creating a pipeline source term requires
+separate water inventory, phase transfer, reaction products, energy, pressure, and numerical
+coupling evidence.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a

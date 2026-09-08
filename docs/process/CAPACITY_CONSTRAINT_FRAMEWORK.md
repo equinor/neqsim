@@ -57,7 +57,7 @@ PlantConstraintDefinition totalPower = PlantConstraintDefinition
     .participant(PlantConstraintParticipant.direct(
         "compression/K-101", "MW", "instantaneous electrical load"))
     .participant(PlantConstraintParticipant.converted(
-        "compression/K-102", "kW", "shaft power", 0.001, 0.0))
+        "compression/K-102", "kW", "instantaneous electrical load", 0.001, 0.0))
     .build();
 registry.register(totalPower);
 ```
@@ -102,11 +102,79 @@ boundary evidence. These adapters validate identity, direction, physical unit, a
 they do not retain live suppliers or evaluator callbacks. A sample's registered basis is copied from
 the matching plant definition, so an adapter cannot invent a rate- or reference-basis conversion.
 
-This layer is deliberately not operating authority. It does not calculate total power, common-shaft
-driver or torque balance, compressor maps, separator capacity, piping hydraulics, product quality,
-emissions, utility allocation, rollback, caching, dirty scheduling, or solver acceptance. Those
-increments must supply qualified samples after complete convergence, and external optimizer
-proposals must still be replayed and accepted by the full NeqSim model.
+### Shared total-power evidence
+
+`PlantSharedResourceEvidence` is the immutable post-solve adapter for a maximum
+`SHARED_BUDGET`. It requires one observation for every registered participant and an independently
+calculated total in the same target unit and basis. Missing, unexpected, stale, non-finite,
+out-of-validity, metadata-mismatched, exception, or unconverged evidence is incomplete; unavailable
+values are Java `NaN` and JSON `null`, never zero load.
+
+Use `fromProcessSystemShaftPower(...)` when participant IDs are top-level compressor or pump names,
+or `fromProcessModelShaftPower(...)` when participant IDs are `ProcessModel` area names. Both
+adapters cross-check the participant sum against the existing `getPower(unit)` total and retain the
+explicit **compressor and pump shaft-power** basis. They do not infer motor efficiency or convert
+shaft power to electrical demand.
+
+```java
+PlantConstraintDefinition shaftBudget = PlantConstraintDefinition
+    .builder("total-shaft-power",
+        PlantConstraintScope.sharedResource("NorthPlant", "compression shaft power"))
+    .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+    .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+    .unit("MW")
+    .basis("compressor and pump shaft power")
+    .provenance("approved rotating-equipment study")
+    .participant(PlantConstraintParticipant.converted(
+        "Compression", "kW", "compressor and pump shaft power", 0.001, 0.0))
+    .build();
+
+PlantSharedResourceEvidence powerEvidence =
+    PlantSharedResourceEvidence.fromProcessModelShaftPower(
+        shaftBudget, calculationId, 12.0, model, model.isModelConverged(),
+        "completed isolated ProcessModel");
+PlantUtilizationSnapshot snapshot = PlantUtilizationSnapshot.builder(
+        new PlantConstraintRegistry().register(shaftBudget), calculationId)
+    .convergenceComplete(model.isModelConverged())
+    .sample(powerEvidence.toPlantConstraintSample())
+    .build();
+```
+
+For an electrical `EnergyBus`, `fromSolvedEnergyBusRequestedDemand(...)` uses the current solved
+report's requested input demand, including unmet demand. It ignores producer output rows and rejects
+unregistered inputs, external demand, bidirectional loads, and stale reports. An out-of-service
+shaft participant is accepted only when explicitly named and observed at finite zero power.
+Changing a limit or line-up requires new evidence with a new calculation identity; collection is
+read-only and does not restore process mutations.
+
+This layer is deliberately not operating authority. It does not infer electrical efficiency,
+compute separator capacity or piping hydraulics, coordinate product quality, emissions or utility
+allocation, restore mutations, cache process results, schedule dirty equipment, or accept solver
+candidates. External optimizer proposals must still be replayed and accepted by the full NeqSim
+model.
+
+### Common-shaft compressor-train evidence
+
+`PlantCommonShaftEvidence` freezes the already solved `MechanicalShaft` allocation together with
+the declared `CompressorDriver`, `Gearbox`, and every casing `Compressor` operating point. The
+adapter performs no equipment run and retains no mutable equipment. The caller supplies the exact
+calculation ID, driver and casing participant IDs, speed and power-balance tolerances, and an
+independently approved maximum torque.
+
+The resulting common snapshot contains distinct constraints for casing-to-shaft speed agreement,
+shaft maximum speed, unmet shaft power, driver speed range and available power, gearbox maximum
+input power, shaft maximum torque, and each casing's minimum signed surge/stonewall map margin.
+Power is in kW, speed in rpm, torque in N m, and map distances are dimensionless. Gearbox input
+power uses the configured efficiency and idle loss; driver speed uses the configured output-to-input ratio;
+torque uses only `power / angular speed`. No rating or map envelope is inferred.
+
+Every active shaft input and the driver output must be declared. A stale bus report, unexpected
+participant, mismatched calculation identity or casing power, chartless or non-finite map point,
+unknown rating, trip, or incomplete convergence makes the evidence incomplete. A finite solved
+point outside its map or beyond a declared speed, power, gearbox, or torque limit remains complete
+but infeasible. Explicitly out-of-service casings qualify only with verified zero requested and
+observed shaft load. Java getters, serialization, `toPlantUtilizationSnapshot()`, and `toJson()`
+expose the same immutable evidence; unavailable JSON numbers are `null`, never zero.
 
 ## Expected equipment coverage before qualification
 
