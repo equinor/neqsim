@@ -52,10 +52,12 @@ public final class NativeEngineeringDiagramRenderer {
   private static final double PORT_MARKER_SIZE = 1.8;
   private static final double PORT_SLOT_MARGIN = 2.0;
   private static final double PARALLEL_LANE_SPACING = 4.0;
-  private static final double PID_TAG_TEXT_SIZE = 2.2;
-  private static final double PID_HORIZONTAL_MARKER_SPACING = 24.0;
+  private static final double PID_TAG_TEXT_SIZE = 2.5;
+  private static final double PID_HORIZONTAL_MARKER_SPACING = 28.0;
   private static final double PID_VERTICAL_MARKER_SPACING = 10.0;
   private static final double PID_SIGNAL_LANE_SPACING = 3.0;
+  private static final double PID_SIGNAL_TRACK_OFFSET = 48.0;
+  private static final int PID_MARKERS_PER_ROW = 4;
 
   /** Controlled paper sizes supported by the native renderer. */
   public enum SheetFormat {
@@ -1040,6 +1042,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
     });
     Map<String, Double> signalLanes = pidSignalLanes(signals, proposalOwners);
+    Map<String, Double> signalTracks = pidSignalTracks(signals, proposalOwners);
     for (Map<String, Object> signal : signals) {
       String sourceId = textValue(signal.get("sourcePidElementId"));
       String targetId = textValue(signal.get("targetPidElementId"));
@@ -1054,6 +1057,11 @@ public final class NativeEngineeringDiagramRenderer {
         double loop = 8.0 + Math.abs(lane);
         points = Arrays.asList(source, new Point(source.x + loop, source.y - loop),
             new Point(source.x + loop * 2.0, source.y), source);
+      } else if (signalTracks.containsKey(signalId(signal))) {
+        String ownerId = proposalOwners.get(sourceId);
+        Point owner = positions.get(ownerId);
+        double trackX = owner.x + signalTracks.get(signalId(signal)).doubleValue();
+        points = Arrays.asList(source, new Point(trackX, source.y), new Point(trackX, target.y), target);
       } else {
         double middleX = (source.x + target.x) / 2.0 + lane;
         points = Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target);
@@ -1088,16 +1096,24 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private static Point pidMarkerPosition(Point equipment, String register, int index, int count) {
-    double centered = index - (count - 1) / 2.0;
     if ("nozzles".equals(register)) {
+      double centered = index - (count - 1) / 2.0;
       return new Point(equipment.x - OBJECT_WIDTH / 2.0 - 14.0, equipment.y + centered * PID_VERTICAL_MARKER_SPACING);
     }
     if ("interfaces".equals(register)) {
+      double centered = index - (count - 1) / 2.0;
       return new Point(equipment.x + OBJECT_WIDTH / 2.0 + 16.0, equipment.y + centered * PID_VERTICAL_MARKER_SPACING);
     }
+    int row = index / PID_MARKERS_PER_ROW;
+    int rowStart = row * PID_MARKERS_PER_ROW;
+    int rowCount = Math.min(PID_MARKERS_PER_ROW, count - rowStart);
+    int column = index - rowStart;
+    double centered = column - (rowCount - 1) / 2.0;
     double y = "instruments".equals(register) ? equipment.y - OBJECT_HEIGHT / 2.0 - 15.0
         : equipment.y + OBJECT_HEIGHT / 2.0 + 16.0;
-    return new Point(equipment.x + centered * PID_HORIZONTAL_MARKER_SPACING, y);
+    double rowDirection = "instruments".equals(register) ? -1.0 : 1.0;
+    return new Point(equipment.x + centered * PID_HORIZONTAL_MARKER_SPACING,
+        y + rowDirection * row * PID_VERTICAL_MARKER_SPACING);
   }
 
   private static Point pidMarkerConnectionPoint(Point equipment, String register, int index, int count) {
@@ -1179,6 +1195,39 @@ public final class NativeEngineeringDiagramRenderer {
       for (int index = 0; index < group.size(); index++) {
         double centered = index - (group.size() - 1) / 2.0;
         result.put(signalId(group.get(index)), Double.valueOf(centered * PID_SIGNAL_LANE_SPACING));
+      }
+    }
+    return result;
+  }
+
+  private static Map<String, Double> pidSignalTracks(List<Map<String, Object>> signals,
+      Map<String, String> proposalOwners) {
+    Map<String, List<Map<String, Object>>> byOwner = new TreeMap<String, List<Map<String, Object>>>();
+    for (Map<String, Object> signal : signals) {
+      String sourceOwner = textValue(proposalOwners.get(textValue(signal.get("sourcePidElementId"))));
+      String targetOwner = textValue(proposalOwners.get(textValue(signal.get("targetPidElementId"))));
+      if (sourceOwner.isEmpty() || !sourceOwner.equals(targetOwner)) {
+        continue;
+      }
+      List<Map<String, Object>> group = byOwner.get(sourceOwner);
+      if (group == null) {
+        group = new ArrayList<Map<String, Object>>();
+        byOwner.put(sourceOwner, group);
+      }
+      group.add(signal);
+    }
+    Map<String, Double> result = new TreeMap<String, Double>();
+    for (List<Map<String, Object>> group : byOwner.values()) {
+      Collections.sort(group, new Comparator<Map<String, Object>>() {
+        @Override
+        public int compare(Map<String, Object> left, Map<String, Object> right) {
+          return signalId(left).compareTo(signalId(right));
+        }
+      });
+      for (int index = 0; index < group.size(); index++) {
+        double direction = index % 2 == 0 ? -1.0 : 1.0;
+        double offset = PID_SIGNAL_TRACK_OFFSET + index / 2 * PID_SIGNAL_LANE_SPACING;
+        result.put(signalId(group.get(index)), Double.valueOf(direction * offset));
       }
     }
     return result;

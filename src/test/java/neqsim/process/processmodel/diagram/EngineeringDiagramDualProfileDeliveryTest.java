@@ -87,6 +87,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertTrue(registers.getGapCount() > 0);
     int proposalCount = 0;
     Map<String, List<String>> proposalIdsByOwnerAndRegister = new java.util.TreeMap<String, List<String>>();
+    Map<String, String> proposalOwnerById = new java.util.TreeMap<String, String>();
     for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
       for (Map<String, Object> row : rows(registers, register)) {
         String id = String.valueOf(row.get("id"));
@@ -98,6 +99,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
           proposalIdsByOwnerAndRegister.put(group, proposalIds);
         }
         proposalIds.add(id);
+        proposalOwnerById.put(id, String.valueOf(row.get("semanticEquipmentId")));
         assertTrue(pidSvg.contains("data-semantic-id=\"pid-proposal:" + id + "\""), id);
         assertTrue(pidSvg.contains(">" + tag + "</text>"), tag);
         proposalCount++;
@@ -105,7 +107,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     }
     assertTrue(proposalCount > 4);
     assertFalse(pidSvg.contains(" +1</text>"));
-    assertTrue(pidSvg.contains("font-size=\"2.2\""));
+    assertTrue(pidSvg.contains("font-size=\"2.5\""));
     for (Map.Entry<String, List<String>> entry : proposalIdsByOwnerAndRegister.entrySet()) {
       if (entry.getValue().size() < 2) {
         continue;
@@ -115,12 +117,37 @@ class EngineeringDiagramDualProfileDeliveryTest {
         ownerTerminals.add(proposalConnectionTerminal(pidSvg, id));
       }
       assertEquals(entry.getValue().size(), ownerTerminals.size(), entry.getKey());
+      if ((entry.getKey().endsWith("|instruments") || entry.getKey().endsWith("|valves"))
+          && entry.getValue().size() > 4) {
+        Set<String> markerRows = new HashSet<String>();
+        double minimumX = Double.POSITIVE_INFINITY;
+        double maximumX = Double.NEGATIVE_INFINITY;
+        for (String id : entry.getValue()) {
+          double[] marker = proposalMarkerPoint(pidSvg, id);
+          minimumX = Math.min(minimumX, marker[0]);
+          maximumX = Math.max(maximumX, marker[0]);
+          markerRows.add(String.valueOf(marker[1]));
+        }
+        assertTrue(maximumX - minimumX <= 84.0, entry.getKey());
+        assertTrue(markerRows.size() > 1, entry.getKey());
+      }
     }
     List<Map<String, Object>> signals = rows(registers, "controlSignals");
     assertTrue(signals.size() > 1);
     for (Map<String, Object> signal : signals) {
       String signalId = "pid-signal:" + signal.get("sourcePidElementId") + ":" + signal.get("targetPidElementId");
       assertTrue(pidSvg.contains("data-semantic-id=\"" + signalId + "\""), signalId);
+      String sourceId = String.valueOf(signal.get("sourcePidElementId"));
+      String targetId = String.valueOf(signal.get("targetPidElementId"));
+      if (proposalOwnerById.get(sourceId).equals(proposalOwnerById.get(targetId))) {
+        String rawPoints = pointsForSemanticId(pidSvg, signalId);
+        String[] points = rawPoints.split(" ");
+        String context = signalId + " points=\"" + rawPoints + "\"";
+        double sourceX = parseCoordinate(points[0].split(",", 2)[0], context);
+        double targetX = parseCoordinate(points[points.length - 1].split(",", 2)[0], context);
+        double trackX = parseCoordinate(points[1].split(",", 2)[0], context);
+        assertTrue(trackX < Math.min(sourceX, targetX) || trackX > Math.max(sourceX, targetX), signalId);
+      }
     }
     assertEquals(signals.size(), signalPaths(pidSvg).size());
     assertTrue(((java.util.List<?>) registers.toMap().get("nozzles")).stream().anyMatch(
@@ -191,5 +218,29 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertTrue(matcher.find(), proposalId);
     String[] points = matcher.group(1).split(" ");
     return points[points.length - 1];
+  }
+
+  private static double[] proposalMarkerPoint(String svg, String proposalId) {
+    String rawPoints = pointsForSemanticId(svg, "pid-proposal:" + proposalId + ":connection");
+    String[] points = rawPoints.split(" ");
+    String[] coordinates = points[0].split(",", 2);
+    String context = proposalId + " points=\"" + rawPoints + "\"";
+    return new double[] { parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context) };
+  }
+
+  private static double parseCoordinate(String value, String context) {
+    try {
+      return Double.parseDouble(value.trim());
+    } catch (NumberFormatException error) {
+      throw new AssertionError("Non-numeric SVG coordinate '" + value + "' for " + context, error);
+    }
+  }
+
+  private static String pointsForSemanticId(String svg, String semanticId) {
+    Pattern pattern = Pattern
+        .compile("<polyline points=\"([^\"]+)\"[^>]+data-semantic-id=\"" + Pattern.quote(semanticId) + "\"");
+    Matcher matcher = pattern.matcher(svg);
+    assertTrue(matcher.find(), semanticId);
+    return matcher.group(1);
   }
 }
