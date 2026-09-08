@@ -64,6 +64,33 @@ class EngineeringDiagramSymbolConventionTest {
   }
 
   @Test
+  void rendersOptInProcessEquipmentFamiliesAndLineTerminalsWithFlowDirection() {
+    EngineeringDiagramDocumentSet documents = processFamilyDocuments();
+    EngineeringDiagramConventionRegister conventions = new EngineeringDiagramConventionRegister()
+        .withConvention(proposedConvention(EngineeringNode.Kind.EQUIPMENT, SymbolShape.PROCESS_EQUIPMENT))
+        .withConvention(proposedConvention(EngineeringNode.Kind.LINE, SymbolShape.LINE_TERMINAL));
+
+    NativeEngineeringDiagramRenderer.Result first = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE, conventions,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    NativeEngineeringDiagramRenderer.Result second = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE, conventions,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = first.getSvgBySheetId().values().iterator().next();
+
+    assertTrue(elementForSemanticId(svg, "equipment:separator").startsWith("<polygon"));
+    assertTrue(elementForSemanticId(svg, "equipment:compressor").startsWith("<polygon"));
+    assertTrue(elementForSemanticId(svg, "equipment:valve").startsWith("<polygon"));
+    assertTrue(elementForSemanticId(svg, "equipment:exchanger").startsWith("<polygon"));
+    assertTrue(elementForSemanticId(svg, "line:feed").startsWith("<polygon"));
+    assertTrue(svg.contains("data-semantic-id=\"flow-arrow:connection:feed\""));
+    assertEquals(first.getSvgBySheetId(), second.getSvgBySheetId());
+    assertArrayEquals(first.getPdf(), second.getPdf());
+    assertEquals(first.getVisualFingerprintsBySheetId(), second.getVisualFingerprintsBySheetId());
+    assertTrue(first.isComplete());
+  }
+
+  @Test
   void keepsConventionsSortedImmutableAndDefensivelyCopied() {
     SymbolConvention equipment = reviewedConvention(EngineeringNode.Kind.EQUIPMENT, SymbolShape.HEXAGON);
     SymbolConvention boundary = reviewedConvention(EngineeringNode.Kind.BOUNDARY, SymbolShape.RECTANGLE);
@@ -101,6 +128,45 @@ class EngineeringDiagramSymbolConventionTest {
     graph.addNode(new EngineeringNode("boundary:feed", EngineeringNode.Kind.BOUNDARY, "feed", "Feed boundary"));
     return EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-CONVENTION-001", "Project convention reference",
         ContentProfile.PFD);
+  }
+
+  private static EngineeringDiagramDocumentSet processFamilyDocuments() {
+    EngineeringGraph graph = new EngineeringGraph("PROCESS-FAMILY-PLANT", "A");
+    graph.addNode(new EngineeringNode("line:feed", EngineeringNode.Kind.LINE, "feed", "Feed").putProperty("lineNumber",
+        "10-FEED-001"));
+    graph.addNode(new EngineeringNode("equipment:separator", EngineeringNode.Kind.EQUIPMENT, "separator", "V-101")
+        .putProperty("javaClass", "neqsim.process.equipment.separator.Separator"));
+    graph.addNode(new EngineeringNode("equipment:compressor", EngineeringNode.Kind.EQUIPMENT, "compressor", "K-101")
+        .putProperty("javaClass", "neqsim.process.equipment.compressor.Compressor"));
+    graph.addNode(new EngineeringNode("equipment:valve", EngineeringNode.Kind.EQUIPMENT, "valve", "XV-101")
+        .putProperty("javaClass", "neqsim.process.equipment.valve.ThrottlingValve"));
+    graph.addNode(new EngineeringNode("equipment:exchanger", EngineeringNode.Kind.EQUIPMENT, "exchanger", "E-101")
+        .putProperty("javaClass", "neqsim.process.equipment.heatexchanger.HeatExchanger"));
+    graph.addNode(new EngineeringNode("port:feed-out", EngineeringNode.Kind.PORT, "feed-out", "feed-out")
+        .putProperty("ownerNodeId", "line:feed").putProperty("direction", "OUTLET"));
+    graph
+        .addNode(new EngineeringNode("nozzle:separator-in", EngineeringNode.Kind.NOZZLE, "separator-in", "separator-in")
+            .putProperty("ownerNodeId", "equipment:separator").putProperty("direction", "INLET"));
+    graph.addNode(new EngineeringNode("connection:feed", EngineeringNode.Kind.PIPE_SEGMENT, "feed", "10-FEED-001")
+        .putProperty("connectionType", "MATERIAL").putProperty("sourceEndpointId", "port:feed-out")
+        .putProperty("targetEndpointId", "nozzle:separator-in").putProperty("sourceEquipment", "feed")
+        .putProperty("targetEquipment", "V-101"));
+    return EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PROCESS-FAMILY-001",
+        "Process equipment family reference", ContentProfile.PFD);
+  }
+
+  private static SymbolConvention proposedConvention(EngineeringNode.Kind kind, SymbolShape shape) {
+    return new SymbolConvention(kind, shape, "#1f2937", "#ffffff", "teaching-symbol-profile:v1", EvidenceState.PROPOSED,
+        "", "", "2026-09-08T00:00:00Z", "A");
+  }
+
+  private static String elementForSemanticId(String svg, String semanticId) {
+    String identity = "data-semantic-id=\"" + semanticId + "\"";
+    int identityIndex = svg.indexOf(identity);
+    assertTrue(identityIndex >= 0, semanticId);
+    int start = svg.lastIndexOf('<', identityIndex);
+    int end = svg.indexOf('>', identityIndex) + 1;
+    return svg.substring(start, end);
   }
 
   private static SymbolConvention reviewedConvention(EngineeringNode.Kind kind, SymbolShape shape) {
