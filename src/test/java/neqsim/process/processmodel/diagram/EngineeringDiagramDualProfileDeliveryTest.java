@@ -67,8 +67,8 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(baseline.getPfd().getRendering().getSvgBySheetId(), report.getPfd().getRendering().getSvgBySheetId());
     assertNotEquals(baseline.getPid().getRendering().getSvgBySheetId(),
         report.getPid().getRendering().getSvgBySheetId());
-    assertTrue(report.getPid().getRendering().getSvgBySheetId().toString().contains("P&ID PROPOSAL OVERLAY"));
-    assertFalse(report.getPfd().getRendering().getSvgBySheetId().toString().contains("P&ID PROPOSAL OVERLAY"));
+    assertTrue(report.getPid().getRendering().getSvgBySheetId().toString().contains("P&amp;ID PROPOSAL OVERLAY"));
+    assertFalse(report.getPfd().getRendering().getSvgBySheetId().toString().contains("P&amp;ID PROPOSAL OVERLAY"));
     EngineeringDiagramPidRegisters registers = report.getPidEngineeringRegisters();
     assertEquals(report.getPid().getDocumentSet().getSourceGraphFingerprint(), registers.getSourceGraphFingerprint());
     assertTrue(registers.getLineCount() > 0);
