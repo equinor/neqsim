@@ -1,4 +1,4 @@
-name: Create release (draft)
+name: Create release after merge
 permissions:
   contents: read
 
@@ -11,16 +11,20 @@ on:
         default: false
         type: boolean
   push:
+    # Release branches are intentionally excluded. A version PR must be merged
+    # before an automatic release can be created or published.
     branches:
       - master
       - main
-      - release/*
     paths:
       - 'pom*.xml'
 
 jobs:
   get_versions:
     name: Get version numbers from pom-files
+    # Automatic runs are restricted to the default branch by the push trigger.
+    # Manual runs may select an existing release tag for an explicit repair.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     outputs:
@@ -134,6 +138,7 @@ jobs:
 
   create_release:
     name: Create release v${{ needs.get_versions.outputs.version_8 }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -158,10 +163,11 @@ jobs:
         id: publication
         env:
           RELEASE_EVENT: ${{ github.event_name }}
+          RELEASE_REF: ${{ github.ref }}
           RELEASE_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           UPDATE_PUBLISHED: ${{ inputs.update_published }}
         run: |
-          if [[ "$RELEASE_EVENT" == "push" && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]] || [[ "$UPDATE_PUBLISHED" == "true" ]]; then
+          if [[ "$RELEASE_EVENT" == "push" && ( "$RELEASE_REF" == "refs/heads/master" || "$RELEASE_REF" == "refs/heads/main" ) && "$RELEASE_COMMIT_MESSAGE" == *"[publish-release]"* ]] || [[ "$RELEASE_EVENT" == "workflow_dispatch" && "$UPDATE_PUBLISHED" == "true" ]]; then
             echo "draft=false" >> "$GITHUB_OUTPUT"
           else
             echo "draft=true" >> "$GITHUB_OUTPUT"
@@ -172,6 +178,7 @@ jobs:
         with:
           name: NeqSim ${{ needs.get_versions.outputs.version_8 }}
           tag: v${{ needs.get_versions.outputs.version_8 }}
+          commit: ${{ github.sha }}
           draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
           allowUpdates: true
