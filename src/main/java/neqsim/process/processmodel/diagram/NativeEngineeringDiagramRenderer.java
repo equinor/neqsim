@@ -1080,9 +1080,10 @@ public final class NativeEngineeringDiagramRenderer {
       Map<String, Object> row = rows.get(index);
       String id = textValue(row.get("id"));
       Point marker = pidMarkerPosition(equipment, register, index, rows.size());
+      Point connection = pidMarkerConnectionPoint(equipment, register, index, rows.size());
       proposalPositions.put(id, marker);
       proposalOwners.put(id, equipmentId);
-      addPidMarker(page, register, equipment, marker, id, textValue(row.get("tag")));
+      addPidMarker(page, register, connection, marker, id, textValue(row.get("tag")));
     }
   }
 
@@ -1099,15 +1100,27 @@ public final class NativeEngineeringDiagramRenderer {
     return new Point(equipment.x + centered * PID_HORIZONTAL_MARKER_SPACING, y);
   }
 
-  private static void addPidMarker(Page page, String register, Point equipment, Point marker, String id, String tag) {
+  private static Point pidMarkerConnectionPoint(Point equipment, String register, int index, int count) {
+    double fraction = count == 1 ? 0.5 : (double) index / (count - 1);
+    if ("nozzles".equals(register) || "interfaces".equals(register)) {
+      double y = equipment.y - OBJECT_HEIGHT / 2.0 + 3.0 + fraction * (OBJECT_HEIGHT - 6.0);
+      double x = "nozzles".equals(register) ? equipment.x - OBJECT_WIDTH / 2.0 : equipment.x + OBJECT_WIDTH / 2.0;
+      return new Point(x, y);
+    }
+    double x = equipment.x - OBJECT_WIDTH / 2.0 + 4.0 + fraction * (OBJECT_WIDTH - 8.0);
+    double y = "instruments".equals(register) ? equipment.y - OBJECT_HEIGHT / 2.0 : equipment.y + OBJECT_HEIGHT / 2.0;
+    return new Point(x, y);
+  }
+
+  private static void addPidMarker(Page page, String register, Point connection, Point marker, String id, String tag) {
     String semanticId = "pid-proposal:" + id;
     if ("instruments".equals(register)) {
       page.commands.add(Command.polygon(
           Arrays.asList(new Point(marker.x, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
               new Point(marker.x, marker.y + 3.0), new Point(marker.x - 3.0, marker.y)),
           "#2563eb", "#ffffff", 0.6, semanticId));
-      page.commands.add(Command.line(marker.x, marker.y + 3.0, equipment.x, equipment.y - OBJECT_HEIGHT / 2.0,
-          "#2563eb", 0.4, semanticId + ":connection", ""));
+      page.commands.add(Command.line(marker.x, marker.y + 3.0, connection.x, connection.y, "#2563eb", 0.4,
+          semanticId + ":connection", ""));
     } else if ("valves".equals(register)) {
       page.commands
           .add(Command.polygon(Arrays.asList(new Point(marker.x - 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
@@ -1115,19 +1128,19 @@ public final class NativeEngineeringDiagramRenderer {
       page.commands
           .add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
               new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId + ":half"));
-      page.commands.add(Command.line(marker.x, marker.y - 2.5, equipment.x, equipment.y + OBJECT_HEIGHT / 2.0,
-          "#7c2d12", 0.4, semanticId + ":connection", ""));
+      page.commands.add(Command.line(marker.x, marker.y - 2.5, connection.x, connection.y, "#7c2d12", 0.4,
+          semanticId + ":connection", ""));
     } else if ("interfaces".equals(register)) {
       page.commands.add(
           Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
               new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff", 0.6, semanticId));
-      page.commands.add(Command.line(marker.x - 3.0, marker.y, equipment.x + OBJECT_WIDTH / 2.0, equipment.y, "#6d28d9",
-          0.4, semanticId + ":connection", ""));
+      page.commands.add(Command.line(marker.x - 3.0, marker.y, connection.x, connection.y, "#6d28d9", 0.4,
+          semanticId + ":connection", ""));
     } else {
       page.commands
           .add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5, semanticId, ""));
-      page.commands.add(Command.line(marker.x + 1.5, marker.y, equipment.x - OBJECT_WIDTH / 2.0, equipment.y, "#0891b2",
-          0.4, semanticId + ":connection", ""));
+      page.commands.add(Command.line(marker.x + 1.5, marker.y, connection.x, connection.y, "#0891b2", 0.4,
+          semanticId + ":connection", ""));
     }
     if ("nozzles".equals(register)) {
       page.commands
