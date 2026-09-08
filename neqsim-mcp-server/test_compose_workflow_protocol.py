@@ -2,7 +2,7 @@
 
 This dependency-free harness starts the packaged NeqSim MCP server over STDIO
 and qualifies one real shared-fluid calculation, explicit accounting,
-stop-on-first-failure behavior, invalid input handling, unchanged inventory,
+stop-on-first-failure behavior, invalid input handling, promoted inventory,
 standard envelopes, and real transport. It does not establish arbitrary
 execution, semantic compatibility between steps, transactionality,
 persistence, numerical fidelity, convergence, conservation, facility
@@ -279,27 +279,33 @@ def test_malformed_step_fails_closed(client):
     )
 
 
-def test_inventory_remains_candidate(client):
+def test_inventory_promotes_contract(client):
     result = payload(client.call_tool("getCapabilities", {}))
     require(result.get("status") == "success", "capabilities request failed", result)
     inventory = result.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("composeWorkflow", {})
     require(
-        inventory.get("inventoryVersion") == "1.31"
-        and limitations.get("contractTestedToolCount") == 31
-        and limitations.get("confirmedGapToolCount") == 20,
-        "qualification changed inventory accounting",
+        inventory.get("inventoryVersion") == "1.32"
+        and limitations.get("contractTestedToolCount") == 32
+        and limitations.get("confirmedGapToolCount") == 19,
+        "composed-workflow promotion did not update inventory accounting",
         inventory,
     )
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "composeWorkflow was promoted before evidence merged",
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_COMPOSED_WORKFLOW_ORCHESTRATION"
+        and "neqsim-mcp-server/test_compose_workflow_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "semantic compatibility" in record.get("evidenceBoundary", "")
+        and "plant or control authority" in record.get("evidenceBoundary", ""),
+        "composeWorkflow promotion evidence drifted",
         record,
     )
     require(
         limitations.get("contractPromotionCandidateCount") == 0,
-        "qualification queued a promotion inside inventory",
+        "promotion left a queued inventory candidate",
         limitations,
     )
 
@@ -311,7 +317,7 @@ def main():
         ("unknown runner stops", test_unknown_runner_stops),
         ("missing steps fail closed", test_missing_steps_fails_closed),
         ("malformed step fails closed", test_malformed_step_fails_closed),
-        ("inventory remains candidate", test_inventory_remains_candidate),
+        ("inventory promotes contract", test_inventory_promotes_contract),
     ]
     try:
         client.start()

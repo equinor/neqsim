@@ -1563,13 +1563,13 @@ def test_capabilities():
         "listUnitVariables",
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
-        "runPlugin", "runCapability", "diagnoseAutomation", "getAutomationLearningReport",
+        "runPlugin", "runCapability", "composeWorkflow", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-one bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.31"
-          and limitations.get("contractTestedToolCount") == 31
-          and limitations.get("confirmedGapToolCount") == 20
+    check("thirty-two bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.32"
+          and limitations.get("contractTestedToolCount") == 32
+          and limitations.get("confirmedGapToolCount") == 19
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1674,6 +1674,18 @@ def test_capabilities():
           and "operating-system or process sandbox"
           in runtime_capability.get("evidenceBoundary", ""),
           str(runtime_capability))
+    composed_workflow = coverage_records.get("composeWorkflow", {})
+    check("composed workflow has bounded contract evidence",
+          composed_workflow.get("coverageStatus") == "CONTRACT_TESTED"
+          and composed_workflow.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_COMPOSED_WORKFLOW_ORCHESTRATION"
+          and "neqsim-mcp-server/test_compose_workflow_protocol.py"
+          in composed_workflow.get("contractEvidenceSources", [])
+          and "semantic compatibility"
+          in composed_workflow.get("evidenceBoundary", "")
+          and "plant or control authority"
+          in composed_workflow.get("evidenceBoundary", ""),
+          str(composed_workflow))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1691,7 +1703,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 20
+          and limitations.get("confirmedGapToolCount") == 19
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
