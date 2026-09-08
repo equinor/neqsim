@@ -991,7 +991,7 @@ public final class NativeEngineeringDiagramRenderer {
     return Command.rect(left, top, OBJECT_WIDTH, OBJECT_HEIGHT, stroke, fill, 0.7, objectId, "");
   }
 
-  private void addPidProposalOverlay(Page page, Sheet sheet, Map<String, SemanticObject> objects,
+  private void addPidProposalOverlay(Page page, Map<String, SemanticObject> objects,
       Map<String, Point> positions) {
     if (pidRegisters == null) {
       return;
