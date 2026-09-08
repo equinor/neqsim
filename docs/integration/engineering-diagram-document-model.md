@@ -116,9 +116,12 @@ the corresponding port/nozzle at the left or right bound of its owner symbol, an
 identity on the SVG port marker. Port slots are sorted by stable identity. Branches therefore retain
 distinct anchors, connections between the same owner pair receive deterministic parallel lanes, and
 declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
-off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
-authoritative and is never replaced by automatic routing. Each fixed-port route also carries a
-deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
+off-page connectors remain the cross-sheet boundary. Their lanes follow the local canonical endpoint
+where space permits and retain deterministic minimum separation when several continuations share one
+sheet edge. Connection labels are selected from horizontal route segments using deterministic
+object- and label-collision scoring instead of being placed on a shared vertical trunk. A reviewed
+protected route remains authoritative and is never replaced by automatic routing. Each fixed-port
+route also carries a deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
 each visible off-page label combines the canonical connection designation, directional `TO` or
 `FROM`, and the controlled peer-sheet number. Stable connector and peer-sheet identities remain in
 the document model and SVG semantic attributes without being exposed as reader-facing drawing text.
@@ -126,7 +129,8 @@ Legacy convention/routing profiles retain their previous labels and bytes.
 
 `DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
 A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
-false warning. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
+false warning. Connector-lane and route-label placement reduce common congestion but do not suppress
+the renderer's whole-sheet collision diagnostics. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
 standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
 layout refinement is required.
 
