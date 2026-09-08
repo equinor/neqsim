@@ -26,7 +26,17 @@ public final class EngineeringDiagramConventionRegister implements Serializable 
     /** Four-sided diamond symbol. */
     DIAMOND,
     /** Six-sided hexagonal symbol. */
-    HEXAGON
+    HEXAGON,
+    /**
+     * Renderer-native process-equipment family selected from canonical source-class evidence.
+     *
+     * <p>
+     * This is a recognizable proposal symbol set, not an ISO 10628 or project-standard qualification claim.
+     * </p>
+     */
+    PROCESS_EQUIPMENT,
+    /** Directional terminal used for canonical process-line objects. */
+    LINE_TERMINAL
   }
 
   /** Evidence state attached to one project convention. */
