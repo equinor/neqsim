@@ -40,6 +40,23 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("balance-table.json")));
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/dexpi-plant-2.0.xml")));
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/proteus-4.1.xml")));
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/pid-design-model.json")));
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/pid-completeness-report.json")));
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/pid-engineering-registers.json")));
+    assertTrue(first.getPidEngineeringRegisters().getLineCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getNozzleCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getValveCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getInstrumentCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getControlSignalCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getInterfaceCount() > 0);
+    assertTrue(first.getPidEngineeringRegisters().getGapCount() > 0);
+    String registerJson = new String(
+        Files.readAllBytes(first.getDirectory().resolve("pid/pid-engineering-registers.json")), "UTF-8");
+    assertTrue(registerJson.contains("\"schemaVersion\": \"neqsim_engineering_diagram_pid_registers.v1\""));
+    assertTrue(registerJson.contains("\"nominalPipeSize\": \"PROJECT_INPUT_REQUIRED\""));
+    assertTrue(registerJson.contains("\"reducerDisposition\": \"NO_GOVERNED_REDUCER_DECLARATION\""));
+    assertTrue(registerJson.contains("\"qualificationStatus\": \"REVIEW_REQUIRED\""));
+    assertFalse(registerJson.contains("24-VB-01"));
     assertTrue(first.toJson().contains("\"pidApprovalStatus\": \"REVIEW_REQUIRED\""));
     assertTrue(first.toJson().contains("\"fitnessForConstruction\": false"));
 
@@ -54,5 +71,11 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
         Files.readAllBytes(second.getDirectory().resolve("pfd/drawing-set.pdf")));
     assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pid/drawing-set.pdf")),
         Files.readAllBytes(second.getDirectory().resolve("pid/drawing-set.pdf")));
+    assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pid/pid-design-model.json")),
+        Files.readAllBytes(second.getDirectory().resolve("pid/pid-design-model.json")));
+    assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pid/pid-completeness-report.json")),
+        Files.readAllBytes(second.getDirectory().resolve("pid/pid-completeness-report.json")));
+    assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pid/pid-engineering-registers.json")),
+        Files.readAllBytes(second.getDirectory().resolve("pid/pid-engineering-registers.json")));
   }
 }
