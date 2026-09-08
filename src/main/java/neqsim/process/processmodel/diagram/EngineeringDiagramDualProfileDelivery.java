@@ -423,8 +423,8 @@ public final class EngineeringDiagramDualProfileDelivery {
       }
       EngineeringDiagramDelivery.Report pid = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pid"),
           deliveryRequest(request, ContentProfile.PID, request.pidDrawingNumber, pidRegisters));
-      if (pidRegisters != null && !pidRegisters.getSourceGraphFingerprint()
-          .equals(pid.getDocumentSet().getSourceGraphFingerprint())) {
+      if (pidRegisters != null
+          && !pidRegisters.getSourceGraphFingerprint().equals(pid.getDocumentSet().getSourceGraphFingerprint())) {
         throw new IOException("P&ID proposal overlay source graph differs from the rendered canonical plant");
       }
       Path nativePidPath = target.resolve(PID_DEXPI_PLANT_FILE);
