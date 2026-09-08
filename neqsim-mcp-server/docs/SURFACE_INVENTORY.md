@@ -21,8 +21,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 31 bounded contract-tested software contracts + 20 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.31; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 32 bounded contract-tested software contracts + 19 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.32; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -145,8 +145,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 20 records remain
-`CONFIRMED_GAP`, thirty-one are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 19 records remain
+`CONFIRMED_GAP`, thirty-two are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -193,9 +193,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.31 with 20/31/20 coverage accounting while retaining
+now reconciles inventory 1.32 with 20/32/19 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its thirty-one bounded software contracts and requires 20 confirmed gaps. The read-only
+among its thirty-two bounded software contracts and requires 19 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -213,14 +213,14 @@ structural preservation of validation metadata, isolated custom-profile create/a
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
 `getCapabilities`, while the primary `test_mcp_server.py` now includes
-`manageValidationProfile` in its thirty-one bounded software contracts and requires 20 confirmed
+`manageValidationProfile` in its thirty-two bounded software contracts and requires 19 confirmed
 gaps.
 
 This is software/governance evidence only. The named standards and design factors are not asserted
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.31 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.32 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -430,7 +430,7 @@ stateful execution, plant/control authority, certification, or accountable
 engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.31. A future transition must again move the
+No promotion candidate remains queued in inventory 1.32. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -473,11 +473,11 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Thirty-one bounded discovery, catalog, lookup, progress, trust-retrieval,
+every published tool. Thirty-two bounded discovery, catalog, lookup, progress, trust-retrieval,
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, security-management,
 persisted-state, adjustable-parameter discovery, pre-flight validation, result-validation, reporting handoff,
 process-local plugin execution, automation advisory, simulation-variable mutation, paired snapshot, and
-visualization-generation and bounded runtime-capability contracts are contract-tested, leaving 20 confirmed trust gaps and no queued promotion candidate.
+visualization-generation, bounded runtime-capability, and composed-workflow contracts are contract-tested, leaving 19 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise
@@ -489,26 +489,30 @@ DEXPI/P&ID ingestion remains owned by #2899, dynamics by #2911, flash/stability/
 #2937, and merged production-optimization foundations by #2941. This inventory audits existing
 publication only and does not implement competing domain functionality.
 
-## Composed-workflow qualification candidate (inventory 1.31)
+## Promoted bounded composed-workflow contract
 
-The published `composeWorkflow` surface is being qualified as a bounded,
-caller-authored orchestration contract. Direct Java and packaged-MCP evidence
-covers one real shared-fluid flash step, explicit workflow and step accounting,
-stop-on-first-failure behavior, exact unknown-runner diagnostics, malformed and
-missing-step rejection, normal access enforcement, standard response evidence,
-and JSON-RPC/STDIO transport.
+Inventory version 1.32 atomically promotes `composeWorkflow` after merged
+#3566 established direct Java and packaged-MCP evidence for a bounded,
+caller-authored orchestration contract. Machine-readable coverage, Java
+assertions, `test_compose_workflow_protocol.py`, synchronized focused
+protocol expectations, authoritative `test_mcp_server.py` accounting, and
+documentation move together from 20/31/20 to 20/32/19.
 
-The shared-fluid repair is intentionally additive: the original nested
-`fluid` object remains available while its model/components are exposed at
-the selected runner's input root. This does not create a second fluid model or
-change any thermodynamic calculation.
+The contract covers ordered curated-runner dispatch, one real shared-fluid
+flash route, explicit workflow and per-step accounting, additive shared-fluid
+normalization, step-specific override precedence, stop-on-first-failure
+behavior, structured invalid-request errors, normal access enforcement,
+standard response evidence, and packaged JSON-RPC/STDIO transport. The
+original nested `fluid` object remains available while its model/components
+are exposed at the selected runner's input root; no thermodynamic model or
+calculation is reimplemented.
 
-`composeWorkflow` remains `CONFIRMED_GAP` in inventory
-`1.31 / 20+31+20` until the qualification merges and a separate atomic
-promotion increment updates machine-readable coverage. The candidate does not
-establish natural-language planning, arbitrary execution, semantic
-compatibility between steps, transactionality, persistence, distributed
-execution, numerical fidelity, convergence, conservation, optimization,
-facility completeness, external IAM/transport security, tenant isolation,
-plant/control authority, certification, or accountable engineering approval.
+This classification does not establish natural-language planning, arbitrary
+code, tool, plugin, shell, class, or network execution, semantic compatibility
+or unit conversion between steps, transactionality, rollback, persistence,
+distributed execution, scheduling, resource or tenant isolation, numerical
+fidelity, convergence, conservation, uncertainty, optimization quality,
+facility completeness, external IAM or transport security, plant or control
+authority, certification, or accountable engineering approval. No promotion
+candidate remains queued.
 
