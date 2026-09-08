@@ -147,11 +147,34 @@ shaft participant is accepted only when explicitly named and observed at finite 
 Changing a limit or line-up requires new evidence with a new calculation identity; collection is
 read-only and does not restore process mutations.
 
-This layer is deliberately not operating authority. It does not coordinate a common-shaft driver or
-torque balance, infer electrical efficiency, compute compressor maps, separator capacity, piping
-hydraulics, product quality, emissions, utility allocation, rollback, caching, dirty scheduling, or
-solver acceptance. External optimizer proposals must still be replayed and accepted by the full
-NeqSim model.
+This layer is deliberately not operating authority. It does not infer electrical efficiency,
+compute separator capacity or piping hydraulics, coordinate product quality, emissions or utility
+allocation, restore mutations, cache process results, schedule dirty equipment, or accept solver
+candidates. External optimizer proposals must still be replayed and accepted by the full NeqSim
+model.
+
+### Common-shaft compressor-train evidence
+
+`PlantCommonShaftEvidence` freezes the already solved `MechanicalShaft` allocation together with
+the declared `CompressorDriver`, `Gearbox`, and every casing `Compressor` operating point. The
+adapter performs no equipment run and retains no mutable equipment. The caller supplies the exact
+calculation ID, driver and casing participant IDs, speed and power-balance tolerances, and an
+independently approved maximum torque.
+
+The resulting common snapshot contains distinct constraints for casing-to-shaft speed agreement,
+shaft maximum speed, unmet shaft power, driver speed range and available power, gearbox maximum
+input power, shaft maximum torque, and each casing's minimum signed surge/stonewall map margin.
+Power is in kW, speed in rpm, torque in N m, and map distances are dimensionless. Gearbox input
+power uses the configured efficiency and idle loss; driver speed uses the configured output-to-input ratio;
+torque uses only `power / angular speed`. No rating or map envelope is inferred.
+
+Every active shaft input and the driver output must be declared. A stale bus report, unexpected
+participant, mismatched calculation identity or casing power, chartless or non-finite map point,
+unknown rating, trip, or incomplete convergence makes the evidence incomplete. A finite solved
+point outside its map or beyond a declared speed, power, gearbox, or torque limit remains complete
+but infeasible. Explicitly out-of-service casings qualify only with verified zero requested and
+observed shaft load. Java getters, serialization, `toPlantUtilizationSnapshot()`, and `toJson()`
+expose the same immutable evidence; unavailable JSON numbers are `null`, never zero.
 
 ## Expected equipment coverage before qualification
 

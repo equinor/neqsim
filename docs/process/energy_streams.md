@@ -61,6 +61,12 @@ shaftTrain.setConsumedPower("compressor", 8.0e6);
 double sparePower = shaftTrain.getNetPower("MW");
 ```
 
+For optimizer acceptance of a multi-casing train, use `PlantCommonShaftEvidence` after the shaft
+allocation and all compressor operating points have completed under one calculation ID. It
+cross-checks exact participant coverage and preserves separate immutable speed, power, torque,
+driver, gearbox, and casing-map constraints. It does not run or restore the train, infer ratings,
+or turn a missing observation into zero utilization.
+
 Point-to-point `EnergyStream` connections reject multiple calculated producers or specification consumers during graph construction. Use `EnergyBus` for intentional multi-party distribution.
 
 ## Coupled networks and repeated execution

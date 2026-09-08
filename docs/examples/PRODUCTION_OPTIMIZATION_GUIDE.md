@@ -179,6 +179,40 @@ physical margin, required relief, and diagnostics. Missing observations remain u
 than becoming zero utilization. Rebuild evidence after any process, availability, bus, or limit
 change; never reuse it for a different candidate.
 
+### Qualify a common-shaft compressor train
+
+After all casings and their shared `MechanicalShaft` have completed the same isolated candidate,
+freeze the train's common speed, shaft power, driver, gearbox, torque, and casing-map evidence:
+
+```java
+PlantCommonShaftEvidence trainEvidence = PlantCommonShaftEvidence
+    .builder("Plant", "Compression", "export train", calculationId, shaft,
+        "completed isolated candidate")
+    .casing(casingAPort.getParticipantId(), casingA)
+    .casing(casingBPort.getParticipantId(), casingB)
+    .driver(driverPort.getParticipantId(), driver)
+    .gearbox("export-train-gearbox", gearbox)
+    .speedToleranceRpm(1.0)
+    .powerBalanceToleranceKw(1.0e-6)
+    .maximumTorqueNm(8000.0)
+    .convergenceComplete(fullModelConverged)
+    .build();
+
+if (!trainEvidence.isComplete() || !trainEvidence.isFeasible()) {
+  throw new IllegalStateException(trainEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot trainSnapshot =
+    trainEvidence.toPlantUtilizationSnapshot();
+```
+
+`calculationId` is the UUID string stored on every completed casing. Casing power must equal that
+casing's exact shaft-input request. Gearbox input includes its configured idle loss and efficiency.
+The gearbox maximum input power is configured in W, while the driver model and evidence report use
+kW. `maximumTorqueNm` is an independently approved limit, not
+a value estimated by the adapter. A line-up or limit change invalidates the old evidence; solve the
+isolated candidate again and build a new snapshot. Through JPype, use the same callback-free builder
+and `toJson()` rather than supplying Python callbacks.
+
 ---
 
 ## Overview
