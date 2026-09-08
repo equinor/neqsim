@@ -74,11 +74,12 @@ schedules and materials remain `PROJECT_INPUT_REQUIRED`; reducers remain
 The opt-in registers add a source-linked,
 `P&ID PROPOSAL OVERLAY - REVIEW REQUIRED` layer to the P&ID SVG/PDF sheets
 only. Each proposed nozzle, valve, instrument, and declared interface has an
-independent marker, full-size tag, and stable semantic identity at its canonical
-source equipment. Repeated callouts use deterministic, distributed attachment
-points along the owning equipment boundary instead of converging on one centre
-point. Control/safeguarding relationships use stable, separated
-routing lanes for each source/target equipment pair. PFD rendering, the simulation, and both DEXPI
+independent marker, legible full tag, and stable semantic identity at its canonical
+source equipment. Dense instrument and valve callouts use deterministic four-column
+racks with multiple rows plus distributed attachment points along the owning
+equipment boundary instead of one wide converging fan. Same-equipment
+control/safeguarding relationships use alternating external tracks; other
+relationships retain stable separated lanes. PFD rendering, the simulation, and both DEXPI
 exchange profiles remain unchanged. The overlay is review evidence, not a
 complete project P&ID or a qualified symbol catalog.
 
@@ -91,7 +92,7 @@ the completeness report retains engineering errors and review gaps.
 | Requirement | Current implementation | Automated evidence | Remaining acceptance work |
 | --- | --- | --- | --- |
 | One canonical plant, distinct PFD/P&ID profiles | Dual-profile facade, shared source fingerprint, and P&ID-only proposal overlay | `EngineeringDiagramDualProfileDeliveryTest` and full-model profile assertions | Improve whole-sheet clarity without changing the canonical plant |
-| Reviewable vector and PDF sheets | Native A1 SVG/PDF sheets, process-equipment symbols, fixed-port orthogonal routing, flow arrows, and independently tagged P&ID proposal markers with separated signal lanes | Renderer tests, bundle artifact checks, and fresh full-sheet/detail inspection | Resolve remaining route and line-label congestion and retain accountable reviewed baselines |
+| Reviewable vector and PDF sheets | Native A1 SVG/PDF sheets, process-equipment symbols, fixed-port orthogonal routing, flow arrows, compact multi-row P&ID proposal racks, and external same-equipment signal tracks | Renderer tests, rack-span/row/track checks, bundle artifact checks, and fresh full-sheet/detail inspection | Resolve remaining process-route and off-page-label congestion and retain accountable reviewed baselines |
 | Stable regeneration | Deterministic child and bundle manifests plus byte-stable SVG/PDF | Fresh-model repeated-delivery test | Retain accountable reviewed visual baselines |
 | Native PFD exchange | Native DEXPI 2.0 Process artifact | Delivery assessment, bundle labels, and full-model topology assertions | External interoperability qualification |
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
