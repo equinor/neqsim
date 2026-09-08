@@ -148,13 +148,18 @@ public final class Comparesimulations2EngineeringDiagramReference {
   private static EngineeringDiagramLayoutRegister place(EngineeringDiagramLayoutRegister register, String sheet,
       String[] names, Map<String, String> equipmentIds) {
     EngineeringDiagramLayoutRegister result = register;
+    int columns = names.length >= 13 ? 5 : 4;
+    int rows = (names.length + columns - 1) / columns;
     for (int index = 0; index < names.length; index++) {
       String objectId = equipmentIds.get(names[index]);
       if (objectId == null) {
         throw new IllegalStateException("Proposed layout references missing canonical equipment: " + names[index]);
       }
-      double x = 90.0 + (index % 5) * 145.0;
-      double y = 105.0 + (index / 5) * 150.0;
+      int row = index / columns;
+      int positionInRow = index % columns;
+      int column = row % 2 == 0 ? positionInRow : columns - 1 - positionInRow;
+      double x = 90.0 + column * (660.0 / (columns - 1));
+      double y = rows == 1 ? 280.0 : 100.0 + row * (360.0 / (rows - 1));
       result = result
           .withAssignment(new SheetAssignment(objectId, sheet, SOURCE + ":proposed-layout",
               EngineeringDiagramLayoutRegister.EvidenceState.PROPOSED, RECORDED_BY, RECORDED_AT, REVISION))
