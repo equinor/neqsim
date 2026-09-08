@@ -2,6 +2,7 @@ package neqsim.process.processmodel.diagram;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -62,8 +63,12 @@ class EngineeringDiagramPidRegistersTest {
     evidence.add("later-change");
     nozzle.attribute("newAttribute", "later-change");
     assertEquals(snapshot, registers.toJson());
-    assertThrows(UnsupportedOperationException.class, () -> registers.toMap().clear());
-    Map<?, ?> row = (Map<?, ?>) ((List<?>) registers.toMap().get("nozzles")).get(0);
+    Map<String, Object> firstView = registers.toMap();
+    Map<String, Object> secondView = registers.toMap();
+    assertNotSame(firstView, secondView);
+    assertNotSame(firstView.get("nozzles"), secondView.get("nozzles"));
+    assertThrows(UnsupportedOperationException.class, () -> firstView.clear());
+    Map<?, ?> row = (Map<?, ?>) ((List<?>) firstView.get("nozzles")).get(0);
     assertThrows(UnsupportedOperationException.class, () -> ((Map<?, ?>) row.get("attributes")).clear());
     assertThrows(UnsupportedOperationException.class,
         () -> ((List<?>) ((Map<?, ?>) row.get("attributes")).get("evidence")).clear());
