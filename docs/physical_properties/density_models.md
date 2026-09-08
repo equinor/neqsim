@@ -749,6 +749,29 @@ compare the recorded checksum with the distributed file, audit the permission
 decision, map source groups to real laboratories and apparatus, and pre-register
 acceptance limits before evaluating a holdout.
 
+### Acoustic compressibility conversion
+
+`PitzerBinaryVolumetricAcousticConversion` provides the missing thermodynamic
+bridge for assessing sound-speed evidence without equating isentropic and
+isothermal response:
+
+$$\kappa_S=\frac{1}{\rho c^2},\qquad
+\kappa_T=\kappa_S+\frac{T\alpha^2}{\rho c_p}.$$
+
+Inputs use SI units: temperature in K, density in kg/m3, speed of sound in m/s,
+volumetric thermal expansivity in 1/K, and mass-specific isobaric heat capacity
+in J/(kg K). Compressibilities are returned in 1/Pa. The uncertainty method
+accepts a full 5-by-5 covariance matrix in that input order, checks that it is
+finite, symmetric, and positive semidefinite, and evaluates
+$u^2(\kappa_T)=J\Sigma J^T$ with an analytic sensitivity Jacobian. This retains
+correlations among measurements instead of silently assuming independence.
+
+The conversion does not fill missing density, expansivity, or heat-capacity
+inputs, infer their covariance, fit any coefficient, or activate a density
+model. Acoustic rows therefore remain inadmissible for volumetric-Pitzer
+calibration until every matched property, uncertainty, source lineage, and
+redistribution right passes the campaign provenance gates.
+
 ### Qualification boundary
 
 - The caller owns coefficient provenance and must keep calibration and
@@ -1030,6 +1053,9 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 | `PitzerBinaryVolumetricGroupedValidation.validate(...)` | Fit one lineage set and evaluate a disjoint untouched holdout |
 | `PitzerBinaryVolumetricDatasetProvenance.validateRepositoryObservations(...)` | Check role, license, checksum manifest, row count and state envelope |
 | `PitzerBinaryVolumetricGroupedValidation.validateRepositoryDatasets(...)` | Enforce repository provenance before grouped fitting and holdout evaluation |
+| `PitzerBinaryVolumetricAcousticConversion.calculateIsentropicCompressibility(...)` | Convert density and sound speed to isentropic compressibility |
+| `PitzerBinaryVolumetricAcousticConversion.calculateIsothermalCompressibility(...)` | Apply the expansivity and heat-capacity correction in SI units |
+| `PitzerBinaryVolumetricAcousticConversion.convertWithUncertainty(...)` | Propagate a full input covariance through the acoustic conversion |
 
 These methods do not install a parameter dataset or alter a phase. A caller
 must explicitly supply a provenance-qualified `StateParameters` instance.
