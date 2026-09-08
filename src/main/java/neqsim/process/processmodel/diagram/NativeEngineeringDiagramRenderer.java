@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 20674)
-Total output lines: 1754
-
 package neqsim.process.processmodel.diagram;
 
 import java.io.ByteArrayOutputStream;
@@ -841,7 +838,52 @@ public final class NativeEngineeringDiagramRenderer {
         : convention.getFillColor();
     if (shape == SymbolShape.PROCESS_EQUIPMENT) {
       addProcessEquipmentSymbol(page, object, position, stroke, fill);
-    } else if (shape …674 tokens truncated…quals(family)) {
+    } else if (shape == SymbolShape.LINE_TERMINAL) {
+      addLineTerminalSymbol(page, object, position, stroke, fill);
+    } else {
+      page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
+    }
+    String primary = displayLabel(object);
+    page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
+    String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
+    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
+  }
+
+  private static void addProcessEquipmentSymbol(Page page, SemanticObject object, Point position, String stroke,
+      String fill) {
+    String family = equipmentFamily(object);
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double right = position.x + OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    double bottom = position.y + OBJECT_HEIGHT / 2.0;
+    if ("SEPARATOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left + 7.0, top), new Point(right - 7.0, top),
+          new Point(right, top + 5.0), new Point(right, bottom - 5.0), new Point(right - 7.0, bottom),
+          new Point(left + 7.0, bottom), new Point(left, bottom - 5.0), new Point(left, top + 5.0)), stroke, fill, 0.7,
+          object.getId()));
+      page.commands.add(Command.line(left + 2.0, position.y + 2.5, right - 2.0, position.y + 2.5, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("HEAT EXCHANGER".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
+          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
+      page.commands.add(Command.line(left + 8.0, top + 3.0, right - 8.0, bottom - 3.0, stroke, 0.5, "", ""));
+      page.commands.add(Command.line(left + 8.0, bottom - 3.0, right - 8.0, top + 3.0, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("COMPRESSOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left, position.y - 4.0), new Point(right, top),
+          new Point(right, bottom), new Point(left, position.y + 4.0)), stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("PUMP".equals(family)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(left + 5.0, top), new Point(right - 8.0, top), new Point(right, position.y),
+              new Point(right - 8.0, bottom), new Point(left + 5.0, bottom), new Point(left, position.y)),
+          stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("VALVE".equals(family)) {
       page.commands.add(Command.polygon(
           Arrays.asList(new Point(left, top), new Point(position.x, position.y), new Point(left, bottom)), stroke, fill,
           0.7, object.getId()));
