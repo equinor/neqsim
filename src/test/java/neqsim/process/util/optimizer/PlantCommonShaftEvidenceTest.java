@@ -99,9 +99,33 @@ class PlantCommonShaftEvidenceTest {
         .build();
 
     assertTrue(evidence.isComplete(), evidence.getDiagnostics().toString());
+    assertTrue(evidence.isFeasible());
     assertTrue(evidence.getCasings().stream()
         .anyMatch(casing -> casing.getStatus() == PlantCommonShaftEvidence.CasingStatus.OUT_OF_SERVICE));
+    assertTrue(evidence.toPlantUtilizationSnapshot().getEvidence().stream()
+        .anyMatch(row -> row.getOperatingStatus() == PlantConstraintEvidence.OperatingStatus.DISABLED));
     assertEquals(400.0, evidence.getTotalCasingPowerKw(), 1.0e-12);
+  }
+
+  @Test
+  void inconsistentChartFlagAndSignedMarginsFailClosed() {
+    TrainFixture fixture = trainFixture(800.0, 900.0);
+    StubCompressor casingA = new StubCompressor("casing A", 10000.0, 400.0, 0.12, 0.18, true,
+        UUID.fromString(CALCULATION_ID));
+    StubCompressor casingB = new StubCompressor("casing B", 10000.0, 350.0, -0.01, 0.21, true,
+        UUID.fromString(CALCULATION_ID));
+    casingB.operatingPoint.put("withinChart", true);
+
+    PlantCommonShaftEvidence evidence = PlantCommonShaftEvidence
+        .builder("medium production model", "compression", "export train", CALCULATION_ID, fixture.shaft,
+            "completed isolated candidate")
+        .casing(fixture.casingAPort.getParticipantId(), casingA).casing(fixture.casingBPort.getParticipantId(), casingB)
+        .driver(fixture.driverPort.getParticipantId(), fixture.driver).gearbox("gearbox-1", fixture.gearbox)
+        .speedToleranceRpm(1.0).powerBalanceToleranceKw(1.0e-6).maximumTorqueNm(800.0).convergenceComplete(true)
+        .build();
+
+    assertFalse(evidence.isComplete());
+    assertTrue(evidence.getDiagnostics().stream().anyMatch(value -> value.contains("METADATA_MISMATCH")));
   }
 
   @Test

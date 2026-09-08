@@ -437,6 +437,10 @@ public final class PlantCommonShaftEvidence implements Serializable {
         return unavailableCasing(input.participantId, equipmentName, CasingStatus.NON_FINITE_VALUE, provenance,
             "Map margins are unavailable");
       }
+      if (withinChart != (surge >= 0.0 && stonewall >= 0.0)) {
+        return unavailableCasing(input.participantId, equipmentName, CasingStatus.METADATA_MISMATCH, provenance,
+            "Chart status disagrees with signed map margins");
+      }
       return new CasingEvidence(input.participantId, equipmentName, CasingStatus.AVAILABLE, speed, power, true,
           withinChart, surge, stonewall, limiting, provenance, "");
     } catch (RuntimeException ex) {
@@ -476,7 +480,8 @@ public final class PlantCommonShaftEvidence implements Serializable {
       result.add(definition("compressor-map-margin",
           PlantConstraintScope.equipment(builder.modelName, builder.areaName, casing.getEquipmentName()), "fraction",
           "minimum signed distance to surge or stonewall", casing.getProvenance())
-          .limitDirection(PlantConstraintDefinition.LimitDirection.MINIMUM).build());
+          .limitDirection(PlantConstraintDefinition.LimitDirection.MINIMUM)
+          .enabled(casing.getStatus() != CasingStatus.OUT_OF_SERVICE).build());
     }
     Collections.sort(result);
     return result;
