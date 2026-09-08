@@ -292,6 +292,61 @@ uncertainty, nonlinear economics, multi-source feasibility, or control actions. 
 property must already be resolved on the documented basis, and costs must use one common
 currency-per-mass basis.
 
+## Multi-source linear blend optimization
+
+`RefineryLinearBlendOptimizer` extends the qualified binary envelope to two or more resolved
+sources. It minimizes a linear source cost on normalized, non-negative mass fractions:
+
+$$\min_x\sum_i c_i x_i,\qquad \sum_i x_i=1,\qquad x_i\geq0$$
+
+API gravity is affine in the fractions because ideal additive volume makes reciprocal specific
+gravity mass-linear. Sulfur and nitrogen are mass-linear. Viscosity constraints are linearized in
+the published Refutas VBN space at one explicit common temperature, then reconstructed through
+`RefineryViscosityBlend`.
+
+```java
+RefineryLinearBlendOptimizer.Result optimum =
+    RefineryLinearBlendOptimizer.optimizeMinimumCost(
+        new double[] {1.0, 2.0, 3.0},
+        new double[] {0.85, 0.80, 0.75},
+        new double[] {0.030, 0.010, 0.002},
+        new double[] {0.003, 0.001, 0.0002},
+        new double[] {600.0, 300.0, 50.0},
+        50.0,
+        30.0,
+        60.0,
+        0.015,
+        0.01,
+        50.0,
+        600.0);
+
+double[] sourceMassFractions = optimum.getSourceMassFractions();
+double unitCost = optimum.getUnitCostPerMass();
+double blendApi = optimum.getAssayBlend().getApiGravity();
+double blendViscosityCSt = optimum.getViscosityBlend().getKinematicViscosityCSt();
+```
+
+The documented analytical case selects source fractions 0.25, 0.75, and 0.0, with unit cost
+1.75 and sulfur exactly at the 0.015 mass-fraction limit. A binary regression reproduces the
+qualified `RefineryBinaryBlendEnvelope` endpoint. Input reversal preserves the physical optimum.
+An infeasible problem, invalid property, non-finite solver result, failed mass closure, or failed
+property reconstruction stops without returning a recipe.
+
+The optimizer uses NeqSim's existing Apache Commons Math simplex dependency. It returns one
+minimum-cost feasible vertex; it does not claim that the recipe is unique when costs or constraints
+are degenerate. Costs must share one currency-per-mass basis, source properties must already be
+resolved on their documented bases, and all viscosities must refer to the supplied common
+temperature.
+
+The SG/API, sulfur, and nitrogen rules retain the existing public DOE/OEDI assay provenance. The
+viscosity rule retains the Centeno et al. provenance,
+[DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028). The numerical examples
+are transparent arithmetic integration cases, not measured multi-crude blend data.
+
+This is a screening optimizer. It does not model excess volume, blend contraction,
+viscosity-temperature extrapolation, phase or asphaltene compatibility, uncertainty, nonlinear or
+integer economics, inventory, scheduling, control actions, or certified product compliance.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:
