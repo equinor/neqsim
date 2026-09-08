@@ -2,6 +2,7 @@ package neqsim.process.processmodel.diagram;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,7 +48,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
   }
 
   @Test
-  void publishesOptInProposalSidecarsWithoutChangingTheSourceOrDrawings() throws IOException {
+  void publishesOptInProposalSidecarsAndPidOverlayWithoutChangingTheSourceOrPfd() throws IOException {
     ProcessSystem process = EngineeringDiagramReferenceFixtures.simpleTrain().getProcessSystem();
     String sourceDot = process.toDOT();
     int measurementCount = process.getMeasurementDevices().size();
@@ -62,7 +63,13 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(sourceDot, process.toDOT());
     assertEquals(measurementCount, process.getMeasurementDevices().size());
     assertEquals(baseline.getPfd().getFingerprint(), report.getPfd().getFingerprint());
-    assertEquals(baseline.getPid().getFingerprint(), report.getPid().getFingerprint());
+    assertNotEquals(baseline.getPid().getFingerprint(), report.getPid().getFingerprint());
+    assertEquals(baseline.getPfd().getRendering().getSvgBySheetId(),
+        report.getPfd().getRendering().getSvgBySheetId());
+    assertNotEquals(baseline.getPid().getRendering().getSvgBySheetId(),
+        report.getPid().getRendering().getSvgBySheetId());
+    assertTrue(report.getPid().getRendering().getSvgBySheetId().toString().contains("P&ID PROPOSAL OVERLAY"));
+    assertFalse(report.getPfd().getRendering().getSvgBySheetId().toString().contains("P&ID PROPOSAL OVERLAY"));
     EngineeringDiagramPidRegisters registers = report.getPidEngineeringRegisters();
     assertEquals(report.getPid().getDocumentSet().getSourceGraphFingerprint(), registers.getSourceGraphFingerprint());
     assertTrue(registers.getLineCount() > 0);
@@ -84,7 +91,8 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(registers.toJson(),
         new String(Files.readAllBytes(report.getDirectory().resolve("pid/pid-engineering-registers.json")),
             StandardCharsets.UTF_8));
-    assertTrue(report.toJson().contains("SIDECARS_ONLY_NOT_MATERIALIZED_IN_DRAWINGS_OR_EXCHANGES"));
+    assertTrue(report.toJson()
+        .contains("REVIEW_REQUIRED_SOURCE_LINKED_OVERLAY_IN_SVG_PDF_WITH_SIDECARS;EXCHANGES_UNCHANGED"));
   }
 
   @Test
