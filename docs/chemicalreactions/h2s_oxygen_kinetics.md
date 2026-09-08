@@ -192,10 +192,36 @@ factors across unchanged-state segment subdivisions recovers the unsplit retenti
 inventory.
 
 These endpoint rates are differential screening evidence evaluated under the source's
-constant-oxygen assumption. They are not a time-averaged control-volume source, a conversion to
-molar flow, oxygen consumption, or product stoichiometry. Creating a pipeline source term requires
-separate water inventory, phase transfer, reaction products, energy, pressure, and numerical
-coupling evidence.
+constant-oxygen assumption. They are not a conversion to molar flow, oxygen consumption, or
+product stoichiometry.
+
+## Segment-mean loss-rate evidence
+
+For each lower-rate, nominal, and upper-rate path, `SegmentResult` also exposes the analytical
+mean total-sulfide loss rate over the segment. For positive duration,
+
+$
+\overline{r}_{r,i}
+=\frac{c_{r,i,\mathrm{in}}-c_{r,i,\mathrm{out}}}{\Delta t_i}
+=\frac{c_{r,i,\mathrm{reacted}}}{\Delta t_i}.
+$
+
+Its unit is mol total sulfide/(kg water h). Because the differential rate decays monotonically
+within a constant-state segment, the mean is bounded by the endpoint rates:
+
+$
+r_{r,i,\mathrm{out}}\leq\overline{r}_{r,i}\leq r_{r,i,\mathrm{in}}.
+$
+
+Multiplying the mean by segment duration exactly recovers the reacted molality. For a zero-duration
+segment the quotient would be undefined, so the API returns its exact continuous limit
+`k[O2] c_in`; this equals both endpoint rates and remains finite. For an unchanged-state segment
+split into subsegments, duration-weighted mean rates recover the unsplit reacted inventory and
+unsplit mean rate.
+
+This is a time average on a molality basis, not yet a volumetric or molar-flow control-volume
+source. Creating a pipeline source term still requires separately qualified water inventory,
+phase transfer, oxygen consumption, reaction products, energy, pressure, and numerical coupling.
 
 ## Piecewise target crossing
 
