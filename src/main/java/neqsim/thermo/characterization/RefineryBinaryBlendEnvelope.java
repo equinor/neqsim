@@ -7,10 +7,9 @@ import java.util.Arrays;
  * Immutable feasible mass-fraction envelope for a quality-constrained binary refinery blend.
  *
  * <p>
- * The envelope combines the existing ideal-additive-volume specific-gravity rule, linear
- * sulfur/nitrogen bookkeeping, and common-temperature Refutas kinematic-viscosity rule. It does
- * not mutate an assay or thermodynamic system and does not introduce an independent property
- * correlation.
+ * The envelope combines the existing ideal-additive-volume specific-gravity rule, linear sulfur/nitrogen bookkeeping,
+ * and common-temperature Refutas kinematic-viscosity rule. It does not mutate an assay or thermodynamic system and does
+ * not introduce an independent property correlation.
  * </p>
  */
 public final class RefineryBinaryBlendEnvelope implements Serializable {
@@ -25,12 +24,10 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
   private final double minimumFirstSourceMassFraction;
   private final double maximumFirstSourceMassFraction;
 
-  private RefineryBinaryBlendEnvelope(double[] sourceSpecificGravities,
-      double[] sourceSulfurMassFractions, double[] sourceNitrogenMassFractions,
-      double[] sourceKinematicViscositiesCSt, double temperatureCelsius,
+  private RefineryBinaryBlendEnvelope(double[] sourceSpecificGravities, double[] sourceSulfurMassFractions,
+      double[] sourceNitrogenMassFractions, double[] sourceKinematicViscositiesCSt, double temperatureCelsius,
       double minimumApiGravity, double maximumApiGravity, double maximumSulfurMassFraction,
-      double maximumNitrogenMassFraction, double minimumKinematicViscosityCSt,
-      double maximumKinematicViscosityCSt) {
+      double maximumNitrogenMassFraction, double minimumKinematicViscosityCSt, double maximumKinematicViscosityCSt) {
     requireBinaryArray(sourceSpecificGravities, "specific gravities");
     requireBinaryArray(sourceSulfurMassFractions, "sulfur mass fractions");
     requireBinaryArray(sourceNitrogenMassFractions, "nitrogen mass fractions");
@@ -41,20 +38,17 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     if (!Double.isFinite(temperatureCelsius)) {
       throw new IllegalArgumentException("Common viscosity temperature must be finite");
     }
-    if (!Double.isFinite(minimumKinematicViscosityCSt)
-        || !Double.isFinite(maximumKinematicViscosityCSt)
-        || !(minimumKinematicViscosityCSt > 0.2)
-        || maximumKinematicViscosityCSt < minimumKinematicViscosityCSt) {
+    if (!Double.isFinite(minimumKinematicViscosityCSt) || !Double.isFinite(maximumKinematicViscosityCSt)
+        || !(minimumKinematicViscosityCSt > 0.2) || maximumKinematicViscosityCSt < minimumKinematicViscosityCSt) {
       throw new IllegalArgumentException(
           "Kinematic-viscosity bounds must be finite, ordered, and greater than 0.2 cSt");
     }
 
     // Reuse the qualified property implementations as the authoritative input-domain checks.
-    double[] equalMasses = {1.0, 1.0};
-    RefineryAssayBlend.fromBulkProperties(equalMasses, sourceSpecificGravities,
-        sourceSulfurMassFractions, sourceNitrogenMassFractions);
-    RefineryViscosityBlend.fromMassBasis(equalMasses, sourceKinematicViscositiesCSt,
-        temperatureCelsius);
+    double[] equalMasses = { 1.0, 1.0 };
+    RefineryAssayBlend.fromBulkProperties(equalMasses, sourceSpecificGravities, sourceSulfurMassFractions,
+        sourceNitrogenMassFractions);
+    RefineryViscosityBlend.fromMassBasis(equalMasses, sourceKinematicViscositiesCSt, temperatureCelsius);
 
     this.sourceSpecificGravities = Arrays.copyOf(sourceSpecificGravities, 2);
     this.sourceSulfurMassFractions = Arrays.copyOf(sourceSulfurMassFractions, 2);
@@ -62,26 +56,23 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     this.sourceKinematicViscositiesCSt = Arrays.copyOf(sourceKinematicViscositiesCSt, 2);
     this.temperatureCelsius = temperatureCelsius;
 
-    double[] interval = {0.0, 1.0};
+    double[] interval = { 0.0, 1.0 };
     double firstApiGravity = calculateApiGravity(sourceSpecificGravities[0]);
     double secondApiGravity = calculateApiGravity(sourceSpecificGravities[1]);
-    intersectLinearConstraint(interval, firstApiGravity, secondApiGravity, minimumApiGravity,
-        maximumApiGravity, "API-gravity");
-    intersectLinearConstraint(interval, sourceSulfurMassFractions[0],
-        sourceSulfurMassFractions[1], 0.0, maximumSulfurMassFraction, "sulfur");
-    intersectLinearConstraint(interval, sourceNitrogenMassFractions[0],
-        sourceNitrogenMassFractions[1], 0.0, maximumNitrogenMassFraction, "nitrogen");
+    intersectLinearConstraint(interval, firstApiGravity, secondApiGravity, minimumApiGravity, maximumApiGravity,
+        "API-gravity");
+    intersectLinearConstraint(interval, sourceSulfurMassFractions[0], sourceSulfurMassFractions[1], 0.0,
+        maximumSulfurMassFraction, "sulfur");
+    intersectLinearConstraint(interval, sourceNitrogenMassFractions[0], sourceNitrogenMassFractions[1], 0.0,
+        maximumNitrogenMassFraction, "nitrogen");
 
-    double firstBlendNumber = RefineryViscosityBlend
-        .calculateViscosityBlendingNumber(sourceKinematicViscositiesCSt[0]);
+    double firstBlendNumber = RefineryViscosityBlend.calculateViscosityBlendingNumber(sourceKinematicViscositiesCSt[0]);
     double secondBlendNumber = RefineryViscosityBlend
         .calculateViscosityBlendingNumber(sourceKinematicViscositiesCSt[1]);
-    double minimumBlendNumber = RefineryViscosityBlend
-        .calculateViscosityBlendingNumber(minimumKinematicViscosityCSt);
-    double maximumBlendNumber = RefineryViscosityBlend
-        .calculateViscosityBlendingNumber(maximumKinematicViscosityCSt);
-    intersectLinearConstraint(interval, firstBlendNumber, secondBlendNumber,
-        minimumBlendNumber, maximumBlendNumber, "kinematic viscosity");
+    double minimumBlendNumber = RefineryViscosityBlend.calculateViscosityBlendingNumber(minimumKinematicViscosityCSt);
+    double maximumBlendNumber = RefineryViscosityBlend.calculateViscosityBlendingNumber(maximumKinematicViscosityCSt);
+    intersectLinearConstraint(interval, firstBlendNumber, secondBlendNumber, minimumBlendNumber, maximumBlendNumber,
+        "kinematic viscosity");
 
     minimumFirstSourceMassFraction = interval[0];
     maximumFirstSourceMassFraction = interval[1];
@@ -104,17 +95,14 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
    * @return immutable feasible binary envelope
    * @throws IllegalArgumentException for invalid sources, bounds, or an empty feasible interval
    */
-  public static RefineryBinaryBlendEnvelope fromQualityConstraints(
-      double[] sourceSpecificGravities, double[] sourceSulfurMassFractions,
-      double[] sourceNitrogenMassFractions, double[] sourceKinematicViscositiesCSt,
-      double temperatureCelsius, double minimumApiGravity, double maximumApiGravity,
-      double maximumSulfurMassFraction, double maximumNitrogenMassFraction,
-      double minimumKinematicViscosityCSt, double maximumKinematicViscosityCSt) {
-    return new RefineryBinaryBlendEnvelope(sourceSpecificGravities,
-        sourceSulfurMassFractions, sourceNitrogenMassFractions,
-        sourceKinematicViscositiesCSt, temperatureCelsius, minimumApiGravity,
-        maximumApiGravity, maximumSulfurMassFraction, maximumNitrogenMassFraction,
-        minimumKinematicViscosityCSt, maximumKinematicViscosityCSt);
+  public static RefineryBinaryBlendEnvelope fromQualityConstraints(double[] sourceSpecificGravities,
+      double[] sourceSulfurMassFractions, double[] sourceNitrogenMassFractions, double[] sourceKinematicViscositiesCSt,
+      double temperatureCelsius, double minimumApiGravity, double maximumApiGravity, double maximumSulfurMassFraction,
+      double maximumNitrogenMassFraction, double minimumKinematicViscosityCSt, double maximumKinematicViscosityCSt) {
+    return new RefineryBinaryBlendEnvelope(sourceSpecificGravities, sourceSulfurMassFractions,
+        sourceNitrogenMassFractions, sourceKinematicViscositiesCSt, temperatureCelsius, minimumApiGravity,
+        maximumApiGravity, maximumSulfurMassFraction, maximumNitrogenMassFraction, minimumKinematicViscosityCSt,
+        maximumKinematicViscosityCSt);
   }
 
   /** @return inclusive minimum first-source mass fraction */
@@ -166,16 +154,15 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
    * Select the unique minimum-cost endpoint of the feasible interval.
    *
    * <p>
-   * Costs may use any common currency per common mass unit. Equal costs fail closed when the
-   * feasible interval contains more than one point because the optimum is then non-unique.
+   * Costs may use any common currency per common mass unit. Equal costs fail closed when the feasible interval contains
+   * more than one point because the optimum is then non-unique.
    * </p>
    *
    * @param firstSourceCostPerMass non-negative first-source unit cost
    * @param secondSourceCostPerMass non-negative second-source unit cost
    * @return immutable minimum-cost combined property plan
    */
-  public Plan planMinimumCost(double firstSourceCostPerMass,
-      double secondSourceCostPerMass) {
+  public Plan planMinimumCost(double firstSourceCostPerMass, double secondSourceCostPerMass) {
     requireNonNegativeFinite(firstSourceCostPerMass, "First-source cost");
     requireNonNegativeFinite(secondSourceCostPerMass, "Second-source cost");
     double firstMassFraction;
@@ -192,27 +179,25 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     return createPlan(firstMassFraction, firstSourceCostPerMass, secondSourceCostPerMass, true);
   }
 
-  private Plan createPlan(double firstSourceMassFraction, double firstSourceCostPerMass,
-      double secondSourceCostPerMass, boolean costAvailable) {
-    if (!Double.isFinite(firstSourceMassFraction)
-        || firstSourceMassFraction < minimumFirstSourceMassFraction
+  private Plan createPlan(double firstSourceMassFraction, double firstSourceCostPerMass, double secondSourceCostPerMass,
+      boolean costAvailable) {
+    if (!Double.isFinite(firstSourceMassFraction) || firstSourceMassFraction < minimumFirstSourceMassFraction
         || firstSourceMassFraction > maximumFirstSourceMassFraction) {
       throw new IllegalArgumentException("First-source mass fraction must lie inside the feasible interval");
     }
-    double[] masses = {firstSourceMassFraction, 1.0 - firstSourceMassFraction};
-    RefineryAssayBlend assayBlend = RefineryAssayBlend.fromBulkProperties(masses,
-        sourceSpecificGravities, sourceSulfurMassFractions, sourceNitrogenMassFractions);
-    RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(masses,
-        sourceKinematicViscositiesCSt, temperatureCelsius);
+    double[] masses = { firstSourceMassFraction, 1.0 - firstSourceMassFraction };
+    RefineryAssayBlend assayBlend = RefineryAssayBlend.fromBulkProperties(masses, sourceSpecificGravities,
+        sourceSulfurMassFractions, sourceNitrogenMassFractions);
+    RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(masses, sourceKinematicViscositiesCSt,
+        temperatureCelsius);
     double unitCost = costAvailable
-        ? firstSourceMassFraction * firstSourceCostPerMass
-            + (1.0 - firstSourceMassFraction) * secondSourceCostPerMass
+        ? firstSourceMassFraction * firstSourceCostPerMass + (1.0 - firstSourceMassFraction) * secondSourceCostPerMass
         : Double.NaN;
     return new Plan(firstSourceMassFraction, assayBlend, viscosityBlend, costAvailable, unitCost);
   }
 
-  private static void intersectLinearConstraint(double[] interval, double firstValue,
-      double secondValue, double minimumValue, double maximumValue, String propertyName) {
+  private static void intersectLinearConstraint(double[] interval, double firstValue, double secondValue,
+      double minimumValue, double maximumValue, String propertyName) {
     double slope = firstValue - secondValue;
     if (slope == 0.0) {
       if (firstValue < minimumValue || firstValue > maximumValue) {
@@ -229,14 +214,12 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     double updatedMaximum = Math.min(interval[1], propertyMaximumFraction);
     if (updatedMinimum > updatedMaximum) {
       if (updatedMinimum - updatedMaximum <= FRACTION_ROUNDOFF_TOLERANCE) {
-        double sharedBoundary = Math.max(0.0,
-            Math.min(1.0, 0.5 * (updatedMinimum + updatedMaximum)));
+        double sharedBoundary = Math.max(0.0, Math.min(1.0, 0.5 * (updatedMinimum + updatedMaximum)));
         interval[0] = sharedBoundary;
         interval[1] = sharedBoundary;
         return;
       }
-      throw new IllegalArgumentException(
-          "No feasible binary blend satisfies the " + propertyName + " constraint");
+      throw new IllegalArgumentException("No feasible binary blend satisfies the " + propertyName + " constraint");
     }
     interval[0] = Math.max(0.0, updatedMinimum);
     interval[1] = Math.min(1.0, updatedMaximum);
@@ -252,10 +235,8 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     }
   }
 
-  private static void requireFiniteOrderedBounds(double minimumValue, double maximumValue,
-      String propertyName) {
-    if (!Double.isFinite(minimumValue) || !Double.isFinite(maximumValue)
-        || maximumValue < minimumValue) {
+  private static void requireFiniteOrderedBounds(double minimumValue, double maximumValue, String propertyName) {
+    if (!Double.isFinite(minimumValue) || !Double.isFinite(maximumValue) || maximumValue < minimumValue) {
       throw new IllegalArgumentException(propertyName + " bounds must be finite and ordered");
     }
   }
@@ -281,9 +262,8 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     private final boolean unitCostAvailable;
     private final double unitCostPerMass;
 
-    private Plan(double firstSourceMassFraction, RefineryAssayBlend assayBlend,
-        RefineryViscosityBlend viscosityBlend, boolean unitCostAvailable,
-        double unitCostPerMass) {
+    private Plan(double firstSourceMassFraction, RefineryAssayBlend assayBlend, RefineryViscosityBlend viscosityBlend,
+        boolean unitCostAvailable, double unitCostPerMass) {
       this.firstSourceMassFraction = firstSourceMassFraction;
       this.assayBlend = assayBlend;
       this.viscosityBlend = viscosityBlend;
