@@ -184,7 +184,13 @@ public final class TaskSolverRunner {
         // Build step input: merge step-specific input with carry-forward data
         JsonObject stepInput = new JsonObject();
         if (carryForward.has("fluid")) {
-          stepInput.add("fluid", carryForward.get("fluid"));
+          JsonElement fluid = carryForward.get("fluid");
+          stepInput.add("fluid", fluid.deepCopy());
+          if (fluid.isJsonObject()) {
+            for (Map.Entry<String, JsonElement> entry : fluid.getAsJsonObject().entrySet()) {
+              stepInput.add(entry.getKey(), entry.getValue().deepCopy());
+            }
+          }
         }
         if (stepDef.has("input")) {
           JsonObject specific = stepDef.getAsJsonObject("input");
