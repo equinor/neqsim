@@ -112,9 +112,9 @@ public final class Comparesimulations2EngineeringDiagramReference {
       }
     }
     EngineeringDiagramLayoutRegister register = new EngineeringDiagramLayoutRegister()
-        .withSheet(sheet("separation", "1", "Three-stage separation and oil export"))
-        .withSheet(sheet("recompression", "2", "Flash-gas recompression and dew point"))
-        .withSheet(sheet("export", "3", "Fuel split and gas export compression"));
+        .withSheet(sheet("separation", "2", "Three-stage separation and oil export"))
+        .withSheet(sheet("recompression", "3", "Flash-gas recompression and dew point"))
+        .withSheet(sheet("export", "4", "Fuel split and gas export compression"));
 
     String[] separation = { "20-HA-01", "20-VA-01", "VLV-100", "MIX-101", "20-HA-02", "20-VA-02", "VLV-102", "MIX-102",
         "20-HA-03", "20-VA-03", "21-HA-01", "21-PA-01" };
