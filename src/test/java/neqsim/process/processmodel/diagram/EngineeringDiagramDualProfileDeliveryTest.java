@@ -225,7 +225,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     String[] points = rawPoints.split(" ");
     String[] coordinates = points[0].split(",", 2);
     String context = proposalId + " points=\"" + rawPoints + "\"";
-    return new double[] {parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context)};
+    return new double[] { parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context) };
   }
 
   private static double parseCoordinate(String value, String context) {
