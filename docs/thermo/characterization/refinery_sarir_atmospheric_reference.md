@@ -284,6 +284,27 @@ are not configured. In particular, the factory does not tune either side-draw fr
 published plant or HYSYS yields, and creating or solving the case is not evidence of product-yield
 or D86 agreement.
 
+## Solved-case product and balance summary
+
+After the caller runs the configured column, `SarirAtmosphericFractionationResult.evaluate(case)`
+creates an immutable Java/JPype summary of the rigorous result. The four rows remain in the
+established top-to-bottom comparison order: Total Naphtha, Kerosene, Diesel, and Residual. Each row
+reports calculated mass flow in kg/h, mass fraction of feed, mole-weighted mean normal boiling point,
+the independently published plant rate, and the absolute relative rate difference.
+
+The evaluator requires a solved non-fallback MESH-residual column. It rejects non-finite or negative
+flows, mass or energy errors above the qualified five-percent integration tolerance, feed/product
+mass-closure error above that tolerance, fewer than two material products, and material products
+whose mean normal boiling points do not increase from overhead to bottoms. Product arrays are
+defensive copies, and exact-label lookup fails closed for unsupported labels.
+
+The calculated mass fractions and mean normal boiling points depend on the caller-supplied cut
+properties and unreported column controls. They are model outputs, not source measurements, ASTM
+D86 curves, or evidence that NeqSim reproduces the plant. The plant rates remain read-only
+comparators: no calculated-versus-plant error is used as a solver control, tuning target, or pass
+threshold. Java callers use the same evaluator directly; Python callers access the factory,
+`getColumn().run(...)`, and evaluator through the existing JPype bridge.
+
 ## Scientific boundary
 
 The source-derived volumes, boiling boundaries, and product-specification rows are reproducible,
