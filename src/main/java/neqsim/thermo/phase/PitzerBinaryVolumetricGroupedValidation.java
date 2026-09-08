@@ -46,10 +46,9 @@ public final class PitzerBinaryVolumetricGroupedValidation implements Serializab
    * Validate repository-distributed provenance before fitting and holdout evaluation.
    *
    * <p>
-   * The provenance manifest must assign every observation to its declared calibration or
-   * validation role and establish repository redistribution permission, file checksum,
-   * uncertainty basis, row count, and state envelope. The original caller-supplied
-   * {@link #validate(List, List, double, double, double)} path remains available for private or
+   * The provenance manifest must assign every observation to its declared calibration or validation role and establish
+   * repository redistribution permission, file checksum, uncertainty basis, row count, and state envelope. The original
+   * caller-supplied {@link #validate(List, List, double, double, double)} path remains available for private or
    * in-memory data that are not distributed with NeqSim.
    * </p>
    *
@@ -61,32 +60,18 @@ public final class PitzerBinaryVolumetricGroupedValidation implements Serializab
    * @param debyeHuckelVolumeSlope caller-supplied Debye-Huckel volume slope in SI units
    * @return immutable calibration fit and held-out residual diagnostics
    */
-  public ValidationResult validateRepositoryDatasets(
-      PitzerBinaryVolumetricDatasetProvenance provenance,
+  public ValidationResult validateRepositoryDatasets(PitzerBinaryVolumetricDatasetProvenance provenance,
       List<PitzerBinaryVolumetricRegression.Observation> calibrationObservations,
-      List<PitzerBinaryVolumetricRegression.Observation> validationObservations,
-      double temperatureK,
-      double pressurePa,
+      List<PitzerBinaryVolumetricRegression.Observation> validationObservations, double temperatureK, double pressurePa,
       double debyeHuckelVolumeSlope) {
     if (provenance == null) {
       throw new IllegalArgumentException("Volumetric Pitzer dataset provenance must not be null");
     }
-    provenance.validateRepositoryObservations(
-        calibrationObservations,
-        PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION,
-        temperatureK,
-        pressurePa);
-    provenance.validateRepositoryObservations(
-        validationObservations,
-        PitzerBinaryVolumetricDatasetProvenance.DatasetRole.VALIDATION,
-        temperatureK,
-        pressurePa);
-    return validate(
-        calibrationObservations,
-        validationObservations,
-        temperatureK,
-        pressurePa,
-        debyeHuckelVolumeSlope);
+    provenance.validateRepositoryObservations(calibrationObservations,
+        PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION, temperatureK, pressurePa);
+    provenance.validateRepositoryObservations(validationObservations,
+        PitzerBinaryVolumetricDatasetProvenance.DatasetRole.VALIDATION, temperatureK, pressurePa);
+    return validate(calibrationObservations, validationObservations, temperatureK, pressurePa, debyeHuckelVolumeSlope);
   }
 
   /**
