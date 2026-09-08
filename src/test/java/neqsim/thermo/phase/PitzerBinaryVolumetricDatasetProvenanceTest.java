@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
@@ -125,6 +126,7 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
 
     assertEquals("a-source", provenance.getSources().get(0).getSourceGroup());
     assertEquals(checksum('b'), provenance.getSource("a-source").getSha256());
+    assertNotSame(provenance.getSources(), provenance.getSources());
     assertThrows(UnsupportedOperationException.class,
         () -> provenance.getSources()
             .add(source("new-source", PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION,
