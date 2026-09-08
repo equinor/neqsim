@@ -118,7 +118,11 @@ distinct anchors, connections between the same owner pair receive deterministic 
 declared recycle or backward connections receive a deterministic orthogonal return path. Reciprocal
 off-page connectors remain the cross-sheet boundary, while a reviewed protected route remains
 authoritative and is never replaced by automatic routing. Each fixed-port route also carries a
-deterministic vector arrowhead in SVG and PDF; legacy center routing retains its previous bytes.
+deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
+each visible off-page label combines the canonical connection designation, directional `TO` or
+`FROM`, and the controlled peer-sheet number. Stable connector and peer-sheet identities remain in
+the document model and SVG semantic attributes without being exposed as reader-facing drawing text.
+Legacy convention/routing profiles retain their previous labels and bytes.
 
 `DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
 A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
