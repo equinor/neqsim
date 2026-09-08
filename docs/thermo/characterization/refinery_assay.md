@@ -238,6 +238,60 @@ compliance, dynamic-viscosity conversion, viscosity-temperature extrapolation, n
 behavior, pressure correction, phase behavior, compatibility, multi-source or multi-property
 optimization, economics, or control.
 
+
+## Binary quality-constrained blend envelope
+
+`RefineryBinaryBlendEnvelope` combines the already-qualified bulk-property and viscosity
+screens for exactly two resolved sources. For first-source mass fraction `x`, API gravity,
+sulfur, nitrogen, and VBN are affine in `x`:
+
+$P_{blend}=xP_1+(1-x)P_2$
+
+For API gravity this follows from the ideal-additive-volume relation because
+$API=141.5/SG-131.5$. For viscosity, $P$ is VBN and the final value is obtained through the
+published Refutas inverse. The implementation intersects every inclusive property interval with
+$0\leq x\leq1$ and fails closed when the intersection is empty.
+
+```java
+RefineryBinaryBlendEnvelope envelope =
+    RefineryBinaryBlendEnvelope.fromQualityConstraints(
+        new double[] {0.847, 0.771},
+        new double[] {0.020, 0.005},
+        new double[] {0.0020, 0.0005},
+        new double[] {550.0, 375.0},
+        50.0,
+        35.56021251475798,
+        52.0278858625162,
+        0.014,
+        0.01,
+        411.7708156677767,
+        550.0);
+
+double minimumFirstFraction = envelope.getMinimumFirstSourceMassFraction();
+double maximumFirstFraction = envelope.getMaximumFirstSourceMassFraction();
+RefineryBinaryBlendEnvelope.Plan minimumCost = envelope.planMinimumCost(1.0, 2.0);
+double selectedFirstFraction = minimumCost.getFirstSourceMassFraction();
+double selectedCost = minimumCost.getUnitCostPerMass();
+double selectedApi = minimumCost.getAssayBlend().getApiGravity();
+double selectedViscosity = minimumCost.getViscosityBlend().getKinematicViscosityCSt();
+```
+
+The documented arithmetic case gives a closed first-source interval of 0.25-0.60. With source
+costs 1 and 2 per common mass unit, the unique minimum-cost endpoint is 0.60 and the blended unit
+cost is 1.40. Reversing the costs selects 0.25. Equal costs fail closed when the feasible interval
+contains more than one point; a single-point feasible interval remains valid.
+
+The specific-gravity endpoints 0.847 and 0.771 are preserved public DOE/OEDI assay values used by
+the existing bulk-blend qualification. The viscosities and quality values are arithmetic
+integration evidence, not measured blend data. The viscosity relation retains the Centeno et al.
+provenance, [DOI 10.1016/j.fuel.2011.02.028](https://doi.org/10.1016/j.fuel.2011.02.028).
+
+This bounded analytical planner is not a generic optimizer. It does not predict excess volume,
+viscosity-temperature behavior, phase or asphaltene compatibility, measured product quality,
+uncertainty, nonlinear economics, multi-source feasibility, or control actions. Every source
+property must already be resolved on the documented basis, and costs must use one common
+currency-per-mass basis.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:
