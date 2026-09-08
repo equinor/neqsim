@@ -220,7 +220,7 @@ public final class EngineeringDiagramPidRegisters {
 
   /** @return recursively immutable register evidence */
   public Map<String, Object> toMap() {
-    return data;
+    return immutableMap(data);
   }
 
   /** @return deterministic register JSON */
