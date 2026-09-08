@@ -71,23 +71,31 @@ Candidate line bindings require project review. Missing pipe sizes, classes,
 schedules and materials remain `PROJECT_INPUT_REQUIRED`; reducers remain
 `NO_GOVERNED_REDUCER_DECLARATION` rather than invented fittings.
 
-These proposal sidecars do not modify the simulation, SVG/PDF drawings or DEXPI
-exchanges. The bundle manifest records that projection boundary and fingerprints
-all three sidecars. `isComplete()` confirms bundle delivery, not an approved
-P&ID design; the completeness report retains engineering errors and review gaps.
+The opt-in registers add a compact, source-linked,
+`P&ID PROPOSAL OVERLAY - REVIEW REQUIRED` layer to the P&ID SVG/PDF sheets
+only. The layer groups proposed nozzles, valves, instruments, declared
+interfaces, and control/safeguarding signal relationships at their canonical
+source equipment. Every visible proposal marker and signal path carries a
+stable semantic identity. PFD rendering, the simulation, and both DEXPI
+exchange profiles remain unchanged. The overlay is review evidence, not a
+complete per-element project P&ID or a qualified symbol catalog.
+
+The bundle manifest records that projection boundary and fingerprints all three
+sidecars. `isComplete()` confirms bundle delivery, not an approved P&ID design;
+the completeness report retains engineering errors and review gaps.
 
 ## Requirement and evidence matrix
 
 | Requirement | Current implementation | Automated evidence | Remaining acceptance work |
 | --- | --- | --- | --- |
-| One canonical plant, distinct PFD/P&ID profiles | Dual-profile facade and shared source fingerprint | `EngineeringDiagramDualProfileDeliveryTest` | Run and qualify the full notebook model |
-| Reviewable vector and PDF sheets | Existing native SVG/PDF renderer, A3 default, fixed-port orthogonal routing | Existing renderer tests plus bundle artifact checks | Full-sheet and detail inspection of every new reference sheet |
-| Stable regeneration | Deterministic child and bundle manifests | Fresh-model repeated-delivery test | Normalized reference baselines for the full model |
-| Native PFD exchange | Native DEXPI 2.0 Process artifact | Existing delivery assessment and bundle labels | Full-model topology/loss evidence |
+| One canonical plant, distinct PFD/P&ID profiles | Dual-profile facade, shared source fingerprint, and P&ID-only proposal overlay | `EngineeringDiagramDualProfileDeliveryTest` and full-model profile assertions | Improve whole-sheet clarity without changing the canonical plant |
+| Reviewable vector and PDF sheets | Native A1 SVG/PDF sheets, process-equipment symbols, fixed-port orthogonal routing, flow arrows, and P&ID proposal markers/signals | Renderer tests, bundle artifact checks, and fresh full-sheet/detail inspection | Resolve route, line-label, proposal-tag, and signal-path congestion |
+| Stable regeneration | Deterministic child and bundle manifests plus byte-stable SVG/PDF | Fresh-model repeated-delivery test | Retain accountable reviewed visual baselines |
+| Native PFD exchange | Native DEXPI 2.0 Process artifact | Delivery assessment, bundle labels, and full-model topology assertions | External interoperability qualification |
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
 | Stream and H&MB companions | Opt-in governed stream/balance artifacts with exact boundary resolution | Valid, missing-case, unknown-boundary, and repeated-delivery tests | Publish and qualify full-model operating values and boundary assignments |
-| Piping and instrumentation content | Opt-in source-linked proposal registers and completeness sidecars | Register fidelity, immutability, signal classification and full-model regeneration tests | Supply governed engineering inputs, review candidate bindings, and project approved proposals into drawings/exchanges |
-| Manual layout and routing | Existing evidence-bearing layout register | Existing layout and renderer tests | Declare full-model sheets, pins, protected routes, and stale-reference regeneration |
+| Piping and instrumentation content | Opt-in source-linked proposal registers, sidecars, and compact P&ID-only SVG/PDF overlay | Register fidelity, immutability, signal classification, visible semantic-ID, profile-difference, and regeneration tests | Supply governed inputs; replace grouped teaching markers with legible reviewed per-element drawing and exchange projections |
+| Manual layout and routing | Three persistent proposed A1 sheets, stable pins, fixed ports, orthogonal routes, and reciprocal continuations | Layout, renderer, full-model topology, and repeated-delivery tests | Accountable route refinement and reviewed visual baselines |
 | Standards alignment | Explicit scope and no-conformance boundary | Manifest flags and documentation checks | Licensed clause mapping and accountable review |
 
 ## Engineering and qualification boundary
@@ -133,8 +141,10 @@ layout evidence, not checked project layout or engineering approval.
 The slow regression test executes two fresh plants and compares manifest,
 source-topology, SVG, and PDF evidence byte-for-byte. It also checks the
 operating stream/H&MB companions, all three P&ID proposal/register sidecars,
-and the separate native DEXPI 2.0 Plant and Proteus 4.1 P&ID proposal exchanges. Passing automation establishes
-deterministic generation only; full-sheet/detail human inspection, project
-metadata, completed and reviewed line/nozzle/valve/reducer/instrument/control
-registers, their drawing projection, and accountable discipline review remain mandatory before visual
-acceptance.
+and the separate native DEXPI 2.0 Plant and Proteus 4.1 P&ID proposal exchanges.
+Passing automation establishes deterministic generation only. Fresh
+full-sheet/detail inspection must still reject unreadable or congested routes,
+labels, markers, and signals. Project metadata, completed and reviewed
+line/nozzle/valve/reducer/instrument/control registers, legible per-element
+drawing and exchange projection, and accountable discipline review remain
+mandatory before visual acceptance.
