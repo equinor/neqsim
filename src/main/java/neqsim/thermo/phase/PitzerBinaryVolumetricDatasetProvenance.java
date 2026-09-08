@@ -12,10 +12,10 @@ import java.util.TreeMap;
  * Immutable provenance manifest for repository-distributed binary volumetric Pitzer observations.
  *
  * <p>
- * The manifest binds every declared source lineage to its calibration or validation role, citation,
- * license, redistribution decision, file checksum, uncertainty basis, row count, and state envelope.
- * It checks metadata-to-observation consistency before repository-distributed observations are fitted
- * or evaluated. It does not prove experimental independence or calculate a checksum from source bytes.
+ * The manifest binds every declared source lineage to its calibration or validation role, citation, license,
+ * redistribution decision, file checksum, uncertainty basis, row count, and state envelope. It checks
+ * metadata-to-observation consistency before repository-distributed observations are fitted or evaluated. It does not
+ * prove experimental independence or calculate a checksum from source bytes.
  * </p>
  */
 public final class PitzerBinaryVolumetricDatasetProvenance implements Serializable {
@@ -68,9 +68,9 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
    * Validate repository-distributed observations against one declared role.
    *
    * <p>
-   * Every observation must have a declared source, permitted redistribution, the declared role and
-   * molality range. The common temperature and pressure must lie within each used source envelope,
-   * and the number of observations for each source must exactly match its manifest record.
+   * Every observation must have a declared source, permitted redistribution, the declared role and molality range. The
+   * common temperature and pressure must lie within each used source envelope, and the number of observations for each
+   * source must exactly match its manifest record.
    * </p>
    *
    * @param observations observations to validate
@@ -78,11 +78,8 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
    * @param temperatureK common temperature in K
    * @param pressurePa common absolute pressure in Pa
    */
-  public void validateRepositoryObservations(
-      List<PitzerBinaryVolumetricRegression.Observation> observations,
-      DatasetRole role,
-      double temperatureK,
-      double pressurePa) {
+  public void validateRepositoryObservations(List<PitzerBinaryVolumetricRegression.Observation> observations,
+      DatasetRole role, double temperatureK, double pressurePa) {
     if (observations == null || observations.isEmpty()) {
       throw new IllegalArgumentException("Repository volumetric Pitzer observations must not be null or empty");
     }
@@ -99,16 +96,13 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
       }
       SourceRecord source = sourcesByGroup.get(observation.getSourceGroup());
       if (source == null) {
-        throw new IllegalArgumentException(
-            "Observation has no provenance record: " + observation.getSourceGroup());
+        throw new IllegalArgumentException("Observation has no provenance record: " + observation.getSourceGroup());
       }
       if (source.getRole() != role) {
-        throw new IllegalArgumentException(
-            "Observation source role mismatch for " + observation.getSourceGroup());
+        throw new IllegalArgumentException("Observation source role mismatch for " + observation.getSourceGroup());
       }
       source.requireRepositoryRedistributable();
-      if (!source.containsState(
-          observation.getMolality(), temperatureK, pressurePa)) {
+      if (!source.containsState(observation.getMolality(), temperatureK, pressurePa)) {
         throw new IllegalArgumentException(
             "Observation is outside the declared source envelope: " + observation.getSourceGroup());
       }
@@ -121,13 +115,8 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
         Integer actualCount = observedCounts.get(source.getSourceGroup());
         int count = actualCount == null ? 0 : actualCount;
         if (count != source.getObservationCount()) {
-          throw new IllegalArgumentException(
-              "Observation count mismatch for "
-                  + source.getSourceGroup()
-                  + ": expected "
-                  + source.getObservationCount()
-                  + " but found "
-                  + count);
+          throw new IllegalArgumentException("Observation count mismatch for " + source.getSourceGroup() + ": expected "
+              + source.getObservationCount() + " but found " + count);
         }
       }
     }
@@ -169,10 +158,7 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
   }
 
   private static void requireRange(double minimum, double maximum, double lowerBound, String name) {
-    if (!Double.isFinite(minimum)
-        || !Double.isFinite(maximum)
-        || minimum < lowerBound
-        || maximum < minimum) {
+    if (!Double.isFinite(minimum) || !Double.isFinite(maximum) || minimum < lowerBound || maximum < minimum) {
       throw new IllegalArgumentException(name + " range is invalid");
     }
   }
@@ -218,23 +204,10 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
      * @param minimumPressurePa minimum absolute pressure in Pa
      * @param maximumPressurePa maximum absolute pressure in Pa
      */
-    public SourceRecord(
-        String sourceGroup,
-        DatasetRole role,
-        String citation,
-        String sourceUrl,
-        String licenseId,
-        String licenseUrl,
-        RedistributionStatus redistributionStatus,
-        String sha256,
-        String uncertaintyBasis,
-        int observationCount,
-        double minimumMolality,
-        double maximumMolality,
-        double minimumTemperatureK,
-        double maximumTemperatureK,
-        double minimumPressurePa,
-        double maximumPressurePa) {
+    public SourceRecord(String sourceGroup, DatasetRole role, String citation, String sourceUrl, String licenseId,
+        String licenseUrl, RedistributionStatus redistributionStatus, String sha256, String uncertaintyBasis,
+        int observationCount, double minimumMolality, double maximumMolality, double minimumTemperatureK,
+        double maximumTemperatureK, double minimumPressurePa, double maximumPressurePa) {
       this.sourceGroup = requireText(sourceGroup, "Source group");
       if (role == null) {
         throw new IllegalArgumentException("Dataset role must not be null");
@@ -269,24 +242,18 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
       this.maximumPressurePa = maximumPressurePa;
 
       if (redistributionStatus == RedistributionStatus.PERMITTED && this.licenseUrl.isEmpty()) {
-        throw new IllegalArgumentException(
-            "Permitted redistribution requires a non-empty license URL");
+        throw new IllegalArgumentException("Permitted redistribution requires a non-empty license URL");
       }
     }
 
     private boolean containsState(double molality, double temperatureK, double pressurePa) {
-      return molality >= minimumMolality
-          && molality <= maximumMolality
-          && temperatureK >= minimumTemperatureK
-          && temperatureK <= maximumTemperatureK
-          && pressurePa >= minimumPressurePa
-          && pressurePa <= maximumPressurePa;
+      return molality >= minimumMolality && molality <= maximumMolality && temperatureK >= minimumTemperatureK
+          && temperatureK <= maximumTemperatureK && pressurePa >= minimumPressurePa && pressurePa <= maximumPressurePa;
     }
 
     private void requireRepositoryRedistributable() {
       if (redistributionStatus != RedistributionStatus.PERMITTED) {
-        throw new IllegalArgumentException(
-            "Repository redistribution is not permitted for " + sourceGroup);
+        throw new IllegalArgumentException("Repository redistribution is not permitted for " + sourceGroup);
       }
     }
 
