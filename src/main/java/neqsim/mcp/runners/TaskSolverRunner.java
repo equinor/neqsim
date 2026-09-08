@@ -17,9 +17,9 @@ import com.google.gson.JsonParser;
  * Two capabilities in one class:
  * </p>
  * <ul>
- * <li><b>solve_task</b> — Takes a high-level engineering task description and structured parameters, classifies the
- * task, builds a multi-step execution plan (sequence of existing runners), executes each step passing results between
- * them, validates the combined output, and returns a structured engineering report.</li>
+ * <li><b>solve_task</b> — Takes a high-level engineering task description and structured parameters, classifies
+ * supported keywords into a fixed plan of existing runners, executes each step with shared caller input, optionally
+ * validates the collected output, and returns a structured engineering report.</li>
  * <li><b>compose_workflow</b> — Chains multiple domain runners in sequence (e.g., Reservoir → Process → Pipeline →
  * Economics) with automatic data flow between stages.</li>
  * </ul>
@@ -65,13 +65,23 @@ public final class TaskSolverRunner {
 
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String task = input.has("task") ? input.get("task").getAsString() : "";
+      if (!input.has("task") || input.get("task").isJsonNull()
+          || !input.get("task").isJsonPrimitive()
+          || !input.get("task").getAsJsonPrimitive().isString()
+          || input.get("task").getAsString().trim().isEmpty()) {
+        return errorJson("MISSING_TASK", "Provide a non-blank string 'task' description");
+      }
+      String task = input.get("task").getAsString().trim();
 
-      // Step 1: Classify the task
-      String taskType = classifyTask(task, input);
+      // Step 1: Classify only the keyword families backed by explicit fixed plans.
+      String taskType = classifyTask(task);
+      if (taskType == null) {
+        return errorJson("UNSUPPORTED_TASK",
+            "Task description does not match a supported fixed-plan keyword family");
+      }
 
       // Step 2: Build execution plan
-      List<PlanStep> plan = buildPlan(taskType, input);
+      List<PlanStep> plan = buildPlan(taskType);
 
       // Step 3: Execute each step
       List<StepResult> stepResults = new ArrayList<StepResult>();
@@ -101,7 +111,7 @@ public final class TaskSolverRunner {
           } else {
             carryForward.add(step.name + "_result", parsed);
           }
-          result.success = !parsed.has("errors");
+          result.success = isSuccessfulResponse(parsed);
         } catch (Exception e) {
           result.success = false;
           result.errorMessage = e.getMessage();
@@ -250,10 +260,9 @@ public final class TaskSolverRunner {
    * Classifies a task description into a category.
    *
    * @param task the task description
-   * @param input the full input JSON
-   * @return the task category
+   * @return the task category, or {@code null} when no fixed plan is supported
    */
-  private static String classifyTask(String task, JsonObject input) {
+  private static String classifyTask(String task) {
     String lower = task.toLowerCase();
 
     if (lower.contains("compress") || lower.contains("compressor")) {
@@ -274,15 +283,6 @@ public final class TaskSolverRunner {
     if (lower.contains("hydrate") || lower.contains("wax") || lower.contains("flow assurance")) {
       return "flow_assurance";
     }
-    if (lower.contains("co2") || lower.contains("carbon capture") || lower.contains("ccs")) {
-      return "ccs";
-    }
-    if (lower.contains("hydrogen") || lower.contains("h2")) {
-      return "hydrogen";
-    }
-    if (lower.contains("distill") || lower.contains("column") || lower.contains("tower")) {
-      return "distillation";
-    }
     if (lower.contains("reservoir") || lower.contains("depletion")) {
       return "reservoir";
     }
@@ -292,11 +292,7 @@ public final class TaskSolverRunner {
     if (lower.contains("dynamic") || lower.contains("transient") || lower.contains("blowdown")) {
       return "dynamic";
     }
-    if (lower.contains("heat exchang") || lower.contains("cooler") || lower.contains("heater")) {
-      return "heat_exchange";
-    }
-
-    return "general_process";
+    return null;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -307,10 +303,9 @@ public final class TaskSolverRunner {
    * Builds an execution plan based on task type.
    *
    * @param taskType the classified task type
-   * @param input the full input JSON
    * @return list of plan steps
    */
-  private static List<PlanStep> buildPlan(String taskType, JsonObject input) {
+  private static List<PlanStep> buildPlan(String taskType) {
     List<PlanStep> plan = new ArrayList<PlanStep>();
 
     switch (taskType) {
@@ -384,11 +379,21 @@ public final class TaskSolverRunner {
   private static String buildStepInput(PlanStep step, JsonObject originalInput, JsonObject carryForward) {
     JsonObject stepInput = new JsonObject();
 
-    // Always include fluid
+    // Preserve the shared fluid and expose its canonical model/components to
+    // runners whose native JSON contract uses top-level fields.
+    JsonElement fluid = null;
     if (originalInput.has("fluid")) {
-      stepInput.add("fluid", originalInput.get("fluid"));
+      fluid = originalInput.get("fluid");
     } else if (carryForward.has("fluid")) {
-      stepInput.add("fluid", carryForward.get("fluid"));
+      fluid = carryForward.get("fluid");
+    }
+    if (fluid != null) {
+      stepInput.add("fluid", fluid.deepCopy());
+      if (fluid.isJsonObject()) {
+        for (Map.Entry<String, JsonElement> entry : fluid.getAsJsonObject().entrySet()) {
+          stepInput.add(entry.getKey(), entry.getValue().deepCopy());
+        }
+      }
     }
 
     // Include parameters
@@ -460,6 +465,27 @@ public final class TaskSolverRunner {
     }
   }
 
+  /**
+   * Determines whether a runner response represents a successful step.
+   *
+   * @param response parsed runner response
+   * @return true only when no explicit error, blocked status, or false success is present
+   */
+  private static boolean isSuccessfulResponse(JsonObject response) {
+    if (response.has("errors") && response.get("errors").isJsonArray()
+        && response.getAsJsonArray("errors").size() > 0) {
+      return false;
+    }
+    if (response.has("status") && response.get("status").isJsonPrimitive()) {
+      String status = response.get("status").getAsString();
+      if ("error".equalsIgnoreCase(status) || "blocked".equalsIgnoreCase(status)) {
+        return false;
+      }
+    }
+    return !response.has("success") || !response.get("success").isJsonPrimitive()
+        || response.get("success").getAsBoolean();
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // Report building
   // ═══════════════════════════════════════════════════════════════════════════
@@ -483,6 +509,8 @@ public final class TaskSolverRunner {
     report.addProperty("task", task);
     report.addProperty("taskType", taskType);
     report.addProperty("totalTimeMs", totalTimeMs);
+    report.addProperty("totalSteps", plan.size());
+    report.addProperty("completedSteps", results.size());
 
     // Overall success
     boolean allSuccess = true;
@@ -492,7 +520,37 @@ public final class TaskSolverRunner {
         break;
       }
     }
+    report.addProperty("status", allSuccess ? "success" : "error");
     report.addProperty("success", allSuccess);
+    if (!allSuccess) {
+      JsonArray errors = new JsonArray();
+      JsonObject error = new JsonObject();
+      error.addProperty("code", "TASK_STEP_FAILED");
+      error.addProperty("message", "A required task step failed");
+      for (StepResult result : results) {
+        if (!result.success) {
+          error.addProperty("step", result.stepName);
+          try {
+            JsonObject output = JsonParser.parseString(result.output).getAsJsonObject();
+            if (output.has("errors") && output.get("errors").isJsonArray()
+                && output.getAsJsonArray("errors").size() > 0) {
+              JsonObject nested = output.getAsJsonArray("errors").get(0).getAsJsonObject();
+              if (nested.has("code")) {
+                error.addProperty("causeCode", nested.get("code").getAsString());
+              }
+              if (nested.has("message")) {
+                error.addProperty("causeMessage", nested.get("message").getAsString());
+              }
+            }
+          } catch (Exception ignored) {
+            // Keep the stable task-level diagnostic when a runner returned non-JSON.
+          }
+          break;
+        }
+      }
+      errors.add(error);
+      report.add("errors", errors);
+    }
 
     // Plan
     JsonArray planArray = new JsonArray();

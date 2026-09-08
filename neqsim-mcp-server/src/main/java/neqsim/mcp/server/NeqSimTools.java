@@ -1458,23 +1458,24 @@ public class NeqSimTools {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /**
-   * Solve a high-level engineering task by automatic planning and execution.
+   * Route a supported engineering task to a bounded fixed plan of existing runners.
    *
    * @param taskJson JSON with task description and parameters
-   * @return JSON with execution plan, step results, validation, and report
+   * @return JSON with keyword classification, fixed plan, step results, validation, and report
    */
-  @Tool(description = "[EXPERIMENTAL — Tier 3] Solve a complete engineering task. "
-      + "Takes a high-level description "
-      + "(e.g., 'Design a 3-stage compression system from 5 to 150 bara'), automatically "
-      + "classifies the task, builds a multi-step execution plan, executes each step, "
-      + "chains results between steps, runs engineering validation against industry rules, "
-      + "and returns a structured report. Limited validation — results require independent "
-      + "review. Not available in STUDY_TEAM, DIGITAL_TWIN, or ENTERPRISE modes.")
+  @Tool(description = "[EXPERIMENTAL — Tier 3] Route a supported engineering task through "
+      + "a deterministic fixed plan of existing NeqSim runners. Keyword families cover "
+      + "compression, separation, dehydration, pipeline, PVT, flow assurance, reservoir, "
+      + "economics, and dynamic studies. The caller supplies the fluid and runner parameters; "
+      + "unsupported task descriptions fail closed. Results are collected for review, not "
+      + "semantically transformed between steps. Limited validation — results require "
+      + "independent engineering review. Not available in STUDY_TEAM, DIGITAL_TWIN, "
+      + "or ENTERPRISE modes.")
   public String solveTask(
-      @ToolArg(description = "JSON with: 'task' (natural language description), "
-          + "'fluid' (composition), 'parameters' (task-specific values like outletPressure, "
-          + "stages, intercoolerTemp), optional 'process' (equipment definitions), "
-          + "optional 'validate' (true/false, default true).") String taskJson) {
+      @ToolArg(description = "JSON with: required non-blank 'task' (keyword-based description), "
+          + "'fluid' (canonical model and composition), 'parameters' (runner-specific values), "
+          + "optional 'process' (equipment definitions), and optional 'validate' "
+          + "(true/false, default true).") String taskJson) {
     String policyBlocked = enforceToolAccess("solveTask");
     if (policyBlocked != null) {
       return policyBlocked;
