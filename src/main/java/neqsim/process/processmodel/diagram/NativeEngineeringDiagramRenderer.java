@@ -427,8 +427,12 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     addRouteQualityDiagnostics(page, positions, diagnostics);
+    Map<String, String> sheetNumberById = new TreeMap<String, String>();
+    for (Sheet controlledSheet : drawing.getSheets()) {
+      sheetNumberById.put(controlledSheet.getId(), controlledSheet.getNumber());
+    }
     for (OffPageConnector connector : sheet.getOffPageConnectors()) {
-      addOffPageConnector(page, connector, contentRight, contentBottom);
+      addOffPageConnector(page, connector, objects, sheetNumberById, contentRight, contentBottom);
     }
     for (String id : ids) {
       SemanticObject object = objects.get(id);
@@ -764,17 +768,34 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 
-  private void addOffPageConnector(Page page, OffPageConnector connector, double contentRight, double contentBottom) {
+  private void addOffPageConnector(Page page, OffPageConnector connector, Map<String, SemanticObject> objects,
+      Map<String, String> sheetNumberById, double contentRight, double contentBottom) {
     Point point = connectorPoint(connector, contentRight, contentBottom);
     double direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 1.0 : -1.0;
     List<Point> triangle = Arrays.asList(new Point(point.x, point.y),
         new Point(point.x - direction * 5.0, point.y - 3.0), new Point(point.x - direction * 5.0, point.y + 3.0),
         new Point(point.x, point.y));
     page.commands.add(Command.polyline(triangle, "#111827", 0.7, "", connector.getId(), false));
-    String label = "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
+    String label = offPageLabel(connector, objects, sheetNumberById);
     double textX = point.x - direction * 7.0;
     page.commands.add(Command.text(textX, point.y - 4.0, 2.4, label, "#111827", connector.getId(),
         direction > 0.0 ? "end" : "start"));
+  }
+
+  private String offPageLabel(OffPageConnector connector, Map<String, SemanticObject> objects,
+      Map<String, String> sheetNumberById) {
+    SymbolConvention lineConvention = conventionRegister.getSymbolConvention(EngineeringNode.Kind.LINE);
+    if (lineConvention == null || lineConvention.getShape() != SymbolShape.LINE_TERMINAL) {
+      return "TO/FROM " + connector.getZoneReference() + " [" + connector.getPeerSheetId() + "]";
+    }
+    SemanticObject connection = objects.get(connector.getSemanticConnectionId());
+    String connectionLabel = connection == null ? connector.getZoneReference() : displayLabel(connection);
+    String movement = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? "TO" : "FROM";
+    String peerSheetNumber = sheetNumberById.get(connector.getPeerSheetId());
+    if (peerSheetNumber == null || peerSheetNumber.trim().isEmpty()) {
+      peerSheetNumber = connector.getPeerSheetId();
+    }
+    return connectionLabel + " " + movement + " SHEET " + peerSheetNumber;
   }
 
   private void addObject(Page page, SemanticObject object, Point position) {
