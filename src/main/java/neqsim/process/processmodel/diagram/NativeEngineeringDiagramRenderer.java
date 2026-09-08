@@ -301,8 +301,8 @@ public final class NativeEngineeringDiagramRenderer {
    *
    * <p>
    * The overlay is a compact graphical projection of the immutable engineering registers. It does not modify the
-   * canonical process topology, qualify project symbols, or approve any proposal for design, safety, or construction.
-   * A null register preserves the existing PFD and legacy renderer bytes.
+   * canonical process topology, qualify project symbols, or approve any proposal for design, safety, or construction. A
+   * null register preserves the existing PFD and legacy renderer bytes.
    * </p>
    *
    * @param documentSet immutable controlled engineering-diagram document set
@@ -996,8 +996,8 @@ public final class NativeEngineeringDiagramRenderer {
     if (pidRegisters == null) {
       return;
     }
-    page.commands.add(Command.text(page.width - 12.0, 22.0, 2.2, "P&ID PROPOSAL OVERLAY - REVIEW REQUIRED",
-        "#1d4ed8", "pid-proposal:overlay-status", "end"));
+    page.commands.add(Command.text(page.width - 12.0, 22.0, 2.2, "P&ID PROPOSAL OVERLAY - REVIEW REQUIRED", "#1d4ed8",
+        "pid-proposal:overlay-status", "end"));
     Map<String, Object> registerData = pidRegisters.toMap();
     Map<String, List<Map<String, Object>>> rowsByEquipment = new TreeMap<String, List<Map<String, Object>>>();
     for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
@@ -1042,14 +1042,14 @@ public final class NativeEngineeringDiagramRenderer {
       }
       List<Point> points;
       if (distance(source, target) < 0.001) {
-        points = Arrays.asList(source, new Point(source.x + 5.0, source.y - 5.0),
-            new Point(source.x + 10.0, source.y), source);
+        points = Arrays.asList(source, new Point(source.x + 5.0, source.y - 5.0), new Point(source.x + 10.0, source.y),
+            source);
       } else {
         double middleX = (source.x + target.x) / 2.0;
         points = Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target);
       }
-      page.commands.add(Command.polyline(points, "#2563eb", 0.5, "2 2",
-          "pid-signal:" + sourceId + ":" + targetId, false));
+      page.commands
+          .add(Command.polyline(points, "#2563eb", 0.5, "2 2", "pid-signal:" + sourceId + ":" + targetId, false));
     }
   }
 
@@ -1074,28 +1074,29 @@ public final class NativeEngineeringDiagramRenderer {
     String count = rows.size() == 1 ? "" : " +" + (rows.size() - 1);
     String semanticId = "pid-proposal:" + firstId;
     if ("instruments".equals(register)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x, marker.y - 3.0),
-          new Point(marker.x + 3.0, marker.y), new Point(marker.x, marker.y + 3.0),
-          new Point(marker.x - 3.0, marker.y)), "#2563eb", "#ffffff", 0.6, semanticId));
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(marker.x, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
+              new Point(marker.x, marker.y + 3.0), new Point(marker.x - 3.0, marker.y)),
+          "#2563eb", "#ffffff", 0.6, semanticId));
       page.commands.add(Command.line(marker.x, marker.y + 3.0, equipment.x, equipment.y - OBJECT_HEIGHT / 2.0,
           "#2563eb", 0.4, semanticId + ":connection", ""));
     } else if ("valves".equals(register)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x - 3.5, marker.y - 2.5),
-          new Point(marker.x, marker.y), new Point(marker.x - 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6,
-          semanticId));
-      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5),
-          new Point(marker.x, marker.y), new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6,
-          semanticId + ":half"));
+      page.commands
+          .add(Command.polygon(Arrays.asList(new Point(marker.x - 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
+              new Point(marker.x - 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId));
+      page.commands
+          .add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5), new Point(marker.x, marker.y),
+              new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6, semanticId + ":half"));
     } else if ("interfaces".equals(register)) {
-      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0),
-          new Point(marker.x + 3.0, marker.y), new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff",
-          0.6, semanticId));
+      page.commands.add(
+          Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0), new Point(marker.x + 3.0, marker.y),
+              new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff", 0.6, semanticId));
     } else {
-      page.commands.add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5,
-          semanticId, ""));
+      page.commands
+          .add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5, semanticId, ""));
     }
-    page.commands.add(Command.text(marker.x, marker.y - 4.5, 1.5, firstTag + count, "#111827",
-        semanticId + ":tag", "middle"));
+    page.commands
+        .add(Command.text(marker.x, marker.y - 4.5, 1.5, firstTag + count, "#111827", semanticId + ":tag", "middle"));
   }
 
   private static List<Map<String, Object>> proposalRows(Map<String, Object> data, String register) {
