@@ -134,13 +134,15 @@ layout refinement is required.
 
 The five-argument `NativeEngineeringDiagramRenderer` constructor accepts an optional
 `EngineeringDiagramPidRegisters` snapshot. A non-null snapshot must have the same canonical source
-graph fingerprint as the rendered document set. The renderer then adds a compact,
+graph fingerprint as the rendered document set. The renderer then adds a deterministic,
 review-required overlay to SVG and PDF with stable semantic identities for proposed nozzles, valves,
 instruments, declared isolation/drain/vent/relief interfaces, and control or safeguarding signal
 relationships.
 
-The overlay groups proposal categories at their source equipment to keep the projection
-deterministic. It is not a substitute for individually legible, project-approved symbols and tags.
+Each register row receives its own symbol and full tag at its source equipment. Category-specific
+callout rails use stable spacing, and control/safeguarding relationships use deterministic lanes per
+source/target equipment pair instead of sharing one overlapping center path. The overlay is still not
+a substitute for project-approved symbols, routing, data, or discipline checking.
 Supplying `null` preserves existing PFD and legacy renderer bytes. The overlay does not alter the
 document topology or either DEXPI exchange profile, and it does not infer pipe size, class, schedule,
 material, reducer duty, completed control logic, or safety design.
