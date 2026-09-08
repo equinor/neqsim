@@ -727,6 +727,28 @@ validation result is admissible only when those lineages are genuinely
 independent, all rows and uncertainties have qualified provenance, and the
 acceptance limits were fixed before the holdout was evaluated.
 
+### Repository dataset provenance
+
+`PitzerBinaryVolumetricDatasetProvenance` records a machine-auditable manifest
+for observations distributed with NeqSim. Each source-lineage record fixes its
+calibration or validation role, full citation and stable URL, license and
+redistribution decision, SHA-256 source-file checksum, uncertainty basis, exact
+row count, and molality, temperature and pressure envelope.
+
+`validateRepositoryDatasets(...)` checks both observation lists against that
+manifest before fitting. It fails closed for an undeclared lineage, role or row
+count mismatch, a state outside the declared envelope, or any source whose
+redistribution status is restricted or unknown. The original
+`validate(...)` method remains available for caller-owned private or in-memory
+data that are not bundled with NeqSim.
+
+The manifest verifies declared metadata against the supplied observations. It
+does not hash source bytes, prove that a license interpretation is correct, or
+prove experimental independence. Repository maintainers must separately
+compare the recorded checksum with the distributed file, audit the permission
+decision, map source groups to real laboratories and apparatus, and pre-register
+acceptance limits before evaluating a holdout.
+
 ### Qualification boundary
 
 - The caller owns coefficient provenance and must keep calibration and
@@ -1006,6 +1028,8 @@ component.setCostaldCharacteristicVolume(newValue);  // cm³/mol
 | `PitzerBinaryVolumetricRegression.fit(...)` | Fit caller-supplied one-state observations with SVD rank checks |
 | `FitResult.getGroupStatistics()` | Inspect residuals by laboratory or source lineage |
 | `PitzerBinaryVolumetricGroupedValidation.validate(...)` | Fit one lineage set and evaluate a disjoint untouched holdout |
+| `PitzerBinaryVolumetricDatasetProvenance.validateRepositoryObservations(...)` | Check role, license, checksum manifest, row count and state envelope |
+| `PitzerBinaryVolumetricGroupedValidation.validateRepositoryDatasets(...)` | Enforce repository provenance before grouped fitting and holdout evaluation |
 
 These methods do not install a parameter dataset or alter a phase. A caller
 must explicitly supply a provenance-qualified `StateParameters` instance.
