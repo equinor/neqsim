@@ -37,8 +37,8 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
     assertTrue(first.getPid().getRendering().getSvgBySheetId().size() >= 3);
     String pfdSvg = first.getPfd().getRendering().getSvgBySheetId().toString();
     String pidSvg = first.getPid().getRendering().getSvgBySheetId().toString();
-    assertFalse(pfdSvg.contains("P&ID PROPOSAL OVERLAY"));
-    assertTrue(pidSvg.contains("P&ID PROPOSAL OVERLAY"));
+    assertFalse(pfdSvg.contains("P&amp;ID PROPOSAL OVERLAY"));
+    assertTrue(pidSvg.contains("P&amp;ID PROPOSAL OVERLAY"));
     assertTrue(pidSvg.contains("data-semantic-id=\"pid-proposal:"));
     assertTrue(pidSvg.contains("data-semantic-id=\"pid-signal:"));
     assertNotEquals(pfdSvg, pidSvg);
