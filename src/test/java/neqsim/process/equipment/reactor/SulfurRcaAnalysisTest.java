@@ -28,11 +28,8 @@ class SulfurRcaAnalysisTest {
     process.run();
 
     SulfurRcaAnalysis analysis = new SulfurRcaAnalysis(process);
-    analysis.setSurfaceState("scaled pipe", new SulfurRcaAnalysis.SurfaceState()
-        .setWettedFraction(0.8)
-        .setIronSulfideCoverageFraction(0.9)
-        .setReactiveIronOxideFraction(0.2)
-        .setWallTemperatureC(35.0));
+    analysis.setSurfaceState("scaled pipe", new SulfurRcaAnalysis.SurfaceState().setWettedFraction(0.8)
+        .setIronSulfideCoverageFraction(0.9).setReactiveIronOxideFraction(0.2).setWallTemperatureC(35.0));
     analysis.run();
 
     SulfurRcaAnalysis.LocationResult highest = analysis.getHighestRiskLocation();
@@ -56,8 +53,7 @@ class SulfurRcaAnalysisTest {
     process.run();
 
     SulfurRcaAnalysis analysis = new SulfurRcaAnalysis(process);
-    analysis.setSurfaceState("sour stream", new SulfurRcaAnalysis.SurfaceState()
-        .setIronSulfideCoverageFraction(1.0));
+    analysis.setSurfaceState("sour stream", new SulfurRcaAnalysis.SurfaceState().setIronSulfideCoverageFraction(1.0));
     analysis.run();
 
     SulfurRcaAnalysis.LocationResult result = analysis.getHighestRiskLocation();
