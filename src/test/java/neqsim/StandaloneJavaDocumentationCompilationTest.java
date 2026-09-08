@@ -36,7 +36,8 @@ public class StandaloneJavaDocumentationCompilationTest {
   private static final int EXPECTED_EXAMPLE_COUNT = 14;
   private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("EclipseE300ExportImportExample.java",
       "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java", "MultiScenarioVFPExample.java",
-      "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "TwoFluidPipeExample.java");
+      "MultiphaseModelPressureDropComparison.java", "OffshoreEmissionReportingExample.java",
+      "RealTimeIntegrationExample.java", "TwoFluidPipeExample.java");
 
   @TempDir
   Path compilationOutput;
