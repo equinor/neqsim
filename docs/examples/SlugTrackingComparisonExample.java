@@ -8,6 +8,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Comparison of Slug Tracking between Two-Fluid Model and Drift-Flux Model.
@@ -34,6 +36,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class SlugTrackingComparisonExample {
+  private static final Logger logger = LogManager.getLogger(SlugTrackingComparisonExample.class);
+
 
   /**
    * Main entry point.
@@ -41,10 +45,10 @@ public class SlugTrackingComparisonExample {
    * @param args Command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("=============================================================");
-    System.out.println("  Slug Tracking Comparison: Two-Fluid vs Drift-Flux");
-    System.out.println("  20 km pipeline with terrain-induced slugging");
-    System.out.println("=============================================================\n");
+    logger.info("=============================================================");
+    logger.info("  Slug Tracking Comparison: Two-Fluid vs Drift-Flux");
+    logger.info("  20 km pipeline with terrain-induced slugging");
+    logger.info("=============================================================\n");
 
     runSlugTrackingComparison();
   }
@@ -115,14 +119,14 @@ public class SlugTrackingComparisonExample {
 
     double[] terrain = createTerrainProfile(sections, length);
 
-    System.out.println("Configuration:");
-    System.out.printf("  Length:          %.0f m (%.1f km)%n", length, length / 1000);
-    System.out.printf("  Diameter:        %.0f mm%n", diameter * 1000);
-    System.out.printf("  Sections:        %d%n", sections);
-    System.out.printf("  Inlet pressure:  %.0f bara%n", pressure);
-    System.out.printf("  Flow rate:       %.1f kg/s%n", flowRate);
-    System.out.printf("  Simulation time: %.0f minutes%n", simulationTime / 60);
-    System.out.println();
+    logger.info("Configuration:");
+    logger.info("{}", String.format("  Length:          %.0f m (%.1f km)", length, length / 1000));
+    logger.info("{}", String.format("  Diameter:        %.0f mm", diameter * 1000));
+    logger.info("{}", String.format("  Sections:        %d", sections));
+    logger.info("{}", String.format("  Inlet pressure:  %.0f bara", pressure));
+    logger.info("{}", String.format("  Flow rate:       %.1f kg/s", flowRate));
+    logger.info("{}", String.format("  Simulation time: %.0f minutes", simulationTime / 60));
+    logger.info("");
 
     // Print terrain summary
     double minElev = Double.MAX_VALUE, maxElev = Double.MIN_VALUE;
@@ -135,15 +139,15 @@ public class SlugTrackingComparisonExample {
         numValleys++;
       }
     }
-    System.out.printf("Terrain: %.1f to %.1f m elevation, %d valleys detected%n%n", minElev,
-        maxElev, numValleys);
+    logger.info("{}", String.format("Terrain: %.1f to %.1f m elevation, %d valleys detected\n", minElev,
+        maxElev, numValleys));
 
     // =====================
     // Run Two-Fluid Model
     // =====================
-    System.out.println("-------------------------------------------------------------");
-    System.out.println("  Running Two-Fluid Model (7-equation)...");
-    System.out.println("-------------------------------------------------------------");
+    logger.info("-------------------------------------------------------------");
+    logger.info("  Running Two-Fluid Model (7-equation)...");
+    logger.info("-------------------------------------------------------------");
 
     SystemInterface fluid1 = createFluid(temperature, pressure);
     Stream inlet1 = new Stream("TwoFluidInlet", fluid1);
@@ -172,10 +176,10 @@ public class SlugTrackingComparisonExample {
     for (int i = 0; i < steps; i++) {
       twoFluidPipe.runTransient(dt, id);
       if (i % 900 == 0 && i > 0) { // Report every 15 minutes
-        System.out.printf("  Progress: %.0f%% (time=%.0f min, %d slugs, fill=%.1f%%)%n",
+        logger.info("{}", String.format("  Progress: %.0f%% (time=%.0f min, %d slugs, fill=%.1f%%)",
             100.0 * i / steps, i / 60.0, twoFluidPipe.getSlugTracker().getTotalSlugsGenerated(),
             100.0 * twoFluidPipe.getAccumulationTracker().getAccumulationZones().get(0).liquidVolume
-                / twoFluidPipe.getAccumulationTracker().getAccumulationZones().get(0).maxVolume);
+                / twoFluidPipe.getAccumulationTracker().getAccumulationZones().get(0).maxVolume));
       }
     }
     long elapsed1 = System.currentTimeMillis() - startTime1;
@@ -192,14 +196,14 @@ public class SlugTrackingComparisonExample {
     }
     int tf_accumZones = twoFluidPipe.getAccumulationTracker().getAccumulationZones().size();
 
-    System.out.printf("  Completed in %.1f seconds%n%n", elapsed1 / 1000.0);
+    logger.info("{}", String.format("  Completed in %.1f seconds\n", elapsed1 / 1000.0));
 
     // =====================
     // Run Drift-Flux Model
     // =====================
-    System.out.println("-------------------------------------------------------------");
-    System.out.println("  Running Drift-Flux Model (4-equation)...");
-    System.out.println("-------------------------------------------------------------");
+    logger.info("-------------------------------------------------------------");
+    logger.info("  Running Drift-Flux Model (4-equation)...");
+    logger.info("-------------------------------------------------------------");
 
     SystemInterface fluid2 = createFluid(temperature, pressure);
     Stream inlet2 = new Stream("DriftFluxInlet", fluid2);
@@ -245,129 +249,128 @@ public class SlugTrackingComparisonExample {
     }
     int df_accumZones = driftFluxPipe.getAccumulationTracker().getAccumulationZones().size();
 
-    System.out.printf("  Completed in %.1f seconds%n%n", elapsed2 / 1000.0);
+    logger.info("{}", String.format("  Completed in %.1f seconds\n", elapsed2 / 1000.0));
 
     // =====================
     // Print Comparison
     // =====================
-    System.out.println("=============================================================");
-    System.out.println("  SLUG TRACKING COMPARISON RESULTS");
-    System.out.println("=============================================================");
-    System.out.println();
-    System.out.printf("%-30s %15s %15s%n", "Metric", "Two-Fluid", "Drift-Flux");
-    System.out.println("-------------------------------------------------------------");
-    System.out.printf("%-30s %15d %15d%n", "Slugs Generated", tf_slugsGenerated, df_slugsGenerated);
-    System.out.printf("%-30s %15d %15d%n", "Slugs Merged", tf_slugsMerged, df_slugsMerged);
-    System.out.printf("%-30s %15d %15d%n", "Active Slugs at End", tf_activeSlugs, df_activeSlugs);
-    System.out.printf("%-30s %15d %15d%n", "Slugs at Outlet", tf_outletSlugs, df_outletSlugs);
-    System.out.printf("%-30s %15.1f %15.1f%n", "Max Slug Length (m)", tf_maxLength, df_maxLength);
-    System.out.printf("%-30s %15.1f %15.1f%n", "Max Slug Volume (m³)", tf_maxVolume, df_maxVolume);
-    System.out.printf("%-30s %15d %15d%n", "Accumulation Zones", tf_accumZones, df_accumZones);
-    System.out.printf("%-30s %15.1f %15.1f%n", "Computation Time (s)", elapsed1 / 1000.0,
-        elapsed2 / 1000.0);
-    System.out.println("-------------------------------------------------------------");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  SLUG TRACKING COMPARISON RESULTS");
+    logger.info("=============================================================");
+    logger.info("");
+    logger.info("{}", String.format("%-30s %15s %15s", "Metric", "Two-Fluid", "Drift-Flux"));
+    logger.info("-------------------------------------------------------------");
+    logger.info("{}", String.format("%-30s %15d %15d", "Slugs Generated", tf_slugsGenerated, df_slugsGenerated));
+    logger.info("{}", String.format("%-30s %15d %15d", "Slugs Merged", tf_slugsMerged, df_slugsMerged));
+    logger.info("{}", String.format("%-30s %15d %15d", "Active Slugs at End", tf_activeSlugs, df_activeSlugs));
+    logger.info("{}", String.format("%-30s %15d %15d", "Slugs at Outlet", tf_outletSlugs, df_outletSlugs));
+    logger.info("{}", String.format("%-30s %15.1f %15.1f", "Max Slug Length (m)", tf_maxLength, df_maxLength));
+    logger.info("{}", String.format("%-30s %15.1f %15.1f", "Max Slug Volume (m³)", tf_maxVolume, df_maxVolume));
+    logger.info("{}", String.format("%-30s %15d %15d", "Accumulation Zones", tf_accumZones, df_accumZones));
+    logger.info("{}", String.format("%-30s %15.1f %15.1f", "Computation Time (s)", elapsed1 / 1000.0,
+        elapsed2 / 1000.0));
+    logger.info("-------------------------------------------------------------");
+    logger.info("");
 
     // Calculate slug frequencies
     double tf_freq = tf_outletSlugs > 0 ? tf_outletSlugs / simulationTime : 0;
     double df_freq = df_outletSlugs > 0 ? df_outletSlugs / simulationTime : 0;
-    System.out.printf("Slug Frequency at Outlet:%n");
-    System.out.printf("  Two-Fluid:  %.4f Hz (1 slug every %.1f s)%n", tf_freq,
-        tf_freq > 0 ? 1 / tf_freq : Double.POSITIVE_INFINITY);
-    System.out.printf("  Drift-Flux: %.4f Hz (1 slug every %.1f s)%n", df_freq,
-        df_freq > 0 ? 1 / df_freq : Double.POSITIVE_INFINITY);
-    System.out.println();
+    logger.info("{}", String.format("Slug Frequency at Outlet:"));
+    logger.info("{}", String.format("  Two-Fluid:  %.4f Hz (1 slug every %.1f s)", tf_freq,
+        tf_freq > 0 ? 1 / tf_freq : Double.POSITIVE_INFINITY));
+    logger.info("{}", String.format("  Drift-Flux: %.4f Hz (1 slug every %.1f s)", df_freq,
+        df_freq > 0 ? 1 / df_freq : Double.POSITIVE_INFINITY));
+    logger.info("");
 
     // Analysis
-    System.out.println("=============================================================");
-    System.out.println("  ANALYSIS");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  ANALYSIS");
+    logger.info("=============================================================");
+    logger.info("");
 
     double slugDiff = Math.abs(tf_slugsGenerated - df_slugsGenerated);
     double avgSlugs = (tf_slugsGenerated + df_slugsGenerated) / 2.0;
     double percentDiff = avgSlugs > 0 ? 100.0 * slugDiff / avgSlugs : 0;
 
-    System.out.printf("Slug count difference: %.0f (%.1f%% relative)%n", slugDiff, percentDiff);
-    System.out.println();
+    logger.info("{}", String.format("Slug count difference: %.0f (%.1f%% relative)", slugDiff, percentDiff));
+    logger.info("");
 
     if (percentDiff < 20) {
-      System.out.println("Models show GOOD AGREEMENT in slug generation.");
-      System.out
-          .println("For this gas-dominant flow, both models predict similar terrain slugging.");
+      logger.info("Models show GOOD AGREEMENT in slug generation.");
+      logger.info("For this gas-dominant flow, both models predict similar terrain slugging.");
     } else if (percentDiff < 50) {
-      System.out.println("Models show MODERATE DIFFERENCE in slug generation.");
-      System.out.println("This may be due to different holdup predictions at terrain low points.");
+      logger.info("Models show MODERATE DIFFERENCE in slug generation.");
+      logger.info("This may be due to different holdup predictions at terrain low points.");
     } else {
-      System.out.println("Models show SIGNIFICANT DIFFERENCE in slug generation.");
-      System.out.println("This is expected for systems with:");
-      System.out.println("  - High liquid loading");
-      System.out.println("  - Oil-water stratification effects");
-      System.out.println("  - Complex terrain with multiple accumulation zones");
+      logger.info("Models show SIGNIFICANT DIFFERENCE in slug generation.");
+      logger.info("This is expected for systems with:");
+      logger.info("  - High liquid loading");
+      logger.info("  - Oil-water stratification effects");
+      logger.info("  - Complex terrain with multiple accumulation zones");
     }
 
-    System.out.println();
-    System.out.println("Key model differences affecting slug tracking:");
-    System.out.println("  1. Two-Fluid tracks oil and water separately within slugs");
-    System.out.println("  2. Drift-Flux uses empirical slip relations (faster computation)");
-    System.out.println("  3. Two-Fluid captures interfacial momentum transfer more accurately");
-    System.out.println("  4. Both use the same SlugTracker and LiquidAccumulationTracker");
-    System.out.println();
-    System.out.println("Recommendation:");
+    logger.info("");
+    logger.info("Key model differences affecting slug tracking:");
+    logger.info("  1. Two-Fluid tracks oil and water separately within slugs");
+    logger.info("  2. Drift-Flux uses empirical slip relations (faster computation)");
+    logger.info("  3. Two-Fluid captures interfacial momentum transfer more accurately");
+    logger.info("  4. Both use the same SlugTracker and LiquidAccumulationTracker");
+    logger.info("");
+    logger.info("Recommendation:");
     if (elapsed1 > 3 * elapsed2) {
-      System.out.println("  Use Drift-Flux for routine analysis (faster).");
-      System.out.println("  Use Two-Fluid when oil-water separation in slugs is important.");
+      logger.info("  Use Drift-Flux for routine analysis (faster).");
+      logger.info("  Use Two-Fluid when oil-water separation in slugs is important.");
     } else {
-      System.out.println("  Models have similar computation time.");
-      System.out.println("  Use Two-Fluid for three-phase systems with oil-water effects.");
-      System.out.println("  Use Drift-Flux for standard gas-liquid systems.");
+      logger.info("  Models have similar computation time.");
+      logger.info("  Use Two-Fluid for three-phase systems with oil-water effects.");
+      logger.info("  Use Drift-Flux for standard gas-liquid systems.");
     }
 
     // =====================
     // Detailed Diagnostics
     // =====================
-    System.out.println();
-    System.out.println("=============================================================");
-    System.out.println("  DETAILED DIAGNOSTICS");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("");
+    logger.info("=============================================================");
+    logger.info("  DETAILED DIAGNOSTICS");
+    logger.info("=============================================================");
+    logger.info("");
 
     // Compare holdup profiles at key locations
     double[] tf_holdup = twoFluidPipe.getLiquidHoldupProfile();
     double[] df_holdup = driftFluxPipe.getLiquidHoldupProfile();
 
-    System.out.println("Liquid Holdup Comparison at Key Locations:");
-    System.out.printf("%-15s %15s %15s %15s%n", "Location", "Two-Fluid", "Drift-Flux", "Terrain");
-    System.out.println("-------------------------------------------------------------");
+    logger.info("Liquid Holdup Comparison at Key Locations:");
+    logger.info("{}", String.format("%-15s %15s %15s %15s", "Location", "Two-Fluid", "Drift-Flux", "Terrain"));
+    logger.info("-------------------------------------------------------------");
     int[] checkPoints = {0, 20, 40, 60, 80, 99}; // Inlet, valleys at 20%,40%,60%,80%, outlet
     for (int idx : checkPoints) {
       double tfH = (tf_holdup != null && idx < tf_holdup.length) ? tf_holdup[idx] : 0;
       double dfH = (df_holdup != null && idx < df_holdup.length) ? df_holdup[idx] : 0;
       double elev = terrain[idx];
-      System.out.printf("Section %-6d %15.3f %15.3f %15.1f m%n", idx, tfH, dfH, elev);
+      logger.info("{}", String.format("Section %-6d %15.3f %15.3f %15.1f m", idx, tfH, dfH, elev));
     }
-    System.out.println();
+    logger.info("");
 
     // Compare accumulation zones
-    System.out.println("Accumulation Zone Details:");
-    System.out.println();
-    System.out.println("Two-Fluid Model Zones:");
+    logger.info("Accumulation Zone Details:");
+    logger.info("");
+    logger.info("Two-Fluid Model Zones:");
     for (AccumulationZone zone : twoFluidPipe.getAccumulationTracker().getAccumulationZones()) {
       int startSec = zone.sectionIndices.isEmpty() ? -1 : zone.sectionIndices.get(0);
-      System.out.printf("  Zone at section %d: volume=%.2f m³, fill=%.1f%%%n", startSec,
-          zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume);
+      logger.info("{}", String.format("  Zone at section %d: volume=%.2f m³, fill=%.1f%%", startSec,
+          zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume));
     }
-    System.out.println();
-    System.out.println("Drift-Flux Model Zones:");
+    logger.info("");
+    logger.info("Drift-Flux Model Zones:");
     for (AccumulationZone zone : driftFluxPipe.getAccumulationTracker().getAccumulationZones()) {
       int startSec = zone.sectionIndices.isEmpty() ? -1 : zone.sectionIndices.get(0);
-      System.out.printf("  Zone at section %d: volume=%.2f m³, fill=%.1f%%%n", startSec,
-          zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume);
+      logger.info("{}", String.format("  Zone at section %d: volume=%.2f m³, fill=%.1f%%", startSec,
+          zone.liquidVolume, 100.0 * zone.liquidVolume / zone.maxVolume));
     }
-    System.out.println();
+    logger.info("");
 
     // Root cause analysis
-    System.out.println("ROOT CAUSE OF DIFFERENCE:");
+    logger.info("ROOT CAUSE OF DIFFERENCE:");
     double avgTfHoldup = 0, avgDfHoldup = 0;
     if (tf_holdup != null && df_holdup != null) {
       for (int i = 0; i < Math.min(tf_holdup.length, df_holdup.length); i++) {
@@ -378,15 +381,15 @@ public class SlugTrackingComparisonExample {
       avgTfHoldup /= n;
       avgDfHoldup /= n;
     }
-    System.out.printf("  Average liquid holdup: Two-Fluid=%.3f, Drift-Flux=%.3f%n", avgTfHoldup,
-        avgDfHoldup);
+    logger.info("{}", String.format("  Average liquid holdup: Two-Fluid=%.3f, Drift-Flux=%.3f", avgTfHoldup,
+        avgDfHoldup));
     if (avgDfHoldup > avgTfHoldup * 1.5) {
-      System.out.println("  -> Drift-Flux predicts higher holdup -> faster liquid accumulation");
-      System.out.println("  -> This leads to more frequent slug initiation");
+      logger.info("  -> Drift-Flux predicts higher holdup -> faster liquid accumulation");
+      logger.info("  -> This leads to more frequent slug initiation");
     } else if (avgTfHoldup > avgDfHoldup * 1.5) {
-      System.out.println("  -> Two-Fluid predicts higher holdup -> faster liquid accumulation");
+      logger.info("  -> Two-Fluid predicts higher holdup -> faster liquid accumulation");
     } else {
-      System.out.println("  -> Similar average holdup, difference may be in local accumulation");
+      logger.info("  -> Similar average holdup, difference may be in local accumulation");
     }
   }
 }
