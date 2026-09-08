@@ -58,6 +58,21 @@ public final class FluidPropertyEstimator {
   /**
    * Estimate saturation pressure for a component in a system.
    *
+   * <p>
+   * The component-specific Antoine correlation is preferred when the component database supplies usable coefficients,
+   * because the Lee-Kesler corresponding-states correlation is built for normal fluids and is very inaccurate for
+   * polar, hydrogen-bonding components. For methanol at 5-35 &deg;C it errs by 9 to 21 percent even with a literature
+   * acentric factor.
+   * </p>
+   *
+   * <p>
+   * The error is far larger in practice because the stored acentric factor of an associating component is a fitting
+   * placeholder rather than a physical value. NeqSim stores &omega; = -0.031 for methanol against a literature value of
+   * 0.556, which inflates the Lee-Kesler vapour pressure by roughly a factor of ten to nineteen over 5-35 &deg;C. Any
+   * corresponding-states correlation that reads the acentric factor of an associating component will fail the same way,
+   * and it fails silently. Lee-Kesler is retained here only as a fallback when no Antoine data exists.
+   * </p>
+   *
    * @param system the thermodynamic system
    * @param phaseNum the phase number
    * @param compNum the component index
@@ -68,6 +83,16 @@ public final class FluidPropertyEstimator {
     double pc = system.getPhase(phaseNum).getComponent(compNum).getPC();
     double omega = system.getPhase(phaseNum).getComponent(compNum).getAcentricFactor();
     double temperature = system.getPhase(phaseNum).getTemperature();
+
+    double antoine = Double.NaN;
+    try {
+      antoine = system.getPhase(phaseNum).getComponent(compNum).getAntoineVaporPressure(temperature);
+    } catch (Exception ex) {
+      antoine = Double.NaN;
+    }
+    if (!Double.isNaN(antoine) && !Double.isInfinite(antoine) && antoine > 0.0 && antoine < pc) {
+      return antoine;
+    }
     return estimateSaturationPressure(temperature, tc, pc, omega);
   }
 
@@ -92,10 +117,12 @@ public final class FluidPropertyEstimator {
   public static double estimateLiquidMolarVolume(double temperature, double tc, double vc, double omega) {
     double zra = 0.29056 - 0.08775 * omega;
     double tr = temperature / tc;
+    // cm3/mol -> m3/mol is 1e-6; the previous 1e-3 made every molar volume 1000x too large, which
+    // in turn made the Macleod-Sugden surface tension underflow by 1e-12 (density is raised to 4).
     if (tr < 1.0) {
-      return vc * Math.pow(zra, Math.pow(1.0 - tr, 2.0 / 7.0)) * 1e-3;
+      return vc * Math.pow(zra, Math.pow(1.0 - tr, 2.0 / 7.0)) * 1e-6;
     } else {
-      return vc * 1e-3;
+      return vc * 1e-6;
     }
   }
 
@@ -139,7 +166,8 @@ public final class FluidPropertyEstimator {
     double tr = temperature / tc;
     if (parachor > 0 && tr < 1.0 && liquidMolarVolume > 1e-20) {
       double rhoL = 1.0 / liquidMolarVolume;
-      return Math.pow(parachor * rhoL / 1e6, 4.0);
+      // The parachor form yields dyn/cm (= mN/m); the trailing 1e-3 converts to N/m.
+      return Math.pow(parachor * rhoL / 1e6, 4.0) * 1e-3;
     } else {
       return 0.02 * Math.pow(Math.max(0.0, 1.0 - tr), 1.26);
     }
