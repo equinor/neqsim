@@ -192,8 +192,8 @@ factors across unchanged-state segment subdivisions recovers the unsplit retenti
 inventory.
 
 These endpoint rates are differential screening evidence evaluated under the source's
-constant-oxygen assumption. They are not a conversion to molar flow, oxygen consumption, or
-product stoichiometry.
+constant-oxygen assumption. By themselves they are not a time-averaged control-volume source, a
+conversion to molar flow, oxygen consumption, or product stoichiometry.
 
 ## Segment-mean loss-rate evidence
 
