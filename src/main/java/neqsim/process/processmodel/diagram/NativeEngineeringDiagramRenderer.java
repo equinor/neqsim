@@ -199,6 +199,7 @@ public final class NativeEngineeringDiagramRenderer {
   private final SheetFormat format;
   private final EngineeringDiagramConventionRegister conventionRegister;
   private final RoutingMode routingMode;
+  private final EngineeringDiagramPidRegisters pidRegisters;
 
   /**
    * Creates an A3-landscape native renderer using byte-compatible legacy rectangle defaults.
@@ -292,6 +293,27 @@ public final class NativeEngineeringDiagramRenderer {
    */
   public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
       EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode) {
+    this(documentSet, format, conventionRegister, routingMode, null);
+  }
+
+  /**
+   * Creates a renderer with an optional source-linked, review-required P&amp;ID proposal overlay.
+   *
+   * <p>
+   * The overlay is a compact graphical projection of the immutable engineering registers. It does not modify the
+   * canonical process topology, qualify project symbols, or approve any proposal for design, safety, or construction.
+   * A null register preserves the existing PFD and legacy renderer bytes.
+   * </p>
+   *
+   * @param documentSet immutable controlled engineering-diagram document set
+   * @param format paper geometry
+   * @param conventionRegister evidence-bearing project symbol conventions
+   * @param routingMode connection-routing behavior
+   * @param pidRegisters source-linked P&amp;ID proposal registers, or null
+   */
+  public NativeEngineeringDiagramRenderer(EngineeringDiagramDocumentSet documentSet, SheetFormat format,
+      EngineeringDiagramConventionRegister conventionRegister, RoutingMode routingMode,
+      EngineeringDiagramPidRegisters pidRegisters) {
     if (documentSet == null) {
       throw new IllegalArgumentException("documentSet must not be null");
     }
@@ -304,10 +326,15 @@ public final class NativeEngineeringDiagramRenderer {
     if (routingMode == null) {
       throw new IllegalArgumentException("routingMode must not be null");
     }
+    if (pidRegisters != null
+        && !documentSet.getSourceGraphFingerprint().equals(pidRegisters.getSourceGraphFingerprint())) {
+      throw new IllegalArgumentException("P&ID registers must identify the rendered canonical source graph");
+    }
     this.documentSet = documentSet;
     this.format = format;
     this.conventionRegister = conventionRegister;
     this.routingMode = routingMode;
+    this.pidRegisters = pidRegisters;
   }
 
   /**
@@ -442,6 +469,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     addPortMarkers(page, endpointAnchors);
+    addPidProposalOverlay(page, sheet, objects, positions);
     addTitleBlock(page, drawing, sheet);
     return page;
   }
@@ -961,6 +989,136 @@ public final class NativeEngineeringDiagramRenderer {
           stroke, fill, 0.7, objectId);
     }
     return Command.rect(left, top, OBJECT_WIDTH, OBJECT_HEIGHT, stroke, fill, 0.7, objectId, "");
+  }
+
+  private void addPidProposalOverlay(Page page, Sheet sheet, Map<String, SemanticObject> objects,
+      Map<String, Point> positions) {
+    if (pidRegisters == null) {
+      return;
+    }
+    page.commands.add(Command.text(page.width - 12.0, 22.0, 2.2, "P&ID PROPOSAL OVERLAY - REVIEW REQUIRED",
+        "#1d4ed8", "pid-proposal:overlay-status", "end"));
+    Map<String, Object> registerData = pidRegisters.toMap();
+    Map<String, List<Map<String, Object>>> rowsByEquipment = new TreeMap<String, List<Map<String, Object>>>();
+    for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
+      for (Map<String, Object> row : proposalRows(registerData, register)) {
+        String equipmentId = textValue(row.get("semanticEquipmentId"));
+        if (!positions.containsKey(equipmentId)) {
+          continue;
+        }
+        List<Map<String, Object>> rows = rowsByEquipment.get(equipmentId + "|" + register);
+        if (rows == null) {
+          rows = new ArrayList<Map<String, Object>>();
+          rowsByEquipment.put(equipmentId + "|" + register, rows);
+        }
+        rows.add(row);
+      }
+    }
+    Map<String, Point> proposalPositions = new TreeMap<String, Point>();
+    List<String> equipmentIds = new ArrayList<String>(positions.keySet());
+    Collections.sort(equipmentIds);
+    for (String equipmentId : equipmentIds) {
+      SemanticObject object = objects.get(equipmentId);
+      if (object == null || object.getKind() != EngineeringNode.Kind.EQUIPMENT) {
+        continue;
+      }
+      Point equipment = positions.get(equipmentId);
+      addPidMarker(page, equipmentId, "nozzles", rowsByEquipment, equipment,
+          new Point(equipment.x - OBJECT_WIDTH / 2.0 - 4.0, equipment.y), proposalPositions);
+      addPidMarker(page, equipmentId, "instruments", rowsByEquipment, equipment,
+          new Point(equipment.x, equipment.y - OBJECT_HEIGHT / 2.0 - 7.0), proposalPositions);
+      addPidMarker(page, equipmentId, "valves", rowsByEquipment, equipment,
+          new Point(equipment.x, equipment.y + OBJECT_HEIGHT / 2.0 + 7.0), proposalPositions);
+      addPidMarker(page, equipmentId, "interfaces", rowsByEquipment, equipment,
+          new Point(equipment.x + OBJECT_WIDTH / 2.0 + 8.0, equipment.y - 7.0), proposalPositions);
+    }
+    for (Map<String, Object> signal : proposalRows(registerData, "controlSignals")) {
+      String sourceId = textValue(signal.get("sourcePidElementId"));
+      String targetId = textValue(signal.get("targetPidElementId"));
+      Point source = proposalPositions.get(sourceId);
+      Point target = proposalPositions.get(targetId);
+      if (source == null || target == null) {
+        continue;
+      }
+      List<Point> points;
+      if (distance(source, target) < 0.001) {
+        points = Arrays.asList(source, new Point(source.x + 5.0, source.y - 5.0),
+            new Point(source.x + 10.0, source.y), source);
+      } else {
+        double middleX = (source.x + target.x) / 2.0;
+        points = Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target);
+      }
+      page.commands.add(Command.polyline(points, "#2563eb", 0.5, "2 2",
+          "pid-signal:" + sourceId + ":" + targetId, false));
+    }
+  }
+
+  private static void addPidMarker(Page page, String equipmentId, String register,
+      Map<String, List<Map<String, Object>>> rowsByEquipment, Point equipment, Point marker,
+      Map<String, Point> proposalPositions) {
+    List<Map<String, Object>> rows = rowsByEquipment.get(equipmentId + "|" + register);
+    if (rows == null || rows.isEmpty()) {
+      return;
+    }
+    Collections.sort(rows, new Comparator<Map<String, Object>>() {
+      @Override
+      public int compare(Map<String, Object> left, Map<String, Object> right) {
+        return textValue(left.get("id")).compareTo(textValue(right.get("id")));
+      }
+    });
+    String firstId = textValue(rows.get(0).get("id"));
+    String firstTag = textValue(rows.get(0).get("tag"));
+    for (Map<String, Object> row : rows) {
+      proposalPositions.put(textValue(row.get("id")), marker);
+    }
+    String count = rows.size() == 1 ? "" : " +" + (rows.size() - 1);
+    String semanticId = "pid-proposal:" + firstId;
+    if ("instruments".equals(register)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x, marker.y - 3.0),
+          new Point(marker.x + 3.0, marker.y), new Point(marker.x, marker.y + 3.0),
+          new Point(marker.x - 3.0, marker.y)), "#2563eb", "#ffffff", 0.6, semanticId));
+      page.commands.add(Command.line(marker.x, marker.y + 3.0, equipment.x, equipment.y - OBJECT_HEIGHT / 2.0,
+          "#2563eb", 0.4, semanticId + ":connection", ""));
+    } else if ("valves".equals(register)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x - 3.5, marker.y - 2.5),
+          new Point(marker.x, marker.y), new Point(marker.x - 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6,
+          semanticId));
+      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x + 3.5, marker.y - 2.5),
+          new Point(marker.x, marker.y), new Point(marker.x + 3.5, marker.y + 2.5)), "#7c2d12", "#ffffff", 0.6,
+          semanticId + ":half"));
+    } else if ("interfaces".equals(register)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(marker.x - 3.0, marker.y - 3.0),
+          new Point(marker.x + 3.0, marker.y), new Point(marker.x - 3.0, marker.y + 3.0)), "#6d28d9", "#ffffff",
+          0.6, semanticId));
+    } else {
+      page.commands.add(Command.rect(marker.x - 1.5, marker.y - 1.5, 3.0, 3.0, "#0891b2", "#ffffff", 0.5,
+          semanticId, ""));
+    }
+    page.commands.add(Command.text(marker.x, marker.y - 4.5, 1.5, firstTag + count, "#111827",
+        semanticId + ":tag", "middle"));
+  }
+
+  private static List<Map<String, Object>> proposalRows(Map<String, Object> data, String register) {
+    List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+    Object raw = data.get(register);
+    if (!(raw instanceof List<?>)) {
+      return result;
+    }
+    for (Object item : (List<?>) raw) {
+      if (!(item instanceof Map<?, ?>)) {
+        continue;
+      }
+      Map<String, Object> row = new LinkedHashMap<String, Object>();
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>) item).entrySet()) {
+        row.put(String.valueOf(entry.getKey()), entry.getValue());
+      }
+      result.add(row);
+    }
+    return result;
+  }
+
+  private static String textValue(Object value) {
+    return value == null ? "" : String.valueOf(value);
   }
 
   private void addTitleBlock(Page page, Drawing drawing, Sheet sheet) {
