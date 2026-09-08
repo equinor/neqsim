@@ -116,8 +116,7 @@ class TaskSolverRunnerTest {
     assertFalse(completed.get("success").getAsBoolean());
     JsonObject output = completed.getAsJsonObject("output");
     assertEquals("error", output.get("status").getAsString());
-    assertEquals("UNKNOWN_RUNNER",
-        output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("UNKNOWN_RUNNER", output.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
     assertFalse(result.getAsJsonObject("combinedData").has("skipped_result"));
   }
 
@@ -128,8 +127,7 @@ class TaskSolverRunnerTest {
 
     JsonObject result = JsonParser.parseString(TaskSolverRunner.composeWorkflow(request.toString())).getAsJsonObject();
     assertEquals("error", result.get("status").getAsString());
-    assertEquals("MISSING_STEPS",
-        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("MISSING_STEPS", result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
@@ -147,8 +145,7 @@ class TaskSolverRunnerTest {
 
     JsonObject result = JsonParser.parseString(TaskSolverRunner.composeWorkflow(request.toString())).getAsJsonObject();
     assertEquals("error", result.get("status").getAsString());
-    assertEquals("WORKFLOW_ERROR",
-        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("WORKFLOW_ERROR", result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
