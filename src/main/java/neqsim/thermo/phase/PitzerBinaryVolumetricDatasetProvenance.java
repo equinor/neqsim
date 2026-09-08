@@ -124,7 +124,7 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
 
   /** @return immutable source records sorted by source-lineage identifier */
   public List<SourceRecord> getSources() {
-    return sources;
+    return Collections.unmodifiableList(new ArrayList<SourceRecord>(sources));
   }
 
   /**
