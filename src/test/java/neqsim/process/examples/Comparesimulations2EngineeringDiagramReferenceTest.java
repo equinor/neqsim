@@ -3,6 +3,7 @@ package neqsim.process.examples;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -34,6 +35,13 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
         first.getPid().getDocumentSet().getSourceGraphFingerprint());
     assertTrue(first.getPfd().getRendering().getSvgBySheetId().size() >= 3);
     assertTrue(first.getPid().getRendering().getSvgBySheetId().size() >= 3);
+    String pfdSvg = first.getPfd().getRendering().getSvgBySheetId().toString();
+    String pidSvg = first.getPid().getRendering().getSvgBySheetId().toString();
+    assertFalse(pfdSvg.contains("P&ID PROPOSAL OVERLAY"));
+    assertTrue(pidSvg.contains("P&ID PROPOSAL OVERLAY"));
+    assertTrue(pidSvg.contains("data-semantic-id=\"pid-proposal:"));
+    assertTrue(pidSvg.contains("data-semantic-id=\"pid-signal:"));
+    assertNotEquals(pfdSvg, pidSvg);
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("pfd/drawing-set.pdf")));
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("pid/drawing-set.pdf")));
     assertTrue(Files.isRegularFile(first.getDirectory().resolve("stream-table.json")));
