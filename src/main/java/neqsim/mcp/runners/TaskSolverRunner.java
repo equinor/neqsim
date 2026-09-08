@@ -65,10 +65,8 @@ public final class TaskSolverRunner {
 
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      if (!input.has("task") || input.get("task").isJsonNull()
-          || !input.get("task").isJsonPrimitive()
-          || !input.get("task").getAsJsonPrimitive().isString()
-          || input.get("task").getAsString().trim().isEmpty()) {
+      if (!input.has("task") || input.get("task").isJsonNull() || !input.get("task").isJsonPrimitive()
+          || !input.get("task").getAsJsonPrimitive().isString() || input.get("task").getAsString().trim().isEmpty()) {
         return errorJson("MISSING_TASK", "Provide a non-blank string 'task' description");
       }
       String task = input.get("task").getAsString().trim();
@@ -76,8 +74,7 @@ public final class TaskSolverRunner {
       // Step 1: Classify only the keyword families backed by explicit fixed plans.
       String taskType = classifyTask(task);
       if (taskType == null) {
-        return errorJson("UNSUPPORTED_TASK",
-            "Task description does not match a supported fixed-plan keyword family");
+        return errorJson("UNSUPPORTED_TASK", "Task description does not match a supported fixed-plan keyword family");
       }
 
       // Step 2: Build execution plan

@@ -49,8 +49,8 @@ class TaskSolverRunnerTest {
     assertEquals("pvt", step.get("runner").getAsString());
     assertTrue(step.get("success").getAsBoolean());
     assertEquals("success", step.getAsJsonObject("output").get("status").getAsString());
-    assertTrue(result.getAsJsonObject("combinedData").getAsJsonObject("fluid")
-        .getAsJsonObject("components").has("methane"));
+    assertTrue(
+        result.getAsJsonObject("combinedData").getAsJsonObject("fluid").getAsJsonObject("components").has("methane"));
     assertTrue(result.getAsJsonObject("combinedData").has("pvt_study_result"));
   }
 
@@ -66,28 +66,23 @@ class TaskSolverRunnerTest {
     assertEquals("compression", result.get("taskType").getAsString());
     assertEquals(3, result.get("totalSteps").getAsInt());
     assertEquals(1, result.get("completedSteps").getAsInt());
-    assertEquals("flash_feed",
-        result.getAsJsonArray("stepResults").get(0).getAsJsonObject().get("step").getAsString());
+    assertEquals("flash_feed", result.getAsJsonArray("stepResults").get(0).getAsJsonObject().get("step").getAsString());
   }
 
   @Test
   void testSolveRejectsMissingTask() {
     JsonObject result = JsonParser.parseString(TaskSolverRunner.solveTask("{}")).getAsJsonObject();
     assertEquals("error", result.get("status").getAsString());
-    assertEquals("MISSING_TASK",
-        result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("MISSING_TASK", result.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
   void testSolveRejectsBlankOrMalformedTask() {
-    JsonObject blank =
-        JsonParser.parseString(TaskSolverRunner.solveTask("{\"task\":\"   \"}")).getAsJsonObject();
-    assertEquals("MISSING_TASK",
-        blank.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    JsonObject blank = JsonParser.parseString(TaskSolverRunner.solveTask("{\"task\":\"   \"}")).getAsJsonObject();
+    assertEquals("MISSING_TASK", blank.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
 
     JsonObject malformed = JsonParser.parseString(TaskSolverRunner.solveTask("{")).getAsJsonObject();
-    assertEquals("TASK_ERROR",
-        malformed.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+    assertEquals("TASK_ERROR", malformed.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
   }
 
   @Test
