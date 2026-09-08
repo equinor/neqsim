@@ -77,15 +77,17 @@ reading aid, not execution evidence.
 These files are outside Maven's compiled source tree. The
 `StandaloneJavaDocumentationCompilationTest` compiles the exact catalog against the
 current NeqSim API. This is build verification only, not runtime or engineering-result
-validation. The Eclipse E300, flow-regime, multi-scenario VFP,
-multiphase-model comparison, slug-tracking comparison, offshore-emissions,
-real-time integration, and two-fluid pipe examples are also source-checked for Log4j2
+validation. The acoustic-compressibility, Eclipse E300, flow-regime,
+multi-scenario VFP, multiphase-model comparison, slug-tracking comparison,
+offshore-emissions, real-time integration, and two-fluid pipe examples are also
+source-checked for Log4j2
 compliance; the remaining files retain legacy console output. Inspect assumptions and execute the required workflow
 before engineering reuse. For a supported starting point, use the
 [Java getting-started guide](../java-getting-started.md).
 
 | Example | Build status | Capability |
 |---------|---------------|------------|
+| [AcousticCompressibilityConversionExample](AcousticCompressibilityConversionExample.java) | **Build-verified source** | Acoustic-to-isothermal compressibility conversion with full input covariance |
 | [EclipseE300ExportImportExample](EclipseE300ExportImportExample.java) | **Build-verified source** | Eclipse E300 fluid export and import workflow |
 | [FlowRegimeDebug](FlowRegimeDebug.java) | **Build-verified source** | Flow-regime diagnostic calculations |
 | [FlowRegimeDetectionExample](FlowRegimeDetectionExample.java) | **Build-verified source** | Flow-regime detection across operating cases |
