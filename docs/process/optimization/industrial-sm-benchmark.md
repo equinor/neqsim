@@ -159,7 +159,8 @@ claim is made. The five-fork wall-time totals were 128.385 s before and 116.614 
 compilation work contributes to those totals. Timing distributions and per-mode execution counts
 remain available in the preserved reports. A later additive evidence-path qualification executes
 the M case's total-shaft-power transition; it does not change or reinterpret these preserved timing
-records. Full large-process qualification and the common-shaft transition remain open roadmap work.
+records. Common-shaft evidence and the strict separator adapter were subsequently added as separate
+immutable post-solve paths. Full large-process qualification remains open roadmap work.
 
 The exact aggregates are stored as deterministic gzip files with an empty filename and `mtime=0`.
 Decompression reproduces the original aggregate bytes, including every fork's raw report and its
@@ -220,6 +221,8 @@ relative tolerances alongside the measured differences. The participant-sum/sour
 within a single solved state retains its separate `1e-10` tolerance, and the existing convergence,
 mass-balance and bottleneck-transition gates still apply.
 
-That result qualifies the total-power evidence path only. The full ordered piping, compressor,
-separator and export-quality sequence, full L process fixture, and common-shaft case remain open.
-No missing metric or transition is represented as a passed gate.
+That result qualifies the total-power evidence path only. Common-shaft and strict separator evidence
+have separate focused qualification; neither changes the stored S/M timing record. The full ordered
+piping, compressor, separator and export-quality sequence, the full L process fixture, separator
+carry-over/slug evidence, and piping fidelity remain open. No missing metric or transition is
+represented as a passed gate.
