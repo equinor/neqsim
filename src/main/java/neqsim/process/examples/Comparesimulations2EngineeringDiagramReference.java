@@ -93,7 +93,7 @@ public final class Comparesimulations2EngineeringDiagramReference {
     return EngineeringDiagramDualProfileDelivery.Request
         .builder("ANDREASEN-SEPARATION-COMPRESSION", REVISION, "PFD-ANDREASEN-001", "PID-ANDREASEN-001",
             "Separation and compression teaching case")
-        .operatingCaseId(OPERATING_CASE).balanceBoundaries(boundaries)
+        .operatingCaseId(OPERATING_CASE).balanceBoundaries(boundaries).includePidEngineeringRegisters(true)
         .sheetFormat(NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE)
         .routingMode(NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL)
         .conventionRegister(proposedSymbolConventions()).layoutRegister(layoutRegister(process)).build();

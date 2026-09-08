@@ -55,6 +55,27 @@ Plant, Proteus, simulation, and document APIs are unchanged. Supplying an
 operating-case identity opts into the companion package and therefore requires
 at least one explicit balance boundary.
 
+`Request.Builder.includePidEngineeringRegisters(true)` additionally publishes
+`pid/pid-design-model.json`, `pid/pid-completeness-report.json`, and
+`pid/pid-engineering-registers.json`. It reuses the existing offshore complete
+proposal rules with teaching area code `00` and a persistent plant identity.
+The option defaults to false and is enabled by the full-model reference below.
+`Report.getPidEngineeringRegisters()` returns the immutable register snapshot,
+or `null` when the option is disabled.
+
+The registers preserve canonical material-connection identities, source-linked
+nozzle/valve/instrument/interface proposals, control and safeguarding signal
+relationships, rule provenance, and unresolved completeness findings. Material
+links between nozzles or relief destinations are not counted as control signals.
+Candidate line bindings require project review. Missing pipe sizes, classes,
+schedules and materials remain `PROJECT_INPUT_REQUIRED`; reducers remain
+`NO_GOVERNED_REDUCER_DECLARATION` rather than invented fittings.
+
+These proposal sidecars do not modify the simulation, SVG/PDF drawings or DEXPI
+exchanges. The bundle manifest records that projection boundary and fingerprints
+all three sidecars. `isComplete()` confirms bundle delivery, not an approved
+P&ID design; the completeness report retains engineering errors and review gaps.
+
 ## Requirement and evidence matrix
 
 | Requirement | Current implementation | Automated evidence | Remaining acceptance work |
@@ -65,7 +86,7 @@ at least one explicit balance boundary.
 | Native PFD exchange | Native DEXPI 2.0 Process artifact | Existing delivery assessment and bundle labels | Full-model topology/loss evidence |
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
 | Stream and H&MB companions | Opt-in governed stream/balance artifacts with exact boundary resolution | Valid, missing-case, unknown-boundary, and repeated-delivery tests | Publish and qualify full-model operating values and boundary assignments |
-| Piping and instrumentation content | Existing governed proposal, Proteus writer, and detailed DEXPI paths | Existing DEXPI/P&ID tests | Bind explicit line/nozzle/valve/reducer/instrument/control/interface registers to this model |
+| Piping and instrumentation content | Opt-in source-linked proposal registers and completeness sidecars | Register fidelity, immutability, signal classification and full-model regeneration tests | Supply governed engineering inputs, review candidate bindings, and project approved proposals into drawings/exchanges |
 | Manual layout and routing | Existing evidence-bearing layout register | Existing layout and renderer tests | Declare full-model sheets, pins, protected routes, and stale-reference regeneration |
 | Standards alignment | Explicit scope and no-conformance boundary | Manifest flags and documentation checks | Licensed clause mapping and accountable review |
 
@@ -111,9 +132,9 @@ layout evidence, not checked project layout or engineering approval.
 
 The slow regression test executes two fresh plants and compares manifest,
 source-topology, SVG, and PDF evidence byte-for-byte. It also checks the
-operating stream/H&MB companions and the separate native DEXPI 2.0 Plant and
-Proteus 4.1 P&ID proposal exchanges. Passing automation establishes
+operating stream/H&MB companions, all three P&ID proposal/register sidecars,
+and the separate native DEXPI 2.0 Plant and Proteus 4.1 P&ID proposal exchanges. Passing automation establishes
 deterministic generation only; full-sheet/detail human inspection, project
-metadata, explicit governed line/nozzle/valve/reducer/instrument/control
-registers, and accountable discipline review remain mandatory before visual
+metadata, completed and reviewed line/nozzle/valve/reducer/instrument/control
+registers, their drawing projection, and accountable discipline review remain mandatory before visual
 acceptance.

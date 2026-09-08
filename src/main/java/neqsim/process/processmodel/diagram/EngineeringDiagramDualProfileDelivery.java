@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.NorsokOffshoreEngineeringBuilder;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Boundary;
 import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.Direction;
@@ -23,6 +25,11 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentPro
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
 import neqsim.process.engineering.model.EngineeringDiagramStreamTable;
 import neqsim.process.engineering.model.EngineeringDiagramStreamTable.Row;
+import neqsim.process.engineering.pid.NorsokPidRuleCatalog;
+import neqsim.process.engineering.pid.PidCompletenessValidator;
+import neqsim.process.engineering.pid.PidDesignBasis;
+import neqsim.process.engineering.pid.PidDesignModel;
+import neqsim.process.engineering.pid.PidDesignSynthesizer;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.Dexpi20ConformanceAssessment;
 import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
@@ -51,6 +58,9 @@ public final class EngineeringDiagramDualProfileDelivery {
   private static final String PID_DEXPI_PLANT_FILE = "pid/dexpi-plant-2.0.xml";
   private static final String PID_DEXPI_PLANT_ASSESSMENT_FILE = "pid/dexpi-plant-assessment.json";
   private static final String PID_PROTEUS_FILE = "pid/proteus-4.1.xml";
+  private static final String PID_DESIGN_MODEL_FILE = "pid/pid-design-model.json";
+  private static final String PID_COMPLETENESS_FILE = "pid/pid-completeness-report.json";
+  private static final String PID_REGISTERS_FILE = "pid/pid-engineering-registers.json";
 
   private EngineeringDiagramDualProfileDelivery() {
   }
@@ -121,6 +131,7 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final EngineeringDiagramDesignationRegister designationRegister;
     private final EngineeringDiagramLayoutRegister layoutRegister;
     private final EngineeringDiagramConventionRegister conventionRegister;
+    private final boolean includePidEngineeringRegisters;
 
     private Request(Builder builder) {
       plantId = requireText(builder.plantId, "plantId");
@@ -135,6 +146,7 @@ public final class EngineeringDiagramDualProfileDelivery {
       designationRegister = requireNonNull(builder.designationRegister, "designationRegister");
       layoutRegister = requireNonNull(builder.layoutRegister, "layoutRegister");
       conventionRegister = requireNonNull(builder.conventionRegister, "conventionRegister");
+      includePidEngineeringRegisters = builder.includePidEngineeringRegisters;
       if (pfdDrawingNumber.equals(pidDrawingNumber)) {
         throw new IllegalArgumentException("PFD and P&ID drawing numbers must be distinct");
       }
@@ -175,6 +187,7 @@ public final class EngineeringDiagramDualProfileDelivery {
       private EngineeringDiagramDesignationRegister designationRegister = new EngineeringDiagramDesignationRegister();
       private EngineeringDiagramLayoutRegister layoutRegister = new EngineeringDiagramLayoutRegister();
       private EngineeringDiagramConventionRegister conventionRegister = new EngineeringDiagramConventionRegister();
+      private boolean includePidEngineeringRegisters;
 
       private Builder(String plantId, String revision, String pfdDrawingNumber, String pidDrawingNumber, String title) {
         this.plantId = plantId;
@@ -229,6 +242,17 @@ public final class EngineeringDiagramDualProfileDelivery {
         return this;
       }
 
+      /**
+       * Opts into the existing offshore P&amp;ID proposal profile and source-linked registers.
+       *
+       * @param value true to publish proposals using teaching area code 00; false by default
+       * @return this builder
+       */
+      public Builder includePidEngineeringRegisters(boolean value) {
+        includePidEngineeringRegisters = value;
+        return this;
+      }
+
       /** @return validated immutable request */
       public Request build() {
         return new Request(this);
@@ -246,11 +270,15 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final EngineeringDiagramStreamTable streamTable;
     private final EngineeringDiagramBalanceTable balanceTable;
     private final Dexpi20ConformanceAssessment.Report pidPlantAssessment;
+    private final EngineeringDiagramPidRegisters pidEngineeringRegisters;
+    private final String pidDesignModelFingerprint;
+    private final String pidCompletenessFingerprint;
     private final String fingerprint;
 
     private Report(Path directory, EngineeringDiagramDelivery.Report pfd, EngineeringDiagramDelivery.Report pid,
         Request request, EngineeringDiagramStreamTable streamTable, EngineeringDiagramBalanceTable balanceTable,
-        Dexpi20ConformanceAssessment.Report pidPlantAssessment) {
+        Dexpi20ConformanceAssessment.Report pidPlantAssessment, EngineeringDiagramPidRegisters pidEngineeringRegisters,
+        String pidDesignModelJson, String pidCompletenessJson) {
       this.directory = directory;
       this.pfd = pfd;
       this.pid = pid;
@@ -259,6 +287,9 @@ public final class EngineeringDiagramDualProfileDelivery {
       this.streamTable = streamTable;
       this.balanceTable = balanceTable;
       this.pidPlantAssessment = pidPlantAssessment;
+      this.pidEngineeringRegisters = pidEngineeringRegisters;
+      pidDesignModelFingerprint = sha256(pidDesignModelJson);
+      pidCompletenessFingerprint = sha256(pidCompletenessJson);
       fingerprint = sha256(new GsonBuilder().create().toJson(toMapWithoutFingerprint()));
     }
 
@@ -277,6 +308,11 @@ public final class EngineeringDiagramDualProfileDelivery {
       return pid;
     }
 
+    /** @return immutable P&amp;ID registers, or null when the request did not opt in */
+    public EngineeringDiagramPidRegisters getPidEngineeringRegisters() {
+      return pidEngineeringRegisters;
+    }
+
     /** @return deterministic manifest fingerprint */
     public String getFingerprint() {
       return fingerprint;
@@ -289,6 +325,8 @@ public final class EngineeringDiagramDualProfileDelivery {
               && streamTable.getSourceGraphFingerprint().equals(pfd.getDocumentSet().getSourceGraphFingerprint());
       return pfd.isComplete() && pid.isComplete() && pidPlantAssessment != null
           && pidPlantAssessment.isSchemaAndProfileConformant() && companionEvidenceComplete
+          && (pidEngineeringRegisters == null || pidEngineeringRegisters.getSourceGraphFingerprint()
+              .equals(pid.getDocumentSet().getSourceGraphFingerprint()))
           && pfd.getDocumentSet().getSourceGraphFingerprint().equals(pid.getDocumentSet().getSourceGraphFingerprint());
     }
 
@@ -324,6 +362,15 @@ public final class EngineeringDiagramDualProfileDelivery {
       result.put("pidNativeDexpiAssessmentFile", PID_DEXPI_PLANT_ASSESSMENT_FILE);
       result.put("pidProteusFile", PID_PROTEUS_FILE);
       result.put("pidNativeDexpiAssessment", pidPlantAssessment.toMap());
+      if (pidEngineeringRegisters != null) {
+        result.put("pidDesignModelFile", PID_DESIGN_MODEL_FILE);
+        result.put("pidDesignModelFingerprint", pidDesignModelFingerprint);
+        result.put("pidCompletenessReportFile", PID_COMPLETENESS_FILE);
+        result.put("pidCompletenessReportFingerprint", pidCompletenessFingerprint);
+        result.put("pidEngineeringRegistersFile", PID_REGISTERS_FILE);
+        result.put("pidEngineeringRegistersFingerprint", sha256(pidEngineeringRegisters.toJson()));
+        result.put("pidProposalProjection", "SIDECARS_ONLY_NOT_MATERIALIZED_IN_DRAWINGS_OR_EXCHANGES");
+      }
       if (streamTable != null) {
         result.put("streamTable", streamTable.toMap());
       }
@@ -391,7 +438,23 @@ public final class EngineeringDiagramDualProfileDelivery {
         Files.write(target.resolve(BALANCE_TABLE_FILE), balanceTable.toJson().getBytes(StandardCharsets.UTF_8));
       }
 
-      Report report = new Report(target, pfd, pid, request, streamTable, balanceTable, pidPlantAssessment);
+      EngineeringDiagramPidRegisters pidRegisters = null;
+      String pidModelJson = "";
+      String pidCompletenessJson = "";
+      if (request.includePidEngineeringRegisters) {
+        EngineeringProject project = NorsokOffshoreEngineeringBuilder.from(request.title, processSystem)
+            .projectId(request.plantId).registerProposedInstruments(false).build().setRevision(request.revision);
+        PidDesignModel pidModel = PidDesignSynthesizer.synthesize(project,
+            new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "00"), NorsokPidRuleCatalog.completeProposals());
+        pidModelJson = new GsonBuilder().setPrettyPrinting().create().toJson(pidModel.toMap());
+        pidCompletenessJson = PidCompletenessValidator.validate(pidModel).toJson();
+        pidRegisters = EngineeringDiagramPidRegisters.fromDocumentSet(pid.getDocumentSet(), pidModel);
+        Files.write(target.resolve(PID_DESIGN_MODEL_FILE), pidModelJson.getBytes(StandardCharsets.UTF_8));
+        Files.write(target.resolve(PID_COMPLETENESS_FILE), pidCompletenessJson.getBytes(StandardCharsets.UTF_8));
+        Files.write(target.resolve(PID_REGISTERS_FILE), pidRegisters.toJson().getBytes(StandardCharsets.UTF_8));
+      }
+      Report report = new Report(target, pfd, pid, request, streamTable, balanceTable, pidPlantAssessment, pidRegisters,
+          pidModelJson, pidCompletenessJson);
       if (!report.isComplete()) {
         throw new IOException("PFD and P&ID deliveries do not retain one complete canonical plant");
       }
