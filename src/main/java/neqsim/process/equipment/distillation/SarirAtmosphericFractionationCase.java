@@ -152,8 +152,7 @@ public final class SarirAtmosphericFractionationCase {
      * @param keroseneSideDrawFraction fraction of tray liquid withdrawn, in [0, 1)
      * @param dieselSideDrawTray bottom-up NeqSim tray index for the heavier liquid side draw
      * @param dieselSideDrawFraction fraction of tray liquid withdrawn, in [0, 1)
-     * @throws IllegalArgumentException if a value is non-finite or outside its physical or
-     *         topological domain
+     * @throws IllegalArgumentException if a value is non-finite or outside its physical or topological domain
      */
     public OperatingInputs(double topPressureBara, double bottomPressureBara, double reboilerTemperatureKelvin,
         double condenserRefluxRatio, int keroseneSideDrawTray, double keroseneSideDrawFraction, int dieselSideDrawTray,
