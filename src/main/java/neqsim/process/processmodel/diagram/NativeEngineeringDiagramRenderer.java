@@ -433,7 +433,7 @@ public final class NativeEngineeringDiagramRenderer {
     for (String id : ids) {
       SemanticObject object = objects.get(id);
       Point position = positions.get(id);
-      if (object != null && position != null && isDrawableNode(object.getKind())) {
+      if (object != null && position != null && isDrawableObject(object)) {
         addObject(page, object, position);
       }
     }
@@ -463,7 +463,7 @@ public final class NativeEngineeringDiagramRenderer {
       for (Sheet sheet : drawing.getSheets()) {
         for (String objectId : sheet.getObjectNodeIds()) {
           SemanticObject object = objects.get(objectId);
-          if (object != null && isDrawableNode(object.getKind())) {
+          if (object != null && isDrawableObject(object)) {
             visibleObjects.put(objectId, object);
           }
         }
@@ -488,7 +488,7 @@ public final class NativeEngineeringDiagramRenderer {
     List<String> drawableIds = new ArrayList<String>();
     for (String id : sheet.getObjectNodeIds()) {
       SemanticObject object = objects.get(id);
-      if (object != null && isDrawableNode(object.getKind()) && positions.containsKey(id)) {
+      if (object != null && isDrawableObject(object) && positions.containsKey(id)) {
         drawableIds.add(id);
       }
     }
@@ -530,7 +530,7 @@ public final class NativeEngineeringDiagramRenderer {
     List<String> automatic = new ArrayList<String>();
     for (String id : sheet.getObjectNodeIds()) {
       SemanticObject object = objects.get(id);
-      if (object != null && isDrawableNode(object.getKind()) && !result.containsKey(id)) {
+      if (object != null && isDrawableObject(object) && !result.containsKey(id)) {
         automatic.add(id);
       }
     }
@@ -718,6 +718,9 @@ public final class NativeEngineeringDiagramRenderer {
       dash = "2 2";
     }
     page.commands.add(Command.polyline(points, color, 0.8, dash, connection.getId(), protectedGeometry));
+    if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL) {
+      addFlowArrow(page, points, color, connection.getId());
+    }
     String label = displayLabel(connection);
     Point labelPoint = routeLabelPoint(points);
     if (label == null || label.trim().isEmpty()) {
@@ -780,11 +783,141 @@ public final class NativeEngineeringDiagramRenderer {
     String stroke = convention == null ? "#1f2937" : convention.getStrokeColor();
     String fill = convention == null ? (object.getKind() == EngineeringNode.Kind.EQUIPMENT ? "#eef6ee" : "#eff6ff")
         : convention.getFillColor();
-    page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
+    if (shape == SymbolShape.PROCESS_EQUIPMENT) {
+      addProcessEquipmentSymbol(page, object, position, stroke, fill);
+    } else if (shape == SymbolShape.LINE_TERMINAL) {
+      addLineTerminalSymbol(page, object, position, stroke, fill);
+    } else {
+      page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
+    }
     String primary = displayLabel(object);
     page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
+    String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
+    page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
+  }
+
+  private static void addProcessEquipmentSymbol(Page page, SemanticObject object, Point position, String stroke,
+      String fill) {
+    String family = equipmentFamily(object);
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double right = position.x + OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    double bottom = position.y + OBJECT_HEIGHT / 2.0;
+    if ("SEPARATOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left + 7.0, top), new Point(right - 7.0, top),
+          new Point(right, top + 5.0), new Point(right, bottom - 5.0), new Point(right - 7.0, bottom),
+          new Point(left + 7.0, bottom), new Point(left, bottom - 5.0), new Point(left, top + 5.0)), stroke, fill, 0.7,
+          object.getId()));
+      page.commands.add(Command.line(left + 2.0, position.y + 2.5, right - 2.0, position.y + 2.5, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("HEAT EXCHANGER".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
+          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
+      page.commands.add(Command.line(left + 8.0, top + 3.0, right - 8.0, bottom - 3.0, stroke, 0.5, "", ""));
+      page.commands.add(Command.line(left + 8.0, bottom - 3.0, right - 8.0, top + 3.0, stroke, 0.5, "", ""));
+      return;
+    }
+    if ("COMPRESSOR".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(left, position.y - 4.0), new Point(right, top),
+          new Point(right, bottom), new Point(left, position.y + 4.0)), stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("PUMP".equals(family)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(left + 5.0, top), new Point(right - 8.0, top), new Point(right, position.y),
+              new Point(right - 8.0, bottom), new Point(left + 5.0, bottom), new Point(left, position.y)),
+          stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("VALVE".equals(family)) {
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(left, top), new Point(position.x, position.y), new Point(left, bottom)), stroke, fill,
+          0.7, object.getId()));
+      page.commands.add(Command.polygon(
+          Arrays.asList(new Point(right, top), new Point(position.x, position.y), new Point(right, bottom)), stroke,
+          fill, 0.7, ""));
+      return;
+    }
+    if ("MIXER".equals(family)) {
+      page.commands.add(Command.polygon(Arrays.asList(new Point(position.x, top), new Point(right, position.y),
+          new Point(position.x, bottom), new Point(left, position.y)), stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("SPLITTER".equals(family)) {
+      page.commands.add(
+          Command.polygon(Arrays.asList(new Point(left, top), new Point(right, position.y), new Point(left, bottom)),
+              stroke, fill, 0.7, object.getId()));
+      return;
+    }
+    if ("RECYCLE".equals(family)) {
+      page.commands.add(symbolCommand(SymbolShape.HEXAGON, position, stroke, fill, object.getId()));
+      page.commands.add(Command.text(position.x, position.y, 4.5, "R", stroke, "", "middle"));
+      return;
+    }
+    page.commands.add(symbolCommand(SymbolShape.RECTANGLE, position, stroke, fill, object.getId()));
+  }
+
+  private static void addLineTerminalSymbol(Page page, SemanticObject object, Point position, String stroke,
+      String fill) {
+    double left = position.x - OBJECT_WIDTH / 2.0;
+    double right = position.x + OBJECT_WIDTH / 2.0;
+    double top = position.y - OBJECT_HEIGHT / 2.0;
+    double bottom = position.y + OBJECT_HEIGHT / 2.0;
     page.commands.add(
-        Command.text(position.x, position.y + 4.0, 2.0, object.getKind().name(), "#4b5563", object.getId(), "middle"));
+        Command.polygon(Arrays.asList(new Point(left, top), new Point(right - 7.0, top), new Point(right, position.y),
+            new Point(right - 7.0, bottom), new Point(left, bottom)), stroke, fill, 0.7, object.getId()));
+  }
+
+  private static String equipmentFamily(SemanticObject object) {
+    String javaClass = stringProperty(object, "javaClass", "").toLowerCase(Locale.ROOT);
+    if (javaClass.contains("separator")) {
+      return "SEPARATOR";
+    }
+    if (javaClass.contains("heatexchanger") || javaClass.contains("cooler") || javaClass.contains("heater")) {
+      return "HEAT EXCHANGER";
+    }
+    if (javaClass.contains("compressor")) {
+      return "COMPRESSOR";
+    }
+    if (javaClass.contains("pump")) {
+      return "PUMP";
+    }
+    if (javaClass.contains("valve")) {
+      return "VALVE";
+    }
+    if (javaClass.contains("mixer")) {
+      return "MIXER";
+    }
+    if (javaClass.contains("splitter")) {
+      return "SPLITTER";
+    }
+    if (javaClass.contains("recycle")) {
+      return "RECYCLE";
+    }
+    return "EQUIPMENT";
+  }
+
+  private static void addFlowArrow(Page page, List<Point> points, String color, String connectionId) {
+    for (int index = points.size() - 1; index > 0; index--) {
+      Point start = points.get(index - 1);
+      Point end = points.get(index);
+      double length = distance(start, end);
+      if (length < 0.001) {
+        continue;
+      }
+      double unitX = (end.x - start.x) / length;
+      double unitY = (end.y - start.y) / length;
+      Point tip = new Point(start.x + (end.x - start.x) * 0.65, start.y + (end.y - start.y) * 0.65);
+      Point base = new Point(tip.x - unitX * 3.0, tip.y - unitY * 3.0);
+      double perpendicularX = -unitY * 1.4;
+      double perpendicularY = unitX * 1.4;
+      page.commands.add(Command.polygon(
+          Arrays.asList(tip, new Point(base.x + perpendicularX, base.y + perpendicularY),
+              new Point(base.x - perpendicularX, base.y - perpendicularY)),
+          color, color, 0.4, "flow-arrow:" + connectionId));
+      return;
+    }
   }
 
   private static Command symbolCommand(SymbolShape shape, Point position, String stroke, String fill, String objectId) {
@@ -954,6 +1087,11 @@ public final class NativeEngineeringDiagramRenderer {
   private static boolean isDrawableNode(EngineeringNode.Kind kind) {
     return kind == EngineeringNode.Kind.EQUIPMENT || kind == EngineeringNode.Kind.INSTRUMENT
         || kind == EngineeringNode.Kind.BOUNDARY || kind == EngineeringNode.Kind.PROCESS_TAP;
+  }
+
+  private boolean isDrawableObject(SemanticObject object) {
+    return isDrawableNode(object.getKind()) || object.getKind() == EngineeringNode.Kind.LINE
+        && conventionRegister.getSymbolConvention(EngineeringNode.Kind.LINE) != null;
   }
 
   private static boolean isConnection(EngineeringNode.Kind kind) {
