@@ -469,7 +469,7 @@ public final class NativeEngineeringDiagramRenderer {
       }
     }
     addPortMarkers(page, endpointAnchors);
-    addPidProposalOverlay(page, sheet, objects, positions);
+    addPidProposalOverlay(page, objects, positions);
     addTitleBlock(page, drawing, sheet);
     return page;
   }
