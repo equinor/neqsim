@@ -1746,16 +1746,19 @@ public class NeqSimTools {
    * @param streamJson JSON with streaming action and parameters
    * @return JSON with operation ID or polled results
    */
-  @Tool(description = "Run simulations with incremental streaming results. "
-      + "Starts async operations (parametric sweeps, dynamic sims, Monte Carlo) "
-      + "and polls for new results as they become available. "
-      + "Actions: startParametricSweep, startDynamicStreaming, startMonteCarlo, "
-      + "pollResults, cancelOperation, listOperations.")
+  @Tool(description = "Run bounded in-process simulations with incremental polling. "
+      + "Starts canonical NeqSim parametric sweeps, dynamic simulations, or deterministic "
+      + "Monte Carlo studies. Requests are capped at 1000 sweep points, 10000 dynamic "
+      + "steps, or 1000 iterations; polls return at most 100 records. Operations are "
+      + "principal-scoped, retained in process for 30 minutes, and not durable or distributed. "
+      + "Results require independent engineering review. Actions: startParametricSweep, "
+      + "startDynamicStreaming, startMonteCarlo, pollResults, cancelOperation, listOperations.")
   public String streamSimulation(
-      @ToolArg(description = "JSON with: 'action' (startParametricSweep|startDynamicStreaming|"
-          + "startMonteCarlo|pollResults|cancelOperation|listOperations). "
-          + "For start actions: simulation parameters. "
-          + "For pollResults: 'operationId' and 'lastIndex'.") String streamJson) {
+      @ToolArg(description = "JSON with action. Sweep: components, sweepVariable "
+          + "(temperature|pressure), from, to, points and documented units. Dynamic: processJson, "
+          + "totalTime and timeStep. Monte Carlo: components, iterations and distribution "
+          + "parameters. Poll: operationId and non-negative lastIndex. List reports active "
+          + "execution and fixed request limits.") String streamJson) {
     String policyBlocked = enforceToolAccess("streamSimulation");
     if (policyBlocked != null) {
       return policyBlocked;
