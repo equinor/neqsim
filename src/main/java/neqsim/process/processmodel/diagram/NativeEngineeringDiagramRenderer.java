@@ -52,6 +52,7 @@ public final class NativeEngineeringDiagramRenderer {
   private static final double PORT_MARKER_SIZE = 1.8;
   private static final double PORT_SLOT_MARGIN = 2.0;
   private static final double PARALLEL_LANE_SPACING = 4.0;
+  private static final double OFF_PAGE_LANE_SPACING = 14.0;
   private static final double PID_TAG_TEXT_SIZE = 2.5;
   private static final double PID_HORIZONTAL_MARKER_SPACING = 28.0;
   private static final double PID_VERTICAL_MARKER_SPACING = 10.0;
@@ -445,6 +446,8 @@ public final class NativeEngineeringDiagramRenderer {
     Map<String, Double> routeLanes = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
         ? parallelRouteLanes(sheet, objects)
         : Collections.<String, Double>emptyMap();
+    Map<String, Point> connectorPoints = offPageConnectorPoints(sheet, positions, endpointAnchors, objects,
+        contentRight, contentBottom);
 
     List<String> ids = new ArrayList<String>(sheet.getObjectNodeIds());
     Collections.sort(ids);
@@ -455,7 +458,7 @@ public final class NativeEngineeringDiagramRenderer {
             "Controlled sheet references a semantic object that is absent from the document set", id));
       } else if (isConnection(object.getKind())) {
         addConnection(page, object, positions, endpointAnchors, connectors.get(id), protectedRoutes.get(id), objects,
-            contentRight, contentBottom, routeLanes.containsKey(id) ? routeLanes.get(id).doubleValue() : 0.0,
+            connectorPoints, contentBottom, routeLanes.containsKey(id) ? routeLanes.get(id).doubleValue() : 0.0,
             diagnostics);
       }
     }
@@ -465,7 +468,7 @@ public final class NativeEngineeringDiagramRenderer {
       sheetNumberById.put(controlledSheet.getId(), controlledSheet.getNumber());
     }
     for (OffPageConnector connector : sheet.getOffPageConnectors()) {
-      addOffPageConnector(page, connector, objects, sheetNumberById, contentRight, contentBottom);
+      addOffPageConnector(page, connector, connectorPoints.get(connector.getId()), objects, sheetNumberById);
     }
     for (String id : ids) {
       SemanticObject object = objects.get(id);
@@ -704,7 +707,7 @@ public final class NativeEngineeringDiagramRenderer {
 
   private void addConnection(Page page, SemanticObject connection, Map<String, Point> positions,
       Map<String, Point> endpointAnchors, OffPageConnector connector, ProtectedRoute protectedRoute,
-      Map<String, SemanticObject> objects, double contentRight, double contentBottom, double laneOffset,
+      Map<String, SemanticObject> objects, Map<String, Point> connectorPoints, double contentBottom, double laneOffset,
       List<Diagnostic> diagnostics) {
     List<Point> points = new ArrayList<Point>();
     boolean protectedGeometry = protectedRoute != null;
@@ -715,7 +718,7 @@ public final class NativeEngineeringDiagramRenderer {
     } else {
       Point source = routedEndpointPosition(connection, "sourceEndpointId", true, positions, endpointAnchors, objects);
       Point target = routedEndpointPosition(connection, "targetEndpointId", false, positions, endpointAnchors, objects);
-      Point offPage = connector == null ? null : connectorPoint(connector, contentRight, contentBottom);
+      Point offPage = connector == null ? null : connectorPoints.get(connector.getId());
       if (connector != null && connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE) {
         target = offPage;
       } else if (connector != null) {
@@ -760,12 +763,15 @@ public final class NativeEngineeringDiagramRenderer {
       addFlowArrow(page, points, color, connection.getId());
     }
     String label = displayLabel(connection);
-    Point labelPoint = routeLabelPoint(points);
     if (label == null || label.trim().isEmpty()) {
       diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_LABEL_MISSING",
           "Rendered connection has no primary label and requires drawing review", connection.getId()));
       label = "";
-    } else {
+    }
+    Point labelPoint = routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+        ? collisionAwareRouteLabelPoint(points, label, positions, page.routes, page.width, contentBottom)
+        : routeLabelPoint(points);
+    if (!label.isEmpty()) {
       page.commands
           .add(Command.text(labelPoint.x, labelPoint.y - 3.0, 2.3, label, color, connection.getId(), "middle"));
     }
@@ -802,9 +808,8 @@ public final class NativeEngineeringDiagramRenderer {
     }
   }
 
-  private void addOffPageConnector(Page page, OffPageConnector connector, Map<String, SemanticObject> objects,
-      Map<String, String> sheetNumberById, double contentRight, double contentBottom) {
-    Point point = connectorPoint(connector, contentRight, contentBottom);
+  private void addOffPageConnector(Page page, OffPageConnector connector, Point point,
+      Map<String, SemanticObject> objects, Map<String, String> sheetNumberById) {
     double direction = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 1.0 : -1.0;
     List<Point> triangle = Arrays.asList(new Point(point.x, point.y),
         new Point(point.x - direction * 5.0, point.y - 3.0), new Point(point.x - direction * 5.0, point.y + 3.0),
@@ -1395,6 +1400,57 @@ public final class NativeEngineeringDiagramRenderer {
     return new Point(x, y);
   }
 
+  private Map<String, Point> offPageConnectorPoints(Sheet sheet, Map<String, Point> positions,
+      Map<String, Point> endpointAnchors, Map<String, SemanticObject> objects, double contentRight,
+      double contentBottom) {
+    Map<String, Point> result = new TreeMap<String, Point>();
+    if (routingMode != RoutingMode.FIXED_PORT_ORTHOGONAL) {
+      for (OffPageConnector connector : sheet.getOffPageConnectors()) {
+        result.put(connector.getId(), connectorPoint(connector, contentRight, contentBottom));
+      }
+      return result;
+    }
+    for (EngineeringDiagramDocumentSet.ConnectorRole role : EngineeringDiagramDocumentSet.ConnectorRole.values()) {
+      List<OffPageConnector> connectors = new ArrayList<OffPageConnector>();
+      final Map<String, Double> desiredY = new TreeMap<String, Double>();
+      for (OffPageConnector connector : sheet.getOffPageConnectors()) {
+        if (connector.getRole() != role) {
+          continue;
+        }
+        connectors.add(connector);
+        SemanticObject connection = objects.get(connector.getSemanticConnectionId());
+        String property = role == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? "sourceEndpointId"
+            : "targetEndpointId";
+        Point local = connection == null ? null
+            : routedEndpointPosition(connection, property, role == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE,
+                positions, endpointAnchors, objects);
+        desiredY.put(connector.getId(), Double.valueOf(local == null ? CONTENT_TOP + 20.0 : local.y));
+      }
+      Collections.sort(connectors, new Comparator<OffPageConnector>() {
+        @Override
+        public int compare(OffPageConnector left, OffPageConnector right) {
+          int byY = Double.compare(desiredY.get(left.getId()).doubleValue(), desiredY.get(right.getId()).doubleValue());
+          return byY == 0 ? left.getId().compareTo(right.getId()) : byY;
+        }
+      });
+      double lower = CONTENT_TOP + 12.0;
+      double upper = contentBottom - 12.0;
+      double spacing = connectors.size() < 2 ? 0.0
+          : Math.min(OFF_PAGE_LANE_SPACING, (upper - lower) / (connectors.size() - 1));
+      double previous = lower - spacing;
+      for (int index = 0; index < connectors.size(); index++) {
+        OffPageConnector connector = connectors.get(index);
+        double reservedUpper = upper - (connectors.size() - index - 1) * spacing;
+        double y = Math.max(desiredY.get(connector.getId()).doubleValue(), previous + spacing);
+        y = Math.max(lower, Math.min(reservedUpper, y));
+        double x = role == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? contentRight : CONTENT_LEFT;
+        result.put(connector.getId(), new Point(x, y));
+        previous = y;
+      }
+    }
+    return result;
+  }
+
   private static String displayLabel(SemanticObject object) {
     for (EngineeringDiagramDesignationRegister.Designation designation : object.getDesignations()) {
       return designation.getValue();
@@ -1447,6 +1503,52 @@ public final class NativeEngineeringDiagramRenderer {
       remaining -= segmentLength;
     }
     return points.get(0);
+  }
+
+  private static Point collisionAwareRouteLabelPoint(List<Point> points, String label, Map<String, Point> positions,
+      List<RouteView> routes, double pageWidth, double contentBottom) {
+    Point best = routeLabelPoint(points);
+    int bestScore = Integer.MAX_VALUE;
+    double bestSegmentLength = -1.0;
+    for (int index = 1; index < points.size(); index++) {
+      Point start = points.get(index - 1);
+      Point end = points.get(index);
+      if (Math.abs(start.y - end.y) > 0.0000001) {
+        continue;
+      }
+      double segmentLength = Math.abs(end.x - start.x);
+      for (double fraction : new double[] { 0.5, 0.25, 0.75 }) {
+        Point candidate = new Point(start.x + (end.x - start.x) * fraction, start.y);
+        int score = routeLabelCollisionScore(label, candidate, positions, routes, pageWidth, contentBottom);
+        if (score < bestScore || score == bestScore && segmentLength > bestSegmentLength) {
+          best = candidate;
+          bestScore = score;
+          bestSegmentLength = segmentLength;
+        }
+      }
+    }
+    return best;
+  }
+
+  private static int routeLabelCollisionScore(String label, Point candidate, Map<String, Point> positions,
+      List<RouteView> routes, double pageWidth, double contentBottom) {
+    double width = estimatedTextWidth(label, 2.3);
+    int score = 0;
+    if (candidate.x - width / 2.0 < CONTENT_LEFT || candidate.x + width / 2.0 > pageWidth - CONTENT_LEFT
+        || candidate.y - 5.0 < CONTENT_TOP || candidate.y > contentBottom) {
+      score += 1000;
+    }
+    for (Point position : positions.values()) {
+      if (labelIntersectsObject(label, candidate, position)) {
+        score += 100;
+      }
+    }
+    for (RouteView route : routes) {
+      if (!route.label.isEmpty() && labelsOverlap(label, candidate, route.label, route.labelPoint)) {
+        score += 100;
+      }
+    }
+    return score;
   }
 
   private static double distance(Point start, Point end) {
