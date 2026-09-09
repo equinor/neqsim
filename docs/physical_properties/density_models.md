@@ -772,6 +772,20 @@ model. Acoustic rows therefore remain inadmissible for volumetric-Pitzer
 calibration until every matched property, uncertainty, source lineage, and
 redistribution right passes the campaign provenance gates.
 
+The SI conversion is checked against the CC BY 4.0 compressed-water results of
+El Hawary and Meier (2023) at 303.15 K and 50 MPa. Their published sound-speed
+correlation and Table 5 density and heat-capacity values give
+$\kappa_T=3.96032\times10^{-10}$ 1/Pa. This agrees within 0.018% with the
+alternative $\kappa_Sc_p/c_v$ identity and within 0.030% with a symmetric
+45/55 MPa density derivative. The benchmark validates units and thermodynamic
+consistency of the conversion. Because the source derived density and heat
+capacity through thermodynamic integration of its acoustic measurements, this
+is not an independent experimental validation. It is pure-water evidence and
+does not qualify CaCl2 acoustic data or any volumetric-Pitzer coefficient.
+
+Reference: El Hawary and Meier (2023),
+[doi:10.1007/s10765-023-03276-1](https://doi.org/10.1007/s10765-023-03276-1).
+
 ### Qualification boundary
 
 - The caller owns coefficient provenance and must keep calibration and
