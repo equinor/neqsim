@@ -19,6 +19,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * ThrottlingValve class.
@@ -151,10 +152,14 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     return getMechanicalDesign().maxDesignVolumeFlow;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Returns the configured outlet pressure in absolute bar, independently of the unit used to set it.
+   *
+   * @return configured outlet pressure in bara
+   */
   @Override
   public double getOutletPressure() {
-    return this.pressure;
+    return new PressureUnit(pressure, pressureUnit).getValue("bara");
   }
 
   /** {@inheritDoc} */
@@ -229,6 +234,15 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     pressureUnit = unit;
     this.pressure = pressure;
     getOutletStream().getThermoSystem().setPressure(pressure, pressureUnit);
+  }
+
+  /**
+   * Applies a solver pressure without changing the user's configured pressure unit.
+   *
+   * @param pressureBara calculated outlet pressure in absolute bar
+   */
+  private void setCalculatedOutletPressure(double pressureBara) {
+    setOutletPressure(new PressureUnit(pressureBara, "bara").getValue(pressureUnit));
   }
 
   /** {@inheritDoc} */
@@ -325,7 +339,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * Calculates the outlet pressure based on the adjusted Kv value.
    *
    * @param KvAdjusted the adjusted flow coefficient (Kv)
-   * @return the calculated outlet pressure
+   * @return the calculated outlet pressure in bara, independently of the configured pressure unit
    */
   public double calculateOutletPressure(double KvAdjusted) {
     return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(KvAdjusted, inStream) / 1.0e5;
@@ -400,11 +414,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // update outlet pressure if required
     if (valveKvSet && isCalcPressure) {
       outPres = calculateOutletPressure(adjustKv(Kv, percentValveOpening));
-      setOutletPressure(outPres);
+      setCalculatedOutletPressure(outPres);
     }
     if (deltaPressure != 0) {
       thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure, pressureUnit);
-      setOutletPressure(thermoSystem.getPressure());
+      setCalculatedOutletPressure(thermoSystem.getPressure("bara"));
     }
 
     if ((inStream.getPressure(pressureUnit) - pressure) < 0) {
@@ -418,13 +432,17 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     }
 
     if (getSpecification().equals("out stream")) {
-      thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
+      thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
+    }
+
+    // An unset pressure retains the outlet stream's existing absolute pressure.
+    if (getOutletPressure() == 0.0) {
+      thermoSystem.setPressure(outPres, "bara");
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
-      thermoSystem.setPressure(outPres, pressureUnit);
+    if (isIsoThermal() || Math.abs(thermoSystem.getPressure("bara") - inletPressure) < 1e-6
+        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || thermoSystem.getPressure("bara") == 0) {
       thermoOps.TPflash();
     } else {
       runPHflashWithNaNRetry(thermoOps, enthalpy);
@@ -518,20 +536,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     thermoSystem.init(2);
     double enthalpy = thermoSystem.getEnthalpy();
 
-    double outPres = getOutletStream().getThermoSystem().getPressure();
-    pressure = outPres;
+    double outPres = getOutletStream().getPressure("bara");
+    pressure = getOutletStream().getPressure(pressureUnit);
     double deltaP = Math.max(inStream.getPressure() - outPres, 0.0);
 
-    if ((thermoSystem.getPressure(pressureUnit) - outPres) < 0) {
+    if ((thermoSystem.getPressure("bara") - outPres) < 0) {
       if (isAcceptNegativeDP()) {
-        thermoSystem.setPressure(outPres, pressureUnit);
+        thermoSystem.setPressure(outPres, "bara");
       }
     } else {
-      thermoSystem.setPressure(outPres, pressureUnit);
+      thermoSystem.setPressure(outPres, "bara");
     }
 
     if (getSpecification().equals("out stream")) {
-      thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
+      thermoSystem.setPressure(outStream.getPressure("bara"), "bara");
     }
     double adjustKv = adjustKv(Kv, percentValveOpening);
     if (deltaP > 0.0 && !isCalcPressure) {
@@ -546,8 +564,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (valveKvSet && isCalcPressure) {
       inStream.getFluid().initProperties();
       outPres = calculateOutletPressure(adjustKv);
-      thermoSystem.setPressure(outPres);
-      setOutletPressure(outPres);
+      thermoSystem.setPressure(outPres, "bara");
+      setCalculatedOutletPressure(outPres);
+      deltaP = Math.max(inStream.getPressure("bara") - outPres, 0.0);
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -1581,7 +1600,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   }
 
   /**
-   * Auto-sizes the valve based on current flow conditions with specified design opening.
+   * Auto-sizes the valve based on current flow conditions with specified design opening. The inlet must have been
+   * flashed at the design conditions. Sizing preserves its flow, phase split and initialized thermodynamic state.
    *
    * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
    * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
@@ -1602,13 +1622,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     // have established a Cv at a different operating point; running with that stale Cv
     // must not overwrite the new design flow before it is captured for sizing.
     double designFlowRate = getInletStream().getFlowRate("kg/hr");
-    double outletFlowRate = getOutletStream().getFlowRate("kg/hr");
+    double designMolarFlowRate = getInletStream().getFlowRate("mole/sec");
+    double outletMolarFlowRate = getOutletStream().getFlowRate("mole/sec");
 
     // Run the valve first to establish phase type and thermodynamic conditions.
     run();
 
-    getInletStream().setFlowRate(designFlowRate, "kg/hr");
-    getOutletStream().setFlowRate(outletFlowRate, "kg/hr");
+    // setFlowRate() reinitializes the phase state even for an unchanged rate. In
+    // rich gas this can nearly double the density and size a different valve.
+    restoreMolarFlowRate(getInletStream(), designMolarFlowRate);
+    restoreMolarFlowRate(getOutletStream(), outletMolarFlowRate);
 
     // Check if we have meaningful flow
     double flowRate = designFlowRate;
@@ -1678,6 +1701,20 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     initializeCapacityConstraints();
 
     autoSized = true;
+  }
+
+  /**
+   * Restores a sizing flow only when it changed, retaining the stream's phase split and composition.
+   *
+   * @param stream stream whose design flow is to be restored
+   * @param molarFlowRate original molar flow in mol/s
+   */
+  private void restoreMolarFlowRate(StreamInterface stream, double molarFlowRate) {
+    SystemInterface fluid = stream.getFluid();
+    if (fluid.getTotalNumberOfMoles() != molarFlowRate) {
+      fluid.setTotalNumberOfMoles(molarFlowRate);
+      fluid.init(2);
+    }
   }
 
   /**
