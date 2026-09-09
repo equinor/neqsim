@@ -119,20 +119,26 @@ declared recycle or backward connections receive a deterministic orthogonal retu
 off-page connectors remain the cross-sheet boundary. Their lanes follow the local canonical endpoint
 where space permits and retain deterministic minimum separation when several continuations share one
 sheet edge. Connection labels are selected from horizontal route segments using deterministic
-object- and label-collision scoring instead of being placed on a shared vertical trunk. A reviewed
-protected route remains authoritative and is never replaced by automatic routing. Each fixed-port
+object- and label-collision scoring instead of being placed on a shared vertical trunk. For an
+unprotected connection, automatic routing evaluates the direct orthogonal path and deterministic
+page channels, then selects by fewest non-endpoint object intersections, best achievable label
+collision score, and shortest route, in that order. A reviewed protected route remains authoritative
+and is never replaced by automatic routing. Each fixed-port
 route also carries a deterministic vector arrowhead in SVG and PDF. When the opt-in `LINE_TERMINAL` convention is present,
 each visible off-page label combines the canonical connection designation, directional `TO` or
 `FROM`, and the controlled peer-sheet number. Stable connector and peer-sheet identities remain in
 the document model and SVG semantic attributes without being exposed as reader-facing drawing text.
+Long line-terminal identities remain complete and are reduced only as far as 2.2 mm text to fit
+inside the fixed vector symbol; the renderer never truncates or substitutes a machine identifier.
 Legacy convention/routing profiles retain their previous labels and bytes.
 
 `DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED` reports a malformed endpoint that cannot resolve to an owner.
 A valid peer owner absent from an off-page connection's current sheet is expected and does not create a
-false warning. Connector-lane and route-label placement reduce common congestion but do not suppress
-the renderer's whole-sheet collision diagnostics. Fixed-port routing is deterministic proposal geometry; it is not obstacle-optimal,
-standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
-layout refinement is required.
+false warning. Connector-lane, obstacle-aware route, and route-label placement reduce common
+congestion but do not suppress the renderer's whole-sheet collision diagnostics. Fixed-port routing
+is deterministic proposal geometry; it is not globally obstacle-optimal, standards-qualified, or
+drawing-approved. Projects should retain protected routes where accountable layout refinement is
+required.
 
 `EngineeringDiagramLayoutRegister.SheetOverviewRegion` can place a controlled
 detail-sheet index on another sheet using source-evidenced paper-millimetre
