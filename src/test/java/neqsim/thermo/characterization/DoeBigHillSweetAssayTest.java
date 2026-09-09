@@ -87,8 +87,8 @@ public class DoeBigHillSweetAssayTest {
     sourceWeightPercent[0] = 0.0;
     assertEquals(18.44, DoeBigHillSweetAssay.getVacuumScreeningSourceWeightPercent()[0], 0.0);
 
-    assertArrayEquals(new double[] { 18.44 / 42.84, 12.84 / 42.84, 11.56 / 42.84 },
-        assay.getResolvedMassFractions(), 1.0e-12);
+    assertArrayEquals(new double[] { 18.44 / 42.84, 12.84 / 42.84, 11.56 / 42.84 }, assay.getResolvedMassFractions(),
+        1.0e-12);
     assertEquals(1.0, sum(assay.getResolvedMassFractions()), 1.0e-12);
     assertEquals(0.8152119514472456, assay.getBulkSulfurMassPercent(), 1.0e-12);
     assertEquals(0.24922969187675068, assay.getBulkNitrogenMassPercent(), 1.0e-12);
