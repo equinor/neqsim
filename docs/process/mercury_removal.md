@@ -130,6 +130,38 @@ Two parameters model degraded column internals:
 
 The combined effect reduces removal efficiency significantly. For example, a bed with `degradationFactor = 0.6` and `bypassFraction = 0.1` will have both lower capacity and 10% of the gas untreated.
 
+### Condensable-contaminant screening
+
+After running the bed, `assessContaminant(componentName, saturationMoleFraction)` screens a
+contaminant present in the last calculated bed fluid. Supply the bulk gas saturation mole fraction
+at the same temperature and pressure, calculated separately using an appropriate equilibrium model.
+The screening uses relative saturation $a = y/y_{sat}$ and a representative pore radius:
+
+| Pore radius | Filling model | Reported `maxAllowableMoleFraction` |
+| --- | --- | --- |
+| At least 2 nm | Kelvin onset; representative pore is either open or filled | $y_{sat}$ multiplied by Kelvin onset |
+| Below 2 nm | Dubinin–Radushkevich continuous volume filling | Concentration giving 5% pore filling |
+
+For the micropore branch, $W/W_0 = \exp[-(RT\ln(1/a)/(\beta E_0))^2]$. The corresponding
+screening concentration is $y_{lim} = y_{sat}\exp[-\beta E_0\sqrt{-\ln(0.05)}/(RT)]$.
+`condensationExpected` is true above 5% filling for micropores and at or above Kelvin onset
+for larger pores. `kelvinOnset` remains a diagnostic value in the micropore branch; use the
+reported concentration limit for the selected mechanism. The 2 nm switch and 5% criterion
+are screening conventions, not a calibrated sorbent performance specification.
+
+Configure the radius with `setSorbentPoreRadius` (nm), pore volume with `setSorbentPoreVolume`
+(cm³/g), and geometry with `setSorbentPoreType`. Defaults are 6 nm, 0.35 cm³/g, and cylindrical
+pores. Micropore defaults are $E_0 = 8000$ J/mol and $\beta = 1$; fit these to measured
+isotherms for the actual contaminant and sorbent using `setDubininCharacteristicEnergy` and
+`setDubininAffinityCoefficient`. Pore volume does not change the fractional filling criterion.
+
+`getContaminantAssessmentJson` includes the mechanism, saturation, filling fraction, and
+concentration limit in mole fraction and ppmv. `applyContaminantDegradation` replaces the bed's
+degradation factor with one minus the assessed filling fraction. Run the bed again to apply
+that factor to removal performance. Assessments of several contaminants do not automatically
+combine their effects; each application replaces the previous factor. This is a pore-blocking
+screening approximation and does not predict competitive adsorption or contaminant transport.
+
 ---
 
 ## API Reference

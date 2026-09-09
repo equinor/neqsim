@@ -125,6 +125,23 @@ public class MercuryRemovalBedContaminantTest {
         "Micropore filling fraction must be a physical fraction, was " + a.poreFillingFraction);
   }
 
+  /** The reported micropore concentration limit must correspond to the screening criterion. */
+  @Test
+  public void testMicroporeLimitMatchesFillingCriterion() {
+    double ySat = methanolSaturation();
+    MercuryRemovalBed bed = runBed(200.0e-6);
+    bed.setSorbentPoreRadius(1.0);
+    MercuryRemovalBed.ContaminantAssessment assessment = bed.assessContaminant("methanol", ySat);
+    double fillingAtLimit = CapillaryCondensationModel.microporeFillingFraction(
+        assessment.maxAllowableMoleFraction / ySat, bed.getInletStream().getThermoSystem().getTemperature(),
+        bed.getDubininCharacteristicEnergy(), bed.getDubininAffinityCoefficient());
+    assertEquals(0.05, fillingAtLimit, 1.0e-12,
+        "The micropore limit must use Dubinin filling rather than the Kelvin onset");
+    bed.setDubininCharacteristicEnergy(10000.0);
+    assertTrue(bed.assessContaminant("methanol", ySat).maxAllowableMoleFraction < assessment.maxAllowableMoleFraction,
+        "Stronger adsorption must lower the allowable concentration");
+  }
+
   /**
    * More methanol must mean more relative saturation and never less pore blocking.
    */

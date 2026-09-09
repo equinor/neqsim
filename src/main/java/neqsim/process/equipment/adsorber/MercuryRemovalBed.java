@@ -10,6 +10,7 @@ import neqsim.physicalproperties.interfaceproperties.solidadsorption.CapillaryCo
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -102,6 +103,9 @@ public class MercuryRemovalBed extends TwoPortEquipment {
 
   /** Affinity coefficient of the contaminant relative to the Dubinin reference vapour. */
   private double dubininAffinityCoefficient = 1.0;
+
+  /** Micropore volume filling fraction above which the screening flags blocking. */
+  private static final double MICROPORE_BLOCKING_FRACTION = 0.05;
 
   // ======================================================================
   // Chemisorption kinetics
@@ -1209,7 +1213,7 @@ public class MercuryRemovalBed extends TwoPortEquipment {
     /** Relative saturation at which the representative pore fills, from the Kelvin equation. */
     public double kelvinOnset;
 
-    /** Maximum contaminant mole fraction that keeps the representative pore open. */
+    /** Concentration at Kelvin onset, or at five percent filling for a microporous sorbent. */
     public double maxAllowableMoleFraction;
 
     /** Fraction of sorbent pore volume occupied by condensate, 0 to 1. */
@@ -1281,7 +1285,13 @@ public class MercuryRemovalBed extends TwoPortEquipment {
       result.mechanism = "micropore-filling";
       result.poreFillingFraction = CapillaryCondensationModel.microporeFillingFraction(result.relativeSaturation,
           system.getTemperature(), dubininCharacteristicEnergy, dubininAffinityCoefficient);
-      result.condensationExpected = result.poreFillingFraction > 0.05;
+      // Invert the same Dubinin criterion used for the flag. A Kelvin limit would overstate
+      // the allowable concentration for this branch even when the filling warning is correct.
+      double limitingActivity = Math.exp(-dubininAffinityCoefficient * dubininCharacteristicEnergy
+          / (ThermodynamicConstantsInterface.R * system.getTemperature())
+          * Math.sqrt(-Math.log(MICROPORE_BLOCKING_FRACTION)));
+      result.maxAllowableMoleFraction = saturationMoleFraction * limitingActivity;
+      result.condensationExpected = result.poreFillingFraction > MICROPORE_BLOCKING_FRACTION;
     } else {
       result.mechanism = "kelvin";
       result.poreFillingFraction = result.relativeSaturation >= result.kelvinOnset ? 1.0 : 0.0;

@@ -292,23 +292,109 @@ public final class EngineeringDiagramLayoutRegister implements Serializable {
     }
   }
 
+  /**
+   * Immutable navigation region showing the contents of one controlled detail sheet on another sheet.
+   *
+   * <p>
+   * The region is a document index, not a semantic plant object and not a process-connectivity claim. It allows a
+   * sparse plant overview to identify the governed detail sheets without duplicating or inventing equipment.
+   * </p>
+   */
+  public static final class SheetOverviewRegion extends LayoutEvidence {
+    private static final long serialVersionUID = 1000L;
+    private final String overviewSheetKey;
+    private final String targetSheetKey;
+    private final double x;
+    private final double y;
+    private final double width;
+    private final double height;
+    private final CoordinateUnit unit;
+
+    public SheetOverviewRegion(String overviewSheetKey, String targetSheetKey, double x, double y, double width,
+        double height, CoordinateUnit unit, String sourceReference, EvidenceState evidenceState, String recordedBy,
+        String recordedAt, String revision) {
+      super(sourceReference, evidenceState, recordedBy, recordedAt, revision);
+      this.overviewSheetKey = requireText(overviewSheetKey, "overviewSheetKey");
+      this.targetSheetKey = requireText(targetSheetKey, "targetSheetKey");
+      this.x = requireCoordinate(x, "x");
+      this.y = requireCoordinate(y, "y");
+      this.width = requirePositiveDimension(width, "width");
+      this.height = requirePositiveDimension(height, "height");
+      if (unit == null) {
+        throw new IllegalArgumentException("unit must not be null");
+      }
+      this.unit = unit;
+    }
+
+    public String getOverviewSheetKey() {
+      return overviewSheetKey;
+    }
+
+    public String getTargetSheetKey() {
+      return targetSheetKey;
+    }
+
+    public double getX() {
+      return x;
+    }
+
+    public double getY() {
+      return y;
+    }
+
+    public double getWidth() {
+      return width;
+    }
+
+    public double getHeight() {
+      return height;
+    }
+
+    public CoordinateUnit getUnit() {
+      return unit;
+    }
+
+    Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("overviewSheetKey", overviewSheetKey);
+      result.put("targetSheetKey", targetSheetKey);
+      result.put("x", Double.valueOf(x));
+      result.put("y", Double.valueOf(y));
+      result.put("width", Double.valueOf(width));
+      result.put("height", Double.valueOf(height));
+      result.put("unit", unit.name());
+      result.put("connectivityClaimed", Boolean.FALSE);
+      addEvidence(result);
+      return result;
+    }
+  }
+
   private final List<SheetDefinition> sheets;
   private final List<SheetAssignment> assignments;
   private final List<PinnedPosition> pinnedPositions;
   private final List<ProtectedRoute> protectedRoutes;
+  private final List<SheetOverviewRegion> overviewRegions;
 
   /** Creates an empty immutable layout register. */
   public EngineeringDiagramLayoutRegister() {
     this(Collections.<SheetDefinition>emptyList(), Collections.<SheetAssignment>emptyList(),
-        Collections.<PinnedPosition>emptyList(), Collections.<ProtectedRoute>emptyList());
+        Collections.<PinnedPosition>emptyList(), Collections.<ProtectedRoute>emptyList(),
+        Collections.<SheetOverviewRegion>emptyList());
   }
 
   public EngineeringDiagramLayoutRegister(List<SheetDefinition> sheets, List<SheetAssignment> assignments,
       List<PinnedPosition> pinnedPositions, List<ProtectedRoute> protectedRoutes) {
+    this(sheets, assignments, pinnedPositions, protectedRoutes, Collections.<SheetOverviewRegion>emptyList());
+  }
+
+  public EngineeringDiagramLayoutRegister(List<SheetDefinition> sheets, List<SheetAssignment> assignments,
+      List<PinnedPosition> pinnedPositions, List<ProtectedRoute> protectedRoutes,
+      List<SheetOverviewRegion> overviewRegions) {
     this.sheets = sortedSheets(sheets);
     this.assignments = sortedAssignments(assignments);
     this.pinnedPositions = sortedPositions(pinnedPositions);
     this.protectedRoutes = sortedRoutes(protectedRoutes);
+    this.overviewRegions = sortedOverviewRegions(overviewRegions);
   }
 
   public List<SheetDefinition> getSheets() {
@@ -327,28 +413,38 @@ public final class EngineeringDiagramLayoutRegister implements Serializable {
     return Collections.unmodifiableList(new ArrayList<ProtectedRoute>(protectedRoutes));
   }
 
+  public List<SheetOverviewRegion> getOverviewRegions() {
+    return Collections.unmodifiableList(new ArrayList<SheetOverviewRegion>(overviewRegions));
+  }
+
   public EngineeringDiagramLayoutRegister withSheet(SheetDefinition sheet) {
     List<SheetDefinition> result = new ArrayList<SheetDefinition>(sheets);
     result.add(requireItem(sheet, "sheet"));
-    return new EngineeringDiagramLayoutRegister(result, assignments, pinnedPositions, protectedRoutes);
+    return new EngineeringDiagramLayoutRegister(result, assignments, pinnedPositions, protectedRoutes, overviewRegions);
   }
 
   public EngineeringDiagramLayoutRegister withAssignment(SheetAssignment assignment) {
     List<SheetAssignment> result = new ArrayList<SheetAssignment>(assignments);
     result.add(requireItem(assignment, "assignment"));
-    return new EngineeringDiagramLayoutRegister(sheets, result, pinnedPositions, protectedRoutes);
+    return new EngineeringDiagramLayoutRegister(sheets, result, pinnedPositions, protectedRoutes, overviewRegions);
   }
 
   public EngineeringDiagramLayoutRegister withPinnedPosition(PinnedPosition position) {
     List<PinnedPosition> result = new ArrayList<PinnedPosition>(pinnedPositions);
     result.add(requireItem(position, "position"));
-    return new EngineeringDiagramLayoutRegister(sheets, assignments, result, protectedRoutes);
+    return new EngineeringDiagramLayoutRegister(sheets, assignments, result, protectedRoutes, overviewRegions);
   }
 
   public EngineeringDiagramLayoutRegister withProtectedRoute(ProtectedRoute route) {
     List<ProtectedRoute> result = new ArrayList<ProtectedRoute>(protectedRoutes);
     result.add(requireItem(route, "route"));
-    return new EngineeringDiagramLayoutRegister(sheets, assignments, pinnedPositions, result);
+    return new EngineeringDiagramLayoutRegister(sheets, assignments, pinnedPositions, result, overviewRegions);
+  }
+
+  public EngineeringDiagramLayoutRegister withOverviewRegion(SheetOverviewRegion region) {
+    List<SheetOverviewRegion> result = new ArrayList<SheetOverviewRegion>(overviewRegions);
+    result.add(requireItem(region, "region"));
+    return new EngineeringDiagramLayoutRegister(sheets, assignments, pinnedPositions, protectedRoutes, result);
   }
 
   private static List<SheetDefinition> sortedSheets(List<SheetDefinition> values) {
@@ -421,6 +517,24 @@ public final class EngineeringDiagramLayoutRegister implements Serializable {
     return Collections.unmodifiableList(result);
   }
 
+  private static List<SheetOverviewRegion> sortedOverviewRegions(List<SheetOverviewRegion> values) {
+    List<SheetOverviewRegion> result = checkedCopy(values, "overviewRegions");
+    Collections.sort(result, new Comparator<SheetOverviewRegion>() {
+      @Override
+      public int compare(SheetOverviewRegion left, SheetOverviewRegion right) {
+        int overview = left.getOverviewSheetKey().compareTo(right.getOverviewSheetKey());
+        return overview != 0 ? overview : left.getTargetSheetKey().compareTo(right.getTargetSheetKey());
+      }
+    });
+    requireUnique(result, new Key<SheetOverviewRegion>() {
+      @Override
+      public String value(SheetOverviewRegion item) {
+        return item.getOverviewSheetKey() + "\n" + item.getTargetSheetKey();
+      }
+    }, "overview/target sheet region");
+    return Collections.unmodifiableList(result);
+  }
+
   private interface Key<T> {
     String value(T item);
   }
@@ -457,6 +571,13 @@ public final class EngineeringDiagramLayoutRegister implements Serializable {
   private static double requireCoordinate(double value, String name) {
     if (Double.isNaN(value) || Double.isInfinite(value) || value < 0.0) {
       throw new IllegalArgumentException(name + " must be a finite non-negative coordinate");
+    }
+    return value;
+  }
+
+  private static double requirePositiveDimension(double value, String name) {
+    if (Double.isNaN(value) || Double.isInfinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException(name + " must be a finite positive dimension");
     }
     return value;
   }

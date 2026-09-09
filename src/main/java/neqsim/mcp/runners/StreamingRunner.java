@@ -44,6 +44,21 @@ public final class StreamingRunner {
   /** Max concurrent streaming operations. */
   private static final int MAX_OPERATIONS = 20;
 
+  /** Maximum points accepted for a parametric sweep. */
+  static final int MAX_SWEEP_POINTS = 1000;
+
+  /** Maximum time steps accepted for one dynamic operation. */
+  static final int MAX_DYNAMIC_STEPS = 10000;
+
+  /** Maximum iterations accepted for one Monte Carlo operation. */
+  static final int MAX_MONTE_CARLO_ITERATIONS = 1000;
+
+  /** Maximum result records returned by one poll. */
+  static final int MAX_RESULTS_PER_POLL = 100;
+
+  /** Maximum accepted serialized process definition size. */
+  private static final int MAX_PROCESS_JSON_BYTES = 256 * 1024;
+
   /** Retention time for completed streaming operations. */
   private static final long OPERATION_RETENTION_MS = 30L * 60L * 1000L;
 
@@ -103,15 +118,13 @@ public final class StreamingRunner {
    */
   private static String startParametricSweep(JsonObject input) {
     cleanupOperations();
-    if (OPERATIONS.size() >= MAX_OPERATIONS) {
-      return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
-    }
-
     String opId = newOperationId("sweep");
     StreamingOperation op = new StreamingOperation(opId, "parametric_sweep");
 
     // Parse sweep parameters
-    JsonObject components = input.has("components") ? input.getAsJsonObject("components") : new JsonObject();
+    JsonObject components = input.has("components") && input.get("components").isJsonObject()
+        ? input.getAsJsonObject("components")
+        : null;
     String model = input.has("model") ? input.get("model").getAsString() : "SRK";
     String sweepVar = input.has("sweepVariable") ? input.get("sweepVariable").getAsString() : "temperature";
     double from = input.has("from") ? input.get("from").getAsDouble() : 0;
@@ -124,6 +137,34 @@ public final class StreamingRunner {
     String fixedTempUnit = input.has("fixedTemperatureUnit") ? input.get("fixedTemperatureUnit").getAsString() : "C";
     double fixedPressure = input.has("fixedPressure") ? input.get("fixedPressure").getAsDouble() : 1.0;
     String fixedPressureUnit = input.has("fixedPressureUnit") ? input.get("fixedPressureUnit").getAsString() : "bara";
+
+    String componentError = validateComponents(components);
+    if (componentError != null) {
+      return componentError;
+    }
+    if (points < 1 || points > MAX_SWEEP_POINTS) {
+      return errorJson("INVALID_POINTS", "points must be between 1 and " + MAX_SWEEP_POINTS,
+          "Choose a bounded positive sweep size");
+    }
+    if (!"temperature".equalsIgnoreCase(sweepVar) && !"pressure".equalsIgnoreCase(sweepVar)) {
+      return errorJson("INVALID_SWEEP_VARIABLE", "sweepVariable must be temperature or pressure",
+          "Use one of the documented sweep variables");
+    }
+    if (!isTemperatureUnit(fixedTempUnit) || !isPressureUnit(fixedPressureUnit)
+        || ("temperature".equalsIgnoreCase(sweepVar) && !isTemperatureUnit(unit))
+        || ("pressure".equalsIgnoreCase(sweepVar) && !isPressureUnit(unit))) {
+      return errorJson("INVALID_UNIT", "Unsupported sweep or fixed-condition unit",
+          "Use C, K or F for temperature and bara, bar, psi, kPa, MPa or atm for pressure");
+    }
+    if (!isFinite(from) || !isFinite(to) || !isFinite(fixedTemp) || !isFinite(fixedPressure)
+        || convertToKelvin(fixedTemp, fixedTempUnit) <= 0.0 || convertToBara(fixedPressure, fixedPressureUnit) <= 0.0
+        || ("temperature".equalsIgnoreCase(sweepVar)
+            && (convertToKelvin(from, unit) <= 0.0 || convertToKelvin(to, unit) <= 0.0))
+        || ("pressure".equalsIgnoreCase(sweepVar)
+            && (convertToBara(from, unit) <= 0.0 || convertToBara(to, unit) <= 0.0))) {
+      return errorJson("INVALID_RANGE", "Sweep and fixed conditions must be finite and physically positive",
+          "Use temperatures above absolute zero and positive absolute pressures");
+    }
 
     op.totalSteps = points;
     String limited = registerOperation(op);
@@ -188,7 +229,8 @@ public final class StreamingRunner {
     });
 
     JsonObject response = new JsonObject();
-    response.addProperty("status", "started");
+    response.addProperty("status", "success");
+    response.addProperty("operationStatus", "started");
     response.addProperty("operationId", opId);
     response.addProperty("type", "parametric_sweep");
     response.addProperty("totalPoints", points);
@@ -204,18 +246,41 @@ public final class StreamingRunner {
    */
   private static String startDynamicStreaming(JsonObject input) {
     cleanupOperations();
-    if (OPERATIONS.size() >= MAX_OPERATIONS) {
-      return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
-    }
-
     String opId = newOperationId("dynamic");
     StreamingOperation op = new StreamingOperation(opId, "dynamic_simulation");
 
-    String processJson = input.has("processJson") ? GSON.toJson(input.get("processJson")) : "{}";
+    if (!input.has("processJson") || input.get("processJson").isJsonNull()) {
+      return errorJson("MISSING_PROCESS", "processJson is required for dynamic streaming",
+          "Provide a nested process definition or a JSON string");
+    }
+    JsonElement processElement = input.get("processJson");
+    if (!processElement.isJsonObject()
+        && (!processElement.isJsonPrimitive() || !processElement.getAsJsonPrimitive().isString())) {
+      return errorJson("INVALID_PROCESS", "processJson must be an object or JSON string",
+          "Provide a ProcessSystem JSON definition");
+    }
+    String processJson = processElement.isJsonObject() ? GSON.toJson(processElement) : processElement.getAsString();
+    if (processJson.trim().isEmpty()) {
+      return errorJson("INVALID_PROCESS", "processJson must not be blank", "Provide a ProcessSystem JSON definition");
+    }
+    if (processJson.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_PROCESS_JSON_BYTES) {
+      return errorJson("REQUEST_TOO_LARGE", "processJson exceeds " + MAX_PROCESS_JSON_BYTES + " bytes",
+          "Reduce the process definition before starting the operation");
+    }
     double totalTime = input.has("totalTime") ? input.get("totalTime").getAsDouble() : 3600.0;
     double timeStep = input.has("timeStep") ? input.get("timeStep").getAsDouble() : 1.0;
+    if (!isFinite(totalTime) || !isFinite(timeStep) || totalTime <= 0.0 || timeStep <= 0.0) {
+      return errorJson("INVALID_TIME_RANGE", "totalTime and timeStep must be finite and positive",
+          "Provide positive durations in seconds");
+    }
 
-    int steps = (int) (totalTime / timeStep);
+    double stepCount = Math.floor(totalTime / timeStep);
+    if (stepCount < 1.0 || stepCount > MAX_DYNAMIC_STEPS) {
+      return errorJson("INVALID_STEP_COUNT",
+          "Dynamic operation must contain between 1 and " + MAX_DYNAMIC_STEPS + " time steps",
+          "Increase timeStep or reduce totalTime");
+    }
+    int steps = (int) stepCount;
     op.totalSteps = steps;
     String limited = registerOperation(op);
     if (limited != null) {
@@ -225,9 +290,9 @@ public final class StreamingRunner {
     EXECUTOR.submit(() -> {
       try {
         SimulationResult buildResult = ProcessSystem.fromJsonAndRun(processJson);
-        if (buildResult.isError()) {
-          op.status = "failed";
+        if (buildResult.isError() || buildResult.getProcessSystem() == null) {
           op.errorMessage = "Failed to build process";
+          op.markFinished("failed");
           return;
         }
 
@@ -259,7 +324,8 @@ public final class StreamingRunner {
     });
 
     JsonObject response = new JsonObject();
-    response.addProperty("status", "started");
+    response.addProperty("status", "success");
+    response.addProperty("operationStatus", "started");
     response.addProperty("operationId", opId);
     response.addProperty("type", "dynamic_simulation");
     response.addProperty("totalSteps", steps);
@@ -275,14 +341,12 @@ public final class StreamingRunner {
    */
   private static String startMonteCarlo(JsonObject input) {
     cleanupOperations();
-    if (OPERATIONS.size() >= MAX_OPERATIONS) {
-      return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Cancel some first");
-    }
-
     String opId = newOperationId("mc");
     StreamingOperation op = new StreamingOperation(opId, "monte_carlo");
 
-    JsonObject baseComponents = input.has("components") ? input.getAsJsonObject("components") : new JsonObject();
+    JsonObject baseComponents = input.has("components") && input.get("components").isJsonObject()
+        ? input.getAsJsonObject("components")
+        : null;
     String model = input.has("model") ? input.get("model").getAsString() : "SRK";
     int iterations = input.has("iterations") ? input.get("iterations").getAsInt() : 100;
 
@@ -291,6 +355,22 @@ public final class StreamingRunner {
     double tempStd = input.has("temperatureStd") ? input.get("temperatureStd").getAsDouble() : 5.0;
     double presMean = input.has("pressureMean") ? input.get("pressureMean").getAsDouble() : 50.0;
     double presStd = input.has("pressureStd") ? input.get("pressureStd").getAsDouble() : 10.0;
+
+    String componentError = validateComponents(baseComponents);
+    if (componentError != null) {
+      return componentError;
+    }
+    if (iterations < 1 || iterations > MAX_MONTE_CARLO_ITERATIONS) {
+      return errorJson("INVALID_ITERATIONS", "iterations must be between 1 and " + MAX_MONTE_CARLO_ITERATIONS,
+          "Choose a bounded positive Monte Carlo size");
+    }
+    if (!isFinite(tempMean) || !isFinite(tempStd) || !isFinite(presMean) || !isFinite(presStd) || tempStd < 0.0
+        || presStd < 0.0 || convertToKelvin(tempMean, "C") <= 0.0 || presMean <= 0.0) {
+      return errorJson("INVALID_DISTRIBUTION",
+          "Monte Carlo parameters must be finite, with non-negative "
+              + "standard deviations, temperature above absolute zero, and positive mean pressure",
+          "Correct the requested distribution");
+    }
 
     op.totalSteps = iterations;
     String limited = registerOperation(op);
@@ -367,7 +447,8 @@ public final class StreamingRunner {
     });
 
     JsonObject response = new JsonObject();
-    response.addProperty("status", "started");
+    response.addProperty("status", "success");
+    response.addProperty("operationStatus", "started");
     response.addProperty("operationId", opId);
     response.addProperty("type", "monte_carlo");
     response.addProperty("iterations", iterations);
@@ -391,11 +472,16 @@ public final class StreamingRunner {
     op.touch();
 
     int lastIndex = input.has("lastIndex") ? input.get("lastIndex").getAsInt() : 0;
+    if (lastIndex < 0) {
+      return errorJson("INVALID_CURSOR", "lastIndex must be zero or greater",
+          "Use nextPollIndex from the previous response");
+    }
 
     JsonObject response = new JsonObject();
     response.addProperty("operationId", opId);
     response.addProperty("type", op.type);
-    response.addProperty("status", op.status);
+    response.addProperty("status", "success");
+    response.addProperty("operationStatus", op.status);
     response.addProperty("completedSteps", op.completedSteps);
     response.addProperty("totalSteps", op.totalSteps);
     response.addProperty("progressPercent", op.totalSteps > 0 ? (100.0 * op.completedSteps / op.totalSteps) : 0);
@@ -405,7 +491,7 @@ public final class StreamingRunner {
     }
 
     // Get new results since lastIndex
-    List<JsonObject> newResults = op.getResultsSince(lastIndex);
+    List<JsonObject> newResults = op.getResultsSince(lastIndex, MAX_RESULTS_PER_POLL);
     JsonArray results = new JsonArray();
     for (JsonObject r : newResults) {
       results.add(r);
@@ -414,6 +500,8 @@ public final class StreamingRunner {
     response.addProperty("newResultCount", newResults.size());
     response.addProperty("totalResultCount", op.getResultCount());
     response.addProperty("nextPollIndex", lastIndex + newResults.size());
+    response.addProperty("maxResultsPerPoll", MAX_RESULTS_PER_POLL);
+    response.addProperty("hasMoreResults", lastIndex + newResults.size() < op.getResultCount());
 
     return GSON.toJson(response);
   }
@@ -428,17 +516,18 @@ public final class StreamingRunner {
     String opId = input.has("operationId") ? input.get("operationId").getAsString() : "";
     StreamingOperation op = ownedOperation(opId);
 
-    JsonObject response = new JsonObject();
-    if (op != null) {
-      op.cancelled = true;
-      op.status = "cancelling";
-      op.touch();
-      response.addProperty("status", "cancelling");
-      response.addProperty("operationId", opId);
-    } else {
-      response.addProperty("status", "not_found");
-      response.addProperty("operationId", opId);
+    if (op == null) {
+      String notFound = errorJson("NOT_FOUND", "Operation not found: " + opId,
+          "Use action 'list' to see active operations");
+      JsonObject response = JsonParser.parseString(notFound).getAsJsonObject();
+      response.addProperty("operationStatus", "not_found");
+      return GSON.toJson(response);
     }
+    String operationStatus = op.requestCancellation();
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    response.addProperty("operationStatus", operationStatus);
+    response.addProperty("operationId", opId);
     return GSON.toJson(response);
   }
 
@@ -451,6 +540,7 @@ public final class StreamingRunner {
     cleanupOperations();
     String owner = McpRequestContext.currentSubject();
     JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
 
     JsonArray ops = new JsonArray();
     for (Map.Entry<String, StreamingOperation> entry : OPERATIONS.entrySet()) {
@@ -472,6 +562,7 @@ public final class StreamingRunner {
     response.addProperty("count", ops.size());
     response.add("operations", ops);
     response.add("executionPolicy", McpExecutionPolicy.describe());
+    response.add("requestLimits", describeRequestLimits());
     response.addProperty("activeForCaller", McpExecutionPolicy.activeOperations(owner));
     return GSON.toJson(response);
   }
@@ -496,7 +587,10 @@ public final class StreamingRunner {
    * @param op the operation to register
    * @return null when registration succeeded, otherwise an error response
    */
-  private static String registerOperation(StreamingOperation op) {
+  private static synchronized String registerOperation(StreamingOperation op) {
+    if (activeOperationCount() >= MAX_OPERATIONS) {
+      return errorJson("LIMIT_REACHED", "Max streaming operations reached", "Wait for active work to finish");
+    }
     if (!McpExecutionPolicy.tryAcquireSlot()) {
       return errorJson("CONCURRENCY_LIMIT",
           "This caller already has " + McpExecutionPolicy.getMaxOperationsPerPrincipal() + " operations running",
@@ -510,6 +604,105 @@ public final class StreamingRunner {
   // ═══════════════════════════════════════════════════════════════════════════
   // Helpers
   // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Counts active operations without treating retained terminal results as active work.
+   *
+   * @return number of non-terminal operations
+   */
+  private static int activeOperationCount() {
+    int active = 0;
+    for (StreamingOperation op : OPERATIONS.values()) {
+      if (!op.isTerminal()) {
+        active++;
+      }
+    }
+    return active;
+  }
+
+  /**
+   * Validates a non-empty, finite and non-negative composition with positive total amount.
+   *
+   * @param components component amount map
+   * @return null when valid, otherwise a structured error response
+   */
+  private static String validateComponents(JsonObject components) {
+    if (components == null || components.size() == 0) {
+      return errorJson("MISSING_COMPONENTS", "components must contain at least one component",
+          "Provide a component-to-amount map");
+    }
+    double total = 0.0;
+    try {
+      for (Map.Entry<String, JsonElement> entry : components.entrySet()) {
+        JsonElement element = entry.getValue();
+        if (entry.getKey().trim().isEmpty() || element == null || !element.isJsonPrimitive()
+            || !element.getAsJsonPrimitive().isNumber()) {
+          return errorJson("INVALID_COMPONENTS", "Component names and amounts must be numeric",
+              "Provide non-blank names and finite non-negative amounts");
+        }
+        double amount = element.getAsDouble();
+        if (!isFinite(amount) || amount < 0.0) {
+          return errorJson("INVALID_COMPONENTS", "Component amounts must be finite and non-negative",
+              "Correct the component map");
+        }
+        total += amount;
+      }
+    } catch (RuntimeException e) {
+      return errorJson("INVALID_COMPONENTS", "Component amounts must be numeric",
+          "Provide finite non-negative amounts");
+    }
+    if (!isFinite(total) || total <= 0.0) {
+      return errorJson("INVALID_COMPONENTS", "At least one component amount must be positive",
+          "Correct the component map");
+    }
+    return null;
+  }
+
+  /**
+   * Reports fixed streaming request bounds.
+   *
+   * @return request-limit object
+   */
+  private static JsonObject describeRequestLimits() {
+    JsonObject limits = new JsonObject();
+    limits.addProperty("maxSweepPoints", MAX_SWEEP_POINTS);
+    limits.addProperty("maxDynamicSteps", MAX_DYNAMIC_STEPS);
+    limits.addProperty("maxMonteCarloIterations", MAX_MONTE_CARLO_ITERATIONS);
+    limits.addProperty("maxResultsPerPoll", MAX_RESULTS_PER_POLL);
+    limits.addProperty("maxProcessJsonBytes", MAX_PROCESS_JSON_BYTES);
+    return limits;
+  }
+
+  /**
+   * Checks whether a value is finite.
+   *
+   * @param value value to check
+   * @return true only for finite values
+   */
+  private static boolean isFinite(double value) {
+    return !Double.isNaN(value) && !Double.isInfinite(value);
+  }
+
+  /**
+   * Checks a documented temperature unit.
+   *
+   * @param unit unit token
+   * @return true for C, K or F
+   */
+  private static boolean isTemperatureUnit(String unit) {
+    return "C".equalsIgnoreCase(unit) || "K".equalsIgnoreCase(unit) || "F".equalsIgnoreCase(unit);
+  }
+
+  /**
+   * Checks a documented pressure unit.
+   *
+   * @param unit unit token
+   * @return true for bara, bar, psi, kPa, MPa or atm
+   */
+  private static boolean isPressureUnit(String unit) {
+    return "bara".equalsIgnoreCase(unit) || "bar".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)
+        || "kPa".equalsIgnoreCase(unit) || "MPa".equalsIgnoreCase(unit) || "atm".equalsIgnoreCase(unit);
+  }
 
   /**
    * Converts temperature to Kelvin.
@@ -756,16 +949,32 @@ public final class StreamingRunner {
      *
      * @param finalStatus final status value
      */
-    void markFinished(String finalStatus) {
+    synchronized void markFinished(String finalStatus) {
+      if (!finished.compareAndSet(false, true)) {
+        return;
+      }
       status = finalStatus;
       touch();
-      if (finished.compareAndSet(false, true)) {
-        java.util.concurrent.ScheduledFuture<?> handle = timeoutHandle;
-        if (handle != null) {
-          handle.cancel(false);
-        }
-        McpExecutionPolicy.releaseSlot(owner);
+      java.util.concurrent.ScheduledFuture<?> handle = timeoutHandle;
+      if (handle != null) {
+        handle.cancel(false);
       }
+      McpExecutionPolicy.releaseSlot(owner);
+    }
+
+    /**
+     * Requests cooperative cancellation without overwriting a terminal outcome.
+     *
+     * @return the resulting operation status
+     */
+    synchronized String requestCancellation() {
+      if (isTerminal()) {
+        return status;
+      }
+      cancelled = true;
+      status = "cancelling";
+      touch();
+      return status;
     }
 
     /**
@@ -784,12 +993,13 @@ public final class StreamingRunner {
      * @param fromIndex the start index
      * @return new results
      */
-    List<JsonObject> getResultsSince(int fromIndex) {
+    List<JsonObject> getResultsSince(int fromIndex, int limit) {
       synchronized (results) {
         if (fromIndex >= results.size()) {
           return new ArrayList<JsonObject>();
         }
-        return new ArrayList<JsonObject>(results.subList(fromIndex, results.size()));
+        int toIndex = Math.min(results.size(), fromIndex + limit);
+        return new ArrayList<JsonObject>(results.subList(fromIndex, toIndex));
       }
     }
 

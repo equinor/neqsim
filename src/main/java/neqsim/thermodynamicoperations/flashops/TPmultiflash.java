@@ -125,6 +125,12 @@ public class TPmultiflash extends TPflash {
 
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         double overallFraction = getFlashOverallFraction(i);
+        // Stability trials can activate stored phases containing ions stripped from the feed.
+        // Clear them on every molecular-basis update, before normalization dilutes the molecules.
+        if (isIon(i) && overallFraction <= 1.0e-100) {
+          system.getPhase(k).getComponent(i).setx(1.0e-50);
+          continue;
+        }
         if (overallFraction > 1e-100) {
           // Check for ions - ions can only exist in aqueous phases
           // This check must happen regardless of isChemicalSystem() status
@@ -219,6 +225,9 @@ public class TPmultiflash extends TPflash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       double overallFraction = getFlashOverallFraction(i);
+      if (isIon(i) && overallFraction <= 1.0e-100) {
+        overallFraction = 0.0;
+      }
       multTerm[i] = overallFraction / Erow[i];
       multTerm2[i] = overallFraction / (Erow[i] * Erow[i]);
     }
@@ -264,6 +273,16 @@ public class TPmultiflash extends TPflash {
    */
   private void calcEAndCacheFugacityCoefficients() {
     for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
+      // Removed ions must not enter the molecular beta equations. In particular, the
+      // divalent-ion coefficient can underflow on the ion-free trial and make its
+      // nominally negligible Hessian contribution evaluate as 0 / 0.
+      if (isIon(component) && getFlashOverallFraction(component) <= 1.0e-100) {
+        Erow[component] = 1.0;
+        for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+          fugacityCoefficients[phase][component] = 1.0;
+        }
+        continue;
+      }
       Erow[component] = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double fugacityCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();

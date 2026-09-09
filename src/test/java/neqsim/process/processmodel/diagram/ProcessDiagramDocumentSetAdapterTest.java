@@ -31,6 +31,7 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedP
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetAssignment;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDefinition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetOverviewRegion;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
@@ -424,6 +425,10 @@ class ProcessDiagramDocumentSetAdapterTest {
         () -> new ProtectedRoute("pipe-segment:feed", "detail", Arrays.asList(new Waypoint(1.0, 2.0)),
             CoordinateUnit.MILLIMETRE, "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED, "Process discipline",
             "2026-08-13T14:00:00Z", "LAYOUT-B"));
+    assertThrows(IllegalArgumentException.class,
+        () -> new SheetOverviewRegion("plant", "detail", 10.0, 20.0, 0.0, 50.0, CoordinateUnit.MILLIMETRE,
+            "project-layout:PFD-LAYOUT-001", EvidenceState.REVIEWED, "Process discipline", "2026-08-13T14:00:00Z",
+            "LAYOUT-B"));
   }
 
   @Test

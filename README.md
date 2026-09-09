@@ -611,8 +611,10 @@ Browse and install community-contributed skills, or publish your own:
 neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
 neqsim skill install <name> --target vscode   # also export to your ~/.copilot/skills folder
+neqsim skill sync-packages           # install any deferred skill Python packages
+neqsim skill ensure <name>           # install one skill's package on first use
 neqsim skill doctor                  # check private-catalog authentication readiness
-neqsim skill doctor --target vscode  # verify VS Code skill exports
+neqsim skill doctor --target vscode  # verify VS Code skill exports and package health
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 

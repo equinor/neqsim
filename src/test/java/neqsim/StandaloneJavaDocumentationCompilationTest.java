@@ -33,11 +33,12 @@ import org.junit.jupiter.api.io.TempDir;
  * @version 1.0
  */
 public class StandaloneJavaDocumentationCompilationTest {
-  private static final int EXPECTED_EXAMPLE_COUNT = 14;
-  private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("EclipseE300ExportImportExample.java",
-      "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java", "MultiScenarioVFPExample.java",
-      "MultiphaseModelPressureDropComparison.java", "OffshoreEmissionReportingExample.java",
-      "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java", "TwoFluidPipeExample.java");
+  private static final int EXPECTED_EXAMPLE_COUNT = 15;
+  private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("AcousticCompressibilityConversionExample.java",
+      "EclipseE300ExportImportExample.java", "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java",
+      "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
+      "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java",
+      "TwoFluidPipeExample.java");
 
   @TempDir
   Path compilationOutput;

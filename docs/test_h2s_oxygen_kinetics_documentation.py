@@ -255,6 +255,37 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.trajectory_test)
 
+    def test_segment_mean_loss_rate_contract_is_documented_and_executable(self):
+        for token in (
+            "Segment-mean loss-rate evidence",
+            "analytical mean total-sulfide loss rate",
+            r"\overline{r}_{r,i}",
+            r"\frac{c_{r,i,\mathrm{in}}-c_{r,i,\mathrm{out}}}{\Delta t_i}",
+            r"r_{r,i,\mathrm{out}}\leq\overline{r}_{r,i}\leq r_{r,i,\mathrm{in}}",
+            "mol total sulfide/(kg water h)",
+            "exact continuous limit",
+            "duration-weighted mean rates",
+            "not yet a volumetric or molar-flow control-volume source",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "getLowerRateMeanLossRateMolalityPerHour()",
+            "getNominalMeanLossRateMolalityPerHour()",
+            "getUpperRateMeanLossRateMolalityPerHour()",
+        ):
+            self.assertIn(token, self.trajectory)
+
+        for token in (
+            "testSegmentMeanLossRatesCloseInventoryAndAreBounded",
+            "testDurationWeightedMeanLossRateIsSplitInvariant",
+            "assertMeanLossRate(",
+            "getLowerRateMeanLossRateMolalityPerHour()",
+            "getNominalMeanLossRateMolalityPerHour()",
+            "getUpperRateMeanLossRateMolalityPerHour()",
+        ):
+            self.assertIn(token, self.trajectory_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",

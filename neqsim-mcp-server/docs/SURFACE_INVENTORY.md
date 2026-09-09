@@ -21,8 +21,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 32 bounded contract-tested software contracts + 19 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.32; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 33 bounded contract-tested software contracts + 18 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.33; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -145,8 +145,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 19 records remain
-`CONFIRMED_GAP`, thirty-two are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 18 records remain
+`CONFIRMED_GAP`, thirty-three are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -193,9 +193,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.32 with 20/32/19 coverage accounting while retaining
+now reconciles inventory 1.33 with 20/33/18 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its thirty-two bounded software contracts and requires 19 confirmed gaps. The read-only
+among its thirty-three bounded software contracts and requires 18 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -213,14 +213,14 @@ structural preservation of validation metadata, isolated custom-profile create/a
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
 `getCapabilities`, while the primary `test_mcp_server.py` now includes
-`manageValidationProfile` in its thirty-two bounded software contracts and requires 19 confirmed
+`manageValidationProfile` in its thirty-three bounded software contracts and requires 18 confirmed
 gaps.
 
 This is software/governance evidence only. The named standards and design factors are not asserted
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.32 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.33 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -430,7 +430,7 @@ stateful execution, plant/control authority, certification, or accountable
 engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.32. A future transition must again move the
+No promotion candidate remains queued in inventory 1.33. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -473,11 +473,11 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Thirty-two bounded discovery, catalog, lookup, progress, trust-retrieval,
+every published tool. Thirty-three bounded discovery, catalog, lookup, progress, trust-retrieval,
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, security-management,
 persisted-state, adjustable-parameter discovery, pre-flight validation, result-validation, reporting handoff,
 process-local plugin execution, automation advisory, simulation-variable mutation, paired snapshot, and
-visualization-generation, bounded runtime-capability, and composed-workflow contracts are contract-tested, leaving 19 confirmed trust gaps and no queued promotion candidate.
+visualization-generation, bounded runtime-capability, composed-workflow, and task-solver contracts are contract-tested, leaving 18 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise
@@ -516,3 +516,28 @@ facility completeness, external IAM or transport security, plant or control
 authority, certification, or accountable engineering approval. No promotion
 candidate remains queued.
 
+## Promoted bounded task-solver contract
+
+Inventory version 1.33 atomically promotes `solveTask` after merged #3575
+established direct Java and packaged-MCP evidence for a bounded task-orchestration
+contract. Machine-readable coverage, Java assertions,
+`test_solve_task_protocol.py`, synchronized focused protocol expectations,
+authoritative `test_mcp_server.py` accounting, and documentation move
+together from 20/32/19 to 20/33/18.
+
+The contract covers non-blank task enforcement, nine deterministic
+keyword-routed fixed plans, fail-closed unsupported descriptions, one real
+shared-fluid PVT route, canonical fluid preservation and native runner input
+projection, explicit plan/completion accounting, required-step stop behavior,
+underlying runner diagnostic preservation, normal access enforcement,
+standard response evidence, and packaged JSON-RPC/STDIO transport. No
+thermodynamic or process model is reimplemented.
+
+This classification does not establish general natural-language
+understanding, open-ended planning, arbitrary runner, tool, plugin, code,
+shell, class, or network execution, semantic result chaining, numerical
+fidelity, convergence, conservation, uncertainty, optimization quality,
+facility completeness, persistence, distributed execution, external IAM or
+transport security, tenant isolation, plant or control authority,
+certification, or accountable engineering approval. No promotion candidate
+remains queued.

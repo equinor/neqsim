@@ -258,6 +258,53 @@ assay.apply();
 traceability. Profile validation completes before existing assay data or thermodynamic
 components are modified.
 
+## Reusable 34-tray case factory
+
+`SarirAtmosphericFractionationCase.create(...)` promotes the qualified sensitivity setup into a
+reusable Java and Python/JPype entry point. It returns the configured crude feed and an unsolved
+`DistillationColumn`, allowing callers to execute, inspect, or extend the case without copying the
+source-to-model tray mapping.
+
+The factory reads only the published 34-valve-tray count, tray-31-from-the-top feed location,
+54,420 kg/h crude rate, 350 degC feed temperature, and 233 kPa absolute feed pressure from
+`SarirAtmosphericReference`. The source tray maps to NeqSim simple-tray index 4 because the
+library numbers simple trays from the bottom and reserves index 0 for the reboiler.
+
+Every unreported property or operating choice remains explicit. Callers must supply 18 cut specific
+gravities, 18 cut molar masses, top and bottom pressures, reboiler temperature, condenser reflux
+ratio, and both liquid side-draw tray indices and fractions. The operating-input object rejects
+non-finite pressures, temperatures, reflux, or fractions; an inverted pressure profile; fractions
+outside [0, 1); the feed tray as a side draw; and a kerosene screen draw at or below the heavier
+diesel screen draw. The existing `SarirAtmosphericAssay` bulk-density and average-molar-mass gates
+remain authoritative for the property profiles.
+
+The returned column uses the qualified MESH-residual numerical controls, but it is intentionally
+unsolved. Steam services, side strippers, pump-arounds, tray efficiencies, and source product rates
+are not configured. In particular, the factory does not tune either side-draw fraction to the
+published plant or HYSYS yields, and creating or solving the case is not evidence of product-yield
+or D86 agreement.
+
+## Solved-case product and balance summary
+
+After the caller runs the configured column, `SarirAtmosphericFractionationResult.evaluate(case)`
+creates an immutable Java/JPype summary of the rigorous result. The four rows remain in the
+established top-to-bottom comparison order: Total Naphtha, Kerosene, Diesel, and Residual. Each row
+reports calculated mass flow in kg/h, mass fraction of feed, mole-weighted mean normal boiling point,
+the independently published plant rate, and the absolute relative rate difference.
+
+The evaluator requires a solved non-fallback MESH-residual column. It rejects non-finite or negative
+flows, mass or energy errors above the qualified five-percent integration tolerance, feed/product
+mass-closure error above that tolerance, fewer than two material products, and material products
+whose mean normal boiling points do not increase from overhead to bottoms. Product arrays are
+defensive copies, and exact-label lookup fails closed for unsupported labels.
+
+The calculated mass fractions and mean normal boiling points depend on the caller-supplied cut
+properties and unreported column controls. They are model outputs, not source measurements, ASTM
+D86 curves, or evidence that NeqSim reproduces the plant. The plant rates remain read-only
+comparators: no calculated-versus-plant error is used as a solver control, tuning target, or pass
+threshold. Java callers use the same evaluator directly; Python callers access the factory,
+`getColumn().run(...)`, and evaluator through the existing JPype bridge.
+
 ## Scientific boundary
 
 The source-derived volumes, boiling boundaries, and product-specification rows are reproducible,

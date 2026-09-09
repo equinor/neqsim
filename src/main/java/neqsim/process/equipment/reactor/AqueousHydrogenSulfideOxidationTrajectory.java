@@ -592,6 +592,22 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       return lowerPseudoFirstOrderRate * lowerRateOutletTotalSulfideMolality;
     }
 
+    /**
+     * Return the segment-mean total-sulfide loss rate for the lower-rate path.
+     *
+     * <p>
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
+     * </p>
+     *
+     * @return mean loss rate [mol/(kg water h)]
+     */
+    public double getLowerRateMeanLossRateMolalityPerHour() {
+      double durationHours = segment.getDurationHours();
+      return durationHours == 0.0 ? getLowerRateInletLossRateMolalityPerHour()
+          : lowerRateReactedTotalSulfideMolality / durationHours;
+    }
+
     /** @return local lower-rate retained fraction across this segment. */
     public double getLowerRateRetentionFactor() {
       return Math.exp(-lowerRateExposure);
@@ -607,6 +623,22 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
       return nominalPseudoFirstOrderRate * nominalOutletTotalSulfideMolality;
     }
 
+    /**
+     * Return the segment-mean total-sulfide loss rate for the nominal path.
+     *
+     * <p>
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
+     * </p>
+     *
+     * @return mean loss rate [mol/(kg water h)]
+     */
+    public double getNominalMeanLossRateMolalityPerHour() {
+      double durationHours = segment.getDurationHours();
+      return durationHours == 0.0 ? getNominalInletLossRateMolalityPerHour()
+          : nominalReactedTotalSulfideMolality / durationHours;
+    }
+
     /** @return local nominal retained fraction across this segment. */
     public double getNominalRetentionFactor() {
       return Math.exp(-nominalExposure);
@@ -620,6 +652,22 @@ public final class AqueousHydrogenSulfideOxidationTrajectory implements Serializ
     /** @return instantaneous outlet loss rate for the upper-rate path [mol/(kg water h)]. */
     public double getUpperRateOutletLossRateMolalityPerHour() {
       return upperPseudoFirstOrderRate * upperRateOutletTotalSulfideMolality;
+    }
+
+    /**
+     * Return the segment-mean total-sulfide loss rate for the upper-rate path.
+     *
+     * <p>
+     * For positive duration this is reacted molality divided by duration. At zero duration the exact continuous limit
+     * is the inlet differential rate.
+     * </p>
+     *
+     * @return mean loss rate [mol/(kg water h)]
+     */
+    public double getUpperRateMeanLossRateMolalityPerHour() {
+      double durationHours = segment.getDurationHours();
+      return durationHours == 0.0 ? getUpperRateInletLossRateMolalityPerHour()
+          : upperRateReactedTotalSulfideMolality / durationHours;
     }
 
     /** @return local upper-rate retained fraction across this segment. */

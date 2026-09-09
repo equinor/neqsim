@@ -17,34 +17,32 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
   /**
-   * Smallest phase mole fraction for which a component is allowed to carry association sites.
+   * Smallest overall mole fraction for which a component carries association sites during initialization.
    *
    * <p>
-   * {@link neqsim.thermo.component.Component#setx(double)} clamps a non-positive mole fraction to {@code 1e-50}, so a
-   * component that a flash has driven out of a phase (for example CO2 salted out of a concentrated brine) stays in the
-   * phase at that floor. If such a component keeps its association sites, its row of the association Hessian has a
-   * magnitude of about {@code 1e-50} next to rows of order one, the linear solve is effectively singular, and every
-   * fugacity coefficient in the phase is returned as NaN or as a silently wrong finite number.
+   * Negligible feed components can make the association Hessian ill-conditioned. Site topology is built before
+   * {@link neqsim.thermo.component.Component#init(double, double, double, double, int)} resets phase mole fractions to
+   * the overall composition for initialization type zero. The cutoff must therefore use the component's overall mole
+   * count and the current system total, not a stale phase mole fraction from an earlier flash.
    * </p>
    *
    * <p>
-   * The association contribution of a component scales with its mole number, so at {@code 1e-20} it is already four
-   * orders of magnitude below double precision resolution and cannot influence any physical result. The threshold
-   * therefore removes the numerically unstable band with a wide margin while leaving every physically meaningful
-   * composition untouched.
+   * This numerical cutoff applies only to constructing the initial association system. It is not a solubility limit and
+   * must not remove sites from a material feed component merely because it was depleted in one phase.
    * </p>
    */
   double MIN_ASSOCIATION_MOLE_FRACTION = 1.0e-20;
 
   /**
-   * Check whether a component is too dilute in a phase to carry association sites.
+   * Check whether a component is negligible in the composition used by initialization type zero.
    *
    * @param component the component to test
-   * @return true when the component must be treated as non-associating in this phase
+   * @param totalNumberOfMoles total system mole count passed to phase initialization
+   * @return true when the component must be treated as non-associating during initialization
    */
-  static boolean hasNegligibleAssociation(neqsim.thermo.component.ComponentInterface component) {
-    double moleFraction = component.getx();
-    return !(moleFraction > MIN_ASSOCIATION_MOLE_FRACTION);
+  static boolean hasNegligibleAssociation(neqsim.thermo.component.ComponentInterface component,
+      double totalNumberOfMoles) {
+    return !(component.getNumberOfmoles() > MIN_ASSOCIATION_MOLE_FRACTION * totalNumberOfMoles);
   }
 
   /**

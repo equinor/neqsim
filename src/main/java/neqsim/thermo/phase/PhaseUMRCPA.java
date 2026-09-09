@@ -121,7 +121,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     if (initType == 0) {
       activeAccosComp = new int[numberOfComponents];
       for (int i = 0; i < numberOfComponents; i++) {
-        if (PhaseCPAInterface.hasNegligibleAssociation(componentArray[i])) {
+        if (PhaseCPAInterface.hasNegligibleAssociation(componentArray[i], totalNumberOfMoles)) {
           componentArray[i].setNumberOfAssociationSites(0);
           if (activeAccosComp[i] == 1) {
             activeAccosComp[i] = 0;
@@ -140,7 +140,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         selfAccociationScheme = new int[numberOfComponents][0][0];
         crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
         for (int i = 0; i < numberOfComponents; i++) {
-          if (PhaseCPAInterface.hasNegligibleAssociation(componentArray[i])) {
+          if (PhaseCPAInterface.hasNegligibleAssociation(componentArray[i], totalNumberOfMoles)) {
             componentArray[i].setNumberOfAssociationSites(0);
           } else {
             componentArray[i].setNumberOfAssociationSites(componentArray[i].getOrginalNumberOfAssociationSites());

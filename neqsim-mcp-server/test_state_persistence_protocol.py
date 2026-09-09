@@ -174,12 +174,12 @@ def test_current_phase0_boundary(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.32", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.33", "inventory version drifted", inventory)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("manageState", {})
     require(
-        limitations.get("contractTestedToolCount") == 32
-        and limitations.get("confirmedGapToolCount") == 19
+        limitations.get("contractTestedToolCount") == 33
+        and limitations.get("confirmedGapToolCount") == 18
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_NON_NUMERICAL_LOCAL_STATE_PERSISTENCE_LIFECYCLE"

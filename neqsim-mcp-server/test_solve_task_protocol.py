@@ -2,7 +2,7 @@
 
 The scenarios exercise real STDIO transport, fixed-plan discovery, one
 shared-fluid PVT calculation, explicit accounting, fail-closed inputs,
-required-step stop behavior, and unchanged Phase 0 inventory. They do not
+required-step stop behavior, and promoted Phase 0 inventory. They do not
 establish general language planning, arbitrary execution, semantic result
 chaining, numerical fidelity, convergence, plant authority, certification, or
 engineering approval.
@@ -209,18 +209,26 @@ def test_required_failure_stops(client):
             "underlying runner diagnostic was not preserved", result)
 
 
-def test_inventory_unchanged(client):
+def test_inventory_promoted(client):
     result = payload(client.call_tool("getCapabilities", {}))
     require(result.get("status") == "success", "capabilities request failed", result)
     inventory = result.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("solveTask", {})
-    require(inventory.get("inventoryVersion") == "1.32"
-            and limitations.get("contractTestedToolCount") == 32
-            and limitations.get("confirmedGapToolCount") == 19,
-            "qualification unexpectedly changed inventory", inventory)
-    require(record.get("coverageStatus") == "CONFIRMED_GAP",
-            "solveTask was promoted during qualification", record)
+    require(inventory.get("inventoryVersion") == "1.33"
+            and limitations.get("contractTestedToolCount") == 33
+            and limitations.get("confirmedGapToolCount") == 18
+            and limitations.get("contractPromotionCandidateCount") == 0,
+            "task-solver promotion accounting drifted", inventory)
+    require(record.get("coverageStatus") == "CONTRACT_TESTED",
+            "solveTask was not promoted atomically", record)
+    require(record.get("benchmarkApplicability")
+            == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_TASK_ORCHESTRATION",
+            "task-solver benchmark boundary drifted", record)
+    require(record.get("contractEvidenceCount") == 6
+            and "neqsim-mcp-server/test_solve_task_protocol.py" in record.get("contractEvidenceSources", [])
+            and "neqsim-mcp-server/docs/evidence/TASK_SOLVER_CONTRACT.md" in record.get("contractEvidenceSources", []),
+            "task-solver evidence sources drifted", record)
 
 
 def main():
@@ -232,7 +240,7 @@ def main():
         ("blank and malformed task", test_blank_and_malformed_task),
         ("unsupported task", test_unsupported_task),
         ("required failure stops", test_required_failure_stops),
-        ("inventory unchanged", test_inventory_unchanged),
+        ("inventory promoted", test_inventory_promoted),
     ]
     try:
         client.start()

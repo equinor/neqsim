@@ -1503,6 +1503,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void hydrateFormationPressure() throws IsNaNException {
+    if (runPitzerHydrateFlash(true, 0)) {
+      return;
+    }
     operation = new HydrateFormationPressureFlash(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
@@ -1686,6 +1689,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param initialTemperatureGuess a double
    */
   public void hydrateFormationTemperature(double initialTemperatureGuess) {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      if (!Double.isFinite(initialTemperatureGuess) || initialTemperatureGuess < 273.15
+          || initialTemperatureGuess > 323.15) {
+        throw new IllegalArgumentException("Pitzer hydrate temperature guess must be within 273.15-323.15 K");
+      }
+      runPitzerHydrateFlash(false, 0);
+      return;
+    }
     system.setTemperature(initialTemperatureGuess);
     operation = new HydrateFormationTemperatureFlash(system);
     for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -1704,6 +1715,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void hydrateFormationTemperature() throws IsNaNException {
+    if (runPitzerHydrateFlash(false, 0)) {
+      return;
+    }
     // guessing temperature
     double factor = 1.0;
     if (system.getPhase(0).hasComponent("methanol")) {
@@ -1731,8 +1745,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // The secant search is sensitive to where it starts, so one failed start does not mean the
     // fluid has no hydrate temperature. Concentrated brines in particular converge from a start
     // near the ice point but not from the pressure based guess above. Retrying across the range
-    // where hydrates of the common formers are stable turns those spurious failures into answers,
-    // while a fluid that really has no hydrate temperature still fails after every attempt.
+    // where hydrates of the common formers are stable can recover a verified root. If every
+    // attempt fails, report that no result is available; this does not prove the absence of hydrates.
     double[] retryTemperatures = { 273.15, 268.15, 278.15, 263.15, 283.15, 258.15 };
     for (int attempt = 0; attempt < retryTemperatures.length && Double.isNaN(system.getTemperature()); attempt++) {
       system.setTemperature(retryTemperatures[attempt]);
@@ -1756,10 +1770,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
       ((ComponentHydrate) system.getPhase(4).getComponent(i)).getHydrateStructure();
     }
-    if (!isRunAsThread()) {
-      getOperation().run();
-    } else {
-      run();
+    try {
+      if (!isRunAsThread()) {
+        getOperation().run();
+      } else {
+        run();
+      }
+    } catch (IllegalStateException ex) {
+      if (ex.getMessage() == null || !ex.getMessage().startsWith("Hydrate fluid inventory")) {
+        throw ex;
+      }
+      // The operation restores the original feed and reports NaN before rejecting an
+      // invalid phase split. The no-argument wrapper may retry from another temperature.
     }
   }
 
@@ -1770,6 +1792,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void hydrateFormationTemperature(int structure) throws IsNaNException {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      if (structure != 1 && structure != 2) {
+        throw new IllegalArgumentException("Pitzer hydrate structure must be 1 or 2; ice equilibrium is not supported");
+      }
+      runPitzerHydrateFlash(false, structure);
+      return;
+    }
     system.setTemperature(273.0 + 1.0);
     if (structure == 0) {
       system.setSolidPhaseCheck("water");
@@ -1792,6 +1821,29 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationTemperature",
           "Could not find solution - possible no dew point exists");
     }
+  }
+
+  /**
+   * Dispatches Pitzer hydrate calculations to the activity-consistent bounded solver.
+   *
+   * @param solvePressure true to solve pressure, false to solve temperature
+   * @param structure 0 for automatic selection, 1 for sI, 2 for sII
+   * @return true when this is a Pitzer system and the operation was dispatched
+   */
+  private boolean runPitzerHydrateFlash(boolean solvePressure, int structure) {
+    if (!(system instanceof neqsim.thermo.system.SystemPitzer)) {
+      return false;
+    }
+    neqsim.thermodynamicoperations.flashops.saturationops.PitzerHydrateFlash flash = new neqsim.thermodynamicoperations.flashops.saturationops.PitzerHydrateFlash(
+        (neqsim.thermo.system.SystemPitzer) system, solvePressure);
+    flash.setStructure(structure);
+    operation = flash;
+    if (!isRunAsThread()) {
+      flash.run();
+    } else {
+      run();
+    }
+    return true;
   }
 
   /**

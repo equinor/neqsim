@@ -28,6 +28,9 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Coordin
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetAssignment;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDefinition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetOverviewRegion;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
@@ -100,6 +103,37 @@ class NativeEngineeringDiagramRendererTest {
       }
     }
     assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_FIXED_PORT_UNRESOLVED"));
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void rendersControlledOverviewRegionsAsSheetIndexesWithoutClaimingProcessConnectivity() {
+    EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
+    EngineeringDiagramDocumentSet baseline = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-OVERVIEW", "Overview index reference",
+        ContentProfile.PFD);
+    Sheet overview = baseline.getDrawings().get(0).getSheets().get(0);
+    SemanticObject separator = findObject(baseline, EngineeringNode.Kind.EQUIPMENT, "equipmentName", "10-VA-001");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(new SheetDefinition("separator-detail", "2", "Separator detail", "project-layout:overview",
+            EvidenceState.REVIEWED, "Process discipline", "2026-09-09T00:00:00Z", "B"))
+        .withAssignment(new SheetAssignment(separator.getId(), "separator-detail", "project-layout:overview",
+            EvidenceState.REVIEWED, "Process discipline", "2026-09-09T00:00:00Z", "B"))
+        .withOverviewRegion(new SheetOverviewRegion(overview.getKey(), "separator-detail", 40.0, 90.0, 330.0, 120.0,
+            CoordinateUnit.MILLIMETRE, "project-layout:overview", EvidenceState.REVIEWED, "Process discipline",
+            "2026-09-09T00:00:00Z", "B"));
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessSystem(
+        reference.getProcessSystem(), reference.getCaseId(), "A", "PFD-NATIVE-OVERVIEW", "Overview index reference",
+        ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
+    String svg = result.getSvgBySheetId().get(documents.getDrawings().get(0).getSheets().get(0).getId());
+
+    assertEquals(1, documents.getDrawings().get(0).getSheets().get(0).getOverviewRegions().size());
+    assertTrue(svg.contains("CONTROLLED SHEET INDEX - NOT PROCESS CONNECTIVITY"));
+    assertTrue(svg.contains("SHEET 2 - Separator detail"));
+    assertTrue(svg.contains("10-VA-001"));
+    assertTrue(svg.contains("data-semantic-id=\"overview-region:"));
     assertTrue(result.isComplete());
   }
 
@@ -332,6 +366,138 @@ class NativeEngineeringDiagramRendererTest {
     assertTrue(first.isComplete());
   }
 
+  @Test
+  void placesFixedPortRouteLabelsOnHorizontalSegmentsInsteadOfCongestedVerticalTrunks() {
+    EngineeringGraph graph = fixedPortRoutingGraph();
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-010",
+        "Collision-aware route-label reference", ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", sheetKey, 80.0, 60.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", sheetKey, 250.0, 180.0));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-010",
+        "Collision-aware route-label reference", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(),
+        layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+    String route = pointsForSemanticId(svg, "connection:parallel-1");
+    double labelX = textCoordinateForSemanticId(svg, "connection:parallel-1", "x");
+    double labelY = textCoordinateForSemanticId(svg, "connection:parallel-1", "y") + 3.0;
+
+    assertTrue(pointLiesOnHorizontalSegment(route, labelX, labelY),
+        "route label should follow a horizontal process-line segment: " + route);
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void routesUnprotectedFixedPortConnectionsAroundPinnedEquipment() {
+    EngineeringGraph graph = new EngineeringGraph("OBSTACLE-AWARE-ROUTING", "A");
+    graph.addNode(new EngineeringNode("equipment:a", EngineeringNode.Kind.EQUIPMENT, "a", "Equipment A")
+        .putProperty("equipmentName", "A"));
+    graph.addNode(new EngineeringNode("equipment:obstacle", EngineeringNode.Kind.EQUIPMENT, "obstacle", "Obstacle")
+        .putProperty("equipmentName", "OBSTACLE"));
+    graph.addNode(new EngineeringNode("equipment:b", EngineeringNode.Kind.EQUIPMENT, "b", "Equipment B")
+        .putProperty("equipmentName", "B"));
+    graph.addNode(endpointNode("nozzle:a-out", "equipment:a", "OUTLET"));
+    graph.addNode(endpointNode("nozzle:b-in", "equipment:b", "INLET"));
+    graph.addNode(connectionNode("connection:around-obstacle", "nozzle:a-out", "nozzle:b-in", "A", "B", false));
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-012",
+        "Obstacle-aware route reference", ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", sheetKey, 80.0, 80.0))
+        .withPinnedPosition(reviewedPosition("equipment:obstacle", sheetKey, 165.0, 80.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", sheetKey, 250.0, 80.0));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-012",
+        "Obstacle-aware route reference", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+    String route = pointsForSemanticId(svg, "connection:around-obstacle");
+
+    assertTrue(route.split(" ").length >= 6, route);
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_OBJECT_INTERSECTION"));
+    assertEquals(result.getSvgBySheetId(), new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render().getSvgBySheetId());
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void keepsLongLineTerminalIdentityInsideItsSymbol() {
+    EngineeringGraph graph = new EngineeringGraph("LINE-TERMINAL-LABEL", "A");
+    graph.addNode(new EngineeringNode("line:reflux", EngineeringNode.Kind.LINE, "reflux", "dew point liquid reflux 1"));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-LINE-LABEL",
+        "Line-terminal label reference", ContentProfile.PFD);
+    EngineeringDiagramConventionRegister conventions = new EngineeringDiagramConventionRegister()
+        .withConvention(new SymbolConvention(EngineeringNode.Kind.LINE, SymbolShape.LINE_TERMINAL, "#1f2937", "#eff6ff",
+            "project-line-profile:v1", EngineeringDiagramConventionRegister.EvidenceState.PROPOSED, "", "",
+            "2026-09-09T00:00:00Z", "A"));
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE, conventions,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+
+    assertTrue(svg.contains(">dew point liquid reflux 1</text>"));
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_LABEL_OVERFLOW"));
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void alignsSingleOffPageConnectorsWithTheirLocalEndpoints() {
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
+        "PFD-NATIVE-011", "Endpoint-aligned off-page connector reference", ContentProfile.PFD);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    int alignedConnectors = 0;
+
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      Map<EngineeringDiagramDocumentSet.ConnectorRole, Integer> counts = new TreeMap<EngineeringDiagramDocumentSet.ConnectorRole, Integer>();
+      for (EngineeringDiagramDocumentSet.OffPageConnector connector : sheet.getOffPageConnectors()) {
+        Integer count = counts.get(connector.getRole());
+        counts.put(connector.getRole(), Integer.valueOf(count == null ? 1 : count.intValue() + 1));
+      }
+      String svg = result.getSvgBySheetId().get(sheet.getId());
+      Map<EngineeringDiagramDocumentSet.ConnectorRole, List<Double>> connectorY = new TreeMap<EngineeringDiagramDocumentSet.ConnectorRole, List<Double>>();
+      for (EngineeringDiagramDocumentSet.OffPageConnector connector : sheet.getOffPageConnectors()) {
+        List<Double> sameSide = connectorY.get(connector.getRole());
+        if (sameSide == null) {
+          sameSide = new ArrayList<Double>();
+          connectorY.put(connector.getRole(), sameSide);
+        }
+        sameSide.add(Double.valueOf(pointY(pointsForSemanticId(svg, connector.getId()).split(" ")[0])));
+        if (counts.get(connector.getRole()).intValue() != 1) {
+          continue;
+        }
+        String route = pointsForSemanticId(svg, connector.getSemanticConnectionId());
+        String[] routePoints = route.split(" ");
+        int localIndex = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE ? 0
+            : routePoints.length - 1;
+        int connectorIndex = connector.getRole() == EngineeringDiagramDocumentSet.ConnectorRole.SOURCE
+            ? routePoints.length - 1
+            : 0;
+        assertEquals(pointY(routePoints[localIndex]), pointY(routePoints[connectorIndex]), 0.0000001,
+            connector.getId());
+        alignedConnectors++;
+      }
+      for (List<Double> sameSide : connectorY.values()) {
+        for (int left = 0; left < sameSide.size(); left++) {
+          for (int right = left + 1; right < sameSide.size(); right++) {
+            assertTrue(Math.abs(sameSide.get(left).doubleValue() - sameSide.get(right).doubleValue()) >= 14.0);
+          }
+        }
+      }
+    }
+
+    assertTrue(alignedConnectors > 0);
+    assertTrue(result.isComplete());
+  }
+
   private static EngineeringGraph fixedPortRoutingGraph() {
     EngineeringGraph graph = new EngineeringGraph("FIXED-PORT-ROUTING", "A");
     graph.addNode(new EngineeringNode("equipment:a", EngineeringNode.Kind.EQUIPMENT, "a", "Equipment A")
@@ -378,6 +544,59 @@ class NativeEngineeringDiagramRendererTest {
 
   private static String pointX(String points, int index) {
     return points.split(" ")[index].split(",", 2)[0];
+  }
+
+  private static double pointY(String point) {
+    String[] coordinates = point.split(",", 2);
+    assertTrue(coordinates.length == 2, "Malformed SVG point: " + point);
+    return parseCoordinate(coordinates[1], "point y in '" + point + "'");
+  }
+
+  private static double textCoordinateForSemanticId(String svg, String semanticId, String coordinate) {
+    String identity = "data-semantic-id=\"" + semanticId + "\"";
+    int elementStart = svg.indexOf("<text");
+    while (elementStart >= 0) {
+      int elementEnd = svg.indexOf('>', elementStart);
+      if (elementEnd > elementStart && svg.substring(elementStart, elementEnd).contains(identity)) {
+        break;
+      }
+      elementStart = svg.indexOf("<text", elementEnd);
+    }
+    assertTrue(elementStart >= 0);
+    String attribute = coordinate + "=\"";
+    int valueStart = svg.indexOf(attribute, elementStart) + attribute.length();
+    int valueEnd = svg.indexOf('"', valueStart);
+    assertTrue(valueStart >= attribute.length());
+    assertTrue(valueEnd > valueStart);
+    String value = svg.substring(valueStart, valueEnd);
+    return parseCoordinate(value, coordinate + " for " + semanticId);
+  }
+
+  private static boolean pointLiesOnHorizontalSegment(String points, double x, double y) {
+    String[] vertices = points.split(" ");
+    for (int index = 1; index < vertices.length; index++) {
+      String[] start = vertices[index - 1].split(",", 2);
+      String[] end = vertices[index].split(",", 2);
+      String context = "polyline segment '" + vertices[index - 1] + " " + vertices[index] + "'";
+      assertTrue(start.length == 2 && end.length == 2, "Malformed SVG " + context);
+      double startX = parseCoordinate(start[0], context);
+      double startY = parseCoordinate(start[1], context);
+      double endX = parseCoordinate(end[0], context);
+      double endY = parseCoordinate(end[1], context);
+      if (Math.abs(startY - endY) < 0.0000001 && Math.abs(y - startY) < 0.0000001 && x >= Math.min(startX, endX)
+          && x <= Math.max(startX, endX)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static double parseCoordinate(String value, String context) {
+    try {
+      return Double.parseDouble(value.trim());
+    } catch (NumberFormatException error) {
+      throw new AssertionError("Non-numeric SVG coordinate '" + value + "' for " + context, error);
+    }
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {

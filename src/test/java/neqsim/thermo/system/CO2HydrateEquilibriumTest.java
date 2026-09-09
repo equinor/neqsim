@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
 /**
  * Accuracy and robustness tests for CO2 hydrate equilibrium in pure water and in brine.
@@ -119,13 +120,12 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Verifies that a component driven onto the mole fraction floor by a flash cannot corrupt CPA fugacities.
+   * Verifies that a negligible feed component cannot corrupt CPA fugacities during initialization.
    *
    * <p>
-   * {@code Component.setx} clamps a non-positive mole fraction to {@code 1e-50}. A cross associating component left at
-   * that floor used to keep its association sites, which made the association Hessian singular and returned NaN
-   * fugacity coefficients for every component in the phase. That is how CO2 salted out of a concentrated brine used to
-   * destroy a hydrate calculation, so the trace limit is pinned here.
+   * A cross associating component at a negligible overall concentration can make the association Hessian singular and
+   * return NaN fugacity coefficients. The initialization cutoff is pinned here using trace feed amounts. Phase-local
+   * depletion of a material feed component must not disable its association sites.
    * </p>
    */
   @Test
@@ -211,12 +211,18 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
     try {
       new ThermodynamicOperations(brine).hydrateFormationTemperature();
       reportedTemperature = brine.getTemperature();
-    } catch (Exception ex) {
+    } catch (IsNaNException ex) {
       logger.info("CO2 rich 15 wt% NaCl brine correctly reported a failure: {}", ex.getMessage());
+      assertTrue(Double.isNaN(brine.getTemperature()), "A rejected root must not leave a finite temperature");
       return;
+    } finally {
+      assertEquals(waterMoles * 0.5, brine.getPhase(0).getComponent("CO2").getNumberOfmoles(), 1.0e-8);
+      assertEquals(waterMoles, brine.getPhase(0).getComponent("water").getNumberOfmoles(), 1.0e-8);
+      assertEquals(saltMoles, brine.getPhase(0).getComponent("Na+").getNumberOfmoles(), 1.0e-8);
+      assertEquals(saltMoles, brine.getPhase(0).getComponent("Cl-").getNumberOfmoles(), 1.0e-8);
     }
 
-    assertTrue(!Double.isFinite(reportedTemperature) || reportedTemperature < freshWaterHydrateTemperature,
+    assertTrue(Double.isFinite(reportedTemperature) && reportedTemperature < freshWaterHydrateTemperature,
         "A 15 wt% NaCl brine reported a hydrate temperature of " + reportedTemperature
             + " K, which is not below the fresh water value of " + freshWaterHydrateTemperature + " K");
   }

@@ -27,6 +27,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 |-----------|------|-------------|
 | Separators | [separators.md](separators) | 2-phase and 3-phase separators, scrubbers |
 | Separator Entrainment | [separator-entrainment-modeling.md](separator-entrainment-modeling) | Droplet distributions, internals, grade efficiency, and performance calculation |
+| Private Entrainment Extensions | [private-extensions.md](private-extensions) | ServiceLoader SPI for proprietary carry-over correlations supplied in a separate JAR |
 | Distillation | [distillation.md](distillation) | Distillation columns |
 | Absorbers | [absorbers.md](absorbers) | Absorption/stripping columns |
 | Adsorbers | [adsorbers.md](adsorbers) | Simplified adsorption equipment |
@@ -52,6 +53,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
+| Compressor Thermal Model | [Compressor thermal model and catalog](../../compressor_thermal_model) | Metal-node temperatures, catalog templates, steady and transient screening, and deposition inputs |
 | Compressor Curves | [compressor_curves.md](compressor_curves) | Performance maps, correction, interpolation, and envelopes |
 | Compressor Shaft | [compressor_shaft.md](compressor_shaft) | Multiple compressor bodies on a common-speed shaft |
 | Compressor Anti-Surge Control | [compressor_antisurge_control.md](compressor_antisurge_control) | Dynamic anti-surge recycle, speed/load control, and coordinated pressure-speed-recycle control philosophy |

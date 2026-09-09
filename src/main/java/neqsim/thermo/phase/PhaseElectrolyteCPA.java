@@ -121,7 +121,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
       for (int i = 0; i < numberOfComponents; i++) {
-        if (PhaseCPAInterface.hasNegligibleAssociation(getComponent(i))) {
+        if (PhaseCPAInterface.hasNegligibleAssociation(getComponent(i), totalNumberOfMoles)) {
           getComponent(i).setNumberOfAssociationSites(0);
         } else {
           getComponent(i).setNumberOfAssociationSites(getComponent(i).getOrginalNumberOfAssociationSites());

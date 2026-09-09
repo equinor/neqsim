@@ -44,9 +44,11 @@ thermo/
 - [Mixing Rules Guide](mixing_rules_guide): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
 - [Flash Calculations Guide](flash_calculations_guide): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
 - [Reactive Flash](reactive_flash): **Simultaneous chemical and phase equilibrium** using the Modified RAND method. Covers reactive TP and PH flash for systems with gas-phase reactions, ionic equilibria, and multiphase reactive systems.
+- [Reaction Model Audit](reaction_model_audit): **Read-only provenance and compatibility diagnostics** for active reaction sets, concentration bases, stored parameters, and model-specific validation declarations.
 - [Hydrate Models Guide](hydrate_models): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
 - [Electrolyte CPA Model](ElectrolyteCPAModel): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
 - [Pitzer Parameter Provenance and Coverage](pitzer_parameter_provenance): **Dataset and safety reference** for Pitzer equation conventions, source/licensing comparisons, mixed-ion coverage diagnostics, and parameter-adoption gates.
+- [Pitzer Hydrate Equilibrium](pitzer_hydrate_equilibrium): CO2/chloride-brine hydrate onset temperatures, pressures and curves, explicit neutral interaction inputs, and reference-state and temperature limits.
 - [Electrolyte VLE and VLLE Phase Boundaries](electrolyte_phase_boundaries): **Bracketed saturation API** for Pitzer and electrolyte-EOS gas, oil and aqueous phase appearance with balance, charge, fugacity and topology diagnostics.
 
 ### Database Documentation

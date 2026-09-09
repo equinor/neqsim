@@ -176,6 +176,85 @@ but infeasible. Explicitly out-of-service casings qualify only with verified zer
 observed shaft load. Java getters, serialization, `toPlantUtilizationSnapshot()`, and `toJson()`
 expose the same immutable evidence; unavailable JSON numbers are `null`, never zero.
 
+### Strict separator evidence
+
+`PlantSeparatorEvidence` adapts an already solved separator into the same immutable plant registry
+and snapshot model. Select `GAS_SCRUBBER`, `TWO_PHASE_OIL`, `TWO_PHASE_WATER`, or `THREE_PHASE` so
+the required phase observations are explicit. The adapter reads the existing Souders-Brown gas-load,
+K-value, droplet-cut, inlet-momentum, oil/water residence, live liquid-level, and three-phase
+interface-settling calculations. It does not run or retain the separator.
+
+The strict path requires the exact completed calculation ID, full-candidate convergence, vessel
+diameter and length, inlet-nozzle diameter, and every applicable HLL/NLL/NIL and effective-length
+input. This intentionally disables the convenience geometry fallbacks used by interactive
+separator calculations: missing design data becomes unavailable evidence, never zero utilization.
+The liquid-level and three-phase interface-settling limits are caller-owned installed limits.
+
+```java
+PlantSeparatorEvidence separatorEvidence = PlantSeparatorEvidence
+    .builder("Plant", "Separation", calculationId, separator,
+        PlantSeparatorEvidence.Profile.THREE_PHASE,
+        "approved vessel rating revision 4")
+    .maximumLiquidLevelFraction(0.80)
+    .minimumInterfaceSettlingMinutes(1.0)
+    .convergenceComplete(model.isModelConverged())
+    .build();
+
+if (!separatorEvidence.isComplete()) {
+  throw new IllegalStateException(separatorEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot separatorSnapshot =
+    separatorEvidence.toPlantUtilizationSnapshot();
+```
+
+Java serialization, JPype getters, `toPlantUtilizationSnapshot()`, and `toJson()` preserve the same
+detached values, physical margins, units, bases, and diagnostics. A physical limit violation remains
+complete and is interpreted according to the severity of the corresponding installed separator
+constraint. Carry-over/carry-under and slug handling are not inferred: they remain separate required
+coverage until a qualified provider, measured correlation, or installed slug-volume rating is
+declared and validated.
+
+### Strict piping evidence
+
+`PlantPipelineEvidence` snapshots one completed `PipeBeggsAndBrills` calculation into six
+deterministic hydraulic/thermal rows: maximum absolute pressure, total pressure drop, receiving
+pressure, maximum mixture superficial velocity, and minimum/maximum bulk-fluid temperature. Each
+row retains the governing solved-profile node and distance from the inlet.
+
+The caller must explicitly declare every installed limit and confirm that length, diameter, and
+roughness came from the stated line-list or design source. The adapter never treats the pipe's
+constructor defaults, auto-sizing values, API RP 14E result, FIV/FRMS/AIV screening result, or a
+missing rating as installed capacity.
+
+```java
+PlantPipelineEvidence pipelineEvidence = PlantPipelineEvidence
+    .builder("Plant", "Gathering", calculationId, pipeline,
+        "approved line list revision 7 and operating case")
+    .geometryVerified(true)
+    .maximumPressureBara(120.0)
+    .maximumPressureDropBar(12.0)
+    .minimumReceivingPressureBara(70.0)
+    .maximumMixtureVelocityMetresPerSecond(14.0)
+    .minimumTemperatureCelsius(-20.0)
+    .maximumTemperatureCelsius(80.0)
+    .convergenceComplete(model.isModelConverged())
+    .build();
+
+if (!pipelineEvidence.isComplete() || !pipelineEvidence.isFeasible()) {
+  throw new IllegalStateException(pipelineEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot pipelineSnapshot =
+    pipelineEvidence.toPlantUtilizationSnapshot();
+```
+
+Exact pipe and candidate calculation identity, a complete solved profile, monotonic profile
+distance, finite values, and complete convergence are mandatory. Isothermal calculations carry the
+single authoritative temperature observation returned by the pipe; non-isothermal calculations
+retain the actual temperature extrema. Java getters, serialization, JPype use, and `toJson()`
+expose the same callback-free values and physical margins. Hydrate/wax/liquid-dropout envelopes,
+noise/FIV qualification, erosion acceptance, slugging, transient integrity, and pipeline-solver
+changes remain separately owned and must be registered only from qualified evidence.
+
 ## Expected equipment coverage before qualification
 
 `UtilizationCoverageReport` captures evidence for explicitly declared equipment and constraint

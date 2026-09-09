@@ -502,13 +502,15 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments;
     private final List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions;
     private final List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes;
+    private final List<EngineeringDiagramLayoutRegister.SheetOverviewRegion> overviewRegions;
 
     private Sheet(String key, String id, String number, String title, List<String> areaNodeIds,
         List<String> objectNodeIds, List<OffPageConnector> connectors,
         EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition,
         List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments,
         List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions,
-        List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes) {
+        List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes,
+        List<EngineeringDiagramLayoutRegister.SheetOverviewRegion> overviewRegions) {
       this.key = requireText(key, "sheet key");
       this.id = requireText(id, "sheet id");
       this.number = requireText(number, "sheet number");
@@ -523,6 +525,8 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
           .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.PinnedPosition>(pinnedPositions));
       this.protectedRoutes = Collections
           .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>(protectedRoutes));
+      this.overviewRegions = Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.SheetOverviewRegion>(overviewRegions));
     }
 
     /** @return stable register key used for manual assignments */
@@ -577,6 +581,12 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
           .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>(protectedRoutes));
     }
 
+    /** @return immutable defensive snapshot of controlled detail-sheet index regions */
+    public List<EngineeringDiagramLayoutRegister.SheetOverviewRegion> getOverviewRegions() {
+      return Collections
+          .unmodifiableList(new ArrayList<EngineeringDiagramLayoutRegister.SheetOverviewRegion>(overviewRegions));
+    }
+
     private Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("id", id);
@@ -612,6 +622,13 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
           routeMaps.add(route.toMap());
         }
         result.put("protectedRoutes", routeMaps);
+      }
+      if (!overviewRegions.isEmpty()) {
+        List<Map<String, Object>> regionMaps = new ArrayList<Map<String, Object>>();
+        for (EngineeringDiagramLayoutRegister.SheetOverviewRegion region : overviewRegions) {
+          regionMaps.add(region.toMap());
+        }
+        result.put("overviewRegions", regionMaps);
       }
       return result;
     }
@@ -1146,6 +1163,20 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
         sheet.protectedRoutes.add(route);
       }
     }
+    for (EngineeringDiagramLayoutRegister.SheetOverviewRegion region : layoutRegister.getOverviewRegions()) {
+      MutableSheet overview = sheetsByKey.get(region.getOverviewSheetKey());
+      MutableSheet target = sheetsByKey.get(region.getTargetSheetKey());
+      if (overview == null || target == null) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_UNKNOWN_SHEET",
+            "Overview region must reference existing overview and target sheets",
+            region.getOverviewSheetKey() + "->" + region.getTargetSheetKey()));
+      } else if (overview == target) {
+        diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_SELF_OVERVIEW",
+            "Overview region cannot index its own sheet", region.getOverviewSheetKey()));
+      } else {
+        overview.overviewRegions.add(region);
+      }
+    }
   }
 
   private static List<Diagnostic> validate(List<Drawing> drawings) {
@@ -1443,6 +1474,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
     private final List<EngineeringDiagramLayoutRegister.SheetAssignment> manualAssignments = new ArrayList<EngineeringDiagramLayoutRegister.SheetAssignment>();
     private final List<EngineeringDiagramLayoutRegister.PinnedPosition> pinnedPositions = new ArrayList<EngineeringDiagramLayoutRegister.PinnedPosition>();
     private final List<EngineeringDiagramLayoutRegister.ProtectedRoute> protectedRoutes = new ArrayList<EngineeringDiagramLayoutRegister.ProtectedRoute>();
+    private final List<EngineeringDiagramLayoutRegister.SheetOverviewRegion> overviewRegions = new ArrayList<EngineeringDiagramLayoutRegister.SheetOverviewRegion>();
 
     private MutableSheet(String key, String id, String number, String title,
         EngineeringDiagramLayoutRegister.SheetDefinition manualDefinition) {
@@ -1455,7 +1487,7 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
 
     private Sheet toSheet() {
       return new Sheet(key, id, number, title, areaNodeIds, objectNodeIds, connectors, manualDefinition,
-          manualAssignments, pinnedPositions, protectedRoutes);
+          manualAssignments, pinnedPositions, protectedRoutes, overviewRegions);
     }
   }
 }

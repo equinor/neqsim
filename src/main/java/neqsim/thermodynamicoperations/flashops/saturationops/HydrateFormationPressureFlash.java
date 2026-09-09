@@ -30,6 +30,10 @@ public class HydrateFormationPressureFlash extends ConstantDutyTemperatureFlash 
   /** {@inheritDoc} */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, true).run();
+      return;
+    }
     double olfFug = 0.0;
     // system.setHydrateCheck(true);
     ThermodynamicOperations ops = new ThermodynamicOperations(system);

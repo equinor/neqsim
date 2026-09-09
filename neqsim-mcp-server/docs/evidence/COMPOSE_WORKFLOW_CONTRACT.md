@@ -81,12 +81,12 @@ limitations, and obtaining qualified engineering review.
 
 ## Inventory status
 
-Inventory version `1.32` atomically promotes `composeWorkflow` to
+Inventory version `1.33` atomically promotes `composeWorkflow` to
 `CONTRACT_TESTED` after merged PR #3566 established the direct evidence
 above. Machine-readable coverage, Java assertions,
 `test_compose_workflow_protocol.py`, synchronized focused protocol
 expectations, authoritative `test_mcp_server.py` accounting, and
-documentation move together from `20/31/20` to `20/32/19`.
+documentation move together from `20/31/20` to `20/33/18`.
 
 No promotion candidate remains queued. Phase 0 remains incomplete and
 `scientificValidationComplete=false`; this is a bounded software-contract
