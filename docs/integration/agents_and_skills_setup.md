@@ -145,6 +145,12 @@ neqsim skill private-init --repo <company>/<company>-neqsim-enterprise-skills --
 neqsim agent install --all --vscode --force   # community + enterprise
 ```
 
+A later refresh only re-installs what changed: a skill's Python package is
+pip-installed again only when its `pyproject.toml` changed. Use
+`--no-pip` to skip package installs completely and run
+`neqsim skill sync-packages` (all at once) or `neqsim skill ensure <name>`
+(on first use) afterwards.
+
 Full company setup, catalog format, discovery, and governance:
 **[Enterprise Agent and Skill Repositories](enterprise_agent_skill_repos.md)**.
 

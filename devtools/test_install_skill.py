@@ -912,5 +912,149 @@ class InstallAllSkillsTest(unittest.TestCase):
         self.assertIn("--all", stream.getvalue())
 
 
+class SkillPackageInstallTest(unittest.TestCase):
+    """Tests for pip-install skipping, deferral, and on-first-use installs."""
+
+    def setUp(self):
+        install_skill._BATCH_PACKAGE_INSTALLS[0] = False
+        del install_skill._PENDING_PACKAGE_INSTALLS[:]
+        del install_skill._INSTALLED_DIST_NAMES[:]
+
+    tearDown = setUp
+
+    @staticmethod
+    def _args(**overrides):
+        import argparse
+        base = dict(no_pip=False)
+        base.update(overrides)
+        return argparse.Namespace(**base)
+
+    def _package_dir(self, tmp_path, deps="[]"):
+        from pathlib import Path
+        dest_dir = Path(tmp_path) / "demo-package-skill"
+        dest_dir.mkdir(parents=True)
+        (dest_dir / "pyproject.toml").write_text(
+            "[project]\nname = \"demo-package-skill\"\nversion = \"0.1.0\"\n"
+            f"dependencies = {deps}\n",
+            encoding="utf-8",
+        )
+        return dest_dir
+
+    def test_unchanged_package_skips_pip(self):
+        """A reinstall with identical pyproject metadata does not re-run pip."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp)
+            sha = install_skill._sha256_file(dest_dir / "pyproject.toml")
+            previous = {"package_installed": True, "package_sha256": sha}
+            with mock.patch.object(install_skill, "_pip_install_skill_package") as pip:
+                result = install_skill._handle_skill_package(
+                    "demo-package-skill", dest_dir, self._args(), previous)
+        self.assertEqual((sha, True, False), result)
+        self.assertFalse(pip.called)
+
+    def test_changed_dependencies_trigger_pip(self):
+        """A changed pyproject (new dependency) reinstalls the package."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp, deps="[\"requests\"]")
+            previous = {"package_installed": True, "package_sha256": "stale"}
+            with mock.patch.object(install_skill, "_pip_install_skill_package",
+                                   return_value=True) as pip:
+                _sha, installed, pending = install_skill._handle_skill_package(
+                    "demo-package-skill", dest_dir, self._args(), previous)
+        self.assertTrue(installed)
+        self.assertFalse(pending)
+        self.assertTrue(pip.called)
+
+    def test_no_pip_defers_the_package(self):
+        """--no-pip records the package as pending instead of installing it."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp)
+            with mock.patch.object(install_skill, "_pip_install_skill_package") as pip:
+                _sha, installed, pending = install_skill._handle_skill_package(
+                    "demo-package-skill", dest_dir, self._args(no_pip=True), {})
+        self.assertFalse(installed)
+        self.assertTrue(pending)
+        self.assertFalse(pip.called)
+
+    def test_batch_mode_installs_all_packages_in_one_pip_call(self):
+        """Bulk installs queue packages and install them in a single pip pass."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp)
+            install_skill.begin_package_install_batch()
+            _sha, installed, pending = install_skill._handle_skill_package(
+                "demo-package-skill", dest_dir, self._args(), {})
+            self.assertFalse(installed)
+            self.assertTrue(pending)
+            with mock.patch.object(install_skill.subprocess, "check_output") as pip, \
+                    mock.patch.object(install_skill, "load_manifest", return_value={}), \
+                    mock.patch.object(install_skill, "save_manifest"):
+                failed = install_skill.flush_package_install_batch()
+        self.assertEqual([], failed)
+        self.assertEqual(1, pip.call_count)
+        self.assertIn("-e", pip.call_args[0][0])
+
+    def test_ensure_skips_when_package_already_importable(self):
+        """`skill ensure` is a no-op when the distribution is already installed."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp)
+            manifest = {"demo-package-skill": {"path": str(dest_dir / "SKILL.md")}}
+            with mock.patch.object(install_skill, "_installed_distribution_names",
+                                   return_value={"demo-package-skill"}), \
+                    mock.patch.object(install_skill, "_pip_install_skill_package") as pip:
+                ok = install_skill.ensure_skill_package("demo-package-skill", manifest)
+        self.assertTrue(ok)
+        self.assertFalse(pip.called)
+
+    def test_ensure_installs_a_deferred_package_on_first_use(self):
+        """`skill ensure` installs a package that --no-pip deferred."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dest_dir = self._package_dir(tmp)
+            manifest = {"demo-package-skill": {
+                "path": str(dest_dir / "SKILL.md"), "package_pending": True}}
+            with mock.patch.object(install_skill, "_installed_distribution_names",
+                                   return_value=set()), \
+                    mock.patch.object(install_skill, "_pip_install_skill_package",
+                                      return_value=True) as pip, \
+                    mock.patch.object(install_skill, "save_manifest"):
+                ok = install_skill.ensure_skill_package("demo-package-skill", manifest)
+        self.assertTrue(ok)
+        self.assertTrue(pip.called)
+        self.assertTrue(manifest["demo-package-skill"]["package_installed"])
+        self.assertFalse(manifest["demo-package-skill"]["package_pending"])
+
+    def test_batch_is_chunked_to_fit_a_command_line(self):
+        """Many packages are split across pip calls so Windows' 32k limit holds."""
+        items = [(f"skill-{i}", "C:/Users/demo/.neqsim/skills/skill-%03d" % i)
+                 for i in range(400)]
+        chunks = install_skill._chunk_package_items(items)
+        self.assertGreater(len(chunks), 1)
+        self.assertEqual(len(items), sum(len(chunk) for chunk in chunks))
+        for chunk in chunks:
+            command_chars = sum(len(str(dest)) + 10 for _name, dest in chunk)
+            self.assertLessEqual(command_chars, 16000 + len(str(items[0][1])) + 10)
+
+    def test_bulk_failure_falls_back_to_one_skill_at_a_time(self):
+        """A failing bulk pip call retries each skill individually."""
+        items = [("alpha", "/skills/alpha"), ("beta", "/skills/beta")]
+        with mock.patch.object(install_skill, "_pip_install_package_chunk", return_value=False), \
+                mock.patch.object(install_skill, "_pip_install_skill_package",
+                                  side_effect=[True, False]) as pip:
+            failed = install_skill._pip_install_skill_packages(items)
+        self.assertEqual(["beta"], failed)
+        self.assertEqual(2, pip.call_count)
+
+
 if __name__ == "__main__":
     unittest.main()
