@@ -145,6 +145,23 @@ When capacity limiting is enabled and the requested flow reaches the choked
 limit, downstream pressure is no longer uniquely determined by flow and Kv
 alone.
 
+Initialize the inlet at the design conditions (for example, `inlet.run()`)
+before calling `autoSize(safetyFactor, designOpeningPercent)`. Sizing preserves
+the inlet flow, phase split, density, compressibility factor and heat-capacity
+ratio. In particular, it must not reset an already flashed rich-gas inlet while
+restoring an unchanged flow rate. A Cv copied with `setCv(sizedValve.getCv())`
+then reproduces the same forward flow when the initialized inlet, opening,
+sizing method, gas/liquid selection and correction settings are the same.
+
+`calculateOutletPressure(adjustedKv)` and `getOutletPressure()` return **bara**.
+Internally calculated absolute pressures are converted to the configured unit
+before applying them, including when the original setpoint used `barg` or
+`kPa`. This applies to both steady-state and transient calculations and avoids
+adding atmospheric pressure twice. Use `getOutletStream().getPressure(unit)`
+to read the resulting stream pressure in another unit. The one-argument
+`setOutletPressure(value)` continues to use the previously configured unit;
+use the two-argument setter when supplying a value in a different unit.
+
 ## Valve characteristic and mechanical design
 
 The inherent characteristic belongs to `ValveMechanicalDesign`, not directly to
