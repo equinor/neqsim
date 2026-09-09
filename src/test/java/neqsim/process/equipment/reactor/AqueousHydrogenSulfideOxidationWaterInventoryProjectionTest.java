@@ -64,7 +64,7 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
   }
 
   @Test
-  void testWaterInventoryScalingAndFitScatterOrderingArePreserved() {
+  void testReferenceSegmentPreservesScalingAndFitScatterOrdering() {
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment =
         segmentResult(referenceSegment(10.0));
     AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result small =
@@ -121,6 +121,9 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
         () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment, 0.0));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment, -1.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment,
+            Double.MIN_VALUE));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment,
             Double.NaN));
