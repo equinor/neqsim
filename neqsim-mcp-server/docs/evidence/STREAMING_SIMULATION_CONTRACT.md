@@ -7,9 +7,11 @@ transient, and Monte Carlo operations using existing NeqSim runners. A caller
 receives an opaque operation identifier, polls paginated results, may request
 cooperative cancellation, and can list only that caller's operations.
 
-This qualification keeps Phase 0 inventory at `1.33 / 20+33+18`.
-`streamSimulation` remains `CONFIRMED_GAP` until a separate post-merge
-promotion atomically records this direct evidence.
+Merged qualification PR #3589 established the direct Java and packaged-MCP
+evidence recorded here. Inventory `1.34 / 20+34+17` atomically promotes
+`streamSimulation` from `CONFIRMED_GAP` to `CONTRACT_TESTED` without
+changing production code, public schema, canonical NeqSim models, policy, or
+numerical behavior.
 
 ## Contract-tested implementation boundary
 
@@ -59,7 +61,7 @@ two-point SRK sweep lifecycle. Existing
 poll, cancel, or list another principal's operation.
 
 The packaged `neqsim-mcp-server/test_streaming_protocol.py` harness starts
-the shaded server over STDIO and repeats seven transport-level scenarios. It
+the shaded server over STDIO and repeats eight transport-level scenarios. It
 checks discovery language, standard response evidence, fixed limit reporting,
 fail-closed requests, a canonical two-point NeqSim sweep, pagination metadata,
 and non-disclosing cancellation. The comprehensive MCP regression remains the
@@ -79,3 +81,12 @@ security, tenant isolation beyond the request context, plant control or
 write-back, standards compliance, certification, or accountable engineering
 approval. Each result retains the applicability and validation boundary of the
 underlying NeqSim model and must be independently reviewed.
+
+## Inventory continuity
+
+Phase 0 inventory version `1.34` records `20` explicit-trust tools,
+`34` contract-tested tools, `17` confirmed gaps, and zero queued promotion
+candidates. The evidence sources resolve to the canonical streaming runner,
+focused Java and principal-scoping tests, the packaged streaming harness, the
+comprehensive MCP harness, and this document. Phase 0 remains incomplete and
+`scientificValidationComplete=false`.
