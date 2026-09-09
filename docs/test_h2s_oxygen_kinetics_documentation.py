@@ -311,7 +311,7 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "finite and strictly positive",
             r"\dot n_{r,i}\Delta t_i=n_{r,i,\mathrm{reacted}}",
             "reacted amount is exactly zero",
-            "scales linearly with water inventory",
+            "scale linearly with water inventory",
             "unsigned total-sulfide loss potential",
             "not a component source applied to a control volume",
         ):
