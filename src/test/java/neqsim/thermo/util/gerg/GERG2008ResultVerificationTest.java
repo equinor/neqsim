@@ -344,8 +344,8 @@ public class GERG2008ResultVerificationTest {
    * Test that direct GERG-2008 TP flash exposes finite thermodynamic properties.
    *
    * <p>
-   * Transport properties remain unavailable for native GERG-2008 phases; use a compatible transport-property model
-   * when viscosity or thermal conductivity is required.
+   * Transport properties remain unavailable for native GERG-2008 phases; use a compatible transport-property model when
+   * viscosity or thermal conductivity is required.
    * </p>
    */
   @Test
@@ -389,11 +389,9 @@ public class GERG2008ResultVerificationTest {
       maximumMaterialResidual = Math.max(maximumMaterialResidual, Math.abs(feedComposition - composition));
     }
     assertEquals(1.0, compositionTotal, 5.0e-12, label + " composition normalization");
-    assertTrue(maximumMaterialResidual < 1.0e-10,
-        label + " single-phase material residual " + maximumMaterialResidual);
+    assertTrue(maximumMaterialResidual < 1.0e-10, label + " single-phase material residual " + maximumMaterialResidual);
 
-    assertTrue(Double.isFinite(fluid.getPhase(0).getZ()) && fluid.getPhase(0).getZ() > 0.0,
-        label + " compressibility");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getZ()) && fluid.getPhase(0).getZ() > 0.0, label + " compressibility");
     assertTrue(Double.isFinite(fluid.getPhase(0).getDensity()) && fluid.getPhase(0).getDensity() > 0.0,
         label + " density");
     assertTrue(Double.isFinite(fluid.getPhase(0).getEnthalpy()), label + " enthalpy");
@@ -402,8 +400,7 @@ public class GERG2008ResultVerificationTest {
     assertTrue(Double.isFinite(fluid.getPhase(0).getCv()) && fluid.getPhase(0).getCv() > 0.0, label + " Cv");
     assertTrue(Double.isFinite(fluid.getPhase(0).getSoundSpeed()) && fluid.getPhase(0).getSoundSpeed() > 0.0,
         label + " sound speed");
-    assertTrue(Double.isFinite(fluid.getPhase(0).getJouleThomsonCoefficient()),
-        label + " Joule-Thomson coefficient");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getJouleThomsonCoefficient()), label + " Joule-Thomson coefficient");
   }
 
   private void assertDirectGasFlashEquivalent(SystemInterface expected, SystemInterface actual,
