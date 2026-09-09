@@ -38,10 +38,13 @@ public final class SarirAtmosphericFractionationCase {
 
   private final Stream feedStream;
   private final DistillationColumn column;
+  private final OperatingInputs operatingInputs;
 
-  private SarirAtmosphericFractionationCase(Stream feedStream, DistillationColumn column) {
+  private SarirAtmosphericFractionationCase(Stream feedStream, DistillationColumn column,
+      OperatingInputs operatingInputs) {
     this.feedStream = feedStream;
     this.column = column;
+    this.operatingInputs = operatingInputs;
   }
 
   /**
@@ -107,7 +110,7 @@ public final class SarirAtmosphericFractionationCase {
     configuredColumn.setEnthalpyBalanceTolerance(ENTHALPY_BALANCE_TOLERANCE);
     configuredColumn.setEnforceEnergyBalanceTolerance(true);
 
-    return new SarirAtmosphericFractionationCase(feed, configuredColumn);
+    return new SarirAtmosphericFractionationCase(feed, configuredColumn, operatingInputs);
   }
 
   /**
@@ -126,6 +129,15 @@ public final class SarirAtmosphericFractionationCase {
    */
   public DistillationColumn getColumn() {
     return column;
+  }
+
+  /**
+   * Return the immutable engineering inputs used to configure this case.
+   *
+   * @return source-unreported operating inputs supplied by the caller
+   */
+  public OperatingInputs getOperatingInputs() {
+    return operatingInputs;
   }
 
   /**

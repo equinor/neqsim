@@ -49,6 +49,8 @@ public class SarirAtmosphericFractionationCaseTest {
     assertEquals(0.08, inputs.getKeroseneSideDrawFraction(), 0.0);
     assertEquals(15, inputs.getDieselSideDrawTray());
     assertEquals(0.15, inputs.getDieselSideDrawFraction(), 0.0);
+    assertTrue(inputs == model.getOperatingInputs());
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationResult.evaluate(model));
 
     column.run(UUID.randomUUID());
 
@@ -64,11 +66,50 @@ public class SarirAtmosphericFractionationCaseTest {
         column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
         column.getLiquidOutStream() };
     assertBalancesAndBoilingOrder(column, feed, products);
+
+    SarirAtmosphericFractionationResult result = SarirAtmosphericFractionationResult.evaluate(model);
+    assertEquals(feed.getFlowRate("kg/hr"), result.getFeedMassFlowKgPerHour(), 1.0e-8);
+    assertEquals(column.getLastIterationCount(), result.getIterationCount());
+    assertEquals(column.getMassBalanceError(), result.getColumnMassBalanceError(), 0.0);
+    assertEquals(column.getEnergyBalanceError(), result.getColumnEnergyBalanceError(), 0.0);
+    assertTrue(result.getMassClosureRelativeError() <= BALANCE_TOLERANCE);
+    assertTrue(!result.getConvergenceDiagnostics().isEmpty());
+
+    String[] expectedLabels = { "Total Naphtha", "Kerosene", "Diesel", "Residual" };
+    SarirAtmosphericFractionationResult.ProductResult[] rows = result.getProducts();
+    assertEquals(expectedLabels.length, rows.length);
+    double calculatedMassFlow = 0.0;
+    double calculatedFraction = 0.0;
+    double previousBoilingPoint = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < rows.length; i++) {
+      assertEquals(expectedLabels[i], rows[i].getProductLabel());
+      assertEquals(rows[i], result.getProduct(expectedLabels[i]));
+      assertTrue(Double.isFinite(rows[i].getCalculatedMassFlowKgPerHour()));
+      assertTrue(rows[i].getCalculatedMassFlowKgPerHour() >= 0.0);
+      assertTrue(Double.isFinite(rows[i].getCalculatedMassFractionOfFeed()));
+      assertTrue(Double.isFinite(rows[i].getPlantMassFlowKgPerHour()));
+      assertTrue(Double.isFinite(rows[i].getAbsoluteRelativeErrorPercentAgainstPlant()));
+      calculatedMassFlow += rows[i].getCalculatedMassFlowKgPerHour();
+      calculatedFraction += rows[i].getCalculatedMassFractionOfFeed();
+      if (Double.isFinite(rows[i].getMeanNormalBoilingPointKelvin())) {
+        assertTrue(rows[i].getMeanNormalBoilingPointKelvin() > previousBoilingPoint);
+        assertEquals(rows[i].getMeanNormalBoilingPointKelvin() - 273.15, rows[i].getMeanNormalBoilingPointCelsius(),
+            1.0e-12);
+        previousBoilingPoint = rows[i].getMeanNormalBoilingPointKelvin();
+      }
+    }
+    assertEquals(result.getProductMassFlowKgPerHour(), calculatedMassFlow, 1.0e-8);
+    assertEquals(calculatedMassFlow / feed.getFlowRate("kg/hr"), calculatedFraction, 1.0e-12);
+    rows[0] = null;
+    assertTrue(result.getProducts()[0] != null);
+    assertThrows(IllegalArgumentException.class, () -> result.getProduct(null));
+    assertThrows(IllegalArgumentException.class, () -> result.getProduct("Naphtha"));
   }
 
   /** Require unreported operating controls and profiles to fail closed. */
   @Test
   public void invalidEngineeringInputsAreRejectedBeforeCaseCreation() {
+    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(2.5, 2.0, 700.0, 1.0, 24, 0.08, 15, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 15, 0.08, 24, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 24, 1.0, 15, 0.15));
