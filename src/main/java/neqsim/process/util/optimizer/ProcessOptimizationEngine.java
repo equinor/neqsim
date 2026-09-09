@@ -1241,55 +1241,70 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Analyzes the sensitivity of the optimal solution to flow rate changes.
    *
+   * <p>
+   * Restores and solves the supplied base flow and inlet pressure after all probes, including when a probe fails. The
+   * flow buffer is the last feasible sampled increase, not the first infeasible trial.
+   * </p>
+   *
    * @param optimalFlow the optimal flow rate in kg/hr
    * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return sensitivity result with gradient and margin information
    */
   public SensitivityResult analyzeSensitivity(double optimalFlow, double inletPressure, double outletPressure) {
-    SensitivityResult result = new SensitivityResult();
-    result.setBaseFlow(optimalFlow);
+    try {
+      SensitivityResult result = new SensitivityResult();
+      result.setBaseFlow(optimalFlow);
 
-    // Calculate flow gradient
-    double gradient = estimateGradient(inletPressure, outletPressure, optimalFlow);
-    result.setFlowGradient(gradient);
+      // Calculate flow gradient
+      double gradient = estimateGradient(inletPressure, outletPressure, optimalFlow);
+      result.setFlowGradient(gradient);
 
-    // Analyze constraint margins
-    if (hasProcess()) {
-      setFeedFlowRate(optimalFlow);
-      runSimulation();
+      // Analyze constraint margins
+      if (hasProcess()) {
+        setFeedFlowRate(optimalFlow);
+        runSimulation();
 
-      Map<String, Double> margins = new HashMap<String, Double>();
-      String tightestConstraint = null;
-      double smallestMargin = Double.MAX_VALUE;
+        Map<String, Double> margins = new HashMap<String, Double>();
+        String tightestConstraint = null;
+        double smallestMargin = Double.MAX_VALUE;
 
-      List<ProcessEquipmentInterface> units = getAllUnitOperations();
-      for (int i = 0; i < units.size(); i++) {
-        ProcessEquipmentInterface equipment = units.get(i);
-        EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
+        List<ProcessEquipmentInterface> units = getAllUnitOperations();
+        for (int i = 0; i < units.size(); i++) {
+          ProcessEquipmentInterface equipment = units.get(i);
+          EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
-        if (strategy != null) {
-          double utilization = strategy.evaluateCapacity(equipment);
-          double margin = 1.0 - utilization;
-          margins.put(equipment.getName(), margin);
+          if (strategy != null) {
+            double utilization = strategy.evaluateCapacity(equipment);
+            double margin = 1.0 - utilization;
+            margins.put(equipment.getName(), margin);
 
-          if (margin < smallestMargin && margin >= 0) {
-            smallestMargin = margin;
-            tightestConstraint = equipment.getName();
+            if (margin < smallestMargin && margin >= 0) {
+              smallestMargin = margin;
+              tightestConstraint = equipment.getName();
+            }
           }
         }
+
+        result.setConstraintMargins(margins);
+        result.setTightestConstraint(tightestConstraint);
+        result.setTightestMargin(smallestMargin);
       }
 
-      result.setConstraintMargins(margins);
-      result.setTightestConstraint(tightestConstraint);
-      result.setTightestMargin(smallestMargin);
+      // Estimate max flow increase before constraint violation
+      double flowBuffer = estimateFlowBuffer(optimalFlow, inletPressure, outletPressure);
+      result.setFlowBuffer(flowBuffer);
+
+      return result;
+    } finally {
+      // Gradient and capacity-buffer probes mutate the live process. Always leave a
+      // solved base point so equipment outputs agree with the returned optimum.
+      if (hasProcess()) {
+        setFeedFlowRate(optimalFlow);
+        setInletPressure(inletPressure);
+        runSimulation();
+      }
     }
-
-    // Estimate max flow increase before constraint violation
-    double flowBuffer = estimateFlowBuffer(optimalFlow, inletPressure, outletPressure);
-    result.setFlowBuffer(flowBuffer);
-
-    return result;
   }
 
   /**
@@ -1302,15 +1317,17 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double estimateFlowBuffer(double currentFlow, double inletPressure, double outletPressure) {
     double testFlow = currentFlow * 1.01; // 1% increase
+    double lastFeasibleFlow = currentFlow;
     int steps = 0;
     int maxSteps = 50;
 
-    while (canAchieveFlow(inletPressure, outletPressure, testFlow) && steps < maxSteps) {
+    while (steps < maxSteps && canAchieveFlow(inletPressure, outletPressure, testFlow)) {
+      lastFeasibleFlow = testFlow;
       testFlow *= 1.01;
       steps++;
     }
 
-    return testFlow - currentFlow;
+    return lastFeasibleFlow - currentFlow;
   }
 
   /**

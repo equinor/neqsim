@@ -227,7 +227,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
 
     for (CapacityConstraint constraint : constraints.values()) {
-      if (constraint.isViolated()) {
+      if (constraint.isEnabled() && constraint.isViolated()) {
         violations.add(constraint);
       }
     }
@@ -244,6 +244,9 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     double maxUtil = 0.0;
 
     for (CapacityConstraint constraint : constraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
@@ -276,6 +279,9 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     // Check hard constraint violations
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
     for (CapacityConstraint constraint : constraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       if (constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD
           || constraint.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL) {
         if (constraint.isHardLimitExceeded()) {
@@ -293,7 +299,7 @@ public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {
     Map<String, CapacityConstraint> constraints = getConstraints(equipment);
 
     for (CapacityConstraint constraint : constraints.values()) {
-      if (constraint.getUtilization() > 1.0) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
         return false;
       }
     }

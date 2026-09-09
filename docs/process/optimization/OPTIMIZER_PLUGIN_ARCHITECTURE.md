@@ -1240,9 +1240,24 @@ System.out.println("Iterations: " + result.getIterations());
 
 ---
 
+## Disabled Compressor Constraints
+
+`CompressorCapacityStrategy` excludes disabled constraints from violation lists,
+bottleneck selection, and hard/soft limit checks. This matters for fixed-pressure
+compressors without performance charts, whose surge and speed constraints are
+disabled. Disabled map constraints must not reject an otherwise feasible power
+limited operating point. Active limits remain enforced.
+
 ## Sensitivity Analysis
 
-Analyze how the optimal solution responds to parameter changes.
+Analyze how the optimal solution responds to parameter changes. Sensitivity probes
+restore and solve the supplied base flow and inlet pressure before returning, so
+equipment outputs remain consistent with the reported throughput. The flow buffer
+is the last feasible sampled increase from up to 50 successive 1% probes. It is
+zero when the first probe violates a hard limit; it is not the size of that
+infeasible step or a guaranteed maximum margin. See the executable
+[Practical Examples](PRACTICAL_EXAMPLES#basic-process-optimization) for the explicit
+operating-point re-run needed with the 3.20.0 release.
 
 ### SensitivityResult Class
 
