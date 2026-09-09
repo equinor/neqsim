@@ -21,6 +21,9 @@ PAGES = tuple(
     )
 )
 MODULES = DOCS / "modules.md"
+REFERENCE_INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
+EQUIPMENT_INDEX = DOCS / "process" / "equipment" / "README.md"
+COMPRESSOR_THERMAL_GUIDE = DOCS / "compressor_thermal_model.md"
 
 FRONT_MATTER = re.compile(r"\A---\n(?P<fields>.*?)\n---\n", re.DOTALL)
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
@@ -104,6 +107,18 @@ def test_root_standalone_page_links_use_published_urls_and_resolve() -> None:
                 assert any(candidate.exists() for candidate in candidates), (
                     f"{page}: unresolved internal target {target}"
                 )
+
+
+def test_compressor_thermal_guide_is_discoverable_from_curated_indexes() -> None:
+    destinations = {
+        REFERENCE_INDEX: "compressor_thermal_model.md",
+        EQUIPMENT_INDEX: "../../compressor_thermal_model",
+    }
+    for index, destination in destinations.items():
+        content = index.read_text(encoding="utf-8")
+        assert destination in _targets(content), f"{index}: missing {destination}"
+        assert COMPRESSOR_THERMAL_GUIDE in _target_candidates(index, destination)
+        assert COMPRESSOR_THERMAL_GUIDE.is_file()
 
 
 def test_module_inventory_distinguishes_foundations_from_safety() -> None:
