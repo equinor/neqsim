@@ -7,9 +7,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Immutable engineering summary for a solved {@link DoeBigHillVacuumFractionationCase}.
  *
  * <p>
- * The result qualifies numerical convergence, conservation, and product ordering for an explicit
- * screening case. It is not a measured DOE vacuum-column material balance or a product-yield
- * validation.
+ * The result qualifies numerical convergence, conservation, and product ordering for an explicit screening case. It is
+ * not a measured DOE vacuum-column material balance or a product-yield validation.
  * </p>
  */
 public final class DoeBigHillVacuumFractionationResult {
@@ -31,9 +30,8 @@ public final class DoeBigHillVacuumFractionationResult {
 
   private DoeBigHillVacuumFractionationResult(ProductResult[] products, double feedMassFlowKgPerHour,
       double productMassFlowKgPerHour, double massClosureRelativeError,
-      double maximumComponentMolarClosureRelativeError, double columnMassBalanceError,
-      double columnEnergyBalanceError, double meshResidualNorm, int iterationCount,
-      double solveTimeSeconds, String convergenceDiagnostics) {
+      double maximumComponentMolarClosureRelativeError, double columnMassBalanceError, double columnEnergyBalanceError,
+      double meshResidualNorm, int iterationCount, double solveTimeSeconds, String convergenceDiagnostics) {
     this.products = products.clone();
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
     this.productMassFlowKgPerHour = productMassFlowKgPerHour;
@@ -53,11 +51,10 @@ public final class DoeBigHillVacuumFractionationResult {
    * @param model solved case to evaluate
    * @return immutable product and convergence summary
    * @throws NullPointerException if {@code model} is {@code null}
-   * @throws IllegalStateException if the case is unsolved, used fallback products, is
-   *         non-conservative, or contains invalid or unordered products
+   * @throws IllegalStateException if the case is unsolved, used fallback products, is non-conservative, or contains
+   * invalid or unordered products
    */
-  public static DoeBigHillVacuumFractionationResult evaluate(
-      DoeBigHillVacuumFractionationCase model) {
+  public static DoeBigHillVacuumFractionationResult evaluate(DoeBigHillVacuumFractionationCase model) {
     Objects.requireNonNull(model, "model");
     DistillationColumn column = model.getColumn();
     if (!column.solved()) {
@@ -73,12 +70,10 @@ public final class DoeBigHillVacuumFractionationResult {
 
     double massBalanceError = column.getMassBalanceError();
     double energyBalanceError = column.getEnergyBalanceError();
-    requireFiniteBoundedError(massBalanceError, "Column mass-balance error",
-        BALANCE_TOLERANCE);
-    requireFiniteBoundedError(energyBalanceError, "Column energy-balance error",
-        BALANCE_TOLERANCE);
-    requireFiniteBoundedError(column.getLastTrayMaterialBalanceError(),
-        "Maximum tray material-balance error", column.getTrayMaterialBalanceTolerance());
+    requireFiniteBoundedError(massBalanceError, "Column mass-balance error", BALANCE_TOLERANCE);
+    requireFiniteBoundedError(energyBalanceError, "Column energy-balance error", BALANCE_TOLERANCE);
+    requireFiniteBoundedError(column.getLastTrayMaterialBalanceError(), "Maximum tray material-balance error",
+        column.getTrayMaterialBalanceTolerance());
     double meshResidual = column.getLastMeshResidualNorm();
     requireFiniteBoundedError(meshResidual, "MESH residual", column.getMeshResidualTolerance());
 
@@ -102,16 +97,13 @@ public final class DoeBigHillVacuumFractionationResult {
       }
       previousMeanBoilingPoint = meanBoilingPoint;
       productMassFlow += massFlow;
-      productResults[i] = new ProductResult(PRODUCT_LABELS[i], massFlow,
-          massFlow / feedMassFlow, meanBoilingPoint);
+      productResults[i] = new ProductResult(PRODUCT_LABELS[i], massFlow, massFlow / feedMassFlow, meanBoilingPoint);
     }
 
     double closureError = Math.abs(feedMassFlow - productMassFlow) / feedMassFlow;
     requireFiniteBoundedError(closureError, "External mass-closure error", BALANCE_TOLERANCE);
-    double maximumComponentError = maximumComponentMolarClosureRelativeError(
-        model.getFeedStream(), streams);
-    requireFiniteBoundedError(maximumComponentError,
-        "Maximum component molar-closure error", BALANCE_TOLERANCE);
+    double maximumComponentError = maximumComponentMolarClosureRelativeError(model.getFeedStream(), streams);
+    requireFiniteBoundedError(maximumComponentError, "Maximum component molar-closure error", BALANCE_TOLERANCE);
 
     int iterations = column.getLastIterationCount();
     double solveTime = column.getLastSolveTimeSeconds();
@@ -120,9 +112,8 @@ public final class DoeBigHillVacuumFractionationResult {
     }
 
     String diagnostics = column.getConvergenceDiagnostics();
-    return new DoeBigHillVacuumFractionationResult(productResults, feedMassFlow,
-        productMassFlow, closureError, maximumComponentError, massBalanceError,
-        energyBalanceError, meshResidual, iterations, solveTime,
+    return new DoeBigHillVacuumFractionationResult(productResults, feedMassFlow, productMassFlow, closureError,
+        maximumComponentError, massBalanceError, energyBalanceError, meshResidual, iterations, solveTime,
         diagnostics == null ? "" : diagnostics);
   }
 
@@ -209,8 +200,8 @@ public final class DoeBigHillVacuumFractionationResult {
     double mean = 0.0;
     double compositionSum = 0.0;
     for (int i = 0; i < composition.length; i++) {
-      if (!Double.isFinite(composition[i]) || composition[i] < 0.0
-          || !Double.isFinite(boilingPoints[i]) || !(boilingPoints[i] > 0.0)) {
+      if (!Double.isFinite(composition[i]) || composition[i] < 0.0 || !Double.isFinite(boilingPoints[i])
+          || !(boilingPoints[i] > 0.0)) {
         throw new IllegalStateException("Product composition and boiling points must be physical");
       }
       mean += composition[i] * boilingPoints[i];
@@ -222,8 +213,7 @@ public final class DoeBigHillVacuumFractionationResult {
     return mean / compositionSum;
   }
 
-  private static double maximumComponentMolarClosureRelativeError(StreamInterface feed,
-      StreamInterface[] products) {
+  private static double maximumComponentMolarClosureRelativeError(StreamInterface feed, StreamInterface[] products) {
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double feedMolarFlow = feed.getFlowRate("mol/hr");
     double maximumError = 0.0;
@@ -238,11 +228,9 @@ public final class DoeBigHillVacuumFractionationResult {
         if (productComposition.length != feedComposition.length) {
           throw new IllegalStateException("Product composition must align with the feed");
         }
-        productComponentFlow += product.getFlowRate("mol/hr")
-            * productComposition[componentIndex];
+        productComponentFlow += product.getFlowRate("mol/hr") * productComposition[componentIndex];
       }
-      double relativeError = Math.abs(feedComponentFlow - productComponentFlow)
-          / feedComponentFlow;
+      double relativeError = Math.abs(feedComponentFlow - productComponentFlow) / feedComponentFlow;
       if (!Double.isFinite(relativeError)) {
         throw new IllegalStateException("Component molar-closure error must be finite");
       }
@@ -251,10 +239,8 @@ public final class DoeBigHillVacuumFractionationResult {
     return maximumError;
   }
 
-  private static void requireFiniteBoundedError(double value, String label,
-      double tolerance) {
-    if (!Double.isFinite(value) || value < 0.0 || !Double.isFinite(tolerance)
-        || tolerance < 0.0 || value > tolerance) {
+  private static void requireFiniteBoundedError(double value, String label, double tolerance) {
+    if (!Double.isFinite(value) || value < 0.0 || !Double.isFinite(tolerance) || tolerance < 0.0 || value > tolerance) {
       throw new IllegalStateException(label + " exceeds the qualified tolerance");
     }
   }
@@ -266,8 +252,8 @@ public final class DoeBigHillVacuumFractionationResult {
     private final double massFractionOfFeed;
     private final double meanNormalBoilingPointKelvin;
 
-    private ProductResult(String productLabel, double massFlowKgPerHour,
-        double massFractionOfFeed, double meanNormalBoilingPointKelvin) {
+    private ProductResult(String productLabel, double massFlowKgPerHour, double massFractionOfFeed,
+        double meanNormalBoilingPointKelvin) {
       this.productLabel = productLabel;
       this.massFlowKgPerHour = massFlowKgPerHour;
       this.massFractionOfFeed = massFractionOfFeed;
