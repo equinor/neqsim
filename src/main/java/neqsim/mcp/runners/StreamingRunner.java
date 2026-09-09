@@ -517,7 +517,11 @@ public final class StreamingRunner {
     StreamingOperation op = ownedOperation(opId);
 
     if (op == null) {
-      return errorJson("NOT_FOUND", "Operation not found: " + opId, "Use action 'list' to see active operations");
+      String notFound = errorJson("NOT_FOUND", "Operation not found: " + opId,
+          "Use action 'list' to see active operations");
+      JsonObject response = JsonParser.parseString(notFound).getAsJsonObject();
+      response.addProperty("operationStatus", "not_found");
+      return GSON.toJson(response);
     }
     String operationStatus = op.requestCancellation();
     JsonObject response = new JsonObject();
