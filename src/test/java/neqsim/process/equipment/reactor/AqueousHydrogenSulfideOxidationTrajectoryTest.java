@@ -269,6 +269,26 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
   }
 
   @Test
+  void testSegmentMeanLossRatesCloseInventoryAndAreBounded() {
+    AqueousHydrogenSulfideOxidationTrajectory.Result result = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(3.0),
+            new AqueousHydrogenSulfideOxidationTrajectory.Segment(7.0, 310.15, 7.0, 1.5, 220.0e-6)));
+
+    for (AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment : result.getSegmentResults()) {
+      double durationHours = segment.getSegment().getDurationHours();
+      assertMeanLossRate(segment.getLowerRateReactedTotalSulfideMolality(), durationHours,
+          segment.getLowerRateMeanLossRateMolalityPerHour(), segment.getLowerRateInletLossRateMolalityPerHour(),
+          segment.getLowerRateOutletLossRateMolalityPerHour());
+      assertMeanLossRate(segment.getNominalReactedTotalSulfideMolality(), durationHours,
+          segment.getNominalMeanLossRateMolalityPerHour(), segment.getNominalInletLossRateMolalityPerHour(),
+          segment.getNominalOutletLossRateMolalityPerHour());
+      assertMeanLossRate(segment.getUpperRateReactedTotalSulfideMolality(), durationHours,
+          segment.getUpperRateMeanLossRateMolalityPerHour(), segment.getUpperRateInletLossRateMolalityPerHour(),
+          segment.getUpperRateOutletLossRateMolalityPerHour());
+    }
+  }
+
+  @Test
   void testSegmentRetentionFactorsCloseInventoryUpdate() {
     AqueousHydrogenSulfideOxidationTrajectory.Result result = AqueousHydrogenSulfideOxidationTrajectory
         .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(3.0),
@@ -305,6 +325,12 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         0.0);
     assertEquals(identity.getUpperRateInletLossRateMolalityPerHour(),
         identity.getUpperRateOutletLossRateMolalityPerHour(), 0.0);
+    assertEquals(identity.getLowerRateInletLossRateMolalityPerHour(),
+        identity.getLowerRateMeanLossRateMolalityPerHour(), 0.0);
+    assertEquals(identity.getNominalInletLossRateMolalityPerHour(), identity.getNominalMeanLossRateMolalityPerHour(),
+        0.0);
+    assertEquals(identity.getUpperRateInletLossRateMolalityPerHour(),
+        identity.getUpperRateMeanLossRateMolalityPerHour(), 0.0);
   }
 
   @Test
@@ -325,6 +351,33 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         first.getNominalRetentionFactor() * second.getNominalRetentionFactor(), 1.0e-15);
     assertEquals(whole.getUpperRateRetentionFactor(),
         first.getUpperRateRetentionFactor() * second.getUpperRateRetentionFactor(), 1.0e-15);
+    assertEquals(unsplit.getFinalTotalSulfideMolality(), split.getFinalTotalSulfideMolality(), 1.0e-20);
+  }
+
+  @Test
+  void testDurationWeightedMeanLossRateIsSplitInvariant() {
+    double durationHours = 10.0;
+    AqueousHydrogenSulfideOxidationTrajectory.Result unsplit = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(referenceSegment(durationHours)));
+    AqueousHydrogenSulfideOxidationTrajectory.Result split = AqueousHydrogenSulfideOxidationTrajectory.advance(
+        INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(4.0), referenceSegment(durationHours - 4.0)));
+
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult whole = unsplit.getSegmentResults().get(0);
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult first = split.getSegmentResults().get(0);
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult second = split.getSegmentResults().get(1);
+
+    assertEquals(whole.getLowerRateMeanLossRateMolalityPerHour() * durationHours,
+        first.getLowerRateMeanLossRateMolalityPerHour() * 4.0
+            + second.getLowerRateMeanLossRateMolalityPerHour() * (durationHours - 4.0),
+        1.0e-20);
+    assertEquals(whole.getNominalMeanLossRateMolalityPerHour() * durationHours,
+        first.getNominalMeanLossRateMolalityPerHour() * 4.0
+            + second.getNominalMeanLossRateMolalityPerHour() * (durationHours - 4.0),
+        1.0e-20);
+    assertEquals(whole.getUpperRateMeanLossRateMolalityPerHour() * durationHours,
+        first.getUpperRateMeanLossRateMolalityPerHour() * 4.0
+            + second.getUpperRateMeanLossRateMolalityPerHour() * (durationHours - 4.0),
+        1.0e-20);
     assertEquals(unsplit.getFinalTotalSulfideMolality(), split.getFinalTotalSulfideMolality(), 1.0e-20);
   }
 
@@ -420,6 +473,14 @@ public class AqueousHydrogenSulfideOxidationTrajectoryTest extends NeqSimTest {
         () -> AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(0.5, null));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationTrajectory
         .timeToRemainingFractionRange(0.5, Collections.<AqueousHydrogenSulfideOxidationTrajectory.Segment>emptyList()));
+  }
+
+  private static void assertMeanLossRate(double reactedMolality, double durationHours, double meanLossRate,
+      double inletLossRate, double outletLossRate) {
+    assertEquals(reactedMolality / durationHours, meanLossRate, 0.0);
+    assertEquals(reactedMolality, meanLossRate * durationHours, 1.0e-20);
+    assertTrue(meanLossRate <= inletLossRate);
+    assertTrue(meanLossRate >= outletLossRate);
   }
 
   private static double exposureAtTime(List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments,
