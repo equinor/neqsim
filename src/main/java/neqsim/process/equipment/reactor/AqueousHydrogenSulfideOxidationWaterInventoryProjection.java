@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Projects qualified aqueous H2S/O2 segment evidence onto an explicit water inventory.
  *
  * <p>
- * The projection multiplies the existing molality-basis mean total-sulfide loss rates and reacted
- * molalities by a caller-supplied liquid-water inventory. It does not derive water holdup, assign
- * reaction products, consume oxygen, or mutate a process or thermodynamic system.
+ * The projection multiplies the existing molality-basis mean total-sulfide loss rates and reacted molalities by a
+ * caller-supplied liquid-water inventory. It does not derive water holdup, assign reaction products, consume oxygen, or
+ * mutate a process or thermodynamic system.
  * </p>
  *
  * @author esol
@@ -17,7 +17,8 @@ import java.io.Serializable;
 public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
   private static final double SECONDS_PER_HOUR = 3600.0;
 
-  private AqueousHydrogenSulfideOxidationWaterInventoryProjection() {}
+  private AqueousHydrogenSulfideOxidationWaterInventoryProjection() {
+  }
 
   /**
    * Project one immutable trajectory segment onto an explicit liquid-water inventory.
@@ -26,38 +27,30 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
    * @param waterInventoryKg liquid-water inventory [kg]
    * @return immutable dimensional total-sulfide loss evidence
    */
-  public static Result project(
-      AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult,
+  public static Result project(AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult,
       double waterInventoryKg) {
     if (segmentResult == null) {
       throw new IllegalArgumentException("Segment result cannot be null");
     }
     requirePositiveFinite(waterInventoryKg, "Water inventory");
 
-    double lowerRateMeanLossMolesPerHour = finiteProduct(
-        segmentResult.getLowerRateMeanLossRateMolalityPerHour(), waterInventoryKg,
-        "Lower-rate mean total-sulfide loss");
-    double nominalMeanLossMolesPerHour = finiteProduct(
-        segmentResult.getNominalMeanLossRateMolalityPerHour(), waterInventoryKg,
-        "Nominal mean total-sulfide loss");
-    double upperRateMeanLossMolesPerHour = finiteProduct(
-        segmentResult.getUpperRateMeanLossRateMolalityPerHour(), waterInventoryKg,
-        "Upper-rate mean total-sulfide loss");
+    double lowerRateMeanLossMolesPerHour = finiteProduct(segmentResult.getLowerRateMeanLossRateMolalityPerHour(),
+        waterInventoryKg, "Lower-rate mean total-sulfide loss");
+    double nominalMeanLossMolesPerHour = finiteProduct(segmentResult.getNominalMeanLossRateMolalityPerHour(),
+        waterInventoryKg, "Nominal mean total-sulfide loss");
+    double upperRateMeanLossMolesPerHour = finiteProduct(segmentResult.getUpperRateMeanLossRateMolalityPerHour(),
+        waterInventoryKg, "Upper-rate mean total-sulfide loss");
 
-    double lowerRateReactedMoles = finiteProduct(
-        segmentResult.getLowerRateReactedTotalSulfideMolality(), waterInventoryKg,
-        "Lower-rate reacted total sulfide");
-    double nominalReactedMoles = finiteProduct(
-        segmentResult.getNominalReactedTotalSulfideMolality(), waterInventoryKg,
+    double lowerRateReactedMoles = finiteProduct(segmentResult.getLowerRateReactedTotalSulfideMolality(),
+        waterInventoryKg, "Lower-rate reacted total sulfide");
+    double nominalReactedMoles = finiteProduct(segmentResult.getNominalReactedTotalSulfideMolality(), waterInventoryKg,
         "Nominal reacted total sulfide");
-    double upperRateReactedMoles = finiteProduct(
-        segmentResult.getUpperRateReactedTotalSulfideMolality(), waterInventoryKg,
-        "Upper-rate reacted total sulfide");
+    double upperRateReactedMoles = finiteProduct(segmentResult.getUpperRateReactedTotalSulfideMolality(),
+        waterInventoryKg, "Upper-rate reacted total sulfide");
 
-    return new Result(segmentResult.getIndex(), segmentResult.getSegment().getDurationHours(),
-        waterInventoryKg, lowerRateMeanLossMolesPerHour, nominalMeanLossMolesPerHour,
-        upperRateMeanLossMolesPerHour, lowerRateReactedMoles, nominalReactedMoles,
-        upperRateReactedMoles);
+    return new Result(segmentResult.getIndex(), segmentResult.getSegment().getDurationHours(), waterInventoryKg,
+        lowerRateMeanLossMolesPerHour, nominalMeanLossMolesPerHour, upperRateMeanLossMolesPerHour,
+        lowerRateReactedMoles, nominalReactedMoles, upperRateReactedMoles);
   }
 
   private static void requirePositiveFinite(double value, String name) {
@@ -68,8 +61,7 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
 
   private static double finiteProduct(double first, double second, String name) {
     double product = first * second;
-    if (!Double.isFinite(product) || product < 0.0
-        || (first > 0.0 && second > 0.0 && product == 0.0)) {
+    if (!Double.isFinite(product) || product < 0.0 || (first > 0.0 && second > 0.0 && product == 0.0)) {
       throw new IllegalArgumentException(name + " is not finite and non-negative");
     }
     return product;
@@ -90,9 +82,8 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     private final double upperRateReactedMoles;
 
     private Result(int segmentIndex, double durationHours, double waterInventoryKg,
-        double lowerRateMeanLossMolesPerHour, double nominalMeanLossMolesPerHour,
-        double upperRateMeanLossMolesPerHour, double lowerRateReactedMoles,
-        double nominalReactedMoles, double upperRateReactedMoles) {
+        double lowerRateMeanLossMolesPerHour, double nominalMeanLossMolesPerHour, double upperRateMeanLossMolesPerHour,
+        double lowerRateReactedMoles, double nominalReactedMoles, double upperRateReactedMoles) {
       this.segmentIndex = segmentIndex;
       this.durationHours = durationHours;
       this.waterInventoryKg = waterInventoryKg;
