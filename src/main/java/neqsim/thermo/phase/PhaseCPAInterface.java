@@ -17,6 +17,37 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
   /**
+   * Smallest phase mole fraction for which a component is allowed to carry association sites.
+   *
+   * <p>
+   * {@link neqsim.thermo.component.Component#setx(double)} clamps a non-positive mole fraction to {@code 1e-50}, so a
+   * component that a flash has driven out of a phase (for example CO2 salted out of a concentrated brine) stays in the
+   * phase at that floor. If such a component keeps its association sites, its row of the association Hessian has a
+   * magnitude of about {@code 1e-50} next to rows of order one, the linear solve is effectively singular, and every
+   * fugacity coefficient in the phase is returned as NaN or as a silently wrong finite number.
+   * </p>
+   *
+   * <p>
+   * The association contribution of a component scales with its mole number, so at {@code 1e-20} it is already four
+   * orders of magnitude below double precision resolution and cannot influence any physical result. The threshold
+   * therefore removes the numerically unstable band with a wide margin while leaving every physically meaningful
+   * composition untouched.
+   * </p>
+   */
+  double MIN_ASSOCIATION_MOLE_FRACTION = 1.0e-20;
+
+  /**
+   * Check whether a component is too dilute in a phase to carry association sites.
+   *
+   * @param component the component to test
+   * @return true when the component must be treated as non-associating in this phase
+   */
+  static boolean hasNegligibleAssociation(neqsim.thermo.component.ComponentInterface component) {
+    double moleFraction = component.getx();
+    return !(moleFraction > MIN_ASSOCIATION_MOLE_FRACTION);
+  }
+
+  /**
    * Getter for property hcpatot.
    *
    * @return a double

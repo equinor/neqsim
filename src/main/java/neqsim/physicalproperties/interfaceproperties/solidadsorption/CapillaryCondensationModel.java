@@ -105,6 +105,54 @@ public class CapillaryCondensationModel implements Serializable, ThermodynamicCo
   private int integrationSteps = 100;
 
   /**
+   * Pore radius below which the continuum Kelvin equation stops being valid (nm).
+   *
+   * <p>
+   * Below roughly two nanometres the meniscus is only a few molecular diameters across. The Kelvin equation then
+   * <em>over</em>-predicts the relative saturation at which the pore fills, so using it for a microporous sorbent is
+   * non-conservative. Use {@link #microporeFillingFraction(double, double, double, double)} instead.
+   * </p>
+   */
+  public static final double KELVIN_VALIDITY_RADIUS_NM = 2.0;
+
+  /**
+   * Dubinin-Radushkevich micropore volume filling fraction.
+   *
+   * <p>
+   * In micropores the adsorbate fills the pore volume progressively rather than condensing at a sharp threshold:
+   * </p>
+   * $$\frac{W}{W_0} = \exp\left[-\left(\frac{RT\ln(1/a)}{\beta E_0}\right)^2\right]$$
+   *
+   * <p>
+   * Filling starts at only a few percent of bulk saturation, one to two orders of magnitude below the Kelvin onset for
+   * the same pore size. The characteristic energy must be fitted to a measured isotherm of the same adsorbate on the
+   * same sorbent; it is not transferable between sorbents.
+   * </p>
+   *
+   * @param relativeSaturation the adsorbate activity, 0 to 1
+   * @param temperature the temperature in K, must be positive
+   * @param characteristicEnergy the Dubinin characteristic energy in J/mol, must be positive
+   * @param affinityCoefficient the affinity coefficient relative to the reference vapour, must be positive
+   * @return fraction of micropore volume filled, between 0 and 1
+   */
+  public static double microporeFillingFraction(double relativeSaturation, double temperature,
+      double characteristicEnergy, double affinityCoefficient) {
+    if (temperature <= 0.0 || characteristicEnergy <= 0.0 || affinityCoefficient <= 0.0) {
+      throw new IllegalArgumentException(
+          "Temperature, characteristic energy and affinity coefficient must all be positive");
+    }
+    if (relativeSaturation <= 0.0) {
+      return 0.0;
+    }
+    if (relativeSaturation >= 1.0) {
+      return 1.0;
+    }
+    double adsorptionPotential = R * temperature * Math.log(1.0 / relativeSaturation);
+    double exponent = adsorptionPotential / (affinityCoefficient * characteristicEnergy);
+    return Math.exp(-exponent * exponent);
+  }
+
+  /**
    * Basis used to evaluate the relative saturation that drives the Kelvin equation.
    */
   public enum RelativeSaturationBasis {
