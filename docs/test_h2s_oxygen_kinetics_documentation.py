@@ -330,7 +330,7 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         for token in (
             "testProjectionClosesPositiveDurationInventoryInHoursAndSeconds",
             "testZeroDurationPreservesDifferentialLimitAndZeroReaction",
-            "testWaterInventoryScalingAndFitScatterOrderingArePreserved",
+            "testReferenceSegmentPreservesScalingAndFitScatterOrdering",
             "testConstantWaterInventorySegmentSplitClosesTotalReaction",
             "testProjectionFailsClosedForMissingOrInvalidWaterInventory",
         ):
