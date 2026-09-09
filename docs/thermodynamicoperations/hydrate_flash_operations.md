@@ -154,6 +154,14 @@ System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C")
 System.out.println("At pressure: " + fluid.getPressure("bara") + " bara");
 ```
 
+For non-reactive electrolyte fluids, every fluid evaluation must conserve the
+input component inventory, normalize material phases, and confine ions to the
+aqueous phase. Violations raise `IllegalStateException` with a diagnostic; a
+small hydrate fugacity residual cannot override a failed material balance.
+The original multiphase-check setting is restored even when evaluation fails.
+See [Electrolyte CPA component conservation](../thermo/ElectrolyteCPAModel#component-conservation-in-hydrate-temperature-calculations)
+for the mixed-brine regression scope and remaining phase-selection limitations.
+
 ### Hydrate Formation Pressure
 
 Calculates the pressure at which hydrate first forms at given temperature.

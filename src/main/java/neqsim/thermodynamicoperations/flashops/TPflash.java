@@ -1183,6 +1183,10 @@ public class TPflash extends Flash {
       }
     }
     double originalGibbsEnergy = system.getGibbsEnergy();
+    // Gibbs energies can only rank states with the same conserved inventory. A
+    // non-conservative reference must not veto a converged, balanced refinement.
+    double originalMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+    boolean originalInventoryValid = Double.isFinite(originalMaterialResidual) && originalMaterialResidual <= 1.0e-10;
     boolean converged = false;
     boolean failed = false;
 
@@ -1263,7 +1267,8 @@ public class TPflash extends Flash {
     double refinedGibbsEnergy = system.getGibbsEnergy();
     double gibbsTolerance = Math.max(1.0e-8, Math.abs(originalGibbsEnergy) * 1.0e-12);
     if (failed || !converged || !isValidIonicGasAqueousEndpoint(gasPhase, aqueousPhase)
-        || !Double.isFinite(refinedGibbsEnergy) || refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance) {
+        || !Double.isFinite(refinedGibbsEnergy)
+        || (originalInventoryValid && refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance)) {
       for (int phase = 0; phase < 2; phase++) {
         system.setBeta(phase, originalBeta[phase]);
         for (int component = 0; component < componentCount; component++) {
