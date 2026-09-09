@@ -45,8 +45,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * <pre>
  * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
  *
- * // Find maximum throughput with gradient acceleration
- * engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_ACCELERATED);
+ * // Find maximum throughput with a single-flow gradient search
+ * engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_DESCENT);
  * OptimizationResult result = engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
  *
  * // Get sensitivity analysis
@@ -55,8 +55,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * // Evaluate all constraints
  * ConstraintReport report = engine.evaluateAllConstraints();
  *
- * // Generate lift curve
- * LiftCurve curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
+ * // Screen fixed-composition throughput at inlet pressures (bara) and temperatures (K).
+ * // Water-cut and GOR entries are labels; this method does not recombine the feed fluid.
+ * LiftCurveData curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -444,7 +445,12 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Generates a lift curve for the process.
+   * Generates fixed-composition throughput screening samples for the process.
+   *
+   * <p>
+   * Water cut and GOR are retained as point labels only; they do not change the feed composition. This method does not
+   * calculate reservoir bottomhole pressure or generate a qualified well VFP table.
+   * </p>
    *
    * @param pressures array of inlet pressures to evaluate in bara
    * @param temperatures array of inlet temperatures in Kelvin

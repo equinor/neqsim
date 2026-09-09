@@ -1,17 +1,36 @@
-name: Practical optimization examples
+name: Production optimization documentation
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
       - '.github/workflows/practical-optimization-examples.yml'
-      - 'docs/process/optimization/PRACTICAL_EXAMPLES.md'
-      - 'devtools/test_practical_optimization_examples.py'
+      - '.github/workflows/convert_notebooks.yml'
+      - 'docs/process/optimization/**'
+      - 'docs/process/*optimization*'
+      - 'docs/process/*FRAMEWORK.md'
+      - 'docs/process/processmodel/process_module.md'
+      - 'docs/wiki/bottleneck_analysis.md'
+      - 'docs/examples/**'
+      - 'docs/fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md'
+      - 'docs/integration/**'
+      - 'docs/util/optimizer_guide.md'
+      - 'docs/convert_notebooks.py'
+      - 'docs/test_convert_notebooks.py'
+      - 'examples/notebooks/**'
+      - 'devtools/*optimization*'
+      - 'devtools/test_optimizer_guide_examples.py'
+      - 'devtools/optimization_java_fragments/**'
+      - 'devtools/neqsim_dev_setup.py'
       - 'src/main/java/neqsim/process/util/optimizer/**'
+      - 'src/main/java/neqsim/process/util/reconciliation/**'
       - 'src/main/java/neqsim/process/equipment/capacity/**'
       - 'src/main/java/neqsim/process/equipment/compressor/**'
-      - 'src/test/java/neqsim/process/util/optimizer/PracticalOptimizationDocumentationTest.java'
-      - 'src/test/java/neqsim/process/util/optimizer/ProcessOptimizationEngineOperatingPointTest.java'
+      - 'src/main/java/neqsim/process/equipment/network/**'
+      - 'src/main/java/neqsim/process/equipment/stream/**'
+      - 'src/main/java/neqsim/process/equipment/util/MultiVariableAdjuster.java'
+      - 'src/test/java/neqsim/process/**'
+      - 'src/test/python/**'
       - 'pom.xml'
 
 permissions:
@@ -20,7 +39,7 @@ permissions:
 jobs:
   examples:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -31,20 +50,68 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Compile and execute Java documentation and regression tests
+      - name: Compile and execute documentation and affected Java regressions
         run: >-
           ./mvnw -B -ntp
-          -Dtest=ProcessOptimizationEngineOperatingPointTest,PracticalOptimizationDocumentationTest,ProcessOptimizationEngineTest,FlowRateOptimizerTest
-          test dependency:build-classpath -Dmdep.outputFile=target/practical-classpath.txt
+          -Dtest=PracticalOptimizationDocumentationTest,OptimizationEntryDocumentationTest,ProductionOptimizationGuideExamplesTest,ProcessModelOptimizationOverviewDocumentationTest,OptimizationGuideExamplesTest,CapacityOptimizationDocumentationTest,OptimizationIntegrationDocumentationTest,ProcessOptimizationEngineOperatingPointTest,ProcessOptimizationEngineTest,ProductionOptimizerSelectedPointTest,ProductionOptimizerTest,ProductionOptimizerAdvancedTest,FlowRateOptimizerTest,ProcessModelOptimizationViewTest,BatchStudyTest,BatchStudyDocumentationRegressionTest,PressureBoundaryOptimizerTest,PressureBoundaryCapacityIntegrationTest,SteadyStateDetectorTest,SteadyStateDocumentationRegressionTest,SQPoptimizerTest,SQPDocumentationRegressionTest,CompressorCapacityPowerUnitsTest,StreamFlowRateInvalidationTest,StreamTest,StreamPerformanceOptionsTest,StreamTransientStateTransactionTest,FluidMagicInputTest,RecombinationFlashGeneratorTest,RecombinationFlashGeneratorRateConsistencyTest,LoopDetectorFlowConservationTest,LoopedPipeNetworkOperatingPointTest,LoopedPipeNetworkTest,NetworkValidationBenchmarkTest
+          test dependency:build-classpath -Dmdep.outputFile=target/optimization-classpath.txt
       - name: Install documented Python dependencies
-        run: python -m pip install "neqsim==3.20.0" numpy pandas matplotlib
-      - name: Execute Python examples against documented release
-        env:
-          MPLBACKEND: Agg
-        run: python -m unittest devtools.test_practical_optimization_examples -v
-      - name: Execute Python examples against current Java source
+        run: python -m pip install "neqsim==3.20.0" numpy scipy pandas matplotlib nlopt
+      - name: Compile all remaining Java fragments and execute capacity/design examples
+        run: python devtools/check_optimization_java_fragments.py
+      - name: Execute standalone Python examples against the documented release
         env:
           MPLBACKEND: Agg
         run: |
-          export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$(cat target/practical-classpath.txt)"
           python -m unittest devtools.test_practical_optimization_examples -v
+          python -m unittest devtools.test_optimization_entry_examples -v
+      - name: Execute Python documentation against current Java source
+        env:
+          MPLBACKEND: Agg
+        run: |
+          export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$(cat target/optimization-classpath.txt)"
+          python -m unittest devtools.test_practical_optimization_examples -v
+          python -m unittest devtools.test_optimization_entry_examples -v
+          python src/test/python/test_production_optimization_guides.py
+          python devtools/test_optimizer_guide_examples.py
+          python devtools/test_optimization_integration_examples.py
+      - name: Verify notebook conversion and documentation search
+        run: |
+          python -m unittest discover -s docs -p 'test_*.py'
+          python devtools/check_documentation_search.py
+      - name: Retain test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: optimization-documentation-tests
+          path: target/surefire-reports/
+
+  notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Compile workspace classes and prepare notebook classpath
+        run: >-
+          ./mvnw -B -ntp -DskipTests compile dependency:build-classpath
+          -Dmdep.outputFile=target/neqsim-dev-classpath.txt
+      - name: Install notebook dependencies
+        run: >-
+          python -m pip install "neqsim==3.20.0" numpy scipy pandas matplotlib
+          nbformat nbclient nbconvert ipykernel
+      - name: Execute all fourteen production optimization notebooks
+        run: python devtools/check_optimization_notebooks.py
+      - name: Retain executed notebooks, HTML, figures and failure logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: optimization-notebooks
+          path: target/optimization-notebooks/

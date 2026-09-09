@@ -423,7 +423,11 @@ public class VFPTableGeneration {
         // Synthetic dry-gas BHP data: demonstrates export, not a calibrated well model.
         double[] flowRates = {50000.0, 100000.0, 200000.0}; // Sm3/day, METRIC gas rate
         double[] thp = {20.0, 40.0, 60.0}; // bara
-        double[][] bhpByThp = {{30.0, 36.0, 48.0}, {52.0, 58.0, 70.0}, {74.0, 80.0, 92.0}};
+        double[][] bhpByThp = {
+            {30.0, 36.0, 48.0},
+            {52.0, 58.0, 70.0},
+            {74.0, 80.0, 92.0}
+        };
         // Exporter indexing: [flow][THP][water ratio][gas/oil ratio][ALQ].
         double[][][][][] bhp = new double[flowRates.length][thp.length][1][1][1];
         for (int i = 0; i < flowRates.length; i++) {

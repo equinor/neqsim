@@ -636,29 +636,43 @@ public class SeparatorMPCIntegration {
 
 ### Production Optimization Setup
 
+Use `ProductionOptimizer` to calculate a steady-state operating target. `ProcessLinkedMPC`
+does not expose the objective/weight/priority/export methods formerly shown in this section.
+Pass the approved target into the configured MPC manipulated-variable workflow separately.
+The method below requires a solved process with a registered feed named `feed`; add the
+plant's product, power, equipment, and environmental constraints before using its result.
+
 ```java
-// Configure for production optimization
+import java.util.Collections;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
+
 public class ProductionOptimization {
-
-    public static void configureOptimization(ProcessLinkedMPC mpc) {
-        // Set optimization objective
-        mpc.setOptimizationObjective(OptimizationType.MAXIMIZE_THROUGHPUT);
-
-        // Define economic weights
-        mpc.setEconomicWeight("Gas_Production", 1.0);    // $/kg
-        mpc.setEconomicWeight("Oil_Production", 1.5);    // $/kg
-        mpc.setEconomicWeight("Power_Consumption", -0.1); // $/kWh
-
-        // Configure constraints for optimizer
-        mpc.setConstraintPriority("Safety_Limits", Priority.HARD);
-        mpc.setConstraintPriority("Environmental", Priority.HARD);
-        mpc.setConstraintPriority("Quality_Specs", Priority.SOFT);
-        mpc.setConstraintPriority("Equipment_Limits", Priority.SOFT);
-
-        // Export optimization configuration
-        IndustrialMPCExporter exporter = mpc.createIndustrialExporter();
-        exporter.setOptimizationEnabled(true);
-        exporter.exportOptimizationConfig("production_opt.json");
+    public static OptimizationResult calculateTarget(ProcessSystem process) {
+        StreamInterface feed = (StreamInterface) process.getUnit("feed");
+        OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
+            .rateUnit("kg/hr")
+            .searchMode(SearchMode.BINARY_FEASIBILITY)
+            .tolerance(10.0)
+            .maxIterations(30);
+        OptimizationConstraint installedFeedLimit = OptimizationConstraint.lessThan(
+            "Installed feed capacity",
+            p -> ((StreamInterface) p.getUnit("feed")).getFlowRate("kg/hr"),
+            15000.0,
+            ConstraintSeverity.HARD,
+            100.0,
+            "Maximum installed feed mass rate in kg/hr"
+        );
+        OptimizationResult result = new ProductionOptimizer().optimize(
+            process, feed, config, Collections.emptyList(),
+            Collections.singletonList(installedFeedLimit)
+        );
+        if (!result.isFeasible()) {
+            throw new IllegalStateException(result.getInfeasibilityDiagnosis());
+        }
+        return result;
     }
 }
 ```

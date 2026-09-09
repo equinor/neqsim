@@ -62,7 +62,9 @@ jobs:
       - name: Check for changes
         id: git-check
         run: |
-          git diff --exit-code docs/examples/*.md || echo "changes=true" >> $GITHUB_OUTPUT
+          if [ -n "$(git status --porcelain -- docs/examples/)" ]; then
+            echo "changes=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create Pull Request
         if: steps.git-check.outputs.changes == 'true'
@@ -74,7 +76,7 @@ jobs:
           body: |
             This PR was automatically generated to convert Jupyter notebooks to Markdown for GitHub Pages.
 
-            Changes include updated markdown versions of notebooks in `docs/examples/`.
+            Changes include updated Markdown versions of notebooks and extracted figures in `docs/examples/`.
           branch: auto-convert-notebooks
           delete-branch: true
           labels: documentation, automated

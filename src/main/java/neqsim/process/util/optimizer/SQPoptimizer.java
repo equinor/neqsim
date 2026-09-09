@@ -30,17 +30,18 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <p>
- * At each iteration, a QP sub-problem is formed with a BFGS approximation of the Hessian of the Lagrangian, and the
- * solution provides a search direction. An Armijo-backtracking line search on a merit function ensures global
- * convergence.
+ * At each iteration, a QP sub-problem is formed with a damped BFGS approximation updated from objective-gradient
+ * differences, and the solution provides a search direction. An Armijo-backtracking line search on an L1 merit function
+ * selects the step length. This reduced implementation does not include nonlinear constraint curvature in the Hessian
+ * update.
  * </p>
  *
  * <h2>Features</h2>
  * <ul>
  * <li>BFGS quasi-Newton Hessian approximation (damped update for positive definiteness)</li>
  * <li>Active-set QP solver for bound and linear inequality constraints</li>
- * <li>L1 exact penalty merit function for global convergence</li>
- * <li>Finite-difference gradient estimation (user can provide analytical gradients)</li>
+ * <li>L1 penalty merit function for step acceptance</li>
+ * <li>Finite-difference objective gradients and constraint Jacobians</li>
  * <li>Variable bounds enforced via projection</li>
  * </ul>
  *
@@ -320,7 +321,7 @@ public class SQPoptimizer implements Serializable {
       double[] dx = solveQPSubproblem(gradF, gEq, hIneq, jacEq, jacIneq, x);
 
       // Line search on L1 merit function
-      double alpha = lineSearch(x, dx, fBest, gEq, hIneq);
+      double alpha = lineSearch(x, dx, fBest, gradF, gEq, hIneq);
 
       // Store previous values for BFGS update
       double[] xPrev = Arrays.copyOf(x, n);
@@ -566,6 +567,24 @@ public class SQPoptimizer implements Serializable {
       }
     }
 
+    Arrays.fill(lambdaIneq, 0.0);
+    return solveActiveSet(gradF, gEq, hIneq, jacEq, jacIneq, activeIneq);
+  }
+
+  /**
+   * Solves the equality-constrained QP and releases inequalities with negative multipliers.
+   *
+   * @param gradF objective gradient
+   * @param gEq equality residuals
+   * @param hIneq inequality residuals
+   * @param jacEq equality Jacobian
+   * @param jacIneq inequality Jacobian
+   * @param activeIneq active inequality indices, reduced when a constraint should be released
+   * @return search direction
+   */
+  private double[] solveActiveSet(double[] gradF, double[] gEq, double[] hIneq, double[][] jacEq, double[][] jacIneq,
+      List<Integer> activeIneq) {
+    int mEq = gEq.length;
     int mActive = mEq + activeIneq.size();
     if (mActive == 0) {
       return solveLinearSystem(hessian, negateVector(gradF));
@@ -587,7 +606,7 @@ public class SQPoptimizer implements Serializable {
 
     // Solve augmented KKT system via Schur complement:
     // d = H^{-1} * (-gradF + A^T * lambda)
-    // A * H^{-1} * A^T * lambda = A * H^{-1} * gradF + c
+    // A * H^{-1} * A^T * lambda = A * H^{-1} * gradF - c
     double[] dUnconstrained = solveLinearSystem(hessian, negateVector(gradF));
     double[][] hInv = invertMatrix(hessian);
 
@@ -627,6 +646,22 @@ public class SQPoptimizer implements Serializable {
     // Solve for multipliers
     double[] lambdaActive = solveLinearSystem(schur, rhs);
 
+    // A negative multiplier means that moving into the feasible interior decreases
+    // the objective. Keeping that inequality as an equality would pin the iterate
+    // to a boundary that is not optimal.
+    int releaseIndex = -1;
+    double mostNegative = -tolerance;
+    for (int k = 0; k < activeIneq.size(); k++) {
+      if (lambdaActive[mEq + k] < mostNegative) {
+        mostNegative = lambdaActive[mEq + k];
+        releaseIndex = k;
+      }
+    }
+    if (releaseIndex >= 0) {
+      activeIneq.remove(releaseIndex);
+      return solveActiveSet(gradF, gEq, hIneq, jacEq, jacIneq, activeIneq);
+    }
+
     // Update Lagrange multipliers
     for (int i = 0; i < mEq; i++) {
       lambdaEq[i] = lambdaActive[i];
@@ -653,12 +688,17 @@ public class SQPoptimizer implements Serializable {
    * @param x current point
    * @param dx search direction
    * @param f0 current objective value
+   * @param gradF current objective gradient
    * @param gEq current equality constraint values
    * @param hIneq current inequality constraint values
    * @return step length alpha
    */
-  private double lineSearch(double[] x, double[] dx, double f0, double[] gEq, double[] hIneq) {
+  private double lineSearch(double[] x, double[] dx, double f0, double[] gradF, double[] gEq, double[] hIneq) {
     double merit0 = computeMerit(f0, gEq, hIneq);
+    // The QP direction removes the linearized active constraint residuals.
+    // Armijo decrease must scale with this directional derivative, not the
+    // absolute objective value: adding a constant must not change convergence.
+    double directionalDerivative = dotProduct(gradF, dx) - computeMerit(0.0, gEq, hIneq);
     double alpha = 1.0;
 
     for (int ls = 0; ls < maxLineSearchIterations; ls++) {
@@ -674,7 +714,7 @@ public class SQPoptimizer implements Serializable {
       double meritTrial = computeMerit(fTrial, gTrial, hTrial);
 
       // Armijo condition on merit function
-      if (meritTrial <= merit0 - armijoC1 * alpha * merit0) {
+      if (meritTrial <= merit0 + armijoC1 * alpha * directionalDerivative) {
         return alpha;
       }
       alpha *= 0.5;

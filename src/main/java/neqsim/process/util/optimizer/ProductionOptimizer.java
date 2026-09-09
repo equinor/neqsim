@@ -992,7 +992,7 @@ public class ProductionOptimizer {
    * config = OptimizationConfig(50000.0, 200000.0) \
    *     .tolerance(100.0) \
    *     .maxIterations(50) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY)
    * }</pre>
    */
   public static final class OptimizationConfig {
@@ -2181,11 +2181,11 @@ public class ProductionOptimizer {
    *
    * <pre>{@code
    * ProductionOptimizer optimizer = new ProductionOptimizer();
-   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.BINARY_FEASIBILITY)
    *     .tolerance(100.0);
    *
    * OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
-   * System.out.println("Optimal: " + result.getOptimalRate() + " " + result.getRateUnit());
+   * logger.info("Optimal: {} {}", result.getOptimalRate(), result.getRateUnit());
    * }</pre>
    *
    * <p>
@@ -2195,12 +2195,20 @@ public class ProductionOptimizer {
    * <pre>{@code
    * optimizer = ProductionOptimizer()
    * config = OptimizationConfig(50000.0, 200000.0) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE) \
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY) \
    *     .tolerance(100.0)
    *
    * result = optimizer.optimize(process, feed_stream, config, None, None)
    * print(f"Optimal: {result.getOptimalRate():.0f} {result.getRateUnit()}")
    * }</pre>
+   *
+   * <p>
+   * Score-based searches require an explicit objective to maximize throughput. A null or empty objective list has zero
+   * objective score; use binary feasibility for monotonic throughput searches without a custom objective. Before
+   * returning, the selected decision vector is reapplied and solved without using cached evidence. The result and live
+   * process therefore describe the same operating point. A failed final solve throws rather than returning an earlier
+   * feasible result.
+   * </p>
    *
    * @param process the process model to evaluate (must not be null)
    * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
@@ -2362,19 +2370,28 @@ public class ProductionOptimizer {
       throw new IllegalArgumentException("Binary and golden-section searches support only one decision variable");
     }
 
+    OptimizationResult selected;
     if (variables.size() == 1 && config.searchMode == SearchMode.BINARY_FEASIBILITY) {
-      return binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+      selected = binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
+      selected = goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
+      selected = nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
+      selected = gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else {
+      selected = particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
     }
-    if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
-      return goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+
+    double[] selectedPoint = new double[variables.size()];
+    for (int i = 0; i < variables.size(); i++) {
+      selectedPoint[i] = selected.getDecisionVariables().get(variables.get(i).getName());
     }
-    if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
-      return nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
-    }
-    if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
-      return gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
-    }
-    return particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    // Search algorithms commonly finish at a rejected probe or a cached point. Reapply and re-evaluate once so live
+    // equipment, reported decisions, objectives and capacity evidence all describe the selected operating point.
+    Evaluation verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
+        selectedPoint);
+    return toResult(selectedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
   }
 
   /**
@@ -3892,7 +3909,7 @@ public class ProductionOptimizer {
       OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       double[] candidate, Map<String, Evaluation> cache) {
     if (config.enableCaching) {
-      String cacheKey = buildVectorCacheKey(candidate, config);
+      String cacheKey = buildVectorCacheKey(candidate);
       Evaluation cached = cache.get(cacheKey);
       if (cached != null) {
         return cached;
@@ -3918,17 +3935,12 @@ public class ProductionOptimizer {
     return evaluateProcess(process, config, objectives, constraints, decisions);
   }
 
-  private String buildVectorCacheKey(double[] candidate, OptimizationConfig config) {
-    // Use a minimum bucket size to avoid excessive cache entries while
-    // maintaining enough precision to distinguish meaningfully different
-    // candidates.
-    // When tolerance is very small, use the value itself with limited precision.
-    double bucketSize = Math.max(config.tolerance, 0.1);
+  private String buildVectorCacheKey(double[] candidate) {
+    // A convergence tolerance is not an evidence-equivalence tolerance. Nearby points can straddle a hard limit,
+    // and each cached evaluation retains the exact decisions that produced it.
     StringBuilder key = new StringBuilder();
     for (double value : candidate) {
-      // Use bucket-based rounding for cache keys
-      long bucket = Math.round(value / bucketSize);
-      key.append(bucket).append("|");
+      key.append(Double.doubleToLongBits(value)).append("|");
     }
     return key.toString();
   }

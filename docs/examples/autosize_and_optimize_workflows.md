@@ -23,53 +23,96 @@ It is a companion to the
 | Scenario | What is given | Workflow |
 |----------|---------------|----------|
 | **A** | *Nothing* — only stream conditions | `autoSizeEquipment()` → optimize |
-| **B** | A fully-specified, larger train (sizes / curves / datasheets) | size the equipment to the design duty → optimize |
-| **C** | Nothing first, then a real (bigger) machine | auto-size → optimize → update with real sizes → re-optimize |
+| **B** | A larger preliminary train design basis | size the equipment to the design duty → optimize |
+| **C** | Nothing first, then a larger design basis | auto-size → optimize → update with revised design sizes → re-optimize |
 
 All three reuse the **same** tiny `size_for()` + `maximize_throughput()` helpers, so changing
 the installed equipment is just changing one number — the throughput the plant is sized for.
 
+The generated charts and dimensions are preliminary educational sizing. A real
+installed machine requires its vendor map, operating limits and driver rating.
+All throughput claims are bounded by the specified search interval.
+
+
+**Runtime:** Use Git and JDK 17 or newer. The setup uses compiled repository classes when present; otherwise it fetches and builds the corrected documentation source from `refs/pull/3597/head`. Set `NEQSIM_GIT_REF` to validate another fixed revision. The public Python package alone does not contain all Java fixes exercised here. Run all cells from a fresh kernel.
+
+
 ```python
-import os, sys
+import importlib.util
+import os
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
+# Install Python packages with this notebook kernel. Java runs from the
+# validated documentation source below, ahead of the package's bundled JAR.
+required = {"neqsim": "neqsim>=3.20.0,<4", "numpy": "numpy",
+            "scipy": "scipy>=1.14,<2", "matplotlib": "matplotlib", "pandas": "pandas"}
+missing = [package for module, package in required.items()
+           if importlib.util.find_spec(module) is None]
+if missing:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
 
-def find_neqsim_project_root():
-    env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
-    candidates = []
-    if env_root:
-        candidates.append(Path(env_root).resolve())
-    cwd = Path.cwd().resolve()
-    candidates.extend([cwd] + list(cwd.parents))
-    for candidate in candidates:
-        if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
-            return candidate
-    raise RuntimeError("Could not find NeqSim project root. Set NEQSIM_PROJECT_ROOT.")
+candidate = Path(os.environ.get("NEQSIM_PROJECT_ROOT", Path.cwd())).resolve()
+PROJECT_ROOT = next((p for p in [candidate, *candidate.parents]
+                     if (p / "pom.xml").is_file()
+                     and (p / "devtools/neqsim_dev_setup.py").is_file()), None)
+if PROJECT_ROOT is None:
+    # The public package alone predates fixes exercised by these examples.
+    # Use the validated documentation PR's source; override with another fixed
+    # commit or ref through NEQSIM_GIT_REF when validating a newer revision.
+    source_ref = os.environ.get("NEQSIM_GIT_REF", "refs/pull/3597/head")
+    PROJECT_ROOT = Path(tempfile.mkdtemp(prefix="neqsim-optimization-"))
+    subprocess.check_call(["git", "init", "-q", str(PROJECT_ROOT)])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "remote", "add", "origin",
+                           "https://github.com/equinor/neqsim.git"])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "fetch", "--depth", "1",
+                           "origin", source_ref])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "checkout", "--quiet",
+                           "--detach", "FETCH_HEAD"])
+    print(f"Fetched NeqSim documentation source: {source_ref}")
 
+if not (PROJECT_ROOT / "target/classes/neqsim/thermo/system/SystemSrkEos.class").is_file():
+    # Requires Git and JDK 17+ before the first source build.
+    # The Maven wrapper downloads its own Maven distribution and dependencies.
+    wrapper = "mvnw.cmd" if os.name == "nt" else "mvnw"
+    build = subprocess.run(
+        [str(PROJECT_ROOT / wrapper), "-q", "-DskipTests", "compile",
+         "dependency:build-classpath", "-DincludeScope=runtime",
+         "-Dmdep.outputFile=target/neqsim-dev-classpath.txt",
+         f"-Dmdep.pathSeparator={os.pathsep}"],
+        cwd=PROJECT_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    if build.returncode:
+        raise RuntimeError("NeqSim source build failed:\n" + build.stdout[-12000:])
 
-PROJECT_ROOT = find_neqsim_project_root()
+os.environ["NEQSIM_PROJECT_ROOT"] = str(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
 from neqsim_dev_setup import neqsim_init, neqsim_classes
+ns = neqsim_classes(neqsim_init(project_root=PROJECT_ROOT,
+                              recompile=False, verbose=False))
+NEQSIM_MODE = "workspace target/classes"
+from neqsim import jneqsim
+import numpy as np
+import matplotlib.pyplot as plt
 
-ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
-ns = neqsim_classes(ns)
-print("NeqSim loaded from workspace classes")
+FIGURES_DIR = Path("figures")
+FIGURES_DIR.mkdir(exist_ok=True)
+
+def save_figure(filename):
+    plt.savefig(FIGURES_DIR / filename, dpi=150, bbox_inches="tight")
+    plt.show()
+
+print(f"NeqSim source: {NEQSIM_MODE}")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-NeqSim project root: C:\Users\ESOL\Documents\GitHub\neqsim
-Classpath:
-  1. C:\Users\ESOL\Documents\GitHub\neqsim\target\classes
-  2. C:\Users\ESOL\Documents\GitHub\neqsim\src\main\resources
-  3. C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.13.0.jar
-
-JVM started: C:\Users\ESOL\graalvm\graalvm-jdk-25.0.1+8.1\bin\server\jvm.dll
-Ready — call neqsim_classes(ns) to import classes
 All NeqSim classes imported OK
-NeqSim loaded from workspace classes
+NeqSim source: workspace target/classes
 ```
 
 </details>
@@ -114,8 +157,14 @@ Everything below is reused by all three scenarios.
 def build_plant(feed_rate_kghr=8000.0):
     """feed -> inlet separator -> export compressor -> export cooler."""
     fluid = SystemSrkEos(273.15 + 45.0, 60.0)
-    for comp, x in [("methane", 0.80), ("ethane", 0.07), ("propane", 0.05),
-                    ("n-butane", 0.03), ("n-pentane", 0.02), ("water", 0.03)]:
+    for comp, x in [
+        ("methane", 0.80),
+        ("ethane", 0.07),
+        ("propane", 0.05),
+        ("n-butane", 0.03),
+        ("n-pentane", 0.02),
+        ("water", 0.03),
+    ]:
         fluid.addComponent(comp, x)
     fluid.setMixingRule("classic")
     fluid.setMultiPhaseCheck(True)
@@ -142,6 +191,13 @@ def build_plant(feed_rate_kghr=8000.0):
 def size_for(plant, design_rate_kghr, safety=1.2):
     """Size every unit for a design throughput. One autoSizeEquipment() call sizes
     the separator, compressor curve and cooler to `safety` x the design duty."""
+    compressor = plant["comp"]
+    compressor.getCompressorChart().setUseCompressorChart(False)
+    compressor.setSolveSpeed(False)
+    compressor.powerSet = False  # clear power prescribed by the previous chart run
+    compressor.setUsePolytropicCalc(True)
+    compressor.setPolytropicEfficiency(0.78)
+    compressor.setSpeed(10000.0)
     plant["feed"].setFlowRate(design_rate_kghr, "kg/hr")
     plant["process"].run()
     plant["process"].autoSizeEquipment(safety)
@@ -161,8 +217,10 @@ def show_bottleneck(process):
     if b is None or b.getEquipment() is None:
         print("  bottleneck: none active")
         return
-    print("  bottleneck: %s [%s] @ %.1f%%" % (
-        b.getEquipmentName(), b.getConstraintName(), b.getUtilizationPercent()))
+    print(
+        "  bottleneck: %s [%s] @ %.1f%%"
+        % (b.getEquipmentName(), b.getConstraintName(), b.getUtilizationPercent())
+    )
 
 
 def maximize_throughput(plant, util_limit=0.95, span=0.30):
@@ -171,20 +229,34 @@ def maximize_throughput(plant, util_limit=0.95, span=0.30):
     process, feed = plant["process"], plant["feed"]
     design = feed.getFlowRate("kg/hr")
     lo, hi = (1.0 - span) * design, design
-    config = (OptimizationConfig(lo, hi)
-              .rateUnit("kg/hr")
-              .tolerance(50.0)
-              .maxIterations(25)
-              .defaultUtilizationLimit(util_limit)
-              .searchMode(SearchMode.BINARY_FEASIBILITY))
-    return ProductionOptimizer().optimize(process, feed, config, None, None)
+    config = (
+        OptimizationConfig(lo, hi)
+        .rateUnit("kg/hr")
+        .tolerance(2.0)
+        .maxIterations(40)
+        .defaultUtilizationLimit(util_limit)
+        .searchMode(SearchMode.BINARY_FEASIBILITY)
+    )
+    result = ProductionOptimizer().optimize(process, feed, config, None, None)
+    assert result.isFeasible(), str(result.getInfeasibilityDiagnosis())
+    assert result.getOptimalRate() > lo, "Search found only the lower bound"
+    return result
 
 
 def report(tag, result):
+    assert result.isFeasible(), "Do not present an infeasible candidate as an optimum"
     bott = result.getBottleneck().getName() if result.getBottleneck() is not None else "n/a"
-    print("%s: optimal %.0f %s | feasible=%s | bottleneck=%s @ %.1f%%" % (
-        tag, result.getOptimalRate(), result.getRateUnit(), result.isFeasible(),
-        bott, result.getBottleneckUtilization() * 100.0))
+    print(
+        "%s: optimal %.0f %s | feasible=%s | bottleneck=%s @ %.1f%%"
+        % (
+            tag,
+            result.getOptimalRate(),
+            result.getRateUnit(),
+            result.isFeasible(),
+            bott,
+            result.getBottleneckUtilization() * 100.0,
+        )
+    )
 
 
 print("Helpers ready")
@@ -208,7 +280,7 @@ constraints automatically. Then we ask for the maximum feasible throughput.
 
 ```python
 A = build_plant()
-size_for(A, 8000.0)            # nothing known -> size for a nominal 8000 kg/hr
+size_for(A, 8000.0)  # nothing known -> size for a nominal 8000 kg/hr
 print("Auto-sized 3 units from flow conditions")
 print("Utilization at design point:", utilization(A["process"]))
 show_bottleneck(A["process"])
@@ -225,27 +297,27 @@ print("Utilization at optimum:", utilization(A["process"]))
 Auto-sized 3 units from flow conditions
 Utilization at design point: {'inlet separator': 83.0, 'export compressor': 98.7, 'export cooler': 82.8}
   bottleneck: export compressor [speed] @ 98.7%
-Scenario A: optimal 6350 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at optimum: {'inlet separator': 66.7, 'export compressor': 95.1, 'export cooler': 65.1}
+Scenario A: optimal 6375 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at optimum: {'inlet separator': 66.1, 'export compressor': 95.0, 'export cooler': 64.6}
 ```
 
 </details>
 
 ## Scenario B — most things given (sizes, curves, datasheets)
 
-Here the installed train is fully specified: a **larger** compressor with its
-performance curve and matching vessels, designed for ~12000 kg/hr. We capture
-that by sizing the plant for the design duty. Individual equipment sizes can
+Here we use a **larger preliminary design basis**, 12000 kg/hr, to generate
+a synthetic compressor chart and matching equipment sizes. These generated
+ratings do not replace a vendor performance map or datasheet. Individual equipment sizes can
 also be set explicitly in one line — e.g. the real separator K-factor via
 `setDesignGasLoadFactor` — and the optimizer immediately respects them. Because
 the machine is bigger than Scenario A, the feasible export is higher.
 
 ```python
 B = build_plant()
-size_for(B, 12000.0)                     # vendor datasheets: train designed for 12000 kg/hr
+size_for(B, 12000.0)  # vendor datasheets: train designed for 12000 kg/hr
 
 # Individual sizes can be overridden in one line (here: real separator K-factor):
-B["sep"].setDesignGasLoadFactor(0.13)    # generous real separator [m/s] -> stays off the limit
+B["sep"].setDesignGasLoadFactor(0.13)  # generous real separator [m/s] -> stays off the limit
 B["process"].run()
 print("Utilization at design point:", utilization(B["process"]))
 show_bottleneck(B["process"])
@@ -261,43 +333,43 @@ print("Utilization at optimum:", utilization(B["process"]))
 ```
 Utilization at design point: {'inlet separator': 68.3, 'export compressor': 98.7, 'export cooler': 82.8}
   bottleneck: export compressor [speed] @ 98.7%
-Scenario B: optimal 9553 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at optimum: {'inlet separator': 54.5, 'export compressor': 95.0, 'export cooler': 64.7}
+Scenario B: optimal 9562 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at optimum: {'inlet separator': 54.4, 'export compressor': 95.0, 'export cooler': 64.6}
 ```
 
 </details>
 
-## Scenario C — nothing given → auto-size → update with real sizes → re-optimize
+## Scenario C — nothing given → auto-size → update with revised design sizes → re-optimize
 
 The full life-cycle: start with no data, auto-size and optimize for an early
-estimate, then later the real datasheet arrives — the installed compressor is
-rated for a higher duty. We re-size the **same** plant for the real machine and
+estimate, then later the design basis changes to a higher throughput. We re-size the **same** plant for the real machine and
 re-optimize. The same helpers are reused — only the design duty changed.
 
 ```python
 C = build_plant()
-size_for(C, 8000.0)                      # 1) nothing known -> auto-size for 8000 kg/hr
+size_for(C, 8000.0)  # 1) nothing known -> auto-size for 8000 kg/hr
 optC_auto = maximize_throughput(C)
 report("Scenario C (auto-sized)", optC_auto)
 
-size_for(C, 10000.0)                     # 2) real datasheet: installed machine rated for 10000 kg/hr
+size_for(C, 10000.0)  # 2) real datasheet: installed machine rated for 10000 kg/hr
 optC_real = maximize_throughput(C)
 report("Scenario C (real sizes)", optC_real)
 
 print("Utilization at real-size optimum:", utilization(C["process"]))
-print("Throughput change after using real sizes: %+.0f kg/hr" % (
-    optC_real.getOptimalRate() - optC_auto.getOptimalRate()))
+print(
+    "Throughput change after using real sizes: %+.0f kg/hr"
+    % (optC_real.getOptimalRate() - optC_auto.getOptimalRate())
+)
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Scenario C (auto-sized): optimal 6350 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-
-Scenario C (real sizes): optimal 7234 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
-Utilization at real-size optimum: {'inlet separator': 60.0, 'export compressor': 95.0, 'export cooler': 52.9}
-Throughput change after using real sizes: +884 kg/hr
+Scenario C (auto-sized): optimal 6375 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Scenario C (real sizes): optimal 7968 kg/hr | feasible=True | bottleneck=export compressor @ 95.0%
+Utilization at real-size optimum: {'inlet separator': 66.1, 'export compressor': 95.0, 'export cooler': 64.6}
+Throughput change after using real sizes: +1594 kg/hr
 ```
 
 </details>
@@ -318,18 +390,29 @@ rates = [optA.getOptimalRate(), optB.getOptimalRate(), optC_real.getOptimalRate(
 
 fig, ax = plt.subplots(figsize=(7, 4.5))
 bars = ax.bar(labels, rates, color=["#4C72B0", "#55A868", "#C44E52"])
-ax.bar(["C\nreal sizes"], [optC_auto.getOptimalRate()], color="#C44E52",
-       alpha=0.25, label="C auto-sized (before update)")
+ax.bar(
+    ["C\nreal sizes"],
+    [optC_auto.getOptimalRate()],
+    color="#C44E52",
+    alpha=0.25,
+    label="C auto-sized (before update)",
+)
 for b, r in zip(bars, rates):
-    ax.text(b.get_x() + b.get_width() / 2, r + 80, "%.0f" % r,
-            ha="center", va="bottom", fontsize=10)
+    ax.text(
+        b.get_x() + b.get_width() / 2,
+        r + 80,
+        "%.0f" % r,
+        ha="center",
+        va="bottom",
+        fontsize=10,
+    )
 ax.set_ylabel("Max feasible throughput [kg/hr]")
 ax.set_title("Autosize & optimize: three workflows")
 ax.grid(axis="y", alpha=0.3)
 ax.legend()
 fig.tight_layout()
 
-figdir = PROJECT_ROOT / "examples" / "notebooks" / "figures"
+figdir = Path("figures")
 figdir.mkdir(parents=True, exist_ok=True)
 figpath = figdir / "autosize_optimize_scenarios.png"
 fig.savefig(figpath, dpi=150, bbox_inches="tight")
@@ -341,10 +424,12 @@ plt.show()
 <summary>Output</summary>
 
 ```
-Saved figure: C:\Users\ESOL\Documents\GitHub\neqsim\examples\notebooks\figures\autosize_optimize_scenarios.png
+Saved figure: figures/autosize_optimize_scenarios.png
 ```
 
 </details>
+
+![Result figure from cell 13](figures/autosize_and_optimize_workflows_cell_13_output_2.png)
 
 ## Bonus — energy/CO₂ vs production: a Pareto trade-off
 
@@ -376,9 +461,9 @@ OptimizationConstraint = ProductionOptimizer.OptimizationConstraint
 ConstraintSeverity = ProductionOptimizer.ConstraintSeverity
 ArrayList = ns.JClass("java.util.ArrayList")
 
-EF_CO2 = 0.50        # kg CO₂ per kWh of shaft power (gas-turbine driver proxy)
-DESIGN = 12000.0     # installed train design throughput [kg/hr]
-REF_PROD = DESIGN    # normalisers -> both objectives are O(1) for the weighted sum
+EF_CO2 = 0.50  # kg CO₂ per kWh of shaft power (gas-turbine driver proxy)
+DESIGN = 12000.0  # installed train design throughput [kg/hr]
+REF_PROD = DESIGN  # normalisers -> both objectives are O(1) for the weighted sum
 REF_PWR = 360.0
 
 # Install a 12 t/hr train, then optimise on it.
@@ -406,25 +491,43 @@ def _proxy(fn):
 
 # Two conflicting objectives: maximise production, minimise energy/CO₂ (∝ shaft power).
 objectives = ArrayList()
-objectives.add(OptimizationObjective(
-    "production", _proxy(lambda p: _export(p) / REF_PROD), 1.0, ObjectiveType.MAXIMIZE))
-objectives.add(OptimizationObjective(
-    "energy_co2", _proxy(lambda p: _power(p) / REF_PWR), 1.0, ObjectiveType.MINIMIZE))
+objectives.add(
+    OptimizationObjective(
+        "production", _proxy(lambda p: _export(p) / REF_PROD), 1.0, ObjectiveType.MAXIMIZE
+    )
+)
+objectives.add(
+    OptimizationObjective(
+        "energy_co2", _proxy(lambda p: _power(p) / REF_PWR), 1.0, ObjectiveType.MINIMIZE
+    )
+)
 
 # Soft penalty: keep the compressor at least 5 % off surge (never a hard stop).
 constraints = ArrayList()
-constraints.add(OptimizationConstraint.greaterThan(
-    "surge_margin", _proxy(_surge), 0.05, ConstraintSeverity.SOFT, 5.0, "stay >5% off surge"))
+constraints.add(
+    OptimizationConstraint.greaterThan(
+        "surge_margin",
+        _proxy(_surge),
+        0.05,
+        ConstraintSeverity.SOFT,
+        5.0,
+        "stay >5% off surge",
+    )
+)
 
-cfg = (OptimizationConfig(0.70 * DESIGN, DESIGN)
-       .rateUnit("kg/hr")
-       .tolerance(50.0)
-       .maxIterations(25)
-       .defaultUtilizationLimit(0.95)
-       .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
-       .paretoGridSize(7))
+cfg = (
+    OptimizationConfig(0.70 * DESIGN, DESIGN)
+    .rateUnit("kg/hr")
+    .tolerance(50.0)
+    .maxIterations(25)
+    .defaultUtilizationLimit(0.95)
+    .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+    .paretoGridSize(7)
+)
 
-pareto = ProductionOptimizer().optimizePareto(pr_process, pr_feed, cfg, objectives, constraints)
+pareto = ProductionOptimizer().optimizePareto(
+    pr_process, pr_feed, cfg, objectives, constraints
+)
 print("Pareto front points:", pareto.getParetoFrontSize())
 print(pareto.toMarkdownTable())
 ```
@@ -433,11 +536,14 @@ print(pareto.toMarkdownTable())
 <summary>Output</summary>
 
 ```
-Pareto front points: 2
+Pareto front points: 5
 | # | Feasible | production | energy_co2 | Weights |
 |---|---|---|---|---|
-| 1 | yes | 0.7728 | 0.9155 | [1.00, 0.00] |
-| 2 | yes | 0.6849 | 0.8071 | [0.33, 0.67] |
+| 1 | yes | 0.7768 | 0.9207 | [0.83, 0.17] |
+| 2 | yes | 0.7768 | 0.9207 | [0.67, 0.33] |
+| 3 | yes | 0.7078 | 0.8348 | [0.50, 0.50] |
+| 4 | yes | 0.7078 | 0.8348 | [0.17, 0.83] |
+| 5 | yes | 0.7078 | 0.8348 | [0.00, 1.00] |
 
 ```
 
@@ -454,6 +560,9 @@ prod, co2 = [], []
 for r in rates:
     pr_feed.setFlowRate(float(r), "kg/hr")
     pr_process.run()
+    max_utilization = max(utilization(pr_process).values()) / 100.0
+    if max_utilization > 0.95:
+        continue
     prod.append(_export(pr_process))
     co2.append(_power(pr_process) * EF_CO2)
 prod, co2 = np.array(prod), np.array(co2)
@@ -464,18 +573,31 @@ for pt in pareto.getParetoFront():
     feed_rate = list(pt.getDecisionVariables().values())[0]
     pr_feed.setFlowRate(float(feed_rate), "kg/hr")
     pr_process.run()
+    assert pt.isFeasible(), "Pareto front contains an infeasible candidate"
     pf_prod.append(_export(pr_process))
     pf_co2.append(_power(pr_process) * EF_CO2)
 
 fig, ax = plt.subplots(figsize=(7, 5))
 ax.plot(prod, co2, "-o", color="#1f77b4", label="feasible frontier (feed sweep)")
-ax.scatter(pf_prod, pf_co2, s=150, marker="*", color="#d62728", zorder=5,
-           label="optimizer Pareto points")
-ax.annotate("CO₂-min\n(min throughput)", (prod[0], co2[0]),
-            textcoords="offset points", xytext=(14, 2))
-ax.annotate("production-max\n(95% utilisation)", (prod[-1], co2[-1]),
-            textcoords="offset points", xytext=(-150, -34),
-            arrowprops=dict(arrowstyle="->", color="0.5"))
+ax.scatter(
+    pf_prod,
+    pf_co2,
+    s=150,
+    marker="*",
+    color="#d62728",
+    zorder=5,
+    label="optimizer Pareto points",
+)
+ax.annotate(
+    "CO₂-min\n(min throughput)", (prod[0], co2[0]), textcoords="offset points", xytext=(14, 2)
+)
+ax.annotate(
+    "highest feasible\nsampled production",
+    (prod[-1], co2[-1]),
+    textcoords="offset points",
+    xytext=(-150, -34),
+    arrowprops=dict(arrowstyle="->", color="0.5"),
+)
 ax.set_xlabel("Export gas production [kg/hr]")
 ax.set_ylabel("CO₂ emissions [kg/hr]  (= shaft power × %.2f kgCO₂/kWh)" % EF_CO2)
 ax.set_title("Energy / CO₂ vs production — Pareto trade-off")
@@ -488,23 +610,27 @@ fig.savefig(figdir / "pareto_energy_co2_vs_production.png", dpi=150, bbox_inches
 plt.show()
 
 intensity = co2 / prod
-print("Specific emissions: %.4f -> %.4f kg CO₂/kg gas (%.1f%% rise across the window)" % (
-    intensity.min(), intensity.max(), 100.0 * (intensity.max() / intensity.min() - 1.0)))
+print(
+    "Specific emissions: %.4f -> %.4f kg CO₂/kg gas (%.1f%% rise across the window)"
+    % (intensity.min(), intensity.max(), 100.0 * (intensity.max() / intensity.min() - 1.0))
+)
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Specific emissions: 0.0177 -> 0.0183 kg CO₂/kg gas (3.6% rise across the window)
+Specific emissions: 0.0177 -> 0.0178 kg CO₂/kg gas (0.3% rise across the window)
 ```
 
 </details>
 
+![Result figure from cell 16](figures/autosize_and_optimize_workflows_cell_16_output_2.png)
+
 **Reading the Pareto front.** On this single-train, fixed-discharge-pressure plant the
 trade-off is almost a straight line: CO₂ scales nearly linearly with throughput, so *every*
 feasible rate between the CO₂-minimum (lowest throughput) and the production-maximum
-(95 % utilisation) is **non-dominated** — picking an operating point is a business preference,
+(the configured utilization limit) is **non-dominated** — picking an operating point is a business preference,
 not a hidden technical optimum. The specific emissions (kg CO₂ / kg gas) still rise modestly
 toward the high-flow end, where the compressor runs less efficiently.
 
@@ -551,8 +677,8 @@ JArrayList = ns.JClass("java.util.ArrayList")
 
 SEP_AREA = "separation"
 COMP_AREA = "compression"
-PM_DESIGN = 12000.0     # installed design feed [kg/hr]
-EF = 0.50               # kg CO₂ per kWh of shaft power (gas-turbine driver proxy)
+PM_DESIGN = 12000.0  # installed design feed [kg/hr]
+EF = 0.50  # kg CO₂ per kWh of shaft power (gas-turbine driver proxy)
 
 
 def build_plant_model(feed_rate_kghr=PM_DESIGN):
@@ -562,8 +688,14 @@ def build_plant_model(feed_rate_kghr=PM_DESIGN):
     Area 'compression': export compressor -> export cooler  (fed by the separator gas)
     """
     fluid = SystemSrkEos(273.15 + 45.0, 60.0)
-    for c, x in [("methane", 0.80), ("ethane", 0.07), ("propane", 0.05),
-                 ("n-butane", 0.03), ("n-pentane", 0.02), ("water", 0.03)]:
+    for c, x in [
+        ("methane", 0.80),
+        ("ethane", 0.07),
+        ("propane", 0.05),
+        ("n-butane", 0.03),
+        ("n-pentane", 0.02),
+        ("water", 0.03),
+    ]:
         fluid.addComponent(c, x)
     fluid.setMixingRule("classic")
     fluid.setMultiPhaseCheck(True)
@@ -613,20 +745,23 @@ feed_addr = SEP_AREA + "::feed.flowRate"
 prod_addr = SEP_AREA + "::inlet separator.gasOutStream.flowRate"
 pwr_addr = COMP_AREA + "::export compressor.power"
 
-rates = np.linspace(0.78 * PM_DESIGN, 0.98 * PM_DESIGN, 9)
+rates = np.linspace(0.70 * PM_DESIGN, 0.98 * PM_DESIGN, 15)
 pm_prod, pm_co2 = [], []
 for r in rates:
     setpoints = LinkedHashMap()
     setpoints.put(feed_addr, float(r))
     # one atomic trial: apply area-qualified setpoint -> runUntilConverged -> gate feasibility
     res = json.loads(str(auto.evaluate(setpoints, "kg/hr", JArrayList(), "kg/hr", 30, 5.0e-3)))
-    if not res["feasible"]:
+    snapshot = json.loads(str(plant.getUtilizationSnapshotJson()))
+    max_utilization = max(unit.get("maxUtilizationPercent", 0.0) for unit in snapshot["units"])
+    if not res["feasible"] or snapshot["anyOverloaded"] or max_utilization > 95.0:
         print("  feed %7.0f kg/hr -> infeasible (skipped)" % r)
         continue
     pm_prod.append(auto.getVariableValue(prod_addr, "kg/hr"))
     pm_co2.append(auto.getVariableValue(pwr_addr, "kW") * EF)
 
 pm_prod, pm_co2 = np.array(pm_prod), np.array(pm_co2)
+assert len(pm_prod) > 1, "At least two capacity-feasible trials are required"
 print("feasible trials    :", len(pm_prod))
 print("production range   : %.0f - %.0f kg/hr" % (pm_prod.min(), pm_prod.max()))
 print("CO₂ range          : %.0f - %.0f kg/hr" % (pm_co2.min(), pm_co2.max()))
@@ -638,9 +773,21 @@ print("CO₂ range          : %.0f - %.0f kg/hr" % (pm_co2.min(), pm_co2.max()))
 ```
 ProcessModel areas : ['separation', 'compression']
 units auto-sized   : 3
-feasible trials    : 9
-production range   : 9139 - 11482 kg/hr
-CO₂ range          : 162 - 212 kg/hr
+  feed    8400 kg/hr -> infeasible (skipped)
+  feed    8640 kg/hr -> infeasible (skipped)
+  feed    9600 kg/hr -> infeasible (skipped)
+  feed    9840 kg/hr -> infeasible (skipped)
+  feed   10080 kg/hr -> infeasible (skipped)
+  feed   10320 kg/hr -> infeasible (skipped)
+  feed   10560 kg/hr -> infeasible (skipped)
+  feed   10800 kg/hr -> infeasible (skipped)
+  feed   11040 kg/hr -> infeasible (skipped)
+  feed   11280 kg/hr -> infeasible (skipped)
+  feed   11520 kg/hr -> infeasible (skipped)
+  feed   11760 kg/hr -> infeasible (skipped)
+feasible trials    : 3
+production range   : 8662 - 9131 kg/hr
+CO₂ range          : 153 - 162 kg/hr
 ```
 
 </details>
@@ -653,38 +800,53 @@ order = np.argsort(pm_prod)
 xp, yp = pm_prod[order], pm_co2[order]
 
 fig, ax = plt.subplots(figsize=(7, 5))
-ax.plot(xp, yp, "-s", color="#2ca02c",
-        label="multi-area ProcessModel\n(convergence-gated evaluate sweep)")
-ax.scatter([xp[0]], [yp[0]], s=140, color="#1f77b4", zorder=5, label="CO₂-min (low throughput)")
+ax.plot(
+    xp,
+    yp,
+    "-s",
+    color="#2ca02c",
+    label="multi-area ProcessModel\n(convergence-gated evaluate sweep)",
+)
+ax.scatter(
+    [xp[0]], [yp[0]], s=140, color="#1f77b4", zorder=5, label="CO₂-min (low throughput)"
+)
 ax.scatter([xp[-1]], [yp[-1]], s=140, color="#d62728", zorder=5, label="production-max")
 ax.set_xlabel("Export gas production [kg/hr]\n(separation::inlet separator gas out)")
 ax.set_ylabel("CO₂ emissions [kg/hr]\n(compression::export compressor power × %.2f)" % EF)
 ax.set_title("ProcessModel (2 areas) — energy/CO₂ vs production, convergence-gated")
 ax.grid(True, alpha=0.3)
 ax.legend(loc="upper left")
-figdir = PROJECT_ROOT / "examples" / "notebooks" / "figures"
+figdir = Path("figures")
 figdir.mkdir(parents=True, exist_ok=True)
 fig.savefig(figdir / "pareto_processmodel_multiarea.png", dpi=150, bbox_inches="tight")
 plt.show()
 
 pm_intensity = yp / xp
-print("Specific emissions: %.4f -> %.4f kg CO₂/kg gas across the feasible window (%.1f%% rise)" % (
-    pm_intensity.min(), pm_intensity.max(),
-    100.0 * (pm_intensity.max() / pm_intensity.min() - 1.0)))
+print(
+    "Specific emissions: %.4f -> %.4f kg CO₂/kg gas across the feasible window (%.1f%% rise)"
+    % (
+        pm_intensity.min(),
+        pm_intensity.max(),
+        100.0 * (pm_intensity.max() / pm_intensity.min() - 1.0),
+    )
+)
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Specific emissions: 0.0178 -> 0.0185 kg CO₂/kg gas across the feasible window (3.9% rise)
+Specific emissions: 0.0177 -> 0.0178 kg CO₂/kg gas across the feasible window (0.3% rise)
 ```
 
 </details>
 
+![Result figure from cell 20](figures/autosize_and_optimize_workflows_cell_20_output_2.png)
+
 **Same trade-off, now across two coupled areas.** Every point on the green frontier is a
 *fully converged* multi-area solution: `evaluate()` ran both areas with `runUntilConverged`
-and only kept trials where `feasible == True`. Production is read from
+and only kept trials where `feasible == True` and the capacity snapshot
+confirmed at most 95% utilization. Convergence alone does not certify capacity. Production is read from
 `separation::inlet separator.gasOutStream` and the energy/CO₂ from
 `compression::export compressor.power` — across the area boundary, **by name**, with no Java
 navigation.
@@ -714,8 +876,7 @@ optimizing large multi-area `ProcessModel` plants.
   (`size_for(...)` for the design duty, or `setDesignGasLoadFactor` for an explicit
   separator size), and the optimizer immediately reflects the new binding constraint.
 - **Full life-cycle.** Scenario C shows the common pattern: auto-size for an early estimate,
-  then update with the real (larger) installed machine and re-optimize using the *same* code.
+  then update with the larger preliminary design basis and re-optimize using the *same* code.
 
 See the [Production Optimization Guide](https://equinor.github.io/neqsim/examples/PRODUCTION_OPTIMIZATION_GUIDE.html)
 for the full optimizer API (custom objectives, multiple decision variables, utilization limits).
-

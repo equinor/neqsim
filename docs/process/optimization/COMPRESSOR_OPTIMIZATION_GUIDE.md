@@ -42,7 +42,7 @@ Production optimization for compression facilities requires careful handling of:
 
 ### Key Classes
 
-```java
+```text
 ProductionOptimizer              // Main optimizer
 OptimizationConfig               // Search configuration
 ManipulatedVariable              // Decision variables (flow, splits, pressures)
@@ -78,7 +78,9 @@ compressor.setSolveSpeed(true);
 
 // Set speed limits (defines optimization headroom)
 double designSpeed = compressor.getSpeed();
-compressor.setMaximumSpeed(designSpeed * 1.15);  // 15% margin above design
+compressor.setMaximumSpeed(designSpeed * 1.15);  // Illustrative mechanical limit
+compressor.reinitializeCapacityConstraints();
+process.run();
 ```
 
 ### 2. Load Compressor Chart from JSON
@@ -114,7 +116,7 @@ CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 40500.0);
 driver.setRatedSpeed(7383.0);
 
 // P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
-driver.setMaxPowerCurveCoefficients(0.3, 0.5, 0.2);  // ~0.86 at 70% speed, 1.0 at 100%
+driver.setMaxPowerCurveCoefficients(0.3, 0.5, 0.2);  // 0.748 at 70% speed, 1.0 at 100%
 
 compressor.setDriver(driver);
 ```
@@ -126,7 +128,7 @@ compressor.setDriver(driver);
 | Scenario | Recommended Algorithm | Why |
 |----------|----------------------|-----|
 | Single flow variable | `BINARY_FEASIBILITY` | Fast, deterministic |
-| Flow + 1 split factor | `GOLDEN_SECTION_SCORE` | Handles non-monotonic |
+| Flow + 1 split factor | `NELDER_MEAD_SCORE` | Supports two decision variables |
 | Flow + 2-3 split factors | `NELDER_MEAD_SCORE` | Multi-dimensional simplex |
 | Many variables (4-10) | `PARTICLE_SWARM_SCORE` | Global search |
 | Many smooth variables (5-20+) | `GRADIENT_DESCENT_SCORE` | **New** - Fast convergence |
@@ -143,7 +145,7 @@ OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
     .defaultUtilizationLimit(1.0);
 
 // For multi-variable optimization (2-10 variables)
-OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
+OptimizationConfig simplexConfig = new OptimizationConfig(minFlow, maxFlow)
     .searchMode(SearchMode.NELDER_MEAD_SCORE)
     .tolerance(flowRate * 0.002)
     .maxIterations(60)
@@ -152,14 +154,14 @@ OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
 
 // NEW: For many-variable smooth problems (5-20+ variables)
 // Uses finite-difference gradients with Armijo line search
-OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
+OptimizationConfig gradientConfig = new OptimizationConfig(minFlow, maxFlow)
     .searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
     .tolerance(flowRate * 0.001)
     .maxIterations(100)
     .rejectInvalidSimulations(true);
 
 // For global search with many local optima
-OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
+OptimizationConfig swarmConfig = new OptimizationConfig(minFlow, maxFlow)
     .searchMode(SearchMode.PARTICLE_SWARM_SCORE)
     .swarmSize(12)
     .inertiaWeight(0.6)
@@ -194,7 +196,7 @@ OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
 When disabled, the optimizer may accept operating points where:
 - Compressor speed is outside chart range
 - Head or efficiency calculations fail
-- Power is negative (impossible)
+- Compressor power is negative for a modeled compression duty
 
 **Recommendation:** Keep enabled (`true`) for production use.
 
@@ -206,7 +208,7 @@ When disabled, the optimizer may accept operating points where:
 // Allow up to 110% utilization during search exploration
 config.defaultUtilizationLimit(1.10);
 
-// Or disable utilization checking entirely
+// Or remove the finite aggregate utilization ceiling (other checks still apply)
 config.defaultUtilizationLimit(Double.MAX_VALUE);
 ```
 
@@ -244,14 +246,14 @@ When creating custom constraints:
 ```java
 // HARD constraint - must be satisfied (infeasible if violated)
 OptimizationConstraint.greaterThan("minSurgeMargin", 
-    proc -> getMinSurgeMargin(proc),
+    proc -> ((Compressor) proc.getUnit("Export Compressor")).getDistanceToSurge(),
     0.10,                           // 10% minimum
     ConstraintSeverity.HARD,        // Never violate
     100.0, "Surge protection margin");
 
 // SOFT constraint - penalized but allowed (optimization prefers feasible)
 OptimizationConstraint.lessThan("totalPower",
-    proc -> getTotalPower(proc),
+    proc -> proc.getPower("kW"),
     40000.0,                        // 40 MW target
     ConstraintSeverity.SOFT,        // Can exceed with penalty
     10.0, "Power budget target");
@@ -260,7 +262,7 @@ OptimizationConstraint.lessThan("totalPower",
 ### Python Configuration
 
 ```python
-from neqsim.neqsimpython import jneqsim
+from neqsim import jneqsim
 
 OptimizationConfig = jneqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig
 SearchMode = jneqsim.process.util.optimizer.ProductionOptimizer.SearchMode
@@ -304,14 +306,14 @@ import neqsim.process.util.optimizer.CompressorOptimizationHelper.CompressorBoun
 // Extract operating bounds from compressor chart
 CompressorBounds bounds = CompressorOptimizationHelper.extractBounds(compressor);
 
-System.out.println("Speed range: " + bounds.getMinSpeed() + " - " + bounds.getMaxSpeed() + " RPM");
-System.out.println("Flow range: " + bounds.getMinFlow() + " - " + bounds.getMaxFlow());
-System.out.println("Surge flow: " + bounds.getSurgeFlow());
-System.out.println("Stone wall: " + bounds.getStoneWallFlow());
+logger.info("{}", "Speed range: " + bounds.getMinSpeed() + " - " + bounds.getMaxSpeed() + " RPM");
+logger.info("{}", "Flow range: " + bounds.getMinFlow() + " - " + bounds.getMaxFlow());
+logger.info("{}", "Surge flow: " + bounds.getSurgeFlow());
+logger.info("{}", "Stone wall: " + bounds.getStoneWallFlow());
 
 // Get recommended operating range with 10% safety margin
 double[] recommended = bounds.getRecommendedRange(0.10);
-System.out.println("Recommended flow: " + recommended[0] + " - " + recommended[1]);
+logger.info("{}", "Recommended flow: " + recommended[0] + " - " + recommended[1]);
 ```
 
 ### Create Compressor Variables and Objectives
@@ -325,7 +327,8 @@ ManipulatedVariable speedVar = CompressorOptimizationHelper.createSpeedVariable(
 ManipulatedVariable pressVar = CompressorOptimizationHelper.createOutletPressureVariable(
     compressor, 80.0, 120.0);
 
-// Standard objectives (power 40%, surge margin 30%, efficiency 30%)
+// Raw objective weights: power 0.4, surge margin 0.3, efficiency 0.3.
+// These are coefficients in different units, not percentage priorities; normalize for your study.
 List<Compressor> compressors = Arrays.asList(comp1, comp2, comp3);
 List<OptimizationObjective> objectives = 
     CompressorOptimizationHelper.createStandardObjectives(compressors);
@@ -338,7 +341,7 @@ List<OptimizationConstraint> constraints =
 ### Python Usage (via JPype)
 
 ```python
-from neqsim.neqsimpython import jneqsim
+from neqsim import jneqsim
 
 Helper = jneqsim.process.util.optimizer.CompressorOptimizationHelper
 
@@ -347,7 +350,11 @@ bounds = Helper.extractBounds(compressor)
 print(f"Speed: {bounds.getMinSpeed():.0f} - {bounds.getMaxSpeed():.0f} RPM")
 
 # Create speed variables for all compressors
-speed_vars = Helper.createSpeedVariables([comp1, comp2])
+import jpype
+compressors = jpype.JClass("java.util.ArrayList")()
+compressors.add(comp1)
+compressors.add(comp2)
+speed_vars = Helper.createSpeedVariables(compressors)
 ```
 
 ---
@@ -360,8 +367,8 @@ For simple throughput maximization with fixed split factors:
 ProductionOptimizer optimizer = new ProductionOptimizer();
 
 OptimizationConfig config = new OptimizationConfig(
-    currentFlow * 0.8,   // Lower bound
-    currentFlow * 1.2    // Upper bound
+    currentFlow * 0.9,   // Confirm a feasible lower bound on the chart
+    currentFlow * 1.1    // Upper bound
 )
     .rateUnit("kg/hr")
     .tolerance(currentFlow * 0.005)
@@ -385,9 +392,9 @@ OptimizationResult result = optimizer.optimize(
     Collections.emptyList()
 );
 
-System.out.println("Optimal flow: " + result.getOptimalRate() + " kg/hr");
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Utilization: " + result.getBottleneckUtilization() * 100 + "%");
+logger.info("{}", "Optimal flow: " + result.getOptimalRate() + " kg/hr");
+logger.info("{}", "Bottleneck: " + (result.getBottleneck() == null ? "None" : result.getBottleneck().getName()));
+logger.info("{}", "Utilization: " + result.getBottleneckUtilization() * 100 + "%");
 ```
 
 ---
@@ -479,14 +486,16 @@ OptimizationConfig stage1Config = new OptimizationConfig(0.28, 0.40)
     .rateUnit("fraction")
     .tolerance(0.001)
     .maxIterations(50)
-    .defaultUtilizationLimit(2.0)  // Allow infeasible during search
+    .defaultUtilizationLimit(2.0)  // Relax capacity only; validity checks still apply
     .searchMode(SearchMode.NELDER_MEAD_SCORE)
     .rejectInvalidSimulations(true);
 
 // Objective: MINIMIZE max utilization (balance the load)
 OptimizationObjective balanceObjective = new OptimizationObjective(
     "balanceLoad",
-    proc -> -getMaxCompressorUtilization(proc),  // Negative for minimization
+    proc -> -proc.getUnitOperations().stream()
+        .filter(unit -> unit instanceof Compressor)
+        .mapToDouble(unit -> unit.getMaxUtilization()).max().orElse(0.0),
     1.0,
     ObjectiveType.MAXIMIZE
 );
@@ -525,14 +534,19 @@ OptimizationResult stage2Result = optimizer.optimize(
     Collections.emptyList()
 );
 
-System.out.println("Optimal flow: " + stage2Result.getOptimalRate() + " kg/hr");
-System.out.println("Balanced splits: [" + optSplit1 + ", " + optSplit2 + ", " + 
+logger.info("{}", "Optimal flow: " + stage2Result.getOptimalRate() + " kg/hr");
+logger.info("{}", "Balanced splits: [" + optSplit1 + ", " + optSplit2 + ", " +
     (1.0 - optSplit1 - optSplit2) + "]");
 ```
 
 ### Two-Stage Helper Method (Simplified)
 
-The `CompressorOptimizationHelper` provides a simplified two-stage optimization:
+The `CompressorOptimizationHelper` provides a two-stage search with N-1 independent splits.
+Each setter below updates the last train as the remainder so fractions always sum to one.
+Use the three-train process from the multi-variable example. The helper builds its own stage
+configurations; it forwards iteration count and stage-2 search mode, flow unit and tolerance,
+but does not forward caller utilization overrides or custom constraints. Use the explicit
+two-stage example when those settings must be retained:
 
 ```java
 import neqsim.process.util.optimizer.CompressorOptimizationHelper;
@@ -542,9 +556,21 @@ List<Compressor> compressors = Arrays.asList(comp1, comp2, comp3);
 
 // Define how to set each train's flow fraction
 List<BiConsumer<ProcessSystem, Double>> trainSetters = Arrays.asList(
-    (proc, split) -> setSplitForTrain1(proc, split),
-    (proc, split) -> setSplitForTrain2(proc, split),
-    (proc, split) -> setSplitForTrain3(proc, split)
+    (proc, split) -> {
+        Splitter trains = (Splitter) proc.getUnit("Compressor Splitter");
+        double second = trains.getSplitFactors()[1];
+        trains.setSplitFactors(new double[] {split, second, 1.0 - split - second});
+    },
+    (proc, split) -> {
+        Splitter trains = (Splitter) proc.getUnit("Compressor Splitter");
+        double first = trains.getSplitFactors()[0];
+        trains.setSplitFactors(new double[] {first, split, 1.0 - first - split});
+    },
+    (proc, split) -> {
+        Splitter trains = (Splitter) proc.getUnit("Compressor Splitter");
+        double first = trains.getSplitFactors()[0];
+        trains.setSplitFactors(new double[] {first, 1.0 - first - split, split});
+    }
 );
 
 OptimizationConfig config = new OptimizationConfig(minFlow, maxFlow)
@@ -562,54 +588,65 @@ TwoStageResult result = CompressorOptimizationHelper.optimizeTwoStage(
     config
 );
 
+// Inspect both stages before accepting their proposed operating point.
+if (!result.getStage1Result().isFeasible() || !result.getStage2Result().isFeasible()) {
+    throw new IllegalStateException("No feasible two-stage solution");
+}
+
 // Access results
-System.out.println("Total flow: " + result.getTotalFlow() + " " + result.getFlowUnit());
-System.out.println("Total power: " + result.getTotalPower() + " kW");
-System.out.println("Min surge margin: " + result.getMinSurgeMargin() * 100 + "%");
+logger.info("{}", "Total flow: " + result.getTotalFlow() + " " + result.getFlowUnit());
+logger.info("{}", "Total power: " + result.getTotalPower() + " kW");
+logger.info("{}", "Min surge margin: " + result.getMinSurgeMargin() * 100 + "%");
 
 // Per-train data
 for (String train : result.getTrainSplits().keySet()) {
-    System.out.printf("%s: split=%.1f%%, flow=%.0f, power=%.1f kW%n",
+    logger.info("{}", String.format("%s: split=%.1f%%, flow=%.0f, power=%.1f kW%n",
         train,
         result.getTrainSplits().get(train) * 100,
         result.getTrainFlows().get(train),
-        result.getTrainPowers().get(train));
+        result.getTrainPowers().get(train)));
 }
 
 // Full summary
-System.out.println(result.toSummary());
+logger.info("{}", result.toSummary());
 ```
 
 ### Python Usage
 
 ```python
-from neqsim.neqsimpython import jneqsim
-from jpype import JImplements, JOverride
+from neqsim import jneqsim
+import jpype
 
+# Prerequisite: process has a three-outlet Compressor Splitter followed by comp1/2/3,
+# active compressor charts and drivers. feed is the stream upstream of the splitter.
 Helper = jneqsim.process.util.optimizer.CompressorOptimizationHelper
 OptimizationConfig = jneqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig
 SearchMode = jneqsim.process.util.optimizer.ProductionOptimizer.SearchMode
+ArrayList = jpype.JClass("java.util.ArrayList")
 
-# Create train setters
-@JImplements("java.util.function.BiConsumer")
-class Train1Setter:
-    @JOverride
-    def accept(self, proc, split):
-        splitter = proc.getUnit("Splitter")
-        splitter.setSplitFactors([float(split), 0.33, 0.34])
+def train_setter(index):
+    def apply(proc, value):
+        splitter = proc.getUnit("Compressor Splitter")
+        splits = list(splitter.getSplitFactors())
+        splits[index] = float(value)
+        # The first two setters are independent. The third is supplied for list parity.
+        if index < 2:
+            splits[2] = 1.0 - splits[0] - splits[1]
+        else:
+            splits[1] = 1.0 - splits[0] - splits[2]
+        splitter.setSplitFactors(jpype.JArray(jpype.JDouble)(splits))
+    return jpype.JProxy("java.util.function.BiConsumer", dict(accept=apply))
 
-config = OptimizationConfig(50000.0, 150000.0) \
-    .rateUnit("kg/hr") \
-    .searchMode(SearchMode.BINARY_FEASIBILITY)
+compressors = ArrayList()
+setters = ArrayList()
+for index, compressor in enumerate([comp1, comp2, comp3]):
+    compressors.add(compressor)
+    setters.add(train_setter(index))
 
-result = Helper.optimizeTwoStage(
-    process, feed, 
-    [comp1, comp2, comp3], 
-    [Train1Setter(), Train2Setter(), Train3Setter()],
-    50000.0, 150000.0, config
-)
-
-print(f"Optimal: {result.getTotalFlow():.0f} kg/hr")
+config = OptimizationConfig(50000.0, 150000.0).rateUnit("kg/hr").maxIterations(50)
+result = Helper.optimizeTwoStage(process, feed, compressors, setters, 50000.0, 150000.0, config)
+if not result.getStage1Result().isFeasible() or not result.getStage2Result().isFeasible():
+    raise RuntimeError("Two-stage search did not find a feasible candidate")
 print(result.toSummary())
 ```
 
@@ -617,14 +654,14 @@ print(result.toSummary())
 
 ## Compressor Constraints
 
-NeqSim automatically tracks these compressor constraints:
+NeqSim exposes these compressor constraints. Speed and surge/stonewall limits are enabled only when an active map supplies the operating envelope:
 
 | Constraint | Type | Description |
 |------------|------|-------------|
 | `speed` | HARD | Current speed vs maximum speed |
 | `minSpeed` | HARD | Current speed vs minimum speed (chart limit) |
 | `power` | HARD | Current power vs driver max power at speed |
-| `surgeMargin` | SOFT | Distance to surge line |
+| `surgeMargin` | HARD | Distance to surge line |
 | `stonewallMargin` | SOFT | Distance to stonewall (choke) line |
 
 ### Accessing Constraints
@@ -634,12 +671,12 @@ Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints(
 
 for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
     CapacityConstraint c = entry.getValue();
-    System.out.printf("%s: %.1f%% (current=%.2f, limit=%.2f)%n",
+    logger.info("{}", String.format("%s: %.1f%% (current=%.2f, limit=%.2f)%n",
         entry.getKey(),
         c.getUtilizationPercent(),
         c.getCurrentValue(),
-        c.getDesignValue()
-    );
+        c.getDisplayDesignValue()
+    ));
 }
 ```
 
@@ -649,7 +686,7 @@ for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
 if (!compressor.isSimulationValid()) {
     List<String> errors = compressor.getSimulationValidationErrors();
     for (String error : errors) {
-        System.out.println("ERROR: " + error);
+        logger.info("{}", "ERROR: " + error);
     }
 }
 ```
@@ -676,7 +713,7 @@ double maxPowerAt6500RPM = driver.getMaxAvailablePowerAtSpeed(6500.0);
 ### Polynomial Driver Curve (Gas Turbines)
 
 ```java
-// P_max(N) = P_rated * (a + b*(N/N_rated) + c*(N/N_rated)²)
+// P_max(N) = driver.getMaxPower() * (a + b*(N/N_rated) + c*(N/N_rated)²)
 CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 40500.0);
 driver.setRatedSpeed(7383.0);
 driver.setMaxPowerCurveCoefficients(0.3, 0.5, 0.2);
@@ -713,9 +750,9 @@ for (ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
 double chartMinSpeed = compressor.getCompressorChart().getMinSpeedCurve();
 double chartMaxSpeed = compressor.getCompressorChart().getMaxSpeedCurve();
 
-// Calculate flow bounds that correspond to chart speed limits
+// Trial mass-flow bounds; validate them against the actual chart and suction state
 double lowerFlow = currentFlow * 0.8;   // Conservative lower
-double upperFlow = currentFlow * 1.15;  // Don't exceed stonewall
+double upperFlow = currentFlow * 1.15;  // Check stonewall after solving; this factor is not a guarantee
 ```
 
 ### 4. Disable Capacity Analysis for Non-Critical Equipment
@@ -728,17 +765,18 @@ manifold.setCapacityAnalysisEnabled(false);
 ### 5. Check Results Before Accepting
 
 ```java
-OptimizationResult result = optimizer.optimize(...);
+OptimizationResult result = optimizer.optimize(
+    processSystem, inletStream, config, null, null);
 
 // Verify feasibility
 if (!result.isFeasible()) {
-    System.out.println("WARNING: No feasible solution found");
+    logger.info("{}", "WARNING: No feasible solution found");
 }
 
 // Verify utilization is bounded
 double util = result.getBottleneckUtilization();
 if (Double.isNaN(util) || Double.isInfinite(util) || util > 10.0) {
-    System.out.println("WARNING: Utilization value is unrealistic: " + util);
+    logger.info("{}", "WARNING: Utilization value is unrealistic: " + util);
 }
 ```
 
@@ -780,7 +818,7 @@ compressor.setSolveSpeed(true);
 ## Python Example (via neqsim-python)
 
 ```python
-from neqsim.neqsimpython import jneqsim
+from neqsim import jneqsim
 from jpype import JImplements, JOverride
 import jpype
 

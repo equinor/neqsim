@@ -20,42 +20,42 @@ class NetworkValidationBenchmarkTest {
   void testSinglePipeBenchmark() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSinglePipeBenchmark();
     assertNotNull(result);
-    assertTrue(result.converged, "Single pipe benchmark should converge. " + result.getSummary());
+    assertTrue(result.allPassed, "Single pipe benchmark should converge. " + result.getSummary());
   }
 
   @Test
   void testParallelPipeBenchmark() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runParallelPipeBenchmark();
     assertNotNull(result);
-    assertTrue(result.converged, "Parallel pipe benchmark should converge. " + result.getSummary());
+    assertTrue(result.allPassed, "Parallel pipe benchmark should converge. " + result.getSummary());
   }
 
   @Test
   void testTriangleMassBalance() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runTriangleMassBalance();
     assertNotNull(result);
-    assertTrue(result.converged, "Triangle mass balance should converge. " + result.getSummary());
+    assertTrue(result.allPassed, "Triangle mass balance should converge. " + result.getSummary());
   }
 
   @Test
   void testSolverCrossVerification() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSolverCrossVerification();
     assertNotNull(result);
-    assertTrue(result.converged, "Solver cross-verification should converge. " + result.getSummary());
+    assertTrue(result.allPassed, "Solver cross-verification should converge. " + result.getSummary());
   }
 
   @Test
   void testPressureMonotonicity() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runPressureMonotonicity();
     assertNotNull(result);
-    assertTrue(result.converged, "Pressure monotonicity should converge. " + result.getSummary());
+    assertTrue(result.allPassed, "Pressure monotonicity should converge. " + result.getSummary());
   }
 
   @Test
   void testSparseVsDenseBenchmark() {
     NetworkValidationBenchmarks.BenchmarkResult result = NetworkValidationBenchmarks.runSparseVsDenseBenchmark();
     assertNotNull(result);
-    assertTrue(result.converged, "Sparse vs Dense should agree. " + result.getSummary());
+    assertTrue(result.allPassed, "Sparse vs Dense should agree. " + result.getSummary());
   }
 
   @Test
@@ -66,6 +66,7 @@ class NetworkValidationBenchmarkTest {
 
     for (NetworkValidationBenchmarks.BenchmarkResult r : results) {
       assertNotNull(r.name);
+      assertTrue(r.allPassed, r.getSummary());
       assertFalse(r.metrics.isEmpty(), "Benchmark " + r.name + " should have metrics");
     }
   }
@@ -76,5 +77,8 @@ class NetworkValidationBenchmarkTest {
     List<NetworkValidationBenchmarks.BenchmarkResult> results = LoopedPipeNetwork.runValidationBenchmarks();
     assertNotNull(results);
     assertFalse(results.isEmpty());
+    for (NetworkValidationBenchmarks.BenchmarkResult result : results) {
+      assertTrue(result.allPassed, result.getSummary());
+    }
   }
 }

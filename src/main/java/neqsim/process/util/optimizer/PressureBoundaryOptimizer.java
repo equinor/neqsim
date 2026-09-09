@@ -1171,34 +1171,36 @@ public class PressureBoundaryOptimizer implements Serializable {
      * @return JSON string representation
      */
     public String toJson() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("{\n");
-      sb.append("  \"tableName\": \"").append(tableName).append("\",\n");
-      sb.append("  \"pressureUnit\": \"").append(pressureUnit).append("\",\n");
-      sb.append("  \"rateUnit\": \"").append(rateUnit).append("\",\n");
-      sb.append("  \"inletPressures\": ").append(Arrays.toString(inletPressures)).append(",\n");
-      sb.append("  \"outletPressures\": ").append(Arrays.toString(outletPressures)).append(",\n");
-      sb.append("  \"flowRates\": [\n");
+      Map<String, Object> values = new LinkedHashMap<String, Object>();
+      values.put("tableName", tableName);
+      values.put("pressureUnit", pressureUnit);
+      values.put("rateUnit", rateUnit);
+      values.put("inletPressures", finiteValues(inletPressures));
+      values.put("outletPressures", finiteValues(outletPressures));
+      List<List<Double>> flowRows = new ArrayList<List<Double>>();
+      List<List<Double>> powerRows = new ArrayList<List<Double>>();
       for (int i = 0; i < flowRates.length; i++) {
-        sb.append("    ").append(Arrays.toString(flowRates[i]));
-        if (i < flowRates.length - 1) {
-          sb.append(",");
-        }
-        sb.append("\n");
+        flowRows.add(finiteValues(flowRates[i]));
+        powerRows.add(finiteValues(powers[i]));
       }
-      sb.append("  ],\n");
-      sb.append("  \"powers\": [\n");
-      for (int i = 0; i < powers.length; i++) {
-        sb.append("    ").append(Arrays.toString(powers[i]));
-        if (i < powers.length - 1) {
-          sb.append(",");
-        }
-        sb.append("\n");
+      values.put("flowRates", flowRows);
+      values.put("powers", powerRows);
+      values.put("feasiblePoints", countFeasiblePoints());
+      return new com.google.gson.GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(values);
+    }
+
+    /**
+     * Preserves unavailable observations as JSON null instead of emitting invalid NaN or infinity tokens.
+     *
+     * @param source the observed numeric values
+     * @return finite values or null entries, in the same order
+     */
+    private static List<Double> finiteValues(double[] source) {
+      List<Double> values = new ArrayList<Double>(source.length);
+      for (double value : source) {
+        values.add(Double.isNaN(value) || Double.isInfinite(value) ? null : Double.valueOf(value));
       }
-      sb.append("  ],\n");
-      sb.append("  \"feasiblePoints\": ").append(countFeasiblePoints()).append("\n");
-      sb.append("}");
-      return sb.toString();
+      return values;
     }
 
     @Override

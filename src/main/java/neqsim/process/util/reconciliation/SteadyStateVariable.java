@@ -118,17 +118,20 @@ public class SteadyStateVariable implements java.io.Serializable {
       return;
     }
 
-    // Mean
+    // Shift first to keep a constant non-binary reading exactly constant and
+    // preserve small fluctuations on top of a large engineering-unit offset.
+    double origin = window.get(0);
     double sum = 0.0;
     for (Double v : window) {
-      sum += v;
+      sum += v - origin;
     }
-    mean = sum / n;
+    double meanOffset = sum / n;
+    mean = origin + meanOffset;
 
     // Standard deviation
     double ssq = 0.0;
     for (Double v : window) {
-      double d = v - mean;
+      double d = (v - origin) - meanOffset;
       ssq += d * d;
     }
     standardDeviation = Math.sqrt(ssq / (n - 1));
@@ -153,21 +156,18 @@ public class SteadyStateVariable implements java.io.Serializable {
       rStatistic = 1.0;
     }
 
-    // Slope via linear regression: y = a + b*x where x = 0,1,...,n-1
-    // b = (n*sum(xi*yi) - sum(xi)*sum(yi)) / (n*sum(xi^2) - (sum(xi))^2)
-    double sumX = 0.0;
+    // Centered linear regression avoids subtracting nearly equal large sums.
+    double meanX = (n - 1) / 2.0;
     double sumXX = 0.0;
     double sumXY = 0.0;
     for (int i = 0; i < n; i++) {
-      double x = i;
-      double y = window.get(i);
-      sumX += x;
+      double x = i - meanX;
+      double y = (window.get(i) - origin) - meanOffset;
       sumXX += x * x;
       sumXY += x * y;
     }
-    double denominator = n * sumXX - sumX * sumX;
-    if (Math.abs(denominator) > 1e-30) {
-      slope = (n * sumXY - sumX * sum) / denominator;
+    if (sumXX > 0.0) {
+      slope = sumXY / sumXX;
     } else {
       slope = 0.0;
     }

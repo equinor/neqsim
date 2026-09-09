@@ -1,576 +1,338 @@
 ---
 title: Multi-Scenario Production Optimization
-description: VFP table generation with varying GOR and water cut scenarios for reservoir simulation coupling. Enables robust production optimization across changing field conditions.
+description: Generate and inspect pressure-performance grids across GOR and water-cut scenarios, with explicit total-fluid flow units and reservoir-export limitations.
 ---
 
 ## Overview
 
-The Multi-Scenario Production Optimization framework generates Vertical Flow Performance (VFP) tables that span different Gas-Oil Ratio (GOR) and Water Cut (WC) conditions. This is essential for reservoir simulation coupling where fluid properties change over time as the field matures.
+`FluidMagicInput`, `RecombinationFlashGenerator`, and `MultiScenarioVFPGenerator`
+combine fluid scenarios with a process pressure search. The grid axes are flow rate,
+outlet pressure, water cut, and gas-oil ratio (GOR).
 
-## Why This Is Useful
+Changes in producing GOR and water cut can change pressure loss and facility capacity.
+Use multiple fluid scenarios to screen those effects, and validate the recombined fluids
+and hydraulic model before using the grid for a field decision.
 
-### The Problem
+The current generator sets **total-fluid flow**, using the unit selected with
+`setFlowRateUnit(...)`. Its default is `Sm3/day`; this is not stock-tank liquid flow.
+The example explicitly uses `kg/hr` to avoid confusing standard gas-equivalent volume,
+actual multiphase volume, and stock-tank liquid production.
 
-Traditional VFP tables assume fixed fluid composition. However, real fields experience:
-
-- **Rising GOR** as pressure depletes and gas breaks out of solution
-- **Increasing water cut** as aquifer breakthrough occurs
-- **Changing fluid properties** affecting flow performance
-
-Using a single VFP table leads to:
-- Inaccurate production forecasts
-- Suboptimal well and facility design
-- Incorrect economic evaluations
-
-### The Solution
-
-This framework generates multi-dimensional VFP tables with:
-
-| Dimension | Description |
-|-----------|-------------|
-| Rate | Liquid production rates (stock tank conditions) |
-| Outlet Pressure | Separator or manifold pressures |
-| Water Cut | 0% to 95% water in liquid |
-| GOR | Range from initial to late-field conditions |
-
-The result is a single VFP table file that reservoir simulators (Eclipse, tNavigator) can interpolate across all operating conditions.
+The legacy `exportVFPEXP(...)` method writes a text representation. It hardcodes a
+`LIQ` header and does not convert total-fluid rates to a reservoir simulator's liquid
+rate basis. Its output has not been validated here as an Eclipse or tNavigator input
+deck. Export the grid to CSV for review; a reservoir adapter must convert units and
+validate keyword syntax, datum depth, and interpolation before loading a simulator.
 
 ## What Is Implemented
 
-### Core Classes
+### FluidMagicInput
 
-The implementation consists of three main classes in `neqsim.process.util.optimizer`:
-
-#### 1. FluidMagicInput
-
-Reference fluid configuration from E300/FluidMagic exports or NeqSim fluids.
-
-**Key Features:**
-- Parse Eclipse E300 fluid exports (FLUIDS section)
-- Extract live oil and free gas compositions
-- Separate phases at standard conditions (15°C, 1.01325 bara)
-- Configure GOR and water cut scenario ranges
-- Support linear or logarithmic value spacing
+Create the input from a NeqSim fluid, then separate it at 15 °C and 1.01325 bara before
+constructing the recombination generator. `fromFluid(...)` does not perform that separation.
 
 ```java
-// From E300 file
-FluidMagicInput input = FluidMagicInput.fromE300File(
-    "path/to/fluid.inc"
-);
-
-// Or from existing NeqSim fluid
-FluidMagicInput input = FluidMagicInput.fromFluid(
-    existingFluid
-);
-
-// Configure scenarios
-input.setGORRange(50.0, 500.0);            // GOR range
-input.setNumberOfGORPoints(6);             // 6 GOR values
-input.setWaterCutRange(0.0, 0.8);          // WC range  
-input.setNumberOfWaterCutPoints(5);        // 5 WC values (0-80%)
+FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
+fluidInput.setGORRange(80.0, 200.0);       // Sm3 gas / Sm3 oil
+fluidInput.setNumberOfGORPoints(2);
+fluidInput.setWaterCutRange(0.0, 0.3);    // water / (oil + water), by volume
+fluidInput.setNumberOfWaterCutPoints(2);
+fluidInput.separateToStandardConditions();
 ```
 
-#### 2. RecombinationFlashGenerator
-
-Generates fluids at different GOR/WC by recombining separated phases.
-
-**Key Features:**
-- Recombine stock tank oil and gas to achieve target GOR
-- Add water phase for desired water cut
-- Thread-safe with result caching
-- Validates achievable GOR range
+An E300 file is an alternative source, not a second declaration of the same variable:
 
 ```java
-RecombinationFlashGenerator generator = 
-    new RecombinationFlashGenerator(fluidInput);
+FluidMagicInput fileInput = FluidMagicInput.fromE300File("path/to/fluid.inc");
+fileInput.separateToStandardConditions();
+```
 
-// Generate fluid at GOR=200, WC=30%, 100 m³/h liquid, 80°C, 50 bara
+The file example requires a real local E300 fluid export. It is not needed to run the
+complete synthetic example below.
+
+### RecombinationFlashGenerator
+
+`generateFluid(gor, waterCut, liquidRate, temperature, pressure)` uses a requested
+stock-tank liquid rate in Sm3/hr to construct the recombined fluid. The separate VFP
+generator subsequently resets its feed's **total** flow in the configured flow unit.
+Do not equate these two rate arguments.
+
+```java
+RecombinationFlashGenerator generator = new RecombinationFlashGenerator(fluidInput);
 SystemInterface fluid = generator.generateFluid(
-    200.0,   // Target GOR (Sm3/Sm3)
-    0.30,    // Water cut (fraction)
-    100.0,   // Liquid rate (m³/h at std conditions)
-    353.15,  // Temperature (K)
-    50.0     // Pressure (bara)
+    200.0,   // Target GOR, Sm3/Sm3
+    0.30,    // Water cut, fraction
+    100.0,   // Requested stock-tank liquid rate, Sm3/hr
+    353.15,  // Temperature, K
+    50.0     // Pressure, bara
 );
+
+// Verify the achieved standard-condition GOR at this water cut, within 5%.
+boolean gorVerified = generator.validateGOR(200.0, 0.30, 0.05);
+logger.info("Recombined GOR verified: {}", gorVerified);
 ```
 
-#### 3. MultiScenarioVFPGenerator
+`validateGOR` takes three arguments and checks the *achieved* GOR after flashing.
+It is not a one-argument feasibility-range query. Scenario minimum and maximum GOR
+settings specify requested axes; they do not establish an achievable composition range.
 
-Generates complete VFP tables with all scenario combinations.
+### MultiScenarioVFPGenerator
 
-**Key Features:**
-- 4-dimensional VFP generation (rate × pressure × WC × GOR)
-- Binary search for minimum inlet pressure at each condition
-- Parallel execution for performance
-- Eclipse VFPEXP format export
-- Comprehensive statistics and feasibility tracking
+The constructor requires names of registered **streams** for the feed and outlet.
+Register the pipe's outlet stream in `ProcessSystem` and give that stream a name;
+passing the pipe equipment's name produces infeasible points.
 
 ```java
-// Define process supplier (creates fresh process for each calculation)
-// The VFP generator will set the fluid and rate on the feed stream
-Supplier<ProcessSystem> factory = () -> {
-    ProcessSystem process = new ProcessSystem();
-    SystemInterface fluid = new SystemSrkEos(288.15, 100.0);
-    fluid.addComponent("methane", 0.8);
-    fluid.setMixingRule("classic");
-    Stream feed = new Stream("feed", fluid);
-    feed.setFlowRate(100.0, "m3/hr");
-    process.add(feed);
-    
-    AdiabaticPipe pipe = new AdiabaticPipe("well", feed);
-    pipe.setLength(3000.0);
-    pipe.setDiameter(0.1);
-    process.add(pipe);
-    
-    return process;
-};
-
-// Create VFP generator
+pipe.getOutletStream().setName("outlet");
+process.add(pipe.getOutletStream());
 MultiScenarioVFPGenerator vfpGen = new MultiScenarioVFPGenerator(
-    factory,
-    "feed",      // Feed stream name
-    "well"       // Outlet equipment name (get outlet stream)
+    factory, "feed", "outlet"
 );
-
-// Configure flash generator from fluid input
-RecombinationFlashGenerator flashGen = new RecombinationFlashGenerator(fluidInput);
-vfpGen.setFlashGenerator(flashGen);
-
-// Configure dimensions
-vfpGen.setFlowRates(new double[]{50, 100, 200, 400, 800});  // m³/h
-vfpGen.setOutletPressures(new double[]{10, 20, 30, 40});    // bara
-vfpGen.setWaterCuts(fluidInput.generateWaterCutValues());        // from fluid input
-vfpGen.setGORs(fluidInput.generateGORValues());                  // from fluid input
-vfpGen.setMinInletPressure(50.0);
-vfpGen.setMaxInletPressure(500.0);
-
-// Generate table
-VFPTable table = vfpGen.generateVFPTable();
-
-// Export to Eclipse format
-vfpGen.exportVFPEXP("output/WELL_VFP.inc", 1);
+vfpGen.setFlashGenerator(generator);
+vfpGen.setFlowRateUnit("kg/hr");
+vfpGen.setFlowRates(new double[] {1000.0, 3000.0});
+vfpGen.setOutletPressures(new double[] {20.0, 30.0});
+vfpGen.setWaterCuts(fluidInput.generateWaterCutValues());
+vfpGen.setGORs(fluidInput.generateGORValues());
+vfpGen.setMinInletPressure(5.0);
+vfpGen.setMaxInletPressure(150.0);
+vfpGen.setPressureTolerance(0.2);
+MultiScenarioVFPGenerator.VFPTable table = vfpGen.generateVFPTable();
 ```
 
-### VFP Table Structure
-
-The generated `VFPTable` object provides:
-
-```java
-// Get BHP at specific conditions
-double bhp = table.getBHP(rateIdx, pressIdx, wcIdx, gorIdx);
-
-// Print a 2D slice (rate vs outlet pressure) at fixed WC/GOR
-table.printSlice(wcIdx, gorIdx);
-
-// Statistics
-int feasible = table.getFeasibleCount();
-int total = table.getTotalPoints();
-double coverage = (double) feasible / total * 100;
-```
-
-### Eclipse VFPEXP Format
-
-The export generates Eclipse-compatible VFP tables:
-
-```
--- Multi-Scenario VFP Table generated by NeqSim
--- Generated: 2024-01-15T10:30:00
--- GOR Range: 50.0 - 500.0 Sm3/Sm3
--- Water Cut Range: 0.0 - 80.0 %
-
-VFPEXP
-  1 /                        -- Table number
-  3000.0 /                   -- Reference depth (m)
-  'LIQ' /                    -- Rate type (liquid)
-  'THP' /                    -- Pressure type
-  'GOR' /                    -- First interpolation variable
-  'WCT' /                    -- Second interpolation variable
-  
--- Rates (m3/day)
-  50.0  100.0  200.0  400.0  800.0 /
-  
--- Outlet pressures (bara)
-  10.0  20.0  30.0  40.0 /
-  
--- GOR values (Sm3/Sm3)
-  50.0  100.0  200.0  300.0  400.0  500.0 /
-  
--- Water cut values (fraction)
-  0.0  0.2  0.4  0.6  0.8 /
-
--- BHP data follows...
-```
-
-## How It Works
-
-### Phase Recombination Algorithm
-
-1. **Separate reference fluid** at standard conditions (15°C, 1.01325 bara)
-2. **Calculate reference GOR** from separated gas and oil volumes
-3. **For target GOR:**
-   - If target > reference: Add more gas phase
-   - If target < reference: Add more oil phase
-   - Blend to achieve exact target ratio
-4. **Add water** to achieve target water cut
-5. **Flash to operating conditions** (T, P)
-
-### VFP Generation Algorithm
-
-For each combination of (rate, outlet_pressure, water_cut, GOR):
-
-1. Generate fluid at operating conditions using recombination
-2. Binary search for inlet pressure:
-   - Start with pressure bracket [min_inlet, max_inlet]
-   - Run process simulation
-   - Check if outlet pressure matches target (±tolerance)
-   - Narrow bracket until converged
-3. Record inlet pressure (BHP) or mark as infeasible
-4. Continue to next combination
-
-### Parallel Execution
-
-The generator uses a process supplier pattern to enable thread-safe parallel execution:
-
-```java
-// Each thread gets its own process instance via Supplier
-import java.util.function.Supplier;
-
-Supplier<ProcessSystem> factory = () -> {
-    // Return a fresh process system for each VFP point
-    return createProcess();
-};
-```
+These fragments use the imports, logger, and process factory in the complete example.
+`Supplier<ProcessSystem>.get()` creates a process; it has no `createProcess(...)` method.
+Each supplied process must have independent streams and equipment for parallel use.
 
 ## Complete Example
 
+Save the following as `VFPGenerationExample.java` in a NeqSim Java project. It runs
+16 synthetic cases and writes a CSV containing all pressure results and feasibility flags.
+The simple `AdiabaticPipe` is a screening pressure-drop model; qualify a suitable
+multiphase hydraulic model and elevation profile for a real well.
+
 ```java
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimizer.*;
+import neqsim.process.util.optimizer.FluidMagicInput;
+import neqsim.process.util.optimizer.MultiScenarioVFPGenerator;
+import neqsim.process.util.optimizer.RecombinationFlashGenerator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class VFPGenerationExample {
+    private static final Logger logger = LogManager.getLogger(VFPGenerationExample.class);
 
-    public static void main(String[] args) {
-        // 1. Create reference fluid (typical North Sea oil)
+    public static void main(String[] args) throws IOException {
         SystemInterface referenceFluid = new SystemSrkEos(288.15, 1.01325);
-        referenceFluid.addComponent("nitrogen", 0.005);
-        referenceFluid.addComponent("CO2", 0.01);
-        referenceFluid.addComponent("methane", 0.45);
-        referenceFluid.addComponent("ethane", 0.05);
-        referenceFluid.addComponent("propane", 0.03);
-        referenceFluid.addComponent("n-butane", 0.015);
-        referenceFluid.addComponent("n-pentane", 0.01);
-        referenceFluid.addComponent("n-hexane", 0.02);
-        referenceFluid.addComponent("C7", 0.41);
+        referenceFluid.addComponent("methane", 0.5);
+        referenceFluid.addComponent("n-heptane", 0.5);
         referenceFluid.setMixingRule("classic");
         referenceFluid.setMultiPhaseCheck(true);
-        
-        // 2. Create fluid input with GOR/WC scenarios
-        FluidMagicInput fluidInput = FluidMagicInput.fromFluid(
-            referenceFluid
-        );
-        fluidInput.setGORRange(80.0, 400.0);
-        fluidInput.setNumberOfGORPoints(5);       // 5 GOR values
-        fluidInput.setWaterCutRange(0.0, 0.6);
-        fluidInput.setNumberOfWaterCutPoints(4);  // 4 WC values
-        
-        // 3. Define process supplier (well model)
-        // VFP generator will replace the fluid and rate
-        Supplier<ProcessSystem> wellFactory = () -> {
+
+        FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
+        fluidInput.setGORRange(80.0, 200.0);
+        fluidInput.setNumberOfGORPoints(2);
+        fluidInput.setWaterCutRange(0.0, 0.3);
+        fluidInput.setNumberOfWaterCutPoints(2);
+        fluidInput.separateToStandardConditions();
+
+        Supplier<ProcessSystem> factory = () -> {
             ProcessSystem process = new ProcessSystem();
-            SystemInterface fluid = referenceFluid.clone();
-            Stream wellhead = new Stream("wellhead", fluid);
-            wellhead.setFlowRate(100.0, "m3/hr");
-            process.add(wellhead);
-            
-            AdiabaticPipe tubing = new AdiabaticPipe("tubing", wellhead);
-            tubing.setLength(2500.0);           // 2500m TVD
-            tubing.setDiameter(0.10);           // 4" tubing
-            tubing.setInletElevation(0.0);
-            tubing.setOutletElevation(2500.0);  // Vertical well
-            process.add(tubing);
-            
+            Stream feed = new Stream("feed", referenceFluid.clone());
+            feed.setFlowRate(1000.0, "kg/hr");
+            process.add(feed);
+            AdiabaticPipe pipe = new AdiabaticPipe("pipe", feed);
+            pipe.setLength(1000.0);
+            pipe.setDiameter(0.15);
+            process.add(pipe);
+            pipe.getOutletStream().setName("outlet");
+            process.add(pipe.getOutletStream());
             return process;
         };
-        
-        // 4. Create VFP generator
-        RecombinationFlashGenerator flashGen = new RecombinationFlashGenerator(fluidInput);
-        MultiScenarioVFPGenerator vfpGen = new MultiScenarioVFPGenerator(
-            wellFactory, "wellhead", "tubing"
+
+        MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(
+            factory, "feed", "outlet"
         );
-        vfpGen.setFlashGenerator(flashGen);
-        
-        // 5. Configure rate and pressure dimensions
-        vfpGen.setFlowRates(new double[]{50, 100, 200, 400, 600, 800});
-        vfpGen.setOutletPressures(new double[]{15, 20, 30, 40, 50});
-        vfpGen.setWaterCuts(fluidInput.generateWaterCutValues());
-        vfpGen.setGORs(fluidInput.generateGORValues());
-        vfpGen.setMinInletPressure(80.0);
-        vfpGen.setMaxInletPressure(450.0);
-        vfpGen.setPressureTolerance(0.5);  // 0.5 bar tolerance
-        
-        // 6. Generate VFP table
-        System.out.println("Generating multi-scenario VFP table...");
-        MultiScenarioVFPGenerator.VFPTable table = vfpGen.generateVFPTable();
-        
-        // 7. Report results
-        System.out.println("\n=== VFP Generation Complete ===");
-        System.out.println("Feasible points: " + table.getFeasibleCount() 
-            + " / " + table.getTotalPoints());
-        
-        // 8. Print sample slice
-        System.out.println("\nSample: WC=0%, GOR=" + fluidInput.generateGORValues()[2]);
-        table.printSlice(0, 2);
-        
-        // 9. Export to Eclipse
-        vfpGen.exportVFPEXP("WELL_A_VFP.inc", 1);
-        System.out.println("\nExported to WELL_A_VFP.inc");
+        generator.setFlashGenerator(new RecombinationFlashGenerator(fluidInput));
+        generator.setFlowRateUnit("kg/hr");
+        generator.setFlowRates(new double[] {1000.0, 3000.0});
+        generator.setOutletPressures(new double[] {20.0, 30.0});
+        generator.setWaterCuts(fluidInput.generateWaterCutValues());
+        generator.setGORs(fluidInput.generateGORValues());
+        generator.setInletTemperature(353.15);
+        generator.setMinInletPressure(5.0);
+        generator.setMaxInletPressure(150.0);
+        generator.setPressureTolerance(0.2);
+        generator.setEnableParallel(false);
+
+        MultiScenarioVFPGenerator.VFPTable table = generator.generateVFPTable();
+        if (table.getFeasibleCount() != table.getTotalPoints()) {
+            throw new IllegalStateException("Synthetic grid contains infeasible points");
+        }
+        logger.info("Feasible pressure points: {} / {}",
+            table.getFeasibleCount(), table.getTotalPoints());
+
+        StringBuilder csv = new StringBuilder(
+            "total_flow_kg_hr,outlet_pressure_bara,water_cut,gor_sm3_sm3,inlet_pressure_bara,feasible\n"
+        );
+        for (int r = 0; r < generator.getFlowRates().length; r++) {
+            for (int p = 0; p < generator.getOutletPressures().length; p++) {
+                for (int w = 0; w < generator.getWaterCuts().length; w++) {
+                    for (int g = 0; g < generator.getGORs().length; g++) {
+                        csv.append(generator.getFlowRates()[r]).append(',')
+                            .append(generator.getOutletPressures()[p]).append(',')
+                            .append(generator.getWaterCuts()[w]).append(',')
+                            .append(generator.getGORs()[g]).append(',')
+                            .append(table.getBHP(r, p, w, g)).append(',')
+                            .append(table.isFeasible(r, p, w, g)).append('\n');
+                    }
+                }
+            }
+        }
+        String outputFile = args.length > 0 ? args[0] : "vfp_grid.csv";
+        Files.write(Paths.get(outputFile), csv.toString().getBytes(StandardCharsets.UTF_8));
+        logger.info("Saved {}", outputFile);
     }
 }
 ```
 
-## Use Cases
+Use only registered component names such as `n-heptane`. A petroleum fraction called
+`C7` must first be characterized and added as a TBP/plus fraction with its required
+properties; it is not a database component that `addComponent("C7", ...)` can resolve.
 
-### 1. Reservoir Simulation Coupling
+## Validation and rate consistency
 
-Generate VFP tables for Eclipse/tNavigator that automatically interpolate:
+The complete synthetic grid produces 16 feasible points. Recombination checks with the same
+reference fluid reproduce dry GORs of 80 and 200. At 30% requested water cut the achieved
+GORs are approximately 81.04 and 202.65, and water cuts are 0.29955 and 0.29891, because
+adding water changes phase equilibrium. Total stock-tank liquid rates of 1000 and 2000
+Sm3/hr are recovered after a standard-condition flash on both cache misses and hits.
+
+The separated reference volumes must retain their equilibrium phase identities. Reinitializing
+an extracted phase with `init(0)` resets phase information and changes its volume; the current
+implementation preserves that phase state. Recombination uses the same standard-condition
+normalization for fresh and cached fluids and converts hourly rates to the mol/s basis used
+by the simulation. Cache keys retain the exact GOR and water-cut values.
+
+## How It Works
+
+For each rate, outlet-pressure, water-cut, and GOR combination, the generator creates a
+fresh process, recombines a fluid, and searches for the lowest inlet pressure whose
+calculated outlet pressure is at least the target. It first checks the maximum inlet
+pressure, then bisects the inlet-pressure bracket until its width meets the tolerance.
+
+This is an inequality search, not a guarantee that the outlet residual equals zero.
+If the lower inlet-pressure bound already exceeds the required pressure, the result
+is limited by that bound. Inspect pressure residuals and choose a bracket that covers
+the physical solution. A failed simulation or unreachable target is stored as an
+infeasible point with a non-finite pressure.
+
+### VFP Table Structure
 
 ```java
-// Configure for full field life
-fluidInput.setGORRange(100.0, 800.0);
-fluidInput.setNumberOfGORPoints(8);   // Initial to blowdown
-fluidInput.setWaterCutRange(0.0, 0.95);
-fluidInput.setNumberOfWaterCutPoints(10); // Dry to wet
-```
-
-### 2. Facility Debottlenecking
-
-Evaluate facility capacity across fluid scenarios:
-
-```java
-// Fixed facility, varying fluids
-for (double gor : gorValues) {
-    for (double wc : wcValues) {
-        SystemInterface fluid = generator.generateFluid(gor, wc, rate, T, P);
-        // Evaluate separator, compressor capacity
-    }
-}
-```
-
-### 3. Well Design Optimization
-
-Compare tubing sizes across production scenarios:
-
-```java
-for (double diameter : new double[]{0.076, 0.10, 0.127}) {
-    Supplier<ProcessSystem> factory = createWellFactory(diameter);
-    VFPTable table = generateVFP(factory, fluidInput);
-    // Compare deliverability
-}
+double pressure = table.getBHP(0, 0, 0, 0);  // required inlet pressure, bara
+boolean feasible = table.isFeasible(0, 0, 0, 0);
+int total = table.getTotalPoints();
+int feasibleCount = table.getFeasibleCount();
+logger.info("Pressure={} bara, feasible={}, coverage={}/{}",
+    pressure, feasible, feasibleCount, total);
 ```
 
 ## Configuration Options
 
-### GOR Range Configuration
+GOR axes support linear or logarithmic spacing; logarithmic spacing is the default.
+Water-cut axes use linear spacing.
 
 ```java
-// Linear spacing
 fluidInput.setGORRange(50.0, 500.0);
 fluidInput.setNumberOfGORPoints(6);
 fluidInput.setGorSpacing(FluidMagicInput.GORSpacing.LINEAR);
-// Results: [50, 140, 230, 320, 410, 500]
+// Requested GORs: [50, 140, 230, 320, 410, 500]
 
-// Logarithmic spacing (better for wide ranges) - this is the default
-fluidInput.setGORRange(10.0, 1000.0);
-fluidInput.setNumberOfGORPoints(5);
-fluidInput.setGorSpacing(FluidMagicInput.GORSpacing.LOGARITHMIC);
-// Results: [10, 31.6, 100, 316, 1000]
-```
-
-### Water Cut Range Configuration
-
-```java
-// Linear spacing
 fluidInput.setWaterCutRange(0.0, 0.8);
 fluidInput.setNumberOfWaterCutPoints(5);
-// Results: [0.0, 0.2, 0.4, 0.6, 0.8]
+// Requested water cuts: [0.0, 0.2, 0.4, 0.6, 0.8]
 ```
 
-### Pressure Search Configuration
+Apply updated axes to the VFP generator before regenerating its table.
 
 ```java
-vfpGen.setMinInletPressure(50.0);    // Min BHP to search
-vfpGen.setMaxInletPressure(500.0);   // Max BHP to search
-vfpGen.setPressureTolerance(0.5);    // Pressure tolerance (bar)
+generator.setGORs(fluidInput.generateGORValues());
+generator.setWaterCuts(fluidInput.generateWaterCutValues());
+generator.setEnableParallel(true);
+generator.setNumberOfWorkers(2);
 ```
 
-## API Reference
-
-### FluidMagicInput
-
-| Method | Description |
-|--------|-------------|
-| `fromE300File(path)` | Parse E300 fluid export file |
-| `fromFluid(fluid)` | Create from NeqSim fluid |
-| `builder()` | Get builder for custom configuration |
-| `setGORRange(min, max)` | Set GOR range (Sm³/Sm³) |
-| `setNumberOfGORPoints(count)` | Set number of GOR values |
-| `setGorSpacing(spacing)` | Set LINEAR or LOGARITHMIC spacing |
-| `setWaterCutRange(min, max)` | Set water cut range (0-1) |
-| `setNumberOfWaterCutPoints(count)` | Set number of WC values |
-| `separateToStandardConditions()` | Separate into gas/oil/water |
-| `generateGORValues()` | Get configured GOR array |
-| `generateWaterCutValues()` | Get configured water cut array |
-
-### RecombinationFlashGenerator
-
-| Method | Description |
-|--------|-------------|
-| `generateFluid(gor, wc, rate, T, P)` | Generate fluid at conditions |
-| `validateGOR(gor)` | Check if GOR is achievable |
-| `clearCache()` | Clear cached results |
-| `getCacheStatistics()` | Get cache hit/miss stats |
-
-### MultiScenarioVFPGenerator
-
-| Method | Description |
-|--------|-------------|
-| `setFlashGenerator(gen)` | Set recombination flash generator |
-| `setFlowRates(rates)` | Set rate dimension (m³/h) |
-| `setWaterCuts(wcs)` | Set water cut values (0-1) |
-| `setGORs(gors)` | Set GOR values (Sm³/Sm³) |
-| `setOutletPressures(pressures)` | Set outlet pressure dimension (bara) |
-| `generateVFPTable()` | Generate complete VFP table |
-| `exportVFPEXP(path, tableNum)` | Export to Eclipse format |
-| `toVFPEXPString(tableNum)` | Get Eclipse format as string |
-
-### VFPTable
-
-| Method | Description |
-|--------|-------------|
-| `getBHP(r, p, w, g)` | Get BHP at indices |
-| `printSlice(wcIdx, gorIdx)` | Print 2D slice |
-| `getFeasibleCount()` | Count feasible points |
-| `getTotalPoints()` | Total point count |
-
-## Performance Guidelines
-
-| VFP Points | Estimated Time | Recommendation |
-|------------|----------------|----------------|
-| < 100 | < 1 min | Quick testing |
-| 100-500 | 1-5 min | Standard runs |
-| 500-2000 | 5-30 min | Enable parallel execution |
-| > 2000 | 30+ min | Use parallel + batch processing |
-
-For large VFP tables:
-
-```java
-// Enable parallel execution
-vfpGen.setEnableParallel(true);
-vfpGen.setNumberOfWorkers(Runtime.getRuntime().availableProcessors());
-```
+Start with a small grid. Runtime depends on phase behavior, hydraulic model, pressure
+bracket, and iteration tolerance; measure it before choosing a large grid or worker count.
 
 ## Input Validation
 
-Before running large VFP generations, validate your setup:
+Run a supplied process directly before launching the grid. Use `factory.get()`, replace
+the registered feed fluid, set its total mass rate, and read the named outlet stream:
 
 ```java
-// 1. Verify fluid input is valid
-fluidInput.separateToStandardConditions();
-System.out.println("Reference GOR: " + fluidInput.getBaseCaseGOR() + " Sm3/Sm3");
-System.out.println("Achievable GOR range: " + fluidInput.getMinGOR() 
-    + " - " + fluidInput.getMaxGOR());
-
-// 2. Create flash generator and test a single point
-RecombinationFlashGenerator flashGen = new RecombinationFlashGenerator(fluidInput);
-double testGOR = (fluidInput.getMinGOR() + fluidInput.getMaxGOR()) / 2;
-SystemInterface testFluid = flashGen.generateFluid(testGOR, 0.1, 100.0, 353.15, 100.0);
-if (testFluid == null) {
-    throw new RuntimeException("Fluid generation failed - check GOR range");
-}
-System.out.println("Test fluid phases: " + testFluid.getNumberOfPhases());
-
-// 3. Verify process runs
-ProcessSystem testProcess = factory.createProcess(testFluid, 100.0);
-testProcess.run();
-System.out.println("Test outlet pressure: " 
-    + testProcess.getUnit("tubing").getOutletStream().getPressure("bara") + " bara");
+ProcessSystem trial = factory.get();
+Stream feed = (Stream) trial.getUnit("feed");
+RecombinationFlashGenerator recombination = new RecombinationFlashGenerator(fluidInput);
+feed.setFluid(recombination.generateFluid(200.0, 0.3, 100.0, 353.15, 100.0));
+feed.setFlowRate(1000.0, "kg/hr");
+trial.run();
+Stream outlet = (Stream) trial.getUnit("outlet");
+logger.info("Trial outlet pressure: {} bara", outlet.getPressure("bara"));
 ```
 
-## Troubleshooting
+Check that the reference fluid has gas and oil phases at standard conditions, that the
+requested GOR is reproduced within an appropriate tolerance, and that the water-cut
+values lie between zero and one. Check mass conservation and physically reasonable
+pressure losses at representative corners of the grid.
 
-### "GOR out of achievable range" Error
+## Eclipse VFPEXP Format
 
-The target GOR must be within the achievable range based on the reference fluid composition. The achievable range depends on the gas-to-oil ratio in the separated phases.
+The existing legacy writer can be inspected with the actual methods below after generation:
 
 ```java
-// Check achievable range
-RecombinationFlashGenerator gen = new RecombinationFlashGenerator(fluidInput);
-boolean valid = gen.validateGOR(targetGOR);
-if (!valid) {
-    System.out.println("GOR " + targetGOR + " is outside achievable range");
-}
+String legacyText = generator.toVFPEXPString(1);
+generator.exportVFPEXP("vfp_legacy_review.txt", 1);
 ```
 
-### Low VFP Feasibility (< 50%)
+The write operation requires handling `IOException`, as in the complete example. The
+legacy text retains the supplied rate values, emits a `VFPEXP` keyword, a hardcoded
+`LIQ` rate label and a zero datum depth. It is not a validated conversion of this
+mass-rate grid to an Eclipse production VFP table. Do not include this text directly
+in a reservoir model based only on its filename. Validate a simulator-specific adapter
+against that simulator's supported VFP keyword, units, indexing, datum, and pressure
+convention. Injection controls also require an appropriate injection table; the
+production GOR/water-cut grid does not establish that compatibility.
 
-If many VFP points are infeasible:
+## API Reference
 
-1. **Increase `maxInletPressure`** - BHP may be hitting the ceiling for high rates
-2. **Decrease `minInletPressure`** - Low rates may need lower BHP to converge
-3. **Check rate/pressure combinations** - Some combinations are physically unrealistic
-4. **Review well model** - Ensure tubing dimensions and elevations are correct
-
-### Slow Generation
-
-1. Enable parallel execution: `vfpGen.setEnableParallel(true)`
-2. Reduce initial testing points: Start with 3-4 values per dimension
-3. Increase pressure tolerance: `vfpGen.setPressureTolerance(1.0)` for faster convergence
-
-### Fluid Generation Returns Null
-
-1. Check that `separateToStandardConditions()` was called on the fluid input
-2. Verify GOR is within achievable range
-3. Ensure water cut is between 0 and 1
-
-## Using VFP in Eclipse Reservoir Simulator
-
-Include the generated VFP file in your Eclipse DATA file:
-
-```
--- Include multi-scenario VFP table
-INCLUDE
-  'WELL_A_VFP.inc' /
-
--- Reference VFP table in well controls
-WCONPROD
-  'WELL_A' OPEN LRAT 500.0 4* 1 /   -- VFP table 1
-/
-
--- For injection wells
-WCONINJE
-  'INJ_1' WATER OPEN RATE 1000.0 1* 200.0 1 /
-/
-```
-
-The reservoir simulator will automatically interpolate across:
-- **GOR dimension** - Based on producing GOR from the reservoir
-- **Water cut dimension** - Based on water cut from the reservoir
-- **Rate and THP dimensions** - Based on operating conditions
+| Class | Method | Meaning |
+|-------|--------|---------|
+| `FluidMagicInput` | `fromFluid(fluid)` / `fromE300File(path)` | Create reference input |
+| `FluidMagicInput` | `separateToStandardConditions()` | Prepare gas, oil, and water reference phases |
+| `FluidMagicInput` | `generateGORValues()` / `generateWaterCutValues()` | Generate requested scenario axes |
+| `RecombinationFlashGenerator` | `generateFluid(gor, wc, liquidRate, T, P)` | Recombine and flash a scenario |
+| `RecombinationFlashGenerator` | `validateGOR(gor, wc, relativeTolerance)` | Check achieved standard-condition GOR |
+| `RecombinationFlashGenerator` | `clearCache()` / `getCacheStatistics()` | Control and inspect recombination cache |
+| `MultiScenarioVFPGenerator` | `setFlowRateUnit(unit)` | Select total-fluid rate unit |
+| `MultiScenarioVFPGenerator` | `generateVFPTable()` | Generate the pressure-performance grid |
+| `VFPTable` | `getBHP(r, p, w, g)` / `isFeasible(r, p, w, g)` | Inspect a grid point |
+| `VFPTable` | `getFeasibleCount()` / `getTotalPoints()` | Inspect grid coverage |
 
 ## Related Documentation
 
-- [Field Development Module](index.md) - Overview of field development tools
-- [Pressure Boundary Optimization](../process/pressure_boundary_optimization.md) - VFP lift curve generation
-- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - Constraints in VFP generation
-- [Thermodynamic Systems](../thermo/index.md) - Fluid modeling
-- [Pipeline Simulation](../fluidmechanics/index.md) - Flow modeling
-
-## Source Code
-
-- [FluidMagicInput.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/optimizer/FluidMagicInput.java)
-- [RecombinationFlashGenerator.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/optimizer/RecombinationFlashGenerator.java)
-- [MultiScenarioVFPGenerator.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/util/optimizer/MultiScenarioVFPGenerator.java)
+- [Field Development Module](index.md)
+- [Pressure Boundary Optimization](../process/pressure_boundary_optimization.md)
+- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md)
+- [Thermodynamic Systems](../thermo/index.md)
+- [Pipeline Simulation](../fluidmechanics/index.md)

@@ -55,6 +55,8 @@ public class LoopDetector implements Serializable {
     final String to;
     /** Pipeline name. */
     final String pipeName;
+    /** Traversal direction relative to the physical pipe orientation. */
+    final int direction;
 
     /**
      * Create an edge.
@@ -62,11 +64,13 @@ public class LoopDetector implements Serializable {
      * @param from source node
      * @param to target node
      * @param pipeName pipe name
+     * @param direction traversal direction relative to the physical pipe
      */
-    Edge(String from, String to, String pipeName) {
+    Edge(String from, String to, String pipeName, int direction) {
       this.from = from;
       this.to = to;
       this.pipeName = pipeName;
+      this.direction = direction;
     }
   }
 
@@ -130,15 +134,13 @@ public class LoopDetector implements Serializable {
     }
 
     // Create a single edge object (forward direction)
-    Edge forwardEdge = new Edge(fromNode, toNode, pipeName);
+    Edge forwardEdge = new Edge(fromNode, toNode, pipeName, 1);
 
     // Add to forward adjacency list
     adjacencyList.get(fromNode).add(forwardEdge);
 
-    // Create backward edge that shares the same inSpanningTree flag reference
-    // by using a wrapper approach - actually, let's use a different approach
-    // We'll store both edges but link them together
-    Edge backwardEdge = new Edge(toNode, fromNode, pipeName);
+    // Reverse adjacency supports graph traversal while retaining the physical pipe orientation.
+    Edge backwardEdge = new Edge(toNode, fromNode, pipeName, -1);
     adjacencyList.get(toNode).add(backwardEdge);
 
     // Store the forward edge in allEdges
@@ -336,24 +338,20 @@ public class LoopDetector implements Serializable {
     // Add edges from node1 to LCA (going up the tree)
     for (int i = 0; i < lcaIndex1; i++) {
       String from = path1.get(i);
-      String to = path1.get(i + 1);
-      Edge treeEdge = findEdgeBetween(from, to);
+      Edge treeEdge = parentEdge.get(from);
       if (treeEdge != null) {
         // Direction: we're going from node1 toward LCA (up the tree)
-        int direction = treeEdge.from.equals(from) ? 1 : -1;
-        loop.addMember(treeEdge.pipeName, direction);
+        loop.addMember(treeEdge.pipeName, -treeEdge.direction);
       }
     }
 
     // Add edges from LCA to node2 (going down the tree)
     for (int i = lcaIndex2; i > 0; i--) {
-      String from = path2.get(i);
       String to = path2.get(i - 1);
-      Edge treeEdge = findEdgeBetween(from, to);
+      Edge treeEdge = parentEdge.get(to);
       if (treeEdge != null) {
         // Direction: we're going from LCA toward node2 (down the tree)
-        int direction = treeEdge.from.equals(from) ? 1 : -1;
-        loop.addMember(treeEdge.pipeName, direction);
+        loop.addMember(treeEdge.pipeName, treeEdge.direction);
       }
     }
 
@@ -380,25 +378,6 @@ public class LoopDetector implements Serializable {
     }
 
     return path;
-  }
-
-  /**
-   * Find an edge between two adjacent nodes.
-   *
-   * @param from source node
-   * @param to target node
-   * @return the edge, or null if not found
-   */
-  private Edge findEdgeBetween(String from, String to) {
-    List<Edge> edges = adjacencyList.get(from);
-    if (edges != null) {
-      for (Edge edge : edges) {
-        if (edge.to.equals(to)) {
-          return edge;
-        }
-      }
-    }
-    return null;
   }
 
   /**

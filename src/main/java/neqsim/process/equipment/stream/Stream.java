@@ -497,7 +497,18 @@ public class Stream extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void setFlowRate(double flowrate, String unit) {
-    getFluid().setTotalFlowRate(flowrate, unit);
+    SystemInterface fluid = getFluid();
+    if (!needRecalculation() && fluid.isInitialized() && flowrate == fluid.getFlowRate(unit)) {
+      return;
+    }
+    // setTotalFlowRate initializes phase information, even for a rate change below the
+    // scalar cache tolerance. The resulting phase split must be flashed before reuse.
+    lastComposition = null;
+    if (stream != null) {
+      stream.setFlowRate(flowrate, unit);
+    } else {
+      fluid.setTotalFlowRate(flowrate, unit);
+    }
   }
 
   /** {@inheritDoc} */

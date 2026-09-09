@@ -2,7 +2,6 @@ package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -39,7 +38,7 @@ public class BatchStudyTest {
 
   @Test
   void testBuilderCreation() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 50.0, 3).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 50.0, 3).build();
 
     assertNotNull(study);
     assertEquals(3, study.getTotalCases());
@@ -47,7 +46,7 @@ public class BatchStudyTest {
 
   @Test
   void testVaryWithExplicitValues() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 30.0).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 20.0, 30.0).build();
 
     assertNotNull(study);
     assertEquals(3, study.getTotalCases());
@@ -55,7 +54,8 @@ public class BatchStudyTest {
 
   @Test
   void testMultipleParameters() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("param1", 1.0, 2.0, 3.0).vary("param2", 10.0, 20.0).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 1.0, 2.0, 3.0)
+        .vary("feed.temperature", 10.0, 20.0).build();
 
     // 3 values for param1 * 2 values for param2 = 6 cases
     assertEquals(6, study.getTotalCases());
@@ -63,7 +63,7 @@ public class BatchStudyTest {
 
   @Test
   void testAddObjective() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3)
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 50.0, 3)
         .addObjective("power", BatchStudy.Objective.MINIMIZE, process -> 100.0)
         .addObjective("throughput", BatchStudy.Objective.MAXIMIZE, process -> 50.0).build();
 
@@ -72,28 +72,28 @@ public class BatchStudyTest {
 
   @Test
   void testParallelismSetting() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).parallelism(4).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 50.0, 3).parallelism(4).build();
 
     assertNotNull(study);
   }
 
   @Test
   void testStudyName() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).name("MyStudy").build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 50.0, 3).name("MyStudy").build();
 
     assertNotNull(study);
   }
 
   @Test
   void testStopOnFailure() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).stopOnFailure(true).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 50.0, 3).stopOnFailure(true).build();
 
     assertNotNull(study);
   }
 
   @Test
   void testRunStudy() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 2).parallelism(1) // Sequential
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("feed.flowRate", 10.0, 20.0, 2).parallelism(1) // Sequential
         // for
         // test
         // stability
@@ -102,7 +102,9 @@ public class BatchStudyTest {
     BatchStudy.BatchStudyResult result = study.run();
 
     assertNotNull(result);
-    assertTrue(result.getTotalCases() >= 0);
+    assertEquals(2, result.getTotalCases());
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
   }
 
   @Test
