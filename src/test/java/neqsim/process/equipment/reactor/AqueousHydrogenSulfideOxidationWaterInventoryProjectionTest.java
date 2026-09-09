@@ -21,7 +21,7 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
         AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment,
             WATER_INVENTORY_KG);
 
-    assertEquals(segment.getSegmentIndex(), projection.getSegmentIndex());
+    assertEquals(segment.getIndex(), projection.getSegmentIndex());
     assertEquals(10.0, projection.getDurationHours(), 0.0);
     assertEquals(WATER_INVENTORY_KG, projection.getWaterInventoryKg(), 0.0);
 
