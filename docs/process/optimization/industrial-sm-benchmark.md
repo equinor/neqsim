@@ -221,8 +221,22 @@ relative tolerances alongside the measured differences. The participant-sum/sour
 within a single solved state retains its separate `1e-10` tolerance, and the existing convergence,
 mass-balance and bottleneck-transition gates still apply.
 
-That result qualifies the total-power evidence path only. Common-shaft and strict separator evidence
-have separate focused qualification; neither changes the stored S/M timing record. The full ordered
-piping, compressor, separator and export-quality sequence, the full L process fixture, separator
-carry-over/slug evidence, and piping fidelity remain open. No missing metric or transition is
-represented as a passed gate.
+That result qualifies the total-power evidence path only. Common-shaft, strict separator, and strict
+piping evidence have separate focused qualification; none changes the stored S/M timing record.
+
+An unmodified-master scale observation was added from
+`32600dc09e38ababc41c9dfb24da0752ddffba80` using
+`LargeProcessSteadyStateBenchmark multi-area cold 0 1 20 optimized`. The generated
+`industrial-large-baseline-32600dc.json` records 162 units across 20 areas, one 1.368788351 s
+model solve, 466,032,584 main-thread allocated bytes, a 56,908-byte JSON result, two model
+iterations, and zero validation failures. Relative mass, maximum-component, and energy residuals
+were `6.0633e-16`, `5.3624e-16`, and `7.0818e-11`, respectively.
+
+This brings a >=150-unit/>=6-area real `ProcessModel` execution into the campaign evidence early,
+but it is not the complete frozen L acceptance case: the reused generic fixture has no recycle,
+pipeline-bottleneck sequence, three-phase water handling, shared-resource transition, discrete
+line-up, cache comparison, or selective optimizer result. Main-thread allocation excludes worker
+threads and the 512 MB maximum heap is a JVM bound, not measured peak usage. The full ordered
+piping, compressor, separator and export-quality sequence, complete L fixture, separator
+carry-over/slug evidence, and qualified piping screening envelopes therefore remain open. No
+missing metric or transition is represented as a passed gate.

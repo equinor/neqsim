@@ -214,6 +214,47 @@ constraint. Carry-over/carry-under and slug handling are not inferred: they rema
 coverage until a qualified provider, measured correlation, or installed slug-volume rating is
 declared and validated.
 
+### Strict piping evidence
+
+`PlantPipelineEvidence` snapshots one completed `PipeBeggsAndBrills` calculation into six
+deterministic hydraulic/thermal rows: maximum absolute pressure, total pressure drop, receiving
+pressure, maximum mixture superficial velocity, and minimum/maximum bulk-fluid temperature. Each
+row retains the governing solved-profile node and distance from the inlet.
+
+The caller must explicitly declare every installed limit and confirm that length, diameter, and
+roughness came from the stated line-list or design source. The adapter never treats the pipe's
+constructor defaults, auto-sizing values, API RP 14E result, FIV/FRMS/AIV screening result, or a
+missing rating as installed capacity.
+
+```java
+PlantPipelineEvidence pipelineEvidence = PlantPipelineEvidence
+    .builder("Plant", "Gathering", calculationId, pipeline,
+        "approved line list revision 7 and operating case")
+    .geometryVerified(true)
+    .maximumPressureBara(120.0)
+    .maximumPressureDropBar(12.0)
+    .minimumReceivingPressureBara(70.0)
+    .maximumMixtureVelocityMetresPerSecond(14.0)
+    .minimumTemperatureCelsius(-20.0)
+    .maximumTemperatureCelsius(80.0)
+    .convergenceComplete(model.isModelConverged())
+    .build();
+
+if (!pipelineEvidence.isComplete() || !pipelineEvidence.isFeasible()) {
+  throw new IllegalStateException(pipelineEvidence.getDiagnostics().toString());
+}
+PlantUtilizationSnapshot pipelineSnapshot =
+    pipelineEvidence.toPlantUtilizationSnapshot();
+```
+
+Exact pipe and candidate calculation identity, a complete solved profile, monotonic profile
+distance, finite values, and complete convergence are mandatory. Isothermal calculations carry the
+single authoritative temperature observation returned by the pipe; non-isothermal calculations
+retain the actual temperature extrema. Java getters, serialization, JPype use, and `toJson()`
+expose the same callback-free values and physical margins. Hydrate/wax/liquid-dropout envelopes,
+noise/FIV qualification, erosion acceptance, slugging, transient integrity, and pipeline-solver
+changes remain separately owned and must be registered only from qualified evidence.
+
 ## Expected equipment coverage before qualification
 
 `UtilizationCoverageReport` captures evidence for explicitly declared equipment and constraint
