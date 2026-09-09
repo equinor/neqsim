@@ -4,8 +4,6 @@ description: Reservoir-to-market oil-field simulation with PVT, wells, SURF, pro
 keywords: field lifecycle, gas injection, oil reservoir, PVT, wells, SURF, flowline, FPSO, NPV, break-even, Norwegian petroleum tax
 ---
 
-# Integrated Field Lifecycle Simulation
-
 The `neqsim.process.fielddevelopment.lifecycle` package connects NeqSim's detailed engineering models on one time
 axis. It is intended for comparing field-development concepts consistently, rather than estimating production and
 economics in disconnected spreadsheets.
@@ -287,6 +285,14 @@ The synthetic reference case represents six subsea producers and three gas injec
 depth. It uses PR-EOS with defined heavy fractions, a gas-cap/oil/water tank, aggregate multiphase tubing and flowline,
 HP/LP separation, oil export pumping, gas export and two-stage gas-injection compression. Well and SURF costs use
 `WellCostEstimator` and `SURFCostEstimator`; topsides and project costs are Class-4 parametric allowances.
+
+The maintained reference assembly is
+[`NorwegianOilFieldCase`](../../src/main/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldCase.java).
+Its focused
+[`NorwegianOilFieldLifecycleTest`](../../src/test/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldLifecycleTest.java)
+executes the reservoir-to-economics workflow and checks production, injection, energy, emissions, economics, reservoir
+pressure, facility sizing, utilization, and product-quality evidence. These regression checks establish executable
+software behavior; they do not qualify the synthetic assumptions for a real asset.
 
 ## Compare concepts
 
