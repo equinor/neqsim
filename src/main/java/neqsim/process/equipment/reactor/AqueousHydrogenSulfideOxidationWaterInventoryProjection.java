@@ -54,7 +54,7 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
         segmentResult.getUpperRateReactedTotalSulfideMolality(), waterInventoryKg,
         "Upper-rate reacted total sulfide");
 
-    return new Result(segmentResult.getSegmentIndex(), segmentResult.getSegment().getDurationHours(),
+    return new Result(segmentResult.getIndex(), segmentResult.getSegment().getDurationHours(),
         waterInventoryKg, lowerRateMeanLossMolesPerHour, nominalMeanLossMolesPerHour,
         upperRateMeanLossMolesPerHour, lowerRateReactedMoles, nominalReactedMoles,
         upperRateReactedMoles);
