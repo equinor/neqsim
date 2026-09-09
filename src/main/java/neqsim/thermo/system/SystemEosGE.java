@@ -365,7 +365,8 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
   }
 
   /**
-   * Check whether the feed contains a hydrocarbon capable of supporting an EOS liquid at the current temperature.
+   * Check whether the feed contains a hydrocarbon or CO2 capable of supporting an EOS liquid at the current
+   * temperature.
    *
    * <p>
    * This prevents a small metastable EOS-liquid root made only from supercritical methane and water from entering a
@@ -379,7 +380,10 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     PhaseInterface referencePhase = phaseArray[eosGasPhaseSlot];
     for (int componentIndex = 0; componentIndex < referencePhase.getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = referencePhase.getComponent(componentIndex);
-      if (component.getz() > 1.0e-12 && (component.isHydrocarbon() || component.isIsTBPfraction())
+      double wilsonK = component.getPC() / getPressure()
+          * Math.exp(5.373 * (1.0 + component.getAcentricFactor()) * (1.0 - component.getTC() / getTemperature()));
+      boolean denseCo2 = "CO2".equals(component.getComponentName()) && wilsonK <= 1.0;
+      if (component.getz() > 1.0e-12 && (component.isHydrocarbon() || component.isIsTBPfraction() || denseCo2)
           && component.getTC() > getTemperature()) {
         return true;
       }

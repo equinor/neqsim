@@ -56,6 +56,10 @@ public class HydrateEquilibriumLine extends ConstantDutyTemperatureFlash {
         ops.hydrateFormationTemperature();
         previousTemp = system.getTemperature();
       } catch (Exception ex) {
+        if (system instanceof neqsim.thermo.system.SystemPitzer) {
+          hydratePoints = null;
+          throw new IllegalStateException("Pitzer hydrate curve failed at " + system.getPressure() + " bara", ex);
+        }
         // logger.error(ex.getMessage(),e);
       }
       hydratePoints[0][i] = system.getTemperature();

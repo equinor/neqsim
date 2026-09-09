@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.component.ComponentHydratePVTsim;
+import neqsim.thermo.component.ComponentHydratePitzer;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 import neqsim.thermo.mixingrule.MixingRulesInterface;
 
@@ -36,7 +37,9 @@ public class PhaseHydrate extends Phase {
    * @param fluidModel a {@link java.lang.String} object
    */
   public PhaseHydrate(String fluidModel) {
-    if (fluidModel.isEmpty()) {
+    if ("Pitzer-GE-model".equals(fluidModel)) {
+      hydrateModel = "PitzerHydrateModel";
+    } else if (fluidModel.isEmpty()) {
       hydrateModel = "PVTsimHydrateModel";
     } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
         || fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
@@ -81,7 +84,9 @@ public class PhaseHydrate extends Phase {
     super.addComponent(name, molesInPhase, compNumber);
     // componentArray[compNumber] = new ComponentHydrateStatoil(name, moles, molesInPhase,
     // compNumber);
-    if (hydrateModel.equals("CPAHydrateModel")) {
+    if (hydrateModel.equals("PitzerHydrateModel")) {
+      componentArray[compNumber] = new ComponentHydratePitzer(name, moles, molesInPhase, compNumber);
+    } else if (hydrateModel.equals("CPAHydrateModel")) {
       componentArray[compNumber] = new ComponentHydrateGF(name, moles, molesInPhase, compNumber);
       // System.out.println("hydrate model: CPA-EoS hydrate model selected");
     } else {

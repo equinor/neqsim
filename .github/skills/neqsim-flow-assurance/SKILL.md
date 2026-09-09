@@ -65,11 +65,22 @@ computed here.
 | Pure water / fresh water | `SystemSrkCPAstatoil` | `10` |
 | Water + MEG / methanol / ethanol | `SystemSrkCPAstatoil` | `10` |
 | **Salt brine / formation water (NaCl, CaCl2, ...)** | `SystemElectrolyteCPAstatoil` | `10` |
+| Pitzer salt-brine water activity | `SystemPitzer` | `"classic"` |
 
-CPA is required for water–hydrocarbon hydrate modeling. **When dissolved salts /
-electrolytes are present, use `SystemElectrolyteCPAstatoil`** so the salt
+CPA or a consistent activity-based aqueous model is needed for water–hydrocarbon hydrate modeling.
+**When dissolved salts / electrolytes are present, use `SystemElectrolyteCPAstatoil` or a
+parameterized `SystemPitzer`** so the salt
 thermodynamic (hydrate-suppression) effect is captured — plain
 `SystemSrkCPAstatoil` ignores ion activity and underestimates subcooling margin.
+
+For Pitzer hydrate onset, load `neqsim-electrolyte-systems` and read
+`docs/thermo/pitzer_hydrate_equilibrium.md`. Accept its hand-off of salt mole basis, dataset,
+explicit CO2-chloride zeta values (and K-Mg theta when both ions are present), pressure grid and operating temperature. Use the standard
+temperature/pressure/curve operations; the Pitzer route checks the fugacity residual and throws
+on failed points. Preserve the aqueous reference-state convention and guest Henry limits.
+Do not label onset calculations as hydrate amounts, kinetics or validated complete drilling-mud predictions.
+Carry forward the experimental assessment separately from convergence: the mixed-chloride high-pressure cases
+include errors exceeding 1 K. Do not generalize the NaCl benchmark to all salts, concentrations or pressures.
 
 ### Hydrate Formation Temperature
 

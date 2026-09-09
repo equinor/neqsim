@@ -5,6 +5,11 @@ description: "This document provides comprehensive documentation for hydrate pha
 
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
 
+For `SystemPitzer`, temperature, pressure and equilibrium-line calls dispatch to `PitzerHydrateFlash`.
+See [Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md) for CO2/brine setup,
+parameter requirements and temperature limits. Hydrate amount operations (`hydrateTPflash` and
+gas-hydrate TP flash) reject Pitzer systems because this coupling calculates onset only.
+
 ## Table of Contents
 
 - [Overview](#overview)
