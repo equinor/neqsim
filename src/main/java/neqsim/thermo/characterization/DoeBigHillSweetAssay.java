@@ -108,9 +108,9 @@ public final class DoeBigHillSweetAssay {
    * Configure the normalized DOE Big Hill Sweet 650 degF+ vacuum-screening feed on a one-kilogram basis.
    *
    * <p>
-   * The three retained source rows account for 42.84 mass% of whole crude. Their source mass percentages are
-   * normalized to the returned feed basis. This is a reproducible heavy-assay slice, not a measured atmospheric-column
-   * bottoms composition.
+   * The three retained source rows account for 42.84 mass% of whole crude. Their source mass percentages are normalized
+   * to the returned feed basis. This is a reproducible heavy-assay slice, not a measured atmospheric-column bottoms
+   * composition.
    * </p>
    *
    * @param system empty or caller-owned thermodynamic system
@@ -144,14 +144,14 @@ public final class DoeBigHillSweetAssay {
   }
 
   private static void addVacuumScreeningCuts(OilAssayCharacterisation assay, double weightScale) {
-    addBoundedCut(assay, "DOE_BH_650_850", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[0] * weightScale, 0.9039,
-        650.0, 850.0, 0.534, 0.102);
-    addBoundedCut(assay, "DOE_BH_850_1050", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[1] * weightScale, 0.9336,
-        850.0, 1050.0, 0.752, 0.234);
-    assay.addCut(new AssayCut("DOE_BH_1050_PLUS")
-        .withWeightPercent(VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[2] * weightScale).withSpecificGravity(1.0089)
-        .withLowerBoilingPointFahrenheit(1050.0).withWatsonCharacterizationFactor(11.7).withSulfurMassPercent(1.334)
-        .withNitrogenMassPercent(0.501));
+    addBoundedCut(assay, "DOE_BH_650_850", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[0] * weightScale, 0.9039, 650.0,
+        850.0, 0.534, 0.102);
+    addBoundedCut(assay, "DOE_BH_850_1050", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[1] * weightScale, 0.9336, 850.0,
+        1050.0, 0.752, 0.234);
+    assay.addCut(
+        new AssayCut("DOE_BH_1050_PLUS").withWeightPercent(VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[2] * weightScale)
+            .withSpecificGravity(1.0089).withLowerBoilingPointFahrenheit(1050.0).withWatsonCharacterizationFactor(11.7)
+            .withSulfurMassPercent(1.334).withNitrogenMassPercent(0.501));
   }
 
   private static void addModeledGasCut(OilAssayCharacterisation assay) {
