@@ -62,9 +62,12 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result large = AqueousHydrogenSulfideOxidationWaterInventoryProjection
         .project(segment, 250.0);
 
-    assertEquals(2.5 * small.getLowerRateMeanLossMolesPerHour(), large.getLowerRateMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
-    assertEquals(2.5 * small.getNominalMeanLossMolesPerHour(), large.getNominalMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
-    assertEquals(2.5 * small.getUpperRateMeanLossMolesPerHour(), large.getUpperRateMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getLowerRateMeanLossMolesPerHour(), large.getLowerRateMeanLossMolesPerHour(),
+        NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getNominalMeanLossMolesPerHour(), large.getNominalMeanLossMolesPerHour(),
+        NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getUpperRateMeanLossMolesPerHour(), large.getUpperRateMeanLossMolesPerHour(),
+        NUMERICAL_TOLERANCE);
     assertEquals(2.5 * small.getNominalReactedMoles(), large.getNominalReactedMoles(), NUMERICAL_TOLERANCE);
 
     assertTrue(large.getLowerRateMeanLossMolesPerHour() < large.getNominalMeanLossMolesPerHour());
