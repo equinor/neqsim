@@ -27,6 +27,16 @@ TRAJECTORY_TEST = (
     / "src/test/java/neqsim/process/equipment/reactor/"
     / "AqueousHydrogenSulfideOxidationTrajectoryTest.java"
 )
+WATER_INVENTORY_PROJECTION = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationWaterInventoryProjection.java"
+)
+WATER_INVENTORY_PROJECTION_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest.java"
+)
 
 
 class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
@@ -40,6 +50,12 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         cls.java_test = JAVA_TEST.read_text(encoding="utf-8")
         cls.trajectory = TRAJECTORY.read_text(encoding="utf-8")
         cls.trajectory_test = TRAJECTORY_TEST.read_text(encoding="utf-8")
+        cls.water_inventory_projection = WATER_INVENTORY_PROJECTION.read_text(
+            encoding="utf-8"
+        )
+        cls.water_inventory_projection_test = WATER_INVENTORY_PROJECTION_TEST.read_text(
+            encoding="utf-8"
+        )
         cls.normalized = " ".join(cls.guide.split())
 
     def test_source_equation_and_units_are_explicit(self):
@@ -285,6 +301,40 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "getUpperRateMeanLossRateMolalityPerHour()",
         ):
             self.assertIn(token, self.trajectory_test)
+
+    def test_water_inventory_projection_is_documented_and_executable(self):
+        for token in (
+            "Explicit water-inventory projection",
+            r"\dot n_{r,i}=\overline{r}_{r,i}m_w",
+            r"n_{r,i,\mathrm{reacted}}=c_{r,i,\mathrm{reacted}}m_w",
+            "lower-rate, nominal, and upper-rate mean loss in mol/h and mol/s",
+            "finite and strictly positive",
+            r"\dot n_{r,i}\Delta t_i=n_{r,i,\mathrm{reacted}}",
+            "reacted amount is exactly zero",
+            "scales linearly with water inventory",
+            "unsigned total-sulfide loss potential",
+            "not a component source applied to a control volume",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static Result project(",
+            "requirePositiveFinite(waterInventoryKg",
+            "getLowerRateMeanLossMolesPerHour()",
+            "getNominalMeanLossMolesPerSecond()",
+            "getUpperRateReactedMoles()",
+            "implements Serializable",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testProjectionClosesPositiveDurationInventoryInHoursAndSeconds",
+            "testZeroDurationPreservesDifferentialLimitAndZeroReaction",
+            "testWaterInventoryScalingAndFitScatterOrderingArePreserved",
+            "testConstantWaterInventorySegmentSplitClosesTotalReaction",
+            "testProjectionFailsClosedForMissingOrInvalidWaterInventory",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
 
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
