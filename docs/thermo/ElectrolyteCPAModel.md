@@ -402,6 +402,36 @@ ops.hydrateFormationTemperature();
 System.out.println("Hydrate T: " + fluid.getTemperature("C") + " °C");
 ```
 
+### Component conservation in hydrate-temperature calculations
+
+Non-reactive brines retain the supplied molecular and ionic inventories. The
+multiphase solver temporarily uses a normalized, ion-free molecular feed for
+phase discovery. Stripped ions are excluded from its phase-fraction equations;
+their very small fugacity coefficients must not enter the molecular Newton
+matrix. Restoring the ions transforms both phase fractions and aqueous
+composition back to the full feed basis. Charge balance alone does not establish
+component conservation.
+
+The final ionic gas/aqueous refinement compares Gibbs energies only when the
+reference state conserves the feed. A converged, normalized, conservative
+candidate must not be rejected because a state with a different inventory has
+a lower extensive Gibbs energy.
+
+At every fluid evaluation, the hydrate-temperature operation checks phase and
+composition normalization, each component's recovered inventory against the
+input, and aqueous ion confinement. An invalid non-reactive electrolyte state
+raises `IllegalStateException` with the failed diagnostic instead of returning
+a hydrate temperature. The caller's multiphase-check setting is restored on
+success and failure. Reactive calculations retain their existing species and
+element-balance handling.
+
+Regression coverage includes CO2 with NaCl–CaCl2 and NaCl–KCl mixtures on a
+1 kg water / 10 mol CO2 basis, nearby pressures and salt concentrations, and
+equivalent salt-addition orders and repeated calculations. These are numerical
+conservation checks, not experimental qualification of mixed-salt hydrate
+temperatures. The separate phase-selection and saturated-boundary qualification
+in [issue #3584](https://github.com/equinor/neqsim/issues/3584) remains open.
+
 ## Known Limitations
 
 1. **Divalent anions (SO₄²⁻)**: Higher errors for 1:2 electrolytes like Na₂SO₄ (~20%)

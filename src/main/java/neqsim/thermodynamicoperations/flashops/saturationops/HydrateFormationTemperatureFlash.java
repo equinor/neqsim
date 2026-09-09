@@ -3,6 +3,8 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentHydrate;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -17,6 +19,8 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
+  /** Maximum absolute mole-fraction error accepted for a non-reactive electrolyte fluid. */
+  private static final double INVENTORY_TOLERANCE = 1.0e-9;
 
   /**
    * Constructor for HydrateFormationTemperatureFlash.
@@ -34,13 +38,33 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     system = null;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a non-reactive electrolyte fluid evaluation fails conservation or phase checks
+   */
   @Override
   public void run() {
     // Enable multi-phase check to properly handle systems with water+MEG+hydrocarbons+electrolytes
     // This ensures proper phase separation (gas, aqueous, hydrocarbon liquid)
     boolean originalMultiPhaseCheck = system.doMultiPhaseCheck();
     system.setMultiPhaseCheck(true);
+    try {
+      runTemperatureIterations();
+    } finally {
+      system.setMultiPhaseCheck(originalMultiPhaseCheck);
+    }
+  }
+
+  /** Iterates hydrate-water fugacity equality while checking the conserved electrolyte feed. */
+  private void runTemperatureIterations() {
+    double[] conservedMoles = null;
+    if (!system.isChemicalSystem() && system.hasIons()) {
+      conservedMoles = new double[system.getPhase(0).getNumberOfComponents()];
+      for (int component = 0; component < conservedMoles.length; component++) {
+        conservedMoles[component] = system.getPhase(0).getComponent(component).getNumberOfmoles();
+      }
+    }
 
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     system.getPhase(4).getComponent("water").setx(1.0);
@@ -57,10 +81,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     double oldOldDiff = 0.0;
 
     // Initial flash to get starting fugacities
-    ops.TPflash();
-    setFug();
-    system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
-    system.getPhase(4).getComponent("water").setx(1.0);
+    updateFluidAndHydrate(ops, conservedMoles);
 
     int waterPhaseIndex = findWaterPhaseIndex();
     diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
@@ -116,10 +137,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       system.setTemperature(temp);
 
       // Perform flash and update fugacities
-      ops.TPflash();
-      setFug();
-      system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
-      system.getPhase(4).getComponent("water").setx(1.0);
+      updateFluidAndHydrate(ops, conservedMoles);
 
       // Calculate new difference
       waterPhaseIndex = findWaterPhaseIndex();
@@ -130,10 +148,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
         // Oscillating - take smaller step
         temp = (oldTemp + temp) / 2.0;
         system.setTemperature(temp);
-        ops.TPflash();
-        setFug();
-        system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
-        system.getPhase(4).getComponent("water").setx(1.0);
+        updateFluidAndHydrate(ops, conservedMoles);
         waterPhaseIndex = findWaterPhaseIndex();
         diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(waterPhaseIndex).getFugacity("water"));
       }
@@ -149,8 +164,76 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
           maxIterations, diff);
     }
 
-    // Restore original multi-phase check setting
-    system.setMultiPhaseCheck(originalMultiPhaseCheck);
+  }
+
+  /**
+   * Evaluates the fluid and hydrate reference and rejects an invalid electrolyte inventory.
+   *
+   * @param ops fluid flash operations
+   * @param conservedMoles input component amounts, or null when this operation does not own species conservation
+   */
+  private void updateFluidAndHydrate(ThermodynamicOperations ops, double[] conservedMoles) {
+    ops.TPflash();
+    setFug();
+    system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
+    system.getPhase(4).getComponent("water").setx(1.0);
+    if (conservedMoles == null) {
+      return;
+    }
+    double totalMoles = 0.0;
+    for (double moles : conservedMoles) {
+      if (!Double.isFinite(moles) || moles < 0.0) {
+        throw new IllegalStateException("Hydrate fluid inventory has an invalid input component amount");
+      }
+      totalMoles += moles;
+    }
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles) || !Double.isFinite(system.getTotalNumberOfMoles())
+        || Math.abs(system.getTotalNumberOfMoles() / totalMoles - 1.0) > INVENTORY_TOLERANCE) {
+      throw new IllegalStateException("Hydrate fluid inventory failed total-mole conservation");
+    }
+    double betaSum = 0.0;
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      double beta = system.getBeta(phase);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        throw new IllegalStateException("Hydrate fluid inventory has an invalid phase fraction: " + beta);
+      }
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < conservedMoles.length; component++) {
+        ComponentInterface species = system.getPhase(phase).getComponent(component);
+        double x = species.getx();
+        if (!Double.isFinite(x) || x < 0.0 || x > 1.0) {
+          throw new IllegalStateException("Hydrate fluid inventory has an invalid composition for "
+              + species.getComponentName() + " in phase " + phase);
+        }
+        compositionSum += x;
+        if ((species.getIonicCharge() != 0 || species.isIsIon())
+            && system.getPhase(phase).getType() != PhaseType.AQUEOUS && x > 1.0e-12) {
+          throw new IllegalStateException(
+              "Hydrate fluid inventory has an ion outside the aqueous phase: " + species.getComponentName());
+        }
+      }
+      if (Math.abs(compositionSum - 1.0) > INVENTORY_TOLERANCE) {
+        throw new IllegalStateException("Hydrate fluid inventory has an unnormalized composition in phase " + phase);
+      }
+    }
+    if (Math.abs(betaSum - 1.0) > INVENTORY_TOLERANCE) {
+      throw new IllegalStateException("Hydrate fluid inventory has unnormalized phase fractions: " + betaSum);
+    }
+    for (int component = 0; component < conservedMoles.length; component++) {
+      double expected = conservedMoles[component] / totalMoles;
+      double recovered = 0.0;
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+      }
+      double overall = system.getPhase(0).getComponent(component).getz();
+      if (!Double.isFinite(overall) || Math.abs(overall - expected) > INVENTORY_TOLERANCE
+          || Math.abs(recovered - expected) > INVENTORY_TOLERANCE) {
+        throw new IllegalStateException(
+            "Hydrate fluid inventory failed for " + system.getPhase(0).getComponent(component).getComponentName()
+                + ": expected=" + expected + ", overall=" + overall + ", recovered=" + recovered);
+      }
+    }
   }
 
   /**
