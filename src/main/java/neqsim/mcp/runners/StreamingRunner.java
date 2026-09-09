@@ -123,7 +123,8 @@ public final class StreamingRunner {
 
     // Parse sweep parameters
     JsonObject components = input.has("components") && input.get("components").isJsonObject()
-        ? input.getAsJsonObject("components") : null;
+        ? input.getAsJsonObject("components")
+        : null;
     String model = input.has("model") ? input.get("model").getAsString() : "SRK";
     String sweepVar = input.has("sweepVariable") ? input.get("sweepVariable").getAsString() : "temperature";
     double from = input.has("from") ? input.get("from").getAsDouble() : 0;
@@ -156,8 +157,7 @@ public final class StreamingRunner {
           "Use C, K or F for temperature and bara, bar, psi, kPa, MPa or atm for pressure");
     }
     if (!isFinite(from) || !isFinite(to) || !isFinite(fixedTemp) || !isFinite(fixedPressure)
-        || convertToKelvin(fixedTemp, fixedTempUnit) <= 0.0
-        || convertToBara(fixedPressure, fixedPressureUnit) <= 0.0
+        || convertToKelvin(fixedTemp, fixedTempUnit) <= 0.0 || convertToBara(fixedPressure, fixedPressureUnit) <= 0.0
         || ("temperature".equalsIgnoreCase(sweepVar)
             && (convertToKelvin(from, unit) <= 0.0 || convertToKelvin(to, unit) <= 0.0))
         || ("pressure".equalsIgnoreCase(sweepVar)
@@ -276,8 +276,9 @@ public final class StreamingRunner {
 
     double stepCount = Math.floor(totalTime / timeStep);
     if (stepCount < 1.0 || stepCount > MAX_DYNAMIC_STEPS) {
-      return errorJson("INVALID_STEP_COUNT", "Dynamic operation must contain between 1 and " + MAX_DYNAMIC_STEPS
-          + " time steps", "Increase timeStep or reduce totalTime");
+      return errorJson("INVALID_STEP_COUNT",
+          "Dynamic operation must contain between 1 and " + MAX_DYNAMIC_STEPS + " time steps",
+          "Increase timeStep or reduce totalTime");
     }
     int steps = (int) stepCount;
     op.totalSteps = steps;
@@ -344,7 +345,8 @@ public final class StreamingRunner {
     StreamingOperation op = new StreamingOperation(opId, "monte_carlo");
 
     JsonObject baseComponents = input.has("components") && input.get("components").isJsonObject()
-        ? input.getAsJsonObject("components") : null;
+        ? input.getAsJsonObject("components")
+        : null;
     String model = input.has("model") ? input.get("model").getAsString() : "SRK";
     int iterations = input.has("iterations") ? input.get("iterations").getAsInt() : 100;
 
@@ -359,14 +361,14 @@ public final class StreamingRunner {
       return componentError;
     }
     if (iterations < 1 || iterations > MAX_MONTE_CARLO_ITERATIONS) {
-      return errorJson("INVALID_ITERATIONS",
-          "iterations must be between 1 and " + MAX_MONTE_CARLO_ITERATIONS,
+      return errorJson("INVALID_ITERATIONS", "iterations must be between 1 and " + MAX_MONTE_CARLO_ITERATIONS,
           "Choose a bounded positive Monte Carlo size");
     }
-    if (!isFinite(tempMean) || !isFinite(tempStd) || !isFinite(presMean) || !isFinite(presStd)
-        || tempStd < 0.0 || presStd < 0.0 || convertToKelvin(tempMean, "C") <= 0.0 || presMean <= 0.0) {
-      return errorJson("INVALID_DISTRIBUTION", "Monte Carlo parameters must be finite, with non-negative "
-          + "standard deviations, temperature above absolute zero, and positive mean pressure",
+    if (!isFinite(tempMean) || !isFinite(tempStd) || !isFinite(presMean) || !isFinite(presStd) || tempStd < 0.0
+        || presStd < 0.0 || convertToKelvin(tempMean, "C") <= 0.0 || presMean <= 0.0) {
+      return errorJson("INVALID_DISTRIBUTION",
+          "Monte Carlo parameters must be finite, with non-negative "
+              + "standard deviations, temperature above absolute zero, and positive mean pressure",
           "Correct the requested distribution");
     }
 
@@ -515,8 +517,7 @@ public final class StreamingRunner {
     StreamingOperation op = ownedOperation(opId);
 
     if (op == null) {
-      return errorJson("NOT_FOUND", "Operation not found: " + opId,
-          "Use action 'list' to see active operations");
+      return errorJson("NOT_FOUND", "Operation not found: " + opId, "Use action 'list' to see active operations");
     }
     String operationStatus = op.requestCancellation();
     JsonObject response = new JsonObject();

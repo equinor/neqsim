@@ -33,15 +33,13 @@ class StreamingRunnerTest {
     JsonObject limits = result.getAsJsonObject("requestLimits");
     assertEquals(StreamingRunner.MAX_SWEEP_POINTS, limits.get("maxSweepPoints").getAsInt());
     assertEquals(StreamingRunner.MAX_DYNAMIC_STEPS, limits.get("maxDynamicSteps").getAsInt());
-    assertEquals(StreamingRunner.MAX_MONTE_CARLO_ITERATIONS,
-        limits.get("maxMonteCarloIterations").getAsInt());
+    assertEquals(StreamingRunner.MAX_MONTE_CARLO_ITERATIONS, limits.get("maxMonteCarloIterations").getAsInt());
     assertEquals(StreamingRunner.MAX_RESULTS_PER_POLL, limits.get("maxResultsPerPoll").getAsInt());
   }
 
   @Test
   void testPollAndCancelNonexistentOperation() {
-    JsonObject poll = run("{\"action\": \"poll\", \"operationId\": \"nonexistent-id\","
-        + " \"lastIndex\": 0}");
+    JsonObject poll = run("{\"action\": \"poll\", \"operationId\": \"nonexistent-id\"," + " \"lastIndex\": 0}");
     assertEquals("error", poll.get("status").getAsString());
     assertEquals("NOT_FOUND", errorCode(poll));
 
@@ -71,14 +69,11 @@ class StreamingRunnerTest {
   @Test
   void testSweepRejectsAmbiguousVariableUnitAndRange() {
     String prefix = "{\"action\":\"startSweep\",\"components\":{\"methane\":1.0},";
-    assertEquals("INVALID_SWEEP_VARIABLE",
-        errorCode(run(prefix + "\"sweepVariable\":\"enthalpy\",\"points\":2}")));
+    assertEquals("INVALID_SWEEP_VARIABLE", errorCode(run(prefix + "\"sweepVariable\":\"enthalpy\",\"points\":2}")));
     assertEquals("INVALID_UNIT",
-        errorCode(run(prefix + "\"sweepVariable\":\"temperature\",\"unit\":\"rankine\","
-            + "\"points\":2}")));
-    assertEquals("INVALID_RANGE",
-        errorCode(run(prefix + "\"sweepVariable\":\"pressure\",\"unit\":\"bara\","
-            + "\"from\":0,\"to\":10,\"points\":2}")));
+        errorCode(run(prefix + "\"sweepVariable\":\"temperature\",\"unit\":\"rankine\"," + "\"points\":2}")));
+    assertEquals("INVALID_RANGE", errorCode(
+        run(prefix + "\"sweepVariable\":\"pressure\",\"unit\":\"bara\"," + "\"from\":0,\"to\":10,\"points\":2}")));
   }
 
   @Test
@@ -87,8 +82,7 @@ class StreamingRunnerTest {
     assertEquals("INVALID_ITERATIONS", errorCode(run(prefix + "\"iterations\":0}")));
     assertEquals("INVALID_ITERATIONS",
         errorCode(run(prefix + "\"iterations\":" + (StreamingRunner.MAX_MONTE_CARLO_ITERATIONS + 1) + "}")));
-    assertEquals("INVALID_DISTRIBUTION",
-        errorCode(run(prefix + "\"iterations\":1,\"temperatureStd\":-1}")));
+    assertEquals("INVALID_DISTRIBUTION", errorCode(run(prefix + "\"iterations\":1,\"temperatureStd\":-1}")));
   }
 
   @Test
@@ -97,8 +91,7 @@ class StreamingRunnerTest {
     String prefix = "{\"action\":\"startDynamic\",\"processJson\":{},";
     assertEquals("INVALID_TIME_RANGE", errorCode(run(prefix + "\"totalTime\":1,\"timeStep\":0}")));
     assertEquals("INVALID_STEP_COUNT",
-        errorCode(run(prefix + "\"totalTime\":" + (StreamingRunner.MAX_DYNAMIC_STEPS + 1)
-            + ",\"timeStep\":1}")));
+        errorCode(run(prefix + "\"totalTime\":" + (StreamingRunner.MAX_DYNAMIC_STEPS + 1) + ",\"timeStep\":1}")));
   }
 
   @Test
@@ -108,8 +101,7 @@ class StreamingRunnerTest {
     assertEquals("success", started.get("status").getAsString(), started.toString());
     assertEquals("started", started.get("operationStatus").getAsString(), started.toString());
     String operationId = started.get("operationId").getAsString();
-    JsonObject poll = run("{\"action\":\"poll\",\"operationId\":\"" + operationId
-        + "\",\"lastIndex\":-1}");
+    JsonObject poll = run("{\"action\":\"poll\",\"operationId\":\"" + operationId + "\",\"lastIndex\":-1}");
     assertEquals("INVALID_CURSOR", errorCode(poll));
     run("{\"action\":\"cancel\",\"operationId\":\"" + operationId + "\"}");
   }
@@ -124,8 +116,7 @@ class StreamingRunnerTest {
 
     JsonObject poll = null;
     for (int attempt = 0; attempt < 200; attempt++) {
-      poll = run("{\"action\":\"poll\",\"operationId\":\"" + operationId
-          + "\",\"lastIndex\":0}");
+      poll = run("{\"action\":\"poll\",\"operationId\":\"" + operationId + "\",\"lastIndex\":0}");
       if ("completed".equals(poll.get("operationStatus").getAsString())) {
         break;
       }
@@ -140,8 +131,7 @@ class StreamingRunnerTest {
     assertEquals(StreamingRunner.MAX_RESULTS_PER_POLL, poll.get("maxResultsPerPoll").getAsInt());
     assertFalse(poll.get("hasMoreResults").getAsBoolean());
 
-    JsonObject cancelledAfterCompletion = run("{\"action\":\"cancel\",\"operationId\":\""
-        + operationId + "\"}");
+    JsonObject cancelledAfterCompletion = run("{\"action\":\"cancel\",\"operationId\":\"" + operationId + "\"}");
     assertEquals("completed", cancelledAfterCompletion.get("operationStatus").getAsString(),
         "Cancellation must not overwrite a terminal outcome");
   }
