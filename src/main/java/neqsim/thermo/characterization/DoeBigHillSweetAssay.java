@@ -40,6 +40,8 @@ public final class DoeBigHillSweetAssay {
   private static final double[] GAS_COMPONENT_WEIGHT_PERCENT = { 0.09, 10.38, 10.21, 45.95 };
   private static final double GAS_SUBSET_WEIGHT_PERCENT = 66.63;
   private static final double C5_175_MOLAR_MASS_KG_PER_MOL = 0.07915383665629189;
+  private static final double[] VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT = { 18.44, 12.84, 11.56 };
+  private static final double VACUUM_SCREENING_WHOLE_CRUDE_MASS_PERCENT = 42.84;
 
   private DoeBigHillSweetAssay() {
   }
@@ -80,13 +82,76 @@ public final class DoeBigHillSweetAssay {
     addBoundedCut(assay, "DOE_BH_250_375", 12.55, 0.7817, 250.0, 375.0, 0.019, 0.0);
     addBoundedCut(assay, "DOE_BH_375_530", 16.19, 0.8297, 375.0, 530.0, 0.096, 0.0018);
     addBoundedCut(assay, "DOE_BH_530_650", 13.18, 0.8604, 530.0, 650.0, 0.313, 0.0186);
-    addBoundedCut(assay, "DOE_BH_650_850", 18.44, 0.9039, 650.0, 850.0, 0.534, 0.102);
-    addBoundedCut(assay, "DOE_BH_850_1050", 12.84, 0.9336, 850.0, 1050.0, 0.752, 0.234);
-
-    assay.addCut(new AssayCut("DOE_BH_1050_PLUS").withWeightPercent(11.56).withSpecificGravity(1.0089)
-        .withLowerBoilingPointFahrenheit(1050.0).withWatsonCharacterizationFactor(11.7).withSulfurMassPercent(1.334)
-        .withNitrogenMassPercent(0.501));
+    addVacuumScreeningCuts(assay, 1.0);
     return assay;
+  }
+
+  /**
+   * Return the source mass represented by the 650 degF+ vacuum-screening slice.
+   *
+   * @return source slice mass in percent of whole crude
+   */
+  public static double getVacuumScreeningWholeCrudeMassPercent() {
+    return VACUUM_SCREENING_WHOLE_CRUDE_MASS_PERCENT;
+  }
+
+  /**
+   * Return the three source mass percentages retained by the vacuum-screening slice.
+   *
+   * @return defensive copy ordered as 650-850 degF, 850-1050 degF, and 1050 degF+
+   */
+  public static double[] getVacuumScreeningSourceWeightPercent() {
+    return VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT.clone();
+  }
+
+  /**
+   * Configure the normalized DOE Big Hill Sweet 650 degF+ vacuum-screening feed on a one-kilogram basis.
+   *
+   * <p>
+   * The three retained source rows account for 42.84 mass% of whole crude. Their source mass percentages are normalized
+   * to the returned feed basis. This is a reproducible heavy-assay slice, not a measured atmospheric-column bottoms
+   * composition.
+   * </p>
+   *
+   * @param system empty or caller-owned thermodynamic system
+   * @return configured three-cut assay; no component has been added to {@code system}
+   * @throws NullPointerException if {@code system} is {@code null}
+   */
+  public static OilAssayCharacterisation createVacuumScreeningFeed(SystemInterface system) {
+    return createVacuumScreeningFeed(system, 1.0);
+  }
+
+  /**
+   * Configure the normalized DOE Big Hill Sweet 650 degF+ vacuum-screening feed.
+   *
+   * @param system empty or caller-owned thermodynamic system
+   * @param totalAssayMassKg positive screening-feed mass in kg
+   * @return configured three-cut assay; no component has been added to {@code system}
+   * @throws NullPointerException if {@code system} is {@code null}
+   * @throws IllegalArgumentException if {@code totalAssayMassKg} is non-finite or not positive
+   */
+  public static OilAssayCharacterisation createVacuumScreeningFeed(SystemInterface system, double totalAssayMassKg) {
+    Objects.requireNonNull(system, "system");
+    if (!Double.isFinite(totalAssayMassKg) || !(totalAssayMassKg > 0.0)) {
+      throw new IllegalArgumentException("Total assay mass must be finite and positive");
+    }
+
+    OilAssayCharacterisation assay = system.getOilAssayCharacterisation();
+    assay.clearCuts();
+    assay.setTotalAssayMass(totalAssayMassKg);
+    addVacuumScreeningCuts(assay, 100.0 / VACUUM_SCREENING_WHOLE_CRUDE_MASS_PERCENT);
+    return assay;
+  }
+
+  private static void addVacuumScreeningCuts(OilAssayCharacterisation assay, double weightScale) {
+    addBoundedCut(assay, "DOE_BH_650_850", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[0] * weightScale, 0.9039, 650.0,
+        850.0, 0.534, 0.102);
+    addBoundedCut(assay, "DOE_BH_850_1050", VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[1] * weightScale, 0.9336, 850.0,
+        1050.0, 0.752, 0.234);
+    assay.addCut(
+        new AssayCut("DOE_BH_1050_PLUS").withWeightPercent(VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT[2] * weightScale)
+            .withSpecificGravity(1.0089).withLowerBoilingPointFahrenheit(1050.0).withWatsonCharacterizationFactor(11.7)
+            .withSulfurMassPercent(1.334).withNitrogenMassPercent(0.501));
   }
 
   private static void addModeledGasCut(OilAssayCharacterisation assay) {

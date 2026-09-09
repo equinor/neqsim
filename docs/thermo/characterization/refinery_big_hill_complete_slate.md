@@ -58,6 +58,32 @@ petroleum pseudo-components), reconstructed component mass closure within `1e-10
 0.40867518 mass%, and nitrogen 0.1095129 mass%. A second construction must produce the identical
 resolved mass vector.
 
+## 650 degF+ vacuum-screening feed
+
+`DoeBigHillSweetAssay.createVacuumScreeningFeed(...)` returns a three-cut heavy feed assembled
+only from the 650-850 degF, 850-1050 degF, and one-sided 1050 degF+ source rows. Those rows account
+for 42.84 mass% of whole crude. The factory preserves their relative masses and normalizes them to
+the screening-feed basis:
+
+$$w_i^{screen}=\frac{w_i^{whole\ crude}}{42.84\%}$$
+
+| Source cut | Whole-crude mass % | Screening-feed mass % |
+| --- | ---: | ---: |
+| 650-850 degF | 18.44 | 43.0438842204 |
+| 850-1050 degF | 12.84 | 29.9719887955 |
+| 1050 degF+ | 11.56 | 26.9841269841 |
+
+The source-weight accessor returns a defensive copy, while the factory preserves the source
+specific gravities, sulfur, nitrogen, finite cut boundaries, and the residue's one-sided lower
+boundary and Watson factor. The normalized feed reconstructs 0.815211951447 sulfur mass% and
+0.249229691877 nitrogen mass%.
+
+This feed is a transparent characterization and numerical-screening basis. It is not a measured
+atmospheric-column bottoms stream: DOE does not report tower entrainment, cut-point overlap, light-tail
+carryover, operating pressure, or a matching atmospheric-column material balance. The factory
+therefore does not infer any of those quantities and does not perform pressure correction or ASTM
+D1160 conversion.
+
 ## Evidence and validity boundary
 
 This class is a source-specific reproducible reference composition. It does not mix the older 1998
@@ -66,6 +92,7 @@ generated critical properties, acentric factors, vapor-liquid equilibrium, atmos
 or conversion-unit performance. DOE publishes the workbook for information purposes with no warranty
 of accuracy or completeness; users remain responsible for its application.
 
-The next validation gate is to run this complete slate through the atmospheric-column workflow and
-compare product yields and boiling ranges against independent public evidence before advancing to
-vacuum fractionation.
+The complete slate has separately passed atmospheric-column integration and the public Sarir case
+now provides the campaign's operating-case fractionation evidence. The normalized 650 degF+ slice is
+the characterization handoff for a later low-pressure column benchmark; it does not itself validate
+vacuum fractionation or product yields.
