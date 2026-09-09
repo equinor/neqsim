@@ -141,3 +141,38 @@ This handoff does not identify the screening feed as measured atmospheric bottom
 or pressure correction, or claim vacuum-gas-oil/residue yields, product quality, equipment design, or
 plant agreement. Those remain separate solved-case and public-benchmark gates.
 
+
+## Solved screening-point result
+
+After a caller explicitly runs the configured column,
+`DoeBigHillVacuumFractionationResult.evaluate(model)` provides a fail-closed Java/JPype summary:
+
+```java
+DoeBigHillVacuumFractionationCase model =
+    DoeBigHillVacuumFractionationCase.create("Big Hill vacuum screen", 1000.0, inputs);
+model.getColumn().run();
+
+DoeBigHillVacuumFractionationResult result =
+    DoeBigHillVacuumFractionationResult.evaluate(model);
+double overheadMassFraction = result.getProduct("Overhead").getMassFractionOfFeed();
+double bottomsMassFraction = result.getProduct("Bottoms").getMassFractionOfFeed();
+```
+
+Evaluation accepts only a converged MESH-residual solve without failed or fallback products. The
+external mass closure, column mass balance, column energy balance, maximum tray material balance,
+final MESH residual, and every component molar balance must each satisfy the configured acceptance
+limit. Both overhead and bottoms must have positive material flow, and their mole-weighted mean
+normal boiling points must increase from overhead to bottoms. The result also records iteration
+count, solve time, and convergence diagnostics, and returns defensive product arrays.
+
+The regression executes the explicit 12-tray point shown above twice from independently constructed
+cases. It requires the three exact DOE pseudo-component identities, no more than 5% mass,
+energy, tray, or component closure error, and product flow and mean-boiling-point repeatability
+within 1%.
+
+These gates qualify numerical conservation and separation direction for one transparent engineering
+screening point. No public DOE measurement defines a matching vacuum-column product split, so the
+reported streams are deliberately labeled `Overhead` and `Bottoms`, not validated VGO or vacuum
+residue. The calculation does not establish pressure correction, ASTM D1160 behavior, equipment
+design, a general SRK accuracy envelope, or plant agreement.
+
