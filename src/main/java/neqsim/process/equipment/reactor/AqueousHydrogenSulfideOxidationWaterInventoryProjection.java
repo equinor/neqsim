@@ -68,7 +68,8 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
 
   private static double finiteProduct(double first, double second, String name) {
     double product = first * second;
-    if (!Double.isFinite(product) || product < 0.0) {
+    if (!Double.isFinite(product) || product < 0.0
+        || (first > 0.0 && second > 0.0 && product == 0.0)) {
       throw new IllegalArgumentException(name + " is not finite and non-negative");
     }
     return product;
