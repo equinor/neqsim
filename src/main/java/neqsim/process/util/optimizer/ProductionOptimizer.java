@@ -2206,8 +2206,9 @@ public class ProductionOptimizer {
    * Score-based searches require an explicit objective to maximize throughput. A null or empty objective list has zero
    * objective score; use binary feasibility for monotonic throughput searches without a custom objective. Before
    * returning, the selected decision vector is reapplied and solved without using cached evidence. The result and live
-   * process therefore describe the same operating point. A failed final solve throws rather than returning an earlier
-   * feasible result.
+   * process therefore describe the same operating point. If that replay is physically infeasible, previously feasible
+   * search points are replayed in deterministic best-first order and only a freshly verified fallback can be returned.
+   * A failed final solve throws rather than returning stale evidence.
    * </p>
    *
    * @param process the process model to evaluate (must not be null)
@@ -2391,7 +2392,106 @@ public class ProductionOptimizer {
     // equipment, reported decisions, objectives and capacity evidence all describe the selected operating point.
     Evaluation verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
         selectedPoint);
-    return toResult(selectedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
+    double[] verifiedPoint = selectedPoint;
+    if (selected.isFeasible() && !isFeasible(verified)) {
+      recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, false);
+      VerifiedSelection fallback = replayFeasibleSearchPoint(process, variables, config, safeObjectives,
+          safeConstraints, selectedPoint, iterationHistory);
+      if (fallback != null) {
+        verifiedPoint = fallback.point;
+        verified = fallback.evaluation;
+      } else {
+        // Candidate recovery leaves mutable equipment at its last probe. Restore the selected point once more so an
+        // infeasible result and the live process still describe the same exact decision vector.
+        verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
+            selectedPoint);
+        recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, isFeasible(verified));
+      }
+    }
+    return toResult(verifiedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
+  }
+
+  /**
+   * Replay earlier feasible search points after the selected point proves non-repeatable.
+   *
+   * <p>
+   * Search evidence is only a proposal: every fallback is applied to the live process and fully solved again. Binary
+   * throughput searches prefer the greatest recorded rate, while score searches prefer the greatest penalized score.
+   * The bounded retry set contains only points already visited by the configured search.
+   * </p>
+   *
+   * @param process mutable process to replay
+   * @param variables manipulated variables in deterministic order
+   * @param config optimization configuration
+   * @param objectives configured objectives
+   * @param constraints configured constraints
+   * @param selectedPoint point whose replay was infeasible
+   * @param iterationHistory complete search history, extended with replay evidence
+   * @return verified fallback, or {@code null} when no recorded feasible point replays successfully
+   */
+  private VerifiedSelection replayFeasibleSearchPoint(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
+      double[] selectedPoint, List<IterationRecord> iterationHistory) {
+    List<IterationRecord> candidates = iterationHistory.stream().filter(IterationRecord::isFeasible)
+        .collect(Collectors.toList());
+    if (config.searchMode == SearchMode.BINARY_FEASIBILITY) {
+      candidates.sort((left, right) -> Double.compare(right.getRate(), left.getRate()));
+    } else {
+      candidates.sort((left, right) -> Double.compare(right.getScore(), left.getScore()));
+    }
+
+    for (IterationRecord candidate : candidates) {
+      double[] point = decisionVector(candidate, variables);
+      if (point == null || sameDecisionVector(point, selectedPoint)) {
+        continue;
+      }
+      Evaluation replayed = evaluateCandidateInternal(process, variables, config, objectives, constraints, point);
+      boolean feasible = isFeasible(replayed);
+      recordIteration(iterationHistory, point[0], candidate.getRateUnit(), replayed, feasible);
+      if (feasible) {
+        return new VerifiedSelection(point, replayed);
+      }
+    }
+    return null;
+  }
+
+  private double[] decisionVector(IterationRecord record, List<ManipulatedVariable> variables) {
+    double[] point = new double[variables.size()];
+    Map<String, Double> decisions = record.getDecisionVariables();
+    for (int i = 0; i < variables.size(); i++) {
+      Double value = decisions.get(variables.get(i).getName());
+      if (value == null || Double.isNaN(value.doubleValue()) || Double.isInfinite(value.doubleValue())) {
+        return null;
+      }
+      point[i] = value.doubleValue();
+    }
+    return point;
+  }
+
+  private boolean sameDecisionVector(double[] left, double[] right) {
+    if (left.length != right.length) {
+      return false;
+    }
+    for (int i = 0; i < left.length; i++) {
+      if (Double.doubleToLongBits(left[i]) != Double.doubleToLongBits(right[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isFeasible(Evaluation evaluation) {
+    return evaluation.utilizationWithinLimits() && evaluation.hardOk();
+  }
+
+  private static final class VerifiedSelection {
+    private final double[] point;
+    private final Evaluation evaluation;
+
+    private VerifiedSelection(double[] point, Evaluation evaluation) {
+      this.point = point;
+      this.evaluation = evaluation;
+    }
   }
 
   /**

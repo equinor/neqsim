@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.compressor.Compressor;
@@ -102,5 +103,31 @@ class ProductionOptimizerSelectedPointTest extends NeqSimTest {
     OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0).maxIterations(1);
     assertThrows(IllegalStateException.class,
         () -> new ProductionOptimizer().optimize(process, feed, config, null, null));
+  }
+
+  @Test
+  void binarySearchFallsBackOnlyToFreshlyVerifiedFeasiblePoint() {
+    Stream feed = createFeed();
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    AtomicInteger selectedPointEvaluations = new AtomicInteger();
+    OptimizationConstraint replaySensitiveLimit = OptimizationConstraint.lessThan("replay-sensitive limit", ps -> {
+      double rate = feed.getFlowRate("kg/hr");
+      if (Math.abs(rate - 1750.0) < 1.0e-12 && selectedPointEvaluations.incrementAndGet() > 1) {
+        return 1800.000001;
+      }
+      return rate;
+    }, 1800.0, ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
+        "Synthetic non-repeatable boundary used to verify conservative replay");
+    OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0).rateUnit("kg/hr").maxIterations(3).tolerance(1.0)
+        .searchMode(SearchMode.BINARY_FEASIBILITY);
+
+    OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null,
+        Collections.singletonList(replaySensitiveLimit));
+
+    assertTrue(result.isFeasible(), result.getInfeasibilityDiagnosis());
+    assertEquals(1500.0, result.getOptimalRate(), 1.0e-12);
+    assertEquals(result.getOptimalRate(), feed.getFlowRate("kg/hr"), 1.0e-12);
+    assertTrue(result.getIterationHistory().size() > 3, "Replay attempts must remain visible in the evidence");
   }
 }

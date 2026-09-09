@@ -31,6 +31,13 @@ positive compressor duty, power-unit consistency, signed network flow conservati
 standard-volume/GOR consistency and rejected or infeasible cases. Solver termination
 alone is insufficient evidence of a physically valid optimum.
 
+`ProductionOptimizer` never accepts cached search evidence as the final plant state. It
+replays the selected decision vector through the full process. If that replay is
+infeasible, it deterministically tries previously feasible search points in best-first
+order and returns only the first point that passes a fresh full replay. If none passes,
+the selected point is restored and reported as infeasible; an exception from the final
+solve is propagated instead of returning stale evidence.
+
 ## Run the checks
 
 Use Java 17 or another supported full JDK and the Python interpreter selected for your
