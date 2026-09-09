@@ -19,6 +19,7 @@ import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Coordin
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetAssignment;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetDefinition;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetOverviewRegion;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.diagram.EngineeringDiagramDualProfileDelivery;
 import neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer;
@@ -119,10 +120,19 @@ public final class Comparesimulations2EngineeringDiagramReference {
     EngineeringGraph graph = ProcessDiagramGraphAdapter
         .fromProcessSystem(process, "ANDREASEN-SEPARATION-COMPRESSION", REVISION).getGraph();
     Map<String, String> equipmentIds = new LinkedHashMap<String, String>();
+    String overviewSheetKey = null;
     for (EngineeringNode node : graph.getNodes().values()) {
       if (node.getKind() == EngineeringNode.Kind.EQUIPMENT) {
         equipmentIds.put(node.getLabel(), node.getId());
+      } else if (node.getKind() == EngineeringNode.Kind.AREA) {
+        if (overviewSheetKey != null) {
+          throw new IllegalStateException("Reference layout requires exactly one canonical plant overview sheet");
+        }
+        overviewSheetKey = node.getExternalKey();
       }
+    }
+    if (overviewSheetKey == null) {
+      throw new IllegalStateException("Reference layout requires one canonical plant overview sheet");
     }
     EngineeringDiagramLayoutRegister register = new EngineeringDiagramLayoutRegister()
         .withSheet(sheet("separation", "2", "Three-stage separation and oil export"))
@@ -137,7 +147,16 @@ public final class Comparesimulations2EngineeringDiagramReference {
         "25-VG-01", "27-KA-01", "27-HA-01" };
     register = place(register, "separation", separation, equipmentIds);
     register = place(register, "recompression", recompression, equipmentIds);
-    return place(register, "export", export, equipmentIds);
+    register = place(register, "export", export, equipmentIds);
+    return register.withOverviewRegion(overviewRegion(overviewSheetKey, "separation", 36.0))
+        .withOverviewRegion(overviewRegion(overviewSheetKey, "recompression", 305.0))
+        .withOverviewRegion(overviewRegion(overviewSheetKey, "export", 574.0));
+  }
+
+  private static SheetOverviewRegion overviewRegion(String overviewSheetKey, String targetSheetKey, double x) {
+    return new SheetOverviewRegion(overviewSheetKey, targetSheetKey, x, 170.0, 230.0, 315.0, CoordinateUnit.MILLIMETRE,
+        SOURCE + ":proposed-overview-index", EngineeringDiagramLayoutRegister.EvidenceState.PROPOSED, RECORDED_BY,
+        RECORDED_AT, REVISION);
   }
 
   private static SheetDefinition sheet(String key, String number, String title) {
