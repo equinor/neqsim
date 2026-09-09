@@ -27,6 +27,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 |-----------|------|-------------|
 | Separators | [separators.md](separators) | 2-phase and 3-phase separators, scrubbers |
 | Separator Entrainment | [separator-entrainment-modeling.md](separator-entrainment-modeling) | Droplet distributions, internals, grade efficiency, and performance calculation |
+| Private Entrainment Extensions | [private-extensions.md](private-extensions) | ServiceLoader SPI for proprietary carry-over correlations supplied in a separate JAR |
 | Distillation | [distillation.md](distillation) | Distillation columns |
 | Absorbers | [absorbers.md](absorbers) | Absorption/stripping columns |
 | Adsorbers | [adsorbers.md](adsorbers) | Simplified adsorption equipment |
