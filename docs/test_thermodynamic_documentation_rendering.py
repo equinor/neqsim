@@ -15,6 +15,14 @@ SCOPE_DIRECTORIES = (
 )
 EXCLUDED_FILE = DOCS / "thermodynamicoperations/TPflash_algorithm.md"
 EXCLUDED_DIRECTORY = DOCS / "thermo/characterization"
+THERMO_OVERVIEW = DOCS / "thermo/README.md"
+REFERENCE_MANUAL = DOCS / "REFERENCE_MANUAL_INDEX.md"
+REACTION_MODEL_AUDIT = DOCS / "thermo/reaction_model_audit.md"
+REACTION_MODEL_AUDIT_SOURCE = (
+    DOCS.parent
+    / "src/main/java/neqsim/chemicalreactions/chemicalreaction"
+    / "ChemicalReactionModelAudit.java"
+)
 
 
 def scoped_pages():
@@ -100,6 +108,24 @@ class ThermodynamicDocumentationRenderingContractTest(unittest.TestCase):
 
     def test_scope_remains_substantial(self):
         self.assertGreaterEqual(len(self.pages), 66)
+
+    def test_reaction_model_audit_routes_resolve_to_source_backed_guide(self):
+        routes = (
+            (THERMO_OVERVIEW, "reaction_model_audit"),
+            (REFERENCE_MANUAL, "thermo/reaction_model_audit.md"),
+        )
+        for source, target in routes:
+            visible = remove_fenced_code(source.read_text(encoding="utf-8"))
+            with self.subTest(source=source.name, target=target):
+                self.assertEqual(1, visible.count(f"]({target})"))
+                candidates = target_candidates(source, target)
+                self.assertIn(REACTION_MODEL_AUDIT, candidates)
+                self.assertTrue(any(candidate.exists() for candidate in candidates))
+
+        guide = REACTION_MODEL_AUDIT.read_text(encoding="utf-8")
+        source = REACTION_MODEL_AUDIT_SOURCE.read_text(encoding="utf-8")
+        self.assertIn("ChemicalReactionModelAudit.compare(cpa, pitzer)", guide)
+        self.assertIn("public final class ChemicalReactionModelAudit", source)
 
     def test_pages_have_searchable_front_matter(self):
         for page in self.pages:

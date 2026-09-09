@@ -175,6 +175,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Thermo Operations   | [docs/thermo/thermodynamic_operations.md](thermo/thermodynamic_operations.md)                     | Thermodynamic operations        |
 | TP Flash Algorithm  | [docs/thermodynamicoperations/TPflash_algorithm.md](thermodynamicoperations/TPflash_algorithm.md) | TP flash algorithm details      |
 | Reactive Flash      | [docs/thermo/reactive_flash.md](thermo/reactive_flash.md)                                        | Simultaneous chemical and phase equilibrium (Modified RAND method) |
+| Reaction Model Audit | [docs/thermo/reaction_model_audit.md](thermo/reaction_model_audit.md)                             | Read-only reaction-source, basis, parameter, and validation-status comparison |
 | Reactive PH Flash   | [examples/notebooks/reactive_ph_flash_examples.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/reactive_ph_flash_examples.ipynb) | Isenthalpic/isentropic reactive flash examples (PH, PS flash) |
 | Reactive Distillation | [docs/process/reactive_distillation.md](process/reactive_distillation.md)                        | Reactive distillation column with equilibrium-based reactive flash on each tray |
 | Phase Envelope Algorithm | [docs/thermodynamicoperations/phase_envelope_algorithm.md](thermodynamicoperations/phase_envelope_algorithm.md) | Michelsen continuation method, cricondenbar/cricondentherm Newton refinement, critical point detection |
