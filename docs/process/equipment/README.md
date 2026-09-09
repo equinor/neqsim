@@ -52,6 +52,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
+| Compressor Thermal Model | [Compressor thermal model and catalog](../../compressor_thermal_model) | Metal-node temperatures, catalog templates, steady and transient screening, and deposition inputs |
 | Compressor Curves | [compressor_curves.md](compressor_curves) | Performance maps, correction, interpolation, and envelopes |
 | Compressor Shaft | [compressor_shaft.md](compressor_shaft) | Multiple compressor bodies on a common-speed shaft |
 | Compressor Anti-Surge Control | [compressor_antisurge_control.md](compressor_antisurge_control) | Dynamic anti-surge recycle, speed/load control, and coordinated pressure-speed-recycle control philosophy |
