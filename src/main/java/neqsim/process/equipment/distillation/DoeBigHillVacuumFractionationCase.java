@@ -64,8 +64,8 @@ public final class DoeBigHillVacuumFractionationCase {
     }
     Objects.requireNonNull(operatingInputs, "operatingInputs");
 
-    SystemInterface feedFluid =
-        new SystemSrkEos(operatingInputs.getFeedTemperatureKelvin(), operatingInputs.getFeedPressureBara());
+    SystemInterface feedFluid = new SystemSrkEos(operatingInputs.getFeedTemperatureKelvin(),
+        operatingInputs.getFeedPressureBara());
     OilAssayCharacterisation assay = DoeBigHillSweetAssay.createVacuumScreeningFeed(feedFluid);
     assay.apply();
     feedFluid.setMixingRule("classic");
@@ -76,8 +76,8 @@ public final class DoeBigHillVacuumFractionationCase {
     feed.setPressure(operatingInputs.getFeedPressureBara(), "bara");
     feed.run();
 
-    DistillationColumn configuredColumn =
-        new DistillationColumn(name + " column", operatingInputs.getSimpleTrayCount(), true, true);
+    DistillationColumn configuredColumn = new DistillationColumn(name + " column", operatingInputs.getSimpleTrayCount(),
+        true, true);
     configuredColumn.addFeedStream(feed, operatingInputs.getFeedTrayIndex());
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
@@ -138,8 +138,8 @@ public final class DoeBigHillVacuumFractionationCase {
      * @throws IllegalArgumentException if a value is outside the qualified topology or physical domain
      */
     public OperatingInputs(int simpleTrayCount, int feedTrayIndex, double feedTemperatureKelvin,
-        double feedPressureBara, double topPressureBara, double bottomPressureBara,
-        double reboilerTemperatureKelvin, double condenserRefluxRatio) {
+        double feedPressureBara, double topPressureBara, double bottomPressureBara, double reboilerTemperatureKelvin,
+        double condenserRefluxRatio) {
       if (simpleTrayCount < MINIMUM_SIMPLE_TRAY_COUNT || simpleTrayCount > MAXIMUM_SIMPLE_TRAY_COUNT) {
         throw new IllegalArgumentException("Simple-tray count must be in [2, 100]");
       }
