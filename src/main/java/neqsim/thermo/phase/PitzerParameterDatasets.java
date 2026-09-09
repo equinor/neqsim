@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Coherent, versioned Pitzer parameter datasets whose equation conventions and public provenance have been mapped to
@@ -16,6 +17,78 @@ import java.util.List;
  * </p>
  */
 public final class PitzerParameterDatasets {
+  /** PHREEQC chloride rows supplemented by explicitly supplied CO2-cation-chloride zeta coefficients. */
+  public static final String PHREEQC_CO2_CHLORIDE_USER_ZETA_ID = "usgs-phreeqc-pitzer-co2-chlorides-user-zeta-v1";
+
+  /**
+   * Applies PHREEQC Na/K/Ca/Mg chloride and CO2 lambda rows with caller-supplied constant zeta values.
+   *
+   * <p>
+   * The bundled source has no explicit CO2-cation-Cl zeta rows. This method never supplies those missing values:
+   * callers must provide a finite value for every present cation, keyed by NeqSim ion name. A caller may explicitly
+   * adopt zero as a screening assumption, which is not an experimentally fitted interaction. All binary, theta, psi and
+   * lambda coefficients come from the pinned public-domain catalog without refitting. This is a manual, unqualified
+   * dataset; ordinary automatic catalog selection and its fail-closed policy are unchanged. Only water, CO2 and these
+   * four chloride salts are supported. Call on a fresh system after adding all components, before flashing or defining
+   * custom interaction families. This method overwrites the named rows, not unrelated custom interaction terms.
+   * </p>
+   *
+   * @param phase Pitzer aqueous role
+   * @param co2ChlorideZeta constant zeta for each present cation (Na+, K+, Ca++, Mg++)
+   * @throws IllegalArgumentException for unsupported species, missing source rows or missing supplied zeta
+   */
+  public static void applyPhreeqcCo2ChlorideParameters(PhasePitzer phase, Map<String, Double> co2ChlorideZeta) {
+    if (phase == null || co2ChlorideZeta == null) {
+      throw new IllegalArgumentException("Pitzer phase and explicit CO2-chloride zeta values are required");
+    }
+    int co2 = requiredComponentIndex(phase, "CO2");
+    int chloride = requiredComponentIndex(phase, "Cl-");
+    List<Integer> ions = new ArrayList<Integer>();
+    List<Integer> cations = new ArrayList<Integer>();
+    for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+      String name = phase.getComponent(i).getComponentName();
+      if ("water".equals(name) || "CO2".equals(name)) {
+        continue;
+      }
+      if (!Arrays.asList("Na+", "K+", "Ca++", "Mg++", "Cl-").contains(name)) {
+        throw new IllegalArgumentException("CO2-chloride dataset does not cover " + name);
+      }
+      ions.add(i);
+      if (phase.getComponent(i).getIonicCharge() > 0.0) {
+        Double zeta = co2ChlorideZeta.get(name);
+        if (zeta == null || !Double.isFinite(zeta)) {
+          throw new IllegalArgumentException("Supply an explicit CO2-" + name + "-Cl- zeta coefficient");
+        }
+        cations.add(i);
+      }
+    }
+    if (cations.isEmpty()) {
+      throw new IllegalArgumentException("CO2-chloride dataset requires at least one supported cation");
+    }
+    PhreeqcPitzerParameterCatalog catalog = PhreeqcPitzerParameterCatalog.getInstance();
+    validateCatalogTopology(phase, catalog, ions, Collections.<Integer>emptyList());
+    catalog.require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, "CO2", "CO2");
+    for (int ion : ions) {
+      catalog.require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, "CO2", phase.getComponent(ion).getComponentName());
+    }
+    // Validate every required row before changing the named parameter families.
+    phase.setParameterDatasetId(PHREEQC_CO2_CHLORIDE_USER_ZETA_ID);
+    phase.setExcludeHydrocarbonsFromNeutralPitzerTopology(false);
+    applyCatalogIonRows(phase, catalog, ions);
+    phase.setLambdaTemperatureCoefficients(co2, co2, PHREEQC_REFERENCE_TEMPERATURE_K,
+        catalog.require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, "CO2", "CO2"));
+    for (int ion : ions) {
+      phase.setLambdaTemperatureCoefficients(co2, ion, PHREEQC_REFERENCE_TEMPERATURE_K, catalog
+          .require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, "CO2", phase.getComponent(ion).getComponentName()));
+    }
+    for (int cation : cations) {
+      phase.setZetaTemperatureCoefficients(co2, cation, chloride, PHREEQC_REFERENCE_TEMPERATURE_K,
+          new double[] { co2ChlorideZeta.get(phase.getComponent(cation).getComponentName()), 0, 0, 0, 0, 0 });
+    }
+    phase.enablePhreeqcCommonIonTerms();
+    phase.markManualParameterDatasetLoaded();
+  }
+
   /**
    * Exact source identity for the public-domain PHREEQC CO2-Na2SO4 subset.
    */

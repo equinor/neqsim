@@ -37,6 +37,10 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   /** {@inheritDoc} */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false).run();
+      return;
+    }
     // Enable multi-phase check to properly handle systems with water+MEG+hydrocarbons+electrolytes
     // This ensures proper phase separation (gas, aqueous, hydrocarbon liquid)
     boolean originalMultiPhaseCheck = system.doMultiPhaseCheck();

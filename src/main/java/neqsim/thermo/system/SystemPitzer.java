@@ -21,7 +21,9 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * </p>
  *
  * <p>
- * The hybrid strategy currently supports fluid phases only. Solid and wax checks are rejected explicitly when the
+ * The hybrid TP strategy supports fluid phases only. Incipient hydrate temperature, pressure and equilibrium curves are
+ * available through ThermodynamicOperations using a Pitzer-consistent liquid-water reference and a bounded outer
+ * search. This does not compute hydrate amounts. Solid and wax checks are rejected explicitly when the hybrid TP
  * strategy is active.
  * </p>
  *
@@ -74,6 +76,16 @@ public class SystemPitzer extends SystemEosGE {
    */
   public void useLegacyPitzerParameters() {
     ((PhasePitzer) phaseArray[1]).setUsePhreeqcCatalogByDefault(false);
+  }
+
+  /**
+   * Loads the PHREEQC CO2/chloride family with explicitly supplied missing neutral ternary interactions.
+   *
+   * @param co2ChlorideZeta constant zeta keyed by each present cation name; no default values are assumed
+   * @see PitzerParameterDatasets#applyPhreeqcCo2ChlorideParameters(PhasePitzer, java.util.Map)
+   */
+  public void applyPhreeqcCo2ChlorideParameters(java.util.Map<String, Double> co2ChlorideZeta) {
+    PitzerParameterDatasets.applyPhreeqcCo2ChlorideParameters((PhasePitzer) phaseArray[1], co2ChlorideZeta);
   }
 
   /**
