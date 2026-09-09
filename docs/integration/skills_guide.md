@@ -11,7 +11,7 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > |------------|---------|
 > | **Use an existing core skill** | Nothing — workspace agents load them automatically from the `.github/skills/` discovery layer |
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
-> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic`. If the skill ships a Python package (`pyproject.toml`), the installer downloads it whole and `pip install -e`'s it automatically — no separate manual install step. |
+> | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic`. If the skill ships a Python package (`pyproject.toml`), the installer downloads it whole and `pip install -e`'s it automatically — no separate manual install step. Reinstalls only re-run pip when the package's `pyproject.toml` changed. |
 > | **Install a community agent** | `neqsim agent install agent-name` → canonical install in `~/.neqsim/agents` → export with `--target vscode` or `--target generic` |
 > | **Check PaperLab commands** | `neqsim paperlab` prints help only; this confirms the command exists but does not install anything |
 > | **Use PaperLab in VS Code** | `neqsim paperlab install --vscode` for the `@paperlab` gateway; add `--include-internal` only for direct specialist-agent compatibility |
@@ -466,11 +466,29 @@ neqsim skill installed
 # Get details about a specific skill
 neqsim skill info neqsim-my-topic
 
+# Skip Python package installs during a bulk install, then install them later
+neqsim skill install --all --target vscode --no-pip
+neqsim skill sync-packages
+
+# Install one skill's Python package on first use (no-op when already importable)
+neqsim skill ensure neqsim-my-topic
+
+# Report export health and which packaged skills are importable
+neqsim skill doctor --target vscode
+
 # Remove a skill
 neqsim skill remove neqsim-my-topic
 ```
 
 Installed community skills are stored at `~/.neqsim/skills/<name>/SKILL.md`.
+
+A skill that ships a Python package is installed **editable**, so re-running
+`install --force` only re-runs pip when that skill's `pyproject.toml`
+(dependencies/metadata) changed — refreshing a large catalog does not reinstall
+every package. `--no-pip` defers the package installs entirely; run
+`neqsim skill sync-packages` (all pending, one pip pass) or `neqsim skill ensure
+<name>` (one skill, on first use) before using a skill that imports its own
+package.
 
 ### Step 5: Make Installed Skills Visible to Agents
 
