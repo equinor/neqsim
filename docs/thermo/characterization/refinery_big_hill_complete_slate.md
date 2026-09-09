@@ -96,3 +96,48 @@ The complete slate has separately passed atmospheric-column integration and the 
 now provides the campaign's operating-case fractionation evidence. The normalized 650 degF+ slice is
 the characterization handoff for a later low-pressure column benchmark; it does not itself validate
 vacuum fractionation or product yields.
+
+## Vacuum-column case handoff
+
+`DoeBigHillVacuumFractionationCase.create(...)` turns the normalized screening feed into a
+composable Java/JPype process handoff. It applies the three public heavy cuts to an SRK system,
+sets the requested mass flow and feed state, and configures a partial-condenser,
+reboiler-equipped `DistillationColumn` with the MESH-residual solver.
+
+Every operating value is explicit because the DOE assay does not report a matching refinery
+vacuum-column case:
+
+```java
+OperatingInputs inputs = new OperatingInputs(
+    12,    // simple trays
+    4,     // bottom-up feed-tray index
+    640.0, // feed temperature, K
+    0.12,  // feed pressure, bara
+    0.08,  // top pressure, bara
+    0.16,  // bottom pressure, bara
+    700.0, // reboiler outlet temperature, K
+    0.5);  // condenser reflux ratio
+
+DoeBigHillVacuumFractionationCase model =
+    DoeBigHillVacuumFractionationCase.create("Big Hill vacuum screen", 1000.0, inputs);
+DistillationColumn column = model.getColumn();
+```
+
+The factory requires the pressure topology
+
+$$0<P_{top}\leq P_{feed}\leq P_{bottom}<1.01325\;\mathrm{bara}$$
+
+with a strictly positive pressure rise from top to bottom, a valid internal feed tray, and a
+reboiler temperature above the feed temperature. Invalid, non-finite, atmospheric, or
+non-positive inputs fail before a case is created.
+
+Factory creation runs only the feed flash and deliberately returns an unsolved column. The example
+values above are transparent engineering assumptions for API and low-pressure handoff qualification;
+they are not DOE measurements or recommended design conditions. A caller must run the column and
+independently qualify convergence, mass and energy closure, product ordering, operating sensitivity,
+and suitability of the chosen thermodynamic model.
+
+This handoff does not identify the screening feed as measured atmospheric bottoms, perform ASTM D1160
+or pressure correction, or claim vacuum-gas-oil/residue yields, product quality, equipment design, or
+plant agreement. Those remain separate solved-case and public-benchmark gates.
+
