@@ -19,8 +19,8 @@ public class DoeBigHillVacuumFractionationCaseTest {
   @Test
   public void explicitInputsCreateUnsolvedSubAtmosphericColumnHandoff() {
     OperatingInputs inputs = qualifiedInputs();
-    DoeBigHillVacuumFractionationCase model =
-        DoeBigHillVacuumFractionationCase.create("Big Hill vacuum screen", STANDARD_FEED_FLOW_KG_PER_HOUR, inputs);
+    DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase.create("Big Hill vacuum screen",
+        STANDARD_FEED_FLOW_KG_PER_HOUR, inputs);
     Stream feed = model.getFeedStream();
     DistillationColumn column = model.getColumn();
 
@@ -54,10 +54,10 @@ public class DoeBigHillVacuumFractionationCaseTest {
 
   @Test
   public void repeatedConstructionPreservesTheQualifiedFeedDefinition() {
-    DoeBigHillVacuumFractionationCase first =
-        DoeBigHillVacuumFractionationCase.create("First", 250.0, qualifiedInputs());
-    DoeBigHillVacuumFractionationCase second =
-        DoeBigHillVacuumFractionationCase.create("Second", 250.0, qualifiedInputs());
+    DoeBigHillVacuumFractionationCase first = DoeBigHillVacuumFractionationCase.create("First", 250.0,
+        qualifiedInputs());
+    DoeBigHillVacuumFractionationCase second = DoeBigHillVacuumFractionationCase.create("Second", 250.0,
+        qualifiedInputs());
 
     assertEquals(first.getFeedStream().getThermoSystem().getNumberOfComponents(),
         second.getFeedStream().getThermoSystem().getNumberOfComponents());
@@ -77,30 +77,22 @@ public class DoeBigHillVacuumFractionationCaseTest {
         () -> DoeBigHillVacuumFractionationCase.create("Vacuum", 0.0, qualifiedInputs()));
     assertThrows(IllegalArgumentException.class,
         () -> DoeBigHillVacuumFractionationCase.create("Vacuum", Double.NaN, qualifiedInputs()));
-    assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumFractionationCase.create("Vacuum", 100.0, null));
+    assertThrows(NullPointerException.class, () -> DoeBigHillVacuumFractionationCase.create("Vacuum", 100.0, null));
 
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(1, 1, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1, 1, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
     assertThrows(IllegalArgumentException.class,
         () -> new OperatingInputs(101, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 0, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 0, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
     assertThrows(IllegalArgumentException.class,
         () -> new OperatingInputs(12, 13, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5));
     assertThrows(IllegalArgumentException.class,
         () -> new OperatingInputs(12, 4, Double.NaN, 0.12, 0.08, 0.16, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.16, 0.16, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 4, 640.0, 0.07, 0.08, 0.16, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 4, 640.0, 0.17, 0.08, 0.16, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.08,
-            DoeBigHillVacuumFractionationCase.STANDARD_ATMOSPHERE_BARA, 700.0, 0.5));
-    assertThrows(IllegalArgumentException.class,
-        () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 640.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.16, 0.16, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 4, 640.0, 0.07, 0.08, 0.16, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 4, 640.0, 0.17, 0.08, 0.16, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.08,
+        DoeBigHillVacuumFractionationCase.STANDARD_ATMOSPHERE_BARA, 700.0, 0.5));
+    assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 640.0, 0.5));
     assertThrows(IllegalArgumentException.class,
         () -> new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, Double.NaN));
   }
