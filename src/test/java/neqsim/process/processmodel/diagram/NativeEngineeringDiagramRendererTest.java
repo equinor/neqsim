@@ -392,6 +392,61 @@ class NativeEngineeringDiagramRendererTest {
   }
 
   @Test
+  void routesUnprotectedFixedPortConnectionsAroundPinnedEquipment() {
+    EngineeringGraph graph = new EngineeringGraph("OBSTACLE-AWARE-ROUTING", "A");
+    graph.addNode(new EngineeringNode("equipment:a", EngineeringNode.Kind.EQUIPMENT, "a", "Equipment A")
+        .putProperty("equipmentName", "A"));
+    graph.addNode(new EngineeringNode("equipment:obstacle", EngineeringNode.Kind.EQUIPMENT, "obstacle", "Obstacle")
+        .putProperty("equipmentName", "OBSTACLE"));
+    graph.addNode(new EngineeringNode("equipment:b", EngineeringNode.Kind.EQUIPMENT, "b", "Equipment B")
+        .putProperty("equipmentName", "B"));
+    graph.addNode(endpointNode("nozzle:a-out", "equipment:a", "OUTLET"));
+    graph.addNode(endpointNode("nozzle:b-in", "equipment:b", "INLET"));
+    graph.addNode(connectionNode("connection:around-obstacle", "nozzle:a-out", "nozzle:b-in", "A", "B", false));
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-012",
+        "Obstacle-aware route reference", ContentProfile.PFD);
+    String sheetKey = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", sheetKey, 80.0, 80.0))
+        .withPinnedPosition(reviewedPosition("equipment:obstacle", sheetKey, 165.0, 80.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", sheetKey, 250.0, 80.0));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-012",
+        "Obstacle-aware route reference", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+    String route = pointsForSemanticId(svg, "connection:around-obstacle");
+
+    assertTrue(route.split(" ").length >= 6, route);
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_OBJECT_INTERSECTION"));
+    assertEquals(result.getSvgBySheetId(), new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render().getSvgBySheetId());
+    assertTrue(result.isComplete());
+  }
+
+  @Test
+  void keepsLongLineTerminalIdentityInsideItsSymbol() {
+    EngineeringGraph graph = new EngineeringGraph("LINE-TERMINAL-LABEL", "A");
+    graph.addNode(new EngineeringNode("line:reflux", EngineeringNode.Kind.LINE, "reflux", "dew point liquid reflux 1"));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-NATIVE-LINE-LABEL",
+        "Line-terminal label reference", ContentProfile.PFD);
+    EngineeringDiagramConventionRegister conventions = new EngineeringDiagramConventionRegister()
+        .withConvention(new SymbolConvention(EngineeringNode.Kind.LINE, SymbolShape.LINE_TERMINAL, "#1f2937", "#eff6ff",
+            "project-line-profile:v1", EngineeringDiagramConventionRegister.EvidenceState.PROPOSED, "", "",
+            "2026-09-09T00:00:00Z", "A"));
+
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A1_LANDSCAPE, conventions,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+
+    assertTrue(svg.contains(">dew point liquid reflux 1</text>"));
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_LABEL_OVERFLOW"));
+    assertTrue(result.isComplete());
+  }
+
+  @Test
   void alignsSingleOffPageConnectorsWithTheirLocalEndpoints() {
     EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
         EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
