@@ -2461,6 +2461,38 @@ Neutral EOS flashes do not dispatch to this solver.
 
 ---
 
+
+### Direct GERG-2008 gas flash lifecycle
+
+The direct GERG-2008 regression uses `SystemGERG2008Eos` with the standard
+GERG-2008 model and the following synthetic molar feed:
+
+- methane: 0.90
+- ethane: 0.05
+- propane: 0.03
+- carbon dioxide: 0.02
+
+The qualification covers 300-350 K and 50-100 bara. It activates the two
+historically disabled direct-flash checks and exercises an initial state, changed
+temperature, changed pressure, an independently constructed changed state,
+return to the initial state, deterministic repeat, and complete thermodynamic
+property access.
+
+Every state must remain a single GAS phase with beta and composition
+normalization within `5e-12`, component material balance and `x=z` below
+`1e-10`, positive finite component fugacity coefficients, compressibility,
+density, heat capacities, and sound speed, and finite energy and
+Joule-Thomson outputs. The regression also requires density to decrease when
+temperature rises at fixed pressure and increase when pressure rises at fixed
+temperature. Fresh and reused calculations must agree within a `1e-8`
+relative budget; the unchanged-state repeat uses `1e-10`.
+
+This is synthetic numerical and state-cache qualification. Existing
+direct-versus-SRK GERG property checks provide supplementary implementation
+comparison, but this matrix does not independently validate GERG parameters,
+multiphase GERG behavior, transport properties, phase envelopes, or process
+equipment and makes no wall-clock performance claim.
+
 ## 7. References
 
 ### Primary References
