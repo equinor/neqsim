@@ -585,12 +585,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(streaming.get("contractTrustAvailable").getAsBoolean());
     assertEquals(7, streaming.get("contractEvidenceCount").getAsInt());
     assertEquals(7, streaming.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(
-        streaming.getAsJsonArray("contractEvidenceSources").toString().contains("StreamingRunnerTest.java"));
-    assertTrue(
-        streaming.getAsJsonArray("contractEvidenceSources").toString().contains("McpPrincipalScopingTest.java"));
-    assertTrue(
-        streaming.getAsJsonArray("contractEvidenceSources").toString().contains("test_streaming_protocol.py"));
+    assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("StreamingRunnerTest.java"));
+    assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("McpPrincipalScopingTest.java"));
+    assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("test_streaming_protocol.py"));
     assertTrue(
         streaming.getAsJsonArray("contractEvidenceSources").toString().contains("STREAMING_SIMULATION_CONTRACT.md"));
     assertTrue(streaming.get("evidenceBoundary").getAsString().contains("statistical or uncertainty validity"));
