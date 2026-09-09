@@ -1384,6 +1384,11 @@ def _requested_skill_export_targets(install_args):
     return targets
 
 
+# Skills already refreshed in this process; agents share required skills, so
+# without this a single --all --force run reinstalls popular skills many times.
+_SKILLS_REFRESHED_THIS_RUN = set()
+
+
 def _skill_install_args(skill_name, install_args):
     """Build skill installer args that preserve agent export target options.
 
@@ -1399,6 +1404,7 @@ def _skill_install_args(skill_name, install_args):
         vscode_scope=getattr(install_args, "vscode_scope", "user"),
         vscode_dir=getattr(install_args, "vscode_skills_dir", None),
         export_dir=getattr(install_args, "export_dir", None),
+        no_pip=getattr(install_args, "no_pip", False),
     )
 
 
@@ -1521,6 +1527,9 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
     force_reinstall = install_missing and bool(getattr(install_args, "force", False))
     missing = _find_missing_required_skills(required_skills)
     to_reinstall = required_skills if force_reinstall else missing
+    # A skill required by many agents must only be refreshed once per run.
+    to_reinstall = [skill for skill in to_reinstall
+                    if skill in missing or skill not in _SKILLS_REFRESHED_THIS_RUN]
 
     if not to_reinstall:
         print("  [OK] Required skills available: {skills}".format(
@@ -1564,6 +1573,7 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
         try:
             install_skill.cmd_install(skill_catalog, args)
             installed_now.append(skill_name)
+            _SKILLS_REFRESHED_THIS_RUN.add(skill_name)
         except SystemExit:
             unresolved.append(skill_name)
     export_check_skills = [skill for skill in required_skills if skill not in installed_now]
@@ -1906,23 +1916,34 @@ def _install_all_agents(agents, args):
     manifest = load_manifest()
     installed = []
     failed = []
-    for index, agent in enumerate(unique, start=1):
-        name = agent.get("name", "")
-        print("  [{index}/{total}] {name}".format(
-            index=index, total=total, name=name))
-        try:
-            _validate_safe_name(name)
-        except SystemExit:
-            failed.append(name)
-            continue
-        if _install_agent_record(agent, args, manifest):
-            installed.append(name)
-        else:
-            failed.append(name)
+    batching = not install_skill._pip_disabled(args)
+    if batching:
+        install_skill.begin_package_install_batch()
+    try:
+        for index, agent in enumerate(unique, start=1):
+            name = agent.get("name", "")
+            print("  [{index}/{total}] {name}".format(
+                index=index, total=total, name=name))
+            try:
+                _validate_safe_name(name)
+            except SystemExit:
+                failed.append(name)
+                continue
+            if _install_agent_record(agent, args, manifest):
+                installed.append(name)
+            else:
+                failed.append(name)
+    finally:
+        if batching:
+            install_skill.flush_package_install_batch()
 
     print("\n  ==== Install summary ====")
     print("  Installed/OK: {count}".format(count=len(installed)))
     print("  Failed: {count}".format(count=len(failed)))
+    deferred = install_skill._count_deferred_packages()
+    if deferred:
+        print("  Deferred skill Python packages: {count}".format(count=deferred))
+        print("  Run: neqsim skill sync-packages   (or 'neqsim skill ensure <name>' on first use)")
     if failed:
         print("  Failed agents: {names}".format(names=", ".join(failed)))
         sys.exit(1)
@@ -2541,6 +2562,7 @@ def main():
         "  neqsim agent install --all --target vscode",
         "  neqsim agent install --all --source community --target vscode",
         "  neqsim agent install --all --source private --target vscode",
+        "  neqsim agent install --all --target vscode --force --no-pip  # skip skill package installs",
         "  neqsim agent installed",
         "  neqsim agent info neqsim-example-agent",
         "  neqsim agent validate neqsim-example-agent",
@@ -2617,6 +2639,9 @@ def main():
     p_install.add_argument(
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
+    p_install.add_argument(
+        "--no-pip", dest="no_pip", action="store_true",
+        help="Do not pip install required skills' Python packages; defer to 'neqsim skill sync-packages'")
 
     sub.add_parser("installed", help="Show installed agents")
 
