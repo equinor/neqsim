@@ -3,7 +3,6 @@ title: Pitzer hydrate equilibrium for brines
 description: CO2 and general gas-hydrate onset calculations coupled to Pitzer aqueous activities, with explicit parameter coverage and model limits.
 ---
 
-
 `SystemPitzer` supports incipient hydrate temperature, pressure and equilibrium curves through
 `ThermodynamicOperations`. This couples the existing Pitzer aqueous model and SRK fluid phases to
 van der Waals–Platteeuw hydrate equilibrium. It calculates the onset boundary; it does not calculate
