@@ -28,6 +28,7 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticOb
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetOverviewRegion;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringNode;
 
@@ -425,6 +426,8 @@ public final class NativeEngineeringDiagramRenderer {
     page.commands.add(Command.text(page.width - 12.0, 17.0, 2.7,
         drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
 
+    addOverviewRegions(page, drawing, sheet, objects, contentBottom, diagnostics);
+
     Map<String, Point> positions = layoutPositions(sheet, objects, contentRight, contentBottom, diagnostics);
     addDrawingQualityDiagnostics(sheet, objects, positions, page.width, contentBottom, diagnostics);
     Map<String, OffPageConnector> connectors = new TreeMap<String, OffPageConnector>();
@@ -481,6 +484,65 @@ public final class NativeEngineeringDiagramRenderer {
     addPidProposalOverlay(page, objects, positions);
     addTitleBlock(page, drawing, sheet);
     return page;
+  }
+
+  private void addOverviewRegions(Page page, Drawing drawing, Sheet overview, Map<String, SemanticObject> objects,
+      double contentBottom, List<Diagnostic> diagnostics) {
+    if (overview.getOverviewRegions().isEmpty()) {
+      return;
+    }
+    double firstRegionTop = Double.MAX_VALUE;
+    for (SheetOverviewRegion region : overview.getOverviewRegions()) {
+      firstRegionTop = Math.min(firstRegionTop, region.getY());
+    }
+    page.commands.add(Command.text(page.width / 2.0, Math.max(CONTENT_TOP + 10.0, firstRegionTop - 14.0), 3.0,
+        "CONTROLLED SHEET INDEX - NOT PROCESS CONNECTIVITY", "#475569", "overview-index-boundary", "middle"));
+    Map<String, Sheet> sheetsByKey = new TreeMap<String, Sheet>();
+    for (Sheet candidate : drawing.getSheets()) {
+      sheetsByKey.put(candidate.getKey(), candidate);
+    }
+    for (SheetOverviewRegion region : overview.getOverviewRegions()) {
+      Sheet target = sheetsByKey.get(region.getTargetSheetKey());
+      String regionId = "overview-region:" + overview.getId() + ":" + region.getTargetSheetKey();
+      if (target == null) {
+        diagnostics.add(diagnostic(Severity.ERROR, "DIAGRAM_RENDER_UNKNOWN_OVERVIEW_TARGET",
+            "Controlled overview region references a target sheet absent from the drawing", regionId));
+        continue;
+      }
+      if (region.getX() < 8.0 || region.getY() < CONTENT_TOP || region.getX() + region.getWidth() > page.width - 8.0
+          || region.getY() + region.getHeight() > contentBottom) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_OVERVIEW_REGION_OUTSIDE_SHEET",
+            "Controlled overview region intersects the sheet border, header, or title-block area", regionId));
+      }
+      page.commands.add(Command.rect(region.getX(), region.getY(), region.getWidth(), region.getHeight(), "#64748b",
+          "#f8fafc", 0.7, regionId, "4 2"));
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + 12.0, 3.3,
+          "SHEET " + target.getNumber() + " - " + target.getTitle(), "#0f172a", regionId + ":title", ""));
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + 22.0, 2.2,
+          region.getEvidenceState().name() + " CONTROLLED LAYOUT INDEX", "#64748b", regionId + ":evidence", ""));
+
+      List<String> equipmentLabels = new ArrayList<String>();
+      for (String objectId : target.getObjectNodeIds()) {
+        SemanticObject object = objects.get(objectId);
+        if (object != null && object.getKind() == EngineeringNode.Kind.EQUIPMENT) {
+          equipmentLabels.add(displayLabel(object));
+        }
+      }
+      Collections.sort(equipmentLabels);
+      int rows = Math.max(1, (equipmentLabels.size() + 1) / 2);
+      double rowSpacing = rows == 1 ? 0.0 : Math.min(32.0, (region.getHeight() - 76.0) / (rows - 1));
+      for (int index = 0; index < equipmentLabels.size(); index++) {
+        int column = index / rows;
+        int row = index % rows;
+        double x = region.getX() + 12.0 + column * (region.getWidth() / 2.0);
+        double y = region.getY() + 42.0 + row * rowSpacing;
+        page.commands
+            .add(Command.text(x, y, 3.2, equipmentLabels.get(index), "#1f2937", regionId + ":equipment:" + index, ""));
+      }
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + region.getHeight() - 10.0, 2.3,
+          equipmentLabels.size() + " CANONICAL EQUIPMENT OBJECTS - SEE REFERENCED SHEET", "#475569",
+          regionId + ":count", ""));
+    }
   }
 
   private void addDocumentDiagnostics(List<Diagnostic> diagnostics) {

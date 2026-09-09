@@ -83,6 +83,14 @@ relationships retain stable separated lanes. PFD rendering, the simulation, and 
 exchange profiles remain unchanged. The overlay is review evidence, not a
 complete project P&ID or a qualified symbol catalog.
 
+The plant overview on sheet 1 also carries three source-evidenced controlled
+sheet-index regions. Each region names its referenced detail sheet and lists
+only the canonical equipment assigned there. The regions are explicitly marked
+`NOT PROCESS CONNECTIVITY`: they improve whole-sheet navigation and utilization
+without copying semantic equipment, synthesizing area flows, or changing the
+canonical topology. Their paper-millimetre geometry is part of the proposed
+layout register and remains review-required.
+
 The bundle manifest records that projection boundary and fingerprints all three
 sidecars. `isComplete()` confirms bundle delivery, not an approved P&ID design;
 the completeness report retains engineering errors and review gaps.
@@ -92,7 +100,7 @@ the completeness report retains engineering errors and review gaps.
 | Requirement | Current implementation | Automated evidence | Remaining acceptance work |
 | --- | --- | --- | --- |
 | One canonical plant, distinct PFD/P&ID profiles | Dual-profile facade, shared source fingerprint, and P&ID-only proposal overlay | `EngineeringDiagramDualProfileDeliveryTest` and full-model profile assertions | Improve whole-sheet clarity without changing the canonical plant |
-| Reviewable vector and PDF sheets | Native A1 SVG/PDF sheets, process-equipment symbols, fixed-port orthogonal routing, endpoint-aligned separated off-page lanes, collision-scored horizontal route labels, flow arrows, compact multi-row P&ID proposal racks, and external same-equipment signal tracks | Renderer label-segment/connector-alignment tests, rack-span/row/track checks, bundle artifact checks, and fresh full-sheet/detail inspection | Resolve any residual process-route congestion and retain accountable reviewed baselines |
+| Reviewable vector and PDF sheets | Native A1 SVG/PDF sheets, process-equipment symbols, fixed-port orthogonal routing, endpoint-aligned separated off-page lanes, collision-scored horizontal route labels, flow arrows, controlled sheet-index regions, compact multi-row P&ID proposal racks, and external same-equipment signal tracks | Renderer label-segment/connector-alignment and non-connectivity sheet-index tests, rack-span/row/track checks, bundle artifact checks, and fresh full-sheet/detail inspection | Resolve any residual process-route congestion and retain accountable reviewed baselines |
 | Stable regeneration | Deterministic child and bundle manifests plus byte-stable SVG/PDF | Fresh-model repeated-delivery test | Retain accountable reviewed visual baselines |
 | Native PFD exchange | Native DEXPI 2.0 Process artifact | Delivery assessment, bundle labels, and full-model topology assertions | External interoperability qualification |
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
@@ -134,12 +142,15 @@ mass balance within 0.01 percent or if `24-VB-01` appears in the canonical
 runnable model. Four proposed balance-boundary declarations use `well stream`
 as the inlet and `fuel gas`, `export gas`, and `export oil` as outlets.
 
-The retained layout register proposes three A1 landscape sheets: three-stage
+The retained layout register proposes three A1 landscape detail sheets: three-stage
 separation/oil export, flash-gas recompression/dew point, and fuel split/gas
 export compression. Major model objects have persistent proposed sheet
-assignments and paper-millimetre pins. Fixed-port orthogonal routing remains
-active for unprotected connections. These records are reproducible teaching
-layout evidence, not checked project layout or engineering approval.
+assignments and paper-millimetre pins. Sheet 1 indexes those three regions with
+their canonical equipment membership while leaving process connectivity to the
+semantic routes and reciprocal continuations above the index. Fixed-port
+orthogonal routing remains active for unprotected connections. These records
+are reproducible teaching layout evidence, not checked project layout or
+engineering approval.
 
 The slow regression test executes two fresh plants and compares manifest,
 source-topology, SVG, and PDF evidence byte-for-byte. It also checks the

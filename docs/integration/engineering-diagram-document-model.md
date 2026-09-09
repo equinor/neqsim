@@ -134,6 +134,14 @@ the renderer's whole-sheet collision diagnostics. Fixed-port routing is determin
 standards-qualified, or drawing-approved. Projects should retain protected routes where accountable
 layout refinement is required.
 
+`EngineeringDiagramLayoutRegister.SheetOverviewRegion` can place a controlled
+detail-sheet index on another sheet using source-evidenced paper-millimetre
+geometry. The native renderer labels the region with the referenced sheet and
+its canonical equipment membership. It also marks the index as not process
+connectivity, so the feature cannot be mistaken for duplicated equipment or a
+synthesized flowsheet. Unknown/self references fail document validation and
+out-of-bounds regions remain visible with a structured warning.
+
 ## Source-linked P&ID proposal overlay
 
 The five-argument `NativeEngineeringDiagramRenderer` constructor accepts an optional
