@@ -75,10 +75,12 @@ thermodynamic (hydrate-suppression) effect is captured — plain
 
 For Pitzer hydrate onset, load `neqsim-electrolyte-systems` and read
 `docs/thermo/pitzer_hydrate_equilibrium.md`. Accept its hand-off of salt mole basis, dataset,
-explicit CO2-chloride zeta values, pressure grid and operating temperature. Use the standard
+explicit CO2-chloride zeta values (and K-Mg theta when both ions are present), pressure grid and operating temperature. Use the standard
 temperature/pressure/curve operations; the Pitzer route checks the fugacity residual and throws
 on failed points. Preserve the aqueous reference-state convention and guest Henry limits.
 Do not label onset calculations as hydrate amounts, kinetics or validated complete drilling-mud predictions.
+Carry forward the experimental assessment separately from convergence: the mixed-chloride high-pressure cases
+include errors exceeding 1 K. Do not generalize the NaCl benchmark to all salts, concentrations or pressures.
 
 ### Hydrate Formation Temperature
 

@@ -70,7 +70,15 @@ requires a supplied value; an explicit zero is a screening assumption. Use this 
 before flashing or defining custom interactions. The dataset identity is
 `usgs-phreeqc-pitzer-co2-chlorides-user-zeta-v1` and remains unqualified. It does not change the
 automatic catalog policy. See [Pitzer hydrate equilibrium](pitzer_hydrate_equilibrium.md) for the
-salt basis, independent NaCl comparison and remaining limits.
+salt basis, independent comparisons and remaining limits.
+
+The catalog also lacks a K+-Mg++ theta row. When both ions are present, use
+`applyPhreeqcCo2ChlorideParameters(zeta, potassiumMagnesiumTheta)` with an explicit finite constant.
+This overload uses identity `usgs-phreeqc-pitzer-co2-chlorides-user-theta-zeta-v1` and remains
+unqualified. The original overload rejects that topology; it does not insert a zero theta.
+The 57-point hydrate reference assessment preserves six mixed-brine errors beyond 1 K,
+unavailable cold/precipitating cases and a CO2 phase mismatch. Neither a complete topology nor
+a passing regression suite promotes these manual parameters to a qualified dataset.
 
 Interaction coverage and scientific qualification remain independent contracts. A complete topology
 may still use a dataset whose full species/range matrix lacks held-out evidence.

@@ -89,6 +89,19 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Loads the CO2/chloride family with explicit missing zeta and potassium-magnesium theta interactions.
+   *
+   * @param co2ChlorideZeta constant zeta keyed by each present cation name
+   * @param potassiumMagnesiumTheta finite constant K+-Mg++ theta in kg/mol; no default is assumed
+   * @see PitzerParameterDatasets#applyPhreeqcCo2ChlorideParameters(PhasePitzer, java.util.Map, double)
+   */
+  public void applyPhreeqcCo2ChlorideParameters(java.util.Map<String, Double> co2ChlorideZeta,
+      double potassiumMagnesiumTheta) {
+    PitzerParameterDatasets.applyPhreeqcCo2ChlorideParameters((PhasePitzer) phaseArray[1], co2ChlorideZeta,
+        potassiumMagnesiumTheta);
+  }
+
+  /**
    * Reports whether automatic parameter loading prefers the bundled PHREEQC catalog.
    *
    * @return {@code true} for the default catalog-first policy

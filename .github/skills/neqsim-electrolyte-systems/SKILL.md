@@ -38,10 +38,15 @@ For Pitzer water activities use `SystemPitzer` with `setMixingRule("classic")` a
 `applyPhreeqcCo2ChlorideParameters(Map<String, Double>)` loads the pinned PHREEQC Na/K/Ca/Mg-Cl
 and CO2 lambda rows, but requires an explicit CO2-cation-Cl zeta for every present cation.
 Zero is an explicit screening assumption, not a fitted catalog coefficient. It remains unqualified.
+When both K+ and Mg++ are present (including zero-amount components), the pinned catalog also lacks their theta row.
+Use `applyPhreeqcCo2ChlorideParameters(zeta, potassiumMagnesiumTheta)` with an explicit finite value;
+the one-argument overload rejects that topology. For concentration sweeps retain the same components and neutral
+parameter dataset at zero salt. See the guide's 57-point reference assessment: numerical convergence and a
+passing regression suite do not mean every experimental comparison passed the 1 K accuracy criterion.
 Do not silently fill missing tuples or equate parameter coverage with scientific validation.
 
 Hand off to `neqsim-flow-assurance` / `flow.assurance` with the configured fluid, salt mole basis,
-dataset identity, supplied zeta values, pressure grid and operating temperature. Carry forward
+dataset identity, supplied zeta/theta values, pressure grid and operating temperature. Carry forward
 the Henry-domain lower limit (CO2 274.19 K; methane 275.46 K) and onset-only scope; subzero
 hydrate predictions require a qualified low-temperature aqueous gas reference.
 

@@ -143,7 +143,7 @@ public class PitzerHydrateFlash extends ConstantDutyTemperatureFlash {
       }
       throw new IllegalStateException("No Pitzer hydrate equilibrium bracket in "
           + (solvePressure ? minimumPressure + "-" + maximumPressure + " bara"
-              : minimumTemperature + "-" + maximumTemperature + " K")
+              : Math.max(minimumTemperature, minimumHenryTemperature()) + "-" + maximumTemperature + " K")
           + "; last log fugacity residual=" + residual);
     } finally {
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
