@@ -458,7 +458,9 @@ class NativeEngineeringDiagramRendererTest {
   }
 
   private static double pointY(String point) {
-    return Double.parseDouble(point.split(",", 2)[1]);
+    String[] coordinates = point.split(",", 2);
+    assertTrue(coordinates.length == 2, "Malformed SVG point: " + point);
+    return parseCoordinate(coordinates[1], "point y in '" + point + "'");
   }
 
   private static double textCoordinateForSemanticId(String svg, String semanticId, String coordinate) {
@@ -475,10 +477,10 @@ class NativeEngineeringDiagramRendererTest {
     String attribute = coordinate + "=\"";
     int valueStart = svg.indexOf(attribute, elementStart) + attribute.length();
     int valueEnd = svg.indexOf('"', valueStart);
-    assertTrue(elementStart >= 0);
     assertTrue(valueStart >= attribute.length());
     assertTrue(valueEnd > valueStart);
-    return Double.parseDouble(svg.substring(valueStart, valueEnd));
+    String value = svg.substring(valueStart, valueEnd);
+    return parseCoordinate(value, coordinate + " for " + semanticId);
   }
 
   private static boolean pointLiesOnHorizontalSegment(String points, double x, double y) {
@@ -486,16 +488,26 @@ class NativeEngineeringDiagramRendererTest {
     for (int index = 1; index < vertices.length; index++) {
       String[] start = vertices[index - 1].split(",", 2);
       String[] end = vertices[index].split(",", 2);
-      double startX = Double.parseDouble(start[0]);
-      double startY = Double.parseDouble(start[1]);
-      double endX = Double.parseDouble(end[0]);
-      double endY = Double.parseDouble(end[1]);
+      String context = "polyline segment '" + vertices[index - 1] + " " + vertices[index] + "'";
+      assertTrue(start.length == 2 && end.length == 2, "Malformed SVG " + context);
+      double startX = parseCoordinate(start[0], context);
+      double startY = parseCoordinate(start[1], context);
+      double endX = parseCoordinate(end[0], context);
+      double endY = parseCoordinate(end[1], context);
       if (Math.abs(startY - endY) < 0.0000001 && Math.abs(y - startY) < 0.0000001 && x >= Math.min(startX, endX)
           && x <= Math.max(startX, endX)) {
         return true;
       }
     }
     return false;
+  }
+
+  private static double parseCoordinate(String value, String context) {
+    try {
+      return Double.parseDouble(value.trim());
+    } catch (NumberFormatException error) {
+      throw new AssertionError("Non-numeric SVG coordinate '" + value + "' for " + context, error);
+    }
   }
 
   private static PinnedPosition reviewedPosition(String semanticObjectId, String sheetKey, double x, double y) {
