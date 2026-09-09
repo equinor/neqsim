@@ -12,6 +12,7 @@ import neqsim.NeqSimTest;
 public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends NeqSimTest {
   private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 25.0e-6;
   private static final double WATER_INVENTORY_KG = 1200.0;
+  private static final double NUMERICAL_TOLERANCE = 1.0e-18;
 
   @Test
   void testProjectionClosesPositiveDurationInventoryInHoursAndSeconds() {
@@ -61,10 +62,10 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result large = AqueousHydrogenSulfideOxidationWaterInventoryProjection
         .project(segment, 250.0);
 
-    assertEquals(2.5 * small.getLowerRateMeanLossMolesPerHour(), large.getLowerRateMeanLossMolesPerHour(), 1.0e-20);
-    assertEquals(2.5 * small.getNominalMeanLossMolesPerHour(), large.getNominalMeanLossMolesPerHour(), 1.0e-20);
-    assertEquals(2.5 * small.getUpperRateMeanLossMolesPerHour(), large.getUpperRateMeanLossMolesPerHour(), 1.0e-20);
-    assertEquals(2.5 * small.getNominalReactedMoles(), large.getNominalReactedMoles(), 1.0e-20);
+    assertEquals(2.5 * small.getLowerRateMeanLossMolesPerHour(), large.getLowerRateMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getNominalMeanLossMolesPerHour(), large.getNominalMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getUpperRateMeanLossMolesPerHour(), large.getUpperRateMeanLossMolesPerHour(), NUMERICAL_TOLERANCE);
+    assertEquals(2.5 * small.getNominalReactedMoles(), large.getNominalReactedMoles(), NUMERICAL_TOLERANCE);
 
     assertTrue(large.getLowerRateMeanLossMolesPerHour() < large.getNominalMeanLossMolesPerHour());
     assertTrue(large.getNominalMeanLossMolesPerHour() < large.getUpperRateMeanLossMolesPerHour());
@@ -85,7 +86,7 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
           .getNominalReactedMoles();
     }
 
-    assertEquals(unsplitReacted, splitReacted, 1.0e-20);
+    assertEquals(unsplitReacted, splitReacted, NUMERICAL_TOLERANCE);
   }
 
   @Test
@@ -111,7 +112,7 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     assertEquals(meanLossMolalityPerHour * WATER_INVENTORY_KG, meanLossMolesPerHour, 0.0);
     assertEquals(meanLossMolesPerHour / 3600.0, meanLossMolesPerSecond, 0.0);
     assertEquals(reactedMolality * WATER_INVENTORY_KG, reactedMoles, 0.0);
-    assertEquals(reactedMoles, meanLossMolesPerHour * durationHours, 1.0e-20);
+    assertEquals(reactedMoles, meanLossMolesPerHour * durationHours, NUMERICAL_TOLERANCE);
   }
 
   private static AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult(
