@@ -3657,13 +3657,20 @@ public class TPmultiflash extends TPflash {
    * The bounded active-set fallback tests each possible phase removal on a clone, accepts only a normalized,
    * material-balanced, fugacity-equal candidate, and selects the lowest-Gibbs candidate. The live system changes only
    * when that candidate also lowers Gibbs energy relative to the stalled three-phase state. Chemical, electrolyte,
-   * solid, wax, and already-converged three-phase systems retain their existing paths.
+   * active solid, wax, and already-converged three-phase systems retain their existing paths. A pending solid check
+   * does not disable fluid-phase recovery: the enclosing TPflash checks the selected solids after the fluid solve.
    * </p>
    */
   private void rescueStalledThreePhaseEndpoint() {
     if (!betaSolveStalled || system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons()
-        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
+        || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
       return;
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseType type = system.getPhase(phaseIndex).getType();
+      if (type != PhaseType.GAS && type != PhaseType.LIQUID && type != PhaseType.OIL && type != PhaseType.AQUEOUS) {
+        return;
+      }
     }
 
     system.init(1);
