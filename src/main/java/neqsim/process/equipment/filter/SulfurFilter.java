@@ -28,10 +28,16 @@ import neqsim.util.nucleation.ClassicalNucleationTheory;
  * <ul>
  * <li>Performs TP-solid flash on inlet to detect solid S8 phase</li>
  * <li>Removes solid S8 from the outlet stream based on removal efficiency</li>
- * <li>Tracks cumulative S8 mass loading (kg/hr) for filter element sizing</li>
+ * <li>Reports captured S8 mass flow (kg/hr) and accumulates loading (kg) during transient operation</li>
  * <li>Calculates filter change interval based on element capacity</li>
  * <li>Integrates with {@link SulfurFilterMechanicalDesign} for vessel sizing and cost</li>
  * </ul>
+ *
+ * <p>
+ * Capture is based on S8 moles in the solid phase after the pressure drop, at the inlet temperature. The outlet is
+ * re-equilibrated with the captured S8 subtracted from its overall component inventory; all other component flows are
+ * conserved. Removal efficiency applies to solid S8, so dissolved sulfur and uncaptured solids may remain.
+ * </p>
  *
  * <p>
  * Usage example:
@@ -150,53 +156,40 @@ public class SulfurFilter extends Filter {
     solidSulfurRemovalRate = 0.0;
     solidS8MassFractionInlet = 0.0;
 
-    // Check if solid phase exists and contains S8
-    if (system.hasPhaseType(PhaseType.SOLID) && system.hasComponent("S8")) {
-      solidS8Detected = true;
-
-      // Find the solid phase and get S8 mass
+    // Component.getNumberOfmoles() is the system inventory replicated in every phase.
+    // Capture must use the S8 inventory physically present in solid phases.
+    if (system.hasComponent("S8")) {
+      double solidS8Moles = 0.0;
       for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
         if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-          double solidPhaseMass = system.getPhase(phaseIdx).getMass();
-          // S8 mass fraction in the total stream that is solid
-          double totalMass = system.getMass("kg");
-          if (totalMass > 0) {
-            solidS8MassFractionInlet = solidPhaseMass / totalMass;
-          }
-          break;
+          solidS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfMolesInPhase();
         }
       }
-
-      // Calculate removal rate: mass flow * solid fraction * efficiency
-      double effectiveRemovalEfficiency = getCurrentRemovalEfficiency();
-      solidSulfurRemovalRate = gasFlowRate * solidS8MassFractionInlet * effectiveRemovalEfficiency;
-
-      // Remove solid S8 from outlet: reduce S8 component by removal efficiency
-      // Set S8 content in outlet to only the fraction that passes through
-      if (system.hasComponent("S8") && effectiveRemovalEfficiency > 0) {
-        // Get current S8 moles in gas phase and reduce total S8
-        double currentS8Moles = 0.0;
-        double solidS8Moles = 0.0;
-        for (int phaseIdx = 0; phaseIdx < system.getNumberOfPhases(); phaseIdx++) {
-          if (system.getPhase(phaseIdx).getType() == PhaseType.SOLID) {
-            solidS8Moles = system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
-          }
-          currentS8Moles += system.getPhase(phaseIdx).getComponent("S8").getNumberOfmoles();
+      solidS8Detected = solidS8Moles > 0.0;
+      if (solidS8Detected) {
+        int s8Index = system.getComponent("S8").getComponentNumber();
+        double s8MolarMass = system.getComponent("S8").getMolarMass();
+        if (gasFlowRate > 0.0) {
+          solidS8MassFractionInlet = solidS8Moles * s8MolarMass * 3600.0 / gasFlowRate;
         }
 
-        // Remove solid S8 from the system (filter captures it)
-        double molesToRemove = solidS8Moles * effectiveRemovalEfficiency;
-        if (molesToRemove > 0 && currentS8Moles > molesToRemove) {
-          system.addComponent("S8", -molesToRemove);
+        double[] outletMolarFlows = system.getMolarRate();
+        double molesToRemove = Math.min(outletMolarFlows[s8Index], solidS8Moles * getCurrentRemovalEfficiency());
+        if (molesToRemove > 0.0) {
+          outletMolarFlows[s8Index] -= molesToRemove;
+          // Reset all allocated phases from one component ledger. Negative addComponent
+          // updates can otherwise be overwritten when a solid-bearing system is initialized.
+          system.setMolarFlowRates(outletMolarFlows);
+          // Restore the fluid/solid phase mapping before equilibrium is recalculated.
+          system.init(0);
+          ops.TPSolidflash();
+          system.initProperties();
+          solidSulfurRemovalRate = molesToRemove * s8MolarMass * 3600.0;
         }
-
-        // Re-flash without solid check to get clean gas outlet
-        ops.TPflash();
-        system.initProperties();
       }
     }
-
     outStream.setThermoSystem(system);
+    outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
 
     // Run particle size prediction using CNT
@@ -214,6 +207,7 @@ public class SulfurFilter extends Filter {
    * @param system the thermodynamic system after flash calculation
    */
   private void runParticleSizePrediction(SystemInterface system) {
+    supersaturationRatio = 1.0;
     nucleationModel = ClassicalNucleationTheory.sulfurS8();
     nucleationModel.setTemperature(system.getTemperature());
     nucleationModel.setTotalPressure(system.getPressure() * 1e5); // bara to Pa
@@ -226,10 +220,10 @@ public class SulfurFilter extends Filter {
       double solidS8moles = 0;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getPhase(i).hasComponent("S8")) {
-          double moles = system.getPhase(i).getComponent("S8").getNumberOfmoles();
+          double moles = system.getPhase(i).getComponent("S8").getNumberOfMolesInPhase();
           totalS8moles += moles;
           if (system.getPhase(i).getType() == PhaseType.SOLID) {
-            solidS8moles = moles;
+            solidS8moles += moles;
           }
         }
       }
