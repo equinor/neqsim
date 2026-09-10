@@ -491,6 +491,8 @@ Figure saved as 'vfp_curves.png'
 
 </details>
 
+![Result figure from cell 15](figures/MultiScenarioVFP_Tutorial_cell_15_output_2.png)
+
 ## 7.1 VFP Feasibility Visualization
 
 Visualize which GOR/WC combinations produce feasible VFP points at a given rate.
@@ -597,6 +599,8 @@ Figure saved as 'vfp_feasibility.png'
 
 </details>
 
+![Result figure from cell 17](figures/MultiScenarioVFP_Tutorial_cell_17_output_2.png)
+
 ## 8. Using the Java MultiScenarioVFPGenerator
 
 For full-scale VFP generation with parallel execution and Eclipse export, use the Java `MultiScenarioVFPGenerator` class directly. This is most easily done from Java code.
@@ -688,4 +692,3 @@ This notebook demonstrated:
 - Use the Java `MultiScenarioVFPGenerator` for production VFP generation
 - Export VFP tables to Eclipse reservoir simulator
 - Integrate with field development optimization workflows
-

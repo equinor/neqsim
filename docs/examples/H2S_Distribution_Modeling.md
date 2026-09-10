@@ -644,4 +644,3 @@ print(summary_df.to_string(index=False))
 4. Carroll, J.J. (2020). "Acid Gas Injection and Carbon Dioxide Sequestration". Wiley-Scrivener.
 
 5. NeqSim Documentation: https://equinor.github.io/neqsim/
-

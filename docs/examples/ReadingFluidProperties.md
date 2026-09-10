@@ -307,6 +307,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 13](figures/ReadingFluidProperties_cell_13_output_1.png)
+
 The gas phase is methane-rich, while heavier hydrocarbons are enriched in the
 oil phase. This is the expected volatility ordering for the stated SRK screening
 case. The result should not be transferred to custody-transfer or reservoir-fluid
@@ -447,4 +449,3 @@ Related current interfaces:
 - [PhaseInterface](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/phase/PhaseInterface.java)
 - [ComponentInterface](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/component/ComponentInterface.java)
 - [Reading fluid properties](../thermo/reading_fluid_properties.md)
-

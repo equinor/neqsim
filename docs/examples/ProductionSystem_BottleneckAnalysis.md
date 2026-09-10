@@ -657,6 +657,8 @@ Figure saved as 'scenario_comparison.png'
 
 </details>
 
+![Result figure from cell 14](figures/ProductionSystem_BottleneckAnalysis_cell_14_output_1.png)
+
 ## 7. Well Prioritization Analysis
 
 Determine which wells to prioritize based on their impact on system constraints.
@@ -820,6 +822,8 @@ Figure saved as 'well_prioritization.png'
 ```
 
 </details>
+
+![Result figure from cell 17](figures/ProductionSystem_BottleneckAnalysis_cell_17_output_1.png)
 
 ## 8. Bottleneck Resolution Strategies
 
@@ -1061,6 +1065,8 @@ Figure saved as 'gor_wc_tradeoff.png'
 
 </details>
 
+![Result figure from cell 22](figures/ProductionSystem_BottleneckAnalysis_cell_22_output_1.png)
+
 ## 10. Summary and Recommendations
 
 ### Key Findings
@@ -1204,4 +1210,3 @@ This notebook demonstrated:
 2. Include economic optimization (NPV of production scenarios)
 3. Add time-varying analysis for field decline
 4. Integrate with reservoir simulator for coupled optimization
-
