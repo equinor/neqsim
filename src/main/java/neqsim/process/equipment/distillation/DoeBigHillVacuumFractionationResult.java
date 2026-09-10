@@ -91,8 +91,7 @@ public final class DoeBigHillVacuumFractionationResult {
       if (!Double.isFinite(massFlow) || !(massFlow > MATERIAL_FLOW_FRACTION * feedMassFlow)) {
         throw new IllegalStateException("Both vacuum screening products must have material positive flow");
       }
-      ProductBoilingPointDistribution boilingPointDistribution =
-          ProductBoilingPointDistribution.from(streams[i]);
+      ProductBoilingPointDistribution boilingPointDistribution = ProductBoilingPointDistribution.from(streams[i]);
       double meanBoilingPoint = boilingPointDistribution.getMeanNormalBoilingPointKelvin();
       if (!(meanBoilingPoint > previousMeanBoilingPoint)) {
         throw new IllegalStateException("Products must become heavier from overhead to bottoms");
@@ -239,8 +238,7 @@ public final class DoeBigHillVacuumFractionationResult {
       this.massFlowKgPerHour = massFlowKgPerHour;
       this.massFractionOfFeed = massFractionOfFeed;
       this.meanNormalBoilingPointKelvin = meanNormalBoilingPointKelvin;
-      this.boilingPointDistribution = Objects.requireNonNull(boilingPointDistribution,
-          "boilingPointDistribution");
+      this.boilingPointDistribution = Objects.requireNonNull(boilingPointDistribution, "boilingPointDistribution");
     }
 
     /** @return product label */
