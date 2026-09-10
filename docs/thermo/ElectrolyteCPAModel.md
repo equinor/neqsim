@@ -429,8 +429,25 @@ Regression coverage includes CO2 with NaCl–CaCl2 and NaCl–KCl mixtures on a
 1 kg water / 10 mol CO2 basis, nearby pressures and salt concentrations, and
 equivalent salt-addition orders and repeated calculations. These are numerical
 conservation checks, not experimental qualification of mixed-salt hydrate
-temperatures. The separate phase-selection and saturated-boundary qualification
-in [issue #3584](https://github.com/equinor/neqsim/issues/3584) remains open.
+temperatures.
+
+For the CO2/water/explicit-ion subset, hydrate-temperature calculations also
+compare independently initialized vapour and liquid CO2 trials with a conserved
+aqueous feed. The constrained solver keeps ions in water, checks molecular
+fugacity equality for both gas/aqueous and liquid-CO2/aqueous splits, and accepts
+a single aqueous phase only after CO2 stability testing. This addresses the
+phase-state failures in [issue #3584](https://github.com/equinor/neqsim/issues/3584).
+It is a hydrate-temperature fluid-evaluation path; the generic `TPflash()` API
+and mixed-inhibitor/chemical paths are unchanged.
+
+Use the operation's `getDiagnostics()` snapshot to distinguish a numerically
+converged finite-inventory result from a saturated CO2 boundary. The
+[hydrate phase-state guide](../thermodynamicoperations/hydrate_flash_operations#co2brine-phase-state-diagnostics)
+documents the public API and the separate saturated/undersaturated experimental
+assessment. The selected public data give maximum absolute temperature errors
+of 1.12 K for saturated systems and 4.10 K for undersaturated systems, so this
+numerical correction does not establish full-range experimental accuracy or
+high-pressure drilling-fluid applicability.
 
 ## Known Limitations
 

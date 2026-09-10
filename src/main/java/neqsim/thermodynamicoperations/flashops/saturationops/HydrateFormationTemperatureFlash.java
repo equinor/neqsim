@@ -7,6 +7,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.CO2BrinePhaseEquilibrium;
 
 /**
  * HydrateFormationTemperatureFlash class.
@@ -21,6 +22,10 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
   /** Maximum absolute mole-fraction error accepted for a non-reactive electrolyte fluid. */
   private static final double INVENTORY_TOLERANCE = 1.0e-9;
+  /** Snapshot of the last calculation; null before the first run. */
+  private HydrateEquilibriumDiagnostics diagnostics;
+  /** Stability evidence from the latest CO2/brine fluid evaluation. */
+  private double minimumCo2TrialDistance = Double.NaN;
 
   /**
    * Constructor for HydrateFormationTemperatureFlash.
@@ -45,8 +50,13 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    */
   @Override
   public void run() {
+    diagnostics = null;
+    minimumCo2TrialDistance = Double.NaN;
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
-      new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false).run();
+      PitzerHydrateFlash flash = new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false);
+      flash.run();
+      diagnostics = new HydrateEquilibriumDiagnostics(system, flash.isConverged(), -Math.expm1(flash.getResidual()),
+          Double.NaN);
       return;
     }
     // Enable multi-phase check to properly handle systems with water+MEG+hydrocarbons+electrolytes
@@ -55,9 +65,23 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     system.setMultiPhaseCheck(true);
     try {
       runTemperatureIterations();
+    } catch (RuntimeException ex) {
+      if (diagnostics == null) {
+        diagnostics = new HydrateEquilibriumDiagnostics(system, false, Double.NaN, minimumCo2TrialDistance);
+      }
+      throw ex;
     } finally {
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
     }
+  }
+
+  /**
+   * Returns immutable convergence, phase identity, stability and conservation evidence.
+   *
+   * @return the most recent diagnostic snapshot, or null before a run
+   */
+  public HydrateEquilibriumDiagnostics getDiagnostics() {
+    return diagnostics;
   }
 
   /** Iterates hydrate-water fugacity equality while checking the conserved electrolyte feed. */
@@ -168,6 +192,12 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
           maxIterations, diff);
     }
 
+    boolean converged = Double.isFinite(diff) && Math.abs(diff) <= tolerance;
+    diagnostics = new HydrateEquilibriumDiagnostics(system, converged, diff, minimumCo2TrialDistance);
+    if (!converged && CO2BrinePhaseEquilibrium.isApplicable(system)) {
+      throw new IllegalStateException("CO2/brine hydrate temperature did not converge: residual=" + diff);
+    }
+
   }
 
   /**
@@ -177,7 +207,13 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @param conservedMoles input component amounts, or null when this operation does not own species conservation
    */
   private void updateFluidAndHydrate(ThermodynamicOperations ops, double[] conservedMoles) {
-    ops.TPflash();
+    if (CO2BrinePhaseEquilibrium.isApplicable(system)) {
+      CO2BrinePhaseEquilibrium fluidFlash = new CO2BrinePhaseEquilibrium(system);
+      fluidFlash.run();
+      minimumCo2TrialDistance = fluidFlash.getMinimumTrialDistance();
+    } else {
+      ops.TPflash();
+    }
     setFug();
     system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
     system.getPhase(4).getComponent("water").setx(1.0);
