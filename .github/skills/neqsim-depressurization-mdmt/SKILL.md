@@ -364,6 +364,7 @@ charging overpressure with relief-demand flag).
 ## See Also
 
 - `neqsim-relief-flare-network` — PSV sizing, flare radiation, header back-pressure
+- `neqsim-firewater-deluge-design` — blowdown is the primary barrier for a pressurised inventory; compare the blowdown time against the time exposed steel survives before deciding how much fire water is worth adding
 - `neqsim-trapped-liquid-fire-rupture` — blocked-in liquid thermal expansion, PFP demand, and rupture source-term handoff
 - `neqsim-dynamic-simulation` — continuous-process transients with controllers
 - `neqsim-consequence-analysis` — what happens after the released gas ignites

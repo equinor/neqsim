@@ -132,6 +132,12 @@ fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
 
+Call `fluid.setSolidPhaseCheck(false)` to disable solid checking for all components,
+including those in cached phases. This is safe before any solid phase has been
+allocated and can be called repeatedly. Disabling preserves the existing phase
+count, phase fractions and component inventories; it does not run a flash or
+remove an existing solid phase.
+
 ---
 
 ## Phase Equilibrium Modes (VLE, LLE, VLLE)

@@ -1,333 +1,256 @@
 ---
 title: Mechanical Design Database and Data Sources
-description: NeqSim supports loading mechanical design parameters from various data sources including databases and CSV files. This allows organizations to maintain centralized repositories of design data, materia...
+description: Load mechanical design limits from the process design database, company CSV files, and standard-based CSV files using the current NeqSim API.
 ---
 
 ## Overview
 
-NeqSim supports loading mechanical design parameters from various data sources including databases and CSV files. This allows organizations to maintain centralized repositories of design data, material properties, and company-specific standards.
+Mechanical design data sources supply `DesignLimitData`: maximum and minimum pressure and
+temperature, corrosion allowance, and joint efficiency. They do not provide a generic material
+property or arbitrary string-property interface. Equipment-specific design standards load
+additional sizing and material data separately.
+
+The complete example below and the CSV formats on this page are exercised by
+`MechanicalDesignGuideDocumentationTest`. The values are synthetic application inputs, not
+requirements taken from an engineering standard.
 
 ## Data Source Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    MechanicalDesignDataSource                    │
-│                         (Interface)                              │
-├─────────────────────────────────────────────────────────────────┤
-│                              │                                   │
-│         ┌────────────────────┼────────────────────┐             │
-│         ▼                    ▼                    ▼             │
-│ ┌───────────────┐  ┌─────────────────┐  ┌──────────────────┐   │
-│ │ Database      │  │ CSV Data        │  │ Standard-Based   │   │
-│ │ DataSource    │  │ Source          │  │ CSV DataSource   │   │
-│ └───────────────┘  └─────────────────┘  └──────────────────┘   │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Class | Input | Lookup |
+|-------|-------|--------|
+| `MechanicalDesignDataSource` | Interface | Equipment type and company identifier |
+| `DatabaseMechanicalDesignDataSource` | NeqSim process design database | `TechnicalRequirements_Process` rows |
+| `CsvMechanicalDesignDataSource` | Filesystem `Path` | Company-format CSV |
+| `StandardBasedCsvDataSource` | Filesystem `Path` or classpath resource `String` | Company or standard-format CSV |
+
+All four are in `neqsim.process.mechanicaldesign.data`.
 
 ## MechanicalDesignDataSource Interface
 
-The core interface for all design data sources:
+The required method is
+`Optional<DesignLimitData> getDesignLimits(String equipmentTypeName, String companyIdentifier)`.
+Use the equipment's Java class simple name, for example `Separator` or `ThreePhaseSeparator`.
+A missing match returns `Optional.empty()`; an individual undefined limit is `Double.NaN`.
 
-```java
-public interface MechanicalDesignDataSource {
-    
-    /**
-     * Get a design parameter value.
-     * @param category Parameter category (e.g., "material", "safety_factor")
-     * @param parameterName Parameter name (e.g., "tensile_strength")
-     * @param equipmentType Equipment type filter
-     * @return Parameter value as double
-     */
-    double getParameter(String category, String parameterName, String equipmentType);
-    
-    /**
-     * Get a string property.
-     */
-    String getProperty(String category, String propertyName, String equipmentType);
-    
-    /**
-     * Check if data source is available.
-     */
-    boolean isAvailable();
-    
-    /**
-     * Get the standard type this data source provides data for.
-     */
-    StandardType getStandardType();
-}
-```
+The interface also provides `getDesignLimitsByStandard(standardCode, version, equipmentTypeName)`,
+`getAvailableStandards(equipmentTypeName)`, `getAvailableVersions(standardCode)`, and
+`hasStandard(standardCode)`. The default standard lookup delegates to company lookup; only
+implementations that override it can distinguish editions.
 
 ## Database Data Source
 
 ### Configuration
 
-The `DatabaseMechanicalDesignDataSource` connects to the NeqSim database:
-
-```java
-import neqsim.process.mechanicaldesign.data.DatabaseMechanicalDesignDataSource;
-
-// Create database source (uses default neqsim database)
-DatabaseMechanicalDesignDataSource dbSource = new DatabaseMechanicalDesignDataSource();
-
-// Or specify connection
-DatabaseMechanicalDesignDataSource dbSource = new DatabaseMechanicalDesignDataSource(
-    "jdbc:derby:neqsimthermodatabase",
-    "TechnicalRequirements_Process"
-);
-```
+`new DatabaseMechanicalDesignDataSource()` uses `NeqSimProcessDesignDataBase`. There is no JDBC
+URL or table-name constructor on this data source. Configure database access through the
+process database API when needed.
 
 ### Database Schema
 
-The primary table `TechnicalRequirements_Process` stores design parameters:
+The reader queries `SPECIFICATION`, `MAXVALUE`, and `MINVALUE` in
+`TechnicalRequirements_Process`, filtered by `EQUIPMENTTYPE` and `Company`. Recognized
+specifications are `MaxPressure`, `MinPressure`, `MaxTemperature`, `MinTemperature`,
+`CorrosionAllowance`, and `JointEfficiency`. When both numeric values are present, this
+reader uses their average; use equal minimum and maximum values for a single fixed limit.
 
-```sql
-CREATE TABLE TechnicalRequirements_Process (
-    ID              INTEGER PRIMARY KEY,
-    COMPANY         VARCHAR(50),
-    CATEGORY        VARCHAR(100),
-    PARAMETER_NAME  VARCHAR(100),
-    EQUIPMENT_TYPE  VARCHAR(50),
-    VALUE_NUMERIC   DOUBLE,
-    VALUE_TEXT      VARCHAR(255),
-    UNIT            VARCHAR(20),
-    STANDARD_CODE   VARCHAR(20),
-    VERSION         VARCHAR(10),
-    NOTES           VARCHAR(500)
-);
-
--- Example data
-INSERT INTO TechnicalRequirements_Process VALUES
-(1, 'Equinor', 'safety_factor', 'pressure_margin', 'separator', 1.10, NULL, '-', 'NORSOK-P002', 'Rev3', NULL),
-(2, 'Equinor', 'material', 'min_wall_thickness', 'pressure_vessel', 6.0, NULL, 'mm', 'ASME-VIII-1', '2023', NULL),
-(3, 'Equinor', 'sizing', 'liquid_retention_time', 'separator', 180, NULL, 's', 'NORSOK-P002', 'Rev3', 'Minimum 3 minutes');
-```
+The bundled table is in `src/main/resources/designdata/TechnicalRequirements_Process.csv`.
+The former generic `CATEGORY` / `PARAMETER_NAME` schema does not match this reader.
 
 ### Querying the Database
 
-```java
-// Get numeric parameter
-double pressureMargin = dbSource.getParameter("safety_factor", "pressure_margin", "separator");
-
-// Get text property
-String material = dbSource.getProperty("material", "default_plate_grade", "pressure_vessel");
-
-// Check availability
-if (dbSource.isAvailable()) {
-    // Use database source
-}
-```
+Use `getDesignLimits(equipmentType, company)`, as demonstrated in the fallback source list
+below. An empty result can mean no matching supported specification or a database read failure;
+inspect the application log before treating it as an intentional absence.
 
 ## CSV Data Source
 
 ### Basic CSV Format
 
-Create CSV files for design parameters:
-
-**File: `designdata/company_standards.csv`**
+Save this company-format example as `company_limits.csv` and pass its `Path` to
+`CsvMechanicalDesignDataSource`. Pressures are bara, temperatures are K, corrosion allowance is
+mm, and joint efficiency is dimensionless.
 
 ```csv
-category,parameter_name,equipment_type,value_numeric,value_text,unit,standard_code
-safety_factor,pressure_margin,separator,1.10,,−,NORSOK-P002
-safety_factor,temperature_margin,all,25.0,,C,NORSOK-P001
-material,default_plate_grade,pressure_vessel,,SA-516-70,,ASTM-A516
-sizing,liquid_retention_time,separator,180.0,,s,NORSOK-P002
-sizing,gas_velocity_factor,scrubber,0.07,,-,API-12J
+EQUIPMENTTYPE,COMPANY,MAXPRESSURE,MINPRESSURE,MAXTEMPERATURE,MINTEMPERATURE,CORROSIONALLOWANCE,JOINTEFFICIENCY
+Separator,ExampleCo,150.0,1.01325,423.15,233.15,3.0,0.85
 ```
 
 ### Using CSV Data Source
 
-```java
-import neqsim.process.mechanicaldesign.data.StandardBasedCsvDataSource;
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
-
-// Load from file path
-StandardBasedCsvDataSource csvSource = new StandardBasedCsvDataSource(
-    "path/to/company_standards.csv",
-    StandardType.NORSOK_P002
-);
-
-// Load from classpath resource
-StandardBasedCsvDataSource csvSource = new StandardBasedCsvDataSource(
-    "designdata/equinor_standards.csv",
-    StandardType.NORSOK_P002
-);
-
-// Get parameters
-double retentionTime = csvSource.getParameter("sizing", "liquid_retention_time", "separator");
-```
+Filesystem input requires `Paths.get("company_limits.csv")`. For `StandardBasedCsvDataSource`,
+the `String` constructor means a **classpath resource**, not a filesystem path. Neither CSV
+reader accepts a `StandardType` constructor argument.
 
 ### Standard-Based CSV Structure
 
-For standards-specific data, use the enhanced format:
-
-**File: `designdata/asme_viii_parameters.csv`**
+Save this independent example as `standard_limits.csv`:
 
 ```csv
-standard_code,category,parameter_name,equipment_type,value,unit,version,notes
-ASME-VIII-1,joint_efficiency,full_radiograph,all,1.0,-,2023,Category A and B joints
-ASME-VIII-1,joint_efficiency,spot_radiograph,all,0.85,-,2023,Category A and B joints
-ASME-VIII-1,joint_efficiency,no_radiograph,all,0.70,-,2023,Category A and B joints
-ASME-VIII-1,material,min_tensile_strength,SA-516-70,485,MPa,2023,Grade 70
-ASME-VIII-1,material,allowable_stress,SA-516-70,138,MPa,2023,At 100°C
+STANDARD_CODE,STANDARD_VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION
+DOCS-DEMO,1,Separator,MaxPressure,150.0,150.0,bara,Synthetic maximum pressure
+DOCS-DEMO,1,Separator,MinPressure,1.01325,1.01325,bara,Synthetic minimum pressure
+DOCS-DEMO,1,Separator,MaxTemperature,423.15,423.15,K,Synthetic maximum temperature
+DOCS-DEMO,1,Separator,MinTemperature,233.15,233.15,K,Synthetic minimum temperature
+DOCS-DEMO,1,Separator,CorrosionAllowance,3.0,3.0,mm,Synthetic corrosion allowance
+DOCS-DEMO,1,Separator,JointEfficiency,0.85,0.85,-,Synthetic joint efficiency
 ```
+
+`UNIT` is descriptive: the current CSV reader does **not** convert units. Supply bara and K
+for `DesignLimitData`, even if an external source uses barg or Celsius. Some bundled standard
+files contain those external units and need explicit conversion before use as design limits.
+
+Standard lookup uses the maximum column for maximum pressure/temperature and the minimum
+column for minimum pressure/temperature. For corrosion and joint efficiency it prefers the
+maximum column. Unrecognized specification names are available through
+`getSpecificationValues(...)`, but are not automatically applied to `DesignLimitData`.
 
 ## Registering Data Sources
 
 ### With MechanicalDesign
 
-```java
-import neqsim.process.mechanicaldesign.MechanicalDesign;
+Use `setDesignDataSource(source)`, `setDesignDataSources(orderedSources)`, or
+`addDesignDataSource(source)` on the equipment's `MechanicalDesign`. Setting or adding a
+source reloads the limits. The complete example demonstrates two ordered sources.
 
-MechanicalDesign mechDesign = separator.getMechanicalDesign();
-
-// Add database source
-mechDesign.addDataSource(new DatabaseMechanicalDesignDataSource());
-
-// Add CSV source
-mechDesign.addDataSource(new StandardBasedCsvDataSource(
-    "designdata/norsok_p002.csv",
-    StandardType.NORSOK_P002
-));
-
-// Data sources are queried in order added (first match wins)
-```
+The first present `DesignLimitData` wins as a whole; fields are not merged across sources.
+Adding a custom source replaces the implicit database-only fallback, so include the database
+explicitly if it is still wanted. Loaded pressure and temperature limits are available through
+`getDesignLimitData()`; loading them does not set the operating envelope. Corrosion allowance
+and joint efficiency are copied into the design object.
 
 ### With SystemMechanicalDesign
 
-```java
-import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
-
-SystemMechanicalDesign sysMech = new SystemMechanicalDesign(process);
-
-// Configure data sources for entire system
-sysMech.addDataSource(new DatabaseMechanicalDesignDataSource());
-sysMech.addDataSource(new StandardBasedCsvDataSource("company_stds.csv", StandardType.NORSOK_P001));
-```
+`SystemMechanicalDesign` has no `addDataSource` method. Configure each equipment design before
+running system calculations. See [Process Design Guide](process_design_guide) for the calculation
+workflow and structured completion checks.
 
 ## Default Data Location
 
-NeqSim looks for design data in these locations:
-
-1. **Classpath resources**: `src/main/resources/designdata/`
-2. **Working directory**: `./designdata/`
-3. **User home**: `~/.neqsim/designdata/`
+CSV inputs are selected explicitly by path or classpath resource. These classes do not search
+`~/.neqsim/designdata/` or the working directory automatically.
 
 ### Provided Default Files
 
-| File | Description |
-|------|-------------|
-| `asme_viii_materials.csv` | ASME Section VIII material allowables |
-| `norsok_p002_sizing.csv` | NORSOK P-002 sizing parameters |
-| `api_617_compressors.csv` | API 617 compressor requirements |
-| `dnv_os_f101_pipeline.csv` | DNV pipeline design factors |
+The repository includes `designdata/TechnicalRequirements_Process.csv`,
+`designdata/MaterialPlateProperties.csv`, `designdata/MaterialPipeProperties.csv`, and
+`designdata/standards/{asme,api,norsok,astm,dnv_iso_en,subsea}_standards.csv` as classpath resources.
+They have different schemas; do not interchange them without checking the consuming reader.
 
 ## Creating Custom Data Sources
 
-Implement the `MechanicalDesignDataSource` interface:
-
-```java
-public class MyCompanyDataSource implements MechanicalDesignDataSource {
-    
-    private Map<String, Double> parameters = new HashMap<>();
-    
-    @Override
-    public double getParameter(String category, String parameterName, String equipmentType) {
-        String key = category + ":" + parameterName + ":" + equipmentType;
-        return parameters.getOrDefault(key, Double.NaN);
-    }
-    
-    @Override
-    public String getProperty(String category, String propertyName, String equipmentType) {
-        // Implementation
-        return null;
-    }
-    
-    @Override
-    public boolean isAvailable() {
-        return true;
-    }
-    
-    @Override
-    public StandardType getStandardType() {
-        return StandardType.NORSOK_P001;
-    }
-}
-```
+Implement `getDesignLimits(...)` and return `Optional.empty()` for unhandled equipment or
+companies. Build a result using `DesignLimitData.builder().maxPressure(...).build()` and add
+other fields required by the application. Missing fields remain `NaN`; the builder does not
+validate physical bounds. A lambda can implement this single required method.
 
 ## Data Validation
 
-NeqSim validates data source values:
+There is no `DataSourceValidator` class in this package. Validate required fields and units in
+the application. The example checks a finite pressure limit and an ordered temperature range.
+Project validation should also check joint efficiency, corrosion allowance, and coverage for
+every equipment type used.
+
+## Complete Example
+
+The example logs summaries at INFO level; enable INFO output in your Log4j2 configuration to
+see them. Its result checks run regardless of the logging level.
+
+Compile this class against NeqSim and run it with the two CSV files above as arguments:
+`MechanicalDesignDatabaseExample company_limits.csv standard_limits.csv`.
 
 ```java
-import neqsim.process.mechanicaldesign.data.DataSourceValidator;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.DesignLimitData;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.CsvMechanicalDesignDataSource;
+import neqsim.process.mechanicaldesign.data.DatabaseMechanicalDesignDataSource;
+import neqsim.process.mechanicaldesign.data.MechanicalDesignDataSource;
+import neqsim.process.mechanicaldesign.data.StandardBasedCsvDataSource;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Validate a data source
-DataSourceValidator validator = new DataSourceValidator();
-List<String> errors = validator.validate(csvSource);
+public class MechanicalDesignDatabaseExample {
+  private static final Logger logger = LogManager.getLogger(MechanicalDesignDatabaseExample.class);
 
-if (!errors.isEmpty()) {
-    for (String error : errors) {
-        System.err.println("Validation error: " + error);
+  public static void main(String[] args) {
+    if (args.length != 2) {
+      throw new IllegalArgumentException("Supply company_limits.csv and standard_limits.csv");
     }
+    CsvMechanicalDesignDataSource companySource =
+        new CsvMechanicalDesignDataSource(Paths.get(args[0]));
+    StandardBasedCsvDataSource standardSource =
+        new StandardBasedCsvDataSource(Paths.get(args[1]));
+    DesignLimitData companyLimits = companySource.getDesignLimits("Separator", "ExampleCo")
+        .orElseThrow(() -> new IllegalStateException("Company limits missing"));
+    DesignLimitData standardLimits =
+        standardSource.getDesignLimitsByStandard("DOCS-DEMO", "1", "Separator")
+            .orElseThrow(() -> new IllegalStateException("Standard limits missing"));
+    if (!companyLimits.equals(standardLimits)) {
+      throw new IllegalStateException("The two demonstration files should give the same limits");
+    }
+    if (!Double.isFinite(companyLimits.getMaxPressure())
+        || companyLimits.getMaxPressure() <= companyLimits.getMinPressure()
+        || !Double.isFinite(companyLimits.getMinTemperature())
+        || !Double.isFinite(companyLimits.getMaxTemperature())
+        || companyLimits.getMinTemperature() <= 0.0
+        || companyLimits.getMinTemperature() >= companyLimits.getMaxTemperature()) {
+      throw new IllegalStateException("Invalid pressure or temperature limits");
+    }
+
+    SystemSrkEos fluid = new SystemSrkEos(303.15, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("Feed", fluid);
+    Separator separator = new Separator("Separator", feed);
+    MechanicalDesign design = separator.getMechanicalDesign();
+    design.setCompanySpecificDesignStandards("ExampleCo");
+    design.setDesignDataSources(Arrays.<MechanicalDesignDataSource>asList(
+        companySource, new DatabaseMechanicalDesignDataSource()));
+    if (!design.getDesignLimitData().equals(companyLimits)) {
+      throw new IllegalStateException("Company limits were not applied");
+    }
+    logger.info("Maximum pressure limit: {} bara; temperature range: {} to {} K",
+        design.getDesignLimitData().getMaxPressure(), companyLimits.getMinTemperature(),
+        companyLimits.getMaxTemperature());
+    logger.info("Available standards: {}; editions: {}",
+        standardSource.getAvailableStandards("Separator"),
+        standardSource.getAvailableVersions("DOCS-DEMO"));
+  }
 }
 ```
+
+Expected results from the supplied inputs are a 150 bara maximum pressure limit, a
+233.15–423.15 K temperature range, 3 mm corrosion allowance, and 0.85 joint efficiency.
+This example loads limits; it does not calculate vessel thickness or weight.
 
 ## Best Practices
 
 ### 1. Version Control Your Data
 
-Keep CSV files in version control alongside your simulations:
-
-```
-project/
-├── simulations/
-│   └── hp_separator_sizing.java
-├── designdata/
-│   ├── project_standards.csv
-│   └── material_data.csv
-└── README.md
-```
+Keep the CSV inputs with the simulation and record their revision and origin.
 
 ### 2. Use Standard Codes Consistently
 
-Always reference standards by their `StandardType` code:
-
-```csv
-# Good
-standard_code,category,parameter
-NORSOK-P002,sizing,liquid_retention
-
-# Avoid
-standard_code,category,parameter  
-NORSOK P-002,sizing,liquid_retention
-Norsok-P002,sizing,liquid_retention
-```
+Use the exact code and edition present in the data. For registered standard-format sources,
+keep one edition per file: the equipment lookup does not select a version and can otherwise
+combine rows from several editions.
 
 ### 3. Document Units
 
-Always include units in your data:
-
-```csv
-parameter_name,value,unit
-min_wall_thickness,6.0,mm
-design_pressure,50.0,barg
-temperature_margin,25.0,C
-```
+Normalize pressure to bara and temperature to K before loading generic design limits. Preserve
+the original units and conversion in the data provenance.
 
 ### 4. Layer Data Sources
 
-Use multiple sources with appropriate priority:
-
-```java
-// Priority order: company-specific → project-specific → defaults
-mechDesign.addDataSource(new CsvDataSource("company_standards.csv"));  // 1st priority
-mechDesign.addDataSource(new CsvDataSource("project_overrides.csv"));  // 2nd priority
-mechDesign.addDataSource(new DatabaseMechanicalDesignDataSource());    // 3rd priority (fallback)
-```
+Order project-specific sources before company defaults and database fallback. Supply all
+required fields in the first matching result because lower-priority sources do not fill gaps.
 
 ## See Also
 
-- [Mechanical Design Standards](mechanical_design_standards) - Standard types and categories
-- [TORG Document Integration](torg_integration) - Project-level requirements
-- [Field Development Orchestration](field_development_orchestration) - Complete workflows
+- [Mechanical Design Standards](mechanical_design_standards)
+- [TORG Document Integration](torg_integration)
+- [Field Development Orchestration](field_development_orchestration)

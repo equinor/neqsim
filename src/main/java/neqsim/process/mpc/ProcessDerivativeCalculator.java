@@ -607,10 +607,24 @@ public class ProcessDerivativeCalculator {
   }
 
   /**
-   * Calculate Hessian matrix for a single output (second derivatives).
+   * Calculate the Hessian of one registered scalar output using central second differences.
    *
-   * @param outputPath output variable path
+   * <p>
+   * Entry {@code [i][j]} is the second derivative of the selected output with respect to inputs i and j, in input
+   * registration order. Diagonal entries use a three-point stencil and mixed entries use a four-point stencil. The
+   * result is symmetric and its dimensions do not depend on the number of registered outputs.
+   * </p>
+   *
+   * <p>
+   * Uses the configured relative or custom input steps, independently of {@link #setMethod(DerivativeMethod)} and
+   * {@link #setParallel(boolean, int)}. Perturbations never replace the cached base case. The base inputs are restored
+   * and the process is rerun on success or failure. If restoration fails, the cache is invalidated and the restoration
+   * exception is propagated, or suppressed on the original calculation exception.
+   * </p>
+   *
+   * @param outputPath registered output variable path
    * @return Hessian matrix [numInputs x numInputs]
+   * @throws IllegalArgumentException if the output is not registered
    */
   public double[][] calculateHessian(String outputPath) {
     int outputIndex = -1;
@@ -628,46 +642,100 @@ public class ProcessDerivativeCalculator {
     ensureBaseCase();
     int n = inputVariables.size();
     double[][] hessian = new double[n][n];
-
-    // Calculate second derivatives using finite differences on gradients
+    double[] originalInputs = baseInputValues.clone();
+    double baseOutput = baseOutputValues[outputIndex];
+    double[] steps = new double[n];
     for (int i = 0; i < n; i++) {
-      VariableSpec inputSpec = inputVariables.get(i);
-      double baseValue = baseInputValues[i];
-      double step = calculateStepSize(inputSpec, baseValue);
-
-      // Gradient at base - step
-      variableAccessor.setValue(inputSpec.path, baseValue - step);
-      process.run();
-      cacheBaseCase(); // Temporarily cache this state
-      double[] gradMinus = calculateGradientForInput(i);
-
-      // Gradient at base + step
-      variableAccessor.setValue(inputSpec.path, baseValue + step);
-      process.run();
-      cacheBaseCase();
-      double[] gradPlus = calculateGradientForInput(i);
-
-      // Restore and recache
-      variableAccessor.setValue(inputSpec.path, baseValue);
-      process.run();
-      cacheBaseCase();
-
-      // d²f/dx_i dx_j ≈ (∂f/∂x_j|_{x_i+h} - ∂f/∂x_j|_{x_i-h}) / 2h
-      for (int j = 0; j < n; j++) {
-        hessian[i][j] = (gradPlus[j] - gradMinus[j]) / (2.0 * step);
-      }
+      steps[i] = calculateStepSize(inputVariables.get(i), originalInputs[i]);
     }
 
-    // Symmetrize (average upper and lower triangular)
-    for (int i = 0; i < n; i++) {
-      for (int j = i + 1; j < n; j++) {
-        double avg = (hessian[i][j] + hessian[j][i]) / 2.0;
-        hessian[i][j] = avg;
-        hessian[j][i] = avg;
+    double[] perturbedInputs = originalInputs.clone();
+    Throwable calculationFailure = null;
+    try {
+      for (int i = 0; i < n; i++) {
+        double stepI = steps[i];
+        perturbedInputs[i] = originalInputs[i] + stepI;
+        double plus = evaluateHessianOutput(perturbedInputs, outputIndex);
+        perturbedInputs[i] = originalInputs[i] - stepI;
+        double minus = evaluateHessianOutput(perturbedInputs, outputIndex);
+        hessian[i][i] = ((plus - baseOutput) + (minus - baseOutput)) / (stepI * stepI);
+        perturbedInputs[i] = originalInputs[i];
+
+        for (int j = i + 1; j < n; j++) {
+          double stepJ = steps[j];
+          perturbedInputs[i] = originalInputs[i] + stepI;
+          perturbedInputs[j] = originalInputs[j] + stepJ;
+          double plusPlus = evaluateHessianOutput(perturbedInputs, outputIndex);
+          perturbedInputs[j] = originalInputs[j] - stepJ;
+          double plusMinus = evaluateHessianOutput(perturbedInputs, outputIndex);
+          perturbedInputs[i] = originalInputs[i] - stepI;
+          double minusMinus = evaluateHessianOutput(perturbedInputs, outputIndex);
+          perturbedInputs[j] = originalInputs[j] + stepJ;
+          double minusPlus = evaluateHessianOutput(perturbedInputs, outputIndex);
+
+          double mixed = ((plusPlus - plusMinus) - (minusPlus - minusMinus)) / (4.0 * stepI * stepJ);
+          hessian[i][j] = mixed;
+          hessian[j][i] = mixed;
+          perturbedInputs[i] = originalInputs[i];
+          perturbedInputs[j] = originalInputs[j];
+        }
+      }
+      return hessian;
+    } catch (RuntimeException | Error failure) {
+      calculationFailure = failure;
+      throw failure;
+    } finally {
+      try {
+        restoreHessianInputs(originalInputs);
+        process.run();
+      } catch (RuntimeException | Error restorationFailure) {
+        invalidateBaseCase();
+        if (calculationFailure == null) {
+          throw restorationFailure;
+        }
+        if (calculationFailure != restorationFailure) {
+          calculationFailure.addSuppressed(restorationFailure);
+        }
       }
     }
+  }
 
-    return hessian;
+  /**
+   * Evaluate only the selected scalar output at a complete input perturbation.
+   *
+   * @param inputs input values in registration order
+   * @param outputIndex selected output index
+   * @return selected output value after running the process
+   */
+  private double evaluateHessianOutput(double[] inputs, int outputIndex) {
+    for (int i = 0; i < inputs.length; i++) {
+      variableAccessor.setValue(inputVariables.get(i).path, inputs[i]);
+    }
+    process.run();
+    return variableAccessor.getValue(outputVariables.get(outputIndex).path);
+  }
+
+  /**
+   * Restore every base input, attempting the remaining setters even if one fails.
+   *
+   * @param inputs original base input values in registration order
+   */
+  private void restoreHessianInputs(double[] inputs) {
+    RuntimeException restorationFailure = null;
+    for (int i = 0; i < inputs.length; i++) {
+      try {
+        variableAccessor.setValue(inputVariables.get(i).path, inputs[i]);
+      } catch (RuntimeException failure) {
+        if (restorationFailure == null) {
+          restorationFailure = failure;
+        } else if (restorationFailure != failure) {
+          restorationFailure.addSuppressed(failure);
+        }
+      }
+    }
+    if (restorationFailure != null) {
+      throw restorationFailure;
+    }
   }
 
   /**

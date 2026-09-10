@@ -454,11 +454,52 @@ for (NetworkLoop loop : loops) {
 
 ### Sensitivity Analysis
 
+For a production network containing a fixed-pressure source `reservoir` and an IPR
+element `ipr`, sweep reservoir pressure in **bara**:
+
 ```java
-// Calculate sensitivity of node pressure to pipe change
-double sensitivity = network.calculatePressureSensitivity("Customer-1", "Pipe-2");
-System.out.println("dP/dD for Customer-1 vs Pipe-2: " + sensitivity);
+double[] pressures = {80.0, 100.0, 140.0, 180.0};
+Map<String, double[]> sweep = network.sensitivityAnalysis("ipr", "reservoir_pressure", pressures);
+double[] rates = sweep.get("totalFlow_kghr");
+double[] valid = sweep.get("valid");
+Map<Integer, String> failures = network.getSensitivityFailures();
 ```
+
+Import `java.util.Map` for these result maps. The source-node name `reservoir` can
+also be used as the sweep target. Each sample updates the fixed source pressure and
+every IPR originating at that source, following
+`network.setReservoirPressure("reservoir", pressureBara)`. Other reservoirs retain
+their settings. A source controlled by a connected feed stream is rejected: vary
+the feed stream pressure explicitly because a network run reads that boundary
+from the stream.
+
+| Result key | Meaning |
+|---|---|
+| `paramValues` | Copy of requested values, in the selected parameter's units |
+| `totalFlow_kghr` | Accepted total sink mass flow in kg/h; `NaN` for rejected samples |
+| `objective` | Accepted revenue objective, or total mass flow when no prices are configured; `NaN` for rejected samples |
+| `converged` | 1.0 if the sampled solve returned with numerical convergence, otherwise 0.0 |
+| `applicable` | 1.0 if convergence and the supported choke envelope pass, otherwise 0.0 |
+| `valid` | 1.0 if the sample is applicable and both flow and objective are finite, otherwise 0.0 |
+
+`getSensitivityFailures()` returns an immutable snapshot of rejected sample indices
+(zero-based) and their reasons, including exceptions, nonconvergence and unsupported
+choke status. A successful zero-flow point remains valid; failed points are never
+encoded as zero production. Subsequent samples still run after a failure. These
+checks do not establish facility-constraint feasibility or independent well-model
+qualification.
+
+When migrating from earlier versions, check `valid[i] == 1.0` before using a sample.
+Code that treated a zero result as a failed solve should use `getSensitivityFailures()`
+instead. Requested choke openings are evaluated exactly in the range 0–100%; out-of-range
+values are rejected instead of silently clamped.
+
+The original source pressure and each connected IPR's original pressure are saved
+independently, restored even after a failed sweep, and the baseline is re-solved.
+If the baseline solve itself throws, the exception propagates with the original
+input settings restored. The same restoration applies to `well_pi`,
+`choke_opening` (including full closure), `sink_pressure` and `pipe_diameter` sweeps.
+Regression coverage is in `LoopedPipeNetworkSensitivityTest`.
 
 ### JSON Export
 
@@ -531,7 +572,8 @@ double getMinimumNodePressure()
 List<NetworkLoop> getLoops()
 
 // Analysis
-double calculatePressureSensitivity(String node, String pipe)
+Map<String, double[]> sensitivityAnalysis(String element, String parameterType, double[] values)
+Map<Integer, String> getSensitivityFailures()
 
 // Export
 String toJson()

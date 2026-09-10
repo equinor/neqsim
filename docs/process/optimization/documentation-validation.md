@@ -115,8 +115,14 @@ case and includes a separate gas-only capacity sweep against a standalone valve.
 See the [supported choke envelope](../equipment/production_well_networks#choke-model).
 The network feature notebook also selects gas capacity for its choke optimizers
 and explicitly marks its legacy capped example as inapplicable. Its reservoir
-sensitivity uses the source-node setter; the generic element-pressure sweep's
-state-update defect is tracked in [#3626](https://github.com/equinor/neqsim/issues/3626).
+sensitivity uses the source-node setter. The generic `sensitivityAnalysis` API also
+updates the source and all connected IPR elements and restores their individual
+original settings after the sweep. `LoopedPipeNetworkSensitivityTest` covers
+independently configured reference points, pressure/rate trends, shared sources,
+restoration after failures, and retained failure/applicability evidence for
+[#3626](https://github.com/equinor/neqsim/issues/3626). See the
+[sensitivity result contract](../equipment/looped_networks#sensitivity-analysis);
+rejected points carry `NaN` flow/objective and explicit validity flags.
 VFP routines have separate contracts for supplied-BHP formatting, fixed-composition
 capacity screening and independently qualified well calculations. The
 [export contract](vfp-export-contract.md) implements #3600: complete indexed axes,

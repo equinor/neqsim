@@ -2785,7 +2785,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "wh", "ipr", 5e-6, false);
-    network.addChoke("wh", "downstream", "choke", 50.0, 50.0);
+    network.addChoke("wh", "downstream", "choke", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("downstream", "platform", "pipeline", 20000, 0.3, 0.00005);
 
     double[] openings = { 10, 30, 50, 70, 90, 100 };

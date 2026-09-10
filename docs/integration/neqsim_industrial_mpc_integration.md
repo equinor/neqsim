@@ -39,7 +39,7 @@ This document describes how NeqSim thermodynamic and process simulation capabili
 ### Integration Benefits
 
 - **Physics-Based Models**: NeqSim provides thermodynamically rigorous models for MPC
-- **Automatic Linearization**: Generate step response models at any operating point
+- **Automatic Linearization**: Calculate local steady-state gains at a solved operating point
 - **Property Estimation**: Accurate phase behavior, densities, enthalpies for soft sensors
 - **Operating Envelope**: Define safe operating regions based on thermodynamic limits
 - **Production Optimization**: Maximize throughput while respecting constraints
@@ -91,61 +91,80 @@ This document describes how NeqSim thermodynamic and process simulation capabili
 
 ## Model Generation Workflow
 
+The fragments below use the imports and equipment names in the [complete example](#complete-separator-control-example).
+Run them inside a method accepting `String outputDirectory` and declaring
+`throws Exception` for file export. These examples
+identify **steady-state gains**. The exporter's first-order time constant is an explicit
+assumption; validate dynamics and dead time against plant data or a transient model before
+using the model for control. Declaring a disturbance variable does not identify its gains:
+`ProcessLinearizer` uses the sensitivities supplied by `setCvSensitivity`.
+
 ### Step 1: Build NeqSim Process Model
 
 ```java
-// Create thermodynamic system
+Path output = Files.createDirectories(Paths.get(outputDirectory));
 SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.85);
+fluid.addComponent("methane", 0.80);
 fluid.addComponent("ethane", 0.10);
 fluid.addComponent("propane", 0.05);
+fluid.addComponent("n-butane", 0.03);
+fluid.addComponent("n-pentane", 0.02);
 fluid.setMixingRule("classic");
 
-// Build process flowsheet
 ProcessSystem process = new ProcessSystem();
 Stream feed = new Stream("Feed", fluid);
-feed.setFlowRate(100.0, "kg/hr");
-
+feed.setFlowRate(500.0, "kg/hr");
 Separator separator = new Separator("HP Separator", feed);
+separator.setInternalDiameter(1.5);
+StreamInterface gasProduct = separator.getGasOutStream();
+gasProduct.setName("Gas Product");
 process.add(feed);
 process.add(separator);
+process.add(gasProduct); // Register the outlet so the MPC can resolve it by name.
 process.run();
 ```
 
 ### Step 2: Configure MPC Variables
 
 ```java
-// Create MPC bridge
 ProcessLinkedMPC mpc = new ProcessLinkedMPC("HP_Separator_MPC", process);
 
-// Define manipulated variables (MVs)
-mpc.addMV("Feed_Flow", feed, "flowRate", 50.0, 150.0, "kg/hr");
-mpc.addMV("Separator_Pressure", separator, "pressure", 30.0, 70.0, "bara");
+// Bounds and setpoints use the units configured on each variable.
+mpc.addMV("Feed", "flowRate", 200.0, 800.0).setUnit("kg/hr");
+mpc.addMV("Feed", "pressure", 30.0, 70.0).setUnit("bara");
+mpc.addCVZone("Gas Product", "flowRate", 100.0, 600.0).setUnit("kg/hr");
+mpc.addCVZone("Gas Product", "pressure", 45.0, 55.0).setUnit("bara");
+mpc.setConstraint("Gas Product", "flowRate", 0.0, 650.0);
+mpc.setConstraint("Gas Product", "pressure", 30.0, 70.0);
 
-// Define controlled variables (CVs)
-mpc.addCV("Gas_Rate", separator.getGasOutStream(), "flowRate", 40.0, 60.0, "kg/hr");
-mpc.addCV("Liquid_Level", separator, "liquidLevel", 0.3, 0.7, "fraction");
-
-// Define disturbance variables (DVs)
-mpc.addDV("Feed_Temperature", feed, "temperature", "C");
+DisturbanceVariable feedTemperature = mpc.addDV("Feed", "temperature");
+feedTemperature.setUnit("K");
 ```
+
+`addMV`, `addCV`, and `addDV` take the name of a registered process unit. Set the
+unit on the returned variable. The current bound-variable readers support stream
+flow, pressure, and temperature; they do not read arbitrary separator level or
+component-fraction properties. A level-control model needs an appropriate dynamic
+inventory model and measurement/control integration.
 
 ### Step 3: Generate Step Response Models
 
 ```java
-// Configure linearization
-mpc.setLinearizationStepSize(0.05);  // 5% step
-mpc.setSettlingTime(600.0);           // 10 minutes
-mpc.setSamplingTime(10.0);            // 10 seconds
+mpc.setPredictionHorizon(30);
+mpc.setControlHorizon(10);
+mpc.identifyModel(10.0); // Sample interval in seconds; identifies steady-state gains.
+if (!mpc.getLinearizationResult().isSuccessful()) {
+    throw new IllegalStateException(mpc.getLinearizationResult().getErrorMessage());
+}
 
-// Generate step responses
-mpc.generateStepResponses();
-
-// Export for industrial MPC
 IndustrialMPCExporter exporter = mpc.createIndustrialExporter();
-exporter.exportStepResponseModel("separator_mpc_model.csv");
-exporter.exportMPCConfiguration("separator_mpc_config.json");
+exporter.setDefaultTimeConstant(60.0); // Assumed first-order dynamics, in seconds.
+exporter.exportStepResponseModel(output.resolve("separator_mpc_model.json").toString());
+exporter.exportStepResponseCSV(output.resolve("separator_mpc_model.csv").toString());
+exporter.exportComprehensiveConfiguration(output.resolve("separator_mpc_config.json").toString());
 ```
+
+`exportStepResponseModel` writes JSON; use `exportStepResponseCSV` for CSV.
 
 ---
 
@@ -171,47 +190,62 @@ The most common integration pattern where NeqSim generates models offline that a
 
 ### Pattern 2: Property Table Lookup
 
-NeqSim pre-calculates property tables that industrial soft sensors use for fast lookups.
+Build a table explicitly by solving the thermodynamic system at each grid point.
+The example writes bulk mixture density and specific enthalpy; a phase-specific
+sensor must also record phase identity and handle phase appearance or disappearance.
+Add `java.io.BufferedWriter`, `java.nio.charset.StandardCharsets`,
+`java.nio.file.Files`, `java.nio.file.Paths`, and `java.util.Locale` to the imports.
 
 ```java
-// Generate property table
-SoftSensorExporter softSensor = mpc.createSoftSensorExporter();
-
-// Configure property grid
-softSensor.addPropertyDimension("pressure", 20.0, 80.0, 10);    // 10 points
-softSensor.addPropertyDimension("temperature", 273.0, 373.0, 10);
-
-// Export lookup tables
-softSensor.exportLookupTable("density", "density_table.csv");
-softSensor.exportLookupTable("viscosity", "viscosity_table.csv");
-softSensor.exportLookupTable("enthalpy", "enthalpy_table.csv");
+try (BufferedWriter writer = Files.newBufferedWriter(output.resolve("property_table.csv"),
+        StandardCharsets.UTF_8)) {
+    writer.write("pressure_bara,temperature_K,density_kg_m3,enthalpy_J_kg");
+    writer.newLine();
+    for (double pressure : new double[] {20.0, 50.0, 80.0}) {
+        for (double temperature : new double[] {280.0, 300.0, 320.0}) {
+            SystemInterface sample = fluid.clone();
+            sample.setPressure(pressure, "bara");
+            sample.setTemperature(temperature, "K");
+            new ThermodynamicOperations(sample).TPflash();
+            sample.initProperties();
+            writer.write(String.format(Locale.ROOT, "%.1f,%.1f,%.8g,%.8g",
+                pressure, temperature, sample.getDensity("kg/m3"),
+                sample.getEnthalpy("J/kg")));
+            writer.newLine();
+        }
+    }
+}
 ```
 
-**Advantages:**
-- Sub-millisecond property lookups
-- No real-time NeqSim dependency
-- Validated thermodynamic accuracy
+Validate interpolation errors, phase boundaries, composition, and grid coverage before
+using a table online. `SoftSensorExporter` exports sensor definitions; it does not
+calculate a lookup table or fit property correlations.
 
 ### Pattern 3: Gain Scheduling
 
 Different operating regions require different model gains. NeqSim calculates models at multiple operating points.
 
 ```java
-// Define operating points
-double[] pressures = {30.0, 50.0, 70.0};  // bara
-double[] temperatures = {280.0, 300.0, 320.0};  // K
-
-// Generate models at each operating point
-for (double P : pressures) {
-    for (double T : temperatures) {
-        feed.setPressure(P, "bara");
-        feed.setTemperature(T, "K");
-        process.run();
-
-        mpc.generateStepResponses();
-        String filename = String.format("model_P%.0f_T%.0f.csv", P, T);
-        exporter.exportStepResponseModel(filename);
+double[] pressures = {35.0, 50.0, 65.0}; // bara, inside the 30-70 bara MV bounds
+double[] temperatures = {280.0, 300.0, 320.0}; // K
+double basePressure = feed.getPressure("bara");
+double baseTemperature = feed.getTemperature("K");
+try {
+    for (double pressure : pressures) {
+        for (double temperature : temperatures) {
+            feed.setPressure(pressure, "bara");
+            feed.setTemperature(temperature, "K");
+            process.run();
+            mpc.identifyModel(10.0);
+            String filename = String.format(Locale.ROOT, "model_P%.0f_T%.0f.csv", pressure, temperature);
+            exporter.exportStepResponseCSV(output.resolve(filename).toString());
+        }
     }
+} finally {
+    feed.setPressure(basePressure, "bara");
+    feed.setTemperature(baseTemperature, "K");
+    process.run();
+    mpc.identifyModel(10.0);
 }
 ```
 
@@ -219,19 +253,25 @@ The industrial MPC selects the appropriate model based on current operating cond
 
 ### Pattern 4: Nonlinear MPC with Steady-State Solver
 
-For nonlinear MPC applications, NeqSim can provide steady-state solutions.
+`SubrModlExporter` writes model configuration and variable mappings. An external
+runtime still needs the nonlinear calculation and a plant-specific adapter; a
+configuration file alone does not supply an executable controller.
 
 ```java
-// Configure for nonlinear MPC
+StateVariable gasFlowState = mpc.addSVR("Gas Product", "flowRate", "gas_flow");
+gasFlowState.setUnit("kg/hr");
+gasFlowState.setModelValue(gasProduct.getFlowRate("kg/hr"));
+
 SubrModlExporter subrModl = mpc.createSubrModlExporter();
-
-// Add state variables for estimation
-mpc.addSVR("Liquid_Composition", separator, "liquidComposition", 0.0, 1.0);
-
-// Export SubrModl configuration
-subrModl.exportConfiguration("separator_subrmodl.cnf");
-subrModl.exportMPCConfiguration("separator_smpc.json");
+subrModl.setModelName("HP_Separator_NL");
+subrModl.exportConfiguration(output.resolve("separator_subrmodl.cnf").toString());
+subrModl.exportMPCConfiguration(output.resolve("separator_smpc.cnf").toString(), true);
+subrModl.exportJSON(output.resolve("separator_subrmodl.json").toString());
 ```
+
+Refresh state model values explicitly when the process is rerun. `StateVariable`
+stores model and measured values; setting a property name does not implement a
+new dynamic state or an automatic measurement connection.
 
 ---
 
@@ -280,25 +320,29 @@ The industrial MPC optimizes by pushing the process toward constraints while mai
 
 ### Example: Separator Train Optimization
 
+Use `ProductionOptimizer` for a steady-state throughput target, as shown in
+[Production Optimization Setup](#production-optimization-setup). Supply equipment
+limits from the installed design and evaluate their physical meaning at the current
+operating point. For example:
+
 ```java
-// Define economic objective
-mpc.setOptimizationObjective(OptimizationType.MAXIMIZE_THROUGHPUT);
+double gasVelocity = separator.getGasSuperficialVelocity(); // m/s
+double allowableGasVelocity = separator.getMaxAllowableGasVelocity(); // m/s
+if (!Double.isFinite(allowableGasVelocity) || allowableGasVelocity <= 0.0) {
+    throw new IllegalStateException("A valid separator capacity basis is required");
+}
+boolean gasVelocityWithinLimit = gasVelocity <= allowableGasVelocity;
 
-// NeqSim provides constraint models:
-// 1. Maximum gas velocity (flooding limit)
-double maxGasVelocity = separator.getMaxGasVelocity();  // m/s
-
-// 2. Minimum residence time
-double minResidenceTime = separator.getMinResidenceTime();  // seconds
-
-// 3. Liquid carryover limit
-double maxLiquidInGas = separator.getMaxLiquidCarryover();  // ppm
-
-// Export constraints to MPC
-exporter.addConstraint("Gas_Velocity", 0, maxGasVelocity, "m/s");
-exporter.addConstraint("Residence_Time", minResidenceTime, 1e6, "s");
-exporter.addConstraint("Liquid_Carryover", 0, maxLiquidInGas, "ppm");
+// Illustrative installed gas mass-rate limit, independently specified in kg/hr.
+// This configures an existing CV; it does not convert velocity into mass flow.
+mpc.setConstraint("Gas Product", "flowRate", 0.0, 650.0);
+exporter.exportVariableConfiguration(output.resolve("separator_constraints.json").toString());
 ```
+
+These checks do not establish liquid carryover or residence-time acceptance.
+Those constraints need vessel geometry, inventories, and a selected separation model.
+`getMaxAllowableGasVelocity` uses the configured design K-factor and assumes a liquid
+density of 1000 kg/m³ when no liquid phase is present; review that assumption for sizing.
 
 ---
 
@@ -366,38 +410,29 @@ Bottleneck analysis identifies which constraints are limiting production and qua
 
 ### Example: Compressor Bottleneck
 
+This fragment requires a solved compressor named `Export_Compressor` with a loaded
+performance map. Add `Compressor` and `CompressorChartInterface` from
+`neqsim.process.equipment.compressor` to the imports.
+
 ```java
-// Identify compressor as bottleneck
 Compressor compressor = (Compressor) process.getUnit("Export_Compressor");
-
-// Analyze compressor performance
-CompressorChart chart = compressor.getCompressorChart();
-double surgeLimit = chart.getSurgeFlow();
-double chokeLimit = chart.getChokeFlow();
-double currentFlow = compressor.getInletStream().getFlowRate("kg/hr");
-
-// Calculate margin to constraints
-double surgeMargin = (currentFlow - surgeLimit) / surgeLimit * 100;  // %
-double chokeMargin = (chokeLimit - currentFlow) / chokeLimit * 100;  // %
-
-// If near choke (bottleneck), simulate options:
-if (chokeMargin < 10) {
-    System.out.println("Compressor approaching choke limit!");
-
-    // Option 1: Increase inlet pressure
-    double newInletPressure = compressor.getInletPressure() * 1.1;
-    compressor.setInletPressure(newInletPressure);
-    process.run();
-    double newChokeMargin = // recalculate
-
-    // Option 2: Cool the inlet gas
-    // Option 3: Install parallel compressor
+CompressorChartInterface chart = compressor.getCompressorChart();
+double surgeLimit = chart.getSurgeFlowAtSpeed(compressor.getSpeed());
+double chokeLimit = chart.getStoneWallFlowAtSpeed(compressor.getSpeed());
+double currentFlow = compressor.getInletStream().getFlowRate("m3/hr");
+if (!Double.isFinite(surgeLimit) || !Double.isFinite(chokeLimit)
+        || surgeLimit <= 0.0 || chokeLimit <= surgeLimit) {
+    throw new IllegalStateException("Load valid surge and stonewall map data first");
 }
-
-// Generate updated MPC model with new operating point
-mpc.generateStepResponses();
-exporter.exportStepResponseModel("compressor_updated.csv");
+double surgeMargin = 100.0 * (currentFlow - surgeLimit) / surgeLimit;
+double chokeMargin = 100.0 * (chokeLimit - currentFlow) / chokeLimit;
+logger.info("Surge margin: {}%; choke margin: {}%", surgeMargin, chokeMargin);
 ```
+
+The flow basis is actual inlet m³/h, matching the map; do not compare map flow with
+kg/h. To investigate higher inlet pressure or cooler gas, change the upstream feed
+or cooler, rerun the process, and recalculate both limits and margins. Changing only
+a downstream inlet stream can be overwritten by the upstream calculation.
 
 ### Bottleneck Value Calculation
 
@@ -418,38 +453,58 @@ NeqSim can validate these shadow prices by simulating the actual production gain
 ### Phase Properties
 
 ```java
-// Calculate phase properties for soft sensor
 ThermodynamicOperations thermoOps = new ThermodynamicOperations(fluid);
 thermoOps.TPflash();
 fluid.initProperties();
 
-double gasCompressibility = fluid.getPhase("gas").getZ();
-double liquidDensity = fluid.getPhase("oil").getDensity("kg/m3");
-double gasViscosity = fluid.getPhase("gas").getViscosity("cP");
-double surfaceTension = fluid.getInterphaseProperties().getSurfaceTension("mN/m");
+if (fluid.hasPhaseType("gas")) {
+    double gasCompressibility = fluid.getPhase("gas").getZ();
+    double gasViscosity = fluid.getPhase("gas").getViscosity("cP");
+    logger.info("Gas Z: {}; viscosity: {} cP", gasCompressibility, gasViscosity);
+}
+if (fluid.hasPhaseType("oil")) {
+    logger.info("Liquid density: {} kg/m3", fluid.getPhase("oil").getDensity("kg/m3"));
+}
+if (fluid.hasPhaseType("gas") && fluid.hasPhaseType("oil")) {
+    int gasPhase = fluid.getPhaseNumberOfPhase("gas");
+    int oilPhase = fluid.getPhaseNumberOfPhase("oil");
+    double surfaceTension = fluid.getInterphaseProperties()
+        .getSurfaceTension(gasPhase, oilPhase, "mN/m");
+    logger.info("Gas/oil surface tension: {} mN/m", surfaceTension);
+}
 ```
 
 ### Molecular Weight Estimation
 
 ```java
-// Export molecular weight correlation
-SoftSensorExporter exporter = mpc.createSoftSensorExporter();
-exporter.setFluid(fluid);
-
-// Generate MW as function of composition and conditions
-exporter.exportCorrelation("molecularWeight",
-    new String[]{"C1_fraction", "C2_fraction", "temperature", "pressure"},
-    "mw_correlation.csv");
+SoftSensorExporter softSensor = exporter.createSoftSensorExporter();
+softSensor.addMolecularWeightSensor("Gas_MW", "Gas Product");
+softSensor.addDensitySensor("Gas_Density", "Gas Product", "kg/m3");
+softSensor.exportConfiguration(output.resolve("gas_soft_sensors.json").toString());
 ```
+
+The export describes inputs, units, and equipment mappings. Calculate the values
+from the current process state, or develop and validate a lookup/correlation separately.
 
 ### Heating Value Calculation
 
+Add `neqsim.standards.gasquality.Standard_ISO6976_2016` to the imports. Heating
+values are calculated by a gas-quality standard, not by methods on a phase.
+
 ```java
-// Calculate heating values for gas sales
-double GCV = fluid.getPhase("gas").getGCV();  // Gross calorific value
-double NCV = fluid.getPhase("gas").getNCV();  // Net calorific value
-double wobbeIndex = fluid.getPhase("gas").getWobbeIndex();
+if (!fluid.hasPhaseType("gas")) {
+    throw new IllegalStateException("A gas phase is required for gas sales properties");
+}
+SystemInterface salesGas = fluid.phaseToSystem("gas");
+Standard_ISO6976_2016 gasQuality = new Standard_ISO6976_2016(salesGas, 15.0, 15.0, "volume");
+gasQuality.calculate();
+double gcv = gasQuality.getValue("SuperiorCalorificValue"); // kJ/m3 at reference conditions
+double ncv = gasQuality.getValue("InferiorCalorificValue"); // kJ/m3 at reference conditions
+double wobbeIndex = gasQuality.getValue("SuperiorWobbeIndex"); // kJ/m3
 ```
+
+This example uses 15 °C for the volume and combustion reference temperatures;
+select the reference conditions required by the sales contract.
 
 ---
 
@@ -458,37 +513,45 @@ double wobbeIndex = fluid.getPhase("gas").getWobbeIndex();
 ### Operating Point Identification
 
 ```java
-// Define key operating variables that affect gains
-List<OperatingPoint> operatingPoints = new ArrayList<>();
-
-// Low throughput
-operatingPoints.add(new OperatingPoint(
-    "Low_Rate", 50.0, 40.0, 290.0));  // flow, pressure, temp
-
-// Normal operation
-operatingPoints.add(new OperatingPoint(
-    "Normal", 100.0, 50.0, 300.0));
-
-// High throughput
-operatingPoints.add(new OperatingPoint(
-    "High_Rate", 150.0, 60.0, 310.0));
-
-// Generate model at each point
-for (OperatingPoint op : operatingPoints) {
-    configureProcess(process, op);
-    mpc.generateStepResponses();
-    exporter.exportStepResponseModel("model_" + op.getName() + ".csv");
+String[] operatingNames = {"Low_Rate", "Normal", "High_Rate"};
+// Columns: mass flow (kg/hr), pressure (bara), temperature (K).
+double[][] operatingPoints = {
+    {250.0, 40.0, 290.0},
+    {500.0, 50.0, 300.0},
+    {750.0, 60.0, 310.0}
+};
+double originalFlow = feed.getFlowRate("kg/hr");
+double originalPressure = feed.getPressure("bara");
+double originalTemperature = feed.getTemperature("K");
+try {
+    for (int point = 0; point < operatingPoints.length; point++) {
+        feed.setFlowRate(operatingPoints[point][0], "kg/hr");
+        feed.setPressure(operatingPoints[point][1], "bara");
+        feed.setTemperature(operatingPoints[point][2], "K");
+        process.run();
+        mpc.identifyModel(10.0);
+        exporter.exportStepResponseCSV(output.resolve("model_" + operatingNames[point] + ".csv").toString());
+    }
+} finally {
+    feed.setFlowRate(originalFlow, "kg/hr");
+    feed.setPressure(originalPressure, "bara");
+    feed.setTemperature(originalTemperature, "K");
+    process.run();
+    mpc.identifyModel(10.0);
 }
 ```
+
+Keep each operating point and its linearization perturbations inside the MV bounds.
+Recalculate disturbance sensitivities at each point when using feedforward control.
 
 ### Model Selection Logic
 
 The industrial MPC uses operating conditions to select the appropriate model:
 
 ```
-IF (flow < 75 kg/hr) THEN
+IF (flow < 375 kg/hr) THEN
     USE model_Low_Rate
-ELSE IF (flow < 125 kg/hr) THEN
+ELSE IF (flow < 625 kg/hr) THEN
     USE model_Normal
 ELSE
     USE model_High_Rate
@@ -500,28 +563,25 @@ ELSE
 
 ### Continuous Model Monitoring
 
-A background service can use NeqSim to validate MPC model predictions:
+The surrounding application must apply measured conditions, supply MPC predictions,
+and decide acceptable error limits. The following helper compares already ordered
+outputs and uses an explicit tolerance per output, in that output's engineering unit.
 
 ```java
-// Compare MPC prediction with NeqSim simulation
 public class ModelValidator {
-    private ProcessSystem neqsimModel;
-    private double[] mpcPrediction;
-
-    public ValidationResult validate(ProcessData currentData) {
-        // Apply current conditions to NeqSim model
-        applyConditions(neqsimModel, currentData);
-        neqsimModel.run();
-
-        // Compare outputs
-        double[] neqsimOutput = getOutputs(neqsimModel);
-        double[] errors = new double[neqsimOutput.length];
-
-        for (int i = 0; i < errors.length; i++) {
-            errors[i] = Math.abs(neqsimOutput[i] - mpcPrediction[i]);
+    public static boolean withinTolerance(double[] simulated, double[] predicted,
+            double[] tolerances) {
+        if (simulated.length != predicted.length || simulated.length != tolerances.length) {
+            throw new IllegalArgumentException("Output and tolerance dimensions must match");
         }
-
-        return new ValidationResult(errors, isModelValid(errors));
+        for (int index = 0; index < simulated.length; index++) {
+            if (!Double.isFinite(simulated[index]) || !Double.isFinite(predicted[index])
+                    || !Double.isFinite(tolerances[index]) || tolerances[index] < 0.0
+                    || Math.abs(simulated[index] - predicted[index]) > tolerances[index]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 ```
@@ -529,19 +589,17 @@ public class ModelValidator {
 ### Bias Detection
 
 ```java
-// State variable with bias tracking
-StateVariable liquidLevel = new StateVariable("Liquid_Level",
-    separator, "liquidLevel", 0.0, 1.0, "fraction");
-
-// Configure bias estimation
-liquidLevel.setBiasTfilt(300.0);   // 5-minute filter
-liquidLevel.setBiasTpred(600.0);   // 10-minute prediction horizon
-
-// Monitor bias evolution
-if (Math.abs(liquidLevel.getBias()) > 0.05) {
-    System.out.println("Significant model bias detected - consider model update");
-}
+StateVariable gasFlowBias = new StateVariable("Gas_Flow", gasProduct, "flowRate");
+gasFlowBias.setUnit("kg/hr");
+gasFlowBias.setModelValue(gasProduct.getFlowRate("kg/hr"));
+gasFlowBias.setBiasTfilt(0.0); // Unfiltered residual for this example.
+// Synthetic measurement for demonstration; replace with a timestamp-aligned plant value.
+gasFlowBias.setMeasuredValue(gasProduct.getFlowRate("kg/hr") + 5.0);
+logger.info("Gas flow measurement-minus-model bias: {} kg/hr", gasFlowBias.getBias());
 ```
+
+Update the model and measured values explicitly for each comparison. Filtering and
+prediction settings require separate tuning and verification of their update cadence.
 
 ---
 
@@ -549,16 +607,38 @@ if (Math.abs(liquidLevel.getBias()) > 0.05) {
 
 ### Complete Separator Control Example
 
+Save as `SeparatorMPCIntegration.java` and run with an optional output directory
+argument (default `mpc-output`). The example identifies flow/pressure gains, exports
+model and sensor configuration files, and returns the configured MPC for reuse.
+It does not execute a closed-loop level controller. The first-order time constant
+of 60 s is an illustrative export assumption, not an identified separator response.
+
 ```java
-import neqsim.process.ProcessSystem;
-import neqsim.process.equipment.*;
-import neqsim.process.mpc.*;
-import neqsim.thermo.system.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mpc.DisturbanceVariable;
+import neqsim.process.mpc.IndustrialMPCExporter;
+import neqsim.process.mpc.ProcessDerivativeCalculator;
+import neqsim.process.mpc.ProcessLinkedMPC;
+import neqsim.process.mpc.SoftSensorExporter;
+import neqsim.process.mpc.StateVariable;
+import neqsim.process.mpc.SubrModlExporter;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SeparatorMPCIntegration {
+    private static final Logger logger = LogManager.getLogger(SeparatorMPCIntegration.class);
 
-    public static void main(String[] args) {
-        // 1. Build process model
+    public static ProcessLinkedMPC configureAndExport(String outputDirectory) throws Exception {
+        Path output = Files.createDirectories(Paths.get(outputDirectory));
         SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
         fluid.addComponent("methane", 0.80);
         fluid.addComponent("ethane", 0.10);
@@ -568,68 +648,69 @@ public class SeparatorMPCIntegration {
         fluid.setMixingRule("classic");
 
         ProcessSystem process = new ProcessSystem();
-
         Stream feed = new Stream("Feed", fluid);
         feed.setFlowRate(500.0, "kg/hr");
-        feed.setTemperature(25.0, "C");
-        feed.setPressure(50.0, "bara");
-
-        Separator hpSep = new Separator("HP_Separator", feed);
-        hpSep.setInternalDiameter(1.5);
-
+        Separator separator = new Separator("HP Separator", feed);
+        separator.setInternalDiameter(1.5);
+        StreamInterface gasProduct = separator.getGasOutStream();
+        gasProduct.setName("Gas Product");
         process.add(feed);
-        process.add(hpSep);
+        process.add(separator);
+        process.add(gasProduct);
         process.run();
 
-        // 2. Configure MPC
         ProcessLinkedMPC mpc = new ProcessLinkedMPC("HP_Sep_MPC", process);
+        mpc.addMV("Feed", "flowRate", 200.0, 800.0).setUnit("kg/hr");
+        mpc.addMV("Feed", "pressure", 30.0, 70.0).setUnit("bara");
+        mpc.addCVZone("Gas Product", "flowRate", 100.0, 600.0).setUnit("kg/hr");
+        mpc.addCVZone("Gas Product", "pressure", 45.0, 55.0).setUnit("bara");
+        mpc.setConstraint("Gas Product", "flowRate", 0.0, 650.0);
+        mpc.setConstraint("Gas Product", "pressure", 30.0, 70.0);
 
-        // Manipulated Variables
-        mpc.addMV("Feed_Flow", feed, "flowRate", 200.0, 800.0, "kg/hr");
-        mpc.addMV("Operating_Pressure", hpSep, "pressure", 30.0, 70.0, "bara");
+        // Identify the temperature disturbance's steady-state sensitivities explicitly.
+        ProcessDerivativeCalculator derivative = new ProcessDerivativeCalculator(process);
+        derivative.addInputVariable("Feed.temperature", "K");
+        derivative.addOutputVariable("Gas Product.flowRate", "kg/hr");
+        derivative.addOutputVariable("Gas Product.pressure", "bara");
+        double[][] temperatureGains = derivative.calculateJacobian();
+        if (!Double.isFinite(temperatureGains[0][0]) || !Double.isFinite(temperatureGains[1][0])) {
+            throw new IllegalStateException("Temperature sensitivities must be finite");
+        }
+        DisturbanceVariable temperature = mpc.addDV("Feed", "temperature");
+        temperature.setUnit("K");
+        temperature.setCvSensitivity(temperatureGains[0][0], temperatureGains[1][0]);
 
-        // Controlled Variables
-        mpc.addCV("Gas_Production", hpSep.getGasOutStream(),
-                  "flowRate", 100.0, 400.0, "kg/hr");
-        mpc.addCV("Liquid_Level", hpSep,
-                  "liquidLevel", 0.3, 0.7, "fraction");
+        mpc.setPredictionHorizon(30);
+        mpc.setControlHorizon(10);
+        mpc.identifyModel(10.0);
+        if (!mpc.getLinearizationResult().isSuccessful()) {
+            throw new IllegalStateException(mpc.getLinearizationResult().getErrorMessage());
+        }
 
-        // Disturbance Variables
-        mpc.addDV("Feed_Temperature", feed, "temperature", "C");
-        mpc.addDV("Feed_Composition_C1", feed, "methane_fraction", "mol/mol");
-
-        // 3. Generate models
-        mpc.setLinearizationStepSize(0.05);
-        mpc.setSettlingTime(600.0);
-        mpc.setSamplingTime(10.0);
-        mpc.generateStepResponses();
-
-        // 4. Export for industrial MPC
         IndustrialMPCExporter exporter = mpc.createIndustrialExporter();
-        exporter.setModelName("HP_Separator");
-        exporter.setDescription("High Pressure Separator MPC Model");
+        exporter.setApplicationName("HP_Separator");
+        exporter.setDefaultTimeConstant(60.0);
+        exporter.exportStepResponseModel(output.resolve("hp_sep_model.json").toString());
+        exporter.exportStepResponseCSV(output.resolve("hp_sep_model.csv").toString());
+        exporter.exportComprehensiveConfiguration(output.resolve("hp_sep_config.json").toString());
 
-        // Step response model
-        exporter.exportStepResponseModel("hp_sep_model.csv");
+        SoftSensorExporter softSensor = exporter.createSoftSensorExporter();
+        softSensor.addDensitySensor("Gas_Density", "Gas Product", "kg/m3");
+        softSensor.addMolecularWeightSensor("Gas_MW", "Gas Product");
+        softSensor.exportConfiguration(output.resolve("hp_sep_sensors.json").toString());
 
-        // MPC configuration
-        exporter.setPredictionHorizon(30);
-        exporter.setControlHorizon(10);
-        exporter.setExecutionInterval(10.0);
-        exporter.exportMPCConfiguration("hp_sep_config.json");
-
-        // 5. Export soft sensors
-        SoftSensorExporter softSensor = mpc.createSoftSensorExporter();
-        softSensor.setFluid(fluid);
-        softSensor.exportCalculation("gas_density", "gas_density_calc.csv");
-        softSensor.exportCalculation("liquid_density", "liquid_density_calc.csv");
-
-        // 6. Export for nonlinear MPC (optional)
+        StateVariable gasFlowState = mpc.addSVR("Gas Product", "flowRate", "gas_flow");
+        gasFlowState.setUnit("kg/hr");
+        gasFlowState.setModelValue(gasProduct.getFlowRate("kg/hr"));
         SubrModlExporter subrModl = mpc.createSubrModlExporter();
         subrModl.setModelName("HP_Sep_NL");
-        subrModl.exportConfiguration("hp_sep_subrmodl.cnf");
+        subrModl.exportConfiguration(output.resolve("hp_sep_subrmodl.cnf").toString());
+        logger.info("MPC integration files written to {}", output.toAbsolutePath());
+        return mpc;
+    }
 
-        System.out.println("MPC integration files generated successfully!");
+    public static void main(String[] args) throws Exception {
+        configureAndExport(args.length > 0 ? args[0] : "mpc-output");
     }
 }
 ```
@@ -691,7 +772,8 @@ AI software and MPC systems typically require derivatives (gradients, Jacobians)
 
 ### Why Analytical Derivatives Are Difficult
 
-In thermodynamic simulators like NeqSim, analytical derivatives are impractical because:
+Many NeqSim thermodynamic derivatives are analytical. End-to-end process derivatives
+can still be difficult to obtain analytically because:
 
 1. **Complex equation chains**: Fugacity → Activity Coefficient → Compressibility → Mixing Rules → Pure Component Parameters
 2. **Iterative algorithms**: Flash calculations use iterative solvers where derivatives require implicit function theorem
@@ -714,8 +796,8 @@ calc.addInputVariable("Feed.pressure", "bara");
 calc.addInputVariable("Feed.temperature", "K");
 
 // Define output variables (what we measure)
-calc.addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr");
-calc.addOutputVariable("Separator.liquidLevel", "fraction");
+calc.addOutputVariable("HP Separator.gasOutStream.flowRate", "kg/hr");
+calc.addOutputVariable("HP Separator.gasOutStream.pressure", "bara");
 
 // Calculate full Jacobian matrix
 double[][] jacobian = calc.calculateJacobian();
@@ -754,7 +836,7 @@ The calculator automatically selects appropriate step sizes based on variable ty
 ```java
 // Get one specific derivative
 double dGasFlow_dFeedFlow = calc.getDerivative(
-    "Separator.gasOutStream.flowRate",  // output
+    "HP Separator.gasOutStream.flowRate",  // output
     "Feed.flowRate"                      // input
 );
 ```
@@ -763,7 +845,7 @@ double dGasFlow_dFeedFlow = calc.getDerivative(
 
 ```java
 // Get gradient of one output w.r.t. all inputs
-double[] gradient = calc.getGradient("Separator.gasOutStream.flowRate");
+double[] gradient = calc.getGradient("HP Separator.gasOutStream.flowRate");
 // gradient[0] = ∂gasFlow/∂feedFlow
 // gradient[1] = ∂gasFlow/∂feedPressure
 // gradient[2] = ∂gasFlow/∂feedTemperature
@@ -771,11 +853,72 @@ double[] gradient = calc.getGradient("Separator.gasOutStream.flowRate");
 
 ### Hessian (Second Derivatives)
 
+`calculateHessian(outputPath)` differentiates the selected registered **scalar output**
+with respect to every input pair. The result is a symmetric N×N matrix in input
+registration order, independently of the number or order of registered outputs.
+Diagonal entries use a three-point central stencil; mixed entries use four corner
+evaluations. Both have second-order truncation error for a smooth response.
+The Hessian uses the configured input step sizes and always runs these central
+stencils sequentially; `setMethod` and `setParallel` control first derivatives.
+
+The standalone example below has three inputs and two outputs. Its selected output
+is the mass-flow input itself, so every entry of the 3×3 Hessian should be zero
+within numerical tolerance. This is the regression case from
+[issue #3616](https://github.com/equinor/neqsim/issues/3616).
+
 ```java
-// Get Hessian matrix for optimization
-double[][] hessian = calc.calculateHessian("Separator.gasOutStream.flowRate");
-// hessian[i][j] = ∂²gasFlow / ∂input_i ∂input_j
+import org.apache.logging.log4j.LogManager;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mpc.ProcessDerivativeCalculator;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class ScalarHessianExample {
+    public static double[][] calculate() {
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+        fluid.addComponent("methane", 1.0);
+        fluid.setMixingRule("classic");
+        Stream feed = new Stream("Feed", fluid);
+        feed.setFlowRate(500.0, "kg/hr");
+        ProcessSystem process = new ProcessSystem();
+        process.add(feed);
+        process.run();
+
+        ProcessDerivativeCalculator calc = new ProcessDerivativeCalculator(process);
+        calc.addInputVariable("Feed.flowRate", "kg/hr");
+        calc.addInputVariable("Feed.pressure", "bara");
+        calc.addInputVariable("Feed.temperature", "K");
+        calc.addOutputVariable("Feed.flowRate", "kg/hr");
+        calc.addOutputVariable("Feed.pressure", "bara");
+        return calc.calculateHessian("Feed.flowRate");
+    }
+
+    public static void main(String[] args) {
+        double[][] hessian = calculate();
+        LogManager.getLogger(ScalarHessianExample.class).info(
+            "Mass-flow Hessian: {}", java.util.Arrays.deepToString(hessian));
+    }
+}
 ```
+The current `ProcessDerivativeCalculator.calculateHessian` implementation is not
+suitable for this example: three inputs and two outputs trigger an array bounds
+error, and the selected-output index is not used in the second-derivative loop.
+Use the validated Jacobian/gradient workflow above. If an external optimizer needs
+a Hessian, compute and validate second derivatives of its scalar objective separately;
+do not assume this helper returns that objective's Hessian. The implementation defect
+and reproducer are tracked in [issue #3616](https://github.com/equinor/neqsim/issues/3616).
+
+Perturbations preserve the cached base inputs and outputs. On success or an exception,
+the calculator restores all base inputs and reruns the process. If restoration itself
+fails, it invalidates the cache and reports that failure, preserving the original
+calculation exception when present.
+
+The existing calculator accesses variables in their native/default accessor units;
+the registration unit string does not perform a conversion. This example uses kg/hr,
+bara and K consistently. A Hessian entry has units of output divided by the two input
+units. Use independent, writable inputs and a converged process away from phase or
+control discontinuities. Check sensitivity to step size and solver tolerances:
+second differences amplify simulation noise.
 
 ### Export for External Systems
 
@@ -784,20 +927,22 @@ double[][] hessian = calc.calculateHessian("Separator.gasOutStream.flowRate");
 String json = calc.exportJacobianToJSON();
 
 // Export to CSV for spreadsheet analysis
-calc.exportJacobianToCSV("jacobian.csv");
+calc.exportJacobianToCSV(output.resolve("jacobian.csv").toString());
 ```
 
 ### JSON Output Format
 
+Illustrative structure for two inputs; numerical values depend on the solved process.
+
 ```json
 {
   "inputs": ["Feed.flowRate", "Feed.pressure"],
-  "outputs": ["Separator.gasOutStream.flowRate", "Separator.liquidLevel"],
+  "outputs": ["HP Separator.gasOutStream.flowRate", "HP Separator.gasOutStream.pressure"],
   "baseInputValues": [100.0, 50.0],
-  "baseOutputValues": [85.2, 0.45],
+  "baseOutputValues": [85.2, 50.0],
   "jacobian": [
     [0.852, -0.023],
-    [0.001, 0.015]
+    [0.0, 1.0]
   ]
 }
 ```
@@ -837,5 +982,5 @@ This complementary approach combines the accuracy of first-principles thermodyna
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: December 2024*
+*Document Version: 1.1*
+*Examples checked against NeqSim 3.20.0 development source, September 2026.*

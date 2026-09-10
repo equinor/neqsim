@@ -676,46 +676,43 @@ public String validateMassTransferAgainstLiterature()
 
 ### Example 1: Water Evaporation into Dry Nitrogen
 
-Simulating evaporation of water into flowing nitrogen gas.
+The following complete **preparation example** initializes the equilibrium
+nitrogen/water feed and selects evaporation controls. It does not calculate
+an evaporation distance or rate. Flashing a combined nitrogen/water feed puts
+the phases at equilibrium; the resulting gas is not a separate dry-gas boundary.
+A rate study must specify non-equilibrium inlet phases and connect the
+configuration to its solver. See [Pipeline Liquid Evaporation](PipelineLiquidEvaporation)
+for a complete finite-rate calculation and its assumptions.
 
+<!-- pipeline-doc-test: evaporation-preparation -->
 ```java
-import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.processimulation.processequipment.stream.Stream;
-import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.MassTransferConfig;
 
-// Create fluid system
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);  // 20°C, 1 atm
+Logger logger = LogManager.getLogger("EvaporationPreparationExample");
+SystemSrkEos fluid = new SystemSrkEos(293.15, 1.01325); // 20 C, 1 atm
 fluid.addComponent("nitrogen", 0.95);
 fluid.addComponent("water", 0.05);
 fluid.setMixingRule("classic");
 fluid.setMultiPhaseCheck(true);
-
-// Create inlet stream
-Stream inlet = new Stream("inlet", fluid);
+Stream inlet = new Stream("Nitrogen and Water Feed", fluid);
 inlet.setFlowRate(100.0, "kg/hr");
 inlet.run();
 
-// Configure mass transfer for evaporation
 MassTransferConfig config = MassTransferConfig.forEvaporation();
 config.setEnableDiagnostics(true);
-config.setMaxPhaseDepletionPerNode(0.99);  // Allow near-complete evaporation
-
-// Create pipe with mass transfer
-// ... (pipe setup code)
-
-// After simulation
-System.out.println("Gas phase dissolved: " + solver.isGasPhaseCompletelyDissolved());
-System.out.println("Liquid phase evaporated: " + solver.isLiquidPhaseCompletelyEvaporated());
-
-double[] summary = solver.getMassTransferSummary();
-System.out.printf("Total dissolved: %.4f mol%n", summary[0]);
-System.out.printf("Total evaporated: %.4f mol%n", summary[1]);
-System.out.printf("Net transfer: %.4f mol%n", summary[2]);
-
-// Validate against literature
-System.out.println(solver.validateMassTransferAgainstLiterature());
+config.setMaxPhaseDepletionPerNode(0.99);
+logger.info("Equilibrium inlet phases: {}", inlet.getFluid().getNumberOfPhases());
+logger.info("Evaporation controls: {}", config);
 ```
+
+SRK/classic is used here to demonstrate setup. Select an appropriate water
+thermodynamic model and validate equilibrium and transfer properties for the
+intended application. The configuration object alone is not evidence that a
+phase-disappearance simulation converged or conserved mass.
 
 ### Example 2: CO₂ Dissolution into MEA Solution
 

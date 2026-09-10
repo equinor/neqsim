@@ -169,21 +169,28 @@ importer.addEquipmentData(
 );
 ```
 
-### Method 3: Using ProcessEquipmentReliability
+### Method 3: Using a Reliability Data Record
 
+Use `ReliabilityDataSource.ReliabilityData` to hold descriptive MTBF/MTTR data.
+This does not change equipment operation or activate a failure scenario.
+The values below are illustrative assumptions, not licensed OREDA observations.
+
+<!-- doc-test: reliability-record -->
 ```java
-import neqsim.process.safety.risk.ProcessEquipmentReliability;
+import neqsim.process.equipment.failure.ReliabilityDataSource.ReliabilityData;
 
-// Create reliability data object
-ProcessEquipmentReliability reliability = new ProcessEquipmentReliability("HP Pump");
-reliability.setFailureRate(1.83e-4);  // failures per hour
-reliability.setMTBF(5464);            // hours
-reliability.setMTTR(24);              // hours
-reliability.setDataSource("OREDA-2015");
-
-// Attach to process equipment
-pump.setReliabilityData(reliability);
+ReliabilityData reliability = new ReliabilityData("Pump", "Centrifugal", 5464.0, 24.0);
+reliability.setSource("Illustrative assumptions");
+reliability.setNotes("Replace with qualified service-specific data before a reliability study.");
+double availability = reliability.getAvailability(); // MTBF / (MTBF + MTTR)
+double failuresPerMillionHours = reliability.getFailureRate(); // 1e6 / MTBF
+double failuresPerHour = failuresPerMillionHours / 1.0e6;
 ```
+
+`ProcessEquipmentReliability` and `pump.setReliabilityData(...)` are not
+implemented APIs. For an operating failure scenario, use the existing
+`EquipmentFailureMode` framework separately. Its application changes equipment
+behavior and should not be confused with storing reliability assumptions.
 
 ---
 

@@ -112,7 +112,8 @@ $$Q = PI_{gas} \times (P_{res}^2 - P_{wf}^2)$$
 
 | Parameter | Method | Unit | Description |
 |-----------|--------|------|-------------|
-| Reservoir pressure | `setReservoirPressure(double)` | bara | Static reservoir pressure |
+| Reservoir boundary pressure | `network.setReservoirPressure(sourceNodeName, pressure)` | bara | Updates the source node and all connected IPR elements |
+| IPR stored pressure | `NetworkPipe.setReservoirPressure(double)` | Pa | Low-level element parameter; does not update the source-node boundary |
 | Productivity index (oil) | `setProductivityIndex(double)` | kg/s/Pa | Oil PI |
 | Gas IPR flag | `setGasIPR(boolean)` | — | Use pressure-squared formulation |
 | Productivity index (gas) | `setProductivityIndex(double)` | kg/s/Pa² | Gas PI |
@@ -120,11 +121,14 @@ $$Q = PI_{gas} \times (P_{res}^2 - P_{wf}^2)$$
 **Convenience method:**
 
 ```java
-network.addWellIPR("ipr1", "reservoir", "wellhead",
-    350.0,           // reservoir pressure [bara]
-    5e-7,            // PI [kg/s/Pa] for oil, or [kg/s/Pa²] for gas
-    false);          // gasIPR = false → oil PI
+network.addSourceNode("reservoir", 350.0, 0.0); // pressure [bara], supply [kg/h]
+network.addJunctionNode("wellhead");
+network.addWellIPR("reservoir", "wellhead", "ipr1", 5e-7, false);
 ```
+
+The IPR inherits its reservoir pressure from the source. Use the network-level
+setter for depletion and the [sensitivity API](looped_networks#sensitivity-analysis)
+for sweeps; changing only the stored IPR pressure leaves the source boundary unchanged.
 
 ### Vogel's Equation
 
@@ -137,8 +141,7 @@ The absolute open-flow potential $Q_{max}$ is specified instead of PI.
 **Convenience method:**
 
 ```java
-network.addWellIPRVogel("vogel1", "reservoir", "wellhead",
-    350.0,           // reservoir pressure [bara]
+network.addWellIPRVogel("reservoir", "wellhead", "vogel1",
     50.0);           // Qmax [kg/s]
 ```
 
@@ -151,8 +154,7 @@ $$Q = C \times (P_{res}^2 - P_{wf}^2)^n$$
 **Convenience method:**
 
 ```java
-network.addWellIPRFetkovich("fetk1", "reservoir", "wellhead",
-    350.0,           // reservoir pressure [bara]
+network.addWellIPRFetkovich("reservoir", "wellhead", "fetk1",
     1e-12,           // C coefficient
     0.8);            // n exponent (0.5–1.0)
 ```
