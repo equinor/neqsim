@@ -5,6 +5,11 @@ description: "This document provides comprehensive documentation for hydrate pha
 
 This document provides comprehensive documentation for hydrate phase equilibrium flash calculations in NeqSim.
 
+For `SystemPitzer`, temperature, pressure and equilibrium-line calls dispatch to `PitzerHydrateFlash`.
+See [Pitzer hydrate equilibrium](../thermo/pitzer_hydrate_equilibrium.md) for CO2/brine setup,
+parameter requirements and temperature limits. Hydrate amount operations (`hydrateTPflash` and
+gas-hydrate TP flash) reject Pitzer systems because this coupling calculates onset only.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -148,6 +153,14 @@ ops.hydrateFormationTemperature();
 System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
 System.out.println("At pressure: " + fluid.getPressure("bara") + " bara");
 ```
+
+For non-reactive electrolyte fluids, every fluid evaluation must conserve the
+input component inventory, normalize material phases, and confine ions to the
+aqueous phase. Violations raise `IllegalStateException` with a diagnostic; a
+small hydrate fugacity residual cannot override a failed material balance.
+The original multiphase-check setting is restored even when evaluation fails.
+See [Electrolyte CPA component conservation](../thermo/ElectrolyteCPAModel#component-conservation-in-hydrate-temperature-calculations)
+for the mixed-brine regression scope and remaining phase-selection limitations.
 
 ### Hydrate Formation Pressure
 

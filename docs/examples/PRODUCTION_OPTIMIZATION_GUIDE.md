@@ -246,6 +246,39 @@ The adapter reuses the current public separator calculations. It does not valida
 carry-over/carry-under correlations, slug capacity, relief limits, or operating approval. Register
 those limits only from qualified provider or measured evidence and retain their provenance.
 
+### Qualify a solved pipeline against explicit installed limits
+
+Use `PlantPipelineEvidence` only after the complete candidate and its
+`PipeBeggsAndBrills` equipment have finished with the same calculation UUID. Supply the line-list
+geometry provenance and each approved pressure, receiving-boundary, velocity, and temperature
+limit; no convenience limit is substituted.
+
+```java
+PlantPipelineEvidence pipelineEvidence = PlantPipelineEvidence
+    .builder("Plant", "Export", calculationId, exportPipeline,
+        "line list revision 7 and export specification")
+    .geometryVerified(true)
+    .maximumPressureBara(160.0)
+    .maximumPressureDropBar(15.0)
+    .minimumReceivingPressureBara(125.0)
+    .maximumMixtureVelocityMetresPerSecond(12.0)
+    .minimumTemperatureCelsius(-10.0)
+    .maximumTemperatureCelsius(60.0)
+    .convergenceComplete(fullModelConverged)
+    .build();
+
+if (!pipelineEvidence.isComplete() || !pipelineEvidence.isFeasible()) {
+  throw new IllegalStateException(pipelineEvidence.getDiagnostics().toString());
+}
+String pipelineJson = pipelineEvidence.toJson();
+```
+
+The JSON evidence rows include the exact sampled value, installed limit, unit, basis, normalized
+utilization, physical margin, profile node, distance, and diagnostic. Missing geometry attestation,
+profiles, ratings, convergence, or exact calculation identity fails closed with JSON `null`
+numbers. API RP 14E, Rhone-Poulenc, FIV/FRMS/AIV, hydrate/wax, slug, and transient results are not
+silently promoted to verified optimization constraints.
+
 ---
 
 ## Overview
@@ -1804,3 +1837,4 @@ try {
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |
+

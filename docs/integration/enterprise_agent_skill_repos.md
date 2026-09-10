@@ -95,6 +95,14 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    and `~/.copilot/skills` folders — the locations VS Code and the GitHub Copilot CLI
    scan in every workspace. Reload/restart VS Code afterwards to pick them up.
 
+   > **Refreshing later is incremental.** Re-running `--all --force` re-downloads
+   > agent/skill content but only pip-installs a skill's Python package when its
+   > `pyproject.toml` changed (skills are installed editable, so source edits need
+   > no reinstall), and each shared required skill is refreshed once per run rather
+   > than once per agent. Add `--no-pip` to skip package installs entirely; then run
+   > `neqsim skill sync-packages` once, or `neqsim skill ensure <name>` the first
+   > time a skill that imports its own Python package is used.
+
 > **Why this order?** Community content needs no authentication, so it is installed
 > first and always works. SSO is only required to *read the private repos*, and
 > `private-init --login` performs the sign-in as part of registering them — so you

@@ -28,6 +28,7 @@ import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.SemanticOb
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.PinnedPosition;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.ProtectedRoute;
+import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.SheetOverviewRegion;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister.Waypoint;
 import neqsim.process.engineering.model.EngineeringNode;
 
@@ -425,6 +426,8 @@ public final class NativeEngineeringDiagramRenderer {
     page.commands.add(Command.text(page.width - 12.0, 17.0, 2.7,
         drawing.getContentProfile().name() + " / " + format.name(), "#374151", "sheet-format", "end"));
 
+    addOverviewRegions(page, drawing, sheet, objects, contentBottom, diagnostics);
+
     Map<String, Point> positions = layoutPositions(sheet, objects, contentRight, contentBottom, diagnostics);
     addDrawingQualityDiagnostics(sheet, objects, positions, page.width, contentBottom, diagnostics);
     Map<String, OffPageConnector> connectors = new TreeMap<String, OffPageConnector>();
@@ -481,6 +484,65 @@ public final class NativeEngineeringDiagramRenderer {
     addPidProposalOverlay(page, objects, positions);
     addTitleBlock(page, drawing, sheet);
     return page;
+  }
+
+  private void addOverviewRegions(Page page, Drawing drawing, Sheet overview, Map<String, SemanticObject> objects,
+      double contentBottom, List<Diagnostic> diagnostics) {
+    if (overview.getOverviewRegions().isEmpty()) {
+      return;
+    }
+    double firstRegionTop = Double.MAX_VALUE;
+    for (SheetOverviewRegion region : overview.getOverviewRegions()) {
+      firstRegionTop = Math.min(firstRegionTop, region.getY());
+    }
+    page.commands.add(Command.text(page.width / 2.0, Math.max(CONTENT_TOP + 10.0, firstRegionTop - 14.0), 3.0,
+        "CONTROLLED SHEET INDEX - NOT PROCESS CONNECTIVITY", "#475569", "overview-index-boundary", "middle"));
+    Map<String, Sheet> sheetsByKey = new TreeMap<String, Sheet>();
+    for (Sheet candidate : drawing.getSheets()) {
+      sheetsByKey.put(candidate.getKey(), candidate);
+    }
+    for (SheetOverviewRegion region : overview.getOverviewRegions()) {
+      Sheet target = sheetsByKey.get(region.getTargetSheetKey());
+      String regionId = "overview-region:" + overview.getId() + ":" + region.getTargetSheetKey();
+      if (target == null) {
+        diagnostics.add(diagnostic(Severity.ERROR, "DIAGRAM_RENDER_UNKNOWN_OVERVIEW_TARGET",
+            "Controlled overview region references a target sheet absent from the drawing", regionId));
+        continue;
+      }
+      if (region.getX() < 8.0 || region.getY() < CONTENT_TOP || region.getX() + region.getWidth() > page.width - 8.0
+          || region.getY() + region.getHeight() > contentBottom) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_OVERVIEW_REGION_OUTSIDE_SHEET",
+            "Controlled overview region intersects the sheet border, header, or title-block area", regionId));
+      }
+      page.commands.add(Command.rect(region.getX(), region.getY(), region.getWidth(), region.getHeight(), "#64748b",
+          "#f8fafc", 0.7, regionId, "4 2"));
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + 12.0, 3.3,
+          "SHEET " + target.getNumber() + " - " + target.getTitle(), "#0f172a", regionId + ":title", ""));
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + 22.0, 2.2,
+          region.getEvidenceState().name() + " CONTROLLED LAYOUT INDEX", "#64748b", regionId + ":evidence", ""));
+
+      List<String> equipmentLabels = new ArrayList<String>();
+      for (String objectId : target.getObjectNodeIds()) {
+        SemanticObject object = objects.get(objectId);
+        if (object != null && object.getKind() == EngineeringNode.Kind.EQUIPMENT) {
+          equipmentLabels.add(displayLabel(object));
+        }
+      }
+      Collections.sort(equipmentLabels);
+      int rows = Math.max(1, (equipmentLabels.size() + 1) / 2);
+      double rowSpacing = rows == 1 ? 0.0 : Math.min(32.0, (region.getHeight() - 76.0) / (rows - 1));
+      for (int index = 0; index < equipmentLabels.size(); index++) {
+        int column = index / rows;
+        int row = index % rows;
+        double x = region.getX() + 12.0 + column * (region.getWidth() / 2.0);
+        double y = region.getY() + 42.0 + row * rowSpacing;
+        page.commands
+            .add(Command.text(x, y, 3.2, equipmentLabels.get(index), "#1f2937", regionId + ":equipment:" + index, ""));
+      }
+      page.commands.add(Command.text(region.getX() + 8.0, region.getY() + region.getHeight() - 10.0, 2.3,
+          equipmentLabels.size() + " CANONICAL EQUIPMENT OBJECTS - SEE REFERENCED SHEET", "#475569",
+          regionId + ":count", ""));
+    }
   }
 
   private void addDocumentDiagnostics(List<Diagnostic> diagnostics) {
@@ -543,7 +605,7 @@ public final class NativeEngineeringDiagramRenderer {
             "Rendered object boundary intersects the sheet border, document header, or title-block area", id));
       }
       String label = displayLabel(object);
-      if (estimatedTextWidth(label, 2.8) > OBJECT_WIDTH - 4.0) {
+      if (estimatedTextWidth(label, primaryTextSize(object)) > OBJECT_WIDTH - 4.0) {
         diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_LABEL_OVERFLOW",
             "Primary object label exceeds the available symbol width and requires drawing review", id));
       }
@@ -705,11 +767,89 @@ public final class NativeEngineeringDiagramRenderer {
     return Math.min(contentBottom - PORT_SLOT_MARGIN, Math.max(source.y, target.y) + offset);
   }
 
+  private static List<Point> obstacleAwareOrthogonalRoute(Point source, Point target, boolean recycle,
+      double laneOffset, Map<String, Point> positions, String sourceOwnerId, String targetOwnerId, double contentBottom,
+      String label, List<RouteView> routes, double pageWidth) {
+    List<List<Point>> candidates = new ArrayList<List<Point>>();
+    if (recycle) {
+      double returnY = recycleReturnY(source, target, contentBottom, laneOffset);
+      double sourceTurnX = source.x + 10.0 + Math.abs(laneOffset);
+      double targetTurnX = target.x - 10.0 - Math.abs(laneOffset);
+      candidates.add(Arrays.asList(source, new Point(sourceTurnX, source.y), new Point(sourceTurnX, returnY),
+          new Point(targetTurnX, returnY), new Point(targetTurnX, target.y), target));
+    } else {
+      double middleX = (source.x + target.x) / 2.0 + laneOffset;
+      candidates.add(Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target));
+    }
+
+    double direction = target.x >= source.x ? 1.0 : -1.0;
+    double lower = CONTENT_TOP + OBJECT_HEIGHT;
+    double upper = contentBottom - OBJECT_HEIGHT;
+    for (int offsetIndex = 0; offsetIndex <= 5; offsetIndex++) {
+      double turnOffset = offsetIndex == 0 ? 0.0 : 10.0 + Math.abs(laneOffset) + (offsetIndex - 1) * 12.0;
+      double sourceTurnX = source.x + direction * turnOffset + laneOffset;
+      double targetTurnX = target.x - direction * turnOffset + laneOffset;
+      for (double channelY = lower; channelY <= upper + 0.0000001; channelY += 12.0) {
+        candidates.add(Arrays.asList(source, new Point(sourceTurnX, source.y), new Point(sourceTurnX, channelY),
+            new Point(targetTurnX, channelY), new Point(targetTurnX, target.y), target));
+      }
+    }
+
+    List<Point> best = candidates.get(0);
+    int bestScore = routeObjectIntersectionCount(best, positions, sourceOwnerId, targetOwnerId);
+    int bestLabelScore = bestRouteLabelCollisionScore(best, label, positions, routes, pageWidth, contentBottom);
+    double bestLength = routeLength(best);
+    for (int index = 1; index < candidates.size(); index++) {
+      List<Point> candidate = candidates.get(index);
+      int score = routeObjectIntersectionCount(candidate, positions, sourceOwnerId, targetOwnerId);
+      int labelScore = bestRouteLabelCollisionScore(candidate, label, positions, routes, pageWidth, contentBottom);
+      double length = routeLength(candidate);
+      if (score < bestScore || score == bestScore && labelScore < bestLabelScore
+          || score == bestScore && labelScore == bestLabelScore && length < bestLength) {
+        best = candidate;
+        bestScore = score;
+        bestLabelScore = labelScore;
+        bestLength = length;
+      }
+    }
+    return best;
+  }
+
+  private static int bestRouteLabelCollisionScore(List<Point> points, String label, Map<String, Point> positions,
+      List<RouteView> routes, double pageWidth, double contentBottom) {
+    if (label == null || label.trim().isEmpty()) {
+      return 0;
+    }
+    Point labelPoint = collisionAwareRouteLabelPoint(points, label, positions, routes, pageWidth, contentBottom);
+    return routeLabelCollisionScore(label, labelPoint, positions, routes, pageWidth, contentBottom);
+  }
+
+  private static int routeObjectIntersectionCount(List<Point> points, Map<String, Point> positions,
+      String sourceOwnerId, String targetOwnerId) {
+    int count = 0;
+    for (Map.Entry<String, Point> entry : positions.entrySet()) {
+      if (!entry.getKey().equals(sourceOwnerId) && !entry.getKey().equals(targetOwnerId)
+          && polylineIntersectsObject(points, entry.getValue())) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static double routeLength(List<Point> points) {
+    double result = 0.0;
+    for (int index = 1; index < points.size(); index++) {
+      result += distance(points.get(index - 1), points.get(index));
+    }
+    return result;
+  }
+
   private void addConnection(Page page, SemanticObject connection, Map<String, Point> positions,
       Map<String, Point> endpointAnchors, OffPageConnector connector, ProtectedRoute protectedRoute,
       Map<String, SemanticObject> objects, Map<String, Point> connectorPoints, double contentBottom, double laneOffset,
       List<Diagnostic> diagnostics) {
     List<Point> points = new ArrayList<Point>();
+    String routeLabel = displayLabel(connection);
     boolean protectedGeometry = protectedRoute != null;
     if (protectedGeometry) {
       for (Waypoint waypoint : protectedRoute.getWaypoints()) {
@@ -725,22 +865,14 @@ public final class NativeEngineeringDiagramRenderer {
         source = offPage;
       }
       if (source != null && target != null) {
-        points.add(source);
-        if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
-            && (Boolean.TRUE.equals(connection.getProperties().get("recycle")) || source.x >= target.x)) {
-          double returnY = recycleReturnY(source, target, contentBottom, laneOffset);
-          double sourceTurnX = source.x + 10.0 + Math.abs(laneOffset);
-          double targetTurnX = target.x - 10.0 - Math.abs(laneOffset);
-          points.add(new Point(sourceTurnX, source.y));
-          points.add(new Point(sourceTurnX, returnY));
-          points.add(new Point(targetTurnX, returnY));
-          points.add(new Point(targetTurnX, target.y));
-        } else {
-          double middleX = (source.x + target.x) / 2.0 + laneOffset;
-          points.add(new Point(middleX, source.y));
-          points.add(new Point(middleX, target.y));
-        }
-        points.add(target);
+        boolean recycle = Boolean.TRUE.equals(connection.getProperties().get("recycle")) || source.x >= target.x;
+        points.addAll(
+            routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+                ? obstacleAwareOrthogonalRoute(source, target, recycle, laneOffset, positions,
+                    endpointOwnerId(connection, "sourceEndpointId", objects),
+                    endpointOwnerId(connection, "targetEndpointId", objects), contentBottom, routeLabel, page.routes,
+                    page.width)
+                : Arrays.asList(source, target));
       } else {
         diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_ENDPOINT_OMITTED",
             "Connection endpoints cannot both be placed on this sheet; the semantic connection remains in the source document",
@@ -762,7 +894,7 @@ public final class NativeEngineeringDiagramRenderer {
     if (routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL) {
       addFlowArrow(page, points, color, connection.getId());
     }
-    String label = displayLabel(connection);
+    String label = routeLabel;
     if (label == null || label.trim().isEmpty()) {
       diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_CONNECTION_LABEL_MISSING",
           "Rendered connection has no primary label and requires drawing review", connection.getId()));
@@ -851,7 +983,8 @@ public final class NativeEngineeringDiagramRenderer {
       page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
     }
     String primary = displayLabel(object);
-    page.commands.add(Command.text(position.x, position.y - 0.8, 2.8, primary, "#111827", object.getId(), "middle"));
+    page.commands.add(Command.text(position.x, position.y - 0.8, primaryTextSize(object), primary, "#111827",
+        object.getId(), "middle"));
     String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
     page.commands.add(Command.text(position.x, position.y + 4.0, 2.0, secondary, "#4b5563", object.getId(), "middle"));
   }
@@ -1624,6 +1757,20 @@ public final class NativeEngineeringDiagramRenderer {
 
   private static double estimatedTextWidth(String value, double fontSize) {
     return value.length() * fontSize * 0.52;
+  }
+
+  private static double primaryTextSize(SemanticObject object) {
+    double standardSize = 2.8;
+    if (object.getKind() != EngineeringNode.Kind.LINE) {
+      return standardSize;
+    }
+    String label = displayLabel(object);
+    double availableWidth = OBJECT_WIDTH - 4.0;
+    double estimatedWidth = estimatedTextWidth(label, standardSize);
+    if (estimatedWidth <= availableWidth) {
+      return standardSize;
+    }
+    return Math.max(2.2, standardSize * (availableWidth - 1.0) / estimatedWidth);
   }
 
   private static boolean insideAll(List<Waypoint> waypoints, double width, double contentBottom) {

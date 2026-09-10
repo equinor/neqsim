@@ -72,6 +72,51 @@ public class DoeBigHillSweetAssayTest {
   }
 
   @Test
+  public void vacuumScreeningFeedNormalizesQualifiedHeavyCutsWithoutInventingBoundaries() {
+    SystemInterface system = new SystemSrkEos(298.15, 1.01325);
+    OilAssayCharacterisation assay = DoeBigHillSweetAssay.createVacuumScreeningFeed(system, 4.2);
+
+    assertEquals(0, system.getNumberOfComponents());
+    assertEquals(3, assay.getCuts().size());
+    assertEquals(4.2, assay.getTotalAssayMass(), 0.0);
+    assertEquals(42.84, DoeBigHillSweetAssay.getVacuumScreeningWholeCrudeMassPercent(), 0.0);
+
+    double[] sourceWeightPercent = DoeBigHillSweetAssay.getVacuumScreeningSourceWeightPercent();
+    assertArrayEquals(new double[] { 18.44, 12.84, 11.56 }, sourceWeightPercent, 0.0);
+    assertEquals(42.84, sum(sourceWeightPercent), 1.0e-12);
+    sourceWeightPercent[0] = 0.0;
+    assertEquals(18.44, DoeBigHillSweetAssay.getVacuumScreeningSourceWeightPercent()[0], 0.0);
+
+    assertArrayEquals(new double[] { 18.44 / 42.84, 12.84 / 42.84, 11.56 / 42.84 }, assay.getResolvedMassFractions(),
+        1.0e-12);
+    assertEquals(1.0, sum(assay.getResolvedMassFractions()), 1.0e-12);
+    assertEquals(0.8152119514472456, assay.getBulkSulfurMassPercent(), 1.0e-12);
+    assertEquals(0.24922969187675068, assay.getBulkNitrogenMassPercent(), 1.0e-12);
+
+    AssayCut firstDistillate = assay.getCuts().get(0);
+    AssayCut secondDistillate = assay.getCuts().get(1);
+    AssayCut residue = assay.getCuts().get(2);
+    assertEquals("DOE_BH_650_850", firstDistillate.getName());
+    assertEquals("DOE_BH_850_1050", secondDistillate.getName());
+    assertEquals("DOE_BH_1050_PLUS", residue.getName());
+    assertTrue(firstDistillate.hasLowerBoilingPoint());
+    assertTrue(firstDistillate.hasUpperBoilingPoint());
+    assertTrue(secondDistillate.hasLowerBoilingPoint());
+    assertTrue(secondDistillate.hasUpperBoilingPoint());
+    assertTrue(residue.hasLowerBoilingPoint());
+    assertFalse(residue.hasUpperBoilingPoint());
+    assertTrue(residue.hasWatsonCharacterizationFactor());
+
+    assay.apply();
+
+    assertEquals(3, system.getNumberOfComponents());
+    assertPositiveFiniteComponent(system.getComponent("DOE_BH_650_850_PC"));
+    assertPositiveFiniteComponent(system.getComponent("DOE_BH_850_1050_PC"));
+    assertPositiveFiniteComponent(system.getComponent("DOE_BH_1050_PLUS_PC"));
+    assertEquals(4.2, reconstructedMassKg(system), 1.0e-10);
+  }
+
+  @Test
   public void invalidMassFailsBeforeChangingExistingAssayOrSystem() {
     SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     OilAssayCharacterisation existing = system.getOilAssayCharacterisation();
@@ -81,6 +126,10 @@ public class DoeBigHillSweetAssayTest {
 
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillSweetAssay.create(system, Double.NaN));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillSweetAssay.create(system, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> DoeBigHillSweetAssay.createVacuumScreeningFeed(system, Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillSweetAssay.createVacuumScreeningFeed(system, 0.0));
+    assertThrows(NullPointerException.class, () -> DoeBigHillSweetAssay.createVacuumScreeningFeed(null));
     assertEquals(1, existing.getCuts().size());
     assertEquals("Existing", existing.getCuts().get(0).getName());
     assertEquals(0, system.getNumberOfComponents());

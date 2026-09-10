@@ -257,13 +257,33 @@ participant evidence is unavailable, while finite physical limit violations rema
 infeasible. The adapter does not compute new compressor or gearbox physics, run or restore process
 equipment, alter process solving, or accept an optimizer proposal.
 
+`PlantPipelineEvidence` now provides a strict post-solve adapter for one completed
+`PipeBeggsAndBrills` calculation. It freezes maximum absolute pressure, inlet-to-outlet pressure
+drop, receiving pressure, maximum mixture superficial velocity, and minimum/maximum bulk
+temperature with their exact profile-node locations. Geometry provenance and all six installed
+limits are explicit caller inputs. Missing profiles or limits, unverified geometry, stale calculation
+identity, non-finite values, and incomplete process convergence remain unavailable. The adapter
+does not qualify API RP 14E, FIV, AIV, hydrate, wax, liquid-dropout, slug, transient, or pipeline
+numerical-internals envelopes.
+
+An unmodified-master scale observation at
+`32600dc09e38ababc41c9dfb24da0752ddffba80` executed 162 units in 20 areas. One measured
+model solve took 1.368788351 s and allocated 466,032,584 bytes on the main thread; its JSON result
+was 56,908 bytes. The run completed two model iterations with zero validation failures and relative
+mass, maximum-component, and energy residuals of `6.0633e-16`, `5.3624e-16`, and `7.0818e-11`.
+This is early real-model scale evidence, not the complete frozen L fixture: it has no recycle,
+pipeline-bottleneck sequence, three-phase water handling, shared-resource transition, discrete
+line-up, cache comparison, or selective optimizer result. The 512 MB heap value is a JVM maximum,
+not measured peak usage. Raw evidence is retained in
+`benchmarks/industrial-large-baseline-32600dc.json`.
+
 ## Next dependency-ready increments
 
-1. Complete separator and piping evidence adapters before adding fail-closed scalable evaluation
-   and solver orchestration.
-2. Execute the full L fixture, then expose the stable evaluator result through current Java and
-   Python workflows and execute C, B, and R as
-   maintained workflows.
+1. Integrate the strict separator and piping snapshots into compiled fail-closed scalable evaluation
+   before solver orchestration.
+2. Extend the measured >=150-unit fixture to the complete frozen L topology and transition sequence.
+3. Expose the stable evaluator result through current Java and Python workflows and execute C, B,
+   and R as maintained workflows.
 
 Until those increments are merged and measured, this page is the authoritative baseline contract,
 not a declaration that industrial-scale optimization is complete.

@@ -6,6 +6,10 @@ keywords: "hydrate, gas hydrate, hydrate formation, hydrate curve, hydrate inhib
 
 This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium.
 
+For electrolyte water activities, see [Pitzer hydrate equilibrium for brines](pitzer_hydrate_equilibrium.md).
+`SystemPitzer` uses `ComponentHydratePitzer` for a consistent aqueous water reference and supports
+onset temperature, pressure and curves. Its hydrate amount, ice and subzero calculations are not supported.
+
 ## Table of Contents
 
 - [Overview](#overview)

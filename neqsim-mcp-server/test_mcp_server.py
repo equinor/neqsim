@@ -1563,13 +1563,13 @@ def test_capabilities():
         "listUnitVariables",
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
-        "runPlugin", "runCapability", "composeWorkflow", "solveTask", "diagnoseAutomation", "getAutomationLearningReport",
+        "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-three bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.33"
-          and limitations.get("contractTestedToolCount") == 33
-          and limitations.get("confirmedGapToolCount") == 18
+    check("thirty-four bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.34"
+          and limitations.get("contractTestedToolCount") == 34
+          and limitations.get("confirmedGapToolCount") == 17
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1686,6 +1686,25 @@ def test_capabilities():
           and "plant or control authority"
           in composed_workflow.get("evidenceBoundary", ""),
           str(composed_workflow))
+    streaming = coverage_records.get("streamSimulation", {})
+    check("bounded streaming simulation has direct contract evidence",
+          streaming.get("coverageStatus") == "CONTRACT_TESTED"
+          and streaming.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_STREAMING_SIMULATION"
+          and streaming.get("contractEvidenceCount") == 7
+          and "src/test/java/neqsim/mcp/runners/StreamingRunnerTest.java"
+          in streaming.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java"
+          in streaming.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_streaming_protocol.py"
+          in streaming.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/STREAMING_SIMULATION_CONTRACT.md"
+          in streaming.get("contractEvidenceSources", [])
+          and "statistical or uncertainty validity"
+          in streaming.get("evidenceBoundary", "")
+          and "plant or control authority"
+          in streaming.get("evidenceBoundary", ""),
+          str(streaming))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1703,7 +1722,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 18
+          and limitations.get("confirmedGapToolCount") == 17
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

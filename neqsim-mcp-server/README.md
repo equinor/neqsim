@@ -599,6 +599,21 @@ The `streamSimulation` tool runs long simulations in the background with increme
 | `cancel` / `cancelOperation`             | Cancel a running operation                                   |
 | `list` / `listOperations`                | List all active operations                                   |
 
+Starts fail closed unless work is explicitly bounded: 1–1000 sweep points,
+1–10,000 dynamic steps, or 1–1000 Monte Carlo iterations. Poll cursors must be
+non-negative and each poll returns at most 100 records, with
+`nextPollIndex` and `hasMoreResults` for continuation. Standard response
+`status` remains `success` or `error`; asynchronous lifecycle state is
+reported separately as `operationStatus`. `listOperations`
+reports these fixed request limits together with the shared execution policy.
+
+Operations are visible only to their initiating principal, retained only in the
+current server process, and removed 30 minutes after terminal activity. A
+restart loses them; cancellation and timeout are cooperative rather than hard
+process isolation. Streaming results preserve the underlying NeqSim model
+behavior and require independent engineering review. See
+[the bounded streaming contract](docs/evidence/STREAMING_SIMULATION_CONTRACT.md).
+
 ---
 
 ## Inline Visualization

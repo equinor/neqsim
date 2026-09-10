@@ -1,10 +1,10 @@
 package neqsim.thermo.util.gerg;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -159,62 +159,45 @@ public class GERG2008ResultVerificationTest {
   }
 
   /**
-   * Verify that state changes correctly trigger recalculation. Disabled: SystemGERG2008Eos direct usage with TPflash
-   * returns NaN. Use SystemSrkEos with GERG property lookups instead.
+   * Verify that direct GERG-2008 state changes recalculate and return without stale cached properties.
    */
-  @Disabled("SystemGERG2008Eos direct usage with TPflash returns NaN")
   @Test
   void verifyStateChangeTriggersRecalculation() {
-    logger.info("\n=== Verify State Change Triggers Recalculation ===\n");
-
-    SystemInterface fluid = new SystemGERG2008Eos(300.0, 50.0);
-    fluid.addComponent("methane", 90.0);
-    fluid.addComponent("ethane", 5.0);
-    fluid.addComponent("propane", 3.0);
-    fluid.addComponent("CO2", 2.0);
-    fluid.setMixingRule("classic");
+    SystemInterface fluid = createDirectGergGas(300.0, 50.0);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
-
+    assertDirectGasFlashState(fluid, "300 K / 50 bara");
+    SystemInterface reference = fluid.clone();
     double density1 = fluid.getPhase(0).getDensity();
     double enthalpy1 = fluid.getPhase(0).getEnthalpy();
 
-    // Change temperature
     fluid.setTemperature(350.0);
     ops.TPflash();
+    assertDirectGasFlashState(fluid, "350 K / 50 bara");
     double density2 = fluid.getPhase(0).getDensity();
     double enthalpy2 = fluid.getPhase(0).getEnthalpy();
 
-    // Change pressure
     fluid.setPressure(100.0);
     ops.TPflash();
+    assertDirectGasFlashState(fluid, "350 K / 100 bara");
     double density3 = fluid.getPhase(0).getDensity();
-    double enthalpy3 = fluid.getPhase(0).getEnthalpy();
 
-    logger.info("State                    | Density (kg/m3) | Enthalpy (J/mol)");
-    logger.info("-------------------------|-----------------|------------------");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=300K, P=50bar          | %15.6f | %16.6f%n", density1,
-        enthalpy1);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=50bar          | %15.6f | %16.6f%n", density2,
-        enthalpy2);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "T=350K, P=100bar         | %15.6f | %16.6f%n", density3,
-        enthalpy3);
+    SystemInterface freshChanged = createDirectGergGas(350.0, 100.0);
+    new ThermodynamicOperations(freshChanged).TPflash();
+    assertDirectGasFlashEquivalent(freshChanged, fluid, 1.0e-8, "fresh/reused changed state");
 
-    // Verify properties changed appropriately
-    // Higher temperature at same pressure -> lower density
-    logger.info("\nPhysics checks:");
-    System.out.println("Higher T at same P -> lower density: " + (density2 < density1 ? "OK" : "FAIL"));
-    // Higher pressure at same temperature -> higher density
-    System.out.println("Higher P at same T -> higher density: " + (density3 > density2 ? "OK" : "FAIL"));
-    // Higher temperature -> higher enthalpy
-    logger.info("Higher T -> higher enthalpy: " + (enthalpy2 > enthalpy1 ? "OK" : "FAIL"));
+    assertTrue(density2 < density1, "higher temperature at constant pressure must lower density");
+    assertTrue(density3 > density2, "higher pressure at constant temperature must raise density");
+    assertTrue(enthalpy2 > enthalpy1, "higher temperature must raise enthalpy");
 
-    // Assert physical correctness
-    org.junit.jupiter.api.Assertions.assertTrue(density2 < density1, "Higher T should give lower density at same P");
-    org.junit.jupiter.api.Assertions.assertTrue(density3 > density2, "Higher P should give higher density at same T");
-    org.junit.jupiter.api.Assertions.assertTrue(enthalpy2 > enthalpy1, "Higher T should give higher enthalpy");
+    fluid.setTemperature(300.0);
+    fluid.setPressure(50.0);
+    ops.TPflash();
+    assertDirectGasFlashEquivalent(reference, fluid, 1.0e-8, "returned state");
 
-    logger.info("\n✓ State changes correctly trigger recalculation with physically correct results");
+    SystemInterface previous = fluid.clone();
+    ops.TPflash();
+    assertDirectGasFlashEquivalent(previous, fluid, 1.0e-10, "deterministic repeat");
   }
 
   /**
@@ -358,57 +341,98 @@ public class GERG2008ResultVerificationTest {
   }
 
   /**
-   * Test thermodynamic properties are accessible with GERG-2008. Note: Transport properties (viscosity, thermal
-   * conductivity) are NOT available for native GERG-2008 phases due to component compatibility issues. Disabled:
-   * SystemGERG2008Eos direct usage with TPflash returns NaN. Use SystemSrkEos with GERG property lookups instead.
+   * Test that direct GERG-2008 TP flash exposes finite thermodynamic properties.
+   *
+   * <p>
+   * Transport properties remain unavailable for native GERG-2008 phases; use a compatible transport-property model when
+   * viscosity or thermal conductivity is required.
+   * </p>
    */
-  @Disabled("SystemGERG2008Eos direct usage with TPflash returns NaN")
   @Test
   void verifyThermodynamicPropertiesAccessible() {
-    logger.info("\n=== Verify Thermodynamic Properties Accessible with GERG-2008 ===\n");
+    SystemInterface fluid = createDirectGergGas(303.15, 50.0);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertDirectGasFlashState(fluid, "thermodynamic property access");
 
-    SystemInterface fluid = new SystemGERG2008Eos(303.15, 50.0);
-    fluid.addComponent("methane", 85.0);
-    fluid.addComponent("ethane", 7.0);
-    fluid.addComponent("propane", 3.0);
-    fluid.addComponent("CO2", 3.0);
-    fluid.addComponent("nitrogen", 2.0);
+    assertTrue(fluid.getPhase(0).getDensity() > 0.0, "density must be positive");
+    assertTrue(fluid.getPhase(0).getCp() > 0.0, "Cp must be positive");
+    assertTrue(fluid.getPhase(0).getCv() > 0.0, "Cv must be positive");
+    assertTrue(fluid.getPhase(0).getSoundSpeed() > 0.0, "sound speed must be positive");
+  }
+
+  private SystemInterface createDirectGergGas(double temperatureK, double pressureBara) {
+    SystemInterface fluid = new SystemGERG2008Eos(temperatureK, pressureBara);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("CO2", 0.02);
     fluid.setMixingRule("classic");
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.TPflash();
+    return fluid;
+  }
 
-    // Get thermodynamic properties (from GERG-2008)
-    double density = fluid.getPhase(0).getDensity();
-    double enthalpy = fluid.getPhase(0).getEnthalpy();
-    double entropy = fluid.getPhase(0).getEntropy();
-    double cp = fluid.getPhase(0).getCp();
-    double cv = fluid.getPhase(0).getCv();
-    double z = fluid.getPhase(0).getZ();
-    double soundSpeed = fluid.getPhase(0).getSoundSpeed();
-    double jt = fluid.getPhase(0).getJouleThomsonCoefficient();
+  private void assertDirectGasFlashState(SystemInterface fluid, String label) {
+    assertEquals(1, fluid.getNumberOfPhases(), label + " phase count");
+    assertEquals(neqsim.thermo.phase.PhaseType.GAS, fluid.getPhase(0).getType(), label + " phase type");
+    assertEquals(1.0, fluid.getBeta(0), 5.0e-12, label + " beta");
 
-    logger.info("Thermodynamic Properties (from GERG-2008):");
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Density:       %15.6f kg/m3%n", density);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Enthalpy:      %15.6f J/mol%n", enthalpy);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Entropy:       %15.6f J/mol-K%n", entropy);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Cp:            %15.6f J/mol-K%n", cp);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Cv:            %15.6f J/mol-K%n", cv);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Z-factor:      %15.6f%n", z);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  Sound Speed:   %15.6f m/s%n", soundSpeed);
-    logger.printf(org.apache.logging.log4j.Level.INFO, "  JT Coeff:      %15.6e K/Pa%n", jt);
+    double compositionTotal = 0.0;
+    double maximumMaterialResidual = 0.0;
+    for (int component = 0; component < fluid.getPhase(0).getNumberOfComponents(); component++) {
+      double composition = fluid.getPhase(0).getComponent(component).getx();
+      double feedComposition = fluid.getPhase(0).getComponent(component).getz();
+      double fugacityCoefficient = fluid.getPhase(0).getComponent(component).getFugacityCoefficient();
+      assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
+          label + " composition " + component);
+      assertTrue(Double.isFinite(fugacityCoefficient) && fugacityCoefficient > 0.0,
+          label + " fugacity coefficient " + component);
+      compositionTotal += composition;
+      maximumMaterialResidual = Math.max(maximumMaterialResidual, Math.abs(feedComposition - composition));
+    }
+    assertEquals(1.0, compositionTotal, 5.0e-12, label + " composition normalization");
+    assertTrue(maximumMaterialResidual < 1.0e-10, label + " single-phase material residual " + maximumMaterialResidual);
 
-    // Verify values are reasonable
-    org.junit.jupiter.api.Assertions.assertTrue(density > 0, "Density should be positive");
-    org.junit.jupiter.api.Assertions.assertTrue(cp > 0, "Cp should be positive");
-    org.junit.jupiter.api.Assertions.assertTrue(cv > 0, "Cv should be positive");
-    org.junit.jupiter.api.Assertions.assertTrue(z > 0 && z < 2, "Z-factor should be reasonable");
-    org.junit.jupiter.api.Assertions.assertTrue(soundSpeed > 0, "Sound speed should be positive");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getZ()) && fluid.getPhase(0).getZ() > 0.0, label + " compressibility");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getDensity()) && fluid.getPhase(0).getDensity() > 0.0,
+        label + " density");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getEnthalpy()), label + " enthalpy");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getEntropy()), label + " entropy");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getCp()) && fluid.getPhase(0).getCp() > 0.0, label + " Cp");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getCv()) && fluid.getPhase(0).getCv() > 0.0, label + " Cv");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getSoundSpeed()) && fluid.getPhase(0).getSoundSpeed() > 0.0,
+        label + " sound speed");
+    assertTrue(Double.isFinite(fluid.getPhase(0).getJouleThomsonCoefficient()), label + " Joule-Thomson coefficient");
+  }
 
-    // Note: Transport properties are NOT available for native GERG-2008 phases
-    logger.info("\nNote: Transport properties (viscosity, thermal conductivity)");
-    logger.info("      are not available for native GERG-2008 EoS phases.");
-    logger.info("      Use SRK EoS with initPhysicalProperties() for transport properties.");
+  private void assertDirectGasFlashEquivalent(SystemInterface expected, SystemInterface actual,
+      double relativeTolerance, String label) {
+    assertDirectGasFlashState(expected, label + " expected");
+    assertDirectGasFlashState(actual, label + " actual");
+    assertRelativeEquals(expected.getBeta(0), actual.getBeta(0), relativeTolerance, label + " beta");
+    assertRelativeEquals(expected.getPhase(0).getZ(), actual.getPhase(0).getZ(), relativeTolerance,
+        label + " compressibility");
+    assertRelativeEquals(expected.getPhase(0).getDensity(), actual.getPhase(0).getDensity(), relativeTolerance,
+        label + " density");
+    assertRelativeEquals(expected.getPhase(0).getEnthalpy(), actual.getPhase(0).getEnthalpy(), relativeTolerance,
+        label + " enthalpy");
+    assertRelativeEquals(expected.getPhase(0).getEntropy(), actual.getPhase(0).getEntropy(), relativeTolerance,
+        label + " entropy");
+    assertRelativeEquals(expected.getPhase(0).getCp(), actual.getPhase(0).getCp(), relativeTolerance, label + " Cp");
+    assertRelativeEquals(expected.getPhase(0).getCv(), actual.getPhase(0).getCv(), relativeTolerance, label + " Cv");
+    assertRelativeEquals(expected.getPhase(0).getSoundSpeed(), actual.getPhase(0).getSoundSpeed(), relativeTolerance,
+        label + " sound speed");
+    assertRelativeEquals(expected.getPhase(0).getJouleThomsonCoefficient(),
+        actual.getPhase(0).getJouleThomsonCoefficient(), relativeTolerance, label + " Joule-Thomson coefficient");
 
-    logger.info("\n✓ All thermodynamic properties are accessible via GERG-2008");
+    for (int component = 0; component < expected.getPhase(0).getNumberOfComponents(); component++) {
+      assertRelativeEquals(expected.getPhase(0).getComponent(component).getx(),
+          actual.getPhase(0).getComponent(component).getx(), relativeTolerance, label + " composition " + component);
+      assertRelativeEquals(expected.getPhase(0).getComponent(component).getFugacityCoefficient(),
+          actual.getPhase(0).getComponent(component).getFugacityCoefficient(), relativeTolerance,
+          label + " fugacity coefficient " + component);
+    }
+  }
+
+  private void assertRelativeEquals(double expected, double actual, double relativeTolerance, String label) {
+    assertEquals(expected, actual, Math.max(1.0e-10, relativeTolerance * Math.abs(expected)), label);
   }
 }

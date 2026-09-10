@@ -12,12 +12,20 @@ HOST_TIE_IN_TEST = (
     DOCS.parent
     / "src/test/java/neqsim/process/fielddevelopment/FieldDevelopmentOverviewDocumentationTest.java"
 )
+FIELD_LIFECYCLE_PAGE = DOCS / "fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md"
+FIELD_LIFECYCLE_CASE = DOCS.parent / (
+    "src/main/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldCase.java"
+)
+FIELD_LIFECYCLE_TEST = DOCS.parent / (
+    "src/test/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldLifecycleTest.java"
+)
 SCOPE_PAGES = (
     DOCS / "examples/FieldDevelopmentWorkflow.md",
     DOCS / "fielddevelopment/API_GUIDE.md",
     DOCS / "fielddevelopment/DECISION_ENGINE_WORKFLOWS.md",
     DOCS / "fielddevelopment/DIGITAL_FIELD_TWIN.md",
     DOCS / "fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md",
+    DOCS / "fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md",
     DOCS / "fielddevelopment/HOST_TIE_IN_CAPACITY.md",
     DOCS / "fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md",
     DOCS / "fielddevelopment/INTEGRATED_PRODUCTION_MODELLING.md",
@@ -144,7 +152,7 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-4 documentation surface."""
 
     def test_frozen_scope_exists(self):
-        self.assertEqual(42, len(SCOPE_PAGES))
+        self.assertEqual(43, len(SCOPE_PAGES))
         for page in SCOPE_PAGES:
             with self.subTest(page=page):
                 self.assertTrue(page.is_file())
@@ -230,6 +238,37 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
         ):
             with self.subTest(source_contract=source_contract):
                 self.assertIn(source_contract, regression)
+
+    def test_field_lifecycle_reference_case_has_executable_source_evidence(self):
+        page = FIELD_LIFECYCLE_PAGE.read_text(encoding="utf-8")
+        case = FIELD_LIFECYCLE_CASE.read_text(encoding="utf-8")
+        regression = FIELD_LIFECYCLE_TEST.read_text(encoding="utf-8")
+
+        for source_link in (
+            "../../src/main/java/neqsim/process/fielddevelopment/lifecycle/"
+            "NorwegianOilFieldCase.java",
+            "../../src/test/java/neqsim/process/fielddevelopment/lifecycle/"
+            "NorwegianOilFieldLifecycleTest.java",
+        ):
+            with self.subTest(source_link=source_link):
+                self.assertIn(source_link, page)
+
+        for source_contract in (
+            "public static FieldLifecycleConcept createGasInjectionCase()",
+            "public static FieldLifecycleConcept createNaturalDepletionCase()",
+            "public static List<FieldLifecycleConcept> createDevelopmentPortfolio()",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, case)
+
+        for regression_contract in (
+            "void gasInjectionCaseRunsFromReservoirToEconomics()",
+            "assertTrue(result.getCumulativeOilSm3() > 0.0)",
+            "assertTrue(result.getCumulativeGasInjectedSm3() > 0.0)",
+            "assertTrue(Double.isFinite(result.getNpvMusd()))",
+        ):
+            with self.subTest(regression_contract=regression_contract):
+                self.assertIn(regression_contract, regression)
 
 
 if __name__ == "__main__":

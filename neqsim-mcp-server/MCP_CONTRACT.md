@@ -443,6 +443,18 @@ An operation exceeding its timeout is cancelled and reported with status
 error rather than queueing. Active limits are reported by `getCapabilities`
 under `modelLifecycle.executionPolicy` and by `streamSimulation(action='list')`.
 
+`streamSimulation` also applies fixed request bounds: 1–1000 parametric
+points, 1–10,000 dynamic time steps, 1–1000 Monte Carlo iterations, a 256 KiB
+dynamic process definition, and at most 100 result records per poll. Invalid
+variables, units, ranges, distributions, compositions, process definitions,
+timings, and negative poll cursors fail closed before background work is
+registered. Retained terminal results do not consume the 20-operation global
+active-work allowance. Operations and results are in-process and
+principal-scoped; they are not durable or distributed. Cancellation and timeout
+remain cooperative, not hard process isolation. The detailed evidence and
+advisory boundary are recorded in
+`docs/evidence/STREAMING_SIMULATION_CONTRACT.md`.
+
 `runCapability(action='invoke')` has a separate five-second in-process worker budget for bounded
 static calculations. It rejects MCP runners and dispatchers, raw generic containers, requests over
 64 KiB, argument arrays over 4096 elements, and results over 256 KiB. Conversion and serialization

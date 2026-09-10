@@ -82,6 +82,10 @@ public class TPHydrateFlash extends TPflash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      throw new UnsupportedOperationException(
+          "Pitzer supports incipient hydrate equilibrium only; use hydrateFormationTemperature or hydrateFormationPressure");
+    }
     // First ensure hydrate check is enabled
     if (!system.getHydrateCheck()) {
       system.setHydrateCheck(true);

@@ -63,6 +63,23 @@ neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no ne
 
 ## Complete-dataset qualification publication gate
 
+For CO2 with Na/K/Ca/Mg chlorides, the explicit
+`SystemPitzer.applyPhreeqcCo2ChlorideParameters(Map<String, Double>)` helper combines catalog ionic
+and CO2 lambda rows with caller-supplied constant CO2-cation-Cl zeta values. Every present cation
+requires a supplied value; an explicit zero is a screening assumption. Use this on a fresh system
+before flashing or defining custom interactions. The dataset identity is
+`usgs-phreeqc-pitzer-co2-chlorides-user-zeta-v1` and remains unqualified. It does not change the
+automatic catalog policy. See [Pitzer hydrate equilibrium](pitzer_hydrate_equilibrium.md) for the
+salt basis, independent comparisons and remaining limits.
+
+The catalog also lacks a K+-Mg++ theta row. When both ions are present, use
+`applyPhreeqcCo2ChlorideParameters(zeta, potassiumMagnesiumTheta)` with an explicit finite constant.
+This overload uses identity `usgs-phreeqc-pitzer-co2-chlorides-user-theta-zeta-v1` and remains
+unqualified. The original overload rejects that topology; it does not insert a zero theta.
+The 57-point hydrate reference assessment preserves six mixed-brine errors beyond 1 K,
+unavailable cold/precipitating cases and a CO2 phase mismatch. Neither a complete topology nor
+a passing regression suite promotes these manual parameters to a qualified dataset.
+
 Interaction coverage and scientific qualification remain independent contracts. A complete topology
 may still use a dataset whose full species/range matrix lacks held-out evidence.
 `SystemPitzer.getPitzerParameterQualification()` completes lazy dataset selection and returns the
