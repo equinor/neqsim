@@ -71,8 +71,8 @@ class CapacityScreeningSemanticsTest {
       process.add(outlet);
       ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
       engine.setEnforceConstraints(false);
-      ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(
-          new double[] { 40.0 }, new double[] { 300.0 }, 20.0, 100.0, 200.0);
+      ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(new double[] { 40.0 },
+          new double[] { 300.0 }, 20.0, 100.0, 200.0);
       assertEquals(1, samples.size());
       assertTrue(Double.isNaN(samples.getPoints().get(0).getMaxFlowRate()));
     }
