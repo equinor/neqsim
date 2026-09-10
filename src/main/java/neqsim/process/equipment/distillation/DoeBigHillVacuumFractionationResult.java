@@ -99,10 +99,8 @@ public final class DoeBigHillVacuumFractionationResult {
       }
       previousMeanBoilingPoint = meanBoilingPoint;
       productMassFlow += massFlow;
-      productResults[i] =
-          new ProductResult(PRODUCT_LABELS[i], massFlow, massFlow / feedMassFlow, meanBoilingPoint,
-              boilingPointDistribution.boilingPointTemperaturesKelvin,
-              boilingPointDistribution.cumulativeMoleFractions);
+      productResults[i] = new ProductResult(PRODUCT_LABELS[i], massFlow, massFlow / feedMassFlow, meanBoilingPoint,
+          boilingPointDistribution.boilingPointTemperaturesKelvin, boilingPointDistribution.cumulativeMoleFractions);
     }
 
     double closureError = Math.abs(feedMassFlow - productMassFlow) / feedMassFlow;
@@ -362,8 +360,7 @@ public final class DoeBigHillVacuumFractionationResult {
      * Return a discrete pseudo-component normal-boiling-point quantile on cumulative mole basis.
      *
      * <p>
-     * This stepwise diagnostic is not an ASTM D86, ASTM D1160, TBP, or continuous
-     * simulated-distillation temperature.
+     * This stepwise diagnostic is not an ASTM D86, ASTM D1160, TBP, or continuous simulated-distillation temperature.
      * </p>
      *
      * @param cumulativeMoleFraction requested cumulative product mole fraction in (0, 1]
@@ -371,8 +368,7 @@ public final class DoeBigHillVacuumFractionationResult {
      * @throws IllegalArgumentException if the request is non-finite or outside (0, 1]
      */
     public double getNormalBoilingPointQuantileKelvin(double cumulativeMoleFraction) {
-      if (!Double.isFinite(cumulativeMoleFraction) || !(cumulativeMoleFraction > 0.0)
-          || cumulativeMoleFraction > 1.0) {
+      if (!Double.isFinite(cumulativeMoleFraction) || !(cumulativeMoleFraction > 0.0) || cumulativeMoleFraction > 1.0) {
         throw new IllegalArgumentException("Cumulative mole fraction must be finite and in (0, 1]");
       }
       for (int i = 0; i < cumulativeMoleFractions.length; i++) {
