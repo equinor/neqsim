@@ -40,7 +40,7 @@ spec:
         QUARKUS_HTTP_HOST: "0.0.0.0"                 # dev default is localhost
         QUARKUS_HTTP_CORS_ENABLED: "false"           # no browser talks to /mcp directly
         QUARKUS_MCP_SERVER_STDIO_ENABLED: "false"    # pod has no stdin -> would exit on EOF
-        NEQSIM_MCP_PROFILE: "STUDY_TEAM"             # governance tier (Tier 1+2 callable)
+        NEQSIM_MCP_PROFILE: "DESKTOP_ENGINEER"       # governance tier: full tool set (Tier 1+2+3, 82 tools) — agreed 2026-08-21, applied 2026-09-10
         # ── Entra OIDC (resource server; %enterprise profile) ──
         QUARKUS_PROFILE: "enterprise"                # turns on OIDC + OTel
         QUARKUS_OIDC_AUTH_SERVER_URL: "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/v2.0"
