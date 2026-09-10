@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Validation benchmark cases for pipeline network solvers.
  *
  * <p>
- * Provides analytically solvable or published benchmark cases for verifying the Hardy Cross and Newton-Raphson solvers
- * against known solutions. Each benchmark returns a result object with computed values, expected values, and pass/fail
- * status.
+ * Provides synthetic equation, conservation, and cross-solver benchmark cases for verifying the Hardy Cross and
+ * Newton-Raphson solvers against known solutions. Each benchmark returns a result object with computed values, expected
+ * values, and pass/fail status.
  * </p>
  *
  * <h2>Benchmark Cases</h2>
@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li><b>Single Pipe (Darcy-Weisbach)</b>: Analytical ΔP from Swamee-Jain / Darcy-Weisbach equation</li>
  * <li><b>Two Parallel Pipes</b>: Known flow split from equal/unequal diameter pipes</li>
  * <li><b>Triangle Loop</b>: Classic 3-pipe loop with Hardy Cross analytical solution</li>
- * <li><b>Two-Loop Network</b>: Cross (1936) textbook example with 5 pipes and 2 loops</li>
+ * <li><b>Two-Loop Network</b>: Synthetic example with 5 pipes and 2 loops</li>
  * <li><b>Mass Balance</b>: Verifies conservation of mass at all junction nodes</li>
  * <li><b>Pressure Monotonicity</b>: Verifies pressure drops along flow direction</li>
  * </ul>
@@ -81,11 +81,7 @@ public class NetworkValidationBenchmarks {
     SystemInterface gas = createBenchmarkGas();
     neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
         gas);
-    try {
-      ops.TPflash();
-    } catch (Exception e) {
-      // ignore
-    }
+    ops.TPflash();
     gas.initProperties();
     double density = gas.getDensity("kg/m3");
     double viscosity = gas.getViscosity("kg/msec");
@@ -114,11 +110,9 @@ public class NetworkValidationBenchmarks {
     network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
     network.run();
 
-    double networkFlow = Math.abs(network.getPipeFlowRate("pipe1")) * 3600.0; // kg/hr
+    double networkFlow = Math.abs(network.getPipeFlowRate("pipe1")); // kg/hr
 
-    result.addMetric("Reynolds number", reynolds, reynolds, 0.01);
-    result.addMetric("Analytical dP (bar)", analyticalDp / 1e5, analyticalDp / 1e5, 0.001);
-    result.addMetric("Friction factor (Swamee-Jain)", swameeJainF, swameeJainF, 0.001);
+    result.addMetric("Darcy-Weisbach dP (bar)", network.getPipe("pipe1").getHeadLoss() / 1e5, analyticalDp / 1e5, 1e-6);
     result.addMetric("Flow rate (kg/hr)", networkFlow, massFlow * 3600.0, 0.10);
     result.converged = network.isConverged();
     result.solverIterations = network.getIterationCount();
@@ -140,7 +134,8 @@ public class NetworkValidationBenchmarks {
    * </pre>
    *
    * <p>
-   * For turbulent Darcy-Weisbach: Q1/Q2 ≈ (D1/D2)^(5/2) (approximate for equal friction factors).
+   * The reference solves the scalar Darcy-Weisbach equations with each pipe's own Reynolds number and relative
+   * roughness. The approximate equal-friction D^(5/2) ratio is not used as an exact acceptance criterion.
    * </p>
    *
    * @return benchmark result
@@ -155,13 +150,13 @@ public class NetworkValidationBenchmarks {
     double d2 = 0.2; // 200 mm
     double roughness = 4.6e-5;
     double sourcePressure = 60.0; // bara
-    double sinkPressure = 55.0; // bara
+    double totalFlowKgHr = 100000.0;
 
     LoopedPipeNetwork network = new LoopedPipeNetwork("bench2_parallel");
     network.setFluidTemplate(gas);
 
-    network.addSourceNode("source", sourcePressure, 0.0); // Pressure-driven (not flow-driven)
-    network.addFixedPressureSinkNode("sink", sinkPressure);
+    network.addSourceNode("source", sourcePressure, totalFlowKgHr);
+    network.addSinkNode("sink", totalFlowKgHr);
     network.addJunctionNode("jA"); // Split point
     network.addJunctionNode("jB"); // Merge point
 
@@ -176,28 +171,73 @@ public class NetworkValidationBenchmarks {
     network.setSolverType(LoopedPipeNetwork.SolverType.HARDY_CROSS);
     network.run();
 
-    double q1 = Math.abs(network.getPipeFlowRate("upper")); // kg/s
-    double q2 = Math.abs(network.getPipeFlowRate("lower")); // kg/s
+    double q1 = Math.abs(network.getPipeFlowRate("upper")); // kg/hr
+    double q2 = Math.abs(network.getPipeFlowRate("lower")); // kg/hr
     double qTotal = q1 + q2;
 
-    // Expected ratio: Q1/Q2 ≈ (D1/D2)^(5/2)
-    double expectedRatio = Math.pow(d1 / d2, 2.5);
-    double actualRatio = (q2 > 1e-10) ? q1 / q2 : 0.0;
-
-    result.addMetric("Flow ratio Q_big/Q_small", actualRatio, expectedRatio, 0.15);
-    result.addMetric("Total flow (kg/hr)", qTotal * 3600.0, qTotal * 3600.0, 0.001);
-    result.addMetric("Upper pipe flow (kg/hr)", q1 * 3600.0, q1 * 3600.0, 0.001);
-    result.addMetric("Lower pipe flow (kg/hr)", q2 * 3600.0, q2 * 3600.0, 0.001);
-
-    // Verify equal pressure drop across parallel paths
-    double dpUpper = Math.abs(network.getPipe("upper").getHeadLoss()) / 1e5;
-    double dpLower = Math.abs(network.getPipe("lower").getHeadLoss()) / 1e5;
-    result.addMetric("dP balance (bar)", Math.abs(dpUpper - dpLower), 0.0, 0.5);
+    // The equal-friction D^(5/2) approximation is not an exact reference for
+    // unequal diameters: Reynolds number and relative roughness differ.
+    // Solve the two scalar Darcy-Weisbach equations independently, subject to
+    // the specified total mass flow, to obtain an absolute flow reference.
+    neqsim.thermodynamicoperations.ThermodynamicOperations operations = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        gas);
+    operations.TPflash();
+    gas.initProperties();
+    double density = gas.getDensity("kg/m3");
+    double viscosity = gas.getViscosity("kg/msec");
+    double totalFlowKgS = totalFlowKgHr / 3600.0;
+    double lower = 0.0;
+    double upper = totalFlowKgS;
+    for (int i = 0; i < 100; i++) {
+      double firstFlow = (lower + upper) / 2.0;
+      double firstDp = darcyPressureDrop(firstFlow, length, d1, roughness, density, viscosity);
+      double secondDp = darcyPressureDrop(totalFlowKgS - firstFlow, length, d2, roughness, density, viscosity);
+      if (firstDp > secondDp) {
+        upper = firstFlow;
+      } else {
+        lower = firstFlow;
+      }
+    }
+    double referenceQ1 = (lower + upper) * 1800.0;
+    double referenceQ2 = totalFlowKgHr - referenceQ1;
+    result.addMetric("Flow ratio Q_big/Q_small", q1 / q2, referenceQ1 / referenceQ2, 1e-6);
+    result.addMetric("Total flow (kg/hr)", qTotal, totalFlowKgHr, 0.01);
+    result.addMetric("Upper pipe flow (kg/hr)", q1, referenceQ1, 0.01);
+    result.addMetric("Lower pipe flow (kg/hr)", q2, referenceQ2, 0.01);
+    result.addMetric("Split mass balance (kg/hr)", network.getNodeFlowRate("jA"), 0.0, 0.01);
+    result.addMetric("Merge mass balance (kg/hr)", network.getNodeFlowRate("jB"), 0.0, 0.01);
+    double dpUpper = network.getPipe("upper").getHeadLoss() / 1e5;
+    double dpLower = network.getPipe("lower").getHeadLoss() / 1e5;
+    result.addMetric("dP balance (bar)", dpUpper - dpLower, 0.0, 1e-6);
 
     result.converged = network.isConverged();
     result.solverIterations = network.getIterationCount();
     result.evaluate();
     return result;
+  }
+
+  /**
+   * Evaluate the scalar Darcy-Weisbach reference in SI units.
+   *
+   * @param massFlow flow in kg/s
+   * @param length length in m
+   * @param diameter diameter in m
+   * @param roughness absolute roughness in m
+   * @param density fluid density in kg/m3
+   * @param viscosity dynamic viscosity in Pa s
+   * @return pressure drop in Pa
+   */
+  private static double darcyPressureDrop(double massFlow, double length, double diameter, double roughness,
+      double density, double viscosity) {
+    if (massFlow == 0.0) {
+      return 0.0;
+    }
+    double area = Math.PI * diameter * diameter / 4.0;
+    double velocity = massFlow / (density * area);
+    double reynolds = density * velocity * diameter / viscosity;
+    double friction = reynolds < 2300.0 ? 64.0 / reynolds
+        : 0.25 / Math.pow(Math.log10(roughness / (3.7 * diameter) + 5.74 / Math.pow(reynolds, 0.9)), 2);
+    return friction * length / diameter * density * velocity * velocity / 2.0;
   }
 
   /**
@@ -232,9 +272,9 @@ public class NetworkValidationBenchmarks {
     network.run();
 
     // Check mass balance at each node: inflow = outflow
-    double qAB = network.getPipeFlowRate("AB") * 3600.0;
-    double qBC = network.getPipeFlowRate("BC") * 3600.0;
-    double qCA = network.getPipeFlowRate("CA") * 3600.0;
+    double qAB = network.getPipeFlowRate("AB");
+    double qBC = network.getPipeFlowRate("BC");
+    double qCA = network.getPipeFlowRate("CA");
 
     // At A: supply = outflow_AB - inflow_CA
     double balanceA = supplyRate - qAB + qCA;
@@ -243,10 +283,10 @@ public class NetworkValidationBenchmarks {
     // At C: inflow_BC + inflow_CA = demand_C (CA flows from C to A, so CA entering A is -CA)
     double balanceC = qBC - qCA - 60.0;
 
-    result.addMetric("Node A mass balance (kg/hr)", Math.abs(balanceA), 0.0, 1.0);
-    result.addMetric("Node B mass balance (kg/hr)", Math.abs(balanceB), 0.0, 1.0);
-    result.addMetric("Node C mass balance (kg/hr)", Math.abs(balanceC), 0.0, 1.0);
-    result.addMetric("Overall mass balance error (kg/s)", network.getMassBalanceError(), 0.0, 0.01);
+    result.addMetric("Node A mass balance (kg/hr)", Math.abs(balanceA), 0.0, 0.01);
+    result.addMetric("Node B mass balance (kg/hr)", Math.abs(balanceB), 0.0, 0.01);
+    result.addMetric("Node C mass balance (kg/hr)", Math.abs(balanceC), 0.0, 0.01);
+    result.addMetric("Overall mass balance error (kg/s)", network.getMassBalanceError(), 0.0, 1e-6);
 
     result.converged = network.isConverged();
     result.solverIterations = network.getIterationCount();
@@ -278,8 +318,8 @@ public class NetworkValidationBenchmarks {
     hcNetwork.run();
     boolean hcConverged = hcNetwork.isConverged();
 
-    double hcQAB = hcNetwork.getPipeFlowRate("AB") * 3600.0;
-    double hcQBC = hcNetwork.getPipeFlowRate("BC") * 3600.0;
+    double hcQAB = hcNetwork.getPipeFlowRate("AB");
+    double hcQBC = hcNetwork.getPipeFlowRate("BC");
     double hcPA = hcNetwork.getNodePressure("A");
 
     // Solve with Newton-Raphson
@@ -288,17 +328,25 @@ public class NetworkValidationBenchmarks {
     nrNetwork.run();
     boolean nrConverged = nrNetwork.isConverged();
 
-    double nrQAB = nrNetwork.getPipeFlowRate("AB") * 3600.0;
-    double nrQBC = nrNetwork.getPipeFlowRate("BC") * 3600.0;
+    double nrQAB = nrNetwork.getPipeFlowRate("AB");
+    double nrQBC = nrNetwork.getPipeFlowRate("BC");
     double nrPA = nrNetwork.getNodePressure("A");
 
     result.addMetric("HC converged", hcConverged ? 1.0 : 0.0, 1.0, 0.0);
     result.addMetric("NR converged", nrConverged ? 1.0 : 0.0, 1.0, 0.0);
-    result.addMetric("Q_AB agreement (kg/hr)", hcQAB, nrQAB, 5.0);
-    result.addMetric("Q_BC agreement (kg/hr)", hcQBC, nrQBC, 5.0);
+    result.addMetric("Q_AB agreement (kg/hr)", hcQAB, nrQAB, 0.01);
+    result.addMetric("Q_BC agreement (kg/hr)", hcQBC, nrQBC, 0.01);
     result.addMetric("P_A agreement (bara)", hcPA, nrPA, 0.5);
-    result.addMetric("HC iterations", hcNetwork.getIterationCount(), hcNetwork.getIterationCount(), 0.0);
-    result.addMetric("NR iterations", nrNetwork.getIterationCount(), nrNetwork.getIterationCount(), 0.0);
+    for (String edge : new String[] { "CA", "CD", "DB" }) {
+      result.addMetric("Q_" + edge + " agreement (kg/hr)", hcNetwork.getPipeFlowRate(edge),
+          nrNetwork.getPipeFlowRate(edge), 0.01);
+    }
+    for (LoopedPipeNetwork net : new LoopedPipeNetwork[] { hcNetwork, nrNetwork }) {
+      String prefix = net == hcNetwork ? "HC " : "NR ";
+      result.addMetric(prefix + "C demand (kg/hr)", net.getNodeFlowRate("C"), 80.0, 0.01);
+      result.addMetric(prefix + "D demand (kg/hr)", net.getNodeFlowRate("D"), 120.0, 0.01);
+      result.addMetric(prefix + "B mass balance (kg/hr)", net.getNodeFlowRate("B"), 0.0, 0.01);
+    }
 
     result.converged = hcConverged && nrConverged;
     result.solverIterations = hcNetwork.getIterationCount() + nrNetwork.getIterationCount();
@@ -347,13 +395,10 @@ public class NetworkValidationBenchmarks {
 
     boolean monotone = (pSource >= pA) && (pA >= pB) && (pB >= pC) && (pC >= pSink);
 
-    result.addMetric("Source pressure (bara)", pSource, pSource, 0.0);
-    result.addMetric("Node A pressure (bara)", pA, pA, 0.0);
-    result.addMetric("Node B pressure (bara)", pB, pB, 0.0);
-    result.addMetric("Node C pressure (bara)", pC, pC, 0.0);
-    result.addMetric("Sink pressure (bara)", pSink, pSink, 0.0);
+    result.addMetric("Source pressure (bara)", pSource, 70.0, 1e-8);
+    result.addMetric("Sink demand (kg/hr)", network.getNodeFlowRate("sink"), 500.0, 0.01);
     result.addMetric("Pressure monotonicity", monotone ? 1.0 : 0.0, 1.0, 0.0);
-    result.addMetric("Total dP (bar)", pSource - pSink, pSource - pSink, 0.0);
+    result.addMetric("Positive outlet pressure", pSink > 0.0 ? 1.0 : 0.0, 1.0, 0.0);
 
     result.converged = network.isConverged();
     result.solverIterations = network.getIterationCount();
@@ -365,8 +410,8 @@ public class NetworkValidationBenchmarks {
    * Benchmark 6: Sparse vs Dense solver agreement for large networks.
    *
    * <p>
-   * Constructs a 10x10 grid network (100 nodes, ~200 pipes) and verifies that the sparse CSC solver and dense Gaussian
-   * elimination produce identical results. Reports timing for both.
+   * Constructs a 36-row banded matrix with grid-like off-diagonals and verifies that the sparse CSC solver and dense
+   * Gaussian elimination agree and satisfy the original linear equations. Reports timing for all three.
    * </p>
    *
    * @return benchmark result
@@ -422,15 +467,21 @@ public class NetworkValidationBenchmarks {
       maxDiffSparseGauss = Math.max(maxDiffSparseGauss, Math.abs(xSparse[i] - xGauss[i]));
     }
 
-    double[] sparsity = NetworkLinearSolver.estimateSparsity(n, n * 2);
-
-    result.addMetric("Matrix size", n, n, 0.0);
-    result.addMetric("Estimated density (%)", sparsity[0] * 100, sparsity[0] * 100, 0.0);
     result.addMetric("Dense vs Gauss max diff", maxDiffDenseGauss, 0.0, 1e-8);
     result.addMetric("Sparse vs Gauss max diff", maxDiffSparseGauss, 0.0, 1e-8);
-    result.addMetric("Gaussian time (us)", gaussTime / 1000.0, gaussTime / 1000.0, 0.0);
-    result.addMetric("Dense EJML time (us)", denseTime / 1000.0, denseTime / 1000.0, 0.0);
-    result.addMetric("Sparse EJML time (us)", sparseTime / 1000.0, sparseTime / 1000.0, 0.0);
+    double maxResidual = 0.0;
+    for (double[] solution : new double[][] { xGauss, xDense, xSparse }) {
+      for (int i = 0; i < n; i++) {
+        double residual = -vecB[i];
+        for (int j = 0; j < n; j++) {
+          residual += matA[i][j] * solution[j];
+        }
+        maxResidual = Math.max(maxResidual, Math.abs(residual));
+      }
+    }
+    result.addMetric("Maximum Ax-b residual", maxResidual, 0.0, 1e-10);
+    logger.debug("Linear solve times (us): Gaussian {}, Dense {}, Sparse {}", gaussTime / 1000.0, denseTime / 1000.0,
+        sparseTime / 1000.0);
 
     result.converged = (maxDiffDenseGauss < 1e-6) && (maxDiffSparseGauss < 1e-6);
     result.evaluate();

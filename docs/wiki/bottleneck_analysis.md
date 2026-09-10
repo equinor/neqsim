@@ -27,7 +27,7 @@ The `getCapacityDuty()` method returns the current operating load of a unit oper
 
 ### 2. Maximum Capacity (`getCapacityMax`)
 The `getCapacityMax()` method returns the maximum design capacity of the equipment. This value is typically set in the equipment's mechanical design.
-- **Compressor**: `maxDesignPower` (Watts).
+- **Compressor**: the mechanical-design setter takes kW; `getCapacityMax()` reports W.
 - **Separator**: `maxDesignGassVolumeFlow` ($m^3/hr$).
 
 ### 3. Rest Capacity (`getRestCapacity`)
@@ -44,7 +44,7 @@ envelopes for equipment without deterministic limits and specify a percentile vi
 
 ### ProcessEquipmentInterface
 The `ProcessEquipmentInterface` defines the methods for capacity analysis:
-```java
+```text
 public double getCapacityDuty();
 public double getCapacityMax();
 public double getRestCapacity();
@@ -52,7 +52,7 @@ public double getRestCapacity();
 
 ### ProcessSystem
 The `ProcessSystem` class includes a method to identify the bottleneck:
-```java
+```text
 public ProcessEquipmentInterface getBottleneck();
 ```
 This method iterates through all unit operations in the system and returns the one with the highest utilization ratio.
@@ -63,52 +63,35 @@ Currently, the following equipment types support capacity analysis:
 
 | Equipment | Duty Metric | Capacity Metric | How to Set Capacity | Override After autoSize |
 |-----------|-------------|-----------------|---------------------|------------------------|
-| **Separator** | Gas flow (m³/s) | Max allowable gas flow | `setDesignGasLoadFactor()`, `setInternalDiameter()` | `separator.setDesignGasLoadFactor(0.15)` |
+| **Separator** | Gas flow (m³/hr) | Max allowable gas flow | `setDesignGasLoadFactor()`, `setInternalDiameter()` | `separator.setDesignGasLoadFactor(0.15)` |
 | **Compressor** | Power (W) | Max design power | `initMechanicalDesign()` + `getMechanicalDesign().setMaxDesignPower()`, `setMaximumSpeed()` | `compressor.getMechanicalDesign().setMaxDesignPower(5000.0)` |
 | **Pump** | Power (W) | Max design power | `getMechanicalDesign().setMaxDesignPower()` | `pump.getMechanicalDesign().setMaxDesignPower(100000)` |
 | **Heater/Cooler** | Duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` | `heater.getMechanicalDesign().setMaxDesignDuty(1e6)` |
-| **ThrottlingValve** | Volume flow (m³/hr) | Max volume flow | `setDesignCv()`, `setDesignVolumeFlow()` | `valve.setDesignCv(200.0)` |
+| **ThrottlingValve** | Volume flow (m³/hr) | Max volume flow | `setCv()`, mechanical `setMaxDesignVolumeFlow()` | `valve.setCv(200.0)` |
 | **Pipeline/Pipe** | Volume flow (m³/hr) | Max design flow | `setMaxDesignVelocity()`, `setDiameter()` | `pipe.setMaxDesignVelocity(25.0)` |
 | **DistillationColumn** | Fs hydraulic factor | Fs limit | `OptimizationConfig.columnFsFactorLimit()` | Configure in optimizer |
-| **Custom types** | User-defined | User-defined | `capacityRuleForType` lambda | N/A |
+| **Custom types** | User-defined | User-defined | `addCapacityConstraint()` with a live supplier | N/A |
 
 ### Capacity Calculation Details
 
-**Separator:** Uses Souders-Brown equation with K-factor:
-```
-MaxGasFlow = K × A × √((ρ_liq - ρ_gas) / ρ_gas)
-Utilization = ActualGasFlow / MaxGasFlow
-```
-Override K-factor with `setDesignGasLoadFactor()` to change capacity.
+Keep three different reporting paths separate:
 
-**Compressor:** Uses power-based utilization:
-```
-Utilization = ShaftPower / MaxDesignPower
-```
-MaxDesignPower comes from: (1) driver speed-power curve, (2) `getMechanicalDesign().setMaxDesignPower()`, or (3) mechanical design.
+| Path | Separator behavior | Compressor behavior |
+|------|--------------------|---------------------|
+| Legacy `getCapacityDuty()/getCapacityMax()` | Gas flow in m³/hr divided by the mechanical gas-flow limit; fallback capacity is `K × area × 3600` | Shaft power in W divided by the available driver/mechanical power in W |
+| Enabled direct `CapacityConstraint` objects | Named K-factor, nozzle momentum, retention and other configured limits | Power/rated power plus chart-dependent speed, surge and stonewall limits |
+| `ProductionOptimizer` without enabled direct constraints | Legacy type-specific liquid-level fraction relative to 1.0 | Capacity strategy or legacy duty/maximum fallback |
 
-**Pump:** Uses power-based utilization:
-```
-Utilization = ShaftPower / MaxDesignPower
-```
+The legacy separator fallback is not the full Souders–Brown rating equation. Enable a named
+gas-load constraint for K-factor analysis, and supply the required geometry and phase properties.
+Similarly, a valve's legacy methods use volume flow, whereas the optimizer's fallback uses opening
+only when a Cv/Kv and an opening ceiling below 100% are configured. Pipe capacity depends on the
+particular pipe class and configured velocity limit; a screening default is not an erosional rating.
 
-**Valve:** Uses flow-based utilization:
-```
-Utilization = ActualVolumeFlow / MaxVolumeFlow
-```
-MaxVolumeFlow derived from Cv at operating conditions.
-
-**Pipe:** Uses velocity or flow-based utilization:
-```
-Utilization = ActualVolumeFlow / MaxVolumeFlow
-MaxVolumeFlow = Area × MaxDesignVelocity
-```
-
-**Notes:**
-- **Separator**: The `ProductionOptimizer` uses gas volumetric flow for capacity tracking. Gas load factor (K-factor) determines max allowable gas velocity.
-- **ThrottlingValve**: Valve utilization is tracked based on volume flow vs design flow capacity.
-- **Pipeline**: Default erosional velocity limit of 20 m/s is applied if no design velocity is set.
-- **Dry Gas**: For separators/scrubbers with single-phase (dry gas), K-factor calculations use a default liquid density of 1000 kg/m³.
+`ProcessSystem.getCapacityUtilizationSummary()` reports **percent**, while
+`getBottleneckUtilization()` and `CapacityConstraint.getUtilization()` report **fractions**.
+For minimum limits such as residence time, utilization is minimum/current; more available residence
+time gives a lower utilization. `getDisplayDesignValue()` displays the appropriate physical limit.
 
 ## Example Usage
 
@@ -122,6 +105,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class BottleneckExample {
+    private static final org.apache.logging.log4j.Logger logger =
+        org.apache.logging.log4j.LogManager.getLogger(BottleneckExample.class);
     public static void main(String[] args) {
         // 1. Create System
         SystemSrkEos testSystem = new SystemSrkEos(298.15, 10.0);
@@ -130,19 +115,19 @@ public class BottleneckExample {
         testSystem.setMixingRule(2);
 
         Stream inletStream = new Stream("inlet stream", testSystem);
-        inletStream.setFlowRate(100.0, "MSm3/day");
+        inletStream.setFlowRate(10000.0, "kg/hr");
         inletStream.setTemperature(20.0, "C");
         inletStream.setPressure(10.0, "bara");
 
         // 2. Create Equipment and Set Capacities
         Separator separator = new Separator("separator", inletStream);
-        // Set Separator Capacity (e.g., 200 m3/hr)
-        separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(200.0);
+        // Explicit gas-flow design basis, at operating conditions (m3/hr)
+        separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(2000.0);
 
         Compressor compressor = new Compressor("compressor", separator.getGasOutStream());
         compressor.setOutletPressure(50.0);
         // Set Compressor Capacity (e.g., 5 MW)
-        compressor.getMechanicalDesign().maxDesignPower = 5000000.0;
+        compressor.getMechanicalDesign().setMaxDesignPower(5000.0); // kW
 
         // 3. Run Simulation
         ProcessSystem process = new ProcessSystem();
@@ -152,27 +137,27 @@ public class BottleneckExample {
         process.run();
 
         // 4. Analyze Results
-        System.out.println("Separator Duty: " + separator.getCapacityDuty());
-        System.out.println("Separator Max: " + separator.getCapacityMax());
-        System.out.println("Compressor Duty: " + compressor.getCapacityDuty());
-        System.out.println("Compressor Max: " + compressor.getCapacityMax());
+        logger.info("{}", "Separator Duty: " + separator.getCapacityDuty());
+        logger.info("{}", "Separator Max: " + separator.getCapacityMax());
+        logger.info("{}", "Compressor Duty: " + compressor.getCapacityDuty());
+        logger.info("{}", "Compressor Max: " + compressor.getCapacityMax());
 
         if (process.getBottleneck() != null) {
-            System.out.println("Bottleneck: " + process.getBottleneck().getName());
-            double utilization = process.getBottleneck().getCapacityDuty() / process.getBottleneck().getCapacityMax();
-            System.out.println("Utilization: " + (utilization * 100) + "%");
+            logger.info("{}", "Bottleneck: " + process.getBottleneck().getName());
+            double utilization = process.getBottleneckUtilization();
+            logger.info("{}", "Utilization: " + (utilization * 100) + "%");
         } else {
-            System.out.println("No bottleneck found (or capacity not set)");
+            logger.info("{}", "No bottleneck found (or capacity not set)");
         }
 
-        System.out.println("Compressor Rest Capacity: " + compressor.getRestCapacity());
+        logger.info("{}", "Compressor Rest Capacity: " + compressor.getRestCapacity());
     }
 }
 ```
 
 ## Extending to Other Equipment
 
-To support capacity analysis for other equipment types (e.g., Pumps, Heat Exchangers), implement the `getCapacityDuty()` and `getCapacityMax()` methods in the respective classes. Ensure that the units for duty and capacity are consistent (e.g., both in Watts or both in kg/hr).
+For a new custom equipment type, implement the `getCapacityDuty()` and `getCapacityMax()` methods in the respective classes. Ensure that the units for duty and capacity are consistent (e.g., both in Watts or both in kg/hr).
 
 ## Multi-Constraint Capacity Analysis
 
@@ -205,30 +190,30 @@ process.run();
 // Simple bottleneck detection (works with both single and multi-constraint)
 ProcessEquipmentInterface bottleneck = process.getBottleneck();
 double utilization = process.getBottleneckUtilization();
-System.out.println("Bottleneck: " + bottleneck.getName() + " at " + (utilization * 100) + "%");
+logger.info("{}", "Bottleneck: " + bottleneck.getName() + " at " + (utilization * 100) + "%");
 
 // Detailed constraint information (multi-constraint equipment only)
 BottleneckResult result = process.findBottleneck();
-if (!result.isEmpty()) {
-    System.out.println("Equipment: " + result.getEquipmentName());
-    System.out.println("Limiting constraint: " + result.getConstraint().getName());
-    System.out.println("Utilization: " + result.getUtilizationPercent() + "%");
+if (result.hasBottleneck()) {
+    logger.info("{}", "Equipment: " + result.getEquipmentName());
+    logger.info("{}", "Limiting constraint: " + result.getConstraint().getName());
+    logger.info("{}", "Utilization: " + result.getUtilizationPercent() + "%");
 }
 
 // Check specific equipment constraints
 Compressor comp = (Compressor) process.getUnit("compressor");
 for (CapacityConstraint c : comp.getCapacityConstraints().values()) {
-    System.out.printf("  %s: %.1f / %.1f %s (%.1f%%)%n",
-        c.getName(), c.getCurrentValue(), c.getDesignValue(),
-        c.getUnit(), c.getUtilizationPercent());
+    logger.info("{}", String.format("  %s: %.1f / %.1f %s (%.1f%%)%n",
+        c.getName(), c.getCurrentValue(), c.getDisplayDesignValue(),
+        c.getUnit(), c.getUtilizationPercent()));
 }
 
 // Check for critical conditions
 if (process.isAnyHardLimitExceeded()) {
-    System.out.println("CRITICAL: Equipment hard limits exceeded!");
+    logger.info("{}", "CRITICAL: Equipment hard limits exceeded!");
 }
 if (process.isAnyEquipmentOverloaded()) {
-    System.out.println("WARNING: Equipment operating above design capacity");
+    logger.info("{}", "WARNING: Equipment operating above design capacity");
 }
 ```
 
@@ -289,38 +274,46 @@ OptimizationConfig config = new OptimizationConfig(100.0, 5_000.0)
     .utilizationLimitForName("compressor", 0.9);
 
 OptimizationObjective objective = new OptimizationObjective("maximize rate",
-    proc -> process.getBottleneck().getCapacityDuty(), 1.0);
+    proc -> ((StreamInterface) proc.getUnit("inlet stream")).getFlowRate("kg/hr"), 1.0);
 
 OptimizationConstraint keepPowerLow = OptimizationConstraint.lessThan("compressor load",
-    proc -> compressor.getCapacityDuty() / compressor.getCapacityMax(), 0.9,
+    proc -> proc.getUnit("compressor").getMaxUtilization(), 0.9,
     ConstraintSeverity.SOFT, 5.0, "Prefer 10% safety margin on compressor");
 
 // Enforce equipment-type constraints (e.g., pressure ratio below 10 for all compressors)
-config.equipmentConstraintRule(new EquipmentConstraintRule(Compressor.class, "pressure ratio",
-    unit -> ((Compressor) unit).getOutStream().getPressure() / ((Compressor) unit)
-        .getInletStream().getPressure(), 10.0,
-    ProductionOptimizer.ConstraintDirection.LESS_THAN, ConstraintSeverity.HARD, 0.0,
-    "Keep pressure ratio within design"));
+List<OptimizationConstraint> compressorConstraints = new java.util.ArrayList<>();
+compressorConstraints.add(keepPowerLow);
+for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+    if (unit instanceof Compressor) {
+        final String name = unit.getName();
+        compressorConstraints.add(OptimizationConstraint.lessThan("pressure ratio " + name,
+            proc -> {
+                Compressor current = (Compressor) proc.getUnit(name);
+                return current.getOutletStream().getPressure("bara")
+                    / current.getInletStream().getPressure("bara");
+            }, 10.0, ConstraintSeverity.HARD, 0.0, "Keep pressure ratio within design"));
+    }
+}
 
 OptimizationResult result = optimizer.optimize(process, inletStream, config,
-    Arrays.asList(objective), Arrays.asList(keepPowerLow));
+    Arrays.asList(objective), compressorConstraints);
 
-System.out.println("Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
+logger.info("{}", "Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+logger.info("{}", "Bottleneck: " + (result.getBottleneck() == null ? "None" : result.getBottleneck().getName()));
 result.getUtilizationRecords().forEach(record ->
-    System.out.println(record.getEquipmentName() + " utilization: " + record.getUtilization()));
+    logger.info("{}", record.getEquipmentName() + " utilization: " + record.getUtilization()));
 // Optional: plot or log iteration history for transparency
-result.getIterationHistory().forEach(iter -> System.out.println(
+result.getIterationHistory().forEach(iter -> logger.info("{}",
     "Iter " + iter.getRate() + " " + iter.getRateUnit() + " bottleneck="
         + iter.getBottleneckName() + " feasible=" + iter.isFeasible() + " score="
         + iter.getScore() + " utilizationCount=" + iter.getUtilizations().size()));
 
 // Quick high-level summary without manual bounds/objective wiring
 OptimizationSummary summary = optimizer.quickOptimize(process, inletStream);
-System.out.println("Max rate: " + summary.getMaxRate() + " " + summary.getRateUnit());
-System.out.println("Limiting equipment: " + summary.getLimitingEquipment()
+logger.info("{}", "Max rate: " + summary.getMaxRate() + " " + summary.getRateUnit());
+logger.info("{}", "Limiting equipment: " + summary.getLimitingEquipment()
     + " margin=" + summary.getUtilizationMargin());
-System.out.println(ProductionOptimizer.formatUtilizationTimeline(result.getIterationHistory()));
+logger.info("{}", ProductionOptimizer.formatUtilizationTimeline(result.getIterationHistory()));
 
 // Built-in capacity coverage now includes separators (liquid level fraction) and
 // MultiStream heat exchangers (duty vs design) in addition to compressors/pumps/columns.
@@ -354,7 +347,7 @@ pressures, or heat integration setpoints.
 
 #### ManipulatedVariable API
 
-```java
+```text
 public class ManipulatedVariable {
     /**
      * Create a decision variable for optimization.
@@ -384,7 +377,7 @@ parameter—not just stream flow rates.
 
 | Scenario | Variables | Setter Example |
 |----------|-----------|----------------|
-| **Parallel train balancing** | Split factors | `splitter.setSplitFactors(new double[]{val, 0.33, 0.33-val})` |
+| **Parallel train balancing** | Split factors | `splitter.setSplitFactors(new double[]{val, 0.33, 0.67-val})` |
 | **Dual-feed systems** | Two inlet flows | `feedA.setFlowRate(val, "kg/hr")` |
 | **Pressure optimization** | Compressor setpoints | `comp.setOutletPressure(val)` |
 | **Temperature control** | Heater/cooler setpoints | `heater.setOutletTemperature(val)` |
@@ -422,22 +415,22 @@ OptimizationConfig config = new OptimizationConfig(1_800_000.0, 2_200_000.0)
     .rateUnit("kg/hr")
     .tolerance(1000.0)
     .defaultUtilizationLimit(0.99)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+    .searchMode(SearchMode.NELDER_MEAD_SCORE);
 
 OptimizationResult result = optimizer.optimize(process, variables, config,
     Collections.singletonList(new OptimizationObjective("throughput",
         proc -> inletStream.getFlowRate("kg/hr"), 1.0)),
     Collections.emptyList());
 
-System.out.println("Optimal flow: " + result.getOptimalRate() + " kg/hr");
-System.out.println("Optimal split: " + Arrays.toString(splitter.getSplitFactors()));
+logger.info("{}", "Optimal flow: " + result.getOptimalRate() + " kg/hr");
+logger.info("{}", "Optimal split: " + Arrays.toString(splitter.getSplitFactors()));
 ```
 
 #### Choosing a Search Mode for Multi-Variable Problems
 
 | Search Mode | Best For | Characteristics |
 |-------------|----------|-----------------|
-| `GOLDEN_SECTION_SCORE` | 1-2 variables, smooth response | Fast convergence on unimodal landscapes |
+| `GOLDEN_SECTION_SCORE` | One variable only | Fast convergence on a unimodal score |
 | `NELDER_MEAD_SCORE` | 2-4 variables, noisy responses | Robust simplex method, handles local noise |
 | `PARTICLE_SWARM_SCORE` | 3+ variables, multimodal | Global search, configurable swarm size |
 
@@ -455,7 +448,7 @@ double bestFlow = 0, bestBalance = 0, maxFeasibleFlow = 0;
 for (double flow = 1_900_000; flow <= 2_150_000; flow += 10_000) {
     for (double bal = -0.10; bal <= 0.10; bal += 0.02) {
         inletStream.setFlowRate(flow, "kg/hr");
-        splitter.setSplitFactors(new double[]{0.333 - bal, 0.333, 0.333 + bal});
+        splitter.setSplitFactors(new double[]{1.0 / 3.0 - bal, 1.0 / 3.0, 1.0 / 3.0 + bal});
         process.run();
         double util = process.getBottleneckUtilization();
         if (util < 1.0 && flow > maxFeasibleFlow) {
@@ -524,7 +517,7 @@ List<ScenarioKpi> kpis = Arrays.asList(ScenarioKpi.optimalRate("kg/hr"), Scenari
 ScenarioComparisonResult comparison = optimizer.compareScenarios(
     Arrays.asList(baseCase, upgradeCase), kpis);
 
-System.out.println(ProductionOptimizer.formatScenarioComparisonTable(comparison, kpis));
+logger.info("{}", ProductionOptimizer.formatScenarioComparisonTable(comparison, kpis));
 ```
 
 The first scenario is treated as the baseline; each KPI cell shows `value (Δbaseline)` so uplift from
@@ -635,115 +628,61 @@ toy throughput maximization:
 
 **1. Energy minimization across compressor trains**
 
-Model a three-stage compression train with interstage coolers and set the objective to minimize
-total power while still honoring a required discharge pressure and anti-surge utilization headroom:
+The spec loader's `variables[].stream` field changes a **stream flow rate**. It does not set
+pressure, temperature, or valve opening. Use Java manipulated-variable setters for those inputs.
+For a solved three-stage `process` containing `stage1`, `stage2`, and `stage3` compressors with
+interstage coolers and fixed feed flow, configure the final stage to deliver 90 bara:
 
-```yaml
-scenarios:
-  - name: energy_min_train
-    process: c_train
-    feedStream: feed_gas
-    lowerBound: 40.0
-    upperBound: 90.0
-    rateUnit: bara # target discharge pressure instead of flow
-    variables:
-      - name: stage1_pressure
-        unit: bara
-        lowerBound: 30.0
-        upperBound: 45.0
-        stream: stage1_out
-      - name: stage2_pressure
-        unit: bara
-        lowerBound: 50.0
-        upperBound: 70.0
-        stream: stage2_out
-    objectives:
-      - name: minimize_power
-        metric: totalPowerMw
-        weight: -1.0
-        type: MAXIMIZE
-    constraints:
-      - name: discharge_pressure
-        metric: dischargePressure
-        limit: 90.0
-        direction: GREATER_THAN
-        severity: HARD
-        description: Keep export pressure above spec
-      - name: anti_surge_headroom
-        metric: minSurgeMargin
-        limit: 1.1
-        direction: GREATER_THAN
-        severity: HARD
-        description: Maintain 10% margin to surge lines on all compressors
-    searchMode: PARTICLE_SWARM_SCORE
-    inertiaWeight: 0.8
-    swarmSize: 24
+```java
+Compressor finalStage = (Compressor) process.getUnit("stage3");
+finalStage.setOutletPressure(90.0, "bara");
+List<ManipulatedVariable> pressures = Arrays.asList(
+    new ManipulatedVariable("stage1 pressure", 30.0, 45.0, "bara",
+        (proc, value) -> ((Compressor) proc.getUnit("stage1")).setOutletPressure(value, "bara")),
+    new ManipulatedVariable("stage2 pressure", 50.0, 70.0, "bara",
+        (proc, value) -> ((Compressor) proc.getUnit("stage2")).setOutletPressure(value, "bara")));
+OptimizationObjective power = new OptimizationObjective("total power",
+    proc -> proc.getPower("kW"), 1.0, ObjectiveType.MINIMIZE);
+OptimizationConfig pressureConfig = new OptimizationConfig(30.0, 70.0)
+    .searchMode(SearchMode.NELDER_MEAD_SCORE).maxIterations(50).tolerance(0.01);
+OptimizationResult energyResult = optimizer.optimize(process, pressures, pressureConfig,
+    Collections.singletonList(power), Collections.emptyList());
+logger.info("Pressure settings: {}", energyResult.getDecisionVariables());
+logger.info("Feasible: {}", energyResult.isFeasible());
 ```
 
-Wire metrics via the spec loader to compute `totalPowerMw` from compressor duties (sum of
-`getShaftWork()` per stage) and `minSurgeMargin` from a helper that returns the lowest ratio of
-operating flow to surge flow across the train. Inspect `result.getIterationHistory()` to see where
-power flattens out—large step sizes in the swarm can reveal solver-cost bottlenecks when each
-iteration requires full thermodynamics and anti-surge calculations.
+**2. Choke capacity and downstream separation**
 
-**2. Choke optimization under sand/erosion constraints**
+For a solved process with `inletStream`, a `choke` valve and a downstream separator, configure
+the installed Cv and pressure drop. Optimize the inlet rate while the valve solver calculates
+the required opening. An imposed feed rate is not independently determined by changing a valve
+opening; reservoir deliverability requires a coupled well/network model.
 
-Use a sand production limit and downstream separator capacity as hard constraints while maximizing
-oil throughput in a well/test separator setup. The choke opening becomes the manipulated variable,
-and penalty objectives can keep gas-lift rates reasonable:
-
-```yaml
-scenarios:
-  - name: choke_max_oil
-    process: wellpad
-    feedStream: wellhead
-    lowerBound: 10.0
-    upperBound: 80.0
-    rateUnit: percent_open
-    variables:
-      - name: choke_opening
-        unit: percent
-        lowerBound: 10.0
-        upperBound: 80.0
-        stream: choke_setting
-    objectives:
-      - name: oil_rate
-        metric: stabilizedOilBpd
-        weight: 1.0
-        type: MAXIMIZE
-      - name: gaslift_penalty
-        metric: gasliftRate
-        weight: -0.05
-        type: MAXIMIZE
-    constraints:
-      - name: sand_limit
-        metric: sandRate
-        limit: 20.0
-        direction: LESS_THAN
-        severity: HARD
-        description: Protect downstream erosion limit (kg/day)
-      - name: separator_capacity
-        metric: separatorUtil
-        limit: 0.95
-        direction: LESS_THAN
-        severity: HARD
-        description: Keep test separator within design envelope
-    searchMode: BINARY_FEASIBILITY
+```java
+ThrottlingValve choke = (ThrottlingValve) process.getUnit("choke");
+choke.setCv(20.0); // Synthetic installed rating; replace with approved valve data.
+choke.setOutletPressure(30.0, "bara");
+choke.setMaximumValveOpening(80.0);
+OptimizationConstraint opening = OptimizationConstraint.lessThan("choke opening",
+    proc -> ((ThrottlingValve) proc.getUnit("choke")).getPercentValveOpening(),
+    80.0, ConstraintSeverity.HARD, 0.0, "Installed choke operating ceiling, percent");
+OptimizationConfig chokeConfig = new OptimizationConfig(1000.0, 20000.0)
+    .rateUnit("kg/hr").searchMode(SearchMode.BINARY_FEASIBILITY).tolerance(10.0);
+OptimizationResult chokeResult = optimizer.optimize(process, inletStream, chokeConfig,
+    Collections.emptyList(), Collections.singletonList(opening));
+logger.info("Proposed rate: {} kg/hr; feasible: {}",
+    chokeResult.getOptimalRate(), chokeResult.isFeasible());
 ```
 
-For this case, metric functions can map to production tests: `sandRate` computed from empirical
-correlations, `separatorUtil` derived from `getCapacityDuty()/getCapacityMax()`, and
-`gasliftRate` pulled from a gas-lift valve set point. The feasibility-first search will quickly
-highlight whether the sand constraint or separator capacity is the binding limitation, while the
-iteration history logs identify performance hotspots (e.g., separator flash calculations dominating
-runtime during tight binary searches).
+Sand production and erosion limits require a qualified, separately supplied model or measured
+evidence. Register those as additional hard constraints before interpreting this example as a
+well operating envelope; this example does not invent a sand-production correlation.
 
 ### Debottlenecking Studies
 
 Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:
-1.  Increase the capacity of the bottleneck equipment (e.g., `compressor.getMechanicalDesign().maxDesignPower = newPower`).
+1.  Increase the capacity of the bottleneck equipment (e.g., `compressor.getMechanicalDesign().setMaxDesignPower(newPowerKW)`).
 2.  Re-run the optimization loop.
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
-
 

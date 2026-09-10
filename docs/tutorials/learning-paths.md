@@ -120,7 +120,7 @@ The AI workflow automates the process around PVT calculations — scoping, runni
 
 1. **[Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md)** - Process optimization
 2. **[Controllers](../process/controllers.md)** - Process control
-3. **Inspect or run — Source only**: [Production Optimizer Tutorial](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb) — no stored execution; run all cells before relying on results
+3. **Run — Executed**: [Production Optimizer Tutorial](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb) — stored outputs and physical assertions are available; use the notebook's corrected-source setup and rerun all cells
 
 ### Level 6: AI-Assisted Studies (30 min)
 

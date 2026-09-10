@@ -33,68 +33,105 @@ so the workflow transfers one-to-one to the full plant.
 | **Activate** | **`applyMechanicalDesignCapacityConstraints()`** | **NEW: one call activates utilization across the whole plant** |
 | Observe (live) | `getUtilizationSnapshotJson()` | bottleneck + per-unit utilization |
 | Discover | `getAdjustableParametersJson()` | bounded decision space |
-| Optimize | `getAutomation().evaluate(setpoints, unit, readbacks)` | gated, never-throwing optimizer step |
+| Optimize | `getAutomation().evaluate(setpoints, unit, readbacks)` | convergence-gated optimizer step |
 | Spec | `Standard_ASTM_D6377` (RVP) | export-oil quality constraint via penalty |
 
 The heavy lifting (sizing, constraint construction, convergence, feasibility gating) happens
 **inside Java NeqSim** — Python only *builds the plant*, *drives setpoints*, and *reads results*.
 
+**Runtime:** Use Git and JDK 17 or newer. The setup uses compiled repository classes when present; otherwise it fetches and builds the corrected documentation source from `refs/pull/3597/head`. Set `NEQSIM_GIT_REF` to validate another fixed revision. The public Python package alone does not contain all Java fixes exercised here. Run all cells from a fresh kernel.
+
+
 ```python
-import os, sys
+import importlib.util
+import os
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
+# Install Python packages with this notebook kernel. Java runs from the
+# validated documentation source below, ahead of the package's bundled JAR.
+required = {"neqsim": "neqsim>=3.20.0,<4", "numpy": "numpy",
+            "scipy": "scipy>=1.14,<2", "matplotlib": "matplotlib", "pandas": "pandas"}
+missing = [package for module, package in required.items()
+           if importlib.util.find_spec(module) is None]
+if missing:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
 
-def find_neqsim_project_root():
-    env_root = os.environ.get("NEQSIM_PROJECT_ROOT")
-    candidates = []
-    if env_root:
-        candidates.append(Path(env_root).resolve())
-    cwd = Path.cwd().resolve()
-    candidates.extend([cwd] + list(cwd.parents))
-    for candidate in candidates:
-        if (candidate / "pom.xml").exists() and (candidate / "devtools" / "neqsim_dev_setup.py").exists():
-            return candidate
-    raise RuntimeError("Could not find NeqSim project root. Set NEQSIM_PROJECT_ROOT.")
+candidate = Path(os.environ.get("NEQSIM_PROJECT_ROOT", Path.cwd())).resolve()
+PROJECT_ROOT = next((p for p in [candidate, *candidate.parents]
+                     if (p / "pom.xml").is_file()
+                     and (p / "devtools/neqsim_dev_setup.py").is_file()), None)
+if PROJECT_ROOT is None:
+    # The public package alone predates fixes exercised by these examples.
+    # Use the validated documentation PR's source; override with another fixed
+    # commit or ref through NEQSIM_GIT_REF when validating a newer revision.
+    source_ref = os.environ.get("NEQSIM_GIT_REF", "refs/pull/3597/head")
+    PROJECT_ROOT = Path(tempfile.mkdtemp(prefix="neqsim-optimization-"))
+    subprocess.check_call(["git", "init", "-q", str(PROJECT_ROOT)])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "remote", "add", "origin",
+                           "https://github.com/equinor/neqsim.git"])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "fetch", "--depth", "1",
+                           "origin", source_ref])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "checkout", "--quiet",
+                           "--detach", "FETCH_HEAD"])
+    print(f"Fetched NeqSim documentation source: {source_ref}")
 
+if not (PROJECT_ROOT / "target/classes/neqsim/thermo/system/SystemSrkEos.class").is_file():
+    # Requires Git and JDK 17+ before the first source build.
+    # The Maven wrapper downloads its own Maven distribution and dependencies.
+    wrapper = "mvnw.cmd" if os.name == "nt" else "mvnw"
+    build = subprocess.run(
+        [str(PROJECT_ROOT / wrapper), "-q", "-DskipTests", "compile",
+         "dependency:build-classpath", "-DincludeScope=runtime",
+         "-Dmdep.outputFile=target/neqsim-dev-classpath.txt",
+         f"-Dmdep.pathSeparator={os.pathsep}"],
+        cwd=PROJECT_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    if build.returncode:
+        raise RuntimeError("NeqSim source build failed:\n" + build.stdout[-12000:])
 
-PROJECT_ROOT = find_neqsim_project_root()
+os.environ["NEQSIM_PROJECT_ROOT"] = str(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
 from neqsim_dev_setup import neqsim_init, neqsim_classes
+ns = neqsim_classes(neqsim_init(project_root=PROJECT_ROOT,
+                              recompile=False, verbose=False))
+NEQSIM_MODE = "workspace target/classes"
+from neqsim import jneqsim
+import numpy as np
+import matplotlib.pyplot as plt
 
-ns = neqsim_init(project_root=PROJECT_ROOT, recompile=False, verbose=True)
-ns = neqsim_classes(ns)
-print("NeqSim loaded from workspace classes")
+FIGURES_DIR = Path("figures")
+FIGURES_DIR.mkdir(exist_ok=True)
+
+def save_figure(filename):
+    plt.savefig(FIGURES_DIR / filename, dpi=150, bbox_inches="tight")
+    plt.show()
+
+print(f"NeqSim source: {NEQSIM_MODE}")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-NeqSim project root: C:\Users\ESOL\Documents\GitHub\neqsim
-Classpath:
-  1. C:\Users\ESOL\Documents\GitHub\neqsim\target\classes
-  2. C:\Users\ESOL\Documents\GitHub\neqsim\src\main\resources
-  3. C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.13.0.jar
-
-
-JVM started: C:\Users\ESOL\graalvm\graalvm-jdk-25.0.1+8.1\bin\server\jvm.dll
-Ready — call neqsim_classes(ns) to import classes
-
 All NeqSim classes imported OK
-NeqSim loaded from workspace classes
+NeqSim source: workspace target/classes
 ```
 
 </details>
 
 ```python
 import json
+import numpy as np
 import jpype
 
 SystemSrkEos = ns.SystemSrkEos
 ProcessSystem = ns.ProcessSystem
 ProcessModel = ns.ProcessModel
 Stream = ns.Stream
-Separator = ns.Separator
+Separator = ns.JClass("neqsim.process.equipment.separator.ThreePhaseSeparator")
 Compressor = ns.Compressor
 Cooler = ns.Cooler
 Heater = ns.Heater
@@ -137,13 +174,26 @@ Two process areas, composed into a single `ProcessModel`:
 Cross-area streams (`gas1`, `gas2`) are shared **by object reference** — exactly the Oseberg
 pattern where each area is a `ProcessSystem` and `ProcessModel.run()` iterates to convergence.
 
+Both oil separators distinguish hydrocarbon liquid and water. The RVPE sample is
+the second separator's **oil outlet**. Knockout scrubbers after gas cooling
+prevent condensed liquid being sent into either compressor. Their liquid outlets
+leave the example as drain products. The LP recompressor is a lumped thermodynamic
+unit for this API example; detailed design requires appropriate compression stages,
+intercooling, discharge-temperature limits and vendor qualification.
+
+
 ```python
 def make_feed(rate_kghr=100000.0):
     fluid = SystemSrkEos(273.15 + 60.0, 62.0)
     for comp, x in [
-        ("methane", 0.70), ("ethane", 0.08), ("propane", 0.05),
-        ("n-butane", 0.04), ("n-pentane", 0.03), ("n-hexane", 0.03),
-        ("n-octane", 0.04), ("water", 0.03),
+        ("methane", 0.70),
+        ("ethane", 0.08),
+        ("propane", 0.05),
+        ("n-butane", 0.04),
+        ("n-pentane", 0.03),
+        ("n-hexane", 0.03),
+        ("n-octane", 0.04),
+        ("water", 0.03),
     ]:
         fluid.addComponent(comp, x)
     fluid.setMixingRule("classic")
@@ -160,7 +210,7 @@ def build_plant(oil_heater_temp_C=65.0, export_pressure_bara=150.0):
 
     # ---- Area A: separation ----
     sep1 = Separator("first stage separator", feed)
-    oil_valve = ThrottlingValve("oil let-down valve", sep1.getLiquidOutStream())
+    oil_valve = ThrottlingValve("oil let-down valve", sep1.getOilOutStream())
     oil_valve.setOutletPressure(3.0)
     oil_heater = Heater("oil stabilization heater", oil_valve.getOutletStream())
     oil_heater.setOutTemperature(oil_heater_temp_C, "C")
@@ -177,7 +227,8 @@ def build_plant(oil_heater_temp_C=65.0, export_pressure_bara=150.0):
     # ---- Area B: recompression + export ----
     recomp_cooler = Cooler("recompression cooler", gas2)
     recomp_cooler.setOutTemperature(30.0, "C")
-    recomp = Compressor("recompression compressor", recomp_cooler.getOutletStream())
+    recomp_scrubber = Separator("recompression scrubber", recomp_cooler.getOutletStream())
+    recomp = Compressor("recompression compressor", recomp_scrubber.getGasOutStream())
     recomp.setOutletPressure(62.0)
     recomp.setPolytropicEfficiency(0.78)
     recomp.setUsePolytropicCalc(True)
@@ -188,14 +239,23 @@ def build_plant(oil_heater_temp_C=65.0, export_pressure_bara=150.0):
 
     export_cooler = Cooler("export cooler", mixer.getOutletStream())
     export_cooler.setOutTemperature(30.0, "C")
-    export_comp = Compressor("export compressor", export_cooler.getOutletStream())
+    export_scrubber = Separator("export scrubber", export_cooler.getOutletStream())
+    export_comp = Compressor("export compressor", export_scrubber.getGasOutStream())
     export_comp.setOutletPressure(export_pressure_bara)
     export_comp.setPolytropicEfficiency(0.78)
     export_comp.setUsePolytropicCalc(True)
 
     recompression = ProcessSystem()
     recompression.setName("recompression")
-    for u in [recomp_cooler, recomp, mixer, export_cooler, export_comp]:
+    for u in [
+        recomp_cooler,
+        recomp_scrubber,
+        recomp,
+        mixer,
+        export_cooler,
+        export_scrubber,
+        export_comp,
+    ]:
         recompression.add(u)
 
     plant = ProcessModel()
@@ -203,9 +263,14 @@ def build_plant(oil_heater_temp_C=65.0, export_pressure_bara=150.0):
     plant.add("recompression", recompression)
 
     handles = {
-        "plant": plant, "feed": feed, "sep1": sep1, "sep2": sep2,
-        "oil_heater": oil_heater, "export_oil": sep2.getLiquidOutStream(),
-        "recomp": recomp, "export_comp": export_comp,
+        "plant": plant,
+        "feed": feed,
+        "sep1": sep1,
+        "sep2": sep2,
+        "oil_heater": oil_heater,
+        "export_oil": sep2.getOilOutStream(),
+        "recomp": recomp,
+        "export_comp": export_comp,
     }
     return handles
 
@@ -213,7 +278,14 @@ def build_plant(oil_heater_temp_C=65.0, export_pressure_bara=150.0):
 P = build_plant()
 plant = P["plant"]
 plant.run()
-print("Plant converged. Areas:", [str(a) for a in plant.getAllProcessNames()] if hasattr(plant, "getAllProcessNames") else "separation, recompression")
+print(
+    "Plant converged. Areas:",
+    (
+        [str(a) for a in plant.getAllProcessNames()]
+        if hasattr(plant, "getAllProcessNames")
+        else "separation, recompression"
+    ),
+)
 print("Export compressor power (MW):", round(float(P["export_comp"].getPower()) / 1e6, 3))
 print("Recompression power (MW):    ", round(float(P["recomp"].getPower()) / 1e6, 3))
 ```
@@ -223,8 +295,8 @@ print("Recompression power (MW):    ", round(float(P["recomp"].getPower()) / 1e6
 
 ```
 Plant converged. Areas: separation, recompression
-Export compressor power (MW): 2.151
-Recompression power (MW):     0.764
+Export compressor power (MW): 2.287
+Recompression power (MW):     0.885
 ```
 
 </details>
@@ -243,7 +315,10 @@ print("bottleneck:   ", snap_before.get("bottleneck"))
 print("anyOverloaded:", snap_before.get("anyOverloaded"))
 print("\nPer-unit maxUtilization (before sizing):")
 for u in snap_before.get("units", []):
-    print(f"  [{u.get('area','-'):>14}] {u.get('name'):<28} {u.get('maxUtilizationPercent', 0):6.1f} %")
+    print(
+        f"  [{u.get('area','-'):>14}] {u.get('name'):<28} "
+        f"{u.get('maxUtilizationPercent', 0):6.1f} %"
+    )
 ```
 
 <details>
@@ -261,9 +336,11 @@ Per-unit maxUtilization (before sizing):
   [    separation] oil stabilization heater        0.0 %
   [    separation] second stage separator          0.0 %
   [ recompression] recompression cooler            0.0 %
+  [ recompression] recompression scrubber          0.0 %
   [ recompression] recompression compressor        0.0 %
   [ recompression] hp gas mixer                    0.0 %
   [ recompression] export cooler                   0.0 %
+  [ recompression] export scrubber                 0.0 %
   [ recompression] export compressor               0.0 %
 ```
 
@@ -300,40 +377,48 @@ for comp in [P["recomp"], P["export_comp"]]:
     except Exception:
         pass
     comp.setSolveSpeed(False)
+    comp.powerSet = False  # recompute duty from pressure and efficiency
     comp.setUsePolytropicCalc(True)
     comp.reinitializeCapacityConstraints()
 
 plant.run()
 n_constraints = plant.applyMechanicalDesignCapacityConstraints()
 print(f"autoSizeEquipment sized {n_sized} units")
-print(f"applyMechanicalDesignCapacityConstraints registered {n_constraints} constraints plant-wide")
+print(
+    f"applyMechanicalDesignCapacityConstraints registered {n_constraints} constraints plant-wide"
+)
 
 snap = j(plant.getUtilizationSnapshotJson())
 print("\nbottleneck:", snap.get("bottleneck"))
 print("Per-unit maxUtilization (after sizing + activation):")
 for u in snap.get("units", []):
-    print(f"  [{u.get('area','-'):>14}] {u.get('name'):<28} {u.get('maxUtilizationPercent', 0):6.1f} %  limit={u.get('limitingConstraint')}")
+    print(
+        f"  [{u.get('area','-'):>14}] {u.get('name'):<28} "
+        f"{u.get('maxUtilizationPercent', 0):6.1f} %  limit={u.get('limitingConstraint')}"
+    )
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-autoSizeEquipment sized 8 units
-applyMechanicalDesignCapacityConstraints registered 5 constraints plant-wide
+autoSizeEquipment sized 10 units
+applyMechanicalDesignCapacityConstraints registered 12 constraints plant-wide
 
-bottleneck: {'name': 'recompression compressor', 'utilization': 1.0600127464924969, 'utilizationPercent': 106.0012746492497, 'limitingConstraint': 'power'}
+bottleneck: {'name': 'oil let-down valve', 'area': 'separation', 'qualifiedName': 'separation::oil let-down valve', 'utilization': 1.0, 'utilizationPercent': 100.0, 'limitingConstraint': 'design Cv'}
 Per-unit maxUtilization (after sizing + activation):
   [    separation] well feed                       0.0 %  limit=None
   [    separation] first stage separator          88.0 %  limit=design volume flow
-  [    separation] oil let-down valve              2.7 %  limit=design volume flow
-  [    separation] oil stabilization heater       31.5 %  limit=duty
-  [    separation] second stage separator         49.5 %  limit=design volume flow
-  [ recompression] recompression cooler           21.3 %  limit=duty
-  [ recompression] recompression compressor      106.0 %  limit=power
+  [    separation] oil let-down valve            100.0 %  limit=design Cv
+  [    separation] oil stabilization heater       34.4 %  limit=duty
+  [    separation] second stage separator         58.4 %  limit=design volume flow
+  [ recompression] recompression cooler           24.2 %  limit=duty
+  [ recompression] recompression scrubber         89.8 %  limit=gasLoadFactor
+  [ recompression] recompression compressor       87.4 %  limit=design volume flow
   [ recompression] hp gas mixer                    0.0 %  limit=None
-  [ recompression] export cooler                  79.9 %  limit=duty
-  [ recompression] export compressor              84.8 %  limit=power
+  [ recompression] export cooler                  86.3 %  limit=duty
+  [ recompression] export scrubber                84.4 %  limit=design volume flow
+  [ recompression] export compressor              83.2 %  limit=design volume flow
 ```
 
 </details>
@@ -350,7 +435,9 @@ power-based bottleneck — exactly the situation an optimizer must respect.
 export_power_kW = float(P["export_comp"].getPower()) / 1000.0
 rated_kW = export_power_kW * 1.15
 P["export_comp"].getMechanicalDesign().setMaxDesignPower(rated_kW)
-P["recomp"].getMechanicalDesign().setMaxDesignPower(float(P["recomp"].getPower()) / 1000.0 * 1.4)
+P["recomp"].getMechanicalDesign().setMaxDesignPower(
+    float(P["recomp"].getPower()) / 1000.0 * 1.4
+)
 
 plant.applyMechanicalDesignCapacityConstraints()  # idempotent re-activation
 snap = j(plant.getUtilizationSnapshotJson())
@@ -358,22 +445,28 @@ print(f"Export compressor rated at {rated_kW:.0f} kW (current load {export_power
 print("bottleneck:", snap.get("bottleneck"))
 for u in snap.get("units", []):
     if u.get("maxUtilizationPercent", 0) > 1.0:
-        print(f"  [{u.get('area','-'):>14}] {u.get('name'):<28} {u.get('maxUtilizationPercent', 0):6.1f} %  ({u.get('limitingConstraint')})")
+        print(
+            f"  [{u.get('area','-'):>14}] {u.get('name'):<28} "
+            f"{u.get('maxUtilizationPercent', 0):6.1f} %  "
+            f"({u.get('limitingConstraint')})"
+        )
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Export compressor rated at 2474 kW (current load 2151 kW)
-bottleneck: {'name': 'recompression compressor', 'utilization': 0.8860066060395422, 'utilizationPercent': 88.60066060395422, 'limitingConstraint': 'design volume flow'}
+Export compressor rated at 2630 kW (current load 2287 kW)
+bottleneck: {'name': 'oil let-down valve', 'area': 'separation', 'qualifiedName': 'separation::oil let-down valve', 'utilization': 1.0, 'utilizationPercent': 100.0, 'limitingConstraint': 'design Cv'}
   [    separation] first stage separator          88.0 %  (design volume flow)
-  [    separation] oil let-down valve              2.7 %  (design volume flow)
-  [    separation] oil stabilization heater       31.5 %  (duty)
-  [    separation] second stage separator         49.5 %  (design volume flow)
-  [ recompression] recompression cooler           21.3 %  (duty)
-  [ recompression] recompression compressor       88.6 %  (design volume flow)
-  [ recompression] export cooler                  79.9 %  (duty)
+  [    separation] oil let-down valve            100.0 %  (design Cv)
+  [    separation] oil stabilization heater       34.4 %  (duty)
+  [    separation] second stage separator         58.4 %  (design volume flow)
+  [ recompression] recompression cooler           24.2 %  (duty)
+  [ recompression] recompression scrubber         89.8 %  (gasLoadFactor)
+  [ recompression] recompression compressor       87.4 %  (design volume flow)
+  [ recompression] export cooler                  86.3 %  (duty)
+  [ recompression] export scrubber                84.4 %  (design volume flow)
   [ recompression] export compressor              87.0 %  (power)
 ```
 
@@ -381,21 +474,23 @@ bottleneck: {'name': 'recompression compressor', 'utilization': 0.88600660603954
 
 ## 6. Closed-loop optimization with `evaluate()`
 
-`getAutomation().evaluate(setpoints, unit, readbacks)` is the **atomic optimizer step**: it
-applies a batch of setpoints, runs the multi-area model to convergence, gates feasibility, and
-reads back objectives — all in one call that **never throws**. We gate each trial on the single
-`feasible` flag and read the objective straight off the Java equipment after the gated run.
+`getAutomation().evaluate(setpoints, unit, readbacks)` applies the temperature
+setpoint and checks model convergence. Each trial also checks the live capacity
+snapshot and an export-oil quality calculation.
 
-Export-oil **RVP** is an *off-model* quality spec, so we compute it separately with
-`Standard_ASTM_D6377` and apply it as a **penalty** (RVP is not a `CapacityConstraint`).
+The quality metric is the ASTM D6377 **RVP-equivalent estimate (RVPE)** at 37.8 °C.
+We explicitly select `RVP_ASTM_D6377`; the class default is `VPCR4`, a different
+vapor-pressure metric. The illustrative RVPE limit is 0.90 bara.
 
-**The trade-off:** raising the stabilization-heater temperature strips more light ends out of
-the oil — lowering export-oil RVP — but the heater **thermal duty** climbs while the
-**recompression power** falls as the gas split shifts. The total energy input
-(compression shaft power + heater duty) therefore has a genuine interior minimum.
+Heating strips light ends from the oil. The optimization compares compression
+shaft power with **positive heating input**; negative heater duty is reported as
+cooling duty and never credited as generated power. Adding MW shaft and MW thermal
+is an illustrative energy-input score, not fuel consumption, exergy or electricity
+cost. Cooling-utility power and heater/driver efficiencies are outside this score.
 
-**Objective:** minimise total energy input (compression power + heater duty) subject to
-RVP(export oil) ≤ 0.90 bara and no unit overloaded.
+We choose the best **feasible sampled** temperature over 45–95 °C in 5 °C steps;
+the result does not establish an exact continuous or global optimum.
+
 
 ```python
 params = j(plant.getAutomation().getAdjustableParametersJson())
@@ -408,8 +503,16 @@ for p in params.get("parameters", []):
     prop = (p.get("targetProperty") or p.get("name") or "").lower()
     if "stabilization heater" in tgt and "temp" in prop:
         heater_addr = p.get("address")
-        print("decision variable:", p.get("address"), "| unit:", p.get("unit"),
-              "| bounds:", p.get("lowerBound"), "->", p.get("upperBound"))
+        print(
+            "decision variable:",
+            p.get("address"),
+            "| unit:",
+            p.get("unit"),
+            "| bounds:",
+            p.get("lowerBound"),
+            "->",
+            p.get("upperBound"),
+        )
         break
 
 if heater_addr is None:
@@ -422,34 +525,29 @@ if heater_addr is None:
 <summary>Output</summary>
 
 ```
-adjustable parameter count: 15
+adjustable parameter count: 17
 decision variable: separation::oil stabilization heater.outletTemperature | unit: C | bounds: 1.0 -> 2000.0
 ```
 
 </details>
 
-## 6. Closed-loop optimization with `evaluate()`
+### Apply the process, capacity and quality gates
 
-`getAutomation().evaluate(setpoints, unit, readbacks)` is the **atomic optimizer step**: it
-applies a batch of setpoints, runs the multi-area model to convergence, gates feasibility, and
-reads back objectives — all in one call that **never throws**. We gate each trial on the single
-`feasible` flag and read back the two compressor powers as the objective.
+A candidate must converge, accept the requested setpoint, satisfy all registered
+capacity limits and meet the explicitly selected RVPE specification. Failed trials
+are retained in the table but excluded when selecting the best operating point.
 
-Export-oil **RVP** is an *off-model* quality spec, so we compute it separately with
-`Standard_ASTM_D6377` and apply it as a **penalty** (RVP is not a `CapacityConstraint`).
-
-**Objective:** minimise total compression power subject to RVP(export oil) ≤ 0.90 bara and no
-unit overloaded.
 
 ```python
 RVP_LIMIT_BARA = 0.90
 
 
 def export_oil_rvp_bara():
-    """ASTM D6377 RVP of the export oil at 37.8 C, in bara."""
+    """ASTM D6377 RVP-equivalent estimate at 37.8 C, in bara."""
     fluid = P["export_oil"].getFluid().clone()
     std = Standard_ASTM_D6377(fluid)
     std.setReferenceTemperature(37.8, "C")
+    std.setMethodRVP("RVP_ASTM_D6377")
     std.calculate()
     return float(std.getValue("RVP", "bara"))
 
@@ -468,8 +566,11 @@ def evaluate_trial(heater_T_C):
     p_recomp = float(P["recomp"].getPower()) / 1e6
     total_power = p_export + p_recomp
     heater_duty = float(P["oil_heater"].getDuty()) / 1e6  # MW (thermal)
-    total_energy = total_power + heater_duty
+    heating_input = max(heater_duty, 0.0)
+    cooling_duty = max(-heater_duty, 0.0)
+    total_energy = total_power + heating_input
     rvp = export_oil_rvp_bara()
+    assert all(np.isfinite(value) for value in [total_power, heater_duty, rvp])
     snap = j(plant.getUtilizationSnapshotJson())
     overloaded = bool(snap.get("anyOverloaded"))
 
@@ -481,6 +582,8 @@ def evaluate_trial(heater_T_C):
         "power_recomp_MW": p_recomp,
         "total_power_MW": total_power,
         "heater_duty_MW": heater_duty,
+        "heating_input_MW": heating_input,
+        "cooling_duty_MW": cooling_duty,
         "total_energy_MW": total_energy,
         "rvp_bara": rvp,
         "rvp_ok": rvp <= RVP_LIMIT_BARA,
@@ -494,11 +597,16 @@ trials = []
 for T in range(45, 96, 5):
     trials.append(evaluate_trial(float(T)))
 
-print(f"{'T_C':>5} {'feas':>5} {'RVP':>6} {'ok':>4} {'P_comp':>7} {'Q_htr':>7} {'E_tot':>7} {'overld':>7}")
+print(
+    f"{'T_C':>5} {'feas':>5} {'RVP':>6} {'ok':>4} {'P_comp':>7} {'Q_htr':>7} "
+    f"{'E_tot':>7} {'overld':>7}"
+)
 for t in trials:
-    print(f"{t['heater_T_C']:5.0f} {str(t['feasible']):>5} {t['rvp_bara']:6.3f} "
-          f"{str(t['rvp_ok']):>4} {t['total_power_MW']:7.3f} {t['heater_duty_MW']:7.3f} "
-          f"{t['total_energy_MW']:7.3f} {str(t['overloaded']):>7}")
+    print(
+        f"{t['heater_T_C']:5.0f} {str(t['feasible']):>5} {t['rvp_bara']:6.3f} "
+        f"{str(t['rvp_ok']):>4} {t['total_power_MW']:7.3f} {t['heater_duty_MW']:7.3f} "
+        f"{t['total_energy_MW']:7.3f} {str(t['overloaded']):>7}"
+    )
 ```
 
 <details>
@@ -506,56 +614,53 @@ for t in trials:
 
 ```
   T_C  feas    RVP   ok  P_comp   Q_htr   E_tot  overld
-   45  True  1.320 False   3.007   0.466   3.473   False
-   50  True  1.217 False   2.989   0.718   3.706   False
-   55  True  1.118 False   2.970   0.991   3.960   False
-   60  True  1.023 False   2.945   1.290   4.236   False
-   65  True  0.932 False   2.915   1.623   4.538   False
-   70  True  0.844 True   2.879   1.998   4.877   False
-   75  True  0.761 True   2.841   2.427   5.268   False
-   80  True  0.682 True   2.803   2.930   5.733   False
-   85  True  0.607 True   2.763   3.534   6.298   False
-   90  True  0.553 True   2.736   3.979   6.715   False
-   95  True  0.512 True   2.715   4.294   7.009   False
+   45  True  1.136 False   3.143   0.411   3.554   False
+   50  True  1.052 False   3.154   0.610   3.764   False
+   55  True  0.972 False   3.163   0.816   3.979   False
+   60  True  0.898 True   3.169   1.030   4.199   False
+   65  True  0.828 True   3.172   1.253   4.425   False
+   70  True  0.762 True   3.172   1.484   4.656   False
+   75  True  0.701 True   3.171   1.724   4.895   False
+   80  True  0.644 True   3.167   1.974   5.141   False
+   85  True  0.592 True   3.162   2.235   5.397   False
+   90  True  0.543 True   3.156   2.510   5.665   False
+   95  True  0.498 True   3.148   2.801   5.949   False
 ```
 
 </details>
 
 ```python
-# Pick the BEST FEASIBLE trial: meets RVP, not overloaded, minimum total energy input.
-PENALTY = 1.0e6
-
-
-def penalized(t):
-    pen = t["total_energy_MW"]
-    if not t["feasible"] or t["overloaded"]:
-        pen += PENALTY
-    if not t["rvp_ok"]:
-        pen += PENALTY * (t["rvp_bara"] - RVP_LIMIT_BARA + 1.0)
-    return pen
-
-
-best = min(trials, key=penalized)
-print("Optimal operating point (min total energy input meeting RVP spec):")
+# Select only valid candidates; a penalty does not make an infeasible point feasible.
+feasible_trials = [
+    trial
+    for trial in trials
+    if trial["feasible"] and trial["rvp_ok"] and not trial["overloaded"]
+]
+assert feasible_trials, "No feasible stabilization temperature in the tested range"
+best = min(feasible_trials, key=lambda trial: trial["total_energy_MW"])
+assert best["total_energy_MW"] >= best["total_power_MW"]
+print("Best feasible sampled temperature (compression plus positive heating input):")
 print(f"  oil heater temperature : {best['heater_T_C']:.0f} C")
-print(f"  export-oil RVP         : {best['rvp_bara']:.3f} bara  (limit {RVP_LIMIT_BARA} bara)")
-print(f"  compression power      : {best['total_power_MW']:.3f} MW")
-print(f"  heater duty            : {best['heater_duty_MW']:.3f} MW")
-print(f"  total energy input     : {best['total_energy_MW']:.3f} MW")
-print(f"  bottleneck             : {best['bottleneck']}")
+print(f"  export-oil RVPE        : {best['rvp_bara']:.3f} bara (limit {RVP_LIMIT_BARA} bara)")
+print(f"  compression power     : {best['total_power_MW']:.3f} MW")
+print(f"  heating input         : {best['heating_input_MW']:.3f} MW thermal")
+print(f"  cooling duty          : {best['cooling_duty_MW']:.3f} MW thermal")
+print(f"  screening energy sum  : {best['total_energy_MW']:.3f} MW")
+print(f"  bottleneck            : {best['bottleneck']}")
 ```
 
 <details>
 <summary>Output</summary>
 
 ```
-Optimal operating point (min total energy input meeting RVP spec):
-  oil heater temperature : 70 C
-  export-oil RVP         : 0.844 bara  (limit 0.9 bara)
-  compression power      : 2.879 MW
-  heater duty            : 1.998 MW
-  total energy input     : 4.877 MW
-  bottleneck             : {'name': 'recompression compressor', 'utilization': 0.8855058621660453, 'utilizationPercent': 88.55058621660453, 'limitingConstraint': 'design volume flow'}
+Best feasible sampled temperature (compression plus positive heating input):
+  oil heater temperature : 60 C
+  export-oil RVPE        : 0.898 bara (limit 0.9 bara)
+  compression power     : 3.169 MW
+  heating input         : 1.030 MW thermal
+  cooling duty          : 0.000 MW thermal
+  screening energy sum  : 4.199 MW
+  bottleneck            : {'name': 'oil let-down valve', 'area': 'separation', 'qualifiedName': 'separation::oil let-down valve', 'utilization': 1.0, 'utilizationPercent': 100.0, 'limitingConstraint': 'design Cv'}
 ```
 
 </details>
@@ -569,32 +674,40 @@ Ts = [t["heater_T_C"] for t in trials]
 rvps = [t["rvp_bara"] for t in trials]
 energy = [t["total_energy_MW"] for t in trials]
 comp_p = [t["total_power_MW"] for t in trials]
-htr_q = [t["heater_duty_MW"] for t in trials]
+htr_q = [t["heating_input_MW"] for t in trials]
 
 fig, ax1 = plt.subplots(figsize=(8, 5))
-ax1.set_title("Oil-stabilization trade-off: RVP vs total energy input")
+ax1.set_title("Oil-stabilization trade-off: RVPE vs screening energy input")
 ax1.set_xlabel("Oil stabilization heater temperature [\u00b0C]")
-ax1.set_ylabel("Export-oil RVP [bara]", color="tab:blue")
+ax1.set_ylabel("Export-oil RVPE [bara]", color="tab:blue")
 ax1.plot(Ts, rvps, "o-", color="tab:blue", label="RVP")
-ax1.axhline(RVP_LIMIT_BARA, color="tab:blue", ls="--", lw=1, label=f"RVP limit {RVP_LIMIT_BARA} bara")
+ax1.axhline(
+    RVP_LIMIT_BARA, color="tab:blue", ls="--", lw=1, label=f"RVPE limit {RVP_LIMIT_BARA} bara"
+)
 ax1.tick_params(axis="y", labelcolor="tab:blue")
 ax1.grid(True, alpha=0.3)
 
 ax2 = ax1.twinx()
 ax2.set_ylabel("Energy input [MW]", color="tab:red")
-ax2.plot(Ts, energy, "s-", color="tab:red", label="total energy")
+ax2.plot(Ts, energy, "s-", color="tab:red", label="shaft power + positive heat")
 ax2.plot(Ts, comp_p, "^--", color="tab:orange", lw=1, label="compression power")
-ax2.plot(Ts, htr_q, "v--", color="tab:purple", lw=1, label="heater duty")
+ax2.plot(Ts, htr_q, "v--", color="tab:purple", lw=1, label="positive heating input")
 ax2.tick_params(axis="y", labelcolor="tab:red")
 ax2.legend(loc="center right", fontsize=8)
 
 ax1.axvline(best["heater_T_C"], color="green", ls=":", lw=2)
-ax1.annotate("optimum", xy=(best["heater_T_C"], RVP_LIMIT_BARA),
-             xytext=(best["heater_T_C"] + 2, RVP_LIMIT_BARA + 0.1), color="green")
+ax1.annotate(
+    "optimum",
+    xy=(best["heater_T_C"], RVP_LIMIT_BARA),
+    xytext=(best["heater_T_C"] + 2, RVP_LIMIT_BARA + 0.1),
+    color="green",
+)
 fig.tight_layout()
 plt.savefig("plant_optimization_tradeoff.png", dpi=120, bbox_inches="tight")
 plt.show()
 ```
+
+![Result figure from cell 18](figures/processmodel_plant_optimization_cell_18_output_1.png)
 
 ```python
 # Utilization bar chart at the optimum operating point.
@@ -610,13 +723,20 @@ ax.axhline(100, color="k", ls="--", lw=1, label="design limit (100%)")
 ax.set_xticks(range(len(names)))
 ax.set_xticklabels(names, rotation=30, ha="right", fontsize=8)
 ax.set_ylabel("Max utilization [%]")
-ax.set_title(f"Plant-wide equipment utilization at optimum (bottleneck: {snap.get('bottleneck')})")
+bottleneck = snap.get("bottleneck") or {}
+ax.set_title(
+    "Plant equipment utilization at the selected point\n"
+    f"Bottleneck: {bottleneck.get('qualifiedName', 'none')} "
+    f"({bottleneck.get('limitingConstraint', 'n/a')})"
+)
 ax.legend()
 ax.grid(True, axis="y", alpha=0.3)
 fig.tight_layout()
 plt.savefig("plant_optimization_utilization.png", dpi=120, bbox_inches="tight")
 plt.show()
 ```
+
+![Result figure from cell 19](figures/processmodel_plant_optimization_cell_19_output_1.png)
 
 ```python
 # Persist a machine-readable result summary.
@@ -625,7 +745,10 @@ results = {
     "reference_pattern": "Oseberg Sture low-pressure operation (multi-area ProcessModel)",
     "decision_variable": {"address": heater_addr, "unit": "C", "range_C": [45, 95]},
     "rvp_limit_bara": RVP_LIMIT_BARA,
-    "objective": "minimise total energy input (compression power + heater duty) subject to RVP <= limit",
+    "objective": (
+        "minimise shaft power plus positive heating input "
+        "subject to ASTM D6377 RVPE and capacity limits"
+    ),
     "optimum": {
         "oil_heater_temperature_C": best["heater_T_C"],
         "export_oil_rvp_bara": round(best["rvp_bara"], 4),
@@ -649,16 +772,18 @@ print(json.dumps(results["optimum"], indent=2))
 ```
 Saved plant_optimization_results.json
 {
-  "oil_heater_temperature_C": 70.0,
-  "export_oil_rvp_bara": 0.8445,
-  "total_compression_power_MW": 2.8793,
-  "heater_duty_MW": 1.9977,
-  "total_energy_MW": 4.877,
+  "oil_heater_temperature_C": 60.0,
+  "export_oil_rvp_bara": 0.8977,
+  "total_compression_power_MW": 3.1688,
+  "heater_duty_MW": 1.0305,
+  "total_energy_MW": 4.1993,
   "bottleneck": {
-    "name": "recompression compressor",
-    "utilization": 0.8855058621660453,
-    "utilizationPercent": 88.55058621660453,
-    "limitingConstraint": "design volume flow"
+    "name": "oil let-down valve",
+    "area": "separation",
+    "qualifiedName": "separation::oil let-down valve",
+    "utilization": 1.0,
+    "utilizationPercent": 100.0,
+    "limitingConstraint": "design Cv"
   }
 }
 ```
@@ -676,10 +801,9 @@ This notebook demonstrated the **complete plant-wide optimization workflow** on 
 4. **Activate** utilization across the entire plant with a single call to the new
    **`applyMechanicalDesignCapacityConstraints()`** helper (idempotent, safe to re-call).
 5. **Discover** the bounded decision space with `getAdjustableParametersJson()`.
-6. **Optimize** with the gated, never-throwing `evaluate()` step, gating on the `feasible` flag
+6. **Optimize** with the convergence-gated `evaluate()` step, gating on the `feasible` flag
    and handling the off-model RVP spec (`Standard_ASTM_D6377`) as a penalty.
 
 For the real **Oseberg** model the only differences are scale (≈13 areas instead of 2) and the
 decision vector (export/injection compressor pressures, stage pressures, heater temperatures,
 compressor speeds) — every API call shown here transfers unchanged.
-

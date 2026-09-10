@@ -43,40 +43,102 @@ This notebook demonstrates how to use **Python optimization libraries** (SciPy, 
 
 ### Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Python Optimization Layer                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
-│  │ scipy.opt   │  │ differential│  │ pymoo/NSGA │              │
-│  │ minimize()  │  │ _evolution()│  │ (Pareto)   │              │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘              │
-└─────────┼────────────────┼────────────────┼─────────────────────┘
-          │                │                │
-          ▼                ▼                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│              Objective Function (Python callable)                │
-│  def objective(x):                                               │
-│      set_variables(process, x)                                   │
-│      process.run()                                               │
-│      return evaluate(process)                                    │
-└─────────────────────────────────────────────────────────────────┘
-          │
-          ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    NeqSim Process Model                          │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐             │
-│  │  Feed   │─▶│ Compres │─▶│ Cooler  │─▶│Separator│             │
-│  │ Stream  │  │  sor    │  │         │  │         │             │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘             │
-└─────────────────────────────────────────────────────────────────┘
-```
+SciPy proposes a bounded vector of operating conditions. A Python wrapper applies
+those conditions, runs a NeqSim process, and evaluates objectives and constraints
+from the same process state. The flowsheet is a feed, first compressor, intercooler,
+second compressor and aftercooler. Compressor curves are demonstrated separately.
+
 
 ## 2. Setup and Imports
+Run cells in order in a fresh runtime. The setup installs missing dependencies
+with the active Python interpreter. A compiled checkout loads `target/classes`
+through `neqsim_dev_setup`; a standalone Colab notebook uses the published package.
+Restart the kernel after upgrading the package or changing Java classes.
+
+
+**Execution source:** Run all cells in a fresh Python kernel with Git and JDK 17+. An existing compiled NeqSim checkout is used first. Otherwise setup fetches and builds the documentation source at `refs/pull/3597/head`, which contains fixes exercised here. Set `NEQSIM_GIT_REF` before running to validate another commit or ref. The public Python package supplies the bridge and helpers; its bundled Java library alone is not the validated source for this notebook. The first source build can take several minutes.
+
 
 ```python
-# Install required packages if needed
-# !pip install neqsim scipy numpy matplotlib
+import importlib.util
+import os
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+# Install Python packages with this notebook kernel. Java runs from the
+# validated documentation source below, ahead of the package's bundled JAR.
+required = {"neqsim": "neqsim>=3.20.0,<4", "numpy": "numpy",
+            "scipy": "scipy>=1.14,<2", "matplotlib": "matplotlib", "pandas": "pandas"}
+missing = [package for module, package in required.items()
+           if importlib.util.find_spec(module) is None]
+if missing:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+
+candidate = Path(os.environ.get("NEQSIM_PROJECT_ROOT", Path.cwd())).resolve()
+PROJECT_ROOT = next((p for p in [candidate, *candidate.parents]
+                     if (p / "pom.xml").is_file()
+                     and (p / "devtools/neqsim_dev_setup.py").is_file()), None)
+if PROJECT_ROOT is None:
+    # The public package alone predates fixes exercised by these examples.
+    # Use the validated documentation PR's source; override with another fixed
+    # commit or ref through NEQSIM_GIT_REF when validating a newer revision.
+    source_ref = os.environ.get("NEQSIM_GIT_REF", "refs/pull/3597/head")
+    PROJECT_ROOT = Path(tempfile.mkdtemp(prefix="neqsim-optimization-"))
+    subprocess.check_call(["git", "init", "-q", str(PROJECT_ROOT)])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "remote", "add", "origin",
+                           "https://github.com/equinor/neqsim.git"])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "fetch", "--depth", "1",
+                           "origin", source_ref])
+    subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "checkout", "--quiet",
+                           "--detach", "FETCH_HEAD"])
+    print(f"Fetched NeqSim documentation source: {source_ref}")
+
+if not (PROJECT_ROOT / "target/classes/neqsim/thermo/system/SystemSrkEos.class").is_file():
+    # Requires Git and JDK 17+ before the first source build.
+    # The Maven wrapper downloads its own Maven distribution and dependencies.
+    wrapper = "mvnw.cmd" if os.name == "nt" else "mvnw"
+    build = subprocess.run(
+        [str(PROJECT_ROOT / wrapper), "-q", "-DskipTests", "compile",
+         "dependency:build-classpath", "-DincludeScope=runtime",
+         "-Dmdep.outputFile=target/neqsim-dev-classpath.txt",
+         f"-Dmdep.pathSeparator={os.pathsep}"],
+        cwd=PROJECT_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+    )
+    if build.returncode:
+        raise RuntimeError("NeqSim source build failed:\n" + build.stdout[-12000:])
+
+os.environ["NEQSIM_PROJECT_ROOT"] = str(PROJECT_ROOT)
+sys.path.insert(0, str(PROJECT_ROOT / "devtools"))
+from neqsim_dev_setup import neqsim_init, neqsim_classes
+ns = neqsim_classes(neqsim_init(project_root=PROJECT_ROOT,
+                              recompile=False, verbose=False))
+NEQSIM_MODE = "workspace target/classes"
+from neqsim import jneqsim
+import numpy as np
+import matplotlib.pyplot as plt
+
+FIGURES_DIR = Path("figures")
+FIGURES_DIR.mkdir(exist_ok=True)
+
+def save_figure(filename):
+    plt.savefig(FIGURES_DIR / filename, dpi=150, bbox_inches="tight")
+    plt.show()
+
+print(f"NeqSim source: {NEQSIM_MODE}")
+
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+All NeqSim classes imported OK
+NeqSim source: workspace target/classes
+```
+
+</details>
 
 ```python
 # Python imports
@@ -85,7 +147,8 @@ from scipy import optimize
 import matplotlib.pyplot as plt
 
 # NeqSim imports via JPype
-from neqsim.neqsimpython import jneqsim
+from neqsim import jneqsim
+import scipy
 
 # Process equipment
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
@@ -103,8 +166,18 @@ SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 SystemPrEos = jneqsim.thermo.system.SystemPrEos
 
 print("NeqSim and SciPy loaded successfully!")
-print(f"SciPy version: {optimize.__name__}")
+print(f"SciPy version: {scipy.__version__}")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+NeqSim and SciPy loaded successfully!
+SciPy version: 1.17.0
+```
+
+</details>
 
 ## 3. Creating a Process Model
 
@@ -149,6 +222,7 @@ def create_gas_process(inlet_pressure=30.0, outlet_pressure=100.0):
     # Stage 1 compressor
     stage1 = Compressor("stage1", feed)
     stage1.setOutletPressure(intermediate_pressure)
+    stage1.setUsePolytropicCalc(True)
     stage1.setPolytropicEfficiency(0.78)
     process.add(stage1)
     
@@ -160,6 +234,7 @@ def create_gas_process(inlet_pressure=30.0, outlet_pressure=100.0):
     # Stage 2 compressor
     stage2 = Compressor("stage2", intercooler.getOutletStream())
     stage2.setOutletPressure(outlet_pressure)
+    stage2.setUsePolytropicCalc(True)
     stage2.setPolytropicEfficiency(0.76)
     process.add(stage2)
     
@@ -184,6 +259,21 @@ print(f"  Stage 2 power: {process.getUnit('stage2').getPower('kW'):.1f} kW")
 print(f"  Total power: {process.getUnit('stage1').getPower('kW') + process.getUnit('stage2').getPower('kW'):.1f} kW")
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+Process created successfully!
+
+Initial conditions:
+  Feed flow rate: 50000 kg/hr
+  Stage 1 power: 1343.1 kW
+  Stage 2 power: 1411.9 kW
+  Total power: 2755.1 kW
+```
+
+</details>
+
 ## 4. Defining the Optimization Problem
 
 The key is creating a **Python callable** that:
@@ -194,78 +284,63 @@ The key is creating a **Python callable** that:
 
 ```python
 class NeqSimOptimizationProblem:
-    """
-    Wrapper class to use NeqSim process with Python optimizers.
-    
-    This class handles:
-    - Setting decision variables on the process
-    - Running the simulation
-    - Evaluating objectives and constraints
-    - Counting function evaluations
-    """
-    
+    """Keep the objective, constraints and returned process at the requested x."""
+
     def __init__(self, process_factory, variable_specs, objective_func):
-        """
-        Initialize the optimization problem.
-        
-        Parameters:
-        - process_factory: Callable that creates a fresh ProcessSystem
-        - variable_specs: List of dicts with 'name', 'min', 'max', 'setter'
-        - objective_func: Callable(process) -> float
-        """
         self.process_factory = process_factory
         self.variable_specs = variable_specs
         self.objective_func = objective_func
         self.process = None
+        self.last_x = None
         self.eval_count = 0
         self.history = []
-        
+
     def get_bounds(self):
-        """Return bounds as [(min1, max1), (min2, max2), ...]."""
-        return [(v['min'], v['max']) for v in self.variable_specs]
-    
+        return [(v["min"], v["max"]) for v in self.variable_specs]
+
     def get_x0(self):
-        """Return initial point (midpoint of bounds)."""
-        return np.array([(v['min'] + v['max']) / 2 for v in self.variable_specs])
-    
+        return np.mean(self.get_bounds(), axis=1)
+
+    def simulate(self, x):
+        x = np.asarray(x, dtype=float)
+        if x.shape != (len(self.variable_specs),) or not np.all(np.isfinite(x)):
+            raise ValueError("Decision vector has the wrong shape or non-finite values")
+        # Exact comparison: rounding here corrupts finite-difference gradients.
+        if self.last_x is None or not np.array_equal(x, self.last_x):
+            process = self.process_factory()
+            for spec, value in zip(self.variable_specs, x):
+                spec["setter"](process, float(value))
+            process.run()
+            feed_rate = process.getUnit("feed").getFlowRate("kg/hr")
+            outlet_rate = process.getUnit("aftercooler").getOutletStream().getFlowRate("kg/hr")
+            if not np.isfinite(outlet_rate) or not np.isclose(feed_rate, outlet_rate, rtol=1e-7):
+                raise RuntimeError("Simulation failed its mass-balance check")
+            self.process, self.last_x = process, x.copy()
+            self.eval_count += 1
+        return self.process
+
     def evaluate(self, x):
-        """
-        Evaluate the objective function.
-        
-        Parameters:
-        - x: Array of decision variable values
-        
-        Returns:
-        - Objective value (for minimization)
-        """
-        self.eval_count += 1
-        
-        # Create fresh process (avoids state issues)
-        self.process = self.process_factory()
-        
-        # Set decision variables
-        for i, var_spec in enumerate(self.variable_specs):
-            var_spec['setter'](self.process, x[i])
-        
-        # Run simulation
-        try:
-            self.process.run()
-            obj_value = self.objective_func(self.process)
-        except Exception as e:
-            print(f"Simulation failed at x={x}: {e}")
-            obj_value = 1e10  # Large penalty for failed simulations
-        
-        # Record history
-        self.history.append({'x': x.copy(), 'obj': obj_value})
-        
-        return obj_value
-    
+        process = self.simulate(x)
+        value = float(self.objective_func(process))
+        if not np.isfinite(value):
+            raise RuntimeError("Objective is not finite")
+        self.history.append({"x": np.asarray(x, dtype=float).copy(), "obj": value})
+        return value
+
     def __call__(self, x):
-        """Make the object callable for scipy.optimize."""
         return self.evaluate(x)
 
-print("NeqSimOptimizationProblem class defined")
+print("NeqSimOptimizationProblem defined; unexpected simulation errors propagate.")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+NeqSimOptimizationProblem defined; unexpected simulation errors propagate.
+```
+
+</details>
 
 ```python
 # Define the optimization problem: Minimize total compressor power
@@ -306,6 +381,18 @@ print(f"  Bounds: {problem.get_bounds()}")
 print(f"  Initial point: {problem.get_x0()}")
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+Optimization problem defined:
+  Variables: ['intermediate_pressure', 'intercooler_temp']
+  Bounds: [(40.0, 80.0), (293.15, 323.15)]
+  Initial point: [ 60.   308.15]
+```
+
+</details>
+
 ## 5. Using SciPy Optimizers
 
 ### 5.1 Nelder-Mead (Derivative-Free)
@@ -319,6 +406,7 @@ result_nm = optimize.minimize(
     problem,
     x0=problem.get_x0(),
     method='Nelder-Mead',
+    bounds=problem.get_bounds(),
     options={
         'maxiter': 100,
         'xatol': 0.1,
@@ -335,7 +423,33 @@ print(f"\nOptimal values:")
 for i, var in enumerate(variable_specs):
     print(f"  {var['name']}: {result_nm.x[i]:.2f}")
 print(f"\nMinimum total power: {result_nm.fun:.1f} kW")
+
+assert result_nm.success
+assert all(lb <= value <= ub for value, (lb, ub) in zip(result_nm.x, problem.get_bounds()))
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Optimization terminated successfully.
+         Current function value: 2676.023232
+         Iterations: 17
+         Function evaluations: 30
+
+=== Nelder-Mead Results ===
+Success: True
+Message: Optimization terminated successfully.
+Function evaluations: 30
+
+Optimal values:
+  intermediate_pressure: 60.05
+  intercooler_temp: 293.15
+
+Minimum total power: 2676.0 kW
+```
+
+</details>
 
 ### 5.2 Powell Method
 
@@ -350,7 +464,7 @@ result_powell = optimize.minimize(
     bounds=problem.get_bounds(),
     options={
         'maxiter': 100,
-        'ftol': 1.0,
+        'ftol': 1e-6,
         'disp': True
     }
 )
@@ -360,56 +474,81 @@ print(f"Function evaluations: {problem.eval_count}")
 print(f"Optimal intermediate pressure: {result_powell.x[0]:.2f} bara")
 print(f"Optimal intercooler temp: {result_powell.x[1] - 273.15:.1f} °C")
 print(f"Minimum total power: {result_powell.fun:.1f} kW")
+
+assert result_powell.success
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Optimization terminated successfully.
+         Current function value: 2676.023229
+         Iterations: 3
+         Function evaluations: 209
+
+=== Powell Results ===
+Function evaluations: 209
+Optimal intermediate pressure: 60.06 bara
+Optimal intercooler temp: 20.0 °C
+Minimum total power: 2676.0 kW
+```
+
+</details>
 
 ### 5.3 Compare Algorithms
 
 ```python
-# Compare multiple optimization algorithms
-
-algorithms = ['Nelder-Mead', 'Powell', 'COBYLA']
-results = {}
-
-for alg in algorithms:
+# Run each optimizer with the same bounds and physical objective.
+algorithms = ["Nelder-Mead", "Powell", "COBYLA"]
+algorithm_results = {}
+for algorithm in algorithms:
     problem.eval_count = 0
-    
-    try:
-        if alg == 'COBYLA':
-            # COBYLA needs constraints, not bounds
-            cons = []
-            for i, (lb, ub) in enumerate(problem.get_bounds()):
-                cons.append({'type': 'ineq', 'fun': lambda x, i=i, lb=lb: x[i] - lb})
-                cons.append({'type': 'ineq', 'fun': lambda x, i=i, ub=ub: ub - x[i]})
-            
-            result = optimize.minimize(
-                problem, x0=problem.get_x0(),
-                method=alg, constraints=cons,
-                options={'maxiter': 100, 'disp': False}
-            )
-        else:
-            result = optimize.minimize(
-                problem, x0=problem.get_x0(),
-                method=alg, bounds=problem.get_bounds(),
-                options={'maxiter': 100, 'disp': False}
-            )
-        
-        results[alg] = {
-            'x': result.x,
-            'fun': result.fun,
-            'nfev': problem.eval_count,
-            'success': result.success
-        }
-    except Exception as e:
-        print(f"{alg} failed: {e}")
+    options = {"maxiter": 250}
+    if algorithm == "COBYLA":
+        options.update({"rhobeg": 5.0, "tol": 1e-3})
+    elif algorithm == "Powell":
+        options.update({"ftol": 1e-6})
+    outcome = optimize.minimize(problem, problem.get_x0(), method=algorithm,
+                                bounds=problem.get_bounds(), options=options)
+    problem.evaluate(outcome.x)
+    assert outcome.success, f"{algorithm}: {outcome.message}"
+    algorithm_results[algorithm] = {"x": outcome.x, "fun": outcome.fun,
+                                    "nfev": problem.eval_count, "success": outcome.success}
 
-# Display comparison
-print("\n=== Algorithm Comparison ===")
-print("-" * 70)
-print(f"{'Algorithm':<15} {'P_inter (bara)':<15} {'T_inter (°C)':<15} {'Power (kW)':<12} {'Evals'}")
-print("-" * 70)
-for alg, res in results.items():
-    print(f"{alg:<15} {res['x'][0]:<15.1f} {res['x'][1]-273.15:<15.1f} {res['fun']:<12.1f} {res['nfev']}")
+print(f"{'Algorithm':<15} {'P_inter (bara)':<15} {'T_inter (C)':<15} {'Power (kW)':<12} {'Runs'}")
+for name, res in algorithm_results.items():
+    print(f"{name:<15} {res['x'][0]:<15.2f} {res['x'][1]-273.15:<15.2f} {res['fun']:<12.2f} {res['nfev']}")
+
+plt.figure(figsize=(8, 4))
+plt.bar(algorithm_results.keys(), [r["fun"] for r in algorithm_results.values()])
+plt.ylabel("Total compressor power (kW)")
+plt.title("Bounded local optimizer comparison")
+plt.grid(axis="y", alpha=0.3)
+plt.tight_layout()
+save_figure("python-optimization-algorithms.png")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Algorithm       P_inter (bara)  T_inter (C)     Power (kW)   Runs
+Nelder-Mead     60.06           20.00           2676.02      58
+Powell          60.06           20.00           2676.02      210
+COBYLA          60.06           20.00           2676.02      39
+```
+
+</details>
+
+![Result figure from cell 16](figures/NeqSim_Python_Optimization_cell_16_output_2.png)
+
+All three local methods reach approximately 2,676 kW at 60.06 bara intermediate
+pressure and 20 °C intercooler temperature within the same operating bounds. The optimum approaches the lower allowed intercooler
+temperature because colder gas requires less second-stage compression work.
+Cooling duty and utility cost are not included in this power-only objective;
+include them before choosing a plant operating temperature.
+
 
 ## 6. Equipment Constraints
 
@@ -418,58 +557,40 @@ Real processes have equipment limitations. Let's add constraints for:
 - Maximum compressor power
 - Minimum/maximum pressure ratios
 
+
 ```python
 class ConstrainedOptimizationProblem(NeqSimOptimizationProblem):
-    """
-    Extended optimization problem with equipment constraints.
-    """
-    
+    """Evaluate each constraint at exactly the x requested by SciPy."""
+
     def __init__(self, process_factory, variable_specs, objective_func, constraint_specs):
         super().__init__(process_factory, variable_specs, objective_func)
         self.constraint_specs = constraint_specs
-        
-    def evaluate_constraints(self, x):
-        """
-        Evaluate all constraints.
-        
-        Returns:
-        - List of constraint values (positive = feasible for inequality)
-        """
-        # Make sure process is up to date
-        if self.process is None:
-            self.evaluate(x)
-        
-        constraint_values = []
-        for spec in self.constraint_specs:
-            value = spec['evaluator'](self.process)
-            if spec['type'] == 'max':
-                # g(x) >= 0 means value <= limit
-                constraint_values.append(spec['limit'] - value)
-            else:  # 'min'
-                # g(x) >= 0 means value >= limit
-                constraint_values.append(value - spec['limit'])
-        
-        return constraint_values
-    
-    def get_scipy_constraints(self):
-        """
-        Return constraints in SciPy format for constrained optimizers.
-        """
-        constraints = []
-        for i, spec in enumerate(self.constraint_specs):
-            constraints.append({
-                'type': 'ineq',
-                'fun': lambda x, idx=i: self._constraint_func(x, idx)
-            })
-        return constraints
-    
-    def _constraint_func(self, x, constraint_idx):
-        """Evaluate single constraint (for SciPy)."""
-        self.evaluate(x)  # Updates self.process
-        return self.evaluate_constraints(x)[constraint_idx]
 
-print("ConstrainedOptimizationProblem class defined")
+    def evaluate_constraints(self, x):
+        process = self.simulate(x)
+        values = []
+        for spec in self.constraint_specs:
+            actual = float(spec["evaluator"](process))
+            if not np.isfinite(actual):
+                raise RuntimeError(f"Non-finite constraint {spec['name']}")
+            margin = spec["limit"] - actual if spec["type"] == "max" else actual - spec["limit"]
+            values.append(margin)
+        return np.asarray(values)
+
+    def get_scipy_constraints(self):
+        return [{"type": "ineq", "fun": self.evaluate_constraints}]
+
+print("Constraint margins use the current decision vector, regardless of call order.")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Constraint margins use the current decision vector, regardless of call order.
+```
+
+</details>
 
 ```python
 # Define equipment constraints
@@ -520,34 +641,37 @@ constrained_problem = ConstrainedOptimizationProblem(
 print(f"Defined {len(constraint_specs)} constraints:")
 for spec in constraint_specs:
     print(f"  - {spec['name']}: {spec['type']} {spec['limit']}")
+# A constraint callback may be the first request, or follow an unrelated trial.
+constrained_problem.evaluate_constraints([50.0, 303.15])
+constrained_problem.evaluate([75.0, 313.15])
+constrained_problem.evaluate_constraints([50.0, 303.15])
+assert np.isclose(constrained_problem.process.getUnit("stage1").getOutletStream().getPressure("bara"), 50.0)
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Defined 5 constraints:
+  - max_stage1_discharge_temp: max 423.15
+  - max_stage2_discharge_temp: max 423.15
+  - max_stage1_power: max 2500.0
+  - max_stage2_power: max 2500.0
+  - min_pressure_ratio_stage1: min 1.5
+```
+
+</details>
 
 ## 6.2 Compressor Curves and Surge/Choke Constraints
 
-Compressor curves define the actual operating envelope. NeqSim supports:
-- **Multi-speed performance maps** (head, efficiency vs flow at different speeds)
-- **Surge curves** - minimum flow limit (causes instability)
-- **Stone wall (choke) curves** - maximum flow limit
+Compressor maps specify head and efficiency as functions of actual inlet volume
+flow and rotational speed. The synthetic demonstration data below are not vendor
+data. Enforce the surge boundary, choke boundary, speed range, power rating and
+minimum delivery pressure together. A specified speed with an active map determines
+discharge pressure; `setOutletPressure` alone does not enforce an export requirement.
 
-### Compressor Operating Envelope
+Surge margin is `(flow - surge_flow) / surge_flow`; multiplying by 100 gives percent.
 
-```
-                    Head
-                     ↑
-                     │        ╭──────────╮
-                     │       ╱   Stone    ╲
-                     │      ╱    Wall      ╲
-              Surge │     ╱   (Choke)      ╲
-              Curve │    ╱                  ╲
-                    │   ╱                    ╲
-                    │  ╱   Operating          ╲
-                    │ ╱     Envelope           ╲
-                    │╱                          ╲
-                    └─────────────────────────────→ Flow
-                         ↑                  ↑
-                    Minimum Flow      Maximum Flow
-                   (Surge Point)    (Stone Wall Point)
-```
 
 ```python
 # Import compressor curve classes
@@ -581,6 +705,7 @@ def create_process_with_compressor_curves():
     # Create compressor
     compressor = Compressor("compressor", feed)
     compressor.setOutletPressure(80.0)  # bara
+    compressor.setUsePolytropicCalc(True)
     compressor.setPolytropicEfficiency(0.78)
     process.add(compressor)
     
@@ -638,6 +763,7 @@ def create_process_with_compressor_curves():
     # Set the curves on the chart
     chart.setCurves(chart_conditions, speeds, flow_array, head_array, flow_array, eff_array)
     chart.setHeadUnit("kJ/kg")
+    chart.setUseCompressorChart(True)
     
     # ========================================
     # SET SURGE CURVE
@@ -678,6 +804,20 @@ print(f"Polytropic efficiency: {comp.getPolytropicEfficiency()*100:.1f} %")
 print(f"Power: {comp.getPower('kW'):.1f} kW")
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+=== Compressor with Performance Curves ===
+Flow rate: 5000 Am3/hr
+Speed: 10500 RPM
+Polytropic head: 91.4 kJ/kg
+Polytropic efficiency: 78.2 %
+Power: 4160.5 kW
+```
+
+</details>
+
 ```python
 # Check surge and choke margins
 chart = comp.getCompressorChart()
@@ -714,231 +854,169 @@ stonewall_margin = (stonewall_flow - flow) / stonewall_flow * 100
 
 print(f"\n  Surge margin: {surge_margin:.1f}%")
 print(f"  Stone wall margin: {stonewall_margin:.1f}%")
+assert not is_surge and not is_stonewall
+assert 0.0 < comp.getPolytropicEfficiency() < 1.0
+plt.figure(figsize=(9, 5))
+for speed, flows, heads in zip(chart.getSpeeds(), chart.getFlows(), chart.getHeads()):
+    plt.plot(flows, heads, label=f"{speed:.0f} rpm")
+head_values = np.linspace(60.0, 140.0, 100)
+plt.plot([surge_curve.getSurgeFlow(h) for h in head_values], head_values,
+         "r--", label="Surge boundary")
+plt.plot([stonewall_curve.getStoneWallFlow(h) for h in head_values], head_values,
+         "k--", label="Choke boundary")
+plt.scatter([flow], [head], color="black", s=70, zorder=5, label="Operating point")
+plt.xlabel("Actual inlet flow (m³/hr)")
+plt.ylabel("Polytropic head (kJ/kg)")
+plt.title("Synthetic compressor map and operating limits")
+plt.grid(alpha=0.3)
+plt.legend(loc="upper left", bbox_to_anchor=(1.01, 1.0))
+plt.tight_layout()
+save_figure("python-optimization-compressor-map.png")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+
+=== Operating Limit Analysis ===
+Operating point: 5000 Am3/hr, 91.4 kJ/kg
+In surge: False
+Is choked (stone wall): False
+
+At head = 91.4 kJ/kg:
+  Surge flow: 2329 Am3/hr
+  Stone wall flow: 6943 Am3/hr
+  Current flow: 5000 Am3/hr
+
+  Surge margin: 114.7%
+  Stone wall margin: 28.0%
+```
+
+</details>
+
+![Result figure from cell 22](figures/NeqSim_Python_Optimization_cell_22_output_2.png)
+
+The initial operating point (5,000 actual m³/hr and approximately 91 kJ/kg)
+lies between the synthetic surge and choke boundaries.
+Head rises with speed and drops with increasing flow along each speed curve.
+The reported margins quantify distance to these boundaries, but a valid delivery
+pressure and driver duty must also be checked. Replace these illustrative curves
+with qualified vendor data for equipment decisions.
+
 
 ### 6.2.1 Optimization with Compressor Curve Constraints
 
 Now let's optimize while respecting the compressor curve limits (surge and choke).
 
-```python
-# Define compressor curve constraint evaluators
 
+```python
 class CompressorCurveOptimization:
-    """
-    Optimization problem with compressor curve constraints.
-    """
-    
+    """Reuse one exact x across objective and independently called constraints."""
+
     def __init__(self):
         self.process = None
+        self.last_x = None
         self.eval_count = 0
         self.history = []
-        
-    def create_process(self):
-        """Create fresh process with compressor curves."""
-        return create_process_with_compressor_curves()
-    
-    def set_variables(self, x):
-        """
-        Set optimization variables.
-        x[0] = flow rate (Am3/hr)
-        x[1] = compressor speed (RPM)
-        """
-        flow_rate, speed = x
-        self.process.getUnit("feed").setFlowRate(flow_rate, "Am3/hr")
-        self.process.getUnit("compressor").setSpeed(speed)
-    
+
+    def simulate(self, x):
+        x = np.asarray(x, dtype=float)
+        if self.last_x is None or not np.array_equal(x, self.last_x):
+            process = create_process_with_compressor_curves()
+            process.getUnit("feed").setFlowRate(float(x[0]), "Am3/hr")
+            process.getUnit("compressor").setSpeed(float(x[1]))
+            process.run()
+            self.process, self.last_x = process, x.copy()
+            self.eval_count += 1
+        return self.process.getUnit("compressor")
+
     def objective(self, x):
-        """
-        Minimize specific power (kW per 1000 Am3/hr).
-        """
-        self.eval_count += 1
-        self.process = self.create_process()
-        self.set_variables(x)
-        
-        try:
-            self.process.run()
-            power = self.process.getUnit("compressor").getPower("kW")
-            flow = x[0]  # Am3/hr
-            specific_power = power / (flow / 1000.0)
-            
-            # Store history
-            self.history.append({
-                'x': x.copy(),
-                'obj': specific_power,
-                'feasible': self.check_feasibility()
-            })
-            
-            return specific_power
-            
-        except Exception as e:
-            print(f"Simulation failed: {e}")
-            return 1e10
-    
-    def check_feasibility(self):
-        """Check if operating point is within compressor envelope."""
-        comp = self.process.getUnit("compressor")
-        chart = comp.getCompressorChart()
-        
-        flow = comp.getInletStream().getFlowRate("Am3/hr")
-        head = comp.getPolytropicHead("kJ/kg")
-        
-        is_surge = chart.getSurgeCurve().isSurge(head, flow)
-        is_stonewall = chart.getStoneWallCurve().isStoneWall(head, flow)
-        
-        return not is_surge and not is_stonewall
-    
-    def surge_constraint(self, x):
-        """
-        Surge constraint: g(x) >= 0 means NOT in surge.
-        Returns: (flow - surge_flow) / surge_flow
-        """
-        self.process = self.create_process()
-        self.set_variables(x)
-        self.process.run()
-        
-        comp = self.process.getUnit("compressor")
-        chart = comp.getCompressorChart()
-        
-        flow = comp.getInletStream().getFlowRate("Am3/hr")
-        head = comp.getPolytropicHead("kJ/kg")
-        surge_flow = chart.getSurgeCurve().getSurgeFlow(head)
-        
-        # Positive = above surge, feasible
-        return (flow - surge_flow) / surge_flow
-    
-    def stonewall_constraint(self, x):
-        """
-        Stone wall constraint: g(x) >= 0 means NOT choked.
-        Returns: (stonewall_flow - flow) / stonewall_flow
-        """
-        comp = self.process.getUnit("compressor")
-        chart = comp.getCompressorChart()
-        
-        flow = comp.getInletStream().getFlowRate("Am3/hr")
-        head = comp.getPolytropicHead("kJ/kg")
-        stonewall_flow = chart.getStoneWallCurve().getStoneWallFlow(head)
-        
-        # Positive = below stone wall, feasible
-        return (stonewall_flow - flow) / stonewall_flow
-    
-    def min_surge_margin_constraint(self, x, min_margin=0.10):
-        """
-        Minimum surge margin constraint (default 10%).
-        g(x) >= 0 means surge margin >= min_margin
-        """
-        self.process = self.create_process()
-        self.set_variables(x)
-        self.process.run()
-        
-        comp = self.process.getUnit("compressor")
-        chart = comp.getCompressorChart()
-        
-        flow = comp.getInletStream().getFlowRate("Am3/hr")
-        head = comp.getPolytropicHead("kJ/kg")
-        surge_flow = chart.getSurgeCurve().getSurgeFlow(head)
-        
-        # Surge margin
-        margin = (flow - surge_flow) / surge_flow
-        
-        # Positive = margin >= min_margin
-        return margin - min_margin
-    
-    def max_power_constraint(self, x, max_power=3000.0):
-        """
-        Maximum power constraint.
-        g(x) >= 0 means power <= max_power
-        """
-        comp = self.process.getUnit("compressor")
-        power = comp.getPower("kW")
-        
-        return (max_power - power) / max_power
+        comp = self.simulate(x)
+        value = comp.getPower("kW") / (comp.getInletStream().getFlowRate("Am3/hr") / 1000.0)
+        if not np.isfinite(value):
+            raise RuntimeError("Non-finite mapped compressor objective")
+        self.history.append({"x": np.asarray(x).copy(), "obj": value})
+        return value
 
-# Create optimization problem
+    def margins(self, x, minimum_surge_margin=0.10, maximum_power=5000.0,
+                minimum_pressure=80.0):
+        comp = self.simulate(x)
+        chart = comp.getCompressorChart()
+        flow = comp.getInletStream().getFlowRate("Am3/hr")
+        head = comp.getPolytropicHead("kJ/kg")
+        surge_flow = chart.getSurgeCurve().getSurgeFlow(head)
+        choke_flow = chart.getStoneWallCurve().getStoneWallFlow(head)
+        return np.array([
+            (flow - surge_flow) / surge_flow - minimum_surge_margin,
+            (choke_flow - flow) / choke_flow,
+            (maximum_power - comp.getPower("kW")) / maximum_power,
+            (comp.getOutletStream().getPressure("bara") - minimum_pressure) / minimum_pressure,
+        ])
+
 curve_problem = CompressorCurveOptimization()
-
-print("Compressor curve optimization problem defined")
-print("Variables: [flow_rate (Am3/hr), speed (RPM)]")
-print("Objective: Minimize specific power (kW per 1000 Am3/hr)")
-print("Constraints:")
-print("  - Surge margin >= 10%")
-print("  - Not in stone wall (choke)")
-print("  - Power <= 3000 kW")
+print("Variables: actual inlet flow (m3/hr), speed (rpm)")
+print("Minimize specific power with surge margin >= 10%, no choke,")
+print("shaft power <= 5000 kW, and delivery pressure >= 80 bara.")
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Variables: actual inlet flow (m3/hr), speed (rpm)
+Minimize specific power with surge margin >= 10%, no choke,
+shaft power <= 5000 kW, and delivery pressure >= 80 bara.
+```
+
+</details>
 
 ```python
-# Run constrained optimization with compressor curve limits
+# Normalize the different variable scales before SLSQP finite differences.
+curve_lower = np.array([3000.0, 9000.0])
+curve_upper = np.array([6000.0, 12000.0])
+def physical_curve_variables(u):
+    return curve_lower + np.asarray(u) * (curve_upper - curve_lower)
 
-# Variable bounds
-bounds = [
-    (3000.0, 6000.0),   # Flow rate: 3000-6000 Am3/hr
-    (9000.0, 12000.0)   # Speed: 9000-12000 RPM
-]
-
-# Initial point
-x0 = np.array([4500.0, 10500.0])
-
-# Define constraints for scipy
-constraints = [
-    {
-        'type': 'ineq',
-        'fun': lambda x: curve_problem.min_surge_margin_constraint(x, 0.10)
-    },
-    {
-        'type': 'ineq',
-        'fun': lambda x: curve_problem.stonewall_constraint(x)
-    },
-    {
-        'type': 'ineq',
-        'fun': lambda x: curve_problem.max_power_constraint(x, 3000.0)
-    }
-]
-
-# Optimize
-curve_problem.eval_count = 0
-curve_problem.history = []
-
-result_curves = optimize.minimize(
-    curve_problem.objective,
-    x0=x0,
-    method='SLSQP',
-    bounds=bounds,
-    constraints=constraints,
-    options={'maxiter': 100, 'disp': True}
+curve_result_scaled = optimize.minimize(
+    lambda u: curve_problem.objective(physical_curve_variables(u)) / 1000.0,
+    x0=np.array([0.5, 0.5]), method="SLSQP", bounds=[(0.0, 1.0)] * 2,
+    constraints=[{"type": "ineq", "fun": lambda u: curve_problem.margins(physical_curve_variables(u))}],
+    options={"maxiter": 100, "ftol": 1e-8, "eps": 1e-5},
 )
-
-print("\n=== Optimization with Compressor Curve Constraints ===")
-print(f"Success: {result_curves.success}")
-print(f"Function evaluations: {curve_problem.eval_count}")
-print(f"\nOptimal values:")
-print(f"  Flow rate: {result_curves.x[0]:.0f} Am3/hr")
-print(f"  Speed: {result_curves.x[1]:.0f} RPM")
-print(f"\nMinimum specific power: {result_curves.fun:.2f} kW per 1000 Am3/hr")
-
-# Verify constraints at optimum
-curve_problem.process = curve_problem.create_process()
-curve_problem.set_variables(result_curves.x)
-curve_problem.process.run()
-
-comp = curve_problem.process.getUnit("compressor")
-chart = comp.getCompressorChart()
-flow = comp.getInletStream().getFlowRate("Am3/hr")
-head = comp.getPolytropicHead("kJ/kg")
-power = comp.getPower("kW")
-
-surge_flow = chart.getSurgeCurve().getSurgeFlow(head)
-surge_margin = (flow - surge_flow) / surge_flow * 100
-
-print(f"\nAt optimum:")
-print(f"  Polytropic head: {head:.1f} kJ/kg")
-print(f"  Power: {power:.1f} kW")
-print(f"  Surge flow: {surge_flow:.0f} Am3/hr")
-print(f"  Surge margin: {surge_margin:.1f}% (minimum 10%)")
-print(f"  In surge: {chart.getSurgeCurve().isSurge(head, flow)}")
+curve_optimum = physical_curve_variables(curve_result_scaled.x)
+comp_opt = curve_problem.simulate(curve_optimum)
+curve_margins = curve_problem.margins(curve_optimum)
+assert curve_result_scaled.success, curve_result_scaled.message
+assert np.min(curve_margins) >= -1e-6
+assert np.isclose(comp_opt.getInletStream().getFlowRate("Am3/hr"), curve_optimum[0], rtol=1e-7)
+print(f"Flow: {curve_optimum[0]:.1f} actual m3/hr; speed: {curve_optimum[1]:.1f} rpm")
+print(f"Specific power: {curve_problem.objective(curve_optimum):.2f} kW per 1000 actual m3/hr")
+print(f"Power: {comp_opt.getPower('kW'):.2f} kW")
+print(f"Delivery pressure: {comp_opt.getOutletStream().getPressure('bara'):.3f} bara")
+print("Constraint margins [surge, choke, power, delivery pressure]:", curve_margins)
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Flow: 4252.0 actual m3/hr; speed: 11470.2 rpm
+Specific power: 1175.93 kW per 1000 actual m3/hr
+Power: 5000.00 kW
+Delivery pressure: 80.000 bara
+Constraint margins [surge, choke, power, delivery pressure]: [ 3.02306815e-01  4.74845846e-01 -1.70985004e-14 -1.66977543e-14]
+```
+
+</details>
 
 ### 6.2.2 Using CompressorChartGenerator (Automatic Curves)
 
 NeqSim can automatically generate compressor curves from templates. This is useful when you don't have detailed vendor data.
+Generate a template only after running a positive-flow design point, so its head
+and efficiency are initialized. A generated map is a preliminary estimate, not
+validated vendor performance.
+
 
 ```python
 # Automatic curve generation using templates
@@ -964,7 +1042,11 @@ def create_process_with_generated_curves():
     
     compressor = Compressor("compressor", feed)
     compressor.setOutletPressure(80.0)
+    compressor.setUsePolytropicCalc(True)
+    compressor.setPolytropicEfficiency(0.78)
+    compressor.setSpeed(10000.0)
     process.add(compressor)
+    process.run()  # Establish the design head before scaling the template.
     
     # ========================================
     # AUTOMATIC CURVE GENERATION
@@ -988,6 +1070,7 @@ def create_process_with_generated_curves():
     
     # Set the generated chart on the compressor
     compressor.setCompressorChart(chart)
+    chart.setUseCompressorChart(True)
     
     # Set operating speed (within the generated range)
     compressor.setSpeed(10000)  # RPM
@@ -1020,7 +1103,28 @@ head_auto = comp_auto.getPolytropicHead("kJ/kg")
 print(f"\nOperating limits:")
 print(f"  In surge: {chart_auto.getSurgeCurve().isSurge(head_auto, flow_auto)}")
 print(f"  Is choked: {chart_auto.getStoneWallCurve().isStoneWall(head_auto, flow_auto)}")
+
+assert comp_auto.getPolytropicHead("kJ/kg") > 0.0
+assert 0.0 < comp_auto.getPolytropicEfficiency() < 1.0
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+=== Process with Auto-Generated Compressor Curves ===
+Flow rate: 5000 Am3/hr
+Speed: 10000 RPM
+Polytropic head: 133.9 kJ/kg
+Polytropic efficiency: 84.0 %
+Power: 5675.3 kW
+
+Operating limits:
+  In surge: False
+  Is choked: False
+```
+
+</details>
 
 ### 6.2.3 Multi-Map MW Interpolation for Varying Gas Composition
 
@@ -1124,6 +1228,9 @@ def create_process_with_mw_chart():
     
     # Apply chart to compressor
     compressor.setCompressorChart(chart)
+    chart.setUseCompressorChart(True)
+    chart.setInletStream(feed)
+    chart.setUseActualMW(True)
     compressor.setSpeed(10500)
     compressor.setUsePolytropicCalc(True)
     
@@ -1153,7 +1260,30 @@ print(f"  Speed: {comp_mw.getSpeed():.0f} RPM")
 print(f"  Polytropic head: {comp_mw.getPolytropicHead('kJ/kg'):.1f} kJ/kg")
 print(f"  Polytropic efficiency: {comp_mw.getPolytropicEfficiency()*100:.1f} %")
 print(f"  Power: {comp_mw.getPower('kW'):.1f} kW")
+
+assert 16.0 < actual_mw < 20.0
+assert np.isclose(chart_mw.getOperatingMW(), actual_mw)
+assert chart_mw.getNumberOfMaps() == 2
+assert comp_mw.getPolytropicHead("kJ/kg") > 0.0
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+=== Multi-MW Interpolation Chart ===
+Actual gas MW: 19.4 g/mol
+(Chart interpolates between MW=16 and MW=20 maps)
+
+Operating point:
+  Flow rate: 4500 Am3/hr
+  Speed: 10500 RPM
+  Polytropic head: 98.4 kJ/kg
+  Polytropic efficiency: 78.2 %
+  Power: 4183.1 kW
+```
+
+</details>
 
 ### Summary: Compressor Curve Constraints
 
@@ -1163,7 +1293,7 @@ print(f"  Power: {comp_mw.getPower('kW'):.1f} kW")
 | **Stone wall (choke)** | `getStoneWallCurve().isStoneWall(head, flow)` | Returns True if choked |
 | **Surge flow** | `getSurgeCurve().getSurgeFlow(head)` | Minimum flow at given head |
 | **Stone wall flow** | `getStoneWallCurve().getStoneWallFlow(head)` | Maximum flow at given head |
-| **Surge margin** | `(flow - surge_flow) / surge_flow` | Percent above surge line |
+| **Surge margin** | `(flow - surge_flow) / surge_flow` | Fraction above surge line; multiply by 100 for percent |
 
 ### Key Classes
 
@@ -1173,6 +1303,7 @@ print(f"  Power: {comp_mw.getPower('kW'):.1f} kW")
 | `CompressorChartGenerator` | Auto-generate curves from templates |
 | `CompressorChartMWInterpolation` | Multiple maps at different MWs |
 | `CompressorChartKhader2015` | Automatic MW correction using sound speed scaling |
+
 
 ```python
 # Optimize with constraints using SLSQP
@@ -1184,7 +1315,7 @@ result_slsqp = optimize.minimize(
     method='SLSQP',
     bounds=constrained_problem.get_bounds(),
     constraints=constrained_problem.get_scipy_constraints(),
-    options={'maxiter': 100, 'disp': True}
+    options={'maxiter': 100, 'disp': True, 'eps': 0.01, 'ftol': 1e-7}
 )
 
 print("\n=== Constrained Optimization Results (SLSQP) ===")
@@ -1201,11 +1332,51 @@ constraint_values = constrained_problem.evaluate_constraints(result_slsqp.x)
 for i, spec in enumerate(constraint_specs):
     status = "✓" if constraint_values[i] >= 0 else "✗"
     print(f"  {status} {spec['name']}: {constraint_values[i]:.2f}")
+
+assert result_slsqp.success, result_slsqp.message
+assert min(constraint_values) >= -1e-5
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Optimization terminated successfully    (Exit mode 0)
+            Current function value: 2676.0232355933213
+            Iterations: 7
+            Function evaluations: 21
+            Gradient evaluations: 7
+
+=== Constrained Optimization Results (SLSQP) ===
+Success: True
+Function evaluations: 43
+
+Optimal values:
+  Intermediate pressure: 60.05 bara
+  Intercooler temperature: 20.0 °C
+
+Minimum total power: 2676.0 kW
+
+Constraint values at optimum (positive = satisfied):
+  ✓ max_stage1_discharge_temp: 74.57
+  ✓ max_stage2_discharge_temp: 85.01
+  ✓ max_stage1_power: 929.10
+  ✓ max_stage2_power: 1394.88
+  ✓ min_pressure_ratio_stage1: 0.50
+```
+
+</details>
 
 ## 7. Multi-Objective with Pareto
 
-For multi-objective optimization, we can use the weighted-sum method to generate Pareto points.
+We minimize **total shaft power** and maximize throughput. Specific power is
+approximately independent of flow in this fixed-efficiency model, so it is not a
+conflicting objective with throughput. Normalize total power and throughput with
+explicit reference values before applying dimensionless weights.
+
+Weighted sums produce candidate operating points. We filter dominated points and
+also use a throughput-constrained sweep to resolve the nearly linear trade-off.
+
 
 ```python
 # Define two objectives: minimize power, maximize throughput
@@ -1238,96 +1409,125 @@ pareto_variables = [
 ]
 
 print("Multi-objective problem defined:")
-print("  Objective 1: Minimize specific power (kW/1000 kg/hr)")
+print("  Objective 1: Minimize total shaft power (kW)")
 print("  Objective 2: Maximize throughput (kg/hr)")
 ```
 
-```python
-# Generate Pareto front using weighted-sum method
+<details>
+<summary>Output</summary>
 
+```
+Multi-objective problem defined:
+  Objective 1: Minimize total shaft power (kW)
+  Objective 2: Maximize throughput (kg/hr)
+```
+
+</details>
+
+```python
 def weighted_objective(weights, objectives):
-    """Create weighted-sum objective function."""
-    def combined(process):
-        values = [obj(process) for obj in objectives]
-        return sum(w * v for w, v in zip(weights, values))
-    return combined
+    """Combine normalized objectives with dimensionless weights."""
+    return lambda proc: sum(w * objective(proc) for w, objective in zip(weights, objectives))
 
-# Weight combinations
 n_points = 11
-weight_sets = [(w, 1-w) for w in np.linspace(0, 1, n_points)]
+weight_sets = [(w, 1.0 - w) for w in np.linspace(0, 1, n_points)]
+pareto_candidates = []
+for weights in weight_sets:
+    objective = weighted_objective(weights, [lambda p: total_power_objective(p) / 4000.0,
+                                             lambda p: negative_throughput(p) / 100000.0])
+    problem_pareto = NeqSimOptimizationProblem(create_gas_process, pareto_variables, objective)
+    outcome = optimize.minimize(problem_pareto, problem_pareto.get_x0(), method="Powell",
+                                bounds=problem_pareto.get_bounds(), options={"maxiter": 60, "ftol": 1e-6})
+    assert outcome.success
+    plant = problem_pareto.simulate(outcome.x)
+    pareto_candidates.append({"power": total_power_objective(plant),
+                              "throughput": -negative_throughput(plant), "method": "weighted sum"})
 
-pareto_points = []
+# Epsilon-constraint method: fix a minimum delivery rate and minimize its power.
+# In this fixed-efficiency model the minimum is at the selected delivery rate.
+for delivery_rate in np.linspace(20000.0, 100000.0, n_points):
+    def fixed_flow_factory(rate=float(delivery_rate)):
+        plant = create_gas_process()
+        plant.getUnit("feed").setFlowRate(rate, "kg/hr")
+        return plant
+    tradeoff = NeqSimOptimizationProblem(fixed_flow_factory, [pareto_variables[1]], total_power_objective)
+    outcome = optimize.minimize_scalar(lambda p: tradeoff([p]), bounds=(40.0, 80.0),
+                                       method="bounded", options={"xatol": 0.01})
+    assert outcome.success
+    plant = tradeoff.simulate([outcome.x])
+    pareto_candidates.append({"power": total_power_objective(plant),
+                              "throughput": -negative_throughput(plant), "method": "delivery sweep"})
 
-print("Generating Pareto front...")
-for i, weights in enumerate(weight_sets):
-    # Normalize weights (since objectives have different scales)
-    w1 = weights[0] * 100  # Scale specific power weight
-    w2 = weights[1] * 0.001  # Scale throughput weight
-    
-    # Create problem with weighted objective
-    combined_obj = weighted_objective(
-        [w1, w2],
-        [power_per_kg, negative_throughput]
-    )
-    
-    problem_pareto = NeqSimOptimizationProblem(
-        process_factory=create_gas_process,
-        variable_specs=pareto_variables,
-        objective_func=combined_obj
-    )
-    
-    # Optimize
-    result = optimize.minimize(
-        problem_pareto,
-        x0=problem_pareto.get_x0(),
-        method='Powell',
-        bounds=problem_pareto.get_bounds(),
-        options={'maxiter': 50, 'disp': False}
-    )
-    
-    # Evaluate both objectives at optimum
-    problem_pareto.evaluate(result.x)
-    spec_power = power_per_kg(problem_pareto.process)
-    throughput = problem_pareto.process.getUnit('aftercooler').getOutletStream().getFlowRate('kg/hr')
-    
-    pareto_points.append({
-        'weights': weights,
-        'x': result.x,
-        'specific_power': spec_power,
-        'throughput': throughput
-    })
-    
-    print(f"  Point {i+1}/{n_points}: w={weights[0]:.1f}, Power={spec_power:.2f}, Throughput={throughput:.0f}")
+def dominates(a, b):
+    return (a["power"] <= b["power"] and a["throughput"] >= b["throughput"]
+            and (a["power"] < b["power"] or a["throughput"] > b["throughput"]))
 
-print("\nPareto front generated!")
+pareto_points = sorted([p for p in pareto_candidates
+                        if not any(dominates(q, p) for q in pareto_candidates)], key=lambda p: p["throughput"])
+# Merge numerical duplicates within 1 kg/hr and 0.01 kW for readable reporting.
+unique_points = {}
+for point in pareto_points:
+    key = (round(point["throughput"]), round(point["power"], 2))
+    unique_points.setdefault(key, point)
+pareto_points = list(unique_points.values())
+print(f"{'Throughput (kg/hr)':>20} {'Total power (kW)':>20}  Method")
+for point in pareto_points:
+    print(f"{point['throughput']:20.0f} {point['power']:20.2f}  {point['method']}")
+assert len(pareto_points) >= 3
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+  Throughput (kg/hr)     Total power (kW)  Method
+               20000              1093.69  weighted sum
+               28000              1531.16  delivery sweep
+               36000              1968.64  delivery sweep
+               44000              2406.11  delivery sweep
+               52000              2843.59  delivery sweep
+               60000              3281.06  delivery sweep
+               68000              3718.54  delivery sweep
+               76000              4156.01  delivery sweep
+               84000              4593.49  delivery sweep
+               92000              5030.96  delivery sweep
+              100000              5468.44  weighted sum
+```
+
+</details>
 
 ```python
-# Plot Pareto front
-throughputs = [p['throughput'] for p in pareto_points]
-spec_powers = [p['specific_power'] for p in pareto_points]
-
-plt.figure(figsize=(10, 6))
-plt.scatter(throughputs, spec_powers, c='blue', s=100, zorder=5)
-plt.plot(throughputs, spec_powers, 'b--', alpha=0.5, zorder=4)
-
-# Annotate some points
-for i in [0, n_points//2, n_points-1]:
-    plt.annotate(f'w={pareto_points[i]["weights"][0]:.1f}',
-                 xy=(throughputs[i], spec_powers[i]),
-                 xytext=(10, 10), textcoords='offset points')
-
-plt.xlabel('Throughput (kg/hr)', fontsize=12)
-plt.ylabel('Specific Power (kW per 1000 kg/hr)', fontsize=12)
-plt.title('Pareto Front: Throughput vs Specific Power', fontsize=14)
-plt.grid(True, alpha=0.3)
+throughputs = [p["throughput"] for p in pareto_points]
+powers = [p["power"] for p in pareto_points]
+plt.figure(figsize=(9, 5))
+plt.plot(throughputs, powers, "o--", label="Non-dominated evaluated candidates")
+plt.xlabel("Throughput (kg/hr)")
+plt.ylabel("Total compressor shaft power (kW)")
+plt.title("Throughput and power trade-off")
+plt.grid(alpha=0.3)
+plt.legend()
 plt.tight_layout()
-plt.show()
+save_figure("python-optimization-pareto.png")
+assert all(np.isfinite(powers))
 ```
+
+![Result figure from cell 35](figures/NeqSim_Python_Optimization_cell_35_output_1.png)
+
+The evaluated trade-off grows from approximately 1,094 kW at 20,000 kg/hr
+to 5,468 kW at 100,000 kg/hr. It increases approximately linearly: every additional unit
+of flow needs compression work at the specified inlet and outlet pressures.
+Weighting alone often finds only endpoints of a linear front; the delivery-rate
+sweep reveals intermediate choices. Select a rate using both available power
+and delivery demand, then evaluate equipment constraints at that rate.
+
 
 ## 8. Global Optimization
 
 For problems with multiple local optima, use global optimizers like `differential_evolution`.
+The following example intentionally minimizes total power while allowing flow to
+vary, so its solution approaches the 30,000 kg/hr minimum bound. Maximizing
+production would require a throughput objective or minimum delivery constraint.
+
 
 ```python
 # Global optimization with Differential Evolution
@@ -1366,7 +1566,8 @@ print("This may take a minute...\n")
 result_de = optimize.differential_evolution(
     global_problem,
     bounds=global_problem.get_bounds(),
-    maxiter=30,
+    maxiter=60,
+    tol=0.02,
     popsize=5,  # Small population for faster demo
     mutation=(0.5, 1.0),
     recombination=0.7,
@@ -1385,7 +1586,48 @@ for i, var in enumerate(global_variables):
     else:
         print(f"  {var['name']}: {result_de.x[i]:.1f}")
 print(f"\nMinimum total power: {result_de.fun:.1f} kW")
+
+assert result_de.success, result_de.message
+global_problem.simulate(result_de.x)
+assert np.isfinite(result_de.fun)
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+Running Differential Evolution (global optimizer)...
+This may take a minute...
+
+differential_evolution step 1: f(x)= 1757.0432113447007
+differential_evolution step 2: f(x)= 1757.0432113447007
+differential_evolution step 3: f(x)= 1757.0432113447007
+differential_evolution step 4: f(x)= 1689.6699097062756
+differential_evolution step 5: f(x)= 1644.3367854612077
+differential_evolution step 6: f(x)= 1644.3367854612077
+differential_evolution step 7: f(x)= 1625.2569627541707
+differential_evolution step 8: f(x)= 1625.2569627541707
+differential_evolution step 9: f(x)= 1625.2569627541707
+differential_evolution step 10: f(x)= 1619.2445901463025
+differential_evolution step 11: f(x)= 1613.6685766345904
+differential_evolution step 12: f(x)= 1612.2245813631134
+differential_evolution step 13: f(x)= 1611.2775292568967
+differential_evolution step 14: f(x)= 1607.3776420749996
+Polishing solution with 'L-BFGS-B'
+
+=== Differential Evolution Results ===
+Success: True
+Function evaluations: 245
+
+Optimal values:
+  flow_rate: 30000.0
+  intermediate_pressure: 60.1
+  intercooler_temp: 20.0 °C
+
+Minimum total power: 1605.6 kW
+```
+
+</details>
 
 ## 9. Gradient-Based Optimization
 
@@ -1403,7 +1645,6 @@ result_lbfgs = optimize.minimize(
     bounds=problem.get_bounds(),
     options={
         'maxiter': 100,
-        'disp': True,
         'eps': 0.1  # Step size for numerical gradient
     }
 )
@@ -1414,7 +1655,24 @@ print(f"Function evaluations: {problem.eval_count}")
 print(f"Optimal intermediate pressure: {result_lbfgs.x[0]:.2f} bara")
 print(f"Optimal intercooler temp: {result_lbfgs.x[1] - 273.15:.1f} °C")
 print(f"Minimum total power: {result_lbfgs.fun:.1f} kW")
+
+assert result_lbfgs.success, result_lbfgs.message
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+
+=== L-BFGS-B Results ===
+Success: True
+Function evaluations: 60
+Optimal intermediate pressure: 60.03 bara
+Optimal intercooler temp: 20.0 °C
+Minimum total power: 2676.0 kW
+```
+
+</details>
 
 ```python
 # Custom gradient estimation with central differences
@@ -1459,6 +1717,21 @@ print(f"  {'Increase' if grad[0] < 0 else 'Decrease'} P_inter to reduce power")
 print(f"  {'Increase' if grad[1] < 0 else 'Decrease'} T_inter to reduce power")
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+Gradient at initial point [ 60.   308.15]:
+  d(Power)/d(P_inter) = -2.66 kW/bara
+  d(Power)/d(T_inter) = 5.89 kW/K
+
+Interpretation:
+  Increase P_inter to reduce power
+  Decrease T_inter to reduce power
+```
+
+</details>
+
 ## 10. Best Practices
 
 ### Algorithm Selection Guide
@@ -1499,6 +1772,8 @@ def optimize_neqsim_process(
     Returns:
     - Dictionary with results
     """
+    if constraints and method not in ("SLSQP", "COBYLA", "trust-constr"):
+        raise ValueError("Use a method that supports the supplied constraints")
     # Create problem
     if constraints:
         problem = ConstrainedOptimizationProblem(
@@ -1509,7 +1784,7 @@ def optimize_neqsim_process(
         problem = NeqSimOptimizationProblem(
             process_factory, variables, objective
         )
-        scipy_constraints = None
+        scipy_constraints = ()
     
     # Run optimization
     result = optimize.minimize(
@@ -1521,11 +1796,18 @@ def optimize_neqsim_process(
         options={'maxiter': maxiter, 'disp': False}
     )
     
+    # Restore and independently evaluate the selected result, which need not
+    # equal the optimizer's final trial evaluation.
+    verified_objective = problem.evaluate(result.x)
+    margins = problem.evaluate_constraints(result.x) if constraints else np.array([])
+    feasible = bool(np.all(margins >= -1e-5))
     # Package results
     return {
-        'success': result.success,
+        'success': bool(result.success and feasible),
+        'message': str(result.message),
+        'constraint_margins': margins,
         'optimal_values': dict(zip([v['name'] for v in variables], result.x)),
-        'objective': result.fun,
+        'objective': verified_objective,
         'evaluations': problem.eval_count,
         'process': problem.process
     }
@@ -1545,13 +1827,35 @@ print(f"\nOptimal values:")
 for name, value in results['optimal_values'].items():
     print(f"  {name}: {value:.2f}")
 print(f"\nObjective: {results['objective']:.1f} kW")
+
+assert results["success"], results["message"]
+assert np.isclose(total_power_objective(results["process"]), results["objective"], rtol=1e-8)
+assert np.isclose(results["process"].getUnit("stage1").getOutletStream().getPressure("bara"),
+                  results["optimal_values"]["intermediate_pressure"])
 ```
+
+<details>
+<summary>Output</summary>
+
+```
+=== Optimization Results ===
+Success: True
+Evaluations: 210
+
+Optimal values:
+  intermediate_pressure: 60.06
+  intercooler_temp: 293.15
+
+Objective: 2676.0 kW
+```
+
+</details>
 
 ### Common Pitfalls and Solutions
 
 | Problem | Solution |
 |---------|----------|
-| Simulation fails for some x | Return large penalty value |
+| Simulation fails for some x | Surface unexpected API or numerical errors; reject known invalid states explicitly |
 | Process state carries over | Create fresh process each evaluation |
 | Slow convergence | Normalize variables to similar scales |
 | Local optima | Use global optimizer first, then polish |
@@ -1561,24 +1865,24 @@ print(f"\nObjective: {results['objective']:.1f} kW")
 
 1. **Wrap NeqSim in a callable** that SciPy can optimize
 2. **Create fresh process** each evaluation to avoid state issues
-3. **Handle failures gracefully** with penalty values
+3. **Reject invalid simulations** and do not hide programming errors as feasible results
 4. **Choose algorithm** based on problem characteristics
 5. **Validate results** by checking constraints and physical feasibility
+
 
 ## Summary
 
 This notebook demonstrated:
 
-✅ **Creating a wrapper class** for NeqSim process optimization  
-✅ **Using SciPy optimizers** (Nelder-Mead, Powell, SLSQP, L-BFGS-B)  
-✅ **Handling equipment constraints** with constraint functions  
-✅ **Multi-objective optimization** with weighted-sum Pareto  
-✅ **Global optimization** with differential evolution  
-✅ **Gradient estimation** for gradient-based methods  
+- **Creating a wrapper class** for NeqSim process optimization
+- **Using SciPy optimizers** (Nelder-Mead, Powell, SLSQP, L-BFGS-B)
+- **Handling equipment constraints** with constraint functions
+- **Multi-objective optimization** with weighted sums and a delivery-rate sweep
+- **Global optimization** with differential evolution
+- **Gradient estimation** for gradient-based methods
 
 ### Related Documentation
 
 - [ProductionOptimizer Tutorial](https://github.com/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb) - NeqSim's built-in optimizer
 - [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) - ProcessSimulationEvaluator API
 - [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) - All optimization options
-

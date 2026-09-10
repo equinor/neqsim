@@ -20,6 +20,8 @@ This page is the landing page for NeqSim process optimization. Use it to find th
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete examples for ProductionOptimizer |
 | [Industrial S/M Benchmark Evidence](industrial-sm-benchmark) | Executed small guide and 27-unit multi-train recycle baseline, reproducible five-fork aggregation, raw records, and known instrumentation gaps |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Core constraint definition and bottleneck detection |
+| [Practical Examples](PRACTICAL_EXAMPLES.md) | Executable Java and Python production optimization workflows |
+| [Running the Documentation](documentation-validation.md) | Test commands, notebook execution, physical checks and model limitations |
 | [Getting Started](getting-started) | Step-by-step workflow for first optimization run |
 | [Batch Studies](batch-studies) | Sensitivity analysis with parameter sweeps |
 | [Process Researcher](process-researcher) | Generate, simulate, optimize, and rank candidate flowsheets from feed and product targets |
@@ -36,9 +38,3 @@ This page is the landing page for NeqSim process optimization. Use it to find th
 3. Implement constraints with [Constraint Framework](constraint-framework).
 4. For multi-objective studies, use [Multi-Objective Optimization](multi-objective-optimization).
 5. For NLP with equalities/inequalities, use [SQP Optimizer](sqp_optimizer).
-
-## What changed in this page
-
-- Removed outdated framing that described this page as a calibration-only document.
-- Clarified that this is a process optimization entry point.
-- Added direct link to a practical getting-started guide.

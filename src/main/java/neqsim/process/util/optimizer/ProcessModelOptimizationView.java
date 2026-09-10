@@ -102,6 +102,39 @@ public class ProcessModelOptimizationView extends ProcessSystem {
   }
 
   /**
+   * Returns compressor and pump shaft power from all process areas.
+   *
+   * @param unit requested power unit (W, kW or MW)
+   * @return the plant-wide shaft power in the requested unit
+   */
+  @Override
+  public double getPower(String unit) {
+    return model.getPower(unit);
+  }
+
+  /**
+   * Returns the signed cooler duty from all process areas.
+   *
+   * @param unit requested duty unit (W, kW or MW)
+   * @return the plant-wide cooler duty in the requested unit
+   */
+  @Override
+  public double getCoolerDuty(String unit) {
+    return model.getCoolerDuty(unit);
+  }
+
+  /**
+   * Returns the signed heater duty from all process areas using the model's aggregation convention.
+   *
+   * @param unit requested duty unit (W, kW or MW)
+   * @return the plant-wide heater duty in the requested unit
+   */
+  @Override
+  public double getHeaterDuty(String unit) {
+    return model.getHeaterDuty(unit);
+  }
+
+  /**
    * Runs the whole plant to cross-area convergence instead of performing a single {@code ProcessSystem.run()} pass.
    *
    * @param id calculation identifier (unused; convergence is managed by the model)

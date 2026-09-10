@@ -4198,7 +4198,7 @@ public class Compressor extends TwoPortEquipment
    * <li>Driver rated power with 10% overload margin</li>
    * </ol>
    *
-   * @return maximum design power in Watts (converted from kW if from driver)
+   * @return maximum design power in Watts (converted from the driver or mechanical-design rating in kW)
    */
   @Override
   public double getCapacityMax() {
@@ -4219,7 +4219,7 @@ public class Compressor extends TwoPortEquipment
     }
     // Priority 3: Mechanical design max power
     if (getMechanicalDesign().maxDesignPower > 0) {
-      return getMechanicalDesign().maxDesignPower;
+      return getMechanicalDesign().maxDesignPower * 1000.0; // kW to W, as for driver ratings
     }
     // Priority 4: Driver rated power with 10% overload margin
     if (driver != null && driver.getRatedPower() > 0) {

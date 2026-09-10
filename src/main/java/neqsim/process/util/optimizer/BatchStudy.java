@@ -31,19 +31,19 @@ import neqsim.process.processmodel.ProcessSystem;
  *
  * <h2>Usage Example:</h2>
  *
+ * <p>
+ * Given an initialized {@code baseCase} containing a stream named {@code feed}, a heater named {@code heater}, and a
+ * compressor named {@code compressor}, the following study varies heater outlet temperature (degrees Celsius) and
+ * compressor discharge pressure (bara). See the batch-studies guide for complete Java and Python process fixtures.
+ * </p>
+ *
  * <pre>
- * ProcessSystem baseCase = new ProcessSystem();
- * // ... configure base case ...
- *
- * BatchStudy study = BatchStudy.builder(baseCase).vary("heater.duty", 1.0e6, 5.0e6, 5) // 5 values
- *     .vary("compressor.pressure", 30.0, 80.0, 6) // 6 values
- *     .addObjective("power", Objective.MINIMIZE).addObjective("throughput", Objective.MAXIMIZE).parallelism(8).build();
- *
+ * BatchStudy study = BatchStudy.builder(baseCase).vary("heater.outletTemperature", 30.0, 100.0, 5)
+ *     .vary("compressor.outletPressure", 80.0, 120.0, 6)
+ *     .addObjective("power", Objective.MINIMIZE,
+ *         proc -&gt; ((neqsim.process.equipment.compressor.Compressor) proc.getUnit("compressor")).getPower("kW"))
+ *     .parallelism(4).build();
  * BatchStudyResult result = study.run();
- *
- * System.out.println("Total cases: " + result.getTotalCases());
- * System.out.println("Best case: " + result.getBestCase("power"));
- *
  * result.exportToCSV("batch_results.csv");
  * </pre>
  *
@@ -88,13 +88,16 @@ public class BatchStudy implements Serializable {
    */
   public BatchStudyResult run() {
     List<ParameterSet> allCases = generateAllCases();
-    BatchStudyResult result = new BatchStudyResult(studyName, allCases.size());
+    BatchStudyResult result = new BatchStudyResult(studyName, allCases.size(), objectives);
 
     if (parallelism <= 1) {
       // Sequential execution
       for (ParameterSet params : allCases) {
         CaseResult caseResult = runCase(params);
         result.addResult(caseResult);
+        if (caseResult.failed && stopOnFailure) {
+          break;
+        }
       }
     } else {
       // Parallel execution
@@ -168,9 +171,12 @@ public class BatchStudy implements Serializable {
       for (Map.Entry<String, Function<ProcessSystem, Double>> extractor : objectiveExtractors.entrySet()) {
         try {
           double value = extractor.getValue().apply(caseCopy);
+          if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Objective " + extractor.getKey() + " is not finite");
+          }
           objectiveValues.put(extractor.getKey(), value);
         } catch (Exception e) {
-          objectiveValues.put(extractor.getKey(), Double.NaN);
+          throw new IllegalArgumentException("Could not evaluate objective " + extractor.getKey(), e);
         }
       }
 
@@ -187,8 +193,8 @@ public class BatchStudy implements Serializable {
   private void applyParameter(ProcessSystem process, String paramPath, double value) {
     // Parse parameter path (e.g., "heater.duty")
     String[] parts = paramPath.split("\\.");
-    if (parts.length < 2) {
-      return;
+    if (parts.length != 2) {
+      throw new IllegalArgumentException("Expected equipment.property parameter path: " + paramPath);
     }
 
     String equipmentName = parts[0];
@@ -197,7 +203,7 @@ public class BatchStudy implements Serializable {
     // Find equipment and set property
     neqsim.process.equipment.ProcessEquipmentInterface equipment = process.getUnit(equipmentName);
     if (equipment == null) {
-      return;
+      throw new IllegalArgumentException("Unknown equipment in parameter path: " + paramPath);
     }
 
     // Common property setters (can be extended)
@@ -206,11 +212,13 @@ public class BatchStudy implements Serializable {
     case "duty":
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
         ((neqsim.process.equipment.heatexchanger.Heater) equipment).setDuty(value);
+        return;
       }
       break;
     case "outlettemperature":
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
         ((neqsim.process.equipment.heatexchanger.Heater) equipment).setOutTemperature(value, "C");
+        return;
       }
       break;
 
@@ -219,21 +227,26 @@ public class BatchStudy implements Serializable {
     case "outletpressure":
       if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
         ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setOutletPressure(value);
+        return;
       } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
         ((neqsim.process.equipment.compressor.Compressor) equipment).setOutletPressure(value);
+        return;
       } else if (equipment instanceof neqsim.process.equipment.pump.Pump) {
         ((neqsim.process.equipment.pump.Pump) equipment).setOutletPressure(value);
+        return;
       }
       break;
     case "opening":
     case "percentvalveopening":
       if (equipment instanceof neqsim.process.equipment.valve.ValveInterface) {
         ((neqsim.process.equipment.valve.ValveInterface) equipment).setPercentValveOpening(value);
+        return;
       }
       break;
     case "cv":
       if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
         ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setCv(value);
+        return;
       }
       break;
 
@@ -241,11 +254,13 @@ public class BatchStudy implements Serializable {
     case "polytropicefficiency":
       if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
         ((neqsim.process.equipment.compressor.Compressor) equipment).setPolytropicEfficiency(value);
+        return;
       }
       break;
     case "isentropicefficiency":
       if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
         ((neqsim.process.equipment.compressor.Compressor) equipment).setIsentropicEfficiency(value);
+        return;
       }
       break;
 
@@ -253,11 +268,13 @@ public class BatchStudy implements Serializable {
     case "temperature":
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
         ((neqsim.process.equipment.stream.StreamInterface) equipment).setTemperature(value, "C");
+        return;
       }
       break;
     case "flowrate":
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
         ((neqsim.process.equipment.stream.StreamInterface) equipment).setFlowRate(value, "kg/hr");
+        return;
       }
       break;
 
@@ -265,6 +282,7 @@ public class BatchStudy implements Serializable {
     case "internaldiameter":
       if (equipment instanceof neqsim.process.equipment.separator.Separator) {
         ((neqsim.process.equipment.separator.Separator) equipment).setInternalDiameter(value);
+        return;
       }
       break;
 
@@ -272,6 +290,7 @@ public class BatchStudy implements Serializable {
       // Extensible for other properties
       break;
     }
+    throw new IllegalArgumentException("Unsupported equipment/property combination: " + paramPath);
   }
 
   /**
@@ -311,7 +330,15 @@ public class BatchStudy implements Serializable {
      * @return this builder
      */
     public Builder vary(String parameterPath, double... values) {
-      variations.add(new ParameterVariation(parameterPath, values));
+      if (parameterPath == null || values == null || values.length == 0) {
+        throw new IllegalArgumentException("A parameter path and at least one value are required");
+      }
+      for (double value : values) {
+        if (!Double.isFinite(value)) {
+          throw new IllegalArgumentException("Parameter values must be finite");
+        }
+      }
+      variations.add(new ParameterVariation(parameterPath, values.clone()));
       return this;
     }
 
@@ -321,16 +348,19 @@ public class BatchStudy implements Serializable {
      * @param parameterPath path to parameter
      * @param min minimum value
      * @param max maximum value
-     * @param steps number of steps
+     * @param steps number of equally spaced values, at least two
      * @return this builder
      */
     public Builder vary(String parameterPath, double min, double max, int steps) {
+      if (steps < 2 || !Double.isFinite(min) || !Double.isFinite(max) || min > max) {
+        throw new IllegalArgumentException("A finite ordered range with at least two steps is required; "
+            + "use the explicit-values overload for one case");
+      }
       double[] values = new double[steps];
       for (int i = 0; i < steps; i++) {
         values[i] = min + (max - min) * i / (steps - 1);
       }
-      variations.add(new ParameterVariation(parameterPath, values));
-      return this;
+      return vary(parameterPath, values);
     }
 
     /**
@@ -354,6 +384,9 @@ public class BatchStudy implements Serializable {
      * @return this builder
      */
     public Builder parallelism(int threads) {
+      if (threads < 1) {
+        throw new IllegalArgumentException("Parallelism must be positive");
+      }
       this.parallelism = threads;
       return this;
     }
@@ -463,10 +496,16 @@ public class BatchStudy implements Serializable {
     private Instant endTime;
     private int successCount = 0;
     private int failureCount = 0;
+    private final Map<String, ObjectiveDefinition> objectives;
 
     BatchStudyResult(String studyName, int totalCases) {
+      this(studyName, totalCases, new HashMap<String, ObjectiveDefinition>());
+    }
+
+    BatchStudyResult(String studyName, int totalCases, Map<String, ObjectiveDefinition> objectives) {
       this.studyName = studyName;
       this.totalCases = totalCases;
+      this.objectives = new HashMap<>(objectives);
       this.startTime = Instant.now();
     }
 
@@ -499,8 +538,19 @@ public class BatchStudy implements Serializable {
      * @return the best case result
      */
     public CaseResult getBestCase(String objectiveName) {
-      return getSuccessfulResults().stream().filter(r -> r.objectiveValues.containsKey(objectiveName))
-          .min(Comparator.comparingDouble(r -> r.objectiveValues.get(objectiveName))).orElse(null);
+      return getSuccessfulResults().stream().filter(r -> hasFiniteObjective(r, objectiveName))
+          .min(Comparator.comparingDouble(r -> minimizationValue(r, objectiveName))).orElse(null);
+    }
+
+    private boolean hasFiniteObjective(CaseResult result, String name) {
+      Double value = result.objectiveValues.get(name);
+      return value != null && Double.isFinite(value);
+    }
+
+    private double minimizationValue(CaseResult result, String name) {
+      ObjectiveDefinition definition = objectives == null ? null : objectives.get(name);
+      double value = result.objectiveValues.get(name);
+      return definition != null && definition.direction == Objective.MAXIMIZE ? -value : value;
     }
 
     /**
@@ -555,20 +605,25 @@ public class BatchStudy implements Serializable {
      * @throws java.io.IOException if write fails
      */
     public void exportToJSON(String filePath) throws java.io.IOException {
-      com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
-          .serializeSpecialFloatingPointValues().create();
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
-        gson.toJson(this, writer);
+        writer.write(toJson());
       }
     }
 
     /**
-     * Converts results to a JSON string.
+     * Converts results to a JSON string. Timestamps and durations use ISO-8601 strings, avoiding reflective access to
+     * Java time implementation fields.
      *
      * @return JSON representation
      */
     public String toJson() {
       com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting()
+          .registerTypeAdapter(Instant.class,
+              (com.google.gson.JsonSerializer<Instant>) (value, type,
+                  context) -> new com.google.gson.JsonPrimitive(value.toString()))
+          .registerTypeAdapter(Duration.class,
+              (com.google.gson.JsonSerializer<Duration>) (value, type,
+                  context) -> new com.google.gson.JsonPrimitive(value.toString()))
           .serializeSpecialFloatingPointValues().create();
       return gson.toJson(this);
     }
@@ -579,28 +634,28 @@ public class BatchStudy implements Serializable {
      * <p>
      * A case is Pareto-optimal if no other case is better in both objectives.
      *
-     * @param objective1 first objective name (to minimize)
-     * @param objective2 second objective name (to minimize)
+     * @param objective1 first objective name (using its configured direction)
+     * @param objective2 second objective name (using its configured direction)
      * @return list of Pareto-optimal cases
      */
     public List<CaseResult> getParetoFront(String objective1, String objective2) {
       List<CaseResult> successful = getSuccessfulResults().stream()
-          .filter(r -> r.objectiveValues.containsKey(objective1) && r.objectiveValues.containsKey(objective2))
+          .filter(r -> hasFiniteObjective(r, objective1) && hasFiniteObjective(r, objective2))
           .collect(Collectors.toList());
 
       List<CaseResult> paretoFront = new ArrayList<>();
 
       for (CaseResult candidate : successful) {
         boolean isDominated = false;
-        double val1 = candidate.objectiveValues.get(objective1);
-        double val2 = candidate.objectiveValues.get(objective2);
+        double val1 = minimizationValue(candidate, objective1);
+        double val2 = minimizationValue(candidate, objective2);
 
         for (CaseResult other : successful) {
           if (candidate == other) {
             continue;
           }
-          double otherVal1 = other.objectiveValues.get(objective1);
-          double otherVal2 = other.objectiveValues.get(objective2);
+          double otherVal1 = minimizationValue(other, objective1);
+          double otherVal2 = minimizationValue(other, objective2);
 
           // Check if 'other' dominates 'candidate' (better or equal in both, strictly
           // better in

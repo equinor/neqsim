@@ -138,7 +138,7 @@ CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", Cons
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `getCurrentValue()` | `double` | Current value from the valueSupplier |
-| `getUtilization()` | `double` | Current value / design value (1.0 = 100%) |
+| `getUtilization()` | `double` | Current/design for maximum limits; minimum/current for minimum limits (1.0 = 100%) |
 | `getUtilizationPercent()` | `double` | Utilization as percentage |
 | `isViolated()` | `boolean` | True if utilization > 1.0 |
 | `isHardLimitExceeded()` | `boolean` | True if HARD constraint exceeds max value |
@@ -222,9 +222,9 @@ Each equipment type has a capacity strategy that knows how to:
 
 | Severity | Impact | Optimizer Behavior |
 |----------|--------|-------------------|
-| `CRITICAL` | Safety hazard or equipment damage | Optimization must stop immediately |
+| `CRITICAL` | Critical evidence severity | Treatment depends on the evaluator; inspect its feasibility result |
 | `HARD` | Exceeds design limits | Marks solution as infeasible |
-| `SOFT` | Exceeds recommended limits | Applies penalty to objective |
+| `SOFT` | Exceeds recommended limits | Custom optimizer constraints apply penalties; enabled capacity utilization still enters the equipment ceiling |
 | `ADVISORY` | Information only | No impact on optimization |
 
 ---
@@ -243,21 +243,23 @@ Each equipment type has a capacity strategy that knows how to:
 
 ```java
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
-import neqsim.process.util.optimizer.ProcessOptimizationEngine.OptimizationResult;
+
 
 // Create engine with process system
-ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process)
+    .setFeedStreamName(feed.getName())
+    .setOutletStreamName("outlet");
 
 // Find max throughput at given pressures
-OptimizationResult result = engine.findMaximumThroughput(
+ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(
     50.0,      // inlet pressure (bara)
     10.0,      // outlet pressure (bara)
     1000.0,    // min flow rate (kg/hr)
     100000.0   // max flow rate (kg/hr)
 );
 
-System.out.println("Max flow: " + result.getOptimalValue() + " kg/hr");
-System.out.println("Bottleneck: " + result.getBottleneck());
+logger.info("{}", "Max flow: " + result.getOptimalValue() + " kg/hr");
+logger.info("{}", "Bottleneck: " + result.getBottleneck());
 ```
 
 ### ProductionOptimizer
@@ -277,18 +279,20 @@ import neqsim.process.util.optimizer.ProductionOptimizer.*;
 // Create optimizer and config
 ProductionOptimizer optimizer = new ProductionOptimizer();
 OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)  // flow range
+    .rateUnit("kg/hr")
+    .rateUnit("kg/hr")
     .tolerance(100.0)
     .maxIterations(30)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+    .searchMode(SearchMode.BINARY_FEASIBILITY)
     .defaultUtilizationLimit(0.95)
     .stagnationIterations(5);  // Early termination if no improvement
 
 // Run optimization
 OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
 
-System.out.println("Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Feasible: " + result.isFeasible());
+logger.info("{}", "Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+logger.info("{}", "Bottleneck: " + (result.getBottleneck() == null ? "None" : result.getBottleneck().getName()));
+logger.info("{}", "Feasible: " + result.isFeasible());
 ```
 
 ### Search Algorithms
@@ -296,7 +300,7 @@ System.out.println("Feasible: " + result.isFeasible());
 | Algorithm | Code | Best For |
 |-----------|------|----------|
 | **Binary Feasibility** | `SearchMode.BINARY_FEASIBILITY` | Single-variable, monotonic problems |
-| **Golden Section** | `SearchMode.GOLDEN_SECTION_SCORE` | Single-variable, non-monotonic |
+| **Golden Section** | `SearchMode.GOLDEN_SECTION_SCORE` | Single-variable, unimodal score |
 | **Nelder-Mead** | `SearchMode.NELDER_MEAD_SCORE` | Multi-variable (2-10 vars), no gradients |
 | **Particle Swarm** | `SearchMode.PARTICLE_SWARM_SCORE` | Global search, non-convex problems |
 | **Gradient Descent** | `SearchMode.GRADIENT_DESCENT_SCORE` | Multi-variable (5-20+ vars), smooth problems |
@@ -320,10 +324,10 @@ Pareto optimization finds non-dominated solutions when objectives conflict:
 // Define multiple objectives
 List<OptimizationObjective> objectives = Arrays.asList(
     new OptimizationObjective("throughput",
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
+        proc -> ((StreamInterface) proc.getUnit("outlet")).getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
     new OptimizationObjective("powerConsumption",
-        proc -> proc.getUnit("compressor").getPower("kW"),
+        proc -> ((Compressor) proc.getUnit("compressor")).getPower("kW"),
         1.0, ObjectiveType.MINIMIZE)
 );
 
@@ -333,9 +337,9 @@ ParetoResult pareto = new ProductionOptimizer().optimizePareto(
 
 // Analyze Pareto front
 for (ParetoPoint point : pareto.getParetoFront()) {
-    System.out.printf("Throughput: %.0f kg/hr, Power: %.1f kW%n",
+    logger.info("{}", String.format("Throughput: %.0f kg/hr, Power: %.1f kW%n",
         point.getObjectiveValues().get("throughput"),
-        point.getObjectiveValues().get("powerConsumption"));
+        point.getObjectiveValues().get("powerConsumption")));
 }
 ```
 
@@ -360,7 +364,7 @@ comp.setOutletPressure(100.0);
 comp.autoSize(1.2);  // Creates constraints AND compressor curves
 
 // Pipeline - creates velocity, pressureDrop, FIV constraints
-Pipeline pipe = new PipeBeggsAndBrills("Export", comp.getOutletStream());
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Export", comp.getOutletStream());
 pipe.setLength(30000.0);
 pipe.setDiameter(0.3);
 pipe.autoSize(1.2);
@@ -403,21 +407,21 @@ separator.useAPIConstraints();      // K-value, retention per API 12J
 separator.useAllConstraints();      // All constraint types
 
 // Method 2: Enable all constraints
-separator.enableConstraints();
+separator.enableAllConstraints();
 
 // Method 3: Enable specific constraint
-separator.getConstraints().get(StandardConstraintType.SEPARATOR_K_VALUE).setEnabled(true);
+separator.getCapacityConstraints().get("kValue").setEnabled(true);
 ```
 
 #### Constraint Enablement by Equipment Type
 
 | Equipment | Default State | Enablement Method |
 |-----------|---------------|-------------------|
-| **Separator** | All disabled | `useEquinorConstraints()`, `useAPIConstraints()`, `enableConstraints()` |
-| **Compressor** | All enabled | Created by `autoSize()` - enabled by default |
-| **ThrottlingValve** | All disabled | `enableConstraints()` |
-| **Pipeline** | All disabled | `enableConstraints()` |
-| **Pump** | All disabled | `enableConstraints()` |
+| **Separator** | All disabled | `useEquinorConstraints()`, `useAPIConstraints()`, `enableAllConstraints()` |
+| **Compressor** | Power/rated power enabled; map constraints require an active chart | Configure power and an active performance chart |
+| **ThrottlingValve** | All disabled | `enableAllConstraints()` |
+| **Pipeline** | All disabled | `enableAllConstraints()` |
+| **Pump** | All disabled | `enableAllConstraints()` |
 
 ### Utilization Limits
 
@@ -433,7 +437,7 @@ OptimizationConfig config = new OptimizationConfig(minRate, maxRate)
     .utilizationLimitForType(Separator.class, 0.98)   // 98% for separators
 
     // Equipment-specific
-    .utilizationLimitForEquipment("HP Compressor", 0.85);  // 85% for this specific unit
+    .utilizationLimitForName("HP Compressor", 0.85);  // 85% for this specific unit
 ```
 
 ---
@@ -445,7 +449,7 @@ OptimizationConfig config = new OptimizationConfig(minRate, maxRate)
 Find the maximum production rate respecting all equipment constraints:
 
 ```java
-// Create process
+// Create and solve the design point before sizing.
 ProcessSystem process = new ProcessSystem();
 
 SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
@@ -457,15 +461,19 @@ fluid.setMixingRule("classic");
 Stream feed = new Stream("Well Feed", fluid);
 feed.setFlowRate(10000.0, "kg/hr");
 process.add(feed);
+feed.run();
 
 Separator separator = new Separator("HP Separator", feed);
+separator.run();
 separator.autoSize(1.2);
-separator.enableConstraints();
+separator.enableConstraints("gasLoadFactor");
 process.add(separator);
 
 Compressor compressor = new Compressor("Export Compressor", separator.getGasOutStream());
 compressor.setOutletPressure(100.0, "bara");
-compressor.autoSize(1.2);
+compressor.run();
+// Establish an explicit power budget 20% above the solved design duty.
+compressor.getMechanicalDesign().setMaxDesignPower(1.2 * compressor.getPower("kW"));
 process.add(compressor);
 
 process.run();
@@ -475,14 +483,19 @@ OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
     .rateUnit("kg/hr")
     .tolerance(10.0)
     .maxIterations(25)
-    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+    .searchMode(SearchMode.BINARY_FEASIBILITY);
 
 OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
+if (!result.isFeasible()) {
+    throw new IllegalStateException(result.getInfeasibilityDiagnosis());
+}
+feed.setFlowRate(result.getOptimalRate(), result.getRateUnit());
+process.run();
 
-System.out.printf("Maximum throughput: %.0f %s%n",
-    result.getOptimalRate(), result.getRateUnit());
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.printf("Utilization: %.1f%%%n", result.getBottleneckUtilization() * 100);
+logger.info("{}", String.format("Maximum throughput: %.0f %s%n",
+    result.getOptimalRate(), result.getRateUnit()));
+logger.info("{}", "Bottleneck: " + (result.getBottleneck() == null ? "None" : result.getBottleneck().getName()));
+logger.info("{}", String.format("Utilization: %.1f%%%n", result.getBottleneckUtilization() * 100));
 ```
 
 ### Bottleneck Analysis
@@ -496,29 +509,29 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 // After running process
 BottleneckResult bottleneck = process.findBottleneck();
 
-if (!bottleneck.isEmpty()) {
-    System.out.println("=== BOTTLENECK ANALYSIS ===");
-    System.out.println("Equipment: " + bottleneck.getEquipmentName());
-    System.out.println("Constraint: " + bottleneck.getConstraintName());
-    System.out.printf("Utilization: %.1f%%%n", bottleneck.getUtilizationPercent());
+if (bottleneck.hasBottleneck()) {
+    logger.info("{}", "=== BOTTLENECK ANALYSIS ===");
+    logger.info("{}", "Equipment: " + bottleneck.getEquipmentName());
+    logger.info("{}", "Constraint: " + bottleneck.getConstraintName());
+    logger.info("{}", String.format("Utilization: %.1f%%%n", bottleneck.getUtilizationPercent()));
 
     // Get constraint details
     CapacityConstraint constraint = bottleneck.getConstraint();
-    System.out.printf("Current value: %.2f %s%n",
-        constraint.getCurrentValue(), constraint.getUnit());
-    System.out.printf("Design limit: %.2f %s%n",
-        constraint.getDesignValue(), constraint.getUnit());
-    System.out.printf("Type: %s%n", constraint.getType());
+    logger.info("{}", String.format("Current value: %.2f %s%n",
+        constraint.getCurrentValue(), constraint.getUnit()));
+    logger.info("{}", String.format("Design limit: %.2f %s%n",
+        constraint.getDisplayDesignValue(), constraint.getUnit()));
+    logger.info("{}", String.format("Type: %s%n", constraint.getType()));
 }
 
 // List all equipment near capacity
-System.out.println("\n=== EQUIPMENT NEAR CAPACITY (>80%) ===");
+logger.info("{}", "\n=== EQUIPMENT ABOVE ITS CONFIGURED WARNING THRESHOLD ===");
 for (String equipName : process.getEquipmentNearCapacityLimit()) {
     ProcessEquipmentInterface unit = process.getUnit(equipName);
-    System.out.printf("%s: %.1f%% (constraint: %s)%n",
+    logger.info("{}", String.format("%s: %.1f%% (constraint: %s)%n",
         unit.getName(),
         unit.getMaxUtilizationPercent(),
-        unit.getBottleneckConstraint().getName());
+        unit.getBottleneckConstraint().getName()));
 }
 ```
 
@@ -545,7 +558,7 @@ List<ManipulatedVariable> variables = Arrays.asList(
 List<OptimizationObjective> objectives = Arrays.asList(
     new OptimizationObjective("profit",
         proc -> {
-            double revenue = proc.getUnit("outlet").getFlowRate("kg/hr") * 0.5;  // $/kg
+            double revenue = ((StreamInterface) proc.getUnit("outlet")).getFlowRate("kg/hr") * 0.5;  // $/kg
             double powerCost = ((Compressor)proc.getUnit("compressor")).getPower("kW") * 0.10;  // $/kWh
             return revenue - powerCost;
         },
@@ -561,11 +574,11 @@ OptimizationConfig config = new OptimizationConfig(0, 1)  // bounds ignored for 
 // Run optimization
 OptimizationResult result = new ProductionOptimizer().optimize(process, variables, config, objectives, null);
 
-System.out.println("Optimal decision variables:");
+logger.info("{}", "Optimal decision variables:");
 for (Map.Entry<String, Double> entry : result.getDecisionVariables().entrySet()) {
-    System.out.printf("  %s: %.2f%n", entry.getKey(), entry.getValue());
+    logger.info("{}", String.format("  %s: %.2f%n", entry.getKey(), entry.getValue()));
 }
-System.out.printf("Optimal profit: $%.2f/hr%n", result.getObjectiveValues().get("profit"));
+logger.info("{}", String.format("Optimal profit: $%.2f/hr%n", result.getObjectiveValues().get("profit")));
 ```
 
 ### Pareto Optimization
@@ -576,12 +589,12 @@ Trade off competing objectives:
 // Define conflicting objectives
 List<OptimizationObjective> objectives = Arrays.asList(
     new OptimizationObjective("throughput",
-        proc -> proc.getUnit("outlet").getFlowRate("kg/hr"),
+        proc -> ((StreamInterface) proc.getUnit("outlet")).getFlowRate("kg/hr"),
         1.0, ObjectiveType.MAXIMIZE),
     new OptimizationObjective("specificPower",
         proc -> {
             double power = ((Compressor)proc.getUnit("comp")).getPower("kW");
-            double flow = proc.getUnit("outlet").getFlowRate("kg/hr");
+            double flow = ((StreamInterface) proc.getUnit("outlet")).getFlowRate("kg/hr");
             return power / flow * 1000;  // kWh/tonne
         },
         1.0, ObjectiveType.MINIMIZE)
@@ -592,13 +605,13 @@ ParetoResult pareto = new ProductionOptimizer().optimizePareto(
     process, feed, config, objectives, null);
 
 // Output Pareto front
-System.out.println("=== PARETO FRONT ===");
-System.out.println("Throughput (kg/hr) | Specific Power (kWh/t)");
-System.out.println("-------------------|-----------------------");
+logger.info("{}", "=== PARETO FRONT ===");
+logger.info("{}", "Throughput (kg/hr) | Specific Power (kWh/t)");
+logger.info("{}", "-------------------|-----------------------");
 for (ParetoPoint point : pareto.getParetoFront()) {
     Map<String, Double> vals = point.getObjectiveValues();
-    System.out.printf("%18.0f | %22.1f%n",
-        vals.get("throughput"), vals.get("specificPower"));
+    logger.info("{}", String.format("%18.0f | %22.1f%n",
+        vals.get("throughput"), vals.get("specificPower")));
 }
 ```
 
@@ -611,46 +624,56 @@ NeqSim can be used with external optimizers via `ProcessSimulationEvaluator`:
 ### Python/SciPy Example
 
 ```python
-from neqsim.neqsimpython import jneqsim
-from scipy.optimize import minimize, NonlinearConstraint
+from neqsim import jneqsim
+import jpype
 import numpy as np
+from scipy.optimize import minimize
 
-# Get Java classes
-ProcessSimulationEvaluator = jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+# Reuse the Well Feed / Export Compressor process from Maximum Throughput.
+Evaluator = jneqsim.process.util.optimizer.ProcessSimulationEvaluator
+evaluator = Evaluator(process)
+evaluator.addParameter("Well Feed", "flowRate", 8000.0, 11000.0, "kg/hr")
+evaluator.addParameter("Export Compressor", "outletPressure", 95.0, 105.0, "bara")
 
-# Create evaluator wrapper
-evaluator = ProcessSimulationEvaluator(process)
+# Tutorial prices: 0.5 currency/kg and 0.10 currency/kWh.
+profit = jpype.JProxy("java.util.function.ToDoubleFunction", dict(
+    applyAsDouble=lambda ps: (
+        ps.getUnit("Well Feed").getFlowRate("kg/hr") * 0.5
+        - ps.getUnit("Export Compressor").getPower("kW") * 0.10
+    )
+))
+utilization = jpype.JProxy("java.util.function.ToDoubleFunction", dict(
+    applyAsDouble=lambda ps: ps.getBottleneckUtilization()
+))
+evaluator.addObjective("profit", profit, Evaluator.ObjectiveDefinition.Direction.MAXIMIZE)
+evaluator.addConstraintUpperBound("capacity", utilization, 0.95)
 
-# Define objective function
+def evaluate(x):
+    trial = evaluator.evaluate(jpype.JArray(jpype.JDouble)(x.tolist()))
+    if not trial.isSimulationConverged() or trial.getErrorMessage() is not None:
+        raise RuntimeError(str(trial.getErrorMessage()))
+    return trial
+
 def objective(x):
-    flow_rate, pressure = x
-    evaluator.setFlowRate(flow_rate)
-    evaluator.setPressure(pressure)
-    evaluator.run()
-    return -evaluator.getProfit()  # Negative for maximization
+    return float(evaluate(x).getObjective())  # Already negated for MAXIMIZE.
 
-# Define constraint (max utilization < 95%)
-def constraint(x):
-    flow_rate, pressure = x
-    evaluator.setFlowRate(flow_rate)
-    evaluator.setPressure(pressure)
-    evaluator.run()
-    return 0.95 - evaluator.getMaxUtilization()
+def capacity_margin(x):
+    return float(evaluate(x).getConstraintMargins()[0])
 
-nlc = NonlinearConstraint(constraint, 0, np.inf)
-
-# Run SciPy optimization
 result = minimize(
     objective,
-    x0=[100000, 100],        # Initial guess
-    bounds=[(50000, 200000), (80, 150)],  # Bounds
-    constraints=nlc,
-    method='SLSQP'
+    x0=np.array([9000.0, 100.0]),
+    bounds=[(8000.0, 11000.0), (95.0, 105.0)],
+    constraints={"type": "ineq", "fun": capacity_margin},
+    method="SLSQP",
+    options={"maxiter": 30, "ftol": 1.0e-6},
 )
-
+candidate = evaluate(result.x)
+if not result.success or not candidate.isFeasible():
+    raise RuntimeError(f"Optimization did not return a feasible solution: {result.message}")
 print(f"Optimal flow: {result.x[0]:.0f} kg/hr")
 print(f"Optimal pressure: {result.x[1]:.1f} bara")
-print(f"Maximum profit: ${-result.fun:.2f}/hr")
+print(f"Profit: {-candidate.getObjective():.2f} currency/hr")
 ```
 
 ### YAML Configuration
@@ -658,42 +681,40 @@ print(f"Maximum profit: ${-result.fun:.2f}/hr")
 Load optimization configuration from YAML files:
 
 ```yaml
-# optimization_config.yaml
-optimization:
-  type: production
-  algorithm: GOLDEN_SECTION_SCORE
-  bounds:
-    min_rate: 50000
-    max_rate: 200000
-    unit: kg/hr
-  tolerance: 100.0
-  max_iterations: 30
-
-  utilization_limits:
-    default: 0.95
-    by_type:
-      Compressor: 0.90
-      Separator: 0.98
-    by_name:
-      "HP Compressor": 0.85
-
-  objectives:
-    - name: throughput
-      direction: maximize
-      weight: 1.0
-
-  constraints:
-    - name: max_power
-      value: 5000
-      unit: kW
-      type: less_than
+# Save as optimization_config.yaml
+scenarios:
+  - name: production
+    process: plant
+    feedStream: feed
+    lowerBound: 1000.0
+    upperBound: 20000.0
+    rateUnit: kg/hr
+    searchMode: BINARY_FEASIBILITY
+    tolerance: 10.0
+    maxIterations: 30
+    objectives:
+      - name: throughput
+        metric: feedRate
+        weight: 1.0
+        type: MAXIMIZE
+    constraints:
+      - name: max_power
+        metric: totalPower
+        limit: 5000.0
+        direction: LESS_THAN
+        severity: HARD
 ```
 
 ```java
-// Load and run
-ProductionOptimizationSpecLoader loader = new ProductionOptimizationSpecLoader();
-OptimizationConfig config = loader.loadConfig("optimization_config.yaml");
-OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
+// Save the YAML above first. This block throws IOException if it cannot be read.
+Map<String, ProcessSystem> processes = Collections.singletonMap("plant", process);
+Map<String, StreamInterface> feeds = Collections.singletonMap("feed", feed);
+Map<String, java.util.function.ToDoubleFunction<ProcessSystem>> metrics = new HashMap<>();
+metrics.put("feedRate", ps -> ((StreamInterface) ps.getUnit(feed.getName())).getFlowRate("kg/hr"));
+metrics.put("totalPower", ps -> ps.getPower("kW"));
+List<ScenarioRequest> scenarios = ProductionOptimizationSpecLoader.load(
+    java.nio.file.Paths.get("optimization_config.yaml"), processes, feeds, metrics);
+List<ScenarioResult> results = new ProductionOptimizer().optimizeScenarios(scenarios);
 ```
 
 ---
@@ -704,8 +725,8 @@ OptimizationResult result = new ProductionOptimizer().optimize(process, feed, co
 
 | Method | Description | Default |
 |--------|-------------|---------|
-| `tolerance(double)` | Convergence tolerance | 100.0 |
-| `maxIterations(int)` | Maximum iterations | 20 |
+| `tolerance(double)` | Convergence tolerance in decision-variable units | 1.0e-3 |
+| `maxIterations(int)` | Maximum iterations | 30 |
 | `rateUnit(String)` | Flow rate unit | "kg/hr" |
 | `searchMode(SearchMode)` | Algorithm selection | BINARY_FEASIBILITY |
 | `defaultUtilizationLimit(double)` | Max equipment utilization | 0.95 |

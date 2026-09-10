@@ -1,3 +1,4 @@
+import base64
 import json
 import re
 import tempfile
@@ -10,6 +11,7 @@ from convert_notebooks import (
     convert_all_notebooks,
     create_examples_index,
     markdown_heading_anchor,
+    notebook_to_markdown,
 )
 
 
@@ -33,6 +35,60 @@ def write_notebook(path: Path, title: str, documentation_metadata=None) -> None:
 
 
 class ConvertNotebooksTest(unittest.TestCase):
+    def test_converter_preserves_stored_png_results_without_duplicate_text(self):
+        # One transparent PNG pixel; no plotting dependencies are required.
+        encoded_png = (
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8"
+            "/x8AAwMCAO+aZ1sAAAAASUVORK5CYII="
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Two figures.ipynb"
+            write_notebook(path, "Stored figure example")
+            notebook = json.loads(path.read_text(encoding="utf-8"))
+            notebook["cells"].append({
+                "cell_type": "code",
+                "source": ["print('Power: 2500 kW')\n"],
+                "execution_count": 1,
+                "metadata": {},
+                "outputs": [
+                    {"output_type": "stream", "name": "stdout", "text": "Power: 2500 kW\n"},
+                    {"output_type": "display_data", "metadata": {}, "data": {
+                        "image/png": encoded_png, "text/plain": "<Figure size 640x480>"}},
+                    {"output_type": "execute_result", "execution_count": 1, "metadata": {}, "data": {
+                        "image/png": [encoded_png[:40] + "\n", encoded_png[40:]],
+                        "text/plain": "<Figure size 800x600>"}},
+                ],
+            })
+            path.write_text(json.dumps(notebook), encoding="utf-8")
+
+            markdown = notebook_to_markdown(path)
+            self.assertIn("Power: 2500 kW", markdown)
+            self.assertTrue(markdown.endswith("\n"))
+            self.assertFalse(markdown.endswith("\n\n"))
+            self.assertNotIn("<Figure size", markdown)
+            self.assertEqual(2, markdown.count("![Result figure"))
+            for output_number in (2, 3):
+                image_name = f"Two figures_cell_2_output_{output_number}.png"
+                self.assertIn("figures/" + quote(image_name), markdown)
+                self.assertEqual(base64.b64decode(encoded_png),
+                                 (path.parent / "figures" / image_name).read_bytes())
+            self.assertEqual(markdown, notebook_to_markdown(path))
+            self.assertEqual(2, len(list((path.parent / "figures").glob("*.png"))))
+
+    def test_converter_rejects_corrupt_stored_png_instead_of_losing_figure(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Corrupt.ipynb"
+            write_notebook(path, "Broken result")
+            notebook = json.loads(path.read_text(encoding="utf-8"))
+            notebook["cells"].append({
+                "cell_type": "code", "source": [], "execution_count": 1, "metadata": {},
+                "outputs": [{"output_type": "display_data", "metadata": {},
+                             "data": {"image/png": "invalid@@@"}}],
+            })
+            path.write_text(json.dumps(notebook), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Invalid PNG output in Corrupt, cell 2"):
+                notebook_to_markdown(path)
+
     def test_converter_uses_curated_page_metadata(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             examples_dir = Path(temp_dir)

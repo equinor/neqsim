@@ -150,9 +150,14 @@ sensitivities separately because only one side can normally be active at a given
 
 ## Java Setup
 
+This method-body fragment requires a solved `processSystem` with registered units `feed`,
+`valve`, `compressor`, and an outlet `Stream` named `outlet`. The full Python example
+below includes its complete process definition.
+
 ```java
 import neqsim.process.util.optimizer.ProcessSimulationEvaluator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.compressor.Compressor;
 
 // Create evaluator with process system
 ProcessSimulationEvaluator evaluator = new ProcessSimulationEvaluator(processSystem);
@@ -163,7 +168,7 @@ evaluator.addParameter("valve", "pressure", 10.0, 50.0, "bara");
 
 // Add objective (minimize compressor power)
 evaluator.addObjective("power",
-    process -> process.getUnit("compressor").getEnergy("kW"));
+    process -> ((Compressor) process.getUnit("compressor")).getPower("kW"));
 
 // Add constraints
 evaluator.addConstraintLowerBound("minPressure",
@@ -230,23 +235,34 @@ process.add(valve)
 ```python
 # Create evaluator
 evaluator = ProcessSimulationEvaluator(process)
+evaluator.setFiniteDifferenceStep(1.0e-4)
+evaluator.setUseRelativeStep(True)
 
 # Add parameters (decision variables)
 evaluator.addParameter("feed", "flowRate", 1000.0, 50000.0, "kg/hr")
 
 # Add objective
-evaluator.addObjective("outletPressure",
-    lambda p: p.getUnit("valve").getOutletStream().getPressure("bara"))
+evaluator.addObjective(
+    "throughput",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr") / 10000.0,
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+)
 
 # Add constraints
 evaluator.addConstraintLowerBound("minFlow",
     lambda p: p.getUnit("feed").getFlowRate("kg/hr"),
     5000.0)
+evaluator.addConstraintUpperBound("maxFlow",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr"),
+    40000.0)
 ```
 
 ### Using SciPy Optimizers
 
 #### Gradient-Based Optimization (L-BFGS-B)
+
+L-BFGS-B enforces bounds only. For this rate example, incorporate both hard rate limits
+into its bounds. Use SLSQP below for general nonlinear constraints.
 
 ```python
 def objective(x):
@@ -262,6 +278,7 @@ def objective_with_gradient(x):
 
 # Get bounds from evaluator
 bounds = [(b[0], b[1]) for b in evaluator.getBounds()]
+bounds[0] = (5000.0, 40000.0)
 x0 = np.array(evaluator.getInitialValues())
 
 # Run L-BFGS-B optimization
@@ -271,7 +288,7 @@ result = minimize(
     method='L-BFGS-B',
     jac=True,
     bounds=bounds,
-    options={'maxiter': 100, 'disp': True}
+    options={'maxiter': 100}
 )
 
 print(f"Optimal x: {result.x}")
@@ -291,17 +308,22 @@ def constraints_func(x):
 # Define constraints for SLSQP
 constraints = [{
     'type': 'ineq',
-    'fun': lambda x: constraints_func(x)  # All margins must be ≥ 0
+    'fun': lambda x: constraints_func(x),  # All margins must be ≥ 0
+    'jac': lambda x: np.asarray(evaluator.estimateConstraintJacobian(x)),
 }]
 
 result = minimize(
     objective,
     x0,
     method='SLSQP',
+    jac=lambda x: np.asarray(evaluator.estimateGradient(x)),
     bounds=bounds,
     constraints=constraints,
-    options={'maxiter': 100, 'disp': True}
+    options={'maxiter': 100, 'disp': True, 'ftol': 1e-12}
 )
+if not result.success or not evaluator.isFeasible(result.x):
+    raise RuntimeError(result.message)
+print(f"SLSQP optimal flow: {result.x[0]:.1f} kg/hr")
 ```
 
 #### Global Optimization (Differential Evolution)
@@ -323,66 +345,82 @@ result = differential_evolution(
 
 ### Multi-Objective Optimization
 
+The next example requires the compressor/cooler process from the complete example below.
+Create a fresh evaluator so its objective vector has exactly two entries. The objective
+scales are illustrative reference values; select them for the engineering study.
+
 ```python
-from scipy.optimize import minimize
+multi_evaluator = ProcessSimulationEvaluator(process)
+multi_evaluator.addParameter("feed", "flowRate", 10000.0, 100000.0, "kg/hr")
+multi_evaluator.addObjective(
+    "power",
+    lambda p: p.getUnit("compressor").getPower("kW") / 1000.0,
+)
+multi_evaluator.addObjective(
+    "throughput",
+    lambda p: p.getUnit("feed").getFlowRate("kg/hr") / 10000.0,
+    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+)
 
-# Setup with multiple objectives
-evaluator.addObjective("power", lambda p: p.getUnit("compressor").getEnergy("kW"))
-evaluator.addObjective("throughput",
-    lambda p: p.getUnit("product").getFlowRate("kg/hr"),
-    ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE)
-
-def weighted_objective(x, weights):
-    result = evaluator.evaluate(x)
-    return result.getWeightedObjective(weights)
-
-# Pareto front approximation via weighted sum
 pareto_points = []
-for w1 in np.linspace(0.1, 0.9, 5):
-    weights = np.array([w1, 1.0 - w1])
+for power_weight in np.linspace(0.1, 0.9, 5):
+    weights = np.array([power_weight, 1.0 - power_weight])
     result = minimize(
-        lambda x: weighted_objective(x, weights),
-        x0,
-        method='L-BFGS-B',
-        bounds=bounds
+        lambda x: multi_evaluator.evaluate(x).getWeightedObjective(weights),
+        np.array(multi_evaluator.getInitialValues()),
+        method="L-BFGS-B",
+        bounds=[tuple(b) for b in multi_evaluator.getBounds()],
     )
+    if not result.success:
+        raise RuntimeError(result.message)
     pareto_points.append({
-        'weights': weights,
-        'x': result.x,
-        'objectives': evaluator.evaluate(result.x).getObjectivesRaw()
+        "weights": weights,
+        "x": result.x,
+        "scaled_objectives": list(multi_evaluator.evaluate(result.x).getObjectivesRaw()),
     })
 ```
 
 ## Using with NLopt (Python)
 
+Install the optional `nlopt` package in the same Python environment first.
+This section uses the single-objective feed/valve evaluator from Basic setup.
+
 ```python
 import nlopt
 import numpy as np
 
-def nlopt_objective(x, grad):
+# Scale the single feed-rate decision and the kg/hr constraint residuals.
+# Optimizing the unscaled 10,000-kg/hr variable can satisfy a numerical stopping
+# test long before it reaches the installed maximum.
+parameter_scale = np.array([10000.0])
+constraint_scale = 10000.0
+
+def nlopt_objective(z, grad):
     """NLopt objective function"""
+    x = z * parameter_scale
     if grad.size > 0:
         gradient = evaluator.estimateGradient(x)
         for i, g in enumerate(gradient):
-            grad[i] = g
+            grad[i] = g * parameter_scale[i]
     return evaluator.evaluateObjective(x)
 
-def nlopt_constraint(x, grad, idx):
+def nlopt_constraint(z, grad, idx):
     """NLopt constraint function"""
+    x = z * parameter_scale
     if grad.size > 0:
         jacobian = evaluator.estimateConstraintJacobian(x)
         for i, j in enumerate(jacobian[idx]):
-            grad[i] = -j  # NLopt uses g(x) ≤ 0, we return -margin
+            grad[i] = -j * parameter_scale[i] / constraint_scale
     margins = evaluator.getConstraintMargins(x)
-    return -margins[idx]  # Convert to ≤ 0 form
+    return -margins[idx] / constraint_scale  # NLopt requires g(z) <= 0
 
 # Create optimizer
 n = evaluator.getParameterCount()
 opt = nlopt.opt(nlopt.LD_SLSQP, n)
 
 # Set bounds
-opt.set_lower_bounds(evaluator.getLowerBounds())
-opt.set_upper_bounds(evaluator.getUpperBounds())
+opt.set_lower_bounds(np.asarray(evaluator.getLowerBounds()) / parameter_scale)
+opt.set_upper_bounds(np.asarray(evaluator.getUpperBounds()) / parameter_scale)
 
 # Set objective
 opt.set_min_objective(nlopt_objective)
@@ -396,7 +434,11 @@ for i in range(evaluator.getConstraintCount()):
 
 # Optimize
 opt.set_maxeval(200)
-x_opt = opt.optimize(evaluator.getInitialValues())
+opt.set_xtol_rel(1.0e-7)
+opt.set_ftol_abs(1.0e-8)
+x_opt = opt.optimize(np.asarray(evaluator.getInitialValues()) / parameter_scale) * parameter_scale
+if not np.all(np.asarray(evaluator.getConstraintMargins(x_opt)) >= -0.01):
+    raise RuntimeError("NLopt returned a point outside the declared 0.01 kg/hr residual tolerance")
 ```
 
 ## Using with Pyomo
@@ -448,9 +490,34 @@ evaluator.setFiniteDifferenceStep(1e-6)
 # Use relative step size
 evaluator.setUseRelativeStep(True)  # step = h * max(|x_i|, 1)
 
-# Optional second-order stencil for smooth interior operating points
-FiniteDifferenceMethod = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator.FiniteDifferenceMethod
-evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
+```
+
+The remaining sensitivity APIs require a `ProcessModelSimulationEvaluator`. The following
+setup wraps the solved feed/valve `process` in a named area; execute it before the quality,
+qualification, and activity examples below.
+
+```python
+ModelEvaluator = jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator
+process_model = jneqsim.process.processmodel.ProcessModel()
+process_model.add("wells", process)
+model_evaluator = ModelEvaluator(process_model)
+model_evaluator.addParameter("wells::feed.flowRate", 1000.0, 50000.0, "kg/hr")
+model_evaluator.addObjective(
+    "feed rate",
+    lambda model: model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+)
+model_evaluator.addConstraintUpperBound(
+    "feed capacity",
+    lambda model: model.getVariableValue("wells::feed.flowRate", "kg/hr"),
+    40000.0,
+)
+model_evaluator.getObjectives().get(0).setUnit("kg/hr")
+model_evaluator.getConstraints().get(0).setUnit("kg/hr")
+model_evaluator.setFiniteDifferenceStep(1.0e-4)
+model_evaluator.setUseRelativeStep(True)
+FiniteDifferenceMethod = ModelEvaluator.FiniteDifferenceMethod
+model_evaluator.setFiniteDifferenceMethod(FiniteDifferenceMethod.CENTRAL)
+x = np.array([10000.0])
 ```
 
 `ProcessModelSimulationEvaluator` keeps `FORWARD` as the default because it requires only one
@@ -466,7 +533,7 @@ For a reusable quality record, run the coarse step and one halved step through t
 objective/constraint API:
 
 ```python
-quality_result = evaluator.estimateSensitivitiesWithQuality(x)
+quality_result = model_evaluator.estimateSensitivitiesWithQuality(x)
 gradient = quality_result.getObjectiveGradient()
 jacobian = quality_result.getConstraintJacobian()
 
@@ -592,8 +659,7 @@ ArrayList = jpype.JClass("java.util.ArrayList")
 
 reference_by_name = {
     # Values are positive and use each constraint's declared unit.
-    "export compressor power": (12_000.0, "installed motor rating"),
-    "gas export nomination": (1_000_000.0, "daily nomination basis"),
+    "feed capacity": (40000.0, "illustrative installed feed limit"),
 }
 
 scales = ArrayList()
@@ -652,11 +718,17 @@ rank economic value without an optimizer-specific solution and objective scaling
 
 Use `ProcessModelOperatingAction` when an optimizer candidate must retain stable engineering
 identity, provenance, exact value semantics, and an explicit restoration token instead of being an
-anonymous numeric setter:
+anonymous numeric setter. The following actions use the `wells::feed.flowRate`
+model constructed in the sensitivity setup; discrete rates represent enumerated operating modes:
 
 ```python
 Action = jneqsim.process.util.optimizer.ProcessModelOperatingAction
 JDoubleArray = jpype.JArray(jpype.JDouble)
+
+# Restore the declared base point after the sensitivity perturbations, and retain
+# its exact unit-converted read-back for the discrete mode's current value.
+model_evaluator.evaluate(x)
+current_feed_rate = process_model.getVariableValue("wells::feed.flowRate", "kg/hr")
 
 feed_target = Action.continuous(
     "field-feed",
@@ -667,13 +739,13 @@ feed_target = Action.continuous(
     "kg/hr",
     "approved operating envelope revision A",
 )
-pressure_mode = Action.discrete(
-    "compressor-lineup",
-    "Compressor line-up",
-    "compression::lineup-selector.value",
-    JDoubleArray([1.0, 2.0, 3.0]),
-    "count",
-    "installed train line-up table revision B",
+feed_mode = Action.discrete(
+    "field-feed-mode",
+    "Field feed mode",
+    "wells::feed.flowRate",
+    JDoubleArray([5000.0, current_feed_rate, 15000.0]),
+    "kg/hr",
+    "enumerated production modes revision B",
 )
 
 capability = feed_target.inspectCapability(process_model)
@@ -687,7 +759,7 @@ if not application.isApplied():
 
 # Running and validating the candidate remains explicit.
 process_model.run()
-# Inspect convergence, constraints, conservation, and product specifications here.
+assert abs(process_model.getVariableValue("wells::feed.flowRate", "kg/hr") - 12000.0) < 1.0e-6
 
 restoration = feed_target.restore(process_model, baseline)
 if not restoration.isApplied():
@@ -704,11 +776,14 @@ Register an action with the established model evaluator when an external optimiz
 candidate loop:
 
 ```python
-binding = feed_target.registerWith(evaluator)
+continuous_evaluator = ModelEvaluator(process_model)
+binding = feed_target.registerWith(continuous_evaluator)
 print(binding.getParameterIndex(), binding.getInitialValue())
 
-lineup_binding = compressor_lineup.registerWith(evaluator)
-allowed_lineups = list(lineup_binding.getAllowedValues())
+# An alternative discrete problem uses its own evaluator.
+discrete_evaluator = ModelEvaluator(process_model)
+mode_binding = feed_mode.registerWith(discrete_evaluator)
+allowed_rates = list(mode_binding.getAllowedValues())
 ```
 
 Registration requires the current model value to belong to the declared candidate domain; an
@@ -724,6 +799,90 @@ Java-serializable for JPype workflows.
 Capability inspection proves only that the exact address is readable in the declared unit.
 Application proves only write/read-back consistency. Neither runs NeqSim, changes topology,
 establishes process feasibility, selects a line-up, or constitutes operating or safety approval.
+
+### Synthetic reservoir, wells, and gathering setup
+
+Run this setup before the hydraulic, coupled-allocation, and bottleneck-relief examples.
+It creates two real `WellFlow` units connected to a common separator. All limits and
+the allocation value proxy are synthetic; the proxy gives well A twice well B's weight
+so a fixed-total allocation has a nonconstant objective. It is not an economic forecast.
+
+```python
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+WellFlow = jneqsim.process.equipment.reservoir.WellFlow
+Separator = jneqsim.process.equipment.separator.Separator
+CapacityConstraint = jneqsim.process.equipment.capacity.CapacityConstraint
+ProcessModel = jneqsim.process.processmodel.ProcessModel
+
+reservoir_fluid = SystemSrkEos(303.15, 100.0)
+for component, amount in {
+    "methane": 0.90, "ethane": 0.10,
+}.items():
+    reservoir_fluid.addComponent(component, amount)
+reservoir_fluid.setMixingRule(2)
+reservoir_fluid.setMultiPhaseCheck(True)
+reservoir = SimpleReservoir("reservoir")
+reservoir.setReservoirFluid(reservoir_fluid, 1.0e9, 0.0, 0.0)
+producer_a = reservoir.addGasProducer("producer A")
+producer_b = reservoir.addGasProducer("producer B")
+producer_a.setName("producer A")
+producer_b.setName("producer B")
+producer_a.setFlowRate(0.6, "MSm3/day")
+producer_b.setFlowRate(0.4, "MSm3/day")
+well_a, well_b = WellFlow("well A"), WellFlow("well B")
+subsurface = ProcessSystem("subsurface")
+subsurface.add(reservoir)
+for producer, well in [(producer_a, well_a), (producer_b, well_b)]:
+    well.setInletStream(producer)
+    well.setWellProductionIndex(5.0e-4)
+    subsurface.add(producer)
+    subsurface.add(well)
+subsurface.run()
+for well in [well_a, well_b]:
+    well.setMaxDrawdown(1.5 * well.getDrawdown(), "bara")
+    well.useWellConstraints()
+
+initial_well_a_rate = producer_a.getFlowRate("kg/hr")
+initial_well_b_rate = producer_b.getFlowRate("kg/hr")
+total_rate = initial_well_a_rate + initial_well_b_rate
+gathering_separator = Separator("inlet separator", well_a.getOutletStream())
+gathering_separator.addStream(well_b.getOutletStream())
+gathering_capacity = CapacityConstraint(
+    "installed gathering rate", "kg/hr", CapacityConstraint.ConstraintType.HARD,
+).setDesignValue(1.10 * total_rate).setSeverity(
+    CapacityConstraint.ConstraintSeverity.HARD,
+).setDataSource("synthetic shared installed gathering capacity").setConfidence(
+    0.90,
+).setValidityRange(0.5 * total_rate, 1.5 * total_rate).setValueSupplier(
+    lambda: producer_a.getFlowRate("kg/hr") + producer_b.getFlowRate("kg/hr"),
+)
+gathering_separator.clearCapacityConstraints()
+gathering_separator.addCapacityConstraint(gathering_capacity)
+gathering = ProcessSystem("gathering")
+gathering.add(gathering_separator)
+hydraulic_model = ProcessModel()
+hydraulic_model.add("Subsurface", subsurface)
+hydraulic_model.add("Gathering", gathering)
+hydraulic_model.run()
+assert np.isclose(
+    gathering_separator.getGasOutStream().getFlowRate("kg/hr")
+    + gathering_separator.getLiquidOutStream().getFlowRate("kg/hr"),
+    total_rate, rtol=1.0e-6, atol=1.0e-6,
+)  # Mass balance within one ppm.
+
+def well_action(identifier, name, baseline_rate):
+    return Action.continuous(
+        identifier, name, f"Subsurface::{name}.flowRate",
+        0.5 * baseline_rate, 1.5 * baseline_rate, "kg/hr",
+        "synthetic well operating envelope",
+    ).withReadBackTolerance(
+        baseline_rate * 1.0e-5, 0.0, "ten ppm mass-flow conversion tolerance for this synthetic model",
+    )
+
+well_a_action = well_action("well-a-rate", "producer A", initial_well_a_rate)
+well_b_action = well_action("well-b-rate", "producer B", initial_well_b_rate)
+well_a_rate, well_b_rate = 0.8 * initial_well_a_rate, 0.8 * initial_well_b_rate
+```
 
 ### Evaluate and restore one hydraulic operating candidate
 
@@ -744,32 +903,26 @@ HydraulicRole = (
     ActionEvaluator.HydraulicLimitRole
 )
 
-simulation = SimulationEvaluator(process_model)
+simulation = SimulationEvaluator(hydraulic_model)
 simulation.setIncludeStrategyCapacityConstraints(False)
-
-well_rate = Action.continuous(
-    "producer-rate",
-    "Producer gas rate",
-    "Subsurface::producer.flowRate",
-    0.5,
-    1.5,
-    "MSm3/day",
-    "approved well operating envelope revision A",
-).withReadBackTolerance(
-    1.0e-5,
-    0.0,
-    "producer flow-control tag resolution in MSm3/day",
+simulation.addObjective(
+    "synthetic allocation value proxy",
+    lambda model: (2.0 * model.getVariableValue("Subsurface::producer A.flowRate", "kg/hr")
+                   + model.getVariableValue("Subsurface::producer B.flowRate", "kg/hr")),
+    SimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
 )
+simulation.getObjectives().get(0).setUnit("weighted-kg/hr")
+well_rate = well_a_action
 hydraulic = ActionEvaluator(simulation, well_rate)
 hydraulic.requireHydraulicConstraint(
     HydraulicRole.WELL_INFLOW_OUTFLOW,
     "Subsurface",
-    "well",
+    "well A",
     "well drawdown",
     "installed maximum drawdown basis",
 )
 
-candidate = hydraulic.evaluate(1.2)
+candidate = hydraulic.evaluate(1.2 * initial_well_a_rate)
 if not candidate.isBaselineRestored():
     raise RuntimeError(list(candidate.getDiagnostics()))
 if not candidate.isBaselineSimulationConverged():
@@ -818,12 +971,15 @@ ActionSetEvaluator = (
     jneqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator
 )
 
+actions = ArrayList()
+actions.add(well_a_action)
+actions.add(well_b_action)
 allocation = ActionSetEvaluator(
     "field-allocation",
     "Field production allocation",
     "approved well envelopes and gathering basis revision A",
     simulation,
-    [well_a_action, well_b_action],
+    actions,
 )
 allocation.requireHydraulicConstraint(
     HydraulicRole.WELL_INFLOW_OUTFLOW,
@@ -1027,22 +1183,70 @@ ArrayList = jpype.JClass("java.util.ArrayList")
 Study = jneqsim.process.util.optimizer.ProcessModelDebottleneckStudy
 
 candidates = ArrayList()
-candidates.add(JArray(JDouble)([800.0]))
-candidates.add(JArray(JDouble)([999.0]))
-candidates.add(JArray(JDouble)([1199.0]))
+for rate in [800.0, 999.0, 1099.0, 1149.0, 1199.0]:
+    candidates.add(JArray(JDouble)([rate]))
 
 search = Study.CandidateListSearch(
-    "throughput-grid",
-    "Ordered throughput grid",
-    "screening candidate set rev A",
-    candidates,
-    0,
-    0.0,
+    "throughput-grid", "Ordered throughput grid", "screening candidate set rev A",
+    candidates, 0, 0.0,
 )
 
-# Configure CapacityAlternative, ProcessModelDebottleneckStudy, and metric
-# definitions with explicit units/provenance as shown in the optimization guide.
+def make_study(proposed_limit):
+    fluid = SystemSrkEos(298.15, 50.0)
+    fluid.addComponent("methane", 0.90)
+    fluid.addComponent("ethane", 0.10)
+    fluid.setMixingRule("classic")
+    study_feed = Stream("feed", fluid)
+    study_feed.setFlowRate(800.0, "kg/hr")
+    separator = Separator("separator", study_feed)
+    installed = CapacityConstraint(
+        "installed gas rate", "kg/hr", CapacityConstraint.ConstraintType.HARD,
+    ).setDesignValue(1000.0).setMaxValue(1300.0).setSeverity(
+        CapacityConstraint.ConstraintSeverity.HARD,
+    ).setDataSource("synthetic installed basis").setConfidence(0.95).setValidityRange(
+        500.0, 1400.0,
+    ).setValueSupplier(lambda: study_feed.getFlowRate("kg/hr"))
+    separator.clearCapacityConstraints()
+    separator.addCapacityConstraint(installed)
+    wells, separation = ProcessSystem("wells"), ProcessSystem("separation")
+    wells.add(study_feed)
+    separation.add(separator)
+    model = ProcessModel()
+    model.add("wells", wells)
+    model.add("separation", separation)
+    model.run()
+    evaluator = ModelEvaluator(model)
+    evaluator.setIncludeStrategyCapacityConstraints(False)
+    evaluator.addParameter("wells::feed.flowRate", 800.0, 1400.0, "kg/hr")
+    evaluator.addObjective(
+        "feed production", lambda m: m.getVariableValue("wells::feed.flowRate", "kg/hr"),
+        ModelEvaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+    )
+    evaluator.getObjectives().get(0).setUnit("kg/hr")
+    evaluator.addEquipmentCapacityConstraints()
+    alternative = Study.CapacityAlternative(
+        f"separator-gas-{proposed_limit:.0f}", "Raise installed gas capacity",
+        "synthetic brownfield screening case", "separation", "separator",
+        "installed gas rate", proposed_limit, "kg/hr", Study.LimitDirection.MAXIMUM,
+        "synthetic replacement equipment basis", 0.90, 900.0, 1300.0,
+    )
+    study = Study(
+        f"separator-study-{proposed_limit:.0f}", "Paired separator capacity study",
+        "synthetic deterministic screening", evaluator, alternative, search, 0,
+    )
+    study.addMetric(Study.MetricDefinition(
+        "production", "Feed production", Study.MetricKind.PRODUCTION, "kg/hr",
+        "wet feed mass rate", "NeqSim stream result", "single steady state", 1.0, True,
+        lambda m: m.getVariableValue("wells::feed.flowRate", "kg/hr"),
+    ))
+    return study
+
+study = make_study(1200.0)
 result = study.evaluate()
+if str(result.getOutcome()) != "COMPLETED":
+    raise RuntimeError(list(result.getDiagnostics()))
+assert result.isCapacityRestored() and result.isProcessStateRestored()
+assert abs(result.getObjectiveDelta() - 200.0) < 1.0e-6
 
 baseline_parameters = list(result.getBaseline().getSelectedParameters())
 alternative_parameters = list(result.getAlternative().getSelectedParameters())
@@ -1104,6 +1308,9 @@ ranking = Ranking(
     policy,
 )
 
+result_1100 = make_study(1100.0).evaluate()
+result_1150 = make_study(1150.0).evaluate()
+result_1200 = result
 study_results = ArrayList()
 study_results.add(result_1100)
 study_results.add(result_1150)
@@ -1111,6 +1318,8 @@ study_results.add(result_1200)
 portfolio = ranking.rank(study_results)
 
 best = portfolio.getBestCandidate()
+if best is None:
+    raise RuntimeError("No compatible completed study was rankable")
 best_alternative_id = best.getAlternativeDefinition().getId()
 best_delta = best.getDelta()
 best_unit = portfolio.getPolicy().getUnit()
@@ -1146,7 +1355,7 @@ economics; never sum their raw deltas or compare unlike units.
 import json
 
 problem_json = evaluator.toJson()
-problem = json.loads(problem_json)
+problem = json.loads(str(problem_json))
 
 print("Parameters:", problem['parameters'])
 print("Objectives:", problem['objectives'])
@@ -1155,7 +1364,7 @@ print("Constraints:", problem['constraints'])
 
 ### Process cloning and parallel evaluation
 
-Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
+Use the original single-system `evaluator` for this section. Only `ProcessSimulationEvaluator` exposes `setCloneForEvaluation(true)`. It clones the
 `ProcessSystem` used for an evaluation so the registered base process is not mutated by that
 call:
 
@@ -1169,8 +1378,16 @@ model per worker, and validate deterministic equivalence before parallel product
 
 ## Complete Example: Gas Processing Optimization
 
+Candidate cloning isolates each call from previous operating points. Current source also
+invalidates a stream after flow setters reset phase information; older builds can otherwise
+reuse an unflashed feed and report an incorrect compression duty during small perturbations.
+The final positive-duty check catches that invalid result for this compression case.
+
+Run this block independently after installing `neqsim`, NumPy, and SciPy. It minimizes
+power with a minimum feed of 10000 kg/hr and a minimum export pressure of 60 bara,
+so the expected optimum is at both lower limits. It is not a throughput-maximization case.
+
 ```python
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
 from neqsim import jneqsim
@@ -1181,7 +1398,7 @@ ProcessSimulationEvaluator = (
 ProcessSystem = jneqsim.process.processmodel.ProcessSystem
 Stream = jneqsim.process.equipment.stream.Stream
 Compressor = jneqsim.process.equipment.compressor.Compressor
-Cooler = jneqsim.process.equipment.cooler.Cooler
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
 SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
 
 # Create process
@@ -1206,6 +1423,7 @@ process.run()
 
 # Setup optimization
 evaluator = ProcessSimulationEvaluator(process)
+evaluator.setCloneForEvaluation(True)
 
 # Decision variables
 evaluator.addParameter("feed", "flowRate", 10000.0, 100000.0, "kg/hr")
@@ -1213,7 +1431,7 @@ evaluator.addParameter("compressor", "outletPressure", 50.0, 120.0, "bara")
 
 # Minimize compressor power
 evaluator.addObjective("power",
-    lambda p: p.getUnit("compressor").getEnergy("kW"))
+    lambda p: p.getUnit("compressor").getPower("kW"))
 
 # Constraints
 evaluator.addConstraintLowerBound("minOutletPressure",
@@ -1224,34 +1442,46 @@ evaluator.addConstraintUpperBound("maxOutletTemp",
     lambda p: p.getUnit("cooler").getOutletStream().getTemperature("C"),
     50.0)
 
-# Optimize with SLSQP
-def objective(x):
-    return evaluator.evaluateObjective(x)
+# Scale decisions and residuals so finite differences resolve simulator changes.
+# z = [feed / 10000 kg/hr, discharge pressure / 100 bara]
+scale = np.array([10000.0, 100.0])
 
-def constraint_margins(x):
-    return evaluator.getConstraintMargins(x)
+def objective(z):
+    return evaluator.evaluateObjective(z * scale) / 1000.0
 
-bounds = [(b[0], b[1]) for b in evaluator.getBounds()]
-x0 = evaluator.getInitialValues()
+def constraint_margins(z):
+    return np.asarray(evaluator.getConstraintMargins(z * scale)) / 100.0
+
+bounds = [(b[0] / scale[i], b[1] / scale[i])
+          for i, b in enumerate(evaluator.getBounds())]
+x0 = np.asarray(evaluator.getInitialValues()) / scale
 
 result = minimize(
     objective,
     x0,
-    method='SLSQP',
+    method="SLSQP",
     bounds=bounds,
-    constraints={'type': 'ineq', 'fun': constraint_margins},
-    options={'maxiter': 100, 'disp': True}
+    constraints={"type": "ineq", "fun": constraint_margins},
+    options={"maxiter": 100, "eps": 1.0e-4, "ftol": 1.0e-8},
 )
+optimal_values = result.x * scale
 
 # Display results
+final_evaluation = evaluator.evaluate(optimal_values)
+if not result.success or not final_evaluation.isFeasible():
+    raise RuntimeError(f"Optimization failed: {result.message}")
+if final_evaluation.getObjective() <= 0.0:
+    raise RuntimeError("Compression duty must be positive for this case")
+if not final_evaluation.isSimulationConverged():
+    raise RuntimeError("Final process calculation did not converge")
 print("\n=== Optimization Results ===")
-print(f"Optimal flow rate: {result.x[0]:.1f} kg/hr")
-print(f"Optimal outlet pressure: {result.x[1]:.1f} bara")
-print(f"Minimum power: {result.fun:.1f} kW")
-print(f"Constraint margins: {constraint_margins(result.x)}")
+print(f"Optimal flow rate: {optimal_values[0]:.1f} kg/hr")
+print(f"Optimal outlet pressure: {optimal_values[1]:.1f} bara")
+print(f"Minimum power: {final_evaluation.getObjective():.1f} kW")
+print(f"Constraint margins (bara, C): {list(final_evaluation.getConstraintMargins())}")
 print(f"Total evaluations: {evaluator.getEvaluationCount()}")
 
-jpype.shutdownJVM()
+# Keep the JVM available for later NeqSim calculations in this Python session.
 ```
 
 ## Troubleshooting
@@ -1260,8 +1490,8 @@ jpype.shutdownJVM()
 
 1. **Simulation doesn't converge**: Check that parameter bounds are physically reasonable
 2. **Gradient estimation fails**: Try larger finite difference step
-3. **Slow evaluations**: Enable caching or reduce process complexity
-4. **Thread safety errors**: Enable `setCloneForEvaluation(True)`
+3. **Slow evaluations**: Measure evaluation counts and reduce process complexity; caching must be implemented with a complete, safe external key
+4. **Thread safety errors**: Give each worker its own evaluator and process; cloning alone does not make an evaluator thread-safe
 
 ### Performance Tips
 

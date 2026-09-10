@@ -12,6 +12,8 @@ Requirements:
     pip install nbconvert nbformat
 """
 
+import base64
+import binascii
 import os
 import sys
 import json
@@ -219,7 +221,10 @@ def repair_local_heading_links(content):
 
 def notebook_to_markdown(notebook_path):
     """
-    Convert a Jupyter notebook to Markdown format suitable for Jekyll.
+    Convert a notebook to Jekyll Markdown and extract stored PNG outputs.
+
+    PNG results are written beside the notebook in ``figures/`` with stable,
+    notebook-specific names. Repeated conversion replaces the same image files.
 
     Args:
         notebook_path: Path to the .ipynb file
@@ -278,7 +283,7 @@ nav_order: 1
     markdown_content = []
     first_h1_stripped = False
 
-    for cell in nb.get('cells', []):
+    for cell_index, cell in enumerate(nb.get('cells', [])):
         cell_type = cell.get('cell_type', '')
         source = ''.join(cell.get('source', []))
 
@@ -313,9 +318,38 @@ nav_order: 1
             if outputs:
                 has_output = False
                 output_text = []
+                image_links = []
 
-                for output in outputs:
+                for output_index, output in enumerate(outputs):
                     output_type = output.get('output_type', '')
+
+                    if output_type in ('display_data', 'execute_result'):
+                        image_data = output.get('data', {}).get('image/png')
+                        if image_data is not None:
+                            encoded = ''.join(image_data) if isinstance(image_data, list) else image_data
+                            try:
+                                image_bytes = base64.b64decode(''.join(encoded.split()), validate=True)
+                            except (binascii.Error, ValueError, TypeError) as error:
+                                raise ValueError(
+                                    f"Invalid PNG output in {notebook_name}, cell {cell_index + 1}"
+                                ) from error
+                            if not image_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+                                raise ValueError(
+                                    f"Output is not PNG in {notebook_name}, cell {cell_index + 1}"
+                                )
+                            image_name = (
+                                f"{notebook_name}_cell_{cell_index + 1}_output_{output_index + 1}.png"
+                            )
+                            image_path = Path(notebook_path).parent / 'figures' / image_name
+                            image_path.parent.mkdir(parents=True, exist_ok=True)
+                            image_path.write_bytes(image_bytes)
+                            image_links.append(
+                                f"![Result figure from cell {cell_index + 1}]"
+                                f"(figures/{quote(image_name, safe='-_.')})\n\n"
+                            )
+                            # The PNG is the useful representation, not Matplotlib's
+                            # accompanying '<Figure size ...>' text/plain fallback.
+                            continue
 
                     if output_type == 'stream':
                         text = ''.join(output.get('text', []))
@@ -350,13 +384,15 @@ nav_order: 1
                     markdown_content.append('```\n\n')
                     markdown_content.append('</details>\n\n')
 
+                markdown_content.extend(image_links)
+
     full_content = front_matter + ''.join(markdown_content)
     full_content = repair_local_heading_links(full_content)
 
     # Escape Liquid tags
     full_content = escape_liquid_tags(full_content)
 
-    return full_content
+    return full_content.rstrip() + "\n"
 
 
 def convert_all_notebooks(examples_dir):

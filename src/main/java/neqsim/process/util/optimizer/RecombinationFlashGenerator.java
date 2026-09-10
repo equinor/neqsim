@@ -3,10 +3,10 @@ package neqsim.process.util.optimizer;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -21,11 +21,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ol>
  *
  * <p>
- * This mimics what happens in the reservoir when wells produce at different GOR:
- * <ul>
- * <li>Low GOR: High drawdown, more liquid production, less gas liberation</li>
- * <li>High GOR: Low drawdown or gas cap expansion, more gas</li>
- * </ul>
+ * The target GOR and water cut are supplied scenario inputs. This class does not calculate reservoir depletion,
+ * drawdown-dependent relative permeability, or gas-cap coning.
  *
  * <h2>Performance Optimization</h2>
  * <p>
@@ -105,9 +102,9 @@ public class RecombinationFlashGenerator implements Serializable {
     this.fluidCache = new ConcurrentHashMap<>();
 
     logger.info("RecombinationFlashGenerator initialized");
-    logger.info("  Gas molar volume: {} Sm3/kmol", gasStdVolumePerMole);
-    logger.info("  Oil molar volume: {} Sm3/kmol", oilStdVolumePerMole);
-    logger.info("  Water molar volume: {} Sm3/kmol", waterStdVolumePerMole);
+    logger.info("  Gas molar volume: {} Sm3/mol", gasStdVolumePerMole);
+    logger.info("  Oil molar volume: {} Sm3/mol", oilStdVolumePerMole);
+    logger.info("  Water molar volume: {} Sm3/mol", waterStdVolumePerMole);
   }
 
   /**
@@ -118,7 +115,7 @@ public class RecombinationFlashGenerator implements Serializable {
     if (gasPhase != null) {
       double totalMoles = gasPhase.getTotalNumberOfMoles();
       double volume = gasPhase.getVolume("m3");
-      gasStdVolumePerMole = (totalMoles > 0) ? volume / totalMoles : 23.69; // Ideal gas fallback
+      gasStdVolumePerMole = (totalMoles > 0) ? volume / totalMoles : 0.02369; // Ideal gas fallback, m3/mol
     }
 
     // Oil molar volume at std conditions
@@ -130,7 +127,7 @@ public class RecombinationFlashGenerator implements Serializable {
 
     // Water molar volume at std conditions (~18 cm3/mol)
     if (waterPhase != null) {
-      waterStdVolumePerMole = MW_WATER / 1000.0; // ~0.018 m3/kmol
+      waterStdVolumePerMole = MW_WATER / 1.0e6; // ~0.000018 m3/mol
     }
   }
 
@@ -157,7 +154,7 @@ public class RecombinationFlashGenerator implements Serializable {
       cacheHits++;
       SystemInterface cachedFluid = fluidCache.get(cacheKey).clone();
       // Scale to desired rate and set conditions
-      scaleFluidToRate(cachedFluid, totalLiquidRate, waterCut);
+      scaleFluidToRate(cachedFluid, totalLiquidRate);
       cachedFluid.setTemperature(temperature);
       cachedFluid.setPressure(pressure);
       ThermodynamicOperations ops = new ThermodynamicOperations(cachedFluid);
@@ -168,11 +165,13 @@ public class RecombinationFlashGenerator implements Serializable {
 
     // Calculate oil and water rates from water cut
     // Water cut = water / (oil + water)
-    double oilRate = totalLiquidRate * (1.0 - waterCut); // Sm3/hr oil
-    double waterRate = totalLiquidRate * waterCut; // Sm3/hr water
+    // NeqSim component amounts represent molar flow in mol/s. Convert the requested
+    // hourly standard liquid volumes before scaling the separated reference phases.
+    double oilRate = totalLiquidRate * (1.0 - waterCut) / 3600.0; // Sm3/s oil
+    double waterRate = totalLiquidRate * waterCut / 3600.0; // Sm3/s water
 
     // Calculate gas rate from GOR (gas per oil volume)
-    double gasRate = oilRate * targetGOR; // Sm3/hr gas
+    double gasRate = oilRate * targetGOR; // Sm3/s gas
 
     logger.debug("Generating fluid: GOR={}, WC={}%, Oil={}, Gas={}, Water={}", targetGOR, waterCut * 100, oilRate,
         gasRate, waterRate);
@@ -198,16 +197,18 @@ public class RecombinationFlashGenerator implements Serializable {
       addScaledPhase(recombined, waterPhase, waterVolumeFactor);
     }
 
-    // Set conditions and flash
-    recombined.setTemperature(temperature);
-    recombined.setPressure(pressure);
     recombined.setMixingRule("classic");
     recombined.setMultiPhaseCheck(true);
+
+    // Use the same equilibrium liquid-rate normalization on cache hits and misses.
+    scaleFluidToRate(recombined, totalLiquidRate);
+    recombined.setTemperature(temperature);
+    recombined.setPressure(pressure);
 
     ThermodynamicOperations ops = new ThermodynamicOperations(recombined);
     ops.TPflash();
 
-    // Cache the base composition (before rate scaling)
+    // Cache an independent fluid; cache hits rescale its equilibrium liquid rate.
     if (enableCaching && fluidCache != null) {
       fluidCache.put(cacheKey, recombined.clone());
     }
@@ -234,7 +235,14 @@ public class RecombinationFlashGenerator implements Serializable {
    * @return empty fluid system
    */
   private SystemInterface createBaseFluid() {
-    SystemInterface fluid = new SystemSrkEos(STD_TEMPERATURE_K, STD_PRESSURE_BARA);
+    // Keep the reference EOS and characterized component definitions. Constructing an
+    // empty SRK system and adding fractions by name loses TBP/E300 petroleum properties.
+    // Phase.clone shares the mixing-rule matrices. Adding water and reconfiguring
+    // those matrices needs an independent copy for parallel composition generation.
+    SystemInterface fluid = SerializationUtils.clone(gasPhase);
+    fluid.setEmptyFluid();
+    fluid.setTemperature(STD_TEMPERATURE_K);
+    fluid.setPressure(STD_PRESSURE_BARA);
     return fluid;
   }
 
@@ -280,13 +288,13 @@ public class RecombinationFlashGenerator implements Serializable {
    *
    * @param fluid the fluid to scale
    * @param totalLiquidRate desired total liquid rate in Sm3/hr
-   * @param waterCut water cut fraction
    */
-  private void scaleFluidToRate(SystemInterface fluid, double totalLiquidRate, double waterCut) {
+  private void scaleFluidToRate(SystemInterface fluid, double totalLiquidRate) {
     // Calculate current liquid volume at std conditions
     fluid.setTemperature(STD_TEMPERATURE_K);
     fluid.setPressure(STD_PRESSURE_BARA);
-    fluid.init(0);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
 
     double currentLiquidVolume = 0.0;
     if (fluid.hasPhaseType("oil")) {
@@ -297,11 +305,9 @@ public class RecombinationFlashGenerator implements Serializable {
     }
 
     if (currentLiquidVolume > 0) {
-      double scaleFactor = totalLiquidRate / currentLiquidVolume;
-      for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-        double moles = fluid.getComponent(i).getNumberOfmoles();
-        fluid.getComponent(i).setNumberOfmoles(moles * scaleFactor);
-      }
+      double scaleFactor = totalLiquidRate / 3600.0 / currentLiquidVolume;
+      fluid.setTotalNumberOfMoles(fluid.getTotalNumberOfMoles() * scaleFactor);
+      fluid.init(1);
     }
   }
 
@@ -313,7 +319,7 @@ public class RecombinationFlashGenerator implements Serializable {
    * @return cache key string
    */
   private String getCacheKey(double gor, double wc) {
-    return String.format("%.2f_%.4f", gor, wc);
+    return Double.toHexString(gor) + "_" + Double.toHexString(wc);
   }
 
   /**

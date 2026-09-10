@@ -102,7 +102,7 @@ sep.setDesignGasLoadFactor(0.08);  // K-factor
 sep.autoSize(1.2);  // 20% safety factor
 
 // Get sizing report
-System.out.println(sep.getSizingReport());
+logger.info(sep.getSizingReport());
 ```
 
 ### Using Design Specifications
@@ -186,13 +186,13 @@ java.util.Map<String, Double> sepSize = result.getEquipmentSizes("HP-Separator")
 for (java.util.Map.Entry<String, DesignResult.ConstraintStatus> e :
     result.getConstraintStatus().entrySet()) {
   DesignResult.ConstraintStatus cs = e.getValue();
-  System.out.printf("%s: %.0f%% used, satisfied=%b%n",
-      cs.getName(), 100.0 * cs.getUtilization(), cs.isSatisfied());
+  logger.info(String.format("%s: %.0f%% used, satisfied=%b%n",
+      cs.getName(), 100.0 * cs.getUtilization(), cs.isSatisfied()));
 }
 
 // Advisory warnings vs. hard violations
 if (result.hasViolations()) {
-  result.getViolations().forEach(System.out::println);
+  result.getViolations().forEach(message -> logger.info(message));
 }
 ```
 
@@ -275,12 +275,14 @@ Builder pattern class for standardized equipment configuration.
 DesignSpecification spec = DesignSpecification.forSeparator("HP-Sep")
     .setMaterial("316L")           // Material grade
     .setStandard("ASME-VIII")      // Design standard
-    .setTRDocument("TR2000")       // Technical requirement
-    .setSafetyFactor(1.25)         // Design margin
-    .setCompanyStandard("Equinor"); // Company name
+    .setTRDocument("Equinor", "TR2000")       // Technical requirement
+    .setSafetyFactor(1.25);        // Design margin
 ```
 
-**Equipment-Specific:**
+**Equipment-Specific:** Each group below applies to its corresponding configured equipment.
+`DesignSpecification.forCompressor(...)` does not currently apply compressor limits; use
+the compressor and its constraint APIs directly.
+
 ```java
 // Separator
 spec.setKFactor(0.08);
@@ -292,15 +294,20 @@ spec.setCv(150.0);
 spec.setMaxValveOpening(90.0);
 
 // Pipeline
-spec.setMaxVelocity(15.0, "m/s");
-spec.setMaxPressureDrop(5.0, "bar");
+spec.setMaxVelocity(15.0); // m/s
+// Maximum pressure drop belongs to the actual equipment design object.
+pipe.initMechanicalDesign();
+pipe.getMechanicalDesign().setMaxDesignPressureDrop(5.0); // bar
 
 // Heater
 spec.setMaxDuty(5.0, "MW");
 
 // Compressor
-spec.setMaxSpeed(12000.0);
-spec.setMinSurgeMargin(10.0);
+compressor.setMaximumSpeed(12000.0);
+CapacityConstraint surge = compressor.getCapacityConstraints().get("surgeMargin");
+if (surge != null && surge.isMinimumConstraint()) {
+    surge.setMinValue(10.0); // percent, applicable only with an active compressor map
+}
 ```
 
 ### ProcessBasis
@@ -338,7 +345,7 @@ Singleton registry of default constraint templates by equipment type.
 EquipmentConstraintRegistry registry = EquipmentConstraintRegistry.getInstance();
 
 // Get templates for equipment type
-List<ConstraintTemplate> sepConstraints = registry.getConstraintTemplates("Separator");
+List<EquipmentConstraintRegistry.ConstraintTemplate> sepConstraints = registry.getConstraintTemplates("Separator");
 
 // Available templates by type:
 // Separator: gasLoadFactor, liquidResidenceTime
@@ -370,25 +377,14 @@ String getDescription();  // Template description
 Integrated workflow manager for design and optimization.
 
 ```java
-// Create from existing ProcessSystem
-DesignOptimizer optimizer = DesignOptimizer.forProcess(myProcess);
-
-// Create from ProcessModule (multi-system modular processes)
-DesignOptimizer optimizer = DesignOptimizer.forProcess(myModule);
-
-// Or create from template
-DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
-
-// Configure workflow
-optimizer
-    .autoSizeEquipment(1.2)       // Auto-size all AutoSizeable equipment
-    .applyDefaultConstraints()     // Apply registry constraints
+// Requires a configured ProcessSystem named process with a stream named Feed.
+DesignOptimizer optimizer = DesignOptimizer.forProcess(process)
+    .autoSizeEquipment(1.2)
+    .applyDefaultConstraints()
     .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
-    .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
-
-// Run
-DesignResult result = optimizer.validate();  // Just validate
-DesignResult result = optimizer.optimize();  // Bounded search only when explicitly configured
+    .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+DesignResult validation = optimizer.validate();
+DesignResult result = optimizer.optimize();
 ```
 
 **ProcessModule Support:**
@@ -432,7 +428,7 @@ if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
 
     // Get equipment sizes
     Map<String, Double> sizes = result.getEquipmentSizes("HP-Separator");
-    double diameter = sizes.get("diameter");
+    Double diameter = sizes.get("diameter"); // null if this unit/key was not sized
 
     // Check constraints
     boolean violated = result.hasViolations();
@@ -489,8 +485,8 @@ if (!validation.hasViolations()) {
 
 ```java
 // Check auto-sizing results
-System.out.println(separator.getSizingReport());
-System.out.println(valve.getSizingReportJson());
+logger.info(separator.getSizingReport());
+logger.info(valve.getSizingReportJson());
 ```
 
 ## Integration with Mechanical Design System
@@ -640,7 +636,7 @@ DesignOptimizer designOpt = DesignOptimizer.forProcess(process)
     .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
-// The underlying ProductionOptimizer handles the mathematical optimization
+// Only an explicitly configured bounded search performs mathematical optimization
 DesignResult result = designOpt.optimize();
 ```
 
@@ -649,11 +645,8 @@ DesignResult result = designOpt.optimize();
 ```java
 // Auto-sized equipment maintains capacity constraints
 separator.autoSize(1.2);
-separator.addCapacityConstraint(new CapacityConstraint.Builder()
-    .name("K-factor")
-    .type("gasLoadFactor")
-    .maxValue(0.08)
-    .build());
+separator.setDesignGasLoadFactor(0.08);
+separator.enableConstraints("gasLoadFactor");
 ```
 
 ### With Mechanical Design
@@ -683,8 +676,8 @@ sep.getMechanicalDesign().setCompanySpecificDesignStandards("Equinor");
 sep.getMechanicalDesign().readDesignSpecifications();
 sep.autoSize(1.15);  // Use 15% margin per company policy
 
-// Get full mechanical design report
-sep.getMechanicalDesign().displayResults();
+// Log the sizing report, including in a headless notebook or CI job.
+logger.info(sep.getSizingReport());
 ```
 
 ## Future Enhancements
@@ -777,24 +770,27 @@ This section explains how AutoSizing, Mechanical Design, and Production Optimiza
 An **active constraint** is the specific limit on a piece of equipment that currently restricts the process from operating at a higher rate.
 
 ```java
-// Example: Finding the active constraint
-ProcessSystem process = new ProcessSystem();
-// ... add equipment ...
+// Run an existing configured process before inspecting its constraints.
 process.run();
 
 // Find the bottleneck equipment
 ProcessEquipmentInterface bottleneck = process.getBottleneck();
-System.out.println("Bottleneck equipment: " + bottleneck.getName());
+if (bottleneck != null) {
+    logger.info("Bottleneck equipment: {}", bottleneck.getName());
+}
 
 // Find the specific active constraint on that equipment
 if (bottleneck instanceof CapacityConstrainedEquipment) {
     CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
     CapacityConstraint activeConstraint = constrained.getBottleneckConstraint();
 
-    System.out.println("Active constraint: " + activeConstraint.getName());
-    System.out.println("Current value: " + activeConstraint.getCurrentValue());
-    System.out.println("Design limit: " + activeConstraint.getDesignValue());
-    System.out.println("Utilization: " + activeConstraint.getUtilizationPercent() + "%");
+    if (activeConstraint == null) {
+        throw new IllegalStateException("No enabled constraint on this equipment");
+    }
+    logger.info("Active constraint: {}", activeConstraint.getName());
+    logger.info("Current value: " + activeConstraint.getCurrentValue());
+    logger.info("Design limit: " + activeConstraint.getDesignValue());
+    logger.info("Utilization: " + activeConstraint.getUtilizationPercent() + "%");
 }
 ```
 
@@ -806,7 +802,9 @@ if (bottleneck instanceof CapacityConstrainedEquipment) {
 
 ### How Constraints Are Set
 
-Constraints are initialized automatically when equipment is auto-sized or when `initMechanicalDesign()` is called:
+Run the process before sizing. `initMechanicalDesign()` creates the design object;
+use `applyMechanicalDesignCapacityConstraints()` to activate supported design limits,
+and explicitly enable the installed constraints required by the study.
 
 ```java
 // Method 1: Auto-sizing sets constraints automatically
@@ -845,8 +843,7 @@ CapacityConstraint speedLimit = new CapacityConstraint("speed", "rpm", Constrain
     .setMaxValue(11000.0);      // Trip point - HARD limit
 
 CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", "%", ConstraintType.SOFT)
-    .setDesignValue(10.0)      // 10% margin from surge
-    .setMinValue(5.0);         // Absolute minimum - warning
+    .setMinValue(10.0);       // Minimum required 10% margin; leave design unset
 
 CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", "m/s", ConstraintType.DESIGN)
     .setDesignValue(0.08)      // Design basis
@@ -855,9 +852,24 @@ CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", "m/s", Cons
 
 ### Optimization with Multiple Equipment Types
 
-The optimizer checks **all** constrained equipment, not just compressors:
+The optimizer checks all constrained equipment in this synthetic dry-gas process:
 
 ```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pipeline.Pipeline;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+
+SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+
 // Create process with multiple equipment types
 ProcessSystem process = new ProcessSystem();
 
@@ -865,15 +877,14 @@ Stream feed = new Stream("Feed", fluid);
 feed.setFlowRate(10000.0, "kg/hr");
 
 Separator sep = new Separator("Inlet Sep", feed);
-sep.autoSize(1.2);  // Sets gasLoadFactor constraint
 
 ThrottlingValve valve = new ThrottlingValve("HP Valve", sep.getGasOutStream());
 valve.setOutletPressure(30.0, "bara");
-valve.autoSize(1.2);  // Sets valveOpening constraint
 
 Compressor comp = new Compressor("Export Comp", valve.getOutletStream());
 comp.setOutletPressure(100.0);
-comp.autoSize(1.2);  // Sets speed, power, surge constraints
+comp.setUsePolytropicCalc(true);
+comp.setPolytropicEfficiency(0.78);
 
 Pipeline pipe = new PipeBeggsAndBrills("Export Pipeline", comp.getOutletStream());
 pipe.setLength(50000.0);
@@ -886,17 +897,38 @@ process.add(valve);
 process.add(comp);
 process.add(pipe);
 
-// Run optimization - checks ALL equipment constraints
-OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
-    .defaultUtilizationLimit(0.95);
+// Solve before sizing the vessel and compressor. Keep installed pipe geometry;
+// velocity-only auto-sizing does not check a long line's full pressure budget.
+process.run();
+sep.autoSize(1.2);
+comp.autoSize(1.2);
+pipe.initMechanicalDesign();
+pipe.getMechanicalDesign().setMaxDesignPressureDrop(10.0);
+sep.enableConstraints("gasLoadFactor");
+pipe.enableAllConstraints();
+process.applyMechanicalDesignCapacityConstraints();
+process.run();
 
-OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
+// Start inside the generated compressor map's feasible flow range. A binary
+// feasibility search cannot use a lower endpoint that is already in surge.
+ProductionOptimizer.OptimizationConfig config =
+    new ProductionOptimizer.OptimizationConfig(7000.0, 15000.0)
+        .rateUnit("kg/hr").tolerance(1.0).defaultUtilizationLimit(0.95);
+
+ProductionOptimizer.OptimizationResult result =
+    new ProductionOptimizer().optimize(process, feed, config, null, null);
 
 // The bottleneck could be ANY of: separator, valve, compressor, or pipeline
-System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Bottleneck utilization: "
+if (!result.isFeasible()) {
+    throw new IllegalStateException("No feasible point within the chosen bounds: "
+        + result.getInfeasibilityDiagnosis());
+}
+if (result.getBottleneck() != null) {
+    logger.info("Bottleneck: {}", result.getBottleneck().getName());
+}
+logger.info("Bottleneck utilization: "
     + String.format("%.1f%%", result.getBottleneckUtilization() * 100));
-System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
+logger.info("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 ```
 
 ### Viewing All Constraints in a Process
@@ -904,27 +936,27 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 ```java
 // Get all constrained equipment
 for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
-    System.out.println("\n" + equip.getName() + ":");
+    logger.info("\n" + ((ProcessEquipmentInterface) equip).getName() + ":");
 
     for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
         String status = c.isViolated() ? "⚠️ EXCEEDED" :
                        c.isNearLimit() ? "⚡ NEAR LIMIT" : "✓ OK";
-        System.out.printf("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
+        logger.info(String.format("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
             c.getName(),
             c.getCurrentValue(),
             c.getDesignValue(),
             c.getUnit(),
             c.getUtilizationPercent(),
-            status);
+            status));
     }
 }
 ```
 
-Example output:
+Illustrative output (not values from the snippets):
 ```
 Inlet Sep:
   gasLoadFactor       :   0.07 /   0.08 m/s  (87.5%) ✓ OK
-  liquidResidenceTime :   3.20 /   3.00 min  (106.7%) ⚠️ EXCEEDED
+  oilRetentionTime    :   3.20 /   3.00 min  (93.8%) ⚡ NEAR LIMIT
 
 HP Valve:
   valveOpening        :  72.00 /  90.00 %    (80.0%) ✓ OK

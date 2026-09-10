@@ -992,7 +992,7 @@ public class ProductionOptimizer {
    * config = OptimizationConfig(50000.0, 200000.0) \
    *     .tolerance(100.0) \
    *     .maxIterations(50) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY)
    * }</pre>
    */
   public static final class OptimizationConfig {
@@ -2181,11 +2181,11 @@ public class ProductionOptimizer {
    *
    * <pre>{@code
    * ProductionOptimizer optimizer = new ProductionOptimizer();
-   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).searchMode(SearchMode.BINARY_FEASIBILITY)
    *     .tolerance(100.0);
    *
    * OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
-   * System.out.println("Optimal: " + result.getOptimalRate() + " " + result.getRateUnit());
+   * logger.info("Optimal: {} {}", result.getOptimalRate(), result.getRateUnit());
    * }</pre>
    *
    * <p>
@@ -2195,12 +2195,21 @@ public class ProductionOptimizer {
    * <pre>{@code
    * optimizer = ProductionOptimizer()
    * config = OptimizationConfig(50000.0, 200000.0) \
-   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE) \
+   *     .searchMode(SearchMode.BINARY_FEASIBILITY) \
    *     .tolerance(100.0)
    *
    * result = optimizer.optimize(process, feed_stream, config, None, None)
    * print(f"Optimal: {result.getOptimalRate():.0f} {result.getRateUnit()}")
    * }</pre>
+   *
+   * <p>
+   * Score-based searches require an explicit objective to maximize throughput. A null or empty objective list has zero
+   * objective score; use binary feasibility for monotonic throughput searches without a custom objective. Before
+   * returning, the selected decision vector is reapplied and solved without using cached evidence. The result and live
+   * process therefore describe the same operating point. If that replay is physically infeasible, previously feasible
+   * search points are replayed in deterministic best-first order and only a freshly verified fallback can be returned.
+   * A failed final solve throws rather than returning stale evidence.
+   * </p>
    *
    * @param process the process model to evaluate (must not be null)
    * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
@@ -2362,19 +2371,127 @@ public class ProductionOptimizer {
       throw new IllegalArgumentException("Binary and golden-section searches support only one decision variable");
     }
 
+    OptimizationResult selected;
     if (variables.size() == 1 && config.searchMode == SearchMode.BINARY_FEASIBILITY) {
-      return binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+      selected = binaryFeasibilitySearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
+      selected = goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
+      selected = nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
+      selected = gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    } else {
+      selected = particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
     }
-    if (variables.size() == 1 && config.searchMode == SearchMode.GOLDEN_SECTION_SCORE) {
-      return goldenSectionSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+
+    double[] selectedPoint = new double[variables.size()];
+    for (int i = 0; i < variables.size(); i++) {
+      selectedPoint[i] = selected.getDecisionVariables().get(variables.get(i).getName());
     }
-    if (config.searchMode == SearchMode.NELDER_MEAD_SCORE) {
-      return nelderMeadSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    // Search algorithms commonly finish at a rejected probe or a cached point. Reapply and re-evaluate once so live
+    // equipment, reported decisions, objectives and capacity evidence all describe the selected operating point.
+    Evaluation verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
+        selectedPoint);
+    double[] verifiedPoint = selectedPoint;
+    if (selected.isFeasible() && !isFeasible(verified)) {
+      recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, false);
+      VerifiedSelection fallback = replayFeasibleSearchPoint(process, variables, config, safeObjectives,
+          safeConstraints, selectedPoint, iterationHistory);
+      if (fallback != null) {
+        verifiedPoint = fallback.point;
+        verified = fallback.evaluation;
+      } else {
+        // Candidate recovery leaves mutable equipment at its last probe. Restore the selected point once more so an
+        // infeasible result and the live process still describe the same exact decision vector.
+        verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
+            selectedPoint);
+        recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, isFeasible(verified));
+      }
     }
-    if (config.searchMode == SearchMode.GRADIENT_DESCENT_SCORE) {
-      return gradientDescentSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+    return toResult(verifiedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
+  }
+
+  /**
+   * Replay earlier feasible search points after the selected point proves non-repeatable.
+   *
+   * <p>
+   * Search evidence is only a proposal: every fallback is applied to the live process and fully solved again. Binary
+   * throughput searches prefer the greatest recorded rate, while score searches prefer the greatest penalized score.
+   * The bounded retry set contains only points already visited by the configured search.
+   * </p>
+   *
+   * @param process mutable process to replay
+   * @param variables manipulated variables in deterministic order
+   * @param config optimization configuration
+   * @param objectives configured objectives
+   * @param constraints configured constraints
+   * @param selectedPoint point whose replay was infeasible
+   * @param iterationHistory complete search history, extended with replay evidence
+   * @return verified fallback, or {@code null} when no recorded feasible point replays successfully
+   */
+  private VerifiedSelection replayFeasibleSearchPoint(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
+      double[] selectedPoint, List<IterationRecord> iterationHistory) {
+    List<IterationRecord> candidates = iterationHistory.stream().filter(IterationRecord::isFeasible)
+        .collect(Collectors.toList());
+    if (config.searchMode == SearchMode.BINARY_FEASIBILITY) {
+      candidates.sort((left, right) -> Double.compare(right.getRate(), left.getRate()));
+    } else {
+      candidates.sort((left, right) -> Double.compare(right.getScore(), left.getScore()));
     }
-    return particleSwarmSearch(process, variables, config, safeObjectives, safeConstraints, iterationHistory);
+
+    for (IterationRecord candidate : candidates) {
+      double[] point = decisionVector(candidate, variables);
+      if (point == null || sameDecisionVector(point, selectedPoint)) {
+        continue;
+      }
+      Evaluation replayed = evaluateCandidateInternal(process, variables, config, objectives, constraints, point);
+      boolean feasible = isFeasible(replayed);
+      recordIteration(iterationHistory, point[0], candidate.getRateUnit(), replayed, feasible);
+      if (feasible) {
+        return new VerifiedSelection(point, replayed);
+      }
+    }
+    return null;
+  }
+
+  private double[] decisionVector(IterationRecord record, List<ManipulatedVariable> variables) {
+    double[] point = new double[variables.size()];
+    Map<String, Double> decisions = record.getDecisionVariables();
+    for (int i = 0; i < variables.size(); i++) {
+      Double value = decisions.get(variables.get(i).getName());
+      if (value == null || Double.isNaN(value.doubleValue()) || Double.isInfinite(value.doubleValue())) {
+        return null;
+      }
+      point[i] = value.doubleValue();
+    }
+    return point;
+  }
+
+  private boolean sameDecisionVector(double[] left, double[] right) {
+    if (left.length != right.length) {
+      return false;
+    }
+    for (int i = 0; i < left.length; i++) {
+      if (Double.doubleToLongBits(left[i]) != Double.doubleToLongBits(right[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isFeasible(Evaluation evaluation) {
+    return evaluation.utilizationWithinLimits() && evaluation.hardOk();
+  }
+
+  private static final class VerifiedSelection {
+    private final double[] point;
+    private final Evaluation evaluation;
+
+    private VerifiedSelection(double[] point, Evaluation evaluation) {
+      this.point = point;
+      this.evaluation = evaluation;
+    }
   }
 
   /**
@@ -3892,7 +4009,7 @@ public class ProductionOptimizer {
       OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       double[] candidate, Map<String, Evaluation> cache) {
     if (config.enableCaching) {
-      String cacheKey = buildVectorCacheKey(candidate, config);
+      String cacheKey = buildVectorCacheKey(candidate);
       Evaluation cached = cache.get(cacheKey);
       if (cached != null) {
         return cached;
@@ -3918,17 +4035,12 @@ public class ProductionOptimizer {
     return evaluateProcess(process, config, objectives, constraints, decisions);
   }
 
-  private String buildVectorCacheKey(double[] candidate, OptimizationConfig config) {
-    // Use a minimum bucket size to avoid excessive cache entries while
-    // maintaining enough precision to distinguish meaningfully different
-    // candidates.
-    // When tolerance is very small, use the value itself with limited precision.
-    double bucketSize = Math.max(config.tolerance, 0.1);
+  private String buildVectorCacheKey(double[] candidate) {
+    // A convergence tolerance is not an evidence-equivalence tolerance. Nearby points can straddle a hard limit,
+    // and each cached evaluation retains the exact decisions that produced it.
     StringBuilder key = new StringBuilder();
     for (double value : candidate) {
-      // Use bucket-based rounding for cache keys
-      long bucket = Math.round(value / bucketSize);
-      key.append(bucket).append("|");
+      key.append(Double.doubleToLongBits(value)).append("|");
     }
     return key.toString();
   }

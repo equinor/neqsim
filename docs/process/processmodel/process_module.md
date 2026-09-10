@@ -344,6 +344,10 @@ ProcessModule supports the same capacity constraint methods as ProcessSystem, en
 
 ### Usage Example
 
+Use configured `inletSystem`, `compressionSystem`, and `exportSystem`; the example logs
+with a class-level Log4j2 `logger`. Import `java.util.List`, `java.util.Map`, and
+`neqsim.process.equipment.capacity.CapacityConstrainedEquipment`.
+
 ```java
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.equipment.capacity.BottleneckResult;
@@ -357,25 +361,25 @@ module.run();
 
 // Get all constrained equipment across all systems
 List<CapacityConstrainedEquipment> constrained = module.getConstrainedEquipment();
-System.out.println("Found " + constrained.size() + " constrained equipment");
+logger.info("Found " + constrained.size() + " constrained equipment");
 
 // Find bottleneck across entire module
 BottleneckResult bottleneck = module.findBottleneck();
 if (bottleneck.hasBottleneck()) {
-    System.out.println("Bottleneck: " + bottleneck.getEquipmentName());
-    System.out.println("Constraint: " + bottleneck.getConstraintName());
-    System.out.println("Utilization: " + bottleneck.getUtilizationPercent() + "%");
+    logger.info("Bottleneck: " + bottleneck.getEquipmentName());
+    logger.info("Constraint: " + bottleneck.getConstraintName());
+    logger.info("Utilization: " + bottleneck.getUtilizationPercent() + "%");
 }
 
 // Check for overloaded equipment
 if (module.isAnyEquipmentOverloaded()) {
-    System.out.println("Warning: Equipment exceeds design capacity!");
+    logger.info("Warning: Equipment exceeds design capacity!");
 }
 
 // Get utilization summary
 Map<String, Double> utilization = module.getCapacityUtilizationSummary();
 for (Map.Entry<String, Double> entry : utilization.entrySet()) {
-    System.out.printf("%s: %.1f%%%n", entry.getKey(), entry.getValue());
+    logger.info(String.format("%s: %.1f%%%n", entry.getKey(), entry.getValue()));
 }
 ```
 
@@ -410,15 +414,24 @@ For detailed constraint management, see [Capacity Constraint Framework](../CAPAC
 
 ## Optimization with ProcessModule
 
-Both `ProcessOptimizationEngine` and `DesignOptimizer` fully support `ProcessModule`:
+`ProcessOptimizationEngine` accepts `ProcessModule`. `DesignOptimizer` supports module
+validation and sizing; its bounded search currently requires a single `ProcessSystem`.
+The following snippets require a configured, connected `facilityModule`, with unique
+stream names `Well Feed` and `Export Gas`. Use the result type belonging to each optimizer.
 
 ### ProcessOptimizationEngine
 
 ```java
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import neqsim.process.processmodel.ProcessSystem;
+
+org.apache.logging.log4j.Logger logger =
+    org.apache.logging.log4j.LogManager.getLogger("ModuleOptimization");
 
 // Create engine with ProcessModule
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(facilityModule);
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BINARY_SEARCH);
+engine.setTolerance(1.0); // kg/hr resolution for this throughput search
 
 // Set feed stream (searches across ALL systems in module)
 engine.setFeedStreamName("Well Feed");
@@ -427,18 +440,36 @@ engine.setFeedStreamName("Well Feed");
 engine.setOutletStreamName("Export Gas");
 
 // Find maximum throughput
-OptimizationResult result = engine.findMaximumThroughput(
+ProcessOptimizationEngine.OptimizationResult result = engine.findMaximumThroughput(
     85.0,      // inlet pressure (bara)
     40.0,      // outlet pressure (bara)
     5000.0,    // min flow (kg/hr)
     200000.0   // max flow (kg/hr)
 );
 
+if (!result.isConverged() || !result.getConstraintViolations().isEmpty()) {
+    throw new IllegalStateException("Search failed or returned constraint violations");
+}
+logger.info("Selected feed rate: {} kg/hr", result.getOptimalValue());
+
+// Replay the selected flow before reading the current outlet conditions.
+// Use the actual connected feed from the module when applying this setpoint.
+for (ProcessSystem system : facilityModule.getAllProcessSystems()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : system.getUnitOperations()) {
+        if (unit instanceof neqsim.process.equipment.stream.StreamInterface
+                && unit.getName().equals("Well Feed")) {
+            ((neqsim.process.equipment.stream.StreamInterface) unit)
+                .setFlowRate(result.getOptimalValue(), "kg/hr");
+        }
+    }
+}
+facilityModule.run();
+
 // Get outlet conditions from the configured outlet stream
 double outletTemp = engine.getOutletTemperature("C");
 double outletFlow = engine.getOutletFlowRate("MSm3/day");
-System.out.println("Export temperature: " + outletTemp + " °C");
-System.out.println("Export flow: " + outletFlow + " MSm3/day");
+logger.info("Export temperature: " + outletTemp + " °C");
+logger.info("Export flow: " + outletFlow + " MSm3/day");
 ```
 
 ### Stream Configuration Methods
@@ -456,13 +487,14 @@ System.out.println("Export flow: " + outletFlow + " MSm3/day");
 
 ```java
 import neqsim.process.design.DesignOptimizer;
+import neqsim.process.design.DesignResult;
 
 // Create optimizer from ProcessModule
 DesignOptimizer optimizer = DesignOptimizer.forProcess(facilityModule);
 
 // Check mode
 if (optimizer.isModuleMode()) {
-    System.out.println("Optimizing module: " + optimizer.getModule().getName());
+    logger.info("Optimizing module: " + optimizer.getModule().getName());
 }
 
 // Configure validation and auto-sizing across the module
@@ -472,6 +504,9 @@ optimizer
 
 DesignResult result = optimizer.optimize();
 ```
+
+The methods above only assess configured constraints and the selected search; independently
+check complete-model convergence, mass/energy balance, and installed capacity coverage.
 
 Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy. The result
 status is `AUTO_SIZED`, not `OPTIMIZED`, because no search was performed. Configured bounded search
