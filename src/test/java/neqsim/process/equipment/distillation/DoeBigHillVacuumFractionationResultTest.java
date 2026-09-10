@@ -82,8 +82,8 @@ public class DoeBigHillVacuumFractionationResultTest {
     assertTrue(products[0].getMeanNormalBoilingPointKelvin() < products[1].getMeanNormalBoilingPointKelvin());
     assertBoilingRange(products[0]);
     assertBoilingRange(products[1]);
-    assertTrue(products[0].getNormalBoilingPointQuantileKelvin(0.5)
-        < products[1].getNormalBoilingPointQuantileKelvin(0.5));
+    assertTrue(
+        products[0].getNormalBoilingPointQuantileKelvin(0.5) < products[1].getNormalBoilingPointQuantileKelvin(0.5));
     assertEquals(1.0, products[0].getMassFractionOfFeed() + products[1].getMassFractionOfFeed(), BALANCE_TOLERANCE);
     assertEquals(FEED_MASS_FLOW_KG_PER_HOUR, result.getFeedMassFlowKgPerHour(), 1.0e-9);
     assertEquals(result.getFeedMassFlowKgPerHour(), result.getProductMassFlowKgPerHour(),
