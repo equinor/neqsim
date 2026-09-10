@@ -556,6 +556,33 @@ envelope.
 
 ---
 
+## `runRiskMatrix` — bounded screening
+
+`runRiskMatrix` deterministically scores 1–100 caller-supplied events on the
+existing NeqSim 5×5 matrix. The complete request is limited to 16,384 UTF-8
+bytes. Each event uses exactly one input mode:
+
+- integer `probabilityLevel` and `consequenceLevel`, each from 1 through 5; or
+- non-negative `failuresPerYear` and `productionLossPercent` from 0 through
+  100.
+
+Names are limited to 256 characters and optional mitigation text to 2,048
+characters. Partial or mixed modes, malformed shapes, fractional levels,
+negative frequencies, out-of-range losses, oversized collections, and
+oversized requests fail closed with stable error codes.
+
+The response identifies whether each score came from explicit levels or the
+generic frequency/production-loss thresholds. `screeningOnly=true` and
+`standardConformanceClaimed=false` are mandatory. The existing `standard` key
+is retained with a generic-screening descriptor for response compatibility; it
+does not assert conformance. The matrix does not identify
+hazards, validate safeguards, establish risk acceptance, demonstrate ISO 31000
+or NORSOK Z-013 compliance, authorize plant action, or replace project-specific
+criteria and qualified safety review. See
+[`RISK_MATRIX_SCREENING_CONTRACT.md`](evidence/RISK_MATRIX_SCREENING_CONTRACT.md).
+
+---
+
 ## Browsable MCP Resources (13 Endpoints)
 
 ### Catalog Resources (Static)

@@ -240,7 +240,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `runRelief`                   | PSV sizing per API 520/521                                                                                                                           |
 | `runLOPA`                     | Layer of Protection Analysis per IEC 61511 / CCPS                                                                                                    |
 | `runSIL`                      | SIL verification per IEC 61508 / IEC 61511                                                                                                           |
-| `runRiskMatrix`               | 5x5 risk matrix scoring per ISO 31000 / NORSOK Z-013                                                                                                 |
+| `runRiskMatrix`               | Bounded generic 5x5 screening of caller-supplied probability and consequence inputs; no standards-conformance claim                                  |
 | `runFlareNetwork`             | Flare radiation and safe-distance contours                                                                                                           |
 | `runHAZOP`                    | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios                                                                            |
 | `runHazopScenario`            | Quantify a single HAZOP deviation (node + guide-word/parameter) against a process simulation                                                         |
