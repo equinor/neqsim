@@ -117,6 +117,14 @@ The network feature notebook also selects gas capacity for its choke optimizers
 and explicitly marks its legacy capped example as inapplicable. Its reservoir
 sensitivity uses the source-node setter; the generic element-pressure sweep's
 state-update defect is tracked in [#3626](https://github.com/equinor/neqsim/issues/3626).
+VFP routines have separate contracts for supplied-BHP formatting, fixed-composition
+capacity screening and independently qualified well calculations. The
+[export contract](vfp-export-contract.md) implements #3600: complete indexed axes,
+METRIC/FIELD conversion, strict infeasible-point rejection and failure of unsupported
+process-to-BHP mappings. Independent slash-record parsing and authored fixtures cover the
+deck representation; they do not constitute execution of a reservoir simulator or
+validation of a physical well model. The simplified network choke's
+critical-flow response is tracked in [#3601](https://github.com/equinor/neqsim/issues/3601).
 Autosized compressor-map replay and broader nonlinear solver robustness remain part of
 the [plant optimization roadmap](https://github.com/equinor/neqsim/issues/3154). These
 limitations are stated in the relevant examples; none is hidden by accepting a failed

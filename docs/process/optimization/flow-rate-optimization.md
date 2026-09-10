@@ -182,16 +182,18 @@ if (point != null && point.isFeasible()) {
 ### Capacity Tables and Eclipse VFP Tables
 
 A capacity table gives maximum **mass flow** for imposed inlet/outlet pressures.
-It is not a reservoir VFP table. The legacy `toEclipseFormat()` helper does not
-convert mass rates to standard phase-volume rates and does not establish the
-well datum or the required THP/BHP convention; do not insert its output directly
-into an Eclipse deck.
+It is not a reservoir VFP table. Both `ProcessCapacityTable.toEclipseFormat()` and
+`ProcessLiftCurveTable.toEclipseFormat()` now throw `UnsupportedOperationException`:
+process outlet pressure does not establish well BHP, and kg/hr is not a standard
+phase-volume rate.
 
 Use `toJson()`, `toCsv()`, or `toFormattedString()` for capacity screening. For
 reservoir coupling, generate physically defined BHP values on the prescribed
 flow/THP/water-fraction/gas-fraction/artificial-lift axes and pass them to
 `EclipseVFPExporter`. Set its unit system and flow-rate type explicitly; its
-setters describe already-converted data, they do not convert kg/hr to Sm3/day.
+input contract defaults to Sm3/day and bara, and converts to the selected METRIC/FIELD
+deck units. It does not infer phase volumes from kg/hr. See the
+[VFP export contract](vfp-export-contract.md) for units, supported axes and migration.
 See [VFP export configuration](OPTIMIZER_PLUGIN_ARCHITECTURE) for the exporter
 API and [pressure boundary optimization](../pressure_boundary_optimization)
 for solving the process boundary problem.
@@ -744,7 +746,7 @@ plt.show()
 
 | Method | Description |
 |--------|-------------|
-| `toEclipseFormat()` | Legacy diagnostic; requires physical/unit conversion before reservoir use |
+| `toEclipseFormat()` | Deprecated diagnostic alias on `LiftCurveTable`; rejected for process capacity/lift tables |
 | `toJson()` | Export to JSON |
 | `getOperatingPoint(i, j)` | Get point at grid indices |
 | `countFeasiblePoints()` | Count of feasible points |

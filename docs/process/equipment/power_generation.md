@@ -821,6 +821,15 @@ System.out.println(gt.isAutoSized());  // true
 
 After running and setting rated capacity (manually or via auto-size), query the operating margin:
 
+The registry's `PowerGenerationCapacityStrategy` reports power and heat-duty capacities in
+**kW**. Its constraint design values and `evaluateMaxCapacity(equipment)` use the same equipment
+rating: `getRatedPower("kW")` for either turbine, `getDesignHeatDuty("kW")` for an HRSG, and
+`getRatedTotalPower("kW")` for a combined cycle. A positive equipment rating takes precedence
+over the strategy's configured fallback (50,000 kW by default). Changing the equipment rating
+is reflected by subsequent calls to both strategy APIs. `evaluateMaxCapacity` reports the
+design rating; overload margins remain separate constraint limits. For example, a 25 MW turbine
+reports 25,000 kW through this strategy, while the equipment's `getCapacityMax()` returns watts.
+
 ```java
 // Current operating duty vs maximum
 double duty = gt.getCapacityDuty();  // current power output (W)

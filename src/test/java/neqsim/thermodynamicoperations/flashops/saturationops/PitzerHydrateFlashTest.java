@@ -52,6 +52,18 @@ public class PitzerHydrateFlashTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void genericTemperatureFlashReportsPitzerConvergenceAndResidual() {
+    SystemPitzer fluid = brine("CO2", 1.0, 0.0, 0.0, 30.0);
+    HydrateFormationTemperatureFlash flash = new HydrateFormationTemperatureFlash(fluid);
+    flash.run();
+    assertTrue(flash.isConverged());
+    double fugacityResidual = 1.0
+        - fluid.getPhases()[4].getFugacity("water") / fluid.getPhase("aqueous").getFugacity("water");
+    assertEquals(fugacityResidual, flash.getLastResidual(), 1.0e-14);
+    assertEquals(0.0, flash.getLastResidual(), 1.0e-8);
+  }
+
+  @Test
   void co2TemperaturePressureRoundTripPreservesFluidRoles() throws Exception {
     SystemPitzer fluid = brine("CO2", 1.0, 0.0, 0.0, 30.0);
     PhaseInterface aqueousRole = fluid.getPhases()[1];

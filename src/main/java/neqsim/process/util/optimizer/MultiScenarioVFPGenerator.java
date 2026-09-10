@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,21 +21,22 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Generates Eclipse VFP tables (VFPPROD/VFPEXP format) with GOR and water cut dimensions.
+ * Generates diagnostic process inlet-pressure tables over rate and composition scenarios.
  *
  * <p>
  * For each combination of (flow rate, outlet pressure, water cut, GOR), calculates the required inlet pressure by
- * running the process simulation. This is the standard Eclipse VFP format for export systems/pipelines.
+ * running the process simulation. These are screening results, not a qualified well model or reservoir deck. Rate
+ * inputs retain their configured simulation units; no standard oil, liquid or gas basis is inferred.
  * </p>
  *
  * <h2>Table Format</h2>
  *
  * <pre>
- * BHP[rate][outletP][WC][GOR] = required inlet pressure (bara)
+ * inletPressure[rate][outletP][WC][GOR] = required process inlet pressure (bara)
  *
  * Where:
- *   - BHP = inlet pressure required to achieve the given rate
- *   - THP = outlet pressure constraint
+ *   - inletPressure = process inlet pressure required to achieve the given rate
+ *   - outletP = process outlet pressure constraint
  *   - rate = target flow rate (Sm3/d or kg/hr)
  *   - WC = water cut (fraction 0-1)
  *   - GOR = gas-oil ratio (Sm3/Sm3)
@@ -76,8 +76,8 @@ import neqsim.thermo.system.SystemInterface;
  * // Generate table
  * VFPTable table = vfpGen.generateVFPTable();
  *
- * // Export to Eclipse format
- * vfpGen.exportVFPEXP("process_vfp.inc", 1);
+ * // Inspect diagnostic results; these are not reservoir simulator input
+ * String diagnostic = vfpGen.toDiagnosticString();
  * </pre>
  *
  * @author ESOL
@@ -103,7 +103,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
   // Table axes
   private double[] flowRates; // Sm3/d or kg/hr
-  private double[] outletPressures; // bara (THP in Eclipse)
+  private double[] outletPressures; // process outlet pressure in bara
   private double[] waterCuts; // fraction 0-1
   private double[] GORs; // Sm3/Sm3
 
@@ -168,8 +168,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
     int nGOR = GORs.length;
     int totalPoints = nRates * nTHP * nWC * nGOR;
 
-    logger.info("Generating VFP table: {} rates × {} THP × {} WC × {} GOR = {} points", nRates, nTHP, nWC, nGOR,
-        totalPoints);
+    logger.info("Generating process screening table: {} rates × {} outlet pressures × {} WC × {} GOR = {} points",
+        nRates, nTHP, nWC, nGOR, totalPoints);
 
     vfpTable = new VFPTable(flowRates, outletPressures, waterCuts, GORs);
     vfpTable.setFlowRateUnit(flowRateUnit);
@@ -247,8 +247,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
 
         if (completed % 20 == 0 || completed == tasks.size()) {
           String status = point.feasible ? String.format("P_in=%.1f bara", point.bhp) : "INFEASIBLE";
-          logger.info("[{}/{}] Rate={}, THP={}, WC={}%, GOR={} → {}", completed, tasks.size(), point.flowRate,
-              point.thp, point.waterCut * 100, point.gor, status);
+          logger.info("[{}/{}] Rate={}, outlet pressure={}, WC={}%, GOR={} → {}", completed, tasks.size(),
+              point.flowRate, point.thp, point.waterCut * 100, point.gor, status);
         }
       } catch (Exception e) {
         logger.error("Task execution failed", e);
@@ -389,126 +389,92 @@ public class MultiScenarioVFPGenerator implements Serializable {
   }
 
   /**
-   * Export to Eclipse VFPEXP format.
+   * Writes diagnostic process results through the legacy file-export entry point.
    *
    * @param filePath output file path
-   * @param tableNumber VFP table number
+   * @param tableNumber unused legacy identifier
    * @throws IOException if writing fails
+   * @deprecated writes diagnostic text, not a reservoir deck; use {@link #toDiagnosticString()}
    */
+  @Deprecated
   public void exportVFPEXP(String filePath, int tableNumber) throws IOException {
     exportVFPEXP(Paths.get(filePath), tableNumber);
   }
 
   /**
-   * Export to Eclipse VFPEXP format.
+   * Writes diagnostic process results through the legacy file-export entry point.
    *
    * @param filePath output file path
-   * @param tableNumber VFP table number
+   * @param tableNumber unused legacy identifier
    * @throws IOException if writing fails
+   * @deprecated writes diagnostic text, not a reservoir deck; use {@link #toDiagnosticString()}
    */
+  @Deprecated
   public void exportVFPEXP(Path filePath, int tableNumber) throws IOException {
     if (vfpTable == null) {
       throw new IllegalStateException("VFP table not generated. Call generateVFPTable() first.");
     }
 
-    String content = toVFPEXPString(tableNumber);
+    String content = toDiagnosticString();
     try (BufferedWriter writer = Files.newBufferedWriter(filePath, StandardCharsets.UTF_8)) {
       writer.write(content);
     }
-    logger.info("VFP table exported to: {}", filePath);
+    logger.info("Process screening diagnostics written to: {}", filePath);
   }
 
   /**
-   * Generate Eclipse VFPEXP format string.
+   * Returns diagnostic process results through the legacy format entry point.
    *
-   * @param tableNumber VFP table number
-   * @return VFPEXP format string
+   * @param tableNumber unused legacy identifier
+   * @return diagnostic text, never a reservoir deck keyword
+   * @throws IllegalStateException if no table has been generated
+   * @deprecated use {@link #toDiagnosticString()}; well pressure qualification is separate
    */
+  @Deprecated
   public String toVFPEXPString(int tableNumber) {
+    return toDiagnosticString();
+  }
+
+  /**
+   * Lists every generated process point with its original axes, units and feasibility.
+   *
+   * <p>
+   * The generated table supplies the axes and rate units, so later changes to generator settings cannot relabel
+   * existing results. Unavailable or infeasible inlet pressures remain NaN, with an explicit false feasibility flag. No
+   * missing pressure is filled or extrapolated.
+   * </p>
+   *
+   * @return tab-separated process screening diagnostics, not reservoir simulator input
+   * @throws IllegalStateException if no table has been generated
+   */
+  public String toDiagnosticString() {
     if (vfpTable == null) {
       throw new IllegalStateException("VFP table not generated");
     }
-
-    StringBuilder sb = new StringBuilder();
-
-    sb.append("---------------------------------------------------------------------------\n");
-    sb.append("-- Eclipse VFPEXP - Generated ").append(LocalDate.now()).append("\n");
-    sb.append("-- Multi-Scenario Production Optimization\n");
-    sb.append("-- THP = Outlet pressure (bara)\n");
-    sb.append("-- BHP = Required inlet pressure (bara)\n");
-    sb.append("-- Generated by NeqSim MultiScenarioVFPGenerator\n");
-    sb.append("---------------------------------------------------------------------------\n\n");
-
-    sb.append("VFPEXP\n\n");
-
-    // Header: table num, datum depth, flow type, WCT, GOR
-    sb.append(String.format("  %d  0  'LIQ'  'WCT'  'GOR'  /\n\n", tableNumber));
-
-    // Flow rates
-    sb.append("-- Flow rates (").append(flowRateUnit).append(")\n");
-    for (int i = 0; i < flowRates.length; i++) {
-      sb.append(String.format("  %.1f", flowRates[i]));
-      if ((i + 1) % 6 == 0) {
-        sb.append("\n");
-      }
-    }
-    if (flowRates.length % 6 != 0) {
-      sb.append("\n");
-    }
-    sb.append("/\n\n");
-
-    // THP values (bara)
-    sb.append("-- THP = Outlet pressures (bara)\n");
-    for (double p : outletPressures) {
-      sb.append(String.format("  %.1f", p));
-    }
-    sb.append("\n/\n\n");
-
-    // WCT values
-    sb.append("-- Water cuts (fraction)\n");
-    for (double w : waterCuts) {
-      sb.append(String.format("  %.3f", w));
-    }
-    sb.append("\n/\n\n");
-
-    // GOR values
-    sb.append("-- GOR values (Sm3/Sm3)\n");
-    for (double g : GORs) {
-      sb.append(String.format("  %.1f", g));
-    }
-    sb.append("\n/\n\n");
-
-    // ALQ (artificial lift quantity - set to 0)
-    sb.append("-- ALQ (not used)\n");
-    sb.append("  0\n/\n\n");
-
-    // BHP table: lines with index prefix
-    sb.append("-- BHP = Required inlet pressure (bara)\n");
-    sb.append("-- Format: THP_idx  WCT_idx  GOR_idx  ALQ_idx  BHP1  BHP2  ...\n");
-    double[][][][] bhp = vfpTable.getBHPTable();
-
-    int lineIdx = 1;
-    for (int t = 0; t < outletPressures.length; t++) {
-      for (int w = 0; w < waterCuts.length; w++) {
-        for (int g = 0; g < GORs.length; g++) {
-          sb.append(String.format("  %d  %d  %d  1", t + 1, w + 1, g + 1));
-          for (int r = 0; r < flowRates.length; r++) {
-            double val = bhp[r][t][w][g];
-            if (Double.isNaN(val)) {
-              sb.append("  1*"); // Eclipse default marker
-            } else {
-              sb.append(String.format("  %.2f", val));
-            }
+    double[] rates = vfpTable.getFlowRates();
+    double[] outlets = vfpTable.getOutletPressures();
+    double[] water = vfpTable.getWaterCuts();
+    double[] gas = vfpTable.getGORs();
+    StringBuilder out = new StringBuilder();
+    out.append("# Process inlet-pressure screening; diagnostic text only\n");
+    out.append("# Rates retain their simulation input basis; no well model is qualified.\n");
+    out.append("rate [").append(vfpTable.getFlowRateUnit()).append("]\t");
+    out.append("outlet pressure [bara]\twater cut [-]\tGOR [Sm3/Sm3]\t");
+    out.append("required inlet pressure [bara]\tfeasible\n");
+    for (int r = 0; r < rates.length; r++) {
+      for (int p = 0; p < outlets.length; p++) {
+        for (int w = 0; w < water.length; w++) {
+          for (int g = 0; g < gas.length; g++) {
+            double pressure = vfpTable.getBHP(r, p, w, g);
+            boolean feasible = vfpTable.isFeasible(r, p, w, g) && Double.isFinite(pressure) && pressure > 0.0;
+            out.append(rates[r]).append('\t').append(outlets[p]).append('\t');
+            out.append(water[w]).append('\t').append(gas[g]).append('\t');
+            out.append(feasible ? pressure : Double.NaN).append('\t').append(feasible).append('\n');
           }
-          sb.append(" /\n");
-          lineIdx++;
         }
       }
     }
-
-    sb.append("\n/\n");
-
-    return sb.toString();
+    return out.toString();
   }
 
   // ==================== Getters and Setters ====================
@@ -566,7 +532,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
   }
 
   /**
-   * Set outlet pressures (THP) for VFP table.
+   * Sets process outlet pressures for the diagnostic table.
    *
    * @param outletPressures array of outlet pressures in bara
    */
@@ -753,7 +719,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
   }
 
   /**
-   * VFP table containing all calculated points.
+   * Diagnostic process inlet-pressure table. Legacy method names do not establish well BHP semantics.
    */
   public static class VFPTable implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -812,7 +778,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
     }
 
     /**
-     * Get the BHP (required inlet pressure) table.
+     * Gets required process inlet pressures; the legacy name does not imply well bottomhole pressure.
      *
      * @return 4D array [rate][thp][wc][gor]
      */
@@ -821,13 +787,13 @@ public class MultiScenarioVFPGenerator implements Serializable {
     }
 
     /**
-     * Get BHP at specific indices.
+     * Gets required process inlet pressure at specific indices.
      *
      * @param rateIdx rate index
-     * @param thpIdx THP index
+     * @param thpIdx process outlet-pressure index (legacy parameter name)
      * @param wcIdx water cut index
      * @param gorIdx GOR index
-     * @return BHP value or NaN if infeasible
+     * @return required process inlet pressure in bara, or NaN if infeasible
      */
     public double getBHP(int rateIdx, int thpIdx, int wcIdx, int gorIdx) {
       return bhpTable[rateIdx][thpIdx][wcIdx][gorIdx];
@@ -837,7 +803,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
      * Check if point is feasible.
      *
      * @param rateIdx rate index
-     * @param thpIdx THP index
+     * @param thpIdx process outlet-pressure index (legacy parameter name)
      * @param wcIdx water cut index
      * @param gorIdx GOR index
      * @return true if feasible
@@ -937,29 +903,24 @@ public class MultiScenarioVFPGenerator implements Serializable {
      * @param gorIdx GOR index
      */
     public void printSlice(int wcIdx, int gorIdx) {
-      System.out.printf("%nVFP Table Slice: WC=%.1f%%, GOR=%.0f%n", waterCuts[wcIdx] * 100, GORs[gorIdx]);
-      System.out.printf("Required Inlet Pressure (bara):%n");
-
-      // Header
-      System.out.printf("%-12s", "Rate\\THP");
-      for (double thp : outletPressures) {
-        System.out.printf("  %8.0f", thp);
+      StringBuilder out = new StringBuilder();
+      out.append("Process screening slice: water cut=").append(waterCuts[wcIdx]);
+      out.append(", GOR=").append(GORs[gorIdx]).append(" Sm3/Sm3\n");
+      out.append("Required inlet pressure [bara]; rate [").append(flowRateUnit).append("]\n");
+      out.append("rate / outlet pressure [bara]");
+      for (double pressure : outletPressures) {
+        out.append('\t').append(pressure);
       }
-      System.out.println();
-
-      // Data rows
+      out.append('\n');
       for (int r = 0; r < flowRates.length; r++) {
-        System.out.printf("%-12.0f", flowRates[r]);
-        for (int t = 0; t < outletPressures.length; t++) {
-          double val = bhpTable[r][t][wcIdx][gorIdx];
-          if (Double.isNaN(val)) {
-            System.out.printf("  %8s", "---");
-          } else {
-            System.out.printf("  %8.1f", val);
-          }
+        out.append(flowRates[r]);
+        for (int p = 0; p < outletPressures.length; p++) {
+          double value = bhpTable[r][p][wcIdx][gorIdx];
+          out.append('\t').append(feasible[r][p][wcIdx][gorIdx] && Double.isFinite(value) ? value : Double.NaN);
         }
-        System.out.println();
+        out.append('\n');
       }
+      logger.info("{}", out);
     }
   }
 }

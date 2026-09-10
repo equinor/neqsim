@@ -163,7 +163,7 @@ class CapabilitiesRunnerTest {
     JsonObject inventory = root.getAsJsonObject("phase0EvidenceInventory");
 
     JsonObject tests = inventory.getAsJsonObject("tests");
-    assertEquals(71, tests.get("javaTestClassCount").getAsInt());
+    assertEquals(72, tests.get("javaTestClassCount").getAsInt());
     assertEquals(94, tests.get("protocolScenarioCount").getAsInt());
 
     JsonObject guides = inventory.getAsJsonObject("guides");
