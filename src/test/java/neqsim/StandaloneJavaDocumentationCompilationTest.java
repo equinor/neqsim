@@ -39,7 +39,7 @@ public class StandaloneJavaDocumentationCompilationTest {
       "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
       "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java",
       "TransientPipelineLiquidAccumulationExample.java", "TwoFluidPipeExample.java",
-      "WellToOilStabilizationExample.java");
+      "TwoFluidPipeSlugTrackingExample.java", "WellToOilStabilizationExample.java");
 
   @TempDir
   Path compilationOutput;
