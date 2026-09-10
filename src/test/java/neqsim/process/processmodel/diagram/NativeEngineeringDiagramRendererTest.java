@@ -72,9 +72,10 @@ class NativeEngineeringDiagramRendererTest {
     assertTrue(pointY(vertical[vertical.length - 2]) > pointY(vertical[vertical.length - 1]));
     assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION"));
     String[] reverse = pointsForSemanticId(svg, "connection:parallel-2").split(" ");
-    assertEquals(283.0, Double.parseDouble(reverse[0].split(",")[0]), 0.0001);
+    assertEquals(283.0, parseCoordinate(reverse[0].split(",")[0], "west-envelope x for connection:parallel-2"),
+        0.0001);
     assertTrue(Math.abs(pointY(reverse[0]) - 180.0) < 8.0, "nozzle must remain on the west envelope");
-    assertTrue(Double.parseDouble(reverse[1].split(",")[0]) < 283.0);
+    assertTrue(parseCoordinate(reverse[1].split(",")[0], "first routed x for connection:parallel-2") < 283.0);
     graph.getNode("nozzle:a-out-1").putProperty("diagramPortSide", "UNKNOWN");
     EngineeringDiagramDocumentSet invalid = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PORT-SIDES",
         "Declared nozzle sides", ContentProfile.PFD);
@@ -146,10 +147,12 @@ class NativeEngineeringDiagramRendererTest {
     String svg = result.getSvgBySheetId().values().iterator().next();
     for (String id : Arrays.asList("connection:parallel-1", "connection:parallel-2", "connection:recycle")) {
       String[] points = pointsForSemanticId(svg, id).split(" ");
-      double firstX = Double.parseDouble(points[0].split(",")[0]);
-      double secondX = Double.parseDouble(points[1].split(",")[0]);
-      double lastX = Double.parseDouble(points[points.length - 1].split(",")[0]);
-      double previousX = Double.parseDouble(points[points.length - 2].split(",")[0]);
+      double firstX = parseCoordinate(points[0].split(",")[0], "first x for " + id + " in '" + points[0] + "'");
+      double secondX = parseCoordinate(points[1].split(",")[0], "second x for " + id + " in '" + points[1] + "'");
+      double lastX = parseCoordinate(points[points.length - 1].split(",")[0],
+          "last x for " + id + " in '" + points[points.length - 1] + "'");
+      double previousX = parseCoordinate(points[points.length - 2].split(",")[0],
+          "previous x for " + id + " in '" + points[points.length - 2] + "'");
       assertTrue(secondX > firstX, "outlet must first exit east: " + id);
       assertTrue(previousX < lastX, "inlet must be approached from west: " + id);
     }
