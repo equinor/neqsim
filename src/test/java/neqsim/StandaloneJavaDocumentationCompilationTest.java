@@ -38,7 +38,7 @@ public class StandaloneJavaDocumentationCompilationTest {
       "EclipseE300ExportImportExample.java", "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java",
       "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
       "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java",
-      "TwoFluidPipeExample.java");
+      "TwoFluidPipeExample.java", "WellToOilStabilizationExample.java");
 
   @TempDir
   Path compilationOutput;

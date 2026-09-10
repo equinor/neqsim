@@ -1,6 +1,8 @@
 package neqsim.process.equipment.reservoir.examples;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -59,6 +61,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class WellToOilStabilizationExample {
+  private static final Logger logger = LogManager.getLogger(WellToOilStabilizationExample.class);
 
   /**
    * Run the complete production system example.
@@ -66,14 +69,14 @@ public class WellToOilStabilizationExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println(StringUtils.repeat("=", 70));
-    System.out.println("NeqSim Well-to-Oil-Stabilization Production System Example");
-    System.out.println(StringUtils.repeat("=", 70));
+    logger.info("{}", StringUtils.repeat("=", 70));
+    logger.info("NeqSim Well-to-Oil-Stabilization Production System Example");
+    logger.info("{}", StringUtils.repeat("=", 70));
 
     // =========================================================================
     // STEP 1: Define Reservoir Fluid
     // =========================================================================
-    System.out.println("\n1. Creating reservoir fluid...");
+    logger.info("\n1. Creating reservoir fluid...");
 
     // Typical black oil composition (simplified)
     SystemInterface reservoirFluid = new SystemSrkEos(373.15, 250.0); // 100°C, 250 bara
@@ -91,24 +94,24 @@ public class WellToOilStabilizationExample {
     reservoirFluid.setMixingRule(2); // Numeric mixing rule
     reservoirFluid.setMultiPhaseCheck(true);
 
-    System.out.println("   - Black oil with 11 components (including water)");
-    System.out.println("   - Reservoir conditions: 100°C, 250 bara");
+    logger.info("   - Black oil with 11 components (including water)");
+    logger.info("   - Reservoir conditions: 100°C, 250 bara");
 
     // =========================================================================
     // STEP 2: Create Reservoir (Material Balance Tank)
     // =========================================================================
-    System.out.println("\n2. Setting up reservoir...");
+    logger.info("\n2. Setting up reservoir...");
 
     SimpleReservoir reservoir = new SimpleReservoir("Main Reservoir");
     reservoir.setReservoirFluid(reservoirFluid, 1e6, 10.0, 10.0);
 
-    System.out.println(
-        "   - Reservoir pressure: " + reservoir.getReservoirFluid().getPressure("bara") + " bara");
+    logger.info("   - Reservoir pressure: {} bara",
+        reservoir.getReservoirFluid().getPressure("bara"));
 
     // =========================================================================
     // STEP 3: Create Integrated Well System (IPR + VLP)
     // =========================================================================
-    System.out.println("\n3. Creating integrated well system (IPR + VLP)...");
+    logger.info("\n3. Creating integrated well system (IPR + VLP)...");
 
     // Create reservoir stream at reservoir conditions
     Stream reservoirStream = new Stream("Reservoir Stream", reservoir.getReservoirFluid());
@@ -136,14 +139,14 @@ public class WellToOilStabilizationExample {
     // Set wellhead pressure constraint
     well.setWellheadPressure(80.0, "bara");
 
-    System.out.println("   - IPR Model: Vogel (solution gas drive)");
-    System.out.println("   - VLP: Optimized hydrostatic+friction solver, 2500m tubing, 4-inch");
-    System.out.println("   - Target WHP: 80 bara");
+    logger.info("   - IPR Model: Vogel (solution gas drive)");
+    logger.info("   - VLP: Optimized hydrostatic+friction solver, 2500m tubing, 4-inch");
+    logger.info("   - Target WHP: 80 bara");
 
     // =========================================================================
     // STEP 4: Flowline to Platform
     // =========================================================================
-    System.out.println("\n4. Creating flowline to platform...");
+    logger.info("\n4. Creating flowline to platform...");
 
     PipeBeggsAndBrills flowline = new PipeBeggsAndBrills("Flowline to Platform");
     flowline.setInletStream(well.getOutletStream());
@@ -153,22 +156,22 @@ public class WellToOilStabilizationExample {
     flowline.setAngle(0.0);
     flowline.setNumberOfIncrements(20);
 
-    System.out.println("   - Length: 5 km, Diameter: 8-inch");
+    logger.info("   - Length: 5 km, Diameter: 8-inch");
 
     // =========================================================================
     // STEP 5: Inlet Choke Valve
     // =========================================================================
-    System.out.println("\n5. Creating inlet choke valve...");
+    logger.info("\n5. Creating inlet choke valve...");
 
     ThrottlingValve inletChoke = new ThrottlingValve("Inlet Choke", flowline.getOutletStream());
     inletChoke.setOutletPressure(35.0, "bara");
 
-    System.out.println("   - Outlet pressure: 35 bara");
+    logger.info("   - Outlet pressure: 35 bara");
 
     // =========================================================================
     // STEP 6: Oil Stabilization Train (3-Stage Separation)
     // =========================================================================
-    System.out.println("\n6. Creating oil stabilization train...");
+    logger.info("\n6. Creating oil stabilization train...");
 
     // --- First Stage: HP Separator ---
     Heater preHeater1 = new Heater("Pre-Heater HP", inletChoke.getOutletStream());
@@ -177,7 +180,7 @@ public class WellToOilStabilizationExample {
     Separator hpSeparator = new Separator("HP Separator");
     hpSeparator.setInletStream(preHeater1.getOutletStream());
 
-    System.out.println("   - HP Separator: 35 bara, 70°C");
+    logger.info("   - HP Separator: 35 bara, 70°C");
 
     // --- Second Stage: MP Separator ---
     ThrottlingValve mpValve =
@@ -190,7 +193,7 @@ public class WellToOilStabilizationExample {
     Separator mpSeparator = new Separator("MP Separator");
     mpSeparator.setInletStream(preHeater2.getOutletStream());
 
-    System.out.println("   - MP Separator: 10 bara, 65°C");
+    logger.info("   - MP Separator: 10 bara, 65°C");
 
     // --- Third Stage: LP Separator (Stabilizer) ---
     ThrottlingValve lpValve =
@@ -203,12 +206,12 @@ public class WellToOilStabilizationExample {
     Separator lpSeparator = new Separator("LP Separator (Stabilizer)");
     lpSeparator.setInletStream(stabilizer.getOutletStream());
 
-    System.out.println("   - LP Separator: 2 bara, 80°C");
+    logger.info("   - LP Separator: 2 bara, 80°C");
 
     // =========================================================================
     // STEP 7: Gas Compression (Recovery)
     // =========================================================================
-    System.out.println("\n7. Creating gas compression system...");
+    logger.info("\n7. Creating gas compression system...");
 
     // Compress LP gas to MP pressure
     Compressor lpCompressor = new Compressor("LP Compressor", lpSeparator.getGasOutStream());
@@ -244,13 +247,13 @@ public class WellToOilStabilizationExample {
     Cooler exportCooler = new Cooler("Export Cooler", exportCompressor.getOutletStream());
     exportCooler.setOutTemperature(30.0, "C");
 
-    System.out.println("   - 3-stage compression: LP→MP→HP→Export");
-    System.out.println("   - Export pressure: 120 bara");
+    logger.info("   - 3-stage compression: LP→MP→HP→Export");
+    logger.info("   - Export pressure: 120 bara");
 
     // =========================================================================
     // STEP 8: Build and Run Process System
     // =========================================================================
-    System.out.println("\n8. Building process system...");
+    logger.info("\n8. Building process system...");
 
     ProcessSystem process = new ProcessSystem();
 
@@ -279,81 +282,80 @@ public class WellToOilStabilizationExample {
     process.add(exportCompressor);
     process.add(exportCooler);
 
-    System.out.println("   - Total equipment: " + process.size() + " units");
-    System.out.println("\n9. Running simulation...");
+    logger.info("   - Total equipment: {} units", process.size());
+    logger.info("\n9. Running simulation...");
     process.run();
 
     // =========================================================================
     // STEP 9: Results Summary
     // =========================================================================
-    System.out.println("\n" + StringUtils.repeat("=", 70));
-    System.out.println("SIMULATION RESULTS");
-    System.out.println(StringUtils.repeat("=", 70));
+    logger.info("\n{}", StringUtils.repeat("=", 70));
+    logger.info("SIMULATION RESULTS");
+    logger.info("{}", StringUtils.repeat("=", 70));
 
     // Well Performance (IPR + VLP results)
-    System.out.println("\n--- WELL PERFORMANCE (IPR + VLP) ---");
-    System.out.println(
-        String.format("   Reservoir Pressure:    %.1f bara", well.getReservoirPressure("bara")));
-    System.out.println(
-        String.format("   Bottom-hole Pressure:  %.1f bara", well.getBottomHolePressure("bara")));
-    System.out.println(
-        String.format("   Wellhead Pressure:     %.1f bara", well.getWellheadPressure("bara")));
-    System.out
-        .println(String.format("   Drawdown:              %.1f bar", well.getDrawdown("bara")));
-    System.out.println(String.format("   Operating Flow Rate:   %.1f Sm³/day",
+    logger.info("\n--- WELL PERFORMANCE (IPR + VLP) ---");
+    logger.info("{}", String.format("   Reservoir Pressure:    %.1f bara",
+        well.getReservoirPressure("bara")));
+    logger.info("{}", String.format("   Bottom-hole Pressure:  %.1f bara",
+        well.getBottomHolePressure("bara")));
+    logger.info("{}", String.format("   Wellhead Pressure:     %.1f bara",
+        well.getWellheadPressure("bara")));
+    logger.info("{}", String.format("   Drawdown:              %.1f bar", well.getDrawdown("bara")));
+    logger.info("{}", String.format("   Operating Flow Rate:   %.1f Sm³/day",
         well.getOperatingFlowRate("Sm3/day")));
 
     // Flowline
-    System.out.println("\n--- FLOWLINE ---");
-    System.out.println(String.format("   Inlet Pressure:        %.1f bara",
+    logger.info("\n--- FLOWLINE ---");
+    logger.info("{}", String.format("   Inlet Pressure:        %.1f bara",
         flowline.getInletStream().getPressure("bara")));
-    System.out.println(String.format("   Outlet Pressure:       %.1f bara",
+    logger.info("{}", String.format("   Outlet Pressure:       %.1f bara",
         flowline.getOutletStream().getPressure("bara")));
-    System.out.println(String.format("   Pressure Drop:         %.1f bar",
+    logger.info("{}", String.format("   Pressure Drop:         %.1f bar",
         flowline.getInletStream().getPressure("bara")
             - flowline.getOutletStream().getPressure("bara")));
 
     // Choke
-    System.out.println("\n--- INLET CHOKE ---");
-    System.out.println(String.format("   Inlet Pressure:        %.1f bara",
+    logger.info("\n--- INLET CHOKE ---");
+    logger.info("{}", String.format("   Inlet Pressure:        %.1f bara",
         inletChoke.getInletStream().getPressure("bara")));
-    System.out.println(String.format("   Outlet Pressure:       %.1f bara",
+    logger.info("{}", String.format("   Outlet Pressure:       %.1f bara",
         inletChoke.getOutletStream().getPressure("bara")));
 
     // Separation
-    System.out.println("\n--- SEPARATION TRAIN ---");
-    System.out.println(String.format("   HP Sep Gas:            %.1f Sm³/day",
+    logger.info("\n--- SEPARATION TRAIN ---");
+    logger.info("{}", String.format("   HP Sep Gas:            %.1f Sm³/day",
         hpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
-    System.out.println(String.format("   MP Sep Gas:            %.1f Sm³/day",
+    logger.info("{}", String.format("   MP Sep Gas:            %.1f Sm³/day",
         mpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
-    System.out.println(String.format("   LP Sep Gas:            %.1f Sm³/day",
+    logger.info("{}", String.format("   LP Sep Gas:            %.1f Sm³/day",
         lpSeparator.getGasOutStream().getFlowRate("Sm3/day")));
 
     // Products
-    System.out.println("\n--- PRODUCT STREAMS ---");
-    System.out.println(String.format("   Stabilized Oil Rate:   %.1f Sm³/day",
+    logger.info("\n--- PRODUCT STREAMS ---");
+    logger.info("{}", String.format("   Stabilized Oil Rate:   %.1f Sm³/day",
         lpSeparator.getLiquidOutStream().getFlowRate("Sm3/day")));
-    System.out.println(String.format("   Stabilized Oil Pressure: %.1f bara",
+    logger.info("{}", String.format("   Stabilized Oil Pressure: %.1f bara",
         lpSeparator.getLiquidOutStream().getPressure("bara")));
-    System.out.println(String.format("   Export Gas Rate:       %.1f Sm³/day",
+    logger.info("{}", String.format("   Export Gas Rate:       %.1f Sm³/day",
         exportCooler.getOutletStream().getFlowRate("Sm3/day")));
-    System.out.println(String.format("   Export Gas Pressure:   %.1f bara",
+    logger.info("{}", String.format("   Export Gas Pressure:   %.1f bara",
         exportCooler.getOutletStream().getPressure("bara")));
 
     // Compression power
-    System.out.println("\n--- COMPRESSION POWER ---");
+    logger.info("\n--- COMPRESSION POWER ---");
     double totalPower =
         lpCompressor.getPower("kW") + mpCompressor.getPower("kW") + exportCompressor.getPower("kW");
-    System.out
-        .println(String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
-    System.out
-        .println(String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
-    System.out.println(
+    logger.info("{}",
+        String.format("   LP Compressor:         %.0f kW", lpCompressor.getPower("kW")));
+    logger.info("{}",
+        String.format("   MP Compressor:         %.0f kW", mpCompressor.getPower("kW")));
+    logger.info("{}",
         String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
-    System.out.println(String.format("   Total Power:           %.0f kW", totalPower));
+    logger.info("{}", String.format("   Total Power:           %.0f kW", totalPower));
 
-    System.out.println("\n" + StringUtils.repeat("=", 70));
-    System.out.println("Simulation completed successfully!");
-    System.out.println(StringUtils.repeat("=", 70));
+    logger.info("\n{}", StringUtils.repeat("=", 70));
+    logger.info("Simulation completed successfully!");
+    logger.info("{}", StringUtils.repeat("=", 70));
   }
 }
