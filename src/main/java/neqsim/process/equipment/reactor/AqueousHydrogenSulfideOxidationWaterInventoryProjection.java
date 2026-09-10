@@ -56,14 +56,12 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
         lowerRateReactedMoles, nominalReactedMoles, upperRateReactedMoles);
   }
 
-
   /**
    * Project a complete immutable trajectory onto one constant liquid-water inventory.
    *
    * <p>
-   * The same inventory is applied to every source-ordered segment. This preserves the
-   * trajectory's telescoping inventory balance without implying that water holdup has been
-   * calculated.
+   * The same inventory is applied to every source-ordered segment. This preserves the trajectory's telescoping
+   * inventory balance without implying that water holdup has been calculated.
    * </p>
    *
    * @param trajectoryResult qualified trajectory result
@@ -81,8 +79,7 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     double lowerRateReactedMoles = 0.0;
     double nominalReactedMoles = 0.0;
     double upperRateReactedMoles = 0.0;
-    for (AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult : trajectoryResult
-        .getSegmentResults()) {
+    for (AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult : trajectoryResult.getSegmentResults()) {
       Result projection = project(segmentResult, waterInventoryKg);
       segmentProjections.add(projection);
       lowerRateReactedMoles = finiteSum(lowerRateReactedMoles, projection.getLowerRateReactedMoles(),
@@ -94,22 +91,19 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     }
 
     double expectedLowerRateReactedMoles = finiteProduct(
-        trajectoryResult.getInitialTotalSulfideMolality()
-            - trajectoryResult.getFinalTotalSulfideMolalityAtLowerRate(),
+        trajectoryResult.getInitialTotalSulfideMolality() - trajectoryResult.getFinalTotalSulfideMolalityAtLowerRate(),
         waterInventoryKg, "Expected cumulative lower-rate reacted total sulfide");
     double expectedNominalReactedMoles = finiteProduct(trajectoryResult.getReactedTotalSulfideMolality(),
         waterInventoryKg, "Expected cumulative nominal reacted total sulfide");
     double expectedUpperRateReactedMoles = finiteProduct(
-        trajectoryResult.getInitialTotalSulfideMolality()
-            - trajectoryResult.getFinalTotalSulfideMolalityAtUpperRate(),
+        trajectoryResult.getInitialTotalSulfideMolality() - trajectoryResult.getFinalTotalSulfideMolalityAtUpperRate(),
         waterInventoryKg, "Expected cumulative upper-rate reacted total sulfide");
 
     return new TrajectoryResult(waterInventoryKg, trajectoryResult.getTotalTimeHours(), segmentProjections,
         lowerRateReactedMoles, nominalReactedMoles, upperRateReactedMoles,
         finiteDifference(expectedLowerRateReactedMoles, lowerRateReactedMoles,
             "Lower-rate trajectory closure residual"),
-        finiteDifference(expectedNominalReactedMoles, nominalReactedMoles,
-            "Nominal trajectory closure residual"),
+        finiteDifference(expectedNominalReactedMoles, nominalReactedMoles, "Nominal trajectory closure residual"),
         finiteDifference(expectedUpperRateReactedMoles, upperRateReactedMoles,
             "Upper-rate trajectory closure residual"));
   }
@@ -128,7 +122,6 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     return product;
   }
 
-
   private static double finiteSum(double accumulator, double increment, String name) {
     double sum = accumulator + increment;
     if (!Double.isFinite(sum) || sum < 0.0) {
@@ -144,7 +137,6 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     }
     return difference;
   }
-
 
   /** Immutable dimensional projection for one constant-water trajectory. */
   public static final class TrajectoryResult implements Serializable {
