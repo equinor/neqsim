@@ -6,6 +6,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating slug tracking capabilities in the TwoFluidPipe model.
@@ -19,20 +21,22 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * <li>Slug statistics at the outlet</li>
  * </ul>
  * </p>
- * 
+ *
  * <p>
  * The pipeline has significant terrain variations designed to induce terrain-induced slugging
  * behavior.
  * </p>
  */
 public class TwoFluidPipeSlugTrackingExample {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeSlugTrackingExample.class);
+
 
   public static void main(String[] args) {
-    System.out.println("=============================================================");
-    System.out.println("  TwoFluidPipe Slug Tracking Example");
-    System.out.println("  Demonstrating terrain-induced slugging");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  TwoFluidPipe Slug Tracking Example");
+    logger.info("  Demonstrating terrain-induced slugging");
+    logger.info("=============================================================");
+    logger.info("");
 
     // Pipeline configuration - shorter pipe with more aggressive terrain for slug formation
     double pipeLength = 20000; // 20 km
@@ -53,14 +57,14 @@ public class TwoFluidPipeSlugTrackingExample {
     // Profile: dips and rises to trap liquid
     double[] elevationProfile = createSlugInducingTerrain(numberOfSections, pipeLength);
 
-    System.out.println("Pipeline Configuration:");
-    System.out.printf("  Length:              %.1f km%n", pipeLength / 1000);
-    System.out.printf("  Diameter:            %.0f mm%n", pipeDiameter * 1000);
-    System.out.printf("  Inlet temperature:   %.1f °C%n", inletTemperature);
-    System.out.printf("  Inlet pressure:      %.1f bara%n", inletPressure);
-    System.out.printf("  Flow rate:           %.1f kg/s%n", flowRate);
-    System.out.printf("  Number of sections:  %d%n", numberOfSections);
-    System.out.println();
+    logger.info("Pipeline Configuration:");
+    logger.info("{}", String.format("  Length:              %.1f km%n", pipeLength / 1000));
+    logger.info("{}", String.format("  Diameter:            %.0f mm%n", pipeDiameter * 1000));
+    logger.info("{}", String.format("  Inlet temperature:   %.1f °C%n", inletTemperature));
+    logger.info("{}", String.format("  Inlet pressure:      %.1f bara%n", inletPressure));
+    logger.info("{}", String.format("  Flow rate:           %.1f kg/s%n", flowRate));
+    logger.info("{}", String.format("  Number of sections:  %d%n", numberOfSections));
+    logger.info("");
 
     // Print terrain summary
     double minElev = Double.MAX_VALUE, maxElev = Double.MIN_VALUE;
@@ -73,8 +77,8 @@ public class TwoFluidPipeSlugTrackingExample {
         lowPointCount++;
       }
     }
-    System.out.printf("Terrain: Min = %.1f m, Max = %.1f m, Low points = %d%n%n", minElev, maxElev,
-        lowPointCount);
+    logger.info("{}", String.format("Terrain: Min = %.1f m, Max = %.1f m, Low points = %d%n%n", minElev, maxElev,
+        lowPointCount));
 
     // Create fluid - gas-condensate with water
     SystemInterface fluid = createGasCondensateWithWater(inletTemperature, inletPressure);
@@ -99,7 +103,7 @@ public class TwoFluidPipeSlugTrackingExample {
     pipe.setThermodynamicUpdateInterval(100);
 
     // First run steady-state to initialize
-    System.out.println("Running initial steady-state...");
+    logger.info("Running initial steady-state...");
     pipe.run();
 
     // Lower the critical holdup threshold to trigger slugs sooner
@@ -110,8 +114,8 @@ public class TwoFluidPipeSlugTrackingExample {
     double timeStep = 1.0; // 1 second steps
     int reportInterval = 300; // Report every 5 minutes
 
-    System.out.println("Running transient simulation (30 minutes)...");
-    System.out.println("(This may take a minute...)");
+    logger.info("Running transient simulation (30 minutes)...");
+    logger.info("(This may take a minute...)");
     long startTime = System.currentTimeMillis();
 
     java.util.UUID calcId = java.util.UUID.randomUUID();
@@ -126,20 +130,20 @@ public class TwoFluidPipeSlugTrackingExample {
       if (stepCount % reportInterval == 0) {
         LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
         int overflowing = tracker.getOverflowingZones().size();
-        System.out.printf("  t=%.0fs: %d slugs active, %d generated, %d zones overflowing%n",
+        logger.info("{}", String.format("  t=%.0fs: %d slugs active, %d generated, %d zones overflowing%n",
             simTime, pipe.getSlugTracker().getSlugCount(),
-            pipe.getSlugTracker().getTotalSlugsGenerated(), overflowing);
+            pipe.getSlugTracker().getTotalSlugsGenerated(), overflowing));
       }
     }
 
     long elapsed = System.currentTimeMillis() - startTime;
-    System.out.printf("Simulation completed in %.1f seconds%n%n", elapsed / 1000.0);
+    logger.info("{}", String.format("Simulation completed in %.1f seconds%n%n", elapsed / 1000.0));
 
     // Print results
-    System.out.println("=============================================================");
-    System.out.println("  PIPELINE RESULTS");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  PIPELINE RESULTS");
+    logger.info("=============================================================");
+    logger.info("");
 
     double[] pressureProfile = pipe.getPressureProfile();
     double[] temperatureProfile = pipe.getTemperatureProfile();
@@ -150,24 +154,24 @@ public class TwoFluidPipeSlugTrackingExample {
     double pressureDrop = (pressureProfile[0] - pressureProfile[pressureProfile.length - 1]) / 1e5;
     double outletTemp = temperatureProfile[temperatureProfile.length - 1] - 273.15;
 
-    System.out.printf("Pressure drop:        %.2f bar%n", pressureDrop);
-    System.out.printf("Outlet temperature:   %.1f °C%n", outletTemp);
-    System.out.printf("Liquid inventory:     %.2f m³%n", pipe.getLiquidInventory("m3"));
-    System.out.println();
+    logger.info("{}", String.format("Pressure drop:        %.2f bar%n", pressureDrop));
+    logger.info("{}", String.format("Outlet temperature:   %.1f °C%n", outletTemp));
+    logger.info("{}", String.format("Liquid inventory:     %.2f m³%n", pipe.getLiquidInventory("m3")));
+    logger.info("");
 
     // Print accumulation zone analysis
-    System.out.println("=============================================================");
-    System.out.println("  LIQUID ACCUMULATION ZONES");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  LIQUID ACCUMULATION ZONES");
+    logger.info("=============================================================");
+    logger.info("");
 
     LiquidAccumulationTracker accTracker = pipe.getAccumulationTracker();
-    System.out.printf("Number of accumulation zones: %d%n",
-        accTracker.getAccumulationZones().size());
-    System.out.printf("Total accumulated volume:     %.3f m³%n",
-        accTracker.getTotalAccumulatedVolume());
-    System.out.printf("Overflowing zones:           %d%n", accTracker.getOverflowingZones().size());
-    System.out.println();
+    logger.info("{}", String.format("Number of accumulation zones: %d%n",
+        accTracker.getAccumulationZones().size()));
+    logger.info("{}", String.format("Total accumulated volume:     %.3f m³%n",
+        accTracker.getTotalAccumulatedVolume()));
+    logger.info("{}", String.format("Overflowing zones:           %d%n", accTracker.getOverflowingZones().size()));
+    logger.info("");
 
     int zoneNum = 1;
     for (LiquidAccumulationTracker.AccumulationZone zone : accTracker.getAccumulationZones()) {
@@ -179,56 +183,56 @@ public class TwoFluidPipeSlugTrackingExample {
         }
       }
       int sectionCount = zone.sectionIndices.size();
-      System.out.printf(
+      logger.info("{}", String.format(
           "Zone %d: Position %.0f-%.0f m, %d sections, max holdup=%.2f, %.1f%% full%s%n", zoneNum++,
           zone.startPosition, zone.endPosition, sectionCount, maxHoldupInZone,
-          100.0 * zone.liquidVolume / zone.maxVolume, zone.isOverflowing ? " [OVERFLOWING]" : "");
+          100.0 * zone.liquidVolume / zone.maxVolume, zone.isOverflowing ? " [OVERFLOWING]" : ""));
     }
-    System.out.println();
+    logger.info("");
 
     // Print slug tracking results
-    System.out.println("=============================================================");
-    System.out.println("  SLUG TRACKING RESULTS");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  SLUG TRACKING RESULTS");
+    logger.info("=============================================================");
+    logger.info("");
 
     SlugTracker slugTracker = pipe.getSlugTracker();
 
-    System.out.printf("Slugs generated (total):     %d%n", slugTracker.getTotalSlugsGenerated());
-    System.out.printf("Slugs merged:                %d%n", slugTracker.getTotalSlugsMerged());
-    System.out.printf("Active slugs in pipe:        %d%n", slugTracker.getSlugCount());
-    System.out.printf("Slugs arrived at outlet:     %d%n", pipe.getOutletSlugCount());
-    System.out.printf("Total slug volume at outlet: %.3f m³%n", pipe.getTotalSlugVolumeAtOutlet());
-    System.out.printf("Max slug length at outlet:   %.1f m%n", pipe.getMaxSlugLengthAtOutlet());
-    System.out.printf("Max slug volume at outlet:   %.3f m³%n", pipe.getMaxSlugVolumeAtOutlet());
-    System.out.println();
+    logger.info("{}", String.format("Slugs generated (total):     %d%n", slugTracker.getTotalSlugsGenerated()));
+    logger.info("{}", String.format("Slugs merged:                %d%n", slugTracker.getTotalSlugsMerged()));
+    logger.info("{}", String.format("Active slugs in pipe:        %d%n", slugTracker.getSlugCount()));
+    logger.info("{}", String.format("Slugs arrived at outlet:     %d%n", pipe.getOutletSlugCount()));
+    logger.info("{}", String.format("Total slug volume at outlet: %.3f m³%n", pipe.getTotalSlugVolumeAtOutlet()));
+    logger.info("{}", String.format("Max slug length at outlet:   %.1f m%n", pipe.getMaxSlugLengthAtOutlet()));
+    logger.info("{}", String.format("Max slug volume at outlet:   %.3f m³%n", pipe.getMaxSlugVolumeAtOutlet()));
+    logger.info("");
 
     // List active slugs
     if (slugTracker.getSlugCount() > 0) {
-      System.out.println("Active Slugs:");
+      logger.info("Active Slugs:");
       for (SlugTracker.SlugUnit slug : slugTracker.getSlugs()) {
-        System.out.printf(
+        logger.info("{}", String.format(
             "  Slug #%d: Front=%.0fm, Length=%.1fm, Velocity=%.2f m/s, Volume=%.3f m³%s%n", slug.id,
             slug.frontPosition, slug.slugBodyLength, slug.frontVelocity, slug.liquidVolume,
-            slug.isTerrainInduced ? " [terrain-induced]" : "");
+            slug.isTerrainInduced ? " [terrain-induced]" : ""));
       }
-      System.out.println();
+      logger.info("");
     }
 
     // Mass conservation check
     double massError = slugTracker.getMassConservationError();
-    System.out.printf("Mass conservation error:     %.6f kg (should be ~0)%n", massError);
-    System.out.println();
+    logger.info("{}", String.format("Mass conservation error:     %.6f kg (should be ~0)%n", massError));
+    logger.info("");
 
     // Print detailed profile at key locations
-    System.out.println("=============================================================");
-    System.out.println("  DETAILED HOLDUP PROFILE");
-    System.out.println("=============================================================");
-    System.out.println();
+    logger.info("=============================================================");
+    logger.info("  DETAILED HOLDUP PROFILE");
+    logger.info("=============================================================");
+    logger.info("");
 
-    System.out.println(
+    logger.info(
         "Position (km) | Elevation (m) | P (bar) | T (°C)  | Liquid | Oil    | Water  | In Slug");
-    System.out.println(
+    logger.info(
         "--------------|---------------|---------|---------|--------|--------|--------|--------");
 
     double dx = pipeLength / numberOfSections;
@@ -243,23 +247,23 @@ public class TwoFluidPipeSlugTrackingExample {
           break;
         }
       }
-      System.out.printf("%13.1f | %13.1f | %7.1f | %7.1f | %6.3f | %6.4f | %6.4f |%s%n", pos,
+      logger.info("{}", String.format("%13.1f | %13.1f | %7.1f | %7.1f | %6.3f | %6.4f | %6.4f |%s%n", pos,
           elevationProfile[i], pressureProfile[i] / 1e5, temperatureProfile[i] - 273.15,
-          liquidHoldup[i], oilHoldup[i], waterHoldup[i], inSlug);
+          liquidHoldup[i], oilHoldup[i], waterHoldup[i], inSlug));
     }
-    System.out.println();
+    logger.info("");
 
     // Print slug statistics summary
-    System.out.println("=============================================================");
-    System.out.println("  SLUG STATISTICS SUMMARY");
-    System.out.println("=============================================================");
-    System.out.println();
-    System.out.print(pipe.getSlugStatisticsSummary());
+    logger.info("=============================================================");
+    logger.info("  SLUG STATISTICS SUMMARY");
+    logger.info("=============================================================");
+    logger.info("");
+    logger.info("{}", pipe.getSlugStatisticsSummary());
   }
 
   /**
    * Creates terrain profile designed to induce slug formation.
-   * 
+   *
    * <p>
    * The terrain has several low points where liquid will accumulate, and uphill sections that
    * create resistance to liquid flow, promoting slug formation.
