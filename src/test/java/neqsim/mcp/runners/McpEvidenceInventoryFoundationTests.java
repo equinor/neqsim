@@ -601,8 +601,8 @@ class McpEvidenceInventoryFoundationTests {
   void testMultiServerCompositionPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject composition =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("composeMultiServerWorkflow");
+    JsonObject composition = limitations.getAsJsonObject("coverageRecords")
+        .getAsJsonObject("composeMultiServerWorkflow");
 
     assertEquals("1.35", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -613,22 +613,17 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(composition.get("contractTrustAvailable").getAsBoolean());
     assertEquals(6, composition.get("contractEvidenceCount").getAsInt());
     assertEquals(6, composition.getAsJsonArray("contractEvidenceSources").size());
-    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("CompositionRunner.java"));
-    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("CompositionRunnerTest.java"));
-    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_composition_protocol.py"));
-    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_mcp_server.py"));
+    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("CompositionRunner.java"));
+    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("CompositionRunnerTest.java"));
+    assertTrue(
+        composition.getAsJsonArray("contractEvidenceSources").toString().contains("test_composition_protocol.py"));
+    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
         .contains("MULTI_SERVER_COMPOSITION_CONTRACT.md"));
     assertTrue(composition.get("evidenceBoundary").getAsString()
         .contains("does not establish external server connection"));
-    assertTrue(composition.get("evidenceBoundary").getAsString()
-        .contains("accountable engineering approval"));
-    assertTrue(limitations.get("promotionBoundary").getAsString()
-        .contains("composeMultiServerWorkflow"));
+    assertTrue(composition.get("evidenceBoundary").getAsString().contains("accountable engineering approval"));
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("composeMultiServerWorkflow"));
     assertEquals(35, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(16, limitations.get("confirmedGapToolCount").getAsInt());
   }

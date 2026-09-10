@@ -531,13 +531,11 @@ public final class McpEvidenceInventory {
       evidenceBoundary = "Caller-authored ordered steps, curated runner dispatch, additive shared-fluid normalization, step-specific override precedence, per-step result, timing and success accounting, stop-on-first-failure behavior, structured missing, malformed and unknown-runner errors, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish natural-language planning, arbitrary code, tool or network execution, semantic compatibility or unit conversion between steps, transactionality, rollback, persistence, distributed execution, resource or tenant isolation, numerical fidelity, convergence, conservation, uncertainty, optimization quality, facility completeness, external IAM or transport security, plant or control authority, certification, or accountable engineering approval";
       break;
     case "composeMultiServerWorkflow":
-      benchmarkApplicability =
-          "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA";
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/CompositionRunner.java",
           "src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java",
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-          "neqsim-mcp-server/test_composition_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/test_composition_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md" };
       evidenceBoundary = "Bounded metadata-only request admission, deterministic built-in and custom-server discovery, fixed workflows, sequential task plans, protected built-ins, bounded process-local custom metadata, fail-closed malformed, oversized, blank, unknown, connection and credential input, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish external server connection, discovery, reachability, tool invocation, workflow execution, result chaining, credential access, transport, IAM or authentication, persistence or durability, distributed transactions or rollback, semantic or unit compatibility, scientific or numerical validity, convergence, conservation, plant or control authority, certification, or accountable engineering approval";
       break;
