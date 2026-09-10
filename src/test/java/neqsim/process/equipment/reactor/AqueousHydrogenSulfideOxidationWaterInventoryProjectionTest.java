@@ -96,8 +96,8 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
   void testProjectionFailsClosedForMissingOrInvalidWaterInventory() {
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment = segmentResult(referenceSegment(1.0));
 
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(null, 1.0));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection
+        .project((AqueousHydrogenSulfideOxidationTrajectory.SegmentResult) null, 1.0));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segment, 0.0));
     assertThrows(IllegalArgumentException.class,
