@@ -80,10 +80,12 @@ positive. WCT is bounded by 0 and 1. Omitted composition and ALQ axes default to
 zero, but an explicitly empty array is invalid. Every BHP dimension must match its axis,
 and all cells must contain finite positive absolute pressure.
 
-`NaN`, infinity, zero BHP, ragged or transposed arrays, missing cells and unsupported
+`NaN`, infinity, zero BHP, ragged or dimensionally mismatched arrays, missing cells and unsupported
 definitions are rejected before an export opens its destination. Invalid data never become
 `1*`, copied neighbors or empirical fallback pressures. Infeasible results can be retained
 in diagnostic tables; select a fully feasible grid before requesting a deck.
+Transposing equally sized dimensions cannot be detected from array shape; callers must
+preserve the documented axis order.
 
 ## Migration from legacy methods
 
