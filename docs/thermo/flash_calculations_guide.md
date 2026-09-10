@@ -869,13 +869,20 @@ void dewPointPressureFlashHC()
 
 ### Solid Phase Flash
 
-For systems with potential solid precipitation (wax, ice, hydrates).
+For systems with potential pure-component solid precipitation, such as sulfur or ice.
 
 ```java
 void TPSolidflash()
 void PHsolidFlash(double Hspec)
 void freezingPointTemperatureFlash()
 ```
+
+`TPSolidflash()` retains the components selected with `setSolidPhaseCheck(String)`.
+Without an enabled solid selection it checks all components. Its `SolidFlash1`
+solver supports one pure solid alongside the fluid phases and rejects multiple
+precipitating candidates with `UnsupportedOperationException` before adding a solid
+phase. See the [sulfur precipitation guide](../chemicalreactions/sulfur_deposition_analysis.md#2-tpsolidflash--sulfur-solubility-and-precipitation)
+for a selected-S8 example and component-balance checks.
 
 **Example - Wax precipitation:**
 ```java

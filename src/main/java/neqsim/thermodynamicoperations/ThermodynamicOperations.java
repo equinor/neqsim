@@ -142,7 +142,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * TPSolidflash.
+   * Perform a temperature-pressure flash with fluid phases and one pure solid phase. Components selected through
+   * {@link SystemInterface#setSolidPhaseCheck(String)} remain the only allowed solid candidates. When solid checking
+   * has not been enabled, all components are checked.
+   *
+   * @throws UnsupportedOperationException if multiple selected components are predicted to precipitate
    */
   public void TPSolidflash() {
     operation = new SolidFlash1(system);

@@ -90,6 +90,22 @@ ops.TPSolidflash();
 boolean solidPresent = gas.hasPhaseType("solid");
 ```
 
+`TPSolidflash()` preserves the components selected with `setSolidPhaseCheck(String)`.
+In particular, selecting `"S8"` does not enable precipitation of water or TBP
+pseudo-components. Calling `TPSolidflash()` without first enabling solid checking
+retains the default of checking all components.
+
+The current `SolidFlash1` solver supports one pure solid phase together with the
+fluid phases. If more than one selected component is predicted to precipitate,
+it throws `UnsupportedOperationException` before adding a solid phase; simultaneous
+independent solids are not supported by this solver. Selecting only S8 therefore
+models sulfur precipitation with other solids excluded. For mixed-solid studies,
+do not interpret a single selected-solid calculation as full equilibrium.
+
+For inventory checks, sum each component's `getNumberOfMolesInPhase()` over the
+active phases and compare it with `getNumberOfmoles()` for that component. Phase
+mole fractions and phase fractions must each sum to one.
+
 ### 3. SulfurDepositionAnalyser — Integrated Unit Operation
 
 The `SulfurDepositionAnalyser` is a process equipment unit that combines all sulfur analysis capabilities in a single `run()` call:
