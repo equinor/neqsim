@@ -87,14 +87,19 @@ class McpClient:
     def list_tools(self):
         return self.request("tools/list", {}).get("result", {}).get("tools", [])
 
-    def call_stream(self, request):
+    def call_tool(self, name, arguments):
         response = self.request("tools/call", {
-            "name": "streamSimulation",
-            "arguments": {"streamJson": json.dumps(request)},
+            "name": name,
+            "arguments": arguments,
         })
         content = response.get("result", {}).get("content", [])
         require(content, "MCP tool call returned no content", response)
         return json.loads(content[0].get("text", ""))
+
+    def call_stream(self, request):
+        return self.call_tool("streamSimulation", {
+            "streamJson": json.dumps(request),
+        })
 
     def close(self):
         if self.proc is None:
@@ -271,6 +276,35 @@ def test_unknown_cancel_is_non_disclosing(client):
             "unknown cancellation disclosed state", result)
 
 
+
+def test_inventory_promoted(client):
+    result = payload(client.call_tool("getCapabilities", {}))
+    require(result.get("status") == "success", "capabilities request failed", result)
+    inventory = result.get("phase0EvidenceInventory", {})
+    limitations = inventory.get("knownLimitations", {})
+    record = limitations.get("coverageRecords", {}).get("streamSimulation", {})
+    require(inventory.get("inventoryVersion") == "1.34"
+            and limitations.get("contractTestedToolCount") == 34
+            and limitations.get("confirmedGapToolCount") == 17
+            and limitations.get("contractPromotionCandidateCount") == 0,
+            "streaming promotion accounting drifted", inventory)
+    require(record.get("coverageStatus") == "CONTRACT_TESTED",
+            "streamSimulation was not promoted atomically", record)
+    require(record.get("benchmarkApplicability")
+            == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_STREAMING_SIMULATION",
+            "streaming benchmark boundary drifted", record)
+    require(record.get("contractEvidenceCount") == 7
+            and "src/test/java/neqsim/mcp/runners/StreamingRunnerTest.java"
+            in record.get("contractEvidenceSources", [])
+            and "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java"
+            in record.get("contractEvidenceSources", [])
+            and "neqsim-mcp-server/test_streaming_protocol.py"
+            in record.get("contractEvidenceSources", [])
+            and "neqsim-mcp-server/docs/evidence/STREAMING_SIMULATION_CONTRACT.md"
+            in record.get("contractEvidenceSources", []),
+            "streaming evidence sources drifted", record)
+
+
 def main():
     client = McpClient()
     tests = [
@@ -281,6 +315,7 @@ def main():
         ("fail-closed dynamic timing", test_fail_closed_dynamic_timing),
         ("canonical sweep lifecycle", test_canonical_sweep_lifecycle),
         ("unknown cancel is non-disclosing", test_unknown_cancel_is_non_disclosing),
+        ("inventory promoted", test_inventory_promoted),
     ]
     try:
         client.start()
