@@ -770,4 +770,3 @@ This tutorial demonstrated the advanced risk analysis capabilities in NeqSim:
 
 These tools integrate seamlessly with NeqSim's process simulation capabilities to provide
 comprehensive risk assessment for oil & gas operations.
-

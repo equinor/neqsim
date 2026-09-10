@@ -343,6 +343,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 14](figures/TwoFluidPipe_Tutorial_cell_14_output_1.png)
+
 ## 6. Two-Fluid Model Theory
 
 The two-fluid model solves separate conservation equations for gas and liquid phases:
@@ -602,6 +604,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 21](figures/TwoFluidPipe_Tutorial_cell_21_output_1.png)
+
 ## 9. Parameter Study: Effect of Flow Rate on Pressure Drop
 
 Let's investigate how flow rate affects pressure drop and liquid holdup in the pipeline.
@@ -721,6 +725,8 @@ Pressure drop correlation: ΔP = 1.10e-09·Q² + 2.24e-06·Q + -1.51e-03
 ```
 
 </details>
+
+![Result figure from cell 24](figures/TwoFluidPipe_Tutorial_cell_24_output_1.png)
 
 ## 10. Heat Transfer Modeling
 
@@ -854,6 +860,8 @@ plt.tight_layout()
 plt.show()
 ```
 
+![Result figure from cell 27](figures/TwoFluidPipe_Tutorial_cell_27_output_1.png)
+
 ## 11. Summary and Key Takeaways
 
 This tutorial demonstrated the use of NeqSim's `TwoFluidPipe` model for multiphase pipeline simulation:
@@ -918,4 +926,3 @@ For more information, see:
 ```
 
 </details>
-

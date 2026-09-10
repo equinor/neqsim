@@ -954,4 +954,3 @@ This notebook demonstrated **NeqSim integration with AI-based production optimiz
 - **NeqSim Documentation**: [neqsim.github.io](https://neqsim.github.io/)
 - **NeqSim Python**: [github.com/equinor/neqsim-python](https://github.com/equinor/neqsim-python)
 - **API Reference**: See `docs/ai_platform_integration.md`
-

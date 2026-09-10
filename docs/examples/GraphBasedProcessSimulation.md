@@ -416,4 +416,3 @@ for edge in hx_node.getIncomingEdges():
 3. Use `runParallel()` when you know you have independent branches
 4. Call `validate()` during development to catch configuration errors
 5. Use `getSummary()` to understand process structure
-
