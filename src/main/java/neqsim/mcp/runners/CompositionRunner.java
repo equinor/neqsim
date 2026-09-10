@@ -151,8 +151,7 @@ public final class CompositionRunner {
   private static synchronized String registerServer(JsonObject input) {
     for (String field : CONNECTION_FIELDS) {
       if (input.has(field)) {
-        return errorJson("UNSUPPORTED_CONNECTION_DATA",
-            "Connection, execution, and credential fields are not accepted",
+        return errorJson("UNSUPPORTED_CONNECTION_DATA", "Connection, execution, and credential fields are not accepted",
             "Register descriptive metadata only; configure connections in the authorized host application");
       }
     }
@@ -562,8 +561,7 @@ public final class CompositionRunner {
   // ═══════════════════════════════════════════════════════════════════════════
 
   private static String requiredString(JsonObject input, String field, int maxLength) {
-    if (!input.has(field) || !input.get(field).isJsonPrimitive()
-        || !input.get(field).getAsJsonPrimitive().isString()) {
+    if (!input.has(field) || !input.get(field).isJsonPrimitive() || !input.get(field).getAsJsonPrimitive().isString()) {
       throw new IllegalArgumentException("Missing string field");
     }
     String value = input.get(field).getAsString().trim();

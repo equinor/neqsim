@@ -54,21 +54,19 @@ class CompositionRunnerTest {
     JsonObject catalog = run("{\"action\":\"listWorkflows\"}");
     assertEquals("success", catalog.get("status").getAsString());
     assertEquals(4, catalog.get("count").getAsInt());
-    assertEquals("digital-twin",
-        catalog.getAsJsonArray("workflows").get(0).getAsJsonObject().get("id").getAsString());
+    assertEquals("digital-twin", catalog.getAsJsonArray("workflows").get(0).getAsJsonObject().get("id").getAsString());
 
     JsonObject workflow = run("{\"action\":\"getWorkflow\",\"workflowId\":\"safety-study\"}");
     assertEquals("success", workflow.get("status").getAsString());
     assertEquals("safety-study", workflow.get("id").getAsString());
     assertEquals(4, workflow.getAsJsonArray("steps").size());
-    assertEquals("neqsim",
-        workflow.getAsJsonArray("steps").get(0).getAsJsonObject().get("server").getAsString());
+    assertEquals("neqsim", workflow.getAsJsonArray("steps").get(0).getAsJsonObject().get("server").getAsString());
   }
 
   @Test
   void compositionPlanIsSequentialMetadataAndPerformsNoExecution() {
-    JsonObject result =
-        run("{\"action\":\"planComposition\",\"task\":\"Compare plant measurements and project cost\"}");
+    JsonObject result = run(
+        "{\"action\":\"planComposition\",\"task\":\"Compare plant measurements and project cost\"}");
 
     assertEquals("success", result.get("status").getAsString());
     assertTrue(result.get("metadataOnly").getAsBoolean());
@@ -95,8 +93,7 @@ class CompositionRunnerTest {
     assertEquals(1, custom.getAsJsonArray("tools").size());
     assertEquals(1, custom.getAsJsonArray("dataFormats").size());
 
-    JsonObject removed =
-        run("{\"action\":\"removeServer\",\"name\":\"" + CUSTOM_SERVER + "\"}");
+    JsonObject removed = run("{\"action\":\"removeServer\",\"name\":\"" + CUSTOM_SERVER + "\"}");
     assertEquals("success", removed.get("status").getAsString());
     assertTrue(removed.get("removed").getAsBoolean());
   }
@@ -107,8 +104,8 @@ class CompositionRunnerTest {
         + "\",\"endpoint\":\"https://example.invalid/mcp\"}");
     assertEquals("UNSUPPORTED_CONNECTION_DATA", errorCode(endpoint));
 
-    JsonObject token = run("{\"action\":\"registerServer\",\"name\":\"" + CUSTOM_SERVER
-        + "\",\"token\":\"do-not-store\"}");
+    JsonObject token = run(
+        "{\"action\":\"registerServer\",\"name\":\"" + CUSTOM_SERVER + "\",\"token\":\"do-not-store\"}");
     assertEquals("UNSUPPORTED_CONNECTION_DATA", errorCode(token));
 
     JsonObject catalog = run("{\"action\":\"listServers\"}");
@@ -117,12 +114,10 @@ class CompositionRunnerTest {
 
   @Test
   void builtInMetadataCannotBeReplacedOrRemoved() {
-    JsonObject replace =
-        run("{\"action\":\"registerServer\",\"name\":\"plant-historian\"}");
+    JsonObject replace = run("{\"action\":\"registerServer\",\"name\":\"plant-historian\"}");
     assertEquals("PROTECTED_SERVER", errorCode(replace));
 
-    JsonObject remove =
-        run("{\"action\":\"removeServer\",\"name\":\"plant-historian\"}");
+    JsonObject remove = run("{\"action\":\"removeServer\",\"name\":\"plant-historian\"}");
     assertEquals("PROTECTED_SERVER", errorCode(remove));
 
     JsonObject catalog = run("{\"action\":\"listServers\"}");
@@ -133,8 +128,7 @@ class CompositionRunnerTest {
   void malformedBlankAndOversizedRequestsFailClosed() {
     assertEquals("INVALID_INPUT", errorCode(run("{")));
     assertEquals("INVALID_INPUT", errorCode(run("{}")));
-    assertEquals("INVALID_INPUT",
-        errorCode(run("{\"action\":\"planComposition\",\"task\":\"   \"}")));
+    assertEquals("INVALID_INPUT", errorCode(run("{\"action\":\"planComposition\",\"task\":\"   \"}")));
     assertEquals("INVALID_INPUT",
         errorCode(run("{\"action\":\"planComposition\",\"task\":\"" + repeat("x", 4097) + "\"}")));
     assertEquals("INVALID_INPUT", errorCode(run(repeat("x", 16385))));
@@ -144,12 +138,10 @@ class CompositionRunnerTest {
   @Test
   void customRegistryHasAFixedCapacity() {
     for (int index = 0; index < 32; index++) {
-      JsonObject response = run("{\"action\":\"registerServer\",\"name\":\"phase0-capacity-"
-          + index + "\"}");
+      JsonObject response = run("{\"action\":\"registerServer\",\"name\":\"phase0-capacity-" + index + "\"}");
       assertEquals("success", response.get("status").getAsString());
     }
-    JsonObject overflow =
-        run("{\"action\":\"registerServer\",\"name\":\"phase0-capacity-32\"}");
+    JsonObject overflow = run("{\"action\":\"registerServer\",\"name\":\"phase0-capacity-32\"}");
     assertEquals("REGISTRY_LIMIT", errorCode(overflow));
   }
 
