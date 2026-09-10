@@ -92,8 +92,10 @@ public final class SarirAtmosphericFractionationResult {
       productMassFlow += massFlow;
 
       double meanBoilingPoint = Double.NaN;
+      ProductBoilingPointDistribution boilingPointDistribution = null;
       if (massFlow > MATERIAL_FLOW_FRACTION * feedMassFlow) {
-        meanBoilingPoint = meanNormalBoilingPoint(streams[i]);
+        boilingPointDistribution = ProductBoilingPointDistribution.from(streams[i]);
+        meanBoilingPoint = boilingPointDistribution.getMeanNormalBoilingPointKelvin();
         if (!(meanBoilingPoint > previousMeanBoilingPoint)) {
           throw new IllegalStateException("Material products must become heavier from the column top to the bottoms");
         }
@@ -103,7 +105,7 @@ public final class SarirAtmosphericFractionationResult {
 
       ProductYieldReference reference = SarirAtmosphericReference.getProductYield(PRODUCT_LABELS[i]);
       productResults[i] = new ProductResult(reference.getName(), massFlow, massFlow / feedMassFlow, meanBoilingPoint,
-          reference.getPlantMassFlowRateKgPerHour(),
+          boilingPointDistribution, reference.getPlantMassFlowRateKgPerHour(),
           reference.calculateAbsoluteRelativeErrorPercentForMassFlowKgPerHour(massFlow));
     }
     if (materialProductCount < 2) {
@@ -178,29 +180,6 @@ public final class SarirAtmosphericFractionationResult {
     return convergenceDiagnostics;
   }
 
-  private static double meanNormalBoilingPoint(StreamInterface stream) {
-    double[] composition = stream.getThermoSystem().getMolarComposition();
-    double[] boilingPoints = stream.getThermoSystem().getNormalBoilingPointTemperatures();
-    if (composition.length != boilingPoints.length || composition.length == 0) {
-      throw new IllegalStateException("Product composition and boiling-point arrays must align");
-    }
-
-    double mean = 0.0;
-    double compositionSum = 0.0;
-    for (int i = 0; i < composition.length; i++) {
-      if (!Double.isFinite(composition[i]) || composition[i] < 0.0 || !Double.isFinite(boilingPoints[i])
-          || !(boilingPoints[i] > 0.0)) {
-        throw new IllegalStateException("Product composition and boiling points must be physical");
-      }
-      mean += composition[i] * boilingPoints[i];
-      compositionSum += composition[i];
-    }
-    if (!Double.isFinite(compositionSum) || !(compositionSum > 0.0) || !Double.isFinite(mean)) {
-      throw new IllegalStateException("Product mean boiling point is undefined");
-    }
-    return mean / compositionSum;
-  }
-
   private static void requireFiniteBoundedError(double value, String label) {
     if (!Double.isFinite(value) || value < 0.0 || value > BALANCE_TOLERANCE) {
       throw new IllegalStateException(label + " exceeds the qualified tolerance");
@@ -213,16 +192,18 @@ public final class SarirAtmosphericFractionationResult {
     private final double calculatedMassFlowKgPerHour;
     private final double calculatedMassFractionOfFeed;
     private final double meanNormalBoilingPointKelvin;
+    private final ProductBoilingPointDistribution boilingPointDistribution;
     private final double plantMassFlowKgPerHour;
     private final double absoluteRelativeErrorPercentAgainstPlant;
 
     private ProductResult(String productLabel, double calculatedMassFlowKgPerHour, double calculatedMassFractionOfFeed,
-        double meanNormalBoilingPointKelvin, double plantMassFlowKgPerHour,
-        double absoluteRelativeErrorPercentAgainstPlant) {
+        double meanNormalBoilingPointKelvin, ProductBoilingPointDistribution boilingPointDistribution,
+        double plantMassFlowKgPerHour, double absoluteRelativeErrorPercentAgainstPlant) {
       this.productLabel = productLabel;
       this.calculatedMassFlowKgPerHour = calculatedMassFlowKgPerHour;
       this.calculatedMassFractionOfFeed = calculatedMassFractionOfFeed;
       this.meanNormalBoilingPointKelvin = meanNormalBoilingPointKelvin;
+      this.boilingPointDistribution = boilingPointDistribution;
       this.plantMassFlowKgPerHour = plantMassFlowKgPerHour;
       this.absoluteRelativeErrorPercentAgainstPlant = absoluteRelativeErrorPercentAgainstPlant;
     }
@@ -258,6 +239,66 @@ public final class SarirAtmosphericFractionationResult {
      */
     public double getMeanNormalBoilingPointCelsius() {
       return Double.isFinite(meanNormalBoilingPointKelvin) ? meanNormalBoilingPointKelvin - 273.15 : Double.NaN;
+    }
+
+    /**
+     * Report whether this material product has a discrete boiling-point distribution.
+     *
+     * @return true for a material product; false for a non-material candidate row
+     */
+    public boolean hasBoilingPointDistribution() {
+      return boilingPointDistribution != null;
+    }
+
+    /**
+     * Return the ascending positive-component normal-boiling-point support.
+     *
+     * @return defensive copy of temperatures in kelvin
+     * @throws IllegalStateException if this is a non-material product
+     */
+    public double[] getBoilingPointTemperaturesKelvin() {
+      return requireBoilingPointDistribution().getBoilingPointTemperaturesKelvin();
+    }
+
+    /**
+     * Return the normalized cumulative product mole fractions.
+     *
+     * @return defensive copy of cumulative mole fractions
+     * @throws IllegalStateException if this is a non-material product
+     */
+    public double[] getCumulativeMoleFractions() {
+      return requireBoilingPointDistribution().getCumulativeMoleFractions();
+    }
+
+    /**
+     * Return a discrete pseudo-component quantile on cumulative product mole basis.
+     *
+     * @param cumulativeMoleFraction requested cumulative product mole fraction in (0, 1]
+     * @return normal boiling point in kelvin
+     * @throws IllegalArgumentException if the request is non-finite or outside (0, 1]
+     * @throws IllegalStateException if this is a non-material product
+     */
+    public double getNormalBoilingPointQuantileKelvin(double cumulativeMoleFraction) {
+      return requireBoilingPointDistribution().getNormalBoilingPointQuantileKelvin(cumulativeMoleFraction);
+    }
+
+    /**
+     * Return a discrete pseudo-component quantile on cumulative product mole basis.
+     *
+     * @param cumulativeMoleFraction requested cumulative product mole fraction in (0, 1]
+     * @return normal boiling point in degrees Celsius
+     * @throws IllegalArgumentException if the request is non-finite or outside (0, 1]
+     * @throws IllegalStateException if this is a non-material product
+     */
+    public double getNormalBoilingPointQuantileCelsius(double cumulativeMoleFraction) {
+      return requireBoilingPointDistribution().getNormalBoilingPointQuantileCelsius(cumulativeMoleFraction);
+    }
+
+    private ProductBoilingPointDistribution requireBoilingPointDistribution() {
+      if (boilingPointDistribution == null) {
+        throw new IllegalStateException("Boiling-point distribution is unavailable for a non-material product");
+      }
+      return boilingPointDistribution;
     }
 
     /** @return measured plant product rate in kg/h */
