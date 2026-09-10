@@ -84,6 +84,9 @@ jobs:
       - name: Run focused bounded-streaming Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.StreamingRunnerTest,neqsim.mcp.runners.McpPrincipalScopingTest test -ntp
 
+      - name: Run focused multi-server composition Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.CompositionRunnerTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
@@ -147,6 +150,9 @@ jobs:
 
       - name: Run focused real-MCP bounded-streaming qualification
         run: cd neqsim-mcp-server && python test_streaming_protocol.py
+
+      - name: Run focused real-MCP multi-server composition qualification
+        run: cd neqsim-mcp-server && python test_composition_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py

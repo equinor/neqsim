@@ -266,7 +266,7 @@ Interfaces may change between minor versions.
 | `bridgeTaskWorkflow`         | Convert MCP tool output to task_solve results.json format           |
 | `manageSession`              | Persistent simulation sessions                                      |
 | `streamSimulation`           | Async simulation with incremental polling                           |
-| `composeMultiServerWorkflow` | Multi-server orchestration                                          |
+| `composeMultiServerWorkflow` | Bounded metadata-only multi-server planning                         |
 | `manageSecurity`             | API key management, rate limiting, audit logging                    |
 | `manageState`                | Persist/restore simulation states                                   |
 | `manageValidationProfile`    | Jurisdiction-specific validation profiles                           |
@@ -684,6 +684,18 @@ The `composeMultiServerWorkflow` tool orchestrates across MCP servers:
 
 Pre-registered server types: `cost-estimation`, `plant-historian`, `cad-3d`,
 `document-extraction`, `safety-analysis`.
+
+This is a bounded metadata-only surface. It never opens connections or invokes
+external tools. Requests are capped at 16,384 UTF-8 bytes; plan tasks are
+non-blank and at most 4096 characters; custom metadata is limited to 32 server
+records with bounded, deduplicated tool and format lists. Built-ins are
+protected, and endpoint, command, environment, header, credential, token, API
+key, and secret fields fail closed. The authorized host remains responsible
+for external discovery, authentication, transport security, data governance,
+step execution, semantic compatibility, and independent engineering review.
+Custom records are process-local and are not durable, distributed, or
+tenant-isolated. See
+[the bounded composition contract](docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md).
 
 ---
 

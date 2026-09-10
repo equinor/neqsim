@@ -223,6 +223,37 @@ This is a time average on a molality basis, not yet a volumetric or molar-flow c
 source. Creating a pipeline source term requires separately qualified water inventory,
 phase transfer, oxygen consumption, reaction products, energy, pressure, and numerical coupling.
 
+## Explicit water-inventory projection
+
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(...)` converts one immutable
+segment result from the molality basis to dimensional total-sulfide loss evidence using a
+caller-supplied liquid-water inventory `m_w` in kg:
+
+$
+\dot n_{r,i}=\overline{r}_{r,i}m_w, \qquad
+n_{r,i,\mathrm{reacted}}=c_{r,i,\mathrm{reacted}}m_w.
+$
+
+The immutable result reports lower-rate, nominal, and upper-rate mean loss in mol/h and mol/s,
+together with reacted total sulfide in mol. The water inventory must be finite and strictly
+positive. For positive segment duration, each path closes exactly as
+
+$
+\dot n_{r,i}\Delta t_i=n_{r,i,\mathrm{reacted}}.
+$
+
+At zero duration, reacted amount is exactly zero while the mean-loss output preserves the existing
+finite differential limit. Dimensional values scale linearly with water inventory. If an unchanged
+state is subdivided while the same water inventory is used for each subsegment, the reacted-mole
+increments sum to the unsplit result.
+
+The supplied water inventory is explicit evidence, not a holdup or free-water prediction. This
+projection is an unsigned total-sulfide loss potential, not a component source applied to a control
+volume. It does not infer water dropout, consume O2, assign products or selectivity, calculate
+reaction heat, pressure or phase transfer, mutate pipeline/transient state, or update sulfur
+deposition and wall inventories. Those steps require separately qualified inputs and must compose
+with the existing pipeline and sulfur-deposition implementations.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a

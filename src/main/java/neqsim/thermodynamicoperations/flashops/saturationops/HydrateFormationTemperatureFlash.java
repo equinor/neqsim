@@ -7,6 +7,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.flashops.CO2BrinePhaseEquilibrium;
 
 /**
  * HydrateFormationTemperatureFlash class.
@@ -21,6 +22,17 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
   /** Maximum absolute mole-fraction error accepted for a non-reactive electrolyte fluid. */
   private static final double INVENTORY_TOLERANCE = 1.0e-9;
+  /** Snapshot of the last calculation; null before the first run. */
+  private HydrateEquilibriumDiagnostics diagnostics;
+  /** Stability evidence from the latest CO2/brine fluid evaluation. */
+  private double minimumCo2TrialDistance = Double.NaN;
+
+  /** True when the last run reached the hydrate equilibrium condition. */
+  private boolean converged = false;
+  /** Water fugacity residual of the last run. */
+  private double lastResidual = Double.NaN;
+  /** Residual accepted when the converged root is re-checked from a clean phase split. */
+  private static final double VERIFICATION_TOLERANCE = 1.0e-3;
 
   /**
    * Constructor for HydrateFormationTemperatureFlash.
@@ -45,19 +57,65 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    */
   @Override
   public void run() {
+    diagnostics = null;
+    minimumCo2TrialDistance = Double.NaN;
+    converged = false;
+    lastResidual = Double.NaN;
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
-      new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false).run();
+      PitzerHydrateFlash flash = new PitzerHydrateFlash((neqsim.thermo.system.SystemPitzer) system, false);
+      flash.run();
+      converged = flash.isConverged();
+      lastResidual = -Math.expm1(flash.getResidual());
+      diagnostics = new HydrateEquilibriumDiagnostics(system, converged, lastResidual, Double.NaN);
       return;
     }
     // Enable multi-phase check to properly handle systems with water+MEG+hydrocarbons+electrolytes
     // This ensures proper phase separation (gas, aqueous, hydrocarbon liquid)
     boolean originalMultiPhaseCheck = system.doMultiPhaseCheck();
     system.setMultiPhaseCheck(true);
+    SystemInterface input = system.clone();
     try {
       runTemperatureIterations();
+      if (!converged) {
+        restoreComponentInventory(input);
+      }
+    } catch (RuntimeException ex) {
+      converged = false;
+      if (diagnostics == null) {
+        diagnostics = new HydrateEquilibriumDiagnostics(system, false, lastResidual, minimumCo2TrialDistance);
+      }
+      restoreComponentInventory(input);
+      system.setTemperature(Double.NaN);
+      throw ex;
     } finally {
       system.setMultiPhaseCheck(originalMultiPhaseCheck);
     }
+  }
+
+  /**
+   * Returns immutable convergence, phase identity, stability and conservation evidence.
+   *
+   * @return the most recent diagnostic snapshot, or null before a run
+   */
+  public HydrateEquilibriumDiagnostics getDiagnostics() {
+    return diagnostics;
+  }
+
+  /**
+   * Restore input species amounts after a failed search without retaining a corrupted phase split.
+   *
+   * @param reference input fluid before the search
+   */
+  private void restoreComponentInventory(SystemInterface reference) {
+    double failedTemperature = system.getTemperature();
+    system.setTemperature(reference.getTemperature());
+    double[] componentMoles = new double[reference.getNumberOfComponents()];
+    for (int component = 0; component < componentMoles.length; component++) {
+      componentMoles[component] = reference.getPhase(0).getComponent(component).getNumberOfmoles();
+    }
+    system.setBeta(0.5);
+    system.setMolarFlowRates(componentMoles);
+    system.setTemperature(failedTemperature);
   }
 
   /** Iterates hydrate-water fugacity equality while checking the conserved electrolyte feed. */
@@ -71,6 +129,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     }
 
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    SystemInterface verificationSystem = system.clone();
     system.getPhase(4).getComponent("water").setx(1.0);
 
     int iter = 0;
@@ -163,11 +222,50 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
 
     } while (Math.abs(diff) > tolerance && iter < maxIterations);
 
-    if (iter >= maxIterations) {
-      logger.warn("Hydrate formation temperature did not converge after {} iterations. " + "Final diff={}",
-          maxIterations, diff);
+    lastResidual = diff;
+    converged = Double.isFinite(diff) && Math.abs(diff) <= tolerance;
+
+    if (converged && !reproducesEquilibrium(verificationSystem, system.getTemperature(), system.getPressure())) {
+      logger.error(
+          "Hydrate equilibrium at {} bara could not be verified from an independent fluid flash at {} K. "
+              + "The residual was satisfied by a degenerate phase split, not by a hydrate equilibrium.",
+          system.getPressure(), system.getTemperature());
+      converged = false;
     }
 
+    diagnostics = new HydrateEquilibriumDiagnostics(system, converged, lastResidual, minimumCo2TrialDistance);
+    if (!converged) {
+      // Leaving the system at whatever temperature the last step reached is worse than failing:
+      // it is a plausible-looking number that can land on either side of the true boundary. NaN
+      // makes the failure impossible to mistake for a result, and matches the check that
+      // ThermodynamicOperations.hydrateFormationTemperature already performs.
+      logger.error(
+          "Hydrate formation temperature did not converge at {} bara after {} iterations "
+              + "(residual {}). Reporting NaN instead of the last iterate {} K.",
+          system.getPressure(), iter, diff, temp);
+      system.setTemperature(Double.NaN);
+      if (CO2BrinePhaseEquilibrium.isApplicable(system)) {
+        throw new IllegalStateException("CO2/brine hydrate temperature did not converge: residual=" + diff);
+      }
+    }
+  }
+
+  /**
+   * Check whether the last {@link #run()} reached the hydrate equilibrium condition.
+   *
+   * @return true when the water fugacity residual converged within tolerance
+   */
+  public boolean isConverged() {
+    return converged;
+  }
+
+  /**
+   * Get the water fugacity residual of the last {@link #run()}.
+   *
+   * @return the final value of {@code 1 - f_hydrate(water) / f_aqueous(water)}
+   */
+  public double getLastResidual() {
+    return lastResidual;
   }
 
   /**
@@ -177,10 +275,26 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @param conservedMoles input component amounts, or null when this operation does not own species conservation
    */
   private void updateFluidAndHydrate(ThermodynamicOperations ops, double[] conservedMoles) {
-    ops.TPflash();
+    if (CO2BrinePhaseEquilibrium.isApplicable(system)) {
+      CO2BrinePhaseEquilibrium fluidFlash = new CO2BrinePhaseEquilibrium(system);
+      fluidFlash.run();
+      minimumCo2TrialDistance = fluidFlash.getMinimumTrialDistance();
+    } else {
+      ops.TPflash();
+    }
     setFug();
     system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
     system.getPhase(4).getComponent("water").setx(1.0);
+    validateFluidInventory(system, conservedMoles);
+  }
+
+  /**
+   * Validate the same conserved-fluid contract in an iteration or an independent verification flash.
+   *
+   * @param target flashed fluid
+   * @param conservedMoles input species amounts, or null for a reactive or non-electrolyte fluid
+   */
+  private static void validateFluidInventory(SystemInterface target, double[] conservedMoles) {
     if (conservedMoles == null) {
       return;
     }
@@ -191,20 +305,20 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       }
       totalMoles += moles;
     }
-    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles) || !Double.isFinite(system.getTotalNumberOfMoles())
-        || Math.abs(system.getTotalNumberOfMoles() / totalMoles - 1.0) > INVENTORY_TOLERANCE) {
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles) || !Double.isFinite(target.getTotalNumberOfMoles())
+        || Math.abs(target.getTotalNumberOfMoles() / totalMoles - 1.0) > INVENTORY_TOLERANCE) {
       throw new IllegalStateException("Hydrate fluid inventory failed total-mole conservation");
     }
     double betaSum = 0.0;
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-      double beta = system.getBeta(phase);
+    for (int phase = 0; phase < target.getNumberOfPhases(); phase++) {
+      double beta = target.getBeta(phase);
       if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
         throw new IllegalStateException("Hydrate fluid inventory has an invalid phase fraction: " + beta);
       }
       betaSum += beta;
       double compositionSum = 0.0;
       for (int component = 0; component < conservedMoles.length; component++) {
-        ComponentInterface species = system.getPhase(phase).getComponent(component);
+        ComponentInterface species = target.getPhase(phase).getComponent(component);
         double x = species.getx();
         if (!Double.isFinite(x) || x < 0.0 || x > 1.0) {
           throw new IllegalStateException("Hydrate fluid inventory has an invalid composition for "
@@ -212,7 +326,7 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
         }
         compositionSum += x;
         if ((species.getIonicCharge() != 0 || species.isIsIon())
-            && system.getPhase(phase).getType() != PhaseType.AQUEOUS && x > 1.0e-12) {
+            && target.getPhase(phase).getType() != PhaseType.AQUEOUS && x > 1.0e-12) {
           throw new IllegalStateException(
               "Hydrate fluid inventory has an ion outside the aqueous phase: " + species.getComponentName());
         }
@@ -227,14 +341,14 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
     for (int component = 0; component < conservedMoles.length; component++) {
       double expected = conservedMoles[component] / totalMoles;
       double recovered = 0.0;
-      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+      for (int phase = 0; phase < target.getNumberOfPhases(); phase++) {
+        recovered += target.getBeta(phase) * target.getPhase(phase).getComponent(component).getx();
       }
-      double overall = system.getPhase(0).getComponent(component).getz();
+      double overall = target.getPhase(0).getComponent(component).getz();
       if (!Double.isFinite(overall) || Math.abs(overall - expected) > INVENTORY_TOLERANCE
           || Math.abs(recovered - expected) > INVENTORY_TOLERANCE) {
         throw new IllegalStateException(
-            "Hydrate fluid inventory failed for " + system.getPhase(0).getComponent(component).getComponentName()
+            "Hydrate fluid inventory failed for " + target.getPhase(0).getComponent(component).getComponentName()
                 + ": expected=" + expected + ", overall=" + overall + ", recovered=" + recovered);
       }
     }
@@ -246,8 +360,18 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @return the index of the gas phase, or 0 if no gas phase found
    */
   private int findGasPhaseIndex() {
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+    return findGasPhaseIndex(system);
+  }
+
+  /**
+   * Find the gas phase index of a system.
+   *
+   * @param target the system to inspect
+   * @return the index of the gas phase, or 0 if no gas phase found
+   */
+  private static int findGasPhaseIndex(SystemInterface target) {
+    for (int i = 0; i < target.getNumberOfPhases(); i++) {
+      if (target.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
         return i;
       }
     }
@@ -261,12 +385,22 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @return the index of the aqueous phase, or -1 if no aqueous phase found
    */
   private int findAqueousPhaseIndex() {
+    return findAqueousPhaseIndex(system);
+  }
+
+  /**
+   * Find the aqueous phase index of a system (phase with highest water content).
+   *
+   * @param target the system to inspect
+   * @return the index of the aqueous phase, or -1 if no aqueous phase found
+   */
+  private static int findAqueousPhaseIndex(SystemInterface target) {
     int aqueousIndex = -1;
     double maxWaterFraction = 0.0;
 
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).hasComponent("water")) {
-        double waterFraction = system.getPhase(i).getComponent("water").getx();
+    for (int i = 0; i < target.getNumberOfPhases(); i++) {
+      if (target.getPhase(i).hasComponent("water")) {
+        double waterFraction = target.getPhase(i).getComponent("water").getx();
         if (waterFraction > maxWaterFraction && waterFraction > 0.3) {
           maxWaterFraction = waterFraction;
           aqueousIndex = i;
@@ -283,12 +417,22 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * @return the phase index to use for water fugacity
    */
   private int findWaterPhaseIndex() {
-    int aqueousIndex = findAqueousPhaseIndex();
+    return findWaterPhaseIndex(system);
+  }
+
+  /**
+   * Find the best phase index for water fugacity comparison in hydrate equilibrium of a system.
+   *
+   * @param target the system to inspect
+   * @return the phase index to use for water fugacity
+   */
+  private static int findWaterPhaseIndex(SystemInterface target) {
+    int aqueousIndex = findAqueousPhaseIndex(target);
     if (aqueousIndex >= 0) {
       return aqueousIndex;
     }
     // Fall back to gas phase if no aqueous phase
-    return findGasPhaseIndex();
+    return findGasPhaseIndex(target);
   }
 
   /**
@@ -358,22 +502,162 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
    * setFug.
    */
   public void setFug() {
-    system.getPhase(4).getComponent("water").setx(1.0);
-    int gasPhaseIndex = findGasPhaseIndex();
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-        if (system.getPhase(4).getComponent(j).isHydrateFormer()
-            || system.getPhase(4).getComponent(j).getName().equals("water")) {
-          ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j,
-              system.getPhase(gasPhaseIndex).getFugacity(j));
+    setFug(system);
+  }
+
+  /**
+   * Set the hydrate phase reference fugacities from the gas phase of a system.
+   *
+   * @param target the system to operate on
+   */
+  private static void setFug(SystemInterface target) {
+    target.getPhase(4).getComponent("water").setx(1.0);
+    int gasPhaseIndex = findGasPhaseIndex(target);
+    for (int i = 0; i < target.getPhase(0).getNumberOfComponents(); i++) {
+      for (int j = 0; j < target.getPhase(0).getNumberOfComponents(); j++) {
+        if (target.getPhase(4).getComponent(j).isHydrateFormer()
+            || target.getPhase(4).getComponent(j).getName().equals("water")) {
+          ((ComponentHydrate) target.getPhase(4).getComponent(i)).setRefFug(j,
+              target.getPhase(gasPhaseIndex).getFugacity(j));
         } else {
-          ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j, 0);
+          ((ComponentHydrate) target.getPhase(4).getComponent(i)).setRefFug(j, 0);
         }
       }
     }
-    system.getPhase(4).getComponent("water").setx(1.0);
-    system.getPhase(4).init();
-    system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
+    target.getPhase(4).getComponent("water").setx(1.0);
+    target.getPhase(4).init();
+    target.getPhase(4).getComponent("water").fugcoef(target.getPhase(4));
+  }
+
+  /**
+   * Re-solve the hydrate equilibrium condition from a clean phase split at the converged temperature.
+   *
+   * <p>
+   * The iteration re-uses the phase split of the previous step, so a flash that degenerates part way through the search
+   * can leave the system in a state where the water fugacity equality is satisfied by an artefact rather than by a real
+   * three phase equilibrium. Repeating the check on an untouched copy of the feed rejects such roots: a real
+   * equilibrium temperature reproduces the residual, an artefact does not.
+   * </p>
+   *
+   * @param reference an untouched copy of the feed
+   * @param temperature the converged temperature in Kelvin
+   * @param pressure the pressure in bara
+   * @return true when the equilibrium condition is reproduced from a clean phase split
+   */
+  private static boolean reproducesEquilibrium(SystemInterface reference, double temperature, double pressure) {
+    try {
+      reference = reference.clone();
+      double[] conservedMoles = null;
+      if (!reference.isChemicalSystem() && reference.hasIons()) {
+        conservedMoles = new double[reference.getNumberOfComponents()];
+        for (int component = 0; component < conservedMoles.length; component++) {
+          conservedMoles[component] = reference.getPhase(0).getComponent(component).getNumberOfmoles();
+        }
+      }
+      reference.setTemperature(temperature);
+      reference.setPressure(pressure);
+      reference.setHydrateCheck(true);
+      reference.setMultiPhaseCheck(true);
+      reference.getPhase(4).getComponent("water").setx(1.0);
+      if (CO2BrinePhaseEquilibrium.isApplicable(reference)) {
+        new CO2BrinePhaseEquilibrium(reference).run();
+      } else {
+        new ThermodynamicOperations(reference).TPflash();
+      }
+      validateFluidInventory(reference, conservedMoles);
+      if (hasIonsInAGasPhase(reference) || hasUnstableAqueousGuestPhase(reference)) {
+        return false;
+      }
+      setFug(reference);
+      reference.getPhase(4).getComponent("water").fugcoef(reference.getPhase(4));
+      reference.getPhase(4).getComponent("water").setx(1.0);
+      int waterPhase = findWaterPhaseIndex(reference);
+      double residual = 1.0
+          - (reference.getPhase(4).getFugacity("water") / reference.getPhase(waterPhase).getFugacity("water"));
+      return Double.isFinite(residual) && Math.abs(residual) < VERIFICATION_TOLERANCE;
+    } catch (Exception ex) {
+      logger.debug("Hydrate equilibrium verification flash failed", ex);
+      return false;
+    }
+  }
+
+  /**
+   * Reject a single aqueous brine that can lower its Gibbs energy by releasing a hydrate-guest vapour.
+   *
+   * <p>
+   * A failed stability search can leave all CO2 dissolved in an otherwise balanced aqueous phase. Its inflated guest
+   * fugacity can satisfy the hydrate residual above the fresh-water boundary. A negative tangent-plane distance for a
+   * guest-only gas trial proves that the aqueous state is unstable. A non-negative value is only a screening result,
+   * not a complete stability certificate.
+   * </p>
+   *
+   * @param target fluid after the verification TP flash
+   * @return true when a guest vapour destabilizes the single aqueous brine or its fugacity cannot be evaluated
+   */
+  private static boolean hasUnstableAqueousGuestPhase(SystemInterface target) {
+    if (target.isChemicalSystem() || !target.hasIons() || target.getNumberOfPhases() != 1
+        || target.getPhase(0).getType() != PhaseType.AQUEOUS) {
+      return false;
+    }
+    double[] guestMoles = new double[target.getNumberOfComponents()];
+    double totalGuestMoles = 0.0;
+    for (int component = 0; component < guestMoles.length; component++) {
+      ComponentInterface species = target.getPhase(0).getComponent(component);
+      if (species.isHydrateFormer() && !"water".equals(species.getComponentName()) && species.getIonicCharge() == 0
+          && !species.isIsIon()) {
+        guestMoles[component] = species.getNumberOfmoles();
+        totalGuestMoles += guestMoles[component];
+      }
+    }
+    if (!(totalGuestMoles > 0.0)) {
+      return false;
+    }
+    SystemInterface vapour = target.clone();
+    vapour.setNumberOfPhases(1);
+    vapour.setPhaseType(0, PhaseType.GAS);
+    vapour.setBeta(0, 1.0);
+    vapour.setMolarFlowRates(guestMoles);
+    vapour.init(1);
+    double tangentPlaneDistance = 0.0;
+    for (int component = 0; component < guestMoles.length; component++) {
+      if (guestMoles[component] > 0.0) {
+        double fugacityRatio = vapour.getPhase(0).getFugacity(component) / target.getPhase(0).getFugacity(component);
+        if (!(fugacityRatio > 0.0) || !Double.isFinite(fugacityRatio)) {
+          return true;
+        }
+        tangentPlaneDistance += guestMoles[component] / totalGuestMoles * Math.log(fugacityRatio);
+      }
+    }
+    logger.debug("Single aqueous hydrate verification: guest-vapour tangent-plane distance={}", tangentPlaneDistance);
+    return tangentPlaneDistance < -1.0e-6;
+  }
+
+  /**
+   * Check whether a phase split has placed ions in a phase identified as gas.
+   *
+   * <p>
+   * Ions are not volatile, so a gas phase carrying a material ion fraction means the phase identification has failed.
+   * Densities, activities and fugacities of that phase are then evaluated on the wrong volume root, and any hydrate
+   * temperature built on it is an artefact rather than an equilibrium.
+   * </p>
+   *
+   * @param target the system to inspect
+   * @return true when a gas phase carries a material amount of ions
+   */
+  private static boolean hasIonsInAGasPhase(SystemInterface target) {
+    for (int phase = 0; phase < target.getNumberOfPhases(); phase++) {
+      if (target.getPhase(phase).getType() != neqsim.thermo.phase.PhaseType.GAS) {
+        continue;
+      }
+      for (int component = 0; component < target.getPhase(phase).getNumberOfComponents(); component++) {
+        if (target.getPhase(phase).getComponent(component).getIonicCharge() != 0
+            && target.getPhase(phase).getComponent(component).getx() > 1.0e-10) {
+          logger.debug("Phase {} is identified as gas but carries ions, so the phase split is not trustworthy", phase);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */

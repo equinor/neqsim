@@ -16,13 +16,13 @@ manually maintained Java method list.
 | Tool implementations | 71 bindings / 60 classes | `getCapabilities.implementationInventory` | `McpImplementationInventory` |
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
-| MCP Java test classes | 71 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
+| MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
 | MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 34 bounded contract-tested software contracts + 17 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.34; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 35 bounded contract-tested software contracts + 16 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.35; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -87,7 +87,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 ## Tests, guides, and known limitations
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
-Phase 0 inventory. The exact current source contains 71 JUnit test classes under
+Phase 0 inventory. The exact current source contains 72 JUnit test classes under
 `src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
@@ -193,9 +193,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.34 with 20/34/17 coverage accounting while retaining
+now reconciles inventory 1.35 with 20/35/16 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its thirty-four bounded software contracts and requires 17 confirmed gaps. The read-only
+among its thirty-five bounded software contracts and requires 16 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -220,7 +220,7 @@ This is software/governance evidence only. The named standards and design factor
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.34 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.35 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -430,7 +430,7 @@ stateful execution, plant/control authority, certification, or accountable
 engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.34. A future transition must again move the
+No promotion candidate remains queued in inventory 1.35. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -477,7 +477,7 @@ every published tool. Thirty-four bounded discovery, catalog, lookup, progress, 
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, security-management,
 persisted-state, adjustable-parameter discovery, pre-flight validation, result-validation, reporting handoff,
 process-local plugin execution, automation advisory, simulation-variable mutation, paired snapshot, and
-visualization-generation, bounded runtime-capability, composed-workflow, task-solver, and streaming-simulation contracts are contract-tested, leaving 17 confirmed trust gaps and no queued promotion candidate.
+visualization-generation, bounded runtime-capability, composed-workflow, task-solver, streaming-simulation, and multi-server-composition contracts are contract-tested, leaving 16 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise
@@ -568,3 +568,26 @@ kernel, external IAM or transport security, tenant isolation beyond the
 request context, plant or control authority, standards compliance,
 certification, or accountable engineering approval. No promotion candidate
 remains queued.
+
+## Promoted bounded multi-server-composition contract
+
+Inventory version 1.35 atomically promotes `composeMultiServerWorkflow` after
+merged #3614 established direct Java and packaged-MCP evidence for bounded
+process-local composition metadata and planning. Machine-readable coverage,
+Java assertions, `test_composition_protocol.py`, synchronized focused protocol
+expectations, authoritative `test_mcp_server.py` accounting, and
+documentation move together from 20/34/17 to 20/35/16.
+
+The contract covers bounded metadata-only request admission; deterministic
+built-in and custom-server discovery; fixed workflows; sequential task plans;
+protected built-ins; bounded process-local custom metadata; fail-closed
+malformed, oversized, blank, unknown, connection, and credential input; normal
+access enforcement; standard response evidence; and packaged JSON-RPC/STDIO
+transport. No thermodynamic or process model is reimplemented.
+
+This classification does not establish external-server connection, discovery,
+reachability, tool invocation, workflow execution, result chaining, credential
+access, transport/IAM/authentication, persistence/durability, distributed
+transactions/rollback, semantic/unit compatibility, scientific or numerical
+validity, convergence, conservation, plant/control authority, certification,
+or accountable engineering approval. No promotion candidate remains queued.

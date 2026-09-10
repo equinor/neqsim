@@ -2,6 +2,7 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -95,7 +96,11 @@ public class SarirAtmosphericFractionationCaseTest {
         assertTrue(rows[i].getMeanNormalBoilingPointKelvin() > previousBoilingPoint);
         assertEquals(rows[i].getMeanNormalBoilingPointKelvin() - 273.15, rows[i].getMeanNormalBoilingPointCelsius(),
             1.0e-12);
+        assertTrue(rows[i].hasBoilingPointDistribution());
+        assertBoilingRange(rows[i]);
         previousBoilingPoint = rows[i].getMeanNormalBoilingPointKelvin();
+      } else {
+        assertTrue(!rows[i].hasBoilingPointDistribution());
       }
     }
     assertEquals(result.getProductMassFlowKgPerHour(), calculatedMassFlow, 1.0e-8);
@@ -127,6 +132,41 @@ public class SarirAtmosphericFractionationCaseTest {
     inconsistentSpecificGravity[0] += 0.5;
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericFractionationCase.create("Sarir",
         inconsistentSpecificGravity, MOLAR_MASS_KG_PER_MOL, qualifiedInputs()));
+  }
+
+  private static void assertBoilingRange(SarirAtmosphericFractionationResult.ProductResult product) {
+    double[] temperatures = product.getBoilingPointTemperaturesKelvin();
+    double[] cumulativeFractions = product.getCumulativeMoleFractions();
+    assertEquals(temperatures.length, cumulativeFractions.length);
+    assertTrue(temperatures.length > 0);
+    assertNotSame(temperatures, product.getBoilingPointTemperaturesKelvin());
+    assertNotSame(cumulativeFractions, product.getCumulativeMoleFractions());
+
+    for (int i = 0; i < temperatures.length; i++) {
+      assertTrue(Double.isFinite(temperatures[i]) && temperatures[i] > 0.0);
+      assertTrue(Double.isFinite(cumulativeFractions[i]) && cumulativeFractions[i] > 0.0);
+      if (i > 0) {
+        assertTrue(temperatures[i] >= temperatures[i - 1]);
+        assertTrue(cumulativeFractions[i] > cumulativeFractions[i - 1]);
+      }
+    }
+    assertEquals(1.0, cumulativeFractions[cumulativeFractions.length - 1], 1.0e-12);
+
+    double t10 = product.getNormalBoilingPointQuantileKelvin(0.10);
+    double t50 = product.getNormalBoilingPointQuantileKelvin(0.50);
+    double t90 = product.getNormalBoilingPointQuantileKelvin(0.90);
+    assertTrue(t10 <= t50);
+    assertTrue(t50 <= t90);
+    assertEquals(t50 - 273.15, product.getNormalBoilingPointQuantileCelsius(0.50), 1.0e-12);
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(0.0));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(1.0001));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(Double.NaN));
+
+    double originalTemperature = product.getBoilingPointTemperaturesKelvin()[0];
+    temperatures[0] = -1.0;
+    cumulativeFractions[0] = -1.0;
+    assertEquals(originalTemperature, product.getBoilingPointTemperaturesKelvin()[0], 0.0);
+    assertTrue(product.getCumulativeMoleFractions()[0] > 0.0);
   }
 
   private static OperatingInputs qualifiedInputs() {

@@ -239,13 +239,16 @@ class ProcessOptimizationEngineTest {
   void testGenerateLiftCurve() {
     double[] pressures = { 30.0, 40.0, 50.0 };
     double[] temperatures = { 298.15 };
-    double[] waterCuts = { 0.0 };
-    double[] gors = { 100.0 };
-
-    ProcessOptimizationEngine.LiftCurveData curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, gors);
-
-    assertNotNull(curve);
-    assertNotNull(curve.getPoints());
+    assertThrows(UnsupportedOperationException.class,
+        () -> engine.generateLiftCurve(pressures, temperatures, new double[] { 0.0 }, new double[] { 100.0 }));
+    ProcessOptimizationEngine.LiftCurveData curve = engine.generateCapacityScreening(pressures, temperatures, 20.0,
+        1000.0, 2000.0);
+    assertEquals(3, curve.size());
+    for (ProcessOptimizationEngine.LiftCurvePoint point : curve.getPoints()) {
+      assertTrue(Double.isNaN(point.getWaterCut()));
+      assertTrue(Double.isNaN(point.getGOR()));
+      assertTrue(point.getMaxFlowRate() >= 1000.0 && point.getMaxFlowRate() <= 2000.0);
+    }
   }
 
   @Test

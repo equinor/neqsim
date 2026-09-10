@@ -47,7 +47,7 @@ envelopes, and real STDIO transport.
 Inventory `1.30 / 20 explicit + 30 contract-tested + 21 confirmed gaps`
 recorded the promotion together with the machine-readable coverage record,
 Java assertions, focused packaged-MCP accounting, and comprehensive protocol
-accounting. Current inventory `1.34 / 20 explicit + 34 contract-tested + 17
+accounting. Current inventory `1.35 / 20 explicit + 35 contract-tested + 17
 confirmed gaps` retains that classification.
 Coverage remains incomplete and `scientificValidationComplete=false`; this is a
 bounded software-contract classification, not a scientific benchmark claim.

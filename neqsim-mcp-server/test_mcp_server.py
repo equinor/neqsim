@@ -1453,7 +1453,8 @@ def test_capabilities():
     check("capabilities status=success", r.get("status") == "success", r.get("message", ""))
     check("capabilities has engine", r.get("engine") == "NeqSim")
     check("capabilities has thermo models", "thermodynamicModels" in r)
-    check("capabilities has equipment", "processEquipment" in r)
+    check("capabilities has equipment", "processEquipment" in r,
+          str(r.get("truncation", {})))
     coverage = r.get("toolCatalogCoverage", {})
     check("capability descriptors cover every published tool",
           coverage.get("complete") is True,
@@ -1499,8 +1500,8 @@ def test_capabilities():
     tests = evidence.get("tests", {})
     guides = evidence.get("guides", {})
     limitations = evidence.get("knownLimitations", {})
-    check("evidence inventory freezes 71 Java test classes",
-          tests.get("javaTestClassCount") == 71,
+    check("evidence inventory freezes 72 Java test classes",
+          tests.get("javaTestClassCount") == 72,
           str(tests))
     check("evidence inventory freezes 94 protocol scenarios",
           tests.get("protocolScenarioCount") == 94,
@@ -1563,13 +1564,14 @@ def test_capabilities():
         "listUnitVariables",
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
-        "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation", "diagnoseAutomation", "getAutomationLearningReport",
+        "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
+        "composeMultiServerWorkflow", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-four bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.34"
-          and limitations.get("contractTestedToolCount") == 34
-          and limitations.get("confirmedGapToolCount") == 17
+    check("thirty-five bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.35"
+          and limitations.get("contractTestedToolCount") == 35
+          and limitations.get("confirmedGapToolCount") == 16
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1705,6 +1707,24 @@ def test_capabilities():
           and "plant or control authority"
           in streaming.get("evidenceBoundary", ""),
           str(streaming))
+    multi_server_composition = coverage_records.get(
+        "composeMultiServerWorkflow", {})
+    check("bounded multi-server composition has direct contract evidence",
+          multi_server_composition.get("coverageStatus") == "CONTRACT_TESTED"
+          and multi_server_composition.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA"
+          and multi_server_composition.get("contractEvidenceCount") == 6
+          and "src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_composition_protocol.py"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "does not establish external server connection"
+          in multi_server_composition.get("evidenceBoundary", "")
+          and "accountable engineering approval"
+          in multi_server_composition.get("evidenceBoundary", ""),
+          str(multi_server_composition))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1722,7 +1742,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 17
+          and limitations.get("confirmedGapToolCount") == 16
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

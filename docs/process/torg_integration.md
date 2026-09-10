@@ -51,6 +51,17 @@ Getters include `getMinAmbientTemperature()`, `getMaxAmbientTemperature()`,
 `getLocation()`. The shorter builder overload `environmentalConditions(minC, maxC)` fills
 default values for the remaining fields.
 
+TORG environmental temperatures are in degrees Celsius. For equipment with an applicable
+design standard, `TorgManager` applies the minimum ambient temperature through
+`MechanicalDesign.setMinOperationTemperature(value, "C")`. Mechanical design stores the value
+in Kelvin: a TORG minimum of -30 °C gives 243.15 K from `getMinOperationTemperature()` or
+`getMinOperationTemperature("K")`, and -30 °C from `getMinOperationTemperature("C")`.
+
+The conversion also applies to `apply(...)`, `loadAndApply(...)`, and the active TORG reapplied
+internally by `FieldDevelopmentDesignOrchestrator.runCompleteDesignWorkflow()`. Repeated
+application preserves the temperature. No manual temperature correction is required after
+application; remove any earlier workaround that repeated the unit-aware setter call.
+
 #### SafetyFactors
 
 `SafetyFactors` takes pressure multiplier, temperature margin (°C), corrosion allowance (mm),
