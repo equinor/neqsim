@@ -113,6 +113,10 @@ $$\frac{\partial C_{Hg}}{\partial t} + u_{int}\frac{\partial C_{Hg}}{\partial z}
 
 $$\frac{\partial q}{\partial t} = k_{eff} \cdot C_{Hg} \cdot (1 - \theta) \cdot \frac{V_{void}}{m_{sorbent}} \cdot 10^{-3}$$
 
+Each reaction substep limits uptake to both the mercury available in the cell gas and the
+remaining sorbent capacity. The same transferred mercury mass is removed from the gas and
+added to the sorbent, including when a large kinetic step reaches either limit.
+
 ### Pressure Drop
 
 The Ergun equation provides the bed pressure drop:
@@ -125,10 +129,16 @@ Two parameters model degraded column internals:
 
 | Parameter                 | Effect                                            | Typical Cause                                   |
 | ------------------------- | ------------------------------------------------- | ----------------------------------------------- |
-| `degradationFactor` (0–1) | Reduces effective capacity $q_{max}$ and rate $k$ | Sorbent fouling, liquid carry-over              |
+| `degradationFactor` (0–1) | Reduces effective capacity $q_{max}$ and steady-state removal rate | Sorbent fouling, liquid carry-over              |
 | `bypassFraction` (0–1)    | Gas bypasses the sorbent entirely                 | Channelling from damaged bed support, wall gaps |
 
 The combined effect reduces removal efficiency significantly. For example, a bed with `degradationFactor = 0.6` and `bypassFraction = 0.1` will have both lower capacity and 10% of the gas untreated.
+
+In transient operation, reducing effective capacity preserves mercury already captured on the
+sorbent. If the retained loading equals or exceeds the reduced capacity, that cell stops
+adsorbing additional mercury. A fully blocked bed has zero effective capacity and transports
+gas without further adsorption; after the initial gas inventory has flushed through, mercury
+passes through the bed. Blockage does not release or erase previously captured mercury.
 
 ### Condensable-contaminant screening
 

@@ -45,6 +45,7 @@ public class MercuryRemovalBedContaminantTest {
     gas.addComponent("nitrogen", 0.0060 * scale);
     gas.addComponent("CO2", 0.0120 * scale);
     gas.addComponent("methanol", methanolMoleFraction);
+    gas.addComponent("mercury", 1.0e-9);
     gas.setMixingRule(10);
     gas.setMultiPhaseCheck(true);
     ThermodynamicOperations ops = new ThermodynamicOperations(gas);

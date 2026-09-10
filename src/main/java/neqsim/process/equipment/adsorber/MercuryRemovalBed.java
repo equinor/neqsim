@@ -295,6 +295,12 @@ public class MercuryRemovalBed extends TwoPortEquipment {
    * gas phase and accumulate it on the sorbent until the local capacity is exhausted.
    * </p>
    *
+   * <p>
+   * Lowering effective capacity preserves previously captured mercury. Cells with no remaining capacity transport gas
+   * without further adsorption. Each reaction transfer is bounded by both the available gas inventory and remaining
+   * capacity, and the same mercury mass is transferred between gas and sorbent.
+   * </p>
+   *
    * @param dt time-step size in seconds
    * @param id calculation identifier
    */
@@ -358,23 +364,25 @@ public class MercuryRemovalBed extends TwoPortEquipment {
 
       // 2) Chemisorption reaction in each cell
       for (int cell = 0; cell < numberOfCells; cell++) {
+        double remainingCapacity = Math.max(0.0, effectiveCapacity - cellLoading[cell]);
+        if (!(remainingCapacity > 0.0)) {
+          // Blockage does not release the mercury already captured by irreversible chemisorption.
+          // This also avoids dividing by zero for a fully blocked fresh bed.
+          continue;
+        }
         double theta = cellLoading[cell] / effectiveCapacity; // fractional saturation
         theta = Math.min(theta, 1.0);
 
         // Irreversible first-order: r = k * C * (1 - theta)
         double reactionRate = kEff * newConc[cell] * (1.0 - theta);
 
-        // Convert reaction rate from concentration to sorbent loading
-        // dq/dt in mg/kg/s = reactionRate (ug/Nm3/s) * cellVoidVolume / cellSorbentMass
-        // * 1e-3
-        double dqdt = reactionRate * cellVoidVolume / cellSorbentMass * 1e-3;
-
-        cellLoading[cell] += subDt * dqdt;
-        cellLoading[cell] = Math.min(cellLoading[cell], effectiveCapacity);
-
-        // Corresponding concentration decrease
-        newConc[cell] -= subDt * reactionRate;
-        newConc[cell] = Math.max(0.0, newConc[cell]);
+        // Bound the transferred mercury by the gas inventory and available sorbent capacity.
+        // Concentration is ug/m3 at bed conditions; loading is mg Hg/kg sorbent.
+        double concentrationRemoved = Math.min(newConc[cell], subDt * reactionRate);
+        double capacityConcentration = remainingCapacity * cellSorbentMass / cellVoidVolume * 1.0e3;
+        concentrationRemoved = Math.min(concentrationRemoved, capacityConcentration);
+        cellLoading[cell] += concentrationRemoved * cellVoidVolume / cellSorbentMass * 1.0e-3;
+        newConc[cell] = Math.max(0.0, newConc[cell] - concentrationRemoved);
       }
 
       cellHgConcentration = newConc;
@@ -519,7 +527,8 @@ public class MercuryRemovalBed extends TwoPortEquipment {
   /**
    * Get the bed utilisation factor (average loading / effective capacity).
    *
-   * @return utilisation factor (0 to 1)
+   * @return loading divided by effective capacity, or zero when effective capacity is zero; retained loading can exceed
+   * the effective capacity after degradation
    */
   public double getBedUtilisation() {
     double effectiveCapacity = maxMercuryCapacity * degradationFactor;

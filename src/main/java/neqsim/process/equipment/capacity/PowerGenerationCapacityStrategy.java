@@ -95,10 +95,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
   /** {@inheritDoc} */
   @Override
   public double evaluateMaxCapacity(ProcessEquipmentInterface equipment) {
-    if (equipment instanceof CombinedCycleSystem) {
-      return ((CombinedCycleSystem) equipment).getTotalPower("kW");
-    }
-    return ratedPowerKW;
+    return resolveDesignValueKW(equipment);
   }
 
   /** {@inheritDoc} */
@@ -126,7 +123,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * @param gt the gas turbine
    */
   private void addGasTurbineConstraints(Map<String, CapacityConstraint> constraints, GasTurbine gt) {
-    double designKW = resolveDesignValueKW(gt.getRatedPower("kW"));
+    double designKW = resolveDesignValueKW(gt);
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(designKW)
         .setMaxValue(designKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
         .setWarningThreshold(0.9).setDescription("Gas turbine power output vs rated")
@@ -142,10 +139,20 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * / {@code setDesignHeatDuty} call on the unit is actually reflected in the reported utilization.
    * </p>
    *
-   * @param equipmentRatedKW rated capacity declared on the equipment in kW, or a non-positive value if unset
+   * @param equipment the power generation equipment whose declared rating is used when positive
    * @return the equipment rating when positive, otherwise the strategy-level rated power in kW
    */
-  private double resolveDesignValueKW(double equipmentRatedKW) {
+  private double resolveDesignValueKW(ProcessEquipmentInterface equipment) {
+    double equipmentRatedKW = 0.0;
+    if (equipment instanceof CombinedCycleSystem) {
+      equipmentRatedKW = ((CombinedCycleSystem) equipment).getRatedTotalPower("kW");
+    } else if (equipment instanceof GasTurbine) {
+      equipmentRatedKW = ((GasTurbine) equipment).getRatedPower("kW");
+    } else if (equipment instanceof SteamTurbine) {
+      equipmentRatedKW = ((SteamTurbine) equipment).getRatedPower("kW");
+    } else if (equipment instanceof HRSG) {
+      equipmentRatedKW = ((HRSG) equipment).getDesignHeatDuty("kW");
+    }
     return equipmentRatedKW > 0.0 ? equipmentRatedKW : ratedPowerKW;
   }
 
@@ -156,7 +163,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * @param st the steam turbine
    */
   private void addSteamTurbineConstraints(Map<String, CapacityConstraint> constraints, SteamTurbine st) {
-    double designKW = resolveDesignValueKW(st.getRatedPower("kW"));
+    double designKW = resolveDesignValueKW(st);
     CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(designKW)
         .setMaxValue(designKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
         .setWarningThreshold(0.9).setDescription("Steam turbine power output vs rated")
@@ -171,7 +178,7 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * @param hrsg the HRSG
    */
   private void addHRSGConstraints(Map<String, CapacityConstraint> constraints, HRSG hrsg) {
-    double designKW = resolveDesignValueKW(hrsg.getDesignHeatDuty("kW"));
+    double designKW = resolveDesignValueKW(hrsg);
     CapacityConstraint heatConstraint = new CapacityConstraint("heatTransferred").setDesignValue(designKW)
         .setMaxValue(designKW * 1.1).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
         .setWarningThreshold(0.9).setDescription("HRSG heat transfer vs design")
@@ -186,8 +193,9 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
    * @param ccs the combined cycle system
    */
   private void addCombinedCycleConstraints(Map<String, CapacityConstraint> constraints, CombinedCycleSystem ccs) {
-    CapacityConstraint powerConstraint = new CapacityConstraint("totalPower").setDesignValue(ratedPowerKW)
-        .setMaxValue(ratedPowerKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+    double designKW = resolveDesignValueKW(ccs);
+    CapacityConstraint powerConstraint = new CapacityConstraint("totalPower").setDesignValue(designKW)
+        .setMaxValue(designKW * 1.05).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
         .setWarningThreshold(0.9).setDescription("Combined cycle total power output vs rated")
         .setValueSupplier(() -> Math.abs(ccs.getTotalPower("kW")));
     constraints.put("totalPower", powerConstraint);
