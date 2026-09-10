@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Logger;
 public class TwoFluidPipeSlugTrackingExample {
   private static final Logger logger = LogManager.getLogger(TwoFluidPipeSlugTrackingExample.class);
 
-
   public static void main(String[] args) {
     logger.info("=============================================================");
     logger.info("  TwoFluidPipe Slug Tracking Example");
