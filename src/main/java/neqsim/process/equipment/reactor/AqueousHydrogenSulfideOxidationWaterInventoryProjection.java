@@ -179,7 +179,7 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
 
     /** @return immutable source-ordered dimensional segment projections. */
     public List<Result> getSegmentProjections() {
-      return segmentProjections;
+      return Collections.unmodifiableList(new ArrayList<Result>(segmentProjections));
     }
 
     /** @return cumulative reacted total sulfide for the lower-rate path [mol]. */
