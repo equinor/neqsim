@@ -1,8 +1,11 @@
 package neqsim.mcp.runners;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.google.gson.Gson;
@@ -10,6 +13,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 /**
@@ -17,21 +21,30 @@ import com.google.gson.JsonParser;
  * engineering workflows.
  *
  * <p>
- * Manages a registry of external MCP server endpoints and provides orchestration for multi-server workflows. Each
- * external server can be a cost estimation service, plant historian connector, CAD/3D system, document extraction
- * service, or any MCP-compliant tool provider.
+ * Manages bounded descriptive metadata for external MCP server types and fixed workflow templates. It does not store
+ * connection endpoints or credentials, open a connection, or invoke an external tool. The host application remains
+ * responsible for identity, authorization, transport security, data handling, and execution.
  * </p>
  *
  * <p>
- * Since NeqSim MCP runs over STDIO, external server calls are modeled as registered endpoints that agents can discover
- * and invoke. The actual cross-server communication is handled by the host application (Claude, Copilot, etc.) which
- * has access to all connected MCP servers. This runner provides the composition metadata and workflow templates.
+ * Since NeqSim MCP runs over STDIO, this runner publishes metadata that an authorized host can inspect when planning
+ * cross-server work. Suggested steps are advisory and are not executed or scientifically validated by this runner.
  * </p>
  *
  * @author Even Solbraa
  * @version 1.0
  */
 public final class CompositionRunner {
+
+  private static final int MAX_REQUEST_BYTES = 16384;
+  private static final int MAX_NAME_LENGTH = 64;
+  private static final int MAX_TEXT_LENGTH = 512;
+  private static final int MAX_TASK_LENGTH = 4096;
+  private static final int MAX_COLLECTION_ENTRIES = 64;
+  private static final int MAX_CUSTOM_SERVERS = 32;
+  private static final int DEFAULT_SERVER_COUNT = 5;
+  private static final String[] CONNECTION_FIELDS = { "endpoint", "url", "command", "arguments", "environment",
+      "headers", "credentials", "token", "apiKey", "secret" };
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
@@ -59,9 +72,18 @@ public final class CompositionRunner {
    * @return JSON with results
    */
   public static String run(String json) {
+    if (json == null || json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
+      return errorJson("INVALID_INPUT", "Composition request is missing or exceeds 16384 bytes",
+          "Provide one bounded JSON object without connection or credential material");
+    }
     try {
-      JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String action = input.has("action") ? input.get("action").getAsString() : "";
+      JsonElement parsed = JsonParser.parseString(json);
+      if (!parsed.isJsonObject()) {
+        return errorJson("INVALID_INPUT", "Composition request must be a JSON object",
+            "Provide one JSON object with a supported action");
+      }
+      JsonObject input = parsed.getAsJsonObject();
+      String action = requiredString(input, "action", MAX_NAME_LENGTH);
 
       switch (action) {
       case "listServers":
@@ -83,8 +105,12 @@ public final class CompositionRunner {
             "Use: listServers, registerServer, removeServer, listWorkflows, "
                 + "getWorkflow, planComposition, describeCapabilities");
       }
+    } catch (IllegalArgumentException | JsonParseException e) {
+      return errorJson("INVALID_INPUT", "Invalid composition request",
+          "Use bounded strings and arrays of strings with the documented fields");
     } catch (Exception e) {
-      return errorJson("COMPOSITION_ERROR", e.getMessage(), "Check JSON format");
+      return errorJson("COMPOSITION_ERROR", "Composition metadata operation failed",
+          "Retry with a documented action and metadata-only input");
     }
   }
 
@@ -93,16 +119,23 @@ public final class CompositionRunner {
    *
    * @return JSON with server registry
    */
-  private static String listServers() {
+  private static synchronized String listServers() {
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("count", SERVERS.size());
 
     JsonArray servers = new JsonArray();
-    for (ExternalServer server : SERVERS.values()) {
-      servers.add(server.toJson());
+    List<String> names = new ArrayList<String>(SERVERS.keySet());
+    Collections.sort(names);
+    for (String name : names) {
+      ExternalServer server = SERVERS.get(name);
+      if (server != null) {
+        servers.add(server.toJson());
+      }
     }
     response.add("servers", servers);
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
     response.addProperty("note",
         "These are known MCP server types that can compose with NeqSim. "
             + "The host application (Claude, Copilot) handles actual connections. "
@@ -116,37 +149,45 @@ public final class CompositionRunner {
    * @param input JSON with server details
    * @return JSON confirmation
    */
-  private static String registerServer(JsonObject input) {
-    String name = input.has("name") ? input.get("name").getAsString() : "";
-    if (name.isEmpty()) {
-      return errorJson("MISSING_NAME", "Server name is required", "Provide 'name' field");
+  private static synchronized String registerServer(JsonObject input) {
+    for (String field : CONNECTION_FIELDS) {
+      if (input.has(field)) {
+        return errorJson("UNSUPPORTED_CONNECTION_DATA", "Connection, execution, and credential fields are not accepted",
+            "Register descriptive metadata only; configure connections in the authorized host application");
+      }
+    }
+
+    String name = requiredString(input, "name", MAX_NAME_LENGTH);
+    if (!name.matches("[A-Za-z0-9][A-Za-z0-9._-]{0,63}")) {
+      return errorJson("INVALID_NAME", "Server name contains unsupported characters",
+          "Use 1-64 letters, digits, dots, underscores, or hyphens");
+    }
+    if (isBuiltInServer(name)) {
+      return errorJson("PROTECTED_SERVER", "Built-in server metadata cannot be replaced",
+          "Use a distinct custom server name");
+    }
+    if (!SERVERS.containsKey(name) && SERVERS.size() - DEFAULT_SERVER_COUNT >= MAX_CUSTOM_SERVERS) {
+      return errorJson("REGISTRY_LIMIT", "Custom server registry limit reached",
+          "Remove an unused custom metadata record before registering another");
     }
 
     ExternalServer server = new ExternalServer();
     server.name = name;
-    server.description = input.has("description") ? input.get("description").getAsString() : "";
-    server.domain = input.has("domain") ? input.get("domain").getAsString() : "general";
-    server.transport = input.has("transport") ? input.get("transport").getAsString() : "stdio";
-    server.version = input.has("version") ? input.get("version").getAsString() : "1.0";
-
-    if (input.has("tools") && input.get("tools").isJsonArray()) {
-      for (JsonElement t : input.getAsJsonArray("tools")) {
-        server.tools.add(t.getAsString());
-      }
-    }
-
-    if (input.has("dataFormats") && input.get("dataFormats").isJsonArray()) {
-      for (JsonElement f : input.getAsJsonArray("dataFormats")) {
-        server.dataFormats.add(f.getAsString());
-      }
-    }
+    server.description = optionalString(input, "description", "", MAX_TEXT_LENGTH);
+    server.domain = optionalString(input, "domain", "general", MAX_NAME_LENGTH);
+    server.transport = optionalString(input, "transport", "stdio", MAX_NAME_LENGTH);
+    server.version = optionalString(input, "version", "1.0", MAX_NAME_LENGTH);
+    server.tools.addAll(stringArray(input, "tools"));
+    server.dataFormats.addAll(stringArray(input, "dataFormats"));
 
     SERVERS.put(name, server);
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
-    response.addProperty("message", "Server '" + name + "' registered");
+    response.addProperty("message", "Server '" + name + "' metadata registered");
     response.addProperty("totalServers", SERVERS.size());
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
     return GSON.toJson(response);
   }
 
@@ -156,14 +197,24 @@ public final class CompositionRunner {
    * @param input JSON with server name
    * @return JSON confirmation
    */
-  private static String removeServer(JsonObject input) {
-    String name = input.has("name") ? input.get("name").getAsString() : "";
+  private static synchronized String removeServer(JsonObject input) {
+    String name = requiredString(input, "name", MAX_NAME_LENGTH);
+    if (isBuiltInServer(name)) {
+      return errorJson("PROTECTED_SERVER", "Built-in server metadata cannot be removed",
+          "Only custom metadata records may be removed");
+    }
     ExternalServer removed = SERVERS.remove(name);
+    if (removed == null) {
+      return errorJson("NOT_FOUND", "Custom server metadata was not found",
+          "Use listServers to discover registered metadata names");
+    }
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
-    response.addProperty("removed", removed != null);
+    response.addProperty("removed", true);
     response.addProperty("totalServers", SERVERS.size());
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
     return GSON.toJson(response);
   }
 
@@ -193,6 +244,8 @@ public final class CompositionRunner {
       workflows.add(wf);
     }
     response.add("workflows", workflows);
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
     return GSON.toJson(response);
   }
 
@@ -203,7 +256,7 @@ public final class CompositionRunner {
    * @return JSON with full workflow definition
    */
   private static String getWorkflow(JsonObject input) {
-    String id = input.has("workflowId") ? input.get("workflowId").getAsString() : "";
+    String id = requiredString(input, "workflowId", MAX_NAME_LENGTH);
     WorkflowTemplate tmpl = TEMPLATES.get(id);
 
     if (tmpl == null) {
@@ -227,6 +280,9 @@ public final class CompositionRunner {
       servers.add(s);
     }
     response.add("requiredServers", servers);
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
+    response.addProperty("hostExecutionRequired", true);
 
     return GSON.toJson(response);
   }
@@ -238,14 +294,14 @@ public final class CompositionRunner {
    * @return JSON with recommended servers and workflow plan
    */
   private static String planComposition(JsonObject input) {
-    String task = input.has("task") ? input.get("task").getAsString() : "";
+    String task = requiredString(input, "task", MAX_TASK_LENGTH);
 
     JsonObject response = new JsonObject();
     response.addProperty("status", "success");
     response.addProperty("task", task);
 
     // Analyze task keywords to recommend servers and workflows
-    String lower = task.toLowerCase();
+    String lower = task.toLowerCase(Locale.ROOT);
 
     JsonArray recommended = new JsonArray();
     JsonArray steps = new JsonArray();
@@ -258,17 +314,17 @@ public final class CompositionRunner {
         || lower.contains("npv") || lower.contains("budget")) {
       addRecommendation(recommended, "cost-estimation", "CAPEX/OPEX cost estimation and economic analysis",
           "recommended");
-      addStep(steps, 1, "neqsim", "runProcess", "Run process simulation to size equipment");
-      addStep(steps, 2, "cost-estimation", "estimateCosts", "Estimate costs based on sized equipment");
+      addStep(steps, steps.size() + 1, "neqsim", "runProcess", "Run process simulation to size equipment");
+      addStep(steps, steps.size() + 1, "cost-estimation", "estimateCosts", "Estimate costs based on sized equipment");
     }
 
     // Check for plant data keywords
     if (lower.contains("plant") || lower.contains("historian") || lower.contains("pi ") || lower.contains("ip.21")
         || lower.contains("operational") || lower.contains("measured") || lower.contains("digital twin")) {
       addRecommendation(recommended, "plant-historian", "Real-time and historical plant data access", "recommended");
-      addStep(steps, 1, "plant-historian", "readTags", "Read current operating data from historian");
-      addStep(steps, 2, "neqsim", "runProcess", "Run simulation with real operating conditions");
-      addStep(steps, 3, "neqsim", "validateResults", "Compare simulation vs measured values");
+      addStep(steps, steps.size() + 1, "plant-historian", "readTags", "Read current operating data from historian");
+      addStep(steps, steps.size() + 1, "neqsim", "runProcess", "Run simulation with real operating conditions");
+      addStep(steps, steps.size() + 1, "neqsim", "validateResults", "Compare simulation vs measured values");
     }
 
     // Check for document extraction
@@ -292,13 +348,16 @@ public final class CompositionRunner {
 
     // Default: if no specific steps planned, give generic plan
     if (steps.size() == 0) {
-      addStep(steps, 1, "neqsim", "runFlash or runProcess", "Run thermodynamic or process simulation");
-      addStep(steps, 2, "neqsim", "validateResults", "Validate results against design rules");
-      addStep(steps, 3, "neqsim", "generateReport", "Generate engineering report");
+      addStep(steps, steps.size() + 1, "neqsim", "runFlash or runProcess", "Run thermodynamic or process simulation");
+      addStep(steps, steps.size() + 1, "neqsim", "validateResults", "Validate results against design rules");
+      addStep(steps, steps.size() + 1, "neqsim", "generateReport", "Generate engineering report");
     }
 
     response.add("recommendedServers", recommended);
     response.add("suggestedSteps", steps);
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
+    response.addProperty("hostExecutionRequired", true);
     response.addProperty("compositionNote",
         "The host application orchestrates cross-server calls. "
             + "Each step's output feeds into the next step's input. "
@@ -356,6 +415,9 @@ public final class CompositionRunner {
     response.add("provides", provides);
     response.add("consumes", consumes);
     response.add("dataFormats", formats);
+    response.addProperty("metadataOnly", true);
+    response.addProperty("executionPerformed", false);
+    response.addProperty("hostExecutionRequired", true);
 
     return GSON.toJson(response);
   }
@@ -498,6 +560,59 @@ public final class CompositionRunner {
   // ═══════════════════════════════════════════════════════════════════════════
   // Helpers
   // ═══════════════════════════════════════════════════════════════════════════
+
+  private static String requiredString(JsonObject input, String field, int maxLength) {
+    if (!input.has(field) || !input.get(field).isJsonPrimitive() || !input.get(field).getAsJsonPrimitive().isString()) {
+      throw new IllegalArgumentException("Missing string field");
+    }
+    String value = input.get(field).getAsString().trim();
+    if (value.isEmpty() || value.length() > maxLength) {
+      throw new IllegalArgumentException("String field outside bounds");
+    }
+    return value;
+  }
+
+  private static String optionalString(JsonObject input, String field, String defaultValue, int maxLength) {
+    if (!input.has(field)) {
+      return defaultValue;
+    }
+    if (!input.get(field).isJsonPrimitive() || !input.get(field).getAsJsonPrimitive().isString()) {
+      throw new IllegalArgumentException("Optional field must be a string");
+    }
+    String value = input.get(field).getAsString().trim();
+    if (value.length() > maxLength) {
+      throw new IllegalArgumentException("Optional string outside bounds");
+    }
+    return value;
+  }
+
+  private static List<String> stringArray(JsonObject input, String field) {
+    List<String> values = new ArrayList<String>();
+    if (!input.has(field)) {
+      return values;
+    }
+    if (!input.get(field).isJsonArray() || input.getAsJsonArray(field).size() > MAX_COLLECTION_ENTRIES) {
+      throw new IllegalArgumentException("Metadata collection outside bounds");
+    }
+    for (JsonElement element : input.getAsJsonArray(field)) {
+      if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) {
+        throw new IllegalArgumentException("Metadata collection must contain strings");
+      }
+      String value = element.getAsString().trim();
+      if (value.isEmpty() || value.length() > MAX_NAME_LENGTH) {
+        throw new IllegalArgumentException("Metadata item outside bounds");
+      }
+      if (!values.contains(value)) {
+        values.add(value);
+      }
+    }
+    return values;
+  }
+
+  private static boolean isBuiltInServer(String name) {
+    return "cost-estimation".equals(name) || "plant-historian".equals(name) || "cad-3d".equals(name)
+        || "document-extraction".equals(name) || "safety-analysis".equals(name);
+  }
 
   /**
    * Adds a recommendation entry to an array.
