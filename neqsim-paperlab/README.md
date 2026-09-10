@@ -448,9 +448,22 @@ a GitHub Issue suggesting new paper opportunities when changes are detected.
 **How it works:**
 
 1. `.github/workflows/research-scan.yml` triggers daily at 06:00 UTC
-2. `neqsim-paperlab/tools/daily_scan.py` runs the scanner on the full repo
+2. `neqsim-paperlab/tools/daily_scan.py` selects one opportunity from trending
+   research, falling back to the codebase scanner when no trending suggestion
+   is available
 3. If opportunities changed since the last scan, a GitHub Issue is created
-   with the full `scout_report.md` as the issue body
+   with the full report named by `report_file` in `.pr_metadata.json`
+
+| Scanner mode | Issue report |
+|--------------|--------------|
+| Default daily suggestion | `daily_suggestion.md` |
+| Full trending scan (`--full-scan`) | `trending_report.md` |
+| Legacy codebase scan (`--legacy`) or fallback | `scout_report.md` |
+
+The workflow uses the metadata from the current scan, even if reports from
+other modes already exist in the output directory. Pull requests that change
+the scanner or its workflow run offline publication-contract tests; they do
+not run the live scanner or create research issues.
 
 **Manual trigger:**
 
@@ -462,13 +475,19 @@ gh workflow run research-scan.yml -f force=true -f since_days=90
 
 **What the issue contains:**
 
-- Ranked table of paper opportunities with scores and readiness
-- Detailed cards per opportunity with NeqSim code improvements
-- Domain and paper-type breakdowns
+- The daily research suggestion, its inspiring paper, score and research angle
+- Relevant NeqSim classes and proposed improvements
+- A ranked opportunity report when the legacy fallback is used
 
 **Change detection:** A content hash tracks whether opportunities changed
 between scans. Issues are only created when new or modified opportunities
 appear (or when `force=true` is set).
+
+The workflow restores the latest successful scan hash and suggestion history.
+It saves a new cache entry only after the scan and any required issue creation
+succeed, so a failed publication does not mark an unpublished report as sent.
+Cache keys include the workflow run and attempt to allow state updates without
+trying to overwrite an immutable cache entry.
 
 ## Skills
 
