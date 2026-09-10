@@ -153,6 +153,12 @@ conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil
 $z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
 fugacity of the converged aqueous phase.
 
+CPA initialization excludes association sites only for components whose overall mole fraction
+is at or below the numerical trace cutoff of $10^{-20}$. It uses the current component and total
+mole counts before resetting phase compositions. A component depleted in a previous phase split
+must retain its sites when its overall concentration is material; otherwise solvent reference
+fugacities, activities, and the resulting salt inhibition can be corrupted.
+
 For a reactive fluid, call `chemicalReactionInit()` before creating the database and selecting the mixing rule. Phase
 and chemical equilibrium are then iterated together. Reactions may change the species inventory—for example, dissolved
 CO₂ can form bicarbonate and carbonate—so the coupled flash propagates reaction-adjusted species amounts while

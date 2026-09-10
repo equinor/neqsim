@@ -46,8 +46,8 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
-import neqsim.thermodynamicoperations.flashops.saturationops.CalciumSulfatePhaseBoundaryQualification;
 import neqsim.thermodynamicoperations.flashops.saturationops.CalcSaltSatauration;
+import neqsim.thermodynamicoperations.flashops.saturationops.CalciumSulfatePhaseBoundaryQualification;
 import neqsim.thermodynamicoperations.flashops.saturationops.CapillaryDewPointFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.CheckScalePotential;
 import neqsim.thermodynamicoperations.flashops.saturationops.ConstantDutyFlashInterface;
@@ -68,9 +68,9 @@ import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorCon
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateInhibitorwtFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitation;
 import neqsim.thermodynamicoperations.flashops.saturationops.MultiSaltPrecipitationResult;
-import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltPrecipitationResult;
 import neqsim.thermodynamicoperations.flashops.saturationops.SaltSaturationResult;
+import neqsim.thermodynamicoperations.flashops.saturationops.SolidComplexTemperatureCalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WATcalc;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointEquilibriumLine;
 import neqsim.thermodynamicoperations.flashops.saturationops.WaterDewPointTemperatureFlash;
@@ -1739,19 +1739,50 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (system.getTemperature() < 200.0) {
       system.setTemperature(200.0); // Don't start too low
     }
-    // logger.info("guess hydrate temperature " + system.getTemperature());
-    operation = new HydrateFormationTemperatureFlash(system);
 
-    for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-      ((ComponentHydrate) system.getPhase(4).getComponent(i)).getHydrateStructure();
+    runHydrateFormationTemperatureFlash();
+
+    // The secant search is sensitive to where it starts, so one failed start does not mean the
+    // fluid has no hydrate temperature. Concentrated brines in particular converge from a start
+    // near the ice point but not from the pressure based guess above. Retrying across the range
+    // where hydrates of the common formers are stable can recover a verified root. If every
+    // attempt fails, report that no result is available; this does not prove the absence of hydrates.
+    double[] retryTemperatures = { 273.15, 268.15, 278.15, 263.15, 283.15, 258.15 };
+    for (int attempt = 0; attempt < retryTemperatures.length && Double.isNaN(system.getTemperature()); attempt++) {
+      system.setTemperature(retryTemperatures[attempt]);
+      runHydrateFormationTemperatureFlash();
     }
-    if (!isRunAsThread()) {
-      getOperation().run();
-    } else {
-      run();
+
+    if (Double.isNaN(system.getTemperature())) {
+      throw new neqsim.util.exception.IsNaNException(this, "hydrateFormationTemperature",
+          "Hydrate formation temperature did not converge at " + system.getPressure()
+              + " bara. No hydrate equilibrium temperature is available for this fluid.");
     }
     // logger.info("Hydrate structure " + (((ComponentHydrate)
     // system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
+  }
+
+  /**
+   * Run a single hydrate formation temperature flash from the current system temperature.
+   */
+  private void runHydrateFormationTemperatureFlash() {
+    operation = new HydrateFormationTemperatureFlash(system);
+    for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
+      ((ComponentHydrate) system.getPhase(4).getComponent(i)).getHydrateStructure();
+    }
+    try {
+      if (!isRunAsThread()) {
+        getOperation().run();
+      } else {
+        run();
+      }
+    } catch (IllegalStateException ex) {
+      if (ex.getMessage() == null || !ex.getMessage().startsWith("Hydrate fluid inventory")) {
+        throw ex;
+      }
+      // The operation restores the original feed and reports NaN before rejecting an
+      // invalid phase split. The no-argument wrapper may retry from another temperature.
+    }
   }
 
   /**
