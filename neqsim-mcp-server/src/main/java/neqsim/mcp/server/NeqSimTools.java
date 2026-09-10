@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 37982)
-Total output lines: 2907
-
 package neqsim.mcp.server;
 
 import java.util.Map;
@@ -1177,7 +1174,562 @@ public class NeqSimTools {
       @ToolArg(description = "JSON specification with: 'components' or 'composition', 'model' "
           + "(SRK/PR), 'temperature_C', 'pressure_bara', 'flowRate' ({value, unit}), "
           + "'pipe' ({length_m, diameter_m, wallThickness_m, roughness_m, elevation_m}), "
-          + "optional 'stidRoute' ({segments:[...]}), 'fieldData' tagreade…7982 tokens truncated…(Exception e) {
+          + "optional 'stidRoute' ({segments:[...]}), 'fieldData' tagreader overrides, "
+          + "'eventSchedule' valve events, 'simulationTime_s', 'timeStep_s', and "
+          + "'designPressure_bara'.") String waterHammerJson) {
+    String policyBlocked = enforceToolAccess("runWaterHammer");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runWaterHammer",
+          withAutoValidation(WaterHammerRunner.run(waterHammerJson), "pipeline"), "general");
+    } catch (Exception e) {
+      return errorJson("Water-hammer study failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Reservoir simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Simulate a reservoir using material balance (tank model).
+   *
+   * @param reservoirJson JSON specification with fluid, reservoir volumes, and producers
+   * @return JSON with reservoir pressure decline and production data
+   */
+  @Tool(description = "Simulate a reservoir using material balance (tank model). "
+      + "Creates a SimpleReservoir with gas/oil/water volumes, adds producer and "
+      + "injector wells, and optionally runs transient depletion over multiple years. "
+      + "Returns reservoir pressure, volumes in place, and cumulative production. "
+      + "Ideal for resource estimation and production forecasting.")
+  public String runReservoir(
+      @ToolArg(description = "JSON specification with: 'components' (composition map), "
+          + "'model' (SRK/PR), 'reservoirTemperature_C', 'reservoirPressure_bara', "
+          + "'gasVolume_Sm3', 'oilVolume_Sm3', 'waterVolume_Sm3', "
+          + "'producers' (array of {name, flowRate: {value, unit}}), "
+          + "'simulationYears' (optional), 'timeStepDays' (optional).") String reservoirJson) {
+    String policyBlocked = enforceToolAccess("runReservoir");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runReservoir", ReservoirRunner.run(reservoirJson), "general");
+    } catch (Exception e) {
+      return errorJson("Reservoir simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Field development economics tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run field development economics (NPV, IRR, cash flow analysis).
+   *
+   * @param economicsJson JSON specification with CAPEX, OPEX, production, prices, and fiscal regime
+   * @return JSON with NPV, IRR, payback, and annual cash flows
+   */
+  @Tool(description = "Run field development economics analysis. Calculates NPV, IRR, "
+      + "payback period, and annual cash flows with detailed tax breakdown. "
+      + "Supports multiple fiscal regimes: Norwegian NCS (78% marginal rate with "
+      + "uplift/depreciation), UK (40% ring-fence + 35% supplementary), Brazil, "
+      + "US-GOM. Also generates production profiles with exponential/hyperbolic/"
+      + "harmonic decline curves. Two modes: 'cashflow' (full NPV/IRR) or "
+      + "'productionProfile' (decline curve generation).")
+  public String runFieldEconomics(
+      @ToolArg(description = "JSON specification with 'mode' ('cashflow' or 'productionProfile'). "
+          + "For cashflow: 'country' (NO/UK/BR/US-GOM), 'capex' ({totalMusd, year} or "
+          + "{schedule: {year: musd}}), 'opex' ({percentOfCapex, fixedPerYearMusd, variablePerBoe}), "
+          + "'oilPrice_usdPerBbl', 'gasPrice_usdPerSm3', 'production' ({oil: {year: bbl}, "
+          + "gas: {year: sm3}}), 'discountRate'. For productionProfile: 'declineType' "
+          + "(EXPONENTIAL/HYPERBOLIC/HARMONIC), 'initialRate_bblPerDay', 'annualDeclineRate', "
+          + "'startYear', 'totalYears', 'plateauYears' (optional).") String economicsJson) {
+    String policyBlocked = enforceToolAccess("runFieldEconomics");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runFieldEconomics", FieldDevelopmentRunner.run(economicsJson),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Field economics calculation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Dynamic simulation tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a dynamic (transient) process simulation with controllers.
+   *
+   * @param dynamicJson JSON specification with process, duration, and optional tuning
+   * @return JSON with time-series results from all transmitters
+   */
+  @Tool(description = "Run a dynamic (transient) process simulation. Takes a standard "
+      + "process JSON, automatically instruments it with PID controllers and "
+      + "measurement devices (pressure, level, temperature, flow transmitters), "
+      + "then runs a transient simulation for the specified duration. "
+      + "Returns time-series data from all transmitters. Use for startup/shutdown "
+      + "analysis, controller tuning, and dynamic response studies.")
+  public String runDynamic(
+      @ToolArg(description = "JSON specification with: 'processJson' (standard process "
+          + "definition), 'duration_seconds' (simulation length), 'timeStep_seconds' "
+          + "(step size, default 1.0), and optional 'tuning' ({pressure: {kp, ti}, "
+          + "level: {kp, ti}, flow: {kp, ti}, temperature: {kp, ti}}).") String dynamicJson) {
+    String policyBlocked = enforceToolAccess("runDynamic");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runDynamic", DynamicRunner.run(dynamicJson), "general");
+    } catch (Exception e) {
+      return errorJson("Dynamic simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Bioprocessing tools
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a bioprocess reactor simulation.
+   *
+   * @param bioprocessJson JSON specification with reactor type and parameters
+   * @return JSON with bioprocess results
+   */
+  @Tool(description = "Run a bioprocessing reactor simulation. Supports: "
+      + "anaerobicDigester (biogas from organic waste — food waste, manure, sewage sludge), "
+      + "fermentation (ethanol, biochemicals — Monod, Contois kinetics), "
+      + "gasifier (thermochemical biomass gasification — downdraft, updraft, fluidized bed), "
+      + "pyrolysis (thermal decomposition — slow, fast, flash modes producing char, "
+      + "bio-oil, and gas). Each reactor returns product yields, energy balances, "
+      + "and conversion efficiencies.")
+  public String runBioprocess(
+      @ToolArg(description = "JSON specification with: 'reactorType' (anaerobicDigester, "
+          + "fermentation, gasifier, pyrolysis). For anaerobicDigester: 'substrateType' "
+          + "(FOOD_WASTE, MANURE, SEWAGE_SLUDGE, etc.), 'feedRate_kgPerHr', "
+          + "'totalSolidsFraction', 'temperature_C'. For fermentation: 'kineticModel' "
+          + "(MONOD, CONTOIS), 'maxSpecificGrowthRate', 'yieldBiomass', 'yieldProduct'. "
+          + "For gasifier: 'biomass' ({carbon, hydrogen, oxygen, nitrogen, sulfur, ash}), "
+          + "'gasifierType' (DOWNDRAFT, UPDRAFT, FLUIDIZED_BED), 'agentType' (AIR, OXYGEN, STEAM). "
+          + "For pyrolysis: 'biomass' (same), 'mode' (SLOW, FAST, FLASH), "
+          + "'temperature_C'.") String bioprocessJson) {
+    String policyBlocked = enforceToolAccess("runBioprocess");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runBioprocess", BioprocessRunner.run(bioprocessJson), "general");
+    } catch (Exception e) {
+      return errorJson("Bioprocess simulation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Session management tools (stateful)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Manage a persistent simulation session for incremental flowsheet construction.
+   *
+   * @param sessionJson JSON with action and session parameters
+   * @return JSON with session state or results
+   */
+  @Tool(description = "Manage a persistent simulation session. Enables incremental process "
+      + "construction: create a session with a fluid, add equipment one-by-one, modify "
+      + "parameters, and re-run — all without resending the entire JSON each time. "
+      + "Sessions persist across multiple calls with automatic 30-minute TTL. "
+      + "Actions: 'create' (new session with fluid), 'addEquipment' (add equipment to "
+      + "session), 'run' (execute simulation), 'modify' (change a parameter and re-run), "
+      + "'evaluate' (closed-loop optimization step: apply a batch of setpoints, re-converge "
+      + "the cached process in place, and read back objectives with a feasible flag — no "
+      + "rebuild), 'getValues' (batch-read variables), 'setValues' (batch-write inputs, "
+      + "optional re-run), 'adjustables' (enumerate the bounded decision space), "
+      + "'getState' (inspect session), 'list' (all sessions), 'close' (delete session).")
+  public String manageSession(
+      @ToolArg(description = "JSON with 'action' (create|addEquipment|run|modify|evaluate|"
+          + "getValues|setValues|adjustables|getState|list|close). For create: 'fluid' "
+          + "(composition) or 'processJson' (full process). "
+          + "For addEquipment: 'sessionId', 'equipment' ({type, name, inlet, properties}). "
+          + "For modify: 'sessionId', 'address' (e.g. 'Compressor.outletPressure'), "
+          + "'value', 'unit'. For evaluate: 'sessionId', 'setpoints' (object of address->value), "
+          + "optional 'readbacks' (array), 'setpointUnit', 'readbackUnit', 'maxIterations', "
+          + "'tolerance'. For getValues: 'sessionId', 'addresses' (array), optional 'unit'. "
+          + "For setValues: 'sessionId', 'updates' (object), optional 'unit', 'runAfter'. "
+          + "For run/getState/close/adjustables: 'sessionId'.") String sessionJson) {
+    String policyBlocked = enforceToolAccess("manageSession");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("manageSession", SessionRunner.run(sessionJson), "general");
+    } catch (Exception e) {
+      return errorJson("Session operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Enumerate the bounded decision space (adjustable parameters and adjusters) of a process.
+   *
+   * @param processJson JSON process definition
+   * @return JSON with the adjustable-parameter registry (address, bounds, unit, source)
+   */
+  @Tool(description = "Enumerate the bounded decision space of a process flowsheet — the "
+      + "adjustable parameters and adjusters an optimizer may perturb. Builds and runs the "
+      + "process once, then returns each parameter's address, lower/upper bounds, unit, and "
+      + "source. Use this to discover decision variables before driving a runProcessLoop sweep.")
+  public String getAdjustableParameters(@ToolArg(
+      description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson) {
+    String policyBlocked = enforceToolAccess("getAdjustableParameters");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("getAdjustableParameters",
+          AutomationRunner.getAdjustableParameters(resolveModel(processJson)), "general");
+    } catch (Exception e) {
+      return errorJson("Adjustable-parameter enumeration failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Run a build-once / sweep-many closed-loop parametric study on a process.
+   *
+   * @param processJson JSON process definition
+   * @param trials JSON array of setpoint batches (each an address-&gt;value object)
+   * @param readbacks JSON array of objective/constraint addresses to read after each trial
+   * @param setpointUnit unit applied to every setpoint, or empty for per-variable defaults
+   * @param readbackUnit unit applied to every read-back, or empty for per-variable defaults
+   * @return JSON with one schema-versioned trial result per batch and a feasible-trial count
+   */
+  @Tool(description = "Run a closed-loop parametric / optimization sweep on a process. The "
+      + "flowsheet is built and run exactly once, then each trial batch of setpoints is applied "
+      + "in place and re-converged (reusing the previous converged state) — far cheaper than "
+      + "one setSimulationVariable-and-run call per trial. Each trial returns a schema-versioned "
+      + "result with a 'feasible' flag, rejected setpoints, and read-back errors, so a malformed "
+      + "candidate degrades one trial instead of crashing the sweep. Pair with "
+      + "getAdjustableParameters to discover decision variables.")
+  public String runProcessLoop(
+      @ToolArg(
+          description = "JSON process definition (same schema as runProcess), OR a modelId returned by manageModel(action=''register'') to reuse a registered model without resending it.") String processJson,
+      @ToolArg(description = "JSON array of setpoint batches; each batch is an object mapping a "
+          + "dot-notation address to a numeric value, e.g. "
+          + "[{\"Compressor.outletPressure\":150},{\"Compressor.outletPressure\":160}].") String trials,
+      @ToolArg(description = "JSON array of objective/constraint addresses to read after each "
+          + "trial, e.g. [\"Compressor.power\"]. May be empty.") String readbacks,
+      @ToolArg(description = "Unit applied to every setpoint (e.g. 'bara'), or empty for "
+          + "per-variable defaults.") String setpointUnit,
+      @ToolArg(description = "Unit applied to every read-back (e.g. 'kW'), or empty for "
+          + "per-variable defaults.") String readbackUnit) {
+    String policyBlocked = enforceToolAccess("runProcessLoop");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runProcessLoop",
+          AutomationRunner.runLoop(resolveModel(processJson), trials, readbacks, setpointUnit, readbackUnit),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Process loop failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task solver and workflow composition
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Route a supported engineering task to a bounded fixed plan of existing runners.
+   *
+   * @param taskJson JSON with task description and parameters
+   * @return JSON with keyword classification, fixed plan, step results, validation, and report
+   */
+  @Tool(description = "[EXPERIMENTAL — Tier 3] Route a supported engineering task through "
+      + "a deterministic fixed plan of existing NeqSim runners. Keyword families cover "
+      + "compression, separation, dehydration, pipeline, PVT, flow assurance, reservoir, "
+      + "economics, and dynamic studies. The caller supplies the fluid and runner parameters; "
+      + "unsupported task descriptions fail closed. Results are collected for review, not "
+      + "semantically transformed between steps. Limited validation — results require "
+      + "independent engineering review. Not available in STUDY_TEAM, DIGITAL_TWIN, "
+      + "or ENTERPRISE modes.")
+  public String solveTask(
+      @ToolArg(description = "JSON with: required non-blank 'task' (keyword-based description), "
+          + "'fluid' (canonical model and composition), 'parameters' (runner-specific values), "
+          + "optional 'process' (equipment definitions), and optional 'validate' "
+          + "(true/false, default true).") String taskJson) {
+    String policyBlocked = enforceToolAccess("solveTask");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("solveTask", TaskSolverRunner.solveTask(taskJson), "general");
+    } catch (Exception e) {
+      return errorJson("Task solving failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Compose a multi-domain workflow by chaining runners in sequence.
+   *
+   * @param workflowJson JSON with workflow steps
+   * @return JSON with all step results and combined output
+   */
+  @Tool(description = "Compose a multi-domain workflow by chaining simulation steps. "
+      + "Define a sequence of runners (flash, process, pipeline, pvt, flow_assurance, "
+      + "reservoir, economics, dynamic, standards, bioprocess) and chain them together — "
+      + "results from each step flow to the next. Example: Reservoir → Process → "
+      + "Pipeline → Economics for a full field development evaluation.")
+  public String composeWorkflow(
+      @ToolArg(description = "JSON with: 'workflow' (name), 'fluid' (shared fluid), "
+          + "'steps' array of {runner, name, input} objects. Runners: flash, process, "
+          + "pipeline, pvt, flow_assurance, reservoir, economics, dynamic, standards, "
+          + "bioprocess. Each step's output is available to subsequent steps.") String workflowJson) {
+    String policyBlocked = enforceToolAccess("composeWorkflow");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("composeWorkflow", TaskSolverRunner.composeWorkflow(workflowJson),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Workflow composition failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  /**
+   * Runs agentic engineering planning, evidence trust, or autonomous study ranking.
+   *
+   * @param agenticJson JSON with action plan, trust, or study
+   * @return JSON with standardized agentic engineering result
+   */
+  @Tool(description = "Run the agentic engineering kernel. Actions: 'plan' builds an Engineering "
+      + "Intent Graph and reviewable Workflow Plan; 'trust' builds an Evidence Graph and trust "
+      + "score for a result package; 'study' ranks candidate designs against objectives and "
+      + "constraints. Deterministic and side-effect free; simulations still run through explicit "
+      + "NeqSim calculation tools.")
+  public String runAgenticEngineering(
+      @ToolArg(description = "JSON with action: plan|trust|study. For plan provide task, optional "
+          + "fluid, objectives, constraints, standards, and deliverables. For trust provide result, "
+          + "provenance, validation, qualityGate, benchmarkTrust, evidence, assumptions, and "
+          + "limitations. For study provide candidates with metrics, objectives, and constraints.") String agenticJson) {
+    String policyBlocked = enforceToolAccess("runAgenticEngineering");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("runAgenticEngineering", AgenticEngineeringRunner.run(agenticJson),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Agentic engineering failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Engineering validation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Validate simulation results against engineering design rules and industry standards.
+   *
+   * @param resultsJson JSON with simulation results
+   * @param context the validation context
+   * @return JSON with validation findings
+   */
+  @Tool(description = "Validate simulation results against engineering design rules. "
+      + "Checks: temperature/pressure physical limits, compressor efficiency (75-88%) and "
+      + "compression ratio (<4.5 per stage per API 617), separator residence time "
+      + "(>60s per NORSOK P-001), heat exchanger approach temperature (>3C per TEMA), "
+      + "pipeline erosional velocity (<25 m/s per API RP 14E), mass/energy balance closure, "
+      + "convergence status, hydrate risk, and material selection limits. "
+      + "Returns PASS / PASS_WITH_WARNINGS / FAIL verdict with remediation hints.")
+  public String validateResults(
+      @ToolArg(description = "JSON with simulation results to validate. Can be output "
+          + "from any runner (flash, process, pipeline, etc.).") String resultsJson,
+      @ToolArg(description = "Validation context: 'process', 'compressor', 'separator', "
+          + "'heatExchanger', 'pipeline', 'valve', or 'general'.") String context) {
+    String policyBlocked = enforceToolAccess("validateResults");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("validateResults",
+          EngineeringValidator.validate(resultsJson, context), "general");
+    } catch (Exception e) {
+      return errorJson("Validation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Report generation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Generate a structured engineering report from simulation results.
+   *
+   * @param reportJson JSON with report type, title, and data
+   * @return JSON with Markdown report, tables, chart data, and validation
+   */
+  @Tool(description = "Generate a structured engineering report from simulation results. "
+      + "Produces a professional Markdown report with tables, chart-ready data arrays "
+      + "(for plotting by AI agents), summary statistics, and optional engineering "
+      + "validation. Report types: process_summary, pvt_study, parametric_sweep, "
+      + "flow_assurance, equipment_design, custom.")
+  public String generateReport(
+      @ToolArg(description = "JSON with: 'reportType' (process_summary|pvt_study|"
+          + "parametric_sweep|flow_assurance|equipment_design|custom), 'title' (report "
+          + "title), 'data' (simulation results to report on), optional 'author', "
+          + "'includeValidation' (true/false), 'includeChartData' (true/false).") String reportJson) {
+    String policyBlocked = enforceToolAccess("generateReport");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("generateReport", ReportRunner.run(reportJson), "general");
+    } catch (Exception e) {
+      return errorJson("Report generation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Task workflow bridge (task_solve integration)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Convert MCP tool output to the task_solve results.json format.
+   *
+   * @param bridgeJson JSON with tool output and metadata
+   * @return JSON in task_solve results.json schema
+   */
+  @Tool(description = "Convert any MCP tool output into the task_solve results.json format "
+      + "for professional engineering report generation. Takes raw output from any tool "
+      + "(runFlash, runProcess, runPVT, runPipeline, calculateStandard, runFieldEconomics, etc.), "
+      + "extracts key results, validation status, and produces the results.json schema "
+      + "consumed by generate_report.py. Use action 'getSchema' for the full schema reference. "
+      + "This bridges MCP simulations to the NeqSim task-solving workflow that produces "
+      + "Word/HTML engineering reports.")
+  public String bridgeTaskWorkflow(
+      @ToolArg(description = "JSON with: 'action' ('toResultsJson' or 'getSchema'). "
+          + "For toResultsJson: 'toolOutput' (raw output from any MCP tool), "
+          + "'sourceRunner' (tool name, e.g. 'runFlash'), optional 'taskTitle', "
+          + "'approach' (methodology description), 'conclusions'.") String bridgeJson) {
+    String policyBlocked = enforceToolAccess("bridgeTaskWorkflow");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      return standardizeResponse("bridgeTaskWorkflow", TaskWorkflowBridge.run(bridgeJson),
+          "general");
+    } catch (Exception e) {
+      return errorJson("Task workflow bridge failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Plugin system
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Run a registered plugin by name, or list all available plugins.
+   *
+   * @param pluginJson JSON with plugin name and input
+   * @return JSON with plugin output or plugin list
+   */
+  @Tool(description = "Run a registered plugin or list available plugins. "
+      + "Plugins extend NeqSim MCP with domain-specific calculations. "
+      + "Use action 'list' to discover available plugins, or 'run' to execute one.")
+  public String runPlugin(
+      @ToolArg(description = "JSON with: 'action' ('list' or 'run'). For 'run': "
+          + "'pluginName' (registered plugin name), 'input' (plugin-specific JSON). "
+          + "For 'list': no additional fields needed.") String pluginJson) {
+    String policyBlocked = enforceToolAccess("runPlugin");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      JsonObject input = JsonParser.parseString(pluginJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "list";
+
+      if ("list".equals(action)) {
+        return standardizeResponse("runPlugin", PluginRegistry.listPlugins(), "general");
+      } else if ("run".equals(action)) {
+        String pluginName = input.has("pluginName") ? input.get("pluginName").getAsString() : "";
+        String pluginInput = input.has("input") ? input.get("input").toString() : "{}";
+        return standardizeResponse("runPlugin", PluginRegistry.runPlugin(pluginName, pluginInput),
+            "general");
+      } else {
+        return errorJson("Unknown plugin action: " + action + ". Use 'list' or 'run'.");
+      }
+    } catch (Exception e) {
+      return errorJson("Plugin operation failed: " + e.getMessage());
+    } finally {
+      McpRequestContext.clear();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Progress tracking
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Check progress of long-running simulations.
+   *
+   * @param progressJson JSON with operation ID or action
+   * @return JSON with progress details
+   */
+  @Tool(description = "Check progress of long-running simulations. "
+      + "Use 'listActive' to see all running operations, or provide an 'operationId' "
+      + "to get detailed progress (percentage, current step, milestones).")
+  public String getProgress(
+      @ToolArg(description = "JSON with: 'action' ('get' or 'listActive'). For 'get': "
+          + "'operationId' (ID returned when starting a long simulation).") String progressJson) {
+    String policyBlocked = enforceToolAccess("getProgress");
+    if (policyBlocked != null) {
+      return policyBlocked;
+    }
+    try {
+      JsonObject input = JsonParser.parseString(progressJson).getAsJsonObject();
+      String action = input.has("action") ? input.get("action").getAsString() : "listActive";
+
+      if ("listActive".equals(action)) {
+        return standardizeResponse("getProgress", ProgressTracker.listActive(), "general");
+      } else if ("get".equals(action) && input.has("operationId")) {
+        return standardizeResponse("getProgress",
+            ProgressTracker.getProgress(input.get("operationId").getAsString()), "general");
+      } else {
+        return standardizeResponse("getProgress", ProgressTracker.listActive(), "general");
+      }
+    } catch (Exception e) {
       return errorJson("Progress query failed: " + e.getMessage());
     } finally {
       McpRequestContext.clear();
