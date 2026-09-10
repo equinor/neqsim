@@ -180,6 +180,22 @@ where $\Delta S_T = \exp(5.0 \cdot (SG_{alk} - SG)) - 1$
 **Corrected Critical Temperature:**
 $$T_c = T_{c,alk} \times \left(\frac{1 + 2f_T}{1 - 2f_T}\right)^2$$
 
+Temperatures in these equations are in kelvin. The full coefficient
+$(0.0398285 - 0.706691 T_b^{-0.5})$ multiplies the inner $\Delta S_T$.
+The correction for [issue #3624](https://github.com/equinor/neqsim/issues/3624)
+aligns the implementation with this grouping, including the critical pressure's
+dependence on the corrected critical temperature. Recreate Twu pseudo-components
+when rerunning a fluid characterized by the earlier implementation; reflashing a
+saved fluid does not recalculate its stored critical properties.
+
+The regression's heaviest cut (412.79 g/mol, specific gravity 0.94575) now has
+$T_c = 921.54394$ K, $P_c = 12.05145$ bar, and acentric factor 0.94858. Previously
+it had $T_c < T_b$ and a negative acentric factor of approximately -38.45.
+Critical-temperature and pressure checks use an independent evaluation of the
+[Whitson Twu equations](https://manual.pvt.whitson.com/methods/c7p_characterization/critical_properties_models/)
+in degrees Rankine and psia. These verify the correlation implementation, not
+experimental accuracy for every petroleum fraction.
+
 #### When to Use
 
 - Gas condensates with high paraffin content

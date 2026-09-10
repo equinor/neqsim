@@ -26,11 +26,11 @@ public class TBPfractionModelTest {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
     thermoSystem.getCharacterization().setTBPModel("Twu");
     thermoSystem.addTBPfraction("C7", 1.0, 110.0 / 1000.0, 0.73);
-    assertEquals(536.173400, thermoSystem.getComponent(0).getTC(), 1e-3);
-    assertEquals(26.52357312690, thermoSystem.getComponent(0).getPC(), 1e-3);
-    assertEquals(0.56001213933, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
+    assertEquals(565.28034045792, thermoSystem.getComponent(0).getTC(), 1e-3);
+    assertEquals(27.96344322995, thermoSystem.getComponent(0).getPC(), 1e-3);
+    assertEquals(0.32808869220, thermoSystem.getComponent(0).getAcentricFactor(), 1e-3);
     assertEquals(437.335493, thermoSystem.getComponent(0).getCriticalVolume(), 1e-3);
-    assertEquals(0.24141893477, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
+    assertEquals(0.26177021726, thermoSystem.getComponent(0).getRacketZ(), 1e-3);
   }
 
   @Test
