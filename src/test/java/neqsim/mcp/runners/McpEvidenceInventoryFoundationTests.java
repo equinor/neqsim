@@ -620,8 +620,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
         .contains("MULTI_SERVER_COMPOSITION_CONTRACT.md"));
-    assertTrue(composition.get("evidenceBoundary").getAsString()
-        .contains("does not establish external server connection"));
+    assertTrue(
+        composition.get("evidenceBoundary").getAsString().contains("does not establish external server connection"));
     assertTrue(composition.get("evidenceBoundary").getAsString().contains("accountable engineering approval"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("composeMultiServerWorkflow"));
     assertEquals(35, limitations.get("contractTestedToolCount").getAsInt());
