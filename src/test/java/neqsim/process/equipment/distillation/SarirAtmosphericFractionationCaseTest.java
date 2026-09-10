@@ -134,8 +134,7 @@ public class SarirAtmosphericFractionationCaseTest {
         inconsistentSpecificGravity, MOLAR_MASS_KG_PER_MOL, qualifiedInputs()));
   }
 
-  private static void assertBoilingRange(
-      SarirAtmosphericFractionationResult.ProductResult product) {
+  private static void assertBoilingRange(SarirAtmosphericFractionationResult.ProductResult product) {
     double[] temperatures = product.getBoilingPointTemperaturesKelvin();
     double[] cumulativeFractions = product.getCumulativeMoleFractions();
     assertEquals(temperatures.length, cumulativeFractions.length);
@@ -158,14 +157,10 @@ public class SarirAtmosphericFractionationCaseTest {
     double t90 = product.getNormalBoilingPointQuantileKelvin(0.90);
     assertTrue(t10 <= t50);
     assertTrue(t50 <= t90);
-    assertEquals(t50 - 273.15, product.getNormalBoilingPointQuantileCelsius(0.50),
-        1.0e-12);
-    assertThrows(IllegalArgumentException.class,
-        () -> product.getNormalBoilingPointQuantileKelvin(0.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> product.getNormalBoilingPointQuantileKelvin(1.0001));
-    assertThrows(IllegalArgumentException.class,
-        () -> product.getNormalBoilingPointQuantileKelvin(Double.NaN));
+    assertEquals(t50 - 273.15, product.getNormalBoilingPointQuantileCelsius(0.50), 1.0e-12);
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(0.0));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(1.0001));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(Double.NaN));
 
     double originalTemperature = product.getBoilingPointTemperaturesKelvin()[0];
     temperatures[0] = -1.0;
