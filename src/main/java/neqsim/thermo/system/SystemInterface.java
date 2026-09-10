@@ -2877,9 +2877,14 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setPressure(double newPressure, String unit);
 
   /**
-   * Setter for property solidPhaseCheck.
+   * Enable or disable solid checking for all components in every allocated phase, including cached phases.
    *
-   * @param test a boolean
+   * <p>
+   * Disabling is safe and idempotent even when no solid phase has been allocated. It preserves the phase count,
+   * composition and component inventories without reallocating phases or recalculating equilibrium.
+   * </p>
+   *
+   * @param test true to enable solid checking, false to disable it
    */
   public void setSolidPhaseCheck(boolean test);
 

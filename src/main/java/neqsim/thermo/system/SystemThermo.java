@@ -5829,12 +5829,14 @@ public abstract class SystemThermo implements SystemInterface {
     if (solidPhaseCheck && !this.hasSolidPhase()) {
       addSolidPhase();
     }
-    // init(0);
 
-    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
-      for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        getPhase(phaseNum).getComponent(k).setSolidCheck(solidPhaseCheck);
-        getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
+    // Include cached phases without requiring a solid phase or a particular phase-index mapping.
+    for (PhaseInterface phase : phaseArray) {
+      if (phase == null) {
+        continue;
+      }
+      for (int k = 0; k < phase.getNumberOfComponents(); k++) {
+        phase.getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
     setNumberOfPhases(oldphase);

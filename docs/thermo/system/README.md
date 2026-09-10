@@ -297,6 +297,11 @@ fluid.setPhaseType(1, "oil");
 fluid.setSolidPhaseCheck(true);
 ```
 
+`setSolidPhaseCheck(false)` safely disables solid checking even on a fresh fluid.
+Repeated calls clear the component flags in every allocated phase while preserving
+the phase count and composition. Existing phases remain allocated; the setter
+does not recalculate equilibrium.
+
 ---
 
 ## System Methods
