@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, and composeMultiServerWorkflow are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.35 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow. Inventory 1.35 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: thirty-five bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records; 35 are CONTRACT_TESTED and 16 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
