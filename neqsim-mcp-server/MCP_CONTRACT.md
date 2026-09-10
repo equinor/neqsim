@@ -126,7 +126,7 @@ domain-specific runners with limited qualification evidence.
 | `runDynamic` | CALCULATION | v1.1 | Dynamic transient simulation with auto-instrumented controllers |
 | `runBioprocess` | CALCULATION | v1.1 | Bioprocessing reactors (AD, fermentation, gasification, pyrolysis) |
 | `streamSimulation` | PLATFORM | v1.2 | Async simulation with incremental polling |
-| `composeMultiServerWorkflow` | PLATFORM | v1.2 | Multi-server orchestration across MCP servers |
+| `composeMultiServerWorkflow` | PLATFORM | v1.2 | Bounded metadata-only planning across MCP servers |
 | `manageSecurity` | PLATFORM | v1.2 | API key management, rate limiting, audit logging |
 | `manageState` | PLATFORM | v1.2 | Persist/restore simulation states across server restarts |
 | `manageValidationProfile` | PLATFORM | v1.2 | Jurisdiction-specific validation profiles (NCS, UKCS, GoM, Brazil) |
@@ -136,6 +136,26 @@ domain-specific runners with limited qualification evidence.
 Execution tools (`solveTask`, `composeWorkflow`, `manageSession`) perform
 multi-step or stateful operations. They are **not part of any governed tier**
 and must not be used for engineering decisions without independent validation.
+
+### Bounded multi-server composition metadata
+
+`composeMultiServerWorkflow` publishes metadata and deterministic host-execution
+plans only. It does not connect to, authenticate with, or execute another
+server. The complete request is limited to 16,384 UTF-8 bytes, a plan task to
+4096 characters, each name to 64 characters, each description to 512
+characters, each tool/format list to 64 unique entries, and the process-local
+custom registry to 32 records. Built-in metadata is immutable. Connection URLs,
+commands, arguments, environment data, headers, credentials, tokens, API keys,
+and secrets are rejected.
+
+The host is responsible for external identity, authorization, transport
+security, schema/unit compatibility, data governance, execution, and
+engineering review. Custom records are not durable, distributed, authenticated,
+encrypted, or tenant-isolated. Suggested steps are not proof of availability,
+feasibility, model fidelity, convergence, conservation, standards
+applicability, safety adequacy, plant authority, certification, or accountable
+engineering approval. See
+[`MULTI_SERVER_COMPOSITION_CONTRACT.md`](docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md).
 
 ## Browsable Resources (Stable)
 

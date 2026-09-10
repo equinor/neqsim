@@ -1815,18 +1815,20 @@ public class NeqSimTools {
    * @param compositionJson JSON with composition action and parameters
    * @return JSON with workflow plan or server info
    */
-  @Tool(description = "Compose multi-server engineering workflows across MCP servers. "
-      + "Browse external servers (cost estimation, plant historian, CAD, safety), "
-      + "plan cross-domain workflows (digital-twin, feed study, vendor evaluation), "
-      + "and describe NeqSim capabilities. "
-      + "Actions: listServers, registerServer, removeServer, listWorkflows, "
-      + "getWorkflow, planComposition, describeCapabilities.")
+  @Tool(description = "Plan bounded multi-server workflow metadata only; this tool does not connect to "
+      + "or execute external servers. Browse external-server metadata, inspect fixed workflow templates, "
+      + "and create deterministic host-execution plans. Requests are capped at 16384 bytes and reject "
+      + "connection, execution, or credential material. The host remains responsible for identity, "
+      + "authorization, transport security, data handling, execution, step compatibility, "
+      + "and independent engineering review. Actions: listServers, registerServer, removeServer, "
+      + "listWorkflows, getWorkflow, planComposition, describeCapabilities.")
   public String composeMultiServerWorkflow(
-      @ToolArg(description = "JSON with: 'action' (listServers|registerServer|removeServer|"
-          + "listWorkflows|getWorkflow|planComposition|describeCapabilities). "
-          + "For planComposition: 'task' (natural language description). "
-          + "For getWorkflow: 'workflowId' (digital-twin|feed-study|vendor-evaluation|"
-          + "safety-study).") String compositionJson) {
+      @ToolArg(description = "Bounded metadata-only JSON with: 'action' "
+          + "(listServers|registerServer|removeServer|listWorkflows|getWorkflow|planComposition|"
+          + "describeCapabilities). For registerServer: 'name' plus optional description, domain, transport, "
+          + "version, tools, and dataFormats; do not provide endpoints, commands, headers, credentials, or tokens. "
+          + "For planComposition: non-blank 'task' up to 4096 characters. For getWorkflow: 'workflowId' "
+          + "(digital-twin|feed-study|vendor-evaluation|safety-study).") String compositionJson) {
     String policyBlocked = enforceToolAccess("composeMultiServerWorkflow");
     if (policyBlocked != null) {
       return policyBlocked;
