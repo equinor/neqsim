@@ -9,10 +9,10 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable pressure-sensitivity summary for the DOE Big Hill vacuum screening case.
  *
  * <p>
- * Feed, top, and bottom absolute pressures are scaled together while all other explicit engineering
- * inputs remain fixed. Each point is independently constructed, solved, and evaluated through the
- * qualified Big Hill case and result contracts. The sensitivity is numerical screening evidence,
- * not a measured or calibrated vacuum-column operating envelope.
+ * Feed, top, and bottom absolute pressures are scaled together while all other explicit engineering inputs remain
+ * fixed. Each point is independently constructed, solved, and evaluated through the qualified Big Hill case and result
+ * contracts. The sensitivity is numerical screening evidence, not a measured or calibrated vacuum-column operating
+ * envelope.
  * </p>
  */
 public final class DoeBigHillVacuumPressureSensitivity {
@@ -62,13 +62,11 @@ public final class DoeBigHillVacuumPressureSensitivity {
    * @param pressureScaleFactors finite positive strictly increasing pressure scale factors
    * @return immutable sensitivity summary
    * @throws NullPointerException if {@code baselineInputs} or {@code pressureScaleFactors} is null
-   * @throws IllegalArgumentException if the name, feed flow, factors, or a scaled pressure envelope
-   *         is invalid
+   * @throws IllegalArgumentException if the name, feed flow, factors, or a scaled pressure envelope is invalid
    * @throws IllegalStateException if a point does not solve or pass the qualified result gates
    */
-  public static DoeBigHillVacuumPressureSensitivity run(String caseNamePrefix,
-      double feedMassFlowKgPerHour, OperatingInputs baselineInputs,
-      double[] pressureScaleFactors) {
+  public static DoeBigHillVacuumPressureSensitivity run(String caseNamePrefix, double feedMassFlowKgPerHour,
+      OperatingInputs baselineInputs, double[] pressureScaleFactors) {
     if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("Case-name prefix must be non-blank");
     }
@@ -86,18 +84,15 @@ public final class DoeBigHillVacuumPressureSensitivity {
     PointResult[] evaluatedPoints = new PointResult[factors.length];
     for (int i = 0; i < factors.length; i++) {
       OperatingInputs pointInputs = scaledInputs(baselineInputs, factors[i]);
-      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase.create(
-          caseNamePrefix + " pressure point " + (i + 1), feedMassFlowKgPerHour, pointInputs);
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+          .create(caseNamePrefix + " pressure point " + (i + 1), feedMassFlowKgPerHour, pointInputs);
       try {
         model.getColumn().run(UUID.randomUUID());
-        DoeBigHillVacuumFractionationResult result =
-            DoeBigHillVacuumFractionationResult.evaluate(model);
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
         evaluatedPoints[i] = new PointResult(factors[i], pointInputs, result);
       } catch (RuntimeException exception) {
         throw new IllegalStateException(
-            "Vacuum pressure sensitivity failed at point " + i + " with scale factor "
-                + factors[i],
-            exception);
+            "Vacuum pressure sensitivity failed at point " + i + " with scale factor " + factors[i], exception);
       }
     }
     return new DoeBigHillVacuumPressureSensitivity(evaluatedPoints);
@@ -159,8 +154,7 @@ public final class DoeBigHillVacuumPressureSensitivity {
         throw new IllegalArgumentException("Pressure scale factors must be finite and positive");
       }
       if (!(factor > previous)) {
-        throw new IllegalArgumentException(
-            "Pressure scale factors must be strictly increasing and unique");
+        throw new IllegalArgumentException("Pressure scale factors must be strictly increasing and unique");
       }
       previous = factor;
     }
@@ -183,8 +177,7 @@ public final class DoeBigHillVacuumPressureSensitivity {
         DoeBigHillVacuumFractionationResult fractionationResult) {
       this.pressureScaleFactor = pressureScaleFactor;
       this.operatingInputs = Objects.requireNonNull(operatingInputs, "operatingInputs");
-      this.fractionationResult =
-          Objects.requireNonNull(fractionationResult, "fractionationResult");
+      this.fractionationResult = Objects.requireNonNull(fractionationResult, "fractionationResult");
     }
 
     /** @return dimensionless factor applied to all three baseline absolute pressures */
@@ -219,3 +212,4 @@ public final class DoeBigHillVacuumPressureSensitivity {
     }
   }
 }
+
