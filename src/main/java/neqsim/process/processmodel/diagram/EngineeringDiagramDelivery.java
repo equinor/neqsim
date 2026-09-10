@@ -315,6 +315,24 @@ public final class EngineeringDiagramDelivery {
       result.put("deliveryDiagnostics", deliveryDiagnostics);
       result.put("visualFingerprintsBySheetId",
           new LinkedHashMap<String, String>(rendering.getVisualFingerprintsBySheetId()));
+      List<Map<String, Object>> sheetOrder = new ArrayList<Map<String, Object>>();
+      for (String sheetId : rendering.getSvgBySheetId().keySet()) {
+        for (EngineeringDiagramDocumentSet.Drawing drawing : documentSet.getDrawings()) {
+          for (EngineeringDiagramDocumentSet.Sheet sheet : drawing.getSheets()) {
+            if (sheetId.equals(sheet.getId())) {
+              Map<String, Object> entry = new LinkedHashMap<String, Object>();
+              entry.put("sheetId", sheetId);
+              entry.put("number", sheet.getNumber());
+              entry.put("title", sheet.getTitle());
+              entry.put("svgFile", svgRelativePath(sheetId));
+              sheetOrder.add(entry);
+            }
+          }
+        }
+      }
+      result.put("renderedSheetOrder", sheetOrder);
+      result.put("visualAcceptanceStatus", "REVIEW_REQUIRED");
+      result.put("rendererCheckScope", rendering.getPerformedChecks());
       List<Map<String, Object>> rendererDiagnostics = new ArrayList<Map<String, Object>>();
       for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : rendering.getDiagnostics()) {
         Map<String, Object> item = new LinkedHashMap<String, Object>();
@@ -472,8 +490,7 @@ public final class EngineeringDiagramDelivery {
           artifacts);
       writeArtifact(staging, PDF_FILE, "application/pdf", rendering.getPdf(), artifacts);
       for (Map.Entry<String, String> svg : rendering.getSvgBySheetId().entrySet()) {
-        String relativePath = "svg/" + safeFileName(svg.getKey()) + "-" + sha256(svg.getKey()).substring(0, 12)
-            + ".svg";
+        String relativePath = svgRelativePath(svg.getKey());
         writeArtifact(staging, relativePath, "image/svg+xml", svg.getValue().getBytes(StandardCharsets.UTF_8),
             artifacts);
       }
@@ -574,6 +591,10 @@ public final class EngineeringDiagramDelivery {
     String normalized = requireText(value, "sheetId").replaceAll("[^A-Za-z0-9._-]+", "-");
     normalized = normalized.replaceAll("^-+|-+$", "");
     return normalized.isEmpty() ? "sheet" : normalized;
+  }
+
+  private static String svgRelativePath(String sheetId) {
+    return "svg/" + safeFileName(sheetId) + "-" + sha256(sheetId).substring(0, 12) + ".svg";
   }
 
   private static String requireText(String value, String name) {

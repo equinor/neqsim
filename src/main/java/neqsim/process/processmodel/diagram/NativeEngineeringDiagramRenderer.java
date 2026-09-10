@@ -102,6 +102,11 @@ public final class NativeEngineeringDiagramRenderer {
     FIXED_PORT_ORTHOGONAL
   }
 
+  /** Explicit endpoint {@code diagramPortSide} values in paper coordinates; north is upwards. */
+  public enum PortSide {
+    NORTH, EAST, SOUTH, WEST
+  }
+
   /** Renderer diagnostic severity. */
   public enum Severity {
     /** Informational source-document evidence retained in the rendering report. */
@@ -153,17 +158,19 @@ public final class NativeEngineeringDiagramRenderer {
     private final byte[] pdf;
     private final Map<String, String> visualFingerprintsBySheetId;
     private final List<Diagnostic> diagnostics;
+    private final boolean checksEndpointInteriors;
 
     private Result(Map<String, String> svgBySheetId, byte[] pdf, Map<String, String> visualFingerprintsBySheetId,
-        List<Diagnostic> diagnostics) {
+        List<Diagnostic> diagnostics, boolean checksEndpointInteriors) {
       this.svgBySheetId = Collections.unmodifiableMap(new LinkedHashMap<String, String>(svgBySheetId));
       this.pdf = Arrays.copyOf(pdf, pdf.length);
       this.visualFingerprintsBySheetId = Collections
           .unmodifiableMap(new LinkedHashMap<String, String>(visualFingerprintsBySheetId));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
+      this.checksEndpointInteriors = checksEndpointInteriors;
     }
 
-    /** @return deterministic sheet-ID-ordered native SVG documents */
+    /** @return native SVG documents in controlled drawing and sheet-number order */
     public Map<String, String> getSvgBySheetId() {
       return svgBySheetId;
     }
@@ -190,6 +197,17 @@ public final class NativeEngineeringDiagramRenderer {
     /** @return immutable structured rendering diagnostics */
     public List<Diagnostic> getDiagnostics() {
       return diagnostics;
+    }
+
+    /** @return actual geometric check scope; zero findings are not drawing or standards approval */
+    public List<String> getPerformedChecks() {
+      List<String> checks = new ArrayList<String>(Arrays.asList("OBJECT_AND_ROUTE_ENVELOPES", "SCENE_BORDER_BOUNDS",
+          "ESTIMATED_TEXT_BOUNDS", "TEXT_TEXT_AND_TEXT_ROUTE_INTERSECTIONS", "PID_MARKER_AND_SIGNAL_INTERSECTIONS",
+          "DUPLICATE_SEMANTIC_ROUTES"));
+      if (checksEndpointInteriors) {
+        checks.add("ENDPOINT_INTERIORS");
+      }
+      return Collections.unmodifiableList(checks);
     }
 
     /** @return {@code true} when no renderer error was recorded */
@@ -357,23 +375,32 @@ public final class NativeEngineeringDiagramRenderer {
     addConventionDiagnostics(objects, diagnostics);
     List<Page> pages = new ArrayList<Page>();
     for (Drawing drawing : documentSet.getDrawings()) {
-      for (Sheet sheet : drawing.getSheets()) {
+      List<Sheet> sheets = new ArrayList<Sheet>(drawing.getSheets());
+      Collections.sort(sheets, new Comparator<Sheet>() {
+        @Override
+        public int compare(Sheet left, Sheet right) {
+          String first = left.getNumber();
+          String second = right.getNumber();
+          boolean firstNumeric = first.matches("[0-9]+");
+          boolean secondNumeric = second.matches("[0-9]+");
+          int order = firstNumeric && secondNumeric
+              ? new java.math.BigInteger(first).compareTo(new java.math.BigInteger(second))
+              : firstNumeric != secondNumeric ? (firstNumeric ? -1 : 1) : first.compareTo(second);
+          return order == 0 ? left.getId().compareTo(right.getId()) : order;
+        }
+      });
+      for (Sheet sheet : sheets) {
         pages.add(buildPage(drawing, sheet, objects, diagnostics));
       }
     }
-    Collections.sort(pages, new Comparator<Page>() {
-      @Override
-      public int compare(Page left, Page right) {
-        return left.sheetId.compareTo(right.sheetId);
-      }
-    });
     Map<String, String> svg = new LinkedHashMap<String, String>();
     Map<String, String> visualFingerprints = new LinkedHashMap<String, String>();
     for (Page page : pages) {
       svg.put(page.sheetId, toSvg(page));
       visualFingerprints.put(page.sheetId, visualFingerprint(page));
     }
-    return new Result(svg, toPdf(pages), visualFingerprints, diagnostics);
+    return new Result(svg, toPdf(pages), visualFingerprints, diagnostics,
+        routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL);
   }
 
   /**
@@ -465,7 +492,6 @@ public final class NativeEngineeringDiagramRenderer {
             diagnostics);
       }
     }
-    addRouteQualityDiagnostics(page, positions, diagnostics);
     Map<String, String> sheetNumberById = new TreeMap<String, String>();
     for (Sheet controlledSheet : drawing.getSheets()) {
       sheetNumberById.put(controlledSheet.getId(), controlledSheet.getNumber());
@@ -483,7 +509,116 @@ public final class NativeEngineeringDiagramRenderer {
     addPortMarkers(page, endpointAnchors);
     addPidProposalOverlay(page, objects, positions);
     addTitleBlock(page, drawing, sheet);
+    addRouteQualityDiagnostics(page, positions, diagnostics);
+    addCompletedSceneDiagnostics(page, positions, diagnostics);
     return page;
+  }
+
+  private static void addCompletedSceneDiagnostics(Page page, Map<String, Point> positions,
+      List<Diagnostic> diagnostics) {
+    List<Command> text = new ArrayList<Command>();
+    List<Command> shapes = new ArrayList<Command>();
+    Map<String, String> emittedRoutes = new TreeMap<String, String>();
+    for (Command command : page.commands) {
+      if (command.id.isEmpty() || "sheet-border".equals(command.id)) {
+        continue;
+      }
+      double[] bounds = commandBounds(command);
+      if (bounds[0] < 8.0 || bounds[1] < 8.0 || bounds[2] > page.width - 8.0 || bounds[3] > page.height - 8.0) {
+        diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_CLIPPED",
+            "Completed scene element crosses the sheet border (text bounds are estimated)", command.id));
+      }
+      if ("text".equals(command.type)) {
+        text.add(command);
+      } else if ("polyline".equals(command.type)) {
+        String signature = command.toSvg();
+        if (emittedRoutes.put(signature, command.id) != null) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_DUPLICATE_ROUTE",
+              "Completed scene repeats the same route geometry and semantic identity", command.id));
+        }
+        if (command.id.startsWith("pid-signal:")) {
+          for (Map.Entry<String, Point> object : positions.entrySet()) {
+            if (polylineIntersectsObject(command.points, object.getValue(), 0.0001)) {
+              diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_SIGNAL_OBJECT_COLLISION",
+                  "P&ID signal traverses object envelope " + object.getKey(), command.id));
+            }
+          }
+        }
+      } else if (command.id.startsWith("pid-proposal:")) {
+        shapes.add(command);
+      }
+    }
+    for (int index = 0; index < text.size(); index++) {
+      Command label = text.get(index);
+      double[] bounds = commandBounds(label);
+      for (int otherIndex = index + 1; otherIndex < text.size(); otherIndex++) {
+        Command other = text.get(otherIndex);
+        if (boundsOverlap(bounds, commandBounds(other))) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_TEXT_COLLISION",
+              "Estimated text bounds overlap " + other.id, label.id));
+        }
+      }
+      for (Command command : page.commands) {
+        if (!"polyline".equals(command.type) || command.id.equals(label.id) || command.id.isEmpty()) {
+          continue;
+        }
+        if (polylineIntersectsRectangle(command.points, bounds[0], bounds[2], bounds[1], bounds[3])) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_TEXT_ROUTE_COLLISION",
+              "Estimated text bounds intersect route, signal or attachment " + command.id, label.id));
+        }
+      }
+      for (Command shape : shapes) {
+        if (boundsOverlap(bounds, commandBounds(shape))) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_TEXT_SYMBOL_COLLISION",
+              "Estimated text bounds overlap P&ID proposal marker " + shape.id, label.id));
+        }
+      }
+    }
+    for (Command shape : shapes) {
+      double[] bounds = commandBounds(shape);
+      for (Map.Entry<String, Point> object : positions.entrySet()) {
+        Point center = object.getValue();
+        if (boundsOverlap(bounds, new double[] { center.x - OBJECT_WIDTH / 2.0, center.y - OBJECT_HEIGHT / 2.0,
+            center.x + OBJECT_WIDTH / 2.0, center.y + OBJECT_HEIGHT / 2.0 })) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_PROPOSAL_OBJECT_COLLISION",
+              "P&ID proposal marker overlaps object envelope " + object.getKey(), shape.id));
+        }
+      }
+      for (RouteView route : page.routes) {
+        if (polylineIntersectsRectangle(route.points, bounds[0] + 0.0001, bounds[2] - 0.0001, bounds[1] + 0.0001,
+            bounds[3] - 0.0001)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_PROPOSAL_ROUTE_COLLISION",
+              "Unbound P&ID proposal marker overlaps process route " + route.connectionId, shape.id));
+        }
+      }
+    }
+  }
+
+  private static double[] commandBounds(Command command) {
+    if ("text".equals(command.type)) {
+      double width = estimatedTextWidth(command.text, command.size);
+      double left = "middle".equals(command.anchor) ? command.x - width / 2.0
+          : "end".equals(command.anchor) ? command.x - width : command.x;
+      return new double[] { left, command.y - command.size / 2.0, left + width, command.y + command.size / 2.0 };
+    }
+    if ("rect".equals(command.type)) {
+      return new double[] { command.x, command.y, command.x + command.width, command.y + command.height };
+    }
+    double left = Double.POSITIVE_INFINITY;
+    double top = Double.POSITIVE_INFINITY;
+    double right = Double.NEGATIVE_INFINITY;
+    double bottom = Double.NEGATIVE_INFINITY;
+    for (Point point : command.points) {
+      left = Math.min(left, point.x);
+      top = Math.min(top, point.y);
+      right = Math.max(right, point.x);
+      bottom = Math.max(bottom, point.y);
+    }
+    return new double[] { left, top, right, bottom };
+  }
+
+  private static boolean boundsOverlap(double[] first, double[] second) {
+    return first[0] < second[2] && second[0] < first[2] && first[1] < second[3] && second[1] < first[3];
   }
 
   private void addOverviewRegions(Page page, Drawing drawing, Sheet overview, Map<String, SemanticObject> objects,
@@ -673,13 +808,18 @@ public final class NativeEngineeringDiagramRenderer {
       Collections.sort(keys);
       String[] ownerAndSide = entry.getKey().split("\\|", 2);
       Point owner = positions.get(ownerAndSide[0]);
-      boolean outlet = "OUTLET".equals(ownerAndSide[1]);
-      double spacing = keys.size() <= 1 ? 0.0
-          : Math.min(3.0, (OBJECT_HEIGHT - 2.0 * PORT_SLOT_MARGIN) / (keys.size() - 1));
+      PortSide side = PortSide.valueOf(ownerAndSide[1]);
+      boolean horizontal = side == PortSide.EAST || side == PortSide.WEST;
+      double span = horizontal ? OBJECT_HEIGHT : OBJECT_WIDTH;
+      double spacing = keys.size() <= 1 ? 0.0 : Math.min(3.0, (span - 2.0 * PORT_SLOT_MARGIN) / (keys.size() - 1));
       for (int index = 0; index < keys.size(); index++) {
         double offset = (index - (keys.size() - 1) / 2.0) * spacing;
         result.put(keys.get(index),
-            new Point(owner.x + (outlet ? OBJECT_WIDTH / 2.0 : -OBJECT_WIDTH / 2.0), owner.y + offset));
+            horizontal
+                ? new Point(owner.x + (side == PortSide.EAST ? OBJECT_WIDTH / 2.0 : -OBJECT_WIDTH / 2.0),
+                    owner.y + offset)
+                : new Point(owner.x + offset,
+                    owner.y + (side == PortSide.SOUTH ? OBJECT_HEIGHT / 2.0 : -OBJECT_HEIGHT / 2.0)));
       }
     }
     return result;
@@ -703,7 +843,27 @@ public final class NativeEngineeringDiagramRenderer {
     }
     String role = source ? "source" : "target";
     String anchorKey = endpointId + "|" + role;
-    String side = source ? "OUTLET" : "INLET";
+    String defaultSide = source ? "EAST" : "WEST";
+    SemanticObject ownerObject = objects.get(ownerId);
+    if (ownerObject != null && "MATERIAL_BLOCK".equals(ownerObject.getProperties().get("projectionKind"))) {
+      Point from = positions.get(endpointOwnerId(connection, "sourceEndpointId", objects));
+      Point to = positions.get(endpointOwnerId(connection, "targetEndpointId", objects));
+      if (from != null && to != null) {
+        if (Math.abs(to.y - from.y) > Math.abs(to.x - from.x)) {
+          defaultSide = (to.y > from.y) == source ? "SOUTH" : "NORTH";
+        } else if (to.x < from.x) {
+          defaultSide = "SOUTH";
+        }
+      }
+    }
+    String side = stringProperty(endpoint, "diagramPortSide", defaultSide);
+    try {
+      PortSide.valueOf(side);
+    } catch (IllegalArgumentException ex) {
+      diagnostics.add(diagnostic(Severity.ERROR, "DIAGRAM_RENDER_INVALID_PORT_SIDE",
+          "diagramPortSide must be NORTH, EAST, SOUTH or WEST", endpointId));
+      side = source ? "EAST" : "WEST";
+    }
     String groupKey = ownerId + "|" + side;
     List<String> keys = anchorKeysByOwnerSide.get(groupKey);
     if (keys == null) {
@@ -771,48 +931,99 @@ public final class NativeEngineeringDiagramRenderer {
       double laneOffset, Map<String, Point> positions, String sourceOwnerId, String targetOwnerId, double contentBottom,
       String label, List<RouteView> routes, double pageWidth) {
     List<List<Point>> candidates = new ArrayList<List<Point>>();
+    // Exit each actual nozzle before turning. Geometric target direction is not nozzle direction:
+    // a right-to-left return still leaves an east-facing outlet towards the east.
+    double clearance = 10.0 + Math.abs(laneOffset) + laneOffset;
+    Point sourceExit = portExit(source, positions.get(sourceOwnerId), true, clearance);
+    Point targetExit = portExit(target, positions.get(targetOwnerId), false, clearance);
     if (recycle) {
       double returnY = recycleReturnY(source, target, contentBottom, laneOffset);
-      double sourceTurnX = source.x + 10.0 + Math.abs(laneOffset);
-      double targetTurnX = target.x - 10.0 - Math.abs(laneOffset);
-      candidates.add(Arrays.asList(source, new Point(sourceTurnX, source.y), new Point(sourceTurnX, returnY),
-          new Point(targetTurnX, returnY), new Point(targetTurnX, target.y), target));
+      candidates.add(Arrays.asList(source, sourceExit, new Point(sourceExit.x, returnY),
+          new Point(targetExit.x, returnY), targetExit, target));
     } else {
-      double middleX = (source.x + target.x) / 2.0 + laneOffset;
-      candidates.add(Arrays.asList(source, new Point(middleX, source.y), new Point(middleX, target.y), target));
+      double middleX = (sourceExit.x + targetExit.x) / 2.0 + laneOffset;
+      candidates.add(Arrays.asList(source, sourceExit, new Point(middleX, sourceExit.y),
+          new Point(middleX, targetExit.y), targetExit, target));
     }
 
-    double direction = target.x >= source.x ? 1.0 : -1.0;
     double lower = CONTENT_TOP + OBJECT_HEIGHT;
     double upper = contentBottom - OBJECT_HEIGHT;
     for (int offsetIndex = 0; offsetIndex <= 5; offsetIndex++) {
-      double turnOffset = offsetIndex == 0 ? 0.0 : 10.0 + Math.abs(laneOffset) + (offsetIndex - 1) * 12.0;
-      double sourceTurnX = source.x + direction * turnOffset + laneOffset;
-      double targetTurnX = target.x - direction * turnOffset + laneOffset;
+      Point sourceTurn = portExit(source, positions.get(sourceOwnerId), true, clearance + offsetIndex * 12.0);
+      Point targetTurn = portExit(target, positions.get(targetOwnerId), false, clearance + offsetIndex * 12.0);
       for (double channelY = lower; channelY <= upper + 0.0000001; channelY += 12.0) {
-        candidates.add(Arrays.asList(source, new Point(sourceTurnX, source.y), new Point(sourceTurnX, channelY),
-            new Point(targetTurnX, channelY), new Point(targetTurnX, target.y), target));
+        candidates.add(Arrays.asList(source, sourceTurn, new Point(sourceTurn.x, channelY),
+            new Point(targetTurn.x, channelY), targetTurn, target));
       }
     }
 
     List<Point> best = candidates.get(0);
-    int bestScore = routeObjectIntersectionCount(best, positions, sourceOwnerId, targetOwnerId);
+    int bestScore = routeGeometryScore(best, positions, sourceOwnerId, targetOwnerId, pageWidth, contentBottom);
+    double bestOverlap = sharedRouteLength(best, routes);
     int bestLabelScore = bestRouteLabelCollisionScore(best, label, positions, routes, pageWidth, contentBottom);
     double bestLength = routeLength(best);
     for (int index = 1; index < candidates.size(); index++) {
       List<Point> candidate = candidates.get(index);
-      int score = routeObjectIntersectionCount(candidate, positions, sourceOwnerId, targetOwnerId);
+      int score = routeGeometryScore(candidate, positions, sourceOwnerId, targetOwnerId, pageWidth, contentBottom);
+      double overlap = sharedRouteLength(candidate, routes);
       int labelScore = bestRouteLabelCollisionScore(candidate, label, positions, routes, pageWidth, contentBottom);
       double length = routeLength(candidate);
-      if (score < bestScore || score == bestScore && labelScore < bestLabelScore
-          || score == bestScore && labelScore == bestLabelScore && length < bestLength) {
+      if (score < bestScore || score == bestScore && overlap < bestOverlap
+          || score == bestScore && overlap == bestOverlap && labelScore < bestLabelScore
+          || score == bestScore && overlap == bestOverlap && labelScore == bestLabelScore && length < bestLength) {
         best = candidate;
         bestScore = score;
+        bestOverlap = overlap;
         bestLabelScore = labelScore;
         bestLength = length;
       }
     }
     return best;
+  }
+
+  private static double sharedRouteLength(List<Point> points, List<RouteView> routes) {
+    double result = 0.0;
+    for (RouteView route : routes) {
+      for (int i = 1; i < points.size(); i++) {
+        Point a = points.get(i - 1);
+        Point b = points.get(i);
+        for (int j = 1; j < route.points.size(); j++) {
+          Point c = route.points.get(j - 1);
+          Point d = route.points.get(j);
+          if (Math.abs(a.y - b.y) < 0.0001 && Math.abs(c.y - d.y) < 0.0001 && Math.abs(a.y - c.y) < 0.0001) {
+            result += Math.max(0.0,
+                Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)));
+          } else if (Math.abs(a.x - b.x) < 0.0001 && Math.abs(c.x - d.x) < 0.0001 && Math.abs(a.x - c.x) < 0.0001) {
+            result += Math.max(0.0,
+                Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)));
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private static Point portExit(Point anchor, Point owner, boolean source, double clearance) {
+    if (owner == null) {
+      return new Point(anchor.x + (source ? clearance : -clearance), anchor.y);
+    }
+    double dx = anchor.x - owner.x;
+    double dy = anchor.y - owner.y;
+    if (Math.abs(dx) / OBJECT_WIDTH >= Math.abs(dy) / OBJECT_HEIGHT) {
+      return new Point(anchor.x + (dx >= 0.0 ? clearance : -clearance), anchor.y);
+    }
+    return new Point(anchor.x, anchor.y + (dy >= 0.0 ? clearance : -clearance));
+  }
+
+  private static int routeGeometryScore(List<Point> points, Map<String, Point> positions, String sourceOwnerId,
+      String targetOwnerId, double width, double contentBottom) {
+    int score = routeObjectIntersectionCount(points, positions, sourceOwnerId, targetOwnerId);
+    for (Point point : points) {
+      if (!inside(point.x, point.y, width, contentBottom)) {
+        score += 10000;
+      }
+    }
+    return score;
   }
 
   private static int bestRouteLabelCollisionScore(List<Point> points, String label, Map<String, Point> positions,
@@ -828,8 +1039,8 @@ public final class NativeEngineeringDiagramRenderer {
       String sourceOwnerId, String targetOwnerId) {
     int count = 0;
     for (Map.Entry<String, Point> entry : positions.entrySet()) {
-      if (!entry.getKey().equals(sourceOwnerId) && !entry.getKey().equals(targetOwnerId)
-          && polylineIntersectsObject(points, entry.getValue())) {
+      boolean endpoint = entry.getKey().equals(sourceOwnerId) || entry.getKey().equals(targetOwnerId);
+      if (polylineIntersectsObject(points, entry.getValue(), endpoint ? 0.0001 : 0.0)) {
         count++;
       }
     }
@@ -917,9 +1128,21 @@ public final class NativeEngineeringDiagramRenderer {
     Collections.sort(objectIds);
     for (int routeIndex = 0; routeIndex < page.routes.size(); routeIndex++) {
       RouteView route = page.routes.get(routeIndex);
+      for (Point point : route.points) {
+        if (!inside(point.x, point.y, page.width, page.height - TITLE_BLOCK_HEIGHT - 7.0)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_OUTSIDE_SHEET",
+              "Rendered route leaves the drawable sheet area", route.connectionId));
+          break;
+        }
+      }
       for (String objectId : objectIds) {
         Point objectPosition = positions.get(objectId);
         boolean endpointOwner = objectId.equals(route.sourceOwnerId) || objectId.equals(route.targetOwnerId);
+        if (endpointOwner && routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL
+            && polylineIntersectsObject(route.points, objectPosition, 0.0001)) {
+          diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION",
+              "Rendered route traverses its endpoint symbol envelope " + objectId, route.connectionId));
+        }
         if (!endpointOwner && polylineIntersectsObject(route.points, objectPosition)) {
           diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_ROUTE_OBJECT_INTERSECTION",
               "Rendered connection route intersects non-endpoint semantic object " + objectId, route.connectionId));
@@ -983,6 +1206,11 @@ public final class NativeEngineeringDiagramRenderer {
       page.commands.add(symbolCommand(shape, position, stroke, fill, object.getId()));
     }
     String primary = displayLabel(object);
+    if ("MATERIAL_BLOCK".equals(object.getProperties().get("projectionKind"))) {
+      page.commands.add(
+          Command.text(position.x, position.y, primaryTextSize(object), primary, "#111827", object.getId(), "middle"));
+      return;
+    }
     page.commands.add(Command.text(position.x, position.y - 0.8, primaryTextSize(object), primary, "#111827",
         object.getId(), "middle"));
     String secondary = shape == SymbolShape.PROCESS_EQUIPMENT ? equipmentFamily(object) : object.getKind().name();
@@ -1474,7 +1702,7 @@ public final class NativeEngineeringDiagramRenderer {
           + "] /Resources << /Font << /F1 3 0 R >> >> /Contents " + contentObject + " 0 R >>"));
       StringBuilder stream = new StringBuilder("q\n");
       for (Command command : page.commands) {
-        stream.append(command.toPdf(page.height));
+        stream.append(command.toPdf(page.height, routingMode == RoutingMode.FIXED_PORT_ORTHOGONAL));
       }
       stream.append("Q\n");
       byte[] streamBytes = bytes(stream.toString());
@@ -1701,10 +1929,19 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private static boolean polylineIntersectsObject(List<Point> points, Point objectPosition) {
-    double left = objectPosition.x - OBJECT_WIDTH / 2.0;
-    double right = objectPosition.x + OBJECT_WIDTH / 2.0;
-    double top = objectPosition.y - OBJECT_HEIGHT / 2.0;
-    double bottom = objectPosition.y + OBJECT_HEIGHT / 2.0;
+    return polylineIntersectsObject(points, objectPosition, 0.0);
+  }
+
+  private static boolean polylineIntersectsObject(List<Point> points, Point objectPosition, double inset) {
+    double left = objectPosition.x - OBJECT_WIDTH / 2.0 + inset;
+    double right = objectPosition.x + OBJECT_WIDTH / 2.0 - inset;
+    double top = objectPosition.y - OBJECT_HEIGHT / 2.0 + inset;
+    double bottom = objectPosition.y + OBJECT_HEIGHT / 2.0 - inset;
+    return polylineIntersectsRectangle(points, left, right, top, bottom);
+  }
+
+  private static boolean polylineIntersectsRectangle(List<Point> points, double left, double right, double top,
+      double bottom) {
     for (int index = 1; index < points.size(); index++) {
       Point start = points.get(index - 1);
       Point end = points.get(index);
@@ -1760,6 +1997,9 @@ public final class NativeEngineeringDiagramRenderer {
   }
 
   private static double primaryTextSize(SemanticObject object) {
+    if ("MATERIAL_BLOCK".equals(object.getProperties().get("projectionKind"))) {
+      return 4.2;
+    }
     double standardSize = 2.8;
     if (object.getKind() != EngineeringNode.Kind.LINE) {
       return standardSize;
@@ -1989,16 +2229,17 @@ public final class NativeEngineeringDiagramRenderer {
       result.append('\n');
     }
 
-    private String toPdf(double pageHeight) {
+    private String toPdf(double pageHeight, boolean paperTextSize) {
       StringBuilder result = new StringBuilder();
       if ("text".equals(type)) {
         double adjustedX = x;
         if ("middle".equals(anchor)) {
-          adjustedX -= text.length() * size * 0.24;
+          adjustedX -= text.length() * size * (paperTextSize ? 0.26 : 0.24);
         } else if ("end".equals(anchor)) {
-          adjustedX -= text.length() * size * 0.48;
+          adjustedX -= text.length() * size * (paperTextSize ? 0.52 : 0.48);
         }
-        result.append(rgb(fill, false)).append(" BT /F1 ").append(number(size * MM_TO_POINT * 0.78)).append(" Tf ")
+        result.append(rgb(fill, false)).append(" BT /F1 ")
+            .append(number(size * MM_TO_POINT * (paperTextSize ? 1.0 : 0.78))).append(" Tf ")
             .append(number(adjustedX * MM_TO_POINT)).append(' ').append(number((pageHeight - y) * MM_TO_POINT))
             .append(" Td (").append(pdf(text)).append(") Tj ET\n");
         return result.toString();

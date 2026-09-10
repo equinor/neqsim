@@ -9,6 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.processmodel.diagram.NativeEngineeringDiagramRenderer;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.Sheet;
 import neqsim.process.processmodel.diagram.EngineeringDiagramDualProfileDelivery;
@@ -32,6 +40,43 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
         .deliver(firstProcess, temporaryDirectory.resolve("first"));
 
     assertTrue(first.isComplete(), first.toJson());
+    assertEquals(7, first.getBlockFlowProjection().getBlockLabels().size());
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("bfd/overview.svg")));
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("bfd/overview.pdf")));
+    assertTrue(Files.isRegularFile(first.getDirectory().resolve("bfd/material-block-graph.json")));
+    assertTrue(first.getBlockFlowRendering().getDiagnostics().stream()
+        .noneMatch(d -> d.getSeverity() != NativeEngineeringDiagramRenderer.Severity.INFO));
+    Map<String, Integer> connectionCoverage = new TreeMap<String, Integer>();
+    Set<String> blockFlows = new TreeSet<String>();
+    for (EngineeringNode node : first.getBlockFlowProjection().toGraph().getNodes().values()) {
+      Object ids = node.getProperties()
+          .get(node.getKind() == EngineeringNode.Kind.EQUIPMENT ? "internalConnectionIds" : "sourceConnectionIds");
+      if (ids instanceof List<?>) {
+        for (Object id : (List<?>) ids) {
+          String key = id.toString();
+          connectionCoverage.put(key, connectionCoverage.containsKey(key) ? connectionCoverage.get(key) + 1 : 1);
+        }
+      }
+      if (node.getKind() == EngineeringNode.Kind.PIPE_SEGMENT) {
+        blockFlows
+            .add(node.getProperties().get("sourceEquipment") + " -> " + node.getProperties().get("targetEquipment"));
+      }
+    }
+    Set<String> canonicalConnections = new TreeSet<String>();
+    first.getPfd().getDocumentSet().getSemanticObjects().stream()
+        .filter(n -> n.getKind() == EngineeringNode.Kind.PIPE_SEGMENT)
+        .forEach(n -> canonicalConnections.add(n.getId()));
+    assertEquals(canonicalConnections, connectionCoverage.keySet());
+    assertTrue(connectionCoverage.values().stream().allMatch(n -> n == 1));
+    assertTrue(
+        blockFlows.containsAll(Arrays.asList("Separation -> Oil export", "Cold process -> Fuel gas",
+            "Cold process -> Gas export", "Recompression -> Separation", "Cold process -> Separation")),
+        blockFlows.toString());
+    assertFalse(blockFlows.contains("Gas export -> Oil export"));
+    assertTrue(first.getPfd().getRendering().getDiagnostics().stream()
+        .noneMatch(d -> d.getCode().equals("DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION")
+            || d.getCode().equals("DIAGRAM_RENDER_ROUTE_OUTSIDE_SHEET")
+            || d.getCode().equals("DIAGRAM_RENDER_DUPLICATE_ROUTE")));
     assertEquals(first.getPfd().getDocumentSet().getSourceGraphFingerprint(),
         first.getPid().getDocumentSet().getSourceGraphFingerprint());
     assertTrue(first.getPfd().getRendering().getSvgBySheetId().size() >= 3);
@@ -88,6 +133,9 @@ class Comparesimulations2EngineeringDiagramReferenceTest {
         .deliver(secondProcess, temporaryDirectory.resolve("second"));
 
     assertEquals(first.getFingerprint(), second.getFingerprint());
+    assertEquals(first.getBlockFlowProjection().toJson(), second.getBlockFlowProjection().toJson());
+    assertEquals(first.getBlockFlowRendering().getSvgBySheetId(), second.getBlockFlowRendering().getSvgBySheetId());
+    assertArrayEquals(first.getBlockFlowRendering().getPdf(), second.getBlockFlowRendering().getPdf());
     assertEquals(first.getPfd().getRendering().getSvgBySheetId(), second.getPfd().getRendering().getSvgBySheetId());
     assertEquals(first.getPid().getRendering().getSvgBySheetId(), second.getPid().getRendering().getSvgBySheetId());
     assertArrayEquals(Files.readAllBytes(first.getDirectory().resolve("pfd/drawing-set.pdf")),
