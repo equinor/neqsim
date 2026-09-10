@@ -64,6 +64,11 @@ public final class ProductBoilingPointDistribution {
       throw new IllegalStateException("Product boiling-point distribution is undefined");
     }
 
+    double meanBoilingPoint = weightedBoilingPoint / compositionSum;
+    if (!Double.isFinite(meanBoilingPoint) || !(meanBoilingPoint > 0.0)) {
+      throw new IllegalStateException("Product mean boiling point is undefined");
+    }
+
     Arrays.sort(points, (left, right) -> Double.compare(left[0], right[0]));
     double[] temperatures = new double[positiveComponentCount];
     double[] cumulativeFractions = new double[positiveComponentCount];
@@ -71,7 +76,13 @@ public final class ProductBoilingPointDistribution {
     int resultIndex = 0;
     for (double[] point : points) {
       if (point[1] > 0.0) {
-        cumulativeFraction += point[1] / compositionSum;
+        double nextCumulativeFraction = cumulativeFraction + point[1] / compositionSum;
+        if (!Double.isFinite(nextCumulativeFraction)
+            || !(nextCumulativeFraction > cumulativeFraction)) {
+          throw new IllegalStateException(
+              "Positive product components must increase cumulative mole fraction");
+        }
+        cumulativeFraction = nextCumulativeFraction;
         temperatures[resultIndex] = point[0];
         cumulativeFractions[resultIndex] = cumulativeFraction;
         resultIndex++;
@@ -79,7 +90,7 @@ public final class ProductBoilingPointDistribution {
     }
     cumulativeFractions[cumulativeFractions.length - 1] = 1.0;
     return new ProductBoilingPointDistribution(temperatures, cumulativeFractions,
-        weightedBoilingPoint / compositionSum);
+        meanBoilingPoint);
   }
 
   /** @return defensive copy of ascending pseudo-component normal boiling points in kelvin */
