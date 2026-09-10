@@ -853,6 +853,53 @@ double[] gradient = calc.getGradient("HP Separator.gasOutStream.flowRate");
 
 ### Hessian (Second Derivatives)
 
+`calculateHessian(outputPath)` differentiates the selected registered **scalar output**
+with respect to every input pair. The result is a symmetric N×N matrix in input
+registration order, independently of the number or order of registered outputs.
+Diagonal entries use a three-point central stencil; mixed entries use four corner
+evaluations. Both have second-order truncation error for a smooth response.
+The Hessian uses the configured input step sizes and always runs these central
+stencils sequentially; `setMethod` and `setParallel` control first derivatives.
+
+The standalone example below has three inputs and two outputs. Its selected output
+is the mass-flow input itself, so every entry of the 3×3 Hessian should be zero
+within numerical tolerance. This is the regression case from
+[issue #3616](https://github.com/equinor/neqsim/issues/3616).
+
+```java
+import org.apache.logging.log4j.LogManager;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mpc.ProcessDerivativeCalculator;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class ScalarHessianExample {
+    public static double[][] calculate() {
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+        fluid.addComponent("methane", 1.0);
+        fluid.setMixingRule("classic");
+        Stream feed = new Stream("Feed", fluid);
+        feed.setFlowRate(500.0, "kg/hr");
+        ProcessSystem process = new ProcessSystem();
+        process.add(feed);
+        process.run();
+
+        ProcessDerivativeCalculator calc = new ProcessDerivativeCalculator(process);
+        calc.addInputVariable("Feed.flowRate", "kg/hr");
+        calc.addInputVariable("Feed.pressure", "bara");
+        calc.addInputVariable("Feed.temperature", "K");
+        calc.addOutputVariable("Feed.flowRate", "kg/hr");
+        calc.addOutputVariable("Feed.pressure", "bara");
+        return calc.calculateHessian("Feed.flowRate");
+    }
+
+    public static void main(String[] args) {
+        double[][] hessian = calculate();
+        LogManager.getLogger(ScalarHessianExample.class).info(
+            "Mass-flow Hessian: {}", java.util.Arrays.deepToString(hessian));
+    }
+}
+```
 The current `ProcessDerivativeCalculator.calculateHessian` implementation is not
 suitable for this example: three inputs and two outputs trigger an array bounds
 error, and the selected-output index is not used in the second-derivative loop.
@@ -860,6 +907,18 @@ Use the validated Jacobian/gradient workflow above. If an external optimizer nee
 a Hessian, compute and validate second derivatives of its scalar objective separately;
 do not assume this helper returns that objective's Hessian. The implementation defect
 and reproducer are tracked in [issue #3616](https://github.com/equinor/neqsim/issues/3616).
+
+Perturbations preserve the cached base inputs and outputs. On success or an exception,
+the calculator restores all base inputs and reruns the process. If restoration itself
+fails, it invalidates the cache and reports that failure, preserving the original
+calculation exception when present.
+
+The existing calculator accesses variables in their native/default accessor units;
+the registration unit string does not perform a conversion. This example uses kg/hr,
+bara and K consistently. A Hessian entry has units of output divided by the two input
+units. Use independent, writable inputs and a converged process away from phase or
+control discontinuities. Check sensitivity to step size and solver tolerances:
+second differences amplify simulation noise.
 
 ### Export for External Systems
 
