@@ -11,8 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
+import neqsim.process.mechanicaldesign.torg.TechnicalRequirementsDocument;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -145,6 +149,30 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("TORG Tests")
   class TorgTests {
+    @ParameterizedTest
+    @CsvSource({ "-30.0, 243.15", "15.0, 288.15" })
+    void shouldPreserveAmbientTemperatureDuringTorgReapplication(double minAmbientCelsius, double expectedKelvin) {
+      TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-001")
+          .addStandard(StandardType.API_12J.getDesignStandardCategory(), StandardType.API_12J)
+          .environmentalConditions(minAmbientCelsius, 40.0).build();
+      MechanicalDesign design = processSystem.getUnit("Separator").getMechanicalDesign();
+      design.setCompanySpecificDesignStandards("default");
+      orchestrator.getTorgManager().apply(torg, processSystem);
+
+      for (int run = 0; run < 2; run++) {
+        // A different valid value proves that the workflow reapplies the active TORG.
+        design.setMinOperationTemperature(5.0, "C");
+        orchestrator.runCompleteDesignWorkflow();
+
+        assertTrue(orchestrator.getWorkflowHistory().stream()
+            .anyMatch(step -> "Apply TORG Standards".equals(step.getStepName()) && step.isSuccess()));
+        assertTrue(orchestrator.getTorgManager().getAppliedStandards("Separator").contains(StandardType.API_12J));
+        assertEquals(expectedKelvin, design.getMinOperationTemperature(), 1.0e-9);
+        assertEquals(expectedKelvin, design.getMinOperationTemperature("K"), 1.0e-9);
+        assertEquals(minAmbientCelsius, design.getMinOperationTemperature("C"), 1.0e-9);
+      }
+    }
+
     @Test
     @DisplayName("Should have TORG manager")
     void shouldHaveTorgManager() {
