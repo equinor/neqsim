@@ -26,7 +26,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.valve.ControlValveSizing_IEC_60534;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
@@ -179,8 +179,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     WELL_IPR,
 
     /**
-     * Production choke or control valve. Uses simplified valve equation: Q = Kv * opening * sqrt(&Delta;P / SG) for
-     * subcritical flow.
+     * Production choke or control valve. Supports legacy subcritical screening and an opt-in forward IEC gas capacity
+     * model, including critical flow, with the Newton-Raphson solver.
      */
     CHOKE,
 
@@ -496,7 +496,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double chokeKv = 0.0; // m3/hr/sqrt(bar) - valve flow coefficient
     private double chokeOpening = 100.0; // percent (0-100)
     private double chokeCriticalPressureRatio = 0.5; // xt for critical flow
-    private boolean chokeUseValveModel = false; // use NeqSim ThrottlingValve delegate
+    private boolean chokeUseValveModel = false; // use the forward IEC gas capacity relation
+    private String chokeModelStatus = "NOT_EVALUATED";
+    private double chokeCapacityKgS = Double.NaN;
 
     // Tubing parameters (for TUBING element type)
     private double tubingInclination = 90.0; // degrees from horizontal (90 = vertical)
@@ -1299,9 +1301,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      * Set choke valve flow coefficient Kv in m3/hr/sqrt(bar).
      *
      * @param kv flow coefficient
+     * @throws IllegalArgumentException if Kv is negative or nonfinite
      */
     public void setChokeKv(double kv) {
+      if (!Double.isFinite(kv) || kv < 0.0) {
+        throw new IllegalArgumentException("Choke Kv must be finite and nonnegative");
+      }
       this.chokeKv = kv;
+      chokeModelStatus = "NOT_EVALUATED";
     }
 
     /**
@@ -1317,9 +1324,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      * Set choke opening percentage (0-100).
      *
      * @param opening choke opening in percent
+     * @throws IllegalArgumentException if opening is nonfinite or outside 0-100 percent
      */
     public void setChokeOpening(double opening) {
+      if (!Double.isFinite(opening) || opening < 0.0 || opening > 100.0) {
+        throw new IllegalArgumentException("Choke opening must be finite and between 0 and 100 percent");
+      }
       this.chokeOpening = opening;
+      chokeModelStatus = "NOT_EVALUATED";
     }
 
     /**
@@ -1334,10 +1346,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     /**
      * Set critical pressure ratio for choked flow.
      *
-     * @param ratio critical pressure ratio (typically 0.4-0.6)
+     * @param ratio limiting pressure-drop fraction for screening, or IEC xT for gas valve mode (0 to 1 exclusive)
+     * @throws IllegalArgumentException if the ratio is nonfinite or outside (0, 1)
      */
     public void setChokeCriticalPressureRatio(double ratio) {
+      if (!Double.isFinite(ratio) || ratio <= 0.0 || ratio >= 1.0) {
+        throw new IllegalArgumentException("Choke critical pressure-drop ratio must be between 0 and 1");
+      }
       this.chokeCriticalPressureRatio = ratio;
+      chokeModelStatus = "NOT_EVALUATED";
     }
 
     /**
@@ -1353,15 +1370,37 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      * Enable or disable the NeqSim ThrottlingValve delegate for this choke.
      *
      * <p>
-     * When enabled, the choke head loss is calculated using NeqSim's {@code ThrottlingValve} which includes real
-     * thermodynamic flash calculations for more accurate results. Default is false (uses simplified Kv equation for
-     * faster convergence).
+     * When enabled, the Newton-Raphson solver uses the forward IEC 60534 capacity relation also used by
+     * {@link neqsim.process.equipment.valve.ThrottlingValve}. The upstream fluid is flashed at the node pressure and
+     * temperature. Only a single gas phase is supported, with linear opening and no attached-fitting correction.
+     * Critical flow retains Kv/opening sensitivity. Other phases and solvers are rejected explicitly. Default is false:
+     * the legacy simplified equation is retained for subcritical screening only.
      * </p>
      *
      * @param useValveModel true to use ThrottlingValve, false for simplified equation
      */
     public void setChokeUseValveModel(boolean useValveModel) {
       this.chokeUseValveModel = useValveModel;
+      chokeModelStatus = "NOT_EVALUATED";
+    }
+
+    /**
+     * Get applicability evidence from the last choke evaluation.
+     *
+     * @return SUBCRITICAL_SCREENING, UNSUPPORTED_CRITICAL_FLOW, IEC_GAS_SUBCRITICAL, IEC_GAS_CRITICAL, CLOSED, an
+     * UNSUPPORTED status, or NOT_EVALUATED
+     */
+    public String getChokeModelStatus() {
+      return chokeModelStatus;
+    }
+
+    /**
+     * Get signed IEC gas capacity at the last evaluated node conditions.
+     *
+     * @return mass flow in kg/s, or NaN when the forward gas model has not been evaluated
+     */
+    public double getChokeCapacityKgS() {
+      return chokeCapacityKgS;
     }
 
     /**
@@ -2577,8 +2616,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Add a production choke element between two nodes.
    *
    * <p>
-   * The choke uses a simplified valve equation: Q = Kv * (opening/100) * sqrt(dP * rho). For critical (choked) flow,
-   * the pressure drop is limited by the critical pressure ratio.
+   * Default behaviour is the legacy subcritical screening equation. Capped critical-flow points are unsupported for
+   * optimization. Enable {@link NetworkPipe#setChokeUseValveModel(boolean)} for the forward gas-capacity relation in a
+   * Newton-Raphson network.
    * </p>
    *
    * @param fromNode upstream node name
@@ -3823,6 +3863,33 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Check numerical convergence and the supported choke envelope for production optimization.
+   *
+   * <p>
+   * The legacy simplified choke is applicable only for subcritical screening. IEC gas mode supports subcritical and
+   * critical single-phase gas flow. This check does not establish well-model qualification or compliance with topside
+   * and user-specified operating constraints.
+   * </p>
+   *
+   * @return true if the current solution converged and every choke has supported applicability evidence
+   */
+  public boolean isProductionOptimizationApplicable() {
+    if (!isConverged()) {
+      return false;
+    }
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        String status = pipe.getChokeModelStatus();
+        if (!"SUBCRITICAL_SCREENING".equals(status) && !"IEC_GAS_SUBCRITICAL".equals(status)
+            && !"IEC_GAS_CRITICAL".equals(status) && !"CLOSED".equals(status)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
    * Get detected loops in the network.
    *
    * @return list of loops
@@ -4212,7 +4279,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     double availability = pipe.getAvailability();
-    if (availability < 1.0) {
+    if (availability < 1.0 && !(pipe.getElementType() == NetworkElementType.CHOKE && pipe.isChokeUseValveModel())) {
       if (pipe.getElementType() == NetworkElementType.COMPRESSOR || pipe.getElementType() == NetworkElementType.PUMP) {
         baseHeadLoss *= availability;
       } else {
@@ -4488,12 +4555,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Calculate head loss for a production choke element.
    *
    * <p>
-   * Uses a simplified valve equation: Q = Kv * (opening/100) * sqrt(dP * rho / SG_ref). Inverting: dP = (Q /
-   * (Kv_eff))^2 / rho where Kv_eff = Kv * (opening/100) converted to SI.
+   * Legacy screening uses dP_bar = (3600 * massFlow / (density * Kv * opening/100))^2. This historical equation has no
+   * gas expansion or specific-gravity correction and is not a qualified valve sizing relation.
    * </p>
    *
    * <p>
-   * For critical (choked) flow, the effective dP is limited by the critical pressure ratio.
+   * Capped critical screening results are marked unsupported for optimization. The opt-in IEC gas mode reports the
+   * actual nodal pressure difference; its capacity residual is solved directly by Newton-Raphson.
    * </p>
    *
    * @param pipe the choke element
@@ -4502,64 +4570,21 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   private double calculateHeadLossChoke(NetworkPipe pipe, SystemInterface fluid) {
     double flowKgs = Math.abs(pipe.getFlowRate());
-    if (flowKgs < 1e-10) {
-      return 0.0;
-    }
-
     double density = fluid.getDensity("kg/m3");
 
-    // Try using real NeqSim ThrottlingValve for Cv/Kv-based sizing with choked flow detection
-    // Only when explicitly enabled via setChokeUseValveModel(true) — slower but more accurate
     if (pipe.isChokeUseValveModel()) {
-      try {
-        SystemInterface chokeFluid = fluid.clone();
-        Stream chokeInlet = new Stream("chokeIn", chokeFluid);
-        chokeInlet.setFlowRate(flowKgs, "kg/sec");
-
-        // Set upstream pressure from the from-node
-        NetworkNode fromNode = nodes.get(pipe.getFromNode());
-        double upstreamP = fromNode.getPressure();
-        chokeInlet.setPressure(upstreamP / 1e5, "bara");
-        chokeInlet.setTemperature(fromNode.getTemperature(), "K");
-        chokeInlet.run();
-
-        ThrottlingValve valve = new ThrottlingValve("networkChoke", chokeInlet);
-        double kvEff = pipe.getChokeKv() * pipe.getChokeOpening() / 100.0;
-        if (kvEff > 0.01) {
-          valve.setCv(kvEff, "Kv");
-        }
-        valve.run();
-
-        double outP = valve.getOutletPressure(); // bara
-        double dP = (upstreamP / 1e5 - outP) * 1e5; // Pa
-        if (dP < 0.0) {
-          dP = 0.0;
-        }
-
-        // Update pipe hydraulic info
-        double qVolM3s = flowKgs / density;
-        double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
-        if (area > 1e-10) {
-          pipe.setVelocity(qVolM3s / area);
-        }
-
-        // Check if choked
-        double xt = pipe.getChokeCriticalPressureRatio();
-        double maxDp = upstreamP * xt;
-        pipe.setFlowRegime(dP >= maxDp * 0.95 ? "Choked" : "Subcritical");
-
-        return Math.signum(pipe.getFlowRate()) * dP;
-      } catch (Exception ex) {
-        logger.debug("ThrottlingValve delegate failed, using simplified: " + ex.getMessage());
-      }
-    } // end if chokeUseValveModel
+      evaluateGasChoke(pipe, fluid);
+      return nodes.get(pipe.getFromNode()).getPressure() - nodes.get(pipe.getToNode()).getPressure();
+    }
 
     // Fallback: simplified Kv equation
     double kv = pipe.getChokeKv();
     double opening = pipe.getChokeOpening() / 100.0;
     double kvEff = kv * opening;
+    pipe.chokeCapacityKgS = Double.NaN;
     if (kvEff < 1e-10) {
-      return 1e7;
+      pipe.chokeModelStatus = "UNSUPPORTED_CLOSED_SCREENING";
+      return Math.signum(pipe.getFlowRate()) * 1e7;
     }
 
     double qVolM3s = flowKgs / density;
@@ -4576,7 +4601,105 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     pipe.setVelocity(qVolM3s / (Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0));
     pipe.setFlowRegime(dP >= maxDp ? "Choked" : "Subcritical");
+    pipe.chokeModelStatus = dP >= maxDp ? "UNSUPPORTED_CRITICAL_FLOW" : "SUBCRITICAL_SCREENING";
     return Math.signum(pipe.getFlowRate()) * dP;
+  }
+
+  /**
+   * Evaluate forward gas capacity and its nodal pressure derivatives.
+   *
+   * <p>
+   * The gas properties are flashed at the physical upstream node. Central pressure differences include the pressure
+   * dependence of the EOS, rather than assuming constant density. Capacity, not pressure loss, is limited at critical
+   * flow. The limiting fraction is Fgamma*xT.
+   * </p>
+   *
+   * @param pipe choke element
+   * @param fallback fluid when no node-specific composition is available
+   * @return signed capacity (kg/s), dQ/dPfrom and dQ/dPto (kg/s/Pa)
+   */
+  private double[] evaluateGasChoke(NetworkPipe pipe, SystemInterface fallback) {
+    if (solverType != SolverType.NEWTON_RAPHSON) {
+      pipe.chokeModelStatus = "UNSUPPORTED_SOLVER";
+      throw new IllegalStateException("IEC gas choke '" + pipe.getName() + "' requires NEWTON_RAPHSON");
+    }
+    double pFrom = nodes.get(pipe.getFromNode()).getPressure();
+    double pTo = nodes.get(pipe.getToNode()).getPressure();
+    if (pipe.getArtificialLiftType() != ArtificialLiftType.NONE) {
+      pipe.chokeModelStatus = "UNSUPPORTED_ARTIFICIAL_LIFT";
+      throw new IllegalStateException("Apply artificial lift to a separate element, not an IEC gas choke");
+    }
+    if (pipe.getChokeKv() == 0.0 || pipe.getChokeOpening() == 0.0 || pipe.getAvailability() == 0.0) {
+      pipe.chokeModelStatus = "CLOSED";
+      pipe.chokeCapacityKgS = 0.0;
+      pipe.setVelocity(0.0);
+      pipe.setFlowRegime("Closed");
+      return new double[] { 0.0, 0.0, 0.0 };
+    }
+    double fromStep = Math.max(1.0, Math.abs(pFrom) * 1e-5);
+    double toStep = Math.max(1.0, Math.abs(pTo) * 1e-5);
+    double dFrom = (gasChokeCapacity(pipe, fallback, pFrom + fromStep, pTo, false)
+        - gasChokeCapacity(pipe, fallback, pFrom - fromStep, pTo, false)) / (2.0 * fromStep);
+    double dTo = (gasChokeCapacity(pipe, fallback, pFrom, pTo + toStep, false)
+        - gasChokeCapacity(pipe, fallback, pFrom, pTo - toStep, false)) / (2.0 * toStep);
+    double capacity = gasChokeCapacity(pipe, fallback, pFrom, pTo, true);
+    pipe.chokeCapacityKgS = capacity;
+    return new double[] { capacity, dFrom, dTo };
+  }
+
+  /**
+   * Calculate the signed IEC gas mass capacity at a trial pressure pair.
+   *
+   * @param pipe choke element
+   * @param fallback default composition
+   * @param pFrom pressure at the from node in Pa
+   * @param pTo pressure at the to node in Pa
+   * @param updateEvidence whether to store regime and velocity evidence
+   * @return signed capacity in kg/s
+   */
+  private double gasChokeCapacity(NetworkPipe pipe, SystemInterface fallback, double pFrom, double pTo,
+      boolean updateEvidence) {
+    boolean forward = pFrom >= pTo;
+    String upstreamName = forward ? pipe.getFromNode() : pipe.getToNode();
+    NetworkNode upstreamNode = nodes.get(upstreamName);
+    double upstream = Math.max(pFrom, pTo);
+    double downstream = Math.min(pFrom, pTo);
+    if (!Double.isFinite(upstream) || !Double.isFinite(downstream) || downstream <= 0.0) {
+      pipe.chokeModelStatus = "UNSUPPORTED_PRESSURE";
+      throw new IllegalStateException("IEC gas choke requires positive finite absolute pressures");
+    }
+    SystemInterface source = nodeFluidMap.get(upstreamName);
+    SystemInterface inlet = (source == null ? fallback : source).clone();
+    inlet.setPressure(upstream / 1e5, "bara");
+    inlet.setTemperature(upstreamNode.getTemperature(), "K");
+    new ThermodynamicOperations(inlet).TPflash();
+    inlet.initProperties();
+    if (inlet.getNumberOfPhases() != 1 || !inlet.hasPhaseType("gas")) {
+      pipe.chokeModelStatus = "UNSUPPORTED_PHASE";
+      throw new IllegalStateException("IEC gas choke '" + pipe.getName() + "' requires a single gas phase");
+    }
+    double gamma = inlet.getGamma2();
+    double z = inlet.getZ();
+    double density = inlet.getDensity("kg/m3");
+    if (!Double.isFinite(gamma) || gamma <= 0.0 || !Double.isFinite(z) || z <= 0.0 || !Double.isFinite(density)
+        || density <= 0.0) {
+      pipe.chokeModelStatus = "UNSUPPORTED_PROPERTIES";
+      throw new IllegalStateException("Invalid upstream properties for IEC gas choke '" + pipe.getName() + "'");
+    }
+    double x = (upstream - downstream) / upstream;
+    double critical = gamma / 1.4 * pipe.getChokeCriticalPressureRatio();
+    ControlValveSizing_IEC_60534 sizing = new ControlValveSizing_IEC_60534();
+    double volumeFlow = sizing.calculateFlowRateFromKvAndValveOpeningGas(
+        pipe.getChokeKv() * pipe.getChokeOpening() / 100.0 * pipe.getAvailability(), inlet.getTemperature(),
+        inlet.getMolarMass("g/mol"), inlet.getViscosity("kg/msec"), gamma, z, upstream, downstream, 0.9,
+        pipe.getChokeCriticalPressureRatio(), true);
+    if (updateEvidence) {
+      pipe.chokeModelStatus = x >= critical ? "IEC_GAS_CRITICAL" : "IEC_GAS_SUBCRITICAL";
+      pipe.setFlowRegime(x >= critical ? "Choked" : "Subcritical");
+      double area = Math.PI * pipe.getDiameter() * pipe.getDiameter() / 4.0;
+      pipe.setVelocity(area > 0.0 ? volumeFlow / area : 0.0);
+    }
+    return (forward ? 1.0 : -1.0) * volumeFlow * density;
   }
 
   /**
@@ -5535,6 +5658,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
   @Override
   public void run(UUID id) {
+    converged = false;
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE && pipe.isChokeUseValveModel()
+          && solverType != SolverType.NEWTON_RAPHSON) {
+        pipe.chokeModelStatus = "UNSUPPORTED_SOLVER";
+        throw new IllegalStateException("IEC gas choke '" + pipe.getName() + "' requires NEWTON_RAPHSON");
+      }
+    }
     // Pull conditions from connected feed streams
     applyFeedStreams();
 
@@ -7051,6 +7182,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (int iter = 0; iter < maxIterations; iter++) {
       // Solve current state
       run();
+      if (!isProductionOptimizationApplicable()) {
+        return Double.NaN;
+      }
       double currentProduction = getTotalSinkFlow();
 
       // Check convergence
@@ -7073,13 +7207,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double perturbedOpening = Math.min(origOpening + stepSize, 100.0);
         choke.setChokeOpening(perturbedOpening);
         run();
-        double productionUp = getTotalSinkFlow();
+        double productionUp = isProductionOptimizationApplicable() ? getTotalSinkFlow() : currentProduction;
 
         // Restore and perturb downward
         double perturbedDown = Math.max(origOpening - stepSize, 1.0);
         choke.setChokeOpening(perturbedDown);
         run();
-        double productionDown = getTotalSinkFlow();
+        double productionDown = isProductionOptimizationApplicable() ? getTotalSinkFlow() : currentProduction;
 
         // Central difference gradient
         gradients[c] = (productionUp - productionDown) / (perturbedOpening - perturbedDown);
@@ -7099,7 +7233,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     // Final solve with optimized openings
     run();
-    return getTotalSinkFlow();
+    return isProductionOptimizationApplicable() ? getTotalSinkFlow() : Double.NaN;
   }
 
   /**
@@ -7328,6 +7462,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     for (int iter = 0; iter < maxIterations; iter++) {
       run();
       double currentObj = computeObjective();
+      if (!Double.isFinite(currentObj)) {
+        buildWellAllocationReport();
+        return Double.NaN;
+      }
 
       if (iter > 0) {
         double relChange = Math.abs(currentObj - lastObjective) / Math.max(Math.abs(currentObj), 1e-10);
@@ -7355,6 +7493,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         run();
         double objDown = computeConstrainedObjective();
 
+        // Unsupported critical screening trials cannot contribute an objective or a gradient.
+        if (!Double.isFinite(objUp)) {
+          objUp = currentObj;
+        }
+        if (!Double.isFinite(objDown)) {
+          objDown = currentObj;
+        }
         gradients[c] = (objUp - objDown) / (upOpen - downOpen);
         choke.setChokeOpening(openings[c]);
       }
@@ -7407,6 +7552,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return objective value
    */
   private double computeObjective() {
+    if (!isProductionOptimizationApplicable()) {
+      return Double.NaN;
+    }
     if (wellOilPrices.isEmpty()) {
       return getTotalSinkFlow() * 3600.0; // kg/hr
     }
@@ -8331,6 +8479,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double[] pipeFlowsSI = new double[np]; // kg/s
       double[] elementHeadLoss = new double[np]; // Pa (signed)
       double[] elementDerivative = new double[np]; // dh/d|Q| in Pa/(kg/s)
+      double[] pressureFromDerivative = new double[np];
+      double[] pressureToDerivative = new double[np];
 
       for (int i = 0; i < np; i++) {
         NetworkPipe pipe = pipes.get(pipeList.get(i));
@@ -8338,8 +8488,22 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
         // Calculate head loss using the element-specific model
         SystemInterface pipeFluid = getHydraulicFluid(pipe, fluid);
-        elementHeadLoss[i] = calculateHeadLoss(pipe, pipeFluid);
-        elementDerivative[i] = calculateHeadLossDerivative(pipe, pipeFluid);
+        if (pipe.getElementType() == NetworkElementType.CHOKE && pipe.isChokeUseValveModel()) {
+          double[] capacity = evaluateGasChoke(pipe, pipeFluid);
+          // Pressure-equivalent scaling keeps the existing Pa convergence tolerance meaningful:
+          // one Pa corresponds to a mass-flow residual of 1e-5 kg/s.
+          double scale = 1e5;
+          double deltaP = nodes.get(pipe.getFromNode()).getPressure() - nodes.get(pipe.getToNode()).getPressure();
+          elementHeadLoss[i] = deltaP + scale * (pipeFlowsSI[i] - capacity[0]);
+          elementDerivative[i] = scale;
+          pressureFromDerivative[i] = scale * capacity[1];
+          pressureToDerivative[i] = scale * capacity[2];
+        } else {
+          elementHeadLoss[i] = calculateHeadLoss(pipe, pipeFluid);
+          elementDerivative[i] = calculateHeadLossDerivative(pipe, pipeFluid);
+          pressureFromDerivative[i] = 1.0;
+          pressureToDerivative[i] = -1.0;
+        }
       }
 
       // --- Step 2: Build and solve the linearized system ---
@@ -8402,16 +8566,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double val = a11inv[i];
 
         if (jFrom >= 0) {
-          schur[jFrom][jFrom] += val;
+          schur[jFrom][jFrom] += val * pressureFromDerivative[i];
           rhs[jFrom] += val * f1[i];
         }
         if (jTo >= 0) {
-          schur[jTo][jTo] += val;
+          schur[jTo][jTo] -= val * pressureToDerivative[i];
           rhs[jTo] -= val * f1[i];
         }
         if (jFrom >= 0 && jTo >= 0) {
-          schur[jFrom][jTo] -= val;
-          schur[jTo][jFrom] -= val;
+          schur[jFrom][jTo] += val * pressureToDerivative[i];
+          schur[jTo][jFrom] -= val * pressureFromDerivative[i];
         }
       }
 
@@ -8450,10 +8614,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
         double atDh = 0.0;
         if (jFrom >= 0) {
-          atDh += dH[jFrom];
+          atDh += pressureFromDerivative[i] * dH[jFrom];
         }
         if (jTo >= 0) {
-          atDh -= dH[jTo];
+          atDh += pressureToDerivative[i] * dH[jTo];
         }
 
         double dQ = a11inv[i] * (-f1[i] + atDh);
@@ -8889,6 +9053,12 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipeJson.addProperty("diameter_m", pipe.getDiameter());
       pipeJson.addProperty("roughness_m", pipe.getRoughness());
       pipeJson.addProperty("flowRate_kghr", pipe.getFlowRate() * 3600.0);
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        pipeJson.addProperty("chokeModelStatus", pipe.getChokeModelStatus());
+        if (Double.isFinite(pipe.getChokeCapacityKgS())) {
+          pipeJson.addProperty("chokeCapacity_kg_s", pipe.getChokeCapacityKgS());
+        }
+      }
       pipeJson.addProperty("headLoss_Pa", pipe.getHeadLoss());
       pipeJson.addProperty("headLoss_bar", pipe.getHeadLoss() / 1e5);
       pipeJson.addProperty("velocity_ms", pipe.getVelocity());
@@ -9482,7 +9652,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       result.put("arrivalPressure_bara",
           topsideSinkNodeName == null ? Double.NaN : getNodePressure(topsideSinkNodeName));
       result.put("totalFlow_kghr", Math.abs(getTotalSinkFlow()) * 3600.0);
-      result.put("converged", isConverged() ? 1.0 : 0.0);
+      result.put("converged", isProductionOptimizationApplicable() ? 1.0 : 0.0);
       result.put("iterations", 1.0);
       return result;
     }
@@ -9511,7 +9681,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       setNodePressure(topsideSinkNodeName, pressure);
       try {
         run();
-        if (!isConverged()) {
+        if (!isProductionOptimizationApplicable()) {
           continue;
         }
         double flow = Math.abs(getTotalSinkFlow()) * 3600.0;
@@ -9533,7 +9703,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     run();
     runTopsideAtNetworkOutlet();
     double[] metrics = getTopsideMetrics();
-    boolean feasible = Double.isFinite(bestP) && isConverged() && isTopsideFeasible();
+    boolean feasible = Double.isFinite(bestP) && isProductionOptimizationApplicable() && isTopsideFeasible();
     result.put("arrivalPressure_bara", getNodePressure(topsideSinkNodeName));
     result.put("totalFlow_kghr", Math.abs(getTotalSinkFlow()) * 3600.0);
     result.put("separatorUtilization", metrics[0]);
@@ -9813,9 +9983,17 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       result.putAll(runCoupled());
     } else {
       result.put("totalFlow_kghr", Math.abs(getTotalSinkFlow()) * 3600.0);
-      result.put("converged", isConverged() ? 1.0 : 0.0);
+      result.put("converged", isProductionOptimizationApplicable() ? 1.0 : 0.0);
     }
     result.put("revenue_usd_hr", computeObjective());
+    result.put("chokeModelApplicable", isProductionOptimizationApplicable());
+    Map<String, String> chokeEvidence = new LinkedHashMap<String, String>();
+    for (NetworkPipe pipe : pipes.values()) {
+      if (pipe.getElementType() == NetworkElementType.CHOKE) {
+        chokeEvidence.put(pipe.getName(), pipe.getChokeModelStatus());
+      }
+    }
+    result.put("chokeModelStatus", chokeEvidence);
 
     // Append choke settings
     Map<String, Double> chokeSettings = new LinkedHashMap<>();
@@ -10055,7 +10233,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     } else {
       run();
       result.put("totalFlow_kghr", Math.abs(getTotalSinkFlow()) * 3600.0);
-      result.put("converged", isConverged() ? 1.0 : 0.0);
+      result.put("converged", isProductionOptimizationApplicable() ? 1.0 : 0.0);
     }
     result.put("revenue_usd_hr", computeObjective());
     return result;

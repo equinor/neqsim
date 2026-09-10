@@ -161,62 +161,80 @@ network.addWellIPRFetkovich("fetk1", "reservoir", "wellhead",
 
 ## Choke Model
 
-The choke model follows IEC 60534-style valve flow equations:
+Two choke modes are available. Select the model before solving and check
+`isProductionOptimizationApplicable()` before using its result in optimization.
 
-$$Q = K_v \times \theta \times \sqrt{\Delta P \times \rho}$$
+| Mode | Supported use | Critical-flow behavior |
+|------|---------------|------------------------|
+| Default simplified equation | Subcritical screening at the template fluid density | Reports `UNSUPPORTED_CRITICAL_FLOW`; optimization rejects the point |
+| `setChokeUseValveModel(true)` | Newton-Raphson, steady single-phase gas, linear opening, no attached-fitting correction | Solves the forward IEC 60534 gas capacity relation, retaining Kv/opening sensitivity |
 
-Where:
-- $K_v$ = valve flow coefficient [m³/hr/√bar]
-- $\theta$ = choke opening fraction (0–1)
-- $\Delta P$ = pressure drop across choke [Pa]
-- $\rho$ = fluid density [kg/m³]
+The legacy screening equation is
+$$\Delta P_{bar} = \left(\frac{3600\dot m}{\rho K_v\theta}\right)^2$$
+where $\dot m$ is kg/s, $\rho$ is kg/m³, and $\theta$ is opening/100. This
+historical relation omits the liquid specific-gravity factor and gas expansion;
+its coefficient must not be interpreted as a qualified installed valve Kv.
+Its pressure-drop cap is retained for compatibility, but a capped solution
+cannot establish valid production or an optimum. A closed screening choke is
+also unsupported; use the forward gas mode for shutoff.
 
-### Critical Flow
+### Gas Capacity and Critical Flow
 
-When the pressure ratio drops below the critical pressure ratio $x_T$
-(typically 0.7), the flow is choked and the pressure drop is capped:
+The opt-in mode uses the same forward relation as `ThrottlingValve` with the
+IEC 60534 sizing method. It flashes the physical upstream composition at the
+node pressure and temperature, then converts actual volumetric flow to kg/s.
+Set the upstream node temperature explicitly for the intended case.
 
-$$\Delta P_{max} = P_{upstream} \times x_T$$
+Define the pressure-drop fraction $x=(P_1-P_2)/P_1$, with absolute pressures,
+and $x_c=(\gamma/1.4)x_T$. The sizing relation uses
+$$x_s=\min(x,x_c),\qquad Y=1-\frac{x_s}{3x_c}$$
+so $Y=2/3$ at and beyond critical flow. At fixed upstream conditions, reducing
+downstream pressure further leaves capacity unchanged; increasing effective
+Kv increases capacity. The solver enforces this **flow** limit and includes
+its pressure derivatives in the nodal mass-balance equations. It does not
+cap the physical pressure difference across the choke.
 
-The solver automatically detects the transition between subcritical and
-critical flow and adjusts the Jacobian derivatives accordingly.
+This formulation follows [Emerson's Control Valve Handbook, chapter 5,
+sections 5.9.1–5.9.4](https://www.emerson.com/is/content/emerson/es/final-control/isolation-valves/documents/control-valve-handbook-en-3661206.pdf).
+The network regression compares a synthetic IPR → choke → arrival fixture
+against a separately configured `ThrottlingValve`. This qualifies the network
+coupling to the existing valve model; it is not an independent experimental
+qualification of a production well or a multiphase choke.
 
-**Parameters:**
-
-| Parameter | Method | Unit | Description |
-|-----------|--------|------|-------------|
-| Kv | `setChokeKv(double)` | m³/hr/√bar | Valve flow coefficient |
-| Opening | `setChokeOpening(double)` | 0–1 | Fraction open |
-| Critical ratio | `setChokeCriticalPressureRatio(double)` | 0–1 | Default 0.7 |
-
-**Convenience method:**
+| Parameter | Method | Value convention |
+|-----------|--------|------------------|
+| Kv | `setChokeKv(double)` | Finite, nonnegative m³/h/√bar coefficient |
+| Opening | `setChokeOpening(double)` | **Percent, 0–100**, with linear characterization |
+| Critical ratio | `setChokeCriticalPressureRatio(double)` | Default **0.5**; screening drop fraction or gas-mode IEC $x_T$, strictly between 0 and 1 |
+| Applicability | `getChokeModelStatus()` | Last evaluated model/regime status |
+| Gas capacity | `getChokeCapacityKgS()` | Signed kg/s at the last evaluated pressure pair |
 
 ```java
-network.addChoke("choke1", "wellhead", "downstream",
-    150.0,           // Kv [m³/hr/√bar]
-    0.8,             // opening fraction
-    0.7);            // critical pressure ratio
+network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+network.getNode("wellhead").setTemperature(313.15); // K
+LoopedPipeNetwork.NetworkPipe choke =
+    network.addChoke("wellhead", "arrival", "choke", 10.0, 60.0);
+choke.setChokeCriticalPressureRatio(0.5);
+choke.setChokeUseValveModel(true);
+network.run();
+if (!network.isProductionOptimizationApplicable()) {
+  throw new IllegalStateException(choke.getChokeModelStatus());
+}
 ```
 
-### Choosing Kv Values
+The gas mode supports zero/full opening and reverse flow, using the physical
+upstream node. A liquid or multiphase inlet, invalid pressure, or a solver other
+than Newton-Raphson raises an explicit error. It does not silently fall back to
+screening. Set actual trim Kv and $x_T$ from applicable valve data; constant
+$x_T$ and linear travel are assumptions, not universal valve characteristics.
+Availability scales effective Kv; zero availability closes the gas choke.
+Apply artificial lift to a separate network element.
 
-The Kv value should be realistic for the expected flow and pressure drop.
-A useful check:
-
-$$K_v \approx \frac{Q_{expected}}{\theta \times \sqrt{\Delta P_{expected} \times \rho}}$$
-
-**Typical ranges:**
-
-| Application | Kv Range (m³/hr/√bar) |
-|-------------|----------------------|
-| Gas well choke | 100–300 |
-| Oil well choke | 50–200 |
-| Control valve (small) | 5–50 |
-| Control valve (large) | 50–500 |
-
-Using too small a Kv for the expected flow rate can cause convergence
-difficulties because the choke becomes the dominant resistance and may
-drive the solver into the critical-flow regime.
+`optimizeFullField()` returns `chokeModelApplicable` and a per-choke
+`chokeModelStatus` map. An unsupported screening point has `converged = 0`
+and NaN objective/revenue even if `isConverged()` reports an algebraic solution.
+Start choke searches from an applicable point. Topside limits and other
+user-defined constraints must still be checked separately.
 
 ---
 
@@ -866,7 +884,7 @@ net.run();
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | Non-convergence with choke | Kv too small for the flow | Increase Kv or reduce flow rate |
-| Oscillation near critical flow | Jacobian mismatch at subcritical/critical boundary | Increase tolerance to 500 Pa |
+| Unsupported critical screening point | Legacy pressure-drop cap has no flow-capacity relation | Use the supported single-phase gas valve mode or retain a subcritical screening case |
 | Zero flow from IPR | Separator pressure > reservoir pressure | Check node pressures |
 | Negative flow in tubing | Wrong node ordering | Ensure from-node is bottomhole |
 | Slow convergence | Large pressure span in network | Increase maxIterations to 500 |

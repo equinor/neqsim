@@ -2031,9 +2031,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     // Get baseline production
@@ -2726,9 +2726,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 40.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 40.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     network.run();
@@ -2756,9 +2756,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res1", "wh1", "ipr1", 5e-6, false);
-    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0);
+    network.addChoke("wh1", "manifold", "choke1", 50.0, 50.0).setChokeUseValveModel(true);
     network.addWellIPR("res2", "wh2", "ipr2", 4e-6, false);
-    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0);
+    network.addChoke("wh2", "manifold", "choke2", 50.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("manifold", "platform", "export", 20000, 0.3, 0.00005);
 
     network.setWellPrice("choke1", 0.50);
@@ -3123,7 +3123,7 @@ class LoopedPipeNetworkTest {
     network.addJunctionNode("wh");
     network.addFixedPressureSinkNode("platform", 50.0);
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 70.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 70.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     double[] pressures = { 250.0, 220.0, 190.0, 160.0, 130.0 };
@@ -3161,9 +3161,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 60.0);
 
     network.addWellIPR("resA", "bhpA", "iprA", 5e-6, false);
-    network.addChoke("bhpA", "whA", "chokeA", 40.0, 80.0);
+    network.addChoke("bhpA", "whA", "chokeA", 40.0, 80.0).setChokeUseValveModel(true);
     network.addWellIPR("resB", "bhpB", "iprB", 4e-6, false);
-    network.addChoke("bhpB", "whB", "chokeB", 35.0, 70.0);
+    network.addChoke("bhpB", "whB", "chokeB", 35.0, 70.0).setChokeUseValveModel(true);
 
     network.addPipe("whA", "manifold", "flA", 5000, 0.20, 0.00005);
     network.addPipe("whB", "manifold", "flB", 6000, 0.20, 0.00005);
@@ -3247,7 +3247,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 60.0);
 
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 50.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 50.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     network.setWellPrice("choke1", 0.30);
@@ -3273,7 +3273,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "bhp", "ipr", 5e-6, false);
-    network.addChoke("bhp", "wh", "choke1", 40.0, 80.0);
+    network.addChoke("bhp", "wh", "choke1", 40.0, 80.0).setChokeUseValveModel(true);
     network.addPipe("wh", "platform", "pipe", 10000, 0.25, 0.00005);
 
     Map<String, double[]> profiles = new java.util.LinkedHashMap<>();
@@ -3331,7 +3331,7 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("res", "wh", "ipr", 5e-13, true);
-    network.addChoke("wh", "ds", "choke", 100.0, 80.0);
+    network.addChoke("wh", "ds", "choke", 100.0, 80.0).setChokeUseValveModel(true);
     network.addPipe("ds", "platform", "pipe", 10000, 0.25, 0.00005);
   }
 
@@ -3437,9 +3437,9 @@ class LoopedPipeNetworkTest {
     network.addFixedPressureSinkNode("platform", 50.0);
 
     network.addWellIPR("ResA", "whA", "iprA", 8e-13, true);
-    network.addChoke("whA", "dsA", "chokeA", 150.0, 80.0);
+    network.addChoke("whA", "dsA", "chokeA", 150.0, 80.0).setChokeUseValveModel(true);
     network.addWellIPR("ResB", "whB", "iprB", 5e-13, true);
-    network.addChoke("whB", "dsB", "chokeB", 150.0, 60.0);
+    network.addChoke("whB", "dsB", "chokeB", 150.0, 60.0).setChokeUseValveModel(true);
     network.addPipe("dsA", "manifold", "pipeA", 3000, 0.15, 0.00005);
     network.addPipe("dsB", "manifold", "pipeB", 5000, 0.12, 0.00005);
     network.addPipe("manifold", "platform", "export", 15000, 0.25, 0.00005);
