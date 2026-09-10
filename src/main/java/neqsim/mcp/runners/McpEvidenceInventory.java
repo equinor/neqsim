@@ -537,7 +537,7 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
           "neqsim-mcp-server/test_composition_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md" };
-      evidenceBoundary = "Bounded local composition metadata, deterministic discovery and plans, protected built-ins, registry limits, invalid, connection and credential rejection, access enforcement, standard evidence, and packaged transport are contract-tested; this does not establish external server connection or reachability, tool or workflow execution or result chaining, credential access or IAM/authentication, persistence or transactions, semantic or unit compatibility, numerical or scientific validity, convergence or conservation, plant or control authority, certification, or accountable engineering approval";
+      evidenceBoundary = "Contract-tested bounded composition metadata and controls; this does not establish external server connection, execution, IAM, scientific validity, control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";
