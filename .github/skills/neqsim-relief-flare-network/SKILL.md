@@ -288,6 +288,7 @@ modeling.
 ## Related Skills
 
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — when PSV is the IPL of last resort in LOPA
+- [`neqsim-firewater-deluge-design`](../neqsim-firewater-deluge-design/SKILL.md) — fire-water demand for the area, which competes with the relief and flare load for the same simultaneous-demand budget
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture screening before thermal relief/PFP decisions
 - [`neqsim-depressurization-mdmt`](../neqsim-depressurization-mdmt/SKILL.md) — blowdown transients + `MultiVesselBlowdownStudy` for coupled header loads
 - [`neqsim-consequence-analysis`](../neqsim-consequence-analysis/SKILL.md) — `Api537FlareFlameModel` radiation/noise and hazardous-area zoning

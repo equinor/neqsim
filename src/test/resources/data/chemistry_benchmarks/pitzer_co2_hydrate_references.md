@@ -28,6 +28,26 @@ Tests use excess CO2 (10 mol per kg initial water), check that a CO2-rich phase 
 the aqueous phase. The reported aqueous *phase fraction* is not a dissolved CO2 feed mole fraction. The separate
 undersaturated measurements in Burgass Table 5 and mixed-gas measurements in Jibril Table 6 are not part of this fixture.
 
+### Separate electrolyte-CPA phase-state fixture
+
+`co2_brine_hydrate_phase_state_burgass2023.csv` selects six saturated measurements
+from Burgass Table 4 and six undersaturated measurements from Table 5, from the
+same CC BY 4.0 source above. Both tables were visually checked in the publisher's
+PDF on 2026-09-10. Table 5 CO2 mole fractions are salt-free: use
+`n_CO2 = x_CO2 / (1 - x_CO2) * n_water`. The zero CO2 fraction in Table 4 rows
+marks an excess-CO2 feed (10 mol per kg water), not a CO2-free experiment.
+
+`CO2BrineHydrateReferenceAssessmentTest` uses the existing electrolyte-CPA
+parameters with no fit. Its 1 K temperature criterion is independent of the
+source's expanded temperature uncertainties (0.4 K in Table 4; 0.7 K in Table 5).
+The generated CSV reports all twelve predictions, signed errors and phase
+labels. Five of six saturated points and two of six undersaturated points meet
+1 K; maximum absolute deviations are 1.12 K and 4.10 K. The failed accuracy
+comparisons remain part of the assessment even though their numerical
+conservation and fluid/hydrate residual checks pass. This fixture does not
+qualify drilling fluids or salt precipitation and does not alter the separate
+Pitzer qualification described below.
+
 All CO2-cation-Cl zeta terms and the missing K-Mg theta are **explicitly zero for screening**, with no parameter
 fitting. Zero-amount ions are retained in the test's pure-water limit to keep the same CO2 self-interaction dataset.
 The manual dataset is not scientifically qualified by loading these coefficients.

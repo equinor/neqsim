@@ -12,8 +12,11 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -90,6 +93,14 @@ class TorgManagerTest {
     List<StandardType> compressorStandards = manager.getAppliedStandards("Test Compressor");
     assertFalse(compressorStandards.isEmpty());
     assertTrue(compressorStandards.contains(StandardType.API_617));
+
+    for (int application = 0; application < 2; application++) {
+      assertTrue(manager.loadAndApply("PROJ-001", process));
+      assertEquals(233.15, separator.getMechanicalDesign().getMinOperationTemperature("K"), 1.0e-9);
+      assertEquals(-40.0, separator.getMechanicalDesign().getMinOperationTemperature("C"), 1.0e-9);
+      assertEquals(233.15, compressor.getMechanicalDesign().getMinOperationTemperature("K"), 1.0e-9);
+      assertEquals(-40.0, compressor.getMechanicalDesign().getMinOperationTemperature("C"), 1.0e-9);
+    }
   }
 
   @Test
@@ -195,15 +206,21 @@ class TorgManagerTest {
     assertFalse(applied);
   }
 
-  @Test
-  void testApplyWithEnvironmentalConditions() {
+  @ParameterizedTest
+  @CsvSource({ "-46.0, 227.15", "-30.0, 243.15", "0.0, 273.15", "15.0, 288.15" })
+  void testApplyWithEnvironmentalConditions(double minAmbientCelsius, double expectedKelvin) {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("ENV-001")
-        .environmentalConditions(-46.0, 40.0).addStandard("separator process design", StandardType.API_12J).build();
+        .environmentalConditions(minAmbientCelsius, 40.0)
+        .addStandard(StandardType.API_12J.getDesignStandardCategory(), StandardType.API_12J).build();
 
     Separator separator = new Separator("Env Test");
-    manager.applyToEquipment(torg, separator);
-
-    // Environmental conditions should be applied
-    assertEquals(-46.0, separator.getMechanicalDesign().getMinOperationTemperature(), 0.01);
+    MechanicalDesign design = separator.getMechanicalDesign();
+    for (int application = 0; application < 3; application++) {
+      manager.applyToEquipment(torg, separator);
+      assertTrue(manager.getAppliedStandards(separator.getName()).contains(StandardType.API_12J));
+      assertEquals(expectedKelvin, design.getMinOperationTemperature(), 1.0e-9);
+      assertEquals(expectedKelvin, design.getMinOperationTemperature("K"), 1.0e-9);
+      assertEquals(minAmbientCelsius, design.getMinOperationTemperature("C"), 1.0e-9);
+    }
   }
 }

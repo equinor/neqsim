@@ -4613,22 +4613,25 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface phaseToSystem(int phaseNumber) {
+    PhaseInterface sourcePhase = getPhase(phaseNumber);
     SystemInterface newSystem = this.clone();
 
+    // A solid flash can leave repeated entries in phaseIndex and skip an inactive storage slot.
+    // Reset every cloned storage slot directly: init(0) restores the identity phase mapping.
     for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        newSystem.getPhase(j).getComponent(i)
-            .setNumberOfmoles(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
-        newSystem.getPhase(j).getComponent(i)
-            .setNumberOfMolesInPhase(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
+      PhaseInterface storedPhase = newSystem.getPhases()[j];
+      for (int i = 0; i < sourcePhase.getNumberOfComponents(); i++) {
+        double moles = sourcePhase.getComponent(i).getNumberOfMolesInPhase();
+        storedPhase.getComponent(i).setNumberOfmoles(moles);
+        storedPhase.getComponent(i).setNumberOfMolesInPhase(moles);
       }
     }
 
-    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(getPhase(phaseNumber).getNumberOfMolesInPhase());
+    ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(sourcePhase.getNumberOfMolesInPhase());
 
     newSystem.init(0);
     newSystem.setNumberOfPhases(1);
-    newSystem.setPhaseType(0, getPhase(phaseNumber).getType()); // phaseType[phaseNumber]);
+    newSystem.setPhaseType(0, sourcePhase.getType());
     newSystem.init(3);
     return newSystem;
   }
@@ -5826,12 +5829,14 @@ public abstract class SystemThermo implements SystemInterface {
     if (solidPhaseCheck && !this.hasSolidPhase()) {
       addSolidPhase();
     }
-    // init(0);
 
-    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
-      for (int k = 0; k < getPhases()[0].getNumberOfComponents(); k++) {
-        getPhase(phaseNum).getComponent(k).setSolidCheck(solidPhaseCheck);
-        getPhase(3).getComponent(k).setSolidCheck(solidPhaseCheck);
+    // Include cached phases without requiring a solid phase or a particular phase-index mapping.
+    for (PhaseInterface phase : phaseArray) {
+      if (phase == null) {
+        continue;
+      }
+      for (int k = 0; k < phase.getNumberOfComponents(); k++) {
+        phase.getComponent(k).setSolidCheck(solidPhaseCheck);
       }
     }
     setNumberOfPhases(oldphase);

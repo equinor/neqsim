@@ -1,9 +1,20 @@
 name: Daily Research Scan
 permissions:
   contents: read
-  issues: write
+
+concurrency:
+  group: research-scan-${{ github.ref }}
+  cancel-in-progress: false
 
 on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/research-scan.yml'
+      - 'neqsim-paperlab/tools/daily_scan.py'
+      - 'neqsim-paperlab/tools/research_scanner.py'
+      - 'neqsim-paperlab/tools/trending_topics.py'
+      - 'neqsim-paperlab/tests/test_daily_scan.py'
   schedule:
     # Run daily at 06:00 UTC
     - cron: '0 6 * * *'
@@ -15,20 +26,40 @@ on:
         default: 'false'
         type: boolean
       since_days:
-        description: 'Look-back window in days'
+        description: 'Look-back window in days for the legacy fallback'
         required: false
         default: '180'
         type: string
       top_n:
-        description: 'Max opportunities to report'
+        description: 'Max opportunities in the legacy fallback'
         required: false
         default: '15'
         type: string
 
 jobs:
+  test:
+    name: Verify research scan publication
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install PyYAML
+      - name: Test scanner and issue publication offline
+        run: python -m unittest discover -s neqsim-paperlab/tests -p test_daily_scan.py -v
+
   scan:
     name: Scan NeqSim for paper opportunities
+    if: github.event_name != 'pull_request'
+    needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      SCAN_OUTPUT_DIR: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -41,76 +72,57 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          pip install requests
+        run: python -m pip install requests
 
-      - name: Restore previous scan hash
-        id: cache
-        uses: actions/cache@v6
+      - name: Restore previous scan state
+        uses: actions/cache/restore@v6
         with:
-          path: /tmp/scan_hash
-          key: research-scan-hash
-
-      - name: Prepare scan output directory
-        run: |
-          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
-          mkdir -p "$SCAN_DIR"
-          if [ -f /tmp/scan_hash/.last_scan_hash ]; then
-            cp /tmp/scan_hash/.last_scan_hash "$SCAN_DIR/.last_scan_hash"
-          fi
+          path: |
+            ${{ env.SCAN_OUTPUT_DIR }}/.last_scan_hash
+            ${{ env.SCAN_OUTPUT_DIR }}/suggestion_history.json
+          key: research-scan-state-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: research-scan-state-v2-
 
       - name: Run research scanner
         id: scan
         env:
           NEQSIM_REPO_ROOT: ${{ github.workspace }}
-          SCAN_OUTPUT_DIR: ${{ github.workspace }}/neqsim-paperlab/papers/_research_scan
+          FORCE_SCAN: ${{ inputs.force }}
+          SINCE_DAYS: ${{ inputs.since_days || '180' }}
+          TOP_N: ${{ inputs.top_n || '15' }}
+        shell: bash
         run: |
-          cd ${{ github.workspace }}
-          FORCE_FLAG=""
-          if [ "${{ inputs.force }}" = "true" ]; then
-            FORCE_FLAG="--force"
+          flags=()
+          if [ "$FORCE_SCAN" = "true" ]; then
+            flags+=(--force)
           fi
           python neqsim-paperlab/tools/daily_scan.py \
-            --since ${{ inputs.since_days || '180' }} \
-            --top ${{ inputs.top_n || '15' }} \
-            $FORCE_FLAG
-
-      - name: Read scan results
-        id: check
-        run: |
-          SCAN_DIR="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan"
-          PR_META="$SCAN_DIR/.pr_metadata.json"
-          if [ -f "$PR_META" ]; then
-            CHANGED=$(python3 -c "import json; print(json.load(open('$PR_META'))['changed'])")
-            TITLE=$(python3 -c "import json; print(json.load(open('$PR_META'))['title'])")
-            echo "changed=$CHANGED" >> $GITHUB_OUTPUT
-            echo "title=$TITLE" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Persist scan hash to cache
-        if: always()
-        run: |
-          mkdir -p /tmp/scan_hash
-          HASH_FILE="${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/.last_scan_hash"
-          if [ -f "$HASH_FILE" ]; then
-            cp "$HASH_FILE" /tmp/scan_hash/.last_scan_hash
-          fi
+            --since "$SINCE_DAYS" --top "$TOP_N" "${flags[@]}"
 
       - name: Create Issue
-        if: steps.check.outputs.changed == 'True' || steps.check.outputs.changed == 'true'
+        if: steps.scan.outputs.changed == 'true'
         uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
-            const reportPath = '${{ github.workspace }}/neqsim-paperlab/papers/_research_scan/scout_report.md';
-            const body = fs.readFileSync(reportPath, 'utf8');
-            const title = '${{ steps.check.outputs.title }}';
+            const path = require('path');
+            const outputDir = process.env.SCAN_OUTPUT_DIR;
+            const metadata = JSON.parse(
+              fs.readFileSync(path.join(outputDir, '.pr_metadata.json'), 'utf8')
+            );
+            const body = fs.readFileSync(path.join(outputDir, metadata.report_file), 'utf8');
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: title,
+              title: metadata.title,
               body: body,
               labels: ['paperlab', 'research-scan', 'automated']
             });
+
+      - name: Save successful scan state
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            ${{ env.SCAN_OUTPUT_DIR }}/.last_scan_hash
+            ${{ env.SCAN_OUTPUT_DIR }}/suggestion_history.json
+          key: research-scan-state-v2-${{ github.run_id }}-${{ github.run_attempt }}

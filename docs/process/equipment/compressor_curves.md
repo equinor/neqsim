@@ -1297,40 +1297,55 @@ JSON is the recommended format for compressor curves due to its readability and 
 
 #### Java Usage
 
+Save the JSON above as `compressor_curve.json` and this complete example as
+`CompressorJsonExample.java`. Pass the JSON filename as the command-line argument.
+At fixed speed the map determines outlet pressure; the example reports that pressure
+instead of imposing an independent pressure target. Actual inlet flow is 20,000 m³/h,
+inside the 6327.9 RPM curve's flow range.
+
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create a simple gas stream
-SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
+public class CompressorJsonExample {
+    private static final Logger logger = LogManager.getLogger(CompressorJsonExample.class);
 
-Stream inlet = new Stream("inlet", fluid);
-inlet.setFlowRate(20000.0, "m3/hr");
-inlet.setTemperature(35.0, "C");
-inlet.setPressure(37.0, "bara");
-inlet.run();
+    public static Compressor run(String chartFile) throws Exception {
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("ethane", 0.10);
+        fluid.addComponent("propane", 0.05);
+        fluid.setMixingRule("classic");
 
-// Create compressor and load curves from JSON file
-Compressor compressor = new Compressor("K-100", inlet);
-compressor.setOutletPressure(110.0, "bara");
-compressor.setUsePolytropicCalc(true);
+        Stream inlet = new Stream("inlet", fluid);
+        inlet.setTemperature(35.0, "C");
+        inlet.setPressure(37.0, "bara");
+        inlet.setFlowRate(20000.0, "m3/hr"); // Set actual volume after temperature and pressure.
+        inlet.run();
 
-// Load compressor curves from JSON file
-compressor.loadCompressorChartFromJson("path/to/compressor_curve.json");
+        Compressor compressor = new Compressor("K-100", inlet);
+        compressor.setUsePolytropicCalc(true);
+        compressor.loadCompressorChartFromJson(chartFile);
+        compressor.setSpeed(6327.9);
+        compressor.run();
 
-// Set speed and run
-compressor.setSpeed(6327.9);  // RPM matching one of the curves
-compressor.run();
+        logger.info("Power: {} kW", compressor.getPower("kW"));
+        logger.info("Outlet pressure: {} bara", compressor.getOutletPressure());
+        logger.info("Polytropic efficiency: {}%", compressor.getPolytropicEfficiency() * 100.0);
+        logger.info("Polytropic head: {} kJ/kg", compressor.getPolytropicHead("kJ/kg"));
+        return compressor;
+    }
 
-// Results now use the loaded performance curves
-System.out.println("Power: " + compressor.getPower("kW") + " kW");
-System.out.println("Polytropic Efficiency: " + (compressor.getPolytropicEfficiency() * 100) + "%");
-System.out.println("Polytropic Head: " + compressor.getPolytropicHead("kJ/kg") + " kJ/kg");
+    public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            throw new IllegalArgumentException("Pass the compressor chart JSON filename");
+        }
+        run(args[0]);
+    }
+}
 ```
 
 #### Loading from JSON String
@@ -1357,36 +1372,27 @@ compressor.loadCompressorChartFromJsonString(jsonString);
 #### Python Usage (neqsim-python)
 
 ```python
-from neqsim.thermo import fluid
-from neqsim.process import stream, compressor
+from neqsim import jneqsim
 
-# Create inlet stream
-gas = fluid('srk')
+gas = jneqsim.thermo.system.SystemSrkEos(308.15, 37.0)
 gas.addComponent("methane", 0.85)
 gas.addComponent("ethane", 0.10)
 gas.addComponent("propane", 0.05)
 gas.setMixingRule("classic")
 
-inlet = stream(gas)
+inlet = jneqsim.process.equipment.stream.Stream("inlet", gas)
 inlet.setFlowRate(20000.0, "m3/hr")
-inlet.setTemperature(35.0, "C")
-inlet.setPressure(37.0, "bara")
 inlet.run()
 
-# Create compressor
-comp = compressor(inlet)
-comp.setOutletPressure(110.0, "bara")
+comp = jneqsim.process.equipment.compressor.Compressor("K-100", inlet)
 comp.setUsePolytropicCalc(True)
-
-# Load curves from JSON file
-comp.loadCompressorChartFromJson("compressor_curves/example_compressor_curve.json")
-
-# Set speed and run
+comp.loadCompressorChartFromJson("compressor_curve.json")
 comp.setSpeed(6327.9)
 comp.run()
 
 print(f"Power: {comp.getPower('kW'):.2f} kW")
-print(f"Efficiency: {comp.getPolytropicEfficiency()*100:.2f}%")
+print(f"Outlet pressure: {comp.getOutletPressure():.2f} bara")
+print(f"Efficiency: {comp.getPolytropicEfficiency() * 100:.2f}%")
 ```
 
 #### Saving Curves to JSON

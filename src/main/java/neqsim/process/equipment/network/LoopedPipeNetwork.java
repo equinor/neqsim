@@ -7624,106 +7624,226 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   // Sensitivity Analysis (Parametric Sweep)
   // =====================================================================
 
+  /** Failure reasons indexed by sample in the most recent sensitivity sweep. */
+  private final Map<Integer, String> sensitivityFailures = new LinkedHashMap<>();
+
+  /**
+   * Get failure evidence from the most recent sensitivity sweep.
+   *
+   * @return immutable snapshot mapping zero-based sample indices to failure reasons
+   */
+  public Map<Integer, String> getSensitivityFailures() {
+    return Collections.unmodifiableMap(new LinkedHashMap<>(sensitivityFailures));
+  }
+
   /**
    * Run sensitivity analysis by sweeping a parameter across a range.
    *
    * <p>
-   * Supported parameter types: "reservoir_pressure", "well_pi", "choke_opening", "sink_pressure", "pipe_diameter".
+   * Supported parameter types are "reservoir_pressure" (bara), "well_pi" (kg/s/Pa or kg/s/Pa squared), "choke_opening"
+   * (percent), "sink_pressure" (bara), and "pipe_diameter" (m). Reservoir pressure accepts either a WELL_IPR name or
+   * its fixed-pressure source-node name and updates that source and every connected IPR. A source controlled by a feed
+   * stream is rejected; vary the feed pressure explicitly instead.
    * </p>
    *
-   * @param elementName name of the element to sweep
+   * <p>
+   * Failed, non-converged, unsupported, and non-finite samples have NaN flow and objective. The "converged",
+   * "applicable", and "valid" arrays use 1.0 for true and 0.0 for false. Applicability follows
+   * {@link #isProductionOptimizationApplicable()}, not facility-constraint feasibility. Failure reasons remain
+   * available through {@link #getSensitivityFailures()}. Original parameter, source, and IPR settings are restored in a
+   * finally block and the baseline is re-solved. If that solve throws, the exception propagates with the original input
+   * settings still restored.
+   * </p>
+   *
+   * @param elementName name of the element or reservoir source to sweep
    * @param parameterType type of parameter to vary
    * @param values array of parameter values to evaluate
-   * @return map with keys "paramValues", "totalFlow_kghr", "sinkPressures_bara" containing results
+   * @return map containing "paramValues", "totalFlow_kghr", "objective", "converged", "applicable", and "valid"; empty
+   * for null or empty values
+   * @throws IllegalArgumentException if the parameter or target is unsupported
    */
   public Map<String, double[]> sensitivityAnalysis(String elementName, String parameterType, double[] values) {
     Map<String, double[]> results = new LinkedHashMap<>();
+    sensitivityFailures.clear();
     if (values == null || values.length == 0) {
       return results;
     }
 
+    double originalValue = getSensitivityParameterValue(elementName, parameterType);
+    NetworkNode reservoirSource = "reservoir_pressure".equals(parameterType)
+        ? getSensitivityReservoirSource(elementName)
+        : null;
+    Map<NetworkPipe, Double> originalReservoirPressures = new LinkedHashMap<>();
+    if (reservoirSource != null) {
+      for (NetworkPipe pipe : pipes.values()) {
+        if (pipe.getElementType() == NetworkElementType.WELL_IPR
+            && pipe.getFromNode().equals(reservoirSource.getName())) {
+          originalReservoirPressures.put(pipe, pipe.getReservoirPressure());
+        }
+      }
+    }
+    Map<String, Double> originalNodePressures = snapshotNodePressures();
     double[] totalFlows = new double[values.length];
     double[] objectiveValues = new double[values.length];
+    double[] convergence = new double[values.length];
+    double[] applicability = new double[values.length];
+    double[] valid = new double[values.length];
+    java.util.Arrays.fill(totalFlows, Double.NaN);
+    java.util.Arrays.fill(objectiveValues, Double.NaN);
 
-    // Save original state
-    NetworkPipe targetPipe = getPipe(elementName);
-    NetworkNode targetNode = nodes.get(elementName);
-    double origValue = 0;
-    if (targetPipe != null) {
-      switch (parameterType) {
-      case "choke_opening":
-        origValue = targetPipe.getChokeOpening();
-        break;
-      case "reservoir_pressure":
-        origValue = targetPipe.getReservoirPressure() / 1e5;
-        break;
-      case "well_pi":
-        origValue = targetPipe.getProductivityIndex();
-        break;
-      case "pipe_diameter":
-        origValue = targetPipe.getDiameter();
-        break;
-      default:
-        break;
+    try {
+      for (int i = 0; i < values.length; i++) {
+        try {
+          if (!Double.isFinite(values[i]) || (!"choke_opening".equals(parameterType) && values[i] <= 0.0)) {
+            throw new IllegalArgumentException("Sensitivity value must be finite and positive for " + parameterType);
+          }
+          applyParameterValue(elementName, parameterType, values[i]);
+          run();
+          convergence[i] = isConverged() ? 1.0 : 0.0;
+          applicability[i] = isProductionOptimizationApplicable() ? 1.0 : 0.0;
+          if (!isConverged()) {
+            sensitivityFailures.put(i, "Network did not converge; max residual = " + getMaxResidual() + " Pa");
+          } else if (!isProductionOptimizationApplicable()) {
+            StringBuilder reason = new StringBuilder("Unsupported production point; choke status:");
+            for (NetworkPipe pipe : pipes.values()) {
+              if (pipe.getElementType() == NetworkElementType.CHOKE) {
+                reason.append(" ").append(pipe.getName()).append("=").append(pipe.getChokeModelStatus());
+              }
+            }
+            sensitivityFailures.put(i, reason.toString());
+          } else {
+            double flow = getTotalSinkFlow() * 3600.0;
+            double objective = computeObjective();
+            if (Double.isFinite(flow) && Double.isFinite(objective)) {
+              totalFlows[i] = flow;
+              objectiveValues[i] = objective;
+              valid[i] = 1.0;
+            } else {
+              sensitivityFailures.put(i, "Non-finite flow or objective");
+            }
+          }
+        } catch (Exception ex) {
+          sensitivityFailures.put(i, ex.getClass().getSimpleName() + ": " + ex.getMessage());
+        }
       }
-    } else if (targetNode != null && "sink_pressure".equals(parameterType)) {
-      origValue = targetNode.getPressure() / 1e5;
-    }
-
-    for (int i = 0; i < values.length; i++) {
-      // Apply parameter
-      applyParameterValue(elementName, parameterType, values[i]);
-
+    } finally {
+      // Restore each IPR independently: the original source and IPR values need not have been equal.
+      applyParameterValue(elementName, parameterType, originalValue);
+      for (Map.Entry<NetworkPipe, Double> entry : originalReservoirPressures.entrySet()) {
+        entry.getKey().setReservoirPressure(entry.getValue());
+      }
+      for (Map.Entry<String, Double> entry : originalNodePressures.entrySet()) {
+        nodes.get(entry.getKey()).setPressure(entry.getValue());
+      }
       try {
         run();
-        totalFlows[i] = getTotalSinkFlow() * 3600.0; // kg/hr
-        objectiveValues[i] = computeObjective();
-      } catch (Exception e) {
-        totalFlows[i] = 0.0;
-        objectiveValues[i] = 0.0;
+      } finally {
+        if (reservoirSource != null) {
+          reservoirSource.setPressure(originalNodePressures.get(reservoirSource.getName()));
+          for (Map.Entry<NetworkPipe, Double> entry : originalReservoirPressures.entrySet()) {
+            entry.getKey().setReservoirPressure(entry.getValue());
+          }
+        }
       }
     }
-
-    // Restore original value
-    applyParameterValue(elementName, parameterType, origValue);
-    run();
 
     results.put("paramValues", values.clone());
     results.put("totalFlow_kghr", totalFlows);
     results.put("objective", objectiveValues);
+    results.put("converged", convergence);
+    results.put("applicable", applicability);
+    results.put("valid", valid);
     return results;
   }
 
   /**
-   * Apply a parameter value to a network element.
+   * Resolve the fixed source boundary for a reservoir-pressure sweep.
+   *
+   * @param elementName IPR or source-node name
+   * @return source node whose pressure and connected IPRs must change together
+   * @throws IllegalArgumentException if the target is not a supported reservoir boundary
+   */
+  private NetworkNode getSensitivityReservoirSource(String elementName) {
+    NetworkPipe pipe = pipes.get(elementName);
+    NetworkNode source = nodes.get(elementName);
+    if (pipe != null) {
+      if (pipe.getElementType() != NetworkElementType.WELL_IPR) {
+        throw new IllegalArgumentException("Reservoir-pressure sensitivity requires a WELL_IPR or source node");
+      }
+      source = nodes.get(pipe.getFromNode());
+    }
+    if (source == null || source.getType() != NodeType.SOURCE || !source.isPressureFixed()) {
+      throw new IllegalArgumentException("Reservoir-pressure sensitivity requires a fixed-pressure source node");
+    }
+    NetworkNode firstSource = null;
+    for (NetworkNode node : nodes.values()) {
+      if (node.getType() == NodeType.SOURCE) {
+        firstSource = node;
+        break;
+      }
+    }
+    if (feedStreams.containsKey(source.getName())
+        || (source == firstSource && feedStreams.containsKey("__default__"))) {
+      throw new IllegalArgumentException(
+          "Source '" + source.getName() + "' is controlled by a feed stream; vary its feed pressure explicitly");
+    }
+    return source;
+  }
+
+  /**
+   * Validate a sensitivity target and read its current parameter value.
+   *
+   * @param elementName element name
+   * @param parameterType parameter type
+   * @return original value in the sensitivity API's units
+   * @throws IllegalArgumentException if the parameter or target is unsupported
+   */
+  private double getSensitivityParameterValue(String elementName, String parameterType) {
+    NetworkPipe pipe = pipes.get(elementName);
+    NetworkNode node = nodes.get(elementName);
+    if ("reservoir_pressure".equals(parameterType)) {
+      return getSensitivityReservoirSource(elementName).getPressure() / 1e5;
+    }
+    if ("sink_pressure".equals(parameterType) && node != null && node.getType() == NodeType.SINK
+        && node.isPressureFixed()) {
+      return node.getPressure() / 1e5;
+    }
+    if (pipe != null) {
+      if ("choke_opening".equals(parameterType) && pipe.getElementType() == NetworkElementType.CHOKE) {
+        return pipe.getChokeOpening();
+      }
+      if ("well_pi".equals(parameterType) && pipe.getElementType() == NetworkElementType.WELL_IPR) {
+        return pipe.getProductivityIndex();
+      }
+      if ("pipe_diameter".equals(parameterType)) {
+        return pipe.getDiameter();
+      }
+    }
+    throw new IllegalArgumentException("Unsupported sensitivity target '" + elementName + "' for " + parameterType);
+  }
+
+  /**
+   * Apply a parameter value to a validated network element.
    *
    * @param elementName element name
    * @param parameterType parameter type
    * @param value value to set
+   * @throws IllegalArgumentException if the value is outside the supported range
    */
   private void applyParameterValue(String elementName, String parameterType, double value) {
-    NetworkPipe pipe = getPipe(elementName);
-    NetworkNode node = nodes.get(elementName);
-
-    if (pipe != null) {
-      switch (parameterType) {
-      case "choke_opening":
-        pipe.setChokeOpening(Math.max(1.0, Math.min(100.0, value)));
-        break;
-      case "reservoir_pressure":
-        pipe.setReservoirPressure(value * 1e5); // bara -> Pa
-        break;
-      case "well_pi":
-        pipe.setProductivityIndex(value);
-        break;
-      case "pipe_diameter":
-        pipe.setDiameter(value);
-        break;
-      default:
-        break;
-      }
-    } else if (node != null && "sink_pressure".equals(parameterType)) {
-      node.setPressure(value * 1e5);
+    if ("reservoir_pressure".equals(parameterType)) {
+      setReservoirPressure(getSensitivityReservoirSource(elementName).getName(), value);
+      return;
+    }
+    NetworkPipe pipe = pipes.get(elementName);
+    if ("sink_pressure".equals(parameterType)) {
+      setNodePressure(elementName, value);
+    } else if ("choke_opening".equals(parameterType)) {
+      pipe.setChokeOpening(value);
+    } else if ("well_pi".equals(parameterType)) {
+      pipe.setProductivityIndex(value);
+    } else if ("pipe_diameter".equals(parameterType)) {
+      pipe.setDiameter(value);
     }
   }
 

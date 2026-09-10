@@ -178,7 +178,84 @@ states from the restored feed and reports `IsNaNException` if all starts fail. A
 fugacity residual cannot override a failed material balance.
 The original multiphase-check setting is restored even when evaluation fails.
 See [Electrolyte CPA component conservation](../thermo/ElectrolyteCPAModel#component-conservation-in-hydrate-temperature-calculations)
-for the mixed-brine regression scope and remaining phase-selection limitations.
+for the mixed-brine regression scope.
+
+#### CO2/brine phase-state diagnostics
+
+For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
+CO2, water and optional explicit ions, the temperature operation uses
+`CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
+verification on a copy of the starting feed. It initializes independent
+vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
+constrained component balances and molecular fugacity equations. Conserved
+candidate states are ranked by Gibbs energy. A single aqueous result is accepted
+only when both normalized CO2 stability trials are non-negative within numerical
+tolerance. This path uses the existing EOS and hydrate parameters. Other gases,
+MEG/methanol mixtures, reactive systems, prescribed phase types and solid-phase
+calculations retain their existing fluid solver.
+
+```java
+SystemInterface brine = new SystemElectrolyteCPAstatoil(283.15, 200.0);
+double waterMoles = 1.0 / 0.01801528;
+double saltMoles = (10.0 / 90.0) / 0.05844277;
+brine.addComponent("CO2", 10.0);
+brine.addComponent("water", waterMoles);
+brine.addComponent("Na+", saltMoles);
+brine.addComponent("Cl-", saltMoles);
+brine.setMixingRule(10);
+brine.setHydrateCheck(true);
+ThermodynamicOperations operations = new ThermodynamicOperations(brine);
+operations.hydrateFormationTemperature();
+HydrateFormationTemperatureFlash operation =
+    (HydrateFormationTemperatureFlash) operations.getOperation();
+HydrateEquilibriumDiagnostics evidence = operation.getDiagnostics();
+boolean converged = evidence.isConverged();
+boolean saturatedCO2Boundary = evidence.isSaturatedCO2Boundary();
+double temperatureK = evidence.getTemperature();
+```
+
+Import the two diagnostic/operation classes from
+`neqsim.thermodynamicoperations.flashops.saturationops`. The example uses 1 kg
+water and 10 wt% NaCl on the water-plus-salt basis, excluding CO2. It returns
+approximately 278.8180 K (5.6680 °C) with a CO2-rich phase and aqueous brine. The
+same feed gives about 277.2851 K at 40 bara and 277.9238 K at 100 bara. These are
+numerical regression values, not experimental measurements.
+
+`getDiagnostics()` returns an immutable snapshot. It reports the dimensionless
+hydrate-water residual, molecular log-fugacity residual, component and charge
+balance residuals, material phase labels and CO2-rich-phase presence. The
+minimum CO2 trial distance refers to the **homogeneous aqueous feed**: a negative
+value calls for a CO2-rich split. It is not the tangent-plane distance of the
+final two-phase equilibrium. A snapshot is null before the first run. Its
+convergence flag includes the independent verification and agrees with
+`isConverged()`; the hydrate residual agrees with `getLastResidual()`. A failed
+search captures diagnostic evidence before restoring the input inventory and
+setting the system temperature to `NaN`.
+
+A converged single-aqueous result is a finite-inventory hydrate calculation;
+`isSaturatedCO2Boundary()` is false. Do not append it to a saturated CO2/brine
+curve. For example, at 100 bara and 5 wt% NaCl, 0.5 and 1 mol CO2 per kg water
+remain single aqueous, whereas 2 mol CO2 produces a CO2-rich/aqueous split.
+Nonconvergence in the constrained CO2/brine path raises `IllegalStateException`.
+Neither a failed search nor an undersaturated label means hydrate-free operation.
+
+**Experimental assessment:**
+`CO2BrineHydrateReferenceAssessmentTest` compares six saturated and six
+undersaturated points from Burgass et al. (2023), Tables 4 and 5
+([DOI](https://doi.org/10.2516/stet/2023005), CC BY 4.0). It writes the complete
+comparison to `target/co2-brine-hydrate-reference-assessment.csv`. The separate
+1 K temperature-comparison criterion is met by five of the six saturated points
+and two of the six undersaturated points. Maximum absolute errors are about
+1.12 K and 4.10 K, respectively. The test requires conservation, phase-state
+classification and fugacity closure for every point; **a passing test suite does
+not mean all reference temperatures meet the accuracy criterion**. Table 5 CO2
+mole fractions exclude salt, so its feed conversion differs from ionic overall
+mole fractions. No parameters were fitted to these observations.
+
+The numerical phase-selection repair does not qualify high-pressure drilling
+fluids, concentrated brines with precipitating salts, or finite-inventory
+temperature accuracy over the full experimental range. Polymers, solids, kinetic
+effects and actual hydrate amounts are outside this incipient-equilibrium test.
 
 ### Hydrate Formation Pressure
 
