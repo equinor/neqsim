@@ -62,8 +62,8 @@ class OptimizationEntryDocumentationTest extends NeqSimTest {
         + "evaluator = new ProcessConstraintEvaluator(process); exporter = new EclipseVFPExporter(1); "
         + "exporter.setFlowRates(new double[]{10000,20000,40000}); exporter.setTHPs(new double[]{20,40}); "
         + "exporter.setWaterCuts(new double[]{0}); exporter.setGORs(new double[]{0}); "
-        + "exporter.setALQs(new double[]{0}); double[][][][][] bhp = new double[2][1][1][1][3]; "
-        + "bhp[0][0][0][0]=new double[]{30,36,48}; bhp[1][0][0][0]=new double[]{50,56,68}; "
+        + "exporter.setALQs(new double[]{0}); double[][][][][] bhp = new double[3][2][1][1][1]; "
+        + "for(int f=0;f<3;f++){for(int t=0;t<2;t++){bhp[f][t][0][0][0]=30+10*t+f;}} "
         + "exporter.setBHPTable(bhp); config = new OptimizationConfig(10000,200000); }\n"
         + "protected static void verify() { if (!Double.isFinite(compressor.getPower(\"kW\"))) "
         + "throw new AssertionError(\"Non-finite compressor power\"); } }\n";

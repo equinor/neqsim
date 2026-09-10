@@ -99,9 +99,9 @@ public class MultiScenarioVFPExample {
       logger.info("\n7. Sample VFP Slices:");
       printSampleSlices(table, fluidInput);
 
-      // Step 8: Export to Eclipse format
-      logger.info("\n8. Exporting to Eclipse VFPEXP format...");
-      String vfpString = vfpGenerator.toVFPEXPString(1);
+      // Step 8: Inspect process pressure diagnostics
+      logger.info("\n8. Inspecting process pressure diagnostics...");
+      String vfpString = vfpGenerator.toDiagnosticString();
       logger.info("   First 50 lines of output:");
       printFirstLines(vfpString, 50);
 

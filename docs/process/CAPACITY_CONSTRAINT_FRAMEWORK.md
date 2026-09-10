@@ -1320,20 +1320,23 @@ maximum rates into BHP cells or interpret unavailable pressure cells as zero pre
 
 Solve and qualify each hydraulic operating point first. Record constraints alongside the
 calculated pressure table; the exporter itself neither solves the process nor enforces
-constraints. `LiftCurveTable.toEclipseFormat()` is a commented capacity matrix, not a
-complete `VFPPROD` keyword.
+constraints. `LiftCurveTable.toDiagnosticTable()` is a pressure matrix, not a
+`VFPPROD` keyword; the process capacity/lift tables reject `toEclipseFormat()`.
+Use [the supplied-BHP export contract](optimization/vfp-export-contract.md) for deck output.
 
 ### VFP Generation with Constraint Checking
 
 This minimal **serialization example** uses explicitly supplied illustrative BHP data;
 it does not claim these numbers were calculated from the feed above. Replace the data
-with a validated hydraulic study. The current `getVFPPRODString()` writer emits singleton
-zero water/gas-ratio/lift axes, so this example uses only those axes.
+with a validated hydraulic study. This example uses singleton zero composition/lift axes;
+the writer also preserves complete multidimensional grids and rejects infeasible cells.
 
 ```java
 EclipseVFPExporter exporter = new EclipseVFPExporter(1);
 exporter.setDatumDepth(1500.0); // m
 exporter.setFlowRateType("GAS");
+exporter.setWaterCutType("WGR");
+exporter.setGORType("OGR");
 exporter.setUnitSystem("METRIC");
 exporter.setFlowRates(new double[] {10000.0, 20000.0}); // standard m3/day
 exporter.setTHPs(new double[] {30.0, 40.0}); // bara

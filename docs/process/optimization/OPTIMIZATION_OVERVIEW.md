@@ -231,7 +231,7 @@ logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 |----------|-------------|-----|
 | "What's the max flow at P_in=50, P_out=10?" | `ProcessOptimizationEngine` | Designed exactly for this |
 | "Find bottleneck equipment" | `ProcessOptimizationEngine` | Has constraint evaluation built-in |
-| "Generate Eclipse VFP tables" | `ProcessOptimizationEngine` | Has `EclipseVFPExporter` integration |
+| "Format supplied well BHP as VFPPROD" | `EclipseVFPExporter` | Explicit axes/units; see [export contract](vfp-export-contract.md) |
 | "Minimize operating cost" | `ProductionOptimizer` | Custom objective function support |
 | "Optimize pressure AND flow rate together" | `ProductionOptimizer` | Multi-variable support |
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
@@ -985,7 +985,7 @@ for (ScenarioResult scenario : optimizer.optimizeScenarios(scenarios)) {
 | `ProcessModelThroughputOptimizer` | Full-model throughput-to-bottleneck study helper | `findMaximumThroughput()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `InstalledCapacityTableLoader` | Attach fixed equipment limits from CSV | `load()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
-| `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization.md) |
+| `LiftCurveGenerator` | Process pressure requirements; well qualification is separate | `generateTable()` | [Flow Rate Optimization](flow-rate-optimization.md) |
 | `BatchParameterEstimator` | Model calibration | `solve()` | [Data Reconciliation and Steady-State Detection](data-reconciliation.md) |
 | `ProductionOptimizationSpecLoader` | YAML/JSON config loading | `load()` | [YAML Format](#yaml-specification-files) |
 

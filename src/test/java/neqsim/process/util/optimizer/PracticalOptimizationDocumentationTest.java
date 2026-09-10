@@ -35,6 +35,17 @@ class PracticalOptimizationDocumentationTest extends NeqSimTest {
   @TempDir
   Path output;
 
+  private static void assertBhpRow(String deck, int thpIndex, double[] expected) {
+    Matcher row = Pattern.compile("^\\s*" + thpIndex + "\\s+1\\s+1\\s+1\\s+([^/]+?)/\\s*$", Pattern.MULTILINE)
+        .matcher(deck);
+    assertTrue(row.find(), "Missing indexed BHP row " + thpIndex);
+    String[] values = row.group(1).trim().split("\\s+");
+    assertEquals(expected.length, values.length);
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], Double.parseDouble(values[i]), 1e-10);
+    }
+  }
+
   @Test
   void everyJavaBlockCompilesAndRunsAndBranchedProcessConservesMass() throws Exception {
     String document = new String(Files.readAllBytes(Paths.get("docs/process/optimization/PRACTICAL_EXAMPLES.md")),
@@ -77,8 +88,8 @@ class PracticalOptimizationDocumentationTest extends NeqSimTest {
       }
       String vfp = new String(Files.readAllBytes(output.resolve("table.inc")), StandardCharsets.UTF_8);
       assertTrue(vfp.contains("VFPPROD"));
-      assertTrue(vfp.contains("30.00  36.00  48.00"));
-      assertTrue(vfp.contains("74.00  80.00  92.00"));
+      assertBhpRow(vfp, 1, new double[] { 30.0, 36.0, 48.0 });
+      assertBhpRow(vfp, 3, new double[] { 74.0, 80.0, 92.0 });
       assertFalse(vfp.contains("No BHP data"));
 
       ProcessSystem process = (ProcessSystem) loader.loadClass("MultiEquipmentOptimization").getMethod("createProcess")
