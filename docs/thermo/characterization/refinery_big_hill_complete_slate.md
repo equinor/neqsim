@@ -205,3 +205,47 @@ The curve is deliberately discrete and molar-basis. It is not a continuous simul
 curve, a TBP curve, an ASTM D86 or ASTM D1160 result, or a pressure-corrected laboratory
 measurement. With only three heavy pseudo-components it must not be used to infer unreported cut
 tails, detailed product quality, or validated VGO/residue yields.
+
+## Absolute-pressure sensitivity screening
+
+`DoeBigHillVacuumPressureSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while scaling the feed, top, and bottom absolute pressures together.
+Tray count, feed tray, feed and reboiler temperatures, reflux ratio, feed composition, and feed mass
+flow remain fixed. Pressure factors must be finite, positive, unique, strictly increasing, and retain
+the qualified sub-atmospheric pressure topology.
+
+The documented three-point screen uses factors close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] pressureFactors = {0.98, 1.00, 1.02};
+
+DoeBigHillVacuumPressureSensitivity sensitivity =
+    DoeBigHillVacuumPressureSensitivity.run(
+        "Big Hill vacuum pressure screen", 1000.0, baseline, pressureFactors);
+
+for (DoeBigHillVacuumPressureSensitivity.PointResult point : sensitivity.getPoints()) {
+  double factor = point.getPressureScaleFactor();
+  double topPressureBara = point.getOperatingInputs().getTopPressureBara();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The factors scale **absolute pressure**, not vacuum gauge or pressure drop. This keeps the relative
+pressure profile fixed and isolates one numerical operating variable; it does not represent an
+optimized or vendor-recommended pressure profile. The narrow 0.98/1.00/1.02 regression is a
+convergence and conservation test around the documented screening point. It does not establish a
+measured pressure response, require a monotonic yield trend, define an uncertainty distribution,
+validate product quality, or demonstrate equipment turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, equipment design, or plant-agreement evidence.
