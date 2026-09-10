@@ -345,7 +345,7 @@ def test_invalid_requests_fail_closed(client):
     )
 
 
-def test_inventory_remains_a_confirmed_gap(client):
+def test_inventory_is_promoted(client):
     result = payload(client.call_tool("getCapabilities", {}))
     require(result.get("status") == "success", "capabilities request failed", result)
     inventory = result.get("phase0EvidenceInventory", {})
@@ -353,19 +353,32 @@ def test_inventory_remains_a_confirmed_gap(client):
     record = limitations.get("coverageRecords", {}).get(
         "composeMultiServerWorkflow", {}
     )
+    sources = record.get("contractEvidenceSources", [])
     require(
-        inventory.get("inventoryVersion") == "1.34"
-        and limitations.get("contractTestedToolCount") == 34
-        and limitations.get("confirmedGapToolCount") == 17
+        inventory.get("inventoryVersion") == "1.35"
+        and limitations.get("contractTestedToolCount") == 35
+        and limitations.get("confirmedGapToolCount") == 16
         and limitations.get("contractPromotionCandidateCount") == 0,
-        "qualification changed inventory accounting",
+        "composition promotion did not update inventory accounting",
         inventory,
     )
     require(
-        record.get("coverageStatus") == "CONFIRMED_GAP",
-        "open qualification prematurely promoted composition evidence",
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA"
+        and record.get("contractEvidenceCount") == 6
+        and "src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java" in sources
+        and "neqsim-mcp-server/test_composition_protocol.py" in sources
+        and "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md"
+        in sources
+        and "does not establish external server connection"
+        in record.get("evidenceBoundary", "")
+        and "accountable engineering approval"
+        in record.get("evidenceBoundary", ""),
+        "composition contract evidence is incomplete",
         record,
     )
+
 
 
 def main():
@@ -377,7 +390,7 @@ def main():
         ("custom metadata lifecycle", test_custom_metadata_lifecycle),
         ("connection and built-in mutations fail closed", test_connection_and_built_in_mutations_fail_closed),
         ("invalid requests fail closed", test_invalid_requests_fail_closed),
-        ("inventory remains a confirmed gap", test_inventory_remains_a_confirmed_gap),
+        ("inventory promoted", test_inventory_is_promoted),
     ]
     try:
         client.start()

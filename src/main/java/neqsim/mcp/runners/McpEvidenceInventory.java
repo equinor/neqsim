@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.34");
+    inventory.addProperty("inventoryVersion", "1.35");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, and streamSimulation are CONTRACT_TESTED by their merged canonical contract evidence; saveSimulationState and compareSimulationStates are CONTRACT_TESTED by merged canonical snapshot Java and packaged-MCP evidence; inventory 1.34 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow. Inventory 1.35 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records: thirty-four bounded software contracts are contract-tested without numerical benchmark claims; CONFIRMED_GAP marks the remaining missing tool-specific trust evidence.");
+        "All 71 tools have coverage records; 35 are CONTRACT_TESTED and 16 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -529,6 +529,15 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_compose_workflow_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/COMPOSE_WORKFLOW_CONTRACT.md" };
       evidenceBoundary = "Caller-authored ordered steps, curated runner dispatch, additive shared-fluid normalization, step-specific override precedence, per-step result, timing and success accounting, stop-on-first-failure behavior, structured missing, malformed and unknown-runner errors, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish natural-language planning, arbitrary code, tool or network execution, semantic compatibility or unit conversion between steps, transactionality, rollback, persistence, distributed execution, resource or tenant isolation, numerical fidelity, convergence, conservation, uncertainty, optimization quality, facility completeness, external IAM or transport security, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "composeMultiServerWorkflow":
+      benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/CompositionRunner.java",
+          "src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_composition_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md" };
+      evidenceBoundary = "Contract-tested bounded composition metadata and controls; this does not establish external server connection, execution, IAM, scientific validity, control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

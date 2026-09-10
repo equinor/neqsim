@@ -99,8 +99,11 @@ the fixed custom-registry ceiling. The packaged harness repeats the public
 contract over the real STDIO MCP transport and requires standard response
 evidence.
 
-Inventory remains `1.34 / 20 explicit + 34 contract-tested + 17 confirmed
-gaps`. This qualification does not promote
-`composeMultiServerWorkflow`; it remains `CONFIRMED_GAP` until a separate
-post-merge evidence promotion updates the machine-readable inventory and
-authoritative comprehensive protocol accounting atomically.
+Inventory `1.35 / 20 explicit + 35 contract-tested + 16 confirmed
+gaps` promotes `composeMultiServerWorkflow` to `CONTRACT_TESTED` after the
+qualification merged. Machine-readable coverage, Java assertions, the focused
+packaged harness, authoritative comprehensive protocol accounting, and
+documentation move atomically on one exact head. This classification records
+only the bounded software contract above; every engineering, external-server,
+security, persistence, scientific, numerical, plant-authority, certification,
+and accountable-approval exclusion remains in force.
