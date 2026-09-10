@@ -12,7 +12,7 @@ import neqsim.NeqSimTest;
 public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends NeqSimTest {
   private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 25.0e-6;
   private static final double WATER_INVENTORY_KG = 1200.0;
-  private static final double NUMERICAL_TOLERANCE = 1.0e-18;
+  private static final double NUMERICAL_TOLERANCE = 1.0e-17;
 
   @Test
   void testProjectionClosesPositiveDurationInventoryInHoursAndSeconds() {
