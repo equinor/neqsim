@@ -358,7 +358,7 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "Collections.unmodifiableList",
             "getSegmentProjections()",
             "getLowerRateReactedMoles()",
-            "getNominalRateClosureResidualMoles()",
+            "getNominalClosureResidualMoles()",
             "getUpperRateClosureResidualMoles()",
             "finiteSum(",
             "finiteDifference(",
