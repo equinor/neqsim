@@ -561,6 +561,7 @@ disposal.getGoverningContributor();
 ## Related Skills
 
 - [`neqsim-relief-flare-network`](../neqsim-relief-flare-network/SKILL.md) — when LOPA shows PSV is the IPL of last resort
+- [`neqsim-firewater-deluge-design`](../neqsim-firewater-deluge-design/SKILL.md) — sizing and adjudicating the active fire-protection barrier (deluge coverage, nozzle net, monitors, active-vs-passive substitution rules)
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — blocked-in liquid fire rupture, PFP demand, and source-term handoff
 - [`neqsim-self-heating-ignition`](../neqsim-self-heating-ignition/SKILL.md) — spontaneous ignition of combustible liquid absorbed into porous insulation (lagging fires); use for any fire with no identified ignition source
 - [`neqsim-dynamic-simulation`](../neqsim-dynamic-simulation/SKILL.md) — depressurization & blowdown
