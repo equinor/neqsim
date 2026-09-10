@@ -74,6 +74,17 @@ String seismicZone = env.getSeismicZone();
 String location = env.getLocation();
 ```
 
+TORG environmental temperatures are in degrees Celsius. For equipment with an applicable
+design standard, `TorgManager` applies the minimum ambient temperature through
+`MechanicalDesign.setMinOperationTemperature(value, "C")`. Mechanical design stores the value
+in Kelvin: a TORG minimum of -30 °C gives 243.15 K from `getMinOperationTemperature()` or
+`getMinOperationTemperature("K")`, and -30 °C from `getMinOperationTemperature("C")`.
+
+The conversion also applies to `apply(...)`, `loadAndApply(...)`, and the active TORG reapplied
+internally by `FieldDevelopmentDesignOrchestrator.runCompleteDesignWorkflow()`. Repeated
+application preserves the temperature. No manual temperature correction is required after
+application; remove any earlier workaround that repeated the unit-aware setter call.
+
 #### SafetyFactors
 
 ```java
@@ -336,6 +347,7 @@ When a TORG is applied to equipment, the following are configured:
 | Setting | Source | Applied To |
 |---------|--------|------------|
 | Design standards | `torg.getStandard(category)` | `mechDesign.setDesignStandard()` |
+| Minimum ambient temperature (°C) | `environmentalConditions.getMinAmbientTemperature()` | `mechDesign.setMinOperationTemperature(value, "C")`, stored in Kelvin |
 | Pressure safety factor | `safetyFactors.getPressureSafetyFactor()` | `mechDesign.setPressureMarginFactor()` |
 | Temperature margin | `safetyFactors.getTemperatureSafetyMargin()` | Design temperature calculation |
 | Corrosion allowance | `safetyFactors.getCorrosionAllowance()` | `mechDesign.setCorrosionAllowance()` |

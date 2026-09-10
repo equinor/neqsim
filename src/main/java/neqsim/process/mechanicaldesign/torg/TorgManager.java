@@ -174,6 +174,11 @@ public class TorgManager {
   /**
    * Apply a TORG to a single equipment item.
    *
+   * <p>
+   * For equipment with applicable standards, the minimum ambient temperature is converted from the TORG's Celsius value
+   * to the Kelvin minimum operating temperature stored by the mechanical design.
+   * </p>
+   *
    * @param torg the TORG to apply
    * @param equipment the equipment to configure
    */
@@ -211,7 +216,7 @@ public class TorgManager {
     // Apply environmental conditions if available
     TechnicalRequirementsDocument.EnvironmentalConditions env = torg.getEnvironmentalConditions();
     if (env != null) {
-      design.setMinOperationTemperature(env.getMinAmbientTemperature());
+      design.setMinOperationTemperature(env.getMinAmbientTemperature(), "C");
     }
 
     // Apply safety factors if available
