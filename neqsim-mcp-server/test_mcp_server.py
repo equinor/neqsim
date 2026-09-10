@@ -1453,7 +1453,8 @@ def test_capabilities():
     check("capabilities status=success", r.get("status") == "success", r.get("message", ""))
     check("capabilities has engine", r.get("engine") == "NeqSim")
     check("capabilities has thermo models", "thermodynamicModels" in r)
-    check("capabilities has equipment", "processEquipment" in r,\n          str(r.get("truncation", {})))
+    check("capabilities has equipment", "processEquipment" in r,
+          str(r.get("truncation", {})))
     coverage = r.get("toolCatalogCoverage", {})
     check("capability descriptors cover every published tool",
           coverage.get("complete") is True,
