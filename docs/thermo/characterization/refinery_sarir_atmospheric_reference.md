@@ -305,6 +305,43 @@ comparators: no calculated-versus-plant error is used as a solver control, tunin
 threshold. Java callers use the same evaluator directly; Python callers access the factory,
 `getColumn().run(...)`, and evaluator through the existing JPype bridge.
 
+## Shared discrete product boiling-range diagnostics
+
+Material products returned by `SarirAtmosphericFractionationResult` expose the same immutable
+`ProductBoilingPointDistribution` used by the qualified Big Hill vacuum result. This shared
+implementation avoids separate atmospheric and vacuum quantile algorithms. It derives an ascending
+normal-boiling-point support from positive-composition pseudo-components, normalizes their
+cumulative product mole fractions to one, and reports the mole-weighted mean normal boiling point.
+
+Java and Python/JPype callers can inspect a material row as follows:
+
+```java
+SarirAtmosphericFractionationResult.ProductResult diesel =
+    result.getProduct("Diesel");
+boolean distributionAvailable = diesel.hasBoilingPointDistribution();
+double dieselT10Kelvin = diesel.getNormalBoilingPointQuantileKelvin(0.10);
+double dieselT50Celsius = diesel.getNormalBoilingPointQuantileCelsius(0.50);
+double dieselT90Kelvin = diesel.getNormalBoilingPointQuantileKelvin(0.90);
+double[] supportKelvin = diesel.getBoilingPointTemperaturesKelvin();
+double[] cumulativeMoleFractions = diesel.getCumulativeMoleFractions();
+```
+
+The support and cumulative arrays are defensive copies. Requests fail closed unless the cumulative
+mole fraction is finite and in `(0, 1]`. A source-table row whose calculated stream is below the
+qualified material-flow threshold reports `hasBoilingPointDistribution() == false`; attempting to
+read its distribution or quantiles fails closed instead of presenting an undefined curve.
+
+The focused 34-tray integration requires finite positive support temperatures, strictly increasing
+normalized cumulative fractions, exact cumulative closure to one, and T10 <= T50 <= T90 for every
+material product. Existing convergence, conservation, product-ordering, and read-only plant-rate
+comparisons remain unchanged.
+
+These values are discrete cumulative-mole pseudo-component diagnostics. They are not continuous
+simulated-distillation or TBP curves, ASTM D86/D1160 temperatures, pressure-corrected laboratory
+measurements, specification-compliance results, or evidence that NeqSim reproduces the Sarir plant
+yields. The cut density and molar-mass profiles and unreported column controls remain explicit
+engineering inputs.
+
 ## Scientific boundary
 
 The source-derived volumes, boiling boundaries, and product-specification rows are reproducible,
