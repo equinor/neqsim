@@ -13,6 +13,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 /**
@@ -104,7 +105,7 @@ public final class CompositionRunner {
             "Use: listServers, registerServer, removeServer, listWorkflows, "
                 + "getWorkflow, planComposition, describeCapabilities");
       }
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | JsonParseException e) {
       return errorJson("INVALID_INPUT", "Invalid composition request",
           "Use bounded strings and arrays of strings with the documented fields");
     } catch (Exception e) {
