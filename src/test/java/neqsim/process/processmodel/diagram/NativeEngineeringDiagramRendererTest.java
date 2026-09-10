@@ -39,6 +39,148 @@ import org.junit.jupiter.api.Test;
 
 class NativeEngineeringDiagramRendererTest {
   @Test
+  void fixedPortPdfKeepsTheDeclaredPaperFontSize() {
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(fixedPortRoutingGraph(),
+        "PFD-FONT-SCALE", "Paper font size", ContentProfile.PFD);
+    NativeEngineeringDiagramRenderer.Result fixed = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String pdf = new String(fixed.getPdf(), StandardCharsets.ISO_8859_1);
+    // 4.2 mm title font converted to PDF points, without the old implicit 22% reduction.
+    assertTrue(pdf.contains("/F1 11.9055 Tf"));
+    assertFalse(pdf.contains("/F1 9.2863 Tf"));
+  }
+
+  @Test
+  void honorsDeclaredVerticalAndReversePortSidesAndRejectsInvalidValues() {
+    EngineeringGraph graph = fixedPortRoutingGraph();
+    graph.getNode("nozzle:a-out-1").putProperty("diagramPortSide", "NORTH");
+    graph.getNode("nozzle:b-in-1").putProperty("diagramPortSide", "SOUTH");
+    graph.getNode("nozzle:a-out-2").putProperty("diagramPortSide", "WEST");
+    graph.getNode("nozzle:b-in-2").putProperty("diagramPortSide", "EAST");
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", "plant", 300.0, 180.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", "plant", 100.0, 80.0));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PORT-SIDES",
+        "Declared nozzle sides", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+    String[] vertical = pointsForSemanticId(svg, "connection:parallel-1").split(" ");
+    assertEquals("300,172", vertical[0]);
+    assertTrue(pointY(vertical[1]) < pointY(vertical[0]));
+    assertEquals("100,88", vertical[vertical.length - 1]);
+    assertTrue(pointY(vertical[vertical.length - 2]) > pointY(vertical[vertical.length - 1]));
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION"));
+    String[] reverse = pointsForSemanticId(svg, "connection:parallel-2").split(" ");
+    assertEquals(283.0, parseCoordinate(reverse[0].split(",")[0], "west-envelope x for connection:parallel-2"), 0.0001);
+    assertTrue(Math.abs(pointY(reverse[0]) - 180.0) < 8.0, "nozzle must remain on the west envelope");
+    assertTrue(parseCoordinate(reverse[1].split(",")[0], "first routed x for connection:parallel-2") < 283.0);
+    graph.getNode("nozzle:a-out-1").putProperty("diagramPortSide", "UNKNOWN");
+    EngineeringDiagramDocumentSet invalid = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PORT-SIDES",
+        "Declared nozzle sides", ContentProfile.PFD);
+    NativeEngineeringDiagramRenderer.Result rejected = new NativeEngineeringDiagramRenderer(invalid,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    assertFalse(rejected.isComplete());
+    assertTrue(hasDiagnostic(rejected, "DIAGRAM_RENDER_INVALID_PORT_SIDE"));
+  }
+
+  @Test
+  void ordersSvgAndPdfByControlledSheetNumberIncludingMultiDigitNumbers() {
+    EngineeringGraph graph = fixedPortRoutingGraph();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withSheet(new SheetDefinition("z-detail", "2", "Second controlled sheet", "fixture", EvidenceState.REVIEWED,
+            "reviewer", "2026-09-10T00:00:00Z", "A"))
+        .withSheet(new SheetDefinition("a-detail", "10", "Tenth controlled sheet", "fixture", EvidenceState.REVIEWED,
+            "reviewer", "2026-09-10T00:00:00Z", "A"))
+        .withAssignment(new SheetAssignment("equipment:a", "z-detail", "fixture", EvidenceState.REVIEWED, "reviewer",
+            "2026-09-10T00:00:00Z", "A"))
+        .withAssignment(new SheetAssignment("equipment:b", "a-detail", "fixture", EvidenceState.REVIEWED, "reviewer",
+            "2026-09-10T00:00:00Z", "A"));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-ORDER",
+        "Controlled order", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents).render();
+    Map<String, String> numberById = new TreeMap<String, String>();
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      numberById.put(sheet.getId(), sheet.getNumber());
+    }
+    List<String> numbers = new ArrayList<String>();
+    for (String id : result.getSvgBySheetId().keySet()) {
+      numbers.add(numberById.get(id));
+    }
+    assertEquals(Arrays.asList("1", "2", "10"), numbers);
+    String pdf = new String(result.getPdf(), StandardCharsets.ISO_8859_1);
+    assertTrue(pdf.indexOf("Second controlled sheet") < pdf.indexOf("Tenth controlled sheet"));
+  }
+
+  @Test
+  void emitsEachCrossSheetConnectionExactlyOncePerSheet() {
+    EngineeringDiagramDocumentSet documents = ProcessDiagramDocumentSetAdapter.fromProcessModel(
+        EngineeringDiagramReferenceFixtures.multiAreaFacility().getProcessModel(), "DEXPI-REF-MULTI-AREA", "A",
+        "PFD-UNIQUE", "Unique continuation routes", ContentProfile.PFD);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    for (Sheet sheet : documents.getDrawings().get(0).getSheets()) {
+      assertEquals(new java.util.HashSet<String>(sheet.getObjectNodeIds()).size(), sheet.getObjectNodeIds().size());
+      for (EngineeringDiagramDocumentSet.OffPageConnector connector : sheet.getOffPageConnectors()) {
+        String svg = result.getSvgBySheetId().get(sheet.getId());
+        long count = Arrays.stream(svg.split("\n")).filter(line -> line.contains("<polyline")
+            && line.contains("data-semantic-id=\"" + connector.getSemanticConnectionId() + "\"")).count();
+        assertEquals(1L, count, connector.getSemanticConnectionId());
+      }
+    }
+  }
+
+  @Test
+  void reverseRoutesLeaveAndApproachFixedNozzlesOutsideBothEndpointEnvelopes() {
+    EngineeringGraph graph = fixedPortRoutingGraph();
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-REVERSE",
+        "Reverse nozzle attachments", ContentProfile.PFD);
+    String key = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", key, 300.0, 100.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", key, 100.0, 100.0));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-REVERSE",
+        "Reverse nozzle attachments", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    String svg = result.getSvgBySheetId().values().iterator().next();
+    for (String id : Arrays.asList("connection:parallel-1", "connection:parallel-2", "connection:recycle")) {
+      String[] points = pointsForSemanticId(svg, id).split(" ");
+      double firstX = parseCoordinate(points[0].split(",")[0], "first x for " + id + " in '" + points[0] + "'");
+      double secondX = parseCoordinate(points[1].split(",")[0], "second x for " + id + " in '" + points[1] + "'");
+      double lastX = parseCoordinate(points[points.length - 1].split(",")[0],
+          "last x for " + id + " in '" + points[points.length - 1] + "'");
+      double previousX = parseCoordinate(points[points.length - 2].split(",")[0],
+          "previous x for " + id + " in '" + points[points.length - 2] + "'");
+      assertTrue(secondX > firstX, "outlet must first exit east: " + id);
+      assertTrue(previousX < lastX, "inlet must be approached from west: " + id);
+    }
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION"));
+    assertFalse(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_OUTSIDE_SHEET"));
+  }
+
+  @Test
+  void retainsAndDiagnosesProtectedEndpointTraversal() {
+    EngineeringGraph graph = fixedPortRoutingGraph();
+    EngineeringDiagramDocumentSet baseline = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PROTECTED-ENDPOINT",
+        "Protected endpoint traversal", ContentProfile.PFD);
+    String key = baseline.getDrawings().get(0).getSheets().get(0).getKey();
+    EngineeringDiagramLayoutRegister layout = new EngineeringDiagramLayoutRegister()
+        .withPinnedPosition(reviewedPosition("equipment:a", key, 300.0, 100.0))
+        .withPinnedPosition(reviewedPosition("equipment:b", key, 100.0, 100.0))
+        .withProtectedRoute(new ProtectedRoute("connection:parallel-1", key,
+            Arrays.asList(new Waypoint(317.0, 100.0), new Waypoint(83.0, 100.0)), CoordinateUnit.MILLIMETRE,
+            "reviewed-route-fixture", EvidenceState.REVIEWED, "reviewer", "2026-09-10T00:00:00Z", "A"));
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(graph, "PFD-PROTECTED-ENDPOINT",
+        "Protected endpoint traversal", ContentProfile.PFD, new EngineeringDiagramDesignationRegister(), layout);
+    NativeEngineeringDiagramRenderer.Result result = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    assertEquals("317,100 83,100",
+        pointsForSemanticId(result.getSvgBySheetId().values().iterator().next(), "connection:parallel-1"));
+    assertTrue(hasDiagnostic(result, "DIAGRAM_RENDER_ROUTE_ENDPOINT_INTERSECTION"));
+  }
+
+  @Test
   void rendersDeterministicNativeSvgAndPdfWithoutChangingClassicOutputs() {
     EngineeringDiagramReferenceFixtures.SystemCase reference = EngineeringDiagramReferenceFixtures.simpleTrain();
     ProcessSystem process = reference.getProcessSystem();

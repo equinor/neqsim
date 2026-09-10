@@ -22,6 +22,8 @@ import neqsim.process.engineering.model.EngineeringDiagramBalanceTable.EvidenceS
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDesignationRegister;
 import neqsim.process.engineering.model.EngineeringDiagramDocumentSet.ContentProfile;
+import neqsim.process.engineering.model.EngineeringDiagramDocumentSet;
+import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringDiagramLayoutRegister;
 import neqsim.process.engineering.model.EngineeringDiagramStreamTable;
 import neqsim.process.engineering.model.EngineeringDiagramStreamTable.Row;
@@ -132,6 +134,8 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final EngineeringDiagramLayoutRegister layoutRegister;
     private final EngineeringDiagramConventionRegister conventionRegister;
     private final boolean includePidEngineeringRegisters;
+    private final Map<String, String> blockFlowSections;
+    private final EngineeringDiagramLayoutRegister blockFlowLayout;
 
     private Request(Builder builder) {
       plantId = requireText(builder.plantId, "plantId");
@@ -147,6 +151,9 @@ public final class EngineeringDiagramDualProfileDelivery {
       layoutRegister = requireNonNull(builder.layoutRegister, "layoutRegister");
       conventionRegister = requireNonNull(builder.conventionRegister, "conventionRegister");
       includePidEngineeringRegisters = builder.includePidEngineeringRegisters;
+      blockFlowSections = builder.blockFlowSections == null ? null
+          : Collections.unmodifiableMap(new LinkedHashMap<String, String>(builder.blockFlowSections));
+      blockFlowLayout = builder.blockFlowLayout;
       if (pfdDrawingNumber.equals(pidDrawingNumber)) {
         throw new IllegalArgumentException("PFD and P&ID drawing numbers must be distinct");
       }
@@ -180,6 +187,8 @@ public final class EngineeringDiagramDualProfileDelivery {
       private final String pfdDrawingNumber;
       private final String pidDrawingNumber;
       private final String title;
+      private Map<String, String> blockFlowSections;
+      private EngineeringDiagramLayoutRegister blockFlowLayout;
       private String operatingCaseId;
       private List<BalanceBoundary> balanceBoundaries = Collections.emptyList();
       private NativeEngineeringDiagramRenderer.SheetFormat sheetFormat = NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE;
@@ -253,6 +262,19 @@ public final class EngineeringDiagramDualProfileDelivery {
         return this;
       }
 
+      /**
+       * Adds a separate material-connected BFD overview with a canonical-connection mapping.
+       *
+       * @param sections canonical owner identity to declared section name
+       * @param layout proposed or reviewed layout for the aggregate graph (sheet key {@code plant})
+       * @return this builder
+       */
+      public Builder blockFlowOverview(Map<String, String> sections, EngineeringDiagramLayoutRegister layout) {
+        blockFlowSections = new LinkedHashMap<String, String>(requireNonNull(sections, "sections"));
+        blockFlowLayout = requireNonNull(layout, "layout");
+        return this;
+      }
+
       /** @return validated immutable request */
       public Request build() {
         return new Request(this);
@@ -274,11 +296,12 @@ public final class EngineeringDiagramDualProfileDelivery {
     private final String pidDesignModelFingerprint;
     private final String pidCompletenessFingerprint;
     private final String fingerprint;
+    private final BlockOverview blockOverview;
 
     private Report(Path directory, EngineeringDiagramDelivery.Report pfd, EngineeringDiagramDelivery.Report pid,
         Request request, EngineeringDiagramStreamTable streamTable, EngineeringDiagramBalanceTable balanceTable,
         Dexpi20ConformanceAssessment.Report pidPlantAssessment, EngineeringDiagramPidRegisters pidEngineeringRegisters,
-        String pidDesignModelJson, String pidCompletenessJson) {
+        String pidDesignModelJson, String pidCompletenessJson, BlockOverview blockOverview) {
       this.directory = directory;
       this.pfd = pfd;
       this.pid = pid;
@@ -288,6 +311,7 @@ public final class EngineeringDiagramDualProfileDelivery {
       this.balanceTable = balanceTable;
       this.pidPlantAssessment = pidPlantAssessment;
       this.pidEngineeringRegisters = pidEngineeringRegisters;
+      this.blockOverview = blockOverview;
       pidDesignModelFingerprint = sha256(pidDesignModelJson);
       pidCompletenessFingerprint = sha256(pidCompletenessJson);
       fingerprint = sha256(new GsonBuilder().create().toJson(toMapWithoutFingerprint()));
@@ -313,6 +337,16 @@ public final class EngineeringDiagramDualProfileDelivery {
       return pidEngineeringRegisters;
     }
 
+    /** @return optional material-block projection with full canonical connection provenance */
+    public EngineeringBlockFlowProjection getBlockFlowProjection() {
+      return blockOverview == null ? null : blockOverview.projection;
+    }
+
+    /** @return optional BFD SVG/PDF rendering and diagnostics */
+    public NativeEngineeringDiagramRenderer.Result getBlockFlowRendering() {
+      return blockOverview == null ? null : blockOverview.rendering;
+    }
+
     /** @return deterministic manifest fingerprint */
     public String getFingerprint() {
       return fingerprint;
@@ -324,6 +358,7 @@ public final class EngineeringDiagramDualProfileDelivery {
           : streamTable != null && streamTable.isValid() && balanceTable != null && balanceTable.isValid()
               && streamTable.getSourceGraphFingerprint().equals(pfd.getDocumentSet().getSourceGraphFingerprint());
       return pfd.isComplete() && pid.isComplete() && pidPlantAssessment != null
+          && (blockOverview == null || blockOverview.rendering.isComplete())
           && pidPlantAssessment.isSchemaAndProfileConformant() && companionEvidenceComplete
           && (pidEngineeringRegisters == null || pidEngineeringRegisters.getSourceGraphFingerprint()
               .equals(pid.getDocumentSet().getSourceGraphFingerprint()))
@@ -362,6 +397,31 @@ public final class EngineeringDiagramDualProfileDelivery {
       result.put("pidNativeDexpiAssessmentFile", PID_DEXPI_PLANT_ASSESSMENT_FILE);
       result.put("pidProteusFile", PID_PROTEUS_FILE);
       result.put("pidNativeDexpiAssessment", pidPlantAssessment.toMap());
+      if (blockOverview != null) {
+        Map<String, Object> overview = new LinkedHashMap<String, Object>();
+        overview.put("projectionFile", "bfd/material-block-graph.json");
+        overview.put("projectionFingerprint", sha256(blockOverview.projection.toJson()));
+        overview.put("documentFile", "bfd/document-set.json");
+        overview.put("svgFile", "bfd/overview.svg");
+        overview.put("pdfFile", "bfd/overview.pdf");
+        overview.put("svgSha256", sha256(blockOverview.rendering.getSvgBySheetId().values().iterator().next()));
+        overview.put("pdfSha256", sha256(blockOverview.rendering.getPdf()));
+        overview.put("visualFingerprints", blockOverview.rendering.getVisualFingerprintsBySheetId());
+        List<Map<String, Object>> checks = new ArrayList<Map<String, Object>>();
+        for (NativeEngineeringDiagramRenderer.Diagnostic diagnostic : blockOverview.rendering.getDiagnostics()) {
+          Map<String, Object> check = new LinkedHashMap<String, Object>();
+          check.put("code", diagnostic.getCode());
+          check.put("severity", diagnostic.getSeverity().name());
+          check.put("subjectId", diagnostic.getSubjectId());
+          check.put("message", diagnostic.getMessage());
+          checks.add(check);
+        }
+        overview.put("rendererDiagnostics", checks);
+        overview.put("rendererCheckScope", blockOverview.rendering.getPerformedChecks());
+        overview.put("sourceGraphFingerprint", pfd.getDocumentSet().getSourceGraphFingerprint());
+        overview.put("qualificationStatus", "REVIEW_REQUIRED");
+        result.put("blockFlowOverview", overview);
+      }
       if (pidEngineeringRegisters != null) {
         result.put("pidDesignModelFile", PID_DESIGN_MODEL_FILE);
         result.put("pidDesignModelFingerprint", pidDesignModelFingerprint);
@@ -409,6 +469,8 @@ public final class EngineeringDiagramDualProfileDelivery {
     try {
       EngineeringDiagramDelivery.Report pfd = EngineeringDiagramDelivery.deliver(processSystem, target.resolve("pfd"),
           deliveryRequest(request, ContentProfile.PFD, request.pfdDrawingNumber, null));
+      BlockOverview blockOverview = request.blockFlowSections == null ? null
+          : deliverBlockOverview(processSystem, request, pfd, target.resolve("bfd"));
       EngineeringDiagramPidRegisters pidRegisters = null;
       String pidModelJson = "";
       String pidCompletenessJson = "";
@@ -461,7 +523,7 @@ public final class EngineeringDiagramDualProfileDelivery {
         Files.write(target.resolve(PID_REGISTERS_FILE), pidRegisters.toJson().getBytes(StandardCharsets.UTF_8));
       }
       Report report = new Report(target, pfd, pid, request, streamTable, balanceTable, pidPlantAssessment, pidRegisters,
-          pidModelJson, pidCompletenessJson);
+          pidModelJson, pidCompletenessJson, blockOverview);
       if (!report.isComplete()) {
         throw new IOException("PFD and P&ID deliveries do not retain one complete canonical plant");
       }
@@ -473,6 +535,47 @@ public final class EngineeringDiagramDualProfileDelivery {
     } catch (RuntimeException ex) {
       deleteRecursively(target);
       throw ex;
+    }
+  }
+
+  private static BlockOverview deliverBlockOverview(ProcessSystem process, Request request,
+      EngineeringDiagramDelivery.Report pfd, Path directory) throws IOException {
+    EngineeringGraph graph = (request.operatingCaseId.isEmpty()
+        ? ProcessDiagramGraphAdapter.fromProcessSystem(process, request.plantId, request.revision)
+        : ProcessDiagramGraphAdapter.fromProcessSystem(process, request.plantId, request.revision,
+            request.operatingCaseId))
+        .getGraph();
+    if (!pfd.getDocumentSet().getSourceGraphFingerprint().equals(graph.toMap().get("fingerprint"))) {
+      throw new IOException("Block overview source graph differs from the PFD canonical plant");
+    }
+    EngineeringBlockFlowProjection projection = EngineeringBlockFlowProjection.fromGraph(graph,
+        request.blockFlowSections);
+    EngineeringDiagramDocumentSet documents = EngineeringDiagramDocumentSet.fromGraph(projection.toGraph(),
+        request.pfdDrawingNumber + "-BFD", "Connected material-block overview", ContentProfile.BFD,
+        new EngineeringDiagramDesignationRegister(), request.blockFlowLayout);
+    NativeEngineeringDiagramRenderer.Result rendering = new NativeEngineeringDiagramRenderer(documents,
+        NativeEngineeringDiagramRenderer.SheetFormat.A3_LANDSCAPE,
+        NativeEngineeringDiagramRenderer.RoutingMode.FIXED_PORT_ORTHOGONAL).render();
+    if (!rendering.isComplete() || rendering.getSvgBySheetId().size() != 1) {
+      throw new IOException("Block overview must contain one complete controlled sheet");
+    }
+    Files.createDirectories(directory);
+    Files.write(directory.resolve("material-block-graph.json"), projection.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(directory.resolve("document-set.json"), documents.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(directory.resolve("overview.svg"),
+        rendering.getSvgBySheetId().values().iterator().next().getBytes(StandardCharsets.UTF_8));
+    Files.write(directory.resolve("overview.pdf"), rendering.getPdf());
+    return new BlockOverview(projection, rendering);
+  }
+
+  private static final class BlockOverview {
+    private final EngineeringBlockFlowProjection projection;
+    private final NativeEngineeringDiagramRenderer.Result rendering;
+
+    private BlockOverview(EngineeringBlockFlowProjection projection,
+        NativeEngineeringDiagramRenderer.Result rendering) {
+      this.projection = projection;
+      this.rendering = rendering;
     }
   }
 
@@ -576,8 +679,12 @@ public final class EngineeringDiagramDualProfileDelivery {
   }
 
   private static String sha256(String value) {
+    return sha256(value.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static String sha256(byte[] value) {
     try {
-      byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
+      byte[] digest = MessageDigest.getInstance("SHA-256").digest(value);
       StringBuilder result = new StringBuilder();
       for (byte item : digest) {
         result.append(String.format("%02x", item & 0xff));

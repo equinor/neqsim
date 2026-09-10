@@ -61,6 +61,13 @@ unit-explicit operating-case snapshot in the controlled document and assessed DE
 designation, layout, and symbol-convention registers can be supplied through the request builder;
 their existing evidence and review rules remain authoritative.
 
+The manifest's `renderedSheetOrder` contains each actual sheet number, title, identity and `svgFile`
+path in PDF page order. Use this list for preview captions and navigation instead of alphabetically
+sorting filenames or inventing sheet numbers by enumeration. Numeric controlled numbers sort
+numerically (2 precedes 10); numeric sheets precede alphanumeric numbers, which sort lexically.
+`visualAcceptanceStatus` remains `REVIEW_REQUIRED`, independently of delivery completeness.
+`rendererCheckScope` identifies the implemented geometric checks and their estimated-text basis.
+
 The destination directory must not exist. The facade writes to a sibling staging directory, runs
 the controlled-document, native-rendering, and bounded DEXPI gates, and publishes the complete
 directory only when every gate passes. It never replaces an existing delivery. Artifact paths in

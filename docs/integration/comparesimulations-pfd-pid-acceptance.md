@@ -12,6 +12,12 @@ This reference tracks the coordinated visual-acceptance milestone in
 
 ## Source fidelity
 
+Issue [#3619](https://github.com/equinor/neqsim/issues/3619) corrects the earlier acceptance interpretation:
+deterministic output and zero findings from the old route-only diagnostics did not establish visual
+acceptance. The original outputs contained duplicate continuations, endpoint-envelope traversal,
+misordered pages and collisions in the P&ID proposal layer. The core correction below is the first
+dependency in the issue's delivery sequence; the issue remains open for the later qualification gates.
+
 The inspected notebook is blob `68f13ad17dce03ee343e2f711437d57cdcb58f19`.
 Cell `b46addc3` defines reusable `getprocess()`; cell `63e9cf5b` contains a
 detailed reference illustration. Cell `78f9c5ff` is a retained historical
@@ -29,6 +35,20 @@ illustration.
 `EngineeringDiagramDualProfileDelivery` publishes `pfd/` and `pid/`
 sub-deliveries from the same `ProcessSystem`. It fails when either delivery is
 incomplete or the canonical source-graph fingerprints differ.
+
+The full-model reference now also opts into `Request.Builder.blockFlowOverview(sections, layout)`.
+This creates a separate A3 `bfd/overview.svg` and `bfd/overview.pdf`, plus `bfd/document-set.json` and
+`bfd/material-block-graph.json`. The bundle manifest includes their paths, visual evidence and SVG/PDF
+hashes. `Report.getBlockFlowProjection()` and `getBlockFlowRendering()` expose the mapping and rendering.
+The ordinary dual-profile API remains opt-in and returns null for those getters when no BFD is requested.
+
+The seven explicitly declared blocks are feed, separation, recompression, cold process, oil export,
+fuel gas and gas export. Their directed connections come only from the canonical material graph.
+The three product paths remain separate; no gas-export-to-oil-export connection is synthesized.
+Inter-section connections, including condensate returns, retain their complete `sourceConnectionIds`.
+Internal connections remain in each block's `internalConnectionIds`. A full-model test verifies that
+these lists form an exact partition of the canonical material connections. Numerical recycle utilities
+are aggregated with their sections and are not promoted to physical equipment.
 
 Each sub-delivery contains controlled document JSON, native SVG sheet(s), a
 native PDF drawing set, native DEXPI 2.0 Process XML, and a delivery manifest.
@@ -106,7 +126,7 @@ the completeness report retains engineering errors and review gaps.
 | P&ID exchange identity | Companion-only child label plus separate native DEXPI 2.0 Plant and Proteus 4.1 proposal artifacts | Plant assessment, profile labels, artifact and deterministic-regeneration assertions | Qualify the full-model proposal and external interoperability |
 | Stream and H&MB companions | Opt-in governed stream/balance artifacts with exact boundary resolution | Valid, missing-case, unknown-boundary, and repeated-delivery tests | Publish and qualify full-model operating values and boundary assignments |
 | Piping and instrumentation content | Opt-in source-linked proposal registers, sidecars, and per-element P&ID-only SVG/PDF callouts with distributed equipment-boundary attachment points | Register fidelity, immutability, signal classification, full-tag/semantic-ID and distinct attachment-point coverage, unique signal-path, profile-difference, and regeneration tests | Supply governed inputs and materialize reviewed per-element exchange content |
-| Manual layout and routing | Three persistent proposed A1 sheets, serpentine process-order pins, fixed ports, protected-route precedence, deterministic obstacle-aware orthogonal routes, and reciprocal continuations | Layout, obstacle-bypass renderer regression, full-model topology, and repeated-delivery tests | Accountable route refinement and reviewed visual baselines |
+| Manual layout and routing | Three persistent proposed A1 sheets, left-to-right rows, explicit stream-terminal assignments, nozzle-exit constraints, protected-route precedence, shared-track penalties, and unique reciprocal continuations | Reverse/vertical port, endpoint-interior, border, duplicate-emission, page-order and full-model regressions | Accountable route refinement, crossing/junction conventions and reviewed visual baselines |
 | Standards alignment | Explicit scope and no-conformance boundary | Manifest flags and documentation checks | Licensed clause mapping and accountable review |
 
 ## Engineering and qualification boundary
@@ -146,11 +166,15 @@ The retained layout register proposes three A1 landscape detail sheets: three-st
 separation/oil export, flash-gas recompression/dew point, and fuel split/gas
 export compression. Major model objects have persistent proposed sheet
 assignments and paper-millimetre pins. Sheet 1 indexes those three regions with
-their canonical equipment membership while leaving process connectivity to the
-semantic routes and reciprocal continuations above the index. Fixed-port
+their canonical equipment membership; feed, products and numerical-recycle stream terminals are
+assigned to the appropriate detail sheets. The separate A3 BFD provides plant-wide material connectivity.
+The SVG map, PDF pages and each child manifest's `renderedSheetOrder` use actual controlled sheet numbers.
+Consumers must use that list's number/title/path for captions instead of sorted filenames. Fixed-port
 orthogonal routing remains active for unprotected connections and chooses
-deterministic bypass channels before accepting a route through an unrelated
-symbol. Protected manual routes remain authoritative. Full line identities are
+deterministic bypass channels while assessing all symbol envelopes, including endpoint interiors.
+It penalizes shared route tracks and border excursions. Explicit `diagramPortSide` declarations support
+north/east/south/west attachments; ordinary undeclared process ports retain east outlets and west inlets.
+Protected manual routes remain authoritative and any endpoint traversal is reported. Full line identities are
 retained in fixed terminal symbols, with adaptive text no smaller than 2.2 mm.
 These records are reproducible teaching layout evidence, not checked project
 layout or engineering approval.
@@ -165,3 +189,21 @@ labels, markers, and signals. Project metadata, completed and reviewed
 line/nozzle/valve/reducer/instrument/control registers, reviewed exchange
 projection, and accountable discipline review remain
 mandatory before visual acceptance.
+
+## Remaining #3619 qualification work
+
+The completed-scene diagnostics now include estimated text bounds, proposal-marker and signal
+intersections, connectors, borders and repeated routes. They expose previously unreported defects in
+the existing P&ID callout layer. `isComplete()` still means delivery completeness; it does not accept
+those drawings. The manifest separately records `visualAcceptanceStatus: REVIEW_REQUIRED` and the
+checks actually performed. Font widths are estimated and are not measured glyph bounds.
+
+The next gated work is the reviewed family/subtype/orientation symbol catalogue and proportional
+equipment envelopes; declared physical line/nozzle/control attachments and a separate unbound-proposal
+register; printed stream IDs with readable operating tables; comprehensive crossing/junction and
+text-layout qualification; per-element exchange coverage/projection and independent DEXPI/Proteus
+round-trip evidence; and clean execution and visual inspection of the coordinated Colab draft. The
+native Plant and Proteus writers still do not receive the synthesized overlay registers or native scene.
+No displayed-overlay exchange-fidelity claim is made. `DexpiShapeCatalog` already contains family and
+instrument-location geometry and should be reconciled with the native scene before adding another
+symbol catalogue; this correction does not copy or certify its standard references.

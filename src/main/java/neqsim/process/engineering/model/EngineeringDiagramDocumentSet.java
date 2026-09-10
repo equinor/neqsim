@@ -1022,7 +1022,11 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
             "Manual sheet assignment targets an object omitted by the selected content profile", node.getId()));
         continue;
       }
-      if (isConnection(node.getKind())) {
+      // A source Stream is represented by a LINE owner with its own ports, not by connection geometry.
+      boolean streamOwner = node.getKind() == EngineeringNode.Kind.LINE
+          && !node.getProperties().containsKey("sourceEndpointId")
+          && !node.getProperties().containsKey("targetEndpointId");
+      if (isConnection(node.getKind()) && !streamOwner) {
         diagnostics.add(new Diagnostic(Severity.ERROR, "DIAGRAM_DOCUMENT_LAYOUT_CONNECTION_ASSIGNMENT_DERIVED",
             "Connection sheet projection is derived from its endpoint assignments; use protected routes for each view",
             node.getId()));
@@ -1090,8 +1094,6 @@ public final class EngineeringDiagramDocumentSet implements Serializable {
       String pairId = "offpage-pair:" + key;
       String sourceId = "offpage:" + key + ":source";
       String targetId = "offpage:" + key + ":target";
-      sourceSheet.objectNodeIds.add(node.getId());
-      targetSheet.objectNodeIds.add(node.getId());
       sourceSheet.connectors.add(new OffPageConnector(sourceId, pairId, node.getId(), ConnectorRole.SOURCE,
           sourceSheet.id, targetSheet.id, targetId, "AUTO"));
       targetSheet.connectors.add(new OffPageConnector(targetId, pairId, node.getId(), ConnectorRole.TARGET,
