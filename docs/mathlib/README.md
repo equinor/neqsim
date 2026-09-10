@@ -184,8 +184,16 @@ with EJML:
 ```java
 import org.ejml.simple.SimpleMatrix;
 
-SimpleMatrix matrix = new SimpleMatrix(new double[][] {{1.0, 2.0}, {3.0, 4.0}});
-SimpleMatrix rhs = new SimpleMatrix(new double[][] {{1.0}, {2.0}});
+double[][] matrixData = {
+    {1.0, 2.0},
+    {3.0, 4.0}
+};
+double[][] rhsData = {
+    {1.0},
+    {2.0}
+};
+SimpleMatrix matrix = new SimpleMatrix(matrixData);
+SimpleMatrix rhs = new SimpleMatrix(rhsData);
 SimpleMatrix solution = matrix.solve(rhs); // [0.0, 0.5]
 double residual = matrix.mult(solution).minus(rhs).normF();
 ```
