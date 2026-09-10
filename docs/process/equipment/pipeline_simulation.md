@@ -1,10 +1,12 @@
 ---
 title: Pipeline Simulation Guide
-description: Comprehensive documentation for pipeline simulation in NeqSim, covering all pipeline types, common interface, flow modeling, and integration with mechanical design.
+description: Pipeline model selection, executable examples, units, profiles, and mechanical design in NeqSim.
 keywords: "pipeline simulation, multiphase flow, Beggs and Brill, pressure drop, pipe flow, gas pipeline, oil pipeline, subsea, heat transfer, elevation, slug, holdup"
 ---
 
-Comprehensive documentation for pipeline simulation in NeqSim, covering all pipeline types, common interface, flow modeling, and integration with mechanical design.
+This guide uses the current Java pipeline API. The complete examples below define
+both the fluid and flow rate; shorter configuration examples explicitly name the
+model they apply to. Geometric setters use **metres** unless stated otherwise.
 
 ## Table of Contents
 
@@ -20,279 +22,127 @@ Comprehensive documentation for pipeline simulation in NeqSim, covering all pipe
 - [Mechanical Design Integration](#mechanical-design-integration)
 - [Examples](#examples)
 
----
-
 ## Overview
 
-NeqSim provides a unified pipeline simulation framework supporting:
+NeqSim contains algebraic pressure-drop correlations, distributed flow solvers,
+and transient pipeline models. Select the model according to the required
+physics. A steady-state pressure-drop calculation does not predict line pack,
+slug arrival times, or pressure-wave propagation.
 
-- **Single-phase flow** - Gas or liquid pipelines
-- **Two-phase flow** - Gas-liquid systems with holdup and slip
-- **Multiphase flow** - Gas-oil-water systems
-- **Transient flow** - Time-dependent simulations
-- **Steady-state flow** - Equilibrium calculations
-
-All pipeline types implement the `PipeLineInterface` which provides 70+ common methods for consistent access to pipeline properties and behavior.
-
-**Location:** `neqsim.process.equipment.pipeline`
-
----
+Most process pipeline classes are in `neqsim.process.equipment.pipeline`.
+`TransientPipe` is in its `twophasepipe` subpackage. Low-level flow systems are
+in `neqsim.fluidmechanics.flowsystem`.
 
 ## Pipeline Interface
 
-All pipeline classes implement `PipeLineInterface`, providing a consistent API:
+`PipeLineInterface` extends `SimulationInterface` and `TwoPortInterface`.
+The following are selected **actual interface signatures**, not a complete
+interface declaration. Implementations differ in supported physics and in which
+result fields they populate; use the model-specific accessors demonstrated below.
 
-```java
-public interface PipeLineInterface extends ProcessEquipmentInterface {
-    // Geometry
-    void setDiameter(double diameter);
-    double getDiameter();
-    void setLength(double length);
-    double getLength();
-    void setRoughness(double roughness);
-    double getRoughness();
-    void setAngle(double angle);
-    double getAngle();
-    void setElevationChange(double elevation);
-    double getElevationChange();
-    void setWallThickness(double thickness);
-    double getWallThickness();
+| Method | Meaning / units |
+|---|---|
+| `setLength(double)` | Pipe length, m |
+| `setDiameter(double)` | **Inner** flow diameter, m |
+| `setPipeWallRoughness(double)` | Absolute roughness, m |
+| `setElevation(double)` | Outlet minus inlet elevation, m |
+| `setNumberOfIncrements(int)` | Discretization setting; interpretation depends on model |
+| `getPressureDrop()` | Inlet minus outlet pressure, bar |
+| `getOutletPressure(String)` | Outlet pressure in the requested unit, e.g. `"bara"` |
+| `getOutletTemperature(String)` | Outlet temperature, e.g. `"C"` or `"K"` |
+| `getFlowRegime()` | **String**, not an integer regime code |
+| `setHeatTransferCoefficient(double)` | Heat-transfer coefficient, W/(m² K) |
+| `setConstantSurfaceTemperature(double)` | Surface temperature, K |
 
-    // Flow Properties
-    double getVelocity();
-    double getVelocity(String unit);
-    double getSuperficialVelocity();
-    double getReynoldsNumber();
-    double getFrictionFactor();
-    double getFlowRegime();
-    String getFlowRegimeDescription();
-
-    // Pressure Drop
-    double getPressureDrop();
-    double getPressureDrop(String unit);
-    double getTotalPressureDrop();
-    double getFrictionalPressureDrop();
-    double getGravitationalPressureDrop();
-    double getAccelerationalPressureDrop();
-
-    // Two-Phase Properties
-    double getLiquidHoldup();
-    double getGasVoidFraction();
-    double getSlipRatio();
-    double getMixtureVelocity();
-    double getLiquidSuperficialVelocity();
-    double getGasSuperficialVelocity();
-
-    // Heat Transfer
-    void setOverallHeatTransferCoefficient(double U);
-    double getOverallHeatTransferCoefficient();
-    void setAmbientTemperature(double temp);
-    double getAmbientTemperature();
-    double getHeatLoss();
-    double getHeatLoss(String unit);
-
-    // Profile Data
-    double[] getPressureProfile();
-    double[] getTemperatureProfile();
-    double[] getLiquidHoldupProfile();
-    double[] getVelocityProfile();
-    int getNumberOfNodes();
-    void setNumberOfNodes(int nodes);
-
-    // Mechanical Design
-    MechanicalDesign getMechanicalDesign();
-    void initMechanicalDesign();
-}
-```
-
----
+Do not assume unit-string overloads for length, diameter, roughness, or heat
+transfer setters. For example, pass 5000.0 to `setLength` for 5 km.
 
 ## Pipeline Types
 
 ### PipeBeggsAndBrills
 
-Two-phase flow using Beggs-Brill correlation with flow regime detection.
-
-```java
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-
-PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Flowline", inlet);
-pipe.setLength(5000.0, "m");
-pipe.setDiameter(0.254, "m");  // 10 inch
-pipe.setAngle(5.0);  // Upward inclination
-pipe.run();
-
-// Flow regime
-String regime = pipe.getFlowRegimeDescription();  // "Intermittent", "Segregated", etc.
-double holdup = pipe.getLiquidHoldup();
-```
+`PipeBeggsAndBrills` uses the Beggs-Brill gas/liquid pressure-drop and holdup
+correlation, with segmented equilibrium flashes and selectable thermal modes.
+Use `getFlowRegime()` or `getFlowRegimeEnum()`, and use the segment holdup and
+velocity profiles for computed hydraulic results. See Examples 2 and 3.
 
 ### AdiabaticPipe
 
-Simple pipe with no heat transfer (adiabatic walls).
+`AdiabaticPipe` is a lightweight single-phase hydraulic model. Despite its name,
+the current `run()` keeps inlet temperature unless an outlet temperature is
+specified, then performs a TP flash at the calculated outlet pressure. It does
+**not** solve an adiabatic energy balance. Constant temperature is an isothermal
+assumption; adiabatic flow can change temperature. Example 1 demonstrates this
+class's actual behavior.
 
-```java
-import neqsim.process.equipment.pipeline.AdiabaticPipe;
-
-AdiabaticPipe pipe = new AdiabaticPipe("Gas Pipe", inlet);
-pipe.setLength(1000.0, "m");
-pipe.setDiameter(0.3, "m");
-pipe.run();
-
-// Temperature remains constant
-double dT = pipe.getOutletStream().getTemperature("C")
-          - pipe.getInletStream().getTemperature("C");
-// dT ≈ 0 (adiabatic)
-```
+For a model with an explicit thermal mode, use `PipeBeggsAndBrills` and
+`PipeBeggsAndBrills.HeatTransferMode.ADIABATIC` or `.ISOTHERMAL` as appropriate.
 
 ### OnePhasePipe
 
-Optimized for single-phase (gas or liquid) flow.
-
-```java
-import neqsim.process.equipment.pipeline.OnePhasePipe;
-
-OnePhasePipe pipe = new OnePhasePipe("Liquid Line", inlet);
-pipe.setLength(2000.0, "m");
-pipe.setDiameter(0.15, "m");
-pipe.run();
-
-double reynolds = pipe.getReynoldsNumber();
-double friction = pipe.getFrictionFactor();
-```
+The current process class is **`OnePhasePipeLine`**, not `OnePhasePipe`.
+It wraps the low-level `PipeFlowSystem` for distributed single-phase flow.
+See the [single-phase setup](../../fluidmechanics/#single-phase-pipe-flow)
+for explicit geometry, boundary arrays, initialization, and solving.
 
 ### MultiphasePipe
 
-Wrapper for `TwoPhasePipeFlowSystem` with full multiphase capabilities.
-
-```java
-import neqsim.process.equipment.pipeline.MultiphasePipe;
-
-MultiphasePipe pipe = new MultiphasePipe("Export Pipeline", inlet);
-pipe.setLength(50000.0, "m");
-pipe.setDiameter(0.4, "m");
-pipe.setNumberOfNodes(100);
-pipe.setOverallHeatTransferCoefficient(15.0, "W/m2K");
-pipe.setAmbientTemperature(4.0, "C");
-pipe.run();
-
-// Get profiles
-double[] pressure = pipe.getPressureProfile();
-double[] temperature = pipe.getTemperatureProfile();
-double[] holdup = pipe.getLiquidHoldupProfile();
-```
+`MultiphasePipe` wraps `TwoPhasePipeFlowSystem` for process-model integration.
+It uses `setNumberOfNodesInLeg(int)`, `setHeatTransferCoefficient(double)`,
+and `setAmbientTemperature(double)` (K). Its name does not imply that every
+three-phase or phase-disappearance case is qualified. Read the
+[two-phase model guide](../../fluidmechanics/TwoPhasePipeFlowModel) and assess
+convergence, phase conservation, and applicability for the intended case.
 
 ### TransientPipe
 
-Time-dependent pipeline simulation.
-
-```java
-import neqsim.process.equipment.pipeline.TransientPipe;
-
-TransientPipe pipe = new TransientPipe("Transient Line", inlet);
-pipe.setLength(10000.0, "m");
-pipe.setDiameter(0.3, "m");
-pipe.setTimeStep(1.0);  // seconds
-pipe.setSimulationTime(3600.0);  // 1 hour
-pipe.run();
-
-// Access time-dependent results
-double[][] pressureVsTime = pipe.getPressureHistory();
-```
-
----
+The class is `neqsim.process.equipment.pipeline.twophasepipe.TransientPipe`.
+Its API uses `setNumberOfSections(int)` and `setMaxSimulationTime(double)`
+(seconds); it selects internal timesteps using its CFL setting. Boundary
+conditions must also be specified. `run()` can stop when it reaches its
+steady-state criterion before the maximum simulation time. See the
+[transient pipeline guide](../../wiki/pipeline_transient_simulation).
 
 ## Common Functionality
 
 ### Setting Geometry
 
-All pipeline types support consistent geometry methods:
-
-```java
-// Length
-pipe.setLength(5000.0, "m");
-pipe.setLength(16404.0, "ft");
-
-// Diameter
-pipe.setDiameter(0.254, "m");      // Outer diameter
-pipe.setInnerDiameter(0.244, "m"); // Inner diameter
-
-// Wall thickness
-pipe.setWallThickness(0.01, "m");  // 10mm
-
-// Roughness
-pipe.setRoughness(0.0001, "m");    // Absolute roughness
-pipe.setRoughness(0.1, "mm");      // With unit
-
-// Elevation
-pipe.setElevationChange(100.0, "m");  // Total rise
-pipe.setAngle(5.7);                   // Degrees from horizontal
-```
+Use inner diameter rather than nominal pipe size or outside diameter. Convert
+units before calling the geometric setters. For a straight incline, specify
+length with either elevation change or angle; do not supply contradictory values.
+`PipeBeggsAndBrills.setAngle(double)` takes degrees, positive uphill.
 
 ### Getting Flow Properties
 
-```java
-// Velocity
-double velocity = pipe.getVelocity("m/s");
-double superficial = pipe.getSuperficialVelocity();
-
-// Pressure drop
-double totalDP = pipe.getTotalPressureDrop();
-double frictionDP = pipe.getFrictionalPressureDrop();
-double gravityDP = pipe.getGravitationalPressureDrop();
-double accelDP = pipe.getAccelerationalPressureDrop();
-
-// Dimensionless numbers
-double Re = pipe.getReynoldsNumber();
-double f = pipe.getFrictionFactor();
-```
+For `AdiabaticPipe`, `getVelocity()`, `getReynoldsNumber()`, and
+`getFrictionFactor()` expose hydraulic results. For `PipeBeggsAndBrills`, use
+`getMixtureSuperficialVelocityProfile()` and `getMixtureReynoldsNumber()` for
+computed segment data. Avoid assuming that every inherited scalar result field
+is populated by every model.
 
 ### Two-Phase Properties
 
-```java
-// Holdup and void fraction
-double holdup = pipe.getLiquidHoldup();      // Liquid volume fraction
-double voidFrac = pipe.getGasVoidFraction(); // Gas volume fraction
-
-// Superficial velocities
-double vsl = pipe.getLiquidSuperficialVelocity();
-double vsg = pipe.getGasSuperficialVelocity();
-double vm = pipe.getMixtureVelocity();
-
-// Slip ratio
-double slip = pipe.getSlipRatio();  // vg/vl
-```
-
----
+For `PipeBeggsAndBrills`, `getLiquidHoldupProfile()` contains liquid volume
+fractions. `getGasSuperficialVelocityProfile()` and
+`getLiquidSuperficialVelocityProfile()` give superficial velocities in m/s.
+The phase velocity is the superficial velocity divided by its in-situ volume
+fraction. This division is meaningful only while that phase is present.
 
 ## Flow Regime Detection
 
-The Beggs-Brill correlation identifies flow regimes:
+The Beggs-Brill model returns these enum names from `getFlowRegime()`:
 
-| Regime           | Description                       | Typical Conditions           |
-| ---------------- | --------------------------------- | ---------------------------- |
-| **Segregated**   | Stratified flow, liquid at bottom | Low gas, low liquid velocity |
-| **Intermittent** | Slug/plug flow                    | Moderate velocities          |
-| **Distributed**  | Annular/mist flow                 | High gas velocity            |
-| **Transition**   | Between regimes                   | Boundary conditions          |
+| String | Meaning |
+|---|---|
+| `SEGREGATED` | Separated gas/liquid flow |
+| `INTERMITTENT` | Slug/plug category |
+| `DISTRIBUTED` | Dispersed-flow category |
+| `TRANSITION` | Transition between categories |
+| `SINGLE_PHASE` | A single phase is present |
+| `UNKNOWN` | A regime has not been determined |
 
-```java
-PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Pipe", inlet);
-pipe.setLength(1000.0, "m");
-pipe.setDiameter(0.2, "m");
-pipe.run();
-
-// Get flow regime
-int regimeCode = pipe.getFlowRegime();
-String regimeDesc = pipe.getFlowRegimeDescription();
-
-switch (regimeCode) {
-    case 1: System.out.println("Segregated flow"); break;
-    case 2: System.out.println("Intermittent flow"); break;
-    case 3: System.out.println("Distributed flow"); break;
-    case 4: System.out.println("Transition"); break;
-}
-```
+These are correlation categories, not predictions of slug timing or amplitude.
+Example 2 reads the string and its corresponding `FlowRegime` enum.
 
 ### Flow Pattern Map
 
@@ -311,37 +161,33 @@ Where $\lambda_L$ is the no-slip liquid holdup and $N_{Fr}$ is the Froude number
 
 ### Overall Heat Transfer Coefficient
 
-```java
-// Set U-value
-pipe.setOverallHeatTransferCoefficient(25.0, "W/m2K");
-pipe.setOverallHeatTransferCoefficient(4.4, "BTU/hr-ft2-F");
+For `PipeBeggsAndBrills`, set the surface temperature using
+`setConstantSurfaceTemperature(4.0, "C")`, then set an effective U-value with
+`setHeatTransferCoefficient(15.0)`. The latter selects `SPECIFIED_U` mode.
+For a wall/insulation resistance model, use `setThickness(double)`,
+`setPipeWallThermalConductivity(double)`, `setInsulation(thickness, conductivity)`,
+`setOuterHeatTransferCoefficient(double)`, and select `HeatTransferMode.DETAILED_U`.
+See the executable [heat-transfer examples](../../fluidmechanics/heat_transfer).
 
-// Set ambient conditions
-pipe.setAmbientTemperature(15.0, "C");
-pipe.setAmbientTemperature(4.0, "C");  // Seabed
-
-// Calculate heat loss
-pipe.run();
-double heatLoss = pipe.getHeatLoss("kW");
-double heatLossMW = pipe.getHeatLoss("MW");
-```
+For the horizontal, unheated flowline in Example 2, inlet minus outlet enthalpy
+flow estimates net heat removal. It is not a universal `getHeatLoss()` API and
+requires accounting for elevation, kinetic energy, and other energy terms in
+more general cases.
 
 ### Typical U-Values
 
-| Application               | U-Value (W/m²K) |
-| ------------------------- | --------------- |
-| Bare pipe in air          | 10-25           |
-| Insulated pipe in air     | 1-5             |
-| Buried pipe               | 2-10            |
-| Subsea pipe (uninsulated) | 15-50           |
-| Subsea pipe (insulated)   | 1-5             |
-| Pipe-in-pipe              | 0.5-2           |
-
----
+U depends on the selected reference area, flow conditions, wall construction,
+insulation, and environment. Treat a chosen value such as 15 W/(m² K) as an
+example assumption; calculate or obtain a case-specific value for design.
 
 ## Pressure Drop Calculations
 
 ### Total Pressure Drop
+
+The general decomposition is shown below. The current `PipeBeggsAndBrills`
+pressure-drop calculation sums hydrostatic and friction terms; it does not
+expose separate gravitational, frictional, and acceleration-drop getters.
+Do not assume this model includes every term in the general expression.
 
 $$\Delta P_{total} = \Delta P_{friction} + \Delta P_{gravity} + \Delta P_{acceleration}$$
 
@@ -375,35 +221,16 @@ Where $\psi$ is the inclination correction factor.
 
 ## Profile Methods
 
-For pipelines divided into multiple nodes:
+`PipeBeggsAndBrills` stores pressure in **bara**, temperature in **K**, and
+length in **m**. For the non-isothermal examples below, profiles include the
+inlet and outlet, giving `numberOfIncrements + 1` entries. Iterate over the
+actual returned lengths; do not substitute a fabricated `getNumberOfNodes()`.
+The isothermal path currently stores only the inlet temperature entry, so use
+the inlet temperature for all positions if that mode is selected.
 
-```java
-MultiphasePipe pipe = new MultiphasePipe("Pipeline", inlet);
-pipe.setLength(50000.0, "m");
-pipe.setNumberOfNodes(100);
-pipe.run();
-
-// Pressure profile
-double[] pressure = pipe.getPressureProfile();
-
-// Temperature profile
-double[] temperature = pipe.getTemperatureProfile();
-
-// Liquid holdup profile
-double[] holdup = pipe.getLiquidHoldupProfile();
-
-// Velocity profile
-double[] velocity = pipe.getVelocityProfile();
-
-// Plot profiles
-for (int i = 0; i < pipe.getNumberOfNodes(); i++) {
-    double distance = i * pipe.getLength() / pipe.getNumberOfNodes();
-    System.out.printf("%.0f m: P=%.1f bar, T=%.1f°C, HL=%.2f%n",
-        distance, pressure[i], temperature[i], holdup[i]);
-}
-```
-
----
+Example 2 reads the length, pressure, temperature, and holdup arrays together.
+Other pipe models may expose a different profile layout or pressure unit;
+check the specific model before combining profiles.
 
 ## Geometry and Properties
 
@@ -427,163 +254,186 @@ for (int i = 0; i < pipe.getNumberOfNodes(); i++) {
 
 ---
 
+The table lists **outside** diameters. Choose the wall thickness/schedule and
+calculate the inner flow diameter before assigning `setDiameter`.
+
 ## Mechanical Design Integration
 
-All pipeline types integrate with the mechanical design framework:
+Pipeline hydraulic geometry and mechanical design use distinct inputs. The
+convenience pipeline design API takes `setDesignTemperature` in °C and
+`setDesignPressure` with an explicit unit. `calculateMinimumWallThickness()`
+returns **metres**. This differs from the older `PipelineMechanicalDesign`
+object's `setMaxOperationTemperature` (K) and `getWallThickness` (mm).
 
-```java
-// Initialize mechanical design
-AdiabaticPipe pipe = new AdiabaticPipe("Export Line", inlet);
-pipe.setLength(50000.0, "m");
-pipe.setDiameter(0.508, "m");
-pipe.initMechanicalDesign();
-
-// Configure design
-PipelineMechanicalDesign design = (PipelineMechanicalDesign) pipe.getMechanicalDesign();
-design.setMaxOperationPressure(150.0);  // bara
-design.setMaxOperationTemperature(80.0);  // °C
-design.setMaterialGrade("X65");
-design.setDesignStandardCode("DNV-OS-F101");
-design.setCompanySpecificDesignStandards("Equinor");
-
-// Calculate design
-design.calcDesign();
-
-// Get results
-double wallThickness = design.getWallThickness();  // mm
-String json = design.toJson();  // Complete report
-```
-
-See [Pipeline Mechanical Design](../pipeline_mechanical_design) for detailed mechanical design documentation.
-
----
+Example 4 demonstrates the convenience API. See
+[Pipeline Mechanical Design](../pipeline_mechanical_design) for design
+assumptions, standards, and the separate mechanical-design object.
 
 ## Examples
 
+Each block is self-contained Java method-body code: put the imports at the top
+of a class and the remaining statements inside `main` or a method. The
+`PipelineGuideDocumentationTest` regression compiles these exact fenced blocks
+and checks flow conservation and plausible results. Fluids and dimensions are
+synthetic examples, using SRK with the classic mixing rule.
+
 ### Example 1: Gas Export Pipeline
 
+<!-- pipeline-doc-test: gas-export -->
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 
-// Dry gas
-SystemSrkEos gas = new SystemSrkEos(303.15, 150.0);
+Logger logger = LogManager.getLogger("GasExportExample");
+SystemSrkEos gas = new SystemSrkEos(303.15, 150.0); // K, bara
 gas.addComponent("methane", 0.92);
 gas.addComponent("ethane", 0.05);
 gas.addComponent("propane", 0.02);
 gas.addComponent("CO2", 0.01);
 gas.setMixingRule("classic");
-
 Stream inlet = new Stream("Gas Inlet", gas);
-inlet.setFlowRate(20.0, "MSm3/day");
+inlet.setFlowRate(10.0, "MSm3/day"); // Standard volume, not actual pipe volume
 inlet.run();
 
-// 100 km pipeline
 AdiabaticPipe pipeline = new AdiabaticPipe("Export Pipeline", inlet);
-pipeline.setLength(100000.0, "m");
-pipeline.setDiameter(0.762, "m");  // 30 inch
-pipeline.setRoughness(0.0001, "m");
+pipeline.setLength(100000.0); // m
+pipeline.setDiameter(0.762); // m, assumed inner diameter
+pipeline.setPipeWallRoughness(0.0001); // m
 pipeline.run();
-
-System.out.println("Inlet: " + inlet.getPressure("bara") + " bara");
-System.out.println("Outlet: " + pipeline.getOutletStream().getPressure("bara") + " bara");
-System.out.println("Pressure drop: " + pipeline.getPressureDrop("bara") + " bara");
-System.out.println("Velocity: " + pipeline.getVelocity("m/s") + " m/s");
+logger.info("Outlet: {} bara; pressure drop: {} bar",
+    pipeline.getOutletPressure("bara"), pipeline.getPressureDrop());
+logger.info("Velocity: {} m/s; Re: {}; Darcy f: {}", pipeline.getVelocity(),
+    pipeline.getReynoldsNumber(), pipeline.getFrictionFactor());
+logger.info("Temperature change: {} K",
+    pipeline.getOutletTemperature("K") - inlet.getTemperature("K"));
 ```
+
+Expect positive pressure drop and unchanged temperature for this class's
+constant-temperature calculation. This does not establish an adiabatic heat
+balance.
 
 ### Example 2: Subsea Multiphase Flowline
 
+This example models a gas/condensate mixture with Beggs-Brill and a specified
+U-value. It assumes a horizontal, constant-diameter pipe and equilibrium phase
+partitioning; it does not resolve separate oil/water slip or slug transients.
+
+<!-- pipeline-doc-test: subsea-flowline -->
 ```java
-import neqsim.process.equipment.pipeline.MultiphasePipe;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 
-// Wellstream
-SystemSrkEos fluid = new SystemSrkEos(350.0, 200.0);
-fluid.addComponent("methane", 0.65);
-fluid.addComponent("ethane", 0.08);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("n-hexane", 0.10);
+Logger logger = LogManager.getLogger("SubseaFlowlineExample");
+SystemSrkEos fluid = new SystemSrkEos(333.15, 100.0); // 60 C, 100 bara
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.05);
 fluid.addComponent("n-decane", 0.10);
-fluid.addComponent("water", 0.02);
 fluid.setMixingRule("classic");
-fluid.setMultiPhaseCheck(true);
+Stream inlet = new Stream("Wellhead", fluid);
+inlet.setFlowRate(10000.0, "kg/hr");
+inlet.run();
 
-Stream wellhead = new Stream("Wellhead", fluid);
-wellhead.setFlowRate(50000.0, "kg/hr");
-wellhead.run();
+PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Subsea Flowline", inlet);
+pipeline.setLength(5000.0);
+pipeline.setDiameter(0.20);
+pipeline.setElevation(0.0);
+pipeline.setPipeWallRoughness(4.6e-5);
+pipeline.setNumberOfIncrements(20);
+pipeline.setConstantSurfaceTemperature(4.0, "C");
+pipeline.setHeatTransferCoefficient(15.0); // W/(m2 K), selects SPECIFIED_U
+pipeline.run();
 
-// 25 km subsea flowline
-MultiphasePipe flowline = new MultiphasePipe("Subsea Flowline", wellhead);
-flowline.setLength(25000.0, "m");
-flowline.setDiameter(0.254, "m");  // 10 inch
-flowline.setNumberOfNodes(50);
-flowline.setOverallHeatTransferCoefficient(15.0, "W/m2K");
-flowline.setAmbientTemperature(4.0, "C");
-flowline.run();
-
-// Results
-System.out.println("Outlet pressure: " + flowline.getOutletStream().getPressure("bara") + " bara");
-System.out.println("Outlet temperature: " + flowline.getOutletStream().getTemperature("C") + " °C");
-System.out.println("Liquid holdup: " + flowline.getLiquidHoldup());
-System.out.println("Flow regime: " + flowline.getFlowRegimeDescription());
-System.out.println("Heat loss: " + flowline.getHeatLoss("MW") + " MW");
+String regime = pipeline.getFlowRegime();
+PipeBeggsAndBrills.FlowRegime regimeEnum = pipeline.getFlowRegimeEnum();
+double[] pressureBara = pipeline.getPressureProfile();
+double[] temperatureK = pipeline.getTemperatureProfile();
+double[] holdup = pipeline.getLiquidHoldupProfile();
+for (int i = 0; i < pressureBara.length; i++) {
+    logger.info("x={} m; P={} bara; T={} C; HL={}",
+        pipeline.getLengthProfile().get(i), pressureBara[i], temperatureK[i] - 273.15,
+        holdup[i]);
+}
+logger.info("Outlet regime: {} ({})", regime, regimeEnum);
+logger.info("Outlet superficial velocities: gas={} m/s; liquid={} m/s",
+    pipeline.getGasSuperficialVelocityProfile().get(holdup.length - 1),
+    pipeline.getLiquidSuperficialVelocityProfile().get(holdup.length - 1));
+double netEnthalpyRemovalKW = (inlet.getThermoSystem().getEnthalpy()
+    - pipeline.getOutletStream().getThermoSystem().getEnthalpy()) / 1000.0;
+logger.info("Net enthalpy-flow removal: {} kW", netEnthalpyRemovalKW);
 ```
+
+Expect an outlet pressure below the inlet, cooling toward the 4 °C surroundings,
+and holdup between zero and one. Check grid sensitivity and the correlation's
+applicability before interpreting design results.
 
 ### Example 3: Vertical Riser
 
+A synthetic gas/condensate stream rises 500 m over 550 m measured length.
+The straight equivalent incline represents the net elevation, not catenary
+geometry or dynamic slugging.
+
+<!-- pipeline-doc-test: riser -->
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 
-// Production from seabed
-Stream production = new Stream("Seabed Production", wellfluid);
-production.setFlowRate(30000.0, "kg/hr");
-production.run();
+Logger logger = LogManager.getLogger("RiserExample");
+SystemSrkEos fluid = new SystemSrkEos(323.15, 100.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("n-decane", 0.15);
+fluid.setMixingRule("classic");
+Stream inlet = new Stream("Seabed Production", fluid);
+inlet.setFlowRate(10000.0, "kg/hr");
+inlet.run();
 
-// 500m riser
-PipeBeggsAndBrills riser = new PipeBeggsAndBrills("Riser", production);
-riser.setLength(550.0, "m");  // Include catenary
-riser.setDiameter(0.2, "m");
-riser.setElevationChange(500.0, "m");  // Vertical rise
-riser.run();
-
-System.out.println("Bottom pressure: " + production.getPressure("bara") + " bara");
-System.out.println("Top pressure: " + riser.getOutletStream().getPressure("bara") + " bara");
-System.out.println("Flow regime: " + riser.getFlowRegimeDescription());
-System.out.println("Liquid holdup: " + riser.getLiquidHoldup());
+PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("Riser", inlet);
+pipeline.setLength(550.0);
+pipeline.setDiameter(0.20);
+pipeline.setElevation(500.0);
+pipeline.setNumberOfIncrements(20);
+pipeline.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+pipeline.run();
+logger.info("Bottom: {} bara; top: {} bara; incline: {} degrees",
+    inlet.getPressure("bara"), pipeline.getOutletPressure("bara"), pipeline.getAngle());
+double[] holdup = pipeline.getLiquidHoldupProfile();
+logger.info("Outlet regime: {}; liquid holdup: {}", pipeline.getFlowRegime(),
+    holdup[holdup.length - 1]);
 ```
 
 ### Example 4: Pipeline with Mechanical Design
 
+This demonstrates the mechanical calculator's input/output units. The required
+thickness is a calculation result, not a selected commercial pipe schedule.
+
+<!-- pipeline-doc-test: mechanical-design -->
 ```java
-// Create pipeline
-AdiabaticPipe pipe = new AdiabaticPipe("Gas Pipeline", inlet);
-pipe.setLength(50000.0, "m");
-pipe.setDiameter(0.508, "m");
-pipe.run();
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
 
-// Mechanical design
-pipe.initMechanicalDesign();
-PipelineMechanicalDesign design = (PipelineMechanicalDesign) pipe.getMechanicalDesign();
-design.setMaxOperationPressure(150.0);
-design.setMaterialGrade("X65");
-design.setDesignStandardCode("ASME-B31.8");
-design.setLocationClass("Class 2");
-design.calcDesign();
-
-// Get design results
-System.out.println("Wall thickness: " + design.getWallThickness() + " mm");
-System.out.println("MAOP: " + design.getCalculator().getMAOP("bar") + " bar");
-System.out.println("Test pressure: " + design.getCalculator().calculateTestPressure() + " MPa");
-
-// Cost estimation
-design.getCalculator().calculateProjectCost();
-System.out.println("Total cost: $" + design.getCalculator().getTotalProjectCost());
-
-// Full JSON report
-String json = design.toJson();
+Logger logger = LogManager.getLogger("PipelineDesignExample");
+AdiabaticPipe pipeline = new AdiabaticPipe("Gas Pipeline");
+pipeline.setDiameter(0.508); // Inner diameter, m
+pipeline.setLength(50000.0);
+pipeline.setDesignPressure(150.0, "bar");
+pipeline.setDesignTemperature(80.0); // C on the pipeline convenience API
+pipeline.setMaterialGrade("X65");
+pipeline.setDesignCode("ASME_B31_8");
+pipeline.setLocationClass(2); // Integer, not "Class 2"
+pipeline.setCorrosionAllowance(0.003); // m
+double minimumThicknessM = pipeline.calculateMinimumWallThickness();
+logger.info("Minimum wall thickness including corrosion allowance: {} mm",
+    minimumThicknessM * 1000.0);
 ```
-
----
 
 ## Related Documentation
 

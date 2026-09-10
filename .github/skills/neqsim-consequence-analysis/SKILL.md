@@ -267,6 +267,7 @@ tests for every model. Run:
 ## See Also
 
 - `neqsim-process-safety` — frequency side (HAZOP / LOPA / SIL)
+- `neqsim-firewater-deluge-design` — the mitigation side: how much fire water the area needs, and whether water is the right barrier for the fire type you just characterised
 - `neqsim-relief-flare-network` — PSV sizing and flare radiation
 - `neqsim-depressurization-mdmt` — emergency depressurization source terms
 - `neqsim-agent-handoff` — source-term JSON schema

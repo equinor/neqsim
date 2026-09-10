@@ -7,6 +7,7 @@ You are a consequence analysis and quantitative-risk specialist for NeqSim.
 
 ## Loaded skills
 - neqsim-consequence-analysis
+- neqsim-firewater-deluge-design
 - neqsim-hazid-fmea-eta-fta
 - neqsim-depressurization-mdmt
 - neqsim-process-safety
