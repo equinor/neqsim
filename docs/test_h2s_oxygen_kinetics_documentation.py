@@ -336,6 +336,43 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 
+
+    def test_constant_water_trajectory_projection_is_documented_and_executable(self):
+        for token in (
+            "Constant-water trajectory projection",
+            "one caller-supplied constant liquid-water inventory",
+            r"n_{r,\mathrm{reacted}}",
+            r"\sum_i n_{r,i,\mathrm{reacted}}",
+            r"m_w(c_0-c_{r,n,\mathrm{out}})",
+            "closure residual in mol",
+            "one-segment trajectory",
+            "unchanged-state subdivision",
+            "defensively immutable",
+            "not a calculated pipeline holdup",
+            "unsigned total-sulfide-loss evidence",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static TrajectoryResult project(",
+            "Collections.unmodifiableList",
+            "getSegmentProjections()",
+            "getLowerRateReactedMoles()",
+            "getNominalRateClosureResidualMoles()",
+            "getUpperRateClosureResidualMoles()",
+            "finiteSum(",
+            "finiteDifference(",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testTrajectoryProjectionClosesAllPathsAndPreservesSourceOrder",
+            "testTrajectoryProjectionMatchesSingleSegmentAndIsSplitInvariant",
+            "testTrajectoryProjectionZeroDurationIsExactAndResultIsDefensive",
+            "testTrajectoryProjectionFailsClosedForMissingOrInvalidWaterInventory",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",
