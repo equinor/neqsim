@@ -43,6 +43,10 @@ public class DoeBigHillVacuumFractionationResultTest {
       assertRelativeRepeat(firstProducts[i].getMassFlowKgPerHour(), secondProducts[i].getMassFlowKgPerHour());
       assertRelativeRepeat(firstProducts[i].getMeanNormalBoilingPointKelvin(),
           secondProducts[i].getMeanNormalBoilingPointKelvin());
+      for (double quantile : new double[] { 0.1, 0.5, 0.9 }) {
+        assertRelativeRepeat(firstProducts[i].getNormalBoilingPointQuantileKelvin(quantile),
+            secondProducts[i].getNormalBoilingPointQuantileKelvin(quantile));
+      }
     }
   }
 
@@ -76,6 +80,10 @@ public class DoeBigHillVacuumFractionationResultTest {
     assertTrue(products[0].getMassFlowKgPerHour() > 0.0);
     assertTrue(products[1].getMassFlowKgPerHour() > 0.0);
     assertTrue(products[0].getMeanNormalBoilingPointKelvin() < products[1].getMeanNormalBoilingPointKelvin());
+    assertBoilingRange(products[0]);
+    assertBoilingRange(products[1]);
+    assertTrue(
+        products[0].getNormalBoilingPointQuantileKelvin(0.5) < products[1].getNormalBoilingPointQuantileKelvin(0.5));
     assertEquals(1.0, products[0].getMassFractionOfFeed() + products[1].getMassFractionOfFeed(), BALANCE_TOLERANCE);
     assertEquals(FEED_MASS_FLOW_KG_PER_HOUR, result.getFeedMassFlowKgPerHour(), 1.0e-9);
     assertEquals(result.getFeedMassFlowKgPerHour(), result.getProductMassFlowKgPerHour(),
@@ -86,6 +94,41 @@ public class DoeBigHillVacuumFractionationResultTest {
     assertEquals("DOE_BH_850_1050_PC", model.getFeedStream().getThermoSystem().getComponent(1).getComponentName());
     assertEquals("DOE_BH_1050_PLUS_PC", model.getFeedStream().getThermoSystem().getComponent(2).getComponentName());
     assertIndependentComponentBalance(model);
+  }
+
+  private static void assertBoilingRange(ProductResult product) {
+    double[] temperatures = product.getBoilingPointTemperaturesKelvin();
+    double[] cumulativeFractions = product.getCumulativeMoleFractions();
+    assertEquals(temperatures.length, cumulativeFractions.length);
+    assertTrue(temperatures.length > 0);
+    assertNotSame(temperatures, product.getBoilingPointTemperaturesKelvin());
+    assertNotSame(cumulativeFractions, product.getCumulativeMoleFractions());
+
+    for (int i = 0; i < temperatures.length; i++) {
+      assertTrue(Double.isFinite(temperatures[i]) && temperatures[i] > 0.0);
+      assertTrue(Double.isFinite(cumulativeFractions[i]) && cumulativeFractions[i] > 0.0);
+      if (i > 0) {
+        assertTrue(temperatures[i] >= temperatures[i - 1]);
+        assertTrue(cumulativeFractions[i] > cumulativeFractions[i - 1]);
+      }
+    }
+    assertEquals(1.0, cumulativeFractions[cumulativeFractions.length - 1], 1.0e-12);
+
+    double t10 = product.getNormalBoilingPointQuantileKelvin(0.1);
+    double t50 = product.getNormalBoilingPointQuantileKelvin(0.5);
+    double t90 = product.getNormalBoilingPointQuantileKelvin(0.9);
+    assertTrue(t10 <= t50);
+    assertTrue(t50 <= t90);
+    assertEquals(t50 - 273.15, product.getNormalBoilingPointQuantileCelsius(0.5), 1.0e-12);
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(0.0));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(1.0001));
+    assertThrows(IllegalArgumentException.class, () -> product.getNormalBoilingPointQuantileKelvin(Double.NaN));
+
+    double originalTemperature = product.getBoilingPointTemperaturesKelvin()[0];
+    temperatures[0] = -1.0;
+    cumulativeFractions[0] = -1.0;
+    assertEquals(originalTemperature, product.getBoilingPointTemperaturesKelvin()[0], 0.0);
+    assertTrue(product.getCumulativeMoleFractions()[0] > 0.0);
   }
 
   private static void assertIndependentComponentBalance(DoeBigHillVacuumFractionationCase model) {

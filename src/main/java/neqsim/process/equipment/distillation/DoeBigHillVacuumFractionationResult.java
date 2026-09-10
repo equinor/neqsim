@@ -1,5 +1,6 @@
 package neqsim.process.equipment.distillation;
 
+import java.util.Arrays;
 import java.util.Objects;
 import neqsim.process.equipment.stream.StreamInterface;
 
@@ -92,12 +93,14 @@ public final class DoeBigHillVacuumFractionationResult {
         throw new IllegalStateException("Both vacuum screening products must have material positive flow");
       }
       double meanBoilingPoint = meanNormalBoilingPoint(streams[i]);
+      BoilingPointDistribution boilingPointDistribution = boilingPointDistribution(streams[i]);
       if (!(meanBoilingPoint > previousMeanBoilingPoint)) {
         throw new IllegalStateException("Products must become heavier from overhead to bottoms");
       }
       previousMeanBoilingPoint = meanBoilingPoint;
       productMassFlow += massFlow;
-      productResults[i] = new ProductResult(PRODUCT_LABELS[i], massFlow, massFlow / feedMassFlow, meanBoilingPoint);
+      productResults[i] = new ProductResult(PRODUCT_LABELS[i], massFlow, massFlow / feedMassFlow, meanBoilingPoint,
+          boilingPointDistribution.boilingPointTemperaturesKelvin, boilingPointDistribution.cumulativeMoleFractions);
     }
 
     double closureError = Math.abs(feedMassFlow - productMassFlow) / feedMassFlow;
@@ -213,6 +216,49 @@ public final class DoeBigHillVacuumFractionationResult {
     return mean / compositionSum;
   }
 
+  private static BoilingPointDistribution boilingPointDistribution(StreamInterface stream) {
+    double[] composition = stream.getThermoSystem().getMolarComposition();
+    double[] boilingPoints = stream.getThermoSystem().getNormalBoilingPointTemperatures();
+    if (composition.length != boilingPoints.length || composition.length == 0) {
+      throw new IllegalStateException("Product composition and boiling-point arrays must align");
+    }
+
+    double[][] points = new double[composition.length][2];
+    double compositionSum = 0.0;
+    int positiveComponentCount = 0;
+    for (int i = 0; i < composition.length; i++) {
+      if (!Double.isFinite(composition[i]) || composition[i] < 0.0 || !Double.isFinite(boilingPoints[i])
+          || !(boilingPoints[i] > 0.0)) {
+        throw new IllegalStateException("Product composition and boiling points must be physical");
+      }
+      points[i][0] = boilingPoints[i];
+      points[i][1] = composition[i];
+      compositionSum += composition[i];
+      if (composition[i] > 0.0) {
+        positiveComponentCount++;
+      }
+    }
+    if (!Double.isFinite(compositionSum) || !(compositionSum > 0.0) || positiveComponentCount == 0) {
+      throw new IllegalStateException("Product boiling-point distribution is undefined");
+    }
+
+    Arrays.sort(points, (left, right) -> Double.compare(left[0], right[0]));
+    double[] temperatures = new double[positiveComponentCount];
+    double[] cumulativeFractions = new double[positiveComponentCount];
+    double cumulativeFraction = 0.0;
+    int resultIndex = 0;
+    for (double[] point : points) {
+      if (point[1] > 0.0) {
+        cumulativeFraction += point[1] / compositionSum;
+        temperatures[resultIndex] = point[0];
+        cumulativeFractions[resultIndex] = cumulativeFraction;
+        resultIndex++;
+      }
+    }
+    cumulativeFractions[cumulativeFractions.length - 1] = 1.0;
+    return new BoilingPointDistribution(temperatures, cumulativeFractions);
+  }
+
   private static double maximumComponentMolarClosureRelativeError(StreamInterface feed, StreamInterface[] products) {
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double feedMolarFlow = feed.getFlowRate("mol/hr");
@@ -245,19 +291,34 @@ public final class DoeBigHillVacuumFractionationResult {
     }
   }
 
+  private static final class BoilingPointDistribution {
+    private final double[] boilingPointTemperaturesKelvin;
+    private final double[] cumulativeMoleFractions;
+
+    private BoilingPointDistribution(double[] boilingPointTemperaturesKelvin, double[] cumulativeMoleFractions) {
+      this.boilingPointTemperaturesKelvin = boilingPointTemperaturesKelvin;
+      this.cumulativeMoleFractions = cumulativeMoleFractions;
+    }
+  }
+
   /** Immutable calculated vacuum-screening product row. */
   public static final class ProductResult {
     private final String productLabel;
     private final double massFlowKgPerHour;
     private final double massFractionOfFeed;
     private final double meanNormalBoilingPointKelvin;
+    private final double[] boilingPointTemperaturesKelvin;
+    private final double[] cumulativeMoleFractions;
 
     private ProductResult(String productLabel, double massFlowKgPerHour, double massFractionOfFeed,
-        double meanNormalBoilingPointKelvin) {
+        double meanNormalBoilingPointKelvin, double[] boilingPointTemperaturesKelvin,
+        double[] cumulativeMoleFractions) {
       this.productLabel = productLabel;
       this.massFlowKgPerHour = massFlowKgPerHour;
       this.massFractionOfFeed = massFractionOfFeed;
       this.meanNormalBoilingPointKelvin = meanNormalBoilingPointKelvin;
+      this.boilingPointTemperaturesKelvin = boilingPointTemperaturesKelvin.clone();
+      this.cumulativeMoleFractions = cumulativeMoleFractions.clone();
     }
 
     /** @return product label */
@@ -283,6 +344,50 @@ public final class DoeBigHillVacuumFractionationResult {
     /** @return mole-weighted mean normal boiling point in degrees Celsius */
     public double getMeanNormalBoilingPointCelsius() {
       return meanNormalBoilingPointKelvin - 273.15;
+    }
+
+    /** @return defensive copy of ascending pseudo-component normal boiling points in kelvin */
+    public double[] getBoilingPointTemperaturesKelvin() {
+      return boilingPointTemperaturesKelvin.clone();
+    }
+
+    /** @return defensive copy of normalized cumulative product mole fractions */
+    public double[] getCumulativeMoleFractions() {
+      return cumulativeMoleFractions.clone();
+    }
+
+    /**
+     * Return a discrete pseudo-component normal-boiling-point quantile on cumulative mole basis.
+     *
+     * <p>
+     * This stepwise diagnostic is not an ASTM D86, ASTM D1160, TBP, or continuous simulated-distillation temperature.
+     * </p>
+     *
+     * @param cumulativeMoleFraction requested cumulative product mole fraction in (0, 1]
+     * @return first normal boiling point whose cumulative mole fraction reaches the request, in kelvin
+     * @throws IllegalArgumentException if the request is non-finite or outside (0, 1]
+     */
+    public double getNormalBoilingPointQuantileKelvin(double cumulativeMoleFraction) {
+      if (!Double.isFinite(cumulativeMoleFraction) || !(cumulativeMoleFraction > 0.0) || cumulativeMoleFraction > 1.0) {
+        throw new IllegalArgumentException("Cumulative mole fraction must be finite and in (0, 1]");
+      }
+      for (int i = 0; i < cumulativeMoleFractions.length; i++) {
+        if (cumulativeMoleFractions[i] >= cumulativeMoleFraction) {
+          return boilingPointTemperaturesKelvin[i];
+        }
+      }
+      return boilingPointTemperaturesKelvin[boilingPointTemperaturesKelvin.length - 1];
+    }
+
+    /**
+     * Return a discrete pseudo-component normal-boiling-point quantile on cumulative mole basis.
+     *
+     * @param cumulativeMoleFraction requested cumulative product mole fraction in (0, 1]
+     * @return first normal boiling point whose cumulative mole fraction reaches the request, in degrees Celsius
+     * @throws IllegalArgumentException if the request is non-finite or outside (0, 1]
+     */
+    public double getNormalBoilingPointQuantileCelsius(double cumulativeMoleFraction) {
+      return getNormalBoilingPointQuantileKelvin(cumulativeMoleFraction) - 273.15;
     }
   }
 }
