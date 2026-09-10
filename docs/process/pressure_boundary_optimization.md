@@ -141,7 +141,7 @@ LiftCurveTable table = optimizer.generateLiftCurveTable(
 );
 
 // Export a commented text matrix (not a VFPPROD keyword)
-logger.info(table.toEclipseFormat());
+logger.info(table.toDiagnosticTable());
 
 // Export to JSON for other applications
 logger.info(table.toJson());
@@ -272,12 +272,13 @@ PressureBoundaryOptimizer trainOptimizer =
 double totalPower = trainOptimizer.calculateTotalPower();
 ```
 
-## Eclipse VFP Table Integration
+## Capacity Diagnostics and VFP Integration
 
-`LiftCurveTable.toEclipseFormat()` writes a commented capacity matrix. It does **not**
+`LiftCurveTable.toDiagnosticTable()` writes a commented capacity matrix. It does **not**
 produce a complete Eclipse `VFPPROD` keyword: its dependent variable is maximum rate,
 whereas a production VFP table needs bottom-hole pressures on flow/THP/water/GOR/lift axes.
-Use `EclipseVFPExporter` only after calculating and validating that separate pressure table.
+Use `EclipseVFPExporter` only after calculating and validating that separate pressure table;
+see the [VFP export contract](optimization/vfp-export-contract.md).
 
 ```java
 LiftCurveTable table = optimizer.generateLiftCurveTable(
@@ -287,7 +288,7 @@ LiftCurveTable table = optimizer.generateLiftCurveTable(
 );
 
 // Get the commented capacity matrix
-String eclipseTable = table.toEclipseFormat();
+String diagnosticTable = table.toDiagnosticTable();
 ```
 
 Illustrative output format (numbers below are not results of the quick start):
@@ -298,12 +299,12 @@ Illustrative output format (numbers below are not results of the quick start):
 -- Columns: Outlet Pressure [bara]
 -- Values: Flow Rate [kg/hr]
 
--- Infeasible points marked with 1*
+-- Infeasible points marked with NaN
 
 -- Outlet Pressures: 80.00 90.00 100.00 110.00 120.00
 
 -- Pin=30.00
-  450.50 380.25 310.00 240.75 1*
+  450.50 380.25 310.00 240.75 NaN
 
 -- Pin=40.00
   520.30 450.80 380.40 310.20 245.00
@@ -439,7 +440,7 @@ logger.info("Feasible points: {}/{}", table.countFeasiblePoints(),
     inletP.length * outletP.length);
 
 java.nio.file.Files.write(java.nio.file.Paths.get("capacity_matrix.txt"),
-    table.toEclipseFormat().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    table.toDiagnosticTable().getBytes(java.nio.charset.StandardCharsets.UTF_8));
 java.nio.file.Files.write(java.nio.file.Paths.get("lift_curve.json"),
     table.toJson().getBytes(java.nio.charset.StandardCharsets.UTF_8));
 ```

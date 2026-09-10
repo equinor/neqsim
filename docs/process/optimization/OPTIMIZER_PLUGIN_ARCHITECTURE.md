@@ -66,7 +66,7 @@ The Optimizer Plugin Architecture provides a flexible, extensible framework for 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           EclipseVFPExporter                                 │
 │  ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐                │
-│  │   VFPPROD       │ │    VFPINJ       │ │    VFPEXP       │                │
+│  │   VFPPROD       │ │    VFPINJ       │ │  Validated BHP  │                │
 │  │  (Production)   │ │   (Injection)   │ │    (Export)     │                │
 │  └─────────────────┘ └─────────────────┘ └─────────────────┘                │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -415,7 +415,7 @@ CompressorConstraintConfig api617 = CompressorConstraintConfig.createAPI617Confi
 
 ## Eclipse VFP Export
 
-Generate VFP tables for reservoir simulation. **Capacity constraints directly affect the maximum flow rates in VFP tables**.
+Format supplied well BHP tables for reservoir simulation. Qualify the well calculation and its feasible operating envelope before export.
 
 > **📘 See Also:** [Capacity Constraint Framework - VFP Section](../CAPACITY_CONSTRAINT_FRAMEWORK#constraints-in-eclipse-vfp-table-generation) for detailed documentation on constraint management for VFP studies.
 
@@ -426,10 +426,13 @@ constructor, constraint-enforcement switch, BHP solver, or pointwise bottleneck 
 Solve the well/pipeline separately and reject failed or infeasible points before supplying
 finite BHP values. Never substitute a throughput maximum for BHP.
 
-The production writer currently serializes only the first water/gas/ALQ slice and writes zero
-axis entries. Use a single dry-gas slice here. It does not support general composition or
-artificial-lift tables. Verify exported syntax and unit conventions with the target reservoir
-simulator; these format examples are not reservoir qualification.
+The writer serializes every supplied composition and ALQ slice and rejects missing or infeasible
+pressures. OPM/Eclipse `VFPPROD` and `VFPINJ` are supported with explicit `METRIC` or `FIELD`
+headers. Input rates default to Sm3/day and pressures to bara; the output units are converted,
+including the FIELD Mscf/STB gas-ratio convention. The surrounding deck must use the same unit
+system. See the [VFP export contract](vfp-export-contract.md) for supported definitions,
+index order, conversion rules and migration from the legacy methods. These examples qualify
+formatting; a well model must be independently validated.
 
 ### Constraint Configuration for VFP
 
@@ -441,6 +444,8 @@ import neqsim.process.util.optimizer.EclipseVFPExporter;
 EclipseVFPExporter exporter = new EclipseVFPExporter(1);
 exporter.setDatumDepth(1000.0); // metres
 exporter.setFlowRateType("GAS");
+exporter.setWaterCutType("WGR");
+exporter.setGORType("OGR");
 exporter.setUnitSystem("METRIC");
 exporter.setTableTitle("Synthetic dry-gas format example; not a qualified well model");
 ```
@@ -451,9 +456,14 @@ exporter.setTableTitle("Synthetic dry-gas format example; not a qualified well m
 ```java
 double[] thp = {20.0, 40.0}; // bara
 double[] flowRates = {10000.0, 20000.0, 40000.0}; // gas Sm3/day for METRIC/GAS
-double[][][][][] bhp = new double[2][1][1][1][3];
-bhp[0][0][0][0] = new double[] {30.0, 36.0, 48.0};
-bhp[1][0][0][0] = new double[] {50.0, 56.0, 68.0};
+// Input order: [flow][THP][water ratio][gas ratio][ALQ].
+double[][][][][] bhp = new double[3][2][1][1][1];
+bhp[0][0][0][0][0] = 30.0;
+bhp[1][0][0][0][0] = 36.0;
+bhp[2][0][0][0][0] = 48.0;
+bhp[0][1][0][0][0] = 50.0;
+bhp[1][1][0][0][0] = 56.0;
+bhp[2][1][0][0][0] = 68.0;
 exporter.setTHPs(thp);
 exporter.setFlowRates(flowRates);
 exporter.setWaterCuts(new double[] {0.0});
@@ -477,9 +487,13 @@ exporter.exportVFPINJ("VFPINJ_GAS1.INC");
 
 <!-- optimization-example: 16 -->
 ```java
-// Legacy export-system writer emits a VFPPROD-formatted record.
-// It neither runs a pipeline nor generates a standard keyword named VFPEXP.
-exporter.exportVFPEXP("EXPORT_SYSTEM.INC");
+// The unsupported VFPEXP dialect fails before opening the output file.
+try {
+    exporter.exportVFPEXP("EXPORT_SYSTEM.INC");
+    throw new AssertionError("VFPEXP must reject unsupported export-system semantics");
+} catch (UnsupportedOperationException expected) {
+    logger.info("Use process capacity CSV/JSON for facility screening");
+}
 ```
 
 ### What-If Studies: Modifying Constraints for VFP Scenarios
@@ -634,7 +648,7 @@ ProcessOptimizationEngine.OptimizationResult result =
 | `findMaximumThroughput(pin, pout, minQ, maxQ)`               | `OptimizationResult`         | Find max flow for pressure constraints     |
 | `findRequiredInletPressure(outletP, flowRate)`               | `OptimizationResult`         | Find inlet pressure for target flow        |
 | `findBottleneckEquipment()`                                  | `String`                     | Get name of bottleneck equipment           |
-| `generateLiftCurve(pressures, temperaturesK, waterCuts, gors)`         | `LiftCurveData`              | Generate screening throughput samples; validate composition support      |
+| `generateCapacityScreening(pressures, temperaturesK)`         | `LiftCurveData`              | Fixed-composition mass-throughput screening; no BHP or recombination      |
 | `analyzeSensitivity(flow, inletP, outletP)`                  | `SensitivityResult`          | Analyze flow sensitivity and margins       |
 | `calculateShadowPrices(flow, inletP, outletP)`               | `Map<String, Double>`        | Calculate heuristic constraint-relief indicators         |
 | `createFlowRateOptimizer()`                                  | `FlowRateOptimizer`          | Create integrated FlowRateOptimizer        |

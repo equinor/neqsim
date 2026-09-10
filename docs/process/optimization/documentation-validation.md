@@ -104,10 +104,13 @@ constraints. An unrated compressor map, a disabled constraint or a surrogate obj
 does not establish physical plant capacity. Full-field optimization is a staged choke
 and arrival-pressure search, not proof of a global joint optimum.
 
-Legacy VFP routines have distinct roles: supplied-BHP formatting, fixed-composition
-capacity screening and well/reservoir calculations must not be conflated. Unsupported
-composition axes, unit conventions and deck qualification are tracked in
-[#3600](https://github.com/equinor/neqsim/issues/3600). The simplified network choke's
+VFP routines have separate contracts for supplied-BHP formatting, fixed-composition
+capacity screening and independently qualified well calculations. The
+[export contract](vfp-export-contract.md) implements #3600: complete indexed axes,
+METRIC/FIELD conversion, strict infeasible-point rejection and failure of unsupported
+process-to-BHP mappings. Independent slash-record parsing and authored fixtures cover the
+deck representation; they do not constitute execution of a reservoir simulator or
+validation of a physical well model. The simplified network choke's
 critical-flow response is tracked in [#3601](https://github.com/equinor/neqsim/issues/3601).
 Autosized compressor-map replay and broader nonlinear solver robustness remain part of
 the [plant optimization roadmap](https://github.com/equinor/neqsim/issues/3154). These
