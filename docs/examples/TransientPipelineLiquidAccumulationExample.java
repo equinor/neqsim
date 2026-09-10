@@ -1,12 +1,12 @@
 package examples;
 
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Example demonstrating transient liquid (water and oil) accumulation in a long subsea pipeline
@@ -32,7 +32,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TransientPipelineLiquidAccumulationExample {
   private static final Logger logger =
       LogManager.getLogger(TransientPipelineLiquidAccumulationExample.class);
-
 
   /**
    * Main entry point.
@@ -106,12 +105,12 @@ public class TransientPipelineLiquidAccumulationExample {
     double[] flowRates = {50.0, 100.0, 150.0};
 
     logger.info("Pipeline Configuration:");
-    logger.info("  Length:           " + (pipeLength / 1000) + " km");
-    logger.info("  Diameter:         " + (pipeDiameter * 1000) + " mm");
-    logger.info("  Inlet temperature:" + inletTemperature + " °C");
-    logger.info("  Inlet pressure:   " + inletPressure + " bara");
-    logger.info("  Outlet pressure:  " + outletPressure + " bara");
-    logger.info("  Number of sections: " + numberOfSections);
+    logger.info("  Length:           {} km", pipeLength / 1000);
+    logger.info("  Diameter:         {} mm", pipeDiameter * 1000);
+    logger.info("  Inlet temperature:{} °C", inletTemperature);
+    logger.info("  Inlet pressure:   {} bara", inletPressure);
+    logger.info("  Outlet pressure:  {} bara", outletPressure);
+    logger.info("  Number of sections: {}", numberOfSections);
     logger.info("");
 
     // Create terrain profile with some undulations
@@ -141,9 +140,9 @@ public class TransientPipelineLiquidAccumulationExample {
 
       // Debug: show phases for first flow rate
       if (flowRate == flowRates[0]) {
-        logger.info("Inlet fluid phases: " + inlet.getFluid().getNumberOfPhases());
+        logger.info("Inlet fluid phases: {}", inlet.getFluid().getNumberOfPhases());
         for (int p = 0; p < inlet.getFluid().getNumberOfPhases(); p++) {
-          logger.info("  Phase " + p + ": " + inlet.getFluid().getPhase(p).getPhaseTypeName());
+          logger.info("  Phase {}: {}", p, inlet.getFluid().getPhase(p).getPhaseTypeName());
         }
         logger.info("");
       }
