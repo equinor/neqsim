@@ -2188,10 +2188,17 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void orderByDensity();
 
   /**
-   * phaseToSystem.
+   * Creates an independent system containing the component inventory of the selected physical phase.
    *
-   * @param phaseNumber a int
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * <p>
+   * The result retains the source model, mixing rule, multiphase and solid-check settings. Every configured phase
+   * storage slot is initialized with the extracted inventory, including inactive slots that may be reused by a later
+   * flash. Extracting gas after a solid flash therefore excludes the removed solids without disabling subsequent
+   * solid-equilibrium calculations. The source system is unchanged.
+   * </p>
+   *
+   * @param phaseNumber logical phase index in the source system
+   * @return a single-phase system initialized with the selected phase type and inventory
    */
   public SystemInterface phaseToSystem(int phaseNumber);
 
@@ -2213,10 +2220,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public SystemInterface phaseToSystem(PhaseInterface newPhase);
 
   /**
-   * phaseToSystem.
+   * Extracts a named phase using the inventory and configuration semantics of {@link #phaseToSystem(int)}.
    *
-   * @param phaseName a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @param phaseName phase name, for example "gas", "oil" or "aqueous"
+   * @return an independent extracted system; falls back to phase zero if the name is not found
    */
   public SystemInterface phaseToSystem(String phaseName);
 
