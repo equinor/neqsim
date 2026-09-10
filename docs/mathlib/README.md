@@ -1,329 +1,249 @@
 ---
 title: Mathematical Library Package
-description: The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.
+description: Executable polynomial, root finding, interpolation, differentiation, and linear algebra examples using NeqSim and its numerical dependencies.
 ---
 
-The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.
+NeqSim's mathematical package provides specialized utilities. General-purpose
+solvers and interpolation are also available through its Apache Commons Math 3
+dependency. Each Java block below is independent: place the imports at the top
+of a file and the statements inside a method. The examples are compiled and
+executed directly from this page by `MathAndExpanderDocumentationTest`.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Package Structure](#package-structure)
 - [Nonlinear Solvers](#nonlinear-solvers)
+- [Numerical Derivatives](#numerical-derivatives)
 - [General Math](#general-math)
+- [Matrix Operations](#matrix-operations)
 - [Usage Examples](#usage-examples)
-
----
+- [Optimization](#optimization)
 
 ## Overview
 
 **Location:** `neqsim.mathlib`
 
-**Purpose:**
-- Nonlinear equation solving
-- Matrix operations
-- Numerical differentiation
-- Root finding algorithms
-- Optimization routines
-
----
+The package does not expose the previously documented `NewtonRaphson`,
+`Brent`, `Bisection`, `SplineInterpolation`, or `GeneralMath` classes.
+The existing polynomial solver's name is spelled `NewtonRhapson`.
 
 ## Package Structure
 
-```
-mathlib/
-├── generalmath/                  # General mathematical utilities
-│   ├── GeneralMath.java          # Common math functions
-│   ├── TDMAsolve.java            # Tridiagonal matrix solver
-│   └── SplineInterpolation.java  # Spline interpolation
-│
-└── nonlinearsolver/              # Nonlinear equation solvers
-    ├── NonLinearSolver.java      # Base solver
-    ├── NewtonRaphson.java        # Newton-Raphson method
-    ├── Brent.java                # Brent's method
-    ├── Bisection.java            # Bisection method
-    └── NumericalDerivative.java  # Numerical derivatives
-```
-
----
+| Package | Implemented classes |
+|---|---|
+| `neqsim.mathlib.generalmath` | `TDMAsolve`, `BandedLinearSystemSolver` |
+| `neqsim.mathlib.nonlinearsolver` | `NewtonRhapson`, `SysNewtonRhapson`, `NumericalDerivative`, `NumericalIntegration` |
 
 ## Nonlinear Solvers
 
 ### Newton-Raphson Method
 
-Iterative method for finding roots of functions.
+Call `setOrder` before `setConstants`. Polynomial coefficients are in
+**descending** powers. The initial guess is passed to `solve`; the class
+does not accept a function object or expose `setTolerance`.
 
-$$x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}$$
-
+<!-- doc-test: math-newton -->
 ```java
-import neqsim.mathlib.nonlinearsolver.NewtonRaphson;
+import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 
-// Define function to solve: f(x) = x² - 2 (find √2)
-Function<Double, Double> f = x -> x * x - 2.0;
-Function<Double, Double> df = x -> 2.0 * x;
-
-NewtonRaphson solver = new NewtonRaphson();
-solver.setFunction(f);
-solver.setDerivative(df);
-solver.setInitialGuess(1.0);
-solver.setTolerance(1e-10);
+NewtonRhapson solver = new NewtonRhapson();
+solver.setOrder(2);
+solver.setConstants(new double[] {1.0, 0.0, -2.0}); // x² - 2
 solver.setMaxIterations(100);
-
-double root = solver.solve();
-System.out.println("√2 = " + root);  // 1.4142135623...
+double root = solver.solve(1.0); // approximately 1.41421356237
+double residual = Math.abs(solver.funkValue(root));
 ```
+
+Check the residual after solving; a returned number alone does not establish
+convergence.
 
 ### Brent's Method
 
-Robust root-finding combining bisection, secant, and inverse quadratic interpolation.
+Use the Commons Math API for general bracketed root finding. Endpoints must
+straddle a root.
 
+<!-- doc-test: math-brent -->
 ```java
-import neqsim.mathlib.nonlinearsolver.Brent;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.solvers.BrentSolver;
 
-Function<Double, Double> f = x -> x * x * x - x - 2.0;
-
-Brent solver = new Brent();
-solver.setFunction(f);
-solver.setBracket(1.0, 2.0);  // Root is in [1, 2]
-solver.setTolerance(1e-10);
-
-double root = solver.solve();
-System.out.println("Root: " + root);
+UnivariateFunction function = x -> x * x * x - x - 2.0;
+BrentSolver solver = new BrentSolver(1.0e-10);
+double root = solver.solve(100, function, 1.0, 2.0); // approximately 1.5213797068
 ```
 
 ### Bisection Method
 
-Simple but robust root-finding.
+For `sin(x) - 0.5`, use `[0, π/2]` to find `π/6`. The formerly shown
+`[0, π]` interval has the same sign at both endpoints and is not a valid
+bracket, even though it contains two roots.
 
+<!-- doc-test: math-bisection -->
 ```java
-import neqsim.mathlib.nonlinearsolver.Bisection;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.solvers.BisectionSolver;
 
-Function<Double, Double> f = x -> Math.sin(x) - 0.5;
-
-Bisection solver = new Bisection();
-solver.setFunction(f);
-solver.setBracket(0.0, Math.PI);
-solver.setTolerance(1e-8);
-
-double root = solver.solve();
-System.out.println("arcsin(0.5) = " + root);  // π/6 ≈ 0.5236
+UnivariateFunction function = x -> Math.sin(x) - 0.5;
+BisectionSolver solver = new BisectionSolver(1.0e-10);
+double root = solver.solve(100, function, 0.0, Math.PI / 2.0);
 ```
-
----
 
 ## Numerical Derivatives
 
 ### Forward Difference
 
-$$f'(x) \approx \frac{f(x+h) - f(x)}{h}$$
+$$f'(x) \approx \frac{f(x+h)-f(x)}{h}$$
 
 ### Central Difference
 
-$$f'(x) \approx \frac{f(x+h) - f(x-h)}{2h}$$
+$$f'(x) \approx \frac{f(x+h)-f(x-h)}{2h}$$
 
+NeqSim's `NumericalDerivative` is a static thermodynamic helper. It does not
+provide the previously shown general `setFunction` or `centralDifference`
+API. For a scalar function, write the finite difference explicitly:
+
+<!-- doc-test: math-derivative -->
 ```java
-import neqsim.mathlib.nonlinearsolver.NumericalDerivative;
+import java.util.function.DoubleUnaryOperator;
 
-Function<Double, Double> f = x -> Math.exp(x);
-
-NumericalDerivative deriv = new NumericalDerivative();
-deriv.setFunction(f);
-deriv.setStepSize(1e-6);
-
-double df = deriv.centralDifference(1.0);
-System.out.println("d/dx(e^x) at x=1: " + df);  // ≈ e ≈ 2.718
+DoubleUnaryOperator function = Math::exp;
+double x = 1.0;
+double h = 1.0e-5;
+double derivative = (function.applyAsDouble(x + h) - function.applyAsDouble(x - h))
+    / (2.0 * h); // approximately e
 ```
 
----
+Choose a step appropriate to the variable scale: small steps amplify roundoff,
+while large steps increase truncation error.
 
 ## General Math
 
 ### TDMAsolve (Thomas Algorithm)
 
-Efficient solver for tridiagonal systems.
+This solves `a[i] x[i-1] + b[i] x[i] + c[i] x[i+1] = d[i]`. Arrays must have
+equal lengths, with unused endpoints `a[0] = c[n-1] = 0`. The algorithm does
+not pivot; its elimination pivots must remain nonzero.
 
-$$\begin{bmatrix} b_1 & c_1 \\ a_2 & b_2 & c_2 \\ & \ddots & \ddots & \ddots \\ & & a_{n-1} & b_{n-1} & c_{n-1} \\ & & & a_n & b_n \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_{n-1} \\ x_n \end{bmatrix} = \begin{bmatrix} d_1 \\ d_2 \\ \vdots \\ d_{n-1} \\ d_n \end{bmatrix}$$
-
+<!-- doc-test: math-tdma -->
 ```java
 import neqsim.mathlib.generalmath.TDMAsolve;
 
-// Coefficients
-double[] a = {0, 1, 1, 1};    // Lower diagonal
-double[] b = {4, 4, 4, 4};    // Main diagonal
-double[] c = {1, 1, 1, 0};    // Upper diagonal
-double[] d = {5, 5, 5, 5};    // Right-hand side
-
-double[] x = TDMAsolve.solve(a, b, c, d);
+double[] a = {0.0, 1.0, 1.0, 1.0};
+double[] b = {4.0, 4.0, 4.0, 4.0};
+double[] c = {1.0, 1.0, 1.0, 0.0};
+double[] d = {5.0, 5.0, 5.0, 5.0};
+double[] solution = TDMAsolve.solve(a, b, c, d);
 ```
 
 ### Spline Interpolation
 
-Cubic spline interpolation for smooth curves.
+Commons Math's natural cubic spline can interpolate inside the tabulated range.
+Zero endpoint curvature means that it does not reproduce every quadratic
+exactly between knots.
 
+<!-- doc-test: math-spline -->
 ```java
-import neqsim.mathlib.generalmath.SplineInterpolation;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
 double[] xData = {0, 1, 2, 3, 4, 5};
-double[] yData = {0, 1, 4, 9, 16, 25};  // y = x²
-
-SplineInterpolation spline = new SplineInterpolation(xData, yData);
-
-// Interpolate at any point
-double y = spline.interpolate(2.5);  // ≈ 6.25
+double[] yData = {0, 1, 4, 9, 16, 25};
+PolynomialSplineFunction spline = new SplineInterpolator().interpolate(xData, yData);
+double valueAtKnot = spline.value(2.0); // 4.0
+double interpolated = spline.value(2.5); // approximately 6.26316
 ```
 
 ### Common Math Functions
 
+Use Java's `Math` and Commons Math. Here polynomial coefficients are in
+**ascending** powers, unlike `NewtonRhapson.setConstants`.
+
+<!-- doc-test: math-functions -->
 ```java
-import neqsim.mathlib.generalmath.GeneralMath;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 
-// Safe logarithm (handles near-zero)
-double logVal = GeneralMath.safeLog(x);
-
-// Polynomial evaluation
-double[] coeffs = {1, 2, 3};  // 1 + 2x + 3x²
-double polyVal = GeneralMath.polynomial(x, coeffs);
-
-// Linear interpolation
-double y = GeneralMath.linearInterpolate(x, x1, y1, x2, y2);
+double logValue = Math.log(2.0);
+PolynomialFunction polynomial = new PolynomialFunction(new double[] {1.0, 2.0, 3.0});
+double polynomialValue = polynomial.value(2.0); // 17.0
+double linearValue = new LinearInterpolator()
+    .interpolate(new double[] {1.0, 3.0}, new double[] {2.0, 6.0})
+    .value(2.0); // 4.0
 ```
 
----
+Check logarithm domains explicitly. Clipping negative arguments would conceal
+a modeling error.
 
 ## Matrix Operations
 
-For matrix operations, NeqSim uses external libraries:
-- **EJML** (Efficient Java Matrix Library)
-- **Apache Commons Math**
-- **JAMA**
+NeqSim uses EJML, Apache Commons Math, and JAMA. For example, solve `A x = b`
+with EJML:
 
+<!-- doc-test: math-matrix -->
 ```java
 import org.ejml.simple.SimpleMatrix;
 
-// Matrix multiplication
-SimpleMatrix A = new SimpleMatrix(new double[][] {
-    {1, 2}, {3, 4}
-});
-SimpleMatrix B = new SimpleMatrix(new double[][] {
-    {5, 6}, {7, 8}
-});
-SimpleMatrix C = A.mult(B);
-
-// Solve linear system Ax = b
-double[][] bData = { {1}, {2} };
-SimpleMatrix b = new SimpleMatrix(bData);
-SimpleMatrix x = A.solve(b);
-
-// Eigenvalue decomposition
-SimpleEVD evd = A.eig();
+SimpleMatrix matrix = new SimpleMatrix(new double[][] {{1.0, 2.0}, {3.0, 4.0}});
+SimpleMatrix rhs = new SimpleMatrix(new double[][] {{1.0}, {2.0}});
+SimpleMatrix solution = matrix.solve(rhs); // [0.0, 0.5]
+double residual = matrix.mult(solution).minus(rhs).normF();
 ```
 
----
+## Usage Examples
 
-## Usage in NeqSim
+### Usage in NeqSim
 
-### Flash Calculations
-
-Newton-Raphson used in flash convergence:
-
-```java
-// Simplified flash iteration
-while (error > tolerance) {
-    // Calculate fugacities
-    double[] fugL = calculateLiquidFugacity();
-    double[] fugV = calculateVaporFugacity();
-    
-    // Newton-Raphson update for K-values
-    for (int i = 0; i < nc; i++) {
-        K[i] = K[i] * fugL[i] / fugV[i];
-    }
-    
-    // Rachford-Rice equation
-    beta = solveRachfordRice(K, z);
-    error = calculateError();
-}
-```
-
-### Phase Envelope
-
-Continuation methods for phase boundary tracking:
-
-```java
-// Predictor-corrector method
-while (pressure < maxPressure) {
-    // Predict next point
-    double[] predicted = predictNextPoint(direction, stepSize);
-    
-    // Correct using Newton-Raphson
-    double[] corrected = correctPoint(predicted);
-    
-    // Update direction for next step
-    direction = updateDirection(corrected);
-}
-```
-
----
+Flash and phase-envelope algorithms combine equilibrium models, stability
+checks, and specialized solvers. Use the public `ThermodynamicOperations`
+workflows in the [flash guide](../thermo/flash_calculations_guide).
+Illustrative fugacity-update pseudocode is not a standalone flash solver.
 
 ## Optimization
 
 ### Minimization
 
+Commons Math supports bounded scalar minimization:
+
+<!-- doc-test: math-minimum -->
 ```java
-// Golden section search for minimum
-Function<Double, Double> f = x -> (x - 2) * (x - 2) + 1;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.SearchInterval;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 
-double a = 0, b = 5;
-double tolerance = 1e-6;
-double phi = (1 + Math.sqrt(5)) / 2;
-
-while ((b - a) > tolerance) {
-    double x1 = b - (b - a) / phi;
-    double x2 = a + (b - a) / phi;
-    
-    if (f.apply(x1) < f.apply(x2)) {
-        b = x2;
-    } else {
-        a = x1;
-    }
-}
-double minimum = (a + b) / 2;  // ≈ 2.0
+BrentOptimizer optimizer = new BrentOptimizer(1.0e-10, 1.0e-12);
+UnivariatePointValuePair optimum = optimizer.optimize(
+    new MaxEval(100),
+    new UnivariateObjectiveFunction(x -> (x - 2.0) * (x - 2.0) + 1.0),
+    GoalType.MINIMIZE,
+    new SearchInterval(0.0, 5.0));
+double minimumLocation = optimum.getPoint(); // 2.0
+double minimumValue = optimum.getValue(); // 1.0
 ```
 
 ### Multidimensional Optimization
 
-For parameter fitting, NeqSim uses:
-- Levenberg-Marquardt
-- Simplex (Nelder-Mead)
-- BFGS
-
----
+See [process optimization](../process/optimization/OPTIMIZATION_OVERVIEW) for
+equipment constraints and process evaluators, and [statistics](../statistics/)
+for parameter estimation.
 
 ## Convergence Criteria
 
-### Absolute Tolerance
-
-$$|x_{n+1} - x_n| < \epsilon$$
-
-### Relative Tolerance
-
-$$\frac{|x_{n+1} - x_n|}{|x_n|} < \epsilon$$
-
-### Function Value Tolerance
-
-$$|f(x_n)| < \epsilon$$
-
----
+Check residuals, bounds, finite values, and problem-scaled tolerances rather
+than only the change between iterations. For linear systems check `||A x-b||`;
+for physical models also check conservation and admissible states.
 
 ## Best Practices
 
-1. **Choose appropriate solver** - Newton for fast convergence, Brent for robustness
-2. **Provide good initial guess** - Improves convergence
-3. **Set reasonable tolerances** - Balance accuracy vs speed
-4. **Check convergence** - Verify solver actually converged
-5. **Handle edge cases** - Division by zero, negative values for log
-
----
+1. Choose a solver whose assumptions match the problem.
+2. Supply valid brackets or reasonable initial guesses.
+3. Check residuals independently.
+4. Handle singular systems and invalid function domains explicitly.
 
 ## Related Documentation
 
-- [Flash Calculations](../thermo/flash_calculations_guide) - Flash solver internals
-- [Physical Properties](../physical_properties/) - Property correlations
+- [Flash Calculations](../thermo/flash_calculations_guide)
+- [Physical Properties](../physical_properties/)

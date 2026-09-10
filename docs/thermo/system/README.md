@@ -150,13 +150,25 @@ fluid.setMixingRule("classic");
 
 ### ePCSAFT (Electrolyte PC-SAFT)
 
-```java
-import neqsim.thermo.system.SystemElectrolytePCSAFT;
+`SystemElectrolytePCSAFT` is not an implemented NeqSim system class. For an
+implemented electrolyte model, the following example uses **electrolyte CPA**;
+it is a different equation of state, not an ePC-SAFT calculation. Amounts are
+mol, with equal sodium and chloride amounts for charge balance.
 
-SystemElectrolytePCSAFT brine = new SystemElectrolytePCSAFT(298.15, 1.0);
+<!-- doc-test: thermo-electrolyte -->
+```java
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemElectrolyteCPAstatoil brine = new SystemElectrolyteCPAstatoil(298.15, 10.01325);
+brine.addComponent("methane", 0.1);
 brine.addComponent("water", 1.0);
-brine.addComponent("Na+", 0.1);
-brine.addComponent("Cl-", 0.1);
+brine.addComponent("Na+", 0.001);
+brine.addComponent("Cl-", 0.001);
+brine.setMixingRule(10);
+new ThermodynamicOperations(brine).TPflash();
+brine.initProperties();
+double aqueousDensity = brine.getPhase("aqueous").getDensity("kg/m3");
 ```
 
 ---
@@ -217,13 +229,22 @@ gas.addComponent("propane", 0.04);
 
 Universal Mixing Rule with PR EoS.
 
-```java
-import neqsim.thermo.system.SystemUMRPRU;
+Use the implemented `SystemUMRPRUEos` class and select its UNIFAC mixing rule
+explicitly. Constructor temperature is in K and pressure is in bara.
 
-SystemUMRPRU lng = new SystemUMRPRU(110.0, 1.0);
+<!-- doc-test: thermo-umr -->
+```java
+import neqsim.thermo.system.SystemUMRPRUEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemUMRPRUEos lng = new SystemUMRPRUEos(110.0, 1.0);
 lng.addComponent("methane", 0.92);
 lng.addComponent("ethane", 0.05);
 lng.addComponent("propane", 0.03);
+lng.setMixingRule("HV", "UNIFAC_UMRPRU");
+new ThermodynamicOperations(lng).TPflash();
+lng.initProperties();
+double density = lng.getDensity("kg/m3");
 ```
 
 ---

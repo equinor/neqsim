@@ -18,7 +18,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 - [Two-Phase Mass Transfer](#two-phase-mass-transfer)
 - [Two-Phase Heat Transfer](#two-phase-heat-transfer)
 - [Reactive Mass Transfer](#reactive-mass-transfer)
-- [Usage Examples](#usage-examples)
+- [Usage Examples](#single-phase-pipe-flow)
 
 ## Related Documentation
 
@@ -101,76 +101,16 @@ Where:
 
 ## Package Structure
 
-```
-fluidmechanics/
-├── FluidMech.java                    # Package marker
-│
-├── flowsystem/                       # Flow system definitions
-│   ├── FlowSystem.java               # Base flow system
-│   ├── FlowSystemInterface.java      # Interface
-│   │
-│   ├── onephaseflowsystem/           # Single-phase systems
-│   │   ├── OnePhaseFlowSystem.java
-│   │   └── pipeflowsystem/
-│   │       └── OnePhasePipeFlowSystem.java
-│   │
-│   └── twophaseflowsystem/           # Two-phase systems
-│       ├── TwoPhaseFlowSystem.java
-│       └── pipeflowsystem/
-│           ├── TwoPhasePipeFlowSystem.java
-│           └── stratifiedflowsystem/
-│               └── StratifiedFlowSystem.java
-│
-├── flownode/                         # Flow nodes
-│   ├── FlowNode.java                 # Base node
-│   ├── FlowNodeInterface.java        # Interface
-│   ├── FlowNodeSelector.java         # Node selection
-│   │
-│   ├── onephasenode/                 # Single-phase nodes
-│   │   ├── OnePhaseFlowNode.java
-│   │   └── onephasepipeflownode/
-│   │       └── OnePhasePipeFlowNode.java
-│   │
-│   ├── twophasenode/                 # Two-phase nodes
-│   │   ├── TwoPhaseFlowNode.java
-│   │   └── twophasepipeflownode/
-│   │       ├── TwoPhasePipeFlowNode.java
-│   │       ├── AnnularFlow.java
-│   │       ├── StratifiedFlow.java
-│   │       └── DropletFlow.java
-│   │
-│   ├── multiphasenode/               # Multi-phase nodes
-│   │   └── MultiPhaseFlowNode.java
-│   │
-│   └── fluidboundary/                # Boundary conditions
-│       ├── FluidBoundary.java
-│       └── InterphaseTransport.java
-│
-├── flowleg/                          # Pipe segments
-│   ├── FlowLeg.java
-│   └── FlowLegInterface.java
-│
-├── flowsolver/                       # Numerical solvers
-│   ├── FlowSolver.java
-│   ├── FlowSolverInterface.java
-│   ├── OnePhaseFlowSolver.java
-│   └── TwoPhaseFlowSolver.java
-│
-├── geometrydefinitions/              # Pipe geometry
-│   ├── GeometryDefinition.java
-│   ├── GeometryDefinitionInterface.java
-│   ├── pipe/
-│   │   └── PipeGeometry.java
-│   └── internalgeometry/
-│       └── InternalGeometry.java
-│
-└── util/                             # Utilities
-    ├── timeseries/
-    │   └── TimeSeries.java
-    └── fluidmechanicsvisualization/
-        └── flowsystemvisualization/
-            └── FlowSystemVisualization.java
-```
+| Package under `neqsim.fluidmechanics` | Current entry points |
+|---|---|
+| `flowsystem.onephaseflowsystem.pipeflowsystem` | `PipeFlowSystem` |
+| `flowsystem.twophaseflowsystem.twophasepipeflowsystem` | `TwoPhasePipeFlowSystem`, builder and `PipeFlowResult` |
+| `flownode.onephasenode.onephasepipeflownode` | `onePhasePipeFlowNode` |
+| `flownode.twophasenode.twophasepipeflownode` | `StratifiedFlowNode`, `AnnularFlow`, `DropletFlowNode` |
+| `geometrydefinitions.pipe` | `PipeData` |
+| `flownode.fluidboundary.heatmasstransfercalc` | `FluidBoundary`, `FluidBoundaryInterface` |
+| `flowsolver.onephaseflowsolver.onephasepipeflowsolver` | `OnePhaseFixedStaggeredGrid` |
+| `flowsolver.twophaseflowsolver.twophasepipeflowsolver` | `TwoPhaseFixedStaggeredGridSolver`, `MassTransferConfig` |
 
 ---
 
@@ -178,68 +118,119 @@ fluidmechanics/
 
 ### Single-Phase Pipe Flow
 
+The low-level class is `PipeFlowSystem`; its geometry uses `PipeData`. Flow rate
+and inlet thermodynamics belong to the fluid, while length/elevation/thermal
+boundary arrays belong to the flow system. Arrays below describe the two ends
+of one leg. This complete steady, isothermal gas example is compiled and run
+by `PipelineGuideDocumentationTest`.
+
+<!-- pipeline-doc-test: single-phase -->
 ```java
-import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
-import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.OnePhasePipeFlowSystem;
-import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeGeometry;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
+import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Create fluid
-SystemInterface gas = new SystemSrkEos(300.0, 50.0);
+Logger logger = LogManager.getLogger("SinglePhaseFlowExample");
+SystemSrkEos gas = new SystemSrkEos(288.15, 70.0); // K, bara
 gas.addComponent("methane", 0.95);
-gas.addComponent("ethane", 0.05);
+gas.addComponent("nitrogen", 0.05);
 gas.setMixingRule("classic");
+gas.setTotalFlowRate(50.0, "kg/sec");
+gas.init(0);
+gas.initProperties();
 
-// Create pipe geometry
-PipeGeometry pipe = new PipeGeometry("Pipeline");
-pipe.setDiameter(0.5, "m");        // 0.5 m inner diameter
-pipe.setLength(10000.0, "m");      // 10 km length
-pipe.setRoughness(0.00005, "m");   // Pipe roughness
+PipeFlowSystem flow = new PipeFlowSystem();
+flow.setInletThermoSystem(gas);
+flow.setNumberOfLegs(1);
+flow.setNumberOfNodesInLeg(12);
+GeometryDefinitionInterface[] geometry = {
+    new PipeData(0.5, 1.0e-5), new PipeData(0.5, 1.0e-5)
+}; // Inner diameter and roughness, m
+flow.setEquipmentGeometry(geometry);
+flow.setLegHeights(new double[] {0.0, 0.0});
+flow.setLegPositions(new double[] {0.0, 15000.0}); // m
+flow.setLegOuterTemperatures(new double[] {288.15, 288.15}); // K
+flow.setLegWallHeatTransferCoefficients(new double[] {0.0, 0.0});
+flow.setLegOuterHeatTransferCoefficients(new double[] {0.0, 0.0});
+flow.createSystem();
+flow.init();
+flow.setFailOnNonConvergence(true);
+flow.solveSteadyState(1); // Isothermal hydraulic solve
 
-// Create flow system
-OnePhasePipeFlowSystem flowSystem = new OnePhasePipeFlowSystem();
-flowSystem.setInletFluid(gas);
-flowSystem.setGeometry(pipe);
-flowSystem.setInletPressure(50.0, "bara");
-flowSystem.setOutletPressure(40.0, "bara");
-flowSystem.setNumberOfNodes(100);
+int outletIndex = flow.getTotalNumberOfNodes() - 1;
+double outletPressure = flow.getNode(outletIndex).getBulkSystem().getPressure();
+logger.info("Outlet: {} bara; pressure drop: {} bar", outletPressure,
+    gas.getPressure() - outletPressure);
+logger.info("Outlet velocity: {} m/s", flow.getNode(outletIndex).getVelocity());
 
-// Initialize and solve
-flowSystem.init();
-flowSystem.solveTransient(1);
-
-// Get results
-double pressureDrop = flowSystem.getPressureDrop();
-double velocity = flowSystem.getFlowVelocity();
+// Solver type 1 uses face velocities and the upstream cell's EOS density.
+double inletMassFlux = flow.getNode(1).getVelocityIn().doubleValue()
+    * flow.getNode(0).getGeometry().getArea()
+    * flow.getNode(0).getBulkSystem().getPhase(0).getDensity();
+double outletMassFlux = flow.getNode(outletIndex).getVelocityIn().doubleValue()
+    * flow.getNode(outletIndex - 1).getGeometry().getArea()
+    * flow.getNode(outletIndex - 1).getBulkSystem().getPhase(0).getDensity();
+logger.info("Finite-volume boundary flows: inlet={} kg/s; outlet={} kg/s",
+    inletMassFlux, outletMassFlux);
+logger.info("Reported outlet node flow: {} kg/s",
+    flow.getNode(outletIndex).getBulkSystem().getFlowRate("kg/sec"));
+logger.info("Convergence: {}", flow.getConvergenceReport().getMessage());
 ```
+
+Expect positive outlet pressure below 70 bara and a converged hydraulic solve.
+This example assumes a single gas phase throughout. Solver type `1` does not
+solve a cooling-pipeline energy balance. Inventory-residual diagnostics in the
+convergence report are only defined for transient calculations.
+
+**Flow reporting limitation:** for this 12-cell case, the current outlet node
+reports approximately 49.893754 kg/s, a 0.21249% difference from the specified
+50 kg/s feed. The finite-volume inlet and outlet boundary fluxes are both
+approximately 49.885716 kg/s and agree to about 2 × 10⁻¹² relative. Thus the
+node-reported difference is not evidence of global finite-volume mass loss.
+The distinction arises from the staggered face/cell layout and the solver's
+EOS density (`getPhase(0).getDensity()`), versus the physical-property density
+used when initializing/reporting node flow. The boundary flux also differs
+from the specified feed; account for that consistency limitation when
+connecting this low-level model to other equipment.
+
+The regression independently reconstructs and compares the two boundary
+fluxes using the solver's equation tolerance. It does not require the current
+node-flow discrepancy to remain present.
 
 ### Two-Phase Pipe Flow
 
 #### Simplified API (Recommended)
 
+This complete short-pipe example uses the factory and structured result API.
+The component amounts are in mol/s (0.1 mol/s methane and 0.05 mol/s water)
+and supply an explicit inlet flow. The phase indices seed the initial
+condition; the model determines the subsequent phase state. The short length
+keeps this an API demonstration, not a long-pipeline qualification.
+
+<!-- pipeline-doc-test: two-phase-factory -->
 ```java
-import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.*;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem;
+import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.PipeFlowResult;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create two-phase fluid
-SystemInterface fluid = new SystemSrkEos(300.0, 30.0);
-fluid.addComponent("methane", 0.80, 0);    // Gas phase
-fluid.addComponent("n-decane", 0.20, 1);   // Liquid phase
-fluid.createDatabase(true);
-fluid.setMixingRule(2);
-
-// Create horizontal pipe using factory method
-TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.15, 1000, 50);
-
-// Solve with mass transfer and get structured results
+Logger logger = LogManager.getLogger("TwoPhaseFlowExample");
+SystemInterface fluid = new SystemSrkEos(295.3, 5.0); // K, bara
+fluid.addComponent("methane", 0.1, 0); // mol/s, initial gas phase
+fluid.addComponent("water", 0.05, 1); // mol/s, initial liquid phase
+fluid.setMixingRule("classic");
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.025, 3.0, 10);
 PipeFlowResult result = pipe.solveWithMassTransfer();
-
-// Access results
-System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
-System.out.println("Outlet temperature: " + result.getOutletTemperature() + " K");
-System.out.println(result);  // Formatted summary
-
-// Export for plotting (e.g., in Jupyter with neqsim-python)
+logger.info("Pressure drop: {} bar; outlet temperature: {} K",
+    result.getTotalPressureDrop(), result.getOutletTemperature());
 Map<String, double[]> data = result.toMap();
+logger.info("Returned profile fields: {}", data.keySet());
 ```
 
 #### Factory Methods
@@ -254,7 +245,10 @@ Map<String, double[]> data = result.toMap();
 
 #### Builder Pattern (Full Control)
 
+This is an alternative configuration using the `fluid` defined above.
+
 ```java
+import neqsim.fluidmechanics.flownode.FlowPattern;
 // For advanced configurations, use the builder
 TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .withFluid(fluid)
@@ -290,11 +284,11 @@ Flow nodes discretize the pipe and calculate local conditions.
 
 | Regime | Class | Description |
 |--------|-------|-------------|
-| Stratified | `StratifiedFlow` | Separated gas-liquid layers |
+| Stratified | `StratifiedFlowNode` | Separated gas-liquid layers |
 | Annular | `AnnularFlow` | Liquid film on wall, gas core |
-| Droplet/Mist | `DropletFlow` | Liquid droplets in gas |
-| Slug | `SlugFlow` | Intermittent gas-liquid slugs |
-| Bubble | `BubbleFlow` | Gas bubbles in liquid |
+| Droplet/Mist | `DropletFlowNode` | Liquid droplets in gas |
+| Slug | `SlugFlowNode` | Intermittent gas-liquid slugs |
+| Bubble | `BubbleFlowNode` | Gas bubbles in liquid |
 
 ---
 
@@ -333,12 +327,12 @@ node.getFluidBoundary().setMassTransferCalc(true);
 node.getFluidBoundary().setHeatTransferCalc(true);
 
 // Enable thermodynamic corrections (activity coefficients)
-node.getFluidBoundary().setThermodynamicCorrections(0, true);  // Gas phase
-node.getFluidBoundary().setThermodynamicCorrections(1, true);  // Liquid phase
+node.getFluidBoundary().useThermodynamicCorrections(true, 0);  // Gas phase
+node.getFluidBoundary().useThermodynamicCorrections(true, 1);  // Liquid phase
 
 // Enable finite flux corrections (Stefan flow)
-node.getFluidBoundary().setFiniteFluxCorrection(0, true);
-node.getFluidBoundary().setFiniteFluxCorrection(1, true);
+node.getFluidBoundary().useFiniteFluxCorrection(true, 0);
+node.getFluidBoundary().useFiniteFluxCorrection(true, 1);
 ```
 
 ---
@@ -437,7 +431,9 @@ Where $D_{ij}$ is the binary diffusion coefficient calculated from:
 
 For multicomponent systems, the mass transfer coefficients form a matrix $[k]$:
 
-```java
+The following is schematic matrix assembly, not a callable public method.
+
+```text
 // In KrishnaStandartFilmModel
 public double calcMassTransferCoefficients(int phaseNum) {
     int n = getNumberOfComponents() - 1;
@@ -540,15 +536,10 @@ Where $\bar{H}_j$ is the partial molar enthalpy of component $j$.
 
 ### Wall Heat Transfer in Two-Phase Flow
 
-For heat transfer to the pipe wall in two-phase flow:
-
-```java
-// Set overall heat transfer coefficient
-pipe.setOverallHeatTransferCoefficient(10.0);  // W/(m²·K)
-
-// Or calculate from resistances
-// 1/U = 1/h_inner + ln(r_o/r_i)/(2πkL) + 1/h_outer
-```
+For `PipeBeggsAndBrills`, use `setHeatTransferCoefficient(double)` for an
+effective U-value and `setConstantSurfaceTemperature(double, String)` for the
+thermal boundary. See the [heat-transfer examples](heat_transfer) for full
+setup and the resistance equations with a consistent reference area.
 
 ---
 
@@ -576,7 +567,9 @@ $$Ha = \frac{\sqrt{k_{rxn} \cdot D_A}}{k_L}$$
 
 ### Reactive Film Model
 
-```java
+The following describes enhancement-factor application schematically.
+
+```text
 // ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel
 
 // Enhancement factor calculation
@@ -630,174 +623,82 @@ With temperature-dependent rate constants from experimental data.
 
 ## Transient Flow Simulation
 
-```java
-// Set up transient simulation
-flowSystem.init();
+For `PipeFlowSystem`, initialize and solve the steady flow first. Supply the
+boundary time series through `getTimeSeries().setTimes(double[])`,
+`setInletThermoSystems(SystemInterface[])`, and
+`setNumberOfTimeStepsInInterval(int)` before `solveTransient(1)`. The argument
+`1` selects the solver equations; it is **not** a one-second timestep.
+Repeated calls without a time series do not define a transient boundary event.
 
-double simulationTime = 3600.0;  // 1 hour
-double timeStep = 1.0;           // 1 second
-
-for (double t = 0; t < simulationTime; t += timeStep) {
-    flowSystem.solveTransient(1);
-
-    // Get time series data
-    TimeSeries data = flowSystem.getTimeSeries();
-
-    // Log results
-    for (int i = 0; i < flowSystem.getNumberOfNodes(); i++) {
-        double x = flowSystem.getNode(i).getPosition();
-        double P = flowSystem.getNode(i).getPressure();
-        double T = flowSystem.getNode(i).getTemperature();
-    }
-}
-```
-
----
+See [compositional tracking](../wiki/pipeline_transient_simulation) for
+complete time-series examples, conservation diagnostics, and supported boundary
+conditions.
 
 ## Heat Transfer
 
-```java
-// Set ambient conditions
-flowSystem.setSurroundingTemperature(288.15);  // K
+For a process-level cooling calculation, use the self-contained
+[heat-transfer example](heat_transfer#basic-heat-transfer-in-pipe-flow).
+It selects `PipeBeggsAndBrills`, explicitly defines mass flow and surrounding
+temperature, and uses the model's actual thermal API.
 
-// Set overall heat transfer coefficient
-pipe.setOverallHeatTransferCoefficient(10.0);  // W/(m²·K)
-
-// Or specify insulation
-pipe.setInsulationThickness(0.05, "m");
-pipe.setInsulationConductivity(0.04);  // W/(m·K)
-
-// Solve with heat transfer
-flowSystem.setCalculateHeatTransfer(true);
-flowSystem.solveTransient(1);
-
-// Get temperature profile
-for (int i = 0; i < flowSystem.getNumberOfNodes(); i++) {
-    double T = flowSystem.getNode(i).getTemperature();
-}
-```
-
----
+For the low-level flow system, set per-leg temperatures with
+`setLegOuterTemperatures(double[])` and wall/external coefficients with
+`setLegWallHeatTransferCoefficients(double[])` and
+`setLegOuterHeatTransferCoefficients(double[])` before creating the system.
+An energy-enabled solver is required for temperature evolution; the
+isothermal example above deliberately sets both coefficients to zero.
 
 ## Geometry Definitions
 
 ### Pipe Geometry
 
-```java
-PipeGeometry pipe = new PipeGeometry("Export Pipeline");
-
-// Dimensions
-pipe.setDiameter(0.4, "m");
-pipe.setLength(50000.0, "m");  // 50 km
-pipe.setRoughness(0.000045, "m");
-
-// Inclination profile (optional)
-double[] distances = {0, 10000, 20000, 30000, 40000, 50000};
-double[] elevations = {0, 50, 100, 80, 120, 150};
-pipe.setElevationProfile(distances, elevations);
-```
+`PipeData` describes inner diameter, roughness, and wall/environment properties.
+It does not contain the whole route; use the flow system's `setLegPositions`
+and `setLegHeights` for that. The single-phase example above shows the complete
+route/geometry setup.
 
 ### Internal Geometry
 
-For complex internal structures (coatings, deposits).
-
-```java
-InternalGeometry internal = new InternalGeometry();
-internal.setCoatingThickness(0.002, "m");
-internal.setWaxThickness(0.001, "m");
-pipe.setInternalGeometry(internal);
-```
-
----
+Use `PipeData.setCarbonSteelWall(thicknessM)` and
+`PipeData.addMineralWoolInsulation(thicknessM)` for material layers. The
+[heat-transfer guide](heat_transfer#usage-in-neqsim) demonstrates the distinction
+between wall resistance and the fluid-side coefficient. A deposit also changes
+the hydraulic flow area; assigning an insulation material is not a model of
+wax deposition kinetics.
 
 ## Flow Solver Options
 
-```java
-FlowSolverInterface solver = flowSystem.getSolver();
-
-// Solver settings
-solver.setMaxIterations(100);
-solver.setConvergenceCriteria(1e-6);
-solver.setRelaxationFactor(0.8);
-```
-
----
+`flow.getSolver()` returns the active `FlowSolverInterface` after solving.
+Solver-specific controls and convergence reports are documented by the actual
+solver class. For the single-phase example, `setFailOnNonConvergence(true)`
+and `getConvergenceReport()` expose whether the hydraulic solve succeeded.
+Do not assume generic `setMaxIterations`, `setConvergenceCriteria`, or
+`setRelaxationFactor` methods exist on that interface.
 
 ## Integration with Process Equipment
 
-```java
-import neqsim.process.equipment.pipeline.Pipeline;
-
-// Use Pipeline equipment in ProcessSystem
-Pipeline pipeline = new Pipeline("Export Line", inletStream);
-pipeline.setLength(50.0, "km");
-pipeline.setDiameter(0.5, "m");
-pipeline.setOutletPressure(30.0, "bara");
-pipeline.run();
-
-Stream outlet = pipeline.getOutletStream();
-double Tout = outlet.getTemperature("C");
-```
-
----
+Use `OnePhasePipeLine`, `MultiphasePipe`, or a correlation model such as
+`PipeBeggsAndBrills` for a `ProcessSystem`. `Pipeline` is their base class and
+should not be used as a substitute for selecting a physical model. See the
+[complete pipeline examples](../process/equipment/pipeline_simulation#examples)
+for inlet streams, real geometric setters, and outlet results.
 
 ## Visualization
 
-```java
-// Get display interface
-FlowSystemVisualizationInterface display = flowSystem.getDisplay();
-
-// Plot pressure profile
-display.plotPressureProfile();
-
-// Plot temperature profile
-display.plotTemperatureProfile();
-
-// Plot holdup (two-phase)
-display.plotHoldupProfile();
-```
-
----
+Read node values from `flow.getNode(i).getBulkSystem()` and iterate through
+`flow.getTotalNumberOfNodes()` in a low-level model. Process models such as
+`PipeBeggsAndBrills` provide pressure, temperature, and length profiles for
+plotting with the caller's charting tool. See the
+[profile example](../process/equipment/pipeline_simulation#example-2-subsea-multiphase-flowline)
+for units and array lengths.
 
 ## Example: Gas Pipeline
 
-```java
-// Natural gas pipeline simulation
-SystemInterface gas = new SystemSrkEos(288.15, 80.0);
-gas.addComponent("nitrogen", 0.02);
-gas.addComponent("CO2", 0.01);
-gas.addComponent("methane", 0.90);
-gas.addComponent("ethane", 0.05);
-gas.addComponent("propane", 0.02);
-gas.setMixingRule("classic");
-
-// Set flow rate
-gas.setTotalFlowRate(50.0, "MSm3/day");
-
-// Pipeline geometry
-PipeGeometry pipe = new PipeGeometry("Gas Export");
-pipe.setDiameter(0.9, "m");
-pipe.setLength(200000.0, "m");  // 200 km
-pipe.setRoughness(0.00004, "m");
-
-// Flow system
-OnePhasePipeFlowSystem gasFlow = new OnePhasePipeFlowSystem();
-gasFlow.setInletFluid(gas);
-gasFlow.setGeometry(pipe);
-gasFlow.setInletPressure(80.0, "bara");
-gasFlow.setNumberOfNodes(200);
-
-gasFlow.init();
-gasFlow.solveTransient(1);
-
-// Results
-System.out.println("Inlet pressure: " + gasFlow.getInletPressure() + " bar");
-System.out.println("Outlet pressure: " + gasFlow.getOutletPressure() + " bar");
-System.out.println("Pressure drop: " + gasFlow.getPressureDrop() + " bar");
-System.out.println("Flow velocity: " + gasFlow.getFlowVelocity() + " m/s");
-```
-
----
+The [single-phase example](#single-phase-pipe-flow) is a complete 15 km gas
+pipeline calculation using the low-level API. For a 100 km process-equipment
+example, use the [gas export pipeline](../process/equipment/pipeline_simulation#example-1-gas-export-pipeline).
+Both explicitly define the fluid, mixing rule, flow rate, inner diameter,
+roughness, calculation mode, and result units.
 
 ## Best Practices
 

@@ -1,11 +1,15 @@
 ---
 title: Expanders and Turbines
-description: Documentation for expansion equipment in NeqSim.
+description: Runnable gas expansion, power recovery, NGL separation, and shaft power accounting examples using the current NeqSim APIs.
 ---
 
-Documentation for expansion equipment in NeqSim.
+Gas expanders recover shaft work while reducing pressure. Each example below
+defines its fluid, flow, and equipment. Place its imports at file level and its
+statements inside a Java method. `MathAndExpanderDocumentationTest` compiles and
+runs the marked examples directly from this page.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Expander Class](#expander-class)
 - [Turboexpander](#turboexpander)
@@ -13,185 +17,105 @@ Documentation for expansion equipment in NeqSim.
 - [Compander Systems](#compander-systems)
 - [Examples](#examples)
 
----
-
 ## Overview
 
-**Location:** `neqsim.process.equipment.expander`
+| Class | Purpose |
+|---|---|
+| `neqsim.process.equipment.expander.Expander` | Expansion at a specified outlet pressure and efficiency |
+| `neqsim.process.equipment.expander.TurboExpanderCompressor` | Integrated expander/compressor with design data and speed matching |
+| `neqsim.process.equipment.expander.MapTurboExpanderCompressor` | Integrated machine using performance maps |
+| `neqsim.process.equipment.stream.MechanicalShaft` | Shared shaft power balance and rotational dynamics |
 
-**Classes:**
-| Class                      | Description                       |
-| -------------------------- | --------------------------------- |
-| `Expander`                 | General gas expander              |
-| `TurboExpander`            | Turboexpander with shaft coupling |
-| `ExpanderCompressorModule` | Compander unit                    |
-
-Gas expanders are used for:
-- Power recovery from high-pressure gas
-- Cryogenic cooling (JT effect + work extraction)
-- NGL recovery processes
-- LNG production
-
----
+There are no `TurboExpander` or `ExpanderCompressorModule` classes.
+Use `Expander` for a simple thermodynamic expansion and the integrated
+classes when machine matching is required.
 
 ## Expander Class
 
 ### Basic Usage
 
-```java
-import neqsim.process.equipment.expander.Expander;
-
-// Create expander
-Expander expander = new Expander("EX-100", gasStream);
-expander.setOutletPressure(10.0, "bara");
-expander.setIsentropicEfficiency(0.85);
-expander.run();
-
-// Results
-double power = expander.getPower("kW");
-double outletTemp = expander.getOutletTemperature("C");
-```
+`new Expander(name, inlet)` takes a solved inlet stream.
+`setOutletPressure(value, "bara")` specifies absolute discharge pressure and
+`setIsentropicEfficiency(value)` takes a fraction between zero and one.
+Read temperature and pressure through `getOutletStream()`.
 
 ### Outlet Specification
 
-```java
-// By outlet pressure
-expander.setOutletPressure(10.0, "bara");
-
-// By pressure ratio
-expander.setPressureRatio(5.0);
-
-// By outlet temperature
-expander.setOutletTemperature(-50.0, "C");
-```
-
----
+The examples use outlet pressure and efficiency as independent specifications.
+Do not assume every inherited compressor setting is implemented by the
+expander's solver. For an integrated machine with an outlet-temperature
+specification, see the
+[turboexpander/compressor model](../../simulation/turboexpander_compressor_model).
 
 ## Turboexpander
 
-For direct shaft coupling to compressor.
-
-### Basic Usage
-
-```java
-import neqsim.process.equipment.expander.TurboExpander;
-
-TurboExpander turboExpander = new TurboExpander("TEX-100", gasStream);
-turboExpander.setOutletPressure(10.0, "bara");
-turboExpander.setIsentropicEfficiency(0.85);
-turboExpander.run();
-```
+A simple turboexpansion is modeled by `Expander`, including expansion into
+a two-phase outlet. Use a downstream `Separator` when the resulting phases
+need separate material streams.
 
 ### Shaft Coupling
 
-```java
-// Couple expander to compressor
-turboExpander.setCoupledCompressor(compressor);
-
-// Power balance
-turboExpander.run();
-compressor.run();
-
-double expanderPower = turboExpander.getPower("kW");
-double compressorPower = compressor.getPower("kW");
-double netPower = expanderPower - compressorPower;
-```
-
----
+For `TurboExpanderCompressor`, the compressor feed is supplied through
+`setCompressorFeedStream` and the expander pressure through
+`setExpanderOutPressure` (bara). Its design speed, efficiencies, geometry,
+and maps must represent the actual machine. The
+[integrated-machine guide](../../simulation/turboexpander_compressor_model)
+documents that workflow.
 
 ## Power Recovery
 
 ### Isentropic Power
 
-$$W_{isentropic} = \dot{m} \cdot (h_1 - h_{2s})$$
+For specific enthalpies in J/kg and mass flow in kg/s, the positive magnitude
+of ideal recovered power is
 
-Where:
-- $h_1$ = inlet enthalpy
-- $h_{2s}$ = isentropic outlet enthalpy
+$$P_{s}=\dot m(h_{in}-h_{out,s})$$
 
 ### Actual Power
 
-$$W_{actual} = \eta_{isentropic} \cdot W_{isentropic}$$
+$$P_{recovered}=\eta_s P_s$$
+
+`Expander.getPower("kW")` uses a **negative** value for work extracted from
+the gas. Therefore, display `-expander.getPower("kW")` as positive recovered
+power. A compressor's consumed power is positive. Do not subtract an already
+negative expander value from compressor demand and call that recovered power.
 
 ### Temperature Drop
 
-```java
-// Get temperatures
-double T_in = expander.getInletTemperature("C");
-double T_out = expander.getOutletTemperature("C");
-double deltaT = T_in - T_out;
-
-// Compare to JT expansion (throttling)
-ThrottlingValve valve = new ThrottlingValve("JT", gasStream);
-valve.setOutletPressure(10.0, "bara");
-valve.run();
-
-double T_out_JT = valve.getOutletTemperature("C");
-double deltaT_JT = T_in - T_out_JT;
-
-System.out.println("Expander cooling: " + deltaT + " C");
-System.out.println("JT cooling: " + deltaT_JT + " C");
-```
+An expander and a throttling valve follow different thermodynamic paths.
+The comparison example below evaluates both at identical inlet and outlet
+pressures. Cooling depends on the fluid and conditions; the displayed trend
+is a result of that case, not a guarantee for every fluid.
 
 ### Capacity Utilization
 
-`Expander` extends `Compressor`, but the inherited consumed-power capacity logic does not fit a
-machine that *produces* shaft power and *cools* the gas. `Expander` therefore overrides the capacity
-behaviour:
-
-- **`isSimulationValid()`** is expander-correct — negative shaft power, an outlet colder than the
-  inlet, and a pressure ratio below 1 are all treated as valid (only `NaN` or an outlet hotter than
-  the inlet flags the run invalid).
-- **`initializeCapacityConstraints()`** removes the inherited `power` / `ratedPower` constraints and,
-  when a rating is set, adds a single `recoveredPower` HARD constraint sourced from `|getPower|` with
-  `dataSource = "equipment"`.
-
-This removes the previously spurious **~150 % utilization** that an expander used to report through
-`getMaxUtilization()` / `getUtilizationSnapshotJson()`. Provide a rating to get a meaningful number:
-
-```java
-expander.setRatedRecoveredPower(5000.0);     // kW — rebuilds the recoveredPower constraint
-double util = expander.getMaxUtilization();  // |getPower| / 5000 kW
-```
-
-Without a rating the expander simply reports no spurious limit instead of a fabricated one. See
-[Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#expanders-turbo-expanders) for the
-full snapshot/RL context.
-
----
+`setRatedRecoveredPower` takes kW and creates a `recoveredPower` constraint
+based on the magnitude of expander power. Without an installed rating there
+is no recovered-power rating check. Read the specific constraint for that
+utilization; other constraints may still limit the machine. See the
+[capacity framework](../CAPACITY_CONSTRAINT_FRAMEWORK#expanders-turbo-expanders).
 
 ## Compander Systems
 
-Combined expander-compressor on single shaft.
-
-### Usage
-
-```java
-import neqsim.process.equipment.expander.ExpanderCompressorModule;
-
-ExpanderCompressorModule compander = new ExpanderCompressorModule("Compander");
-compander.setExpanderInletStream(hotGas);
-compander.setCompressorInletStream(coldGas);
-compander.setExpanderOutletPressure(10.0, "bara");
-compander.setCompressorOutletPressure(40.0, "bara");
-compander.setIsentropicEfficiency(0.85);
-compander.run();
-
-double netPower = compander.getNetPower("kW");  // Can be positive or negative
-```
-
----
+For already solved equipment, `MechanicalShaft.setGeneratedPower` and
+`setConsumedPower` take watts. `getNetPower("kW")` is positive for a surplus
+and negative for a deficit. The third example performs this accounting only:
+it does not change a compressor pressure or solve a speed match. Use the
+integrated machine when that coupling is needed.
 
 ## Examples
 
 ### Example 1: Simple Expander
 
+SRK gas at 320 K and 80 bara expands to 20 bara with 85% isentropic
+efficiency. The output should cool, recover work, and conserve mass.
+
+<!-- doc-test: expander-basic -->
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.expander.Expander;
 
-// High pressure gas
 SystemSrkEos gas = new SystemSrkEos(320.0, 80.0);
 gas.addComponent("methane", 0.90);
 gas.addComponent("ethane", 0.07);
@@ -202,21 +126,34 @@ Stream feed = new Stream("HP Gas", gas);
 feed.setFlowRate(50000.0, "kg/hr");
 feed.run();
 
-// Expander
 Expander expander = new Expander("EX-100", feed);
 expander.setOutletPressure(20.0, "bara");
 expander.setIsentropicEfficiency(0.85);
 expander.run();
 
-System.out.println("Inlet: " + feed.getTemperature("C") + " C, " + feed.getPressure("bara") + " bara");
-System.out.println("Outlet: " + expander.getOutletTemperature("C") + " C, " + expander.getOutletPressure("bara") + " bara");
-System.out.println("Power generated: " + expander.getPower("kW") + " kW");
+double outletTemperatureC = expander.getOutletStream().getTemperature("C");
+double recoveredPowerKW = -expander.getPower("kW");
+double outletMassFlow = expander.getOutletStream().getFlowRate("kg/hr");
+expander.setRatedRecoveredPower(5000.0);
+double powerUtilization = expander.getCapacityConstraints()
+    .get("recoveredPower").getUtilization();
 ```
 
 ### Example 2: NGL Recovery with Turboexpander
 
+The cooler can create liquid before expansion. This simplified equilibrium
+example does not qualify inlet liquid tolerance or separation internals for a
+real turboexpander. Include upstream separation and a machine operating
+envelope for an equipment study.
+
+<!-- doc-test: expander-ngl -->
 ```java
-// Rich gas feed
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.separator.Separator;
+
 SystemSrkEos richGas = new SystemSrkEos(300.0, 70.0);
 richGas.addComponent("nitrogen", 0.02);
 richGas.addComponent("methane", 0.75);
@@ -229,67 +166,79 @@ Stream feed = new Stream("Rich Gas", richGas);
 feed.setFlowRate(100000.0, "Sm3/day");
 feed.run();
 
-// Pre-cooling
 Cooler precooler = new Cooler("Pre-cooler", feed);
-precooler.setOutletTemperature(280.0, "K");
+precooler.setOutTemperature(280.0);
 precooler.run();
+Separator inletSeparator = new Separator("Expander inlet separator", precooler.getOutletStream());
+inletSeparator.run();
 
-// Turboexpander
-TurboExpander expander = new TurboExpander("TEX-100", precooler.getOutletStream());
+Expander expander = new Expander("TEX-100", inletSeparator.getGasOutStream());
 expander.setOutletPressure(25.0, "bara");
 expander.setIsentropicEfficiency(0.82);
 expander.run();
 
-// Cold separator
-Separator coldSep = new Separator("Cold Sep", expander.getOutletStream());
-coldSep.run();
-
-// Results
-System.out.println("Expander outlet: " + expander.getOutletTemperature("C") + " C");
-System.out.println("Power: " + expander.getPower("kW") + " kW");
-System.out.println("NGL recovered: " + coldSep.getLiquidOutStream().getFlowRate("m3/hr") + " m³/hr");
+Separator coldSeparator = new Separator("Cold Separator", expander.getOutletStream());
+coldSeparator.run();
+double nglKgPerHour = coldSeparator.getLiquidOutStream().getFlowRate("kg/hr");
+double totalOutletKgPerHour = inletSeparator.getLiquidOutStream().getFlowRate("kg/hr")
+    + coldSeparator.getGasOutStream().getFlowRate("kg/hr") + nglKgPerHour;
 ```
+
+The mass balance includes liquid recovered in both separators. Report an
+actual liquid volume with `"m3/hr"` only with its operating conditions;
+standard gas-equivalent volume is a different quantity.
 
 ### Example 3: Expander vs JT Valve Comparison
 
+Two independent feeds prevent shared fluid state between alternative paths.
+The additional compressor represents a separately specified shaft load.
+
+<!-- doc-test: expander-shaft -->
 ```java
-// Same inlet conditions
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.MechanicalShaft;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.compressor.Compressor;
+
 SystemSrkEos gas = new SystemSrkEos(300.0, 60.0);
 gas.addComponent("methane", 0.85);
 gas.addComponent("ethane", 0.10);
 gas.addComponent("propane", 0.05);
 gas.setMixingRule("classic");
 
-Stream feed1 = new Stream("Feed 1", gas);
-feed1.setFlowRate(10000.0, "kg/hr");
-feed1.run();
+Stream valveFeed = new Stream("Valve feed", gas);
+valveFeed.setFlowRate(10000.0, "kg/hr");
+valveFeed.run();
+Stream expanderFeed = new Stream("Expander feed", gas.clone());
+expanderFeed.setFlowRate(10000.0, "kg/hr");
+expanderFeed.run();
 
-Stream feed2 = new Stream("Feed 2", gas.clone());
-feed2.setFlowRate(10000.0, "kg/hr");
-feed2.run();
-
-// JT valve
-ThrottlingValve valve = new ThrottlingValve("JT Valve", feed1);
+ThrottlingValve valve = new ThrottlingValve("JT Valve", valveFeed);
 valve.setOutletPressure(15.0, "bara");
 valve.run();
-
-// Expander
-Expander expander = new Expander("Expander", feed2);
+Expander expander = new Expander("Expander", expanderFeed);
 expander.setOutletPressure(15.0, "bara");
 expander.setIsentropicEfficiency(0.85);
 expander.run();
 
-System.out.println("JT Valve outlet: " + valve.getOutletTemperature("C") + " C");
-System.out.println("Expander outlet: " + expander.getOutletTemperature("C") + " C");
-System.out.println("Extra cooling: " + (valve.getOutletTemperature("C") - expander.getOutletTemperature("C")) + " C");
-System.out.println("Power recovered: " + expander.getPower("kW") + " kW");
-```
+Compressor compressor = new Compressor("Independent shaft load", valveFeed);
+compressor.setOutletPressure(80.0, "bara");
+compressor.setIsentropicEfficiency(0.75);
+compressor.run();
 
----
+MechanicalShaft shaft = new MechanicalShaft("Power accounting");
+shaft.setGeneratedPower(expander.getName(), -expander.getPower());
+shaft.setConsumedPower(compressor.getName(), compressor.getPower());
+double shaftSurplusKW = shaft.getNetPower("kW");
+double extraCoolingK = valve.getOutletStream().getTemperature("K")
+    - expander.getOutletStream().getTemperature("K");
+```
 
 ## Related Documentation
 
-- [Equipment Index](index.md) - All equipment
-- [Compressors](compressors) - Gas compression
-- [Valves](valves) - JT valves
-- [Heat Exchangers](heat_exchangers) - Heat integration
+- [Equipment Index](index.md)
+- [Compressors](compressors)
+- [Valves](valves)
+- [Heat Exchangers](heat_exchangers)
