@@ -279,8 +279,7 @@ public final class SarirAtmosphericFractionationResult {
      * @throws IllegalStateException if this is a non-material product
      */
     public double getNormalBoilingPointQuantileKelvin(double cumulativeMoleFraction) {
-      return requireBoilingPointDistribution()
-          .getNormalBoilingPointQuantileKelvin(cumulativeMoleFraction);
+      return requireBoilingPointDistribution().getNormalBoilingPointQuantileKelvin(cumulativeMoleFraction);
     }
 
     /**
@@ -292,14 +291,12 @@ public final class SarirAtmosphericFractionationResult {
      * @throws IllegalStateException if this is a non-material product
      */
     public double getNormalBoilingPointQuantileCelsius(double cumulativeMoleFraction) {
-      return requireBoilingPointDistribution()
-          .getNormalBoilingPointQuantileCelsius(cumulativeMoleFraction);
+      return requireBoilingPointDistribution().getNormalBoilingPointQuantileCelsius(cumulativeMoleFraction);
     }
 
     private ProductBoilingPointDistribution requireBoilingPointDistribution() {
       if (boilingPointDistribution == null) {
-        throw new IllegalStateException(
-            "Boiling-point distribution is unavailable for a non-material product");
+        throw new IllegalStateException("Boiling-point distribution is unavailable for a non-material product");
       }
       return boilingPointDistribution;
     }
