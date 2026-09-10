@@ -61,6 +61,9 @@ public class PitzerHydrateFlashTest extends neqsim.NeqSimTest {
         - fluid.getPhases()[4].getFugacity("water") / fluid.getPhase("aqueous").getFugacity("water");
     assertEquals(fugacityResidual, flash.getLastResidual(), 1.0e-14);
     assertEquals(0.0, flash.getLastResidual(), 1.0e-8);
+    assertTrue(flash.getDiagnostics().isConverged());
+    assertEquals(flash.getLastResidual(), flash.getDiagnostics().getHydrateResidual(), 0.0);
+    assertEquals(fluid.getTemperature(), flash.getDiagnostics().getTemperature(), 0.0);
   }
 
   @Test
