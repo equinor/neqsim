@@ -176,3 +176,32 @@ reported streams are deliberately labeled `Overhead` and `Bottoms`, not validate
 residue. The calculation does not establish pressure correction, ASTM D1160 behavior, equipment
 design, a general SRK accuracy envelope, or plant agreement.
 
+## Discrete product boiling-range diagnostics
+
+Each calculated product also exposes the ascending normal-boiling-point support of its positive
+pseudo-components and the corresponding normalized cumulative product mole fractions:
+
+```java
+ProductResult overhead = result.getProduct("Overhead");
+double overheadT10Kelvin = overhead.getNormalBoilingPointQuantileKelvin(0.10);
+double overheadT50Kelvin = overhead.getNormalBoilingPointQuantileKelvin(0.50);
+double overheadT90Kelvin = overhead.getNormalBoilingPointQuantileKelvin(0.90);
+double[] supportKelvin = overhead.getBoilingPointTemperaturesKelvin();
+double[] cumulativeMoleFractions = overhead.getCumulativeMoleFractions();
+```
+
+For a requested cumulative mole fraction (q) in ((0,1]), the quantile is the first discrete
+pseudo-component normal boiling point whose normalized cumulative product mole fraction reaches
+(q). The support and cumulative arrays are defensive copies, are ordered by increasing normal
+boiling point, and close at a cumulative fraction of one. Invalid or non-finite quantile requests
+fail closed.
+
+The focused regression requires T10 <= T50 <= T90 for both products, an overhead T50 below the
+bottoms T50, and 1% repeatability of all three diagnostics across independently constructed and
+solved cases. These temperatures make the modeled separation direction and broad boiling range
+inspectable on the exact three-pseudo-component DOE basis.
+
+The curve is deliberately discrete and molar-basis. It is not a continuous simulated-distillation
+curve, a TBP curve, an ASTM D86 or ASTM D1160 result, or a pressure-corrected laboratory
+measurement. With only three heavy pseudo-components it must not be used to infer unreported cut
+tails, detailed product quality, or validated VGO/residue yields.
