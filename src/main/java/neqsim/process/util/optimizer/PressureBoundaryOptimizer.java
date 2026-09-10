@@ -30,9 +30,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  *
  * <p>
  * This class provides a simplified interface for lift curve generation and flow rate optimization where pressures
- * (inlet and outlet) are the boundary conditions. It is designed for generating lift curves for reservoir simulation
- * integration (e.g., Eclipse VFP tables) and for capacity analysis of process systems with compressors, pipelines, and
- * other equipment.
+ * (inlet and outlet) are the boundary conditions. Results describe process capacity for compressors, pipelines, and
+ * other equipment. They do not establish a well model, bottomhole pressure, or reservoir deck input.
  * </p>
  *
  * <p>
@@ -44,8 +43,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * <ul>
  * <li><b>Pressure Boundary Optimization</b> - Find maximum flow rate at given inlet/outlet pressure boundaries while
  * respecting equipment constraints</li>
- * <li><b>Lift Curve Table Generation</b> - Generate 2D tables (VLP/IPR) compatible with Eclipse reservoir simulator
- * format</li>
+ * <li><b>Capacity Table Generation</b> - Generate diagnostic process throughput tables over pressure boundaries</li>
  * <li><b>Automatic Compressor Configuration</b> - Auto-generates compressor performance charts based on design
  * conditions</li>
  * <li><b>Power Tracking</b> - Reports total compressor power consumption for each operating point</li>
@@ -56,7 +54,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  *
  * <h2>Typical Use Cases</h2>
  * <ul>
- * <li>Generating VFP tables for Eclipse reservoir simulation coupling</li>
+ * <li>Screening process capacity over pressure boundary scenarios</li>
  * <li>Capacity analysis for gas compression systems</li>
  * <li>Export pipeline capacity studies</li>
  * <li>Compressor power optimization</li>
@@ -138,7 +136,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * System.out.println("Total power: " + result.getDecisionVariables().get("totalPower_kW") + " kW");
  * </pre>
  *
- * <h2>Example 3: Generate Eclipse VFP Table</h2>
+ * <h2>Example 3: Generate a Process Capacity Table</h2>
  *
  * <pre>
  * // Create optimizer (assuming process is already set up)
@@ -153,8 +151,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * // Generate the lift curve table
  * LiftCurveTable table = optimizer.generateLiftCurveTable(inletPressures, outletPressures, "bara");
  *
- * // Output in Eclipse VFP format
- * System.out.println(table.toEclipseFormat());
+ * // Inspect diagnostic results with their original units
+ * logger.info(table.toDiagnosticTable());
  *
  * // Or get JSON for other integrations
  * System.out.println(table.toJson());
@@ -254,10 +252,10 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * </tr>
  * </table>
  *
- * <h2>Integration with Eclipse Reservoir Simulator</h2>
+ * <h2>Process Screening Output</h2>
  * <p>
- * The {@link LiftCurveTable#toEclipseFormat()} method generates output compatible with Eclipse VFPPROD keyword format.
- * The table can be directly included in Eclipse data files for reservoir-to-surface coupling simulations.
+ * The {@link LiftCurveTable#toDiagnosticTable()} method lists process pressure boundaries, maximum rates, power and
+ * feasibility. Reservoir coupling requires separate well-model and surface-rate qualification.
  * </p>
  *
  * <h2>Thread Safety</h2>
@@ -630,7 +628,7 @@ public class PressureBoundaryOptimizer implements Serializable {
   }
 
   /**
-   * Generates a lift curve table for Eclipse VFP format.
+   * Generates a diagnostic process capacity table over inlet and outlet pressures.
    *
    * <p>
    * Creates a 2D table where each cell contains the maximum flow rate achievable for the given inlet pressure (row) and
@@ -904,8 +902,8 @@ public class PressureBoundaryOptimizer implements Serializable {
    *
    * <p>
    * This table represents the maximum achievable flow rate for each combination of inlet pressure (row) and outlet
-   * pressure (column). It is designed for integration with reservoir simulators like Eclipse, which use VFP (Vertical
-   * Flow Performance) tables to couple reservoir and surface network models.
+   * pressure (column). It is a process capacity screening result; the pressure boundaries are not automatically well
+   * pressures and the rate axis retains its configured simulation basis.
    * </p>
    *
    * <p>
@@ -915,7 +913,7 @@ public class PressureBoundaryOptimizer implements Serializable {
    * The table is organized as a 2D matrix where:
    * </p>
    * <ul>
-   * <li><b>Rows</b> - Inlet pressures (e.g., wellhead or reservoir pressures)</li>
+   * <li><b>Rows</b> - Process inlet pressures</li>
    * <li><b>Columns</b> - Outlet pressures (e.g., export or delivery pressures)</li>
    * <li><b>Cells</b> - Maximum feasible flow rate at that pressure combination</li>
    * </ul>
@@ -929,11 +927,11 @@ public class PressureBoundaryOptimizer implements Serializable {
    * </ul>
    *
    * <p>
-   * <strong>Eclipse VFP Format</strong>
+   * <strong>Diagnostic Output</strong>
    * </p>
    * <p>
-   * The {@link #toEclipseFormat()} method generates output compatible with Eclipse VFPPROD keyword. Infeasible points
-   * are marked with "1*" (Eclipse default value marker).
+   * The {@link #toDiagnosticTable()} method lists each pressure pair with rate, power and feasibility. Unavailable
+   * values are retained as NaN. This text is not reservoir simulator input.
    * </p>
    *
    * <p>
@@ -953,7 +951,7 @@ public class PressureBoundaryOptimizer implements Serializable {
    * String bottleneck = table.getBottleneck(0, 1); // Limiting equipment
    *
    * // Export formats
-   * System.out.println(table.toEclipseFormat()); // Eclipse VFP format
+   * logger.info(table.toDiagnosticTable()); // Process screening
    * System.out.println(table.toJson()); // JSON format
    *
    * // Statistics
@@ -1093,76 +1091,43 @@ public class PressureBoundaryOptimizer implements Serializable {
     }
 
     /**
-     * Formats the table in Eclipse VFP format.
+     * Returns a diagnostic process table through the legacy format entry point.
      *
-     * <p>
-     * The format follows Eclipse VFP table conventions with inlet pressure as rows and outlet pressure as columns.
-     * </p>
-     *
-     * @return Eclipse format string
+     * @return diagnostic text, never a reservoir deck keyword
+     * @deprecated use {@link #toDiagnosticTable()}; process pressure boundaries are not well pressures
      */
+    @Deprecated
     public String toEclipseFormat() {
-      StringBuilder sb = new StringBuilder();
+      return toDiagnosticTable();
+    }
 
-      sb.append("-- Lift Curve Table: ").append(tableName).append("\n");
-      sb.append("-- Generated by NeqSim PressureBoundaryOptimizer\n");
-      sb.append("-- Pressure unit: ").append(pressureUnit).append("\n");
-      sb.append("-- Rate unit: ").append(rateUnit).append("\n");
-      sb.append("--\n");
-
-      // Header with outlet pressures (THP values)
-      sb.append("VFPPROD\n");
-      sb.append("-- Table: ").append(tableName).append("\n");
-      sb.append("-- THP values (").append(pressureUnit).append("): ");
-      for (double p : outletPressures) {
-        sb.append(String.format("%.1f ", p));
-      }
-      sb.append("\n");
-
-      // BHP column header
-      sb.append("-- BHP (").append(pressureUnit).append(") / RATE (").append(rateUnit).append(")\n");
-      sb.append("-- Pin\\Pout");
-      for (double p : outletPressures) {
-        sb.append(String.format("%12.1f", p));
-      }
-      sb.append("\n");
-
-      // Data rows (one per inlet pressure)
+    /**
+     * Lists process pressure boundaries, maximum flow, power, bottleneck and feasibility.
+     *
+     * @return tab-separated diagnostic text with original units and NaN for unavailable values
+     */
+    public String toDiagnosticTable() {
+      StringBuilder out = new StringBuilder();
+      out.append("# Process capacity screening; diagnostic text only\n");
+      out.append("# Table: ").append(tableName == null ? "" : tableName.replace('\n', ' ').replace('\r', ' '))
+          .append('\n');
+      out.append("inlet pressure [").append(pressureUnit).append("]\t");
+      out.append("outlet pressure [").append(pressureUnit).append("]\t");
+      out.append("maximum flow [").append(rateUnit).append("]\tpower [kW]\tbottleneck\tfeasible\n");
       for (int i = 0; i < inletPressures.length; i++) {
-        sb.append(String.format("%10.1f", inletPressures[i]));
         for (int j = 0; j < outletPressures.length; j++) {
-          if (Double.isNaN(flowRates[i][j])) {
-            sb.append(String.format("%12s", "1*"));
-          } else {
-            sb.append(String.format("%12.0f", flowRates[i][j]));
-          }
+          double rate = flowRates[i][j];
+          double power = powers[i][j];
+          boolean feasible = Double.isFinite(rate) && rate >= 0.0;
+          out.append(inletPressures[i]).append('\t').append(outletPressures[j]).append('\t');
+          out.append(feasible ? rate : Double.NaN).append('\t');
+          out.append(Double.isFinite(power) ? power : Double.NaN).append('\t');
+          String bottleneck = bottlenecks[i][j];
+          out.append(bottleneck == null ? "" : bottleneck.replace('\t', ' ').replace('\n', ' ').replace('\r', ' '));
+          out.append('\t').append(feasible).append('\n');
         }
-        sb.append("\n");
       }
-
-      sb.append("/\n");
-
-      // Power table
-      sb.append("\n-- Power Table (kW)\n");
-      sb.append("-- Pin\\Pout");
-      for (double p : outletPressures) {
-        sb.append(String.format("%12.1f", p));
-      }
-      sb.append("\n");
-
-      for (int i = 0; i < inletPressures.length; i++) {
-        sb.append(String.format("%10.1f", inletPressures[i]));
-        for (int j = 0; j < outletPressures.length; j++) {
-          if (Double.isNaN(powers[i][j])) {
-            sb.append(String.format("%12s", "-"));
-          } else {
-            sb.append(String.format("%12.1f", powers[i][j]));
-          }
-        }
-        sb.append("\n");
-      }
-
-      return sb.toString();
+      return out.toString();
     }
 
     /**

@@ -269,6 +269,17 @@ public class OptimizerPluginArchitectureTest {
     exporter.setWaterCuts(new double[] { 0, 0.2, 0.5, 0.8 });
     exporter.setGORs(new double[] { 50, 100, 200, 500 });
     exporter.setTableTitle("Test VFP Table");
+    double[][][][][] bhp = new double[5][5][4][4][1];
+    for (int f = 0; f < 5; f++) {
+      for (int t = 0; t < 5; t++) {
+        for (int w = 0; w < 4; w++) {
+          for (int g = 0; g < 4; g++) {
+            bhp[f][t][w][g][0] = 100.0 + f + t + w + g;
+          }
+        }
+      }
+    }
+    exporter.setBHPTable(bhp);
 
     String vfpString = exporter.getVFPPRODString();
 
@@ -285,6 +296,13 @@ public class OptimizerPluginArchitectureTest {
     exporter.setFlowRates(new double[] { 1000, 5000, 10000, 20000 });
     exporter.setTHPs(new double[] { 50, 100, 150, 200 });
 
+    double[][][][][] bhp = new double[4][4][1][1][1];
+    for (int f = 0; f < 4; f++) {
+      for (int t = 0; t < 4; t++) {
+        bhp[f][t][0][0][0] = 250.0 + f + t;
+      }
+    }
+    exporter.setBHPTable(bhp);
     String vfpString = exporter.getVFPINJString();
 
     assertNotNull(vfpString);

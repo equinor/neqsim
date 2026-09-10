@@ -93,7 +93,8 @@ class CapacityOptimizationDocumentationTest {
     assertEquals(400.0, table.getFlowRate(0, 0), 0.5);
     assertEquals(0.0, table.getPower(0, 0), 1e-12);
     assertTrue(Double.isNaN(table.getFlowRate(0, 1)));
-    assertTrue(table.toEclipseFormat().contains("1*"));
+    assertTrue(table.toDiagnosticTable().contains("NaN"));
+    assertEquals(table.toDiagnosticTable(), table.toEclipseFormat());
     double[] curve = optimizer.generateCapacityCurve(60.0, new double[] { 30.0, 35.0 }, "bara");
     assertEquals(400.0, curve[0], 0.5);
     assertTrue(Double.isNaN(curve[1]));
@@ -304,8 +305,8 @@ class CapacityOptimizationDocumentationTest {
     exporter.setBHPTable(bhp);
     String output = exporter.getVFPPRODString();
     assertTrue(output.contains("VFPPROD"));
-    assertTrue(output.contains("35.00"));
-    assertTrue(output.contains("52.00"));
+    assertTrue(output.contains("35.0"));
+    assertTrue(output.contains("52.0"));
   }
 
   /** Runs these documentation checks when a JUnit launcher is unavailable locally. */

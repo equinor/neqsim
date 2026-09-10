@@ -130,6 +130,22 @@ System.out.println("Has aqueous phase: " + hasAqueous);  // false
 
 Calculates the temperature at which hydrate first forms at given pressure.
 
+The solver checks the water-fugacity residual and repeats the equilibrium check on a copy of
+the starting fluid. A failed or unreproducible root is reported as `NaN`, rather than returning
+the last temperature iterate. The no-argument `hydrateFormationTemperature()` method retries
+several initial temperatures and throws `IsNaNException` if none succeeds. Such a failure is
+not evidence that the fluid is hydrate-free. For non-reactive electrolyte fluids, each trial flash and the
+verification flash must conserve the input component inventories. A failed search restores its
+input species amounts before reporting `NaN`, so retries cannot silently use a salt-depleted
+fluid. Reactive fluids can change species through equilibrium reactions and are excluded from
+this species-by-species comparison. When using the overload with an explicit initial
+temperature, handle inventory diagnostics and check that the resulting temperature is finite. The underlying
+`HydrateFormationTemperatureFlash` also exposes `isConverged()` and `getLastResidual()`.
+For a non-reactive brine that collapses to one aqueous phase, verification also tests a gas
+composed of the hydrate guests. A negative tangent-plane distance rejects an unstable aqueous
+state with artificially elevated guest fugacity. This trial is an additional rejection check,
+not a complete phase-stability analysis or an extension of the model's validated salinity range.
+
 **Methods:**
 ```java
 void hydrateFormationTemperature()
@@ -156,8 +172,10 @@ System.out.println("At pressure: " + fluid.getPressure("bara") + " bara");
 
 For non-reactive electrolyte fluids, every fluid evaluation must conserve the
 input component inventory, normalize material phases, and confine ions to the
-aqueous phase. Violations raise `IllegalStateException` with a diagnostic; a
-small hydrate fugacity residual cannot override a failed material balance.
+aqueous phase. The underlying operation and the explicit-initial-temperature overload raise
+`IllegalStateException` with a diagnostic. The no-argument wrapper retries those rejected
+states from the restored feed and reports `IsNaNException` if all starts fail. A small hydrate
+fugacity residual cannot override a failed material balance.
 The original multiphase-check setting is restored even when evaluation fails.
 See [Electrolyte CPA component conservation](../thermo/ElectrolyteCPAModel#component-conservation-in-hydrate-temperature-calculations)
 for the mixed-brine regression scope.
@@ -166,7 +184,8 @@ for the mixed-brine regression scope.
 
 For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
 CO2, water and optional explicit ions, the temperature operation uses
-`CO2BrinePhaseEquilibrium` for each fluid evaluation. It initializes independent
+`CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
+verification on a copy of the starting feed. It initializes independent
 vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
 constrained component balances and molecular fugacity equations. Conserved
 candidate states are ranked by Gibbs energy. A single aqueous result is accepted
@@ -207,7 +226,11 @@ hydrate-water residual, molecular log-fugacity residual, component and charge
 balance residuals, material phase labels and CO2-rich-phase presence. The
 minimum CO2 trial distance refers to the **homogeneous aqueous feed**: a negative
 value calls for a CO2-rich split. It is not the tangent-plane distance of the
-final two-phase equilibrium. A snapshot is null before the first run.
+final two-phase equilibrium. A snapshot is null before the first run. Its
+convergence flag includes the independent verification and agrees with
+`isConverged()`; the hydrate residual agrees with `getLastResidual()`. A failed
+search captures diagnostic evidence before restoring the input inventory and
+setting the system temperature to `NaN`.
 
 A converged single-aqueous result is a finite-inventory hydrate calculation;
 `isSaturatedCO2Boundary()` is false. Do not append it to a saturated CO2/brine

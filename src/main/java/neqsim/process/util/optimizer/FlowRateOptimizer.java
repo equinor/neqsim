@@ -101,7 +101,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * double[] outletPressures = { 140, 145, 150, 155 }; // bara
  * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
  *
- * System.out.println(table.toEclipseFormat());
+ * logger.info(table.toFormattedString());
  * </pre>
  *
  * <h2>Example Usage - ProcessModel</h2>
@@ -1149,7 +1149,7 @@ public class FlowRateOptimizer implements Serializable {
    *
    * ProcessLiftCurveTable table = optimizer.generateProcessLiftCurve(flowRates, "kg/hr", inletPressures, "bara");
    *
-   * System.out.println(table.toEclipseFormat());
+   * logger.info(table.toFormattedString());
    * System.out.println("Minimum power operating point: " + table.findMinimumPowerPoint());
    * </pre>
    *
@@ -1534,7 +1534,7 @@ public class FlowRateOptimizer implements Serializable {
    * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
    *
    * System.out.println(table.toFormattedString());
-   * System.out.println(table.toEclipseFormat());
+   * logger.info(table.toFormattedString());
    * </pre>
    *
    * @param inletPressures array of inlet pressures
@@ -2422,7 +2422,7 @@ public class FlowRateOptimizer implements Serializable {
    *     .withProgressLogging(true);
    *
    * LiftCurveResult result = optimizer.generateProfessionalLiftCurves(config);
-   * System.out.println(result.getCapacityTable().toEclipseFormat());
+   * logger.info(result.getCapacityTable().toFormattedString());
    * </pre>
    *
    * @author ESOL
@@ -4012,39 +4012,17 @@ public class FlowRateOptimizer implements Serializable {
     }
 
     /**
-     * Returns a formatted string in Eclipse VFP-like format.
+     * Rejects export of process screening results as well bottomhole pressures.
      *
-     * @return Eclipse-compatible formatted string
+     * @return no result; this method always throws
+     * @throws UnsupportedOperationException always because process outlet pressure is not BHP
+     * @deprecated use {@link #toFormattedString()} or {@link #toJson()} for process screening
      */
+    @Deprecated
     public String toEclipseFormat() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("-- Process Lift Curve Table: ").append(tableName).append("\n");
-      sb.append("-- Flow rates (").append(flowRateUnit).append(")\n");
-      sb.append("-- THP (inlet pressure, ").append(pressureUnit).append(")\n");
-      sb.append("-- BHP = outlet pressure (").append(pressureUnit).append(")\n\n");
-
-      // Header with inlet pressures
-      sb.append("-- Flow\\THP ");
-      for (double p : inletPressures) {
-        sb.append(String.format("%8.1f ", p));
-      }
-      sb.append("\n");
-
-      // Data rows
-      for (int i = 0; i < flowRates.length; i++) {
-        sb.append(String.format("-- %8.1f", flowRates[i]));
-        for (int j = 0; j < inletPressures.length; j++) {
-          ProcessOperatingPoint point = operatingPoints[i][j];
-          if (point != null && point.isFeasible()) {
-            sb.append(String.format("%8.2f ", point.getOutletPressure()));
-          } else {
-            sb.append("     NaN ");
-          }
-        }
-        sb.append("\n");
-      }
-
-      return sb.toString();
+      throw new UnsupportedOperationException("Process screening results are not well BHP. "
+          + "Use toFormattedString()/toJson(); supply independently qualified well pressures "
+          + "and standard phase-volume rates to EclipseVFPExporter.");
     }
 
     /**
@@ -4439,112 +4417,17 @@ public class FlowRateOptimizer implements Serializable {
     }
 
     /**
-     * Generates Eclipse VFP table format output.
+     * Rejects export of process screening results as well bottomhole pressures.
      *
-     * <p>
-     * This format is compatible with Eclipse 300 reservoir simulator lift tables. The output generates VFPPROD tables
-     * that can be directly included in Eclipse DATA files.
-     * </p>
-     *
-     * <p>
-     * The generated table uses the following Eclipse conventions:
-     * <ul>
-     * <li>FLO = flow rate (in flowRateUnit)</li>
-     * <li>THP = tubing head pressure (inlet pressure / wellhead pressure)</li>
-     * <li>BHP = bottom hole pressure (outlet pressure in this context)</li>
-     * </ul>
-     *
-     * @return Eclipse VFP format string ready for inclusion in Eclipse DATA file
+     * @return no result; this method always throws
+     * @throws UnsupportedOperationException always because process outlet pressure is not BHP
+     * @deprecated use {@link #toFormattedString()} or {@link #toJson()} for process screening
      */
+    @Deprecated
     public String toEclipseFormat() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("-- =============================================================\n");
-      sb.append("-- Process Capacity Table: ").append(tableName).append("\n");
-      sb.append("-- Generated by NeqSim FlowRateOptimizer\n");
-      sb.append("-- Generation Date: ").append(java.time.LocalDateTime.now()).append("\n");
-      sb.append("-- Max Utilization Constraint: ").append(maxUtilization * 100).append("%\n");
-      sb.append("-- Pressure Unit: ").append(pressureUnit).append("\n");
-      sb.append("-- Flow Rate Unit: ").append(flowRateUnit).append("\n");
-      sb.append("-- =============================================================\n\n");
-
-      // Collect all unique feasible flow rates
-      java.util.TreeSet<Double> flowRateSet = new java.util.TreeSet<Double>();
-      for (int i = 0; i < inletPressures.length; i++) {
-        for (int j = 0; j < outletPressures.length; j++) {
-          if (operatingPoints[i][j] != null && operatingPoints[i][j].isFeasible()) {
-            flowRateSet.add(operatingPoints[i][j].getFlowRate());
-          }
-        }
-      }
-
-      // Convert to array
-      Double[] sortedFlows = flowRateSet.toArray(new Double[0]);
-
-      // Generate VFPPROD table
-      sb.append("VFPPROD\n");
-      sb.append("-- Table number, datum depth, FLO type, WFR type, GFR type, THP type, ");
-      sb.append("ALQ type, UNITS, TAB type\n");
-      sb.append(String.format("   1   0.0   'LIQ'   'WCT'   'GOR'   'THP'   ''   '%s'   'BHP'  /\n",
-          "METRIC".equalsIgnoreCase(pressureUnit) ? "METRIC" : "FIELD"));
-      sb.append("\n");
-
-      // Flow rate axis (FLO)
-      sb.append("-- Flow rates (").append(flowRateUnit).append(")\n");
-      for (Double flow : sortedFlows) {
-        sb.append(String.format("   %.2f\n", flow));
-      }
-      sb.append("/\n\n");
-
-      // THP axis (inlet pressures)
-      sb.append("-- THP values (inlet pressures in ").append(pressureUnit).append(")\n");
-      for (double pin : inletPressures) {
-        sb.append(String.format("   %.2f\n", pin));
-      }
-      sb.append("/\n\n");
-
-      // Default WCT (water cut) - single value for now
-      sb.append("-- WCT values (water cut fraction)\n");
-      sb.append("   0.0 /\n\n");
-
-      // Default GOR
-      sb.append("-- GOR values\n");
-      sb.append("   0.0 /\n\n");
-
-      // Default ALQ (artificial lift quantity)
-      sb.append("-- ALQ values\n");
-      sb.append("   0.0 /\n\n");
-
-      // BHP values (outlet pressures) as 3D table
-      sb.append("-- BHP values (outlet pressures in ").append(pressureUnit).append(")\n");
-      sb.append("-- Format: BHP for each FLO at each THP (WCT=0, GOR=0, ALQ=0)\n");
-
-      for (int thpIdx = 0; thpIdx < inletPressures.length; thpIdx++) {
-        sb.append(String.format("-- THP = %.2f %s\n", inletPressures[thpIdx], pressureUnit));
-        for (Double targetFlow : sortedFlows) {
-          // Find closest matching operating point at this inlet pressure
-          ProcessOperatingPoint bestMatch = null;
-          double minDiff = Double.MAX_VALUE;
-          for (int j = 0; j < outletPressures.length; j++) {
-            ProcessOperatingPoint pt = operatingPoints[thpIdx][j];
-            if (pt != null && pt.isFeasible()) {
-              double diff = Math.abs(pt.getFlowRate() - targetFlow);
-              if (diff < minDiff) {
-                minDiff = diff;
-                bestMatch = pt;
-              }
-            }
-          }
-          if (bestMatch != null && minDiff < targetFlow * 0.1) {
-            sb.append(String.format("   %.2f\n", bestMatch.getOutletPressure()));
-          } else {
-            sb.append("   1* \n"); // Eclipse default/undefined marker
-          }
-        }
-        sb.append("/\n");
-      }
-
-      sb.append("\n");
-      return sb.toString();
+      throw new UnsupportedOperationException("Process screening results are not well BHP. "
+          + "Use toFormattedString()/toJson(); supply independently qualified well pressures "
+          + "and standard phase-volume rates to EclipseVFPExporter.");
     }
 
     /**

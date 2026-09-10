@@ -18,11 +18,11 @@ The current generator sets **total-fluid flow**, using the unit selected with
 The example explicitly uses `kg/hr` to avoid confusing standard gas-equivalent volume,
 actual multiphase volume, and stock-tank liquid production.
 
-The legacy `exportVFPEXP(...)` method writes a text representation. It hardcodes a
-`LIQ` header and does not convert total-fluid rates to a reservoir simulator's liquid
-rate basis. Its output has not been validated here as an Eclipse or tNavigator input
-deck. Export the grid to CSV for review; a reservoir adapter must convert units and
-validate keyword syntax, datum depth, and interpolation before loading a simulator.
+The legacy `exportVFPEXP(...)` method now writes diagnostic text only, without reservoir
+keywords, artificial phase-rate labels or a well BHP claim. Prefer `toDiagnosticString()`
+for inspection and a `.txt` file for the legacy writer. A reservoir study must establish
+well geometry, datum, pressure semantics and standard phase-volume rates before using the
+[supplied-BHP exporter](../process/optimization/vfp-export-contract.md).
 
 ## What Is Implemented
 
@@ -296,23 +296,21 @@ requested GOR is reproduced within an appropriate tolerance, and that the water-
 values lie between zero and one. Check mass conservation and physically reasonable
 pressure losses at representative corners of the grid.
 
-## Eclipse VFPEXP Format
+## Process Pressure Diagnostics
 
 The existing legacy writer can be inspected with the actual methods below after generation:
 
 ```java
-String legacyText = generator.toVFPEXPString(1);
+String diagnostic = generator.toDiagnosticString();
 generator.exportVFPEXP("vfp_legacy_review.txt", 1);
 ```
 
-The write operation requires handling `IOException`, as in the complete example. The
-legacy text retains the supplied rate values, emits a `VFPEXP` keyword, a hardcoded
-`LIQ` rate label and a zero datum depth. It is not a validated conversion of this
-mass-rate grid to an Eclipse production VFP table. Do not include this text directly
-in a reservoir model based only on its filename. Validate a simulator-specific adapter
-against that simulator's supported VFP keyword, units, indexing, datum, and pressure
-convention. Injection controls also require an appropriate injection table; the
-production GOR/water-cut grid does not establish that compatibility.
+The write operation requires handling `IOException`, as in the complete example. The legacy
+method name is retained for compatibility, but the content is diagnostic text. It preserves
+the configured total-fluid flow unit, required process inlet pressure and failed points as
+`NaN`. It does not produce a reservoir deck or convert the result into well BHP. Use the
+[supplied-BHP export contract](../process/optimization/vfp-export-contract.md) only after
+independently qualifying the hydraulic model, phase-volume rate basis, datum and boundaries.
 
 ## API Reference
 

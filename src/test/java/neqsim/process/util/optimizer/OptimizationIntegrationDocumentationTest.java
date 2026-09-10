@@ -291,7 +291,8 @@ class OptimizationIntegrationDocumentationTest {
         }
       }
     }
-    assertTrue(generator.toVFPEXPString(1).contains("Flow rates (kg/hr)"));
+    assertTrue(generator.toDiagnosticString().contains("rate [kg/hr]"));
+    assertEquals(generator.toDiagnosticString(), generator.toVFPEXPString(1));
     assertTrue(recombination.validateGOR(200.0, 0.3, 0.05));
   }
 

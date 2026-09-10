@@ -59,7 +59,10 @@ class CO2BrineHydratePhaseStateTest {
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       ops.hydrateFormationTemperature(guess);
       assertEndpoint(fluid, saturated);
-      HydrateEquilibriumDiagnostics result = ((HydrateFormationTemperatureFlash) ops.getOperation()).getDiagnostics();
+      HydrateFormationTemperatureFlash flash = (HydrateFormationTemperatureFlash) ops.getOperation();
+      HydrateEquilibriumDiagnostics result = flash.getDiagnostics();
+      assertTrue(flash.isConverged());
+      assertEquals(flash.getLastResidual(), result.getHydrateResidual(), 0.0);
       assertTrue(result.isConverged());
       assertTrue(result.hasAqueousPhase());
       assertEquals(saturated, result.hasCO2RichPhase());
@@ -108,6 +111,8 @@ class CO2BrineHydratePhaseStateTest {
     flash.run();
     assertFalse(fluid.doMultiPhaseCheck());
     HydrateEquilibriumDiagnostics snapshot = flash.getDiagnostics();
+    assertTrue(flash.isConverged());
+    assertEquals(flash.getLastResidual(), snapshot.getHydrateResidual(), 0.0);
     assertTrue(snapshot.isSaturatedCO2Boundary());
     assertThrows(UnsupportedOperationException.class, () -> snapshot.getPhaseTypes().add("gas"));
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -120,9 +125,19 @@ class CO2BrineHydratePhaseStateTest {
       assertEquals(snapshot.getTemperature(), restored.getTemperature());
     }
     fluid.addComponent("Na+", 0.1);
+    double[] inputMoles = new double[fluid.getNumberOfComponents()];
+    for (int component = 0; component < inputMoles.length; component++) {
+      inputMoles[component] = fluid.getPhase(0).getComponent(component).getNumberOfmoles();
+    }
     assertThrows(IllegalStateException.class, flash::run);
+    assertFalse(flash.isConverged());
+    assertTrue(Double.isNaN(flash.getLastResidual()));
+    assertTrue(Double.isNaN(fluid.getTemperature()));
     assertFalse(flash.getDiagnostics().isConverged());
     assertFalse(fluid.doMultiPhaseCheck());
+    for (int component = 0; component < inputMoles.length; component++) {
+      assertEquals(inputMoles[component], fluid.getPhase(0).getComponent(component).getNumberOfmoles(), 1.0e-10);
+    }
     assertTrue(snapshot.isConverged(), "Subsequent mutations must not change the earlier snapshot");
   }
 

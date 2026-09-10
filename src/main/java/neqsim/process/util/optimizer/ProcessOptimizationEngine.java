@@ -56,8 +56,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * ConstraintReport report = engine.evaluateAllConstraints();
  *
  * // Screen fixed-composition throughput at inlet pressures (bara) and temperatures (K).
- * // Water-cut and GOR entries are labels; this method does not recombine the feed fluid.
- * LiftCurveData curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
+ * // Composition is taken from the configured feed. This is not a well VFP calculation.
+ * LiftCurveData curve = engine.generateCapacityScreening(pressures, temperatures);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -445,72 +445,118 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Generates fixed-composition throughput screening samples for the process.
+   * Legacy entry point for fixed-composition process screening.
    *
-   * <p>
-   * Water cut and GOR are retained as point labels only; they do not change the feed composition. This method does not
-   * calculate reservoir bottomhole pressure or generate a qualified well VFP table.
-   * </p>
-   *
-   * @param pressures array of inlet pressures to evaluate in bara
-   * @param temperatures array of inlet temperatures in Kelvin
-   * @param waterCuts array of water cuts as fraction
-   * @param GORs array of gas-oil ratios in Sm3/Sm3
-   * @return lift curve data
+   * @param pressures inlet pressures in bara
+   * @param temperatures inlet temperatures in Kelvin
+   * @param waterCuts only the legacy singleton zero placeholder is supported
+   * @param GORs only the legacy singleton zero placeholder is supported
+   * @return fixed-composition capacity samples; not a well VFP table
+   * @throws UnsupportedOperationException for composition scenarios, which require recombination
+   * @deprecated use {@link #generateCapacityScreening(double[], double[])}; composition axes are unsupported
    */
+  @Deprecated
   public LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures, double[] waterCuts, double[] GORs) {
-    LiftCurveData liftCurve = new LiftCurveData();
-
-    if (processSystem == null || pressures == null || pressures.length == 0) {
-      return liftCurve;
+    if (waterCuts == null || waterCuts.length != 1 || waterCuts[0] != 0.0 || GORs == null || GORs.length != 1
+        || GORs[0] != 0.0) {
+      throw new UnsupportedOperationException("Composition axes require feed recombination. "
+          + "Use generateCapacityScreening for fixed-composition process capacity; it does not calculate well BHP.");
     }
-
-    for (double pressure : pressures) {
-      for (double temperature : temperatures) {
-        for (double waterCut : waterCuts) {
-          for (double gor : GORs) {
-            LiftCurvePoint point = evaluateLiftCurvePoint(pressure, temperature, waterCut, gor);
-            if (point != null) {
-              liftCurve.addPoint(point);
-            }
-          }
-        }
-      }
-    }
-
-    return liftCurve;
+    return generateCapacityScreening(pressures, temperatures);
   }
 
   /**
-   * Evaluates a single lift curve point.
+   * Screens maximum process mass throughput for inlet pressure/temperature combinations.
+   *
+   * <p>
+   * Uses the configured feed composition and equipment constraints, with a minimum outlet pressure of 1 bara and a
+   * screening search range of 0 to 1,000,000 kg/hr. Samples contain inlet pressure (bara), temperature (K) and maximum
+   * mass flow (kg/hr). Water-cut/GOR fields in the legacy container are NaN because they are not specified axes. No
+   * well hydraulics, datum pressure or composition recombination is inferred.
+   * </p>
+   *
+   * @param pressures finite positive inlet pressures in bara
+   * @param temperatures finite positive inlet temperatures in Kelvin
+   * @return process capacity screening samples, never a supplied-BHP table
+   * @throws IllegalArgumentException for missing or invalid axes
+   * @throws IllegalStateException when no process is configured
+   */
+  public LiftCurveData generateCapacityScreening(double[] pressures, double[] temperatures) {
+    return generateCapacityScreening(pressures, temperatures, 1.0, 0.0, 1000000.0);
+  }
+
+  /**
+   * Screens fixed-composition process capacity with explicit pressure and mass-flow limits.
+   *
+   * @param pressures inlet pressures in bara
+   * @param temperatures inlet temperatures in Kelvin
+   * @param minimumOutletPressure minimum required process outlet pressure in bara
+   * @param minimumFlow minimum search rate in kg/hr, nonnegative
+   * @param maximumFlow maximum search rate in kg/hr, greater than minimumFlow
+   * @return samples with NaN maximum flow for infeasible points; no BHP is calculated
+   * @throws IllegalArgumentException for missing, non-finite or invalid bounds
+   * @throws IllegalStateException if no process or feed is configured
+   */
+  public LiftCurveData generateCapacityScreening(double[] pressures, double[] temperatures,
+      double minimumOutletPressure, double minimumFlow, double maximumFlow) {
+    validateScreeningAxis(pressures, "inlet pressure");
+    validateScreeningAxis(temperatures, "temperature");
+    validateScreeningAxis(new double[] { minimumOutletPressure }, "minimum outlet pressure");
+    if (!Double.isFinite(minimumFlow) || !Double.isFinite(maximumFlow) || minimumFlow < 0.0
+        || maximumFlow <= minimumFlow) {
+      throw new IllegalArgumentException("Mass-flow bounds must be finite with 0 <= minimum < maximum");
+    }
+    if (!hasProcess() || getFeedStream() == null || getFeedStream().getFluid() == null) {
+      throw new IllegalStateException("Capacity screening requires a configured process and feed fluid");
+    }
+    LiftCurveData samples = new LiftCurveData();
+    for (double pressure : pressures) {
+      for (double temperature : temperatures) {
+        samples.addPoint(evaluateCapacityPoint(pressure, temperature, minimumOutletPressure, minimumFlow, maximumFlow));
+      }
+    }
+    return samples;
+  }
+
+  private static void validateScreeningAxis(double[] values, String name) {
+    if (values == null || values.length == 0) {
+      throw new IllegalArgumentException(name + " axis must be nonempty");
+    }
+    for (double value : values) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalArgumentException(name + " values must be finite and positive");
+      }
+    }
+  }
+
+  /**
+   * Evaluates and replays a single fixed-composition capacity point.
    *
    * @param pressure the inlet pressure in bara
    * @param temperature the temperature in Kelvin
-   * @param waterCut the water cut fraction (0-1)
-   * @param gor the gas-oil ratio
-   * @return the evaluated lift curve point, or null if evaluation fails
+   * @param outletPressure minimum required outlet pressure in bara
+   * @param minFlow minimum mass flow in kg/hr
+   * @param maxFlow maximum mass flow in kg/hr
+   * @return the evaluated sample; maximum flow is NaN on failure or infeasibility
    */
-  private LiftCurvePoint evaluateLiftCurvePoint(double pressure, double temperature, double waterCut, double gor) {
+  private LiftCurvePoint evaluateCapacityPoint(double pressure, double temperature, double outletPressure,
+      double minFlow, double maxFlow) {
+    LiftCurvePoint point = new LiftCurvePoint();
+    point.setInletPressure(pressure);
+    point.setTemperature(temperature);
+    point.setWaterCut(Double.NaN);
+    point.setGOR(Double.NaN);
+    point.setMaxFlowRate(Double.NaN);
     try {
-      // Set conditions and find max flow
-      setInletConditions(pressure, temperature, waterCut, gor);
-
-      // Find max flow at these conditions
-      double maxFlow = findMaxFlowAtConditions(pressure);
-
-      LiftCurvePoint point = new LiftCurvePoint();
-      point.setInletPressure(pressure);
-      point.setTemperature(temperature);
-      point.setWaterCut(waterCut);
-      point.setGOR(gor);
-      point.setMaxFlowRate(maxFlow);
-
-      return point;
-
+      getFeedStream().getFluid().setTemperature(temperature);
+      double candidate = goldenSectionSearch(pressure, outletPressure, minFlow, maxFlow);
+      if (Double.isFinite(candidate) && canAchieveFlow(pressure, outletPressure, candidate)) {
+        point.setMaxFlowRate(candidate);
+      }
     } catch (Exception e) {
-      logger.warn("Failed to evaluate lift curve point at P=" + pressure, e);
-      return null;
+      logger.warn("Failed to evaluate capacity sample at P={}", pressure, e);
     }
+    return point;
   }
 
   /**
@@ -638,7 +684,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       // Check outlet pressure
       double actualOutletPressure = getOutletPressure();
-      if (actualOutletPressure < outletPressure * 0.99) {
+      if (!Double.isFinite(actualOutletPressure) || actualOutletPressure <= 0.0
+          || actualOutletPressure < outletPressure * 0.99) {
         return false;
       }
 
@@ -735,26 +782,6 @@ public class ProcessOptimizationEngine implements Serializable {
     }
 
     return violations;
-  }
-
-  /**
-   * Finds the maximum achievable flow at the given inlet pressure.
-   *
-   * <p>
-   * Uses golden section search with a hardcoded outlet pressure of 1.0 bara and a flow range from 0 to 1,000,000 kg/hr.
-   * These defaults are intended for quick sensitivity analysis; for precise work, use {@link #findMaximumThroughput}
-   * with explicit bounds.
-   * </p>
-   *
-   * @param inletPressure the inlet pressure in bara
-   * @return the maximum feasible flow in kg/hr
-   */
-  private double findMaxFlowAtConditions(double inletPressure) {
-    double minFlow = 0.0;
-    double maxFlow = 1000000.0; // kg/hr
-    double outletPressure = 1.0; // bara - typical separator/export
-
-    return goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
   }
 
   // ==========================================================================
@@ -1641,20 +1668,6 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Sets inlet conditions.
-   *
-   * @param pressure the inlet pressure in bara
-   * @param temperature the inlet temperature in Kelvin
-   * @param waterCut the water cut fraction
-   * @param gor the gas-oil ratio
-   */
-  private void setInletConditions(double pressure, double temperature, double waterCut, double gor) {
-    // Simplified - actual implementation would modify fluid composition
-    setInletPressure(pressure);
-    // Additional composition changes based on waterCut and GOR would go here
-  }
-
-  /**
    * Gets the outlet stream used for optimization.
    *
    * <p>
@@ -2110,7 +2123,7 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Lift curve data container.
+   * Process capacity screening samples; contains no bottomhole-pressure values.
    */
   public static class LiftCurveData implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -2130,7 +2143,7 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Single point on a lift curve.
+   * Process screening sample: inlet pressure (bara), temperature (K), maximum mass flow (kg/hr).
    */
   public static class LiftCurvePoint implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -401,11 +401,12 @@ public class ConstraintMonitoringDashboard {
 Export an explicitly supplied BHP grid using the current `EclipseVFPExporter`
 API. The exporter formats data; it does not accept a `ProcessSystem` constructor
 or calculate a well model. This example uses synthetic dry-gas BHP data and a
-single zero water-ratio, oil-ratio, and artificial-lift slice. The current VFPPROD
-writer emits only this slice; it must not be used to claim a multi-composition
-table. Replace the synthetic grid with validated well calculations for a reservoir
-study. Use this include in a METRIC deck; gas flow is standard volume per day,
-not kg/hr. Array order is `[flow][THP][water ratio][gas/oil ratio][ALQ]`.
+single zero water-ratio, oil-ratio, and artificial-lift slice. The writer also supports
+complete composition/ALQ grids with explicit definitions and rejects incomplete or infeasible
+data. Replace the synthetic grid with validated well calculations for a reservoir study.
+Use this include in a METRIC deck; gas flow is standard volume per day, not kg/hr.
+Array order is `[flow][THP][water ratio][gas ratio][ALQ]`. See the
+[VFP export contract](vfp-export-contract.md) for FIELD conversion and model qualification.
 
 ```java
 import java.nio.charset.StandardCharsets;
@@ -441,6 +442,8 @@ public class VFPTableGeneration {
         exporter.setDatumDepth(1000.0); // m
         exporter.setUnitSystem("METRIC");
         exporter.setFlowRateType("GAS");
+        exporter.setWaterCutType("WGR");
+        exporter.setGORType("OGR");
         exporter.setFlowRates(flowRates);
         exporter.setTHPs(thp);
         exporter.setWaterCuts(new double[] {0.0});
