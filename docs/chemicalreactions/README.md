@@ -1,364 +1,191 @@
 ---
 title: Chemical Reactions Package
-description: The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.
+description: Supported equilibrium workflows, reaction-data provenance, diagnostics, and kinetics boundaries in NeqSim.
 ---
 
-The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.
+The `neqsim.chemicalreactions` package supplies reaction definitions, database-backed
+aqueous-equilibrium operations, residual diagnostics, and coupled kinetic helpers. Simultaneous
+phase and chemical equilibrium is exposed through the reactive-flash operations.
 
-## Table of Contents
-- [Overview](#overview)
-- [Package Structure](#package-structure)
-- [Chemical Equilibrium](#chemical-equilibrium)
-- [Reaction Kinetics](#reaction-kinetics)
-- [Usage Examples](#usage-examples)
+## Choose the right workflow
 
----
+| Need | Supported entry point | Evidence |
+|---|---|---|
+| Simultaneous TP phase and chemical equilibrium | `ThermodynamicOperations.reactiveTPflash()` | [Reactive-flash guide](../thermo/reactive_flash) |
+| Direct control of the modified-RAND TP solver | `ReactiveMultiphaseTPflash` | [Reactive-flash tests](https://github.com/equinor/neqsim/tree/master/src/test/java/neqsim/thermodynamicoperations/flashops/reactiveflash) |
+| Reactive PH or PS equilibrium | `reactivePHflash(...)` or `reactivePSflash(...)` | [Reactive-flash guide](../thermo/reactive_flash#reactive-ph-flash-isenthalpic-and-ps-flash-isentropic) |
+| Inspect the initialized aqueous reaction set and closure diagnostics | `system.getChemicalReactionOperations()` | [Reaction-model audit guide](reaction_model_audit) |
+| Screen experimental CO₂ impurity kinetics | Dedicated, evidence-gated reactor and transport classes | [Qualified execution guide](co2_impurity_qualified_execution) |
 
-## Overview
+A normal `TPflash()` solves phase equilibrium only. It does not become reactive through a
+boolean switch. Use a reactive-flash operation explicitly so the calculation intent is visible.
 
-**Location:** `neqsim.chemicalreactions`
+## Equilibrium basis
 
-**Purpose:**
-- Calculate chemical equilibrium composition
-- Model reaction kinetics
-- Support reactive flash calculations
-- Handle simultaneous phase and chemical equilibrium
+At fixed temperature and pressure, equilibrium minimizes total Gibbs energy subject to elemental
+conservation:
 
----
+$$
+\min G = \sum_i n_i \mu_i
+$$
 
-## Package Structure
+$$
+\sum_i a_{ji} n_i = b_j
+$$
 
-```
-chemicalreactions/
-├── ChemicalReactionOperations.java   # Main operations class
-│
-├── chemicalequilibrium/              # Equilibrium calculations
-│   ├── ChemicalEquilibrium.java      # Base class
-│   ├── ChemEq.java                   # Equilibrium solver
-│   ├── LinearProgrammingChemicalEquilibrium.java
-│   └── ReferencePotComparator.java
-│
-├── chemicalreaction/                 # Reaction definitions
-│   ├── ChemicalReaction.java         # Single reaction
-│   └── ChemicalReactionList.java     # Reaction set
-│
-└── kinetics/                         # Kinetics models
-    └── Kinetics.java                 # Kinetic rate calculations
-```
+Here, $n_i$ is the amount of species $i$, $\mu_i$ its chemical potential, $a_{ji}$ the amount of
+element $j$ in species $i$, and $b_j$ the conserved feed inventory of that element. Ionic
+aqueous calculations also require electroneutrality.
 
----
+NeqSim contains two related implementations:
 
-## Chemical Equilibrium
+- `neqsim.chemicalreactions.ChemicalReactionOperations` owns the database-selected reaction list
+  attached to a thermodynamic system, aqueous reaction closure, and residual diagnostics.
+- `neqsim.thermodynamicoperations.flashops.reactiveflash` contains the modified-RAND solvers for
+  simultaneous phase and chemical equilibrium. `FormulaMatrix` derives the element constraints
+  and number of independent reactions from the selected components.
 
-### Theory
+Application code should create and configure the thermodynamic system, then call the relevant
+thermodynamic operation. Do not construct the low-level equilibrium or linear-programming helpers
+as standalone solvers; their constructors require internal matrices, components, reference
+potentials, and phase context.
 
-Chemical equilibrium is achieved when the Gibbs energy is minimized:
+## Complete Java example
 
-$$\min G = \sum_i n_i \mu_i$$
+The build-verified
+[ChemicalReactionEquilibriumExample.java](../examples/ChemicalReactionEquilibriumExample.java)
+solves the water-gas-shift system
 
-Subject to element balance constraints:
+$$
+\mathrm{CO + H_2O \rightleftharpoons CO_2 + H_2}
+$$
 
-$$\sum_i a_{ji} n_i = b_j \quad \text{for each element } j$$
+at 600 K and 1 bar. It uses Java 8-compatible syntax and parameterized Log4j2 reporting, checks
+finite bounded mole fractions, verifies the expected reaction direction, and checks carbon and
+hydrogen balances.
 
-Where:
-- $n_i$ = moles of species $i$
-- $\mu_i$ = chemical potential of species $i$
-- $a_{ji}$ = atoms of element $j$ in species $i$
-- $b_j$ = total moles of element $j$
-
-### Basic Usage
+The example's core public call is:
 
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-
-// Create reactive system
-SystemInterface reactive = new SystemSrkEos(700.0, 10.0);
-reactive.addComponent("methane", 1.0);
-reactive.addComponent("water", 2.0);
-reactive.addComponent("CO2", 0.0);
-reactive.addComponent("CO", 0.0);
-reactive.addComponent("hydrogen", 0.0);
-reactive.setMixingRule("classic");
-
-// Enable chemical reactions
-reactive.setChemicalReactions(true);
-
-// Perform equilibrium calculation
-ThermodynamicOperations ops = new ThermodynamicOperations(reactive);
-ops.calcChemicalEquilibrium();
-
-// Display results
-for (int i = 0; i < reactive.getNumberOfComponents(); i++) {
-    System.out.println(reactive.getComponent(i).getName() + 
-        ": " + reactive.getComponent(i).getNumberOfmable() + " mol");
-}
+ThermodynamicOperations operations = new ThermodynamicOperations(system);
+operations.reactiveTPflash();
 ```
 
----
+Run the complete source from a checkout after compiling NeqSim:
 
-## Supported Reactions
-
-### Steam Reforming
-
-```
-CH₄ + H₂O ⇌ CO + 3H₂
-CO + H₂O ⇌ CO₂ + H₂
+```bash
+./mvnw -q -DskipTests package
+java -cp "target/classes:target/dependency/*" ChemicalReactionEquilibriumExample
 ```
 
-### Combustion
+Classpath syntax differs on Windows. The repository's
+`StandaloneJavaDocumentationCompilationTest` compiles the exact source against the current API.
+`ReactiveFlashBenchmarkTest.testWaterGasShiftEquilibrium` executes the same feed and conditions
+and verifies convergence, reaction direction, and elemental conservation.
 
-```
-CH₄ + 2O₂ → CO₂ + 2H₂O
-C₂H₆ + 3.5O₂ → 2CO₂ + 3H₂O
-```
+## System setup
 
-### Acid Gas Reactions
+A reproducible reactive calculation should make each of these choices explicit:
 
-```
-CO₂ + H₂O ⇌ H₂CO₃
-H₂S + H₂O ⇌ HS⁻ + H₃O⁺
-NH₃ + H₂O ⇌ NH₄⁺ + OH⁻
-```
-
-### Amine Reactions
-
-```
-CO₂ + 2RNH₂ ⇌ RNHCOO⁻ + RNH₃⁺
-CO₂ + RNH₂ + H₂O ⇌ RNH₃⁺ + HCO₃⁻
-```
-
-### Experimental CO₂ impurity kinetics
-
-`CO2ImpurityKineticReactor` provides an isothermal, concentration-based Arrhenius network for
-screening trace-reaction trends in CO₂-rich streams. The implementation applies balanced
-stoichiometry, non-negative extent bounds, configurable residence time and material-dependent R8
-kinetics. Its default parameters require calibration before engineering use.
-
-See the [CO₂ impurity kinetics guide](co2_impurity_kinetics_guide) for reaction definitions,
-Java usage, numerical safeguards, and model limitations. Use the
-[CO₂ transport reaction-kinetics guide](co2_transport_reaction_kinetics) to enforce evidence
-ranges and screen a reaction/transport Damköhler number.
-Use the [CO₂ hydration temperature-trajectory guide](co2_hydration_temperature_trajectory) for
-exact, carbon-conserving propagation of the qualified neutral pair through ordered temperature segments.
-Use the [qualified CO₂ impurity execution guide](co2_impurity_qualified_execution) to bind
-public evidence to every experimental R1-R8 parameterization before fail-closed execution.
-Use the [aqueous H2S/O2 kinetics guide](h2s_oxygen_kinetics) for the primary-source,
-atmospheric-pressure total-sulfide oxidation screening correlation and its fail-closed limits.
-
-
----
-
-## ChemicalReactionOperations
-
-### Main Class
-
-```java
-import neqsim.chemicalreactions.ChemicalReactionOperations;
-
-ChemicalReactionOperations reactionOps = new ChemicalReactionOperations(fluid);
-
-// Add reactions
-reactionOps.addReaction("methane_reforming");
-reactionOps.addReaction("water_gas_shift");
-
-// Calculate equilibrium
-reactionOps.calcChemicalEquilibrium();
-
-// Get equilibrium constants
-double Keq = reactionOps.getEquilibriumConstant("methane_reforming");
-```
-
----
-
-## Reaction Kinetics
-
-For rate-limited reactions, use kinetic models.
-
-### Kinetic Rate Expression
-
-General rate expression:
-
-$$r = k \cdot \prod_i C_i^{n_i}$$
-
-Where:
-- $k$ = rate constant
-- $C_i$ = concentration of species $i$
-- $n_i$ = reaction order with respect to species $i$
-
-### Temperature Dependence (Arrhenius)
-
-$$k = A \cdot \exp\left(-\frac{E_a}{RT}\right)$$
-
-Where:
-- $A$ = pre-exponential factor
-- $E_a$ = activation energy
-- $R$ = gas constant
-- $T$ = temperature
-
-### Usage
-
-```java
-import neqsim.chemicalreactions.kinetics.Kinetics;
-
-Kinetics kinetics = new Kinetics(fluid);
-
-// Set reaction parameters
-kinetics.setPreExponentialFactor(1.0e10);  // 1/s
-kinetics.setActivationEnergy(80000.0);      // J/mol
-
-// Calculate rate at current conditions
-double rate = kinetics.getReactionRate();
-```
-
----
-
-## Reactive Flash Calculations
-
-Combine phase equilibrium with chemical equilibrium.
-
-### TP Flash with Reactions
-
-```java
-// Set up reactive system
-SystemInterface fluid = new SystemSrkEos(500.0, 20.0);
-fluid.addComponent("methane", 1.0);
-fluid.addComponent("oxygen", 0.5);
-fluid.addComponent("CO2", 0.0);
-fluid.addComponent("water", 0.0);
-fluid.setMixingRule("classic");
-fluid.setChemicalReactions(true);
-
-// Reactive TP flash
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-// Results include both phase and chemical equilibrium
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-    System.out.println(fluid.getComponent(i).getName() + 
-        ": " + fluid.getComponent(i).getz() + " mol/mol");
-}
-```
-
----
-
-## Gibbs Energy Minimization
-
-### Linear Programming Method
-
-For complex systems, use linear programming approach.
-
-```java
-import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
-
-LinearProgrammingChemicalEquilibrium lpEquil = 
-    new LinearProgrammingChemicalEquilibrium(fluid);
-lpEquil.solve();
-
-// Get equilibrium composition
-double[] composition = lpEquil.getEquilibriumComposition();
-```
-
----
-
-## Database Integration
-
-Chemical reactions and their parameters are stored in the database.
-
-### Reaction Database
-
-| Field | Description |
-|-------|-------------|
-| name | Reaction identifier |
-| reactants | Reactant species |
-| products | Product species |
-| stoichiometry | Stoichiometric coefficients |
-| deltaH | Enthalpy of reaction |
-| deltaG | Gibbs energy of reaction |
-| Keq_A, Keq_B, Keq_C | Equilibrium constant correlation |
-
-### Loading Reactions
-
-```java
-// Load reactions from database
-fluid.createChemicalReactions(true);
-
-// Or specify specific reactions
-fluid.addChemicalReaction("steam_reforming");
-fluid.addChemicalReaction("water_gas_shift");
-```
-
----
-
-## Example: Ammonia Synthesis
-
-```java
-// Ammonia synthesis: N₂ + 3H₂ ⇌ 2NH₃
-SystemInterface syngas = new SystemSrkEos(673.15, 200.0);  // 400°C, 200 bar
-syngas.addComponent("nitrogen", 1.0);
-syngas.addComponent("hydrogen", 3.0);
-syngas.addComponent("ammonia", 0.0);
-syngas.setMixingRule("classic");
-syngas.setChemicalReactions(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(syngas);
-ops.calcChemicalEquilibrium();
-
-double NH3fraction = syngas.getComponent("ammonia").getz();
-double conversion = 2 * NH3fraction / 
-    (syngas.getComponent("nitrogen").getz() + NH3fraction);
-
-System.out.println("NH₃ mole fraction: " + NH3fraction);
-System.out.println("N₂ conversion: " + (conversion * 100) + "%");
-```
-
----
-
-## Example: CO₂ Capture with Amine
-
-```java
-// CO₂ absorption in MEA solution
-SystemInterface solution = new SystemElectrolyteCPA(313.15, 1.01325);
-solution.addComponent("CO2", 0.05);
-solution.addComponent("water", 0.75);
-solution.addComponent("MEA", 0.20);
-solution.setMixingRule("CPA_Statoil");
-solution.setChemicalReactions(true);
-
-// Flash with reactions
-ThermodynamicOperations ops = new ThermodynamicOperations(solution);
-ops.TPflash();
-
-// Get CO₂ loading
-double CO2loading = solution.getComponent("CO2").getx() / 
-    solution.getComponent("MEA").getx();
-System.out.println("CO₂ loading: " + CO2loading + " mol CO₂/mol MEA");
-```
-
----
-
-## Best Practices
-
-1. **Initialize products** with small but non-zero amounts
-2. **Check element balance** before and after equilibrium
-3. **Use appropriate thermodynamic model** (electrolyte models for ionic reactions)
-4. **Verify equilibrium constants** against literature
-5. **Consider kinetic limitations** for slow reactions
-
----
-
-## Limitations
-
-- Not all reactions are in the database
-- Custom reactions require database extension
-- Some complex reaction mechanisms not supported
-- High-temperature kinetics may need external data
-
----
-
-## Related Documentation
-
-- [Thermodynamic Operations](../thermodynamicoperations/) - Flash calculations
-- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Creating reactive systems
-- [Electrolyte Models](../thermo/) - Electrolyte CPA for ionic reactions
+1. Select a thermodynamic model appropriate for every phase and species.
+2. Add all feed species with physical, non-negative amounts.
+3. Set the mixing rule and phase limit.
+4. Initialize the system before direct solver use.
+5. Run the dedicated reactive operation.
+6. Check convergence and conservation before interpreting composition.
+7. Record reaction-data provenance and the thermodynamic model with the result.
+
+The reactive solver can redistribute species only within the elemental inventory represented by
+the configured components. The availability and validity of reaction data depend on the selected
+data source and component set; the package does not imply that every named industrial reaction is
+qualified.
+
+## Aqueous chemistry and charge balance
+
+Database-backed `ChemicalReactionOperations` is intended for a liquid reactive phase, especially
+aqueous electrolyte chemistry. Its initialized reaction set is owned by the thermodynamic system.
+After initialization, obtain it through `system.getChemicalReactionOperations()` to inspect:
+
+- whether reactions were selected;
+- the reaction-data source and provenance;
+- natural-log reaction residuals;
+- reactive-phase charge residuals; and
+- element-balance residuals.
+
+For ions, the complete reactive phase must satisfy
+
+$$
+\sum_i z_i n_i = 0
+$$
+
+where $z_i$ is ionic charge. Do not seed an arbitrary unbalanced ion inventory merely to force
+solver initialization. Use a supported electrolyte model, a charge-balanced feed, and the
+diagnostic limits documented in the [reactive-flash guide](../thermo/reactive_flash).
+
+## Reaction data and provenance
+
+`ChemicalReactionList` selects applicable database reactions from the system's components and
+builds stoichiometric matrices. `ChemicalReactionDataSource` identifies the selected parameter
+set. Treat the identifier and cited reference as part of the calculation result.
+
+Reaction identifiers, correlations, temperature ranges, and reference states are data, not generic
+user-defined strings accepted by the thermodynamic system. Adding or changing reaction data is a
+model-development task that requires source evidence, validation, and review; it is not a
+documentation-only configuration step.
+
+Use the [reaction-model audit guide](reaction_model_audit) to list the initialized model without
+re-evaluating potentially underflowing activity products. Use the
+[qualified execution guide](co2_impurity_qualified_execution) when an experimental kinetic network
+requires evidence-bound execution.
+
+## Kinetics boundary
+
+The legacy `neqsim.chemicalreactions.kinetics.Kinetics` class is coupled to an initialized
+`ChemicalReactionOperations` instance. It is not a general-purpose Arrhenius builder with
+independent setters for a pre-exponential factor and activation energy.
+
+For rate-limited process models, choose a dedicated implementation whose reaction definition,
+units, parameter provenance, validity range, integration method, and conservation behavior are
+documented and tested. Current examples include:
+
+- [CO₂ impurity kinetics](co2_impurity_kinetics_guide);
+- [CO₂ transport reaction-kinetics screening](co2_transport_reaction_kinetics);
+- [qualified CO₂ impurity execution](co2_impurity_qualified_execution);
+- [aqueous H₂S/O₂ kinetics](h2s_oxygen_kinetics); and
+- [CO₂ hydration temperature trajectories](co2_hydration_temperature_trajectory).
+
+Do not substitute equilibrium composition for residence-time-dependent conversion, or infer a rate
+constant from equilibrium data alone.
+
+## Validation checklist
+
+Before engineering use:
+
+- confirm the reaction set and parameter source;
+- confirm that temperature, pressure, composition, and phase regime are inside the evidence range;
+- require solver convergence;
+- verify element conservation and, for electrolytes, charge closure;
+- inspect reaction residuals instead of relying only on a returned composition;
+- compare with an independent benchmark or measurement; and
+- distinguish equilibrium predictions from kinetic or transport limitations.
+
+The WGS quickstart is an API and conservation example. Its values are not a design basis or a
+validated reactor model.
+
+## Package map
+
+| Area | Responsibility |
+|---|---|
+| `ChemicalReactionOperations` | System-owned aqueous reaction selection, solution, and diagnostics |
+| `chemicalreaction` | Reaction records, lists, data sources, correlations, and model audit |
+| `chemicalequilibrium` | Internal equilibrium and initialization helpers |
+| `kinetics` | Helpers coupled to initialized reaction operations |
+| `thermodynamicoperations.flashops.reactiveflash` | Public reactive TP/PH/PS workflows and modified-RAND implementation |
+
+## Related documentation
+
+- [Reactive flash calculations](../thermo/reactive_flash)
+- [Thermodynamic operations](../thermo/thermodynamic_operations)
+- [Fluid creation](../thermo/fluid_creation_guide)
+- [Electrolyte models](../thermo/ElectrolyteCPAModel)
+- [Reaction-model audit](reaction_model_audit)
