@@ -1304,6 +1304,29 @@ independent OLGA/public benchmark qualification is completed. Do not use short s
 limit-cycle evidence; report period, the P10-P90 band, and completed cycle count over a settled
 window.
 
+### Experimental common-time-level kernel
+
+`UnsplitTransientSolver` is the first numerical foundation for replacing the sequential
+predictor/pressure-projection path. It solves gas, oil and water mass; the three phase momenta; and
+cell pressure in one isothermal implicit-midpoint system. Pressure-dependent volume closure remains
+an equation in every cell, including the final cell. A prescribed outlet pressure is passed to the
+model callback as a boundary-face condition and must enter the boundary phase fluxes; it is not a
+replacement for the final cell's volume equation.
+
+The kernel uses scaled residuals and unknowns, a colored finite-difference Jacobian for a declared
+cell stencil, partial-pivoting linear solves, an Armijo line search, and fraction-to-boundary limits
+for phase mass and pressure. A model can freeze donor, flow-regime, and complementarity choices for
+one Jacobian and refresh them between Newton iterations. Every model evaluation must be
+transactional: trial calls must start from the same accepted state and must not accumulate accepted
+mass, component, thermal, limiter, or rejection ledgers.
+
+This class is not yet selected by `TwoFluidPipe.runTransient`. It does not change a default or
+qualify severe slugging. Integration still requires a transactional adapter for the complete
+finite-volume flux/source operator, pressure-dependent phase properties, and the fixed-pressure
+outlet face. The existing 5 s mesh matrix and the 180/600 s public Tengesdal gates must pass before
+the path can be exposed as a pipe option. Energy, named-component transport, and phase change are
+outside the initial isothermal solve and remain separate unsupported intersections.
+
 ### Standing benchmark acceptance metrics
 
 Use `TwoFluidBenchmarkMetrics` to compare a rate sweep, a section profile, mesh realizations, and
