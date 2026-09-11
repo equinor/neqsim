@@ -44,6 +44,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermo/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermo Package</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equations of state, mixing rules, fluids</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermodynamicoperations/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermodynamic Operations</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Flash calculations, phase envelopes</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="physical_properties/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="chemicalreactions/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Chemical Reactions</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Chemical equilibrium and reaction kinetics</span></li>
 <li style="padding: 0.5rem 0;"><a href="chemicalreactions/co2_impurity_kinetics_guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Experimental CO₂ Impurity Kinetic Reactor</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Balanced trace-reaction network, reactor usage, safeguards, and limitations</span></li>
 </ul>
 </div>
@@ -72,6 +73,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <ul style="list-style: none; padding: 0; margin: 0;">
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="pvtsimulation/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>PVT Simulation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Reservoir fluid characterization</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="blackoil/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Black Oil Models</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Simplified correlations</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="statistics/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Statistics &amp; Parameter Fitting</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Parameter estimation, Monte Carlo simulation, and data analysis</span></li>
 <li style="padding: 0.5rem 0;"><a href="fielddevelopment/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Field Development</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Integrated workflows</span></li>
 </ul>
 </div>
