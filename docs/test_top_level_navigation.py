@@ -7,6 +7,11 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 REFERENCE_INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
+LANDING_PAGE = DOCS / "index.md"
+FOUNDATIONAL_PACKAGE_TARGETS = {
+    "chemicalreactions/README.html": DOCS / "chemicalreactions" / "README.md",
+    "statistics/README.html": DOCS / "statistics" / "README.md",
+}
 
 FRONT_MATTER = re.compile(r"\A---\n(?P<fields>.*?)\n---\n", re.DOTALL)
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -108,6 +113,14 @@ def test_top_level_landing_relative_targets_resolve() -> None:
             assert any(candidate.exists() for candidate in candidates), (
                 f"{page}: unresolved relative target {target}"
             )
+
+
+def test_main_landing_routes_to_foundational_package_guides() -> None:
+    targets = _link_targets(LANDING_PAGE.read_text(encoding="utf-8"))
+    for destination, package_landing in FOUNDATIONAL_PACKAGE_TARGETS.items():
+        assert destination in targets, f"{LANDING_PAGE}: missing {destination}"
+        assert package_landing in _target_candidates(LANDING_PAGE, destination)
+        assert package_landing.is_file()
 
 
 def test_single_landing_directories_are_discoverable() -> None:
