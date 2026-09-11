@@ -30,7 +30,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Private Entrainment Extensions | [private-extensions.md](private-extensions) | ServiceLoader SPI for proprietary carry-over correlations supplied in a separate JAR |
 | Distillation | [distillation.md](distillation) | Distillation columns |
 | Absorbers | [absorbers.md](absorbers) | Absorption/stripping columns |
-| Adsorbers | [adsorbers.md](adsorbers) | Simplified adsorption equipment |
+| Adsorbers (legacy boundary) | [adsorbers.md](adsorbers) | Unqualified SimpleAdsorber MDEA-loading prototype; use absorber or adsorption-bed models for new work |
 | Adsorption Beds | [adsorption_bed.md](adsorption_bed) | Dynamic beds, breakthrough, mercury removal, and PSA |
 | Membranes | [membranes.md](membranes) | Membrane separation units |
 | Filters | [filters.md](filters) | Particulate and charcoal filters |
