@@ -112,8 +112,8 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
    * Locate when an absolute remaining total-sulfide target is reached at constant water inventory.
    *
    * <p>
-   * The dimensional threshold is converted to a remaining fraction and delegated to the existing piecewise
-   * analytical crossing calculation. No product identity, oxygen demand, or process source term is inferred.
+   * The dimensional threshold is converted to a remaining fraction and delegated to the existing piecewise analytical
+   * crossing calculation. No product identity, oxygen demand, or process source term is inferred.
    * </p>
    *
    * @param initialTotalSulfideMolality initial total-sulfide molality [mol/kg water]
@@ -145,16 +145,16 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     double targetReactedMoles = finiteDifference(initialTotalSulfideMoles, targetRemainingMoles,
         "Target reacted total sulfide");
     if (targetRemainingMoles < initialTotalSulfideMoles && targetReactedMoles == 0.0) {
-      throw new IllegalArgumentException("Target remaining total sulfide cannot be represented at this inventory scale");
+      throw new IllegalArgumentException(
+          "Target remaining total sulfide cannot be represented at this inventory scale");
     }
     double targetRemainingFraction = targetRemainingMoles / initialTotalSulfideMoles;
-    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0
-        || targetRemainingFraction > 1.0) {
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0 || targetRemainingFraction > 1.0) {
       throw new IllegalArgumentException("Target remaining fraction must be finite and in the interval (0, 1]");
     }
 
-    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange =
-        AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(targetRemainingFraction, segments);
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(targetRemainingFraction, segments);
     return new RemainingMolesTargetResult(initialTotalSulfideMolality, waterInventoryKg, initialTotalSulfideMoles,
         targetRemainingMoles, targetReactedMoles, targetRemainingFraction, crossingRange);
   }
