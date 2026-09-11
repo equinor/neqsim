@@ -254,6 +254,36 @@ reaction heat, pressure or phase transfer, mutate pipeline/transient state, or u
 deposition and wall inventories. Those steps require separately qualified inputs and must compose
 with the existing pipeline and sulfur-deposition implementations.
 
+
+## Constant-water trajectory projection
+
+The overloaded
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(...)` applies one
+caller-supplied constant liquid-water inventory to a complete immutable trajectory. It preserves
+the source order and returns every existing per-segment dimensional projection together with
+cumulative lower-rate, nominal, and upper-rate reacted total-sulfide amounts.
+
+For each fit-scatter path `r`, the segment increments telescope at constant water inventory:
+
+$
+n_{r,\mathrm{reacted}}
+= \sum_i n_{r,i,\mathrm{reacted}}
+= m_w(c_0-c_{r,n,\mathrm{out}}).
+$
+
+The result exposes the difference between the summed increments and this endpoint identity as a
+closure residual in mol. A one-segment trajectory exactly reuses the existing segment projection,
+an unchanged-state subdivision preserves cumulative reacted moles, and a trajectory containing
+only a zero-duration segment reports exactly zero reaction. The segment list is defensively
+immutable. A null trajectory, non-finite or non-positive inventory, numerical underflow, or
+non-finite accumulation fails closed.
+
+The constant inventory is an explicit caller assumption; it is not a calculated pipeline holdup,
+water-dropout history, or moving material-parcel model. The cumulative amounts remain unsigned
+total-sulfide-loss evidence. They do not consume O2, assign sulfur products, calculate heat or
+phase transfer, create signed component sources, mutate pipeline/transient state, or update S8,
+FeS, wall, or sulfur-deposition inventories.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
