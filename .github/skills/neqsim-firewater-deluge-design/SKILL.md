@@ -42,6 +42,11 @@ Answer them in this order. Reversing the order is the usual way these studies go
 `neqsim.process.safety.firewater` (Java 8, all classes `Serializable`, all emit
 schema-versioned JSON via `toJson()`).
 
+> Do **not** use `FireProtectionDesign.firewaterDemand(...)`
+> (`neqsim.process.mechanicaldesign.designstandards`) for any of these questions. It
+> returns one lumped m³/h figure for the engineering-deliverables package and carries no
+> coverage, nozzle, monitor or hydraulic-feasibility logic.
+
 ```java
 // 1. demand: blanket area coverage
 FireWaterDemandCalculator area = new FireWaterDemandCalculator(510.0)

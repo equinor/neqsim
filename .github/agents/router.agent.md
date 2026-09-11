@@ -26,6 +26,7 @@ Analyze the request and match it to one or more agents:
 | Wall thickness, ASME, API, DNV, mechanical sizing, cost | `@mechanical.design` | `@process.model` for operating conditions; current DNV-ST-F101 uses the typed screening kernel, never the legacy DNV-OS calculator |
 | Standards compliance, TR1965, STS0131, TR2237, NORSOK P-002, NORSOK S-001, technical requirements review | `@standards.review` | `@technical.reader` for document extraction; `@process.model` for calculated evidence |
 | Blowdown, depressurization, PSV, relief valve, fire case, source term, HAZOP, SIL | `@safety.depressuring` | `@process.model` for steady-state base |
+| Deluge coverage, fire water, nozzle count, fire monitor, area application rate, active vs passive fire protection, PFP instead of deluge | `@safety.depressuring` | `@consequence.analysis` for the fire type and heat flux first; loads `neqsim-firewater-deluge-design` |
 | Self-ignition, spontaneous combustion, lagging fire, oil-soaked or glycol-soaked insulation, fire with no ignition source, smouldering, basket/oven test data | `@safety.depressuring` | `@consequence.analysis` once ignition is predicted; `@reaction.engineering` if full oxidation kinetics are needed |
 | Root cause, failure analysis, trip diagnosis, vibration diagnosis, equipment anomaly, RCA | `@root.cause` | `@plant.data` for historian data; `@process.model` for simulation base |
 | Emissions, CO2 tax, flaring, venting, carbon intensity, GHG, EU ETS | `@emissions.environmental` | `@process.model` for process conditions |

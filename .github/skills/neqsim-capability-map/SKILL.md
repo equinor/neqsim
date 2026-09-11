@@ -406,8 +406,23 @@ transport properties (viscosity, thermal conductivity, density).
 | `AlarmTripScheduleGenerator` | Alarm/trip setpoints per IEC 61511 / NORSOK I-001 | `process.mechanicaldesign` |
 | `InstrumentScheduleGenerator` | ISA-5.1 tagged instrument schedule with live MeasurementDevice bridge | `process.mechanicaldesign` |
 | `SparePartsInventory` | Recommended spare parts by equipment type with lead times | `process.mechanicaldesign` |
-| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment (API 521) | `process.mechanicaldesign.designstandards` |
+| `FireProtectionDesign` | Jet fire, BLEVE, pool fire scenario assessment (API 521); `firewaterDemand(...)` is a lumped m3/h deliverables figure only | `process.mechanicaldesign.designstandards` |
 | `NoiseAssessment` | Equipment noise + ISO 9613-2 atmospheric attenuation | `process.mechanicaldesign.designstandards` |
+
+### Active Fire Protection (fire water / deluge)
+
+| Class | Purpose | Package |
+|-------|---------|---------|
+| `FireWaterDemandCalculator` | Area and dedicated-object fire-water demand, simultaneous-release factor, AFFF concentrate | `process.safety.firewater` |
+| `DelugeNozzleLayout` | Nozzle count from the larger of the flow and spray-overlap criteria, grid spacing, clearance check | `process.safety.firewater` |
+| `FireMonitorCoverage` | Monitor substitution screening with wind drift and line-of-sight | `process.safety.firewater` |
+| `FireWaterCoverageAssessment` | Gates a new deluge section against an existing system — separates coverage, flow and pressure-margin deficits | `process.safety.firewater` |
+| `ActiveFireProtectionScreening` | Inventory → PFP → fire-water hierarchy and the one-directional active-vs-passive substitution rule | `process.safety.firewater` |
+
+**Use these, not `FireProtectionDesign.firewaterDemand(...)`, for any coverage,
+nozzle-count or adequacy question.** `FireProtectionDesign` returns a single
+lumped demand for the deliverables package and has no coverage, nozzle or
+hydraulic-feasibility logic.
 
 ### Electrical Design
 
@@ -605,6 +620,8 @@ transport properties (viscosity, thermal conductivity, density).
 | Sulfur deposition? | ✅ | `SulfurDepositionAnalyser` |
 | JT cooling? | ✅ | `ThrottlingValve` |
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
+| Fire-water / deluge coverage of an area? | ✅ | `FireWaterDemandCalculator` + `DelugeNozzleLayout` + `FireWaterCoverageAssessment` (`neqsim.process.safety.firewater`) |
+| Can PFP or fire monitors replace deluge? | ✅ | `ActiveFireProtectionScreening`, `FireMonitorCoverage` |
 | PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
 | Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
 | Tank venting (API 2000)? | 🔧 | `Api2000TankVentingScreeningKernel` — caller-controlled normal/emergency demand aggregation and rated-capacity/pressure screen; no API table lookup or vent sizing |
