@@ -1798,6 +1798,24 @@ Document the independent check in `step2_analysis/notes.md` under a
     achieved. Give each conclusion its own "what remains open" instead of one
     lumped gap register at the end.
 
+15e. **Select the final-document writing style.** Only now, after the analysis and
+    conclusions are complete, load `neqsim-final-report-writing-style` and select
+    the style for the generated report or durable summary. Do not apply either
+    style retroactively to analysis notes, notebook reasoning, source extraction,
+    ordinary chat, or progress updates.
+
+    - Honor an explicit user request for `prose_english` or
+      `standard_engineering_english`.
+    - Otherwise select `prose_english` when the reader must interpret evidence or
+      make a decision.
+    - Select `standard_engineering_english` when the reader must perform an action,
+      reproduce a method, identify equipment, or follow a requirement or limit.
+    - For mixed reports, use `prose_english` as the primary style and controlled
+      section overrides for procedures, requirements, warnings, cautions, limits,
+      equipment descriptions, and checklists.
+    - Record `primary`, `selection`, `reason`, and `section_overrides` in
+      `results.json["writing_style"]`.
+
 16. **Update `generate_report.py`** in `step3_report/`:
     - The report **auto-reads** `task_spec.md` and `results.json` — verify both exist
     - Fill in the executive summary with actual findings

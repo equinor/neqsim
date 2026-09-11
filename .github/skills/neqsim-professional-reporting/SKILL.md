@@ -1,8 +1,8 @@
 ---
 name: neqsim-professional-reporting
 version: "1.0.0"
-description: "Engineering deliverable quality — the nine analytical-depth moves (contributor ranking, adjudicating the source document, quantitative rule-outs, robustness crossover, conservatism direction, discriminating test), results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, a PEPR/M1/root-cause problem-solving report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
-last_verified: "2026-07-09"
+description: "Engineering deliverable quality — the nine analytical-depth moves (contributor ranking, adjudicating the source document, quantitative rule-outs, robustness crossover, conservatism direction, discriminating test), results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, final-document writing-style selection, AACE class declaration. USE WHEN: producing a task report, a PEPR/M1/root-cause problem-solving report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
+last_verified: "2026-09-11"
 ---
 
 # NeqSim Professional Reporting Skill
@@ -130,6 +130,30 @@ Required JSON schema fragment:
   }
 }
 ```
+
+## Final Writing Style (Step 3 Only)
+
+Do not select or impose a report writing style during research, analysis, calculation, source
+extraction, working notes, ordinary chat, or interim updates. Preserve the language that best
+supports those activities.
+
+Immediately before generating or revising the final report or durable summary, load
+`neqsim-final-report-writing-style`. It selects between:
+
+- `prose_english` (`neqsim-prose-english`) for executive summaries, evidence interpretation,
+  discussions, conclusions, root-cause narratives, and decision rationales;
+- `standard_engineering_english` (`neqsim-standard-engineering-english`) for procedures, method
+  steps, equipment descriptions, requirements, warnings, cautions, limits, and checklists.
+
+An explicit user request for either style takes precedence. For a mixed report, use
+`prose_english` as the primary style and apply `standard_engineering_english` only to controlled
+technical sections. Mandatory safety, regulatory, contractual, accessibility, and template rules
+take precedence over both styles.
+
+Record the primary style, selection reason, and section overrides in
+`results.json["writing_style"]`. Style revision must not change facts, values, units, citations,
+uncertainty, findings, or recommendations. The condensed controlled style is inspired by
+ASD-STE100 and must not be described as ASD-STE100 compliant.
 
 ## Principle 2 — Executive Summary Structure
 
