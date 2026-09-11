@@ -89,7 +89,12 @@ public final class LOPARunner {
           return errorJson("INVALID_LAYER",
               "layers[" + i + "].name must be a non-blank string of at most 256 characters");
         }
-        double pfd = readFiniteNumber(layer, "pfd", "layers[" + i + "].pfd");
+        double pfd;
+        try {
+          pfd = readFiniteNumber(layer, "pfd", "layers[" + i + "].pfd");
+        } catch (IllegalArgumentException invalidPfd) {
+          return errorJson("INVALID_LAYER", invalidPfd.getMessage());
+        }
         if (pfd <= 0.0 || pfd > 1.0) {
           return errorJson("INVALID_LAYER", "layers[" + i + "].pfd must be greater than 0 and at most 1");
         }

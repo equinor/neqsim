@@ -89,7 +89,8 @@ class LOPARunnerTest {
     assertErrorCode(request("0.1", "1e-5", "[{\"name\":\" \" ,\"pfd\":0.1}]"), "INVALID_LAYER");
     assertErrorCode(request("0.1", "1e-5", "[{\"name\":\"x\",\"pfd\":0}]"), "INVALID_LAYER");
     assertErrorCode(request("0.1", "1e-5", "[{\"name\":\"x\",\"pfd\":1.01}]"), "INVALID_LAYER");
-    assertErrorCode(request("0.1", "1e-5", "[{\"name\":\"x\",\"pfd\":NaN}]"), "INVALID_INPUT");
+    assertErrorCode(request("0.1", "1e-5", "[{\"name\":\"x\",\"pfd\":NaN}]"), "INVALID_LAYER");
+    assertErrorCode(request("0.1", "1e-5", "[{\"name\":\"x\",\"pfd\":\"low\"}]"), "INVALID_LAYER");
   }
 
   @Test
