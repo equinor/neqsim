@@ -249,3 +249,45 @@ validate product quality, or demonstrate equipment turndown.
 All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, equipment design, or plant-agreement evidence.
+
+## Condenser-reflux sensitivity screening
+
+`DoeBigHillVacuumRefluxSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while varying only the condenser reflux ratio. Tray count, feed tray,
+feed and reboiler temperatures, all three absolute pressures, feed composition, and feed mass flow
+remain fixed. Reflux ratios must be finite, non-negative, unique, and strictly increasing.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] refluxRatios = {0.49, 0.50, 0.51};
+
+DoeBigHillVacuumRefluxSensitivity sensitivity =
+    DoeBigHillVacuumRefluxSensitivity.run(
+        "Big Hill vacuum reflux screen", 1000.0, baseline, refluxRatios);
+
+for (DoeBigHillVacuumRefluxSensitivity.PointResult point : sensitivity.getPoints()) {
+  double refluxRatio = point.getCondenserRefluxRatio();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The condenser reflux ratio is a dimensionless `DistillationColumn` input. This screen isolates that
+single numerical operating variable; it does not represent a measured, optimized, or
+vendor-recommended reflux policy. The narrow 0.49/0.50/0.51 regression is a convergence and
+conservation test around the documented screening point. It does not establish a measured reflux
+response, require a monotonic yield trend, quantify condenser or reboiler duty, define utilities,
+size equipment, validate product quality, or demonstrate turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
