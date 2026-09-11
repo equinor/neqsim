@@ -349,6 +349,43 @@ This method dimensionalizes an analytical screening target only. The constant wa
 remains caller-supplied and is not a calculated holdup. The output is not a residence-time design,
 pipeline position, signed H2S source, oxygen demand, product yield, or deposition prediction.
 
+## Absolute remaining-moles target crossing
+
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(...)`
+converts a requested absolute remaining total-sulfide inventory to the fraction required by the
+existing piecewise target-crossing calculation. With initial molality `c_0`, constant water
+inventory `m_w`, and requested remaining amount `n_remaining,target`,
+
+$
+n_0=c_0m_w, \qquad
+f_{\mathrm{target}}=\frac{n_{\mathrm{remaining,target}}}{n_0}, \qquad
+n_{\mathrm{reacted,target}}=n_0-n_{\mathrm{remaining,target}}.
+$
+
+The immutable result records the input molality and water inventory, initial, remaining, and
+complementary reacted amounts, the target fraction, and the existing shortest, nominal, and
+longest crossing times and segment indices. A remaining target equal to half the initial inventory
+maps exactly to a fraction of `0.5`; at the illustrative reference state the nominal crossing is
+`22.4288 h`. It agrees exactly with the reacted-moles inverse when the two dimensional targets
+are complements.
+
+Forward evaluation at each reported fit-scatter crossing recovers the requested remaining amount.
+A smaller remaining target requires a longer time. Scaling both the constant water inventory and
+remaining-moles target by the same factor leaves the target fraction and crossing times unchanged.
+Unchanged-state segment subdivision preserves elapsed times while the source-order crossing index
+continues to describe the supplied segmentation. A target equal to the initial inventory crosses
+at exact time zero.
+
+The target must be finite, strictly positive, and no greater than the initial dimensional inventory;
+exact zero is unreachable in finite time for this first-order model. Non-finite, numerically
+underflowing, overflowing, unrepresentable, or unreachable inputs fail closed. Every lower,
+nominal, and upper fit-scatter path must reach a non-identity target within the supplied finite
+trajectory.
+
+This method is an absolute inventory-threshold screen, not a water-holdup calculation, residence-
+time design, pipeline position, signed H2S source, oxygen demand, product yield, or deposition
+prediction. The water inventory remains an explicit constant caller input.
+
 ## Scientific stop boundary
 
 This capability does not:
