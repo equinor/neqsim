@@ -108,6 +108,9 @@ public class TwoFluidConservationEquations implements Serializable {
   private boolean inletClosed;
   private boolean outletClosed;
 
+  /** Prescribed pressure at the external outlet face in Pa; NaN uses the outlet-cell pressure. */
+  private double outletBoundaryPressure = Double.NaN;
+
   /**
    * Impose impermeable external faces independently of reconstructed subcell velocities.
    *
@@ -117,6 +120,34 @@ public class TwoFluidConservationEquations implements Serializable {
   public void setClosedBoundaries(boolean closeInlet, boolean closeOutlet) {
     inletClosed = closeInlet;
     outletClosed = closeOutlet;
+  }
+
+  /**
+   * Prescribe pressure at the external outlet face without replacing the final cell pressure.
+   *
+   * <p>
+   * The value contributes only to the outlet momentum traction. Phase mass and energy remain the signed or one-way
+   * advective fluxes selected by the existing outlet policy. Pass {@link Double#NaN} to restore the cell-based
+   * zero-gradient pressure.
+   * </p>
+   *
+   * @param pressure positive finite outlet-face pressure in Pa, or NaN for the cell-based pressure
+   * @throws IllegalArgumentException if a finite pressure is not positive
+   */
+  public void setOutletBoundaryPressure(double pressure) {
+    if (!Double.isNaN(pressure) && (!(pressure > 0.0) || !Double.isFinite(pressure))) {
+      throw new IllegalArgumentException("Outlet boundary pressure must be positive and finite, or NaN");
+    }
+    outletBoundaryPressure = pressure;
+  }
+
+  /**
+   * Get the prescribed external outlet-face pressure.
+   *
+   * @return pressure in Pa, or NaN when the outlet-cell pressure is used
+   */
+  public double getOutletBoundaryPressure() {
+    return outletBoundaryPressure;
   }
 
   /**
@@ -581,6 +612,60 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
+   * Evaluate the finite-volume operator without committing its retained diagnostics.
+   *
+   * <p>
+   * The supplied sections are trial objects and may be updated by closure evaluation. Callers that own accepted
+   * sections must therefore pass clones. All evaluator-owned interface reconstructions, boundary diagnostics, phase
+   * rates, and momentum-force ledgers are restored even if evaluation fails. This contract makes repeated residual and
+   * finite-difference Jacobian probes deterministic.
+   * </p>
+   *
+   * @param sections trial pipe sections
+   * @param dx representative cell size in m
+   * @return time derivatives with the same shape as {@link #calcRHS(TwoFluidSection[], double)}
+   */
+  public double[][] calcRHSTransactional(TwoFluidSection[] sections, double dx) {
+    double[] savedInterfaceGasHoldup = interfaceGasHoldup.clone();
+    double[] savedInterfaceLiquidHoldup = interfaceLiquidHoldup.clone();
+    double[] savedInterfacePressure = interfacePressure.clone();
+    double[][] savedInterfacePhaseHoldup = copyMatrix(interfacePhaseHoldup);
+    double[][] savedInterfacePhasePressure = copyMatrix(interfacePhasePressure);
+    TwoFluidSection savedReconstructedOutlet = reconstructedOutlet;
+    boolean savedOutletBackflowClamped = outletBackflowClamped;
+    MassBalanceRate savedMassBalanceRate = lastMassBalanceRate;
+    double[][] savedPhaseMassFaceFluxes = copyMatrix(lastPhaseMassFaceFluxes);
+    double[][] savedPhaseMassSourcesPerLength = copyMatrix(lastPhaseMassSourcesPerLength);
+    double[][] savedMomentumSourceForcesPerLength = copyMatrix(lastMomentumSourceForcesPerLength);
+    try {
+      return calcRHS(sections, dx);
+    } finally {
+      interfaceGasHoldup = savedInterfaceGasHoldup;
+      interfaceLiquidHoldup = savedInterfaceLiquidHoldup;
+      interfacePressure = savedInterfacePressure;
+      interfacePhaseHoldup = savedInterfacePhaseHoldup;
+      interfacePhasePressure = savedInterfacePhasePressure;
+      reconstructedOutlet = savedReconstructedOutlet;
+      outletBackflowClamped = savedOutletBackflowClamped;
+      lastMassBalanceRate = savedMassBalanceRate;
+      lastPhaseMassFaceFluxes = savedPhaseMassFaceFluxes;
+      lastPhaseMassSourcesPerLength = savedPhaseMassSourcesPerLength;
+      lastMomentumSourceForcesPerLength = savedMomentumSourceForcesPerLength;
+    }
+  }
+
+  private static double[][] copyMatrix(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] copy = new double[source.length][];
+    for (int row = 0; row < source.length; row++) {
+      copy[row] = source[row] == null ? null : source[row].clone();
+    }
+    return copy;
+  }
+
+  /**
    * Get the phase-resolved boundary and source rates from the most recent right-hand-side evaluation.
    *
    * @return immutable mass-balance rate snapshot
@@ -738,6 +823,8 @@ public class TwoFluidConservationEquations implements Serializable {
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
+    double facePressure =
+        Double.isNaN(outletBoundaryPressure) ? sec.getPressure() : outletBoundaryPressure;
 
     // Gas flux (positive velocity means flow INTO domain)
     // Use the stored gas holdup directly, not derived from mass
@@ -748,7 +835,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double alphaG = sec.getGasHoldup();
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
 
     // Oil flux - use holdup directly for inlet BC stability
     double rhoO = sec.getOilDensity();
@@ -760,7 +847,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // smaller than the rounding error in gas holdup.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
 
     // Water flux - use holdup directly for inlet BC stability
     double rhoW = sec.getWaterDensity();
@@ -771,7 +858,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Do not subtract other phase holdups to recover this phase's availability.
     alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
 
     // Energy flux
     if (includeEnergyEquation) {

@@ -234,7 +234,6 @@ public final class UnsplitTransientSolver implements Serializable {
       double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
-    int cellCount = previousState.length;
     double[][] state = copy(previousState);
     double[] pressure = previousPressure.clone();
     double[] variableScale = createVariableScale(previousState, previousPressure);
