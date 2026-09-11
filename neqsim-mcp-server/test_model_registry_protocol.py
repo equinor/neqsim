@@ -358,11 +358,11 @@ def test_phase0_classification_is_promoted_atomically(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.35", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.36", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
     require(
-        limitations.get("contractTestedToolCount") == 35
-        and limitations.get("confirmedGapToolCount") == 16,
+        limitations.get("contractTestedToolCount") == 36
+        and limitations.get("confirmedGapToolCount") == 15,
         "manageModel promotion did not move trust accounting atomically",
         limitations,
     )

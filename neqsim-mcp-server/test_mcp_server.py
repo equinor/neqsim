@@ -98,7 +98,10 @@ JSON_TOOL_ARGS = {
 def start_server():
     global proc
     proc = subprocess.Popen(
-        ["java", "-jar", JAR],
+        # This comprehensive harness asserts the complete discovery contract.
+        # Disable transport trimming only for this test process so the growing
+        # capability inventory cannot hide fields that the harness validates.
+        ["java", "-Dneqsim.mcp.maxResponseBytes=0", "-jar", JAR],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -1565,13 +1568,13 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-five bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.35"
-          and limitations.get("contractTestedToolCount") == 35
-          and limitations.get("confirmedGapToolCount") == 16
+    check("thirty-six bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.36"
+          and limitations.get("contractTestedToolCount") == 36
+          and limitations.get("confirmedGapToolCount") == 15
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1725,6 +1728,25 @@ def test_capabilities():
           and "accountable engineering approval"
           in multi_server_composition.get("evidenceBoundary", ""),
           str(multi_server_composition))
+    risk_matrix = coverage_records.get("runRiskMatrix", {})
+    check("bounded risk-matrix screening has direct contract evidence",
+          risk_matrix.get("coverageStatus") == "CONTRACT_TESTED"
+          and risk_matrix.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_GENERIC_RISK_SCREENING_SOFTWARE_CONTRACT"
+          and risk_matrix.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/RiskMatrix.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/RiskMatrixRunnerTest.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_risk_matrix_protocol.py"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "does not identify hazards"
+          in risk_matrix.get("evidenceBoundary", "")
+          and "qualified safety-engineering review"
+          in risk_matrix.get("evidenceBoundary", ""),
+          str(risk_matrix))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1742,7 +1764,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 16
+          and limitations.get("confirmedGapToolCount") == 15
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

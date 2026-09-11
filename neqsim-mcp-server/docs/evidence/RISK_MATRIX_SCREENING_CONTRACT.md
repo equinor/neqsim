@@ -87,7 +87,10 @@ The packaged suite repeats discovery, valid routes, boundary cases, fail-closed
 inputs, limits, deterministic behavior, and the standard MCP envelope over the
 real JSON-RPC/STDIO transport.
 
-Inventory remains `1.35 / 20 explicit + 35 contract-tested + 16 confirmed
-gaps`. This qualification does not promote `runRiskMatrix`; it remains
-`CONFIRMED_GAP` until a separate post-merge evidence-only increment updates
-machine-readable coverage and authoritative protocol accounting atomically.
+Merged #3645 established this direct source and packaged-MCP qualification.
+Inventory version `1.36 / 20 explicit + 36 contract-tested + 15 confirmed gaps`
+atomically promotes `runRiskMatrix` to `CONTRACT_TESTED`. Machine-readable
+coverage, Java assertions, the focused packaged protocol, synchronized protocol
+expectations, authoritative comprehensive accounting, and documentation move
+together without production, schema, canonical-model, policy, or numerical
+changes. No promotion candidate remains queued.
