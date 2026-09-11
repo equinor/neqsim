@@ -136,7 +136,7 @@ documentation-only configuration step.
 
 Use the [reaction-model audit guide](../thermo/reaction_model_audit) to list the initialized model without
 re-evaluating potentially underflowing activity products. Use the
-[qualified execution guide](co2_impurity_qualified_execution) when an experimental kinetic network
+[qualified CO₂ impurity execution guide](co2_impurity_qualified_execution) when an experimental kinetic network
 requires evidence-bound execution.
 
 ## Kinetics boundary
@@ -150,10 +150,10 @@ units, parameter provenance, validity range, integration method, and conservatio
 documented and tested. Current examples include:
 
 - [CO₂ impurity kinetics](co2_impurity_kinetics_guide);
-- [CO₂ transport reaction-kinetics screening](co2_transport_reaction_kinetics);
-- [qualified CO₂ impurity execution](co2_impurity_qualified_execution);
-- [aqueous H₂S/O₂ kinetics](h2s_oxygen_kinetics); and
-- [CO₂ hydration temperature trajectories](co2_hydration_temperature_trajectory).
+- [Damköhler CO₂ transport reaction-kinetics screening](co2_transport_reaction_kinetics);
+- [qualified CO₂ impurity execution guide](co2_impurity_qualified_execution);
+- [aqueous H2S/O2 kinetics guide](h2s_oxygen_kinetics); and
+- [CO₂ hydration temperature-trajectory guide](co2_hydration_temperature_trajectory).
 
 Do not substitute equilibrium composition for residence-time-dependent conversion, or infer a rate
 constant from equilibrium data alone.
