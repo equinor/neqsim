@@ -23,9 +23,8 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
     OperatingInputs baseline = baselineInputs();
     double[] massFlows = { 980.0, 1000.0, 1020.0 };
 
-    DoeBigHillVacuumFeedMassFlowSensitivity sensitivity =
-        DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "Big Hill vacuum feed-mass-flow screen", baseline, massFlows);
+    DoeBigHillVacuumFeedMassFlowSensitivity sensitivity = DoeBigHillVacuumFeedMassFlowSensitivity
+        .run("Big Hill vacuum feed-mass-flow screen", baseline, massFlows);
 
     massFlows[0] = 9999.0;
     PointResult[] points = sensitivity.getPoints();
@@ -55,8 +54,7 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
       assertEquals(baseline.getFeedPressureBara(), applied.getFeedPressureBara(), 0.0);
       assertEquals(baseline.getTopPressureBara(), applied.getTopPressureBara(), 0.0);
       assertEquals(baseline.getBottomPressureBara(), applied.getBottomPressureBara(), 0.0);
-      assertEquals(baseline.getReboilerTemperatureKelvin(),
-          applied.getReboilerTemperatureKelvin(), 0.0);
+      assertEquals(baseline.getReboilerTemperatureKelvin(), applied.getReboilerTemperatureKelvin(), 0.0);
       assertEquals(baseline.getCondenserRefluxRatio(), applied.getCondenserRefluxRatio(), 0.0);
 
       DoeBigHillVacuumFractionationResult result = point.getFractionationResult();
@@ -65,37 +63,28 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
       ProductResult bottoms = result.getProduct("Bottoms");
       assertTrue(overhead.getMassFlowKgPerHour() > 0.0);
       assertTrue(bottoms.getMassFlowKgPerHour() > 0.0);
-      assertTrue(overhead.getMeanNormalBoilingPointKelvin()
-          < bottoms.getMeanNormalBoilingPointKelvin());
+      assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.10)));
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.50)));
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.90)));
-      assertThrows(IllegalArgumentException.class,
-          () -> point.getOverheadBoilingPointQuantileKelvin(0.0));
+      assertThrows(IllegalArgumentException.class, () -> point.getOverheadBoilingPointQuantileKelvin(0.0));
       assertTrue(result.getMassClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
-      expectedMinimumOverhead =
-          Math.min(expectedMinimumOverhead, point.getOverheadMassFraction());
-      expectedMaximumOverhead =
-          Math.max(expectedMaximumOverhead, point.getOverheadMassFraction());
-      expectedMaximumMassClosure =
-          Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
+      expectedMinimumOverhead = Math.min(expectedMinimumOverhead, point.getOverheadMassFraction());
+      expectedMaximumOverhead = Math.max(expectedMaximumOverhead, point.getOverheadMassFraction());
+      expectedMaximumMassClosure = Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
       expectedMaximumComponentClosure = Math.max(expectedMaximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
-      expectedMaximumEnergyError =
-          Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
-      expectedMaximumMeshResidual =
-          Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
+      expectedMaximumEnergyError = Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
+      expectedMaximumMeshResidual = Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
     }
 
     assertEquals(expectedMinimumOverhead, sensitivity.getMinimumOverheadMassFraction(), 0.0);
     assertEquals(expectedMaximumOverhead, sensitivity.getMaximumOverheadMassFraction(), 0.0);
-    assertEquals(expectedMaximumMassClosure,
-        sensitivity.getMaximumMassClosureRelativeError(), 0.0);
-    assertEquals(expectedMaximumComponentClosure,
-        sensitivity.getMaximumComponentMolarClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumMassClosure, sensitivity.getMaximumMassClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumComponentClosure, sensitivity.getMaximumComponentMolarClosureRelativeError(), 0.0);
     assertEquals(expectedMaximumEnergyError, sensitivity.getMaximumColumnEnergyBalanceError(), 0.0);
     assertEquals(expectedMaximumMeshResidual, sensitivity.getMaximumMeshResidualNorm(), 0.0);
   }
@@ -106,28 +95,21 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
     OperatingInputs baseline = baselineInputs();
 
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            " ", baseline, new double[] { 980.0, 1020.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(" ", baseline, new double[] { 980.0, 1020.0 }));
     assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", null, new double[] { 980.0, 1020.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", null, new double[] { 980.0, 1020.0 }));
     assertThrows(NullPointerException.class,
         () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, null));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", baseline, new double[] { 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0 }));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", baseline, new double[] { 1000.0, Double.NaN }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0, Double.NaN }));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", baseline, new double[] { 1000.0, 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0, 1000.0 }));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", baseline, new double[] { 1020.0, 980.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1020.0, 980.0 }));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(
-            "screen", baseline, new double[] { 0.0, 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 0.0, 1000.0 }));
   }
 
   private static OperatingInputs baselineInputs() {
