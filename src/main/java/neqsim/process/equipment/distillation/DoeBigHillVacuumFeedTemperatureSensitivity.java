@@ -180,7 +180,7 @@ public final class DoeBigHillVacuumFeedTemperatureSensitivity {
     }
 
     /** @return feed temperature applied at this point in kelvin */
-    public double getReboilerTemperatureKelvin() {
+    public double getFeedTemperatureKelvin() {
       return feedTemperatureKelvin;
     }
 
