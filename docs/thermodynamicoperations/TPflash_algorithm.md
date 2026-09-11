@@ -15,6 +15,28 @@ NeqSim implements the classical Michelsen flash algorithm with stability analysi
 - Multi-phase equilibrium (VLLE, LLE)
 - Systems with electrolytes and chemical reactions
 
+For neutral fluids containing an active TBP or plus fraction with invalid stored
+critical properties and multiphase checking enabled, the final TPflash state is
+checked after the bounded refinement paths. Invalid properties are non-finite or
+non-positive critical values, or a critical temperature at or below the normal
+boiling point. Active phase fractions and compositions must be finite,
+nonnegative, and normalized; recombined component mole fractions must agree
+with the feed within an absolute tolerance of `1e-8`. An invalid result throws
+`IllegalStateException` before streams or separators can use its phase
+inventories. Independently normalizing the compositions of a failed phase split
+does not restore component conservation. Reactive, ionic, solid, wax,
+specialized EOS-GE, and valid characterized fluids retain their existing
+acceptance paths; this guard does not itself certify equilibrium or global
+stability.
+
+The wet PR/Twu sour-fluid regression for
+[issue #3624](https://github.com/equinor/neqsim/issues/3624) combines a repaired
+[Twu characterization correction](../wiki/tbp_fraction_models#34-twu-model)
+with this failure guard. At 343.15 K and 33 bara, a 100000 kg/h feed gives
+14181.286376 kg/h gas, 84974.581766 kg/h oil, and 844.131858 kg/h water.
+The regression checks phase and separator component balances, normalized phases,
+fugacity equality, repeated/cloned runs, and nearby pressure/temperature cases.
+
 ---
 
 ## Table of Contents

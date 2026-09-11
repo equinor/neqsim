@@ -90,6 +90,8 @@ public class TPflash extends Flash {
   private static final double WATER_PHASE_COLLAPSE_VOLATILE_K_LOWER_LIMIT = 10.0;
   /** Maximum accepted component material-balance residual for water-rich endpoint refinement. */
   private static final double WATER_RICH_MATERIAL_BALANCE_TOLERANCE = 1.0e-8;
+  /** Maximum absolute composition or phase-fraction closure error for a characterized fluid. */
+  private static final double CHARACTERIZED_FLUID_INVENTORY_TOLERANCE = 1.0e-8;
   /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
@@ -608,6 +610,9 @@ public class TPflash extends Flash {
    * <li>presdiff</li>
    * <li>Component K properties for all phases if required</li>
    * </ul>
+   *
+   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has invalid
+   * phase inventories
    */
   @Override
   public void run() {
@@ -631,11 +636,80 @@ public class TPflash extends Flash {
     }
     try {
       runInternal();
+      validateCharacterizedFluidPhaseInventories();
     } finally {
       multiphaseEndpointRescueSeed = null;
       if (disableWarmStart) {
         neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
       }
+    }
+  }
+
+  /**
+   * Rejects invalid material inventories left by a failed petroleum-fraction multiphase flash.
+   *
+   * <p>
+   * Normalizing each phase composition cannot repair a stalled beta solve: the resulting normalized phases may
+   * represent a different feed. Validate the final state after all bounded refinements, before process equipment can
+   * extract its phases. This guard is limited to neutral fluids with an active TBP or plus fraction whose stored
+   * critical properties are non-finite, non-positive, or have a critical temperature at or below the normal boiling
+   * point. Reactive, ionic, solid, wax, specialized EOS-GE, and valid characterized fluids retain their existing
+   * acceptance paths. This material-balance check does not replace equilibrium or stability tests.
+   * </p>
+   *
+   * @throws IllegalStateException if phase fractions, phase compositions, or component balances are invalid
+   */
+  private void validateCharacterizedFluidPhaseInventories() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() < 2 || system.isChemicalSystem() || system.hasIons()
+        || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || directGammaPhiModel != null
+        || hybridEosGeFlashModel != null) {
+      return;
+    }
+    boolean hasInvalidPetroleumFraction = false;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      if (component.getz() <= 0.0 || (!component.isIsTBPfraction() && !component.isIsPlusFraction())) {
+        continue;
+      }
+      double criticalTemperature = component.getTC();
+      double criticalPressure = component.getPC();
+      double normalBoilingPoint = component.getNormalBoilingPoint();
+      double acentricFactor = component.getAcentricFactor();
+      if (!Double.isFinite(criticalTemperature) || criticalTemperature <= 0.0 || !Double.isFinite(criticalPressure)
+          || criticalPressure <= 0.0 || !Double.isFinite(acentricFactor) || (Double.isFinite(normalBoilingPoint)
+              && normalBoilingPoint > 0.0 && criticalTemperature <= normalBoilingPoint)) {
+        hasInvalidPetroleumFraction = true;
+        break;
+      }
+    }
+    if (!hasInvalidPetroleumFraction) {
+      return;
+    }
+    double betaSum = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double beta = system.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        throw new IllegalStateException("TPflash returned an invalid phase fraction for phase " + phaseIndex);
+      }
+      betaSum += beta;
+      double compositionSum = 0.0;
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        double composition = phase.getComponent(componentIndex).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          throw new IllegalStateException("TPflash returned an invalid composition for phase " + phaseIndex);
+        }
+        compositionSum += composition;
+      }
+      if (Math.abs(compositionSum - 1.0) > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE) {
+        throw new IllegalStateException("TPflash returned an unnormalized composition for phase " + phaseIndex);
+      }
+    }
+    double materialResidual = maximumComponentMaterialBalanceResidual(system);
+    if (Math.abs(betaSum - 1.0) > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE
+        || materialResidual > CHARACTERIZED_FLUID_INVENTORY_TOLERANCE) {
+      throw new IllegalStateException("TPflash failed to conserve the feed: component mole-fraction residual="
+          + materialResidual + ", phase-fraction sum=" + betaSum);
     }
   }
 

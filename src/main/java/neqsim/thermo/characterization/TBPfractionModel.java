@@ -775,7 +775,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       return TC;
     }
@@ -826,7 +826,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
@@ -853,7 +853,7 @@ public class TBPfractionModel implements java.io.Serializable {
       double VCnalkane = Math.pow((0.82055 + 0.715468 * phi + 2.21266 * phi * phi * phi + 13411.1 * Math.pow(phi, 14)),
           -8);
       double deltaST = Math.exp(5.0 * (SGalkane - sg)) - 1.0;
-      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5) * deltaST));
+      double fT = deltaST * (-0.270159 * Math.pow(TB, -0.5) + (0.0398285 - 0.706691 * Math.pow(TB, -0.5)) * deltaST);
       double TC = Tcnalkane * Math.pow(((1 + 2 * fT) / (1 - 2 * fT)), 2);
       double deltaSP = Math.exp(0.5 * (SGalkane - sg)) - 1.0;
       double deltaSV = Math.exp(4.0 * (SGalkane * SGalkane - sg * sg)) - 1.0;
