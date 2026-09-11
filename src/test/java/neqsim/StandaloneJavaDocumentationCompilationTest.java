@@ -65,17 +65,16 @@ public class StandaloneJavaDocumentationCompilationTest {
   /** Verifies that the chemical-reactions package guide uses the maintained public workflow. */
   @Test
   void testChemicalReactionGuideUsesCurrentExecutableContract() throws IOException {
-    Path guidePath =
-        Paths.get(System.getProperty("user.dir"), "docs", "chemicalreactions", "README.md").toAbsolutePath();
+    Path guidePath = Paths.get(System.getProperty("user.dir"), "docs", "chemicalreactions", "README.md")
+        .toAbsolutePath();
     String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
 
     assertTrue(guide.contains("../examples/ChemicalReactionEquilibriumExample.java"));
     assertTrue(guide.contains("operations.reactiveTPflash();"));
     assertTrue(guide.contains("ReactiveFlashBenchmarkTest.testWaterGasShiftEquilibrium"));
 
-    List<String> retiredCalls =
-        Arrays.asList("setChemicalReactions(", "calcChemicalEquilibrium(", "addChemicalReaction(", ".addReaction(",
-            "new Kinetics(", "getNumberOfmable(");
+    List<String> retiredCalls = Arrays.asList("setChemicalReactions(", "calcChemicalEquilibrium(",
+        "addChemicalReaction(", ".addReaction(", "new Kinetics(", "getNumberOfmable(");
     for (String retiredCall : retiredCalls) {
       assertFalse(guide.contains(retiredCall), "Package guide must not advertise retired call " + retiredCall);
     }
