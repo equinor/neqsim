@@ -115,6 +115,6 @@ public class DoeBigHillVacuumFeedTemperatureSensitivityTest {
   }
 
   private static OperatingInputs baselineInputs() {
-    return new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 640.0, 0.5);
+    return new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
   }
 }
