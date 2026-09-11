@@ -101,8 +101,7 @@ class TPflashTwuSourFluidConservationTest {
       }
       double expectedFraction = expected.getComponent(i).getNumberOfmoles() / expectedTotalMoles;
       double recoveredFraction = recovered / recoveredTotalMoles;
-      assertEquals(expectedFraction, recoveredFraction, 1.0e-10,
-          expected.getComponent(i).getComponentName());
+      assertEquals(expectedFraction, recoveredFraction, 1.0e-10, expected.getComponent(i).getComponentName());
     }
   }
 
