@@ -315,6 +315,40 @@ This diagnostic identifies a crossing within caller-defined aqueous screening se
 not locate a position in a pipeline, calculate flow residence time, size equipment, or couple the
 reaction to phase behavior, mass transfer, oxygen depletion, or a transient solver.
 
+
+## Absolute reacted-moles target crossing
+
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToReactedMolesRange(...)`
+converts a requested reacted total-sulfide amount to the remaining fraction required by the
+existing piecewise target-crossing calculation. With initial molality `c_0`, constant water
+inventory `m_w`, and requested reacted amount `n_target`,
+
+$
+n_0=c_0m_w, \qquad
+f_{\mathrm{target}}=\frac{n_0-n_{\mathrm{target}}}{n_0}.
+$
+
+The immutable result records the input molality and water inventory, initial and target amounts,
+the corresponding remaining amount and fraction, and the existing shortest, nominal, and longest
+crossing times and segment indices. Reacting half of the initial dimensional inventory therefore
+maps exactly to a remaining fraction of `0.5`; at the illustrative reference state the nominal
+time is `22.4288 h`.
+
+Forward evaluation at each reported fit-scatter crossing recovers the requested reacted amount.
+Larger targets require longer times. Scaling both the constant water inventory and reacted-moles
+target by the same factor leaves the target fraction and crossing times unchanged. Unchanged-state
+segment subdivision preserves elapsed times while the reported source-order crossing index follows
+the supplied segmentation. A target of exactly zero crosses at time zero.
+
+The target must be finite, non-negative, and strictly less than the initial dimensional
+total-sulfide inventory; equality would require infinite time in this first-order model. Inputs
+that cannot represent a positive target change at the current floating-point scale fail closed.
+Every fit-scatter path must reach the target within the supplied finite trajectory.
+
+This method dimensionalizes an analytical screening target only. The constant water inventory
+remains caller-supplied and is not a calculated holdup. The output is not a residence-time design,
+pipeline position, signed H2S source, oxygen demand, product yield, or deposition prediction.
+
 ## Scientific stop boundary
 
 This capability does not:
@@ -331,3 +365,4 @@ Electrolyte pH/speciation remains owned by issue #3144. TP flash, dynamics, pipe
 MCP publication remain coordinated with #2937, #2911, the pipeline roadmap, and #3153. Applying
 this atmospheric aqueous correlation to a Northern-Lights-type high-pressure CO2 pipeline requires
 separate phase, pressure, mass-transfer, and composition evidence.
+
