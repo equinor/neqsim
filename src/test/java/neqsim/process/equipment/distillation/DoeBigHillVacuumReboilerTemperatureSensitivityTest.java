@@ -24,10 +24,8 @@ public class DoeBigHillVacuumReboilerTemperatureSensitivityTest {
     OperatingInputs baseline = baselineInputs();
     double[] temperatures = { 698.0, 700.0, 702.0 };
 
-    DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity =
-        DoeBigHillVacuumReboilerTemperatureSensitivity.run(
-            "Big Hill vacuum reboiler-temperature screen", FEED_MASS_FLOW_KG_PER_HOUR,
-            baseline, temperatures);
+    DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity = DoeBigHillVacuumReboilerTemperatureSensitivity
+        .run("Big Hill vacuum reboiler-temperature screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, temperatures);
 
     temperatures[0] = 999.0;
     PointResult[] points = sensitivity.getPoints();
@@ -65,35 +63,28 @@ public class DoeBigHillVacuumReboilerTemperatureSensitivityTest {
       ProductResult bottoms = result.getProduct("Bottoms");
       assertTrue(overhead.getMassFractionOfFeed() > 0.0);
       assertTrue(bottoms.getMassFractionOfFeed() > 0.0);
-      assertTrue(overhead.getMeanNormalBoilingPointKelvin()
-          < bottoms.getMeanNormalBoilingPointKelvin());
+      assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.10)));
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.50)));
       assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.90)));
-      assertThrows(IllegalArgumentException.class,
-          () -> point.getOverheadBoilingPointQuantileKelvin(0.0));
+      assertThrows(IllegalArgumentException.class, () -> point.getOverheadBoilingPointQuantileKelvin(0.0));
       assertTrue(result.getMassClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
       expectedMinimumOverhead = Math.min(expectedMinimumOverhead, point.getOverheadMassFraction());
       expectedMaximumOverhead = Math.max(expectedMaximumOverhead, point.getOverheadMassFraction());
-      expectedMaximumMassClosure =
-          Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
+      expectedMaximumMassClosure = Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
       expectedMaximumComponentClosure = Math.max(expectedMaximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
-      expectedMaximumEnergyError =
-          Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
-      expectedMaximumMeshResidual =
-          Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
+      expectedMaximumEnergyError = Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
+      expectedMaximumMeshResidual = Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
     }
 
     assertEquals(expectedMinimumOverhead, sensitivity.getMinimumOverheadMassFraction(), 0.0);
     assertEquals(expectedMaximumOverhead, sensitivity.getMaximumOverheadMassFraction(), 0.0);
-    assertEquals(expectedMaximumMassClosure,
-        sensitivity.getMaximumMassClosureRelativeError(), 0.0);
-    assertEquals(expectedMaximumComponentClosure,
-        sensitivity.getMaximumComponentMolarClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumMassClosure, sensitivity.getMaximumMassClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumComponentClosure, sensitivity.getMaximumComponentMolarClosureRelativeError(), 0.0);
     assertEquals(expectedMaximumEnergyError, sensitivity.getMaximumColumnEnergyBalanceError(), 0.0);
     assertEquals(expectedMaximumMeshResidual, sensitivity.getMaximumMeshResidualNorm(), 0.0);
   }
@@ -103,33 +94,24 @@ public class DoeBigHillVacuumReboilerTemperatureSensitivityTest {
   public void invalidSensitivityInputsFailClosed() {
     OperatingInputs baseline = baselineInputs();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run(" ",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 698.0, 702.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen", 0.0, baseline,
-            new double[] { 698.0, 702.0 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run(" ",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 698.0, 702.0 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen", 0.0,
+        baseline, new double[] { 698.0, 702.0 }));
+    assertThrows(NullPointerException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 698.0, 702.0 }));
     assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 698.0, 702.0 }));
-    assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0, Double.NaN }));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0, 700.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 702.0, 700.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
-            FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 640.0, 700.0 }));
+        () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, null));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0, Double.NaN }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0, 700.0 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 702.0, 700.0 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 640.0, 700.0 }));
   }
 
   private static OperatingInputs baselineInputs() {
