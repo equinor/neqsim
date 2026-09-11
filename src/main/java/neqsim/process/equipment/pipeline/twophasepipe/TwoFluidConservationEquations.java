@@ -823,8 +823,6 @@ public class TwoFluidConservationEquations implements Serializable {
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
-    double facePressure =
-        Double.isNaN(outletBoundaryPressure) ? sec.getPressure() : outletBoundaryPressure;
 
     // Gas flux (positive velocity means flow INTO domain)
     // Use the stored gas holdup directly, not derived from mass
@@ -835,7 +833,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double alphaG = sec.getGasHoldup();
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
 
     // Oil flux - use holdup directly for inlet BC stability
     double rhoO = sec.getOilDensity();
@@ -847,7 +845,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // smaller than the rounding error in gas holdup.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
 
     // Water flux - use holdup directly for inlet BC stability
     double rhoW = sec.getWaterDensity();
@@ -858,7 +856,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Do not subtract other phase holdups to recover this phase's availability.
     alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
 
     // Energy flux
     if (includeEnergyEquation) {
@@ -890,6 +888,7 @@ public class TwoFluidConservationEquations implements Serializable {
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
+    double facePressure = Double.isNaN(outletBoundaryPressure) ? sec.getPressure() : outletBoundaryPressure;
 
     if (!allowOutletPhaseBackflow
         && (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0)) {
@@ -904,7 +903,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double alphaG = sec.getGasMassPerLength() / (rhoG * A);
     alphaG = Math.max(0, Math.min(1, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
 
     // Oil flux - use default density if not set
     double rhoO = sec.getOilDensity();
@@ -917,7 +916,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // artificial priority at the outlet.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
 
     // Water flux - use default density if not set
     double rhoW = sec.getWaterDensity();
@@ -927,7 +926,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
     alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
 
     // Energy flux
     if (includeEnergyEquation) {

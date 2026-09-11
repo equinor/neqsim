@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -26,8 +27,8 @@ class TwoFluidUnsplitModelAdapterTest {
     double[] pressure = { accepted[0].getPressure(), accepted[1].getPressure() };
     double[] area = { accepted[0].getArea(), accepted[1].getArea() };
     TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
-        (cell, conservativeState, cellPressure, time) ->
-            new double[] { 40.0 + 1.0e-6 * (cellPressure - 5.0e6), 700.0, 1000.0 });
+        (cell, conservativeState, cellPressure,
+            time) -> new double[] { 40.0 + 1.0e-6 * (cellPressure - 5.0e6), 700.0, 1000.0 });
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
 
     double[] free = solver.residual(state, pressure, state, pressure, area, 0.05, 0.0, Double.NaN, false, adapter);
@@ -39,11 +40,7 @@ class TwoFluidUnsplitModelAdapterTest {
     assertNotEquals(free[11], fixed[11], "Outlet oil momentum must use the prescribed face pressure");
     assertSame(acceptedBalance, equations.getLastMassBalanceRate());
     assertMatrixEquals(acceptedFaces, equations.getLastPhaseMassFaceFluxes());
-    if (acceptedBackflow) {
-      assertSame(Boolean.TRUE, Boolean.valueOf(equations.isOutletBackflowClamped()));
-    } else {
-      assertSame(Boolean.FALSE, Boolean.valueOf(equations.isOutletBackflowClamped()));
-    }
+    assertEquals(acceptedBackflow, equations.isOutletBackflowClamped());
     assertArrayEquals(acceptedState[0], accepted[0].getStateVector(), 0.0);
     assertArrayEquals(acceptedState[1], accepted[1].getStateVector(), 0.0);
     assertArrayEquals(pressure, new double[] { accepted[0].getPressure(), accepted[1].getPressure() }, 0.0);
