@@ -68,7 +68,7 @@ boundaries.
 
 ## Inventory continuity
 
-Current Phase 0 inventory version `1.36` records `20` explicit-trust tools,
-`36` contract-tested tools, and `15` confirmed gaps. No promotion candidate
+Current Phase 0 inventory version `1.37` records `20` explicit-trust tools,
+`37` contract-tested tools, and `14` confirmed gaps. No promotion candidate
 is queued. Phase 0 remains incomplete and
 `scientificValidationComplete=false`.

@@ -101,8 +101,8 @@ evidence.
 
 Inventory `1.35 / 20 explicit + 35 contract-tested + 16 confirmed gaps`
 promoted `composeMultiServerWorkflow` to `CONTRACT_TESTED` after the
-qualification merged. Current inventory `1.36 / 20 explicit + 36 contract-tested
-+ 15 confirmed gaps` retains that classification. Machine-readable coverage,
+qualification merged. Current inventory `1.37 / 20 explicit + 37 contract-tested
++ 14 confirmed gaps` retains that classification. Machine-readable coverage,
 Java assertions, the focused packaged harness, authoritative comprehensive
 protocol accounting, and documentation move atomically on one exact head. This
 classification records only the bounded software contract above; every

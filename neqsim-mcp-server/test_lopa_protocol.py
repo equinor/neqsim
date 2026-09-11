@@ -317,7 +317,7 @@ def test_deterministic_screening_and_advisory_evidence(client):
     )
 
 
-def test_inventory_remains_confirmed_gap(client):
+def test_inventory_is_promoted(client):
     response = client.request("tools/call", {"name": "getCapabilities", "arguments": {}})
     content = response.get("result", {}).get("content", [])
     require(content, "getCapabilities returned no content", response)
@@ -326,14 +326,28 @@ def test_inventory_remains_confirmed_gap(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runLOPA", {})
     require(
-        inventory.get("inventoryVersion") == "1.36"
-        and limitations.get("contractTestedToolCount") == 36
-        and limitations.get("confirmedGapToolCount") == 15
+        inventory.get("inventoryVersion") == "1.37"
+        and limitations.get("contractTestedToolCount") == 37
+        and limitations.get("confirmedGapToolCount") == 14
         and limitations.get("contractPromotionCandidateCount") == 0,
-        "qualification changed inventory accounting",
+        "LOPA promotion did not update inventory accounting",
         inventory,
     )
-    require(record.get("coverageStatus") == "CONFIRMED_GAP", "runLOPA was promoted prematurely", record)
+    sources = record.get("contractEvidenceSources", [])
+    require(
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
+        and record.get("contractEvidenceCount") == 7
+        and "src/main/java/neqsim/process/safety/SafetyInstrumentedFunction.java" in sources
+        and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java" in sources
+        and "neqsim-mcp-server/test_lopa_protocol.py" in sources
+        and "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md" in sources
+        and "does not identify hazards" in record.get("evidenceBoundary", "")
+        and "qualified process-safety review" in record.get("evidenceBoundary", ""),
+        "runLOPA contract evidence drifted",
+        record,
+    )
 
 
 def main():
@@ -348,7 +362,7 @@ def main():
             test_fail_closed_layer_contract,
             test_collection_text_and_request_bounds,
             test_deterministic_screening_and_advisory_evidence,
-            test_inventory_remains_confirmed_gap,
+            test_inventory_is_promoted,
         ]
         for scenario in scenarios:
             scenario(client)

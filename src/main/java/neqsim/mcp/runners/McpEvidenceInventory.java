@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.36");
+    inventory.addProperty("inventoryVersion", "1.37");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix. Inventory 1.36 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA. Inventory 1.37 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 36 are CONTRACT_TESTED and 15 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 37 are CONTRACT_TESTED and 14 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -548,6 +548,16 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_risk_matrix_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md" };
       evidenceBoundary = "Bounded request, event and text validation, mutually exclusive caller input modes, canonical NeqSim category and score mapping, deterministic defaults and ordering, stable fail-closed errors, explicit input-basis and screening metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not identify hazards, infer frequency or consequence, validate scenarios, safeguards or risk acceptance, establish ISO 31000, NORSOK Z-013 or other standards conformance, authorize plant action, certify design, or replace project-specific criteria and accountable qualified safety-engineering review";
+      break;
+    case "runLOPA":
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/LOPARunner.java",
+          "src/main/java/neqsim/process/safety/SafetyInstrumentedFunction.java",
+          "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_lopa_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md" };
+      evidenceBoundary = "Bounded request, scenario, layer and text validation, caller-supplied initiating-event and independent-protection-layer inputs, canonical NeqSim PFD multiplication and target comparison, deterministic defaults and ordering, stable fail-closed errors, explicit screening and advisory metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not identify hazards, establish scenario completeness, verify IPL independence or effectiveness, select or verify SIL, decide tolerability or risk acceptance, establish standards compliance, authorize plant action, certify design, or replace qualified process-safety review and accountable approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";
