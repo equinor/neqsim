@@ -2218,20 +2218,24 @@ public class NeqSimTools {
   }
 
   /**
-   * Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013.
+   * Score caller-supplied risk events on a bounded generic 5x5 screening matrix.
    *
    * @param riskJson JSON spec with risk events
    * @return JSON string with scored matrix
    */
-  @Tool(description = "Score risk events on a 5x5 matrix per ISO 31000 / NORSOK Z-013. "
-      + "Each event is categorised by probability (1-5) and consequence (1-5), either "
-      + "directly or from frequency (failures/year) and production loss (%). "
-      + "Returns risk score, level (LOW/MEDIUM/HIGH/CRITICAL) and colour for each event "
-      + "plus the overall worst-case.")
+  @Tool(description = "Score caller-supplied events on a bounded generic 5x5 screening matrix. "
+      + "The request is capped at 16384 UTF-8 bytes and 100 events. Each event uses exactly one "
+      + "input mode: integer probability/consequence levels from 1 to 5, or non-negative "
+      + "failures/year plus production loss from 0 to 100 percent. Returns deterministic scores, "
+      + "levels, display colours, input basis, and an advisory boundary. This does not identify "
+      + "hazards, validate safeguards or risk acceptance, establish ISO 31000 or NORSOK Z-013 "
+      + "compliance, authorize plant action, or replace project-specific qualified review.")
   public String runRiskMatrix(
-      @ToolArg(description = "JSON with: 'events' array. Each event has 'name' and EITHER "
-          + "('probabilityLevel' 1-5 + 'consequenceLevel' 1-5) OR "
-          + "('failuresPerYear' + 'productionLossPercent'), plus optional 'mitigation'.") String riskJson) {
+      @ToolArg(description = "Bounded JSON with an 'events' array of 1 to 100 records. Each event has an optional "
+          + "name (maximum 256 characters) and exactly one complete mode: integer 'probabilityLevel' 1-5 plus "
+          + "integer 'consequenceLevel' 1-5, or non-negative 'failuresPerYear' plus "
+          + "'productionLossPercent' from 0 to 100. Optional 'mitigation' is a string of at most 2048 characters. "
+          + "The caller owns the category basis and engineering review.") String riskJson) {
     String policyBlocked = enforceToolAccess("runRiskMatrix");
     if (policyBlocked != null) {
       return policyBlocked;

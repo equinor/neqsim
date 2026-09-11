@@ -591,3 +591,26 @@ access, transport/IAM/authentication, persistence/durability, distributed
 transactions/rollback, semantic/unit compatibility, scientific or numerical
 validity, convergence, conservation, plant/control authority, certification,
 or accountable engineering approval. No promotion candidate remains queued.
+
+## Qualified bounded risk-matrix screening
+
+`runRiskMatrix` now has direct source and packaged-MCP qualification for its
+generic software-screening contract. Requests are limited to 16,384 UTF-8 bytes,
+1–100 events, 256-character names, and 2,048-character mitigation strings.
+Every event must provide exactly one complete input basis: integer caller levels
+from 1 through 5, or a non-negative frequency with production loss from 0
+through 100 percent. Malformed shapes, partial or ambiguous modes, non-integral
+levels, invalid ranges, and oversized inputs fail closed.
+
+The response preserves the canonical `RiskMatrix` category and score mapping,
+adds per-event input-basis evidence, and explicitly reports
+`screeningOnly=true` and `standardConformanceClaimed=false`. This
+qualification does not identify hazards, validate scenario completeness,
+safeguards, acceptance criteria, standards applicability or compliance,
+operating decisions, or accountable engineering approval. See
+`docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md`.
+
+Inventory remains `1.35 / 20 explicit + 35 contract-tested + 16 confirmed
+gaps`. `runRiskMatrix` remains `CONFIRMED_GAP` until a separate post-merge
+evidence promotion changes machine-readable coverage and authoritative protocol
+accounting atomically. No promotion candidate is queued in this qualification.
