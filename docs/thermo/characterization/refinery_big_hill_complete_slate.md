@@ -339,3 +339,51 @@ turndown.
 All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
+
+## Feed-temperature sensitivity screening
+
+`DoeBigHillVacuumFeedTemperatureSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while varying only the feed temperature. Tray count, feed tray, all
+three absolute pressures, reboiler outlet temperature, condenser reflux ratio, feed composition, and
+feed mass flow remain fixed. Temperatures must be finite, positive, unique, strictly increasing, and
+below the fixed reboiler temperature.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] feedTemperaturesKelvin = {638.0, 640.0, 642.0};
+
+DoeBigHillVacuumFeedTemperatureSensitivity sensitivity =
+    DoeBigHillVacuumFeedTemperatureSensitivity.run(
+        "Big Hill vacuum feed-temperature screen",
+        1000.0,
+        baseline,
+        feedTemperaturesKelvin);
+
+for (DoeBigHillVacuumFeedTemperatureSensitivity.PointResult point :
+    sensitivity.getPoints()) {
+  double feedTemperatureKelvin = point.getFeedTemperatureKelvin();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The temperature is the specified feed-stream temperature at the fixed feed pressure, not a measured
+preheat-train profile, furnace outlet temperature, flash-zone temperature, or heat duty. This screen
+isolates that single numerical operating variable; it does not represent a measured, optimized, or
+vendor-recommended preheat policy. The narrow 638/640/642 K regression is a convergence and
+conservation test around the documented screening point. It does not establish a measured
+temperature response, require a monotonic yield trend, quantify furnace or exchanger performance,
+define heat integration, size equipment, validate product quality, or demonstrate turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
