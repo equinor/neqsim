@@ -96,8 +96,8 @@ public class DoeBigHillVacuumFeedTemperatureSensitivityTest {
 
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run(" ",
         FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 638.0, 642.0 }));
-    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen", 0.0,
-        baseline, new double[] { 638.0, 642.0 }));
+    assertThrows(IllegalArgumentException.class,
+        () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen", 0.0, baseline, new double[] { 638.0, 642.0 }));
     assertThrows(NullPointerException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
         FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 638.0, 642.0 }));
     assertThrows(NullPointerException.class,
