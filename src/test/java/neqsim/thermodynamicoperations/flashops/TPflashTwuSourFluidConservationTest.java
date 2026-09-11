@@ -82,17 +82,26 @@ class TPflashTwuSourFluidConservationTest {
         assertTrue(Double.isFinite(x) && x >= 0.0 && x <= 1.0);
         compositionSum += x;
       }
-      assertEquals(1.0, compositionSum, 1.0e-10);
+      assertEquals(1.0, compositionSum, 1.0e-12);
     }
-    assertEquals(1.0, betaSum, 1.0e-10);
+    assertEquals(1.0, betaSum, 1.0e-12);
     assertEquals(expected.getFlowRate("kg/hr"), massFlow, 1.0e-5);
+    double expectedTotalMoles = 0.0;
+    double recoveredTotalMoles = 0.0;
+    for (int i = 0; i < expected.getNumberOfComponents(); i++) {
+      expectedTotalMoles += expected.getComponent(i).getNumberOfmoles();
+      for (int p = 0; p < actual.getNumberOfPhases(); p++) {
+        recoveredTotalMoles += actual.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+      }
+    }
     for (int i = 0; i < expected.getNumberOfComponents(); i++) {
       double recovered = 0.0;
       for (int p = 0; p < actual.getNumberOfPhases(); p++) {
         recovered += actual.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
       }
-      double feedMoles = expected.getComponent(i).getNumberOfmoles();
-      assertEquals(feedMoles, recovered, Math.max(1.0e-10, feedMoles * 1.0e-9),
+      double expectedFraction = expected.getComponent(i).getNumberOfmoles() / expectedTotalMoles;
+      double recoveredFraction = recovered / recoveredTotalMoles;
+      assertEquals(expectedFraction, recoveredFraction, 1.0e-10,
           expected.getComponent(i).getComponentName());
     }
   }
@@ -160,7 +169,7 @@ class TPflashTwuSourFluidConservationTest {
         for (int p = 1; p < fluid.getNumberOfPhases(); p++) {
           double logFugacity = Math.log(fluid.getPhase(p).getComponent(i).getx())
               + fluid.getPhase(p).getComponent(i).getLogFugacityCoefficient();
-          assertEquals(reference, logFugacity, 1.0e-7, fluid.getComponent(i).getComponentName());
+          assertEquals(reference, logFugacity, 1.0e-8, fluid.getComponent(i).getComponentName());
         }
       }
       fluid = fluid.clone();
