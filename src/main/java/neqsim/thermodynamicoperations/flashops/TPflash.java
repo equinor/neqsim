@@ -611,7 +611,7 @@ public class TPflash extends Flash {
    * <li>Component K properties for all phases if required</li>
    * </ul>
    *
-   * @throws IllegalStateException if a neutral multiphase petroleum-fraction fluid has invalid phase inventories
+   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has invalid\n   *         phase inventories
    */
   @Override
   public void run() {
@@ -664,15 +664,25 @@ public class TPflash extends Flash {
         || hybridEosGeFlashModel != null) {
       return;
     }
-    boolean hasPetroleumFraction = false;
+    boolean hasInvalidPetroleumFraction = false;
     for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
       neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
-      if (component.getz() > 0.0 && (component.isIsTBPfraction() || component.isIsPlusFraction())) {
-        hasPetroleumFraction = true;
+      if (component.getz() <= 0.0 || (!component.isIsTBPfraction() && !component.isIsPlusFraction())) {
+        continue;
+      }
+      double criticalTemperature = component.getTC();
+      double criticalPressure = component.getPC();
+      double normalBoilingPoint = component.getNormalBoilingPoint();
+      double acentricFactor = component.getAcentricFactor();
+      if (!Double.isFinite(criticalTemperature) || criticalTemperature <= 0.0 || !Double.isFinite(criticalPressure)
+          || criticalPressure <= 0.0 || !Double.isFinite(acentricFactor)
+          || (Double.isFinite(normalBoilingPoint) && normalBoilingPoint > 0.0
+              && criticalTemperature <= normalBoilingPoint)) {
+        hasInvalidPetroleumFraction = true;
         break;
       }
     }
-    if (!hasPetroleumFraction) {
+    if (!hasInvalidPetroleumFraction) {
       return;
     }
     double betaSum = 0.0;
