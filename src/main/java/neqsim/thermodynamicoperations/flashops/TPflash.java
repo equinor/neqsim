@@ -611,8 +611,8 @@ public class TPflash extends Flash {
    * <li>Component K properties for all phases if required</li>
    * </ul>
    *
-   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has
-   *         invalid phase inventories
+   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has invalid
+   *         phase inventories
    */
   @Override
   public void run() {
@@ -654,8 +654,7 @@ public class TPflash extends Flash {
    * extract its phases. This guard is limited to neutral fluids with an active TBP or plus fraction whose stored
    * critical properties are non-finite, non-positive, or have a critical temperature at or below the normal boiling
    * point. Reactive, ionic, solid, wax, specialized EOS-GE, and valid characterized fluids retain their existing
-   * acceptance paths. This material-balance check does not replace
-   * equilibrium or stability tests.
+   * acceptance paths. This material-balance check does not replace equilibrium or stability tests.
    * </p>
    *
    * @throws IllegalStateException if phase fractions, phase compositions, or component balances are invalid
