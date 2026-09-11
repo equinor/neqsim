@@ -51,8 +51,7 @@ class SILRunnerTest {
     JsonObject result = run("{" + "\"name\":\"SIF-200\",\"claimedSIL\":2,\"architecture\":\"1oo1\","
         + "\"proofTestInterval_hours\":8760,\"components\":["
         + "{\"name\":\"PT\",\"type\":\"sensor\",\"lambdaDU_per_hr\":1.0e-7},"
-        + "{\"name\":\"Valve\",\"type\":\"finalElement\",\"architecture\":\"1oo2\","
-        + "\"lambdaDU_per_hr\":5.0e-7}]}" );
+        + "{\"name\":\"Valve\",\"type\":\"finalElement\",\"architecture\":\"1oo2\"," + "\"lambdaDU_per_hr\":5.0e-7}]}");
     double expected = 0.00044439;
     assertEquals("success", result.get("status").getAsString());
     assertEquals(expected, result.getAsJsonObject("screening").get("pfdAvg").getAsDouble(), 1.0e-12);
@@ -84,12 +83,10 @@ class SILRunnerTest {
 
   @Test
   void rejectsInvalidTopLevelNumbersArchitectureAndText() {
-    for (String input : new String[] { "{\"pfdAvg\":0}", "{\"pfdAvg\":-0.1}", "{\"pfdAvg\":1.01}",
-        "{\"pfdAvg\":NaN}", "{\"pfdAvg\":\"low\"}", "{\"pfdAvg\":0.01,\"claimedSIL\":0}",
-        "{\"pfdAvg\":0.01,\"claimedSIL\":2.5}", "{\"pfdAvg\":0.01,\"claimedSIL\":5}",
-        "{\"pfdAvg\":0.01,\"architecture\":\"2oo2\"}",
-        "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":0}",
-        "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":87601}",
+    for (String input : new String[] { "{\"pfdAvg\":0}", "{\"pfdAvg\":-0.1}", "{\"pfdAvg\":1.01}", "{\"pfdAvg\":NaN}",
+        "{\"pfdAvg\":\"low\"}", "{\"pfdAvg\":0.01,\"claimedSIL\":0}", "{\"pfdAvg\":0.01,\"claimedSIL\":2.5}",
+        "{\"pfdAvg\":0.01,\"claimedSIL\":5}", "{\"pfdAvg\":0.01,\"architecture\":\"2oo2\"}",
+        "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":0}", "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":87601}",
         "{\"pfdAvg\":0.01,\"name\":\" \"}" }) {
       assertErrorCode(input, "INVALID_INPUT");
     }
@@ -99,11 +96,9 @@ class SILRunnerTest {
   void rejectsInvalidComponentShapesTypesSourcesAndValues() {
     assertErrorCode("{\"components\":[]}", "INVALID_INPUT");
     for (String components : new String[] { "[\"component\"]", "[{\"type\":\"sensor\",\"pfd\":0.01}]",
-        "[{\"name\":\"PT\",\"type\":\"other\",\"pfd\":0.01}]",
-        "[{\"name\":\"PT\",\"type\":\"sensor\"}]",
+        "[{\"name\":\"PT\",\"type\":\"other\",\"pfd\":0.01}]", "[{\"name\":\"PT\",\"type\":\"sensor\"}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":0.01,\"lambdaDU_per_hr\":1e-7}]",
-        "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":0}]",
-        "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":1.01}]",
+        "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":0}]", "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":1.01}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"lambdaDU_per_hr\":0}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"lambdaDU_per_hr\":1.01}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"architecture\":\"2oo2\",\"lambdaDU_per_hr\":1e-7}]" }) {
@@ -122,8 +117,8 @@ class SILRunnerTest {
     }
     components.append(']');
     assertErrorCode("{\"components\":" + components + "}", "TOO_MANY_COMPONENTS");
-    assertErrorCode("{\"components\":[{\"name\":\"" + repeat('n', 257)
-        + "\",\"type\":\"sensor\",\"pfd\":0.01}]}", "INVALID_COMPONENT");
+    assertErrorCode("{\"components\":[{\"name\":\"" + repeat('n', 257) + "\",\"type\":\"sensor\",\"pfd\":0.01}]}",
+        "INVALID_COMPONENT");
     assertErrorCode("{\"name\":\"" + repeat('x', 16400) + "\",\"pfdAvg\":0.01}", "REQUEST_TOO_LARGE");
   }
 

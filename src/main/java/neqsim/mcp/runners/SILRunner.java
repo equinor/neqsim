@@ -41,11 +41,10 @@ public final class SILRunner {
   /** Computational admission bound for a caller-supplied hourly failure rate. */
   private static final double MAX_FAILURE_RATE_PER_HOUR = 1.0;
   /** Architectures implemented by the bounded runner. */
-  private static final Set<String> SUPPORTED_ARCHITECTURES =
-      new HashSet<String>(Arrays.asList("1oo1", "1oo2", "2oo3"));
+  private static final Set<String> SUPPORTED_ARCHITECTURES = new HashSet<String>(Arrays.asList("1oo1", "1oo2", "2oo3"));
   /** Component type labels admitted by the public tool contract. */
-  private static final Set<String> SUPPORTED_COMPONENT_TYPES =
-      new HashSet<String>(Arrays.asList("sensor", "logic", "finalelement"));
+  private static final Set<String> SUPPORTED_COMPONENT_TYPES = new HashSet<String>(
+      Arrays.asList("sensor", "logic", "finalelement"));
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   private SILRunner() {
@@ -135,8 +134,7 @@ public final class SILRunner {
             if (hasPfd) {
               componentPfd = readFiniteNumber(component, "pfd", "components[" + i + "].pfd");
             } else {
-              failureRate = readFiniteNumber(component, "lambdaDU_per_hr",
-                  "components[" + i + "].lambdaDU_per_hr");
+              failureRate = readFiniteNumber(component, "lambdaDU_per_hr", "components[" + i + "].lambdaDU_per_hr");
               if (failureRate <= 0.0 || failureRate > MAX_FAILURE_RATE_PER_HOUR) {
                 return errorJson("INVALID_COMPONENT",
                     "components[" + i + "].lambdaDU_per_hr must be greater than 0 and at most 1");
@@ -187,22 +185,22 @@ public final class SILRunner {
           "Caller-supplied SIF PFD screening; independent functional-safety verification required");
       out.addProperty("standardContext",
           "IEC 61508 and IEC 61511 are context only; this result does not demonstrate conformance");
-      out.addProperty("inputBasis", hasComponents ? "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE"
-          : "CALLER_SUPPLIED_DIRECT_PFD_AVG");
+      out.addProperty("inputBasis",
+          hasComponents ? "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE" : "CALLER_SUPPLIED_DIRECT_PFD_AVG");
       out.addProperty("advisoryBoundary",
           "The caller supplies reliability data and lifecycle assumptions; the result does not select or approve SIL, "
               + "validate SRS completeness, independence, common cause, architecture suitability, diagnostic "
               + "coverage, proof-test effectiveness or systematic capability, certify standards conformance, "
               + "authorize plant action, or replace independent functional-safety assessment and accountable approval");
       JsonArray assumptions = new JsonArray();
-      assumptions.add(
-          "Failure rates, PFD values, proof-test interval, architecture, and claimed SIL are caller supplied "
+      assumptions
+          .add("Failure rates, PFD values, proof-test interval, architecture, and claimed SIL are caller supplied "
               + "and unverified");
       assumptions.add(
           "Independence, common cause, diagnostic coverage, proof-test coverage, repair, and systematic capability "
               + "are not modelled by this bounded screening");
-      assumptions.add(
-          "Project SRS, lifecycle evidence, device qualification, operating context, and applicable criteria "
+      assumptions
+          .add("Project SRS, lifecycle evidence, device qualification, operating context, and applicable criteria "
               + "require independent qualified review");
       out.add("assumptions", assumptions);
 
