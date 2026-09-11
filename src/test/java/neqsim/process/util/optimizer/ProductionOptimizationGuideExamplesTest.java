@@ -79,6 +79,7 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
       + "static PlantConstraintRegistry registry;\n" + "static String calculationId;\n"
       + "static boolean fullModelConverged;\n" + "static PlantConstraintSample powerSample;\n"
       + "static ProcessModelSimulationEvaluator evaluator;\n"
+      + "static ProcessModelOperatingActionSetEvaluator transactionalEvaluator;\n"
       + "static ProcessModelDebottleneckStudy.StudyResult study1100, study1150, study1200;\n"
       + "static neqsim.process.equipment.stream.MechanicalShaft shaft;\n"
       + "static neqsim.process.equipment.stream.EnergyPort casingAPort, casingBPort, driverPort;\n"
