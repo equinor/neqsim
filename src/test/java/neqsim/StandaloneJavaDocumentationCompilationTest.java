@@ -33,10 +33,10 @@ import org.junit.jupiter.api.io.TempDir;
  * @version 1.0
  */
 public class StandaloneJavaDocumentationCompilationTest {
-  private static final int EXPECTED_EXAMPLE_COUNT = 15;
+  private static final int EXPECTED_EXAMPLE_COUNT = 16;
   private static final List<String> LOG4J2_EXAMPLES = Arrays.asList("AcousticCompressibilityConversionExample.java",
-      "EclipseE300ExportImportExample.java", "FlowRegimeDebug.java", "FlowRegimeDetectionExample.java",
-      "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
+      "ChemicalReactionEquilibriumExample.java", "EclipseE300ExportImportExample.java", "FlowRegimeDebug.java",
+      "FlowRegimeDetectionExample.java", "MultiScenarioVFPExample.java", "MultiphaseModelPressureDropComparison.java",
       "OffshoreEmissionReportingExample.java", "RealTimeIntegrationExample.java", "SlugTrackingComparisonExample.java",
       "TransientPipelineLiquidAccumulationExample.java", "TwoFluidPipeExample.java",
       "TwoFluidPipeSlugTrackingExample.java", "WellToOilStabilizationExample.java");
@@ -59,6 +59,24 @@ public class StandaloneJavaDocumentationCompilationTest {
       assertFalse(source.contains("printStackTrace"), example + " must preserve exception context through Log4j2");
       assertTrue(source.contains("LogManager.getLogger(" + className + ".class)"),
           example + " must declare a class-scoped Log4j2 logger");
+    }
+  }
+
+  /** Verifies that the chemical-reactions package guide uses the maintained public workflow. */
+  @Test
+  void testChemicalReactionGuideUsesCurrentExecutableContract() throws IOException {
+    Path guidePath = Paths.get(System.getProperty("user.dir"), "docs", "chemicalreactions", "README.md")
+        .toAbsolutePath();
+    String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
+
+    assertTrue(guide.contains("../examples/ChemicalReactionEquilibriumExample.java"));
+    assertTrue(guide.contains("operations.reactiveTPflash();"));
+    assertTrue(guide.contains("ReactiveFlashBenchmarkTest.testWaterGasShiftEquilibrium"));
+
+    List<String> retiredCalls = Arrays.asList("setChemicalReactions(", "calcChemicalEquilibrium(",
+        "addChemicalReaction(", ".addReaction(", "new Kinetics(", "getNumberOfmable(");
+    for (String retiredCall : retiredCalls) {
+      assertFalse(guide.contains(retiredCall), "Package guide must not advertise retired call " + retiredCall);
     }
   }
 
