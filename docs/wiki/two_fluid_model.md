@@ -873,10 +873,17 @@ search, fraction-to-boundary mass/pressure limits, and hooks that freeze and ref
 active sets. Its model callback must be transactional so Jacobian probes cannot advance accepted
 diagnostics or state.
 
-This is a solver foundation, not a selectable `TwoFluidPipe` mode or a severe-slugging claim. The
-full finite-volume flux/source adapter, pressure-dependent properties, conservative outlet-face
-transport, and 5/180/600 s qualification sequence remain required. Energy, named-component
-transport, and phase change are outside the initial isothermal system.
+`TwoFluidUnsplitModelAdapter` connects this kernel to the finite-volume flux/source operator
+transactionally. It reconstructs trial sections from accepted clones, evaluates phase densities at
+both midpoint and closure pressure, restores retained equation diagnostics after each probe, and
+uses a prescribed pressure only in the external outlet momentum traction. The last cell still owns
+its volume-closure equation, while outlet phase mass and energy remain conservative advective
+fluxes.
+
+This is still not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
+accepted-state commit/rollback, donor/regime active-set ownership, and the 5/180/600 s qualification
+sequence remain required. Energy, named-component transport, and phase change are outside the
+initial isothermal system.
 
 ### Public severe-slugging qualification
 

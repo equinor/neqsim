@@ -1320,12 +1320,19 @@ one Jacobian and refresh them between Newton iterations. Every model evaluation 
 transactional: trial calls must start from the same accepted state and must not accumulate accepted
 mass, component, thermal, limiter, or rejection ledgers.
 
-This class is not yet selected by `TwoFluidPipe.runTransient`. It does not change a default or
-qualify severe slugging. Integration still requires a transactional adapter for the complete
-finite-volume flux/source operator, pressure-dependent phase properties, and the fixed-pressure
-outlet face. The existing 5 s mesh matrix and the 180/600 s public Tengesdal gates must pass before
-the path can be exposed as a pipe option. Energy, named-component transport, and phase change are
-outside the initial isothermal solve and remain separate unsupported intersections.
+`TwoFluidUnsplitModelAdapter` now supplies the transactional finite-volume bridge. It clones
+accepted section templates for every residual probe, evaluates pressure-dependent phase densities
+at the midpoint and closure pressures, restores evaluator-owned diagnostics after every trial, and
+applies a prescribed pressure only to the external outlet momentum traction. Advective phase mass
+and energy fluxes keep the existing signed or one-way outlet policy, and the final cell retains its
+own volume-closure equation.
+
+The adapter is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
+qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
+rollback wiring, and active-set ownership for donor and regime choices. The existing 5 s mesh matrix
+and the 180/600 s public Tengesdal gates must pass before the path can be exposed as a pipe option.
+Energy, named-component transport, and phase change are outside the initial isothermal solve and
+remain separate unsupported intersections.
 
 ### Standing benchmark acceptance metrics
 
