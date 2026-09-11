@@ -108,6 +108,56 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
             "Upper-rate trajectory closure residual"));
   }
 
+  /**
+   * Locate when an absolute reacted total-sulfide target is reached at constant water inventory.
+   *
+   * <p>
+   * The dimensional target is converted to a remaining fraction and delegated to the existing piecewise analytical
+   * crossing calculation. No product identity, oxygen demand, or process source term is inferred.
+   * </p>
+   *
+   * @param initialTotalSulfideMolality initial total-sulfide molality [mol/kg water]
+   * @param targetReactedMoles requested reacted total sulfide [mol]
+   * @param waterInventoryKg constant liquid-water inventory [kg]
+   * @param segments non-empty ordered exposure segments
+   * @return immutable dimensional target and piecewise crossing evidence
+   * @throws IllegalArgumentException when inputs are outside the source or numerical domain, the target is not less
+   * than the initial dimensional inventory, or every fit-scatter path cannot reach the target
+   */
+  public static ReactedMolesTargetResult timeToReactedMolesRange(double initialTotalSulfideMolality,
+      double targetReactedMoles, double waterInventoryKg,
+      List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments) {
+    if (!Double.isFinite(initialTotalSulfideMolality)
+        || initialTotalSulfideMolality < AqueousHydrogenSulfideOxidationTrajectory.MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
+        || initialTotalSulfideMolality > AqueousHydrogenSulfideOxidationTrajectory.MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY) {
+      throw new IllegalArgumentException("Initial total-sulfide molality must be within the source experiment range");
+    }
+    requirePositiveFinite(waterInventoryKg, "Water inventory");
+
+    double initialTotalSulfideMoles = finiteProduct(initialTotalSulfideMolality, waterInventoryKg,
+        "Initial total sulfide");
+    if (!Double.isFinite(targetReactedMoles) || targetReactedMoles < 0.0
+        || targetReactedMoles >= initialTotalSulfideMoles) {
+      throw new IllegalArgumentException(
+          "Target reacted total sulfide must be finite, non-negative, and less than the initial inventory");
+    }
+
+    double targetRemainingMoles = finiteDifference(initialTotalSulfideMoles, targetReactedMoles,
+        "Target remaining total sulfide");
+    if (targetRemainingMoles <= 0.0 || (targetReactedMoles > 0.0 && targetRemainingMoles == initialTotalSulfideMoles)) {
+      throw new IllegalArgumentException("Target reacted total sulfide cannot be represented at this inventory scale");
+    }
+    double targetRemainingFraction = targetRemainingMoles / initialTotalSulfideMoles;
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0 || targetRemainingFraction > 1.0) {
+      throw new IllegalArgumentException("Target remaining fraction must be finite and in the interval (0, 1]");
+    }
+
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(targetRemainingFraction, segments);
+    return new ReactedMolesTargetResult(initialTotalSulfideMolality, waterInventoryKg, initialTotalSulfideMoles,
+        targetReactedMoles, targetRemainingMoles, targetRemainingFraction, crossingRange);
+  }
+
   private static void requirePositiveFinite(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {
       throw new IllegalArgumentException(name + " must be finite and positive");
@@ -136,6 +186,67 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       throw new IllegalArgumentException(name + " is not finite");
     }
     return difference;
+  }
+
+  /** Immutable dimensional reacted-moles target and piecewise crossing evidence. */
+  public static final class ReactedMolesTargetResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double initialTotalSulfideMolality;
+    private final double waterInventoryKg;
+    private final double initialTotalSulfideMoles;
+    private final double targetReactedMoles;
+    private final double targetRemainingMoles;
+    private final double targetRemainingFraction;
+    private final AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange;
+
+    private ReactedMolesTargetResult(double initialTotalSulfideMolality, double waterInventoryKg,
+        double initialTotalSulfideMoles, double targetReactedMoles, double targetRemainingMoles,
+        double targetRemainingFraction,
+        AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange) {
+      this.initialTotalSulfideMolality = initialTotalSulfideMolality;
+      this.waterInventoryKg = waterInventoryKg;
+      this.initialTotalSulfideMoles = initialTotalSulfideMoles;
+      this.targetReactedMoles = targetReactedMoles;
+      this.targetRemainingMoles = targetRemainingMoles;
+      this.targetRemainingFraction = targetRemainingFraction;
+      this.crossingRange = crossingRange;
+    }
+
+    /** @return initial total-sulfide molality [mol/kg water]. */
+    public double getInitialTotalSulfideMolality() {
+      return initialTotalSulfideMolality;
+    }
+
+    /** @return caller-supplied constant liquid-water inventory [kg]. */
+    public double getWaterInventoryKg() {
+      return waterInventoryKg;
+    }
+
+    /** @return initial total-sulfide inventory [mol]. */
+    public double getInitialTotalSulfideMoles() {
+      return initialTotalSulfideMoles;
+    }
+
+    /** @return requested reacted total sulfide [mol]. */
+    public double getTargetReactedMoles() {
+      return targetReactedMoles;
+    }
+
+    /** @return remaining total sulfide at the requested target [mol]. */
+    public double getTargetRemainingMoles() {
+      return targetRemainingMoles;
+    }
+
+    /** @return remaining fraction corresponding to the requested dimensional target. */
+    public double getTargetRemainingFraction() {
+      return targetRemainingFraction;
+    }
+
+    /** @return immutable lower, nominal, and upper piecewise crossing evidence. */
+    public AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult getCrossingRange() {
+      return crossingRange;
+    }
   }
 
   /** Immutable dimensional projection for one constant-water trajectory. */

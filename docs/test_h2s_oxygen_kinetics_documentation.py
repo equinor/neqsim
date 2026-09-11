@@ -373,6 +373,45 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 
+
+    def test_absolute_reacted_moles_target_is_documented_and_executable(self):
+        for token in (
+            "Absolute reacted-moles target crossing",
+            "`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToReactedMolesRange(...)`",
+            r"n_0=c_0m_w",
+            r"f_{\mathrm{target}}=\frac{n_0-n_{\mathrm{target}}}{n_0}",
+            "shortest, nominal, and longest crossing times and segment indices",
+            "remaining fraction of `0.5`",
+            "nominal time is `22.4288 h`",
+            "Scaling both the constant water inventory and reacted-moles target",
+            "target of exactly zero crosses at time zero",
+            "strictly less than the initial dimensional total-sulfide inventory",
+            "not a calculated holdup",
+            "not a residence-time design",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static ReactedMolesTargetResult timeToReactedMolesRange(",
+            "public static final class ReactedMolesTargetResult",
+            "getInitialTotalSulfideMoles()",
+            "getTargetReactedMoles()",
+            "getTargetRemainingMoles()",
+            "getTargetRemainingFraction()",
+            "getCrossingRange()",
+            "cannot be represented at this inventory scale",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testReactedMolesTargetReproducesHalfInventoryAndForwardExposure",
+            "testReactedMolesTargetIsMonotonicAndPreservesLinearWaterScaling",
+            "testReactedMolesTargetIsSplitInvariantAndPreservesCrossingSegment",
+            "testReactedMolesTargetIdentityAndInvalidInputsFailClosed",
+            "assertTargetReaction(",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",
@@ -434,3 +473,4 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
