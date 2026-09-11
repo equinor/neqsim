@@ -1,0 +1,120 @@
+package neqsim.process.equipment.distillation;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationCase.OperatingInputs;
+import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult.ProductResult;
+import neqsim.process.equipment.distillation.DoeBigHillVacuumRefluxSensitivity.PointResult;
+
+/** Qualification tests for {@link DoeBigHillVacuumRefluxSensitivity}. */
+public class DoeBigHillVacuumRefluxSensitivityTest {
+  private static final double FEED_MASS_FLOW_KG_PER_HOUR = 1000.0;
+  private static final double BALANCE_TOLERANCE = 5.0e-2;
+
+  /** Execute the documented three-point reflux screen with every other input held fixed. */
+  @Test
+  @Timeout(value = 300, unit = TimeUnit.SECONDS)
+  public void refluxScreenReturnsQualifiedImmutablePoints() {
+    OperatingInputs baseline = baselineInputs();
+    double[] ratios = { 0.49, 0.50, 0.51 };
+
+    DoeBigHillVacuumRefluxSensitivity sensitivity = DoeBigHillVacuumRefluxSensitivity
+        .run("Big Hill vacuum reflux screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, ratios);
+
+    ratios[0] = 99.0;
+    PointResult[] points = sensitivity.getPoints();
+    assertEquals(3, points.length);
+    assertNotSame(points, sensitivity.getPoints());
+    assertEquals(0.49, points[0].getCondenserRefluxRatio(), 0.0);
+    assertEquals(0.50, points[1].getCondenserRefluxRatio(), 0.0);
+    assertEquals(0.51, points[2].getCondenserRefluxRatio(), 0.0);
+    assertEquals(points[0], sensitivity.getPoint(0));
+    assertEquals(points[2], sensitivity.getPoint(2));
+    assertThrows(IndexOutOfBoundsException.class, () -> sensitivity.getPoint(-1));
+    assertThrows(IndexOutOfBoundsException.class, () -> sensitivity.getPoint(3));
+
+    double expectedMinimumOverhead = Double.POSITIVE_INFINITY;
+    double expectedMaximumOverhead = Double.NEGATIVE_INFINITY;
+    double expectedMaximumMassClosure = 0.0;
+    double expectedMaximumComponentClosure = 0.0;
+    double expectedMaximumEnergyError = 0.0;
+    double expectedMaximumMeshResidual = 0.0;
+
+    for (PointResult point : points) {
+      double ratio = point.getCondenserRefluxRatio();
+      OperatingInputs applied = point.getOperatingInputs();
+      assertEquals(ratio, applied.getCondenserRefluxRatio(), 0.0);
+      assertEquals(baseline.getSimpleTrayCount(), applied.getSimpleTrayCount());
+      assertEquals(baseline.getFeedTrayIndex(), applied.getFeedTrayIndex());
+      assertEquals(baseline.getFeedTemperatureKelvin(), applied.getFeedTemperatureKelvin(), 0.0);
+      assertEquals(baseline.getFeedPressureBara(), applied.getFeedPressureBara(), 0.0);
+      assertEquals(baseline.getTopPressureBara(), applied.getTopPressureBara(), 0.0);
+      assertEquals(baseline.getBottomPressureBara(), applied.getBottomPressureBara(), 0.0);
+      assertEquals(baseline.getReboilerTemperatureKelvin(), applied.getReboilerTemperatureKelvin(), 0.0);
+
+      DoeBigHillVacuumFractionationResult result = point.getFractionationResult();
+      ProductResult overhead = result.getProduct("Overhead");
+      ProductResult bottoms = result.getProduct("Bottoms");
+      assertTrue(overhead.getMassFractionOfFeed() > 0.0);
+      assertTrue(bottoms.getMassFractionOfFeed() > 0.0);
+      assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
+      assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.10)));
+      assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.50)));
+      assertTrue(Double.isFinite(point.getOverheadBoilingPointQuantileKelvin(0.90)));
+      assertThrows(IllegalArgumentException.class, () -> point.getOverheadBoilingPointQuantileKelvin(0.0));
+      assertTrue(result.getMassClosureRelativeError() <= BALANCE_TOLERANCE);
+      assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
+      assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
+
+      expectedMinimumOverhead = Math.min(expectedMinimumOverhead, point.getOverheadMassFraction());
+      expectedMaximumOverhead = Math.max(expectedMaximumOverhead, point.getOverheadMassFraction());
+      expectedMaximumMassClosure = Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
+      expectedMaximumComponentClosure = Math.max(expectedMaximumComponentClosure,
+          result.getMaximumComponentMolarClosureRelativeError());
+      expectedMaximumEnergyError = Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
+      expectedMaximumMeshResidual = Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
+    }
+
+    assertEquals(expectedMinimumOverhead, sensitivity.getMinimumOverheadMassFraction(), 0.0);
+    assertEquals(expectedMaximumOverhead, sensitivity.getMaximumOverheadMassFraction(), 0.0);
+    assertEquals(expectedMaximumMassClosure, sensitivity.getMaximumMassClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumComponentClosure, sensitivity.getMaximumComponentMolarClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumEnergyError, sensitivity.getMaximumColumnEnergyBalanceError(), 0.0);
+    assertEquals(expectedMaximumMeshResidual, sensitivity.getMaximumMeshResidualNorm(), 0.0);
+  }
+
+  /** Require malformed sensitivity definitions to fail before presenting an envelope. */
+  @Test
+  public void invalidSensitivityInputsFailClosed() {
+    OperatingInputs baseline = baselineInputs();
+
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run(" ",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.49, 0.51 }));
+    assertThrows(IllegalArgumentException.class,
+        () -> DoeBigHillVacuumRefluxSensitivity.run("screen", 0.0, baseline, new double[] { 0.49, 0.51 }));
+    assertThrows(NullPointerException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 0.49, 0.51 }));
+    assertThrows(NullPointerException.class,
+        () -> DoeBigHillVacuumRefluxSensitivity.run("screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, null));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.5 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.5, 0.5 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.51, 0.49 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { Double.NaN, 0.5 }));
+    assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { -0.1, 0.5 }));
+  }
+
+  private static OperatingInputs baselineInputs() {
+    return new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+  }
+}
