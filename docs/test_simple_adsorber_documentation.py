@@ -122,12 +122,16 @@ class SimpleAdsorberDocumentationContractTest(unittest.TestCase):
                 self.assertNotIn(inactive, run_body)
 
     def test_maintained_replacement_is_source_and_test_backed(self):
-        self.assertIn("public class AdsorptionBed extends TwoPortEquipment", self.bed_source)
+        self.assertIn(
+            "public class AdsorptionBed extends TwoPortEquipment", self.bed_source
+        )
         self.assertIn(
             "public AdsorptionBed(String name, StreamInterface inletStream)",
             self.bed_source,
         )
-        self.assertIn("public void setAdsorbentMaterial(String material)", self.bed_source)
+        self.assertIn(
+            "public void setAdsorbentMaterial(String material)", self.bed_source
+        )
         self.assertIn("class AdsorptionBedTest", self.bed_test)
         self.assertIn("@Test", self.bed_test)
         self.assertNotIn("@Disabled", self.bed_test)
@@ -158,7 +162,9 @@ class SimpleAdsorberDocumentationContractTest(unittest.TestCase):
                 resolved / "index.md",
             )
             with self.subTest(target=target):
-                self.assertTrue(any(candidate.is_file() for candidate in candidates), target)
+                self.assertTrue(
+                    any(candidate.is_file() for candidate in candidates), target
+                )
 
 
 if __name__ == "__main__":
