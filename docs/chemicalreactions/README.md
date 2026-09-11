@@ -74,8 +74,9 @@ operations.reactiveTPflash();
 Run the complete source from a checkout after compiling NeqSim:
 
 ```bash
-./mvnw -q -DskipTests package
-java -cp "target/classes:target/dependency/*" ChemicalReactionEquilibriumExample
+./mvnw -q -DskipTests package dependency:copy-dependencies
+javac -cp "target/classes:target/dependency/*" docs/examples/ChemicalReactionEquilibriumExample.java
+java -cp "target/classes:target/dependency/*:docs/examples" ChemicalReactionEquilibriumExample
 ```
 
 Classpath syntax differs on Windows. The repository's
