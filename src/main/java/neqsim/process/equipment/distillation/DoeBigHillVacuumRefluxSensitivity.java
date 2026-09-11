@@ -9,10 +9,9 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable condenser-reflux sensitivity summary for the DOE Big Hill vacuum screening case.
  *
  * <p>
- * Condenser reflux ratio is varied while all other explicit engineering inputs remain fixed. Each
- * point is independently constructed, solved, and evaluated through the qualified Big Hill case and
- * result contracts. The sensitivity is numerical screening evidence, not a measured or calibrated
- * vacuum-column operating envelope.
+ * Condenser reflux ratio is varied while all other explicit engineering inputs remain fixed. Each point is
+ * independently constructed, solved, and evaluated through the qualified Big Hill case and result contracts. The
+ * sensitivity is numerical screening evidence, not a measured or calibrated vacuum-column operating envelope.
  * </p>
  */
 public final class DoeBigHillVacuumRefluxSensitivity {
@@ -38,12 +37,10 @@ public final class DoeBigHillVacuumRefluxSensitivity {
       double overheadFraction = result.getProduct("Overhead").getMassFractionOfFeed();
       minimumOverheadFraction = Math.min(minimumOverheadFraction, overheadFraction);
       maximumOverheadFraction = Math.max(maximumOverheadFraction, overheadFraction);
-      maximumMassClosure =
-          Math.max(maximumMassClosure, result.getMassClosureRelativeError());
+      maximumMassClosure = Math.max(maximumMassClosure, result.getMassClosureRelativeError());
       maximumComponentClosure = Math.max(maximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
-      maximumEnergyError =
-          Math.max(maximumEnergyError, result.getColumnEnergyBalanceError());
+      maximumEnergyError = Math.max(maximumEnergyError, result.getColumnEnergyBalanceError());
       maximumMeshResidual = Math.max(maximumMeshResidual, result.getMeshResidualNorm());
     }
 
@@ -63,14 +60,12 @@ public final class DoeBigHillVacuumRefluxSensitivity {
    * @param baselineInputs explicit source-unreported baseline column inputs
    * @param condenserRefluxRatios finite non-negative strictly increasing reflux ratios
    * @return immutable sensitivity summary
-   * @throws NullPointerException if {@code baselineInputs} or
-   *         {@code condenserRefluxRatios} is null
+   * @throws NullPointerException if {@code baselineInputs} or {@code condenserRefluxRatios} is null
    * @throws IllegalArgumentException if the name, feed flow, or reflux ratios are invalid
    * @throws IllegalStateException if a point does not solve or pass the qualified result gates
    */
-  public static DoeBigHillVacuumRefluxSensitivity run(String caseNamePrefix,
-      double feedMassFlowKgPerHour, OperatingInputs baselineInputs,
-      double[] condenserRefluxRatios) {
+  public static DoeBigHillVacuumRefluxSensitivity run(String caseNamePrefix, double feedMassFlowKgPerHour,
+      OperatingInputs baselineInputs, double[] condenserRefluxRatios) {
     if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("Case-name prefix must be non-blank");
     }
@@ -88,21 +83,15 @@ public final class DoeBigHillVacuumRefluxSensitivity {
     PointResult[] evaluatedPoints = new PointResult[ratios.length];
     for (int i = 0; i < ratios.length; i++) {
       OperatingInputs pointInputs = refluxInputs(baselineInputs, ratios[i]);
-      DoeBigHillVacuumFractionationCase model =
-          DoeBigHillVacuumFractionationCase.create(
-              caseNamePrefix + " reflux point " + (i + 1),
-              feedMassFlowKgPerHour,
-              pointInputs);
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+          .create(caseNamePrefix + " reflux point " + (i + 1), feedMassFlowKgPerHour, pointInputs);
       try {
         model.getColumn().run(UUID.randomUUID());
-        DoeBigHillVacuumFractionationResult result =
-            DoeBigHillVacuumFractionationResult.evaluate(model);
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
         evaluatedPoints[i] = new PointResult(ratios[i], pointInputs, result);
       } catch (RuntimeException exception) {
         throw new IllegalStateException(
-            "Vacuum reflux sensitivity failed at point " + i
-                + " with condenser reflux ratio " + ratios[i],
-            exception);
+            "Vacuum reflux sensitivity failed at point " + i + " with condenser reflux ratio " + ratios[i], exception);
       }
     }
     return new DoeBigHillVacuumRefluxSensitivity(evaluatedPoints);
@@ -122,8 +111,7 @@ public final class DoeBigHillVacuumRefluxSensitivity {
    */
   public PointResult getPoint(int index) {
     if (index < 0 || index >= points.length) {
-      throw new IndexOutOfBoundsException(
-          "Reflux sensitivity point index is outside the result");
+      throw new IndexOutOfBoundsException("Reflux sensitivity point index is outside the result");
     }
     return points[index];
   }
@@ -162,27 +150,19 @@ public final class DoeBigHillVacuumRefluxSensitivity {
     double previous = Double.NEGATIVE_INFINITY;
     for (double ratio : ratios) {
       if (!Double.isFinite(ratio) || ratio < 0.0) {
-        throw new IllegalArgumentException(
-            "Condenser reflux ratios must be finite and non-negative");
+        throw new IllegalArgumentException("Condenser reflux ratios must be finite and non-negative");
       }
       if (!(ratio > previous)) {
-        throw new IllegalArgumentException(
-            "Condenser reflux ratios must be strictly increasing and unique");
+        throw new IllegalArgumentException("Condenser reflux ratios must be strictly increasing and unique");
       }
       previous = ratio;
     }
   }
 
   private static OperatingInputs refluxInputs(OperatingInputs baseline, double ratio) {
-    return new OperatingInputs(
-        baseline.getSimpleTrayCount(),
-        baseline.getFeedTrayIndex(),
-        baseline.getFeedTemperatureKelvin(),
-        baseline.getFeedPressureBara(),
-        baseline.getTopPressureBara(),
-        baseline.getBottomPressureBara(),
-        baseline.getReboilerTemperatureKelvin(),
-        ratio);
+    return new OperatingInputs(baseline.getSimpleTrayCount(), baseline.getFeedTrayIndex(),
+        baseline.getFeedTemperatureKelvin(), baseline.getFeedPressureBara(), baseline.getTopPressureBara(),
+        baseline.getBottomPressureBara(), baseline.getReboilerTemperatureKelvin(), ratio);
   }
 
   /** Immutable result for one condenser-reflux point. */
@@ -195,8 +175,7 @@ public final class DoeBigHillVacuumRefluxSensitivity {
         DoeBigHillVacuumFractionationResult fractionationResult) {
       this.condenserRefluxRatio = condenserRefluxRatio;
       this.operatingInputs = Objects.requireNonNull(operatingInputs, "operatingInputs");
-      this.fractionationResult =
-          Objects.requireNonNull(fractionationResult, "fractionationResult");
+      this.fractionationResult = Objects.requireNonNull(fractionationResult, "fractionationResult");
     }
 
     /** @return dimensionless condenser reflux ratio applied at this point */
