@@ -291,3 +291,51 @@ size equipment, validate product quality, or demonstrate turndown.
 All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
+
+## Reboiler-temperature sensitivity screening
+
+`DoeBigHillVacuumReboilerTemperatureSensitivity.run(...)` independently rebuilds, solves, and
+evaluates multiple Big Hill vacuum cases while varying only the reboiler outlet temperature. Tray
+count, feed tray, feed temperature, all three absolute pressures, condenser reflux ratio, feed
+composition, and feed mass flow remain fixed. Temperatures must be finite, positive, unique,
+strictly increasing, and above the fixed feed temperature.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] reboilerTemperaturesKelvin = {698.0, 700.0, 702.0};
+
+DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity =
+    DoeBigHillVacuumReboilerTemperatureSensitivity.run(
+        "Big Hill vacuum reboiler-temperature screen",
+        1000.0,
+        baseline,
+        reboilerTemperaturesKelvin);
+
+for (DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point :
+    sensitivity.getPoints()) {
+  double reboilerTemperatureKelvin = point.getReboilerTemperatureKelvin();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The temperature is the specified reboiler outlet temperature, not a measured tray profile, boiling
+curve, heat duty, or utility demand. This screen isolates that single numerical operating variable;
+it does not represent a measured, optimized, or vendor-recommended temperature policy. The narrow
+698/700/702 K regression is a convergence and conservation test around the documented screening
+point. It does not establish a measured temperature response, require a monotonic yield trend,
+quantify heat-transfer performance, size equipment, validate product quality, or demonstrate
+turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
