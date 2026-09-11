@@ -295,6 +295,141 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
         .timeToReactedMolesRange(INITIAL_TOTAL_SULFIDE_MOLALITY, 0.0, WATER_INVENTORY_KG, null));
   }
 
+  @Test
+  void testRemainingMolesTargetReproducesHalfInventoryAndAgreesWithComplement() {
+    AqueousHydrogenSulfideOxidationTrajectory.Segment segment = referenceSegment(100.0);
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentEvidence = segmentResult(segment);
+    double initialMoles = INITIAL_TOTAL_SULFIDE_MOLALITY * WATER_INVENTORY_KG;
+    double targetRemainingMoles = 0.5 * initialMoles;
+
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult remainingTarget =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, targetRemainingMoles, WATER_INVENTORY_KG,
+            Collections.singletonList(segment));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.ReactedMolesTargetResult reactedTarget =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToReactedMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, initialMoles - targetRemainingMoles, WATER_INVENTORY_KG,
+            Collections.singletonList(segment));
+
+    assertEquals(initialMoles, remainingTarget.getInitialTotalSulfideMoles(), 0.0);
+    assertEquals(targetRemainingMoles, remainingTarget.getTargetRemainingMoles(), 0.0);
+    assertEquals(0.5 * initialMoles, remainingTarget.getTargetReactedMoles(), 0.0);
+    assertEquals(0.5, remainingTarget.getTargetRemainingFraction(), 0.0);
+    assertEquals(22.4288, remainingTarget.getCrossingRange().getNominalTimeHours(), 1.0e-4);
+    assertEquals(reactedTarget.getCrossingRange().getShortestTimeHours(),
+        remainingTarget.getCrossingRange().getShortestTimeHours(), 0.0);
+    assertEquals(reactedTarget.getCrossingRange().getNominalTimeHours(),
+        remainingTarget.getCrossingRange().getNominalTimeHours(), 0.0);
+    assertEquals(reactedTarget.getCrossingRange().getLongestTimeHours(),
+        remainingTarget.getCrossingRange().getLongestTimeHours(), 0.0);
+
+    assertTargetRemaining(targetRemainingMoles, initialMoles, segmentEvidence.getUpperPseudoFirstOrderRate(),
+        remainingTarget.getCrossingRange().getShortestTimeHours());
+    assertTargetRemaining(targetRemainingMoles, initialMoles, segmentEvidence.getNominalPseudoFirstOrderRate(),
+        remainingTarget.getCrossingRange().getNominalTimeHours());
+    assertTargetRemaining(targetRemainingMoles, initialMoles, segmentEvidence.getLowerPseudoFirstOrderRate(),
+        remainingTarget.getCrossingRange().getLongestTimeHours());
+  }
+
+  @Test
+  void testRemainingMolesTargetIsMonotonicAndPreservesLinearWaterScaling() {
+    AqueousHydrogenSulfideOxidationTrajectory.Segment segment = referenceSegment(100.0);
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult largerRemaining =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.018, WATER_INVENTORY_KG, Collections.singletonList(segment));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult smallerRemaining =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.009, WATER_INVENTORY_KG, Collections.singletonList(segment));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult scaled =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.036, 2.0 * WATER_INVENTORY_KG,
+            Collections.singletonList(segment));
+
+    assertTrue(largerRemaining.getCrossingRange().getShortestTimeHours()
+        < smallerRemaining.getCrossingRange().getShortestTimeHours());
+    assertTrue(largerRemaining.getCrossingRange().getNominalTimeHours()
+        < smallerRemaining.getCrossingRange().getNominalTimeHours());
+    assertTrue(largerRemaining.getCrossingRange().getLongestTimeHours()
+        < smallerRemaining.getCrossingRange().getLongestTimeHours());
+    assertEquals(largerRemaining.getCrossingRange().getShortestTimeHours(),
+        scaled.getCrossingRange().getShortestTimeHours(), NUMERICAL_TOLERANCE);
+    assertEquals(largerRemaining.getCrossingRange().getNominalTimeHours(),
+        scaled.getCrossingRange().getNominalTimeHours(), NUMERICAL_TOLERANCE);
+    assertEquals(largerRemaining.getCrossingRange().getLongestTimeHours(),
+        scaled.getCrossingRange().getLongestTimeHours(), NUMERICAL_TOLERANCE);
+  }
+
+  @Test
+  void testRemainingMolesTargetIsSplitInvariantAndIdentityIsExact() {
+    double initialMoles = INITIAL_TOTAL_SULFIDE_MOLALITY * WATER_INVENTORY_KG;
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult unsplit =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.015, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(100.0)));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult split =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.015, WATER_INVENTORY_KG,
+            Arrays.asList(referenceSegment(10.0), referenceSegment(90.0)));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.RemainingMolesTargetResult identity =
+        AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, initialMoles, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(0.0)));
+
+    assertEquals(unsplit.getCrossingRange().getShortestTimeHours(),
+        split.getCrossingRange().getShortestTimeHours(), NUMERICAL_TOLERANCE);
+    assertEquals(unsplit.getCrossingRange().getNominalTimeHours(), split.getCrossingRange().getNominalTimeHours(),
+        NUMERICAL_TOLERANCE);
+    assertEquals(unsplit.getCrossingRange().getLongestTimeHours(), split.getCrossingRange().getLongestTimeHours(),
+        NUMERICAL_TOLERANCE);
+    assertEquals(0, unsplit.getCrossingRange().getNominalCrossingSegmentIndex());
+    assertEquals(1, split.getCrossingRange().getNominalCrossingSegmentIndex());
+    assertEquals(0.0, identity.getTargetReactedMoles(), 0.0);
+    assertEquals(1.0, identity.getTargetRemainingFraction(), 0.0);
+    assertEquals(0.0, identity.getCrossingRange().getShortestTimeHours(), 0.0);
+    assertEquals(0.0, identity.getCrossingRange().getNominalTimeHours(), 0.0);
+    assertEquals(0.0, identity.getCrossingRange().getLongestTimeHours(), 0.0);
+  }
+
+  @Test
+  void testRemainingMolesTargetInvalidInputsAndUnreachableTrajectoryFailClosed() {
+    double initialMoles = INITIAL_TOTAL_SULFIDE_MOLALITY * WATER_INVENTORY_KG;
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(19.0e-6, 0.01,
+            WATER_INVENTORY_KG, Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.0, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, initialMoles + 0.001, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, Double.NaN, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, Double.MIN_VALUE, 1.0e300,
+            Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.015, Double.POSITIVE_INFINITY,
+            Collections.singletonList(referenceSegment(100.0))));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(
+            INITIAL_TOTAL_SULFIDE_MOLALITY, 0.015, WATER_INVENTORY_KG,
+            Collections.singletonList(referenceSegment(1.0))));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationWaterInventoryProjection
+        .timeToRemainingMolesRange(INITIAL_TOTAL_SULFIDE_MOLALITY, initialMoles, WATER_INVENTORY_KG, null));
+  }
+
+  private static void assertTargetRemaining(double targetRemainingMoles, double initialMoles,
+      double pseudoFirstOrderRate, double crossingTimeHours) {
+    double remainingMoles = initialMoles * Math.exp(-pseudoFirstOrderRate * crossingTimeHours);
+    assertEquals(targetRemainingMoles, remainingMoles, NUMERICAL_TOLERANCE);
+  }
+
   private static void assertTargetReaction(double targetReactedMoles, double initialMoles, double pseudoFirstOrderRate,
       double crossingTimeHours) {
     double reactedMoles = initialMoles * -Math.expm1(-pseudoFirstOrderRate * crossingTimeHours);
