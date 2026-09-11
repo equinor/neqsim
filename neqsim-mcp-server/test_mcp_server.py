@@ -1577,13 +1577,13 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "runRiskMatrix", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-six bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.36"
-          and limitations.get("contractTestedToolCount") == 36
-          and limitations.get("confirmedGapToolCount") == 15
+    check("thirty-seven bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.37"
+          and limitations.get("contractTestedToolCount") == 37
+          and limitations.get("confirmedGapToolCount") == 14
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1756,6 +1756,23 @@ def test_capabilities():
           and "qualified safety-engineering review"
           in risk_matrix.get("evidenceBoundary", ""),
           str(risk_matrix))
+    lopa = coverage_records.get("runLOPA", {})
+    check("bounded LOPA screening has direct contract evidence",
+          lopa.get("coverageStatus") == "CONTRACT_TESTED"
+          and lopa.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
+          and lopa.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_lopa_protocol.py"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md"
+          in lopa.get("contractEvidenceSources", [])
+          and "does not identify hazards" in lopa.get("evidenceBoundary", "")
+          and "qualified process-safety review" in lopa.get("evidenceBoundary", ""),
+          str(lopa))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1773,7 +1790,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 15
+          and limitations.get("confirmedGapToolCount") == 14
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

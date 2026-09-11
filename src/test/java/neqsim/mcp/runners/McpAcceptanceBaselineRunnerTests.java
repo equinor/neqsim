@@ -20,7 +20,7 @@ class McpAcceptanceBaselineRunnerTests {
     assertFalse(contract.get("scientificValidationComplete").getAsBoolean());
 
     JsonObject inventory = McpEvidenceInventory.build();
-    assertEquals("1.36", inventory.get("inventoryVersion").getAsString());
+    assertEquals("1.37", inventory.get("inventoryVersion").getAsString());
     assertTrue(inventory.has("acceptanceBaselineContract"));
     assertFalse(inventory.get("complete").getAsBoolean());
   }

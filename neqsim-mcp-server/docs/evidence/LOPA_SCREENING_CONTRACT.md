@@ -86,6 +86,10 @@ This capability does not:
 - `neqsim-mcp-server/test_mcp_server.py` protects the public tool inventory and
   direct discovery boundary within the comprehensive protocol regression.
 
-This qualification does not promote `runLOPA` in the Phase 0 evidence
-inventory. Promotion requires a later, separately accepted increment after this
-contract has merged and remained green on its exact published head.
+Merged #3655 established this direct source and packaged-MCP qualification.
+Inventory version `1.37 / 20 explicit + 37 contract-tested + 14 confirmed gaps`
+atomically promotes `runLOPA` to `CONTRACT_TESTED`. Machine-readable coverage,
+Java assertions, the focused packaged protocol, synchronized protocol
+expectations, authoritative comprehensive accounting, and documentation move
+together without production, schema, canonical-model, policy, or numerical
+changes. No promotion candidate remains queued.

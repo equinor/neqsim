@@ -53,8 +53,8 @@ The implementation remains `VisualizationRunner`, exposed through
 `NeqSimTools.generateVisualization`. Merged qualification #3510 supplies the
 direct Java and packaged-MCP evidence. Inventory `1.29 / 20 explicit + 29
 contract-tested + 22 confirmed gaps` atomically recorded
-`generateVisualization` as `CONTRACT_TESTED`. Current inventory `1.36 / 20
-explicit + 36 contract-tested + 15 confirmed gaps` retains that classification
+`generateVisualization` as `CONTRACT_TESTED`. Current inventory `1.37 / 20
+explicit + 37 contract-tested + 14 confirmed gaps` retains that classification
 while preserving zero queued promotion candidates and
 `scientificValidationComplete=false`.
 
