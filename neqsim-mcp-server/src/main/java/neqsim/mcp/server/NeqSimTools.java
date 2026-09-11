@@ -2158,20 +2158,21 @@ public class NeqSimTools {
   }
 
   /**
-   * Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA.
+   * Run a bounded Layer of Protection Analysis (LOPA) screening calculation.
    *
    * @param lopaJson JSON spec with scenario, frequencies, and layers
    * @return JSON string with LOPA result and gap analysis
    */
-  @Tool(description = "Run a Layer of Protection Analysis (LOPA) per IEC 61511 / CCPS LOPA. "
-      + "Computes the mitigated event frequency by stacking PFDs of independent "
-      + "protection layers (BPCS, alarms, relief valves, SIFs), compares against a target, "
-      + "and reports the gap, total RRF, and required additional SIL/PFD if the target "
-      + "is not met.")
+  @Tool(description = "Run bounded caller-supplied LOPA screening (maximum 16384 UTF-8 bytes and 100 layers). "
+      + "Uses NeqSim's canonical LOPA result to multiply ordered layer PFDs and compare the mitigated "
+      + "frequency with a caller-supplied target. IEC 61511 and CCPS are context only: this tool does not "
+      + "identify hazards, establish IPL independence, verify SIL or safeguards, determine risk acceptance, "
+      + "claim standards compliance, authorize plant action, or replace qualified process-safety review.")
   public String runLOPA(
       @ToolArg(description = "JSON with: 'scenario' (name), 'initiatingEventFrequency_per_year', "
-          + "'targetFrequency_per_year', and 'layers' array. Each layer has 'name' and 'pfd' "
-          + "(probability of failure on demand, 0-1). Example: "
+          + "'targetFrequency_per_year', and a non-empty 'layers' array (maximum 100). Frequencies must be "
+          + "finite and greater than zero. Each layer has a non-blank 'name' and finite 'pfd' "
+          + "(probability of failure on demand, greater than 0 and at most 1). Example: "
           + "{\"scenario\":\"HP separator overpressure\",\"initiatingEventFrequency_per_year\":0.1,"
           + "\"targetFrequency_per_year\":1e-5,\"layers\":[{\"name\":\"BPCS\",\"pfd\":0.1},"
           + "{\"name\":\"PSV\",\"pfd\":0.01}]}") String lopaJson) {

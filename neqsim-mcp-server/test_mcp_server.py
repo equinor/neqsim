@@ -322,6 +322,15 @@ def test_protocol():
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
 
+    lopa_tool = next((tool for tool in tools if tool.get("name") == "runLOPA"), {})
+    lopa_description = lopa_tool.get("description", "")
+    check("bounded LOPA discovery contract",
+          "16384 UTF-8 bytes" in lopa_description
+          and "100 layers" in lopa_description
+          and "does not identify hazards" in lopa_description
+          and "qualified process-safety review" in lopa_description,
+          lopa_description)
+
     # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
              "runPlugin", "getProgress", "streamSimulation",

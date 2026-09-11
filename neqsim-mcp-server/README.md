@@ -238,7 +238,7 @@ code-level `enforceAccess()` — returns structured error JSON, not a silent ski
 | `saveSimulationState`         | Save process state as a JSON snapshot                                                                                                                |
 | `runOperationalStudy`         | P&ID/tag-driven valve scenarios, field-data binding, controller response metrics, and evidence-package bottleneck reports on a local simulation copy |
 | `runRelief`                   | PSV sizing per API 520/521                                                                                                                           |
-| `runLOPA`                     | Layer of Protection Analysis per IEC 61511 / CCPS                                                                                                    |
+| `runLOPA`                     | Bounded caller-supplied LOPA screening; IEC 61511/CCPS context only, with qualified process-safety review required                                   |
 | `runSIL`                      | SIL verification per IEC 61508 / IEC 61511                                                                                                           |
 | `runRiskMatrix`               | Bounded generic 5x5 screening of caller-supplied probability and consequence inputs; no standards-conformance claim                                  |
 | `runFlareNetwork`             | Flare radiation and safe-distance contours                                                                                                           |

@@ -90,6 +90,9 @@ jobs:
       - name: Run focused bounded risk-matrix Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.RiskMatrixRunnerTest test -ntp
 
+      - name: Run focused bounded LOPA Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.LOPARunnerTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
@@ -159,6 +162,9 @@ jobs:
 
       - name: Run focused real-MCP bounded risk-matrix qualification
         run: cd neqsim-mcp-server && python test_risk_matrix_protocol.py
+
+      - name: Run focused real-MCP bounded LOPA qualification
+        run: cd neqsim-mcp-server && python test_lopa_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
