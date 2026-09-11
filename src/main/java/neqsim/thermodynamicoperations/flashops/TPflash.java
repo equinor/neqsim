@@ -611,7 +611,8 @@ public class TPflash extends Flash {
    * <li>Component K properties for all phases if required</li>
    * </ul>
    *
-   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has invalid\n   *         phase inventories
+   * @throws IllegalStateException if a neutral multiphase fluid with invalid petroleum-fraction properties has
+   *         invalid phase inventories
    */
   @Override
   public void run() {
@@ -650,9 +651,10 @@ public class TPflash extends Flash {
    * <p>
    * Normalizing each phase composition cannot repair a stalled beta solve: the resulting normalized phases may
    * represent a different feed. Validate the final state after all bounded refinements, before process equipment can
-   * extract its phases. This guard covers neutral fluids containing TBP or plus fractions, whose estimated or imported
-   * critical properties can make the EOS ill-conditioned. Reactive, ionic, solid, wax, specialized EOS-GE, and fluids
-   * without petroleum fractions retain their own acceptance paths. This material-balance check does not replace
+   * extract its phases. This guard is limited to neutral fluids with an active TBP or plus fraction whose stored
+   * critical properties are non-finite, non-positive, or have a critical temperature at or below the normal boiling
+   * point. Reactive, ionic, solid, wax, specialized EOS-GE, and valid characterized fluids retain their existing
+   * acceptance paths. This material-balance check does not replace
    * equilibrium or stability tests.
    * </p>
    *
@@ -675,9 +677,8 @@ public class TPflash extends Flash {
       double normalBoilingPoint = component.getNormalBoilingPoint();
       double acentricFactor = component.getAcentricFactor();
       if (!Double.isFinite(criticalTemperature) || criticalTemperature <= 0.0 || !Double.isFinite(criticalPressure)
-          || criticalPressure <= 0.0 || !Double.isFinite(acentricFactor)
-          || (Double.isFinite(normalBoilingPoint) && normalBoilingPoint > 0.0
-              && criticalTemperature <= normalBoilingPoint)) {
+          || criticalPressure <= 0.0 || !Double.isFinite(acentricFactor) || (Double.isFinite(normalBoilingPoint)
+              && normalBoilingPoint > 0.0 && criticalTemperature <= normalBoilingPoint)) {
         hasInvalidPetroleumFraction = true;
         break;
       }
