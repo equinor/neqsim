@@ -9,10 +9,9 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable reboiler-temperature sensitivity summary for the DOE Big Hill vacuum screening case.
  *
  * <p>
- * Reboiler outlet temperature is varied while all other explicit engineering inputs remain fixed.
- * Each point is independently constructed, solved, and evaluated through the qualified Big Hill
- * case and result contracts. The sensitivity is numerical screening evidence, not a measured or
- * calibrated vacuum-column operating envelope.
+ * Reboiler outlet temperature is varied while all other explicit engineering inputs remain fixed. Each point is
+ * independently constructed, solved, and evaluated through the qualified Big Hill case and result contracts. The
+ * sensitivity is numerical screening evidence, not a measured or calibrated vacuum-column operating envelope.
  * </p>
  */
 public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
@@ -61,14 +60,12 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
    * @param baselineInputs explicit source-unreported baseline column inputs
    * @param reboilerTemperaturesKelvin finite positive strictly increasing temperatures in kelvin
    * @return immutable sensitivity summary
-   * @throws NullPointerException if {@code baselineInputs} or
-   *         {@code reboilerTemperaturesKelvin} is null
+   * @throws NullPointerException if {@code baselineInputs} or {@code reboilerTemperaturesKelvin} is null
    * @throws IllegalArgumentException if the name, feed flow, or temperatures are invalid
    * @throws IllegalStateException if a point does not solve or pass the qualified result gates
    */
-  public static DoeBigHillVacuumReboilerTemperatureSensitivity run(String caseNamePrefix,
-      double feedMassFlowKgPerHour, OperatingInputs baselineInputs,
-      double[] reboilerTemperaturesKelvin) {
+  public static DoeBigHillVacuumReboilerTemperatureSensitivity run(String caseNamePrefix, double feedMassFlowKgPerHour,
+      OperatingInputs baselineInputs, double[] reboilerTemperaturesKelvin) {
     if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("Case-name prefix must be non-blank");
     }
@@ -86,17 +83,15 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
     PointResult[] evaluatedPoints = new PointResult[temperatures.length];
     for (int i = 0; i < temperatures.length; i++) {
       OperatingInputs pointInputs = temperatureInputs(baselineInputs, temperatures[i]);
-      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase.create(
-          caseNamePrefix + " reboiler-temperature point " + (i + 1), feedMassFlowKgPerHour,
-          pointInputs);
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+          .create(caseNamePrefix + " reboiler-temperature point " + (i + 1), feedMassFlowKgPerHour, pointInputs);
       try {
         model.getColumn().run(UUID.randomUUID());
-        DoeBigHillVacuumFractionationResult result =
-            DoeBigHillVacuumFractionationResult.evaluate(model);
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
         evaluatedPoints[i] = new PointResult(temperatures[i], pointInputs, result);
       } catch (RuntimeException exception) {
-        throw new IllegalStateException("Vacuum reboiler-temperature sensitivity failed at point "
-            + i + " with reboiler temperature " + temperatures[i] + " K", exception);
+        throw new IllegalStateException("Vacuum reboiler-temperature sensitivity failed at point " + i
+            + " with reboiler temperature " + temperatures[i] + " K", exception);
       }
     }
     return new DoeBigHillVacuumReboilerTemperatureSensitivity(evaluatedPoints);
@@ -159,19 +154,16 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
             "Reboiler temperatures must be finite and greater than the feed temperature");
       }
       if (!(temperature > previous)) {
-        throw new IllegalArgumentException(
-            "Reboiler temperatures must be strictly increasing and unique");
+        throw new IllegalArgumentException("Reboiler temperatures must be strictly increasing and unique");
       }
       previous = temperature;
     }
   }
 
-  private static OperatingInputs temperatureInputs(OperatingInputs baseline,
-      double reboilerTemperatureKelvin) {
+  private static OperatingInputs temperatureInputs(OperatingInputs baseline, double reboilerTemperatureKelvin) {
     return new OperatingInputs(baseline.getSimpleTrayCount(), baseline.getFeedTrayIndex(),
-        baseline.getFeedTemperatureKelvin(), baseline.getFeedPressureBara(),
-        baseline.getTopPressureBara(), baseline.getBottomPressureBara(),
-        reboilerTemperatureKelvin, baseline.getCondenserRefluxRatio());
+        baseline.getFeedTemperatureKelvin(), baseline.getFeedPressureBara(), baseline.getTopPressureBara(),
+        baseline.getBottomPressureBara(), reboilerTemperatureKelvin, baseline.getCondenserRefluxRatio());
   }
 
   /** Immutable result for one reboiler-temperature point. */
