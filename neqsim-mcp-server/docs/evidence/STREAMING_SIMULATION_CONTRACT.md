@@ -84,8 +84,8 @@ underlying NeqSim model and must be independently reviewed.
 
 ## Inventory continuity
 
-Current Phase 0 inventory version `1.35` records `20` explicit-trust tools,
-`35` contract-tested tools, `16` confirmed gaps, and zero queued promotion
+Current Phase 0 inventory version `1.36` records `20` explicit-trust tools,
+`36` contract-tested tools, `15` confirmed gaps, and zero queued promotion
 candidates. The evidence sources resolve to the canonical streaming runner,
 focused Java and principal-scoping tests, the packaged streaming harness, the
 comprehensive MCP harness, and this document. Phase 0 remains incomplete and

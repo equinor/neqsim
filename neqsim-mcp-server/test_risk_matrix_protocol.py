@@ -313,6 +313,40 @@ def test_deterministic_screening(client):
     )
 
 
+def test_inventory_is_promoted(client):
+    response = client.request("tools/call", {"name": "getCapabilities", "arguments": {}})
+    content = response.get("result", {}).get("content", [])
+    require(content, "getCapabilities returned no content", response)
+    result = payload(json.loads(content[0].get("text", "")))
+    require(result.get("status") == "success", "capabilities request failed", result)
+    inventory = result.get("phase0EvidenceInventory", {})
+    limitations = inventory.get("knownLimitations", {})
+    record = limitations.get("coverageRecords", {}).get("runRiskMatrix", {})
+    sources = record.get("contractEvidenceSources", [])
+    require(
+        inventory.get("inventoryVersion") == "1.36"
+        and limitations.get("contractTestedToolCount") == 36
+        and limitations.get("confirmedGapToolCount") == 15
+        and limitations.get("contractPromotionCandidateCount") == 0,
+        "risk-matrix promotion did not update inventory accounting",
+        inventory,
+    )
+    require(
+        record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_BOUNDED_GENERIC_RISK_SCREENING_SOFTWARE_CONTRACT"
+        and record.get("contractEvidenceCount") == 7
+        and "src/main/java/neqsim/process/safety/risk/RiskMatrix.java" in sources
+        and "src/test/java/neqsim/mcp/runners/RiskMatrixRunnerTest.java" in sources
+        and "neqsim-mcp-server/test_risk_matrix_protocol.py" in sources
+        and "neqsim-mcp-server/docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md" in sources
+        and "does not identify hazards" in record.get("evidenceBoundary", "")
+        and "qualified safety-engineering review" in record.get("evidenceBoundary", ""),
+        "risk-matrix contract evidence is incomplete",
+        record,
+    )
+
+
 def main():
     client = McpClient()
     client.start()
@@ -324,12 +358,13 @@ def main():
             test_fail_closed_modes_and_ranges,
             test_collection_and_text_bounds,
             test_deterministic_screening,
+            test_inventory_is_promoted,
         ]
         for scenario in scenarios:
             scenario(client)
     finally:
         client.close()
-    print("PASS: bounded risk-matrix packaged-MCP contract (6 scenarios)")
+    print("PASS: bounded risk-matrix packaged-MCP contract (7 scenarios)")
 
 
 if __name__ == "__main__":
