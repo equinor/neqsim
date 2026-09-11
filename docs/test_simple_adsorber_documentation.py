@@ -58,6 +58,7 @@ class SimpleAdsorberDocumentationContractTest(unittest.TestCase):
         self.assertNotRegex(self.guide, r"(?m)^# ")
         self.assertNotIn("```", self.guide)
 
+        normalized_guide = " ".join(self.guide.split())
         required = (
             "legacy, currently unqualified MDEA-loading prototype",
             "It is not NeqSim's solid-adsorption model",
