@@ -860,6 +860,24 @@ the 50-step liquid-outlet range is -18.55 to 6.88 kg/s versus the stored 0.375 t
 comparison. Do not tune public closures to that commercial trace; use the public Tengesdal
 experiment for subsequent amplitude, period, mesh, and long-horizon validation.
 
+### Experimental Unsplit Solver Foundation
+
+`UnsplitTransientSolver` defines an isothermal common-time-level system with seven unknowns per
+cell: three phase masses, three phase momenta, and pressure. It evaluates conservation at the
+implicit midpoint and retains pressure-dependent volume closure in every cell. A fixed outlet
+pressure belongs to the boundary face supplied to the model callback; it does not replace the last
+cell's closure equation or trigger proportional outlet-cell mass repair.
+
+The kernel provides scaled residuals, a colored block-stencil finite-difference Jacobian, line
+search, fraction-to-boundary mass/pressure limits, and hooks that freeze and refresh donor/regime
+active sets. Its model callback must be transactional so Jacobian probes cannot advance accepted
+diagnostics or state.
+
+This is a solver foundation, not a selectable `TwoFluidPipe` mode or a severe-slugging claim. The
+full finite-volume flux/source adapter, pressure-dependent properties, conservative outlet-face
+transport, and 5/180/600 s qualification sequence remain required. Energy, named-component
+transport, and phase change are outside the initial isothermal system.
+
 ### Public severe-slugging qualification
 
 Tengesdal Test 3 pressure metrics use `getPressureProfile()[0]`, the upstream inlet cell.
