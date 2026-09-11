@@ -9,10 +9,9 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable feed-mass-flow sensitivity summary for the DOE Big Hill vacuum screening case.
  *
  * <p>
- * Feed mass flow is varied while all explicit column operating inputs and the feed composition
- * remain fixed. Each point is independently constructed, solved, and evaluated through the
- * qualified Big Hill case and result contracts. The sensitivity is numerical screening evidence,
- * not a measured or calibrated vacuum-column throughput envelope.
+ * Feed mass flow is varied while all explicit column operating inputs and the feed composition remain fixed. Each point
+ * is independently constructed, solved, and evaluated through the qualified Big Hill case and result contracts. The
+ * sensitivity is numerical screening evidence, not a measured or calibrated vacuum-column throughput envelope.
  * </p>
  */
 public final class DoeBigHillVacuumFeedMassFlowSensitivity {
@@ -60,13 +59,12 @@ public final class DoeBigHillVacuumFeedMassFlowSensitivity {
    * @param baselineInputs explicit source-unreported baseline column inputs
    * @param feedMassFlowsKgPerHour finite positive strictly increasing feed mass flows in kg/h
    * @return immutable sensitivity summary
-   * @throws NullPointerException if {@code baselineInputs} or
-   *         {@code feedMassFlowsKgPerHour} is null
+   * @throws NullPointerException if {@code baselineInputs} or {@code feedMassFlowsKgPerHour} is null
    * @throws IllegalArgumentException if the name or feed mass flows are invalid
    * @throws IllegalStateException if a point does not solve or pass the qualified result gates
    */
-  public static DoeBigHillVacuumFeedMassFlowSensitivity run(String caseNamePrefix,
-      OperatingInputs baselineInputs, double[] feedMassFlowsKgPerHour) {
+  public static DoeBigHillVacuumFeedMassFlowSensitivity run(String caseNamePrefix, OperatingInputs baselineInputs,
+      double[] feedMassFlowsKgPerHour) {
     if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("Case-name prefix must be non-blank");
     }
@@ -81,16 +79,15 @@ public final class DoeBigHillVacuumFeedMassFlowSensitivity {
     PointResult[] evaluatedPoints = new PointResult[massFlows.length];
     for (int i = 0; i < massFlows.length; i++) {
       DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
-          .create(caseNamePrefix + " feed-mass-flow point " + (i + 1), massFlows[i],
-              baselineInputs);
+          .create(caseNamePrefix + " feed-mass-flow point " + (i + 1), massFlows[i], baselineInputs);
       try {
         model.getColumn().run(UUID.randomUUID());
-        DoeBigHillVacuumFractionationResult result =
-            DoeBigHillVacuumFractionationResult.evaluate(model);
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
         evaluatedPoints[i] = new PointResult(massFlows[i], baselineInputs, result);
       } catch (RuntimeException exception) {
-        throw new IllegalStateException("Vacuum feed-mass-flow sensitivity failed at point " + i
-            + " with feed mass flow " + massFlows[i] + " kg/h", exception);
+        throw new IllegalStateException(
+            "Vacuum feed-mass-flow sensitivity failed at point " + i + " with feed mass flow " + massFlows[i] + " kg/h",
+            exception);
       }
     }
     return new DoeBigHillVacuumFeedMassFlowSensitivity(evaluatedPoints);
@@ -110,8 +107,7 @@ public final class DoeBigHillVacuumFeedMassFlowSensitivity {
    */
   public PointResult getPoint(int index) {
     if (index < 0 || index >= points.length) {
-      throw new IndexOutOfBoundsException(
-          "Feed-mass-flow sensitivity point index is outside the result");
+      throw new IndexOutOfBoundsException("Feed-mass-flow sensitivity point index is outside the result");
     }
     return points[index];
   }
@@ -153,8 +149,7 @@ public final class DoeBigHillVacuumFeedMassFlowSensitivity {
         throw new IllegalArgumentException("Feed mass flows must be finite and positive");
       }
       if (!(massFlow > previous)) {
-        throw new IllegalArgumentException(
-            "Feed mass flows must be strictly increasing and unique");
+        throw new IllegalArgumentException("Feed mass flows must be strictly increasing and unique");
       }
       previous = massFlow;
     }
@@ -170,8 +165,7 @@ public final class DoeBigHillVacuumFeedMassFlowSensitivity {
         DoeBigHillVacuumFractionationResult fractionationResult) {
       this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
       this.operatingInputs = Objects.requireNonNull(operatingInputs, "operatingInputs");
-      this.fractionationResult =
-          Objects.requireNonNull(fractionationResult, "fractionationResult");
+      this.fractionationResult = Objects.requireNonNull(fractionationResult, "fractionationResult");
     }
 
     /** @return feed mass flow applied at this point in kg/h */
