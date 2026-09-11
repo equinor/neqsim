@@ -72,7 +72,7 @@ class SimpleAdsorberDocumentationContractTest(unittest.TestCase):
         )
         for phrase in required:
             with self.subTest(phrase=phrase):
-                self.assertIn(phrase, self.guide)
+                self.assertIn(phrase, normalized_guide)
 
     def test_stale_calls_and_engineering_claims_are_rejected(self):
         rejected = (
