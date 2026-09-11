@@ -14,7 +14,7 @@ phase and chemical equilibrium is exposed through the reactive-flash operations.
 | Simultaneous TP phase and chemical equilibrium | `ThermodynamicOperations.reactiveTPflash()` | [Reactive-flash guide](../thermo/reactive_flash) |
 | Direct control of the modified-RAND TP solver | `ReactiveMultiphaseTPflash` | [Reactive-flash tests](https://github.com/equinor/neqsim/tree/master/src/test/java/neqsim/thermodynamicoperations/flashops/reactiveflash) |
 | Reactive PH or PS equilibrium | `reactivePHflash(...)` or `reactivePSflash(...)` | [Reactive-flash guide](../thermo/reactive_flash#reactive-ph-flash-isenthalpic-and-ps-flash-isentropic) |
-| Inspect the initialized aqueous reaction set and closure diagnostics | `system.getChemicalReactionOperations()` | [Reaction-model audit guide](reaction_model_audit) |
+| Inspect the initialized aqueous reaction set and closure diagnostics | `system.getChemicalReactionOperations()` | [Reaction-model audit guide](../thermo/reaction_model_audit) |
 | Screen experimental CO₂ impurity kinetics | Dedicated, evidence-gated reactor and transport classes | [Qualified execution guide](co2_impurity_qualified_execution) |
 
 A normal `TPflash()` solves phase equilibrium only. It does not become reactive through a
@@ -134,7 +134,7 @@ user-defined strings accepted by the thermodynamic system. Adding or changing re
 model-development task that requires source evidence, validation, and review; it is not a
 documentation-only configuration step.
 
-Use the [reaction-model audit guide](reaction_model_audit) to list the initialized model without
+Use the [reaction-model audit guide](../thermo/reaction_model_audit) to list the initialized model without
 re-evaluating potentially underflowing activity products. Use the
 [qualified execution guide](co2_impurity_qualified_execution) when an experimental kinetic network
 requires evidence-bound execution.
@@ -189,4 +189,4 @@ validated reactor model.
 - [Thermodynamic operations](../thermo/thermodynamic_operations)
 - [Fluid creation](../thermo/fluid_creation_guide)
 - [Electrolyte models](../thermo/ElectrolyteCPAModel)
-- [Reaction-model audit](reaction_model_audit)
+- [Reaction-model audit](../thermo/reaction_model_audit)
