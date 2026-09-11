@@ -98,7 +98,10 @@ JSON_TOOL_ARGS = {
 def start_server():
     global proc
     proc = subprocess.Popen(
-        ["java", "-jar", JAR],
+        # This comprehensive harness asserts the complete discovery contract.
+        # Disable transport trimming only for this test process so the growing
+        # capability inventory cannot hide fields that the harness validates.
+        ["java", "-Dneqsim.mcp.maxResponseBytes=0", "-jar", JAR],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
