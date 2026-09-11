@@ -9,9 +9,9 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable feed-temperature sensitivity summary for the DOE Big Hill vacuum screening case.
  *
  * <p>
- * Feed temperature is varied while all other explicit engineering inputs remain fixed. Each point is
- * independently constructed, solved, and evaluated through the qualified Big Hill case and result contracts. The
- * sensitivity is numerical screening evidence, not a measured or calibrated vacuum-column operating envelope.
+ * Feed temperature is varied while all other explicit engineering inputs remain fixed. Each point is independently
+ * constructed, solved, and evaluated through the qualified Big Hill case and result contracts. The sensitivity is
+ * numerical screening evidence, not a measured or calibrated vacuum-column operating envelope.
  * </p>
  */
 public final class DoeBigHillVacuumFeedTemperatureSensitivity {
@@ -149,8 +149,7 @@ public final class DoeBigHillVacuumFeedTemperatureSensitivity {
   private static void validateTemperatures(double[] temperatures, double reboilerTemperatureKelvin) {
     double previous = Double.NEGATIVE_INFINITY;
     for (double temperature : temperatures) {
-      if (!Double.isFinite(temperature) || !(temperature > 0.0)
-          || !(temperature < reboilerTemperatureKelvin)) {
+      if (!Double.isFinite(temperature) || !(temperature > 0.0) || !(temperature < reboilerTemperatureKelvin)) {
         throw new IllegalArgumentException(
             "Feed temperatures must be finite, positive, and below the reboiler temperature");
       }
