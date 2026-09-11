@@ -1,162 +1,325 @@
 package neqsim.mcp.runners;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import neqsim.process.safety.risk.sis.SILVerificationResult;
 import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
 
 /**
- * MCP runner for SIL (Safety Integrity Level) verification per IEC 61508 / IEC 61511.
+ * MCP runner for bounded Safety Instrumented Function (SIF) PFD screening.
  *
  * <p>
- * Computes the average Probability of Failure on Demand (PFD<sub>avg</sub>) for a Safety Instrumented Function (SIF)
- * given a list of components (sensors / logic-solver / final-elements) with either an explicit PFD or a
- * dangerous-undetected failure rate plus proof-test interval. Returns the achieved SIL, claimed SIL, RRF, and
- * verification issues.
+ * Computes average probability of failure on demand from caller-supplied component data and delegates SIL-band
+ * classification to NeqSim's canonical {@link SafetyInstrumentedFunction} and {@link SILVerificationResult}. The result
+ * is screening evidence only: it does not select or approve a SIL, verify lifecycle assumptions, demonstrate standards
+ * conformance, or replace independent functional-safety assessment.
  * </p>
  *
  * @author Even Solbraa
- * @version 1.0
+ * @version 1.1
  */
 public final class SILRunner {
 
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  /** Maximum accepted serialized request size. */
+  private static final int MAX_REQUEST_BYTES = 16384;
+  /** Maximum number of component contributions in one request. */
+  private static final int MAX_COMPONENTS = 100;
+  /** Maximum trimmed name, description, or component-type length. */
+  private static final int MAX_TEXT_LENGTH = 256;
+  /** Computational admission bound; not an engineering recommendation. */
+  private static final double MAX_PROOF_TEST_INTERVAL_HOURS = 87600.0;
+  /** Computational admission bound for a caller-supplied hourly failure rate. */
+  private static final double MAX_FAILURE_RATE_PER_HOUR = 1.0;
+  /** Architectures implemented by the bounded runner. */
+  private static final Set<String> SUPPORTED_ARCHITECTURES =
+      new HashSet<String>(Arrays.asList("1oo1", "1oo2", "2oo3"));
+  /** Component type labels admitted by the public tool contract. */
+  private static final Set<String> SUPPORTED_COMPONENT_TYPES =
+      new HashSet<String>(Arrays.asList("sensor", "logic", "finalelement"));
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   private SILRunner() {
   }
 
   /**
-   * Runs a SIL verification calculation from a JSON definition.
+   * Runs a bounded SIF PFD screening calculation from a JSON definition.
    *
-   * @param json JSON with sif metadata and components array
-   * @return JSON string with SIL verification result
+   * @param json JSON with SIF metadata and either direct PFD or component contributions
+   * @return JSON string with canonical calculation evidence and explicit advisory boundaries
    */
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return errorJson("JSON input is null or empty");
+      return errorJson("INVALID_INPUT", "JSON input is null or empty");
+    }
+    if (json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
+      return errorJson("REQUEST_TOO_LARGE", "SIL input exceeds 16384 UTF-8 bytes");
     }
     try {
-      JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      String name = input.has("name") ? input.get("name").getAsString() : "SIF-001";
-      String description = input.has("description") ? input.get("description").getAsString() : "Safety function";
-      int claimedSil = input.has("claimedSIL") ? input.get("claimedSIL").getAsInt() : 2;
-      String architecture = input.has("architecture") ? input.get("architecture").getAsString() : "1oo1";
-      double testIntervalHours = input.has("proofTestInterval_hours")
-          ? input.get("proofTestInterval_hours").getAsDouble()
-          : 8760.0;
+      JsonElement parsed = JsonParser.parseString(json);
+      if (!parsed.isJsonObject()) {
+        return errorJson("INVALID_INPUT", "SIL input must be a JSON object");
+      }
+      JsonObject input = parsed.getAsJsonObject();
+      String name = readBoundedString(input, "name", "SIF-001");
+      String description = readBoundedString(input, "description", "Safety function");
+      if (name == null) {
+        return errorJson("INVALID_INPUT", "name must be a non-blank string of at most 256 characters");
+      }
+      if (description == null) {
+        return errorJson("INVALID_INPUT", "description must be a non-blank string of at most 256 characters");
+      }
+      int claimedSil = readClaimedSil(input);
+      String architecture = readArchitecture(input);
+      double testIntervalHours = readOptionalFiniteNumber(input, "proofTestInterval_hours", 8760.0);
+      if (testIntervalHours <= 0.0 || testIntervalHours > MAX_PROOF_TEST_INTERVAL_HOURS) {
+        return errorJson("INVALID_INPUT", "proofTestInterval_hours must be greater than 0 and at most 87600");
+      }
 
-      // Aggregate PFD from components.
-      double totalPfd = 0.0;
+      boolean hasComponents = input.has("components");
+      boolean hasDirectPfd = input.has("pfdAvg");
+      if (hasComponents == hasDirectPfd) {
+        return errorJson("INVALID_INPUT", "Provide exactly one of 'components' or top-level 'pfdAvg'");
+      }
+
+      double totalPfd;
       JsonArray componentsOut = new JsonArray();
-      if (input.has("components")) {
-        JsonArray comps = input.getAsJsonArray("components");
-        for (JsonElement el : comps) {
-          JsonObject c = el.getAsJsonObject();
-          String cName = c.has("name") ? c.get("name").getAsString() : "comp";
-          String cType = c.has("type") ? c.get("type").getAsString() : "sensor";
-          double cPfd;
-          double failureRate = 0.0;
-          if (c.has("pfd")) {
-            cPfd = c.get("pfd").getAsDouble();
-          } else if (c.has("lambdaDU_per_hr")) {
-            failureRate = c.get("lambdaDU_per_hr").getAsDouble();
-            String arch = c.has("architecture") ? c.get("architecture").getAsString() : architecture;
-            cPfd = computePfdForArchitecture(arch, failureRate, testIntervalHours);
-          } else {
-            throw new IllegalArgumentException("Component '" + cName + "' must specify 'pfd' or 'lambdaDU_per_hr'");
+      if (hasComponents) {
+        JsonElement componentElement = input.get("components");
+        if (!componentElement.isJsonArray()) {
+          return errorJson("INVALID_INPUT", "components must be a JSON array");
+        }
+        JsonArray components = componentElement.getAsJsonArray();
+        if (components.size() == 0) {
+          return errorJson("INVALID_INPUT", "At least one component is required");
+        }
+        if (components.size() > MAX_COMPONENTS) {
+          return errorJson("TOO_MANY_COMPONENTS", "At most 100 components are allowed");
+        }
+        totalPfd = 0.0;
+        for (int i = 0; i < components.size(); i++) {
+          JsonElement element = components.get(i);
+          if (!element.isJsonObject()) {
+            return errorJson("INVALID_COMPONENT", "components[" + i + "] must be a JSON object");
           }
-          totalPfd += cPfd;
-          JsonObject co = new JsonObject();
-          co.addProperty("name", cName);
-          co.addProperty("type", cType);
-          co.addProperty("failureRate_per_hr", failureRate);
-          co.addProperty("pfdContribution", round(cPfd, 8));
-          componentsOut.add(co);
+          JsonObject component = element.getAsJsonObject();
+          String componentName = readBoundedString(component, "name", null);
+          String componentType = readBoundedString(component, "type", null);
+          if (componentName == null) {
+            return errorJson("INVALID_COMPONENT",
+                "components[" + i + "].name must be a non-blank string of at most 256 characters");
+          }
+          if (componentType == null || !SUPPORTED_COMPONENT_TYPES.contains(componentType.toLowerCase(Locale.ROOT))) {
+            return errorJson("INVALID_COMPONENT",
+                "components[" + i + "].type must be one of sensor, logic, or finalElement");
+          }
+          boolean hasPfd = component.has("pfd");
+          boolean hasFailureRate = component.has("lambdaDU_per_hr");
+          if (hasPfd == hasFailureRate) {
+            return errorJson("INVALID_COMPONENT",
+                "components[" + i + "] must provide exactly one of pfd or lambdaDU_per_hr");
+          }
+
+          double failureRate = 0.0;
+          double componentPfd;
+          try {
+            if (hasPfd) {
+              componentPfd = readFiniteNumber(component, "pfd", "components[" + i + "].pfd");
+            } else {
+              failureRate = readFiniteNumber(component, "lambdaDU_per_hr",
+                  "components[" + i + "].lambdaDU_per_hr");
+              if (failureRate <= 0.0 || failureRate > MAX_FAILURE_RATE_PER_HOUR) {
+                return errorJson("INVALID_COMPONENT",
+                    "components[" + i + "].lambdaDU_per_hr must be greater than 0 and at most 1");
+              }
+              String componentArchitecture = component.has("architecture") ? readArchitecture(component) : architecture;
+              componentPfd = computePfdForArchitecture(componentArchitecture, failureRate, testIntervalHours);
+            }
+          } catch (IllegalArgumentException invalidComponent) {
+            return errorJson("INVALID_COMPONENT", invalidComponent.getMessage());
+          }
+          if (!Double.isFinite(componentPfd) || componentPfd <= 0.0 || componentPfd > 1.0) {
+            return errorJson("INVALID_COMPONENT",
+                "components[" + i + "] PFD contribution must be greater than 0 and at most 1");
+          }
+          totalPfd += componentPfd;
+          if (!Double.isFinite(totalPfd) || totalPfd > 1.0) {
+            return errorJson("CALCULATION_OUT_OF_RANGE", "Aggregate PFD must be finite and at most 1");
+          }
+
+          JsonObject componentOut = new JsonObject();
+          componentOut.addProperty("name", componentName);
+          componentOut.addProperty("type", componentType);
+          componentOut.addProperty("failureRate_per_hr", failureRate);
+          componentOut.addProperty("pfdContribution", round(componentPfd, 8));
+          componentsOut.add(componentOut);
         }
-        // Compute percentages
-        for (JsonElement el : componentsOut) {
-          JsonObject co = el.getAsJsonObject();
-          double pfd = co.get("pfdContribution").getAsDouble();
-          co.addProperty("percentOfTotal", round(totalPfd > 0 ? 100.0 * pfd / totalPfd : 0.0, 2));
+        for (JsonElement element : componentsOut) {
+          JsonObject componentOut = element.getAsJsonObject();
+          double contribution = componentOut.get("pfdContribution").getAsDouble();
+          componentOut.addProperty("percentOfTotal", round(100.0 * contribution / totalPfd, 2));
         }
-      } else if (input.has("pfdAvg")) {
-        totalPfd = input.get("pfdAvg").getAsDouble();
       } else {
-        throw new IllegalArgumentException("Provide either 'components' array or top-level 'pfdAvg'");
+        totalPfd = readFiniteNumber(input, "pfdAvg", "pfdAvg");
+        if (totalPfd <= 0.0 || totalPfd > 1.0) {
+          return errorJson("INVALID_INPUT", "pfdAvg must be greater than 0 and at most 1");
+        }
       }
 
       SafetyInstrumentedFunction sif = SafetyInstrumentedFunction.builder().name(name).description(description)
           .sil(claimedSil).pfd(totalPfd).testIntervalHours(testIntervalHours).architecture(architecture).build();
-
-      SILVerificationResult ver = new SILVerificationResult(sif);
+      SILVerificationResult verification = new SILVerificationResult(sif);
 
       JsonObject out = new JsonObject();
       out.addProperty("status", "success");
-      out.addProperty("standard", "IEC 61508 / IEC 61511");
-      JsonObject sum = new JsonObject();
-      sum.addProperty("name", sif.getName());
-      sum.addProperty("architecture", architecture);
-      sum.addProperty("claimedSIL", ver.getClaimedSIL());
-      sum.addProperty("achievedSIL", ver.getAchievedSIL());
-      sum.addProperty("silAchieved", ver.isSilAchieved());
-      sum.addProperty("pfdAvg", round(ver.getPfdAverage(), 8));
-      sum.addProperty("riskReductionFactor", round(sif.getRiskReductionFactor(), 1));
-      sum.addProperty("proofTestInterval_hours", testIntervalHours);
-      sum.addProperty("proofTestInterval_years", round(sif.getProofTestIntervalYears(), 2));
-      sum.addProperty("hardwareFaultTolerance", ver.getHardwareFaultTolerance());
-      out.add("verification", sum);
+      out.addProperty("screeningOnly", true);
+      out.addProperty("standardConformanceClaimed", false);
+      out.addProperty("standard",
+          "Caller-supplied SIF PFD screening; independent functional-safety verification required");
+      out.addProperty("standardContext",
+          "IEC 61508 and IEC 61511 are context only; this result does not demonstrate conformance");
+      out.addProperty("inputBasis", hasComponents ? "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE"
+          : "CALLER_SUPPLIED_DIRECT_PFD_AVG");
+      out.addProperty("advisoryBoundary",
+          "The caller supplies reliability data and lifecycle assumptions; the result does not select or approve SIL, "
+              + "validate SRS completeness, independence, common cause, architecture suitability, diagnostic "
+              + "coverage, proof-test effectiveness or systematic capability, certify standards conformance, "
+              + "authorize plant action, or replace independent functional-safety assessment and accountable approval");
+      JsonArray assumptions = new JsonArray();
+      assumptions.add(
+          "Failure rates, PFD values, proof-test interval, architecture, and claimed SIL are caller supplied "
+              + "and unverified");
+      assumptions.add(
+          "Independence, common cause, diagnostic coverage, proof-test coverage, repair, and systematic capability "
+              + "are not modelled by this bounded screening");
+      assumptions.add(
+          "Project SRS, lifecycle evidence, device qualification, operating context, and applicable criteria "
+              + "require independent qualified review");
+      out.add("assumptions", assumptions);
+
+      JsonObject summary = new JsonObject();
+      summary.addProperty("name", sif.getName());
+      summary.addProperty("architecture", architecture);
+      summary.addProperty("claimedSIL", verification.getClaimedSIL());
+      summary.addProperty("achievedSILBand", verification.getAchievedSIL());
+      summary.addProperty("claimedBandMetByPfd", verification.isSilAchieved());
+      summary.addProperty("pfdAvg", round(verification.getPfdAverage(), 8));
+      summary.addProperty("riskReductionFactor", round(sif.getRiskReductionFactor(), 1));
+      summary.addProperty("proofTestInterval_hours", testIntervalHours);
+      summary.addProperty("proofTestInterval_years", round(sif.getProofTestIntervalYears(), 2));
+      summary.addProperty("hardwareFaultTolerance", verification.getHardwareFaultTolerance());
+      summary.addProperty("silBandIsIndicative", true);
+      summary.addProperty("architectureSuitabilityVerified", false);
+      summary.addProperty("diagnosticCoverageVerified", false);
+      summary.addProperty("systematicCapabilityVerified", false);
+      out.add("screening", summary);
       out.add("components", componentsOut);
-      out.add("verificationDetails", JsonParser.parseString(ver.toJson()));
+      out.add("canonicalCalculation", JsonParser.parseString(verification.toJson()));
       return GSON.toJson(out);
+    } catch (IllegalArgumentException e) {
+      return errorJson("INVALID_INPUT", e.getMessage());
     } catch (Exception e) {
-      return errorJson("SIL verification failed: " + e.getMessage());
+      return errorJson("INVALID_INPUT", "SIL input could not be processed");
     }
   }
 
-  /**
-   * Computes PFD for a given architecture using the simplified IEC 61508 formulae.
-   *
-   * @param arch architecture string (1oo1, 1oo2, 2oo3)
-   * @param lambdaDU dangerous undetected failure rate per channel [/hr]
-   * @param testInterval proof-test interval [hr]
-   * @return PFD<sub>avg</sub>
-   */
-  private static double computePfdForArchitecture(String arch, double lambdaDU, double testInterval) {
-    if ("1oo2".equalsIgnoreCase(arch)) {
-      return SafetyInstrumentedFunction.calculatePfd1oo2(lambdaDU, testInterval);
+  /** Reads a bounded string. */
+  private static String readBoundedString(JsonObject object, String field, String defaultValue) {
+    if (!object.has(field)) {
+      return defaultValue;
     }
-    if ("2oo3".equalsIgnoreCase(arch)) {
-      return SafetyInstrumentedFunction.calculatePfd2oo3(lambdaDU, testInterval);
+    JsonElement value = object.get(field);
+    if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()) {
+      return null;
     }
-    return SafetyInstrumentedFunction.calculatePfd1oo1(lambdaDU, testInterval);
+    String text = value.getAsString().trim();
+    return text.isEmpty() || text.length() > MAX_TEXT_LENGTH ? null : text;
   }
 
-  /**
-   * Rounds a value.
-   *
-   * @param value value
-   * @param decimals decimals
-   * @return rounded value
-   */
+  /** Reads and validates claimed SIL. */
+  private static int readClaimedSil(JsonObject input) {
+    if (!input.has("claimedSIL")) {
+      return 2;
+    }
+    double value = readFiniteNumber(input, "claimedSIL", "claimedSIL");
+    if (value != Math.rint(value) || value < 1.0 || value > 4.0) {
+      throw new IllegalArgumentException("claimedSIL must be an integer from 1 to 4");
+    }
+    return (int) value;
+  }
+
+  /** Reads and normalizes an admitted architecture. */
+  private static String readArchitecture(JsonObject input) {
+    String architecture = readBoundedString(input, "architecture", "1oo1");
+    if (architecture == null) {
+      throw new IllegalArgumentException("architecture must be one of 1oo1, 1oo2, or 2oo3");
+    }
+    String normalized = architecture.toLowerCase(Locale.ROOT);
+    if (!SUPPORTED_ARCHITECTURES.contains(normalized)) {
+      throw new IllegalArgumentException("architecture must be one of 1oo1, 1oo2, or 2oo3");
+    }
+    return normalized;
+  }
+
+  /** Reads an optional finite number. */
+  private static double readOptionalFiniteNumber(JsonObject input, String field, double defaultValue) {
+    return input.has(field) ? readFiniteNumber(input, field, field) : defaultValue;
+  }
+
+  /** Reads a required finite number with a stable field label. */
+  private static double readFiniteNumber(JsonObject input, String field, String displayName) {
+    if (!input.has(field)) {
+      throw new IllegalArgumentException("Missing required field: " + displayName);
+    }
+    JsonElement element = input.get(field);
+    if (!element.isJsonPrimitive()) {
+      throw new IllegalArgumentException(displayName + " must be a finite number");
+    }
+    JsonPrimitive primitive = element.getAsJsonPrimitive();
+    if (!primitive.isNumber()) {
+      throw new IllegalArgumentException(displayName + " must be a finite number");
+    }
+    double value = primitive.getAsDouble();
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException(displayName + " must be a finite number");
+    }
+    return value;
+  }
+
+  /** Computes component PFD with the canonical NeqSim formulas. */
+  private static double computePfdForArchitecture(String architecture, double lambdaDu, double testInterval) {
+    if ("1oo2".equals(architecture)) {
+      return SafetyInstrumentedFunction.calculatePfd1oo2(lambdaDu, testInterval);
+    }
+    if ("2oo3".equals(architecture)) {
+      return SafetyInstrumentedFunction.calculatePfd2oo3(lambdaDu, testInterval);
+    }
+    return SafetyInstrumentedFunction.calculatePfd1oo1(lambdaDu, testInterval);
+  }
+
+  /** Rounds a value for deterministic presentation. */
   private static double round(double value, int decimals) {
     double factor = Math.pow(10, decimals);
     return Math.round(value * factor) / factor;
   }
 
-  /**
-   * Error JSON.
-   *
-   * @param message message
-   * @return JSON string
-   */
-  private static String errorJson(String message) {
-    JsonObject err = new JsonObject();
-    err.addProperty("status", "error");
-    err.addProperty("message", message);
-    return err.toString();
+  /** Returns a stable fail-closed error response. */
+  private static String errorJson(String code, String message) {
+    JsonObject error = new JsonObject();
+    error.addProperty("status", "error");
+    error.addProperty("code", code);
+    error.addProperty("message", message);
+    error.addProperty("screeningOnly", true);
+    error.addProperty("standardConformanceClaimed", false);
+    return error.toString();
   }
 }

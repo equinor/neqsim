@@ -15,7 +15,7 @@ import com.google.gson.JsonParser;
 public final class McpEvidenceInventory {
 
   private static final int JAVA_TEST_CLASS_COUNT = 72;
-  private static final int PROTOCOL_SCENARIO_COUNT = 94;
+  private static final int PROTOCOL_SCENARIO_COUNT = 95;
   private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
 
   /** Private constructor for utility class. */

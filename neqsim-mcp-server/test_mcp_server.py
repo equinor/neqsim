@@ -331,6 +331,15 @@ def test_protocol():
           and "qualified process-safety review" in lopa_description,
           lopa_description)
 
+    sil_tool = next((tool for tool in tools if tool.get("name") == "runSIL"), {})
+    sil_description = sil_tool.get("description", "")
+    check("bounded SIL discovery contract",
+          "16384 UTF-8 bytes" in sil_description
+          and "100 components" in sil_description
+          and "does not select or approve SIL" in sil_description
+          and "independent functional-safety assessment" in sil_description,
+          sil_description)
+
     # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
              "runPlugin", "getProgress", "streamSimulation",
@@ -2130,6 +2139,43 @@ def test_validate_results():
     check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
 
 
+def test_sil_screening_contract():
+    """Exercise bounded SIF PFD screening without changing inventory status."""
+    print("\n=== SIL Screening Contract ===")
+    r = call_tool("runSIL", {
+        "silJson": json.dumps({
+            "name": "Synthetic shutdown",
+            "claimedSIL": 2,
+            "architecture": "1oo1",
+            "proofTestInterval_hours": 8760,
+            "components": [
+                {"name": "PT", "type": "sensor", "pfd": 0.001},
+                {"name": "Logic", "type": "logic", "pfd": 0.0005},
+                {"name": "Valve", "type": "finalElement", "pfd": 0.005},
+            ],
+        }),
+    })
+    check("SIL screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("SIL screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and r.get("inputBasis") == "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE",
+          str(r))
+    screening = r.get("screening", {})
+    check("SIL canonical component sum is exposed",
+          screening.get("pfdAvg") == 0.0065
+          and screening.get("silBandIsIndicative") is True
+          and screening.get("architectureSuitabilityVerified") is False,
+          str(screening))
+    invalid = call_tool("runSIL", {"silJson": "[]"})
+    error_code = invalid.get("code")
+    if error_code is None and invalid.get("errors"):
+        error_code = invalid["errors"][0].get("code")
+    check("SIL malformed input fails closed",
+          invalid.get("status") == "error" and error_code == "INVALID_INPUT",
+          str(invalid))
+
+
 # --- Cross-validation tools ---
 
 def test_cross_validate_models():
@@ -2588,6 +2634,7 @@ if __name__ == "__main__":
         test_design_utilities()
         test_compare_processes()
         test_validate_results()
+        test_sil_screening_contract()
         test_cross_validate_models()
         test_parametric_study()
 
