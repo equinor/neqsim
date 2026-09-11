@@ -279,6 +279,71 @@ profiles, ratings, convergence, or exact calculation identity fails closed with 
 numbers. API RP 14E, Rhone-Poulenc, FIV/FRMS/AIV, hydrate/wax, slug, and transient results are not
 silently promoted to verified optimization constraints.
 
+### Compile a fail-closed evaluation plan
+
+Use `ProcessModelCompiledEvaluationPlan` around a configured
+`ProcessModelOperatingActionSetEvaluator` before handing repeated candidates to an external solver.
+Compilation evaluates the unchanged action vector and freezes the exact area order and
+`ProcessSystem` structure versions, action and required-hydraulic definitions, evaluator
+configuration, installed ratings, and expected installed-capacity and process-boundary identities.
+
+```java
+ProcessModelCompiledEvaluationPlan plan =
+    ProcessModelCompiledEvaluationPlan.compile(
+        "production-allocation-v1",
+        "Compiled production allocation",
+        "approved operating envelope revision 4",
+        "NeqSim master and plant configuration revision 2026-09-11",
+        transactionalEvaluator);
+
+ProcessModelCompiledEvaluationPlan.EvaluationResult candidate =
+    plan.evaluate(new double[] {11000.0});
+if (!candidate.isAccepted()) {
+  throw new IllegalStateException(candidate.getDiagnostics().toString());
+}
+String authoritativeJson = candidate.toJson();
+```
+
+`transactionalEvaluator` is a fully configured
+`ProcessModelOperatingActionSetEvaluator`: it must contain at least one exact hydraulic binding,
+and its underlying evaluator must already contain objectives and every required process-boundary
+constraint. Do not add objectives, constraints, actions, equipment, or ratings after compilation.
+`plan.isCurrent()` and `getStalenessDiagnostics()` are preflight views only; `evaluate(...)` repeats
+the same check immediately before model mutation.
+
+JPype uses the same Java authority and returns the same strict JSON. `plan.toJson()` includes the
+qualified no-change compilation evidence; each evaluation result includes its complete delegated
+candidate evidence. Java non-finite values are represented as JSON `null`, not invalid `NaN` or
+`Infinity` tokens.
+
+```python
+CompiledPlan = jneqsim.process.util.optimizer.ProcessModelCompiledEvaluationPlan
+candidate_values = jpype.JArray(jpype.JDouble)([11000.0])
+plan = CompiledPlan.compile(
+    "production-allocation-v1",
+    "Compiled production allocation",
+    "approved operating envelope revision 4",
+    "NeqSim master and plant configuration revision 2026-09-11",
+    transactional_evaluator,
+)
+candidate = plan.evaluate(candidate_values)
+if not candidate.isAccepted():
+    raise RuntimeError(str(candidate.getDiagnostics()))
+authoritative_json = str(candidate.toJson())
+```
+
+A non-finite or incorrectly sized vector is rejected before a process run. A changed topology,
+action, binding, evaluator definition, installed rating, or availability makes the compiled plan
+stale before candidate mutation. A physically violated candidate retains its complete immutable
+evidence but is not accepted. Any incomplete restoration overrides the candidate classification.
+Shared mutable equipment is never evaluated concurrently; compile independent plans on independent
+model instances for parallel candidate work.
+
+The executable Java scale harness is
+`CompiledProcessModelEvaluationPlanBenchmark`. Its default fixture contains 162 units across 20
+areas and writes compilation/evaluation time, main-thread allocation, strict result size, exact
+coverage, convergence, restoration, and mass closure without a CI wall-time assertion.
+
 ---
 
 ## Overview
@@ -1837,4 +1902,3 @@ try {
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |
-

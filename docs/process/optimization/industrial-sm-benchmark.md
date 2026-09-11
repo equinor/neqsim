@@ -240,3 +240,26 @@ threads and the 512 MB maximum heap is a JVM bound, not measured peak usage. The
 piping, compressor, separator and export-quality sequence, complete L fixture, separator
 carry-over/slug evidence, and qualified piping screening envelopes therefore remain open. No
 missing metric or transition is represented as a passed gate.
+
+## Compiled evaluator L-scale increment
+
+The compiled fail-closed evaluator was exercised on the maintained 162-unit, 20-area serial
+`ProcessModel` shape at source base `71835e21ef7e9c7b5a0ba809126c17b99aa864d8`. The added
+`CompiledProcessModelEvaluationPlanBenchmark` configures one bounded feed action, a 14,000 kg/h
+installed export rating, and a hard whole-plant mass-closure boundary. Compilation freezes 41 exact
+installed-capacity identities and one process-boundary identity before evaluating the changed
+12,120 kg/h candidate.
+
+The recorded run compiled the plan in 2.689549205 s with 1,154,759,416 main-thread allocated bytes
+and evaluated the changed candidate in 1.159243826 s with 694,325,784 main-thread allocated bytes.
+The strict authoritative result was 79,243 bytes. The candidate converged and was accepted; every
+action restored, the 12,000 kg/h baseline reconverged, and restored feed and product mass were both
+11,999.999999999996 kg/h, giving a zero recorded mass residual. Raw environment, model, command,
+budget, and limitation evidence is retained in
+[`benchmarks/compiled-plan-large-71835e21.json`](benchmarks/compiled-plan-large-71835e21.json).
+
+These are single-run acceptance budgets, not CI timing limits or a #2939 speedup claim. Allocation
+is main-thread-only and the 5 GiB maximum heap is not measured peak memory. This increment proves
+compiled-plan scale, exact evidence coverage, strict JSON size, convergence, and restoration. It
+does not yet add the full recycle, water-handling, common-shaft/total-power transition, discrete
+line-up, or bounded mixed continuous/discrete orchestration required by the final L fixture.
