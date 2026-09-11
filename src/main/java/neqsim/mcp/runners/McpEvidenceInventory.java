@@ -552,7 +552,7 @@ public final class McpEvidenceInventory {
     case "runLOPA":
       benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT";
       evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/LOPARunner.java",
-          "src/main/java/neqsim/process/safety/SafetyInstrumentedFunction.java",
+          "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java",
           "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java",
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
           "neqsim-mcp-server/test_lopa_protocol.py", "neqsim-mcp-server/test_mcp_server.py",

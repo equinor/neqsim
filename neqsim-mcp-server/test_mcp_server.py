@@ -1762,7 +1762,7 @@ def test_capabilities():
           and lopa.get("benchmarkApplicability")
           == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
           and lopa.get("contractEvidenceCount") == 7
-          and "src/main/java/neqsim/process/safety/SafetyInstrumentedFunction.java"
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
           in lopa.get("contractEvidenceSources", [])
           and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java"
           in lopa.get("contractEvidenceSources", [])

@@ -339,7 +339,7 @@ def test_inventory_is_promoted(client):
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
         and record.get("contractEvidenceCount") == 7
-        and "src/main/java/neqsim/process/safety/SafetyInstrumentedFunction.java" in sources
+        and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java" in sources
         and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java" in sources
         and "neqsim-mcp-server/test_lopa_protocol.py" in sources
         and "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md" in sources
