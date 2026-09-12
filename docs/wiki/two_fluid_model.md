@@ -872,8 +872,10 @@ The kernel provides scaled residuals, a colored block-stencil finite-difference 
 search, fraction-to-boundary mass/pressure limits, and hooks that freeze and refresh donor/regime
 active sets. The adapter delegates those hooks to an explicit, attempt-local active-set owner using
 defensive state copies. When a donor, regime, or complementarity choice changes, the solver
-re-evaluates the base residual before forming another Jacobian; the diagnostic Jacobian also uses
-the same frozen choices for its base and perturbed columns. Its model callback must remain
+re-evaluates the residual before every subsequent refresh, bounded by the per-iterate active-set
+budget (default 20). Both the nonlinear solve and diagnostic Jacobian use the same frozen choices
+for their base and perturbed columns. Partial freeze failures are cleaned up, with cleanup exceptions
+suppressed beneath the original error. Its model callback must remain
 transactional so Jacobian probes cannot advance accepted diagnostics or state.
 
 `TwoFluidUnsplitModelAdapter` connects this kernel to the finite-volume flux/source operator
@@ -883,8 +885,40 @@ uses a prescribed pressure only in the external outlet momentum traction. The la
 its volume-closure equation, while outlet phase mass and energy remain conservative advective
 fluxes.
 
+The serializable solver result now distinguishes convergence, iteration/update budgets, a singular
+Jacobian, an inadmissible step and failed line search. Callback counts include actual frozen-base,
+refresh and rejected-trial evaluations rather than estimates.
+
+`evaluateTransactional` returns the trial's immutable RHS and exact phase-face/source/mass-balance
+ledger while restoring previously published diagnostics, including on failure. The optional
+mechanical-force diagnostic retains its documented six gas/liquid columns. Its backflow flag belongs
+only to the current trial. Callers must supply trial section clones and synchronize configuration on
+the equations instance.
+
+`TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
+current midpoint operator and endpoint volume closure, then returns defensive endpoint clones and
+the exact phase transport ledger with inventories integrated over each cell length. It rejects
+inconsistent candidates and unsupported thermal, phase-transfer and separately split source modes.
+Density coefficients use the common midpoint time at both midpoint and end pressure. Strict
+`setConservativeEndpoint` recovery preserves all conservative values, retains positive trace-phase
+velocity, and never normalizes holdup or caps velocity. Endpoint closure diagnostics still require
+an explicit refresh. Preparation does not commit state, reports, clocks or streams; the legacy
+primitive-recovery path is unchanged.
+
+The tests verify a closed three-phase five-second fixed point and a nonuniform flowing candidate.
+The separate eight-case **flowing** five-second matrix is still failing: with interfacial pressure
+off all four cases stop at 0.475–2.175 s; with it on only 4 cells / 0.05 s completes, while the other
+three stop at 2.150–4.100 s. The fixed-step, full-duration assertions remain enabled. These synthetic
+40 m tests use a prescribed isothermal density law, not an EOS flash or experimental data. They
+expose unresolved numerical/spatial/boundary qualification and cannot qualify severe slugging.
+An isolated 8-cell replay found bitwise-repeatable residuals and identical colored/full Jacobians;
+a water-cut crossing of the oil-water inversion threshold caused a discontinuous closure switch
+beyond the default backtracking budget. More backtracking alone does not qualify the inversion law.
+See [the model guide](../process/TWOFLUIDPIPE_MODEL.md#five-second-flowing-gate-still-failing) for
+the exact fixture, paired matrix and reproduction command.
+
 This is still not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
-accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the 5/180/600 s qualification
+accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the established 5/180/600 s qualification
 sequence remain required. Energy, named-component transport, and phase change are outside the
 initial isothermal system.
 

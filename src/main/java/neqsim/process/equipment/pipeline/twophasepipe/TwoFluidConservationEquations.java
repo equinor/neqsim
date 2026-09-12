@@ -625,32 +625,122 @@ public class TwoFluidConservationEquations implements Serializable {
    * @param dx representative cell size in m
    * @return time derivatives with the same shape as {@link #calcRHS(TwoFluidSection[], double)}
    */
-  public double[][] calcRHSTransactional(TwoFluidSection[] sections, double dx) {
-    double[] savedInterfaceGasHoldup = interfaceGasHoldup.clone();
-    double[] savedInterfaceLiquidHoldup = interfaceLiquidHoldup.clone();
-    double[] savedInterfacePressure = interfacePressure.clone();
-    double[][] savedInterfacePhaseHoldup = copyMatrix(interfacePhaseHoldup);
-    double[][] savedInterfacePhasePressure = copyMatrix(interfacePhasePressure);
-    TwoFluidSection savedReconstructedOutlet = reconstructedOutlet;
-    boolean savedOutletBackflowClamped = outletBackflowClamped;
-    MassBalanceRate savedMassBalanceRate = lastMassBalanceRate;
-    double[][] savedPhaseMassFaceFluxes = copyMatrix(lastPhaseMassFaceFluxes);
-    double[][] savedPhaseMassSourcesPerLength = copyMatrix(lastPhaseMassSourcesPerLength);
-    double[][] savedMomentumSourceForcesPerLength = copyMatrix(lastMomentumSourceForcesPerLength);
+  public synchronized double[][] calcRHSTransactional(TwoFluidSection[] sections, double dx) {
+    DiagnosticSnapshot saved = new DiagnosticSnapshot();
     try {
       return calcRHS(sections, dx);
     } finally {
-      interfaceGasHoldup = savedInterfaceGasHoldup;
-      interfaceLiquidHoldup = savedInterfaceLiquidHoldup;
-      interfacePressure = savedInterfacePressure;
-      interfacePhaseHoldup = savedInterfacePhaseHoldup;
-      interfacePhasePressure = savedInterfacePhasePressure;
-      reconstructedOutlet = savedReconstructedOutlet;
-      outletBackflowClamped = savedOutletBackflowClamped;
-      lastMassBalanceRate = savedMassBalanceRate;
-      lastPhaseMassFaceFluxes = savedPhaseMassFaceFluxes;
-      lastPhaseMassSourcesPerLength = savedPhaseMassSourcesPerLength;
-      lastMomentumSourceForcesPerLength = savedMomentumSourceForcesPerLength;
+      saved.restore();
+    }
+  }
+
+  /**
+   * Evaluate one trial and return its exact flux/source ledger without publishing equation diagnostics.
+   *
+   * <p>
+   * Unlike reading diagnostic getters after {@link #calcRHSTransactional}, the returned ledger belongs to this
+   * evaluation, not the preceding accepted step. Supplied sections remain caller-owned trial objects and may be updated
+   * by closures. Callers must pass clones of accepted sections. The returned backflow flag describes only this
+   * evaluation; an earlier sticky flag is restored independently. Concurrent callers must synchronize on this equations
+   * instance when configuring it; unsynchronized legacy configuration/evaluation is not made thread-safe.
+   * </p>
+   *
+   * @param sections trial pipe sections
+   * @param dx representative cell size in m
+   * @return immutable trial derivatives and phase-resolved ledgers
+   */
+  public synchronized TransactionalEvaluation evaluateTransactional(TwoFluidSection[] sections, double dx) {
+    DiagnosticSnapshot saved = new DiagnosticSnapshot();
+    try {
+      outletBackflowClamped = false;
+      double[][] rates = calcRHS(sections, dx);
+      return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes,
+          lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength, outletBackflowClamped);
+    } finally {
+      saved.restore();
+    }
+  }
+
+  /** Immutable evidence from a single finite-volume operator evaluation, in gas/oil/water order. */
+  public static final class TransactionalEvaluation implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double[][] rates;
+    private final MassBalanceRate massBalanceRate;
+    private final double[][] phaseMassFaceFluxes;
+    private final double[][] phaseMassSourcesPerLength;
+    private final double[][] momentumSourceForcesPerLength;
+    private final boolean outletBackflowClamped;
+
+    private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
+        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
+      this.rates = copyMatrix(rates);
+      this.massBalanceRate = massBalanceRate;
+      this.phaseMassFaceFluxes = copyMatrix(phaseMassFaceFluxes);
+      this.phaseMassSourcesPerLength = copyMatrix(phaseMassSourcesPerLength);
+      this.momentumSourceForcesPerLength = copyMatrix(momentumSourceForcesPerLength);
+      this.outletBackflowClamped = outletBackflowClamped;
+    }
+
+    /** @return conservative time derivatives, with seven columns per cell */
+    public double[][] getRates() {
+      return copyMatrix(rates);
+    }
+
+    /** @return immutable external boundary and domain source rates in kg/s */
+    public MassBalanceRate getMassBalanceRate() {
+      return massBalanceRate;
+    }
+
+    /** @return defensive face mass fluxes in kg/s, shape [cellCount + 1][3] */
+    public double[][] getPhaseMassFaceFluxes() {
+      return copyMatrix(phaseMassFaceFluxes);
+    }
+
+    /** @return defensive phase mass sources in kg/(m s), shape [cellCount][3] */
+    public double[][] getPhaseMassSourcesPerLength() {
+      return copyMatrix(phaseMassSourcesPerLength);
+    }
+
+    /**
+     * @return defensive momentum-force diagnostics in N/m, shape [cellCount][6], or empty when disabled; column order
+     * matches {@link TwoFluidConservationEquations#getLastMomentumSourceForcesPerLength()}
+     */
+    public double[][] getMomentumSourceForcesPerLength() {
+      return copyMatrix(momentumSourceForcesPerLength);
+    }
+
+    /** @return whether this trial clamped a reversed outlet phase */
+    public boolean isOutletBackflowClamped() {
+      return outletBackflowClamped;
+    }
+  }
+
+  /** Save buffers that closures can overwrite in place, plus immutable diagnostic objects. */
+  private final class DiagnosticSnapshot {
+    private final double[] savedGasHoldup = interfaceGasHoldup.clone();
+    private final double[] savedLiquidHoldup = interfaceLiquidHoldup.clone();
+    private final double[] savedPressure = interfacePressure.clone();
+    private final double[][] savedPhaseHoldup = copyMatrix(interfacePhaseHoldup);
+    private final double[][] savedPhasePressure = copyMatrix(interfacePhasePressure);
+    private final TwoFluidSection savedOutlet = reconstructedOutlet;
+    private final boolean savedBackflow = outletBackflowClamped;
+    private final MassBalanceRate savedBalance = lastMassBalanceRate;
+    private final double[][] savedFaces = copyMatrix(lastPhaseMassFaceFluxes);
+    private final double[][] savedSources = copyMatrix(lastPhaseMassSourcesPerLength);
+    private final double[][] savedForces = copyMatrix(lastMomentumSourceForcesPerLength);
+
+    private void restore() {
+      interfaceGasHoldup = savedGasHoldup;
+      interfaceLiquidHoldup = savedLiquidHoldup;
+      interfacePressure = savedPressure;
+      interfacePhaseHoldup = savedPhaseHoldup;
+      interfacePhasePressure = savedPhasePressure;
+      reconstructedOutlet = savedOutlet;
+      outletBackflowClamped = savedBackflow;
+      lastMassBalanceRate = savedBalance;
+      lastPhaseMassFaceFluxes = savedFaces;
+      lastPhaseMassSourcesPerLength = savedSources;
+      lastMomentumSourceForcesPerLength = savedForces;
     }
   }
 
@@ -2345,6 +2435,11 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setImplicitInterfacialPressure(boolean implicitInterfacialPressure) {
     this.implicitInterfacialPressure = implicitInterfacialPressure;
+  }
+
+  /** @return true when the Bestion stabilizer is omitted from the RHS for a separate implicit update */
+  public boolean isImplicitInterfacialPressure() {
+    return implicitInterfacialPressure;
   }
 
   /**

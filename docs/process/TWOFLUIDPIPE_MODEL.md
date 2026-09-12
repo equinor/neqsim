@@ -1316,9 +1316,12 @@ replacement for the final cell's volume equation.
 The kernel uses scaled residuals and unknowns, a colored finite-difference Jacobian for a declared
 cell stencil, partial-pivoting linear solves, an Armijo line search, and fraction-to-boundary limits
 for phase mass and pressure. A model can freeze donor, flow-regime, and complementarity choices for
-one Jacobian and refresh them between Newton iterations. A changed active set always triggers a
-fresh base residual, and the diagnostic Jacobian evaluates its base and perturbed columns with the
-same frozen choices. Every model evaluation must be
+one Jacobian and refresh them between Newton iterations. Every reported active-set change triggers
+a fresh residual before another refresh, even above the convergence tolerance. Refreshes are bounded
+per iterate by `setMaximumActiveSetUpdates` (default 20); a final unchanged refresh is required.
+Both the solve and diagnostic Jacobian evaluate their base and perturbed columns with the same
+frozen choices. Cleanup runs even after partially failed freeze initialization, preserving an original
+exception if cleanup also fails. Every model evaluation must be
 transactional: trial calls must start from the same accepted state and must not accumulate accepted
 mass, component, thermal, limiter, or rejection ledgers.
 
@@ -1331,9 +1334,94 @@ own volume-closure equation. An explicit `ActiveSetController` now delegates the
 and refresh lifecycle using defensive state and pressure copies, so an attempt-local finite-volume
 active-set implementation cannot mutate the accepted pipe state.
 
+`Result` is serializable and reports an explicit `TerminationReason`: convergence, nonlinear
+iteration limit, active-set update limit, singular Jacobian, no admissible step, or failed line search.
+The evaluation count measures actual solver callback invocations, including the frozen base,
+active-set refreshes, and rejected line-search probes; it excludes work internal to callbacks.
+
+#### Transactional candidate preparation
+
+`TwoFluidConservationEquations.evaluateTransactional` returns an immutable evaluation containing
+the exact RHS, phase face mass flows, local phase mass sources, domain mass-balance rates,
+optional six-column gas/liquid mechanical-force diagnostics, and a trial-only outlet-clamp flag.
+It restores the preceding published diagnostics even when evaluation throws. Reading the old
+diagnostic getters after a transactional probe still returns the preceding published evaluation,
+not the probe's ledger. Caller-supplied sections are trial objects and may be updated by closures;
+accepted sections must be cloned first. Concurrent configuration must use the same equations lock.
+
+`TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
+candidate against its accepted templates, requested time step, boundary, and current operator. It
+checks all six midpoint conservation equations and the endpoint occupied volume. A `PreparedStep`
+contains defensive endpoint clones, the exact midpoint evaluation, initial/final phase inventories
+integrated with each cell's own length, and phase mass residuals in kg. Preparation does **not**
+advance a pipe clock, publish a report, update a stream, or commit any accepted state.
+
+The endpoint path `TwoFluidSection.setConservativeEndpoint` performs no mass, momentum, energy,
+holdup normalization or velocity capping. Every positive trace phase uses its own momentum/mass;
+exactly absent phases require zero momentum. Bulk liquid velocity is mass-weighted, while superficial
+liquid velocity sums the separate oil and water volume fluxes. Invalid states are rejected before
+mutation. Conserved and algebraic primitive fields are endpoint-valid; friction, regime, oil-water
+correlations and thermodynamic/thermal diagnostics still need an endpoint closure refresh.
+The original public primitive-recovery path retains its existing guards and normalization.
+
+Candidate preparation currently rejects thermal/energy and phase-transfer modes, the separately
+split Bestion term (`setImplicitInterfacialPressure(true)`), stiff bubble drag and subcell slug-force
+integration. These options omit terms from the RHS or require an unimplemented additional update.
+The explicit RHS interfacial-pressure option itself is permitted. Density callbacks use the common
+midpoint coefficient time at both midpoint and endpoint pressures. The midpoint residual still uses
+legacy trial primitive recovery away from volume closure; strict endpoint recovery alone does not
+qualify that spatial extension or supply concrete donor/regime active sets.
+
+Runnable examples and rejection/serialization tests are in `TwoFluidUnsplitModelAdapterTest`,
+`TwoFluidTransactionalEvaluationTest`, and `TwoFluidConservativeEndpointTest`. A closed, quiescent
+three-phase state remains unchanged over five prepared one-second steps. A nonuniform three-cell
+flowing step verifies independent cell pressure and the exact phase transport ledger.
+
+#### Five-second flowing gate: still failing
+
+The synthetic qualification gate uses a horizontal 40 m, 0.10 m line at 5 MPa absolute and 300 K;
+initial gas/oil/water holdups are 0.6/0.2/0.2, phase velocities are 3/0.55/0.45 m/s, and densities
+are `rhoG = 40 * p / 5e6`, 700 and 1000 kg/m3. This is a fixed-temperature density closure, **not**
+an EOS-flashed fluid. It prescribes the existing inlet-state boundary and a 5 MPa external outlet
+face with signed outlet transport. It uses the smooth compatibility controller, fixed time steps,
+no retries, and unchanged Newton/conservation gates; no empirical coefficients are tuned.
+
+The 12 September 2026 probe found:
+
+| Cells | Step (s) | Interfacial pressure off | Interfacial pressure on |
+| --- | --- | --- | --- |
+| 4 | 0.05 | Rejected at 0.550 s | Completed 5 s |
+| 4 | 0.025 | Rejected at 2.175 s | Rejected at 4.100 s |
+| 8 | 0.05 | Rejected at 0.550 s | Rejected at 2.150 s |
+| 8 | 0.025 | Rejected at 0.475 s | Rejected at 2.150 s |
+
+Times are accepted start times of the first rejected step. All rejections reported
+`LINE_SEARCH_FAILED`. Failed trajectories developed alternating phase velocities and differing
+stratified/slug classifications; these observations alone do not identify a unique causal closure.
+One completed trajectory does not establish refinement convergence or physical accuracy. The
+eight-case test retains its full-five-second assertions, so seven cases currently fail: this is an
+explicit unresolved qualification gate, not a passing regression or a Tengesdal validation.
+
+An isolated replay of the 8-cell / 0.025 s / interfacial-pressure-on rejection at 2.15 s found a
+specific immediate mechanism. Repeated residuals and the colored versus full-stencil Jacobians
+were bitwise identical. A backtracking trial at `alpha = 2^-13` moved cell 1's midpoint water cut
+to 0.5214285028964517, below its inversion threshold 0.5214285714285715, switching dispersed
+oil-in-water to dispersed water-in-oil. The scaled residual jumped to 0.114715011. At `2^-14`,
+the original branch remained selected and the norm decreased from 0.02551565261134096 to
+0.025514095316063398. The default 12-probe line search does not reach that step length. This
+identifies a closure-branch discontinuity interacting with globalization for this rejection, not a
+coloring defect or nondeterministic ledger. Increasing the backtracking budget alone does not
+resolve the inversion law or qualify the evolving flow. Concrete oil-water inversion/active-set
+treatment and pressure/boundary refinement checks remain required.
+
+```bash
+./mvnw -q '-Dtest=TwoFluidUnsplitModelAdapterTest#fiveSecondIsothermalThreePhaseStepsConserveTheAcceptedTransportLedger' test
+```
+
 The adapter is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
 qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
-rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices. The existing 5 s mesh matrix
+rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices.
+The unresolved synthetic gate above must not be confused with the established WS1 cases. The existing 5 s mesh matrix
 and the 180/600 s public Tengesdal gates must pass before the path can be exposed as a pipe option.
 Energy, named-component transport, and phase change are outside the initial isothermal solve and
 remain separate unsupported intersections.
