@@ -6,6 +6,7 @@ description: |
   the dual-boot setup cell, claim → test linkage, equation → Java method
   cross-references, units enforcement against `nomenclature.yaml`, and
   notebook-driven figure / results-table injection.
+last_verified: "2026-09-12"
 ---
 
 # NeqSim integration for scientific writing

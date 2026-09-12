@@ -21,9 +21,46 @@ def blocks(path):
     return re.findall(r"^```python\n(.*?)^```", path.read_text(encoding="utf-8"), re.M | re.S)
 
 
+def require_nlopt(test_case):
+    """Skip locally when the optional NLopt backend is absent; still fail in CI."""
+    try:
+        import nlopt  # noqa: F401
+    except ImportError:
+        if os.environ.get("CI"):
+            raise
+        test_case.skipTest("NLopt is an optional backend: pip install nlopt")
+
+
+def runtime_version_skew():
+    """Return a message when the installed JAR predates the documented source.
+
+    These fences exercise the *current* documentation. Against an older released
+    neqsim package the newest documented classes simply do not exist, which
+    surfaces as an unrelated-looking ``has no attribute`` failure.
+    """
+    if os.environ.get("NEQSIM_TEST_CLASSPATH"):
+        return None
+    repo = re.search(r"<revision>([^<]+)</revision>",
+                     (ROOT / "pom.xml").read_text(encoding="utf-8"))
+    try:
+        import importlib.metadata as metadata
+
+        installed = metadata.version("neqsim")
+    except Exception:
+        return None
+    if repo and installed != repo.group(1):
+        return ("installed neqsim {0} predates repository source {1}; set "
+                "NEQSIM_TEST_CLASSPATH to target/classes plus dependencies"
+                .format(installed, repo.group(1)))
+    return None
+
+
 class OptimizationIntegrationExamplesTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        skew = runtime_version_skew()
+        if skew and not os.environ.get("CI"):
+            raise unittest.SkipTest(skew)
         classpath = os.environ.get("NEQSIM_TEST_CLASSPATH")
         if classpath:
             import jpype
@@ -51,6 +88,7 @@ class OptimizationIntegrationExamplesTest(unittest.TestCase):
         return namespace
 
     def test_basic_scipy_nlopt_and_custom_setters(self):
+        require_nlopt(self)
         namespace = self.execute(self.external, list(range(6)) + [7, 8, 9, 10, 24, 25], "external")
         self.assertAlmostEqual(40000.0, namespace["x_opt"][0], delta=0.01)
         self.assertEqual(2, namespace["evaluator"].getParameterCount())

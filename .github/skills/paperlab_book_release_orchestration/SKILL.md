@@ -3,6 +3,7 @@ name: paperlab_book_release_orchestration
 description: |
   Define the PaperLab whole-book release workflow: audit order, blocker rules,
   render commands, artifact freshness checks, and release gate reporting.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Book Release Orchestration

@@ -414,6 +414,40 @@ power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
 | `ClassCastException` in equipment | Wrong stream type connection | Verify equipment constructors take `StreamInterface` |
 | `java.sql.SQLException` | Component not in database | Check spelling, verify against COMP.csv |
 | `StackOverflowError` in recycle | Infinite loop in process topology | Check for circular references without a Recycle unit |
+| `IllegalAccessError` / `NoSuchMethodError` between two NeqSim classes in the **same** package | Two `neqsim-*.jar` versions on one classpath | See "Stale or Duplicate Runtime JAR" below |
+| `Java package 'neqsim.x.y' has no attribute 'Z'` for a class that exists in `src/` | Installed JAR is older than the repo source | See "Stale or Duplicate Runtime JAR" below |
+
+## Stale or Duplicate Runtime JAR
+
+The Python package adds its `lib/*` folder to the classpath as a flat glob, so a
+JAR left behind by an earlier install is loaded **alongside** the current one.
+Classes then resolve across two versions of the same package.
+
+**Symptom:** an access or linkage error between two classes that are provably in
+the same package and legal in source, e.g.
+`IllegalAccessError: class ...ProcessModelOperatingActionSetEvaluator tried to
+access private method ...HydraulicConstraintBinding.<init>(...)`.
+
+Do **not** go looking for a Java access-modifier bug. Check the JAR count first:
+
+```powershell
+Get-ChildItem <venv>\Lib\site-packages\neqsim\lib\*.jar
+python -c "import importlib.metadata as m; print(m.version('neqsim'))"
+```
+
+Keep only the JAR matching the installed package version. `python
+devtools/neqsim_doctor.py` reports this as "Single NeqSim JAR on runtime
+classpath".
+
+**Related symptom — version skew, not a missing class:** `has no attribute 'X'`
+for a class that exists under `src/main/java/` means the released JAR predates
+`<revision>` in `pom.xml`. Point the run at workspace classes instead:
+`NEQSIM_TEST_CLASSPATH=target/classes` plus dependencies, or use the
+`devtools/neqsim_dev_setup.py` bootstrap.
+
+Replacing a JAR under a **live** JVM (notebook kernel) is a third variant: the
+copy succeeds but any class not already loaded fails to resolve. Restart the
+kernel; a JVM cannot reload a JAR in-process.
 
 ## Phase Envelope Branch Labels Swapped
 

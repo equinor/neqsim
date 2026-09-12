@@ -3,6 +3,7 @@ name: paperlab_paper_to_book_chapter
 description: |
   Transform validated PaperLab papers into teachable book chapters, sections,
   worked examples, exercises, notebooks, and figure discussions.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Paper to Book Chapter

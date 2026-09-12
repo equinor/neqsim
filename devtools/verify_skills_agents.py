@@ -24,6 +24,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -195,6 +196,32 @@ def check_skill_index() -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def _git_symlink_target(path: Path) -> str:
+    """Return the committed symlink target for ``path``, or "" if not a git symlink.
+
+    A Windows clone made with ``core.symlinks=false`` materializes a committed
+    symlink (git mode 120000) as a plain text file holding the target path, so
+    the filesystem check alone cannot distinguish it from a copied tree.
+    """
+    rel = path.relative_to(REPO_ROOT).as_posix()
+    try:
+        entry = subprocess.run(
+            ["git", "ls-files", "-s", "--", rel],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError:
+        return ""
+    if entry.returncode != 0 or not entry.stdout.startswith("120000 "):
+        return ""
+    try:
+        return path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
 def check_codex_skill_discovery() -> Tuple[List[str], List[str]]:
     """Verify that Codex discovers the canonical skill directory via symlink."""
     errors: List[str] = []
@@ -202,10 +229,26 @@ def check_codex_skill_discovery() -> Tuple[List[str], List[str]]:
     expected_target = "../.github/skills"
 
     if not CODEX_SKILLS_DIR.is_symlink():
-        errors.append(
-            ".agents/skills must be a symbolic link to ../.github/skills; "
-            "do not maintain a copied skill tree"
-        )
+        committed_target = _git_symlink_target(CODEX_SKILLS_DIR)
+        if committed_target == expected_target:
+            warnings.append(
+                ".agents/skills is committed as a symlink to {0} but this checkout "
+                "materialized it as a plain file (git core.symlinks=false). The repo "
+                "is correct; to get a real link locally enable Windows Developer Mode, "
+                "then run: git config core.symlinks true && git checkout -- "
+                ".agents/skills".format(expected_target)
+            )
+        elif committed_target:
+            errors.append(
+                ".agents/skills is committed as a symlink to {!r}; expected {!r}".format(
+                    committed_target, expected_target
+                )
+            )
+        else:
+            errors.append(
+                ".agents/skills must be a symbolic link to ../.github/skills; "
+                "do not maintain a copied skill tree"
+            )
         return errors, warnings
 
     actual_target = os.readlink(str(CODEX_SKILLS_DIR))

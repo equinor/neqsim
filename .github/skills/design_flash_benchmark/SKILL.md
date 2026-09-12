@@ -1,6 +1,7 @@
 ---
 name: "design_flash_benchmark"
 description: "Create a structured test matrix for comparing flash algorithm performance"
+last_verified: "2026-09-12"
 ---
 
 # Skill: Design Flash Benchmark

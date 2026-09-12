@@ -1,6 +1,7 @@
 ---
 name: "neqsim_standard_requirement_extraction"
 description: "Extract and map engineering requirements from standards or approved standards"
+last_verified: "2026-09-12"
 ---
 
 # Skill: NeqSim Standard Requirement Extraction

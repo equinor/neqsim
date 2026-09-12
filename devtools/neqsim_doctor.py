@@ -299,6 +299,7 @@ def check_python_neqsim():
             if cls_check.returncode == 0 and "CLASSPATH_OK" in cls_check.stdout:
                 _check("NeqSim classpath", True,
                        "NeqSim classes load correctly")
+                _check_duplicate_runtime_jars(path)
             else:
                 _check(
                     "NeqSim classpath", False,
@@ -347,6 +348,32 @@ def check_python_neqsim():
             "neqsim package", False, str(e),
             fix_hint="pip install neqsim or run from the repo with devtools"
         )
+
+
+def _check_duplicate_runtime_jars(neqsim_init_path):
+    """Flag several neqsim-*.jar versions sharing the runtime lib/ directory.
+
+    The package adds ``lib/*`` to the classpath, so a leftover older JAR is
+    loaded alongside the current one. Classes then resolve across two versions
+    of the same package and fail late with IllegalAccessError/NoSuchMethodError
+    instead of anything that points at the real cause.
+    """
+    lib_dir = os.path.join(os.path.dirname(neqsim_init_path), "lib")
+    if not os.path.isdir(lib_dir):
+        return
+    jars = [os.path.basename(j)
+            for j in glob.glob(os.path.join(lib_dir, "neqsim-*.jar"))
+            if not any(s in os.path.basename(j)
+                       for s in ("-sources", "-javadoc", "-tests"))]
+    if len(jars) > 1:
+        _check(
+            "Single NeqSim JAR on runtime classpath", False,
+            "{n} versions in {d}: {names}".format(
+                n=len(jars), d=lib_dir, names=", ".join(sorted(jars))),
+            fix_hint="Delete the stale JAR(s); keep only the current version"
+        )
+    elif jars:
+        _check("Single NeqSim JAR on runtime classpath", True, jars[0])
 
 
 def check_agent_files():

@@ -4,6 +4,7 @@ description: |
   Verify NeqSim API references in PaperLab books against Java source, tests,
   notebooks, and documented setup patterns. Use for code snippets, method
   names, constructor signatures, units, and API claims in book chapters.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab NeqSim API Claim Verification

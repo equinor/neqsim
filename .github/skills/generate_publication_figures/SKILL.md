@@ -1,6 +1,7 @@
 ---
 name: "generate_publication_figures"
 description: "Create matplotlib figures that meet journal submission standards: correct fonts,"
+last_verified: "2026-09-12"
 ---
 
 # Skill: Generate Publication-Quality Figures

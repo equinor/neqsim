@@ -3,6 +3,7 @@ name: paperlab_reproducibility_capsule
 description: |
   Build PaperLab reproducibility capsules with raw data, scripts, notebooks,
   command logs, environment records, seeds, manifests, and rerun instructions.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Reproducibility Capsule

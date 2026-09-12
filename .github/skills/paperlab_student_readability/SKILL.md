@@ -4,6 +4,7 @@ description: |
   Review and revise PaperLab book chapters so students can learn efficiently.
   Use for learning-objective alignment, prerequisite checks, worked examples,
   summaries, exercises, glossary consistency, and chapter-level pedagogy.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Student Readability
