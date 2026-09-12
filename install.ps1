@@ -188,7 +188,7 @@ Write-Host "Word template for generated reports:" -ForegroundColor Cyan
 Write-Host "  Default (nothing set): built-in NeqSim report styling"
 Write-Host "  Change it:  neqsim --set-report-template `"C:\path\company template.docx`""
 Write-Host "  Check it:   neqsim --show-report-template"
-Write-Host "Every Report.docx then inherits its styles, fonts, headers, and footers."
+Write-Host "Every Word report then inherits its styles, fonts, headers, and footers."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR

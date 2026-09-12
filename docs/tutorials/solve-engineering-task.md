@@ -453,8 +453,8 @@ python step3_report/generate_report.py
 ```
 
 This produces two files:
-- **Report.docx** — Word document for formal distribution
-- **Report.html** — Interactive HTML with navigation sidebar
+- **`<Report title>.docx`** — Word document for formal distribution
+- **`<Report title>.html`** — Interactive HTML with navigation sidebar
 
 Both reports auto-populate from your data:
 

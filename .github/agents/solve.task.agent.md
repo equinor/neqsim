@@ -1886,10 +1886,17 @@ Document the independent check in `step2_analysis/notes.md` under a
     ```
     This is the **default and preferred output** — an engineering technical report.
     Only generate a scientific paper if the user explicitly requests it
-    (`--paper` or `--paper-only`). The default workflow produces Report.docx
-    and Report.html only.
+    (`--paper` or `--paper-only`). The default workflow produces the Word and
+    HTML report only.
 
-    **Corporate Word template:** Report.docx is automatically built from the
+    **File names are the report title.** A study titled "Hydrate margin for the
+    export line" ships `step3_report/Hydrate_margin_for_the_export_line.docx`
+    and `.html`, so the deliverable is identifiable outside its task folder. Set
+    `study.title` in `study_config.yaml` (or pass `--title`) before generating.
+    Files written under an earlier title are removed on regeneration — never
+    leave a superseded report beside the current one.
+
+    **Corporate Word template:** the Word report is automatically built from the
     template the user configured with `neqsim --set-report-template "PATH"`
     (or `NEQSIM_REPORT_TEMPLATE`), so it inherits their organisation's styles,
     fonts, headers, and footers. Do not pass `--no-template` or override the
@@ -1913,6 +1920,35 @@ Document the independent check in `step2_analysis/notes.md` under a
     - Fill in the Problem Statement
     - Check off completed steps
     - Write the Key Results section
+
+19a. **The work record is generated with the report** (`step3_report/WORK_RECORD.md`)
+    — step 18 writes it automatically. Rebuild it alone with:
+    ```
+    Run in terminal: neqsim work-record task_solve/YYYY-MM-DD_slug
+    ```
+    The report answers *what the conclusion is*; the work record answers *how it
+    was produced* — every script and notebook with its purpose and outputs, every
+    source system and collected document, the cached data files, the figures, an
+    annotated folder map, and the commands to reproduce the study. It is built
+    from the folder, so it cannot drift from the files it describes.
+
+    **Then fill the three NARRATIVE blocks by hand** (`background`, `method`,
+    `limitations`). They are the part a reader cannot reconstruct from a
+    directory listing: why this approach over the alternatives, what each step
+    established, which numbers are screening-level, and what evidence would
+    change the answer. Text inside the blocks is preserved when the file is
+    regenerated, so regenerate freely after adding scripts or data.
+    Verify with `neqsim work-record <task> --check`, which fails while a
+    narrative block still holds template text or a declared artifact is missing.
+
+    **Two config keys make the auto-built half good** — set them in
+    `study_config.yaml` as the analysis takes shape: `analysis.scripts`
+    (file / purpose / produces) turns section 7 into the real reproduction
+    sequence, and `inputs.data_sources` (system / scope / access / evidence)
+    fills the source-system table with captured-vs-missing status. A one-line
+    docstring on every analysis script becomes its purpose in section 3.
+    Set `report.work_record: required` to make the report gate enforce it, or
+    `skip` to opt out.
 
 19b. **Pre-send review (MANDATORY — `consistency_checker.py` does not catch these).**
     A report assembled incrementally accumulates contradictions that are
@@ -2205,19 +2241,47 @@ void testBasicCase() {
 **Estimated complexity:** Small (1-2 days) / Medium (3-5 days) / Large (1-2 weeks)
 ```
 
-### 6.3 — Implementation During Task (Optional but Encouraged)
+### 6.3 — Implementation During Task (MANDATORY, not optional)
 
-If the proposed improvement is achievable within the current task session:
+A gap that blocked or slowed THIS task is closed in THIS task. Deferring it to a
+proposal is only acceptable when the fix is genuinely larger than the task
+itself — and then the NIP must say why.
 
-1. **Implement the Java class** under the appropriate package
+For a NeqSim gap:
+
+1. **Implement the Java class** under the appropriate package (Java 8 only)
 2. **Write complete JavaDoc** (per MANDATORY requirements)
 3. **Add a JUnit 5 test** with physical validation
-4. **Build and verify**: `mvnw.cmd package -DskipTests`
-5. **Use the new class** in the task notebook
-6. **Include in the PR** as a NeqSim contribution
+4. **Format**: `mvnw.cmd spotless:apply`, then verify `mvnw.cmd test -Dtest=...`
+5. **Use the new class** in the task notebook — a class nothing calls is not evidence
+6. **Include in the PR** as a NeqSim contribution before the task closes
+
+For an agent or skill gap (a wrong/missing API recipe, an undocumented gotcha, a
+missing hand-off between two skills, a useful new composition): edit the
+`SKILL.md` / `*.agent.md` in the right repo — community content stays
+plant-agnostic, site-specific detail goes to the enterprise repos — and update
+the "Loaded skills" / router guidance if the pipeline changed.
+
+Then record it in **both** places, every task:
+
+- `step1_scope_and_research/neqsim_improvements.md` → section 1 "Delivered"
+- `results.json` → `improvements` array, e.g.
+
+```json
+"improvements": [
+  {"target": "neqsim",
+   "gap": "no way to turn a field seat-leak test into a leak rate",
+   "change": "added neqsim.process.diagnostics.ValveSeatLeakageAssessment",
+   "evidence": "ValveSeatLeakageAssessmentTest, 6 tests green"}
+]
+```
+
+If nothing needed changing, say so explicitly — `validate_task_results.py`
+warns on a silent record, because silence means the question was never asked.
+Never ask the user for permission to do this step.
 
 This turns every task into a potential NeqSim enhancement — the development
-flywheel: **task → gap → proposal → implementation → better task answers**.
+flywheel: **task → gap → implementation → better next task**.
 
 ### 6.4 — Workaround Documentation
 
@@ -2421,8 +2485,8 @@ L1. **The `generate_report.py` template now includes built-in styled formatting*
    (`benchmark_validation`, `uncertainty`, `risk_evaluation`). You do NOT need to
    add custom rendering logic per task — just populate the results.json correctly.
    The formatters produce color-coded risk badges, P10/P50/P90 tables, tornado
-   tables, and PASS/FAIL benchmark tables in all four outputs (Report.docx,
-   Report.html — and Paper.docx/Paper.html when `--paper` is used).
+   tables, and PASS/FAIL benchmark tables in all four outputs (the Word and HTML
+   report — and the Word/HTML paper when `--paper` is used).
 
 L2. **Four layers must stay synchronised for every report section:**
    - `build_sections()` — defines the section with heading, content, and flags

@@ -44,12 +44,37 @@ def _run(task, *args):
     return result
 
 
+def _report_docx(task):
+    """Return the generated Word report — its file name is the report title."""
+    produced = sorted((task / "step3_report").glob("*.docx"))
+    assert len(produced) == 1, produced
+    return produced[0]
+
+
+def test_report_file_is_named_after_the_title(tmp_path):
+    task = _make_task(tmp_path)
+    _run(task, "--no-template", "--title", "Hydrate margin: export line")
+
+    assert _report_docx(task).name == "Hydrate_margin_export_line.docx"
+    assert (task / "step3_report" / "Hydrate_margin_export_line.html").is_file()
+
+
+def test_renaming_the_study_removes_the_superseded_report(tmp_path):
+    task = _make_task(tmp_path)
+    _run(task, "--no-template", "--title", "First title")
+    _run(task, "--no-template", "--title", "Second title")
+
+    assert _report_docx(task).name == "Second_title.docx"
+    assert not (task / "step3_report" / "First_title.docx").exists()
+    assert not (task / "step3_report" / "First_title.html").exists()
+
+
 def test_report_inherits_template_styling(tmp_path):
     template = _make_template(tmp_path / "company template.docx")
     task = _make_task(tmp_path)
     _run(task, "--template", str(template))
 
-    report = docx.Document(str(task / "step3_report" / "Report.docx"))
+    report = docx.Document(str(_report_docx(task)))
     assert report.styles["Normal"].font.name == "Garamond"
     assert "ACME Engineering" in report.sections[0].header.paragraphs[0].text
     body = "\n".join(p.text for p in report.paragraphs)
@@ -62,7 +87,7 @@ def test_keep_template_content_retains_boilerplate(tmp_path):
     task = _make_task(tmp_path)
     _run(task, "--template", str(template), "--keep-template-content")
 
-    report = docx.Document(str(task / "step3_report" / "Report.docx"))
+    report = docx.Document(str(_report_docx(task)))
     body = "\n".join(p.text for p in report.paragraphs)
     assert "Template boilerplate" in body
 
@@ -73,12 +98,12 @@ def test_saved_template_is_used_and_can_be_bypassed(tmp_path, monkeypatch):
     monkeypatch.setenv("NEQSIM_REPORT_TEMPLATE", str(template))
 
     _run(task)
-    assert docx.Document(str(task / "step3_report" / "Report.docx")
+    assert docx.Document(str(_report_docx(task))
                          ).styles["Normal"].font.name == "Rockwell"
 
     monkeypatch.delenv("NEQSIM_REPORT_TEMPLATE")
     _run(task, "--no-template")
-    assert docx.Document(str(task / "step3_report" / "Report.docx")
+    assert docx.Document(str(_report_docx(task))
                          ).styles["Normal"].font.name != "Rockwell"
 
 
@@ -90,7 +115,7 @@ def test_missing_template_fails_loudly(tmp_path):
         cwd=str(task), capture_output=True, text=True)
     assert result.returncode == 2
     assert "not found" in result.stdout
-    assert not (task / "step3_report" / "Report.docx").exists()
+    assert not list((task / "step3_report").glob("*.docx"))
 
 
 def test_template_without_builtin_styles_still_renders(tmp_path):
@@ -108,4 +133,4 @@ def test_template_without_builtin_styles_still_renders(tmp_path):
 
     task = _make_task(tmp_path)
     _run(task, "--template", str(template))
-    assert (task / "step3_report" / "Report.docx").is_file()
+    assert _report_docx(task).is_file()

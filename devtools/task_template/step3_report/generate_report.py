@@ -9,11 +9,20 @@ Usage:
     python step3_report/generate_report.py --template "C:/…/company template.docx"
     python step3_report/generate_report.py --no-template  # ignore the saved template
     python step3_report/generate_report.py --keep-template-content
+    python step3_report/generate_report.py --title "..." --author "..."
     python devtools/task_template/step3_report/generate_report.py --task-dir PATH
 
 The canonical copy of this script lives in devtools/task_template/. Run it
 against any task folder with `neqsim report <task folder>` (or --task-dir /
 NEQSIM_TASK_DIR) so a fix here applies to task folders created earlier.
+
+The report title is the STUDY title, and the task is stated at the top of the
+report. Title/author resolution order:
+    --title / --author  >  NEQSIM_REPORT_TITLE / NEQSIM_REPORT_AUTHOR  >
+    study_config.yaml (study.title, study.author)  >  the first heading of
+    task_spec.md  >  a task-local generate_report.py copy  >  the folder name.
+The task statement comes from results.json ("task_statement" / "objective"),
+else the Objective/Task Description section of task_spec.md, else study.title.
 
 Report.docx is built from a Word template when one is configured, so company
 fonts, colours, styles, headers, and footers apply. Resolution order:
@@ -31,11 +40,15 @@ This script AUTO-READS data from the task folder:
   - results.json "equations"               -> renders equations (KaTeX/images)
   - results.json "figure_captions"         -> custom captions for figures
 
-It produces:
-  - step3_report/Report.docx  (Word document for formal distribution)
-  - step3_report/Report.html  (navigable HTML with sidebar, KaTeX equations)
-  - step3_report/Paper.docx   (scientific paper in Word format, with --paper)
-  - step3_report/Paper.html   (scientific paper in HTML format, with --paper)
+It produces (file names are the report title, so a deliverable is identifiable
+outside its task folder — e.g. "Hydrate margin for the export line" becomes
+Hydrate_margin_for_the_export_line.docx):
+  - step3_report/<Title>.docx        (Word document for formal distribution)
+  - step3_report/<Title>.html        (navigable HTML with sidebar, KaTeX equations)
+  - step3_report/<Title>_Paper.docx  (scientific paper in Word format, with --paper)
+  - step3_report/<Title>_Paper.html  (scientific paper in HTML format, with --paper)
+Report files written under an earlier title are removed, so a renamed study does
+not leave a superseded deliverable beside the current one.
 
 If results.json or task_spec.md are missing, the report uses placeholder text.
 Customize MANUAL_SECTIONS below for content that can't be auto-generated.
@@ -46,6 +59,7 @@ import glob
 import json
 import base64
 import io
+import re
 import sqlite3
 from datetime import date
 
@@ -70,6 +84,22 @@ try:
 except ImportError:
     HAS_MATPLOTLIB = False
 
+# ── Word typography ──────────────────────────────────────
+# Floors applied to the template's own styles (see _apply_readable_typography).
+BODY_PT = 11.0
+HEADING1_PT = 16.0
+HEADING2_PT = 13.0
+HEADING3_PT = 11.5
+TABLE_PT = 10.0
+CAPTION_PT = 9.5
+BODY_SPACE_AFTER_PT = 6.0
+
+# Equation images are rendered at EQ_FONT_PT and then placed at their NATURAL
+# size, so the maths comes out at EQ_FONT_PT in the document. Forcing a fixed
+# picture width instead magnifies a short equation to the width of the page.
+EQ_FONT_PT = 13.0
+EQ_RENDER_DPI = 300
+
 # ── Paths ────────────────────────────────────────────────
 def _resolve_task_dir() -> str:
     """Return the task folder: --task-dir, NEQSIM_TASK_DIR, else this file's parent.
@@ -93,6 +123,7 @@ def _resolve_task_dir() -> str:
 TASK_DIR = _resolve_task_dir()
 FIG_DIR = os.path.join(TASK_DIR, "figures")
 REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
+REPORT_BASENAME = "Report"      # replaced by the report title in __main__
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
 PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
@@ -100,9 +131,101 @@ PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
 RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
 TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
 STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
+OUTPUT_MANIFEST_FILE = os.path.join(REPORT_DIR, ".report_outputs.json")
+LEGACY_OUTPUT_NAMES = ("Report.docx", "Report.html", "Paper.docx", "Paper.html")
+REPORT_NAME_MAX_CHARS = 120
 
 if not os.path.isdir(REPORT_DIR):
     os.makedirs(REPORT_DIR)
+
+
+def slugify_report_name(title, fallback="Report"):
+    """Return a filesystem-safe file base name derived from the report title.
+
+    Parameters
+    ----------
+    title : str
+        The report (study) title.
+    fallback : str
+        Name used when the title yields nothing usable.
+
+    Returns
+    -------
+    str
+        Title with path-hostile characters removed and spaces as underscores.
+    """
+    text = str(title or "")
+    text = re.sub(r"[\\/:*?\"<>|\r\n\t]+", " ", text)
+    text = re.sub(r"[^0-9A-Za-z\u00C0-\u024F &()+,._-]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip(" .-_")
+    if not text:
+        return fallback
+    name = re.sub(r"_+", "_", text.replace(" ", "_")).strip("_")
+    if len(name) > REPORT_NAME_MAX_CHARS:
+        name = name[:REPORT_NAME_MAX_CHARS].rstrip("_-")
+    return name or fallback
+
+
+def apply_report_output_names(title):
+    """Name the generated report files after the report title.
+
+    Every task ships deliverables whose file name is the study title, so a
+    report is identifiable outside its task folder.
+
+    Parameters
+    ----------
+    title : str
+        Resolved report title.
+
+    Returns
+    -------
+    str
+        The base name used for the generated files.
+    """
+    global REPORT_BASENAME, DOCX_FILE, HTML_FILE, PAPER_DOCX_FILE, PAPER_HTML_FILE
+    REPORT_BASENAME = slugify_report_name(title)
+    DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".docx")
+    HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".html")
+    PAPER_DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.docx")
+    PAPER_HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.html")
+    return REPORT_BASENAME
+
+
+def prune_superseded_outputs(current_files):
+    """Delete report files this generator wrote under an earlier title.
+
+    Without this, renaming a study leaves the superseded deliverable beside the
+    current one and a reader cannot tell which is live.
+
+    Parameters
+    ----------
+    current_files : list of str
+        Paths written by this run.
+    """
+    current = set(os.path.abspath(path) for path in current_files
+                  if path and os.path.exists(path))
+    previous = list(LEGACY_OUTPUT_NAMES)
+    if os.path.exists(OUTPUT_MANIFEST_FILE):
+        try:
+            with open(OUTPUT_MANIFEST_FILE, encoding="utf-8-sig") as manifest:
+                previous.extend(json.load(manifest).get("files", []))
+        except (OSError, ValueError):
+            pass
+    for name in previous:
+        stale = os.path.abspath(os.path.join(REPORT_DIR, os.path.basename(name)))
+        if stale in current or not os.path.isfile(stale):
+            continue
+        try:
+            os.remove(stale)
+            print("Removed superseded report file: {}".format(os.path.basename(stale)))
+        except OSError as error:
+            print("NOTE: could not remove {}: {}".format(stale, error))
+    try:
+        with open(OUTPUT_MANIFEST_FILE, "w", encoding="utf-8") as manifest:
+            json.dump({"files": sorted(os.path.basename(p) for p in current)},
+                      manifest, indent=2)
+    except OSError:
+        pass
 
 # ── Word template (corporate branding) ───────────────────
 # Resolution order: --template PATH, NEQSIM_REPORT_TEMPLATE, the saved
@@ -177,17 +300,126 @@ def _ensure_paragraph_style(doc, name, size_pt=None, bold=False):
     style.font.bold = bold
 
 
+def _apply_readable_typography(doc):
+    """Raise style sizes that fall below the readable floor.
+
+    Only ever increases a size, so a template whose body text and headings are
+    already reasonable keeps its own design. Corporate templates built for
+    dense forms often ship Normal at 9-9.5 pt with all heading levels at the
+    same size, which leaves the report body small and the section hierarchy
+    invisible once the template body is cleared.
+    """
+    floors = (
+        ("Normal", BODY_PT),
+        ("Heading 1", HEADING1_PT),
+        ("Heading 2", HEADING2_PT),
+        ("Heading 3", HEADING3_PT),
+    )
+    for name, floor_pt in floors:
+        try:
+            style = doc.styles[name]
+        except KeyError:
+            continue
+        current = style.font.size.pt if style.font.size else None
+        if current is None or current < floor_pt:
+            style.font.size = Pt(floor_pt)
+        if name.startswith("Heading"):
+            style.font.bold = True
+    # A form template often sets space_after = 0, which glues consecutive
+    # paragraphs together and hides the paragraph structure entirely.
+    try:
+        body = doc.styles["Normal"].paragraph_format
+        if body.space_after is None or body.space_after < Pt(BODY_SPACE_AFTER_PT):
+            body.space_after = Pt(BODY_SPACE_AFTER_PT)
+    except KeyError:
+        pass
+
+
 def _new_document():
     """Return a Word document based on the configured template, if any."""
     if not REPORT_TEMPLATE:
-        return Document()
+        doc = Document()
+        _apply_readable_typography(doc)
+        return doc
     doc = Document(REPORT_TEMPLATE)
     if not KEEP_TEMPLATE_CONTENT:
         _clear_document_body(doc)
-    for name, size_pt in (("Title", 28), ("Heading 1", 16), ("Heading 2", 13),
-                          ("Heading 3", 12), ("List Bullet", None)):
+    for name, size_pt in (("Title", 28), ("Heading 1", HEADING1_PT),
+                          ("Heading 2", HEADING2_PT),
+                          ("Heading 3", HEADING3_PT), ("List Bullet", None)):
         _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
+    _apply_readable_typography(doc)
     return doc
+
+
+def _style_numbering_active(doc, style_name, _seen=None):
+    """Return true when a heading style carries automatic Word numbering.
+
+    A corporate template usually numbers its heading styles itself. Writing our
+    own "7. " prefix into such a heading produces "8   7. Solution Workflow" —
+    two numbering schemes that also disagree, because Word counts the cover and
+    contents headings too.
+    """
+    if _seen is None:
+        _seen = set()
+    if style_name in _seen:
+        return False
+    _seen.add(style_name)
+    try:
+        style = doc.styles[style_name]
+    except KeyError:
+        return False
+    element = style.element
+    if element.find(qn("w:pPr")) is not None:
+        if element.find(qn("w:pPr")).find(qn("w:numPr")) is not None:
+            return True
+    based_on = element.find(qn("w:basedOn"))
+    if based_on is not None:
+        parent = based_on.get(qn("w:val"))
+        if parent:
+            return _style_numbering_active(doc, parent, _seen)
+    return False
+
+
+_HEADING_NUMBERING_CACHE = {}
+_MANUAL_HEADING_NUMBER = re.compile(r"^\s*\d+(?:\.\d+)*[.)]?\s+")
+
+
+def _heading_numbering_active(doc, level):
+    """Cache the numbering check per document and heading level."""
+    key = (id(doc), level)
+    if key not in _HEADING_NUMBERING_CACHE:
+        _HEADING_NUMBERING_CACHE[key] = _style_numbering_active(
+            doc, "Heading {}".format(level))
+    return _HEADING_NUMBERING_CACHE[key]
+
+
+def _suppress_paragraph_numbering(paragraph):
+    """Remove list numbering from a single paragraph (numId 0)."""
+    p_pr = paragraph._p.get_or_add_pPr()
+    for existing in p_pr.findall(qn("w:numPr")):
+        p_pr.remove(existing)
+    p_pr.append(parse_xml(
+        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
+            nsdecls("w"))))
+
+
+def _add_heading(doc, text, level=1, numbered=True):
+    """Add a heading that does not fight the template's own numbering.
+
+    When the template numbers headings, our manual "N. " prefix is dropped so
+    Word supplies the single authoritative number; headings that must stay
+    unnumbered (contents, front matter) have numbering suppressed instead.
+    """
+    text = str(text)
+    if _heading_numbering_active(doc, level):
+        if numbered:
+            text = _MANUAL_HEADING_NUMBER.sub("", text)
+        heading = doc.add_heading(text, level=level)
+        if not numbered:
+            _suppress_paragraph_numbering(heading)
+        return heading
+    return doc.add_heading(text, level=level)
 
 
 def _set_table_style(table, name="Table Grid"):
@@ -205,10 +437,16 @@ def _set_table_style(table, name="Table Grid"):
         parse_xml('<w:tblBorders {}>{}</w:tblBorders>'.format(nsdecls("w"), borders))
     )
 
-# ── Configuration (edit these) ───────────────────────────
-TITLE = "Task Report"           # <-- Change to your task title
-AUTHOR = ""                     # <-- Your name
+# ── Configuration ────────────────────────────────────────
+# TITLE and AUTHOR are resolved at run time by resolve_report_identity():
+#   --title / --author  >  study_config.yaml (study.title, study.author)  >
+#   task_spec.md heading  >  a task-local generate_report.py copy  >  folder name.
+# The values below are only the last-resort fallbacks.
+TITLE = "Task Report"
+AUTHOR = ""
 TASK_DATE = date.today().isoformat()
+TASK_STATEMENT = ""             # resolved from study_config/task_spec/results
+STUDY_BADGES = []               # [(label, value)] shown under the title
 
 # ── Paper-specific configuration (edit for scientific paper output) ──
 PAPER_TITLE = ""                # <-- Leave empty to use TITLE
@@ -282,6 +520,50 @@ PAPER_SECTIONS = {
         ""
     ),
 }
+
+
+# ── Task-local overrides ─────────────────────────────────
+# Hand-written report content lives in step3_report/report_sections.json, not
+# in a forked copy of this script. Keys: title, author, classification,
+# doc_number, revision, manual_sections, paper_sections, paper_* metadata.
+REPORT_SECTIONS_FILE = os.path.join(REPORT_DIR, "report_sections.json")
+
+
+def _load_report_sections():
+    """Return the task's hand-written report overrides, or an empty dict."""
+    if not os.path.isfile(REPORT_SECTIONS_FILE):
+        return {}
+    try:
+        with open(REPORT_SECTIONS_FILE, "r", encoding="utf-8-sig") as source:
+            data = json.load(source)
+    except (OSError, ValueError) as error:
+        print("WARNING: could not read {}: {}".format(REPORT_SECTIONS_FILE, error))
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+REPORT_SECTIONS = _load_report_sections()
+# Sections a human wrote by hand; these outrank auto-generated prose.
+AUTHORED_SECTIONS = set()
+
+for _key, _value in (REPORT_SECTIONS.get("manual_sections") or {}).items():
+    if isinstance(_value, str) and _value.strip():
+        MANUAL_SECTIONS[_key] = _value
+        AUTHORED_SECTIONS.add(_key)
+for _key, _value in (REPORT_SECTIONS.get("paper_sections") or {}).items():
+    if isinstance(_value, str) and _value.strip():
+        PAPER_SECTIONS[_key] = _value
+for _key, _global in (("doc_number", "DOC_NUMBER"), ("revision", "REVISION"),
+                      ("paper_title", "PAPER_TITLE"),
+                      ("paper_journal", "PAPER_JOURNAL"),
+                      ("paper_acknowledgments", "PAPER_ACKNOWLEDGMENTS")):
+    if isinstance(REPORT_SECTIONS.get(_key), str) and REPORT_SECTIONS[_key].strip():
+        globals()[_global] = REPORT_SECTIONS[_key]
+for _key, _global in (("revision_history", "REVISION_HISTORY"),
+                      ("paper_authors", "PAPER_AUTHORS"),
+                      ("paper_keywords", "PAPER_KEYWORDS")):
+    if isinstance(REPORT_SECTIONS.get(_key), list) and REPORT_SECTIONS[_key]:
+        globals()[_global] = REPORT_SECTIONS[_key]
 
 
 # ══════════════════════════════════════════════════════════
@@ -479,7 +761,8 @@ def load_study_config():
     with open(STUDY_CONFIG_FILE, "r", encoding="utf-8") as config_file:
         text = config_file.read()
     config = {}
-    for section in ["study", "inputs", "notebooks", "report", "quality_gates"]:
+    for section in ["study", "inputs", "analysis", "notebooks", "report",
+                    "quality_gates"]:
         lines = _section_lines(text, section)
         config[section] = _parse_section_scalars(lines)
     config["report"]["formats"] = _parse_scalar_list(
@@ -490,6 +773,10 @@ def load_study_config():
         _section_lines(text, "notebooks"))
     config["inputs"]["documents"] = _parse_mapping_list(
         _section_lines(text, "inputs"), "documents")
+    config["inputs"]["data_sources"] = _parse_mapping_list(
+        _section_lines(text, "inputs"), "data_sources")
+    config["analysis"]["scripts"] = _parse_mapping_list(
+        _section_lines(text, "analysis"), "scripts")
     print("  Loaded study_config.yaml")
     return config
 
@@ -514,6 +801,172 @@ def extract_spec_section(spec_text, heading):
     if text and "| | | |" not in text and "[e.g.," not in text:
         return text
     return ""
+
+
+# ── Report identity (title, author, task statement) ──────
+
+def _is_placeholder_value(value):
+    """Return true for empty or bracketed scaffold values such as "[Title]"."""
+    text = str(value or "").strip()
+    if not text:
+        return True
+    return text.startswith("[") and text.endswith("]")
+
+
+def _prettify_slug(folder_name):
+    """Turn a task folder name into a readable title."""
+    name = folder_name
+    if len(name) >= 11 and name[4] == "-" and name[7] == "-":
+        name = name[11:]
+    name = name.replace("_", " ").replace("-", " ").strip()
+    if not name:
+        return ""
+    return name[0].upper() + name[1:]
+
+
+def _local_report_constant(name):
+    """Read a constant from report_sections.json or a legacy vendored copy."""
+    override = REPORT_SECTIONS.get(name.lower())
+    if isinstance(override, str) and override.strip():
+        return override.strip()
+    local_copy = os.path.join(REPORT_DIR, "generate_report.py")
+    if os.path.abspath(local_copy) == os.path.abspath(__file__):
+        return ""
+    if not os.path.isfile(local_copy):
+        return ""
+    pattern = re.compile(r'^{}\s*=\s*"([^"]*)"'.format(name), re.MULTILINE)
+    with open(local_copy, "r", encoding="utf-8") as source:
+        match = pattern.search(source.read())
+    return match.group(1).strip() if match else ""
+
+
+def _task_spec_title(task_spec):
+    """Return the title from the first heading of task_spec.md."""
+    if not task_spec:
+        return ""
+    for line in task_spec.split("\n"):
+        if line.startswith("# "):
+            title = line[2:].strip()
+            for prefix in ("Task Specification:", "Task Spec:", "Task:"):
+                if title.lower().startswith(prefix.lower()):
+                    title = title[len(prefix):].strip()
+            if not _is_placeholder_value(title):
+                return title
+            return ""
+    return ""
+
+
+def _cli_option(flag):
+    """Return the value that follows a command-line flag, or an empty string."""
+    if flag not in sys.argv:
+        return ""
+    index = sys.argv.index(flag) + 1
+    if index >= len(sys.argv):
+        print("ERROR: {} requires a value".format(flag))
+        sys.exit(2)
+    return sys.argv[index].strip()
+
+
+def _first_paragraph(text, max_chars=700):
+    """Return the first prose paragraph of a block, trimmed for a summary box."""
+    for block in str(text or "").split("\n\n"):
+        cleaned = " ".join(
+            line.strip() for line in block.split("\n")
+            if line.strip() and not line.strip().startswith(("|", "#", "-", "*"))
+        ).strip()
+        if cleaned:
+            if len(cleaned) > max_chars:
+                cleaned = cleaned[:max_chars].rsplit(" ", 1)[0] + " ..."
+            return cleaned
+    return ""
+
+
+def resolve_task_statement(results, task_spec, study_config):
+    """Return a one-paragraph statement of what the task asked for."""
+    if results:
+        for key in ("task_statement", "task", "objective", "problem_statement"):
+            text = results.get(key)
+            if text and isinstance(text, str) and not _is_placeholder_text(text):
+                return _first_paragraph(text)
+    for heading in ("Objective", "Task Description", "Problem Statement",
+                    "Description", "Background"):
+        text = extract_spec_section(task_spec, heading)
+        if text and not _is_placeholder_text(text):
+            statement = _first_paragraph(text)
+            if statement:
+                return statement
+    title = (study_config or {}).get("study", {}).get("title", "")
+    if not _is_placeholder_value(title):
+        return "Study scope: {}.".format(str(title).rstrip("."))
+    return ""
+
+
+def _study_badges(study_config):
+    """Return [(label, value)] describing study depth, shown under the title."""
+    study = (study_config or {}).get("study", {})
+    labels = (
+        ("task_type", "Task type"),
+        ("scale", "Scale"),
+        ("mode", "Mode"),
+        ("aace_class", "AACE class"),
+        ("fel_stage", "FEL stage"),
+    )
+    badges = []
+    for key, label in labels:
+        value = str(study.get(key, "")).strip()
+        if not value or value.lower() in ("auto", "none", "[title]"):
+            continue
+        badges.append((label, value))
+    return badges
+
+
+def resolve_report_identity(study_config, task_spec, results):
+    """Set TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT and STUDY_BADGES.
+
+    The report title is the study title, so a report generated from the
+    canonical script against any task folder is never left named "Task Report".
+    """
+    global TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT, STUDY_BADGES
+
+    study = (study_config or {}).get("study", {})
+    report_cfg = (study_config or {}).get("report", {})
+
+    title_candidates = [
+        _cli_option("--title"),
+        os.environ.get("NEQSIM_REPORT_TITLE", "").strip(),
+        study.get("title", ""),
+        _task_spec_title(task_spec),
+        _local_report_constant("TITLE"),
+        _prettify_slug(os.path.basename(TASK_DIR)),
+    ]
+    for candidate in title_candidates:
+        if candidate and not _is_placeholder_value(candidate) \
+                and candidate != "Task Report":
+            TITLE = str(candidate).strip()
+            break
+
+    author_candidates = [
+        _cli_option("--author"),
+        os.environ.get("NEQSIM_REPORT_AUTHOR", "").strip(),
+        study.get("author", ""),
+        report_cfg.get("author", ""),
+        _local_report_constant("AUTHOR"),
+    ]
+    for candidate in author_candidates:
+        if candidate and not _is_placeholder_value(candidate):
+            AUTHOR = str(candidate).strip()
+            break
+
+    for candidate in (study.get("classification", ""),
+                      report_cfg.get("classification", ""),
+                      _local_report_constant("CLASSIFICATION")):
+        if candidate and not _is_placeholder_value(candidate):
+            CLASSIFICATION = str(candidate).strip()
+            break
+
+    TASK_STATEMENT = resolve_task_statement(results, task_spec, study_config)
+    STUDY_BADGES = _study_badges(study_config)
+    return TITLE
 
 
 def _as_bool(value):
@@ -541,6 +994,8 @@ def _is_placeholder_text(text):
     if not text:
         return True
     stripped = str(text).strip()
+    if stripped.startswith("[") and stripped.endswith("]"):
+        return True
     placeholder_markers = (
         "[replace with",
         "[describe ",
@@ -645,6 +1100,278 @@ def _format_list_item_text(item):
     return str(item)
 
 
+def load_collection_manifest():
+    """Return the references collection manifest, or {} when absent.
+
+    Written by devtools/generate_sources_md.py; it is the machine-readable
+    record of every document the task collected and which system it came from.
+    """
+    path = os.path.join(TASK_DIR, "step1_scope_and_research", "references",
+                        "collection_manifest.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8-sig") as manifest_file:
+            data = json.load(manifest_file)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _document_source_counts(manifest):
+    """Return [(source name, document count, description)] from the manifest."""
+    rows = []
+    for group in manifest.get("sources", []) or []:
+        if not isinstance(group, dict):
+            continue
+        documents = group.get("documents") or group.get("files") or []
+        if not documents:
+            continue
+        name = (group.get("system_name") or group.get("source")
+                or group.get("name") or "other")
+        rows.append((str(name), len(documents), str(group.get("description", "") or "")))
+    rows.sort(key=lambda row: (-row[1], row[0].lower()))
+    return rows
+
+
+def _count_reference_files():
+    """Count collected files directly, for tasks with no manifest."""
+    references = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
+    if not os.path.isdir(references):
+        return []
+    counts = {}
+    for root, dirs, files in os.walk(references):
+        dirs[:] = [name for name in dirs if not name.startswith(".")]
+        for name in files:
+            if name in ("SOURCES.md", "collection_manifest.json"):
+                continue
+            folder = os.path.basename(root)
+            label = "unfiled" if os.path.abspath(root) == os.path.abspath(references) \
+                else folder
+            counts[label] = counts.get(label, 0) + 1
+    rows = [(name, count, "") for name, count in counts.items()]
+    rows.sort(key=lambda row: (-row[1], row[0].lower()))
+    return rows
+
+
+def format_information_sources_text(config, results):
+    """Format the evidence basis: how many documents came from which system.
+
+    A reader's first question about a data-driven study is what it was built on.
+    This answers it from the collected files themselves, so the count cannot be
+    overstated in prose.
+    """
+    manifest = load_collection_manifest()
+    rows = _document_source_counts(manifest) or _count_reference_files()
+    inputs = (config or {}).get("inputs", {})
+    data_sources = inputs.get("data_sources", []) or []
+    parts = []
+
+    if rows:
+        total = sum(row[1] for row in rows)
+        parts.append(
+            "{} document(s) were collected from {} source system(s) and are stored "
+            "with this task in step1_scope_and_research/references/.".format(
+                total, len(rows)))
+        parts.append("")
+        table = ["| Source system | Documents | Content |",
+                 "|---|---|---|"]
+        for name, count, description in rows:
+            table.append("| {} | {} | {} |".format(name, count, description or "-"))
+        parts.append("\n".join(table))
+
+    if data_sources:
+        parts.append("")
+        parts.append("Source systems read:")
+        table = ["| System | Scope read | Access | Captured evidence |",
+                 "|---|---|---|---|"]
+        for entry in data_sources:
+            if not isinstance(entry, dict):
+                continue
+            evidence = str(entry.get("evidence", "") or "")
+            if not evidence:
+                state = "not recorded"
+            elif os.path.exists(_resolve_task_path(evidence)):
+                state = evidence
+            else:
+                state = "{} (missing)".format(evidence)
+            table.append("| {} | {} | {} | {} |".format(
+                entry.get("system", "-"), entry.get("scope", "-"),
+                entry.get("access", "read-only"), state))
+        if len(table) > 2:
+            parts.append("\n".join(table))
+
+    gaps = manifest.get("data_gaps", []) or []
+    if gaps:
+        parts.append("")
+        parts.append("Documents sought but not obtained:")
+        for gap in gaps:
+            if isinstance(gap, dict):
+                text = (gap.get("description") or gap.get("gap")
+                        or "; ".join("{}: {}".format(key, value)
+                                     for key, value in sorted(gap.items())))
+            else:
+                text = str(gap)
+            parts.append("- {}".format(text))
+
+    if results and results.get("references"):
+        parts.append("")
+        parts.append("Standards and literature cited are listed in the References "
+                     "section; the per-file origin, retrieval date, and relevance of "
+                     "every collected document are in "
+                     "step1_scope_and_research/references/SOURCES.md.")
+    elif rows:
+        parts.append("")
+        parts.append("Per-file origin, retrieval date, and relevance: "
+                     "step1_scope_and_research/references/SOURCES.md.")
+
+    return "\n".join(parts).strip()
+
+
+def format_improvements_text(results):
+    """Format the tooling improvements this task delivered to NeqSim/agents/skills.
+
+    A task is also a test of the tooling; this section makes the resulting fixes
+    part of the deliverable instead of leaving them in a side file.
+    """
+    if not results:
+        return ""
+    items = results.get("improvements")
+    if isinstance(items, str):
+        return items.strip()
+    if not isinstance(items, list) or not items:
+        return ""
+
+    rows = []
+    for item in items:
+        if not isinstance(item, dict):
+            rows.append("- {}".format(item))
+            continue
+        target = item.get("target") or item.get("component") or "tooling"
+        gap = item.get("gap") or item.get("problem") or ""
+        change = item.get("change") or item.get("improvement") or ""
+        evidence = item.get("evidence") or item.get("test") or ""
+        line = "- **{}** — {}".format(target, change or gap)
+        if gap and change:
+            line += " (gap: {})".format(gap)
+        if evidence:
+            line += " [{}]".format(evidence)
+        rows.append(line)
+    return "\n".join(rows)
+
+
+def _assumption_rows(results):
+    """Return (assumption rows, data-gap rows) from any results.json spelling."""
+    assumptions = []
+    gaps = []
+    combined = results.get("assumptions_and_gaps") or results.get("assumptions_gaps")
+    if isinstance(combined, dict):
+        assumptions.extend(combined.get("assumptions", []) or [])
+        gaps.extend(combined.get("data_gaps", []) or combined.get("gaps", []) or [])
+    elif isinstance(combined, list):
+        gaps.extend(combined)
+    for key in ("assumptions", "assumption_register"):
+        value = results.get(key)
+        if isinstance(value, list):
+            assumptions.extend(value)
+    for key in ("data_gaps", "evidence_gaps", "gaps"):
+        value = results.get(key)
+        if isinstance(value, list):
+            gaps.extend(value)
+    return assumptions, gaps
+
+
+def _assumption_text(item, keys):
+    """Pull the first present key from a dict item, else render the whole item."""
+    if not isinstance(item, dict):
+        return str(item)
+    for key in keys:
+        if item.get(key):
+            return str(item[key])
+    return ""
+
+
+def format_assumptions_text(results):
+    """Format the assumption and data-gap register.
+
+    Every assumption a reader must accept, and every piece of information that
+    could not be found, with what was assumed in its place.
+    """
+    if not results:
+        return ""
+    assumptions, gaps = _assumption_rows(results)
+    if not assumptions and not gaps:
+        return ""
+
+    parts = []
+    if assumptions:
+        rows = []
+        for item in assumptions:
+            if isinstance(item, dict):
+                text = _assumption_text(item, ("assumption", "description", "text", "item"))
+                basis = _assumption_text(item, ("basis", "source", "rationale", "why"))
+                effect = _assumption_text(
+                    item, ("effect", "impact", "conservatism", "direction", "consequence"))
+            else:
+                text, basis, effect = str(item), "", ""
+            rows.append((text, basis, effect))
+        parts.append("Assumptions the results depend on:")
+        parts.append("")
+        # A table with two empty columns reads worse than a list; only tabulate
+        # when the basis or effect was actually recorded.
+        if any(basis or effect for _text, basis, effect in rows):
+            table = ["| # | Assumption | Basis | Effect on the result |",
+                     "|---|---|---|---|"]
+            for index, (text, basis, effect) in enumerate(rows, 1):
+                table.append("| A{} | {} | {} | {} |".format(
+                    index, text.replace("|", "/"), basis.replace("|", "/") or "-",
+                    effect.replace("|", "/") or "-"))
+            parts.append("\n".join(table))
+        else:
+            for index, (text, _basis, _effect) in enumerate(rows, 1):
+                parts.append("- A{}: {}".format(index, text))
+
+    if gaps:
+        if parts:
+            parts.append("")
+        parts.append("Information sought but not available, and what was assumed "
+                     "in its place:")
+        parts.append("")
+        table = ["| # | Information sought | Source | Status | Assumed instead | "
+                 "Effect if wrong |", "|---|---|---|---|---|---|"]
+        for index, item in enumerate(gaps, 1):
+            if isinstance(item, dict):
+                sought = _assumption_text(
+                    item, ("gap", "description", "information", "sought", "what",
+                           "needed", "missing", "item", "text"))
+                source = _assumption_text(item, ("source", "system", "document"))
+                status = _assumption_text(item, ("status", "state", "reason"))
+                blocker = _assumption_text(item, ("blocker", "why", "detail"))
+                if not sought:
+                    sought, blocker = blocker, ""
+                if blocker and status:
+                    status = "{} — {}".format(status, blocker)
+                elif blocker:
+                    status = blocker
+                assumed = _assumption_text(
+                    item, ("assumed", "assumption", "fallback", "substitute",
+                           "workaround", "mitigation"))
+                effect = _assumption_text(
+                    item, ("effect", "impact", "consequence", "risk"))
+            else:
+                sought, source, status, assumed, effect = str(item), "", "", "", ""
+            table.append("| G{} | {} | {} | {} | {} | {} |".format(
+                index, sought.replace("|", "/") or "-", source.replace("|", "/") or "-",
+                status.replace("|", "/") or "-", assumed.replace("|", "/") or "-",
+                effect.replace("|", "/") or "-"))
+        parts.append("\n".join(table))
+        parts.append("")
+        parts.append("Each gap above is an open item: the conclusion holds only while "
+                     "the stated substitute assumption holds.")
+
+    return "\n".join(parts).strip()
+
+
 def format_list_items_text(items):
     """Format strings or dictionaries from results.json as bullet text."""
     if not items:
@@ -677,8 +1404,72 @@ def format_safety_readiness_text(results):
     return "\n".join(lines)
 
 
+_SENTENCE_ABBREVIATIONS = (
+    "e.g.", "i.e.", "cf.", "vs.", "etc.", "approx.", "ca.", "no.", "nos.",
+    "fig.", "figs.", "eq.", "eqs.", "ref.", "refs.", "tab.", "sec.", "ch.",
+    "dvs.", "jf.", "bl.a.", "pkt.", "ca.", "inkl.", "ekskl.",
+)
+
+# Longer than this in one unbroken run and a Word/PDF paragraph reads as a wall.
+BODY_PARAGRAPH_MAX_CHARS = 650
+
+
+def _split_sentences(text):
+    """Split prose into sentences, keeping common abbreviations intact."""
+    pieces = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9\u00c6\u00d8\u00c5"\'(\[])', text)
+    merged = []
+    for piece in pieces:
+        if merged and merged[-1].lower().endswith(_SENTENCE_ABBREVIATIONS):
+            merged[-1] = merged[-1] + " " + piece
+        else:
+            merged.append(piece)
+    return merged
+
+
+def _reflow_paragraph(text, max_chars=BODY_PARAGRAPH_MAX_CHARS):
+    """Break an over-long single paragraph at sentence boundaries."""
+    if len(text) <= max_chars:
+        return [text]
+    chunks = []
+    buffer = ""
+    for sentence in _split_sentences(text):
+        if buffer and len(buffer) + 1 + len(sentence) > max_chars:
+            chunks.append(buffer)
+            buffer = sentence
+        else:
+            buffer = sentence if not buffer else buffer + " " + sentence
+    if buffer:
+        chunks.append(buffer)
+    return chunks
+
+
+def _body_paragraphs(text):
+    """Return renderable paragraphs for a plain-prose section.
+
+    A results.json field written as one long string (approach, conclusions,
+    executive_summary) otherwise renders as a single unbroken block. Blocks the
+    author already broke with their own newlines are left untouched.
+    """
+    paragraphs = []
+    for block in str(text or "").split("\n\n"):
+        block = block.strip()
+        if not block:
+            continue
+        if "\n" in block:
+            paragraphs.append(block)
+            continue
+        paragraphs.extend(_reflow_paragraph(block))
+    return paragraphs
+
+
+def _prose_to_html(text):
+    """Render plain prose as HTML paragraphs using the same splitting rules."""
+    return "".join("<p>{}</p>".format(para.replace("\n", "<br>"))
+                   for para in _body_paragraphs(text))
+
+
 def auto_executive_summary(results, task_spec):
-    """Generate an executive summary paragraph from available results data."""
+    """Generate an executive summary from available results data."""
     parts = []
     approach = ""
     if results and results.get("approach"):
@@ -701,6 +1492,19 @@ def auto_executive_summary(results, task_spec):
     readiness = infer_safety_readiness(results) if results else None
     if readiness:
         parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
+    evidence_rows = _document_source_counts(load_collection_manifest()) \
+        or _count_reference_files()
+    if evidence_rows:
+        parts.append("Evidence basis: {} document(s) from {}.".format(
+            sum(row[1] for row in evidence_rows),
+            ", ".join("{} ({})".format(name, count)
+                      for name, count, _desc in evidence_rows[:6])))
+    if results:
+        _assumptions, _gaps = _assumption_rows(results)
+        if _gaps:
+            parts.append("{} item(s) of information could not be obtained; the "
+                         "substitute assumptions are listed in Assumptions and "
+                         "Data Gaps.".format(len(_gaps)))
     if results and results.get("uncertainty"):
         uncertainty = results["uncertainty"]
         p50 = uncertainty.get("p50")
@@ -716,7 +1520,7 @@ def auto_executive_summary(results, task_spec):
             parts.append("Validation checks did not flag design blockers.")
     if results and results.get("conclusions") and not _is_placeholder_text(results["conclusions"]):
         parts.append(results["conclusions"])
-    return " ".join(parts)
+    return "\n\n".join(parts)
 
 
 def auto_problem_description(results, task_spec):
@@ -757,6 +1561,10 @@ def _required_section_available(section, results, task_spec):
     if normalized in ("methodology", "approach"):
         return bool((results and results.get("approach"))
                     or _manual_section_filled("approach"))
+    if normalized in ("information_sources", "evidence_basis", "sources"):
+        return bool(format_information_sources_text({}, results))
+    if normalized in ("assumptions", "assumptions_and_gaps", "data_gaps"):
+        return bool(format_assumptions_text(results))
     if normalized == "results":
         return bool(results and results.get("key_results"))
     if normalized == "discussion":
@@ -888,6 +1696,186 @@ def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks)
     return warnings
 
 
+def _resolve_task_path(path):
+    """Resolve a study_config path relative to the task folder."""
+    if os.path.isabs(str(path)):
+        return str(path)
+    return os.path.join(TASK_DIR, str(path))
+
+
+def _validate_analysis_scripts(analysis):
+    """Return warnings for declared analysis scripts and their artifacts."""
+    warnings = []
+    engine = str(analysis.get("engine", "auto")).strip().lower()
+    scripts = analysis.get("scripts", [])
+    if engine in ("script", "hybrid") and not scripts:
+        warnings.append(
+            "analysis.engine is '{}', but analysis.scripts lists no scripts.".format(engine))
+    for entry in scripts:
+        script_file = entry.get("file")
+        if not script_file:
+            continue
+        script_path = os.path.join(TASK_DIR, "step2_analysis", str(script_file))
+        if not os.path.exists(script_path) and not os.path.exists(
+                _resolve_task_path(script_file)):
+            warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
+                script_file))
+            continue
+        produces = entry.get("produces")
+        if produces and not os.path.exists(_resolve_task_path(produces)):
+            warnings.append("Analysis script {} declares an output that is missing: {}".format(
+                script_file, produces))
+    return warnings
+
+
+def _validate_data_sources(inputs, quality_gates, results):
+    """Return warnings for declared source systems and provenance closure."""
+    warnings = []
+    data_sources = inputs.get("data_sources", [])
+    required = _as_bool(inputs.get("data_sources_required", False))
+    if required and not data_sources:
+        warnings.append(
+            "inputs.data_sources_required is true, but no source systems are listed.")
+
+    for entry in data_sources:
+        system = entry.get("system", "<unnamed>")
+        evidence = entry.get("evidence")
+        if not evidence:
+            if required or _is_required(quality_gates.get("provenance_closure")):
+                warnings.append(
+                    "Data source '{}' has no evidence path — captured records cannot "
+                    "be traced.".format(system))
+            continue
+        if not os.path.exists(_resolve_task_path(evidence)):
+            warnings.append("Captured evidence is missing for data source '{}': {}".format(
+                system, evidence))
+
+    if _is_required(quality_gates.get("provenance_closure")) and data_sources:
+        cited = results.get("data_sources") or results.get("sources") if results else None
+        if not cited:
+            warnings.append(
+                "Provenance closure is required, but results.json has no data_sources "
+                "or sources section naming the systems the numbers came from.")
+    return warnings
+
+
+def _validate_work_record(report, quality_gates):
+    """Return warnings when the method-and-data record is required but unusable."""
+    setting = str(report.get("work_record", "auto")).strip().lower()
+    gate = str(quality_gates.get("work_record", "auto")).strip().lower()
+    if "skip" in (setting, gate):
+        return []
+    if not (_is_required(setting) or _is_required(gate)):
+        return []
+
+    record_path = os.path.join(TASK_DIR, "step3_report", "WORK_RECORD.md")
+    if not os.path.exists(record_path):
+        return ["Work record is required, but step3_report/WORK_RECORD.md is missing "
+                "(build it with: neqsim work-record .)."]
+    try:
+        with open(record_path, "r", encoding="utf-8") as record_file:
+            text = record_file.read()
+    except OSError as error:
+        return ["Work record could not be read: {}".format(error)]
+
+    warnings = []
+    blocks = re.findall(
+        r"<!--\s*WORK_RECORD:NARRATIVE id=([A-Za-z0-9_\-]+)\s*-->\n?(.*?)\n?"
+        r"<!--\s*/WORK_RECORD:NARRATIVE\s*-->", text, re.DOTALL)
+    unfilled = [block_id for block_id, body in blocks
+                if re.fullmatch(r"\[[^\]]*\]", (body or "").strip() or "[]")]
+    if unfilled:
+        warnings.append(
+            "Work record narrative is still template text: {}.".format(
+                ", ".join(unfilled)))
+    if not blocks:
+        warnings.append(
+            "Work record has no narrative blocks — regenerate it with "
+            "neqsim work-record so the method section is present.")
+    return warnings
+
+
+def _find_work_record_generator():
+    """Locate devtools/generate_work_record.py from the environment or the tree.
+
+    A task folder vendors its own copy of this report generator, so the search
+    also walks up from the task itself — that is what lets an old task pick up
+    the current work-record generator.
+    """
+    candidates = []
+    project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    if project_root:
+        candidates.append(os.path.join(project_root, "devtools",
+                                       "generate_work_record.py"))
+    for start in (os.path.dirname(os.path.abspath(__file__)), TASK_DIR):
+        current = start
+        for _ in range(6):
+            candidates.append(os.path.join(current, "devtools",
+                                           "generate_work_record.py"))
+            candidates.append(os.path.join(current, "generate_work_record.py"))
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            current = parent
+    for candidate in candidates:
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def generate_work_record(config):
+    """Build step3_report/WORK_RECORD.md unless the task opts out.
+
+    The report carries the conclusion; the work record carries the method, the
+    data, and the file map. It is regenerated with every report so the two
+    deliverables cannot drift apart.
+    """
+    setting = str((config.get("report") or {}).get("work_record", "auto")).strip().lower()
+    if setting == "skip":
+        return
+    generator = _find_work_record_generator()
+    if not generator:
+        print("")
+        print("NOTE: work record not generated (devtools/generate_work_record.py "
+              "not found). Run: neqsim work-record \"{}\"".format(TASK_DIR))
+        return
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("neqsim_work_record", generator)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        print("")
+        module.main([TASK_DIR])
+    except Exception as error:  # never block the report on the companion file
+        print("")
+        print("NOTE: work record could not be generated: {}".format(error))
+
+
+def _validate_assumption_register(inputs, results):
+    """Warn when information was not obtained but nothing was assumed in writing.
+
+    A study that could not get a document still reached an answer somehow. If no
+    assumption is registered, that substitution is invisible to the reader.
+    """
+    unobtained = []
+    for entry in inputs.get("data_sources", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        evidence = str(entry.get("evidence", "") or "")
+        if not evidence or not os.path.exists(_resolve_task_path(evidence)):
+            unobtained.append(str(entry.get("system", "<unnamed>")))
+    manifest_gaps = load_collection_manifest().get("data_gaps", []) or []
+    if not unobtained and not manifest_gaps:
+        return []
+    if format_assumptions_text(results):
+        return []
+    detail = ", ".join(unobtained) if unobtained else "{} document gap(s)".format(
+        len(manifest_gaps))
+    return ["Information was not obtained ({}), but results.json registers no "
+            "assumptions or data_gaps \u2014 state what was assumed in its place.".format(
+                detail)]
+
+
 def validate_study_config(config, results, task_spec):
     """Return warnings for missing deliverables required by study_config.yaml."""
     if not config:
@@ -895,6 +1883,7 @@ def validate_study_config(config, results, task_spec):
 
     warnings = []
     inputs = config.get("inputs", {})
+    analysis = config.get("analysis", {})
     notebooks = config.get("notebooks", {})
     report = config.get("report", {})
     quality_gates = config.get("quality_gates", {})
@@ -928,9 +1917,11 @@ def validate_study_config(config, results, task_spec):
     notebooks_required = _as_bool(notebooks.get("required", True))
     notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
     execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    script_backed = execution_engine == "script" and not notebooks_required
+    analysis_engine = str(analysis.get("engine", "auto")).strip().lower()
+    script_backed = (not notebooks_required
+                     and (execution_engine == "script" or analysis_engine == "script"))
     if notebooks_required or notebook_execution_required or minimum_count:
-        if minimum_count and len(existing_notebooks) < minimum_count:
+        if minimum_count and len(existing_notebooks) < minimum_count and not script_backed:
             warnings.append(
                 "Configured notebook minimum is {}, but {} notebook(s) exist.".format(
                     minimum_count, len(existing_notebooks)))
@@ -944,11 +1935,26 @@ def validate_study_config(config, results, task_spec):
         warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
                                                    existing_notebooks))
 
+    warnings.extend(_validate_analysis_scripts(analysis))
+    warnings.extend(_validate_data_sources(inputs, quality_gates, results or {}))
+    warnings.extend(_validate_work_record(report, quality_gates))
+    warnings.extend(_validate_assumption_register(inputs, results or {}))
+
     if _as_bool(quality_gates.get("require_results_json", False)) and not results:
         warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
     if _is_required(quality_gates.get("benchmark_validation")) and not (
             results and results.get("benchmark_validation")):
-        warnings.append("Benchmark validation is required, but results.json has no benchmark_validation section.")
+        benchmark_kind = str(quality_gates.get("benchmark_kind", "auto")).strip().lower()
+        if benchmark_kind in ("", "auto", "none"):
+            benchmark_kind = "independent reference"
+        warnings.append(
+            "Benchmark validation ({}) is required, but results.json has no "
+            "benchmark_validation section.".format(benchmark_kind.replace("_", " ")))
+    if _is_required(quality_gates.get("human_review")) and not (
+            results and (results.get("human_review") or results.get("review"))):
+        warnings.append(
+            "Human review is required, but results.json has no human_review section "
+            "recording the reviewer and sign-off status.")
     if _is_required(quality_gates.get("uncertainty_analysis")) and not (
             results and results.get("uncertainty")):
         warnings.append("Uncertainty analysis is required, but results.json has no uncertainty section.")
@@ -1088,7 +2094,7 @@ def render_scope_to_word(doc, content):
         # Sub-heading (e.g., "Applicable Standards:")
         if (line.strip().endswith(":") and not line.strip().startswith("-")
                 and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            doc.add_heading(line.strip(), level=2)
+            _add_heading(doc, line.strip(), level=2)
             i += 1
             continue
 
@@ -1170,10 +2176,11 @@ def get_equations(results):
 
 
 def render_equation_to_image(latex_str, output_path):
-    """Render a LaTeX equation to a high-quality PNG image using matplotlib.
+    """Render a LaTeX equation to a PNG sized for EQ_FONT_PT in the document.
 
-    Uses display-style math, large font, and 300 DPI for crisp rendering
-    in Word documents. Returns True if the image was created, False otherwise.
+    Rendered at EQ_FONT_PT and EQ_RENDER_DPI so that placing the image at its
+    natural size (pixels / EQ_RENDER_DPI inches) reproduces exactly that point
+    size. Returns True if the image was created, False otherwise.
     """
     if not HAS_MATPLOTLIB:
         return False
@@ -1182,16 +2189,39 @@ def render_equation_to_image(latex_str, output_path):
         fig.text(
             0.5, 0.5,
             "${}$".format(latex_str),
-            fontsize=24, ha="center", va="center",
+            fontsize=EQ_FONT_PT, ha="center", va="center",
             math_fontfamily="cm",
         )
-        fig.savefig(output_path, dpi=300, bbox_inches="tight",
-                    pad_inches=0.15, facecolor="white", edgecolor="none")
+        fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
+                    pad_inches=0.04, facecolor="white", edgecolor="none")
         plt.close(fig)
         return True
     except Exception as e:
         print("  Warning: could not render equation: {}".format(e))
         return False
+
+
+def _png_pixel_size(path):
+    """Return (width, height) in pixels from the PNG IHDR chunk, else None."""
+    try:
+        with open(path, "rb") as handle:
+            header = handle.read(24)
+        if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+            return None
+        return (int.from_bytes(header[16:20], "big"),
+                int.from_bytes(header[20:24], "big"))
+    except Exception:
+        return None
+
+
+def _add_equation_picture(doc, image_path, max_width_in):
+    """Insert an equation image at its natural size, capped to the text width."""
+    size = _png_pixel_size(image_path)
+    if size and size[0] > 0:
+        width_in = min(size[0] / float(EQ_RENDER_DPI), max_width_in)
+    else:
+        width_in = min(3.0, max_width_in)
+    doc.add_picture(image_path, width=Inches(width_in))
 
 
 def _parse_key_name(key):
@@ -1466,14 +2496,14 @@ def add_workflow_word_section(doc, results):
     workflow = plan.get("workflow", "")
     if wtype:
         p = doc.add_paragraph()
-        p.add_run("Workflow type: ").font.size = Pt(10)
+        p.add_run("Workflow type: ").font.size = Pt(BODY_PT)
         run = p.add_run(str(wtype))
         run.bold = True
-        run.font.size = Pt(10)
+        run.font.size = Pt(BODY_PT)
     if workflow:
         p = doc.add_paragraph()
-        p.add_run("Composition: ").font.size = Pt(10)
-        p.add_run(str(workflow)).font.size = Pt(10)
+        p.add_run("Composition: ").font.size = Pt(BODY_PT)
+        p.add_run(str(workflow)).font.size = Pt(BODY_PT)
     disc = plan.get("discovery", {})
     if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
         bits = []
@@ -1482,7 +2512,7 @@ def add_workflow_word_section(doc, results):
         if disc.get("agent_search"):
             bits.append("agent_search: {}".format(disc.get("agent_search")))
         p = doc.add_paragraph()
-        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(10)
+        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(BODY_PT)
 
     agents = plan.get("agents_used", [])
     if agents:
@@ -1502,7 +2532,7 @@ def add_workflow_word_section(doc, results):
         p = doc.add_paragraph()
         run = p.add_run(str(rationale))
         run.italic = True
-        run.font.size = Pt(10)
+        run.font.size = Pt(BODY_PT)
 
 
 def format_uncertainty_html(results):
@@ -1649,21 +2679,21 @@ def add_risk_word_table(doc, results):
 
     # Summary paragraph
     p = doc.add_paragraph()
-    p.add_run("Risk assessment using ").font.size = Pt(10)
+    p.add_run("Risk assessment using ").font.size = Pt(BODY_PT)
     r = p.add_run("{} framework".format(matrix))
     r.bold = True
-    r.font.size = Pt(10)
-    p.add_run(". Overall risk level: ").font.size = Pt(10)
+    r.font.size = Pt(BODY_PT)
+    p.add_run(". Overall risk level: ").font.size = Pt(BODY_PT)
     r2 = p.add_run(overall)
     r2.bold = True
-    r2.font.size = Pt(10)
+    r2.font.size = Pt(BODY_PT)
     if overall == "High":
         r2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
     elif overall == "Medium":
         r2.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
     elif overall == "Low":
         r2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(10)
+    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(BODY_PT)
 
     if not risks:
         return
@@ -1706,15 +2736,15 @@ def add_uncertainty_word_tables(doc, results):
     p = doc.add_paragraph()
     p.add_run("{} with {} simulations".format(
         unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))).font.size = Pt(10)
+        unc.get("n_simulations", "N/A"))).font.size = Pt(BODY_PT)
     engine = unc.get("simulation_engine", "")
     if engine:
-        p.add_run(" using {}.".format(engine)).font.size = Pt(10)
+        p.add_run(" using {}.".format(engine)).font.size = Pt(BODY_PT)
 
     # Input parameters table
     params = unc.get("input_parameters", [])
     if params:
-        doc.add_heading("Input Parameter Ranges", level=2)
+        _add_heading(doc, "Input Parameter Ranges", level=2)
         headers = ["Parameter", "Unit", "Low", "Base", "High", "Distribution"]
         data_rows = []
         for param in params:
@@ -1732,7 +2762,7 @@ def add_uncertainty_word_tables(doc, results):
     out_param = unc.get("output_parameter", "")
     out_params = unc.get("output_parameters", {})
     if out_param or out_params:
-        doc.add_heading("Output Distribution (P10 / P50 / P90)", level=2)
+        _add_heading(doc, "Output Distribution (P10 / P50 / P90)", level=2)
         headers = ["Output Parameter", "P10", "P50", "P90"]
         data_rows = []
         if out_param:
@@ -1756,7 +2786,7 @@ def add_uncertainty_word_tables(doc, results):
     # Tornado sensitivity table
     tornado = unc.get("tornado", [])
     if tornado:
-        doc.add_heading("Sensitivity Ranking (Tornado)", level=2)
+        _add_heading(doc, "Sensitivity Ranking (Tornado)", level=2)
         first = tornado[0]
         cols = [k for k in first.keys() if k != "parameter"]
         headers = ["Parameter"] + [c.replace("_", " ").title() for c in cols]
@@ -1831,7 +2861,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None):
         for paragraph in cell.paragraphs:
             for run in paragraph.runs:
                 run.font.bold = True
-                run.font.size = Pt(9)
+                run.font.size = Pt(TABLE_PT)
                 run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         shading = parse_xml(
             '<w:shd {} w:fill="2F5496"/>'.format(nsdecls('w'))
@@ -1846,7 +2876,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None):
             cell.text = str(val)
             for paragraph in cell.paragraphs:
                 for run in paragraph.runs:
-                    run.font.size = Pt(9)
+                    run.font.size = Pt(TABLE_PT)
 
     # Apply column widths if specified
     if col_widths:
@@ -1919,7 +2949,7 @@ def add_custom_word_tables(doc, results):
         if not headers or not data_rows:
             continue
         if title:
-            doc.add_heading(title, level=2)
+            _add_heading(doc, title, level=2)
         # Format numeric values
         formatted_rows = []
         for row in data_rows:
@@ -1996,36 +3026,36 @@ def add_discussion_word(doc, results):
         linked = disc.get("linked_results", [])
         insight_ref = disc.get("insight_question_ref", "")
 
-        doc.add_heading("Discussion {}: {}".format(i, title), level=2)
+        _add_heading(doc, "Discussion {}: {}".format(i, title), level=2)
 
         if observation:
             p = doc.add_paragraph()
             r = p.add_run("Observation: ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(observation).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(observation).font.size = Pt(BODY_PT)
 
         if mechanism:
             p = doc.add_paragraph()
             r = p.add_run("Physical Mechanism: ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(mechanism).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(mechanism).font.size = Pt(BODY_PT)
 
         if implication:
             p = doc.add_paragraph()
             r = p.add_run("Engineering Implication: ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(implication).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(implication).font.size = Pt(BODY_PT)
 
         if recommendation:
             p = doc.add_paragraph()
             r = p.add_run("Recommendation: ")
             r.bold = True
-            r.font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
             r2 = p.add_run(recommendation)
-            r2.font.size = Pt(10)
+            r2.font.size = Pt(BODY_PT)
             r2.font.color.rgb = RGBColor(0x1A, 0x53, 0x7A)
 
         # Traceability line
@@ -2037,7 +3067,7 @@ def add_discussion_word(doc, results):
         if trace_parts:
             p = doc.add_paragraph()
             r = p.add_run(" | ".join(trace_parts))
-            r.font.size = Pt(8)
+            r.font.size = Pt(CAPTION_PT)
             r.font.italic = True
             r.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
 
@@ -2048,7 +3078,20 @@ def add_discussion_word(doc, results):
 # Build sections (auto-populated where possible)
 # ══════════════════════════════════════════════════════════
 
-def build_sections(results, task_spec, study_config_warnings=None):
+def _renumber_sections(sections):
+    """Renumber section headings 1..N so conditional sections cannot leave gaps.
+
+    Sections are appended conditionally, so any counter bug shows up in the
+    issued report as a skipped or repeated chapter number.
+    """
+    for index, section in enumerate(sections, 1):
+        heading = str(section.get("heading", "")).strip()
+        section["heading"] = "{}. {}".format(
+            index, _MANUAL_HEADING_NUMBER.sub("", heading).strip())
+    return sections
+
+
+def build_sections(results, task_spec, study_config_warnings=None, study_config=None):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
     if study_config_warnings is None:
@@ -2056,7 +3099,10 @@ def build_sections(results, task_spec, study_config_warnings=None):
 
     # 1. Executive Summary
     exec_summary = ""
-    if results and results.get("executive_summary"):
+    if "executive_summary" in AUTHORED_SECTIONS:
+        exec_summary = MANUAL_SECTIONS["executive_summary"]
+    if _is_placeholder_text(exec_summary) and results \
+            and results.get("executive_summary"):
         exec_summary = str(results["executive_summary"])
     if _is_placeholder_text(exec_summary):
         exec_summary = auto_executive_summary(results, task_spec)
@@ -2068,7 +3114,10 @@ def build_sections(results, task_spec, study_config_warnings=None):
     })
 
     # 2. Problem Description
-    problem_description = auto_problem_description(results, task_spec)
+    problem_description = MANUAL_SECTIONS["problem_description"] \
+        if "problem_description" in AUTHORED_SECTIONS else ""
+    if _is_placeholder_text(problem_description):
+        problem_description = auto_problem_description(results, task_spec)
     if _is_placeholder_text(problem_description):
         problem_description = MANUAL_SECTIONS["problem_description"]
     sections.append({
@@ -2112,9 +3161,20 @@ def build_sections(results, task_spec, study_config_warnings=None):
     })
     next_section_num += 1
 
+    # Information Sources (auto-built from the collected documents themselves)
+    information_sources = format_information_sources_text(study_config, results)
+    if information_sources:
+        sections.append({
+            "heading": "{}. Information Sources and Evidence Basis".format(
+                next_section_num),
+            "content": information_sources,
+            "has_markdown": True,
+        })
+        next_section_num += 1
+
     # Approach
     approach = MANUAL_SECTIONS["approach"]
-    if results and results.get("approach"):
+    if results and results.get("approach") and "approach" not in AUTHORED_SECTIONS:
         approach = results["approach"]
     sections.append({
         "heading": "{}. Approach".format(next_section_num),
@@ -2204,7 +3264,15 @@ def build_sections(results, task_spec, study_config_warnings=None):
         })
         next_section_num += 1
 
-    if results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
+    assumptions_text = format_assumptions_text(results)
+    if assumptions_text:
+        sections.append({
+            "heading": "{}. Assumptions and Data Gaps".format(next_section_num),
+            "content": assumptions_text,
+            "has_markdown": True,
+        })
+        next_section_num += 1
+    elif results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
         sections.append({
             "heading": "{}. Evidence Gaps and Design-Grade Blockers".format(next_section_num),
             "content": format_list_items_text(
@@ -2216,6 +3284,15 @@ def build_sections(results, task_spec, study_config_warnings=None):
         sections.append({
             "heading": "{}. Recommendations".format(next_section_num),
             "content": format_list_items_text(results.get("recommendations")),
+        })
+        next_section_num += 1
+
+    improvements_text = format_improvements_text(results)
+    if improvements_text:
+        sections.append({
+            "heading": "{}. Tooling Improvements Delivered".format(next_section_num),
+            "content": improvements_text,
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -2247,7 +3324,7 @@ def build_sections(results, task_spec, study_config_warnings=None):
         "has_references": True,
     })
 
-    return sections
+    return _renumber_sections(sections)
 
 
 # ══════════════════════════════════════════════════════════
@@ -2290,6 +3367,26 @@ def _add_cover_page(doc):
     run = subtitle.add_run("NeqSim Engineering Report")
     run.font.size = Pt(14)
     run.font.color.rgb = RGBColor(100, 100, 100)
+
+    if STUDY_BADGES:
+        badges = doc.add_paragraph()
+        badges.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = badges.add_run(
+            "  |  ".join("{}: {}".format(label, value)
+                         for label, value in STUDY_BADGES))
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(130, 130, 130)
+
+    if TASK_STATEMENT:
+        doc.add_paragraph("")
+        statement = doc.add_paragraph()
+        statement.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        statement.paragraph_format.left_indent = Inches(0.8)
+        statement.paragraph_format.right_indent = Inches(0.8)
+        run = statement.add_run(TASK_STATEMENT)
+        run.font.size = Pt(11)
+        run.font.italic = True
+        run.font.color.rgb = RGBColor(70, 70, 70)
 
     for _ in range(3):
         doc.add_paragraph("")
@@ -2355,7 +3452,7 @@ def _add_cover_page(doc):
 def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
     # Add TOC heading
-    doc.add_heading("Table of Contents", level=1)
+    _add_heading(doc, "Table of Contents", level=1, numbered=False)
     # Insert a Word TOC field (updates when user presses F9 in Word)
     paragraph = doc.add_paragraph()
     run = paragraph.add_run()
@@ -2401,6 +3498,74 @@ def _set_update_fields_on_open(doc):
         update.set(qn("w:val"), "true")
 
 
+def _add_page_number_footer(doc):
+    """Add "<title> | <doc no> | Page X of Y" to the footer of every section.
+
+    Skipped when a corporate template is used, because the template owns its
+    own headers and footers.
+    """
+    if REPORT_TEMPLATE:
+        return
+    label = "{} | {} Rev {} | Page ".format(TITLE, _auto_doc_number(), REVISION)
+    for section in doc.sections:
+        footer = section.footer
+        paragraph = footer.paragraphs[0] if footer.paragraphs \
+            else footer.add_paragraph()
+        paragraph.text = ""
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = paragraph.add_run(label)
+        run.font.size = Pt(8)
+        run.font.color.rgb = RGBColor(120, 120, 120)
+        _add_field(paragraph, "PAGE")
+        run = paragraph.add_run(" of ")
+        run.font.size = Pt(8)
+        run.font.color.rgb = RGBColor(120, 120, 120)
+        _add_field(paragraph, "NUMPAGES")
+
+
+def _add_field(paragraph, instruction):
+    """Append a Word field (e.g. PAGE, NUMPAGES) to a paragraph."""
+    run = paragraph.add_run()
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(120, 120, 120)
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
+    run._r.append(parse_xml(
+        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
+            nsdecls("w"), instruction)))
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
+
+
+def _add_task_statement_block(doc):
+    """State the task at the very start of the report body."""
+    if not TASK_STATEMENT:
+        return
+    heading = doc.add_paragraph()
+    run = heading.add_run("Task")
+    run.bold = True
+    run.font.size = Pt(12)
+    run.font.color.rgb = RGBColor(47, 84, 150)
+
+    box = doc.add_table(rows=1, cols=1)
+    box.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = box.rows[0].cells[0]
+    cell._tc.get_or_add_tcPr().append(
+        parse_xml('<w:shd {} w:fill="F3F6FB"/>'.format(nsdecls("w"))))
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    run = paragraph.add_run(TASK_STATEMENT)
+    run.font.size = Pt(BODY_PT)
+    if STUDY_BADGES:
+        meta = cell.add_paragraph()
+        run = meta.add_run("  |  ".join(
+            "{}: {}".format(label, value) for label, value in STUDY_BADGES))
+        run.font.size = Pt(CAPTION_PT)
+        run.font.italic = True
+        run.font.color.rgb = RGBColor(110, 110, 110)
+    doc.add_paragraph("")
+
+
 def build_word_report(sections, results=None):
     """Build the Word document with cover page, TOC, numbered figures, and equations."""
     doc = _new_document()
@@ -2411,9 +3576,12 @@ def build_word_report(sections, results=None):
     # Table of Contents
     _add_word_toc(doc)
 
+    # The task this report answers, stated before any analysis
+    _add_task_statement_block(doc)
+
     # Add all sections
     for section in sections:
-        doc.add_heading(section["heading"], level=1)
+        _add_heading(doc, section["heading"], level=1)
 
         # Results section: use Word table instead of plain text
         if section.get("has_figures") and results and results.get("key_results"):
@@ -2423,10 +3591,9 @@ def build_word_report(sections, results=None):
                 add_custom_word_tables(doc, results)
         elif section.get("has_figures"):
             # No results data — show placeholder text
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
-        elif section.get("has_scope"):
+            for para_text in _body_paragraphs(section["content"]):
+                doc.add_paragraph(para_text)
+        elif section.get("has_scope") or section.get("has_markdown"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
         elif "Validation" in section["heading"] and results and results.get("validation"):
@@ -2449,9 +3616,8 @@ def build_word_report(sections, results=None):
             add_discussion_word(doc, results)
         else:
             # Regular text content
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
+            for para_text in _body_paragraphs(section["content"]):
+                doc.add_paragraph(para_text)
 
         # Embed figures after Results section
         if section.get("has_figures"):
@@ -2464,7 +3630,7 @@ def build_word_report(sections, results=None):
                     last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     caption = doc.add_paragraph(caption_text)
                     caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption.runs[0].font.size = Pt(9)
+                    caption.runs[0].font.size = Pt(CAPTION_PT)
                     caption.runs[0].font.italic = True
                     doc.add_paragraph("")
             else:
@@ -2477,7 +3643,7 @@ def build_word_report(sections, results=None):
         if section.get("has_equations"):
             equations = get_equations(results)
             if equations:
-                doc.add_heading("Key Equations", level=2)
+                _add_heading(doc, "Key Equations", level=2)
                 eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
                 if not os.path.exists(eq_img_dir):
                     os.makedirs(eq_img_dir)
@@ -2490,14 +3656,14 @@ def build_word_report(sections, results=None):
                     eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
                     if render_equation_to_image(latex, eq_img_path):
                         doc.add_paragraph("")
-                        doc.add_picture(eq_img_path, width=Inches(5.5))
+                        _add_equation_picture(doc, eq_img_path, 6.0)
                         last_para = doc.paragraphs[-1]
                         last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         caption = doc.add_paragraph(
                             "Equation {}: {}".format(eq_idx, label)
                         )
                         caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption.runs[0].font.size = Pt(9)
+                        caption.runs[0].font.size = Pt(CAPTION_PT)
                         caption.runs[0].font.italic = True
                     else:
                         # Fallback: text representation
@@ -2505,6 +3671,7 @@ def build_word_report(sections, results=None):
                     doc.add_paragraph("")
 
     # Save
+    _add_page_number_footer(doc)
     doc.save(DOCX_FILE)
     print("Word report saved: {}".format(DOCX_FILE))
 
@@ -2526,6 +3693,34 @@ def _build_rev_rows_html():
             entry.get("rev", ""), entry.get("date", ""),
             entry.get("description", ""), entry.get("author", ""))
     return rows
+
+
+def _html_escape(text):
+    """Escape the characters that would break generated HTML."""
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;"))
+
+
+def _build_badges_html():
+    """Build the study-depth badge row shown under the report title."""
+    if not STUDY_BADGES:
+        return ""
+    spans = "".join(
+        "<span>{}: {}</span>".format(_html_escape(label), _html_escape(value))
+        for label, value in STUDY_BADGES)
+    return '<p class="study-badges">{}</p>'.format(spans)
+
+
+def _build_task_block_html():
+    """Build the task statement shown at the very start of the report body."""
+    if not TASK_STATEMENT:
+        return ""
+    return (
+        '<div class="task-statement">\n'
+        '    <h2>Task</h2>\n'
+        '    <p>{}</p>\n'
+        '</div>'.format(_html_escape(TASK_STATEMENT))
+    )
 
 
 def build_html_report(sections, results=None):
@@ -2612,10 +3807,10 @@ def build_html_report(sections, results=None):
             section_id, section["heading"]
         )
         # Convert scope section markdown to HTML
-        if section.get("has_scope"):
+        if section.get("has_scope") or section.get("has_markdown"):
             content = scope_content_to_html(section["content"])
         else:
-            content = section["content"].replace("\n", "<br>")
+            content = _prose_to_html(section["content"])
 
         # Insert auto-generated HTML for special sections
         if section.get("has_figures"):
@@ -2714,8 +3909,21 @@ def build_html_report(sections, results=None):
         .meta {{ color: #666; margin-bottom: 2rem; }}
         .cover-page {{ text-align: center; padding: 3rem 0; margin-bottom: 2rem;
                        border-bottom: 3px solid #2F5496; }}
-        .cover-page h1 {{ font-size: 2.2rem; color: #2F5496; margin-bottom: 0.5rem; }}
-        .cover-page .subtitle {{ font-size: 1.1rem; color: #888; margin-bottom: 2rem; }}
+        .cover-page h1 {{ font-size: 2.2rem; color: #2F5496; margin-bottom: 0.5rem;
+                          line-height: 1.25; }}
+        .cover-page .subtitle {{ font-size: 1.1rem; color: #888; margin-bottom: 0.8rem; }}
+        .study-badges {{ margin-bottom: 1.5rem; }}
+        .study-badges span {{ display: inline-block; margin: 0 0.25rem 0.35rem 0;
+                       padding: 0.15rem 0.6rem; font-size: 0.78rem; color: #2F5496;
+                       background: #eef2fa; border: 1px solid #d4ddef;
+                       border-radius: 999px; }}
+        .task-statement {{ border-left: 4px solid #2F5496; background: #f3f6fb;
+                       padding: 1rem 1.2rem; margin: 0 0 2rem 0;
+                       border-radius: 0 4px 4px 0; }}
+        .task-statement h2 {{ margin: 0 0 0.4rem 0; border: none; padding: 0;
+                       font-size: 1.05rem; color: #2F5496;
+                       text-transform: uppercase; letter-spacing: 0.06em; }}
+        .task-statement p {{ margin: 0; }}
         .cover-meta {{ display: inline-block; text-align: left; margin: 1rem auto;
                        background: #f8f9fa; padding: 1rem 2rem; border-radius: 6px;
                        border: 1px solid #e0e0e0; }}
@@ -2790,6 +3998,16 @@ def build_html_report(sections, results=None):
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
         }}
+        @media print {{
+            nav {{ display: none; }}
+            main {{ margin-left: 0; max-width: 100%; padding: 0; }}
+            body {{ display: block; font-size: 10.5pt; color: #000; }}
+            .cover-page {{ page-break-after: always; }}
+            section {{ page-break-inside: avoid; }}
+            .figure, table, .discussion-block {{ page-break-inside: avoid; }}
+            h2 {{ page-break-after: avoid; }}
+            a {{ color: #000; text-decoration: none; }}
+        }}
     </style>
 </head>
 <body>
@@ -2806,6 +4024,7 @@ def build_html_report(sections, results=None):
         <div class="cover-page">
             <h1>{title}</h1>
             <p class="subtitle">NeqSim Engineering Report</p>
+            {badges}
             <table class="cover-meta">
                 <tr><td>Document No.</td><td>{doc_num}</td></tr>
                 <tr><td>Revision</td><td>{rev}</td></tr>
@@ -2819,11 +4038,14 @@ def build_html_report(sections, results=None):
                 <tbody>{rev_rows}</tbody>
             </table>
         </div>
+{task_block}
 {sections}
     </main>{katex_body_script}
 </body>
 </html>""".format(
         title=TITLE,
+        badges=_build_badges_html(),
+        task_block=_build_task_block_html(),
         author=AUTHOR or "(not specified)",
         date=TASK_DATE,
         doc_num=_auto_doc_number(),
@@ -3184,11 +4406,11 @@ def build_paper_docx(sections, results=None):
 
         # Heading level
         if stype == "abstract":
-            h = doc.add_heading(heading_text, level=1)
+            h = _add_heading(doc, heading_text, level=1, numbered=False)
         elif is_sub:
-            h = doc.add_heading(heading_text, level=2)
+            h = _add_heading(doc, heading_text, level=2)
         else:
-            h = doc.add_heading(heading_text, level=1)
+            h = _add_heading(doc, heading_text, level=1)
 
         # Style heading runs as Times New Roman
         for run in h.runs:
@@ -3196,13 +4418,12 @@ def build_paper_docx(sections, results=None):
 
         # Abstract is italic
         if stype == "abstract":
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    p = doc.add_paragraph()
-                    r = p.add_run(para_text.strip())
-                    r.font.italic = True
-                    r.font.size = Pt(10)
-                    r.font.name = "Times New Roman"
+            for para_text in _body_paragraphs(section["content"]):
+                p = doc.add_paragraph()
+                r = p.add_run(para_text)
+                r.font.italic = True
+                r.font.size = Pt(10)
+                r.font.name = "Times New Roman"
         elif stype == "references" and results and results.get("references"):
             # Numbered reference list
             for i, ref in enumerate(results["references"], 1):
@@ -3225,9 +4446,8 @@ def build_paper_docx(sections, results=None):
             # Discussion text
             disc = section["content"]
             if disc and not disc.startswith("["):
-                for para_text in disc.split("\n\n"):
-                    if para_text.strip():
-                        doc.add_paragraph(para_text.strip())
+                for para_text in _body_paragraphs(disc):
+                    doc.add_paragraph(para_text)
         elif "Validation" in section["heading"] and results and results.get("validation"):
             add_validation_word_table(doc, results)
         elif section.get("has_benchmark") and results:
@@ -3236,18 +4456,17 @@ def build_paper_docx(sections, results=None):
             add_uncertainty_word_tables(doc, results)
         elif section.get("has_risk") and results:
             add_risk_word_table(doc, results)
-        elif section.get("has_scope", False):
+        elif section.get("has_scope", False) or section.get("has_markdown", False):
             render_scope_to_word(doc, section["content"])
         else:
             # Regular text content
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    p = doc.add_paragraph()
-                    _add_bold_runs(p, para_text.strip())
-                    for run in p.runs:
-                        run.font.name = "Times New Roman"
-                        if not run.font.size:
-                            run.font.size = Pt(11)
+            for para_text in _body_paragraphs(section["content"]):
+                p = doc.add_paragraph()
+                _add_bold_runs(p, para_text)
+                for run in p.runs:
+                    run.font.name = "Times New Roman"
+                    if not run.font.size:
+                        run.font.size = Pt(11)
 
         # Embed equations after Methodology section
         if section.get("has_equations"):
@@ -3266,7 +4485,7 @@ def build_paper_docx(sections, results=None):
                         eq_img_dir, "eq_{}.png".format(eq_counter[0]))
                     if render_equation_to_image(latex, eq_img_path):
                         doc.add_paragraph("")
-                        doc.add_picture(eq_img_path, width=Inches(5.0))
+                        _add_equation_picture(doc, eq_img_path, 5.0)
                         last_para = doc.paragraphs[-1]
                         last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         cap = doc.add_paragraph(
@@ -3295,7 +4514,7 @@ def build_paper_docx(sections, results=None):
                     cap = doc.add_paragraph(caption_text)
                     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     for run in cap.runs:
-                        run.font.size = Pt(9)
+                        run.font.size = Pt(CAPTION_PT)
                         run.font.name = "Times New Roman"
                         run.font.italic = True
                     doc.add_paragraph("")
@@ -3413,7 +4632,7 @@ def build_paper_html(sections, results=None):
         # Content formatting
         if stype == "abstract":
             content = '<div class="abstract-text">{}</div>'.format(
-                section["content"].replace("\n\n", "</p><p>").replace("\n", "<br>"))
+                _prose_to_html(section["content"]))
         elif stype == "references" and results and results.get("references"):
             content = format_references_html(results)
         elif section.get("has_figures") and results and results.get("key_results"):
@@ -3423,8 +4642,7 @@ def build_paper_html(sections, results=None):
             # Add discussion text
             disc = section["content"]
             if disc and not disc.startswith("["):
-                content += "<p>{}</p>".format(
-                    disc.replace("\n\n", "</p><p>").replace("\n", "<br>"))
+                content += _prose_to_html(disc)
             # Add figures
             if figures:
                 for fig_path in figures:
@@ -3437,11 +4655,10 @@ def build_paper_html(sections, results=None):
             content = format_uncertainty_html(results)
         elif section.get("has_risk") and results:
             content = format_risk_html(results)
-        elif section.get("has_scope", False):
+        elif section.get("has_scope", False) or section.get("has_markdown", False):
             content = scope_content_to_html(section["content"])
         else:
-            content = section["content"].replace("\n\n", "</p><p>").replace(
-                "\n", "<br>")
+            content = _prose_to_html(section["content"])
 
         # Add figure discussion after figures in Results & Discussion
         if section.get("has_discussion") and results:
@@ -3654,15 +4871,23 @@ if __name__ == "__main__":
         print("  neqsim --set-report-template \"PATH\"   (or --reset-report-template)")
         sys.exit(2)
 
-    print("Generating outputs for: {}".format(TITLE))
-    if REPORT_TEMPLATE:
-        print("Word template: {}".format(REPORT_TEMPLATE))
-    print("")
-
     # Auto-read task data
     study_config = load_study_config()
     results = load_results()
     task_spec = load_task_spec()
+    resolve_report_identity(study_config, task_spec, results)
+    apply_report_output_names(TITLE)
+
+    print("")
+    print("Generating outputs for: {}".format(TITLE))
+    print("Report files: {}.docx / {}.html".format(REPORT_BASENAME, REPORT_BASENAME))
+    if REPORT_TEMPLATE:
+        print("Word template: {}".format(REPORT_TEMPLATE))
+    if not TASK_STATEMENT:
+        print("NOTE: no task statement found. Add study.title to study_config.yaml,")
+        print("      an '## Objective' section to task_spec.md, or 'objective' to")
+        print("      results.json so the report states the task up front.")
+
     study_config_warnings = validate_study_config(study_config, results, task_spec)
     if study_config_warnings:
         print("")
@@ -3672,14 +4897,17 @@ if __name__ == "__main__":
 
     if not paper_only:
         # Build report sections and generate technical report
-        sections = build_sections(results, task_spec, study_config_warnings)
+        sections = build_sections(results, task_spec, study_config_warnings,
+                                  study_config)
         print("")
         build_word_report(sections, results)
         build_html_report(sections, results)
         print("")
         print("Technical reports generated.")
-        print("  Open Report.html in a browser for navigable view.")
-        print("  Open Report.docx for formal distribution.")
+        print("  Open {} in a browser for navigable view.".format(
+            os.path.basename(HTML_FILE)))
+        print("  Open {} for formal distribution.".format(
+            os.path.basename(DOCX_FILE)))
 
     if generate_paper:
         # Build paper sections and generate scientific paper
@@ -3689,13 +4917,25 @@ if __name__ == "__main__":
         build_paper_html(paper_sections, results)
         print("")
         print("Scientific papers generated.")
-        print("  Open Paper.html in a browser for reading.")
-        print("  Open Paper.docx for journal submission / distribution.")
+        print("  Open {} for reading.".format(os.path.basename(PAPER_HTML_FILE)))
+        print("  Open {} for journal submission / distribution.".format(
+            os.path.basename(PAPER_DOCX_FILE)))
+
+    written = []
+    if not paper_only:
+        written.extend([DOCX_FILE, HTML_FILE])
+    if generate_paper:
+        written.extend([PAPER_DOCX_FILE, PAPER_HTML_FILE])
+    if written:
+        prune_superseded_outputs(written)
 
     if not generate_paper and not paper_only:
         print("")
         print("TIP: Add --paper flag to also generate a scientific paper.")
         print("     python step3_report/generate_report.py --paper")
+
+    if not paper_only:
+        generate_work_record(study_config)
 
     if not results:
         print("")

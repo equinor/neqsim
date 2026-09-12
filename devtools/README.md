@@ -138,13 +138,18 @@ by every NeqSim clone and keeps studies outside the repository. Precedence:
 `neqsim --reset-task-root` removes the setting without moving existing tasks.
 
 The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
-footers every generated `Report.docx` inherits — set it once and all later tasks
+footers every generated Word report inherits — set it once and all later tasks
 follow it. It is stored in the same settings file. Precedence:
 `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` > the saved
 default > built-in styling. The template's own body text is dropped (pass
 `--keep-template-content` to keep it), `--no-template` ignores the setting for one
-run, and `neqsim --reset-report-template` removes it. `Paper.docx` keeps journal
-formatting and ignores the template.
+run, and `neqsim --reset-report-template` removes it. The scientific paper keeps
+journal formatting and ignores the template.
+
+Report files are named after the report title — a study titled "Hydrate margin
+for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
+`.html` (paper: `..._Paper.docx`). Report files written under an earlier title
+are deleted on regeneration, so a renamed study leaves no superseded deliverable.
 
 The document root is the folder the AI agents read source documents from —
 standards, datasheets, P&IDs, vendor documents, historian exports — and **every
