@@ -4396,6 +4396,12 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /**
+   * Initialize the steady pipe state and publish its outlet fluid.
+   *
+   * @param id calculation identifier
+   * @throws IllegalStateException if the positive-flow outlet thermodynamic state cannot be initialized
+   */
   @Override
   public void run(UUID id) {
     lastMassBalanceReport = null;
@@ -4436,8 +4442,9 @@ public class TwoFluidPipe extends Pipeline {
    * @param dt Requested time step (s)
    * @param id Calculation identifier
    * @throws IllegalArgumentException if {@code dt} is not positive and finite
-   * @throws IllegalStateException if initialization is missing or the requested interval cannot be completed; the
-   * balance report and clocks retain only accepted substeps
+   * @throws IllegalStateException if initialization is missing, the requested interval cannot be completed, or the
+   * positive-flow outlet thermodynamic state cannot be initialized; the balance report and clocks retain only accepted
+   * substeps
    */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -6145,6 +6152,12 @@ public class TwoFluidPipe extends Pipeline {
    * stream exposes the interval-average total outlet flux integrated over the accepted internal stages. Phase-resolved
    * integrals remain available from {@link #getLastMassBalanceReport()}.
    * </p>
+   *
+   * <p>
+   * Positive outlet flow is normalized before the final TP flash and property initialization. Rate normalization resets
+   * phase state, so it must not follow the flash. A zero or reverse net outlet flux publishes an empty fluid; intensive
+   * thermodynamic properties are not defined for that empty stream.
+   * </p>
    */
   private void updateOutletStream() {
     if (sections == null || sections.length == 0) {
@@ -6156,13 +6169,6 @@ public class TwoFluidPipe extends Pipeline {
 
     outFluid.setPressure(outlet.getPressure() / 1e5, "bara");
     outFluid.setTemperature(outlet.getTemperature(), "K");
-
-    try {
-      ThermodynamicOperations ops = new ThermodynamicOperations(outFluid);
-      ops.TPflash();
-    } catch (Exception e) {
-      logger.warn("Outlet flash failed: {}", e.getMessage());
-    }
 
     // Calculate outlet mass flow rate from section state
     double area = Math.PI * diameter * diameter / 4.0;
@@ -6199,7 +6205,20 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalStateException(
           "Outlet mass flow must be finite: outlet=" + massFlowOut + " kg/s, inlet=" + massFlowIn + " kg/s");
     }
-    outFluid.setTotalFlowRate(Math.max(0.0, massFlowOut), "kg/sec");
+    if (massFlowOut > 0.0) {
+      // setTotalFlowRate calls init(0), which discards the equilibrium phase split.
+      // Complete every rate mutation before initializing the published state.
+      outFluid.setTotalFlowRate(massFlowOut, "kg/sec");
+      try {
+        new ThermodynamicOperations(outFluid).TPflash();
+        outFluid.initProperties();
+      } catch (Exception e) {
+        throw new IllegalStateException(getName() + ": outlet thermodynamic initialization failed", e);
+      }
+    } else {
+      // Do not flash zero inventory: a closed/clamped outlet must remain empty.
+      outFluid.setEmptyFluid();
+    }
 
     getOutletStream().setFluid(outFluid);
   }

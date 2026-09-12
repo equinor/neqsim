@@ -258,6 +258,15 @@ an outlet has been handed to downstream equipment, preserve its object identity
 across `run(...)` calls by updating its thermodynamic system in place or using
 the established identity-preserving adoption helper.
 
+When publishing an equilibrium outlet, apply `SystemInterface.setTotalFlowRate(...)`
+before the final TP flash: the rate setter calls `init(0)` and resets the phase state.
+Initialize thermodynamic and transport properties with `initProperties()` after the
+flash, then publish without further rate mutations. Check raw outlet Cp, phase identity
+and component closure before any caller-side reflash; a sequential heat-transfer test
+can expose stale properties that a mass-balance test misses. See
+`TwoFluidPipeOutletThermodynamicsTest` and issue #3685. Handle zero inventory separately
+because its intensive properties are undefined.
+
 For phase-separated equipment, add a focused contract test after a successful
 solve that verifies:
 
