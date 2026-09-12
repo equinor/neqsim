@@ -705,21 +705,14 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(8, sil.get("contractEvidenceCount").getAsInt());
     assertEquals(8, sil.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILRunner.java"));
-    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("SafetyInstrumentedFunction.java"));
-    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("SILVerificationResult.java"));
-    assertTrue(
-        sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILRunnerTest.java"));
-    assertTrue(
-        sil.getAsJsonArray("contractEvidenceSources").toString().contains("test_sil_protocol.py"));
-    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("SIL_SCREENING_CONTRACT.md"));
-    assertTrue(
-        sil.get("evidenceBoundary").getAsString().contains("does not establish SRS completeness"));
+    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SafetyInstrumentedFunction.java"));
+    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILVerificationResult.java"));
+    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILRunnerTest.java"));
+    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("test_sil_protocol.py"));
+    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SIL_SCREENING_CONTRACT.md"));
+    assertTrue(sil.get("evidenceBoundary").getAsString().contains("does not establish SRS completeness"));
     assertTrue(sil.get("evidenceBoundary").getAsString().contains("select or approve SIL"));
-    assertTrue(sil.get("evidenceBoundary").getAsString()
-        .contains("independent functional-safety assessment"));
+    assertTrue(sil.get("evidenceBoundary").getAsString().contains("independent functional-safety assessment"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runSIL"));
     assertEquals(38, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(13, limitations.get("confirmedGapToolCount").getAsInt());
