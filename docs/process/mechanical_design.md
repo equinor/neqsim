@@ -143,6 +143,22 @@ double designPressure = mecDesign.getMaxDesignPressure(); // bara
 mecDesign.displayResults();
 ```
 
+### Consistent separator sizing results
+
+`SeparatorMechanicalDesign.calcDesign()` calculates pressure-wall thickness using the final
+sized inner diameter, including any liquid-separation sizing override. Outside diameter,
+shell weight, internals and dependent module weights then use that same geometry. The
+`autoSize()` sizing path and `GasScrubberMechanicalDesign.calcDesign()` follow the same order.
+An unchanged design does not require a second `setDesign()` / `calcDesign()` cycle to obtain
+consistent thickness and weights. Use `setDesign()` to apply the design's process-side settings.
+
+For separators and gas scrubbers, `getWallThickness()` returns metres and
+`setCorrosionAllowance(double)` takes millimetres. Outside diameter is inner diameter plus
+twice the wall thickness. Changing the pressure basis, corrosion allowance or process flow
+requires recalculating the design before consuming its geometry or weights. The existing
+pressure-code correlations and empirical weight estimates are unchanged; this consistency
+fix does not add fabrication details or code certification.
+
 ### Gas-liquid contactor capacity
 
 The mechanical design attached to `PackedColumn`, `AbsorptionColumn`, `StrippingColumn`, and
