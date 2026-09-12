@@ -23,6 +23,7 @@ public final class DoeBigHillVacuumScenarioScreen {
   private final double maximumOverheadMassFraction;
   private final double maximumMassClosureRelativeError;
   private final double maximumComponentMolarClosureRelativeError;
+  private final double maximumComponentRecoveryClosureError;
   private final double maximumColumnEnergyBalanceError;
   private final double maximumMeshResidualNorm;
 
@@ -33,6 +34,7 @@ public final class DoeBigHillVacuumScenarioScreen {
     double maximumOverheadFraction = Double.NEGATIVE_INFINITY;
     double maximumMassClosure = 0.0;
     double maximumComponentClosure = 0.0;
+    double maximumRecoveryClosure = 0.0;
     double maximumEnergyError = 0.0;
     double maximumMeshResidual = 0.0;
     for (PointResult point : points) {
@@ -43,6 +45,8 @@ public final class DoeBigHillVacuumScenarioScreen {
       maximumMassClosure = Math.max(maximumMassClosure, result.getMassClosureRelativeError());
       maximumComponentClosure = Math.max(maximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
+      maximumRecoveryClosure = Math.max(maximumRecoveryClosure,
+          point.getComponentRecovery().getMaximumComponentRecoveryClosureError());
       maximumEnergyError = Math.max(maximumEnergyError, result.getColumnEnergyBalanceError());
       maximumMeshResidual = Math.max(maximumMeshResidual, result.getMeshResidualNorm());
     }
@@ -51,6 +55,7 @@ public final class DoeBigHillVacuumScenarioScreen {
     maximumOverheadMassFraction = maximumOverheadFraction;
     maximumMassClosureRelativeError = maximumMassClosure;
     maximumComponentMolarClosureRelativeError = maximumComponentClosure;
+    maximumComponentRecoveryClosureError = maximumRecoveryClosure;
     maximumColumnEnergyBalanceError = maximumEnergyError;
     maximumMeshResidualNorm = maximumMeshResidual;
   }
@@ -85,7 +90,8 @@ public final class DoeBigHillVacuumScenarioScreen {
       try {
         model.getColumn().run(UUID.randomUUID());
         DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
-        evaluatedPoints[i] = new PointResult(scenario, result);
+        DoeBigHillVacuumComponentRecovery componentRecovery = DoeBigHillVacuumComponentRecovery.evaluate(model);
+        evaluatedPoints[i] = new PointResult(scenario, result, componentRecovery);
       } catch (RuntimeException exception) {
         throw new IllegalStateException("Vacuum scenario screen failed at point " + i + " (" + scenario.getName() + ")",
             exception);
@@ -131,6 +137,11 @@ public final class DoeBigHillVacuumScenarioScreen {
   /** @return largest component molar-closure relative error across the qualified scenarios */
   public double getMaximumComponentMolarClosureRelativeError() {
     return maximumComponentMolarClosureRelativeError;
+  }
+
+  /** @return largest component-recovery closure error across the qualified scenarios */
+  public double getMaximumComponentRecoveryClosureError() {
+    return maximumComponentRecoveryClosureError;
   }
 
   /** @return largest column energy-balance error across the qualified scenarios */
@@ -201,10 +212,13 @@ public final class DoeBigHillVacuumScenarioScreen {
   public static final class PointResult {
     private final Scenario scenario;
     private final DoeBigHillVacuumFractionationResult fractionationResult;
+    private final DoeBigHillVacuumComponentRecovery componentRecovery;
 
-    private PointResult(Scenario scenario, DoeBigHillVacuumFractionationResult fractionationResult) {
+    private PointResult(Scenario scenario, DoeBigHillVacuumFractionationResult fractionationResult,
+        DoeBigHillVacuumComponentRecovery componentRecovery) {
       this.scenario = Objects.requireNonNull(scenario, "scenario");
       this.fractionationResult = Objects.requireNonNull(fractionationResult, "fractionationResult");
+      this.componentRecovery = Objects.requireNonNull(componentRecovery, "componentRecovery");
     }
 
     /** @return immutable scenario definition applied at this point */
@@ -215,6 +229,11 @@ public final class DoeBigHillVacuumScenarioScreen {
     /** @return qualified immutable fractionation result for this scenario */
     public DoeBigHillVacuumFractionationResult getFractionationResult() {
       return fractionationResult;
+    }
+
+    /** @return immutable pseudo-component recovery evidence from the same solved scenario */
+    public DoeBigHillVacuumComponentRecovery getComponentRecovery() {
+      return componentRecovery;
     }
 
     /** @return overhead mass fraction of feed for this scenario */
