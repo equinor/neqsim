@@ -113,23 +113,23 @@ public final class MechanicalDesignData implements Serializable {
     put(designBasis, "corrosionAllowance", design.getCorrosionAllowance() / 1000.0, "m", "getCorrosionAllowance (mm)",
         false);
 
-    if (equipment instanceof TwoPortInterface) {
-      TwoPortInterface ports = (TwoPortInterface) equipment;
-      stream("inlet", ports.getInletStream());
-      stream("outlet", ports.getOutletStream());
+    if (equipment instanceof HeatExchanger) {
+      HeatExchanger exchanger = (HeatExchanger) equipment;
+      for (int i = 0; i < 2; i++) {
+        stream("inlet" + i, exchanger.getInStream(i));
+        stream("outlet" + i, exchanger.getOutStream(i));
+      }
     } else if (equipment instanceof Separator) {
       Separator separator = (Separator) equipment;
       int index = 0;
       for (StreamInterface inlet : separator.getInletStreams()) {
         stream("inlet" + index++, inlet);
       }
-      stream("gasOutlet", separator.getGasOutStream());
-    } else if (equipment instanceof HeatExchanger) {
-      HeatExchanger exchanger = (HeatExchanger) equipment;
-      for (int i = 0; i < 2; i++) {
-        stream("inlet" + i, exchanger.getInStream(i));
-        stream("outlet" + i, exchanger.getOutStream(i));
-      }
+      stream("gasOutlet", index == 0 ? null : separator.getGasOutStream());
+    } else if (equipment instanceof TwoPortInterface) {
+      TwoPortInterface ports = (TwoPortInterface) equipment;
+      stream("inlet", ports.getInletStream());
+      stream("outlet", ports.getOutletStream());
     }
 
     if (design instanceof SeparatorMechanicalDesign) {
@@ -210,10 +210,10 @@ public final class MechanicalDesignData implements Serializable {
       put(geometry, "height", ((DistillationColumnMechanicalDesign) design).getColumnHeight(), "m", "getColumnHeight",
           true);
     }
-    if (equipment instanceof Heater) {
-      put(operatingConditions, "duty", ((Heater) equipment).getDuty("W"), "W", "Heater.getDuty(W)", false);
-    } else if (equipment instanceof HeatExchanger) {
+    if (equipment instanceof HeatExchanger) {
       put(operatingConditions, "duty", ((HeatExchanger) equipment).getDuty(), "W", "HeatExchanger.getDuty", false);
+    } else if (equipment instanceof Heater) {
+      put(operatingConditions, "duty", ((Heater) equipment).getDuty("W"), "W", "Heater.getDuty(W)", false);
     }
     Quantity inner = geometry.get("innerDiameter");
     Quantity outer = geometry.get("outerDiameter");
