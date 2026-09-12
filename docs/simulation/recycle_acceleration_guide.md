@@ -559,16 +559,16 @@ RecycleController controller = process.getRecycleController();
 if (controller.hasSensitivityData()) {
     // Get as SensitivityMatrix for named access
     SensitivityMatrix sensMatrix = controller.getTearStreamSensitivityMatrix();
-    
+
     // Query individual sensitivities
     double dT_dP = sensMatrix.getSensitivity(
-        "recycle1.temperature", 
+        "recycle1.temperature",
         "recycle1.pressure"
     );
-    
+
     // Or get raw Jacobian for matrix operations
     double[][] jacobian = controller.getConvergenceJacobian();
-    
+
     // See variable names
     List<String> varNames = controller.getTearStreamVariableNames();
     // Returns: ["recycle1.temperature", "recycle1.pressure", "recycle1.flowRate", ...]
