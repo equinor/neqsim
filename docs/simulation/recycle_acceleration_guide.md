@@ -32,6 +32,11 @@ NeqSim provides three convergence acceleration methods to speed up recycle conve
 | **Wegstein** | Oscillating or slow-converging recycles | O(1) |
 | **Broyden** | Tightly coupled multi-variable systems | O(n²) |
 
+A loop with no `Recycle` unit at all converges only through the surrounding sweep, with none of the
+above available to it. `ProcessSystem.makeRecycles()` and `ProcessModel.makeRecycles()` find those
+implicit loops and close them with tuned recycles - see
+[Automatic recycle insertion](../process/controllers.md#automatic-recycle-insertion).
+
 ---
 
 ## Understanding Recycles
@@ -688,6 +693,7 @@ List<String> getTearStreamVariableNames()
 
 ## See Also
 
+- [Automatic recycle insertion](../process/controllers.md#automatic-recycle-insertion) - closing loops that have no `Recycle` at all
 - [Graph-Based Process Simulation](graph_based_process_simulation) - Detailed guide on graph algorithms and sensitivity analysis
 - 📓 [GraphBasedProcessSimulation.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 
