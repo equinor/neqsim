@@ -494,3 +494,43 @@ scale-up, turndown, heat duty, utilities, equipment sizing, calibrated product y
 TBP pressure correction, product-specification compliance, or plant agreement. All DOE assay
 provenance, three-cut 650 degF+ normalization, pseudo-component properties, and source-unreported
 engineering-input limitations remain unchanged.
+
+
+## Pseudo-component recovery diagnostics
+
+`DoeBigHillVacuumComponentRecovery.evaluate(...)` adds a molar component-partition audit to an
+already solved and qualified Big Hill vacuum case. It first reuses
+`DoeBigHillVacuumFractionationResult.evaluate(...)`, so the MESH, fallback, mass, energy,
+material-product, boiling-range, and aggregate component-closure gates must pass before recovery
+evidence is returned.
+
+For product $p$ and pseudo-component $c$, the dimensionless recovery is
+$R_{p,c} = \dot n_{p,c} / \dot n_{feed,c}$. The overhead and bottoms recoveries must sum to unity
+within the existing 5% screening tolerance for every component. Component order and exact NeqSim
+component names are preserved from the feed.
+
+```java
+OperatingInputs inputs =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+DoeBigHillVacuumFractionationCase model =
+    DoeBigHillVacuumFractionationCase.create(
+        "Big Hill vacuum component recovery", 1000.0, inputs);
+model.getColumn().run(UUID.randomUUID());
+
+DoeBigHillVacuumComponentRecovery recovery =
+    DoeBigHillVacuumComponentRecovery.evaluate(model);
+for (String componentName : recovery.getComponentNames()) {
+  double overheadRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery(componentName);
+  double bottomsRecovery =
+      recovery.getProduct("Bottoms").getComponentMolarRecovery(componentName);
+}
+```
+
+The returned feed and product quantities use mol/h; recovery fractions are dimensionless. Name,
+flow, recovery, and product arrays are defensive. The result is numerical partition bookkeeping for
+the public DOE-derived three-cut synthetic screening feed. It is not measured cut recovery,
+calibrated yield, ASTM D1160/TBP or simulated-distillation evidence, a sulfur/nitrogen or contaminant
+split, a hydraulic-capacity result, an interaction model, optimization, product-specification
+compliance, or plant agreement. Feed provenance, pseudo-component properties, and every
+source-unreported operating assumption remain unchanged.
