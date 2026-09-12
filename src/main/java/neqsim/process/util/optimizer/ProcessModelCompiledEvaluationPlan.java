@@ -29,9 +29,10 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Can
  * Compilation qualifies the current converged baseline through the supplied
  * {@link ProcessModelOperatingActionSetEvaluator}, then freezes area order and structure versions, action and
  * hydraulic-binding definitions, evaluator configuration, and exact installed-capacity and process-boundary coverage.
- * Candidate evaluation is refused before mutation when any frozen definition has changed. A delegated candidate is
- * accepted only when the full model converged, every action was restored, the restored baseline reconverged, and the
- * exact expected evidence remains finite and complete.
+ * The qualified model and area object identities are also frozen: equal names and structure counters do not authorize
+ * replacement instances. Candidate evaluation is refused before mutation when any frozen definition has changed. A
+ * delegated candidate is accepted only when the full model converged, every action was restored, the restored baseline
+ * reconverged, and the exact expected evidence remains finite and complete.
  * </p>
  *
  * <p>
@@ -64,6 +65,12 @@ public final class ProcessModelCompiledEvaluationPlan implements Serializable {
 
   /** Mutable evaluator authority used only through synchronized evaluation. */
   private final ProcessModelOperatingActionSetEvaluator evaluator;
+
+  /** Exact mutable model instance qualified at compilation. */
+  private final ProcessModel compiledModel;
+
+  /** Exact mutable area instances qualified at compilation, in area order. */
+  private final List<ProcessSystem> compiledAreas;
 
   /** Frozen area names in model insertion order. */
   private final List<String> areaNames;
@@ -117,7 +124,13 @@ public final class ProcessModelCompiledEvaluationPlan implements Serializable {
     this.sourceBaseline = sourceBaseline;
     this.evaluator = evaluator;
     ProcessModel model = evaluator.getSimulationEvaluator().getProcessModel();
+    this.compiledModel = model;
     this.areaNames = immutableStrings(model.getProcessSystemNames());
+    List<ProcessSystem> areas = new ArrayList<ProcessSystem>();
+    for (String areaName : areaNames) {
+      areas.add(model.get(areaName));
+    }
+    this.compiledAreas = Collections.unmodifiableList(areas);
     this.areaStructureVersions = captureAreaStructureVersions(model, areaNames);
     this.actionDefinitions = actionDefinitions(evaluator.getActions());
     this.hydraulicBindingDefinitions = bindingDefinitions(evaluator.getRequiredHydraulicConstraints());
@@ -253,10 +266,20 @@ public final class ProcessModelCompiledEvaluationPlan implements Serializable {
       diagnostics.add("Compiled process model is no longer available");
       return diagnostics;
     }
+    if (model != compiledModel) {
+      diagnostics.add("ProcessModel instance changed after compilation");
+      return diagnostics;
+    }
     List<String> currentAreas = model.getProcessSystemNames();
     if (!areaNames.equals(currentAreas)) {
       diagnostics.add("ProcessModel area order or identity changed after compilation");
       return diagnostics;
+    }
+    for (int index = 0; index < areaNames.size(); index++) {
+      if (model.get(areaNames.get(index)) != compiledAreas.get(index)) {
+        diagnostics.add("ProcessSystem instance changed after compilation: " + areaNames.get(index));
+        return diagnostics;
+      }
     }
     List<Long> currentVersions = captureAreaStructureVersions(model, currentAreas);
     if (!areaStructureVersions.equals(currentVersions)) {

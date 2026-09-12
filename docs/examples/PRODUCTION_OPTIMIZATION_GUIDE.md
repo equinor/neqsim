@@ -283,7 +283,8 @@ silently promoted to verified optimization constraints.
 
 Use `ProcessModelCompiledEvaluationPlan` around a configured
 `ProcessModelOperatingActionSetEvaluator` before handing repeated candidates to an external solver.
-Compilation evaluates the unchanged action vector and freezes the exact area order and
+Compilation evaluates the unchanged action vector and freezes model and area object identities,
+the exact area order and
 `ProcessSystem` structure versions, action and required-hydraulic definitions, evaluator
 configuration, installed ratings, and expected installed-capacity and process-boundary identities.
 
@@ -336,6 +337,8 @@ A non-finite or incorrectly sized vector is rejected before a process run. A cha
 action, binding, evaluator definition, installed rating, or availability makes the compiled plan
 stale before candidate mutation. A physically violated candidate retains its complete immutable
 evidence but is not accepted. Any incomplete restoration overrides the candidate classification.
+Replacing a model or removing and recreating an area requires recompilation even when names and
+structure counters match, because callbacks and stream connections may still reference the original objects.
 Shared mutable equipment is never evaluated concurrently; compile independent plans on independent
 model instances for parallel candidate work.
 

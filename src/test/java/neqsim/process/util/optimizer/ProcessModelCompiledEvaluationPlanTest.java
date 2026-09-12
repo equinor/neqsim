@@ -192,6 +192,47 @@ class ProcessModelCompiledEvaluationPlanTest {
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
 
+  /** Equal area names and structure counters do not authorize a replacement model. */
+  @Test
+  void rejectsReplacementModelBeforeDelegation() {
+    Fixture fixture = createFixture();
+    ProcessModelOperatingActionSetEvaluator evaluator = createEvaluator(fixture);
+    ProcessModelCompiledEvaluationPlan plan = ProcessModelCompiledEvaluationPlan.compile("allocation-plan",
+        "Compiled allocation", "controlled two-producer qualification", "master-test-baseline", evaluator);
+    Fixture replacement = createFixture();
+    int evaluationsBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
+    evaluator.getSimulationEvaluator().setProcessModel(replacement.model);
+
+    assertFalse(plan.isCurrent());
+    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    assertEquals(Outcome.PLAN_STALE, result.getOutcome(), result.getDiagnostics().toString());
+    assertNull(result.getCandidateEvidence());
+    assertEquals(evaluationsBefore, evaluator.getSimulationEvaluator().getEvaluationCount());
+    assertEquals(600.0, replacement.producerA.getFlowRate("kg/hr"), 1.0e-8);
+  }
+
+  /** Replacing an area with equal counters must invalidate its frozen object identity. */
+  @Test
+  void rejectsReplacementAreaBeforeDelegation() {
+    Fixture fixture = createFixture();
+    ProcessModelOperatingActionSetEvaluator evaluator = createEvaluator(fixture);
+    ProcessModelCompiledEvaluationPlan plan = ProcessModelCompiledEvaluationPlan.compile("allocation-plan",
+        "Compiled allocation", "controlled two-producer qualification", "master-test-baseline", evaluator);
+    Fixture replacement = createFixture();
+    assertEquals(fixture.model.get("gathering").getStructureVersion(),
+        replacement.model.get("gathering").getStructureVersion());
+    fixture.model.remove("gathering");
+    fixture.model.add("gathering", replacement.model.get("gathering"));
+    int evaluationsBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
+
+    assertFalse(plan.isCurrent());
+    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    assertEquals(Outcome.PLAN_STALE, result.getOutcome(), result.getDiagnostics().toString());
+    assertNull(result.getCandidateEvidence());
+    assertEquals(evaluationsBefore, evaluator.getSimulationEvaluator().getEvaluationCount());
+    assertEquals(600.0, replacement.producerA.getFlowRate("kg/hr"), 1.0e-8);
+  }
+
   /** Rejects changed installed ratings and evaluator definitions as stale compiled authority. */
   @Test
   void rejectsChangedRatingAndEvaluatorDefinition() {
