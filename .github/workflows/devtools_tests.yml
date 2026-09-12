@@ -41,6 +41,8 @@ jobs:
             devtools/test_skill_search.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_report_workflow.py \
+            devtools/test_task_corpus.py \
+            devtools/test_new_task.py \
             devtools/test_unisim_outputs.py
 
       - name: Run report generator integration test (script)

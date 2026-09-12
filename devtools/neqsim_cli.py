@@ -8,6 +8,7 @@ Usage:
     neqsim doctor            Check your environment is healthy
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
+    neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim --set-task-root P Set the folder new tasks are created in
@@ -55,6 +56,10 @@ COMMANDS = {
     "new-task": {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
+    },
+    "tasks": {
+        "module": "task_corpus",
+        "desc": "Work across solved tasks (index/relink/env/duplicates)",
     },
     "new-skill": {
         "module": "new_skill",
@@ -165,9 +170,9 @@ GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
 def _handle_report(argv):
     """Run the canonical report generator against a task folder.
 
-    Task folders vendor their own copy of generate_report.py at creation time,
-    so an old task keeps an old generator. This command always runs the current
-    devtools copy, which is how a template or formatting fix reaches every task.
+    Task folders carry a launcher, not a copy, of generate_report.py, so a
+    template or formatting fix reaches every task. This command is the same
+    entry point without needing the launcher.
 
     Parameters
     ----------
@@ -414,7 +419,10 @@ def main():
     # Each module uses `if __name__ == "__main__": main()` pattern.
     # We call main() directly.
     if hasattr(mod, "main"):
-        mod.main()
+        # Propagate a failure code so a refusal is not reported as success.
+        code = mod.main()
+        if code:
+            sys.exit(code)
     else:
         # Fallback: re-run as script (shouldn't normally be needed)
         exec(open(os.path.join(DEVTOOLS_DIR, module_name + ".py")).read())

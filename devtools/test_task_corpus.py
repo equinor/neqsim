@@ -68,7 +68,6 @@ def test_environment_overrides_saved_setting(isolated, monkeypatch):
     # Both corpora stay searchable so no prior work is invisible.
     assert saved.resolve() in roots
 
-
 def test_several_roots_are_searched_as_one_corpus(isolated):
     first, second = isolated / "a", isolated / "b"
     first.mkdir()
@@ -132,6 +131,24 @@ def test_index_lists_every_task_with_its_headline_results(isolated):
     assert alpha["benchmark_validation"] is True
     beta = next(r for r in records if r["folder"] == "2026-01-02_beta")
     assert beta["has_results"] is False
+
+
+def test_index_links_stay_valid_for_tasks_outside_the_index_folder(isolated):
+    first, second = isolated / "a", isolated / "b"
+    first.mkdir()
+    second.mkdir()
+    make_task(first, "2026-01-01_inside")
+    make_task(second, "2026-01-02_outside")
+
+    roots = task_roots.resolve_task_roots([str(first), str(second)])
+    records = [task_corpus.summarize_task(f)
+               for f in task_roots.find_task_folders(roots)]
+    index = task_corpus.render_index(records, roots, first)
+
+    assert "(2026-01-01_inside/)" in index
+    # A task in another root cannot be reached by a relative link.
+    assert "file:///" in index
+    assert "(2026-01-02_outside/)" not in index
 
 
 def test_relink_is_dry_run_by_default(isolated):
@@ -230,6 +247,34 @@ def test_env_stamp_keeps_an_existing_block_and_reports_missing_results(isolated)
 
     bare = make_task(root, "2026-01-02_no_results")
     assert task_corpus.stamp_environment(bare) == "no results.json"
+
+
+def test_environment_version_is_resolvable_not_a_pom_placeholder():
+    # pom.xml declares <version>${revision}</version>; stamping that helps nobody.
+    pom = (
+        "<project><artifactId>neqsim</artifactId>"
+        "<version>${revision}</version>"
+        "<properties><revision>3.20.0</revision></properties></project>"
+    )
+    assert task_corpus._resolve_pom_property(pom, "${revision}") == "3.20.0"
+    assert task_corpus._resolve_pom_property(pom, "3.19.0") == "3.19.0"
+    assert task_corpus._resolve_pom_property(pom, "${missing}") == "${missing}"
+
+
+def test_explicit_root_is_exclusive_so_writes_cannot_escape_it(isolated, monkeypatch):
+    named, other = isolated / "named", isolated / "other"
+    named.mkdir()
+    other.mkdir()
+    make_task(named, "2026-01-01_named")
+    make_task(other, "2026-01-02_other")
+    task_roots.SETTINGS_FILE.write_text(
+        json.dumps({"task_root": str(other)}), encoding="utf-8")
+    monkeypatch.setenv("NEQSIM_TASK_ROOT", str(other))
+
+    roots = task_roots.resolve_task_roots([str(named)])
+    assert roots == [named.resolve()]
+    folders = task_roots.find_task_folders(roots)
+    assert [folder.name for folder in folders] == ["2026-01-01_named"]
 
 
 if __name__ == "__main__":

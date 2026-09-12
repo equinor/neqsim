@@ -8,11 +8,13 @@ stop a corpus from being reusable by someone else:
     python devtools/task_corpus.py index          # INDEX.md + tasks.json
     python devtools/task_corpus.py relink         # replace vendored report
                                                   #   generators with a launcher
-    python devtools/task_corpus.py env            # stamp the software
+    python devtools/task_corpus.py env TASK       # stamp the software
                                                   #   environment into results.json
     python devtools/task_corpus.py duplicates     # folders present in >1 root
 
-`relink` and `env` are dry-run by default; pass --apply to write.
+`relink` and `env` are dry-run by default; pass --apply to write. `env` only
+touches task folders named on the command line — reports stamp themselves as
+they are generated, and backfilling would claim a version that never ran.
 """
 import argparse
 import json
@@ -377,7 +379,7 @@ def summarize_task(folder):
     }
 
 
-def render_index(records, roots):
+def render_index(records, roots, out_dir=None):
     """Return the Markdown index of a task corpus."""
     lines = [
         "# Solved task index",
@@ -397,9 +399,18 @@ def render_index(records, roots):
     def mark(flag):
         return "x" if flag else ""
 
+    def link(record):
+        """Link to the task, relative when it sits under the index folder."""
+        if out_dir is None:
+            return record["folder"]
+        try:
+            return Path(record["path"]).relative_to(out_dir).as_posix()
+        except ValueError:
+            return Path(record["path"]).as_uri()
+
     for record in sorted(records, key=lambda r: r["folder"], reverse=True):
         lines.append("| {} | [{}]({}/) | {} | {} | {} | {} | {} | {} |".format(
-            record["date"], record["folder"], record["folder"],
+            record["date"], record["folder"], link(record),
             record["title"].replace("|", "/"),
             mark(record["has_results"]), mark(record["benchmark_validation"]),
             mark(record["uncertainty"]), mark(record["risk_evaluation"]),
@@ -420,7 +431,8 @@ def cmd_index(args):
     records = [summarize_task(folder) for folder in folders]
     out_dir = Path(args.out).resolve() if args.out else roots[0]
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "INDEX.md").write_text(render_index(records, roots), encoding="utf-8")
+    (out_dir / "INDEX.md").write_text(render_index(records, roots, out_dir),
+                                      encoding="utf-8")
     (out_dir / "tasks.json").write_text(
         json.dumps({"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "roots": [str(r) for r in roots],
@@ -465,34 +477,41 @@ def cmd_relink(args):
 
 
 def cmd_env(args):
-    """Stamp the software environment into results.json across the corpus."""
-    roots = resolve_task_roots(args.task_root)
-    folders = find_task_folders(roots)
-    counts = {}
-    targets = []
-    for folder in folders:
-        if not (folder / "results.json").is_file():
-            counts["no results.json"] = counts.get("no results.json", 0) + 1
-            continue
-        data = _read_json(folder / "results.json") or {}
-        if data.get("environment") and not args.force:
-            counts["kept"] = counts.get("kept", 0) + 1
-            continue
-        targets.append(folder)
-    print("Task folders: {}".format(len(folders)))
-    for key in sorted(counts):
-        print("  {}: {}".format(key, counts[key]))
-    print("  would stamp: {}".format(len(targets)))
+    """Stamp the software environment into results.json for named tasks.
+
+    Reports stamp themselves as they are generated, which is the only honest
+    moment: backfilling today's checkout onto an older task would assert a
+    NeqSim version that did not produce its numbers. This command therefore
+    only touches task folders the caller names.
+    """
+    if not args.task:
+        print("Name the task folder(s) to stamp, for example:")
+        print("  neqsim tasks env --apply <task folder>")
+        print("")
+        print("Reports record the environment when they are generated, so a")
+        print("regenerated report needs no stamping. Backfilling an old task")
+        print("would claim this checkout produced numbers it never produced.")
+        return 2
+    folders = [Path(task).resolve() for task in args.task]
+    missing = [f for f in folders if not f.is_dir()]
+    if missing:
+        for folder in missing:
+            print("ERROR: not a folder: {}".format(folder))
+        return 2
     if not args.apply:
+        for folder in folders:
+            state = "has an environment block" if (
+                (_read_json(folder / "results.json") or {}).get("environment")
+            ) else "would be stamped"
+            print("  {}: {}".format(folder.name, state))
         print("\nRe-run with --apply to write the environment block.")
         return 0
     written = 0
-    for folder in targets:
+    for folder in folders:
         outcome = stamp_environment(folder, force=args.force)
         if outcome == "written":
             written += 1
-        else:
-            print("  {}: {}".format(folder.name, outcome))
+        print("  {}: {}".format(folder.name, outcome))
     print("Stamped {} task(s).".format(written))
     return 0
 
@@ -534,11 +553,11 @@ def main(argv=None):
     p_relink.set_defaults(func=cmd_relink)
 
     p_env = sub.add_parser(
-        "env", help="Stamp the software environment into results.json")
+        "env", help="Stamp the software environment into a task's results.json")
+    p_env.add_argument("task", nargs="*", help="Task folder(s) to stamp")
     p_env.add_argument("--apply", action="store_true", help="Write the changes")
     p_env.add_argument("--force", action="store_true",
                        help="Overwrite an existing environment block")
-    add_task_root_argument(p_env)
     p_env.set_defaults(func=cmd_env)
 
     p_dup = sub.add_parser("duplicates", help="List folders present in >1 root")

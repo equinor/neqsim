@@ -1802,17 +1802,20 @@ def _find_work_record_generator():
     also walks up from the task itself — that is what lets an old task pick up
     the current work-record generator.
     """
+    return _find_devtool("generate_work_record.py")
+
+
+def _find_devtool(filename):
+    """Locate a devtools script from NEQSIM_PROJECT_ROOT or the folder tree."""
     candidates = []
     project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
     if project_root:
-        candidates.append(os.path.join(project_root, "devtools",
-                                       "generate_work_record.py"))
+        candidates.append(os.path.join(project_root, "devtools", filename))
     for start in (os.path.dirname(os.path.abspath(__file__)), TASK_DIR):
         current = start
         for _ in range(6):
-            candidates.append(os.path.join(current, "devtools",
-                                           "generate_work_record.py"))
-            candidates.append(os.path.join(current, "generate_work_record.py"))
+            candidates.append(os.path.join(current, "devtools", filename))
+            candidates.append(os.path.join(current, filename))
             parent = os.path.dirname(current)
             if parent == current:
                 break
@@ -1821,6 +1824,40 @@ def _find_work_record_generator():
         if os.path.isfile(candidate):
             return candidate
     return None
+
+
+def record_environment(results):
+    """Record the software that produced this report into results.json.
+
+    Stamped here rather than backfilled later: only the run that renders the
+    deliverable can honestly claim which NeqSim produced its numbers.
+    """
+    if not isinstance(results, dict):
+        return None
+    tool = _find_devtool("task_corpus.py")
+    if not tool:
+        return None
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("neqsim_task_corpus", tool)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        environment = module.capture_environment()
+    except Exception as error:  # a provenance stamp must never break a report
+        print("NOTE: environment not recorded ({}).".format(error))
+        return None
+    results["environment"] = environment
+    try:
+        with open(RESULTS_FILE, "r", encoding="utf-8-sig") as handle:
+            stored = json.load(handle)
+        if isinstance(stored, dict):
+            stored["environment"] = environment
+            with open(RESULTS_FILE, "w", encoding="utf-8") as handle:
+                json.dump(stored, handle, indent=2, ensure_ascii=False)
+                handle.write("\n")
+    except (OSError, ValueError):
+        pass
+    return environment
 
 
 def generate_work_record(config):
@@ -4875,6 +4912,7 @@ if __name__ == "__main__":
     study_config = load_study_config()
     results = load_results()
     task_spec = load_task_spec()
+    record_environment(results)
     resolve_report_identity(study_config, task_spec, results)
     apply_report_output_names(TITLE)
 

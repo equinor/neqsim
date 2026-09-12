@@ -8,13 +8,14 @@ validation) must look in the same places the task creator writes to, otherwise
 it silently reports on a stale corpus.
 
 Resolution order, most specific first:
-  1. explicit roots passed by the caller (``--task-root``)
+  1. explicit roots passed by the caller (``--task-root``) — exclusive
   2. NEQSIM_TASK_ROOT (may list several roots separated by os.pathsep)
   3. ``task_root`` and ``task_roots`` in ~/.neqsim/task_defaults.json
   4. <repository>/task_solve
 
-Every existing root is kept, so a corpus split across several destinations is
-searched as one.
+An explicit root replaces the others so a write command only touches the folder
+it was pointed at. Otherwise every configured root is kept, so a corpus split
+across several destinations is searched as one.
 
 Usage:
     from task_roots import resolve_task_roots, find_task_folders
@@ -62,15 +63,21 @@ def _normalize(value):
 
 
 def resolve_task_roots(explicit=None, include_repo=True):
-    """Return every existing task root, most specific first, deduplicated."""
-    candidates = []
-    candidates.extend(_split(explicit))
-    candidates.extend(_split(os.environ.get("NEQSIM_TASK_ROOT")))
-    settings = _settings()
-    candidates.extend(_split(settings.get("task_root")))
-    candidates.extend(_split(settings.get("task_roots")))
-    if include_repo:
-        candidates.append(str(REPO_ROOT / "task_solve"))
+    """Return every existing task root, most specific first, deduplicated.
+
+    Explicit roots are exclusive: a caller that names a root gets only that
+    root, so a write command cannot reach task folders it was not pointed at.
+    """
+    explicit_roots = _split(explicit)
+    if explicit_roots:
+        candidates = explicit_roots
+    else:
+        candidates = list(_split(os.environ.get("NEQSIM_TASK_ROOT")))
+        settings = _settings()
+        candidates.extend(_split(settings.get("task_root")))
+        candidates.extend(_split(settings.get("task_roots")))
+        if include_repo:
+            candidates.append(str(REPO_ROOT / "task_solve"))
 
     roots = []
     seen = set()
