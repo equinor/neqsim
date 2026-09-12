@@ -12,10 +12,9 @@ import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult
  * Immutable multivariable scenario screen for the DOE Big Hill vacuum case.
  *
  * <p>
- * Every scenario supplies a complete set of explicit engineering inputs and a feed mass flow. Each
- * scenario is independently constructed, solved, and evaluated through the qualified Big Hill case
- * and result contracts. This class reports discrete numerical scenarios; it does not define a
- * measured or continuous vacuum-column operating envelope.
+ * Every scenario supplies a complete set of explicit engineering inputs and a feed mass flow. Each scenario is
+ * independently constructed, solved, and evaluated through the qualified Big Hill case and result contracts. This class
+ * reports discrete numerical scenarios; it does not define a measured or continuous vacuum-column operating envelope.
  * </p>
  */
 public final class DoeBigHillVacuumScenarioScreen {
@@ -44,8 +43,7 @@ public final class DoeBigHillVacuumScenarioScreen {
       maximumMassClosure = Math.max(maximumMassClosure, result.getMassClosureRelativeError());
       maximumComponentClosure = Math.max(maximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
-      maximumEnergyError =
-          Math.max(maximumEnergyError, result.getColumnEnergyBalanceError());
+      maximumEnergyError = Math.max(maximumEnergyError, result.getColumnEnergyBalanceError());
       maximumMeshResidual = Math.max(maximumMeshResidual, result.getMeshResidualNorm());
     }
 
@@ -67,8 +65,7 @@ public final class DoeBigHillVacuumScenarioScreen {
    * @throws IllegalArgumentException if the name, scenario count, or scenario names are invalid
    * @throws IllegalStateException if a scenario does not solve or pass the qualified result gates
    */
-  public static DoeBigHillVacuumScenarioScreen run(String caseNamePrefix,
-      Scenario[] scenarios) {
+  public static DoeBigHillVacuumScenarioScreen run(String caseNamePrefix, Scenario[] scenarios) {
     if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
       throw new IllegalArgumentException("Case-name prefix must be non-blank");
     }
@@ -82,17 +79,15 @@ public final class DoeBigHillVacuumScenarioScreen {
     PointResult[] evaluatedPoints = new PointResult[requestedScenarios.length];
     for (int i = 0; i < requestedScenarios.length; i++) {
       Scenario scenario = requestedScenarios[i];
-      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
-          .create(caseNamePrefix + " scenario " + scenario.getName(),
-              scenario.getFeedMassFlowKgPerHour(), scenario.getOperatingInputs());
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase.create(
+          caseNamePrefix + " scenario " + scenario.getName(), scenario.getFeedMassFlowKgPerHour(),
+          scenario.getOperatingInputs());
       try {
         model.getColumn().run(UUID.randomUUID());
-        DoeBigHillVacuumFractionationResult result =
-            DoeBigHillVacuumFractionationResult.evaluate(model);
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
         evaluatedPoints[i] = new PointResult(scenario, result);
       } catch (RuntimeException exception) {
-        throw new IllegalStateException(
-            "Vacuum scenario screen failed at point " + i + " (" + scenario.getName() + ")",
+        throw new IllegalStateException("Vacuum scenario screen failed at point " + i + " (" + scenario.getName() + ")",
             exception);
       }
     }
@@ -174,13 +169,11 @@ public final class DoeBigHillVacuumScenarioScreen {
      * @throws NullPointerException if {@code operatingInputs} is null
      * @throws IllegalArgumentException if the name or feed mass flow is invalid
      */
-    public Scenario(String name, double feedMassFlowKgPerHour,
-        OperatingInputs operatingInputs) {
+    public Scenario(String name, double feedMassFlowKgPerHour, OperatingInputs operatingInputs) {
       if (name == null || name.trim().isEmpty()) {
         throw new IllegalArgumentException("Scenario name must be non-blank");
       }
-      if (!Double.isFinite(feedMassFlowKgPerHour)
-          || !(feedMassFlowKgPerHour > 0.0)) {
+      if (!Double.isFinite(feedMassFlowKgPerHour) || !(feedMassFlowKgPerHour > 0.0)) {
         throw new IllegalArgumentException("Feed mass flow must be finite and positive");
       }
       this.name = name.trim();
@@ -209,11 +202,9 @@ public final class DoeBigHillVacuumScenarioScreen {
     private final Scenario scenario;
     private final DoeBigHillVacuumFractionationResult fractionationResult;
 
-    private PointResult(Scenario scenario,
-        DoeBigHillVacuumFractionationResult fractionationResult) {
+    private PointResult(Scenario scenario, DoeBigHillVacuumFractionationResult fractionationResult) {
       this.scenario = Objects.requireNonNull(scenario, "scenario");
-      this.fractionationResult =
-          Objects.requireNonNull(fractionationResult, "fractionationResult");
+      this.fractionationResult = Objects.requireNonNull(fractionationResult, "fractionationResult");
     }
 
     /** @return immutable scenario definition applied at this point */
@@ -243,3 +234,4 @@ public final class DoeBigHillVacuumScenarioScreen {
     }
   }
 }
+
