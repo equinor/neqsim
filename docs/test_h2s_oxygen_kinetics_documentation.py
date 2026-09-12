@@ -412,6 +412,45 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 
+    def test_absolute_remaining_moles_target_is_documented_and_executable(self):
+        for token in (
+            "Absolute remaining-moles target crossing",
+            "`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(...)`",
+            r"n_0=c_0m_w",
+            r"f_{\mathrm{target}}=\frac{n_{\mathrm{remaining,target}}}{n_0}",
+            r"n_{\mathrm{reacted,target}}=n_0-n_{\mathrm{remaining,target}}",
+            "shortest, nominal, and longest crossing times and segment indices",
+            "nominal crossing is `22.4288 h`",
+            "reacted-moles inverse when the two dimensional targets are complements",
+            "Scaling both the constant water inventory and remaining-moles target",
+            "target equal to the initial inventory crosses at exact time zero",
+            "strictly positive, and no greater than the initial dimensional inventory",
+            "not a water-holdup calculation",
+            "not a water-holdup calculation, residence- time design",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static RemainingMolesTargetResult timeToRemainingMolesRange(",
+            "public static final class RemainingMolesTargetResult",
+            "getInitialTotalSulfideMoles()",
+            "getTargetRemainingMoles()",
+            "getTargetReactedMoles()",
+            "getTargetRemainingFraction()",
+            "getCrossingRange()",
+            "cannot be represented at this inventory scale",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testRemainingMolesTargetReproducesHalfInventoryAndAgreesWithComplement",
+            "testRemainingMolesTargetIsMonotonicAndPreservesLinearWaterScaling",
+            "testRemainingMolesTargetIsSplitInvariantAndIdentityIsExact",
+            "testRemainingMolesTargetInvalidInputsAndUnreachableTrajectoryFailClosed",
+            "assertTargetRemaining(",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
     def test_piecewise_target_crossing_contract_is_documented_and_executable(self):
         for token in (
             "Piecewise target crossing",
