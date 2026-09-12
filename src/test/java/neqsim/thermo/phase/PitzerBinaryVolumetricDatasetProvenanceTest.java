@@ -126,7 +126,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
             "https://example.test/source", "CC-BY-4.0", "https://creativecommons.org/licenses/by/4.0/",
             PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED, "not-a-checksum",
             "Absolute one-sigma synthetic uncertainty",
-            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
+            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0,
+            1.0, 298.15, 323.15, 1.0e5, 20.0e6));
 
     PitzerBinaryVolumetricDatasetProvenance.SourceRecord duplicate = source("duplicate",
         PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION,
@@ -140,7 +141,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
             "https://example.test/source", "CC-BY-4.0", "",
             PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED, checksum('2'),
             "Absolute one-sigma synthetic uncertainty",
-            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
+            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0,
+            1.0, 298.15, 323.15, 1.0e5, 20.0e6));
   }
 
   @Test
