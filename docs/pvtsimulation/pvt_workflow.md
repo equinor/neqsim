@@ -9,7 +9,7 @@ conditions, uncertainty, parameter bounds, and acceptance criteria are project-s
 remain traceable to their owners.
 
 For a runnable starting point, use the Java 8/Log4j2
-[`PvtSeparatorQuickStart`](README.md#runnable-java-quick-start) and its enabled
+[`PvtSeparatorQuickStart`](README.md#runnable-multi-stage-separator-example) and its enabled
 [documentation regression](../../src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java).
 The enabled [PVT regression tests](../../src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java)
 exercise the current regression surface. This page intentionally contains no second code example.
