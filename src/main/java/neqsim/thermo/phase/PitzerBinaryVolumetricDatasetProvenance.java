@@ -80,8 +80,7 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
    * <p>
    * Every observation must have a declared source, permitted redistribution, explicitly qualified absolute one-sigma
    * uncertainty values, the declared role and molality range. The common temperature and pressure must lie within each
-   * used source envelope, and the number of observations for each
-   * source must exactly match its manifest record.
+   * used source envelope, and the number of observations for each source must exactly match its manifest record.
    * </p>
    *
    * @param observations observations to validate
@@ -200,7 +199,7 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
      * Construct a source-lineage record without a machine-qualified uncertainty decision.
      *
      * @deprecated Repository validation rejects the unresolved uncertainty status assigned by this constructor. Use the
-     *             constructor that accepts {@link UncertaintyQualification}.
+     * constructor that accepts {@link UncertaintyQualification}.
      */
     @Deprecated
     public SourceRecord(String sourceGroup, DatasetRole role, String citation, String sourceUrl, String licenseId,
@@ -209,8 +208,7 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
         double maximumTemperatureK, double minimumPressurePa, double maximumPressurePa) {
       this(sourceGroup, role, citation, sourceUrl, licenseId, licenseUrl, redistributionStatus, sha256,
           uncertaintyBasis, UncertaintyQualification.UNRESOLVED, observationCount, minimumMolality, maximumMolality,
-          minimumTemperatureK,
-          maximumTemperatureK, minimumPressurePa, maximumPressurePa);
+          minimumTemperatureK, maximumTemperatureK, minimumPressurePa, maximumPressurePa);
     }
 
     /**
