@@ -105,6 +105,19 @@ echo (PATH changes only apply to newly opened terminals), or use the line above.
 echo If running 'neqsim' shows "The term 'neqsim' is not recognized" in a VS Code
 echo terminal, fully quit and reopen VS Code -- a new integrated terminal is NOT
 echo enough (VS Code captures PATH at launch). A virtualenv avoids this.
+echo.
+echo Where solved tasks are saved:
+echo   Default (nothing set): ^<this repository^>\task_solve
+echo   Change it:  neqsim --set-task-root "D:\Engineering Tasks"   (or 'cwd')
+echo   Check it:   neqsim --show-task-root
+echo The setting is saved in %USERPROFILE%\.neqsim\task_defaults.json and is used
+echo by 'neqsim new-task' and the AI agents, so tasks can live outside the clone.
+echo.
+echo Word template for generated reports:
+echo   Default (nothing set): built-in NeqSim report styling
+echo   Change it:  neqsim --set-report-template "C:\path\company template.docx"
+echo   Check it:   neqsim --show-report-template
+echo Every Report.docx then inherits its styles, fonts, headers, and footers.
 exit /b 0
 
 :err_pip_boot

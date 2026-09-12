@@ -470,6 +470,51 @@ def check_devtools():
         )
 
 
+def check_task_root():
+    """Report the folder new task folders are created in."""
+    print("\n--- Task destination ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        resolved = new_task.resolve_task_root()
+    except Exception as error:
+        _check("Task root", False, str(error),
+               fix_hint="Set a valid folder: neqsim --set-task-root \"PATH\"")
+        return
+    if os.environ.get("NEQSIM_TASK_ROOT"):
+        source = "from NEQSIM_TASK_ROOT"
+    elif os.path.exists(new_task.task_defaults_path()):
+        source = "saved in ~/.neqsim/task_defaults.json"
+    else:
+        source = "repository default - change with: neqsim --set-task-root \"PATH\""
+    _check("New tasks are created in", True,
+           "{root} ({source})".format(root=resolved, source=source))
+
+
+def check_report_template():
+    """Report the Word template every generated task report is built from."""
+    print("\n--- Report template ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        template = new_task.resolve_report_template()
+    except Exception as error:
+        _check("Report template", False, str(error),
+               fix_hint="Set a valid file: neqsim --set-report-template \"PATH\" "
+                        "(or neqsim --reset-report-template)")
+        return
+    if not template:
+        _check("Word reports use", True,
+               "built-in styling - change with: neqsim --set-report-template \"PATH\"")
+        return
+    source = ("from NEQSIM_REPORT_TEMPLATE" if os.environ.get("NEQSIM_REPORT_TEMPLATE")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Word reports are built from", True,
+           "{template} ({source})".format(template=template, source=source))
+
+
 def check_git():
     """Check git status."""
     print("\n--- Git ---")
@@ -507,6 +552,8 @@ def main():
     check_agent_files()
     check_cross_tool_files()
     check_devtools()
+    check_task_root()
+    check_report_template()
     check_git()
 
     # Summary

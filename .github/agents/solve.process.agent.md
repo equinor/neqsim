@@ -136,7 +136,9 @@ Key points:
 ns.DistillationColumn = ns.JClass("neqsim.process.equipment.distillation.DistillationColumn")
 ns.Expander = ns.JClass("neqsim.process.equipment.expander.Expander")
 ns.Ejector = ns.JClass("neqsim.process.equipment.ejector.Ejector")
-ns.Reactor = ns.JClass("neqsim.process.equipment.reactor.Reactor")
+ns.GibbsReactor = ns.JClass("neqsim.process.equipment.reactor.GibbsReactor")
+ns.PlugFlowReactor = ns.JClass("neqsim.process.equipment.reactor.PlugFlowReactor")
+ns.StirredTankReactor = ns.JClass("neqsim.process.equipment.reactor.StirredTankReactor")
 ns.Filter = ns.JClass("neqsim.process.equipment.filter.Filter")
 ns.Flare = ns.JClass("neqsim.process.equipment.flare.Flare")
 

@@ -362,6 +362,23 @@ workflow gaps were found.
 | No benchmark validation                          | Run hand check or compare to literature; report deviation %         |
 | Discussion that doesn't reference its figures    | Use `[fig_03]` cross-references in prose                            |
 
+## Word output — use the configured template
+
+`Report.docx` is built from the Word template the user configured, so the
+deliverable carries their organisation's styles, fonts, headers and footers.
+Resolution: `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` >
+the saved `report_template` in `~/.neqsim/task_defaults.json`
+(`neqsim --set-report-template "PATH"`) > built-in styling.
+
+- Do not pass `--no-template` or restyle the document away from the template
+  unless the user asks for it.
+- If the generator exits with a missing/invalid-template error, report that —
+  do not ship an unbranded report instead.
+- `Paper.docx` (`--paper`) keeps journal formatting and ignores the template.
+- An older task folder carries its own `generate_report.py`; copy
+  `devtools/task_template/step3_report/generate_report.py` over it to enable the
+  template there.
+
 ## Validation Checklist (RUN BEFORE FINALIZING)
 
 **Depth (Principle 0) — check these first; they cannot be fixed by editing prose:**

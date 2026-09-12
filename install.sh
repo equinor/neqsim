@@ -112,6 +112,21 @@ echo "  $PYTHON -m neqsim_cli --help"
 echo "If 'neqsim' is not found in this shell, open a NEW terminal (or 'source'"
 echo "your shell rc file), or use the line above."
 
+echo ""
+echo "Where solved tasks are saved:"
+echo "  Default (nothing set): <this repository>/task_solve"
+echo "  Change it:  neqsim --set-task-root \"/data/engineering-tasks\"   (or 'cwd')"
+echo "  Check it:   neqsim --show-task-root"
+echo "The setting is saved in ~/.neqsim/task_defaults.json and is used by"
+echo "'neqsim new-task' and the AI agents, so tasks can live outside the clone."
+
+echo ""
+echo "Word template for generated reports:"
+echo "  Default (nothing set): built-in NeqSim report styling"
+echo "  Change it:  neqsim --set-report-template \"/path/company template.docx\""
+echo "  Check it:   neqsim --show-report-template"
+echo "Every Report.docx then inherits its styles, fonts, headers, and footers."
+
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR
 # (./mvnw install) and the local dev-notebook runtime DO. Check for a JDK so

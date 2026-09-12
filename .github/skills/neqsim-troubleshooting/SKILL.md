@@ -332,6 +332,34 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 > `HeatExchanger` always overrode both. Apply the same override when adding new
 > multi-port equipment.
 
+### "Converged: YES" while a unit holds NaN
+
+`runUntilConverged()` can return `true` for a plant whose equipment carries
+`NaN` results. The boundary gate compares stream values; a unit whose internal
+solve produced `NaN` can still present a self-consistent (nonsense) outlet, so
+the gate is satisfied. An older build that reports `converged=false` may hold
+the **better** numbers.
+
+Therefore, when comparing two NeqSim versions or bisecting a regression, never
+classify a run by the convergence flag. Classify on physical finiteness of the
+units you care about:
+
+```python
+bad = (not math.isfinite(eta) or not math.isfinite(power)
+       or outlet_temperature_K < 100.0)   # absolute floor, not a tolerance
+```
+
+`TurboExpanderCompressor` is a worked example of how one `NaN` survives:
+`Math.max(x, 1e-6)` **returns NaN when x is NaN**, and `NaN` fails every
+comparison, so `if (N > N_max)` / `if (N < N_min)` speed clamps in the
+Newton speed-matching loop never fire. The `NaN` then reaches efficiency,
+power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
+`Math.max`/`Math.min` clamps and `>`/`<` bound checks are not guards.
+
+> Also check the right object: a standalone `Expander` built only for reporting
+> is not the unit the flowsheet solves. Read the coupled unit actually added to
+> the `ProcessSystem`.
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power

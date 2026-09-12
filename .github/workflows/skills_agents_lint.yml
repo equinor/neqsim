@@ -43,10 +43,13 @@ jobs:
       - name: Verify referenced MCP tool names exist
         run: python devtools/verify_mcp_tool_references.py
 
+      - name: Verify NeqSim class references in skills and agents
+        run: python devtools/verify_skill_api_refs.py
+
       - name: Test agent/skill discovery tools
         run: |
           python -m pip install --quiet pytest
-          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py -q
+          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_verify_skill_api_refs.py -q
 
       - name: Regenerate agent → skill map
         run: python devtools/generate_agent_skill_map.py

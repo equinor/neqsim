@@ -66,7 +66,93 @@ HTML reports — all in one session.
 > **New user?** The script is in `devtools/` (tracked in git), so it's available
 > immediately after `git clone`. It creates `task_solve/` automatically on first run.
 
-### Task Folder Structure
+### Default Task Destination
+
+Set a user-wide parent folder once, shared by future sessions and NeqSim clones:
+
+```powershell
+neqsim --set-task-root "D:/Engineering Tasks"
+neqsim --show-task-root
+neqsim new-task "My study"
+```
+
+Each new task gets its own dated subfolder. The destination precedence is:
+
+1. `--task-root PATH` on a command (also works with `--setup` and `--list`).
+2. The `NEQSIM_TASK_ROOT` environment variable.
+3. The saved user default in `~/.neqsim/task_defaults.json`.
+4. `<NeqSim repository>/task_solve` when no override exists.
+
+Relative paths are resolved against the current working directory; saved defaults
+are stored as absolute paths. Spaces, `~`, and environment-variable expansion are
+supported. To put one task in the folder the terminal is already in, pass
+`--task-root .`. To make every new task land in whatever folder the terminal is in,
+save the follow-the-terminal default:
+
+```powershell
+neqsim --set-task-root cwd
+```
+
+That stores `"."`, which is re-resolved on each command, so the destination changes
+with the terminal. Agents run commands from a workspace folder, so this makes the
+task land next to the code being worked on. Use an absolute default instead when
+tasks must always collect in one place regardless of the terminal.
+
+### Default Report Template
+
+Set your organisation's Word template once and every task report is built from it:
+
+```powershell
+neqsim --set-report-template "C:/Users/you/Documents/company report template.docx"
+neqsim --show-report-template
+```
+
+`Report.docx` then inherits the template's styles, fonts, theme colours, page
+setup, headers, and footers. The template precedence is:
+
+1. `python step3_report/generate_report.py --template "PATH"` for a single run.
+2. The `NEQSIM_REPORT_TEMPLATE` environment variable.
+3. The saved user default in `~/.neqsim/task_defaults.json`.
+4. Built-in styling when nothing is configured.
+
+The template's own body text is dropped so the report starts on a clean page; pass
+`--keep-template-content` to keep a template cover page or boilerplate. Use
+`--no-template` to ignore the setting for one run, and `neqsim --reset-report-template`
+to remove it. A configured template that is missing or is not a `.docx`/`.dotx` file
+is reported as an error rather than silently ignored, so an unbranded report is never
+issued by accident. `Paper.docx` keeps journal formatting and ignores the template.
+
+> Tasks created before the template support was added carry their own older copy of
+> `generate_report.py`. Run the canonical generator against them instead of copying
+> files around:
+>
+> ```powershell
+> neqsim report "C:/path/to/task_solve/2026-04-21_my_task"
+> neqsim report .                       # the task folder you are standing in
+> neqsim report . --paper --no-template # flags are forwarded to the generator
+> ```
+>
+> `neqsim report` always runs `devtools/task_template/step3_report/generate_report.py`,
+> so a fix to the generator reaches every task folder, old or new. The same effect is
+> available directly with `--task-dir PATH` or the `NEQSIM_TASK_DIR` environment
+> variable.
+
+
+To remove the saved default, run `neqsim --reset-task-root`. The same controls are
+also available on the subcommand as `neqsim new-task --set-default-folder/--show-task-root/--reset-default-folder`.
+This does not move or delete existing tasks, and an environment override still applies.
+Invalid settings or inaccessible destinations must be corrected, not silently ignored.
+
+Agents must treat the `task_solve/` examples in this guide as the resolved parent
+folder. Pass the created absolute task path to all child agents, artifact writers,
+validators and external tools. Existing tasks are resumed in their original folder.
+For notebooks outside the source tree, set `NEQSIM_PROJECT_ROOT` to the NeqSim
+repository and, where needed, `NEQSIM_TASK_DIR` to the active dated task folder.
+An external destination is not automatically gitignored by another repository;
+keep private task data out of commits. Tools that do not expose an output-path
+option are not automatically redirected by this setting.
+
+### Task Folder Layout
 
 ```
 task_solve/

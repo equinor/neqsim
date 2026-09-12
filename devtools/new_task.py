@@ -16,8 +16,29 @@ Usage:
     neqsim new-task "field study" --config-file study_config.yaml
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
+    neqsim new-task --set-default-folder "D:/Engineering Tasks"
+    neqsim new-task --set-default-folder cwd   # follow the terminal folder
+    neqsim new-task --show-task-root     # print the resolved destination
+    neqsim new-task "task title" --task-root "D:/One-off Studies"
+    neqsim new-task "task title" --task-root .    # into the terminal folder
+    neqsim new-task --reset-default-folder
+    neqsim new-task --set-report-template "C:/…/company template.docx"
+    neqsim new-task --show-report-template
+    neqsim new-task --reset-report-template
+
+Destination precedence: --task-root, NEQSIM_TASK_ROOT, saved user default,
+then <repository>/task_solve. Settings: ~/.neqsim/task_defaults.json.
+The short top-level equivalents are `neqsim --set-task-root PATH`,
+`neqsim --show-task-root`, and `neqsim --reset-task-root`.
+
+Word reports are built from the template resolved as: generate_report.py
+--template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template`
+setting. The short top-level equivalents are `neqsim --set-report-template
+PATH`, `neqsim --show-report-template`, and `neqsim --reset-report-template`.
 """
+import argparse
 import os
+import json
 import shutil
 import sys
 from datetime import date
@@ -28,6 +49,129 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 TASK_SOLVE_DIR = os.path.join(PROJECT_ROOT, "task_solve")
 TEMPLATE_DIR = os.path.join(TASK_SOLVE_DIR, "TASK_TEMPLATE")
+CWD_TASK_ROOT = "."
+CWD_ALIASES = ("cwd", "here", ".")
+REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
+
+
+def task_defaults_path():
+    """Return the user-level task destination configuration file."""
+    return os.path.expanduser("~/.neqsim/task_defaults.json")
+
+
+def read_task_defaults():
+    """Return the saved user settings, or an empty mapping when unset."""
+    path = task_defaults_path()
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8-sig") as source:
+        settings = json.load(source)
+    if not isinstance(settings, dict):
+        raise ValueError("{} must contain a JSON object".format(path))
+    return settings
+
+
+def _write_task_defaults(settings):
+    """Persist user settings, removing the file once no setting remains."""
+    path = task_defaults_path()
+    if not settings:
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    _write_file(path, json.dumps(settings, indent=2) + "\n")
+
+
+def _normalize_task_root(task_root):
+    """Map follow-the-terminal aliases onto the current working directory."""
+    return CWD_TASK_ROOT if task_root.strip().lower() in CWD_ALIASES else task_root
+
+
+def resolve_task_root(task_root=None):
+    """Resolve explicit, environment, saved-user, then repository task root."""
+    selected = task_root or os.environ.get("NEQSIM_TASK_ROOT")
+    if not selected:
+        selected = read_task_defaults().get("task_root")
+    if selected is not None and (not isinstance(selected, str) or not selected.strip()):
+        raise ValueError("Task root must be a non-empty path string")
+    selected = _normalize_task_root(selected) if selected else TASK_SOLVE_DIR
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+
+
+def save_default_task_root(task_root):
+    """Persist an absolute task root, or '.' to follow the terminal folder."""
+    if not task_root or not task_root.strip():
+        raise ValueError("Task root must be a non-empty path string")
+    stored = _normalize_task_root(task_root)
+    if stored != CWD_TASK_ROOT:
+        stored = resolve_task_root(task_root)
+    settings = read_task_defaults()
+    settings["task_root"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_task_root():
+    """Remove the saved task root, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("task_root", None) is not None
+    _write_task_defaults(settings)
+    return removed
+
+
+def resolve_report_template(report_template=None):
+    """Resolve explicit, environment, then saved-user Word report template.
+
+    Returns an absolute path to an existing .docx/.dotx file, or None when no
+    template is configured. Raises ValueError for a configured but unusable
+    template so the branding failure is reported instead of silently dropped.
+
+    Parameters
+    ----------
+    report_template : str or None
+        Explicit template path that overrides environment and saved settings.
+
+    Returns
+    -------
+    str or None
+        Absolute template path, or None when the built-in styling applies.
+
+    Raises
+    ------
+    ValueError
+        If the resolved template is blank, not a Word file, or missing.
+    """
+    selected = report_template or os.environ.get("NEQSIM_REPORT_TEMPLATE")
+    if not selected:
+        selected = read_task_defaults().get("report_template")
+    if selected is None:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Report template must be a non-empty path to a .docx or .dotx file")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if os.path.splitext(path)[1].lower() not in REPORT_TEMPLATE_EXTENSIONS:
+        raise ValueError("Report template must be a .docx or .dotx file: {}".format(path))
+    if not os.path.isfile(path):
+        raise ValueError("Report template not found: {}".format(path))
+    return path
+
+
+def save_default_report_template(report_template):
+    """Persist the Word template every generated report should be built from."""
+    if not report_template or not report_template.strip():
+        raise ValueError("Report template must be a non-empty path to a .docx or .dotx file")
+    stored = resolve_report_template(report_template)
+    settings = read_task_defaults()
+    settings["report_template"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_report_template():
+    """Remove the saved report template, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("report_template", None) is not None
+    _write_task_defaults(settings)
+    return removed
 
 TASK_TYPES = {
     "A": "Property",
@@ -539,6 +683,11 @@ The deliverables are a **Word report** (`.docx`) and optionally an **HTML report
 pip install python-docx matplotlib    # one-time setup
 python step3_report/generate_report.py
 ```
+
+`Report.docx` is built from the Word template saved with
+`neqsim --set-report-template "PATH"` (check it with `neqsim --show-report-template`),
+so it carries your organisation's styles, fonts, headers, and footers. Override
+for one run with `--template "PATH"`, or ignore it with `--no-template`.
 
 **AI prompt - paste into VS Code Copilot Chat:**
 
@@ -3505,17 +3654,19 @@ def _write_file(path, content):
         f.write(content)
 
 
-def setup_workspace():
+def setup_workspace(task_root=None):
     """
     Create the task_solve/ folder with README and TASK_TEMPLATE.
 
     Safe to call multiple times — skips files that already exist.
     Returns True if anything was created.
     """
+    task_root = resolve_task_root(task_root)
+    template_dir = os.path.join(task_root, "TASK_TEMPLATE")
     created = False
 
     # Main README
-    readme = os.path.join(TASK_SOLVE_DIR, "README.md")
+    readme = os.path.join(task_root, "README.md")
     if not os.path.exists(readme):
         _write_file(readme, WORKSPACE_README)
         created = True
@@ -3534,6 +3685,7 @@ def setup_workspace():
     }
 
     for path, content in template_files.items():
+        path = os.path.join(template_dir, os.path.relpath(path, TEMPLATE_DIR))
         if not os.path.exists(path):
             _write_file(path, content)
             created = True
@@ -3553,7 +3705,7 @@ def setup_workspace():
                     continue
                 src = os.path.join(root, fname)
                 rel = os.path.relpath(src, canonical_dir)
-                dst = os.path.join(TEMPLATE_DIR, rel)
+                dst = os.path.join(template_dir, rel)
                 # Always overwrite with canonical version
                 _write_file(dst, open(src, "r", encoding="utf-8").read())
                 created = True
@@ -3769,7 +3921,7 @@ def _seed_study_config(task_dir, title, task_type, scale, report_depth,
 
 def create_task(title, task_type="B", author="", prompt="", scale="",
                 report_depth="", notebooks="", config_file="",
-                intake_pause=""):
+                intake_pause="", task_root=None):
     """Create a new task folder from the template.
 
     Parameters
@@ -3793,21 +3945,25 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         Optional path to a study_config.yaml file to copy into the task.
     intake_pause : str
         Optional intake pause setting: auto, always, or never.
+    task_root : str
+        Optional parent folder overriding the environment and saved default.
     """
+    task_root = resolve_task_root(task_root)
+    template_dir = os.path.join(task_root, "TASK_TEMPLATE")
     # Ensure workspace exists
-    if not os.path.exists(TEMPLATE_DIR):
-        print("Setting up task_solve/ workspace for the first time...")
-        setup_workspace()
+    if not os.path.exists(template_dir):
+        print("Setting up task workspace: {}".format(task_root))
+        setup_workspace(task_root)
         print("")
     else:
         # Always refresh the canonical overlay so updates to
         # devtools/task_template/ propagate to new tasks without requiring
         # a full --setup re-run.
-        setup_workspace()
+        setup_workspace(task_root)
 
     today = date.today().isoformat()
     folder_name = "{}_{}".format(today, slugify(title))
-    task_dir = os.path.join(TASK_SOLVE_DIR, folder_name)
+    task_dir = os.path.join(task_root, folder_name)
 
     if os.path.exists(task_dir):
         print("ERROR: Folder already exists: {}".format(task_dir))
@@ -3815,7 +3971,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
 
     # Copy template
     shutil.copytree(
-        TEMPLATE_DIR,
+        template_dir,
         task_dir,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
     )
@@ -3836,6 +3992,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         "A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)",
         type_label,
     )
+    content = content.replace("task_solve/[THIS_FOLDER]", task_dir.replace("\\", "/"))
     content = content.replace("[THIS_FOLDER]", folder_name)
     if author:
         content = content.replace(
@@ -3896,13 +4053,12 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         except Exception as e:
             print("  WARNING: could not seed user_input.md ({})".format(e))
 
-    print("Created: task_solve/{}".format(folder_name))
+    print("Created: {}".format(task_dir))
     print("")
     print("Task input can be added before analysis starts:")
-    print("  Config: task_solve/{}/study_config.yaml".format(folder_name))
-    print("  Prompt/log: task_solve/{}/user_input.md".format(folder_name))
-    print("  Document input: task_solve/{}/step1_scope_and_research/references/".format(
-        folder_name))
+    print("  Config: {}/study_config.yaml".format(task_dir))
+    print("  Prompt/log: {}/user_input.md".format(task_dir))
+    print("  Document input: {}/step1_scope_and_research/references/".format(task_dir))
     print("  Supported documents include PDFs, Word files, Excel stream tables,")
     print("  P&IDs, vendor data sheets, standards, and lab reports.")
     intake_setting = normalize_intake_pause(intake_pause) or "auto"
@@ -3917,30 +4073,31 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     print("    @solve.task {}".format(title))
     print("")
     print("  Alternative - Follow prompts manually:")
-    print("    Open task_solve/{}/README.md".format(folder_name))
+    print("    Open {}/README.md".format(task_dir))
     print("")
     return task_dir
 
 
-def list_tasks():
+def list_tasks(task_root=None):
     """List existing task folders."""
-    if not os.path.exists(TASK_SOLVE_DIR):
-        print("No task_solve/ folder yet. Run: neqsim new-task --setup")
+    task_root = resolve_task_root(task_root)
+    if not os.path.exists(task_root):
+        print("No task folder at {}. Run: neqsim new-task --setup".format(task_root))
         return
 
-    entries = sorted(os.listdir(TASK_SOLVE_DIR))
+    entries = sorted(os.listdir(task_root))
     tasks = [
         e for e in entries
-        if os.path.isdir(os.path.join(TASK_SOLVE_DIR, e))
+        if os.path.isdir(os.path.join(task_root, e))
         and e != "TASK_TEMPLATE"
     ]
 
     if not tasks:
         print("No tasks yet. Create one with: neqsim new-task \"your task\"")
     else:
-        print("Tasks in task_solve/:")
+        print("Tasks in {}:".format(task_root))
         for t in tasks:
-            readme = os.path.join(TASK_SOLVE_DIR, t, "README.md")
+            readme = os.path.join(task_root, t, "README.md")
             status = ""
             if os.path.exists(readme):
                 with open(readme, "r", encoding="utf-8") as f:
@@ -3952,23 +4109,67 @@ def list_tasks():
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    """Handle destination settings before forwarding task creation arguments."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--task-root")
+    settings = parser.add_mutually_exclusive_group()
+    settings.add_argument("--set-default-folder")
+    settings.add_argument("--reset-default-folder", action="store_true")
+    settings.add_argument("--show-task-root", action="store_true")
+    settings.add_argument("--set-report-template")
+    settings.add_argument("--reset-report-template", action="store_true")
+    settings.add_argument("--show-report-template", action="store_true")
+    options, remaining = parser.parse_known_args()
+    try:
+        if options.set_default_folder is not None:
+            stored = save_default_task_root(options.set_default_folder)
+            if stored == CWD_TASK_ROOT:
+                print("Saved default task folder: the terminal's current folder.")
+            else:
+                print("Saved default task folder: {}".format(stored))
+            return
+        if options.reset_default_folder:
+            clear_default_task_root()
+            print("Saved default removed. Existing tasks are unchanged.")
+            return
+        if options.show_task_root:
+            print(resolve_task_root(options.task_root))
+            return
+        if options.set_report_template is not None:
+            print("Saved report template: {}".format(
+                save_default_report_template(options.set_report_template)))
+            return
+        if options.reset_report_template:
+            clear_default_report_template()
+            print("Saved report template removed. Reports use built-in styling.")
+            return
+        if options.show_report_template:
+            print(resolve_report_template() or "(none — reports use built-in styling)")
+            return
+        _main([sys.argv[0]] + remaining, options.task_root)
+    except (OSError, ValueError, TypeError, AttributeError) as error:
+        parser.error(str(error))
+
+
+def _main(argv, task_root=None):
+    """Run task commands using the selected output root."""
+    if len(argv) < 2 or argv[1] in ("-h", "--help"):
         print(__doc__)
         sys.exit(0)
 
-    if sys.argv[1] == "--setup":
-        if setup_workspace():
-            print("Created task_solve/ workspace with README and template.")
+    if argv[1] == "--setup":
+        if setup_workspace(task_root):
+            print("Created task workspace at {}".format(resolve_task_root(task_root)))
         else:
-            print("task_solve/ workspace already exists.")
+            print("Task workspace already exists at {}".format(resolve_task_root(task_root)))
         print("\nCreate a task: neqsim new-task \"your task title\"")
         return
 
-    if sys.argv[1] == "--list":
-        list_tasks()
+    if argv[1] == "--list":
+        list_tasks(task_root)
         return
 
-    title = sys.argv[1]
+    title = argv[1]
     task_type = "B"
     author = ""
     prompt = ""
@@ -3979,37 +4180,37 @@ def main():
     intake_pause = ""
 
     i = 2
-    while i < len(sys.argv):
-        if sys.argv[i] == "--type" and i + 1 < len(sys.argv):
-            task_type = sys.argv[i + 1].upper()
+    while i < len(argv):
+        if argv[i] == "--type" and i + 1 < len(argv):
+            task_type = argv[i + 1].upper()
             i += 2
-        elif sys.argv[i] == "--author" and i + 1 < len(sys.argv):
-            author = sys.argv[i + 1]
+        elif argv[i] == "--author" and i + 1 < len(argv):
+            author = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--prompt" and i + 1 < len(sys.argv):
-            prompt = sys.argv[i + 1]
+        elif argv[i] == "--prompt" and i + 1 < len(argv):
+            prompt = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--prompt-file" and i + 1 < len(sys.argv):
+        elif argv[i] == "--prompt-file" and i + 1 < len(argv):
             try:
-                with open(sys.argv[i + 1], "r", encoding="utf-8") as f:
+                with open(argv[i + 1], "r", encoding="utf-8") as f:
                     prompt = f.read()
             except Exception as e:
                 print("WARNING: could not read --prompt-file: {}".format(e))
             i += 2
-        elif sys.argv[i] == "--scale" and i + 1 < len(sys.argv):
-            scale = sys.argv[i + 1]
+        elif argv[i] == "--scale" and i + 1 < len(argv):
+            scale = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--report-depth" and i + 1 < len(sys.argv):
-            report_depth = sys.argv[i + 1]
+        elif argv[i] == "--report-depth" and i + 1 < len(argv):
+            report_depth = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--notebooks" and i + 1 < len(sys.argv):
-            notebooks = sys.argv[i + 1]
+        elif argv[i] == "--notebooks" and i + 1 < len(argv):
+            notebooks = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--intake-pause" and i + 1 < len(sys.argv):
-            intake_pause = sys.argv[i + 1]
+        elif argv[i] == "--intake-pause" and i + 1 < len(argv):
+            intake_pause = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--config-file" and i + 1 < len(sys.argv):
-            config_file = sys.argv[i + 1]
+        elif argv[i] == "--config-file" and i + 1 < len(argv):
+            config_file = argv[i + 1]
             i += 2
         else:
             i += 1
@@ -4032,7 +4233,7 @@ def main():
         intake_pause = ""
 
     create_task(title, task_type, author, prompt, scale, report_depth,
-                notebooks, config_file, intake_pause)
+                notebooks, config_file, intake_pause, task_root=task_root)
 
 
 if __name__ == "__main__":

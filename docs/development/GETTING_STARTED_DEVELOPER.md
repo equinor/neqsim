@@ -166,6 +166,10 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 neqsim new-task "Your task description" --type B --intake-pause always
 ```
 
+Both paths create the task folder under the task root: the default saved with
+`neqsim --set-task-root "PATH"` (`cwd` follows the terminal folder), or
+`<repo>/task_solve` when nothing is set. Check it with `neqsim --show-task-root`.
+
 The intake pause creates the folder first, then lets you edit
 `study_config.yaml`, add details to `user_input.md`, or place document inputs
 such as PDFs, Excel stream tables, P&IDs, and data sheets in

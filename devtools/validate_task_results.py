@@ -13,6 +13,12 @@ Usage:
     python devtools/validate_task_results.py task_solve/2026-04-21_my_task task_solve/2026-04-22_other
     python devtools/validate_task_results.py --all
     python devtools/validate_task_results.py --changed  # via env vars CHANGED_FILES
+    python devtools/validate_task_results.py --all --enterprise-gate  # strict
+
+With ``--enterprise-gate`` a Standard/Comprehensive task that carries neither a
+benchmark comparison nor a model-vs-plant comparison fails instead of warning.
+That is the only check here that looks at whether the answer was verified rather
+than whether the file is well formed.
 
 Exit codes:
     0 — all results.json files valid (warnings allowed)
@@ -298,6 +304,67 @@ def check_document_evidence(task_folder: Path) -> List[str]:
     return warnings
 
 
+def _is_standard_or_comprehensive(results: dict, task_folder: Path) -> bool:
+    """Heuristic task-scale classifier so Quick tasks skip the correctness gate.
+
+    A task counts as Standard/Comprehensive when it carries an uncertainty or
+    risk section, or has produced a Step 3 report.
+
+    Parameters
+    ----------
+    results : dict
+        Parsed results.json.
+    task_folder : Path
+        Folder holding results.json.
+
+    Returns
+    -------
+    bool
+        True when the engineering-validation requirement applies.
+    """
+    for key in ("uncertainty", "risk_evaluation"):
+        block = results.get(key)
+        if isinstance(block, dict) and block:
+            return True
+    step3 = task_folder / "step3_report"
+    if step3.is_dir():
+        for produced in step3.glob("*"):
+            if produced.suffix.lower() in (".docx", ".html"):
+                return True
+    return False
+
+
+def _has_engineering_validation(results: dict) -> bool:
+    """True when the task compared its answer against something independent.
+
+    Accepts a benchmark block, an explicit plant/model comparison block, or a
+    validation block whose keys name a measured or reference comparison.
+
+    Parameters
+    ----------
+    results : dict
+        Parsed results.json.
+
+    Returns
+    -------
+    bool
+        True when independent validation evidence is present.
+    """
+    bench = results.get("benchmark_validation")
+    if isinstance(bench, (list, dict)) and bench:
+        return True
+    for key in ("plant_comparison", "model_validation", "measured_comparison"):
+        block = results.get(key)
+        if isinstance(block, (list, dict)) and block:
+            return True
+    val = results.get("validation")
+    if isinstance(val, dict):
+        keys = " ".join(val.keys()).lower()
+        if any(t in keys for t in ("measured", "plant", "benchmark", "reference", "deviation")):
+            return True
+    return False
+
+
 def find_results_files(roots: List[Path]) -> List[Path]:
     out: List[Path] = []
     for root in roots:
@@ -344,6 +411,12 @@ def main() -> int:
         action="store_true",
         help="Treat warnings as errors (exits 1 on any warning)",
     )
+    parser.add_argument(
+        "--enterprise-gate",
+        action="store_true",
+        help="Promote the engineering-validation requirement to an error for "
+             "Standard/Comprehensive tasks",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -387,7 +460,12 @@ def main() -> int:
     capability_warnings_seen: set = set()
 
     for f in files:
-        rel = f.relative_to(repo_root) if f.is_absolute() else f
+        # Task folders may live outside the repo (see `neqsim --set-task-root`),
+        # so only shorten the path when it is genuinely inside the repo.
+        try:
+            rel = f.relative_to(repo_root)
+        except ValueError:
+            rel = f
         errors, warnings = validate_file(f)
         # Add Step 1 evidence checks (once per task folder)
         task_folder = f.parent
@@ -395,6 +473,18 @@ def main() -> int:
             capability_warnings_seen.add(str(task_folder))
             warnings.extend(check_capability_assessment(task_folder))
             warnings.extend(check_document_evidence(task_folder))
+        try:
+            with open(f, "r", encoding="utf-8-sig") as handle:
+                parsed = json.load(handle)
+        except (OSError, json.JSONDecodeError):
+            parsed = {}
+        if isinstance(parsed, dict) and _is_standard_or_comprehensive(parsed, task_folder):
+            if not _has_engineering_validation(parsed):
+                msg = (
+                    "engineering validation: Standard/Comprehensive task has neither a "
+                    "benchmark_validation nor a model-vs-plant comparison — add one"
+                )
+                (errors if args.enterprise_gate else warnings).append(msg)
         total_errors += len(errors)
         total_warnings += len(warnings)
         if errors or warnings:
@@ -410,7 +500,8 @@ def main() -> int:
 
     print(
         f"\nSummary: {len(files)} file(s) checked, "
-        f"{total_errors} error(s), {total_warnings} warning(s)."
+        f"{total_errors} error(s), {total_warnings} warning(s) "
+        f"({'enterprise-gate' if args.enterprise_gate else 'advisory'} mode)."
     )
     if failures:
         print("Failed files:")

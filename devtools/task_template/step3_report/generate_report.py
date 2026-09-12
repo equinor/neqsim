@@ -6,6 +6,22 @@ Usage:
     python step3_report/generate_report.py            # Technical report only
     python step3_report/generate_report.py --paper     # Also generate scientific paper
     python step3_report/generate_report.py --paper-only  # Scientific paper only
+    python step3_report/generate_report.py --template "C:/…/company template.docx"
+    python step3_report/generate_report.py --no-template  # ignore the saved template
+    python step3_report/generate_report.py --keep-template-content
+    python devtools/task_template/step3_report/generate_report.py --task-dir PATH
+
+The canonical copy of this script lives in devtools/task_template/. Run it
+against any task folder with `neqsim report <task folder>` (or --task-dir /
+NEQSIM_TASK_DIR) so a fix here applies to task folders created earlier.
+
+Report.docx is built from a Word template when one is configured, so company
+fonts, colours, styles, headers, and footers apply. Resolution order:
+--template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template` in
+~/.neqsim/task_defaults.json (set once with `neqsim --set-report-template PATH`).
+The template's own body text is dropped unless --keep-template-content is given;
+page setup, headers, footers, and styles are always inherited. Paper.docx keeps
+journal formatting and ignores the template.
 
 This script AUTO-READS data from the task folder:
     - study_config.yaml                    -> defines depth, notebook plan, quality gates
@@ -38,6 +54,7 @@ try:
     from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.enum.style import WD_STYLE_TYPE
     from docx.oxml.ns import nsdecls, qn
     from docx.oxml import parse_xml
 except ImportError:
@@ -54,9 +71,28 @@ except ImportError:
     HAS_MATPLOTLIB = False
 
 # ── Paths ────────────────────────────────────────────────
-TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def _resolve_task_dir() -> str:
+    """Return the task folder: --task-dir, NEQSIM_TASK_DIR, else this file's parent.
+
+    Allowing an external task folder lets the canonical devtools copy of this
+    script serve any task, so a fix here reaches task folders that were created
+    with an older vendored copy (`neqsim report <task folder>`).
+    """
+    if "--task-dir" in sys.argv:
+        index = sys.argv.index("--task-dir") + 1
+        if index >= len(sys.argv):
+            print("ERROR: --task-dir requires a path")
+            sys.exit(2)
+        return os.path.abspath(sys.argv[index])
+    env_dir = os.environ.get("NEQSIM_TASK_DIR")
+    if env_dir:
+        return os.path.abspath(os.path.expandvars(os.path.expanduser(env_dir)))
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+TASK_DIR = _resolve_task_dir()
 FIG_DIR = os.path.join(TASK_DIR, "figures")
-REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
 PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
@@ -64,6 +100,110 @@ PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
 RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
 TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
 STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
+
+if not os.path.isdir(REPORT_DIR):
+    os.makedirs(REPORT_DIR)
+
+# ── Word template (corporate branding) ───────────────────
+# Resolution order: --template PATH, NEQSIM_REPORT_TEMPLATE, the saved
+# `report_template` in ~/.neqsim/task_defaults.json (neqsim --set-report-template),
+# then built-in styling. Word documents are then built on the template so the
+# company fonts, colours, styles, headers, and footers apply.
+TASK_DEFAULTS_FILE = os.path.expanduser("~/.neqsim/task_defaults.json")
+REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
+REPORT_TEMPLATE = None          # set in __main__ from CLI/env/settings
+KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template body
+
+
+def resolve_report_template(explicit=None, allow_saved=True):
+    """Resolve the Word template reports are built from, or None if unset.
+
+    Parameters
+    ----------
+    explicit : str or None
+        Template path from --template; overrides environment and settings.
+    allow_saved : bool
+        When False (--no-template), the saved user setting is ignored.
+
+    Returns
+    -------
+    str or None
+        Absolute path to an existing .docx/.dotx file, or None.
+
+    Raises
+    ------
+    ValueError
+        If a template is configured but is not a readable Word file.
+    """
+    selected = explicit or os.environ.get("NEQSIM_REPORT_TEMPLATE")
+    if not selected and allow_saved and os.path.exists(TASK_DEFAULTS_FILE):
+        with open(TASK_DEFAULTS_FILE, encoding="utf-8-sig") as source:
+            selected = json.load(source).get("report_template")
+    if not selected:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Report template must be a path to a .docx or .dotx file")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if os.path.splitext(path)[1].lower() not in REPORT_TEMPLATE_EXTENSIONS:
+        raise ValueError("Report template must be a .docx or .dotx file: {}".format(path))
+    if not os.path.isfile(path):
+        raise ValueError("Report template not found: {}".format(path))
+    return path
+
+
+def _clear_document_body(doc):
+    """Drop the template's own body content, keeping page setup and headers."""
+    body = doc.element.body
+    for child in list(body):
+        if child.tag == qn("w:sectPr"):
+            continue
+        body.remove(child)
+
+
+def _ensure_paragraph_style(doc, name, size_pt=None, bold=False):
+    """Create a minimal stand-in when the template lacks a style we write to."""
+    try:
+        doc.styles[name]
+        return
+    except KeyError:
+        pass
+    style = doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+    try:
+        style.base_style = doc.styles["Normal"]
+    except KeyError:
+        pass
+    if size_pt:
+        style.font.size = Pt(size_pt)
+    style.font.bold = bold
+
+
+def _new_document():
+    """Return a Word document based on the configured template, if any."""
+    if not REPORT_TEMPLATE:
+        return Document()
+    doc = Document(REPORT_TEMPLATE)
+    if not KEEP_TEMPLATE_CONTENT:
+        _clear_document_body(doc)
+    for name, size_pt in (("Title", 28), ("Heading 1", 16), ("Heading 2", 13),
+                          ("Heading 3", 12), ("List Bullet", None)):
+        _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
+    return doc
+
+
+def _set_table_style(table, name="Table Grid"):
+    """Apply a table style, falling back to explicit borders if it is missing."""
+    try:
+        table.style = name
+        return
+    except KeyError:
+        pass
+    borders = "".join(
+        '<w:{} w:val="single" w:sz="4" w:color="999999"/>'.format(edge)
+        for edge in ("top", "left", "bottom", "right", "insideH", "insideV")
+    )
+    table._tbl.tblPr.append(
+        parse_xml('<w:tblBorders {}>{}</w:tblBorders>'.format(nsdecls("w"), borders))
+    )
 
 # ── Configuration (edit these) ───────────────────────────
 TITLE = "Task Report"           # <-- Change to your task title
@@ -1680,7 +1820,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None):
     """
     table = doc.add_table(rows=1, cols=len(headers))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.style = "Table Grid"
+    _set_table_style(table)
 
     # Header row
     hdr = table.rows[0]
@@ -2156,7 +2296,7 @@ def _add_cover_page(doc):
 
     # Metadata table
     meta_table = doc.add_table(rows=5, cols=2)
-    meta_table.style = "Table Grid"
+    _set_table_style(meta_table)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_data = [
         ("Document Number", doc_num),
@@ -2191,7 +2331,7 @@ def _add_cover_page(doc):
     run.font.color.rgb = RGBColor(47, 84, 150)
 
     rev_table = doc.add_table(rows=1 + len(rev_entries), cols=4)
-    rev_table.style = "Table Grid"
+    _set_table_style(rev_table)
     rev_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     headers = ["Rev", "Date", "Description", "Author"]
     for j, h in enumerate(headers):
@@ -2263,7 +2403,7 @@ def _set_update_fields_on_open(doc):
 
 def build_word_report(sections, results=None):
     """Build the Word document with cover page, TOC, numbered figures, and equations."""
-    doc = Document()
+    doc = _new_document()
 
     # Cover page with metadata and revision history
     _add_cover_page(doc)
@@ -2949,6 +3089,9 @@ def build_paper_docx(sections, results=None):
     Uses standard academic formatting: Times New Roman, single-column,
     numbered sections, centered title/author block, italic abstract,
     numbered figures and equations.
+
+    The corporate report template is deliberately not applied here: a journal
+    manuscript follows the journal's format, not company branding.
     """
     doc = Document()
 
@@ -3493,7 +3636,27 @@ if __name__ == "__main__":
     generate_paper = "--paper" in sys.argv or "--paper-only" in sys.argv
     paper_only = "--paper-only" in sys.argv
 
+    # Word template selection: --template PATH | --no-template | saved setting
+    explicit_template = None
+    if "--template" in sys.argv:
+        template_index = sys.argv.index("--template") + 1
+        if template_index >= len(sys.argv):
+            print("ERROR: --template requires a path to a .docx or .dotx file")
+            sys.exit(2)
+        explicit_template = sys.argv[template_index]
+    KEEP_TEMPLATE_CONTENT = "--keep-template-content" in sys.argv
+    try:
+        REPORT_TEMPLATE = resolve_report_template(
+            explicit_template, allow_saved="--no-template" not in sys.argv)
+    except (OSError, ValueError) as error:
+        print("ERROR: {}".format(error))
+        print("Fix the path, pass --template PATH, or run:")
+        print("  neqsim --set-report-template \"PATH\"   (or --reset-report-template)")
+        sys.exit(2)
+
     print("Generating outputs for: {}".format(TITLE))
+    if REPORT_TEMPLATE:
+        print("Word template: {}".format(REPORT_TEMPLATE))
     print("")
 
     # Auto-read task data

@@ -633,6 +633,17 @@ See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class 
 
 ## Task-Solving Workflow (MANDATORY)
 
+**Task destination override:** For new tasks use `neqsim --show-task-root`.
+Resolution is explicit `--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved
+`~/.neqsim/task_defaults.json` default > repository `task_solve/`.
+Set it with `neqsim --set-task-root "PATH"` (or `cwd` to follow the terminal's
+folder); reset it with `neqsim --reset-task-root`. Literal `task_solve/` paths in
+these instructions are examples under the resolved root, not a forced repository location.
+Pass the created absolute task path to child agents, tools and validators; keep
+all artifacts under it. Resume existing tasks in place. For external task folders,
+set `NEQSIM_PROJECT_ROOT` to the source repository and `NEQSIM_TASK_DIR` to the
+active task when needed. Report destination failures instead of silently falling back.
+
 > **Full workflow is in `docs/development/TASK_SOLVING_GUIDE.md`.** Read it before starting any task.
 > Past solved tasks are indexed in `docs/development/TASK_LOG.md` — search before starting from scratch.
 
