@@ -91,6 +91,15 @@ class MechanicalDesignJsonContractTest {
   }
 
   @Test
+  void unconnectedSeparatorKeepsDesignResponseAvailable() {
+    MechanicalDesign design = new MechanicalDesign(new Separator("unit test separator"));
+    assertDoesNotThrow(() -> new MechanicalDesignResponse(design));
+    JsonObject data = JsonParser.parseString(design.toDesignDataJson()).getAsJsonObject();
+    assertTrue(data.getAsJsonObject("operatingConditions").getAsJsonObject("gasOutletPressure").get("value")
+        .isJsonNull());
+  }
+
+  @Test
   void heaterDesignSerializesSelectedSizing() {
     Heater heater = new Heater("heater", feed());
     heater.setOutTemperature(353.15);
@@ -208,6 +217,10 @@ class MechanicalDesignJsonContractTest {
     HeatExchanger exchanger = new HeatExchanger("exchanger", hot, cold);
     exchanger.setUAvalue(1000.0);
     exchanger.run();
+    JsonObject data = JsonParser.parseString(exchanger.getMechanicalDesign().toDesignDataJson()).getAsJsonObject();
+    assertEquals(hot.getPressure("Pa"), value(data, "operatingConditions", "inlet0Pressure"), 1e-6);
+    assertEquals(cold.getPressure("Pa"), value(data, "operatingConditions", "inlet1Pressure"), 1e-6);
+    assertEquals(exchanger.getDuty(), value(data, "operatingConditions", "duty"), 1e-9);
     exchanger.getMechanicalDesign().setManualSelection(HeatExchangerType.PLATE_AND_FRAME);
     exchanger.getMechanicalDesign().calcDesign();
     JsonObject plate = JsonParser.parseString(exchanger.getMechanicalDesign().toJson()).getAsJsonObject();
