@@ -1524,8 +1524,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 94 protocol scenarios",
-          tests.get("protocolScenarioCount") == 94,
+    check("evidence inventory freezes 95 protocol scenarios",
+          tests.get("protocolScenarioCount") == 95,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
