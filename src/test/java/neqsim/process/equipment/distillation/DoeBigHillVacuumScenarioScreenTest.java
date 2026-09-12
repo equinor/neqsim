@@ -72,8 +72,7 @@ public class DoeBigHillVacuumScenarioScreenTest {
       assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
-      String[] expectedComponentNames = {
-          "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+      String[] expectedComponentNames = { "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
       assertArrayEquals(expectedComponentNames, recovery.getComponentNames());
       assertNotSame(recovery.getComponentNames(), recovery.getComponentNames());
       double[] feedComponentFlows = recovery.getFeedComponentMolarFlowsMolPerHour();
