@@ -207,8 +207,9 @@ public final class PitzerBinaryVolumetricDatasetProvenance implements Serializab
         String licenseUrl, RedistributionStatus redistributionStatus, String sha256, String uncertaintyBasis,
         int observationCount, double minimumMolality, double maximumMolality, double minimumTemperatureK,
         double maximumTemperatureK, double minimumPressurePa, double maximumPressurePa) {
-      this(sourceGroup, role, citation, sourceUrl, licenseId, licenseUrl, redistributionStatus, sha256, uncertaintyBasis,
-          UncertaintyQualification.UNRESOLVED, observationCount, minimumMolality, maximumMolality, minimumTemperatureK,
+      this(sourceGroup, role, citation, sourceUrl, licenseId, licenseUrl, redistributionStatus, sha256,
+          uncertaintyBasis, UncertaintyQualification.UNRESOLVED, observationCount, minimumMolality, maximumMolality,
+          minimumTemperatureK,
           maximumTemperatureK, minimumPressurePa, maximumPressurePa);
     }
 
