@@ -1689,7 +1689,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * Calculate source terms for all cells.
    *
    * <p>
-   * For three-phase flow, tracks water separately from oil. Water accumulates more in valleys due to higher density.
+   * For three-phase flow, tracks water separately from oil. Water accumulates more in valleys due to higher density. As
+   * in {@link #calcRHS(TwoFluidSection[], double)}, the supplied conservative phase inventories must already be
+   * initialized and consistent with the primitive state. Direct closure callers constructing only primitive values must
+   * first call {@link TwoFluidSection#updateConservativeVariables()}.
    * </p>
    *
    * @param sections Pipe sections

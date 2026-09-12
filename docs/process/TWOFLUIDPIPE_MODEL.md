@@ -199,8 +199,10 @@ Each component substep also stages inventory and all boundary/source/latent-heat
 privately. Only a completely verified substep replaces the accepted component state; failed
 boundary, flash, source, synchronization or finite-value checks discard the candidate. This fixes
 ledger contamination when a later face or endpoint rejects after an inlet transfer was evaluated.
-It does **not** make the existing complete `TwoFluidPipe.runTransient` call transactional: rollback
-of hydrodynamics, clocks, reports and streams across an outer-call failure remains separate work.
+The component substep alone does **not** make the default complete `TwoFluidPipe.runTransient`
+call transactional. The separately selected
+[complete pipe transaction](#complete-transient-transactions-and-experimental-unsplit-execution)
+provides outer-call rollback within its documented snapshot contract.
 
 #### Validated scope and fail-loud boundaries
 
@@ -1489,10 +1491,10 @@ check; it is not a long-horizon steady fixed-point or severe-slugging qualificat
 ```
 
 The existing named-component route publishes conservative component-weighted outlet composition.
-The frozen-phase unsplit preparation path still needs its own accepted component transport and an
-atomic accepted-state/report/stream publication contract. It cannot reuse inlet composition to
-represent unequal phase transfers. These requirements remain open, so this interface returns a
-prepared candidate and is not a selectable `runTransient` mode.
+The preparation interface returns an independent candidate. The separately selected unsplit
+execution route now provides accepted-state/report/stream publication for spatially uniform
+frozen phase compositions. It cannot reuse total inlet composition to represent unequal phase
+transfers. General evolving composition still needs component transport and EOS coupling.
 
 #### Flow direction and conservative pressure interpolation
 
@@ -1532,7 +1534,7 @@ exactly zero water. The strict endpoint mass/momentum rules and nonlinear tolera
 
 The original stationary AUSM+ flux cannot detect an alternating cell-pressure mode: internal face
 pressures average to the same value while phase advection is zero. The legacy pressure corrector
-is not called by the unsplit kernel. An explicit preparation-only option now addresses this spatial
+is not called by the unsplit kernel. An explicit unsplit option now addresses this spatial
 gap inside the common conservative operator:
 
 ```java
@@ -1676,7 +1678,7 @@ fitted. `FlowRegimeBubbleDomainTest` checks the captured pressure perturbation, 
 pole, negative gas transport, legitimate bubble fractions and the existing coalescence threshold.
 This corrects an impossible inferred state; it does not qualify general countercurrent physics.
 
-With that correction, the historical **5 s** matrix reaches the following local times before
+At revision `477964b5`, that correction made the historical **5 s** matrix reach these local times before
 `LINE_SEARCH_FAILED`, still with 20 Newton iterations, eight halvings, `1e-9` nonlinear and `1e-8`
 independent tolerances. Each failed prefix is discarded:
 
@@ -1733,7 +1735,7 @@ flow rates with explicit faces. Its represented elevation rise is **13.903224706
 pressure-interpolation preparations pass independent phase conservation and preserve the accepted
 pipe exactly. Cells crossing the riser base use their average signed slope; the bend is not resolved.
 
-The separate corrected-face **5 s** gate remains unqualified:
+The separate corrected-face **5 s** gate at `477964b5` remained unqualified:
 
 | Cells / maximum step (s) | Last local time (s) | Prepared steps | Rejections | Termination |
 | --- | --- | --- | --- | --- |
@@ -1745,8 +1747,8 @@ These failures retain the same nonlinear and independent tolerances and discard 
 progress. Fixing the terrain integral does not qualify the transient transition dynamics. The
 180/600 s sequence and experimental slug statistics remain blocked.
 
-Combined local regression evidence for the component-publication, component-transaction,
-bubble-domain and face-terrain update comprises **365 passing tests in 53 classes**: 362 affected
+The preceding `477964b5` component-publication, component-transaction,
+bubble-domain and face-terrain update passed **365 tests in 53 classes**: 362 affected
 fast tests plus three existing slow component/phase/thermal/reference tests. The maintained
 30/60-cell three-phase steady convergence gate is included. The nine explicit five-second riser
 qualification cases are separate failing evidence and are not included in that passing count.
@@ -1852,13 +1854,150 @@ spatial/temporal accuracy checks remain required.
 ./mvnw -q '-Dtest=TwoFluidUnsplitModelAdapterTest#fiveSecondIsothermalThreePhaseIntervalsConserveTheAcceptedTransportLedger,TwoFluidUnsplitIntegratorTest,TwoFluidInletPressureBoundaryTest,TwoFluidVariableAreaPressureRegressionTest,TwoFluidConservativeSlugCouplingTest' test
 ```
 
-The preparation interface is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
-qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
-rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices.
-The synthetic maximum-step gate above must not be confused with the established WS1 cases. The existing 5 s mesh matrix
-and the 180/600 s public Tengesdal gates must pass before the path can be exposed as a pipe option.
-Energy, named-component transport, and phase change are outside the initial isothermal solve and
-remain separate unsupported intersections.
+The preparation methods remain non-mutating. A separately selected experimental `runTransient`
+route now publishes complete intervals within the restricted contract below. The established
+WS1 five-second matrix and 180/600 s public Tengesdal gates still block multiphase production
+qualification. Concrete finite-volume active-set/transition physics, energy, changing component
+composition and phase change remain outside the initial isothermal route.
+
+#### Complete transient transactions and experimental unsplit execution
+
+`setTransactionalTransientEnabled(true)` stages the existing transient algorithm on an isolated
+pipe graph. A failed interval, component/thermal check or outlet publication preserves accepted
+cells, inventories, reports, histories, trackers, identifiers and all three clocks. The default
+remains false, retaining the existing partial-interval failure contract. Successful publication
+preserves connected stream, upstream-volume, multilayer-calculator and thermal-layer identities.
+Other owned submodels are new accepted snapshots: reacquire them through their getters after a
+successful call. Section cloning preserves configured transient oil/water detectors. Adaptive
+step history is copied explicitly because Java serialization omits it.
+
+This transaction currently supports concrete `TwoFluidPipe` instances with SRK, PR, SRK-CPA or
+SRK-CPAs fluid phases. Other EOS helper caches and pipe-subclass commit hooks are not audited;
+they reject before evaluation. Complete copying adds memory and runtime cost. Concurrent access
+through unsynchronized getters and arbitrary side effects in custom stream callbacks are not
+an atomicity guarantee. The default legacy route remains available.
+
+`setUnsplitTransientSolver(solver, maximumTimeStep)` selects experimental isothermal execution
+through `runTransient`; passing null restores the legacy algorithm. Unsplit execution always
+stages the entire interval, independently of the legacy transaction flag. The solver is copied
+defensively. The seven-unknown endpoint, exact integrated phase-face/source transfers and full
+interval conservation checks must all pass before publication. Outlet pressure uses the external
+fixed-pressure face, and outlet mass flow is the accepted transfer divided by accepted elapsed
+time. Endpoint regime labels are refreshed without applying legacy primitive recovery. Friction,
+oil/water closure caches and legacy pressure-correction diagnostics are not a new endpoint force
+evaluation; use the accepted state and mass report for this bounded route.
+
+The anchored SRK/PR density model and original phase-composition reference conditions persist
+across accepted calls and solver selection changes. `run()` reinitialization resets them.
+Reflashing at each new outer time would silently change component inventories under phase slip,
+so outlet publication instead uses the original frozen phase mass fractions. Each phase must
+have the same named-component mass fractions throughout the initial cells and prescribed inlet
+within `1e-10`. `TwoFluidUnsplitPublication` verifies this compatibility and builds the outlet
+from accepted phase transfers. Its TP flash preserves component totals and may change the
+downstream equilibrium phase split. Nonuniform or changed phase composition and negative
+phase outlet transfers reject without publication. Preparation-only signed-flow diagnostics
+retain their broader scope. General component advection and composition-dependent EOS updates
+are still required for evolving multicomponent multiphase transport.
+
+Tests exercise repeat execution, defensive/serialized selection, a closed uniform three-phase
+fixed point, inlet-composition rejection, complete failure rollback, outlet-setter failure and
+connected storage/thermal identity. Local nonlinear defects accumulate over a long outer
+interval; satisfying each local solve does not guarantee the unchanged `1e-8` cumulative
+conservation gate. Select and record solver accuracy and outer-step partitioning, and retain
+failed full-interval checks rather than publishing a converged prefix.
+
+The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
+300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Eight and sixteen
+cells with backward Euler, pressure interpolation, `0.05 s` nominal steps and `1e-10` nonlinear
+tolerance complete two consecutive 2.5 s calls. Their five-second total-mass residuals are about
+`-1.03e-9` and `9.65e-10 kg`. A closed, uniform-pressure three-phase fixture separately verifies
+a fixed point. The unchanged coarse four-cell/0.1 s gas case remains an explicit failing gate:
+Newton stalls near local `0.9 s`, subdivision accumulates defects, and the independent complete
+interval gate rejects. The two successful meshes therefore do not establish mesh qualification
+or a universally reliable single-phase route. Reproduce the retained coarse gate with:
+
+```bash
+./mvnw -q '-Dtest=TwoFluidPipeUnsplitRunTest#coarseGasQualificationMustAlsoCompleteFiveSeconds' -DexcludedTestGroups= -Dneqsim.unsplit.gas.coarse.qualification=true test
+```
+
+#### Inclined film eligibility and trace-phase derivatives
+
+`setUseInclinedFilmBridgingCriterion(true)` adds an opt-in eligibility constraint to the inclined
+annular branch: the current liquid holdup must be below `0.24` as well as meeting the existing
+gas-lift criterion. This uses the bridging threshold already represented in the horizontal map.
+[Barnea (1987)](https://doi.org/10.1016/0301-9322(87)90002-4) describes inclination-dependent
+transition mechanisms; [Paolinelli's primary horizontal oil/water/gas experiments](https://www.ohio.edu/engineering/sites/ohio.edu.engineering/files/sites/engineering/l.d.%20paolineli.pdf)
+report agreement with the `0.24` intermittent-flow threshold. Applying current transient total
+liquid inventory as film holdup is an explicit modeling inference: the detector has no separate
+transported droplet inventory and does not solve Barnea's complete steady film/reversal model.
+It is not experimental qualification of this inclined transient substitution.
+
+The captured annular/slug obstruction had approximately `0.594` liquid holdup. With the added
+constraint, all classifiers remain live and that same saved step converges in three Newton
+iterations to `9.48e-11`, with phase mass residuals about `9e-18`, `-1e-14` and zero kg. This
+closes that specific inconsistent branch; other transitions remain unresolved.
+
+The Jacobian now perturbs a present phase relative to its own common-time-level inventory:
+mass columns use `1e-6 * min(previous variable scale, phase mass)`, while momentum uses
+the smaller of its previous scale and `max(phase mass * 1 m/s, abs(phase momentum))`.
+Exactly absent phases retain their previous probe scale. Derivatives use the actual represented
+increment; positive next-representable values handle additions that otherwise round away.
+Unknown/residual scales, phase presence, iteration/backtracking/retry budgets and acceptance
+tolerances are unchanged. The stable difference
+`delta(m/rho) = delta(m)/rho1 + (m0/rho1) * (rho0-rho1)/rho0`
+retains small phase-volume derivatives without subtracting two bulk-liquid sums. Density may
+depend on pressure, other phases and neighboring cells. Analytic drag/volume and full-versus-colored
+tests cover both time methods, nonuniform areas and trace inventories down to `1e-100`;
+subnormal probes establish finite arithmetic, not unlimited derivative accuracy.
+
+With both changes enabled, all six explicit five-second riser preparations still reject their
+complete local prefixes:
+
+| Geometry | Cells / maximum step (s) | Last local time (s) | Prepared steps | Rejections |
+| --- | --- | ---: | ---: | ---: |
+| Historical | 16 / 0.1 | 1.401953125 | 23 | 16 |
+| Historical | 16 / 0.05 | 1.4533203125 | 33 | 11 |
+| Historical | 24 / 0.05 | 0.95 | 21 | 11 |
+| Explicit faces | 16 / 0.1 | 1.919140625 | 36 | 23 |
+| Explicit faces | 16 / 0.05 | 1.88203125 | 50 | 19 |
+| Explicit faces | 24 / 0.05 | 1.7359375 | 59 | 30 |
+
+The historical 24-cell case reaches the Newton iteration limit; the others fail line search.
+Horizontal annular/dispersed-bubble and flow-reversal closure changes now obstruct continuation.
+Legacy trial velocity guards also remain. The original nine historical/correct-face gates are
+retained separately; no 180/600 s continuation or severe-slugging qualification is claimed.
+
+With the current Jacobian and the film constraint disabled, the original nine gates also fail.
+Their last local times are below; the current derivative treatment changes some subdivision
+paths relative to the explicitly dated `477964b5` measurements above.
+
+| Geometry | Method / pressure interpolation | 16 cells / 0.1 s | 16 cells / 0.05 s | 24 cells / 0.05 s |
+| --- | --- | ---: | ---: | ---: |
+| Historical | Midpoint / off | 0.806640625 | 0.80625 | 0.634375 |
+| Historical | Backward Euler / on | 0.668359375 | 0.68828125 | 0.95 |
+| Explicit faces | Backward Euler / on | 1.1 | 1.2 | 0.580078125 |
+
+```bash
+./mvnw -q -Dtest=TwoFluidPipeTransactionalTest,TwoFluidPipeUnsplitRunTest,TwoFluidUnsplitPublicationTest,FlowRegimeInclinedFilmBridgingTest,UnsplitTraceJacobianTest,TwoFluidInclinedFilmTengesdalPreparationTest test
+# Explicit additional film-bridging five-second gates; currently fail:
+./mvnw -q -Dtest=TwoFluidInclinedFilmTengesdalPreparationTest -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.film-bridging.qualification=true test
+```
+
+Current CI also exposes a legacy coupled-pressure instability after the corrected bubble-domain
+check. The unchanged five-second shared-closure tests pass with the pre-domain-guard detector
+and fail with the corrected detector against otherwise identical hydrodynamics. Failed states
+show alternating riser pressure and velocities at legacy caps; the old negative inferred bubble
+void fraction had selected strong bubble drag there. Restoring that invalid branch or weakening
+the tests would conceal the problem. Keep these failures and the previous 600 s characterization
+as separate, dated evidence while the stable countercurrent operator remains unfinished.
+
+The complete-transaction, unsplit-execution, film-eligibility and Jacobian update passes
+**422 focused tests across 62 classes**: 418 fast tests and four separately selected slow
+component/phase/thermal/reference tests. This includes the existing seeded SRK-CPA four-way
+coupling with and without complete-pipe transactions and the 30/60-cell steady three-phase
+gate. The fifteen riser and one coarse-gas five-second qualification cases are separate failed
+gates, not part of that passing total. The prior CI legacy coupled-riser regressions also remain
+open; focused regression success is not a full-suite or general-flow qualification claim.
 
 ### Standing benchmark acceptance metrics
 

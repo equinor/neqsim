@@ -1,10 +1,12 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -84,6 +86,54 @@ class UpstreamCompressibleVolumeTest {
   void phaseDepletionFailsLoudly() {
     UpstreamCompressibleVolume volume = createVolume(1.0);
     assertThrows(IllegalStateException.class, () -> volume.advance(1.0, new double[] { 1.0e6, 0.0, 0.0 }));
+  }
+
+  @Test
+  void candidateAcceptancePublishesDynamicStateWithoutReplacingStorageConfiguration() {
+    UpstreamCompressibleVolume volume = createVolume(100.0);
+    volume.setSourceMassFlowRates(10.0, 1.0, 0.5);
+    UpstreamCompressibleVolume candidate = SerializationUtils.clone(volume);
+    byte[] before = SerializationUtils.serialize(volume);
+    candidate.advance(1.0, new double[] { 9.0, -0.25, 0.1 });
+
+    volume.validateCandidateConfiguration(candidate);
+    assertArrayEquals(before, SerializationUtils.serialize(volume), "Validation must not publish candidate values");
+    volume.acceptCandidateState(candidate);
+
+    assertArrayEquals(SerializationUtils.serialize(candidate), SerializationUtils.serialize(volume));
+    assertEquals(10.0, volume.getSourceMassFlowRateKgS(0), 0.0);
+    assertEquals(1.0, volume.getSourceMassFlowRateKgS(1), 0.0);
+    assertEquals(0.5, volume.getSourceMassFlowRateKgS(2), 0.0);
+    // Advancing the retained object again must start from the accepted phase densities as well as its inventory.
+    volume.advance(0.5, new double[] { 4.0, 0.25, 0.2 });
+    candidate.advance(0.5, new double[] { 4.0, 0.25, 0.2 });
+    assertArrayEquals(SerializationUtils.serialize(candidate), SerializationUtils.serialize(volume));
+  }
+
+  @Test
+  void incompatibleCandidateConfigurationRejectsWithoutChangingConnectedStorage() {
+    UpstreamCompressibleVolume volume = createVolume(100.0);
+    UpstreamCompressibleVolume changedSource = SerializationUtils.clone(volume);
+    changedSource.setSourceMassFlowRates(1.0, 0.0, 0.0);
+    UpstreamCompressibleVolume changedCompressibility = new UpstreamCompressibleVolume(100.0, 60.0e5,
+        new double[] { 4500.0, 5600.0, 2000.0 }, new double[] { 50.0, 700.0, 1000.0 },
+        new double[] { 351.0, 1200.0, 1450.0 });
+    byte[] before = SerializationUtils.serialize(volume);
+    for (UpstreamCompressibleVolume candidate : new UpstreamCompressibleVolume[] { null, createVolume(101.0),
+        changedSource, changedCompressibility }) {
+      assertThrows(IllegalStateException.class, () -> volume.validateCandidateConfiguration(candidate));
+      assertArrayEquals(before, SerializationUtils.serialize(volume));
+    }
+  }
+
+  @Test
+  void partiallyDepletedCandidateCannotBeAcceptedAsAPressureClosedState() {
+    UpstreamCompressibleVolume volume = createVolume(100.0);
+    UpstreamCompressibleVolume candidate = SerializationUtils.clone(volume);
+    byte[] before = SerializationUtils.serialize(volume);
+    assertThrows(IllegalStateException.class, () -> candidate.advance(1.0, new double[] { 1.0, 1.0e6, 0.0 }));
+    assertThrows(IllegalStateException.class, () -> volume.validateCandidateConfiguration(candidate));
+    assertArrayEquals(before, SerializationUtils.serialize(volume));
   }
 
   private static UpstreamCompressibleVolume createVolume(double volumeM3) {

@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
@@ -97,6 +99,24 @@ class TwoFluidPipeCoupledCapabilityTest {
   }
 
   private static CoupledResult runCoupledCase(double outerStepSeconds) throws Exception {
+    return runCoupledCase(outerStepSeconds, false);
+  }
+
+  @Test
+  @Tag("slow")
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void wholePipeTransactionRetainsCoupledSlugPhaseComponentAndThermalBehavior() throws Exception {
+    CoupledResult legacy = runCoupledCase(0.025, false);
+    CoupledResult transaction = runCoupledCase(0.025, true);
+    assertEquals(legacy.waterTransferKg, transaction.waterTransferKg, 1.0e-16);
+    assertEquals(legacy.latentHeatJ, transaction.latentHeatJ, 1.0e-10);
+    assertEquals(legacy.meanTemperatureChangeK, transaction.meanTemperatureChangeK, 1.0e-10);
+    assertEquals(legacy.slugAgeSeconds, transaction.slugAgeSeconds, 1.0e-12);
+    assertEquals(legacy.slugFrontMetres, transaction.slugFrontMetres, 1.0e-12);
+    assertEquals(legacy.slugLengthMetres, transaction.slugLengthMetres, 1.0e-12);
+  }
+
+  private static CoupledResult runCoupledCase(double outerStepSeconds, boolean transactional) throws Exception {
     SystemInterface wetGas = wetGasNearWaterDewPoint();
     double initialTemperatureK = wetGas.getTemperature("K");
     Stream inlet = new Stream("coupled-inlet-" + outerStepSeconds, wetGas);
@@ -128,6 +148,14 @@ class TwoFluidPipeCoupledCapabilityTest {
     pipe.getLagrangianSlugTracker().setEnableInletSlugGeneration(false);
     pipe.getLagrangianSlugTracker().setEnableWakeEffects(false);
     SlugBubbleUnit slug = seedSlug(pipe);
+    pipe.setTransactionalTransientEnabled(transactional);
+    if (transactional) {
+      pipe.setMaximumTransientSubsteps(1);
+      byte[] before = SerializationUtils.serialize(pipe);
+      assertThrows(IllegalStateException.class, () -> pipe.runTransient(outerStepSeconds, TRANSIENT_ID));
+      assertArrayEquals(before, SerializationUtils.serialize(pipe));
+      pipe.setMaximumTransientSubsteps(10000);
+    }
 
     double cumulativeWaterTransferKg = 0.0;
     double cumulativeLatentHeatJ = 0.0;
@@ -168,6 +196,11 @@ class TwoFluidPipeCoupledCapabilityTest {
     assertTrue(pipe.getLagrangianSlugTracker().isConservativeFilmCouplingEnabled());
     assertFalse(pipe.isTransientOutletBackflowClamped());
     double finalMeanTemperatureK = mean(pipe.getTemperatureProfile());
+    if (transactional) {
+      // Successful transactions publish new owned tracker snapshots; the seeded marker is the only slug.
+      assertEquals(1, pipe.getLagrangianSlugTracker().getSlugs().size());
+      slug = pipe.getLagrangianSlugTracker().getSlugs().get(0);
+    }
     return new CoupledResult(cumulativeWaterTransferKg, cumulativeLatentHeatJ,
         finalMeanTemperatureK - initialTemperatureK, slug.age, slug.frontPosition, slug.slugLength);
   }

@@ -22,7 +22,7 @@ general experimental accuracy for multiphase transients.
 |---|---|---|
 | Existing defaults | Selected steady-state, stratified-transient and phase-consistency regressions pass | No blanket severe-slugging or long-run inventory qualification |
 | Shared slug force balance with interfacial pressure and coupled pressure/momentum enabled | 1800 s inventory drift: 1.323207% at 40 cells and 1.357668% at 80 cells | Meets the unchanged 2% target for these fixtures; requires explicit opt-in |
-| Conservative Lagrangian tracking with implicit slug/film friction | 600 s completes, but amplitude, cycle and pressure-limiter gates remain open; substantial time-step sensitivity | Experimental; disabled by default |
+| Conservative Lagrangian tracking with implicit slug/film friction | Earlier 600 s characterization missed amplitude, cycle and pressure-limiter gates; current legacy riser regression fails after the bubble-domain correction | Experimental; disabled by default |
 
 The under-2% result requires all three settings before initialization:
 `setSharedSlugForceBalanceEnabled(true)`,
@@ -35,7 +35,8 @@ The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
 the unchanged 68.6 kPa lower bound; the unchanged liquid-trough detector finds no
 completed cycle intervals, and pressure limits still activate. Do not use these
-results as qualification of slug loads or extreme pressure transients.
+results as qualification of slug loads or extreme pressure transients. This is a historical
+characterization; it does not establish completion with the current corrected detector.
 
 The public Mohmmed slug-kinematics sweep remains experimentally unqualified:
 its baseline passes 3/9 fixed gates and its mesh/time-step refinement is
@@ -992,20 +993,42 @@ Legacy elevation samples retain their convention. These geometry tests do not es
 transient hydrostatic well-balancing or a steady/unsplit fixed point; see the
 [explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain).
 The separately named corrected-face riser represents the same 13.9032247068273 m rise on both
-meshes and passes three 0.1 s preparations. Its five-second attempts still reject at
+meshes and passes three 0.1 s preparations. Its five-second attempts at `477964b5` rejected at
 0.8875/0.8014/0.5801 s; those results are kept separate from historical geometry measurements.
-The combined component/domain/terrain update passes 365 affected tests across 53 classes,
+The preceding component/domain/terrain update at `477964b5` passed 365 affected tests across 53 classes,
 including three slow component/phase/thermal/reference tests and maintained three-phase steady
 refinement. Nine explicit five-second qualification failures remain separate from passing regressions.
 
-The existing named-component route now publishes each accepted component outlet transfer divided
-by interval duration, including after downstream reflashing. Its component substep also commits
-inventories and ledgers only after complete verification. The unsplit frozen-phase path still
-requires its own accepted component transport before unequal phase transfers can be published.
-This remains a preparation API, not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
-accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the established 5/180/600 s qualification
-sequence remain required. Energy, named-component transport, and phase change are outside the
-initial isothermal system.
+The current transaction/execution/Jacobian update passes 422 focused tests across 62 classes,
+including four slow component/phase/thermal/reference tests. Fifteen riser and one coarse-gas
+five-second cases fail separately, and legacy coupled-riser CI regressions remain unresolved.
+
+The existing named-component route publishes accepted interval-average component outlet flows.
+`setTransactionalTransientEnabled(true)` now also stages the complete legacy pipe interval,
+including component/thermal/slug state, storage, reports, clocks and downstream publication.
+Connected stream, upstream-volume, thermal-calculator and layer identities are retained; other
+owned submodels must be reacquired after acceptance. Supported serializable phases are concrete
+SRK, PR, SRK-CPA and SRK-CPAs; pipe subclasses require a separate commit contract.
+
+`setUnsplitTransientSolver(solver, maximumTimeStep)` separately selects an experimental,
+always-transactional `runTransient` route. It retains original SRK/PR density and phase-composition
+references across calls. Outlet composition derives from exact phase transfers only when each
+phase has uniform frozen component mass fractions across cells and inlet. Nonuniform/changing
+composition and negative phase outlet transfer reject without publication. General component
+transport, energy, phase change and tracked slugs remain unsupported in this route.
+Eight- and sixteen-cell gas configurations complete consecutive calls covering five seconds;
+the coarse four-cell/0.1 s case remains an explicit failed gate. This is bounded execution
+evidence, not general single-phase or multiphase mesh qualification.
+
+The opt-in inclined film-bridging constraint closes the captured high-holdup annular/slug branch
+conflict. Phase-relative Jacobian probes and stable phase-volume differences also correct trace
+derivatives without changing tolerances or nonlinear budgets. With both enabled, the corrected-face
+five-second cases reach approximately 1.919/1.882/1.736 s before rejecting at other regime
+transitions. All six added gates still fail; the 180/600 s sequence remains blocked. Original
+fixture results above are historical evidence, not results of the revised Jacobian. Current legacy
+coupled-riser CI also fails after the valid bubble-domain correction exposes pressure instability.
+See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
+and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 
 ### Public severe-slugging qualification
 

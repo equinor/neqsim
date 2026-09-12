@@ -117,7 +117,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
         maximumPressureDeparture, interval.getMaximumScaledResidual());
   }
 
-  private static TwoFluidPipe createPipe(int count) {
+  static TwoFluidPipe createPipe(int count) {
     double diameter = 0.0762;
     double area = Math.PI * diameter * diameter / 4.0;
     double oilFlow = 0.50 * area * 856.0;

@@ -307,11 +307,14 @@ public final class UnsplitTransientSolver implements Serializable {
     private final double[] residual;
     private final double[][] midpointState;
     private final double[] midpointPressure;
+    private final Evaluation modelEvaluation;
 
-    private ResidualEvaluation(double[] residual, double[][] midpointState, double[] midpointPressure) {
+    private ResidualEvaluation(double[] residual, double[][] midpointState, double[] midpointPressure,
+        Evaluation modelEvaluation) {
       this.residual = residual;
       this.midpointState = midpointState;
       this.midpointPressure = midpointPressure;
+      this.modelEvaluation = modelEvaluation;
     }
   }
 
@@ -392,7 +395,7 @@ public final class UnsplitTransientSolver implements Serializable {
             outletPressure, outletPressureFixed, countedModel, timeWeight);
         residualNorm = maximumAbsolute(current.residual);
         jacobian = approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
-            current.residual, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+            current, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
       }
 
       double[] rightHandSide = new double[current.residual.length];
@@ -488,6 +491,14 @@ public final class UnsplitTransientSolver implements Serializable {
    * diagnostic uses the currently configured temporal method and supports independent directional-derivative
    * qualification without exposing or mutating a nonlinear solve in progress.
    *
+   * <p>
+   * A present phase is perturbed relative to its own common-time-level mass or momentum, while the nonlinear variable
+   * and residual scales remain unchanged. This avoids replacing a small phase inventory by a much larger one merely to
+   * estimate a derivative. Conservative and occupied-area differences are evaluated term by term so a trace-phase
+   * volume derivative is not lost when the bulk liquid volume is added. This does not remove finite-precision limits or
+   * discontinuities in the supplied constitutive model.
+   * </p>
+   *
    * @param previousState accepted state
    * @param previousPressure accepted pressure in Pa
    * @param candidateState candidate state
@@ -522,7 +533,7 @@ public final class UnsplitTransientSolver implements Serializable {
       base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas, timeStep,
           startTime, outletPressure, outletPressureFixed, model, timeWeight);
       return approximateJacobian(previousState, previousPressure, candidateState, candidatePressure, cellAreas,
-          createVariableScale(previousState, previousPressure), base.residual, timeStep, startTime, outletPressure,
+          createVariableScale(previousState, previousPressure), base, timeStep, startTime, outletPressure,
           outletPressureFixed, model, timeWeight);
     }
   }
@@ -577,11 +588,11 @@ public final class UnsplitTransientSolver implements Serializable {
       }
       residual[offset + CONSERVATIVE_VARIABLE_COUNT] = (occupiedArea - cellAreas[cell]) / cellAreas[cell];
     }
-    return new ResidualEvaluation(residual, midpointState, midpointPressure);
+    return new ResidualEvaluation(residual, midpointState, midpointPressure, evaluation);
   }
 
   private double[][] approximateJacobian(double[][] previousState, double[] previousPressure, double[][] candidateState,
-      double[] candidatePressure, double[] cellAreas, double[] variableScale, double[] baseResidual, double timeStep,
+      double[] candidatePressure, double[] cellAreas, double[] variableScale, ResidualEvaluation base, double timeStep,
       double startTime, double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
     int cellCount = previousState.length;
     int dimension = cellCount * BLOCK_SIZE;
@@ -593,18 +604,26 @@ public final class UnsplitTransientSolver implements Serializable {
       for (int color = 0; color < activeColorCount; color++) {
         double[][] perturbedState = copy(candidateState);
         double[] perturbedPressure = candidatePressure.clone();
+        double[] increments = new double[cellCount];
         for (int cell = color; cell < cellCount; cell += colorCount) {
           int column = cell * BLOCK_SIZE + variable;
-          double increment = finiteDifferenceStep * variableScale[column];
+          double increment = finiteDifferenceIncrement(base.midpointState[cell], variable, variableScale[column]);
           if (variable < CONSERVATIVE_VARIABLE_COUNT) {
             perturbedState[cell][variable] += increment;
+            if (perturbedState[cell][variable] == candidateState[cell][variable]) {
+              perturbedState[cell][variable] = Math.nextUp(candidateState[cell][variable]);
+            }
+            increments[cell] = perturbedState[cell][variable] - candidateState[cell][variable];
           } else {
             perturbedPressure[cell] += increment;
+            if (perturbedPressure[cell] == candidatePressure[cell]) {
+              perturbedPressure[cell] = Math.nextUp(candidatePressure[cell]);
+            }
+            increments[cell] = perturbedPressure[cell] - candidatePressure[cell];
           }
         }
-        double[] perturbedResidual = evaluateResidual(previousState, previousPressure, perturbedState,
-            perturbedPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model,
-            timeWeight).residual;
+        ResidualEvaluation perturbed = evaluateResidual(previousState, previousPressure, perturbedState,
+            perturbedPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model, timeWeight);
         for (int cell = color; cell < cellCount; cell += colorCount) {
           int column = cell * BLOCK_SIZE + variable;
           int firstRowCell = Math.max(0, cell - cellStencilHalfWidth);
@@ -612,13 +631,53 @@ public final class UnsplitTransientSolver implements Serializable {
           for (int rowCell = firstRowCell; rowCell <= lastRowCell; rowCell++) {
             for (int rowVariable = 0; rowVariable < BLOCK_SIZE; rowVariable++) {
               int row = rowCell * BLOCK_SIZE + rowVariable;
-              jacobian[row][column] = (perturbedResidual[row] - baseResidual[row]) / finiteDifferenceStep;
+              double difference = residualDifference(previousState, candidateState, perturbedState, cellAreas, base,
+                  perturbed, rowCell, rowVariable, timeStep);
+              jacobian[row][column] = difference / increments[cell] * variableScale[column];
             }
           }
         }
       }
     }
     return jacobian;
+  }
+
+  /**
+   * Perturb a present phase relative to its own inertia. Momentum uses a one m/s reference velocity near rest; the
+   * nonlinear variable scaling is unchanged. Exactly absent phases retain the original probe scale.
+   */
+  private double finiteDifferenceIncrement(double[] evaluationState, int variable, double variableScale) {
+    double scale = variableScale;
+    if (variable < CONSERVATIVE_VARIABLE_COUNT) {
+      double mass = evaluationState[variable % PHASE_COUNT];
+      if (mass > 0.0) {
+        double phaseScale = variable < PHASE_COUNT ? mass : Math.max(mass, Math.abs(evaluationState[variable]));
+        scale = Math.min(scale, phaseScale);
+      }
+    }
+    return finiteDifferenceStep * scale;
+  }
+
+  /** Difference residual terms before summing, avoiding cancellation against a larger phase inventory. */
+  private static double residualDifference(double[][] previousState, double[][] candidateState,
+      double[][] perturbedState, double[] cellAreas, ResidualEvaluation base, ResidualEvaluation perturbed, int cell,
+      int variable, double timeStep) {
+    if (variable < CONSERVATIVE_VARIABLE_COUNT) {
+      double scale = Math.max(MINIMUM_SCALE, Math.abs(previousState[cell][variable]));
+      double stateDifference = perturbedState[cell][variable] - candidateState[cell][variable];
+      double rateDifference = perturbed.modelEvaluation.conservativeRates[cell][variable]
+          - base.modelEvaluation.conservativeRates[cell][variable];
+      return (stateDifference - timeStep * rateDifference) / scale;
+    }
+    double occupiedAreaDifference = 0.0;
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      double density = base.modelEvaluation.phaseDensities[phase][cell];
+      double perturbedDensity = perturbed.modelEvaluation.phaseDensities[phase][cell];
+      double massDifference = perturbedState[cell][phase] - candidateState[cell][phase];
+      occupiedAreaDifference += massDifference / perturbedDensity
+          + candidateState[cell][phase] / perturbedDensity * ((density - perturbedDensity) / density);
+    }
+    return occupiedAreaDifference / cellAreas[cell];
   }
 
   private double admissibleStepLength(double[][] state, double[] pressure, double[] variableScale,

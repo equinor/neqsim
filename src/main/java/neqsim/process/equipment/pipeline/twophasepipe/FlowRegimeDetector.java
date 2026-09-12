@@ -56,6 +56,9 @@ public class FlowRegimeDetector implements Serializable {
   /** Blend closures across horizontal regime transitions instead of switching at a point. */
   private boolean blendRegimeTransitions = true;
 
+  /** Require the local liquid inventory to admit a thin film before selecting inclined annular flow. */
+  private boolean useInclinedFilmBridgingCriterion;
+
   /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
   private static final double KH_TRANSITION_BAND = 0.15;
 
@@ -154,6 +157,38 @@ public class FlowRegimeDetector implements Serializable {
    */
   public void setBlendRegimeTransitions(boolean enable) {
     this.blendRegimeTransitions = enable;
+  }
+
+  /**
+   * Returns whether inclined annular flow must also satisfy the local film-bridging limit.
+   *
+   * @return true when local liquid holdup constrains inclined annular flow
+   */
+  public boolean isUseInclinedFilmBridgingCriterion() {
+    return useInclinedFilmBridgingCriterion;
+  }
+
+  /**
+   * Requires a liquid fraction below 0.24 before the inclined branch can select annular flow.
+   *
+   * <p>
+   * The droplet-lift velocity alone does not establish that an annular film is possible. Barnea (1987), transition J,
+   * also requires enough unoccupied core area to avoid liquid bridging. This opt-in inventory constraint uses the
+   * section's current liquid holdup; all liquid is assigned to the film because this detector has no independently
+   * transported droplet inventory. It excludes thick liquid states even when their gas velocity exceeds the unchanged
+   * droplet-lift threshold. The remaining bubble/slug or downward stratified decisions retain their existing criteria.
+   * </p>
+   *
+   * <p>
+   * This local transient constraint is not the full steady annular-film stability calculation in Barnea's model. It
+   * does not add film reversal, entrainment, a transition band, or countercurrent-flow qualification. It affects only
+   * the mechanistic branch more than ten degrees from horizontal. Disabled by default for compatibility.
+   * </p>
+   *
+   * @param enable true to require the local film-bridging constraint
+   */
+  public void setUseInclinedFilmBridgingCriterion(boolean enable) {
+    useInclinedFilmBridgingCriterion = enable;
   }
 
   /** Drift flux model for slip calculations. */
@@ -263,7 +298,7 @@ public class FlowRegimeDetector implements Serializable {
 
     // Use Barnea's unified model for inclined pipes
     if (Math.abs(theta) > Math.toRadians(10)) {
-      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
+      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma, alphaL);
     } else {
       return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     }
@@ -535,10 +570,11 @@ public class FlowRegimeDetector implements Serializable {
    * @param mu_L Liquid viscosity (Pa·s)
    * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
+   * @param liquidHoldup current conservative liquid volume fraction
    * @return Flow regime
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double mu_G, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma, double liquidHoldup) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -551,7 +587,8 @@ public class FlowRegimeDetector implements Serializable {
     // 0.1 m/s override selected churn at arbitrarily large gas velocities and introduced
     // a holdup discontinuity when an annular pipe was tilted upward. A separate film
     // stability criterion would be needed to subdivide this region into churn and annular.
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
+    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)
+        && (!useInclinedFilmBridgingCriterion || liquidHoldup < ANNULAR_BRIDGING_HOLDUP)) {
       return FlowRegime.ANNULAR;
     }
 

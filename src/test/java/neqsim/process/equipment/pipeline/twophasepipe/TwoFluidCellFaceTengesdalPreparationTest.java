@@ -82,7 +82,7 @@ class TwoFluidCellFaceTengesdalPreparationTest {
   }
 
   /** Keep a distinct factory so diagnostic replays cannot silently replace historical terrain measurements. */
-  private static TwoFluidPipe createPipe(int count) {
+  static TwoFluidPipe createPipe(int count) {
     double diameter = 0.0762;
     double area = Math.PI * diameter * diameter / 4.0;
     double oilFlow = 0.50 * area * 856.0;
