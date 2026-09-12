@@ -323,6 +323,43 @@ Product and deposition calculations require separately qualified stoichiometry a
 and must compose with the existing sulfur analyser, wall inventory, oxidation source, solid
 flash, and filter implementations.
 
+## Explicit elemental-sulfur allocation boundary
+
+`AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(...)` creates an immutable,
+non-mutating accounting receipt between one qualified segment sulfur-equivalent budget and a
+caller-defined elemental-sulfur scenario. The caller must supply both an allocation fraction
+`f_ES` in `[0, 1]` and a non-blank allocation-basis identifier. The identifier records which
+external basis the caller used; its presence does not qualify that basis or turn the fraction
+into a measured product yield.
+
+For each lower-rate, nominal, and upper-rate fit path, the receipt applies the same explicit
+fraction to mass rate and mass:
+
+$
+\dot m_{S,\mathrm{allocated}}=f_{ES}\dot m_{S,\mathrm{equiv}}, \qquad
+\dot m_{S,\mathrm{unallocated}}=\dot m_{S,\mathrm{equiv}}-\dot m_{S,\mathrm{allocated}},
+$
+
+$
+m_{S,\mathrm{allocated}}=f_{ES}m_{S,\mathrm{equiv}}, \qquad
+m_{S,\mathrm{unallocated}}=m_{S,\mathrm{equiv}}-m_{S,\mathrm{allocated}}.
+$
+
+The result exposes the source sulfur-equivalent budget, allocated elemental-sulfur scenario,
+unallocated sulfur-equivalent remainder, and closure residual on both rate and mass bases.
+Zero allocation leaves the complete source budget unallocated; full allocation leaves an exact
+zero remainder. Values scale linearly with the explicit water inventory, and summing receipts
+from an unchanged-state segment subdivision reproduces the unsplit allocated mass. Missing or
+invalid inputs, numerical overflow, and positive products that underflow to zero fail closed.
+
+Downstream code may consume an allocated elemental-sulfur field once and must carry the
+unallocated remainder separately. It must not apply both the original source budget and the
+unallocated remainder as products, because that would double count sulfur. The receipt itself
+does not create S8 molecular amounts, supply a default fraction, select products, qualify
+stoichiometry or selectivity, consume O2, calculate heat, speciation, pressure, phase transfer or
+water holdup, create a signed source, execute a solid flash, or mutate a stream, wall, deposit,
+filter, corrosion, process, transient, or pipeline state.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
