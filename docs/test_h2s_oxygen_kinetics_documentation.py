@@ -373,6 +373,41 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 
+    def test_sulfur_equivalent_budget_is_documented_and_executable(self):
+        for token in (
+            "Product-agnostic sulfur-equivalent budget",
+            "one mole of sulfur atoms",
+            r"\dot m_{S,\mathrm{equiv},r,i}",
+            r"n_{r,i,\mathrm{reacted}}M_S",
+            "M_S = 0.032065 kg/mol",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "mean sulfur-equivalent loss in kg/h and kg/s",
+            "mass-basis closure residual",
+            "not an elemental-sulfur or S8 yield",
+            "separately qualified stoichiometry and selectivity",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "sulfurEquivalentMassKg(",
+            "getLowerRateMeanSulfurEquivalentMassRateKgPerHour()",
+            "getNominalMeanSulfurEquivalentMassRateKgPerSecond()",
+            "getUpperRateReactedSulfurEquivalentMassKg()",
+            "getLowerRateSulfurEquivalentClosureResidualKg()",
+            "getNominalReactedSulfurEquivalentMassKg()",
+            "getUpperRateSulfurEquivalentClosureResidualKg()",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testSegmentSulfurEquivalentMassUsesSharedAuthorityAndClosesRateIntegral",
+            "testTrajectorySulfurEquivalentMassClosesAllPathsAndSegmentSums",
+            "assertSulfurEquivalentPath(",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
 
     def test_absolute_reacted_moles_target_is_documented_and_executable(self):
         for token in (
@@ -512,4 +547,3 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

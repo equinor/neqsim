@@ -11,7 +11,8 @@ import java.util.List;
  * <p>
  * The projection multiplies the existing molality-basis mean total-sulfide loss rates and reacted molalities by a
  * caller-supplied liquid-water inventory. It does not derive water holdup, assign reaction products, consume oxygen, or
- * mutate a process or thermodynamic system.
+ * mutate a process or thermodynamic system. Product-agnostic sulfur-equivalent mass views use the shared sulfur atomic
+ * molar mass from {@link IronSulfideWallInventory}; they are elemental bookkeeping, not an elemental-sulfur yield.
  * </p>
  *
  * @author esol
@@ -239,6 +240,15 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     return difference;
   }
 
+  private static double sulfurEquivalentMassKg(double sulfurAtomMoles, String name) {
+    double mass = sulfurAtomMoles * IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL;
+    if (!Double.isFinite(mass)
+        || (sulfurAtomMoles != 0.0 && IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL != 0.0 && mass == 0.0)) {
+      throw new IllegalArgumentException(name + " is not finite or representable");
+    }
+    return mass;
+  }
+
   /** Immutable dimensional remaining-moles target and piecewise crossing evidence. */
   public static final class RemainingMolesTargetResult implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -420,6 +430,29 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       return upperRateReactedMoles;
     }
 
+    /**
+     * Return cumulative lower-rate sulfur-equivalent loss.
+     *
+     * <p>
+     * This is sulfur-atom accounting, not an S8 or other product yield.
+     * </p>
+     *
+     * @return cumulative lower-rate reacted sulfur equivalent [kg S-equivalent]
+     */
+    public double getLowerRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(lowerRateReactedMoles, "Lower-rate reacted sulfur-equivalent mass");
+    }
+
+    /** @return cumulative nominal reacted sulfur equivalent [kg S-equivalent]. */
+    public double getNominalReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(nominalReactedMoles, "Nominal reacted sulfur-equivalent mass");
+    }
+
+    /** @return cumulative upper-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getUpperRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(upperRateReactedMoles, "Upper-rate reacted sulfur-equivalent mass");
+    }
+
     /** @return lower-rate constant-water inventory closure residual [mol]. */
     public double getLowerRateClosureResidualMoles() {
       return lowerRateClosureResidualMoles;
@@ -433,6 +466,24 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     /** @return upper-rate constant-water inventory closure residual [mol]. */
     public double getUpperRateClosureResidualMoles() {
       return upperRateClosureResidualMoles;
+    }
+
+    /** @return lower-rate sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getLowerRateSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(lowerRateClosureResidualMoles,
+          "Lower-rate sulfur-equivalent trajectory closure residual");
+    }
+
+    /** @return nominal sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getNominalSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(nominalClosureResidualMoles,
+          "Nominal sulfur-equivalent trajectory closure residual");
+    }
+
+    /** @return upper-rate sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getUpperRateSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(upperRateClosureResidualMoles,
+          "Upper-rate sulfur-equivalent trajectory closure residual");
     }
   }
 
@@ -509,6 +560,44 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       return upperRateMeanLossMolesPerHour / SECONDS_PER_HOUR;
     }
 
+    /**
+     * Return the lower-rate mean sulfur-equivalent loss rate.
+     *
+     * <p>
+     * This is sulfur-atom accounting, not an S8 or other product rate.
+     * </p>
+     *
+     * @return lower-rate mean sulfur-equivalent loss [kg S-equivalent/h]
+     */
+    public double getLowerRateMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(lowerRateMeanLossMolesPerHour, "Lower-rate mean sulfur-equivalent loss rate");
+    }
+
+    /** @return nominal mean sulfur-equivalent loss [kg S-equivalent/h]. */
+    public double getNominalMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(nominalMeanLossMolesPerHour, "Nominal mean sulfur-equivalent loss rate");
+    }
+
+    /** @return upper-rate mean sulfur-equivalent loss [kg S-equivalent/h]. */
+    public double getUpperRateMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(upperRateMeanLossMolesPerHour, "Upper-rate mean sulfur-equivalent loss rate");
+    }
+
+    /** @return lower-rate mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getLowerRateMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getLowerRateMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
+    /** @return nominal mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getNominalMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getNominalMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
+    /** @return upper-rate mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getUpperRateMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getUpperRateMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
     /** @return reacted total sulfide for the lower-rate path [mol]. */
     public double getLowerRateReactedMoles() {
       return lowerRateReactedMoles;
@@ -522,6 +611,21 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     /** @return reacted total sulfide for the upper-rate path [mol]. */
     public double getUpperRateReactedMoles() {
       return upperRateReactedMoles;
+    }
+
+    /** @return lower-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getLowerRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(lowerRateReactedMoles, "Lower-rate reacted sulfur-equivalent mass");
+    }
+
+    /** @return nominal reacted sulfur equivalent [kg S-equivalent]. */
+    public double getNominalReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(nominalReactedMoles, "Nominal reacted sulfur-equivalent mass");
+    }
+
+    /** @return upper-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getUpperRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(upperRateReactedMoles, "Upper-rate reacted sulfur-equivalent mass");
     }
   }
 }
