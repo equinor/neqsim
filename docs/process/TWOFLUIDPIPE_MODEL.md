@@ -1377,6 +1377,130 @@ Runnable examples and rejection/serialization tests are in `TwoFluidUnsplitModel
 three-phase state remains unchanged over five prepared one-second steps. A nonuniform three-cell
 flowing step verifies independent cell pressure and the exact phase transport ledger.
 
+#### Pipe preparation with frozen-phase EOS densities
+
+`TwoFluidPipe.prepareUnsplitTransient` now exposes the initialized pipe state to the unsplit
+integrator without committing the candidate. `getSectionSnapshots()` returns independent accepted
+cells. Preparation deeply copies both the finite-volume operator and inlet fluid, so successful
+steps, failed Newton probes and lazy physical-property initialization cannot alter accepted cells,
+profiles, streams, reports, identifiers, trackers or any of the three existing clocks.
+
+`createUnsplitDensityModel()` flashes independent reference-fluid copies once at each accepted
+cell's pressure and temperature. `AnchoredIsothermalDensityModel` then freezes each phase's local
+composition, temperature and root selection. It supports concrete SRK and PR phases and initializes
+independent phase clones during pressure probes, without a new flash or phase-mass repartition.
+Its mass-specific volume is
+
+\[
+v_k(p)=v_{k,\mathrm{EOS}}(p)+\frac{1}{\rho_{k,\mathrm{accepted}}}
+      -v_{k,\mathrm{EOS}}(p_{\mathrm{accepted}}), \qquad \rho_k(p)=1/v_k(p).
+\]
+
+The constant offset matches the accepted density exactly while retaining the EOS volume derivative
+at fixed composition and temperature. This is an anchored density response, not a general translated
+EOS or transient equilibrium calculation. Nonpositive density, volume or isothermal compressibility
+is rejected. CPA and other specialized phase classes, critical/spinodal root continuation, thermal
+evolution and composition mixing are outside this closure. The reported reference compressibility
+is in **1/Pa**, while the underlying phase EOS pressure is in bar.
+
+Every present phase must match the accepted density within `1e-8`, and the initial occupied area
+must match the geometric area within `1e-8`. This prevents an inconsistent handoff from being
+hidden by a pressure correction at arbitrarily small time steps. An exactly absent phase with a
+legacy zero density receives a constant **1 kg/m3 algebraic extension on a copy only**. A reference
+flash cannot promote that extension into physical availability. Accepted appearance or incoming
+face transport without a supported local phase composition is rejected.
+
+The supported boundaries are a prescribed nonnegative phase-flow or closed inlet and an external
+fixed-pressure or closed outlet. The copied operator explicitly selects isothermal conservation and
+the complete Bestion contribution at the common time level. Existing RK/IMEX, coupled-pressure and
+implicit-pressure settings on the pipe are preserved. Energy, heat, phase/component transfer,
+upstream storage, tracked slugs and separately integrated stiff/subcell sources are rejected.
+Cell temperatures, viscosities and sound speeds remain frozen; different initial cell compositions
+do not imply subsequent conservative component mixing.
+
+The overload accepting both total duration and maximum nominal step divides the requested interval
+into equal nominal steps and can bisect nonlinear failures further. The pipe honors
+`setMaximumTransientSubsteps`; the standalone integrator retains its default 256-substep limit.
+All accepted substeps and the complete interval must pass the original independent `1e-8`
+conservation/volume gates, with a caller-configured nonlinear tolerance no greater than `1e-8`.
+The nominal step bound controls neither truncation error nor experimental accuracy.
+
+For an initialized SRK/PR case configured for this bounded isothermal contract:
+
+```java
+pipe.setEnableSlugTracking(false);
+pipe.setIncludeEnergyEquation(false);
+pipe.setIncludeMassTransfer(false);
+pipe.run();
+UnsplitTransientSolver unsplit = new UnsplitTransientSolver();
+unsplit.setRelativeTolerance(1.0e-9);
+AnchoredIsothermalDensityModel density = pipe.createUnsplitDensityModel();
+TwoFluidUnsplitIntegrator.PreparedInterval candidate =
+    pipe.prepareUnsplitTransient(1.0e-5, 1.0e-5, unsplit, density);
+TwoFluidSection[] candidateCells = candidate.getEndpointSections();
+double[][] acceptedFaceMassKg = candidate.getPhaseMassFaceTransferKg();
+// The candidate is separate from the accepted pipe; no clock or outlet stream has advanced.
+```
+
+`AnchoredIsothermalDensityModelTest` checks SRK/PR reference matching, independent EOS pressure
+derivatives, the dilute-gas limit, phase identities, absent phases, mutation isolation and
+serialization. `TwoFluidPipeUnsplitPreparationTest` exercises real methane and methane/decane/water
+steady handoffs, exact unchanged state on success/failure, existing transient reports, inlet cache
+isolation and incompatible configurations. The `1e-5 s` real-fluid handoff is a numerical integration
+check; it is not a long-horizon steady fixed-point or severe-slugging qualification.
+
+```bash
+./mvnw -q '-Dtest=AnchoredIsothermalDensityModelTest,TwoFluidPipeUnsplitPreparationTest,TwoFluidUnsplitIntegratorTest' test
+```
+
+The production outlet publisher currently constructs its fluid from inlet overall composition.
+Unequal phase outlet transfers require conservative component-weighted outlet composition and an
+atomic accepted-state/report/stream publication contract. Those requirements remain open, so the
+new interface returns a prepared candidate and is not a selectable `runTransient` mode.
+
+`TwoFluidUnsplitTengesdalPreparationTest` reuses the physical geometry and feed of the public
+2002 large-facility Test 3: a 19.81 m flowline inclined -3 degrees, a 14.94 m riser, 0.0762 m
+diameter, nitrogen/Crystex feed and a 1.01325 bara outlet. It uses the current steady initializer,
+anchored SRK densities, whole-operator Bestion stabilization, signed outlet transport and disabled
+tracked slugs. The existing shared-slug-force option remains off. All three **0.1 s** preparation
+cases (16 cells / 0.1 s, 16 / 0.05 s, 24 / 0.05 s maximum nominal step) complete with independent
+conservation/volume checks and exact preservation of accepted pipe state.
+
+The 16-cell short cases require 65 accepted substeps and 63/64 rejections; the 24-cell case requires
+83 accepted substeps and 81 rejections. The minimum accepted step is 0.00078125 s. Maximum phase
+speeds are 16.438/17.976 m/s and departures from the initial pressure profile are 13.376/12.840 kPa
+on 16/24 cells, respectively. Maximum cumulative scaled conservation residuals are below
+`3.73e-10`. The substantial early evolution and retry counts are retained as evidence; completion
+of this short interval is not evidence that the initialized flowing state is an unsplit fixed point.
+
+The **5 s** cases do not pass. With the existing nonlinear budget of 20 iterations, eight halvings,
+`1e-9` solve tolerance, `1e-8` independent gates and the pipe's configured substep budget, the
+12 September 2026 run measured:
+
+| Cells | Maximum nominal step (s) | Last locally prepared time (s) | Prepared substeps | Rejected attempts | Failing step (s) | Termination |
+| --- | --- | --- | --- | --- | --- | --- |
+| 16 | 0.1 | 0.691015625 | 371 | 369 | 0.000390625 | Line search failed |
+| 16 | 0.05 | 0.691015625 | 371 | 363 | 0.0001953125 | Line search failed |
+| 24 | 0.05 | 0.5234375 | 344 | 339 | 0.0001953125 | Line search failed |
+
+Those local prefixes are discarded, and no candidate or pipe-clock advancement is published.
+A preceding 256-substep probe exhausted that budget at 0.353125 s on 16 cells and 0.26875 s on
+24 cells. Honoring the larger pipe budget therefore exposed a subsequent nonlinear failure; it did
+not close the physical five-second gate. These results do not identify a unique failed closure,
+prove a steady fixed point, or qualify spontaneous slug formation. No closure coefficient or
+experimental acceptance bound was changed, and the 180/600 s sequence remains blocked.
+
+The active short tests and explicit opt-in failing qualification gate are reproducible separately:
+
+```bash
+./mvnw -q -Dtest=TwoFluidUnsplitTengesdalPreparationTest test
+# Expected to fail until the five-second numerical gap is corrected:
+./mvnw -q -Dtest=TwoFluidUnsplitTengesdalPreparationTest -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.qualification=true test
+```
+
+The five-second method is opt-in because it records an unclosed qualification gate; it is not
+counted among passing regressions or substituted for the established experimental benchmark.
+
 #### Five-second flowing gate: boundary correction and bounded retries
 
 The synthetic qualification gate uses a horizontal 40 m, 0.10 m line at 5 MPa absolute and 300 K;
@@ -1472,7 +1596,7 @@ spatial/temporal accuracy checks remain required.
 ./mvnw -q '-Dtest=TwoFluidUnsplitModelAdapterTest#fiveSecondIsothermalThreePhaseIntervalsConserveTheAcceptedTransportLedger,TwoFluidUnsplitIntegratorTest,TwoFluidInletPressureBoundaryTest,TwoFluidVariableAreaPressureRegressionTest,TwoFluidConservativeSlugCouplingTest' test
 ```
 
-The adapter is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
+The preparation interface is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
 qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
 rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices.
 The synthetic maximum-step gate above must not be confused with the established WS1 cases. The existing 5 s mesh matrix

@@ -84,11 +84,46 @@ public final class TwoFluidUnsplitIntegrator {
    */
   public synchronized PreparedInterval prepareInterval(TwoFluidSection[] acceptedSections, double spatialStep,
       double duration, double startTime, double outletPressure, boolean outletPressureFixed, double relativeTolerance) {
+    return prepareInterval(acceptedSections, spatialStep, duration, startTime, outletPressure, outletPressureFixed,
+        relativeTolerance, duration);
+  }
+
+  /**
+   * Prepare a complete interval with an independent upper bound on the nominal nonlinear time step.
+   *
+   * <p>
+   * The interval is divided into equal nominal steps no larger than the requested bound, subject to representable clock
+   * rounding. Nonlinear rejection may subdivide them further. The complete-interval transaction and cumulative
+   * conservation gates are identical to
+   * {@link #prepareInterval(TwoFluidSection[], double, double, double, double, boolean, double)}. This controls nominal
+   * step size, not temporal truncation error.
+   * </p>
+   *
+   * @param acceptedSections accepted section templates
+   * @param spatialStep representative cell size in m
+   * @param duration requested complete interval in s
+   * @param startTime accepted start time in s
+   * @param outletPressure external outlet pressure in Pa
+   * @param outletPressureFixed whether that pressure is prescribed
+   * @param relativeTolerance independent endpoint and complete-interval conservation tolerance
+   * @param maximumTimeStep positive finite nominal step bound in s
+   * @return immutable complete interval with exact accepted-substep ledgers
+   * @throws IllegalArgumentException for invalid inputs or a nominal step count above the configured budget
+   * @throws IllegalStateException for unsupported configurations, failed verification or exhausted nonlinear retries
+   */
+  public synchronized PreparedInterval prepareInterval(TwoFluidSection[] acceptedSections, double spatialStep,
+      double duration, double startTime, double outletPressure, boolean outletPressureFixed, double relativeTolerance,
+      double maximumTimeStep) {
     double endTime = startTime + duration;
     if (!(duration > 0.0) || !Double.isFinite(duration) || !Double.isFinite(startTime) || !Double.isFinite(endTime)
         || !(endTime > startTime) || !(relativeTolerance > 0.0) || !Double.isFinite(relativeTolerance)
+        || !(maximumTimeStep > 0.0) || !Double.isFinite(maximumTimeStep)
         || outletPressureFixed && (!(outletPressure > 0.0) || !Double.isFinite(outletPressure))) {
       throw new IllegalArgumentException("Interval preparation requires finite advancing time, pressure and tolerance");
+    }
+    double nominalCount = Math.max(1.0, Math.ceil(duration / maximumTimeStep));
+    if (!Double.isFinite(nominalCount) || nominalCount > maximumSubsteps) {
+      throw new IllegalArgumentException("Nominal time steps exceed the configured accepted-substep budget");
     }
     TwoFluidUnsplitModelAdapter first = new TwoFluidUnsplitModelAdapter(equations, acceptedSections, spatialStep,
         densityModel);
@@ -97,7 +132,15 @@ public final class TwoFluidUnsplitIntegrator {
     TwoFluidSection[] initial = local;
     List<PreparedStep> prepared = new ArrayList<>();
     Deque<Attempt> pending = new ArrayDeque<>();
-    pending.push(new Attempt(endTime, 0));
+    for (int step = (int) nominalCount; step > 0; step--) {
+      double endpoint = step == (int) nominalCount ? endTime
+          : startTime + (endTime - startTime) * (step / nominalCount);
+      double beginning = startTime + (endTime - startTime) * ((step - 1.0) / nominalCount);
+      if (!(endpoint > beginning)) {
+        throw new IllegalArgumentException("Nominal time step cannot advance the representable simulation clock");
+      }
+      pending.push(new Attempt(endpoint, 0));
+    }
     double time = startTime;
     int rejected = 0;
     long evaluations = 0;
@@ -264,9 +307,9 @@ public final class TwoFluidUnsplitIntegrator {
       maximumScaledResidual = maximumResidual;
     }
 
-    /** @return verified chronological substeps; each element is immutable and exposes defensive arrays */
+    /** @return unmodifiable defensive list of verified chronological substeps, whose elements are immutable */
     public List<PreparedStep> getSubsteps() {
-      return substeps;
+      return Collections.unmodifiableList(new ArrayList<>(substeps));
     }
 
     /** @return defensive final conserved/primitive sections; closure diagnostics require an endpoint refresh */

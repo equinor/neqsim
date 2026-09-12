@@ -924,7 +924,33 @@ These 40 m tests use prescribed isothermal densities, not an EOS flash or experi
 See [the model guide](../process/TWOFLUIDPIPE_MODEL.md#five-second-flowing-gate-boundary-correction-and-bounded-retries)
 for the historical negative evidence, revised boundary contract and reproduction command.
 
-This is still not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
+`TwoFluidPipe.prepareUnsplitTransient` now prepares an interval from actual initialized pipe cells
+on deep copies of the operator and inlet fluid. `getSectionSnapshots` provides independent accepted
+cells. `createUnsplitDensityModel` supplies a frozen-composition, fixed-temperature SRK/PR phase
+density response, anchored by a constant specific-volume offset to reproduce accepted densities
+exactly. No flash repartitions mass during Newton probes. Initial density and occupied-volume
+consistency are checked, and unsupported phase appearance/inflow is rejected. The pipe exposes a
+separate maximum nominal step and honors its configured accepted-substep budget.
+
+Real methane and methane/decane/water steady handoffs are tested over `1e-5 s`, including unchanged
+streams, profiles, reports, clocks and equation state on success and failure. Additional tests cover
+independent SRK/PR derivatives, serialization and inlet physical-property cache isolation. These
+short handoffs do not establish a steady fixed point over an engineering time horizon. Energy,
+phase/component transfer, heat, upstream storage and tracked/split slug sources are unsupported.
+Viscosity, sound speed and temperature remain frozen. See the
+[EOS preparation contract](../process/TWOFLUIDPIPE_MODEL.md#pipe-preparation-with-frozen-phase-eos-densities)
+for supported phases, boundaries, units and an executable API example.
+
+The actual Tengesdal nitrogen/Crystex riser fixture also completes three short **0.1 s** preparation
+cases on 16/24 cells. Its **5 s** matrix still fails line search at locally prepared times
+0.691015625 s (16 cells) and 0.5234375 s (24 cells), even after increasing the initial 256-substep
+cap to honor the pipe's configured budget. Every failed local prefix is discarded. The source
+includes an explicit opt-in reproduction of this failing gate; it is not counted as a passing
+regression. These results block the subsequent 180/600 s characterization and experimental gates.
+
+The existing outlet publisher uses inlet overall composition; unequal phase transfers require
+conservative component-weighted outlet composition before a prepared state can be published.
+This remains a preparation API, not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
 accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the established 5/180/600 s qualification
 sequence remain required. Energy, named-component transport, and phase change are outside the
 initial isothermal system.

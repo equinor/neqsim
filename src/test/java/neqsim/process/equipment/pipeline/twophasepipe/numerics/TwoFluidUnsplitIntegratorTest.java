@@ -24,6 +24,53 @@ import org.junit.jupiter.api.Test;
 class TwoFluidUnsplitIntegratorTest {
 
   @Test
+  void nominalStepBoundCoversTheCompleteIntervalWithoutChangingTheFixedPoint() {
+    TwoFluidSection[] accepted = nonuniformSections();
+    for (TwoFluidSection cell : accepted) {
+      cell.setGasVelocity(0.0);
+      cell.setLiquidVelocity(0.0);
+      cell.setOilVelocity(0.0);
+      cell.setWaterVelocity(0.0);
+      cell.updateConservativeVariables();
+    }
+    TwoFluidConservationEquations equations = isothermalEquations();
+    equations.setClosedBoundaries(true, true);
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations, densityModel(), solver(), 2, 8);
+    PreparedInterval interval = integrator.prepareInterval(accepted, 5.0, 0.2, 4.5, Double.NaN, false, 1.0e-8, 0.05);
+    assertEquals(4, interval.getSubsteps().size());
+    assertEquals(0, interval.getRejectedAttempts());
+    assertEquals(4.7, interval.getEndTimeSeconds(), 0.0);
+    double time = 4.5;
+    for (PreparedStep step : interval.getSubsteps()) {
+      assertEquals(time, step.getStartTimeSeconds(), 0.0);
+      assertTrue(step.getTimeStepSeconds() > 0.0 && step.getTimeStepSeconds() <= 0.05 + Math.ulp(4.7));
+      time += step.getTimeStepSeconds();
+    }
+    assertEquals(interval.getEndTimeSeconds(), time, 0.0);
+    TwoFluidSection[] endpoint = interval.getEndpointSections();
+    for (int cell = 0; cell < accepted.length; cell++) {
+      assertArrayEquals(accepted[cell].getStateVector(), endpoint[cell].getStateVector(), 0.0);
+      assertEquals(accepted[cell].getPressure(), endpoint[cell].getPressure(), 0.0);
+    }
+    assertArrayEquals(new double[3], interval.getMassResidualKg(), 0.0);
+  }
+
+  @Test
+  void invalidNominalStepOrBudgetFailsBeforeDensityEvaluation() {
+    PhaseDensityModel density = (cell, state, pressure, time) -> {
+      throw new AssertionError("Invalid nominal steps must be rejected before density evaluation");
+    };
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(isothermalEquations(), density, solver(), 2,
+        4);
+    for (double maximum : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 0.01 }) {
+      assertThrows(IllegalArgumentException.class,
+          () -> integrator.prepareInterval(nonuniformSections(), 5.0, 1.0, 0.0, 5.0e6, true, 1.0e-8, maximum));
+    }
+    assertThrows(IllegalArgumentException.class,
+        () -> integrator.prepareInterval(nonuniformSections(), 5.0, 2.0, 1.0e16, 5.0e6, true, 1.0e-8, 0.5));
+  }
+
+  @Test
   void matchesASingleVerifiedStepWithImmutableNonuniformMassAccounting() throws Exception {
     TwoFluidSection[] accepted = nonuniformSections();
     TwoFluidSection[] original = cloneSections(accepted);
