@@ -2190,16 +2190,16 @@ public class NeqSimTools {
   }
 
   /**
-   * Verify a Safety Instrumented Function (SIF) against its claimed SIL per IEC 61508/61511.
+   * Screen caller-supplied SIF reliability inputs against a claimed PFD-based SIL band.
    *
    * @param silJson JSON spec with SIF metadata and component reliability data
-   * @return JSON string with SIL verification result
+   * @return JSON string with bounded SIF PFD screening evidence
    */
-  @Tool(description = "Verify a Safety Instrumented Function (SIF) against its claimed SIL "
-      + "per IEC 61508 / IEC 61511. Computes PFDavg from component-level failure rates "
-      + "(sensors, logic solver, final elements) using simplified architecture formulae "
-      + "(1oo1, 1oo2, 2oo3), determines achieved SIL, hardware fault tolerance, and "
-      + "verification issues.")
+  @Tool(description = "Bounded caller-supplied Safety Instrumented Function PFD screening. "
+      + "Accepts at most 16384 UTF-8 bytes and 100 components, using canonical NeqSim formulae "
+      + "for 1oo1, 1oo2, and 2oo3. The PFD-based SIL band is indicative only: this does not "
+      + "select or approve SIL, establish IEC 61508/61511 conformance, or replace independent "
+      + "functional-safety assessment and accountable approval.")
   public String runSIL(
       @ToolArg(description = "JSON with: 'name', 'claimedSIL' (1-4), 'architecture' "
           + "(1oo1|1oo2|2oo3), 'proofTestInterval_hours', and EITHER 'pfdAvg' (direct) OR "
@@ -2212,7 +2212,7 @@ public class NeqSimTools {
     try {
       return standardizeResponse("runSIL", SILRunner.run(silJson), "general");
     } catch (Exception e) {
-      return errorJson("SIL verification failed: " + e.getMessage());
+      return errorJson("SIL screening could not be processed");
     } finally {
       McpRequestContext.clear();
     }

@@ -126,6 +126,17 @@ effectiveness, select or verify SIL, decide tolerability or risk acceptance,
 establish standards compliance, authorize plant action, certify design, or
 replace qualified process-safety review and accountable approval.
 
+The current qualification adds bounded source and packaged-MCP evidence for
+`runSIL` while retaining inventory `1.37 / 20+37+14` and
+`runSIL=CONFIRMED_GAP`. The runner continues to use the canonical
+`SafetyInstrumentedFunction` and `SILVerificationResult`; the evidence covers
+bounded admission, deterministic presentation, stable fail-closed errors, and
+explicit screening/advisory metadata. It does not establish SRS completeness,
+validate reliability inputs or lifecycle assumptions, select or approve SIL,
+demonstrate IEC 61508/61511 conformance, certify design, authorize plant action,
+or replace independent functional-safety assessment and accountable approval.
+`docs/evidence/SIL_SCREENING_CONTRACT.md` records the detailed boundary.
+
 ## Remaining Phase 0 work
 
 The four public synthetic acceptance scales, bounded baseline harness, 66-criterion campaign traceability matrix, and ten-discipline maturity matrix are already merged and discoverable. Phase 0 is still incomplete because the acceptance baseline retains explicit component, energy, and complete facility-wide single-area closure gaps, and 14 published tools still lack a defensible tool-specific or bounded software-contract trust classification.

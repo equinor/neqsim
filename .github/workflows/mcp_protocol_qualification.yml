@@ -166,6 +166,9 @@ jobs:
       - name: Run focused real-MCP bounded LOPA qualification
         run: cd neqsim-mcp-server && python test_lopa_protocol.py
 
+      - name: Run focused real-MCP bounded SIL qualification
+        run: cd neqsim-mcp-server && python test_sil_protocol.py
+
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
 

@@ -88,7 +88,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
-`src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
+`src/test/java/neqsim/mcp`, 95 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts; the focused harnesses are separately
@@ -636,3 +636,22 @@ verify SIL, decide tolerability or risk acceptance, establish standards
 compliance, authorize plant action, certify design, or replace qualified
 process-safety review and accountable approval. No promotion candidate remains
 queued. See `docs/evidence/LOPA_SCREENING_CONTRACT.md`.
+
+### Qualified bounded SIF PFD-screening candidate
+
+The current increment qualifies `runSIL` through direct Java and packaged-MCP
+evidence while retaining the canonical `SafetyInstrumentedFunction` and
+`SILVerificationResult`. The runner bounds the request, component collection,
+text, supported architectures, claimed SIL, proof-test interval, PFD, and
+failure-rate inputs; rejects conflicting or non-finite inputs; preserves
+component order and deterministic defaults; and returns explicit screening,
+caller-assumption, and independent-assessment metadata.
+
+This qualification does not promote the tool. Inventory remains version 1.37
+at `20/37/14`, with `runSIL=CONFIRMED_GAP`. It does not establish SRS
+completeness, validate reliability data, verify independence, common cause,
+architecture suitability, diagnostic coverage, proof-test effectiveness or
+systematic capability, select or approve SIL, demonstrate standards
+conformance, certify design, authorize plant action, or replace independent
+functional-safety assessment and accountable approval. See
+`docs/evidence/SIL_SCREENING_CONTRACT.md`.
