@@ -24,10 +24,8 @@ public class DoeBigHillVacuumComponentRecoveryTest {
     DoeBigHillVacuumFractionationCase model = createCase("Big Hill component recovery");
     model.getColumn().run(UUID.randomUUID());
 
-    DoeBigHillVacuumComponentRecovery result =
-        DoeBigHillVacuumComponentRecovery.evaluate(model);
-    String[] expectedNames = {
-        "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+    DoeBigHillVacuumComponentRecovery result = DoeBigHillVacuumComponentRecovery.evaluate(model);
+    String[] expectedNames = { "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
     assertArrayEquals(expectedNames, result.getComponentNames());
     assertNotSame(result.getComponentNames(), result.getComponentNames());
 
@@ -58,24 +56,19 @@ public class DoeBigHillVacuumComponentRecoveryTest {
         assertTrue(componentFlows[componentIndex] >= 0.0);
         assertTrue(recoveries[componentIndex] >= 0.0);
         assertTrue(recoveries[componentIndex] <= 1.0 + RECOVERY_CLOSURE_TOLERANCE);
-        assertEquals(componentFlows[componentIndex] / feedFlows[componentIndex],
-            recoveries[componentIndex], 1.0e-12);
+        assertEquals(componentFlows[componentIndex] / feedFlows[componentIndex], recoveries[componentIndex], 1.0e-12);
         assertEquals(componentFlows[componentIndex],
             product.getComponentMolarFlowMolPerHour(expectedNames[componentIndex]), 0.0);
-        assertEquals(recoveries[componentIndex],
-            product.getComponentMolarRecovery(expectedNames[componentIndex]), 0.0);
+        assertEquals(recoveries[componentIndex], product.getComponentMolarRecovery(expectedNames[componentIndex]), 0.0);
         productFlowSum += componentFlows[componentIndex];
         recoverySum += recoveries[componentIndex];
       }
-      assertEquals(feedFlows[componentIndex], productFlowSum,
-          RECOVERY_CLOSURE_TOLERANCE * feedFlows[componentIndex]);
+      assertEquals(feedFlows[componentIndex], productFlowSum, RECOVERY_CLOSURE_TOLERANCE * feedFlows[componentIndex]);
       assertEquals(1.0, recoverySum, RECOVERY_CLOSURE_TOLERANCE);
     }
 
-    assertTrue(result.getMaximumComponentRecoveryClosureError()
-        <= RECOVERY_CLOSURE_TOLERANCE);
-    assertThrows(IllegalArgumentException.class,
-        () -> products[0].getComponentMolarRecovery("unknown"));
+    assertTrue(result.getMaximumComponentRecoveryClosureError() <= RECOVERY_CLOSURE_TOLERANCE);
+    assertThrows(IllegalArgumentException.class, () -> products[0].getComponentMolarRecovery("unknown"));
 
     feedFlows[0] = -1.0;
     products[0].getComponentMolarFlowsMolPerHour()[0] = -1.0;
@@ -88,15 +81,13 @@ public class DoeBigHillVacuumComponentRecoveryTest {
   /** Reject null and unsolved cases before returning recovery evidence. */
   @Test
   public void invalidCasesFailClosed() {
-    assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumComponentRecovery.evaluate(null));
+    assertThrows(NullPointerException.class, () -> DoeBigHillVacuumComponentRecovery.evaluate(null));
     assertThrows(IllegalStateException.class,
         () -> DoeBigHillVacuumComponentRecovery.evaluate(createCase("Unsolved recovery")));
   }
 
   private static DoeBigHillVacuumFractionationCase createCase(String name) {
-    OperatingInputs inputs =
-        new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+    OperatingInputs inputs = new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
     return DoeBigHillVacuumFractionationCase.create(name, 1000.0, inputs);
   }
 }
