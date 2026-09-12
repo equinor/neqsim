@@ -11,11 +11,19 @@ DOCS = ROOT / "docs"
 GUIDE = DOCS / "pvtsimulation" / "pvt_workflow.md"
 INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
 REGRESSION = ROOT / "src/main/java/neqsim/pvtsimulation/regression/PVTRegression.java"
-PARAMETER = ROOT / "src/main/java/neqsim/pvtsimulation/regression/RegressionParameter.java"
+PARAMETER = (
+    ROOT / "src/main/java/neqsim/pvtsimulation/regression/RegressionParameter.java"
+)
 RESULT = ROOT / "src/main/java/neqsim/pvtsimulation/regression/RegressionResult.java"
 REPORT = ROOT / "src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java"
-REGRESSION_TEST = ROOT / "src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java"
-DOCUMENTATION_TEST = ROOT / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
+REGRESSION_TEST = (
+    ROOT
+    / "src/test/java/neqsim/pvtsimulation/regression/PVTRegressionTest.java"
+)
+DOCUMENTATION_TEST = (
+    ROOT
+    / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
+)
 PVT_OVERVIEW = DOCS / "pvtsimulation" / "README.md"
 
 
@@ -88,12 +96,31 @@ class PvtWorkflowDocumentationTest(unittest.TestCase):
             "public PVTRegression(SystemInterface fluid)",
             "this.baseFluid = fluid.clone();",
             "this.tunedFluid = fluid.clone();",
-            "public void addCCEData(double[] pressures, double[] relativeVolumes, double temperature)",
-            "public void addCVDData(double[] pressures, double[] liquidDropout, double[] zFactors, double temperature)",
-            "public void addDLEData(double[] pressures, double[] rs, double[] bo, double[] oilDensity, double temperature)",
-            "public void addSeparatorData(double gor, double bo, double apiGravity, double separatorPressure, double separatorTemperature, double reservoirTemperature)",
-            "public void addViscosityData(double[] pressures, double[] viscosities, double temperature, String phaseName)",
-            "public void addRegressionParameter(RegressionParameter parameter, double lowerBound, double upperBound, double initialGuess)",
+            (
+                "public void addCCEData(double[] pressures, "
+                "double[] relativeVolumes, double temperature)"
+            ),
+            (
+                "public void addCVDData(double[] pressures, "
+                "double[] liquidDropout, double[] zFactors, double temperature)"
+            ),
+            (
+                "public void addDLEData(double[] pressures, double[] rs, "
+                "double[] bo, double[] oilDensity, double temperature)"
+            ),
+            (
+                "public void addSeparatorData(double gor, double bo, "
+                "double apiGravity, double separatorPressure, "
+                "double separatorTemperature, double reservoirTemperature)"
+            ),
+            (
+                "public void addViscosityData(double[] pressures, "
+                "double[] viscosities, double temperature, String phaseName)"
+            ),
+            (
+                "public void addRegressionParameter(RegressionParameter parameter, "
+                "double lowerBound, double upperBound, double initialGuess)"
+            ),
             "public void setExperimentWeight(ExperimentType type, double weight)",
             "public void setMaxIterations(int maxIterations)",
             "public void setTolerance(double tolerance)",
@@ -123,13 +150,22 @@ class PvtWorkflowDocumentationTest(unittest.TestCase):
 
         for signature in [
             "public PVTReportGenerator(SystemInterface fluid)",
-            "public PVTReportGenerator setProjectInfo(String projectName, String fluidName)",
+            (
+                "public PVTReportGenerator setProjectInfo("
+                "String projectName, String fluidName)"
+            ),
             "public PVTReportGenerator setLabInfo(String labName, String sampleDate)",
-            "public PVTReportGenerator setReservoirConditions(double pressure, double temperatureCelsius)",
+            (
+                "public PVTReportGenerator setReservoirConditions("
+                "double pressure, double temperatureCelsius)"
+            ),
             "public PVTReportGenerator addCCE(ConstantMassExpansion cce)",
             "public PVTReportGenerator addDLE(DifferentialLiberation dle)",
             "public PVTReportGenerator addCVD(ConstantVolumeDepletion cvd)",
-            "public PVTReportGenerator addSeparatorTest(MultiStageSeparatorTest sepTest)",
+            (
+                "public PVTReportGenerator addSeparatorTest("
+                "MultiStageSeparatorTest sepTest)"
+            ),
             "public String generateMarkdownReport()",
         ]:
             self.assertIn(normalized(signature), self.report_normalized)
@@ -138,9 +174,14 @@ class PvtWorkflowDocumentationTest(unittest.TestCase):
         for source in [self.regression_test, self.documentation_test]:
             self.assertIn("@Test", source)
             self.assertNotIn("@Disabled", source)
-        self.assertIn("testRegressionFitsSingleCspViscosityParameter", self.regression_test)
+        self.assertIn(
+            "testRegressionFitsSingleCspViscosityParameter", self.regression_test
+        )
         self.assertIn("PvtSeparatorQuickStart", self.pvt_overview)
-        self.assertIn("LogManager.getLogger(PvtSeparatorQuickStart.class)", self.pvt_overview)
+        self.assertIn(
+            "LogManager.getLogger(PvtSeparatorQuickStart.class)",
+            self.pvt_overview,
+        )
         self.assertIn("MultiStageSeparatorTest", self.documentation_test)
 
     def test_engineering_boundaries_and_units_are_explicit(self):
