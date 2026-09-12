@@ -25,6 +25,9 @@ Usage:
     neqsim new-task --set-report-template "C:/…/company template.docx"
     neqsim new-task --show-report-template
     neqsim new-task --reset-report-template
+    neqsim new-task --set-document-root "C:/…/Engineering Documents"
+    neqsim new-task --show-document-root
+    neqsim new-task --reset-document-root
 
 Destination precedence: --task-root, NEQSIM_TASK_ROOT, saved user default,
 then <repository>/task_solve. Settings: ~/.neqsim/task_defaults.json.
@@ -35,6 +38,12 @@ Word reports are built from the template resolved as: generate_report.py
 --template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template`
 setting. The short top-level equivalents are `neqsim --set-report-template
 PATH`, `neqsim --show-report-template`, and `neqsim --reset-report-template`.
+
+The document root is the folder agents read source documents from, including
+every subfolder. It resolves as: explicit path, NEQSIM_DOCUMENT_ROOT, then the
+saved `document_root` setting. The short top-level equivalents are `neqsim
+--set-document-root PATH`, `neqsim --show-document-root`, `neqsim
+--reset-document-root`, and `neqsim documents [PATTERN]` to search it.
 """
 import argparse
 import os
@@ -172,6 +181,99 @@ def clear_default_report_template():
     removed = settings.pop("report_template", None) is not None
     _write_task_defaults(settings)
     return removed
+
+
+def resolve_document_root(document_root=None):
+    """Resolve explicit, environment, then saved-user source-document folder.
+
+    The document root is the folder agents read source documents from, and every
+    subfolder below it is in scope. Returns None when no folder is configured.
+    A configured but missing folder raises instead of silently resolving to
+    nothing, so the agent reports the blocker rather than working document-free.
+
+    Parameters
+    ----------
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+
+    Returns
+    -------
+    str or None
+        Absolute folder path, or None when no document root is configured.
+
+    Raises
+    ------
+    ValueError
+        If the resolved document root is blank or is not an existing folder.
+    """
+    selected = document_root or os.environ.get("NEQSIM_DOCUMENT_ROOT")
+    if not selected:
+        selected = read_task_defaults().get("document_root")
+    if selected is None:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Document root must be a non-empty folder path")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if not os.path.isdir(path):
+        raise ValueError("Document root folder not found: {}".format(path))
+    return path
+
+
+def save_default_document_root(document_root):
+    """Persist the folder every task reads source documents from."""
+    if not document_root or not document_root.strip():
+        raise ValueError("Document root must be a non-empty folder path")
+    stored = resolve_document_root(document_root)
+    settings = read_task_defaults()
+    settings["document_root"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_document_root():
+    """Remove the saved document root, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("document_root", None) is not None
+    _write_task_defaults(settings)
+    return removed
+
+
+def find_documents(pattern="", document_root=None, limit=0):
+    """List documents under the configured document root and all subfolders.
+
+    Parameters
+    ----------
+    pattern : str
+        Case-insensitive substring matched against the path relative to the
+        document root. Empty lists every file.
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+    limit : int
+        Maximum number of matches to return; 0 returns all of them.
+
+    Returns
+    -------
+    list of str
+        Absolute file paths, sorted, from the root and every subfolder.
+    """
+    root = resolve_document_root(document_root)
+    if root is None:
+        raise ValueError(
+            "No document root configured. Set one: neqsim --set-document-root \"PATH\"")
+    needle = (pattern or "").strip().lower()
+    matches = []
+    for folder, subfolders, files in os.walk(root):
+        subfolders[:] = sorted(name for name in subfolders if not name.startswith("."))
+        for name in sorted(files):
+            if name.startswith("."):
+                continue
+            path = os.path.join(folder, name)
+            if needle and needle not in os.path.relpath(path, root).lower():
+                continue
+            matches.append(path)
+            if limit and len(matches) >= limit:
+                return matches
+    return matches
 
 TASK_TYPES = {
     "A": "Property",
@@ -880,6 +982,24 @@ REFERENCES_README = """# References Folder
 
 Place literature papers, standards documents, and other reference material here.
 
+## Where source documents come from
+
+If the user has configured a document root, it is recorded as `inputs.document_root`
+in `study_config.yaml` and printed by `neqsim --show-document-root`. That folder
+**and all its subfolders** are the source library for this task:
+
+```bash
+neqsim --show-document-root       # may be unset - then there is no library
+neqsim documents "API 521"        # recursive search when one is configured
+```
+
+The setting is optional. When it is unset, work from the documents the user
+supplies directly and record the missing evidence as a data gap. When it is set,
+search it before reporting a standard, datasheet, or drawing as unavailable. The
+library is read-only: copy the documents this task actually uses into a
+per-source subfolder here (`stid/`, `vendor/`, `literature/`, `manual/`, ...) so
+the task folder stays self-contained.
+
 ## What to put in this folder
 
 - **PDF papers** -- journal articles, conference papers, technical reports
@@ -1086,6 +1206,7 @@ STUDY_CONFIG = "\n".join([
     "",
     "inputs:",
     "  prompt_file: \"\"       # Optional text/markdown file used as the original task prompt.",
+    "  document_root: \"\"     # Source document library, root + all subfolders. Empty = not configured.",
     "  documents_required: false",
     "  document_extraction_required: auto  # auto | required | optional | skip",
     "  documents:",
@@ -3859,6 +3980,14 @@ def _apply_study_config_overrides(content, title, task_type, scale,
     content = _replace_section_key(content, "study", "title", _yaml_quote(title))
     content = _replace_section_key(content, "study", "task_type", _yaml_quote(task_type))
 
+    try:
+        document_root = resolve_document_root()
+    except (OSError, ValueError) as error:
+        print("  WARNING: document root is not usable: {}".format(error))
+        document_root = None
+    content = _replace_section_key(content, "inputs", "document_root",
+                                   _yaml_quote(document_root or ""))
+
     normalized_scale = normalize_scale(scale)
     if normalized_scale:
         mode, aace_class, fel_stage, default_depth = _scale_defaults(normalized_scale)
@@ -4119,6 +4248,9 @@ def main():
     settings.add_argument("--set-report-template")
     settings.add_argument("--reset-report-template", action="store_true")
     settings.add_argument("--show-report-template", action="store_true")
+    settings.add_argument("--set-document-root")
+    settings.add_argument("--reset-document-root", action="store_true")
+    settings.add_argument("--show-document-root", action="store_true")
     options, remaining = parser.parse_known_args()
     try:
         if options.set_default_folder is not None:
@@ -4145,6 +4277,17 @@ def main():
             return
         if options.show_report_template:
             print(resolve_report_template() or "(none — reports use built-in styling)")
+            return
+        if options.set_document_root is not None:
+            print("Saved document root: {}".format(
+                save_default_document_root(options.set_document_root)))
+            return
+        if options.reset_document_root:
+            clear_default_document_root()
+            print("Saved document root removed.")
+            return
+        if options.show_document_root:
+            print(resolve_document_root() or "(none — no document root configured)")
             return
         _main([sys.argv[0]] + remaining, options.task_root)
     except (OSError, ValueError, TypeError, AttributeError) as error:

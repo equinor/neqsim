@@ -542,6 +542,29 @@ def check_report_template():
            "{template} ({source})".format(template=template, source=source))
 
 
+def check_document_root():
+    """Report the folder agents read source documents from."""
+    print("\n--- Source documents ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        root = new_task.resolve_document_root()
+    except Exception as error:
+        _check("Document root", False, str(error),
+               fix_hint="Set an existing folder: neqsim --set-document-root \"PATH\" "
+                        "(or neqsim --reset-document-root)")
+        return
+    if not root:
+        _check("Documents are read from", True,
+               "not configured - set one with: neqsim --set-document-root \"PATH\"")
+        return
+    source = ("from NEQSIM_DOCUMENT_ROOT" if os.environ.get("NEQSIM_DOCUMENT_ROOT")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Documents are read from", True,
+           "{root} and all subfolders ({source})".format(root=root, source=source))
+
+
 def check_git():
     """Check git status."""
     print("\n--- Git ---")
@@ -581,6 +604,7 @@ def main():
     check_devtools()
     check_task_root()
     check_report_template()
+    check_document_root()
     check_git()
 
     # Summary
