@@ -95,8 +95,8 @@ class MechanicalDesignJsonContractTest {
     MechanicalDesign design = new MechanicalDesign(new Separator("unit test separator"));
     assertDoesNotThrow(() -> new MechanicalDesignResponse(design));
     JsonObject data = JsonParser.parseString(design.toDesignDataJson()).getAsJsonObject();
-    assertTrue(data.getAsJsonObject("operatingConditions").getAsJsonObject("gasOutletPressure").get("value")
-        .isJsonNull());
+    assertTrue(
+        data.getAsJsonObject("operatingConditions").getAsJsonObject("gasOutletPressure").get("value").isJsonNull());
   }
 
   @Test
