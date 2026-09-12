@@ -134,7 +134,7 @@ mecDesign.calcDesign();
 
 // Access results
 double weight = mecDesign.getWeightTotal();           // kg
-double wallThickness = mecDesign.getWallThickness();  // mm
+double wallThickness = mecDesign.getWallThickness();  // m for this separator
 double innerDiameter = mecDesign.getInnerDiameter();  // m
 double length = mecDesign.getTantanLength();          // m
 double designPressure = mecDesign.getMaxDesignPressure(); // bara
@@ -278,7 +278,8 @@ String json = separator.getMechanicalDesign().toJson();
   "maxDesignTemperature": 80.0,
   "innerDiameter": 2.4,
   "tangentLength": 7.2,
-  "wallThickness": 28.5,
+  "wallThickness": 0.0285,
+  "wallThicknessUnit": "m",
   "moduleLength": 10.0,
   "moduleWidth": 5.0,
   "moduleHeight": 4.5,
@@ -286,6 +287,102 @@ String json = separator.getMechanicalDesign().toJson();
 }
 */
 ```
+
+### JSON for 3D geometry and design calculations
+
+Use `toDesignDataJson()` on any mechanical design for the versioned, unit-labelled
+contract. The same snapshot is included as `designData` in response-based
+`toJson()` exports. The dedicated method also works for equipment with its own
+legacy exporter. Run the process and `calcDesign()` after changing inputs, then
+export; exporting does not run calculations or change the equipment.
+
+```java
+// After running the process:
+MechanicalDesign design = separator.getMechanicalDesign();
+design.calcDesign();
+String designDataJson = design.toDesignDataJson();
+java.nio.file.Files.write(java.nio.file.Paths.get("separator-design.json"),
+    designDataJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+```
+
+The contract has `schemaVersion: "1.0"`. Every numeric quantity inside `geometry`,
+`operatingConditions` and `designBasis` has `value`, `unit`, `source` and `status`.
+Lengths use **m**, absolute pressures **Pa**, temperatures **K**, power/duty **W**,
+mass flow **kg/s**, area **m2**, conductance **W/K**, and efficiency **1**.
+Unavailable or non-finite values are JSON `null` with status `unavailable`.
+`available` means a finite getter value is present; it does **not** establish
+calculation completion, freshness, compliance or fabrication readiness.
+`calculationStatus` is explicitly `not_tracked`. Configured operating/design limits
+are marked `configured_or_default` and kept separate from live stream conditions.
+
+| Equipment | Legacy `getWallThickness()` / JSON unit | Normalized geometry and calculation interpretation |
+|---|---|---|
+| Separator, absorber | m | Sized cylindrical shell; orientation from process owner; head type/profile unavailable |
+| Compressor | m | Envelope gap, **not pressure-casing thickness**; `pressureCasingWallThickness` and `pressureCasingInnerDiameter` come separately from the casing calculator |
+| Heat exchanger, heater/cooler | m | Selected sizing envelope; an equivalent diameter does not imply a cylindrical exchanger |
+| Pump | mm | Casing envelope, impeller and shaft sizes converted to m |
+| Pipeline/riser | mm | Geometry uses the pipe's specified ID/thickness/length; `designBasis.designWallThickness` preserves the design getter separately (minimum sizing result after `calcDesign`) |
+| Valve | m | Envelope; face-to-face, body thickness and stem getters use mm where documented |
+| Distillation column | mm | Column envelope; height exported separately |
+| Filter, adsorber | m | Getter dimensions exported with the diameter/thickness consistency check |
+| Membrane | mm | Getter dimensions converted; detailed housing layout is not inferred |
+| Other design classes | Unqualified | Thickness is unavailable in normalized output until its unit contract is qualified |
+
+Existing getter numeric units remain unchanged. Legacy response JSON now declares
+`wallThicknessUnit`; for example separator `wallThickness = 0.0285 m`, whereas
+its explicitly millimetre-valued `shellThickness = 28.5 mm`. Compressor and pump
+impeller/shaft legacy fields remain mm. Previously unpopulated floating-point
+response fields use `Double.NaN` in the Java DTO and now serialize as `null`, and non-finite nested calculator values
+also become `null` in response-based exports. Compact and pretty response exports
+have the same fields. Legacy zero counts/false flags are not a completeness test;
+consume the versioned contract for geometry automation.
+
+Compressor inlet/outlet pressures and efficiencies come from the live compressor,
+not the design envelope defaults. Compressor, pump and valve maximum design
+pressure/temperature fields use their own calculation results. Heat-exchanger
+exports now use their specialized response, selected type, required area and
+thermal coefficient. Shell dimensions are populated only for a shell-and-tube
+selection. No head thickness or product geometry is invented when its source is
+absent.
+
+`geometryConsistency` checks whether positive finite ID, OD and thickness satisfy
+`OD = ID + 2t`. It is `consistent`, `inconsistent` or `incomplete`. This checks
+geometric arithmetic only, not pressure-code adequacy. Correct an inconsistent
+source design before meshing it. A missing head type is expected: the separator
+model does not specify a fabrication head profile.
+
+The runnable [JSON-to-mesh example](../../examples/mechanical_design_json_to_mesh.py)
+uses `trimesh` and rejects missing units, unavailable dimensions and inconsistent
+shell geometry. With the JSON above saved as `separator-design.json`:
+
+```bash
+python -m pip install trimesh numpy
+python examples/mechanical_design_json_to_mesh.py separator-design.json separator-shell.stl
+# For a compressor, pump or exchanger plot-space envelope:
+python examples/mechanical_design_json_to_mesh.py compressor-design.json compressor-skid.glb --mode envelope
+```
+
+The shell mesh is an **open-ended tube wall**, without heads, nozzles or supports.
+Horizontal vessels have their axis along X; vertical vessels along Z. The example
+checks watertightness of the wall solid and its mesh volume against
+`pi * (OD^2 - ID^2) * tangentLength / 4`. The STL/GLB sidecar retains metre units,
+source design data, bounds, representation and the volume error. STL itself does
+not encode units. Envelope mode creates a plot-space box including access
+allowances, so its volume must not be interpreted as metal volume or used for mass.
+
+For design calculations, retain the JSON's sources and statuses alongside each
+result. Wall-metal volume times a separately specified material density gives a
+shell-only mass estimate. Pressure-thickness or hoop-stress calculations also need
+an explicitly selected pressure differential, material allowable stress, joint
+factor, corrosion allowance and applicable design method. Absolute operating
+pressure is not automatically the pressure differential across a wall. Existing
+mechanical/casing calculators remain the source of their design results; a CAD
+mesh is not a substitute for those calculations or a fabrication drawing.
+
+The regression test `MechanicalDesignJsonContractTest` runs the equipment, checks
+getter/JSON values and unit conversions, preserves configured limits across
+reruns, checks missing values, and writes separator/compressor JSON fixtures for
+the mesh example under `target/design-json/`.
 
 ### Exporting System-Wide Design
 
@@ -399,7 +496,8 @@ mechReport.writeJsonReport("mechanical_design_report.json");
       "mechanicalDesign": {
         "designPressure": 55.0,
         "designTemperature": 80.0,
-        "wallThickness": 28.5,
+        "wallThickness": 0.0285,
+        "wallThicknessUnit": "m",
         "weight": 15420.5,
         ...
       }

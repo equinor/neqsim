@@ -184,6 +184,12 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
 
   /** {@inheritDoc} */
   @Override
+  public HeatExchangerMechanicalDesignResponse getResponse() {
+    return new HeatExchangerMechanicalDesignResponse(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void calcDesign() {
     super.calcDesign();
     ProcessEquipmentInterface equipment = getProcessEquipment();

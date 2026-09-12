@@ -1,6 +1,7 @@
 package neqsim.process.mechanicaldesign.compressor;
 
 import java.util.Map;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
@@ -32,77 +33,77 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
   private int numberOfStages;
 
   /** Polytropic head per stage [kJ/kg]. */
-  private double headPerStage;
+  private double headPerStage = Double.NaN;
 
   /** Total polytropic head [kJ/kg]. */
-  private double totalHead;
+  private double totalHead = Double.NaN;
 
   /** Impeller diameter [mm]. */
-  private double impellerDiameter;
+  private double impellerDiameter = Double.NaN;
 
   /** Shaft diameter [mm]. */
-  private double shaftDiameter;
+  private double shaftDiameter = Double.NaN;
 
   /** Impeller tip speed [m/s]. */
-  private double tipSpeed;
+  private double tipSpeed = Double.NaN;
 
   /** Maximum continuous speed [rpm]. */
-  private double maxContinuousSpeed;
+  private double maxContinuousSpeed = Double.NaN;
 
   /** Trip speed [rpm]. */
-  private double tripSpeed;
+  private double tripSpeed = Double.NaN;
 
   /** First lateral critical speed [rpm]. */
-  private double firstCriticalSpeed;
+  private double firstCriticalSpeed = Double.NaN;
 
   /** Required driver power [kW]. */
-  private double driverPower;
+  private double driverPower = Double.NaN;
 
   /** Driver power margin factor. */
-  private double driverMargin;
+  private double driverMargin = Double.NaN;
 
   /** Casing weight [kg]. */
-  private double casingWeight;
+  private double casingWeight = Double.NaN;
 
   /** Rotor weight [kg]. */
-  private double rotorWeight;
+  private double rotorWeight = Double.NaN;
 
   /** Bundle weight [kg]. */
-  private double bundleWeight;
+  private double bundleWeight = Double.NaN;
 
   /** Bearing span [mm]. */
-  private double bearingSpan;
+  private double bearingSpan = Double.NaN;
 
   /** Inlet pressure [bara]. */
-  private double inletPressure;
+  private double inletPressure = Double.NaN;
 
   /** Outlet pressure [bara]. */
-  private double outletPressure;
+  private double outletPressure = Double.NaN;
 
   /** Pressure ratio. */
-  private double pressureRatio;
+  private double pressureRatio = Double.NaN;
 
   /** Polytropic efficiency. */
-  private double polytropicEfficiency;
+  private double polytropicEfficiency = Double.NaN;
 
   /** Isentropic efficiency. */
-  private double isentropicEfficiency;
+  private double isentropicEfficiency = Double.NaN;
 
   // ============================================================================
   // Process Design Parameters (added for TR3500 compliance)
   // ============================================================================
 
   /** Surge margin percentage. */
-  private double surgeMarginPercent;
+  private double surgeMarginPercent = Double.NaN;
 
   /** Stonewall margin percentage. */
-  private double stonewallMarginPercent;
+  private double stonewallMarginPercent = Double.NaN;
 
   /** Minimum turndown percentage. */
-  private double minTurndownPercent;
+  private double minTurndownPercent = Double.NaN;
 
   /** Target polytropic efficiency. */
-  private double targetPolytropicEfficiency;
+  private double targetPolytropicEfficiency = Double.NaN;
 
   /** Seal type (dry gas, oil film, labyrinth). */
   private String sealType;
@@ -114,13 +115,13 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
   private boolean naceCompliance;
 
   /** Maximum discharge temperature [°C]. */
-  private double maxDischargeTemperature;
+  private double maxDischargeTemperature = Double.NaN;
 
   /** Maximum pressure ratio per stage. */
-  private double maxPressureRatioPerStage;
+  private double maxPressureRatioPerStage = Double.NaN;
 
   /** Maximum unfiltered vibration [mm/s]. */
-  private double maxVibrationUnfiltered;
+  private double maxVibrationUnfiltered = Double.NaN;
 
   // ============================================================================
   // Casing Design Parameters (API 617 / ASME VIII)
@@ -177,8 +178,22 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
     this.rotorWeight = mecDesign.getRotorWeight();
     this.bundleWeight = mecDesign.getBundleWeight();
     this.bearingSpan = mecDesign.getBearingSpan();
-    this.inletPressure = mecDesign.getMinOperationPressure();
-    this.outletPressure = mecDesign.getMaxOperationPressure();
+    this.inletPressure = Double.NaN;
+    this.outletPressure = Double.NaN;
+    this.pressureRatio = Double.NaN;
+    if (mecDesign.getProcessEquipment() instanceof Compressor) {
+      Compressor compressor = (Compressor) mecDesign.getProcessEquipment();
+      if (compressor.getInletStream() != null && compressor.getOutletStream() != null) {
+        this.inletPressure = compressor.getInletStream().getPressure("bara");
+        this.outletPressure = compressor.getOutletStream().getPressure("bara");
+      }
+      this.polytropicEfficiency = compressor.getPolytropicEfficiency();
+      this.isentropicEfficiency = compressor.getIsentropicEfficiency();
+      this.totalHead = compressor.getPolytropicFluidHead();
+      setPower(compressor.getPower("kW"));
+    }
+    setMaxDesignPressure(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignPressure() : Double.NaN);
+    setMaxDesignTemperature(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignTemperature() : Double.NaN);
 
     if (mecDesign.getCasingType() != null) {
       this.casingType = mecDesign.getCasingType().name();
