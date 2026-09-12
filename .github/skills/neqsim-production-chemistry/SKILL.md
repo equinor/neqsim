@@ -326,6 +326,54 @@ double kgPerHour = inj.getInjectionRateKgPerHour();
 > the outlet and hands it to the dedicated chemistry models. Do not expect it to change the
 > hydrate curve or pH by itself.
 
+### 4.1 Does the chemical reach the gas? — `ChemicalInjectionNozzlePerformance`
+
+`InhibitorInjectionPoint` and the dose-response models all assume the chemical is **dispersed** in
+the phase it has to treat. For a liquid sprayed into a **gas** line — H2S scavenger into a separator
+gas outlet, corrosion inhibitor or MEG into a wet-gas line — that assumption is the thing most
+likely to be wrong. A bare injection quill releases a coarse jet that settles onto the pipe wall
+within a few pipe diameters and treats nothing; an atomizing nozzle produces a fine spray that stays
+entrained. `neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance` quantifies the
+difference so a quill-to-nozzle modification can be evaluated instead of asserted.
+
+```java
+import neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance;
+import neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance.InjectionDevice;
+
+ChemicalInjectionNozzlePerformance nozzle = new ChemicalInjectionNozzlePerformance();
+nozzle.setInjectionDevice(InjectionDevice.FULL_CONE_NOZZLE);   // or PLAIN_QUILL
+nozzle.setPipeInnerDiameter(0.4889);
+nozzle.setGasVolumeFlow(gasStream.getFlowRate("m3/sec"));
+nozzle.setGasDensity(gasStream.getFluid().getDensity("kg/m3"));
+nozzle.setGasViscosity(gasStream.getFluid().getPhase("gas").getViscosity("kg/msec"));
+nozzle.setChemicalVolumeFlow(235.0);          // l/h
+nozzle.setChemicalDensity(1080.0);
+nozzle.setChemicalViscosity(8.0e-3);
+nozzle.setSurfaceTension(0.040);
+nozzle.setNozzleDifferentialPressure(6.5);    // bar across the device
+nozzle.setInsertionDepth(0.135);              // from the wall; piping specs cap this
+nozzle.evaluate();
+
+double smd = nozzle.getSauterMeanDiameterMicron();
+double reachDiameters = nozzle.getWallImpingementLength() / 0.4889;
+scavenger.setMixingEfficiency(nozzle.getDispersionIndex());
+```
+
+Rules of thumb the class encodes, and the reason each matters:
+
+| Rule | Why |
+|---|---|
+| A bare quill needs about **10 m/s** gas velocity | Drop size from aerodynamic breakup is `We_crit σ / (ρ_G u²)` — velocity enters squared, so halving it quadruples the drop size |
+| Target **10–50 µm**, preferably 20–40 µm | Interfacial area is `6 Q_L / (SMD · Q_G)`, so area buys treatment; below 10 µm the mist carries over into downstream scrubbers |
+| Atomisation is bought with **pump ΔP** | Lefebvre gives `SMD ∝ ΔP^-0.5`; quartering ΔP doubles the drop size |
+| A fixed-orifice nozzle **degrades on turndown** | `Q = K√ΔP` gives `SMD ∝ Q^-0.75`; halving the dose coarsens the spray 1.7× — so a ramp-up from low rates runs at the worst atomisation unless a separate low-rate nozzle is fitted |
+| Two nozzles in parallel are **coarser** than one | Splitting a fixed total rate quarters the ΔP per nozzle. Parallel operation buys capacity, never quality |
+| Insertion limits push the nozzle **off centre** | The drop flight path before wall contact is `u_G · h / v_t`; a shallower insertion shortens `h` and with it the treated length |
+
+> Feed `getDispersionIndex()` into `H2SScavenger.setMixingEfficiency(...)` rather than guessing a
+> value. If the index is low, the answer to poor treatment is the injection hardware, not more
+> chemical.
+
 ## 5. Produced Water — Demulsifier Dose vs Oil-in-Water
 
 ```java

@@ -9,6 +9,61 @@
 
 ---
 
+## 2026-09-12 — New `ChemicalInjectionNozzlePerformance` for gas-phase chemical injection
+
+**New class** `neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance`.
+
+NeqSim could size the chemistry of a gas-phase chemical treatment
+(`chemistry.scavenger.H2SScavengerPerformance`) and could apply a mixing efficiency to a scavenger
+unit (`equipment.absorber.H2SScavenger.setMixingEfficiency`), but nothing computed what mixing
+efficiency an injection arrangement actually delivers. `setMixingEfficiency` was a free input. That
+made the common field question — a bare injection quill was replaced by an atomizing nozzle, is the
+chemical now in contact with the gas? — unanswerable with the library.
+
+The new class closes that gap for any liquid chemical injected into a flowing gas line: H2S
+scavenger, corrosion inhibitor, methanol or MEG sprayed into a gas stream.
+
+```java
+ChemicalInjectionNozzlePerformance nozzle = new ChemicalInjectionNozzlePerformance();
+nozzle.setInjectionDevice(ChemicalInjectionNozzlePerformance.InjectionDevice.FULL_CONE_NOZZLE);
+nozzle.setPipeInnerDiameter(0.4889);
+nozzle.setGasVolumeFlow(2.21);          // m3/s at line conditions
+nozzle.setGasDensity(11.76);            // from a flashed NeqSim stream
+nozzle.setGasViscosity(1.229e-5);
+nozzle.setChemicalVolumeFlow(235.0);    // l/h
+nozzle.setChemicalDensity(1080.0);
+nozzle.setChemicalViscosity(8.0e-3);
+nozzle.setSurfaceTension(0.040);
+nozzle.setNozzleDifferentialPressure(6.5);   // bar
+nozzle.setSprayConeAngle(90.0);
+nozzle.setInsertionDepth(0.135);        // from the pipe wall; piping specs limit this
+nozzle.evaluate();
+
+double smd = nozzle.getSauterMeanDiameterMicron();
+double area = nozzle.getInterfacialArea();            // m2/m3
+double reach = nozzle.getWallImpingementLength();     // m before the drops deposit
+double index = nozzle.getDispersionIndex();           // 0-1, feeds setMixingEfficiency
+```
+
+Correlations are all from the open literature: Lefebvre's pressure-swirl Sauter mean diameter for a
+nozzle, the critical-Weber aerodynamic breakup limit (We = 12) for a bare quill, Stokes settling
+with a Schiller-Naumann drag correction, and `a = 6 Q_L / (SMD Q_G)` for the interfacial area. The
+off-centre term is the part specific to real installations: chemical-injection piping
+specifications limit insertion length, so on a large line the nozzle cannot reach the centreline and
+the drop flight path before wall contact is correspondingly shorter.
+
+Named warnings (`gas_velocity_below_quill_limit`, `droplets_too_coarse`, `mist_carryover_risk`,
+`early_wall_impingement`, `partial_cross_section_coverage`, `off_centre_injection`) make a screening
+verdict explainable instead of a single number.
+
+**Agents and skills to update:** `production.chemistry` agent and the
+`neqsim-production-chemistry` skill should reference the class for injection-point placement and
+nozzle-versus-quill questions.
+
+**Tests:** `ChemicalInjectionNozzlePerformanceTest`, 6 tests.
+
+---
+
 ## 2026-08-24 — Component name resolution, parameterised component lookup, COMP_EXT superset fix
 
 Three related changes around how a component name reaches the component database.
