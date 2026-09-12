@@ -79,6 +79,7 @@ class TwoFluidPipeThreePhaseConvergenceReportTest {
     assertTrue(report.getLiquidSplitResidual() < report.getTolerance());
     assertTrue(report.getThermodynamicResidual() < report.getTolerance());
     assertTrue(report.getPressureDropResidual() < report.getTolerance());
+    assertTrue(report.getMassFluxResidual() < report.getMassFluxTolerance());
 
     double[] pressure = pipe.getPressureProfile();
     double[] liquidHoldup = pipe.getLiquidHoldupProfile();

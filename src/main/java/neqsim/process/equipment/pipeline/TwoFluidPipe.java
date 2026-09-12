@@ -788,6 +788,9 @@ public class TwoFluidPipe extends Pipeline {
    */
   private static final double MIN_SECTION_PRESSURE_PA = 1.0e5;
 
+  /** Relative tolerance for source-free total phase mass transport in steady state. */
+  private static final double SS_MASS_FLUX_TOLERANCE = 1.0e-8;
+
   /** Set when the converged steady-state profile rests on {@link #MIN_SECTION_PRESSURE_PA}. */
   private boolean ssPressureFloorLimited = false;
 
@@ -810,7 +813,7 @@ public class TwoFluidPipe extends Pipeline {
   private SteadyStateConvergenceReport steadyStateConvergenceReport = new SteadyStateConvergenceReport(
       SteadyStateConvergenceReport.TerminationReason.NOT_RUN, 0, 1.0e-4, Double.POSITIVE_INFINITY,
       Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-      Double.POSITIVE_INFINITY);
+      Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, SS_MASS_FLUX_TOLERANCE);
 
   /** Current step count. */
   private int currentStep = 0;
@@ -1364,7 +1367,7 @@ public class TwoFluidPipe extends Pipeline {
     steadyStateConvergenceReport = new SteadyStateConvergenceReport(
         SteadyStateConvergenceReport.TerminationReason.NOT_RUN, 0, tolerance, Double.POSITIVE_INFINITY,
         Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
-        Double.POSITIVE_INFINITY);
+        Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, SS_MASS_FLUX_TOLERANCE);
     transientOutletBackflowClamped = false;
     equations.clearOutletBackflowClamped();
 
@@ -1415,8 +1418,8 @@ public class TwoFluidPipe extends Pipeline {
       double[] h0 = calculateLocalHoldup(inletSec, null, mDotGas, mDotLiq, area);
       inletSec.setLiquidHoldup(h0[0]);
       inletSec.setGasHoldup(h0[1]);
-      inletSec.setGasVelocity(calculateFinitePhaseVelocity(mDotGas, h0[1], inletSec.getGasDensity(), area, 100.0));
-      inletSec.setLiquidVelocity(calculateFinitePhaseVelocity(mDotLiq, h0[0], inletSec.getLiquidDensity(), area, 50.0));
+      inletSec.setGasVelocity(calculateSteadyPhaseVelocity(mDotGas, h0[1], inletSec.getGasDensity(), area));
+      inletSec.setLiquidVelocity(calculateSteadyPhaseVelocity(mDotLiq, h0[0], inletSec.getLiquidDensity(), area));
       if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && h0[0] > 0.0) {
         updateLiquidPhaseSplit(inletSec, null, h0[0], area);
       }
@@ -1436,8 +1439,8 @@ public class TwoFluidPipe extends Pipeline {
         double[] hi = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
         sec.setLiquidHoldup(hi[0]);
         sec.setGasHoldup(hi[1]);
-        sec.setGasVelocity(calculateFinitePhaseVelocity(mDotGas, hi[1], sec.getGasDensity(), area, 100.0));
-        sec.setLiquidVelocity(calculateFinitePhaseVelocity(mDotLiq, hi[0], sec.getLiquidDensity(), area, 50.0));
+        sec.setGasVelocity(calculateSteadyPhaseVelocity(mDotGas, hi[1], sec.getGasDensity(), area));
+        sec.setLiquidVelocity(calculateSteadyPhaseVelocity(mDotLiq, hi[0], sec.getLiquidDensity(), area));
 
         // Water/oil holdups for three-phase
         if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && hi[0] > 0.0) {
@@ -1465,6 +1468,7 @@ public class TwoFluidPipe extends Pipeline {
     double liquidSplitResidual = Double.POSITIVE_INFINITY;
     double thermodynamicResidual = Double.POSITIVE_INFINITY;
     double pressureDropResidual = Double.POSITIVE_INFINITY;
+    double massFluxResidual = Double.POSITIVE_INFINITY;
     for (int iter = 0; iter < maxIter; iter++) {
       ssIterationsUsed = iter + 1;
       // Wall-clock time guard
@@ -1507,10 +1511,9 @@ public class TwoFluidPipe extends Pipeline {
         liquidHoldupResidual = Math.max(liquidHoldupResidual, Math.abs(alphaL_inlet - inletLiquidHoldupBefore));
 
         // Update inlet velocities
-        inletSec.setGasVelocity(
-            calculateFinitePhaseVelocity(localMDotG, alphaG_inlet, inletSec.getGasDensity(), area, 100.0));
+        inletSec.setGasVelocity(calculateSteadyPhaseVelocity(localMDotG, alphaG_inlet, inletSec.getGasDensity(), area));
         inletSec.setLiquidVelocity(
-            calculateFinitePhaseVelocity(localMDotL, alphaL_inlet, inletSec.getLiquidDensity(), area, 50.0));
+            calculateSteadyPhaseVelocity(localMDotL, alphaL_inlet, inletSec.getLiquidDensity(), area));
 
         // Update water/oil holdups for inlet if three-phase
         if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0 && alphaL_inlet > 0.0) {
@@ -1560,8 +1563,8 @@ public class TwoFluidPipe extends Pipeline {
         sec.setGasHoldup(alphaG_new);
 
         // Update velocities based on new holdups
-        sec.setGasVelocity(calculateFinitePhaseVelocity(localMDotG, alphaG_new, sec.getGasDensity(), area, 100.0));
-        sec.setLiquidVelocity(calculateFinitePhaseVelocity(localMDotL, alphaL_new, sec.getLiquidDensity(), area, 50.0));
+        sec.setGasVelocity(calculateSteadyPhaseVelocity(localMDotG, alphaG_new, sec.getGasDensity(), area));
+        sec.setLiquidVelocity(calculateSteadyPhaseVelocity(localMDotL, alphaL_new, sec.getLiquidDensity(), area));
 
         // Update water and oil holdups for three-phase flow
         // Check if this is a three-phase system (both oil and water densities set)
@@ -1723,8 +1726,10 @@ public class TwoFluidPipe extends Pipeline {
         liquidHoldupResidual = Math.max(liquidHoldupResidual, finalConsistencyResiduals[1]);
         liquidSplitResidual = Math.max(liquidSplitResidual, finalConsistencyResiduals[2]);
         pressureMomentumResidual = calculateSteadyPressureMomentumResidual();
+        massFluxResidual = calculateSteadyMassFluxResidual(massFlow);
         boolean finalConsistencySettled = thermodynamicResidual < tolerance && liquidHoldupResidual < tolerance
-            && liquidSplitResidual < tolerance && pressureMomentumResidual < tolerance;
+            && liquidSplitResidual < tolerance && pressureMomentumResidual < tolerance
+            && massFluxResidual < SS_MASS_FLUX_TOLERANCE;
         if (finalConsistencySettled) {
           ssConverged = true;
           logger.info("Steady-state converged after {} iterations ({}ms wall-clock)", ssIterationsUsed,
@@ -1756,20 +1761,6 @@ public class TwoFluidPipe extends Pipeline {
       pressureMomentumResidual = calculateSteadyPressureMomentumResidual();
     }
 
-    SteadyStateConvergenceReport.TerminationReason terminationReason;
-    if (ssConverged) {
-      terminationReason = SteadyStateConvergenceReport.TerminationReason.CONVERGED;
-    } else if (ssPressureFloorLimited) {
-      terminationReason = SteadyStateConvergenceReport.TerminationReason.PRESSURE_FLOOR_LIMIT;
-    } else if (ssWallClockLimited) {
-      terminationReason = SteadyStateConvergenceReport.TerminationReason.WALL_CLOCK_LIMIT;
-    } else {
-      terminationReason = SteadyStateConvergenceReport.TerminationReason.ITERATION_LIMIT;
-    }
-    steadyStateConvergenceReport = new SteadyStateConvergenceReport(terminationReason, ssIterationsUsed, tolerance,
-        pressureMomentumResidual, pressureUpdateResidual, liquidHoldupResidual, liquidSplitResidual,
-        thermodynamicResidual, pressureDropResidual);
-
     // Final accumulation zone identification after convergence
     if (enableTerrainTracking && accumulationTracker != null) {
       accumulationTracker.identifyAccumulationZones(sections);
@@ -1797,6 +1788,24 @@ public class TwoFluidPipe extends Pipeline {
         sec.setLiquidMomentumPerLength(oilMomentum + waterMomentum);
       }
     }
+
+    // Check the exact final state exposed by the phase-flux profiles, including the conservative rebuild.
+    massFluxResidual = calculateSteadyMassFluxResidual(massFlow);
+    ssConverged &= massFluxResidual < SS_MASS_FLUX_TOLERANCE;
+
+    SteadyStateConvergenceReport.TerminationReason terminationReason;
+    if (ssConverged) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.CONVERGED;
+    } else if (ssPressureFloorLimited) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.PRESSURE_FLOOR_LIMIT;
+    } else if (ssWallClockLimited) {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.WALL_CLOCK_LIMIT;
+    } else {
+      terminationReason = SteadyStateConvergenceReport.TerminationReason.ITERATION_LIMIT;
+    }
+    steadyStateConvergenceReport = new SteadyStateConvergenceReport(terminationReason, ssIterationsUsed, tolerance,
+        pressureMomentumResidual, pressureUpdateResidual, liquidHoldupResidual, liquidSplitResidual,
+        thermodynamicResidual, pressureDropResidual, massFluxResidual, SS_MASS_FLUX_TOLERANCE);
 
     // Store initial profiles
     updateResultArrays();
@@ -1830,9 +1839,8 @@ public class TwoFluidPipe extends Pipeline {
       double[] holdups = calculateLocalHoldup(sec, prev, localMDotGas[i], localMDotLiq[i], area);
       sec.setLiquidHoldup(holdups[0]);
       sec.setGasHoldup(holdups[1]);
-      sec.setGasVelocity(calculateFinitePhaseVelocity(localMDotGas[i], holdups[1], sec.getGasDensity(), area, 100.0));
-      sec.setLiquidVelocity(
-          calculateFinitePhaseVelocity(localMDotLiq[i], holdups[0], sec.getLiquidDensity(), area, 50.0));
+      sec.setGasVelocity(calculateSteadyPhaseVelocity(localMDotGas[i], holdups[1], sec.getGasDensity(), area));
+      sec.setLiquidVelocity(calculateSteadyPhaseVelocity(localMDotLiq[i], holdups[0], sec.getLiquidDensity(), area));
       if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && holdups[0] > 0.0) {
         updateLiquidPhaseSplit(sec, prev, holdups[0], area);
       }
@@ -1842,6 +1850,31 @@ public class TwoFluidPipe extends Pipeline {
       liquidSplitResidual = Math.max(liquidSplitResidual, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
     }
     return new double[] { thermodynamicResidual, liquidHoldupResidual, liquidSplitResidual };
+  }
+
+  /**
+   * Check the source-free total mass flux reconstructed from the published section primitives.
+   *
+   * @param inletMassFlow prescribed inlet mass flow in kg/s
+   * @return maximum relative section mass-flux error, or positive infinity for a nonfinite flux
+   */
+  private double calculateSteadyMassFluxResidual(double inletMassFlow) {
+    if (!Double.isFinite(inletMassFlow) || sections == null || sections.length == 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double[] gas = getGasMassFlowProfile();
+    double[] oil = getOilMassFlowProfile();
+    double[] water = getWaterMassFlowProfile();
+    double normalization = Math.max(Math.abs(inletMassFlow), 1.0e-12);
+    double residual = 0.0;
+    for (int i = 0; i < gas.length; i++) {
+      double totalFlow = gas[i] + oil[i] + water[i];
+      if (!Double.isFinite(totalFlow)) {
+        return Double.POSITIVE_INFINITY;
+      }
+      residual = Math.max(residual, Math.abs(totalFlow - inletMassFlow) / normalization);
+    }
+    return residual;
   }
 
   /** Snapshot the properties that close the steady hydraulic equations. */
@@ -2760,6 +2793,21 @@ public class TwoFluidPipe extends Pipeline {
       double Nu = 0.023 * Math.pow(Re, 0.8) * Math.pow(Pr, 0.3);
       return Nu * k / diameter;
     }
+  }
+
+  /**
+   * Recover steady velocity from continuity without clipping the transported phase mass flux.
+   *
+   * @param massFlow phase mass flow rate in kg/s
+   * @param holdup phase holdup
+   * @param density phase density in kg/m3
+   * @param area pipe cross-sectional area in m2
+   * @return finite phase velocity in m/s, or zero if the state cannot carry the prescribed flow
+   */
+  private double calculateSteadyPhaseVelocity(double massFlow, double holdup, double density, double area) {
+    // Legacy transient boundary guards must not remove mass from a steady, source-free pipe.
+    // Invalid states still return zero and are rejected by the steady mass-flux diagnostic.
+    return calculateFinitePhaseVelocity(massFlow, holdup, density, area, Double.POSITIVE_INFINITY);
   }
 
   /**
