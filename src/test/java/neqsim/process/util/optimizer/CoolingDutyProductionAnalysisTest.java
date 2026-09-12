@@ -1,5 +1,6 @@
 package neqsim.process.util.optimizer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -928,6 +929,14 @@ public class CoolingDutyProductionAnalysisTest {
    * Builds process with compressor 2 using the SAME curve as compressor 1.
    */
   private ProcessSystem buildProcessWithIdenticalCompressors(double coolingDeltaT) {
+    return buildProcessWithIdenticalCompressors(coolingDeltaT, false);
+  }
+
+  /**
+   * Builds the synthetic design once; fixed hardware keeps the cooler separator at zero cooling and uses a constant
+   * pressure loss and temperature difference instead of outlet values frozen at the construction flow.
+   */
+  private ProcessSystem buildProcessWithIdenticalCompressors(double coolingDeltaT, boolean fixedHardware) {
     SystemInterface testSystem = createTestFluid();
     ProcessSystem processSystem = new ProcessSystem();
 
@@ -967,12 +976,19 @@ public class CoolingDutyProductionAnalysisTest {
 
     StreamInterface feedToSplitter2;
 
-    if (coolingDeltaT > 0) {
+    if (coolingDeltaT > 0 || fixedHardware) {
       Heater gasCooler = new Heater("Gas Cooler", finalSeparator.getGasOutStream());
       double inletTemp = finalSeparator.getGasOutStream().getTemperature("C");
       gasCooler.setOutTemperature(inletTemp - coolingDeltaT, "C");
       double inletPressure = finalSeparator.getGasOutStream().getPressure("bara");
-      gasCooler.setOutPressure(inletPressure - 0.5, "bara");
+      if (fixedHardware) {
+        // Select Kelvin before the relative-temperature specification, which uses the configured temperature unit.
+        gasCooler.setOutletTemperature(finalSeparator.getGasOutStream().getTemperature());
+        gasCooler.setdT(-coolingDeltaT);
+        gasCooler.setPressureDrop(0.5);
+      } else {
+        gasCooler.setOutPressure(inletPressure - 0.5, "bara");
+      }
       gasCooler.run();
       processSystem.add(gasCooler);
 
@@ -2589,22 +2605,21 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * 2026 Scenario: Cooling Effect Analysis with 3 Compressors. Compressors 1 and 2 have identical bundles (same
-   * compressor curve), and compressor 3 is in operation with its own curve. All compressors use smooth VFD motor power
-   * curves to avoid oscillation.
-   *
-   * Configuration: - ups1 and ups2: example_compressor_curve.json, 44.4 MW max at 7383 RPM - ups3:
-   * compressor_curve_ups3.json, 50 MW max at 6726 RPM - Cooler pressure drop: 0.5 bar
+   * 2026 synthetic cooling-effect regression with three compressors and smooth VFD driver curves. Compressor maps and
+   * separator ratings are generated once at the uncooled design point, then held fixed for the complete sweep. These
+   * generated maps are not vendor JSON curves or identical bundles: each uses its own design flow. The installed cooler
+   * and knockout remain present at zero cooling, with a constant 0.5 bar pressure loss. Production comparisons use only
+   * feasible, replayed optima on this unchanged hardware.
    */
   @Test
   public void test2026ScenarioCoolingAnalysisThreeCompressors() {
     logger.info("\n" + StringUtils.repeat("=", 110));
-    logger.info("2026 SCENARIO: COOLING EFFECT ANALYSIS - 3 COMPRESSORS (UPS1=UPS2 BUNDLE, UPS3 IN OPERATION)");
+    logger.info("2026 SCENARIO: COOLING EFFECT ANALYSIS - 3 COMPRESSORS WITH FIXED SYNTHETIC MAPS");
     logger.info(StringUtils.repeat("=", 110));
     logger.info("Configuration:");
-    System.out.println("  - Compressor 1 (ups1): example_compressor_curve.json, 44.4 MW max @ 7383 RPM");
-    logger.info("  - Compressor 2 (ups2): SAME curve as ups1 (identical bundle)");
-    logger.info("  - Compressor 3 (ups3): compressor_curve_ups3.json, 50 MW max @ 6726 RPM");
+    logger.info("  - Compressor 1 (ups1): synthetic generated map, 44.4 MW VFD driver");
+    logger.info("  - Compressor 2 (ups2): same map template, scaled to its design flow, 44.4 MW VFD driver");
+    logger.info("  - Compressor 3 (ups3): synthetic generated map, 50 MW VFD driver");
     logger.info("  - All compressors use SMOOTH VFD motor power curves");
     logger.info("  - Cooler pressure drop: 0.5 bar");
     logger.info("  - Cooling water: 10Â°C inlet, 20Â°C outlet (Î”T = 10Â°C)");
@@ -2622,8 +2637,11 @@ public class CoolingDutyProductionAnalysisTest {
     // Store results for table output
     List<double[]> results = new ArrayList<>();
 
-    // Get baseline (no cooling) first
-    ProcessSystem baselineProcess = buildProcessWithIdenticalCompressors(0.0);
+    // Size the liquid knockout and generate maps once at the uncooled design point. Then vary only cooling
+    // and feed rate on that installed plant; rebuilding at each temperature would redesign the compressor maps.
+    ProcessSystem baselineProcess = buildProcessWithIdenticalCompressors(0.0, true);
+    Heater installedCooler = (Heater) baselineProcess.getUnit("Gas Cooler");
+    installedCooler.setdT(0.0);
     Stream baselineInletStream = (Stream) baselineProcess.getUnit("Inlet Stream");
     double originalFlow = baselineInletStream.getFlowRate("kg/hr");
 
@@ -2638,6 +2656,7 @@ public class CoolingDutyProductionAnalysisTest {
     OptimizationResult baselineResult = baselineOptimizer.optimize(baselineProcess, baselineInletStream, baselineConfig,
         Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
 
+    assertTrue(baselineResult.isFeasible(), baselineResult.getInfeasibilityDiagnosis());
     double baselineFlow = baselineResult.getOptimalRate();
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
     String baselineBottleneck = baselineResult.getBottleneck() != null ? baselineResult.getBottleneck().getName()
@@ -2648,8 +2667,10 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Sweep cooling from 0 to 15Â°C
     for (double coolingDeltaT = 0.0; coolingDeltaT <= 15.5; coolingDeltaT += 1.0) {
-      ProcessSystem process = buildProcessWithIdenticalCompressors(coolingDeltaT);
-      Stream inletStream = (Stream) process.getUnit("Inlet Stream");
+      ProcessSystem process = baselineProcess;
+      Stream inletStream = baselineInletStream;
+      inletStream.setFlowRate(originalFlow, "kg/hr");
+      installedCooler.setdT(-coolingDeltaT);
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
       OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
@@ -2662,9 +2683,22 @@ public class CoolingDutyProductionAnalysisTest {
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
           Collections.singletonList(throughputObjective), Collections.emptyList());
 
+      assertTrue(result.isFeasible(), "Cooling " + coolingDeltaT + ": " + result.getInfeasibilityDiagnosis());
+
       // Calculate cooling duty from cooler
       Heater cooler = (Heater) process.getUnit("Gas Cooler");
-      double coolingDutyKW = cooler != null ? -cooler.getDuty() / 1000.0 : 0.0;
+      assertEquals(coolingDeltaT, cooler.getInletStream().getTemperature() - cooler.getOutletStream().getTemperature(),
+          1.0e-8, "The requested temperature difference must survive every optimizer replay");
+      assertEquals(0.5, cooler.getInletStream().getPressure() - cooler.getOutletStream().getPressure(), 1.0e-8,
+          "The installed cooler pressure loss must remain constant");
+      assertEquals(result.getOptimalRate(), inletStream.getFlowRate("kg/hr"), originalFlow * 1.0e-8,
+          "The live plant must represent the verified optimum");
+      double coolingDutyKW = -cooler.getDuty() / 1000.0;
+      assertTrue(Double.isFinite(coolingDutyKW), "Duty must be finite");
+      // Holding temperature across a pressure loss can require heat input in the zero-cooling case.
+      if (coolingDeltaT > 0.0) {
+        assertTrue(coolingDutyKW > 0.0, "A cooled case must remove heat");
+      }
       double coolingDutyMW = coolingDutyKW / 1000.0;
 
       // Calculate cooling water requirement
@@ -2694,7 +2728,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Print detailed results table
     logger.info("\n" + StringUtils.repeat("=", 140));
-    logger.info("2026 SCENARIO DETAILED RESULTS TABLE - 3 COMPRESSORS (UPS1=UPS2, UPS3 OPERATING)");
+    logger.info("2026 SCENARIO DETAILED RESULTS TABLE - 3 COMPRESSORS WITH FIXED SYNTHETIC MAPS");
     logger.info(StringUtils.repeat("=", 140));
     logger.info(String.format("%-12s %-18s %-18s %-16s %-18s %-14s %-18s", "Cooling(Â°C)", "Production(MSmÂ³/d)",
         "Production(kg/hr)", "Duty(MW)", "CoolingWater(mÂ³/hr)", "Increase(%)", "Increase(MSmÂ³/d)"));
@@ -2714,7 +2748,7 @@ public class CoolingDutyProductionAnalysisTest {
     double maxIncreaseMSm3 = results.get(results.size() - 1)[5];
 
     logger.info(StringUtils.repeat("-", 140));
-    System.out.println("\n2026 SCENARIO SUMMARY (3 Compressors - ups1=ups2 bundle, ups3 operating):");
+    logger.info("\n2026 SCENARIO SUMMARY (3 Compressors with fixed synthetic maps):");
     logger.info(String.format("  Baseline production (no cooling): %.2f MSmÂ³/day", baselineMSm3Day));
     logger.info(String.format("  Maximum production (%.0fÂ°C cooling): %.2f MSmÂ³/day", maxCooling, maxFlow));
     logger.info(String.format("  Total production increase: %.3f MSmÂ³/day (+%.2f%%)", maxIncreaseMSm3, maxIncrease));

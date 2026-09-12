@@ -1121,6 +1121,16 @@ for (ScenarioResult sr : results) {
 
 ### Scenario Comparison
 
+For an operating-condition comparison, keep installed compressor maps, separator ratings, and
+flowsheet topology fixed across cases. Generate synthetic maps once at a declared design point;
+regenerating them from each cooled operating point compares redesigned equipment. Keep the cooler
+and liquid knockout present in the zero-cooling case when they belong to the installed plant, and
+apply the specified temperature difference and pressure loss at every candidate flow. Check
+`OptimizationResult.isFeasible()` before interpreting a reported rate as achievable production.
+Cooling does not guarantee a production gain when another installed constraint remains limiting.
+The fixed-equipment sweep is exercised by
+`CoolingDutyProductionAnalysisTest.test2026ScenarioCoolingAnalysisThreeCompressors`.
+
 ```java
 import java.util.Arrays;
 import java.util.List;
