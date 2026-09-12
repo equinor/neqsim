@@ -389,7 +389,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
-    outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
@@ -425,6 +424,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       innerDiameter = Daim;
       tantanLength = Length2;
     }
+    updateWallThicknessForSizedDiameter();
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
@@ -493,6 +493,18 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Updates pressure-wall thickness and outside diameter after the final sizing decision, before calculating shell,
+   * internals and module weights. Without a pressure-vessel standard, retains the specified wall thickness.
+   */
+  protected void updateWallThicknessForSizedDiameter() {
+    if (getDesignStandard().containsKey("pressure vessel design code")) {
+      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+          .calcWallThickness(innerDiameter);
+    }
+    outerDiameter = innerDiameter + 2.0 * wallThickness;
+  }
+
+  /**
    * Performs the sizing calculations without reading design specifications. This method is called by autoSize() after
    * design specs have been read and any user overrides have been applied.
    */
@@ -531,7 +543,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // Calculate diameter based on the orientation-specific gas area.
     innerDiameter = Math.sqrt(4.0 * (maxDesignVolumeFlow / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
-    outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
@@ -554,6 +565,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (separatorTotalLength / innerDiameter > 6 || separatorTotalLength / innerDiameter < 3) {
       tantanLength = innerDiameter * 4.0; // Default to L/D = 5
     }
+
+    updateWallThicknessForSizedDiameter();
 
     // Weight calculations
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
@@ -579,6 +592,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     setWeigthVesselShell(emptyVesselWeight);
     setInnerDiameter(innerDiameter);
+    setWeigthInternals(internalsWeight);
     setOuterDiameter(outerDiameter);
     setWeightElectroInstrument(electricalWeight);
     setWeightNozzle(externalNozzelsWeight);
