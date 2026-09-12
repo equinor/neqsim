@@ -7,9 +7,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Immutable pseudo-component recovery summary for a solved DOE Big Hill vacuum screening case.
  *
  * <p>
- * Recoveries are calculated on a molar basis from the existing qualified feed, overhead, and
- * bottoms streams. This class is numerical partition bookkeeping for the synthetic screening case;
- * it is not measured cut-recovery or ASTM distillation evidence.
+ * Recoveries are calculated on a molar basis from the existing qualified feed, overhead, and bottoms streams. This
+ * class is numerical partition bookkeeping for the synthetic screening case; it is not measured cut-recovery or ASTM
+ * distillation evidence.
  * </p>
  */
 public final class DoeBigHillVacuumComponentRecovery {
@@ -21,9 +21,8 @@ public final class DoeBigHillVacuumComponentRecovery {
   private final ProductRecovery[] products;
   private final double maximumComponentRecoveryClosureError;
 
-  private DoeBigHillVacuumComponentRecovery(String[] componentNames,
-      double[] feedComponentMolarFlowsMolPerHour, ProductRecovery[] products,
-      double maximumComponentRecoveryClosureError) {
+  private DoeBigHillVacuumComponentRecovery(String[] componentNames, double[] feedComponentMolarFlowsMolPerHour,
+      ProductRecovery[] products, double maximumComponentRecoveryClosureError) {
     this.componentNames = componentNames.clone();
     this.feedComponentMolarFlowsMolPerHour = feedComponentMolarFlowsMolPerHour.clone();
     this.products = products.clone();
@@ -36,14 +35,11 @@ public final class DoeBigHillVacuumComponentRecovery {
    * @param model solved screening case
    * @return immutable component-recovery summary
    * @throws NullPointerException if {@code model} is {@code null}
-   * @throws IllegalStateException if the existing fractionation-result gates or component-recovery
-   *         closure fail
+   * @throws IllegalStateException if the existing fractionation-result gates or component-recovery closure fail
    */
-  public static DoeBigHillVacuumComponentRecovery evaluate(
-      DoeBigHillVacuumFractionationCase model) {
+  public static DoeBigHillVacuumComponentRecovery evaluate(DoeBigHillVacuumFractionationCase model) {
     Objects.requireNonNull(model, "model");
-    DoeBigHillVacuumFractionationResult fractionationResult =
-        DoeBigHillVacuumFractionationResult.evaluate(model);
+    DoeBigHillVacuumFractionationResult fractionationResult = DoeBigHillVacuumFractionationResult.evaluate(model);
 
     StreamInterface feed = model.getFeedStream();
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
@@ -51,17 +47,13 @@ public final class DoeBigHillVacuumComponentRecovery {
     String[] names = new String[feedComposition.length];
     double[] feedComponentFlows = new double[feedComposition.length];
     for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
-      names[componentIndex] =
-          feed.getThermoSystem().getComponent(componentIndex).getComponentName();
+      names[componentIndex] = feed.getThermoSystem().getComponent(componentIndex).getComponentName();
       feedComponentFlows[componentIndex] = feedMolarFlow * feedComposition[componentIndex];
-      requireFinitePositive(feedComponentFlows[componentIndex],
-          "Feed component molar flow");
+      requireFinitePositive(feedComponentFlows[componentIndex], "Feed component molar flow");
     }
 
-    StreamInterface[] productStreams = {
-        model.getColumn().getGasOutStream(), model.getColumn().getLiquidOutStream() };
-    DoeBigHillVacuumFractionationResult.ProductResult[] qualifiedProducts =
-        fractionationResult.getProducts();
+    StreamInterface[] productStreams = { model.getColumn().getGasOutStream(), model.getColumn().getLiquidOutStream() };
+    DoeBigHillVacuumFractionationResult.ProductResult[] qualifiedProducts = fractionationResult.getProducts();
     ProductRecovery[] recoveries = new ProductRecovery[productStreams.length];
     double[] recoverySums = new double[feedComposition.length];
     for (int productIndex = 0; productIndex < productStreams.length; productIndex++) {
@@ -75,18 +67,13 @@ public final class DoeBigHillVacuumComponentRecovery {
       requireFinitePositive(productMolarFlow, "Product molar flow");
       double[] componentFlows = new double[feedComposition.length];
       double[] componentRecoveries = new double[feedComposition.length];
-      for (int componentIndex = 0; componentIndex < feedComposition.length;
-          componentIndex++) {
+      for (int componentIndex = 0; componentIndex < feedComposition.length; componentIndex++) {
         componentFlows[componentIndex] = productMolarFlow * productComposition[componentIndex];
-        requireFiniteNonNegative(componentFlows[componentIndex],
-            "Product component molar flow");
-        componentRecoveries[componentIndex] =
-            componentFlows[componentIndex] / feedComponentFlows[componentIndex];
-        requireFiniteNonNegative(componentRecoveries[componentIndex],
-            "Product component recovery");
+        requireFiniteNonNegative(componentFlows[componentIndex], "Product component molar flow");
+        componentRecoveries[componentIndex] = componentFlows[componentIndex] / feedComponentFlows[componentIndex];
+        requireFiniteNonNegative(componentRecoveries[componentIndex], "Product component recovery");
         if (componentRecoveries[componentIndex] > 1.0 + RECOVERY_CLOSURE_TOLERANCE) {
-          throw new IllegalStateException(
-              "Product component recovery exceeds the qualified screening bound");
+          throw new IllegalStateException("Product component recovery exceeds the qualified screening bound");
         }
         recoverySums[componentIndex] += componentRecoveries[componentIndex];
       }
@@ -95,22 +82,20 @@ public final class DoeBigHillVacuumComponentRecovery {
       if (!PRODUCT_LABELS[productIndex].equals(productLabel)) {
         throw new IllegalStateException("Qualified product order is inconsistent");
       }
-      recoveries[productIndex] = new ProductRecovery(productLabel, names, productMolarFlow,
-          componentFlows, componentRecoveries);
+      recoveries[productIndex] = new ProductRecovery(productLabel, names, productMolarFlow, componentFlows,
+          componentRecoveries);
     }
 
     double maximumClosureError = 0.0;
     for (double recoverySum : recoverySums) {
       double closureError = Math.abs(1.0 - recoverySum);
       if (!Double.isFinite(closureError) || closureError > RECOVERY_CLOSURE_TOLERANCE) {
-        throw new IllegalStateException(
-            "Component recovery closure exceeds the qualified tolerance");
+        throw new IllegalStateException("Component recovery closure exceeds the qualified tolerance");
       }
       maximumClosureError = Math.max(maximumClosureError, closureError);
     }
 
-    return new DoeBigHillVacuumComponentRecovery(names, feedComponentFlows, recoveries,
-        maximumClosureError);
+    return new DoeBigHillVacuumComponentRecovery(names, feedComponentFlows, recoveries, maximumClosureError);
   }
 
   /** @return defensive copy of feed component names in thermodynamic-system order */
@@ -143,8 +128,7 @@ public final class DoeBigHillVacuumComponentRecovery {
         }
       }
     }
-    throw new IllegalArgumentException(
-        "Unsupported Big Hill vacuum product label: " + productLabel);
+    throw new IllegalArgumentException("Unsupported Big Hill vacuum product label: " + productLabel);
   }
 
   /** @return largest absolute deviation of summed product recovery from unity */
@@ -172,9 +156,8 @@ public final class DoeBigHillVacuumComponentRecovery {
     private final double[] componentMolarFlowsMolPerHour;
     private final double[] componentMolarRecoveries;
 
-    private ProductRecovery(String productLabel, String[] componentNames,
-        double productMolarFlowMolPerHour, double[] componentMolarFlowsMolPerHour,
-        double[] componentMolarRecoveries) {
+    private ProductRecovery(String productLabel, String[] componentNames, double productMolarFlowMolPerHour,
+        double[] componentMolarFlowsMolPerHour, double[] componentMolarRecoveries) {
       this.productLabel = productLabel;
       this.componentNames = componentNames.clone();
       this.productMolarFlowMolPerHour = productMolarFlowMolPerHour;
@@ -230,8 +213,7 @@ public final class DoeBigHillVacuumComponentRecovery {
           }
         }
       }
-      throw new IllegalArgumentException(
-          "Unsupported Big Hill vacuum component name: " + componentName);
+      throw new IllegalArgumentException("Unsupported Big Hill vacuum component name: " + componentName);
     }
   }
 }
