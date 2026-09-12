@@ -435,3 +435,62 @@ All DOE assay provenance and the three-cut 650 degF+ normalization remain unchan
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, optimization, product specifications, hydraulic capacity, or
 plant-agreement evidence.
+
+
+## Combined operating-scenario screening
+
+`DoeBigHillVacuumScenarioScreen.run(...)` independently rebuilds, solves, and evaluates complete
+caller-defined operating scenarios. This is the integration step after the qualified one-factor
+pressure, reflux, feed-temperature, reboiler-temperature, and feed-mass-flow screens. Scenario order
+is preserved; names must be unique, and every scenario supplies its own validated operating inputs
+and positive feed mass flow.
+
+The documented low/base/high scenarios combine only the narrow ranges already exercised by those
+one-factor screens:
+
+```java
+DoeBigHillVacuumScenarioScreen.Scenario[] scenarios = {
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "low",
+        980.0,
+        new OperatingInputs(12, 4, 638.0, 0.1176, 0.0784, 0.1568, 698.0, 0.49)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "base",
+        1000.0,
+        new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.50)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "high",
+        1020.0,
+        new OperatingInputs(12, 4, 642.0, 0.1224, 0.0816, 0.1632, 702.0, 0.51))
+};
+
+DoeBigHillVacuumScenarioScreen screen =
+    DoeBigHillVacuumScenarioScreen.run("Big Hill vacuum combined screen", scenarios);
+
+for (DoeBigHillVacuumScenarioScreen.PointResult point : screen.getPoints()) {
+  String scenarioName = point.getScenario().getName();
+  double feedMassFlowKgPerHour = point.getScenario().getFeedMassFlowKgPerHour();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+All three absolute pressures move together by factors 0.98, 1.00, and 1.02 relative to the base
+0.12/0.08/0.16 bara values. The feed and reboiler temperatures, condenser reflux ratio, and feed mass
+flow simultaneously use the low/base/high values shown above. Tray topology and feed composition
+remain fixed.
+
+Every scenario must pass the qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The result returns defensive scenario-point arrays,
+the exact immutable scenario definitions and fractionation results, overhead-yield bounds, and the
+worst external mass closure, component closure, column energy error, and final MESH residual. Any
+failed scenario aborts the complete screen.
+
+These three discrete calculations are numerical robustness and interaction-screening evidence only.
+They do not define a continuous or measured operating envelope, response surface, interaction
+correlation, probability distribution, or optimization model. No monotonic trend is required. The
+screen does not establish hydraulic capacity, flooding, weeping, entrainment, pressure drop,
+scale-up, turndown, heat duty, utilities, equipment sizing, calibrated product yield, ASTM D1160 or
+TBP pressure correction, product-specification compliance, or plant agreement. All DOE assay
+provenance, three-cut 650 degF+ normalization, pseudo-component properties, and source-unreported
+engineering-input limitations remain unchanged.
