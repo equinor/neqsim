@@ -77,7 +77,7 @@ The current `PVTRegression` methods accept the following quantities:
 
 | Method | Required quantities |
 | --- | --- |
-| `addCCEData` | pressure in bar, relative volume as (V/V_{sat}), optional Y-factor, temperature in K |
+| `addCCEData` | pressure in bar, relative volume as $V/V_{sat}$, optional Y-factor, temperature in K |
 | `addCVDData` | pressure in bar, liquid dropout in volume %, gas compressibility factor, temperature in K |
 | `addDLEData` | pressure in bar, solution GOR in Sm³/Sm³, oil FVF in m³/Sm³, oil density in kg/m³, temperature in K |
 | `addSeparatorData` | GOR in Sm³/Sm³, oil FVF, API gravity, separator pressure in bar, separator temperature in K, reservoir temperature in K |
