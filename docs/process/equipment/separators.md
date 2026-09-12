@@ -483,6 +483,32 @@ double effectiveGasLength = design.getEffectiveLengthGas();
 double effectiveLiquidLength = design.getEffectiveLengthLiquid();
 ```
 
+### Outlet Nozzle Sizing
+
+After running the separator, `calcDesign()` calculates outlet nozzle IDs. The
+individual `calcGasOutletNozzleID()` and `calcOilOutletNozzleID()` methods also
+recalculate and store their results. Sizing uses actual phase flow in **m3/s**
+at operating conditions: minimum area is flow divided by the velocity limit,
+and minimum ID is the square root of four times that area divided by pi.
+
+| Method | Flow basis | Velocity limit | Upward ID rounding | Absent phase / zero flow |
+| --- | --- | --- | --- | --- |
+| `calcGasOutletNozzleID()` | Named gas phase | 20 m/s | 50 mm increments | 0 m |
+| `calcOilOutletNozzleID()` on `Separator` | Oil + aqueous phases in the common liquid outlet | 1.5 m/s | 25 mm increments, minimum 50 mm | 0.05 m |
+| `calcOilOutletNozzleID()` on `ThreePhaseSeparator` | Named oil phase only | 1.5 m/s | 25 mm increments, minimum 50 mm | 0.05 m |
+
+Phase selection does not depend on phase indices. No additional division by
+3,600 is applied to flow already expressed per second. For example, a gas flow
+of 3,580.35 actual m3/h requires approximately 0.2516 m ID at 20 m/s, rounded
+up to 0.30 m. These are preliminary velocity-based dimensions with simple
+rounding increments, not a pipe schedule or a certified nozzle design.
+
+The calculation return values and `getGasOutletNozzleID()` /
+`getOilOutletNozzleID()` use **metres**. The corresponding `toJson()` fields
+`gasOutletNozzleDiameter` and `liquidOutletNozzleDiameter` use **millimetres**.
+Recalculation at zero flow resets the stored values and subsequent JSON exports.
+Water outlet sizing for `ThreePhaseSeparator` is separate from these methods.
+
 ### Pre-Designed Separator Setup
 
 Pre-designed geometry is configured on `SeparatorMechanicalDesign`. Set the process-equipment geometry as well when runtime or dynamic vessel holdup uses the imported dimensions. All values below are in meters.
