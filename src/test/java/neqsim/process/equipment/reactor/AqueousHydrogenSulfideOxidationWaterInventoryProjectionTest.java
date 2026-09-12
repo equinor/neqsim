@@ -36,6 +36,30 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
   }
 
   @Test
+  void testSegmentSulfurEquivalentMassUsesSharedAuthorityAndClosesRateIntegral() {
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result projection = AqueousHydrogenSulfideOxidationWaterInventoryProjection
+        .project(segmentResult(referenceSegment(10.0)), WATER_INVENTORY_KG);
+
+    assertSulfurEquivalentPath(projection.getLowerRateMeanLossMolesPerHour(),
+        projection.getLowerRateMeanSulfurEquivalentMassRateKgPerHour(),
+        projection.getLowerRateMeanSulfurEquivalentMassRateKgPerSecond(), projection.getLowerRateReactedMoles(),
+        projection.getLowerRateReactedSulfurEquivalentMassKg(), projection.getDurationHours());
+    assertSulfurEquivalentPath(projection.getNominalMeanLossMolesPerHour(),
+        projection.getNominalMeanSulfurEquivalentMassRateKgPerHour(),
+        projection.getNominalMeanSulfurEquivalentMassRateKgPerSecond(), projection.getNominalReactedMoles(),
+        projection.getNominalReactedSulfurEquivalentMassKg(), projection.getDurationHours());
+    assertSulfurEquivalentPath(projection.getUpperRateMeanLossMolesPerHour(),
+        projection.getUpperRateMeanSulfurEquivalentMassRateKgPerHour(),
+        projection.getUpperRateMeanSulfurEquivalentMassRateKgPerSecond(), projection.getUpperRateReactedMoles(),
+        projection.getUpperRateReactedSulfurEquivalentMassKg(), projection.getDurationHours());
+
+    assertTrue(
+        projection.getLowerRateReactedSulfurEquivalentMassKg() < projection.getNominalReactedSulfurEquivalentMassKg());
+    assertTrue(
+        projection.getNominalReactedSulfurEquivalentMassKg() < projection.getUpperRateReactedSulfurEquivalentMassKg());
+  }
+
+  @Test
   void testZeroDurationPreservesDifferentialLimitAndZeroReaction() {
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segment = segmentResult(referenceSegment(0.0));
     AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result projection = AqueousHydrogenSulfideOxidationWaterInventoryProjection
@@ -52,6 +76,10 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     assertEquals(0.0, projection.getLowerRateReactedMoles(), 0.0);
     assertEquals(0.0, projection.getNominalReactedMoles(), 0.0);
     assertEquals(0.0, projection.getUpperRateReactedMoles(), 0.0);
+    assertTrue(Double.isFinite(projection.getNominalMeanSulfurEquivalentMassRateKgPerSecond()));
+    assertEquals(0.0, projection.getLowerRateReactedSulfurEquivalentMassKg(), 0.0);
+    assertEquals(0.0, projection.getNominalReactedSulfurEquivalentMassKg(), 0.0);
+    assertEquals(0.0, projection.getUpperRateReactedSulfurEquivalentMassKg(), 0.0);
   }
 
   @Test
@@ -134,6 +162,36 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     assertEquals(0.0, projection.getUpperRateClosureResidualMoles(), NUMERICAL_TOLERANCE);
     assertTrue(projection.getLowerRateReactedMoles() < projection.getNominalReactedMoles());
     assertTrue(projection.getNominalReactedMoles() < projection.getUpperRateReactedMoles());
+  }
+
+  @Test
+  void testTrajectorySulfurEquivalentMassClosesAllPathsAndSegmentSums() {
+    AqueousHydrogenSulfideOxidationTrajectory.Result trajectory = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Arrays.asList(referenceSegment(4.0), referenceSegment(6.0)));
+    AqueousHydrogenSulfideOxidationWaterInventoryProjection.TrajectoryResult projection = AqueousHydrogenSulfideOxidationWaterInventoryProjection
+        .project(trajectory, WATER_INVENTORY_KG);
+
+    double lowerSegmentMass = 0.0;
+    double nominalSegmentMass = 0.0;
+    double upperSegmentMass = 0.0;
+    for (AqueousHydrogenSulfideOxidationWaterInventoryProjection.Result segment : projection.getSegmentProjections()) {
+      lowerSegmentMass += segment.getLowerRateReactedSulfurEquivalentMassKg();
+      nominalSegmentMass += segment.getNominalReactedSulfurEquivalentMassKg();
+      upperSegmentMass += segment.getUpperRateReactedSulfurEquivalentMassKg();
+    }
+
+    assertEquals(projection.getLowerRateReactedMoles() * IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL,
+        projection.getLowerRateReactedSulfurEquivalentMassKg(), 0.0);
+    assertEquals(projection.getNominalReactedMoles() * IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL,
+        projection.getNominalReactedSulfurEquivalentMassKg(), 0.0);
+    assertEquals(projection.getUpperRateReactedMoles() * IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL,
+        projection.getUpperRateReactedSulfurEquivalentMassKg(), 0.0);
+    assertEquals(lowerSegmentMass, projection.getLowerRateReactedSulfurEquivalentMassKg(), NUMERICAL_TOLERANCE);
+    assertEquals(nominalSegmentMass, projection.getNominalReactedSulfurEquivalentMassKg(), NUMERICAL_TOLERANCE);
+    assertEquals(upperSegmentMass, projection.getUpperRateReactedSulfurEquivalentMassKg(), NUMERICAL_TOLERANCE);
+    assertEquals(0.0, projection.getLowerRateSulfurEquivalentClosureResidualKg(), NUMERICAL_TOLERANCE);
+    assertEquals(0.0, projection.getNominalSulfurEquivalentClosureResidualKg(), NUMERICAL_TOLERANCE);
+    assertEquals(0.0, projection.getUpperRateSulfurEquivalentClosureResidualKg(), NUMERICAL_TOLERANCE);
   }
 
   @Test
@@ -436,6 +494,17 @@ public class AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest extends
     assertEquals(meanLossMolesPerHour / 3600.0, meanLossMolesPerSecond, 0.0);
     assertEquals(reactedMolality * WATER_INVENTORY_KG, reactedMoles, 0.0);
     assertEquals(reactedMoles, meanLossMolesPerHour * durationHours, NUMERICAL_TOLERANCE);
+  }
+
+  private static void assertSulfurEquivalentPath(double meanLossMolesPerHour,
+      double meanSulfurEquivalentMassRateKgPerHour, double meanSulfurEquivalentMassRateKgPerSecond, double reactedMoles,
+      double reactedSulfurEquivalentMassKg, double durationHours) {
+    double sulfurMolarMass = IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL;
+    assertEquals(meanLossMolesPerHour * sulfurMolarMass, meanSulfurEquivalentMassRateKgPerHour, 0.0);
+    assertEquals(meanSulfurEquivalentMassRateKgPerHour / 3600.0, meanSulfurEquivalentMassRateKgPerSecond, 0.0);
+    assertEquals(reactedMoles * sulfurMolarMass, reactedSulfurEquivalentMassKg, 0.0);
+    assertEquals(reactedSulfurEquivalentMassKg, meanSulfurEquivalentMassRateKgPerHour * durationHours,
+        NUMERICAL_TOLERANCE);
   }
 
   private static AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult(

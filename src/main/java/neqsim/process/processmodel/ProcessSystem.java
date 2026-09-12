@@ -227,6 +227,10 @@ public class ProcessSystem extends SimulationBaseClass {
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
   private transient ProcessGraph cachedGraph = null;
+  /** Whether run() closes implicit feedback loops with generated recycles. */
+  private boolean autoRecycles = false;
+  /** Re-entrancy guard so the seeding run inside makeRecycles() does not trigger insertion again. */
+  private transient boolean autoRecycleInProgress = false;
   /** Flag indicating if the cached graph needs to be rebuilt. */
   private boolean graphDirty = true;
   /** Monotonic version for topology-derived cache invalidation in parent ProcessModels. */
@@ -1673,6 +1677,99 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Closes every feedback loop that has no {@link Recycle} with an automatically inserted one.
+   *
+   * <p>
+   * Loops are found as strongly connected components of the flowsheet graph. For each one the inlet with the smallest
+   * recycle ratio is swapped for a tear stream seeded from the current loop stream, and a {@code Recycle} tuned for
+   * fast and stable convergence is registered to close it. The flowsheet is run once first when its streams have no
+   * fluid yet, so the tear streams start from a physical state; calling this again is a no-op for loops that are
+   * already closed.
+   * </p>
+   *
+   * @return the recycles created
+   */
+  public List<Recycle> makeRecycles() {
+    return makeRecycles(AutoRecycleBuilder.DEFAULT_TOLERANCE);
+  }
+
+  /**
+   * Closes every feedback loop that has no {@link Recycle} with an automatically inserted one.
+   *
+   * @param tolerance relative tear tolerance for the created recycles, must be positive
+   * @return the recycles created
+   */
+  public List<Recycle> makeRecycles(double tolerance) {
+    if (autoRecycleInProgress) {
+      return new ArrayList<Recycle>();
+    }
+    autoRecycleInProgress = true;
+    try {
+      if (needsSeedRun()) {
+        run();
+      }
+      return AutoRecycleBuilder.insertRecycles(this, tolerance);
+    } finally {
+      autoRecycleInProgress = false;
+    }
+  }
+
+  /**
+   * Whether {@link #run()} closes implicit feedback loops with generated recycles before executing.
+   *
+   * @return true when automatic recycle insertion is enabled
+   */
+  public boolean isAutoRecycles() {
+    return autoRecycles;
+  }
+
+  /**
+   * Enables automatic recycle insertion on {@link #run()}.
+   *
+   * <p>
+   * With this enabled the caller no longer has to run the flowsheet, call {@link #makeRecycles()} and run again: the
+   * first {@code run()} that sees a loop without a {@code Recycle} seeds and closes it, and every later run uses the
+   * generated tear. Disabled by default, because inserting a tear changes how an existing flowsheet iterates.
+   * </p>
+   *
+   * @param autoRecycles true to close implicit loops automatically
+   */
+  public void setAutoRecycles(boolean autoRecycles) {
+    this.autoRecycles = autoRecycles;
+  }
+
+  /**
+   * Checks whether the flowsheet still has streams without a fluid, which a tear stream cannot be seeded from.
+   *
+   * @return true when at least one outlet stream has no fluid yet
+   */
+  private boolean needsSeedRun() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      for (StreamInterface outlet : unit.getOutletStreams()) {
+        if (outlet != null && outlet.getFluid() == null) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Closes implicit loops before a run when automatic recycle insertion is enabled.
+   *
+   * <p>
+   * The analysis is redone on every run rather than cached, because rewiring a stream into an existing mixer is
+   * invisible to the structure caches. It costs one graph build and one strongly-connected-component pass, which is
+   * negligible next to the thermodynamics of the run itself.
+   * </p>
+   */
+  private void applyAutoRecycles() {
+    if (autoRecycles && !autoRecycleInProgress) {
+      makeRecycles();
+    }
+  }
+
+  /**
    * Detects feedback loops that have no explicit recycle convergence controller.
    *
    * @return true for cyclic stream topology without Recycle equipment
@@ -2983,6 +3080,7 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public synchronized void run(UUID id) {
+    applyAutoRecycles();
     enterRunScope();
     if (lastRunStatus == null) {
       lastRunStatus = new RunStatus();

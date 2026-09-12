@@ -732,8 +732,14 @@ acceptance limits were fixed before the holdout was evaluated.
 `PitzerBinaryVolumetricDatasetProvenance` records a machine-auditable manifest
 for observations distributed with NeqSim. Each source-lineage record fixes its
 calibration or validation role, full citation and stable URL, license and
-redistribution decision, SHA-256 source-file checksum, uncertainty basis, exact
+redistribution decision, SHA-256 source-file checksum, uncertainty basis and
+explicit qualification, exact
 row count, and molality, temperature and pressure envelope.
+
+Rows are repository-admissible only when the manifest explicitly marks their
+uncertainty mapping as `QUALIFIED_ABSOLUTE_ONE_SIGMA`. Instrument accuracy,
+precision, or repeatability specifications and unresolved empirical error
+envelopes are non-qualified states and fail before fitting or holdout evaluation.
 
 `validateRepositoryDatasets(...)` checks both observation lists against that
 manifest before fitting. It fails closed for an undeclared lineage, role or row

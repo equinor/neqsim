@@ -41,6 +41,7 @@ If results.json or task_spec.md are missing, the report uses placeholder text.
 Customize MANUAL_SECTIONS below for content that can't be auto-generated.
 """
 import os
+import re
 import sys
 import glob
 import json
@@ -113,6 +114,7 @@ TASK_DEFAULTS_FILE = os.path.expanduser("~/.neqsim/task_defaults.json")
 REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
 REPORT_TEMPLATE = None          # set in __main__ from CLI/env/settings
 KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template body
+TEMPLATE_NUMBERS_HEADINGS = False  # template Heading styles carry their own numbering
 
 
 def resolve_report_template(explicit=None, allow_saved=True):
@@ -177,13 +179,42 @@ def _ensure_paragraph_style(doc, name, size_pt=None, bold=False):
     style.font.bold = bold
 
 
+def _style_has_numbering(doc, name):
+    """True when a paragraph style carries its own list numbering."""
+    try:
+        style = doc.styles[name]
+    except KeyError:
+        return False
+    ppr = style.element.find(qn("w:pPr"))
+    if ppr is None:
+        return False
+    num_pr = ppr.find(qn("w:numPr"))
+    if num_pr is None:
+        return False
+    num_id = num_pr.find(qn("w:numId"))
+    return num_id is not None and num_id.get(qn("w:val")) not in (None, "0")
+
+
+_HEADING_NUMBER_PREFIX = re.compile(r"^\s*\d+(?:\.\d+)*\.?\s+")
+
+
+def _heading_text(text):
+    """Strip our own '1. ' prefix when the template numbers headings itself."""
+    if TEMPLATE_NUMBERS_HEADINGS:
+        return _HEADING_NUMBER_PREFIX.sub("", str(text))
+    return text
+
+
 def _new_document():
     """Return a Word document based on the configured template, if any."""
+    global TEMPLATE_NUMBERS_HEADINGS
     if not REPORT_TEMPLATE:
+        TEMPLATE_NUMBERS_HEADINGS = False
         return Document()
     doc = Document(REPORT_TEMPLATE)
     if not KEEP_TEMPLATE_CONTENT:
         _clear_document_body(doc)
+    TEMPLATE_NUMBERS_HEADINGS = _style_has_numbering(doc, "Heading 1")
     for name, size_pt in (("Title", 28), ("Heading 1", 16), ("Heading 2", 13),
                           ("Heading 3", 12), ("List Bullet", None)):
         _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
@@ -2352,10 +2383,22 @@ def _add_cover_page(doc):
     doc.add_page_break()
 
 
+def _suppress_paragraph_numbering(paragraph):
+    """Keep a heading out of the template's automatic heading numbering."""
+    p_pr = paragraph._p.get_or_add_pPr()
+    for existing in p_pr.findall(qn("w:numPr")):
+        p_pr.remove(existing)
+    p_pr.append(parse_xml(
+        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(nsdecls("w"))
+    ))
+
+
 def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
     # Add TOC heading
-    doc.add_heading("Table of Contents", level=1)
+    toc_heading = doc.add_heading("Table of Contents", level=1)
+    if TEMPLATE_NUMBERS_HEADINGS:
+        _suppress_paragraph_numbering(toc_heading)
     # Insert a Word TOC field (updates when user presses F9 in Word)
     paragraph = doc.add_paragraph()
     run = paragraph.add_run()
@@ -2413,7 +2456,7 @@ def build_word_report(sections, results=None):
 
     # Add all sections
     for section in sections:
-        doc.add_heading(section["heading"], level=1)
+        doc.add_heading(_heading_text(section["heading"]), level=1)
 
         # Results section: use Word table instead of plain text
         if section.get("has_figures") and results and results.get("key_results"):

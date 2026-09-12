@@ -14,6 +14,7 @@ actuators from measured signals. These have different execution and connection r
 - [Named Controller Map](#named-controller-map)
 - [Adjusters](#adjusters)
 - [Recycles](#recycles)
+- [Automatic recycle insertion](#automatic-recycle-insertion)
 - [Setters](#setters)
 - [Calculators](#calculators)
 - [PID Controllers](#pid-controllers)
@@ -168,6 +169,108 @@ acceleration operates on composition, so it does not accelerate the pure-methane
 above. Its default q bounds are -5 to 0, with a two-iteration warm-up. Both `ProcessSystem`
 and `ProcessModel` also provide `setRecycleAccelerationMethod` to update all their recycle units.
 See [Recycle Acceleration](../simulation/recycle_acceleration_guide.md) for tuning and diagnostics.
+
+## Automatic recycle insertion
+
+A loop wired straight back into an upstream mixer - no `Recycle` unit anywhere in it - is an
+**implicit tear**. It still converges, because the surrounding sweep keeps re-evaluating it, but it
+has no tolerance, no acceleration and no convergence report of its own. In a `ProcessModel` that is
+worse: a stream produced by an area that runs *after* its consumer can only be closed by the outer
+Gauss-Seidel pass, which has no relaxation setting, so the plant residual sits on a floor no
+tolerance setting can reach.
+
+`makeRecycles()` finds those loops and closes them:
+
+| Method | Scope |
+| --- | --- |
+| `ProcessSystem.makeRecycles()` | Strongly connected components of one flowsheet |
+| `ProcessModel.makeRecycles()` | Cross-area feedback streams, then every area |
+| `makeRecycles(double tolerance)` | Same, with an explicit relative tear tolerance (default `1e-2`) |
+| `setAutoRecycles(boolean)` | Do it automatically on `run()` / `runUntilConverged(...)` |
+
+For each loop the inlet with the smallest **recycle ratio** - tear flow divided by the total flow
+into the consuming unit - is swapped for a tear stream seeded from the current loop fluid, and a
+`Recycle` is registered to close it. That ratio governs how fast a direct-substitution tear
+contracts, so tearing a small side stream into a large mixer converges in a few passes where
+tearing the main line would make the loop iterate on its own throughput. One edge is torn per
+round and the loop structure is recomputed afterwards, so nested cycles get the tears they need
+and no more - every extra tear is another sub-iteration at run time.
+
+Each generated recycle starts on direct substitution with `setAdaptiveAcceleration(true)`, so it
+upgrades itself to Wegstein only once its flow error stops contracting, and gets an absolute flow
+tolerance at 1e-6 of the largest flow in its area, so a tear on a near-zero leg converges on its
+absolute change instead of a relative error it can never meet.
+
+Only inlets that can be rewired are torn - `Mixer` and `Manifold` expose
+`replaceStream(int, StreamInterface)`. A loop that closes on any other equipment type is logged and
+left untouched rather than silently mis-wired; route it through a mixer to make it tearable.
+
+```java
+import java.util.List;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class AutomaticRecycleExample {
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(273.15 + 30.0, 50.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.addComponent("ethane", 0.1);
+    fluid.addComponent("n-heptane", 0.1);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    Mixer mixer = new Mixer("inlet mixer");
+    mixer.addStream(feed);
+    Separator separator = new Separator("separator", mixer.getOutletStream());
+    Splitter splitter = new Splitter("gas splitter", separator.getGasOutStream());
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
+
+    ProcessSystem process = new ProcessSystem("automatic recycle");
+    process.add(feed);
+    process.add(mixer);
+    process.add(separator);
+    process.add(splitter);
+    process.run();
+
+    // Close the loop implicitly: the recycle branch goes straight back to the mixer.
+    mixer.addStream(splitter.getSplitStream(1));
+
+    List<Recycle> created = process.makeRecycles();
+    assert created.size() == 1;
+    assert created.get(0).isAdaptiveAcceleration();
+    assert created.get(0).getAbsoluteFlowTolerance() > 0.0;
+    // The mixer now reads the generated tear stream, not the splitter outlet.
+    assert mixer.getInletStreams().get(1) == created.get(0).getOutletStream();
+
+    process.run();
+    assert process.solved();
+    double products = splitter.getSplitStream(0).getFlowRate("kg/hr")
+        + separator.getLiquidOutStream().getFlowRate("kg/hr");
+    assert Math.abs(products - 1000.0) < 1.0;
+
+    // Idempotent: the loop is closed, so nothing more is inserted.
+    assert process.makeRecycles().isEmpty();
+  }
+}
+```
+
+`makeRecycles()` seeds itself: if the flowsheet has streams without a fluid it runs once first, so
+the call order is not the caller's problem. To drop the explicit call entirely, enable auto mode -
+the first run then seeds and closes every implicit loop, and later runs use the generated tears:
+
+```python
+plant.setAutoRecycles(True)
+plant.runUntilConverged(30)
+```
+
+Auto mode is **off by default**, because inserting a tear changes how an existing flowsheet
+iterates and would silently move results in models that rely on the implicit-loop pass.
 
 ## Setters
 

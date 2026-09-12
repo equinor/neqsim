@@ -47,9 +47,9 @@ public final class PitzerBinaryVolumetricGroupedValidation implements Serializab
    *
    * <p>
    * The provenance manifest must assign every observation to its declared calibration or validation role and establish
-   * repository redistribution permission, file checksum, uncertainty basis, row count, and state envelope. The original
-   * caller-supplied {@link #validate(List, List, double, double, double)} path remains available for private or
-   * in-memory data that are not distributed with NeqSim.
+   * repository redistribution permission, file checksum, explicit absolute-one-sigma uncertainty qualification, row
+   * count, and state envelope. The original caller-supplied {@link #validate(List, List, double, double, double)} path
+   * remains available for private or in-memory data that are not distributed with NeqSim.
    * </p>
    *
    * @param provenance repository dataset provenance manifest

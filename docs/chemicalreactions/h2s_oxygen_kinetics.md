@@ -284,6 +284,45 @@ total-sulfide-loss evidence. They do not consume O2, assign sulfur products, cal
 phase transfer, create signed component sources, mutate pipeline/transient state, or update S8,
 FeS, wall, or sulfur-deposition inventories.
 
+## Product-agnostic sulfur-equivalent budget
+
+The segment and constant-water trajectory results also expose the sulfur-element mass equivalent
+of the qualified total-sulfide loss. One mole of total sulfide contains one mole of sulfur atoms,
+so the conversion is
+
+$
+\dot m_{S,\mathrm{equiv},r,i}
+=\dot n_{r,i}M_S, \qquad
+m_{S,\mathrm{equiv},r,i}
+=n_{r,i,\mathrm{reacted}}M_S.
+$
+
+where `M_S = 0.032065 kg/mol` reuses
+`IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL`. Segment results report lower-rate,
+nominal, and upper-rate mean sulfur-equivalent loss in kg/h and kg/s, plus reacted
+sulfur-equivalent mass in kg. The trajectory result reports cumulative reacted
+sulfur-equivalent mass and the corresponding mass-basis closure residual for every fit-scatter
+path.
+
+For positive duration, the mass-rate integral closes exactly:
+
+$
+\dot m_{S,\mathrm{equiv},r,i}\Delta t_i
+=m_{S,\mathrm{equiv},r,i}.
+$
+
+Zero duration gives exactly zero reacted sulfur-equivalent mass while preserving the finite
+analytical mean-rate limit. The segment sums telescope to the trajectory cumulative mass,
+unchanged-state subdivision is invariant, and all values scale linearly with the caller-supplied
+water inventory. Non-finite or unrepresentable derived mass fails closed.
+
+This is a sulfur-atom conservation view, not an elemental-sulfur or S8 yield. It does not identify
+S8, sulfate, thiosulfate, polysulfides, FeS, or any other product; prescribe selectivity or oxygen
+demand; calculate reaction heat; or update a stream, wall, deposit, filter, or pipeline state.
+Product and deposition calculations require separately qualified stoichiometry and selectivity
+and must compose with the existing sulfur analyser, wall inventory, oxidation source, solid
+flash, and filter implementations.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
@@ -402,4 +441,3 @@ Electrolyte pH/speciation remains owned by issue #3144. TP flash, dynamics, pipe
 MCP publication remain coordinated with #2937, #2911, the pipeline roadmap, and #3153. Applying
 this atmospheric aqueous correlation to a Northern-Lights-type high-pressure CO2 pipeline requires
 separate phase, pressure, mass-transfer, and composition evidence.
-
