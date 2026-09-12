@@ -62,6 +62,31 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void rejectsUnresolvedOrInstrumentOnlyUncertaintyBeforeFitting() {
+    List<PitzerBinaryVolumetricRegression.Observation> calibration = observations(calciumChlorideModel(),
+        CALIBRATION_MOLALITIES, "uncertainty-source");
+
+    for (PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification qualification : Arrays.asList(
+        PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.INSTRUMENT_SPECIFICATION_ONLY,
+        PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.UNRESOLVED)) {
+      PitzerBinaryVolumetricDatasetProvenance.SourceRecord source =
+          new PitzerBinaryVolumetricDatasetProvenance.SourceRecord("uncertainty-source",
+              PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION, "Synthetic source",
+              "https://example.test/uncertainty-source", "CC-BY-4.0",
+              "https://creativecommons.org/licenses/by/4.0/",
+              PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED, checksum('9'),
+              "Instrument precision without a combined uncertainty budget", qualification,
+              CALIBRATION_MOLALITIES.length, 0.02, 6.0, TEMPERATURE_K, TEMPERATURE_K, PRESSURE_PA, PRESSURE_PA);
+      PitzerBinaryVolumetricDatasetProvenance provenance = manifest(source);
+
+      IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+          () -> provenance.validateRepositoryObservations(calibration,
+              PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION, TEMPERATURE_K, PRESSURE_PA));
+      assertTrue(exception.getMessage().contains("not qualified as absolute one-sigma"));
+    }
+  }
+
+  @Test
   void rejectsUndeclaredRoleCountAndEnvelopeMismatches() {
     PitzerBinaryVolumetricModel model = calciumChlorideModel();
     List<PitzerBinaryVolumetricRegression.Observation> calibration = observations(model, CALIBRATION_MOLALITIES,
@@ -100,7 +125,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
             PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION, "Synthetic source",
             "https://example.test/source", "CC-BY-4.0", "https://creativecommons.org/licenses/by/4.0/",
             PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED, "not-a-checksum",
-            "Absolute one-sigma synthetic uncertainty", 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
+            "Absolute one-sigma synthetic uncertainty",
+            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
 
     PitzerBinaryVolumetricDatasetProvenance.SourceRecord duplicate = source("duplicate",
         PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION,
@@ -113,7 +139,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
             PitzerBinaryVolumetricDatasetProvenance.DatasetRole.CALIBRATION, "Synthetic source",
             "https://example.test/source", "CC-BY-4.0", "",
             PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED, checksum('2'),
-            "Absolute one-sigma synthetic uncertainty", 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
+            "Absolute one-sigma synthetic uncertainty",
+            PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, 1, 0.0, 1.0, 298.15, 323.15, 1.0e5, 20.0e6));
   }
 
   @Test
@@ -126,6 +153,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
 
     assertEquals("a-source", provenance.getSources().get(0).getSourceGroup());
     assertEquals(checksum('b'), provenance.getSource("a-source").getSha256());
+    assertEquals(PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA,
+        provenance.getSource("a-source").getUncertaintyQualification());
     assertNotSame(provenance.getSources(), provenance.getSources());
     assertThrows(UnsupportedOperationException.class,
         () -> provenance.getSources()
@@ -148,7 +177,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
         status == PitzerBinaryVolumetricDatasetProvenance.RedistributionStatus.PERMITTED
             ? "https://creativecommons.org/licenses/by/4.0/"
             : "",
-        status, checksum(checksumCharacter), "Absolute one-sigma synthetic uncertainty", observationCount,
+        status, checksum(checksumCharacter), "Absolute one-sigma synthetic uncertainty",
+        PitzerBinaryVolumetricDatasetProvenance.UncertaintyQualification.QUALIFIED_ABSOLUTE_ONE_SIGMA, observationCount,
         minimumMolality, maximumMolality, TEMPERATURE_K, TEMPERATURE_K, PRESSURE_PA, PRESSURE_PA);
   }
 
