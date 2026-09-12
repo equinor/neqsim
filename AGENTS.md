@@ -99,6 +99,23 @@ Keep `NEQSIM_PROJECT_ROOT` pointing at the NeqSim source repository for external
 tasks; `NEQSIM_TASK_DIR` identifies one active task, not the parent destination.
 Never silently fall back if the configured destination cannot be read or written.
 
+### Configurable Document Root (Source Documents for All Tasks)
+
+The document root is **optional** — it is either set or undefined. When set, that
+folder **and all its subfolders** are the source library for every task:
+`neqsim --set-document-root "PATH"`, `neqsim --show-document-root`,
+`neqsim --reset-document-root`, and `neqsim documents [PATTERN]` to search it
+recursively (the dash-less spelling and an unquoted path with spaces both work).
+Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the saved `document_root` in
+`~/.neqsim/task_defaults.json` > none. Each new task records the resolved value as
+`inputs.document_root` in its `study_config.yaml` (empty when undefined), so a
+resumed task and its child agents see the same library. Search it before reporting
+a standard, datasheet, drawing or vendor document as unavailable. It is read-only —
+never write task output there; copy the documents a task uses into that task's
+`step1_scope_and_research/references/<source>/`. When undefined, work from
+user-supplied documents and log the missing evidence as a data gap; a configured
+folder that is missing or unreadable is a reported blocker, not a silent fallback.
+
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an
 engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 

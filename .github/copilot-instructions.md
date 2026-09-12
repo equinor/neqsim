@@ -644,6 +644,18 @@ all artifacts under it. Resume existing tasks in place. For external task folder
 set `NEQSIM_PROJECT_ROOT` to the source repository and `NEQSIM_TASK_DIR` to the
 active task when needed. Report destination failures instead of silently falling back.
 
+**Source documents:** the document root is **optional** - either set or undefined.
+When set, that folder **and all its subfolders** are the source library for every
+task: `neqsim --set-document-root "PATH"`, `neqsim --show-document-root`,
+`neqsim --reset-document-root`, and `neqsim documents [PATTERN]` to search it
+recursively. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > saved
+`document_root` in `~/.neqsim/task_defaults.json` > none. Every new task records
+the resolved value as `inputs.document_root` in its `study_config.yaml` (empty
+when undefined). Search it before declaring a standard, datasheet or drawing
+unavailable; when undefined, work from user-supplied documents and log a data
+gap. It is read-only: copy the documents a task uses into that task's
+`step1_scope_and_research/references/<source>/` instead of writing there.
+
 > **Full workflow is in `docs/development/TASK_SOLVING_GUIDE.md`.** Read it before starting any task.
 > Past solved tasks are indexed in `docs/development/TASK_LOG.md` — search before starting from scratch.
 
