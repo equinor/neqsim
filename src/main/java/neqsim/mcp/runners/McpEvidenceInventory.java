@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.37");
+    inventory.addProperty("inventoryVersion", "1.38");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA. Inventory 1.37 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL. Inventory 1.38 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 37 are CONTRACT_TESTED and 14 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 38 are CONTRACT_TESTED and 13 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -558,6 +558,17 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_lopa_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md" };
       evidenceBoundary = "Bounded request, scenario, layer and text validation, caller-supplied initiating-event and independent-protection-layer inputs, canonical NeqSim PFD multiplication and target comparison, deterministic defaults and ordering, stable fail-closed errors, explicit screening and advisory metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not identify hazards, establish scenario completeness, verify IPL independence or effectiveness, select or verify SIL, decide tolerability or risk acceptance, establish standards compliance, authorize plant action, certify design, or replace qualified process-safety review and accountable approval";
+      break;
+    case "runSIL":
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/SILRunner.java",
+          "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java",
+          "src/main/java/neqsim/process/safety/risk/sis/SILVerificationResult.java",
+          "src/test/java/neqsim/mcp/runners/SILRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_sil_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md" };
+      evidenceBoundary = "Bounded request, component collection, text, architecture, claimed SIL, proof-test interval, PFD and failure-rate admission, canonical NeqSim SIF calculation and indicative SIL-band presentation, deterministic defaults and component ordering, stable fail-closed errors, explicit caller-input, screening and independent-assessment metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish SRS completeness, validate reliability or lifecycle inputs, verify independence, common cause, architecture suitability, diagnostic coverage, proof-test effectiveness or systematic capability, select or approve SIL, demonstrate IEC 61508/61511, NORSOK, regulatory or project conformance, certify design, authorize plant action, or replace independent functional-safety assessment, qualified engineering judgment and accountable approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

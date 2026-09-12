@@ -1586,13 +1586,13 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-seven bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.37"
-          and limitations.get("contractTestedToolCount") == 37
-          and limitations.get("confirmedGapToolCount") == 14
+    check("thirty-eight bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.38"
+          and limitations.get("contractTestedToolCount") == 38
+          and limitations.get("confirmedGapToolCount") == 13
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1782,6 +1782,27 @@ def test_capabilities():
           and "does not identify hazards" in lopa.get("evidenceBoundary", "")
           and "qualified process-safety review" in lopa.get("evidenceBoundary", ""),
           str(lopa))
+    sil = coverage_records.get("runSIL", {})
+    check("bounded SIF PFD screening has direct contract evidence",
+          sil.get("coverageStatus") == "CONTRACT_TESTED"
+          and sil.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"
+          and sil.get("contractEvidenceCount") == 8
+          and "src/main/java/neqsim/mcp/runners/SILRunner.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SILVerificationResult.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/SILRunnerTest.java"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_sil_protocol.py"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md"
+          in sil.get("contractEvidenceSources", [])
+          and "does not establish SRS completeness" in sil.get("evidenceBoundary", "")
+          and "independent functional-safety assessment" in sil.get("evidenceBoundary", ""),
+          str(sil))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1799,7 +1820,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 14
+          and limitations.get("confirmedGapToolCount") == 13
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

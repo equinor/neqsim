@@ -5,9 +5,10 @@
 `runSIL` is a deterministic screening calculation for caller-supplied Safety
 Instrumented Function (SIF) reliability inputs. It uses NeqSim's canonical
 `SafetyInstrumentedFunction` and `SILVerificationResult`. This qualification
-freezes the bounded MCP request, response, and failure behavior; it does not
-promote the tool from `CONFIRMED_GAP`, perform a functional-safety lifecycle
-assessment, or verify standards conformance.
+freezes the bounded MCP request, response, and failure behavior. Inventory
+`1.38 / 20 explicit + 38 contract-tested + 13 confirmed gaps` promotes that
+software contract to `CONTRACT_TESTED`; it does not perform a functional-safety
+lifecycle assessment or verify standards conformance.
 
 ## Request contract
 
@@ -101,8 +102,10 @@ This capability does not:
 - `neqsim-mcp-server/test_mcp_server.py` protects the public discovery boundary
   and preserves the Phase 0 inventory classification.
 
-This increment records qualification evidence only. Inventory version `1.37`
-remains `20 explicit + 37 contract-tested + 14 confirmed gaps`, and
-`runSIL=CONFIRMED_GAP`. A later atomic promotion must update machine-readable
-coverage, Java assertions, focused protocol expectations, comprehensive
-accounting, acceptance baselines, and documentation together.
+Merged #3664 established the direct Java and packaged-MCP qualification.
+Inventory version `1.38 / 20 explicit + 38 contract-tested + 13 confirmed gaps`
+atomically promotes `runSIL` to `CONTRACT_TESTED`. Machine-readable coverage,
+Java assertions, focused protocol expectations, comprehensive accounting,
+acceptance baselines, and documentation move together without production,
+schema, canonical-model, policy, or numerical changes. No promotion candidate
+remains queued.
