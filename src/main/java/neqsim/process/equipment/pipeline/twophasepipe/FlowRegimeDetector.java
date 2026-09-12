@@ -220,7 +220,8 @@ public class FlowRegimeDetector implements Serializable {
    * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
    * two-phase regime path even when its superficial velocity is arbitrarily small. Co-current backward flow is
    * evaluated in the direction of flow, reversing both velocities and inclination for the correlations. This does not
-   * change the section's physical state or extend the correlations to countercurrent flow.
+   * change the section's physical state or extend the correlations to countercurrent flow. The upward bubble criterion
+   * also requires a nonnegative inferred void fraction and positive bubble transport velocity.
    * </p>
    *
    * @param section The pipe section with current state
@@ -561,9 +562,14 @@ public class FlowRegimeDetector implements Serializable {
       // Bubble to slug transition
       double alpha_G_crit = 0.25; // Critical void fraction for bubble coalescence
 
-      double alpha_G = U_SG / (U_SG + U_SL + U_bubble);
-      if (alpha_G < alpha_G_crit) {
-        return FlowRegime.BUBBLE;
+      double bubbleTransportVelocity = U_SG + U_SL + U_bubble;
+      // Countercurrent flow can make the inferred bubble transport zero or negative. A negative void fraction
+      // does not satisfy the bubble criterion: accepting it would switch closure across the transport pole.
+      if (U_SG >= 0.0 && bubbleTransportVelocity > 0.0) {
+        double alpha_G = U_SG / bubbleTransportVelocity;
+        if (alpha_G < alpha_G_crit) {
+          return FlowRegime.BUBBLE;
+        }
       }
 
       return FlowRegime.SLUG;

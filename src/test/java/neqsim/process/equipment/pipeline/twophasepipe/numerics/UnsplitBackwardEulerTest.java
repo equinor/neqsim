@@ -206,6 +206,7 @@ class UnsplitBackwardEulerTest {
   void serializationWithoutTheNewFieldsRetainsTheMidpointDefaults() throws Exception {
     UnsplitTransientSolver solver = newSolver(TimeIntegrationMethod.IMPLICIT_MIDPOINT);
     assertThrows(IllegalArgumentException.class, () -> solver.setTimeIntegrationMethod(null));
+    assertThrows(IllegalArgumentException.class, () -> roundTrip(solver, ""));
     Result result = solver.solve(decayState(), new double[] { REFERENCE_PRESSURE }, new double[] { 1.0 }, 0.2, 0.0,
         Double.NaN, false, decayModel(1.0));
     assertConverged(result);
@@ -304,6 +305,9 @@ class UnsplitBackwardEulerTest {
   /** Rename an optional serialized field to exercise Java's missing-field defaults with the existing serial UID. */
   @SuppressWarnings("unchecked")
   private static <T extends Serializable> T roundTrip(T value, String missingField) throws Exception {
+    if (missingField != null && missingField.isEmpty()) {
+      throw new IllegalArgumentException("A missing serialized field name must not be empty");
+    }
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try (ObjectOutputStream stream = new ObjectOutputStream(output)) {
       stream.writeObject(value);
@@ -312,7 +316,7 @@ class UnsplitBackwardEulerTest {
     if (missingField != null) {
       byte[] name = missingField.getBytes(StandardCharsets.UTF_8);
       boolean renamed = false;
-      for (int index = 0; index <= data.length - name.length && !renamed; index++) {
+      for (int index = 0; index < data.length && index <= data.length - name.length && !renamed; index++) {
         boolean matches = true;
         for (int offset = 0; offset < name.length; offset++) {
           matches &= data[index + offset] == name[offset];

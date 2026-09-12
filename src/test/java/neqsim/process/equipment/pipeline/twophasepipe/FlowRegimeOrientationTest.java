@@ -18,8 +18,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFrictio
  *
  * <p>
  * The captured riser velocities are a numerical failure reproducer, not an experimental slug-flow reference.
- * Countercurrent criteria retain their existing behavior and are not qualified by coordinate reversal of co-current
- * states.
+ * Countercurrent checks reject nonphysical inferred void fractions without replacing signed velocities by their
+ * magnitudes; coordinate reversal of co-current states does not qualify countercurrent closures.
  * </p>
  */
 class FlowRegimeOrientationTest {
@@ -124,16 +124,16 @@ class FlowRegimeOrientationTest {
   void countercurrentInputsAreNotReplacedByAbsolutePhaseVelocities() {
     FlowRegimeDetector detector = detector(DetectionMethod.MECHANISTIC);
     for (double sign : new double[] { -1.0, 1.0 }) {
-      TwoFluidSection countercurrent = section(Math.PI / 2.0, 0.4, 0.0, sign * 0.3 / 0.4, -sign * 0.5 / 0.6, 0.0);
+      TwoFluidSection countercurrent = section(Math.PI / 2.0, 0.4, 0.0, sign * 0.1 / 0.4, -sign * 0.5 / 0.6, 0.0);
       TwoFluidSection before = countercurrent.clone();
-      // This pins compatibility outside the bounded correction; it is not a countercurrent validation anchor.
-      assertEquals(FlowRegime.BUBBLE, detector.detectFlowRegime(countercurrent));
+      // The signed drift estimate has no admissible bubble void fraction; this is not a countercurrent anchor.
+      assertEquals(FlowRegime.SLUG, detector.detectFlowRegime(countercurrent));
       detector.classify(countercurrent);
-      assertEquals(FlowRegime.BUBBLE, countercurrent.getFlowRegime());
+      assertEquals(FlowRegime.SLUG, countercurrent.getFlowRegime());
       assertPhysicalStateEquals(before, countercurrent);
     }
-    TwoFluidSection forwardMagnitudes = section(Math.PI / 2.0, 0.4, 0.0, 0.3 / 0.4, 0.5 / 0.6, 0.0);
-    assertEquals(FlowRegime.SLUG, detector.detectFlowRegime(forwardMagnitudes),
+    TwoFluidSection forwardMagnitudes = section(Math.PI / 2.0, 0.4, 0.0, 0.1 / 0.4, 0.5 / 0.6, 0.0);
+    assertEquals(FlowRegime.BUBBLE, detector.detectFlowRegime(forwardMagnitudes),
         "Taking absolute values would silently select a different closure for the countercurrent states");
   }
 

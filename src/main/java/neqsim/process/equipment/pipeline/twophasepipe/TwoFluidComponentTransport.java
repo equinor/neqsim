@@ -72,6 +72,24 @@ public final class TwoFluidComponentTransport implements Serializable {
     beginInterval();
   }
 
+  private TwoFluidComponentTransport(TwoFluidComponentTransport accepted) {
+    componentNames = accepted.componentNames;
+    componentMolarMassKgMol = accepted.componentMolarMassKgMol;
+    cellCount = accepted.cellCount;
+    // Advection builds a separate candidate inventory; these accepted arrays are only read.
+    componentInventoryKg = accepted.componentInventoryKg;
+    intervalInitialInventoryKg = accepted.intervalInitialInventoryKg;
+    intervalInletMassKg = accepted.intervalInletMassKg.clone();
+    intervalOutletMassKg = accepted.intervalOutletMassKg.clone();
+    intervalInterphaseTransferKg = new double[PHASE_COUNT][];
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      intervalInterphaseTransferKg[phase] = accepted.intervalInterphaseTransferKg[phase].clone();
+    }
+    intervalCellInterphaseTransferKg = copy(accepted.intervalCellInterphaseTransferKg);
+    intervalLatentHeatEnergyJ = accepted.intervalLatentHeatEnergyJ;
+    maximumPhaseMassSynchronizationErrorKg = accepted.maximumPhaseMassSynchronizationErrorKg;
+  }
+
   /** Reset per-call boundary and interphase ledgers while retaining distributed inventories. */
   public void beginInterval() {
     intervalInitialInventoryKg = totalComponentInventory();
@@ -106,6 +124,12 @@ public final class TwoFluidComponentTransport implements Serializable {
    * Advance components using component source rates frozen at the same Runge-Kutta stages as the hydrodynamic phase
    * sources.
    *
+   * <p>
+   * Inventory, boundary/source ledgers, latent heat and synchronization diagnostics are committed together only after
+   * the complete component substep verifies. An exception leaves this transport object unchanged. This transaction does
+   * not roll back the caller's hydrodynamic state or provide concurrent access synchronization.
+   * </p>
+   *
    * @param timeStepSeconds accepted substep duration
    * @param phaseMassFaceFluxKgS stage-weighted gas/oil/water face mass flows
    * @param phaseMassSourceKgPerMetreSecond stage-weighted cell phase sources
@@ -124,6 +148,48 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface fluidTemplate, double tolerance) {
     validateAdvanceArguments(timeStepSeconds, phaseMassFaceFluxKgS, phaseMassSourceKgPerMetreSecond, sections,
         tolerance);
+    TwoFluidComponentTransport candidate = new TwoFluidComponentTransport(this);
+    double[] latentHeat = candidate.advanceCandidate(timeStepSeconds, phaseMassFaceFluxKgS,
+        phaseMassSourceKgPerMetreSecond, componentSourceKgPerMetreSecond, latentHeatSourceWPerMetre, sections,
+        inletFluid, fluidTemplate, tolerance);
+    candidate.validateFiniteState();
+    componentInventoryKg = candidate.componentInventoryKg;
+    intervalInletMassKg = candidate.intervalInletMassKg;
+    intervalOutletMassKg = candidate.intervalOutletMassKg;
+    intervalInterphaseTransferKg = candidate.intervalInterphaseTransferKg;
+    intervalCellInterphaseTransferKg = candidate.intervalCellInterphaseTransferKg;
+    intervalLatentHeatEnergyJ = candidate.intervalLatentHeatEnergyJ;
+    maximumPhaseMassSynchronizationErrorKg = candidate.maximumPhaseMassSynchronizationErrorKg;
+    return latentHeat;
+  }
+
+  private void validateFiniteState() {
+    requireFiniteValues(intervalInletMassKg);
+    requireFiniteValues(intervalOutletMassKg);
+    for (double[] transfer : intervalInterphaseTransferKg) {
+      requireFiniteValues(transfer);
+    }
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        requireFiniteValues(componentInventoryKg[cell][phase]);
+        requireFiniteValues(intervalCellInterphaseTransferKg[cell][phase]);
+      }
+    }
+    requireFiniteValues(new double[] { intervalLatentHeatEnergyJ, maximumPhaseMassSynchronizationErrorKg });
+  }
+
+  private static void requireFiniteValues(double[] values) {
+    for (double value : values) {
+      if (!Double.isFinite(value)) {
+        throw new IllegalStateException("Component candidate inventory and transport ledgers must remain finite");
+      }
+    }
+  }
+
+  private double[] advanceCandidate(double timeStepSeconds, double[][] phaseMassFaceFluxKgS,
+      double[][] phaseMassSourceKgPerMetreSecond, double[][][] componentSourceKgPerMetreSecond,
+      double[] latentHeatSourceWPerMetre, TwoFluidSection[] sections, SystemInterface inletFluid,
+      SystemInterface fluidTemplate, double tolerance) {
     if (fluidTemplate == null) {
       throw new IllegalArgumentException("Fluid template cannot be null for component transport");
     }
@@ -444,6 +510,9 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   private void validateDonorComposition(double[] donorFractions, double transportedMassKg, int face, int phase) {
+    if (!Double.isFinite(transportedMassKg)) {
+      throw new IllegalStateException("Component face transfer must remain finite");
+    }
     if (transportedMassKg > MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG && sum(donorFractions) <= 0.0) {
       throw new IllegalStateException(
           "Boundary/face flow has no " + phaseName(phase) + " component composition at face " + face);
@@ -476,6 +545,77 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
     return flashWithComponentMasses(fluidTemplate, componentMassKg, pressurePa, temperatureK,
         "thermodynamic synchronization for cell " + cellIndex);
+  }
+
+  /**
+   * Construct the interval-average outlet fluid from the accepted component boundary transfers.
+   *
+   * <p>
+   * Each component flow equals its integrated outlet mass divided by the accepted interval duration. Composition is
+   * mapped by component name, independent of template order. A TP flash at the requested outlet state preserves total
+   * component flows; its equilibrium phase split need not equal the transported hydrodynamic phase split. With zero
+   * outlet transfer the result has zero flow and the template composition is retained only as a thermodynamic carrier.
+   * Call this after a converged component report. The transport state and input template are not modified.
+   * </p>
+   *
+   * @param fluidTemplate thermodynamic template with the tracked component slate
+   * @param pressurePa outlet absolute pressure in Pa
+   * @param temperatureK outlet temperature in K
+   * @param elapsedTimeSeconds accepted interval duration in s
+   * @return independent flashed outlet fluid with interval-average flow in mol/s internally
+   * @throws IllegalArgumentException for invalid time, pressure, temperature or component slate
+   * @throws IllegalStateException for invalid transferred mass or failed thermodynamic evaluation
+   */
+  public SystemInterface createOutletFluid(SystemInterface fluidTemplate, double pressurePa, double temperatureK,
+      double elapsedTimeSeconds) {
+    if (fluidTemplate == null || !(elapsedTimeSeconds > 0.0) || !Double.isFinite(elapsedTimeSeconds)
+        || !(pressurePa > 0.0) || !Double.isFinite(pressurePa) || !(temperatureK > 0.0)
+        || !Double.isFinite(temperatureK)) {
+      throw new IllegalArgumentException(
+          "Component outlet requires a template and positive finite time, pressure and temperature");
+    }
+    validateComponentSlate(fluidTemplate);
+    double[] templateMolarMasses = componentMolarMasses(fluidTemplate, componentNames);
+    for (int component = 0; component < componentNames.length; component++) {
+      if (Math.abs(templateMolarMasses[component] - componentMolarMassKgMol[component]) > 1.0e-12
+          * componentMolarMassKgMol[component]) {
+        throw new IllegalArgumentException(
+            "Component outlet template changes the tracked molar mass of " + componentNames[component]);
+      }
+    }
+    double totalMass = 0.0;
+    for (double mass : intervalOutletMassKg) {
+      if (!Double.isFinite(mass) || mass < 0.0) {
+        throw new IllegalStateException("Component outlet transfer must be finite and nonnegative");
+      }
+      totalMass += mass;
+    }
+    double massFlow = totalMass / elapsedTimeSeconds;
+    if (!Double.isFinite(massFlow)) {
+      throw new IllegalStateException("Component outlet mass flow must be finite");
+    }
+    SystemInterface outletTemplate = fluidTemplate;
+    if (!(fluidTemplate.getTotalNumberOfMoles() > 1.0e-100)) {
+      // Setting a flow on an empty NeqSim system seeds equal component amounts. Restore the specified composition
+      // explicitly before flashing or replacing it with the accepted outlet composition.
+      double[] carrierComposition = fluidTemplate.getMolarComposition().clone();
+      outletTemplate = fluidTemplate.clone();
+      outletTemplate.setTotalFlowRate(1.0, "mol/sec");
+      outletTemplate.setMolarComposition(carrierComposition);
+    }
+    SystemInterface outlet;
+    if (totalMass > 0.0) {
+      outlet = flashWithComponentMasses(outletTemplate, intervalOutletMassKg, pressurePa, temperatureK,
+          "accepted component outlet");
+    } else {
+      SystemInterface carrier = outletTemplate.clone();
+      carrier.setTotalFlowRate(1.0, "mol/sec");
+      carrier.setPressure(pressurePa / 1.0e5, "bara");
+      carrier.setTemperature(temperatureK, "K");
+      outlet = prepareFluid(carrier, "closed component outlet");
+    }
+    outlet.setTotalFlowRate(massFlow, "kg/sec");
+    return outlet;
   }
 
   /**
@@ -691,6 +831,8 @@ public final class TwoFluidComponentTransport implements Serializable {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double targetMassKg = phaseMassKg(sections[cell], phase);
         double componentMassKg = phaseInventory(updated[cell][phase]);
+        requireFiniteValues(updated[cell][phase]);
+        requireFiniteValues(new double[] { componentMassKg });
         double errorKg = componentMassKg - targetMassKg;
         maximumPhaseMassSynchronizationErrorKg = Math.max(maximumPhaseMassSynchronizationErrorKg, Math.abs(errorKg));
         double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(componentMassKg), Math.abs(targetMassKg)));
@@ -803,10 +945,25 @@ public final class TwoFluidComponentTransport implements Serializable {
       if (face == null || face.length != PHASE_COUNT) {
         throw new IllegalArgumentException("Every component face must contain gas, oil, and water mass flow");
       }
+      for (double flow : face) {
+        if (!Double.isFinite(flow)) {
+          throw new IllegalArgumentException("Component face mass flow must be finite");
+        }
+      }
     }
     for (double[] source : sources) {
       if (source == null || source.length != PHASE_COUNT) {
         throw new IllegalArgumentException("Every component cell must contain gas, oil, and water source rates");
+      }
+      for (double rate : source) {
+        if (!Double.isFinite(rate)) {
+          throw new IllegalArgumentException("Component phase mass source must be finite");
+        }
+      }
+    }
+    for (TwoFluidSection section : sections) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        phaseMassKg(section, phase);
       }
     }
   }
@@ -950,6 +1107,9 @@ public final class TwoFluidComponentTransport implements Serializable {
   }
 
   private static double phaseMassKg(TwoFluidSection section, int phase) {
+    if (section == null || !(section.getLength() > 0.0) || !Double.isFinite(section.getLength())) {
+      throw new IllegalArgumentException("Component cells require a positive finite length");
+    }
     double massPerLength;
     switch (phase) {
     case GAS:
@@ -964,7 +1124,11 @@ public final class TwoFluidComponentTransport implements Serializable {
     default:
       throw new IllegalArgumentException("Unsupported phase index " + phase);
     }
-    return Math.max(0.0, massPerLength * section.getLength());
+    double mass = massPerLength * section.getLength();
+    if (!Double.isFinite(mass) || mass < 0.0) {
+      throw new IllegalArgumentException("Component cells require finite nonnegative conservative phase mass");
+    }
+    return mass;
   }
 
   private static double phaseInventory(double[] componentInventory) {

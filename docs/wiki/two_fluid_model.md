@@ -969,15 +969,39 @@ regression. These results block the subsequent 180/600 s characterization and ex
 
 After the direction, exact-zero-block and bulk-drag corrections, the backward-Euler/interpolation
 option completes all three 0.1 s cases in **1/2/2 steps with zero retries** at the original
-conservation/volume tolerances. The five-second gate still fails: current midpoint/no-interpolation
+conservation/volume tolerances. The five-second gate at `62aabb7` still fails: midpoint/no-interpolation
 prefixes stop at 0.7250/0.6951/0.5359 s, and backward-Euler/interpolation prefixes at
 0.6000/0.6258/0.4254 s for the same 16/0.1, 16/0.05 and 24/0.05 matrix. The reduced retry burden
 is numerical progress, not physical qualification. The final affected suite passes **327 tests
 in 45 classes**, including maintained three-phase steady refinement; the six explicit long-gate
 failures are recorded separately in the [actual riser evidence](../process/TWOFLUIDPIPE_MODEL.md#actual-tengesdal-handoff-evidence).
 
-The existing outlet publisher uses inlet overall composition; unequal phase transfers require
-conservative component-weighted outlet composition before a prepared state can be published.
+The subsequent countercurrent bubble-domain correction rejects negative inferred void fraction
+across a bubble-transport denominator pole, preventing a reproduced 0.620-to-305.31 N/m artificial
+drag jump. The unchanged historical five-second matrix advances farther but still fails: midpoint
+prefixes end at 0.8066/0.8063/0.9000 s, and backward-Euler/interpolation at
+0.6684/0.6883/0.6563 s. Both local branch-constrained solutions at the next annular/slug obstruction
+violate their own regime criteria. This is evidence for a constitutive transition gap; solver
+tolerances and retry budgets remain unchanged. See the
+[branch diagnosis](../process/TWOFLUIDPIPE_MODEL.md#countercurrent-bubble-criterion-and-the-remaining-transition-obstruction).
+
+The separate `setCellFaceElevationProfile` option accepts N+1 finite-volume face elevations.
+It integrates each specified terrain rise once, uses midpoint steady pressure with external-face
+boundary offsets, and preserves signed gravity/energy work under nonuniform mesh refinement.
+Legacy elevation samples retain their convention. These geometry tests do not establish general
+transient hydrostatic well-balancing or a steady/unsplit fixed point; see the
+[explicit face contract](../process/TWOFLUIDPIPE_MODEL.md#explicit-cell-face-terrain).
+The separately named corrected-face riser represents the same 13.9032247068273 m rise on both
+meshes and passes three 0.1 s preparations. Its five-second attempts still reject at
+0.8875/0.8014/0.5801 s; those results are kept separate from historical geometry measurements.
+The combined component/domain/terrain update passes 365 affected tests across 53 classes,
+including three slow component/phase/thermal/reference tests and maintained three-phase steady
+refinement. Nine explicit five-second qualification failures remain separate from passing regressions.
+
+The existing named-component route now publishes each accepted component outlet transfer divided
+by interval duration, including after downstream reflashing. Its component substep also commits
+inventories and ledgers only after complete verification. The unsplit frozen-phase path still
+requires its own accepted component transport before unequal phase transfers can be published.
 This remains a preparation API, not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
 accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the established 5/180/600 s qualification
 sequence remain required. Energy, named-component transport, and phase change are outside the
@@ -1042,6 +1066,14 @@ inventories. Without component transport, the reference-composition/no-slip sour
 approximation. The sustained regression covers 120 s of gas, gas/oil and gas/oil/water flow with
 heat and EOS updates active, plus heating/cooling transfer signs and conservative component
 ledgers. Positive-flow boundaries and a fixed named-component slate remain required.
+
+With component transport enabled, the downstream outlet composition follows the accepted boundary
+component ledger rather than the latest inlet composition or the final cell's instantaneous phase
+split. The outlet TP flash preserves total component flow; closed outlets carry zero mass. Each
+component substep stages boundary/source/latent-heat ledgers together with inventory and discards
+all of them on failure. This is component-substep isolation, not whole-pipe transient rollback.
+See the [component publication contract](../process/TWOFLUIDPIPE_MODEL.md#validated-scope-and-fail-loud-boundaries)
+for the supported boundaries and remaining limits.
 
 For the supported conservative-slug coupling, phase and component source allocations plus their
 partial-enthalpy latent source are frozen at the same integration stage. A moving slug/film

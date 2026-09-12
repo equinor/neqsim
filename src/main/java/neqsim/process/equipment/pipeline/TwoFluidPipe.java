@@ -230,6 +230,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Elevation profile at each section (m). */
   private double[] elevationProfile;
 
+  /** Explicit elevations at the N+1 finite-volume faces (m), or null for the legacy section-indexed convention. */
+  private double[] cellFaceElevationProfile;
+
   // ============ Discretization ============
 
   /** Pipe sections with state. */
@@ -966,6 +969,9 @@ public class TwoFluidPipe extends Pipeline {
    * Initialize pipe sections with inlet conditions.
    */
   private void initializeSections() {
+    if (cellFaceElevationProfile != null) {
+      validateCellFaceElevationProfile(cellFaceElevationProfile);
+    }
     if (sectionLengths != null) {
       // Non-uniform mesh: use per-section lengths
       numberOfSections = sectionLengths.length;
@@ -1201,8 +1207,9 @@ public class TwoFluidPipe extends Pipeline {
     double fInit = calcDarcyFrictionFactor(rhoMixInit, Math.abs(vMix), diameter, muMixInit);
     double dPdxInit = fInit * rhoMixInit * vMix * Math.abs(vMix) / (2.0 * diameter);
     // Add average gravity component from elevation profile
-    if (elevationProfile != null && elevationProfile.length > 1) {
-      double totalElevChange = elevationProfile[elevationProfile.length - 1] - elevationProfile[0];
+    double[] initialTerrain = cellFaceElevationProfile != null ? cellFaceElevationProfile : elevationProfile;
+    if (initialTerrain != null && initialTerrain.length > 1) {
+      double totalElevChange = initialTerrain[initialTerrain.length - 1] - initialTerrain[0];
       double avgSinTheta = totalElevChange / length;
       dPdxInit += rhoMixInit * 9.81 * avgSinTheta;
     }
@@ -1232,7 +1239,13 @@ public class TwoFluidPipe extends Pipeline {
       // secDx). atan2 would treat secDx as a horizontal run and return 45 degrees for a vertical
       // cell, leaving a riser with sin(45) = 71% of its hydrostatic head.
       double inclination = previousInclination;
-      if (elevationProfile != null && i < elevationProfile.length - 1 && secDx > 0.0) {
+      if (cellFaceElevationProfile != null) {
+        double leftElevation = cellFaceElevationProfile[i];
+        double rightElevation = cellFaceElevationProfile[i + 1];
+        elevation = 0.5 * leftElevation + 0.5 * rightElevation;
+        // Validation permits only roundoff beyond a vertical cell's unit slope.
+        inclination = Math.asin(Math.max(-1.0, Math.min(1.0, (rightElevation - leftElevation) / secDx)));
+      } else if (elevationProfile != null && i < elevationProfile.length - 1 && secDx > 0.0) {
         double verticalRise = elevationProfile[i + 1] - elevation;
         inclination = Math.asin(Math.max(-1.0, Math.min(1.0, verticalRise / secDx)));
       }
@@ -1334,7 +1347,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Set outlet pressure if not already set
     if (!outletPressureSet) {
-      outletPressure = sections[numberOfSections - 1].getPressure();
+      outletPressure = steadyOutletFacePressure();
     }
 
     // Initialize accumulation tracker
@@ -1386,7 +1399,8 @@ public class TwoFluidPipe extends Pipeline {
     double P_inlet = inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet && !outletPressureSet
         ? inletPressure
         : getInletStream().getFluid().getPressure("Pa");
-    boolean explicitPressureBoundary = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet)
+    boolean explicitPressureBoundary = cellFaceElevationProfile != null
+        || (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet)
         || (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet);
 
     // Fix inlet section pressure to boundary condition
@@ -1439,7 +1453,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure from upstream section gradient
-        double P_new = marchPressure(prev);
+        double P_new = marchPressure(prev, sec);
         sec.setPressure(P_new);
 
         // Holdup and velocities
@@ -1539,7 +1553,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure drop estimate (simplified steady-state)
-        double P_calc = marchPressure(prev);
+        double P_calc = marchPressure(prev, sec);
         pressureResidualSum += Math.abs(P_calc - sec.getPressure());
 
         // Under-relaxed pressure update
@@ -1787,7 +1801,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
-      outletPressure = sections[numberOfSections - 1].getPressure();
+      outletPressure = steadyOutletFacePressure();
     }
 
     // The steady solver works in primitive pressure, holdup, and velocity variables.
@@ -1900,7 +1914,7 @@ public class TwoFluidPipe extends Pipeline {
   private double calculateSteadyPressureMomentumResidual() {
     double pressureResidualSum = 0.0;
     for (int i = 1; i < numberOfSections; i++) {
-      pressureResidualSum += Math.abs(marchPressure(sections[i - 1]) - sections[i].getPressure());
+      pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i]) - sections[i].getPressure());
     }
     double totalDrop = sections[0].getPressure() - sections[numberOfSections - 1].getPressure();
     return pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
@@ -1924,19 +1938,30 @@ public class TwoFluidPipe extends Pipeline {
 
     double maximumCorrection = 0.0;
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet) {
-      double pressureShift = outletPressure - sections[numberOfSections - 1].getPressure();
+      TwoFluidSection last = sections[numberOfSections - 1];
+      double targetPressure = outletPressure;
+      if (cellFaceElevationProfile != null) {
+        targetPressure += 0.5 * last.getLength() * estimatePressureGradient(last);
+      }
+      double pressureShift = targetPressure - last.getPressure();
       for (TwoFluidSection sec : sections) {
         maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
-      sections[numberOfSections - 1].setPressure(Math.max(1.0e5, outletPressure));
-    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
-      double pressureShift = inletPressure - sections[0].getPressure();
+      last.setPressure(Math.max(1.0e5, targetPressure));
+    } else if ((inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet)
+        || cellFaceElevationProfile != null) {
+      double targetPressure = inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet ? inletPressure
+          : getInletStream().getFluid().getPressure("Pa");
+      if (cellFaceElevationProfile != null) {
+        targetPressure -= 0.5 * sections[0].getLength() * estimatePressureGradient(sections[0]);
+      }
+      double pressureShift = targetPressure - sections[0].getPressure();
       for (TwoFluidSection sec : sections) {
         maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
-      sections[0].setPressure(Math.max(1.0e5, inletPressure));
+      sections[0].setPressure(Math.max(1.0e5, targetPressure));
     }
     return maximumCorrection;
   }
@@ -3972,6 +3997,38 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Integrate between cell centers using the two half-cell gradients for explicit face terrain.
+   *
+   * <p>
+   * With constant density and zero velocity, the gravity part is exactly rho*g times the difference of midpoint
+   * elevations, including on a nonuniform mesh and across changes in slope. Legacy section-indexed terrain retains its
+   * upstream whole-cell march. This geometry convention does not make the steady closure an unsplit fixed point.
+   * </p>
+   *
+   * @param previous upstream cell
+   * @param current downstream cell
+   * @return downstream midpoint pressure in Pa, subject to the existing pressure floor
+   */
+  private double marchPressure(TwoFluidSection previous, TwoFluidSection current) {
+    if (cellFaceElevationProfile == null) {
+      return marchPressure(previous);
+    }
+    double pressureDrop = 0.5 * previous.getLength() * estimatePressureGradient(previous)
+        + 0.5 * current.getLength() * estimatePressureGradient(current);
+    return Math.max(MIN_SECTION_PRESSURE_PA, previous.getPressure() - pressureDrop);
+  }
+
+  /** Extrapolate the last midpoint to its physical boundary only for explicit face terrain. */
+  private double steadyOutletFacePressure() {
+    TwoFluidSection last = sections[numberOfSections - 1];
+    double pressure = last.getPressure();
+    if (cellFaceElevationProfile != null) {
+      pressure -= 0.5 * last.getLength() * estimatePressureGradient(last);
+    }
+    return cellFaceElevationProfile == null ? pressure : Math.max(MIN_SECTION_PRESSURE_PA, pressure);
+  }
+
+  /**
    * Check whether any section pressure rests on the marching floor.
    *
    * @return true when at least one section sits at {@link #MIN_SECTION_PRESSURE_PA}
@@ -4408,6 +4465,9 @@ public class TwoFluidPipe extends Pipeline {
 
   @Override
   public void run(UUID id) {
+    if (cellFaceElevationProfile != null) {
+      validateCellFaceElevationProfile(cellFaceElevationProfile);
+    }
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
@@ -4435,7 +4495,7 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     // Set up outlet stream
-    updateOutletStream();
+    updateOutletStream(true);
 
     setCalculationIdentifier(id);
   }
@@ -5590,9 +5650,10 @@ public class TwoFluidPipe extends Pipeline {
 
       // Include gravity-wave speed for inclined/vertical sections (critical for risers)
       // Gravity waves propagate at ~sqrt(g * D * |sin(theta)| * (rhoL - rhoG) / rhoMix)
-      if (enableAdaptiveTimestepping && elevationProfile != null && i < numberOfSections - 1) {
-        double sinTheta = Math.abs(elevationProfile[Math.min(i + 1, elevationProfile.length - 1)] - elevationProfile[i])
-            / secDx;
+      if (enableAdaptiveTimestepping
+          && (cellFaceElevationProfile != null || (elevationProfile != null && i < numberOfSections - 1))) {
+        double sinTheta = cellFaceElevationProfile != null ? Math.abs(Math.sin(sec.getInclination()))
+            : Math.abs(elevationProfile[Math.min(i + 1, elevationProfile.length - 1)] - elevationProfile[i]) / secDx;
         if (sinTheta > 0.01) { // Only for significantly inclined sections
           double rhoG = Math.max(sec.getGasDensity(), 0.1);
           double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
@@ -6433,18 +6494,50 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * Steady-state calculations use the inlet mass flow to enforce global steady closure. After a transient call, the
    * stream exposes the interval-average total outlet flux integrated over the accepted internal stages. Phase-resolved
-   * integrals remain available from {@link #getLastMassBalanceReport()}.
+   * integrals remain available from {@link #getLastMassBalanceReport()}. With named-component transport, the outlet
+   * composition also uses those accepted component transfers; its TP flash preserves each component mass flow.
    * </p>
    */
   private void updateOutletStream() {
+    updateOutletStream(false);
+  }
+
+  /** Publish with an explicit steady-state context so transient pressure never uses a steady-gradient extrapolation. */
+  private void updateOutletStream(boolean steadyPublication) {
     if (sections == null || sections.length == 0) {
       return;
     }
 
     TwoFluidSection outlet = sections[numberOfSections - 1];
+    double publishedPressure = outletStreamPressure(outlet, steadyPublication);
+    if (lastComponentConservationReport != null && lastComponentConservationReport.getElapsedTimeSeconds() > 0.0) {
+      if (componentTransport == null || !lastComponentConservationReport.isConverged()
+          || lastMassBalanceReport == null) {
+        throw new IllegalStateException("Component outlet publication requires verified component and phase ledgers");
+      }
+      double elapsed = lastComponentConservationReport.getElapsedTimeSeconds();
+      if (elapsed != lastMassBalanceReport.getElapsedTimeSeconds()) {
+        throw new IllegalStateException("Component and phase outlet ledgers must cover the same accepted interval");
+      }
+      double componentMass = 0.0;
+      for (double mass : lastComponentConservationReport.getOutletBoundaryMassKg()) {
+        componentMass += mass;
+      }
+      double phaseMass = lastMassBalanceReport.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+      double tolerance = Math.max(1.0e-10,
+          componentConservationTolerance * Math.max(Math.abs(componentMass), Math.abs(phaseMass)));
+      if (!Double.isFinite(componentMass) || !Double.isFinite(phaseMass)
+          || Math.abs(componentMass - phaseMass) > tolerance) {
+        throw new IllegalStateException("Component and phase outlet transfers do not agree");
+      }
+      SystemInterface componentOutlet = componentTransport.createOutletFluid(referenceFluid, publishedPressure,
+          outlet.getTemperature(), elapsed);
+      getOutletStream().setFluid(componentOutlet);
+      return;
+    }
     SystemInterface outFluid = getInletStream().getFluid().clone();
 
-    outFluid.setPressure(outlet.getPressure() / 1e5, "bara");
+    outFluid.setPressure(publishedPressure / 1e5, "bara");
     outFluid.setTemperature(outlet.getTemperature(), "K");
 
     try {
@@ -6492,6 +6585,27 @@ public class TwoFluidPipe extends Pipeline {
     outFluid.setTotalFlowRate(Math.max(0.0, massFlowOut), "kg/sec");
 
     getOutletStream().setFluid(outFluid);
+  }
+
+  /**
+   * Select the external face pressure for the explicit terrain convention.
+   *
+   * <p>
+   * A constant-pressure outlet always uses its boundary value. Other steady outlets use the half-cell extrapolation of
+   * the accepted steady midpoint. Transient outlets retain the current boundary-section value; no steady momentum
+   * gradient is applied to an evolving state. The legacy terrain convention retains its previous section pressure.
+   * </p>
+   */
+  private double outletStreamPressure(TwoFluidSection outlet, boolean steadyPublication) {
+    if (cellFaceElevationProfile != null) {
+      if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+        return outletPressure;
+      }
+      if (steadyPublication) {
+        return steadyOutletFacePressure();
+      }
+    }
+    return outlet.getPressure();
   }
 
   /**
@@ -7675,6 +7789,10 @@ public class TwoFluidPipe extends Pipeline {
    * @param refinementFactor How much finer to make sections at elevation changes (2-10)
    */
   public void generateRefinedMesh(int baseSections, double refinementFactor) {
+    if (cellFaceElevationProfile != null) {
+      throw new IllegalStateException("Explicit cell-face terrain requires elevations resampled on the chosen mesh; "
+          + "set the section lengths and then the matching N+1 face elevations");
+    }
     if (elevationProfile == null || elevationProfile.length < 2) {
       // No elevation profile, use uniform mesh
       this.numberOfSections = baseSections;
@@ -7760,12 +7878,20 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Set elevation profile.
+   * Set the legacy section-indexed elevation profile.
+   *
+   * <p>
+   * This preserves the historical convention: entry i is stored on section i and the next elevation difference is
+   * divided by that section's arc length; the last available inclination is repeated. Use
+   * {@link #setCellFaceElevationProfile(double[])} to specify physical finite-volume faces and midpoint elevations.
+   * Calling this method selects the legacy convention and clears any explicit face profile.
+   * </p>
    *
    * @param elevations Elevation at each section (m)
    */
   public void setElevationProfile(double[] elevations) {
     this.elevationProfile = elevations.clone();
+    this.cellFaceElevationProfile = null;
   }
 
   /**
@@ -7775,6 +7901,72 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double[] getElevationProfile() {
     return elevationProfile == null ? null : elevationProfile.clone();
+  }
+
+  /**
+   * Specify the elevations of all finite-volume faces using the current mesh.
+   *
+   * <p>
+   * Supply N+1 elevations in metres, starting at the inlet face and ending at the outlet face. Cell lengths are arc
+   * lengths along the pipe axis; each cell is represented by a straight segment with sine of inclination equal to its
+   * face elevation rise divided by its length. The cell elevation is the mean of its two face elevations. Thus
+   * integrated gravity uses the specified elevation rise once, including the first and last half cells. Steady
+   * pressures are midpoint values and specified boundary pressures lie at their physical external faces.
+   * </p>
+   *
+   * <p>
+   * Set total length and the uniform or nonuniform mesh before this method. Replace the face profile after changing the
+   * mesh; automatic refinement cannot reinterpret these samples. Invalid inputs are rejected before the previous
+   * profile is replaced and are rechecked before initialization. The legacy elevation profile is cleared. This geometry
+   * convention does not qualify general hydrostatic balance of the transient operator or a steady/transient closure
+   * fixed point.
+   * </p>
+   *
+   * @param elevations finite elevations in metres, one per cell face
+   * @throws IllegalArgumentException if the mesh or elevations are inconsistent or a rise exceeds the cell arc length
+   */
+  public void setCellFaceElevationProfile(double[] elevations) {
+    validateCellFaceElevationProfile(elevations);
+    cellFaceElevationProfile = elevations.clone();
+    elevationProfile = null;
+  }
+
+  /** @return defensive copy of the explicit face elevations in metres, or null for the legacy convention */
+  public double[] getCellFaceElevationProfile() {
+    return cellFaceElevationProfile == null ? null : cellFaceElevationProfile.clone();
+  }
+
+  /** Validate the explicit terrain against arc lengths without changing geometry or accepted state. */
+  private void validateCellFaceElevationProfile(double[] elevations) {
+    int count = sectionLengths == null ? numberOfSections : sectionLengths.length;
+    if (count < 2 || elevations == null || elevations.length != count + 1 || !(length > 0.0)
+        || !Double.isFinite(length)) {
+      throw new IllegalArgumentException(
+          "Cell-face terrain requires N+1 elevations, at least two cells and finite positive length");
+    }
+    for (double elevation : elevations) {
+      if (!Double.isFinite(elevation)) {
+        throw new IllegalArgumentException("Cell-face elevations must be finite");
+      }
+    }
+    double total = 0.0;
+    for (int cell = 0; cell < count; cell++) {
+      double cellLength = sectionLengths == null ? length / count : sectionLengths[cell];
+      if (!(cellLength > 0.0) || !Double.isFinite(cellLength)) {
+        throw new IllegalArgumentException("Cell-face terrain requires finite positive cell arc lengths");
+      }
+      total += cellLength;
+      double rise = elevations[cell + 1] - elevations[cell];
+      double scale = Math.max(cellLength, Math.max(Math.abs(elevations[cell]), Math.abs(elevations[cell + 1])));
+      double roundoff = 8.0 * Math.ulp(scale);
+      if (!Double.isFinite(rise) || Math.abs(rise) - cellLength > roundoff) {
+        throw new IllegalArgumentException("Cell-face elevation rise exceeds the arc length of cell " + cell);
+      }
+    }
+    double roundoff = 16.0 * count * Math.ulp(Math.max(length, total));
+    if (!Double.isFinite(total) || Math.abs(total - length) > roundoff) {
+      throw new IllegalArgumentException("Cell arc lengths must sum to total pipe length for cell-face terrain");
+    }
   }
 
   /**
