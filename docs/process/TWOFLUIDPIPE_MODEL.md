@@ -1316,7 +1316,9 @@ replacement for the final cell's volume equation.
 The kernel uses scaled residuals and unknowns, a colored finite-difference Jacobian for a declared
 cell stencil, partial-pivoting linear solves, an Armijo line search, and fraction-to-boundary limits
 for phase mass and pressure. A model can freeze donor, flow-regime, and complementarity choices for
-one Jacobian and refresh them between Newton iterations. Every model evaluation must be
+one Jacobian and refresh them between Newton iterations. A changed active set always triggers a
+fresh base residual, and the diagnostic Jacobian evaluates its base and perturbed columns with the
+same frozen choices. Every model evaluation must be
 transactional: trial calls must start from the same accepted state and must not accumulate accepted
 mass, component, thermal, limiter, or rejection ledgers.
 
@@ -1325,11 +1327,13 @@ accepted section templates for every residual probe, evaluates pressure-dependen
 at the midpoint and closure pressures, restores evaluator-owned diagnostics after every trial, and
 applies a prescribed pressure only to the external outlet momentum traction. Advective phase mass
 and energy fluxes keep the existing signed or one-way outlet policy, and the final cell retains its
-own volume-closure equation.
+own volume-closure equation. An explicit `ActiveSetController` now delegates the freeze, release,
+and refresh lifecycle using defensive state and pressure copies, so an attempt-local finite-volume
+active-set implementation cannot mutate the accepted pipe state.
 
 The adapter is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
 qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
-rollback wiring, and active-set ownership for donor and regime choices. The existing 5 s mesh matrix
+rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices. The existing 5 s mesh matrix
 and the 180/600 s public Tengesdal gates must pass before the path can be exposed as a pipe option.
 Energy, named-component transport, and phase change are outside the initial isothermal solve and
 remain separate unsupported intersections.

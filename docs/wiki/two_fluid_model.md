@@ -870,8 +870,11 @@ cell's closure equation or trigger proportional outlet-cell mass repair.
 
 The kernel provides scaled residuals, a colored block-stencil finite-difference Jacobian, line
 search, fraction-to-boundary mass/pressure limits, and hooks that freeze and refresh donor/regime
-active sets. Its model callback must be transactional so Jacobian probes cannot advance accepted
-diagnostics or state.
+active sets. The adapter delegates those hooks to an explicit, attempt-local active-set owner using
+defensive state copies. When a donor, regime, or complementarity choice changes, the solver
+re-evaluates the base residual before forming another Jacobian; the diagnostic Jacobian also uses
+the same frozen choices for its base and perturbed columns. Its model callback must remain
+transactional so Jacobian probes cannot advance accepted diagnostics or state.
 
 `TwoFluidUnsplitModelAdapter` connects this kernel to the finite-volume flux/source operator
 transactionally. It reconstructs trial sections from accepted clones, evaluates phase densities at
@@ -881,7 +884,7 @@ its volume-closure equation, while outlet phase mass and energy remain conservat
 fluxes.
 
 This is still not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
-accepted-state commit/rollback, donor/regime active-set ownership, and the 5/180/600 s qualification
+accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the 5/180/600 s qualification
 sequence remain required. Energy, named-component transport, and phase change are outside the
 initial isothermal system.
 

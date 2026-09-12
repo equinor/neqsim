@@ -308,7 +308,9 @@ public final class UnsplitTransientSolver implements Serializable {
       residualNorm = maximumAbsolute(current.residual);
       minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
       activeSetStable = !model.updateActiveSet(current.midpointState, current.midpointPressure);
-      if (!activeSetStable && residualNorm <= relativeTolerance) {
+      if (!activeSetStable) {
+        // The current residual belongs to the old donor/regime/complementarity
+        // set. Never difference a new piecewise-smooth operator against it.
         current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
             outletPressure, outletPressureFixed, model);
         evaluations++;
@@ -372,8 +374,15 @@ public final class UnsplitTransientSolver implements Serializable {
     validateCandidate(candidateState, candidatePressure, previousState.length);
     ResidualEvaluation base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure,
         cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model);
+    if (model.updateActiveSet(base.midpointState, base.midpointPressure)) {
+      base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas, timeStep,
+          startTime, outletPressure, outletPressureFixed, model);
+    }
     model.beginLinearization(base.midpointState, base.midpointPressure);
     try {
+      // Use the same frozen choices for the base and every perturbed column.
+      base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas, timeStep,
+          startTime, outletPressure, outletPressureFixed, model);
       return approximateJacobian(previousState, previousPressure, candidateState, candidatePressure, cellAreas,
           createVariableScale(previousState, previousPressure), base.residual, timeStep, startTime, outletPressure,
           outletPressureFixed, model);

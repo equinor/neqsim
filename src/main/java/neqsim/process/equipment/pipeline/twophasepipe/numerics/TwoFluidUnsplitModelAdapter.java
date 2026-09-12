@@ -39,10 +39,42 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     double[] calculate(int cell, double[] conservativeState, double pressure, double time);
   }
 
+  /**
+   * Owns nonsmooth choices made by the finite-volume closure while Newton forms and accepts an active set.
+   *
+   * <p>
+   * The controller must not mutate the pipe's accepted sections. Implementations may retain only donor, regime and
+   * phase-presence choices derived from the supplied defensive state copies.
+   * </p>
+   */
+  public interface ActiveSetController extends Serializable {
+    /** Freeze the choices used by all residual probes in one Jacobian. */
+    default void beginLinearization(double[][] state, double[] pressure) {
+    }
+
+    /** Release choices frozen for the completed Jacobian. */
+    default void endLinearization() {
+    }
+
+    /**
+     * Refresh choices after an accepted Newton update.
+     *
+     * @return true when a choice changed and the residual must be relinearized
+     */
+    default boolean update(double[][] state, double[] pressure) {
+      return false;
+    }
+  }
+
+  private static final ActiveSetController SMOOTH_ACTIVE_SET = new ActiveSetController() {
+    private static final long serialVersionUID = 1L;
+  };
+
   private final TwoFluidConservationEquations equations;
   private final TwoFluidSection[] acceptedTemplates;
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
+  private final ActiveSetController activeSetController;
 
   /**
    * Create a transactional adapter.
@@ -54,8 +86,25 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    */
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, SMOOTH_ACTIVE_SET);
+  }
+
+  /**
+   * Create a transactional adapter with explicit ownership of nonsmooth closure choices.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param activeSetController donor, regime and phase-presence active-set owner
+   */
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController) {
     if (equations == null || densityModel == null) {
       throw new IllegalArgumentException("Equations and density model cannot be null");
+    }
+    if (activeSetController == null) {
+      throw new IllegalArgumentException("Active-set controller cannot be null");
     }
     if (acceptedTemplates == null || acceptedTemplates.length == 0) {
       throw new IllegalArgumentException("At least one accepted section template is required");
@@ -67,6 +116,24 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     this.acceptedTemplates = cloneSections(acceptedTemplates);
     this.spatialStep = spatialStep;
     this.densityModel = densityModel;
+    this.activeSetController = activeSetController;
+  }
+
+  @Override
+  public synchronized void beginLinearization(double[][] state, double[] pressure) {
+    validateShape(state, pressure, "linearization");
+    activeSetController.beginLinearization(copy(state), pressure.clone());
+  }
+
+  @Override
+  public synchronized void endLinearization() {
+    activeSetController.endLinearization();
+  }
+
+  @Override
+  public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
+    validateShape(state, pressure, "active-set");
+    return activeSetController.update(copy(state), pressure.clone());
   }
 
   @Override
@@ -147,5 +214,13 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       copy[cell] = sections[cell].clone();
     }
     return copy;
+  }
+
+  private static double[][] copy(double[][] values) {
+    double[][] result = new double[values.length][];
+    for (int row = 0; row < values.length; row++) {
+      result[row] = values[row].clone();
+    }
+    return result;
   }
 }

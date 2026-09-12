@@ -4,12 +4,59 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import org.junit.jupiter.api.Test;
 
 class TwoFluidUnsplitModelAdapterTest {
+  @Test
+  void delegatesActiveSetOwnershipWithDefensiveStateCopies() {
+    TwoFluidSection[] accepted = { section(0.0) };
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setIncludeEnergyEquation(false);
+    equations.setIncludeMassTransfer(false);
+    double[][] state = { accepted[0].getStateVector() };
+    double[] pressure = { accepted[0].getPressure() };
+    int[] calls = new int[3];
+    TwoFluidUnsplitModelAdapter.ActiveSetController controller = new TwoFluidUnsplitModelAdapter.ActiveSetController() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void beginLinearization(double[][] trialState, double[] trialPressure) {
+        calls[0]++;
+        trialState[0][0] = -1.0;
+        trialPressure[0] = -1.0;
+      }
+
+      @Override
+      public void endLinearization() {
+        calls[1]++;
+      }
+
+      @Override
+      public boolean update(double[][] trialState, double[] trialPressure) {
+        calls[2]++;
+        trialState[0][1] = -1.0;
+        return true;
+      }
+    };
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
+        (cell, conservativeState, cellPressure, time) -> new double[] { 40.0, 700.0, 1000.0 }, controller);
+
+    adapter.beginLinearization(state, pressure);
+    assertTrue(adapter.updateActiveSet(state, pressure));
+    adapter.endLinearization();
+
+    assertEquals(1, calls[0]);
+    assertEquals(1, calls[1]);
+    assertEquals(1, calls[2]);
+    assertTrue(state[0][0] >= 0.0);
+    assertTrue(state[0][1] >= 0.0);
+    assertTrue(pressure[0] > 0.0);
+  }
+
   @Test
   void repeatedResidualProbesAreTransactionalAndUseTheOutletFacePressure() {
     TwoFluidSection[] accepted = { section(0.0), section(10.0) };
