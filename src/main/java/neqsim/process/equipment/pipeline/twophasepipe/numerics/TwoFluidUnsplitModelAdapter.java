@@ -34,7 +34,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
      * @param cell cell index
      * @param conservativeState seven-column conservative state
      * @param pressure cell pressure in Pa
-     * @param time common midpoint coefficient-evaluation time in s, also used at the end-state pressure
+     * @param time selected coefficient-evaluation time in s, also used at the end-state pressure
      * @return gas, oil, and water densities in kg/m3
      */
     double[] calculate(int cell, double[] conservativeState, double pressure, double time);
@@ -52,8 +52,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     /**
      * Freeze the choices used by all residual probes in one Jacobian.
      *
-     * @param state defensive midpoint conservative state
-     * @param pressure defensive midpoint pressure in Pa, including pressure-dependent donor choices
+     * @param state defensive conservative state at the selected time level
+     * @param pressure defensive pressure in Pa at the selected time level, including pressure-dependent donor choices
      */
     default void beginLinearization(double[][] state, double[] pressure) {
     }
@@ -65,8 +65,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     /**
      * Refresh choices after an accepted Newton update.
      *
-     * @param state defensive midpoint conservative state
-     * @param pressure defensive midpoint pressure in Pa
+     * @param state defensive conservative state at the selected time level
+     * @param pressure defensive pressure in Pa at the selected time level
      * @return true when a choice changed and the residual must be relinearized
      */
     default boolean update(double[][] state, double[] pressure) {
@@ -83,6 +83,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   private final double spatialStep;
   private final PhaseDensityModel densityModel;
   private final ActiveSetController activeSetController;
+  private final double pressureInterpolationTimeScale;
 
   /**
    * Create a transactional adapter.
@@ -108,6 +109,36 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    */
   public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
       double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, activeSetController, 0.0);
+  }
+
+  /**
+   * Create an adapter with transient pressure interpolation inside the conservative face fluxes.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   */
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, double pressureInterpolationTimeScale) {
+    this(equations, acceptedTemplates, spatialStep, densityModel, SMOOTH_ACTIVE_SET, pressureInterpolationTimeScale);
+  }
+
+  /**
+   * Create a transactional adapter with explicit active choices and pressure interpolation.
+   *
+   * @param equations configured finite-volume operator
+   * @param acceptedTemplates accepted section state used as the trial template
+   * @param spatialStep representative cell size in m
+   * @param densityModel pressure-dependent phase density model
+   * @param activeSetController donor, regime and phase-presence active-set owner
+   * @param pressureInterpolationTimeScale zero to disable, or the temporal end-state weight times the attempted step
+   */
+  public TwoFluidUnsplitModelAdapter(TwoFluidConservationEquations equations, TwoFluidSection[] acceptedTemplates,
+      double spatialStep, PhaseDensityModel densityModel, ActiveSetController activeSetController,
+      double pressureInterpolationTimeScale) {
     if (equations == null || densityModel == null) {
       throw new IllegalArgumentException("Equations and density model cannot be null");
     }
@@ -119,6 +150,9 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     }
     if (!(spatialStep > 0.0) || !Double.isFinite(spatialStep)) {
       throw new IllegalArgumentException("Spatial step must be positive and finite");
+    }
+    if (!(pressureInterpolationTimeScale >= 0.0) || !Double.isFinite(pressureInterpolationTimeScale)) {
+      throw new IllegalArgumentException("Pressure interpolation time scale must be nonnegative and finite");
     }
     this.equations = equations;
     this.acceptedTemplates = cloneSections(acceptedTemplates);
@@ -137,6 +171,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     this.spatialStep = spatialStep;
     this.densityModel = densityModel;
     this.activeSetController = activeSetController;
+    this.pressureInterpolationTimeScale = pressureInterpolationTimeScale;
   }
 
   @Override
@@ -160,7 +195,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   public synchronized UnsplitTransientSolver.Evaluation evaluate(double[][] state, double[] pressure,
       double[][] closureState, double[] closurePressure, double time, double outletPressure,
       boolean outletPressureFixed) {
-    validateShape(state, pressure, "midpoint");
+    validateShape(state, pressure, "evaluation");
     validateShape(closureState, closurePressure, "closure");
     if (!Double.isFinite(time)) {
       throw new IllegalArgumentException("Coefficient-evaluation time must be finite");
@@ -182,26 +217,30 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     double[][] rates;
     synchronized (equations) {
       double savedOutletPressure = equations.getOutletBoundaryPressure();
+      double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
+        equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         rates = equations.calcRHSTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
+        equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
       }
     }
     return new UnsplitTransientSolver.Evaluation(rates, closureDensities);
   }
 
   /**
-   * Independently verify a converged isothermal candidate and prepare its endpoint and exact midpoint ledger.
+   * Independently verify a converged isothermal candidate and prepare its endpoint and exact time-level ledger.
    *
    * <p>
    * Nothing is committed: accepted section templates, equation diagnostics, clocks and streams remain unchanged. This
    * checks the actual finite-volume residual again instead of trusting a solver result produced with another adapter,
    * boundary, time step or configuration. Callers still own atomic commit/rollback and physical qualification. Legacy
    * trial primitive recovery remains the residual extension away from volume closure; endpoint recovery never repairs
-   * the converged state. Density coefficients use the common midpoint time at both midpoint and end pressure, as in
-   * {@link #evaluate}.
+   * the converged state. The candidate's immutable time weight determines the state, pressure and common coefficient
+   * time used for conservative rates and end-pressure densities, as in {@link #evaluate}. Subsequent changes to the
+   * solver's temporal method cannot alter this verification.
    * </p>
    *
    * @param candidate nonlinear solve result
@@ -210,7 +249,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
    * @param outletPressure prescribed external face pressure in Pa
    * @param outletPressureFixed whether the outlet face has a pressure boundary
    * @param relativeTolerance positive finite scaled conservation and relative-volume tolerance
-   * @return immutable prepared step with defensive endpoint sections and the exact midpoint transport ledger
+   * @return immutable prepared step with defensive endpoint sections and the exact selected-time transport ledger
    * @throws IllegalArgumentException for invalid inputs or endpoint properties
    * @throws IllegalStateException for an unconverged, inconsistent or unsupported candidate
    */
@@ -230,7 +269,14 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     if (outletPressureFixed && (!(outletPressure > 0.0) || !Double.isFinite(outletPressure))) {
       throw new IllegalArgumentException("A fixed outlet pressure must be positive and finite");
     }
-    double evaluationTime = startTime + 0.5 * timeStep;
+    double timeWeight = candidate.getTimeIntegrationWeight();
+    if (timeWeight != 0.5 && timeWeight != 1.0) {
+      throw new IllegalArgumentException("Candidate time weight must select midpoint or backward Euler");
+    }
+    if (pressureInterpolationTimeScale > 0.0 && pressureInterpolationTimeScale != timeWeight * timeStep) {
+      throw new IllegalArgumentException("Pressure interpolation must use the candidate time weight times its step");
+    }
+    double evaluationTime = startTime + timeWeight * timeStep;
     double[][] midpointState = new double[acceptedTemplates.length][STATE_SIZE];
     double[] midpointPressure = new double[acceptedTemplates.length];
     double[][] previousState = new double[acceptedTemplates.length][];
@@ -240,9 +286,11 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         throw new IllegalStateException("An isothermal candidate cannot change the retained energy variable");
       }
       for (int variable = 0; variable < STATE_SIZE; variable++) {
-        midpointState[cell][variable] = 0.5 * previousState[cell][variable] + 0.5 * endpointState[cell][variable];
+        midpointState[cell][variable] = timeWeight == 1.0 ? endpointState[cell][variable]
+            : 0.5 * previousState[cell][variable] + 0.5 * endpointState[cell][variable];
       }
-      midpointPressure[cell] = 0.5 * acceptedTemplates[cell].getPressure() + 0.5 * endpointPressure[cell];
+      midpointPressure[cell] = timeWeight == 1.0 ? endpointPressure[cell]
+          : 0.5 * acceptedTemplates[cell].getPressure() + 0.5 * endpointPressure[cell];
     }
     TwoFluidSection[] midpoint = createTrialSections(midpointState, midpointPressure, evaluationTime);
     TwoFluidSection[] endpoint = cloneSections(acceptedTemplates);
@@ -256,11 +304,14 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     synchronized (equations) {
       validatePreparedOperator();
       double savedOutletPressure = equations.getOutletBoundaryPressure();
+      double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
+        equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
         evaluation = equations.evaluateTransactional(midpoint, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
+        equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
       }
     }
     double[][] rates = evaluation.getRates();
@@ -276,10 +327,11 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       }
     }
     if (maximumResidual > relativeTolerance) {
-      throw new IllegalStateException("Candidate does not satisfy the current midpoint operator: scaled residual="
+      throw new IllegalStateException("Candidate does not satisfy the selected time-level operator: scaled residual="
           + maximumResidual + ", tolerance=" + relativeTolerance);
     }
-    return new PreparedStep(endpoint, acceptedTemplates, evaluation, timeStep, startTime, maximumResidual);
+    return new PreparedStep(endpoint, acceptedTemplates, evaluation, timeStep, startTime, maximumResidual, timeWeight,
+        pressureInterpolationTimeScale);
   }
 
   /** Fail unsupported configurations before an interval controller starts nonlinear attempts. */
@@ -302,16 +354,21 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     private final double timeStep;
     private final double startTime;
     private final double maximumScaledResidual;
+    private final double timeIntegrationWeight;
+    private final double pressureInterpolationTimeScale;
     private final double[] initialMassKg = new double[PHASE_COUNT];
     private final double[] finalMassKg = new double[PHASE_COUNT];
 
     private PreparedStep(TwoFluidSection[] endpoint, TwoFluidSection[] previous, TransactionalEvaluation evaluation,
-        double timeStep, double startTime, double maximumScaledResidual) {
+        double timeStep, double startTime, double maximumScaledResidual, double timeIntegrationWeight,
+        double pressureInterpolationTimeScale) {
       endpointSections = cloneSections(endpoint);
       midpointEvaluation = evaluation;
       this.timeStep = timeStep;
       this.startTime = startTime;
       this.maximumScaledResidual = maximumScaledResidual;
+      this.timeIntegrationWeight = timeIntegrationWeight;
+      this.pressureInterpolationTimeScale = pressureInterpolationTimeScale;
       for (int cell = 0; cell < endpoint.length; cell++) {
         double[] before = previous[cell].getStateVector();
         double[] after = endpoint[cell].getStateVector();
@@ -335,9 +392,35 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       return cloneSections(endpointSections);
     }
 
-    /** @return immutable exact midpoint derivatives and transport ledger */
+    /**
+     * Compatibility accessor for the selected-time evaluation. It is at the midpoint for the default method and at the
+     * endpoint for backward Euler.
+     *
+     * @return immutable exact derivatives and transport ledger
+     */
     public TransactionalEvaluation getMidpointEvaluation() {
       return midpointEvaluation;
+    }
+
+    /** @return immutable exact derivatives and transport ledger at the candidate's selected time level */
+    public TransactionalEvaluation getEvaluation() {
+      return midpointEvaluation;
+    }
+
+    /** @return immutable end-state weight: 0.5 for midpoint or 1.0 for backward Euler */
+    public double getTimeIntegrationWeight() {
+      // Prepared steps serialized before this setting was introduced used midpoint.
+      return timeIntegrationWeight == 0.0 ? 0.5 : timeIntegrationWeight;
+    }
+
+    /** @return common coefficient-evaluation time in s for the verified rates and density closure */
+    public double getEvaluationTimeSeconds() {
+      return startTime + getTimeIntegrationWeight() * timeStep;
+    }
+
+    /** @return pressure-interpolation mobility time in s, or zero when disabled */
+    public double getPressureInterpolationTimeScale() {
+      return pressureInterpolationTimeScale;
     }
 
     /** @return prepared duration in s; no clock is advanced */
@@ -365,7 +448,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       return finalMassKg.clone();
     }
 
-    /** @return gas/oil/water mass-balance residuals in kg, using exact midpoint boundary/source transfers */
+    /** @return gas/oil/water mass-balance residuals in kg, using the exact selected-time boundary/source transfers */
     public double[] getMassResidualKg() {
       double[] inlet = midpointEvaluation.getMassBalanceRate().getInletMassFlowKgPerSecond();
       double[] outlet = midpointEvaluation.getMassBalanceRate().getOutletMassFlowKgPerSecond();

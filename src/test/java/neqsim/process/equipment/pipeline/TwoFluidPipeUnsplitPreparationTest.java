@@ -31,6 +31,29 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Actual steady-state handoffs and isolation contracts for the unsplit preparation interface. */
 class TwoFluidPipeUnsplitPreparationTest {
   @Test
+  void pressureInterpolationUsesEachSelectedTimeLevelWithoutPublishingThePipe() throws Exception {
+    for (UnsplitTransientSolver.TimeIntegrationMethod method : UnsplitTransientSolver.TimeIntegrationMethod.values()) {
+      TwoFluidPipe pipe = createPipe(true, true);
+      assertFalse(pipe.isUnsplitPressureInterpolationEnabled());
+      pipe.setUnsplitPressureInterpolationEnabled(true);
+      assertTrue(pipe.isUnsplitPressureInterpolationEnabled());
+      PublishedState published = new PublishedState(pipe);
+      UnsplitTransientSolver solver = solver();
+      solver.setTimeIntegrationMethod(method);
+      PreparedInterval interval = pipe.prepareUnsplitTransient(1.0e-5, 5.0e-6, solver,
+          pipe.createUnsplitDensityModel());
+      assertEquals(1.0e-5, interval.getEndTimeSeconds(), 0.0);
+      interval.getSubsteps().forEach(step -> assertEquals(step.getTimeIntegrationWeight() * step.getTimeStepSeconds(),
+          step.getPressureInterpolationTimeScale(), 0.0));
+      for (double residual : interval.getMassResidualKg()) {
+        assertEquals(0.0, residual, 1.0e-8);
+      }
+      published.assertUnchanged(pipe);
+      assertTrue(pipe.isUnsplitPressureInterpolationEnabled());
+    }
+  }
+
+  @Test
   void requiresSteadyInitializationBeforeSnapshotDensityOrPreparation() {
     TwoFluidPipe pipe = createPipe(false, false);
     assertThrows(IllegalStateException.class, pipe::getSectionSnapshots);

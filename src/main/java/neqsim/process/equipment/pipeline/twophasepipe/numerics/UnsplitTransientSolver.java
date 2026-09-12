@@ -8,9 +8,9 @@ import java.io.Serializable;
  *
  * <p>
  * Each finite-volume cell has seven nonlinear unknowns: gas, oil and water mass per length; gas, oil and water momentum
- * per length; and cell pressure. The six conservation residuals use an implicit-midpoint evaluation. The seventh
- * residual is pressure-dependent volume closure. Total energy remains unchanged by this isothermal kernel and must be
- * advanced by a separately qualified thermal model.
+ * per length; and cell pressure. The six conservation residuals use implicit midpoint by default, with backward Euler
+ * available explicitly for temporal damping. The seventh residual is pressure-dependent volume closure. Total energy
+ * remains unchanged by this isothermal kernel and must be advanced by a separately qualified thermal model.
  * </p>
  *
  * <p>
@@ -51,19 +51,34 @@ public final class UnsplitTransientSolver implements Serializable {
   private double finiteDifferenceStep = 1.0e-6;
   private double minimumPressure = 1.0;
   private double fractionToBoundary = 0.99;
+  private TimeIntegrationMethod timeIntegrationMethod = TimeIntegrationMethod.IMPLICIT_MIDPOINT;
+
+  /** Supported time levels for evaluating the complete conservative spatial operator. */
+  public enum TimeIntegrationMethod {
+    /** Second-order midpoint evaluation; the default method. */
+    IMPLICIT_MIDPOINT(0.5),
+    /** First-order endpoint evaluation with damping of stiff decaying modes. */
+    BACKWARD_EULER(1.0);
+
+    private final double weight;
+
+    TimeIntegrationMethod(double weight) {
+      this.weight = weight;
+    }
+  }
 
   /**
    * Transactional spatial model evaluated by the nonlinear solver.
    */
   public interface Model {
     /**
-     * Evaluate six conservative rates and three phase densities at one trial midpoint.
+     * Evaluate six conservative rates and three phase densities at the selected trial time level.
      *
      * @param state seven-column conservative state; column six is unchanged isothermal energy
-     * @param pressure midpoint cell-centre pressure in Pa used by conservative rates
+     * @param pressure cell-centre pressure in Pa at the selected time level used by conservative rates
      * @param closureState end-of-step conservative state used by volume closure
      * @param closurePressure end-of-step cell pressure in Pa used by phase densities
-     * @param time evaluation time in s
+     * @param time selected coefficient-evaluation time in s, also used for end-state closure densities
      * @param outletPressure fixed outlet-face pressure in Pa, or NaN for a free outlet
      * @param outletPressureFixed true when the outlet face has a pressure boundary condition
      * @return transactional model evaluation
@@ -75,8 +90,8 @@ public final class UnsplitTransientSolver implements Serializable {
      * Freeze nonsmooth donor, flow-regime and complementarity choices for one Jacobian, including its unperturbed base
      * residual. The solver releases these choices before the line search, even when initialization or a probe fails.
      *
-     * @param state midpoint conservative state
-     * @param pressure midpoint pressure in Pa
+     * @param state conservative state at the selected time level
+     * @param pressure pressure in Pa at the selected time level
      */
     default void beginLinearization(double[][] state, double[] pressure) {
       // Optional for smooth models.
@@ -95,8 +110,8 @@ public final class UnsplitTransientSolver implements Serializable {
      * solver reevaluates the residual before calling this method again at the same iterate. Calls receive defensive
      * state copies and occur outside a frozen linearization.
      *
-     * @param state updated midpoint conservative state
-     * @param pressure updated midpoint pressure in Pa
+     * @param state updated conservative state at the selected time level
+     * @param pressure updated pressure in Pa at the selected time level
      * @return true when an active choice changed and the residual must be reevaluated
      */
     default boolean updateActiveSet(double[][] state, double[] pressure) {
@@ -180,10 +195,11 @@ public final class UnsplitTransientSolver implements Serializable {
     private final boolean activeSetStable;
     private final boolean converged;
     private final TerminationReason terminationReason;
+    private final double timeIntegrationWeight;
 
     private Result(double[][] state, double[] pressure, int iterations, int modelEvaluations,
         double maximumScaledResidual, double minimumAcceptedStepLength, boolean activeSetStable, boolean converged,
-        TerminationReason terminationReason) {
+        TerminationReason terminationReason, double timeIntegrationWeight) {
       this.state = copy(state);
       this.pressure = pressure.clone();
       this.iterations = iterations;
@@ -193,6 +209,7 @@ public final class UnsplitTransientSolver implements Serializable {
       this.activeSetStable = activeSetStable;
       this.converged = converged;
       this.terminationReason = terminationReason;
+      this.timeIntegrationWeight = timeIntegrationWeight;
     }
 
     /** @return defensive copy of the conservative state */
@@ -241,6 +258,16 @@ public final class UnsplitTransientSolver implements Serializable {
     /** @return reason the nonlinear solve stopped */
     public TerminationReason getTerminationReason() {
       return terminationReason;
+    }
+
+    /**
+     * Return the immutable end-state weight used by this solve, independently of subsequent solver configuration.
+     *
+     * @return 0.5 for implicit midpoint or 1.0 for backward Euler
+     */
+    public double getTimeIntegrationWeight() {
+      // Results serialized before the method option was introduced used midpoint and have a zero field.
+      return timeIntegrationWeight == 0.0 ? 0.5 : timeIntegrationWeight;
     }
   }
 
@@ -324,7 +351,7 @@ public final class UnsplitTransientSolver implements Serializable {
   }
 
   /**
-   * Solve one common implicit-midpoint time level.
+   * Solve one common time level using the configured temporal method captured at entry.
    *
    * @param previousState accepted seven-column state
    * @param previousPressure accepted cell pressure in Pa
@@ -340,6 +367,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
+    double timeWeight = getTimeIntegrationMethod().weight;
     double[][] state = copy(previousState);
     double[] pressure = previousPressure.clone();
     double[] variableScale = createVariableScale(previousState, previousPressure);
@@ -347,9 +375,9 @@ public final class UnsplitTransientSolver implements Serializable {
     int iterations = 0;
     double minimumAcceptedStep = 1.0;
     ResidualEvaluation current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep,
-        startTime, outletPressure, outletPressureFixed, countedModel);
+        startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
     ActiveSetEvaluation refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas,
-        timeStep, startTime, outletPressure, outletPressureFixed, countedModel, current);
+        timeStep, startTime, outletPressure, outletPressureFixed, countedModel, current, timeWeight);
     current = refreshed.evaluation;
     boolean activeSetStable = refreshed.stable;
     double residualNorm = maximumAbsolute(current.residual);
@@ -361,10 +389,10 @@ public final class UnsplitTransientSolver implements Serializable {
       double[][] jacobian;
       try (Linearization ignored = new Linearization(countedModel, current)) {
         current = evaluateResidual(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
-            outletPressure, outletPressureFixed, countedModel);
+            outletPressure, outletPressureFixed, countedModel, timeWeight);
         residualNorm = maximumAbsolute(current.residual);
         jacobian = approximateJacobian(previousState, previousPressure, state, pressure, cellAreas, variableScale,
-            current.residual, timeStep, startTime, outletPressure, outletPressureFixed, countedModel);
+            current.residual, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
       }
 
       double[] rightHandSide = new double[current.residual.length];
@@ -394,7 +422,7 @@ public final class UnsplitTransientSolver implements Serializable {
         trialPressure = pressure.clone();
         applyUpdate(trialState, trialPressure, variableScale, normalizedUpdate, stepLength);
         trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
-            startTime, outletPressure, outletPressureFixed, countedModel);
+            startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
         double trialNorm = maximumAbsolute(trial.residual);
         if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < relativeTolerance) {
           accepted = true;
@@ -412,7 +440,7 @@ public final class UnsplitTransientSolver implements Serializable {
       current = trial;
       minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
       refreshed = refreshActiveSet(previousState, previousPressure, state, pressure, cellAreas, timeStep, startTime,
-          outletPressure, outletPressureFixed, countedModel, current);
+          outletPressure, outletPressureFixed, countedModel, current, timeWeight);
       current = refreshed.evaluation;
       activeSetStable = refreshed.stable;
       residualNorm = maximumAbsolute(current.residual);
@@ -427,11 +455,11 @@ public final class UnsplitTransientSolver implements Serializable {
       terminationReason = TerminationReason.CONVERGED;
     }
     return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm, minimumAcceptedStep,
-        activeSetStable, converged, terminationReason);
+        activeSetStable, converged, terminationReason, timeWeight);
   }
 
   /**
-   * Evaluate the scaled residual for verification and directional-derivative tests.
+   * Evaluate the scaled residual with the currently configured temporal method for directional-derivative tests.
    *
    * @param previousState accepted state
    * @param previousPressure accepted pressure in Pa
@@ -452,13 +480,13 @@ public final class UnsplitTransientSolver implements Serializable {
         model);
     validateCandidate(candidateState, candidatePressure, previousState.length);
     return evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas, timeStep,
-        startTime, outletPressure, outletPressureFixed, model).residual;
+        startTime, outletPressure, outletPressureFixed, model, getTimeIntegrationMethod().weight).residual;
   }
 
   /**
    * Build the colored finite-difference Jacobian of the scaled residual with respect to scaled unknowns. This
-   * diagnostic supports independent directional-derivative qualification without exposing or mutating a nonlinear solve
-   * in progress.
+   * diagnostic uses the currently configured temporal method and supports independent directional-derivative
+   * qualification without exposing or mutating a nonlinear solve in progress.
    *
    * @param previousState accepted state
    * @param previousPressure accepted pressure in Pa
@@ -479,10 +507,11 @@ public final class UnsplitTransientSolver implements Serializable {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
     validateCandidate(candidateState, candidatePressure, previousState.length);
+    double timeWeight = getTimeIntegrationMethod().weight;
     ResidualEvaluation base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure,
-        cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model);
+        cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model, timeWeight);
     ActiveSetEvaluation refreshed = refreshActiveSet(previousState, previousPressure, candidateState, candidatePressure,
-        cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model, base);
+        cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model, base, timeWeight);
     if (!refreshed.stable) {
       throw new IllegalStateException(
           "Active set did not stabilize after " + getMaximumActiveSetUpdates() + " refresh attempts");
@@ -491,16 +520,16 @@ public final class UnsplitTransientSolver implements Serializable {
     try (Linearization ignored = new Linearization(model, base)) {
       // Use the same frozen choices for the base and every perturbed column.
       base = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas, timeStep,
-          startTime, outletPressure, outletPressureFixed, model);
+          startTime, outletPressure, outletPressureFixed, model, timeWeight);
       return approximateJacobian(previousState, previousPressure, candidateState, candidatePressure, cellAreas,
           createVariableScale(previousState, previousPressure), base.residual, timeStep, startTime, outletPressure,
-          outletPressureFixed, model);
+          outletPressureFixed, model, timeWeight);
     }
   }
 
   private ActiveSetEvaluation refreshActiveSet(double[][] previousState, double[] previousPressure,
       double[][] candidateState, double[] candidatePressure, double[] cellAreas, double timeStep, double startTime,
-      double outletPressure, boolean outletPressureFixed, Model model, ResidualEvaluation current) {
+      double outletPressure, boolean outletPressureFixed, Model model, ResidualEvaluation current, double timeWeight) {
     for (int update = 0; update < getMaximumActiveSetUpdates(); update++) {
       if (!model.updateActiveSet(copy(current.midpointState), current.midpointPressure.clone())) {
         return new ActiveSetEvaluation(current, true);
@@ -508,25 +537,27 @@ public final class UnsplitTransientSolver implements Serializable {
       // Even the last permitted switch invalidates the old residual. Keep the
       // returned diagnostics consistent with the final active choices on failure.
       current = evaluateResidual(previousState, previousPressure, candidateState, candidatePressure, cellAreas,
-          timeStep, startTime, outletPressure, outletPressureFixed, model);
+          timeStep, startTime, outletPressure, outletPressureFixed, model, timeWeight);
     }
     return new ActiveSetEvaluation(current, false);
   }
 
   private ResidualEvaluation evaluateResidual(double[][] previousState, double[] previousPressure,
       double[][] candidateState, double[] candidatePressure, double[] cellAreas, double timeStep, double startTime,
-      double outletPressure, boolean outletPressureFixed, Model model) {
+      double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
     int cellCount = previousState.length;
     double[][] midpointState = copy(previousState);
     double[] midpointPressure = new double[cellCount];
     for (int cell = 0; cell < cellCount; cell++) {
       for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
-        midpointState[cell][variable] = 0.5 * (previousState[cell][variable] + candidateState[cell][variable]);
+        midpointState[cell][variable] = timeWeight == 1.0 ? candidateState[cell][variable]
+            : 0.5 * (previousState[cell][variable] + candidateState[cell][variable]);
       }
-      midpointPressure[cell] = 0.5 * (previousPressure[cell] + candidatePressure[cell]);
+      midpointPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
+          : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
     }
     Evaluation evaluation = model.evaluate(copy(midpointState), midpointPressure.clone(), copy(candidateState),
-        candidatePressure.clone(), startTime + 0.5 * timeStep, outletPressure, outletPressureFixed);
+        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
     if (evaluation == null) {
       throw new IllegalArgumentException("Model evaluation cannot be null");
     }
@@ -551,7 +582,7 @@ public final class UnsplitTransientSolver implements Serializable {
 
   private double[][] approximateJacobian(double[][] previousState, double[] previousPressure, double[][] candidateState,
       double[] candidatePressure, double[] cellAreas, double[] variableScale, double[] baseResidual, double timeStep,
-      double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
+      double startTime, double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
     int cellCount = previousState.length;
     int dimension = cellCount * BLOCK_SIZE;
     int colorCount = 2 * cellStencilHalfWidth + 1;
@@ -572,7 +603,8 @@ public final class UnsplitTransientSolver implements Serializable {
           }
         }
         double[] perturbedResidual = evaluateResidual(previousState, previousPressure, perturbedState,
-            perturbedPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model).residual;
+            perturbedPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model,
+            timeWeight).residual;
         for (int cell = color; cell < cellCount; cell += colorCount) {
           int column = cell * BLOCK_SIZE + variable;
           int firstRowCell = Math.max(0, cell - cellStencilHalfWidth);
@@ -634,6 +666,85 @@ public final class UnsplitTransientSolver implements Serializable {
   }
 
   private static double[] solveDense(double[][] matrix, double[] rightHandSide) {
+    int dimension = rightHandSide.length;
+    boolean[] homogeneous = new boolean[dimension];
+    int[] forced = new int[dimension];
+    int forcedCount = 0;
+    for (int row = 0; row < dimension; row++) {
+      if (!Double.isFinite(rightHandSide[row])) {
+        return solveDenseDirect(matrix, rightHandSide);
+      }
+      homogeneous[row] = rightHandSide[row] == 0.0;
+      if (!homogeneous[row]) {
+        forced[forcedCount++] = row;
+      }
+      for (int column = 0; column < dimension; column++) {
+        // Do not hide a nonfinite coefficient in a coupling to an otherwise homogeneous block.
+        if (!Double.isFinite(matrix[row][column])) {
+          return solveDenseDirect(matrix, rightHandSide);
+        }
+      }
+    }
+    if (forcedCount == 0 || forcedCount == dimension) {
+      return solveDenseDirect(matrix, rightHandSide);
+    }
+
+    // Remove each zero-RHS row that depends on an already forced unknown. Propagating those dependencies finds
+    // the maximal closed homogeneous subset using exact zeros, without phase identities or numerical cutoffs.
+    for (int next = 0; next < forcedCount; next++) {
+      int column = forced[next];
+      for (int row = 0; row < dimension; row++) {
+        if (homogeneous[row] && matrix[row][column] != 0.0) {
+          homogeneous[row] = false;
+          forced[forcedCount++] = row;
+        }
+      }
+    }
+    if (forcedCount == dimension) {
+      return solveDenseDirect(matrix, rightHandSide);
+    }
+
+    int[] zeroIndices = new int[dimension - forcedCount];
+    int[] activeIndices = new int[forcedCount];
+    int zeroCount = 0;
+    int activeCount = 0;
+    for (int row = 0; row < dimension; row++) {
+      if (homogeneous[row]) {
+        zeroIndices[zeroCount++] = row;
+      } else {
+        activeIndices[activeCount++] = row;
+      }
+    }
+    double[] activeRightHandSide = new double[activeCount];
+    for (int row = 0; row < activeCount; row++) {
+      activeRightHandSide[row] = rightHandSide[activeIndices[row]];
+    }
+    // A_II x_I = 0 is independent of the remaining equations. Factor it to check nonsingularity before using its
+    // exact-zero solution; the active equations then reduce to A_JJ x_J = b_J. Separate pivoting cannot seed a
+    // disconnected zero inventory through cancellation against forced rows with large off-block coefficients.
+    double[] zeroSolution = solveDenseDirect(squareSubmatrix(matrix, zeroIndices), new double[zeroCount]);
+    double[] activeSolution = solveDenseDirect(squareSubmatrix(matrix, activeIndices), activeRightHandSide);
+    double[] result = new double[dimension];
+    for (int row = 0; row < zeroCount; row++) {
+      result[zeroIndices[row]] = zeroSolution[row];
+    }
+    for (int row = 0; row < activeCount; row++) {
+      result[activeIndices[row]] = activeSolution[row];
+    }
+    return result;
+  }
+
+  private static double[][] squareSubmatrix(double[][] matrix, int[] indices) {
+    double[][] result = new double[indices.length][indices.length];
+    for (int row = 0; row < indices.length; row++) {
+      for (int column = 0; column < indices.length; column++) {
+        result[row][column] = matrix[indices[row]][indices[column]];
+      }
+    }
+    return result;
+  }
+
+  private static double[] solveDenseDirect(double[][] matrix, double[] rightHandSide) {
     int dimension = rightHandSide.length;
     double[][] coefficients = copy(matrix);
     double[] result = rightHandSide.clone();
@@ -743,6 +854,24 @@ public final class UnsplitTransientSolver implements Serializable {
       result[row] = values[row] == null ? null : values[row].clone();
     }
     return result;
+  }
+
+  /**
+   * Select the time level for the complete conservative operator. This does not change nonlinear tolerances or the
+   * physical model. A solve captures its selection at entry; changing this option does not alter an existing result.
+   *
+   * @param timeIntegrationMethod nonnull method, default {@link TimeIntegrationMethod#IMPLICIT_MIDPOINT}
+   */
+  public void setTimeIntegrationMethod(TimeIntegrationMethod timeIntegrationMethod) {
+    if (timeIntegrationMethod == null) {
+      throw new IllegalArgumentException("Time integration method cannot be null");
+    }
+    this.timeIntegrationMethod = timeIntegrationMethod;
+  }
+
+  /** @return configured temporal method, with midpoint retained for solvers serialized before this option */
+  public TimeIntegrationMethod getTimeIntegrationMethod() {
+    return timeIntegrationMethod == null ? TimeIntegrationMethod.IMPLICIT_MIDPOINT : timeIntegrationMethod;
   }
 
   /** @param maximumIterations positive nonlinear iteration budget */

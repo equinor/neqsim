@@ -218,13 +218,16 @@ public class FlowRegimeDetector implements Serializable {
    *
    * <p>
    * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
-   * two-phase regime path even when its superficial velocity is arbitrarily small.
+   * two-phase regime path even when its superficial velocity is arbitrarily small. Co-current backward flow is
+   * evaluated in the direction of flow, reversing both velocities and inclination for the correlations. This does not
+   * change the section's physical state or extend the correlations to countercurrent flow.
    * </p>
    *
    * @param section The pipe section with current state
    * @return Detected flow regime
    */
   public FlowRegime detectFlowRegime(PipeSection section) {
+    section = flowOrientedSection(section);
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
     double alphaL = section.getLiquidHoldup();
@@ -278,14 +281,46 @@ public class FlowRegimeDetector implements Serializable {
    * @return the dominant flow regime
    */
   public FlowRegime classify(PipeSection section) {
-    FlowRegime regime = detectFlowRegime(section);
+    PipeSection oriented = flowOrientedSection(section);
+    FlowRegime regime = detectFlowRegime(oriented);
     section.setFlowRegime(regime);
 
-    Map<FlowRegime, Double> weights = horizontalRegimeWeights(section, regime);
+    Map<FlowRegime, Double> weights = horizontalRegimeWeights(oriented, regime);
     if (weights != null) {
       section.setRegimeWeights(weights);
     }
     return section.getFlowRegime();
+  }
+
+  /**
+   * Express a co-current state in the positive-flow coordinate assumed by the regime correlations.
+   *
+   * <p>
+   * A stagnant phase follows the moving phase's direction. Complete stagnation and countercurrent flow retain their
+   * existing convention. Only a private classification view is reversed; the signed transport state remains intact.
+   * </p>
+   *
+   * @param section physical section
+   * @return the original section or an independently oriented classification view
+   */
+  private PipeSection flowOrientedSection(PipeSection section) {
+    double gasFlow = section.getSuperficialGasVelocity();
+    double liquidFlow = section.getSuperficialLiquidVelocity();
+    if (!(gasFlow <= 0.0 && liquidFlow <= 0.0 && (gasFlow < 0.0 || liquidFlow < 0.0))) {
+      return section;
+    }
+    PipeSection oriented = section.clone();
+    oriented.setInclination(-section.getInclination());
+    oriented.setGasVelocity(-section.getGasVelocity());
+    oriented.setLiquidVelocity(-section.getLiquidVelocity());
+    if (oriented instanceof TwoFluidSection) {
+      TwoFluidSection phaseView = (TwoFluidSection) oriented;
+      TwoFluidSection physical = (TwoFluidSection) section;
+      phaseView.setOilVelocity(-physical.getOilVelocity());
+      phaseView.setWaterVelocity(-physical.getWaterVelocity());
+    }
+    oriented.updateDerivedQuantitiesWithoutNormalization(-gasFlow, -liquidFlow);
+    return oriented;
   }
 
   /**

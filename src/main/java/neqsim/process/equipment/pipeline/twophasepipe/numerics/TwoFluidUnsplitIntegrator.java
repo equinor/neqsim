@@ -32,6 +32,7 @@ public final class TwoFluidUnsplitIntegrator {
   private final UnsplitTransientSolver solver;
   private final int maximumHalvings;
   private final int maximumSubsteps;
+  private boolean pressureInterpolationEnabled;
 
   /**
    * Create an interval preparer allowing at most eight halvings and 256 accepted substeps.
@@ -68,6 +69,26 @@ public final class TwoFluidUnsplitIntegrator {
   }
 
   /**
+   * Select experimental transient pressure interpolation inside each trial's conservative face fluxes.
+   *
+   * <p>
+   * The mobility uses the selected temporal weight times each attempted step, including retries. It vanishes for linear
+   * pressure profiles and couples the alternating cell-pressure mode. This is not a retained-face-history scheme or a
+   * general hydrostatic well-balancing treatment.
+   * </p>
+   *
+   * @param enabled true to include the interpolation defect; default false
+   */
+  public synchronized void setPressureInterpolationEnabled(boolean enabled) {
+    pressureInterpolationEnabled = enabled;
+  }
+
+  /** @return whether transient pressure interpolation is selected */
+  public synchronized boolean isPressureInterpolationEnabled() {
+    return pressureInterpolationEnabled;
+  }
+
+  /**
    * Verify the complete requested interval before exposing a candidate for commit.
    *
    * @param acceptedSections immutable-to-this-call accepted section templates
@@ -77,7 +98,7 @@ public final class TwoFluidUnsplitIntegrator {
    * @param outletPressure external outlet-face pressure in Pa
    * @param outletPressureFixed whether that outlet-face pressure is prescribed
    * @param relativeTolerance independent endpoint and conservative residual verification tolerance
-   * @return immutable prepared interval with every accepted midpoint transport ledger
+   * @return immutable prepared interval with every accepted time-level transport ledger
    * @throws IllegalArgumentException for invalid time, geometry, state or density inputs
    * @throws IllegalStateException for an unsupported operator or failed independent endpoint verification
    * @throws IntervalPreparationException if nonlinear retries, substeps or representable time are exhausted
@@ -151,8 +172,11 @@ public final class TwoFluidUnsplitIntegrator {
         throw new IntervalPreparationException("Accepted substep limit reached", time, dt, prepared.size(), rejected,
             null);
       }
-      TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep,
-          densityModel);
+      double timeWeight = solver
+          .getTimeIntegrationMethod() == UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
+      double interpolationTimeScale = pressureInterpolationEnabled ? timeWeight * dt : 0.0;
+      TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, local, spatialStep, densityModel,
+          interpolationTimeScale);
       double[][] state = new double[local.length][];
       double[] pressure = new double[local.length];
       double[] area = new double[local.length];
@@ -266,9 +290,9 @@ public final class TwoFluidUnsplitIntegrator {
       double[][] momentumChanges = new double[endpoint.length][3];
       for (PreparedStep step : steps) {
         double dt = step.getTimeStepSeconds();
-        double[][] faces = step.getMidpointEvaluation().getPhaseMassFaceFluxes();
-        double[][] sources = step.getMidpointEvaluation().getPhaseMassSourcesPerLength();
-        double[][] rates = step.getMidpointEvaluation().getRates();
+        double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
+        double[][] sources = step.getEvaluation().getPhaseMassSourcesPerLength();
+        double[][] rates = step.getEvaluation().getRates();
         for (int face = 0; face < faces.length; face++) {
           for (int phase = 0; phase < 3; phase++) {
             phaseMassFaceTransferKg[face][phase] += dt * faces[face][phase];

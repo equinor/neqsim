@@ -880,7 +880,7 @@ transactional so Jacobian probes cannot advance accepted diagnostics or state.
 
 `TwoFluidUnsplitModelAdapter` connects this kernel to the finite-volume flux/source operator
 transactionally. It reconstructs trial sections from accepted clones, evaluates phase densities at
-both midpoint and closure pressure, restores retained equation diagnostics after each probe, and
+both selected-time and closure pressure, restores retained equation diagnostics after each probe, and
 uses a prescribed pressure only in the external outlet momentum traction. The last cell still owns
 its volume-closure equation, while outlet phase mass and energy remain conservative advective
 fluxes.
@@ -896,10 +896,10 @@ only to the current trial. Callers must supply trial section clones and synchron
 the equations instance.
 
 `TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
-current midpoint operator and endpoint volume closure, then returns defensive endpoint clones and
+current selected-time operator and endpoint volume closure, then returns defensive endpoint clones and
 the exact phase transport ledger with inventories integrated over each cell length. It rejects
 inconsistent candidates and unsupported thermal, phase-transfer and separately split source modes.
-Density coefficients use the common midpoint time at both midpoint and end pressure. Strict
+Density coefficients use the common evaluation time at both rate and end pressure. Strict
 `setConservativeEndpoint` recovery preserves all conservative values, retains positive trace-phase
 velocity, and never normalizes holdup or caps velocity. Endpoint closure diagnostics still require
 an explicit refresh. Preparation does not commit state, reports, clocks or streams; the legacy
@@ -941,12 +941,40 @@ Viscosity, sound speed and temperature remain frozen. See the
 [EOS preparation contract](../process/TWOFLUIDPIPE_MODEL.md#pipe-preparation-with-frozen-phase-eos-densities)
 for supported phases, boundaries, units and an executable API example.
 
+The default temporal method remains implicit midpoint. Explicit
+`UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER` evaluates at the endpoint and damps
+stiff decaying modes, with the expected first-order accuracy. Each result captures its temporal
+weight so later solver configuration cannot change preparation or its flux ledger.
+
+Co-current fallback now reverses the correlation coordinate and inclination together for both
+regime detectors and horizontal closure blends, while preserving signed transport and oil/water
+slip. This corrects a reproduced false bubble/slug switch; it does not qualify countercurrent flow.
+The bulk gas/liquid drag reaction now follows conservative oil/water mass, giving continuous
+disappearance limits and dissipative gas-drag work for consistent recovered phase velocities.
+The nonlinear linear solve separately factors exactly homogeneous closed blocks, preserving
+absent phases without projecting endpoints or changing tolerances.
+The optional `setUnsplitPressureInterpolationEnabled(true)` also couples the stationary alternating
+pressure mode inside the conservative face fluxes. It uses each attempted step's temporal weight,
+preserves linear pressure profiles, and leaves external transport unchanged. Closed-domain tests
+check independent phase conservation, damping, donor selection and full/colored Jacobians.
+It remains off by default and has no general nonlinear hydrostatic or severe-slugging qualification.
+See [the direction and pressure-interpolation contract](../process/TWOFLUIDPIPE_MODEL.md#flow-direction-and-conservative-pressure-interpolation).
+
 The actual Tengesdal nitrogen/Crystex riser fixture also completes three short **0.1 s** preparation
-cases on 16/24 cells. Its **5 s** matrix still fails line search at locally prepared times
+cases on 16/24 cells. The preceding preparation baseline's **5 s** matrix failed line search at locally prepared times
 0.691015625 s (16 cells) and 0.5234375 s (24 cells), even after increasing the initial 256-substep
 cap to honor the pipe's configured budget. Every failed local prefix is discarded. The source
 includes an explicit opt-in reproduction of this failing gate; it is not counted as a passing
 regression. These results block the subsequent 180/600 s characterization and experimental gates.
+
+After the direction, exact-zero-block and bulk-drag corrections, the backward-Euler/interpolation
+option completes all three 0.1 s cases in **1/2/2 steps with zero retries** at the original
+conservation/volume tolerances. The five-second gate still fails: current midpoint/no-interpolation
+prefixes stop at 0.7250/0.6951/0.5359 s, and backward-Euler/interpolation prefixes at
+0.6000/0.6258/0.4254 s for the same 16/0.1, 16/0.05 and 24/0.05 matrix. The reduced retry burden
+is numerical progress, not physical qualification. The final affected suite passes **327 tests
+in 45 classes**, including maintained three-phase steady refinement; the six explicit long-gate
+failures are recorded separately in the [actual riser evidence](../process/TWOFLUIDPIPE_MODEL.md#actual-tengesdal-handoff-evidence).
 
 The existing outlet publisher uses inlet overall composition; unequal phase transfers require
 conservative component-weighted outlet composition before a prepared state can be published.

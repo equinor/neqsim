@@ -37,6 +37,12 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyPreparation(cells, maximumStep, 0.1);
   }
 
+  @ParameterizedTest
+  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  void shortPressureInterpolatedRiserHandoffPreparesConservatively(int cells, double maximumStep) {
+    verifyPreparation(cells, maximumStep, 0.1, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
+  }
+
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
   @ParameterizedTest
@@ -45,11 +51,27 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     verifyPreparation(cells, maximumStep, 5.0);
   }
 
+  @Tag("slow")
+  @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
+  @ParameterizedTest
+  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  void fiveSecondPressureInterpolatedRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
+    verifyPreparation(cells, maximumStep, 5.0, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
+  }
+
   private static void verifyPreparation(int count, double maximumStep, double duration) {
+    verifyPreparation(count, maximumStep, duration, UnsplitTransientSolver.TimeIntegrationMethod.IMPLICIT_MIDPOINT,
+        false);
+  }
+
+  private static void verifyPreparation(int count, double maximumStep, double duration,
+      UnsplitTransientSolver.TimeIntegrationMethod method, boolean pressureInterpolation) {
     TwoFluidPipe pipe = createPipe(count);
+    pipe.setUnsplitPressureInterpolationEnabled(pressureInterpolation);
     TwoFluidSection[] initial = pipe.getSectionSnapshots();
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
+    solver.setTimeIntegrationMethod(method);
     PreparedInterval interval = pipe.prepareUnsplitTransient(duration, maximumStep, solver,
         pipe.createUnsplitDensityModel());
     assertEquals(duration, interval.getEndTimeSeconds(), 0.0);
@@ -66,6 +88,8 @@ class TwoFluidUnsplitTengesdalPreparationTest {
     assertTrue(initialMass[0] > 0.0 && initialMass[1] > 0.0);
     assertEquals(0.0, initialMass[2], 0.0);
     for (PreparedStep step : interval.getSubsteps()) {
+      assertEquals(pressureInterpolation ? step.getTimeIntegrationWeight() * step.getTimeStepSeconds() : 0.0,
+          step.getPressureInterpolationTimeScale(), 0.0);
       minimumStep = Math.min(minimumStep, step.getTimeStepSeconds());
       assertTrue(step.getMaximumScaledResidual() <= 1.0e-8);
       TwoFluidSection[] candidate = step.getEndpointSections();
@@ -86,11 +110,11 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       assertEquals(initial[cell].getPressure(), unchanged[cell].getPressure(), 0.0);
     }
     logger.info(
-        "Unsplit Tengesdal handoff: cells={}, maximumStep={}, duration={}, substeps={}, rejects={}, "
+        "Unsplit Tengesdal handoff: method={}, pressureInterpolation={}, cells={}, maximumStep={}, duration={}, substeps={}, rejects={}, "
             + "evaluations={}, minimumStep={}, maximumSpeed={}, maximumPressureDeparture={}, scaledResidual={}",
-        count, maximumStep, duration, interval.getSubsteps().size(), interval.getRejectedAttempts(),
-        interval.getModelEvaluations(), minimumStep, maximumVelocity, maximumPressureDeparture,
-        interval.getMaximumScaledResidual());
+        method, pressureInterpolation, count, maximumStep, duration, interval.getSubsteps().size(),
+        interval.getRejectedAttempts(), interval.getModelEvaluations(), minimumStep, maximumVelocity,
+        maximumPressureDeparture, interval.getMaximumScaledResidual());
   }
 
   private static TwoFluidPipe createPipe(int count) {

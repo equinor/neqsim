@@ -317,6 +317,9 @@ public class TwoFluidSectionTest {
     section.setLiquidVelocity(0.5);
     section.updateDerivedQuantities();
 
+    // The conservative source operator partitions mixture forces using initialized phase inertia.
+    section.updateConservativeVariables();
+
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     TwoFluidSection section2 = section.clone();
     section2.setPosition(section.getLength());
@@ -336,6 +339,7 @@ public class TwoFluidSectionTest {
     riserBase.setGasVelocity(0.02);
     riserBase.setLiquidVelocity(0.1);
     riserBase.updateDerivedQuantities();
+    riserBase.updateConservativeVariables();
 
     TwoFluidSection riserBase2 = riserBase.clone();
     riserBase2.setPosition(riserBase.getLength());

@@ -266,6 +266,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Conservation equations solver. */
   private TwoFluidConservationEquations equations;
 
+  /** Experimental pressure interpolation used only by independent unsplit preparation. */
+  private boolean unsplitPressureInterpolationEnabled;
+
   /** Opt-in reduced shared mechanical slug closure; legacy correlations remain the default. */
   private boolean sharedSlugForceBalanceEnabled;
 
@@ -4455,6 +4458,26 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Enable transient pressure interpolation within the conservative fluxes of unsplit preparation.
+   *
+   * <p>
+   * This couples the alternating cell-pressure mode using the selected temporal weight times each attempted step. It
+   * changes only the experimental prepared candidate. It does not select a production transient solver, retain
+   * face-velocity history, or qualify general hydrostatic balance or severe slugging.
+   * </p>
+   *
+   * @param enabled whether to include pressure interpolation; default false
+   */
+  public synchronized void setUnsplitPressureInterpolationEnabled(boolean enabled) {
+    unsplitPressureInterpolationEnabled = enabled;
+  }
+
+  /** @return whether pressure interpolation is enabled for unsplit preparation */
+  public synchronized boolean isUnsplitPressureInterpolationEnabled() {
+    return unsplitPressureInterpolationEnabled;
+  }
+
+  /**
    * Snapshot an anchored, frozen-composition SRK/PR density closure for isothermal unsplit qualification.
    *
    * <p>
@@ -4645,13 +4668,14 @@ public class TwoFluidPipe extends Pipeline {
     }
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver, 8,
         getMaximumTransientSubsteps());
+    integrator.setPressureInterpolationEnabled(unsplitPressureInterpolationEnabled);
     PreparedInterval interval = integrator.prepareInterval(snapshot, dx, dt, simulationTime, outletPressure,
         outletBCType == BoundaryCondition.CONSTANT_PRESSURE, 1.0e-8, maximumTimeStep);
     if (densityModel instanceof AnchoredIsothermalDensityModel) {
       AnchoredIsothermalDensityModel frozen = (AnchoredIsothermalDensityModel) densityModel;
       for (PreparedStep step : interval.getSubsteps()) {
         TwoFluidSection[] endpoint = step.getEndpointSections();
-        double[][] faces = step.getMidpointEvaluation().getPhaseMassFaceFluxes();
+        double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
         for (int cell = 0; cell < endpoint.length; cell++) {
           double[] state = endpoint[cell].getStateVector();
           for (int phase = 0; phase < 3; phase++) {
