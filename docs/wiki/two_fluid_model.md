@@ -906,16 +906,23 @@ an explicit refresh. Preparation does not commit state, reports, clocks or strea
 primitive-recovery path is unchanged.
 
 The tests verify a closed three-phase five-second fixed point and a nonuniform flowing candidate.
-The separate eight-case **flowing** five-second matrix is still failing: with interfacial pressure
-off all four cases stop at 0.475–2.175 s; with it on only 4 cells / 0.05 s completes, while the other
-three stop at 2.150–4.100 s. The fixed-step, full-duration assertions remain enabled. These synthetic
-40 m tests use a prescribed isothermal density law, not an EOS flash or experimental data. They
-expose unresolved numerical/spatial/boundary qualification and cannot qualify severe slugging.
-An isolated 8-cell replay found bitwise-repeatable residuals and identical colored/full Jacobians;
-a water-cut crossing of the oil-water inversion threshold caused a discontinuous closure switch
-beyond the default backtracking budget. More backtracking alone does not qualify the inversion law.
-See [the model guide](../process/TWOFLUIDPIPE_MODEL.md#five-second-flowing-gate-still-failing) for
-the exact fixture, paired matrix and reproduction command.
+The synthetic eight-case **flowing** five-second matrix now completes through
+`TwoFluidUnsplitIntegrator.prepareInterval`, using maximum requested steps of 0.05/0.025 s on
+4/8 cells with Bestion stabilization off/on. A new prescribed-phase-flow inlet lets pressure
+traction follow the trial first cell, and an independent phase-pressure consistency option
+preserves pressure balance even without Bestion stabilization. Production defaults are unchanged.
+The original fixed-inlet-pressure matrix passed only one case; the corrected raw fixed-step
+matrix passes six. Both 4-cell / 0.05 s raw cases still reject at oil-water inversion at 1.400 s.
+Those failures remain documented; the passing eight-case result permits bounded step subdivision.
+
+The interval preparer verifies each substep independently and accumulates only its accepted phase
+face/source transfers. Retry exhaustion discards the entire local interval without publishing a
+partial endpoint, clock or diagnostic. The full five-second duration and original conservation
+tolerances remain; tests also bound phase speeds and pressure excursions. This is nonlinear
+convergence control, not temporal-error control or a change to the discontinuous inversion law.
+These 40 m tests use prescribed isothermal densities, not an EOS flash or experimental data.
+See [the model guide](../process/TWOFLUIDPIPE_MODEL.md#five-second-flowing-gate-boundary-correction-and-bounded-retries)
+for the historical negative evidence, revised boundary contract and reproduction command.
 
 This is still not a selectable `TwoFluidPipe` mode or a severe-slugging claim. Opt-in pipe routing,
 accepted-state commit/rollback, a concrete finite-volume active-set implementation, and the established 5/180/600 s qualification

@@ -1377,16 +1377,16 @@ Runnable examples and rejection/serialization tests are in `TwoFluidUnsplitModel
 three-phase state remains unchanged over five prepared one-second steps. A nonuniform three-cell
 flowing step verifies independent cell pressure and the exact phase transport ledger.
 
-#### Five-second flowing gate: still failing
+#### Five-second flowing gate: boundary correction and bounded retries
 
 The synthetic qualification gate uses a horizontal 40 m, 0.10 m line at 5 MPa absolute and 300 K;
 initial gas/oil/water holdups are 0.6/0.2/0.2, phase velocities are 3/0.55/0.45 m/s, and densities
 are `rhoG = 40 * p / 5e6`, 700 and 1000 kg/m3. This is a fixed-temperature density closure, **not**
-an EOS-flashed fluid. It prescribes the existing inlet-state boundary and a 5 MPa external outlet
-face with signed outlet transport. It uses the smooth compatibility controller, fixed time steps,
-no retries, and unchanged Newton/conservation gates; no empirical coefficients are tuned.
+an EOS-flashed fluid. The outlet face is held at 5 MPa with signed phase transport. The smooth
+compatibility controller and existing constitutive coefficients are retained.
 
-The 12 September 2026 probe found:
+The initial 12 September 2026 probe prescribed both phase inflow and a fixed inlet-pressure
+traction through `setInletBoundaryState`. With fixed time steps and no retries it found:
 
 | Cells | Step (s) | Interfacial pressure off | Interfacial pressure on |
 | --- | --- | --- | --- |
@@ -1396,11 +1396,63 @@ The 12 September 2026 probe found:
 | 8 | 0.025 | Rejected at 0.475 s | Rejected at 2.150 s |
 
 Times are accepted start times of the first rejected step. All rejections reported
-`LINE_SEARCH_FAILED`. Failed trajectories developed alternating phase velocities and differing
-stratified/slug classifications; these observations alone do not identify a unique causal closure.
-One completed trajectory does not establish refinement convergence or physical accuracy. The
-eight-case test retains its full-five-second assertions, so seven cases currently fail: this is an
-explicit unresolved qualification gate, not a passing regression or a Tengesdal validation.
+`LINE_SEARCH_FAILED`. This historical negative matrix is retained; those original fixed-boundary
+trajectories have not been reclassified as qualified.
+
+The follow-up isolated a boundary pressure-work defect. A phase-flow inlet must let pressure
+traction follow the current first-cell pressure rather than impose an independent pressure along
+with all three phase inflows. `setInletPhaseFlowBoundaryState` now makes that choice explicit and
+uses the same trial pressure in both traction and the phase-holdup pressure source. It preserves
+the prescribed phase advection and defensively copies the feed state. The legacy full-state
+setter retains its behavior. An eight-cell, zero-flow alternating-pressure regression demonstrates
+that the old boundary can leave a nonuniform pressure field exactly stationary; the new flow
+boundary produces the required inlet acceleration. Closed faces still carry no advected mass.
+
+Separately, `setConsistentPhasePressureEnabled(true)` retains the phase pressure-balance term
+when Bestion stabilization is disabled. It cancels the extra `p A d(alpha_k)/dx` from the phase
+pressure flux, leaving each cell phase's share of the common pressure gradient. Stationary
+phase contacts, variable areas, and reconstructed fixed-pressure outlets have explicit force-balance
+tests. The legacy defaults remain unchanged. Pressure consistency alone does not regularize the
+classical two-fluid equations or establish mesh convergence.
+
+With both corrections, **six of eight raw fixed-step cases complete five seconds**. For either
+Bestion setting, 4 cells / 0.025 s and both 8-cell steps complete; 4 cells / 0.05 s still rejects
+at 1.400 s. Its midpoint water cut approaches the existing inversion threshold 0.5214285714285715.
+The physical closure remains discontinuous, and the full and colored Jacobians remain identical.
+No inversion coefficient, viscosity jump, hysteresis width or line-search budget was changed.
+
+`TwoFluidUnsplitIntegrator.prepareInterval` now supplies bounded nonlinear subdivision. It first
+tries the requested interval; a rejected solve bisects it, creates a fresh adapter from the last
+locally verified endpoint, and retries. Each accepted substep independently passes `prepareStep`.
+Only accepted midpoint fluxes enter the integrated face transfers (kg) and cell source transfers
+(kg, including actual cell length). Before returning it also verifies cumulative cell mass/momentum
+and domain phase-mass residuals against the interval tolerance. Failure to prepare the complete
+interval discards the locally prepared prefix without publishing state, time or diagnostics. Invalid configurations and failed
+independent endpoint verification fail immediately rather than being retried as nonlinear failures.
+The default limits are eight halvings and 256 accepted substeps per requested interval.
+
+All eight five-second **maximum-step** cases now complete with this interval preparer, retaining
+the original `1e-10` nonlinear tolerance and `1e-8` endpoint and domain phase-mass gates. Additional
+bounds require every accepted phase speed below 10 m/s and pressure within 5% of 5 MPa. The test
+reports actual accepted substeps, rejected attempts, minimum accepted step, maximum speed,
+pressure departure and conservation residuals. These are bounded synthetic numerical checks;
+subdivision controls nonlinear convergence, not temporal error or experimental accuracy. The two
+remaining coarse raw fixed-step failures are not claimed to pass.
+
+The measured maximum-step results below give the larger magnitude of the paired Bestion-off/on
+results in each row; their substep/rejection counts agree. Pressure departure is from 5 MPa.
+
+| Cells | Maximum step (s) | Accepted substeps | Rejected attempts | Minimum step (s) | Maximum speed (m/s) | Maximum pressure departure (kPa) | Relative phase-mass residual |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4 | 0.05 | 104 | 4 | 0.003125 | 2.935 | 44.428 | 2.945e-16 |
+| 4 | 0.025 | 200 | 0 | 0.025 | 2.915 | 43.499 | 5.251e-16 |
+| 8 | 0.05 | 100 | 0 | 0.05 | 2.944 | 42.393 | 5.449e-16 |
+| 8 | 0.025 | 200 | 0 | 0.025 | 2.948 | 42.023 | 3.252e-16 |
+
+The maximum accepted-step scaled conservation residual is below 8.86e-11. The affected 28-class
+regression run passes all 213 tests, including rejection after a locally accepted prefix, unchanged
+caller state/diagnostics on exhaustion, nonuniform interval accounting and serialization. These
+checks do not establish temporal-error convergence or experimental slug statistics.
 
 An isolated replay of the 8-cell / 0.025 s / interfacial-pressure-on rejection at 2.15 s found a
 specific immediate mechanism. Repeated residuals and the colored versus full-stencil Jacobians
@@ -1411,17 +1463,19 @@ the original branch remained selected and the norm decreased from 0.025515652611
 0.025514095316063398. The default 12-probe line search does not reach that step length. This
 identifies a closure-branch discontinuity interacting with globalization for this rejection, not a
 coloring defect or nondeterministic ledger. Increasing the backtracking budget alone does not
-resolve the inversion law or qualify the evolving flow. Concrete oil-water inversion/active-set
-treatment and pressure/boundary refinement checks remain required.
+resolve the inversion law or qualify the evolving flow. The new boundary treatment removes the
+demonstrated pressure amplification, while bounded subdivision can advance this fixture through
+the remaining coarse-step rejection. Concrete oil-water inversion/active-set treatment and
+spatial/temporal accuracy checks remain required.
 
 ```bash
-./mvnw -q '-Dtest=TwoFluidUnsplitModelAdapterTest#fiveSecondIsothermalThreePhaseStepsConserveTheAcceptedTransportLedger' test
+./mvnw -q '-Dtest=TwoFluidUnsplitModelAdapterTest#fiveSecondIsothermalThreePhaseIntervalsConserveTheAcceptedTransportLedger,TwoFluidUnsplitIntegratorTest,TwoFluidInletPressureBoundaryTest,TwoFluidVariableAreaPressureRegressionTest,TwoFluidConservativeSlugCouplingTest' test
 ```
 
 The adapter is not yet selected by `TwoFluidPipe.runTransient`; it does not change a default or
 qualify severe slugging. Integration still requires an opt-in pipe route, accepted-state commit and
 rollback wiring, and a concrete finite-volume active-set implementation for donor and regime choices.
-The unresolved synthetic gate above must not be confused with the established WS1 cases. The existing 5 s mesh matrix
+The synthetic maximum-step gate above must not be confused with the established WS1 cases. The existing 5 s mesh matrix
 and the 180/600 s public Tengesdal gates must pass before the path can be exposed as a pipe option.
 Energy, named-component transport, and phase change are outside the initial isothermal solve and
 remain separate unsupported intersections.

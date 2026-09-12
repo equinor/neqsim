@@ -15,6 +15,7 @@ import java.io.ObjectOutputStream;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.MassBalanceRate;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator.PreparedInterval;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PreparedStep;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,7 @@ class TwoFluidUnsplitModelAdapterTest {
   @ParameterizedTest
   @CsvSource({ "4, 0.05, false", "4, 0.025, false", "8, 0.05, false", "8, 0.025, false", "4, 0.05, true",
       "4, 0.025, true", "8, 0.05, true", "8, 0.025, true" })
-  void fiveSecondIsothermalThreePhaseStepsConserveTheAcceptedTransportLedger(int cells, double dt,
+  void fiveSecondIsothermalThreePhaseIntervalsConserveTheAcceptedTransportLedger(int cells, double dt,
       boolean interfacialPressure) {
     double length = 40.0;
     TwoFluidSection[] accepted = new TwoFluidSection[cells];
@@ -38,50 +39,53 @@ class TwoFluidUnsplitModelAdapterTest {
     }
     TwoFluidConservationEquations equations = isothermalEquations();
     equations.setAllowOutletPhaseBackflow(true);
+    equations.setConsistentPhasePressureEnabled(true);
     equations.setEnableInterfacialPressure(interfacialPressure);
-    equations.setInletBoundaryState(accepted[0]);
+    equations.setInletPhaseFlowBoundaryState(accepted[0]);
     MassBalanceRate published = equations.getLastMassBalanceRate();
     double[] initialMass = inventories(accepted);
     double[] boundaryTransfer = new double[3];
     double maximumResidual = 0.0;
-    int evaluations = 0;
+    long evaluations = 0;
+    int rejectedAttempts = 0;
+    int acceptedSubsteps = 0;
+    double minimumStep = dt;
+    double maximumSpeed = 0.0;
+    double maximumPressureDeparture = 0.0;
     int steps = (int) Math.round(5.0 / dt);
     UnsplitTransientSolver solver = solver();
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations,
+        (cell, state, pressure, time) -> new double[] { 40.0 * pressure / 5.0e6, 700.0, 1000.0 }, solver);
     for (int step = 0; step < steps; step++) {
-      TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, length / cells,
-          (cell, state, pressure, time) -> new double[] { 40.0 * pressure / 5.0e6, 700.0, 1000.0 });
       double time = step * dt;
-      UnsplitTransientSolver.Result result = solver.solve(states(accepted), pressures(accepted), areas(accepted), dt,
-          time, 5.0e6, true, adapter);
-      String failureDetails = "";
-      if (!result.isConverged()) {
-        TwoFluidSection[] diagnostic = cloneSections(accepted);
-        equations.evaluateTransactional(diagnostic, length / cells);
-        StringBuilder details = new StringBuilder();
-        for (TwoFluidSection cell : diagnostic) {
-          details.append(" [regime=").append(cell.getFlowRegime()).append(", alphaG=").append(cell.getGasHoldup())
-              .append(", uG=").append(cell.getGasVelocity()).append(", uO=").append(cell.getOilVelocity())
-              .append(", uW=").append(cell.getWaterVelocity()).append(']');
+      PreparedInterval interval = integrator.prepareInterval(accepted, length / cells, dt, time, 5.0e6, true, 1.0e-8);
+      assertEquals(time + dt, interval.getEndTimeSeconds(), 0.0);
+      assertTrue(interval.getMaximumScaledResidual() <= 1.0e-8);
+      rejectedAttempts += interval.getRejectedAttempts();
+      evaluations += interval.getModelEvaluations();
+      for (PreparedStep prepared : interval.getSubsteps()) {
+        acceptedSubsteps++;
+        minimumStep = Math.min(minimumStep, prepared.getTimeStepSeconds());
+        assertFalse(prepared.getMidpointEvaluation().isOutletBackflowClamped());
+        maximumResidual = Math.max(maximumResidual, prepared.getMaximumScaledResidual());
+        MassBalanceRate balance = prepared.getMidpointEvaluation().getMassBalanceRate();
+        for (int phase = 0; phase < 3; phase++) {
+          boundaryTransfer[phase] += prepared.getTimeStepSeconds() * (balance.getInletMassFlowKgPerSecond()[phase]
+              - balance.getOutletMassFlowKgPerSecond()[phase] + balance.getSourceMassFlowKgPerSecond()[phase]);
         }
-        failureDetails = details.toString();
-      }
-      assertTrue(result.isConverged(),
-          "cells=" + cells + ", dt=" + dt + ", interfacialPressure=" + interfacialPressure + ", time=" + time
-              + ", reason=" + result.getTerminationReason() + ", residual=" + result.getMaximumScaledResidual()
-              + failureDetails);
-      PreparedStep prepared = adapter.prepareStep(result, dt, time, 5.0e6, true, 1.0e-8);
-      assertFalse(prepared.getMidpointEvaluation().isOutletBackflowClamped());
-      maximumResidual = Math.max(maximumResidual, prepared.getMaximumScaledResidual());
-      evaluations += result.getModelEvaluations();
-      MassBalanceRate balance = prepared.getMidpointEvaluation().getMassBalanceRate();
-      for (int phase = 0; phase < 3; phase++) {
-        boundaryTransfer[phase] += dt * (balance.getInletMassFlowKgPerSecond()[phase]
-            - balance.getOutletMassFlowKgPerSecond()[phase] + balance.getSourceMassFlowKgPerSecond()[phase]);
+        for (TwoFluidSection cell : prepared.getEndpointSections()) {
+          maximumSpeed = Math.max(maximumSpeed, Math.abs(cell.getGasVelocity()));
+          maximumSpeed = Math.max(maximumSpeed, Math.abs(cell.getOilVelocity()));
+          maximumSpeed = Math.max(maximumSpeed, Math.abs(cell.getWaterVelocity()));
+          maximumPressureDeparture = Math.max(maximumPressureDeparture, Math.abs(cell.getPressure() - 5.0e6));
+        }
       }
       // Only this test-owned local state is advanced; no TwoFluidPipe clock, report or stream is committed.
-      accepted = prepared.getEndpointSections();
+      accepted = interval.getEndpointSections();
       assertSame(published, equations.getLastMassBalanceRate());
     }
+    assertTrue(maximumSpeed < 10.0, "The bounded flowing fixture must not develop runaway phase velocities");
+    assertTrue(maximumPressureDeparture < 2.5e5, "Pressure must remain within 5% of the 5 MPa boundary");
     double maximumMassResidual = 0.0;
     double[] finalMass = inventories(accepted);
     for (int phase = 0; phase < 3; phase++) {
@@ -91,9 +95,11 @@ class TwoFluidUnsplitModelAdapterTest {
       assertEquals(0.0, residual, 1.0e-8);
     }
     logger.info(
-        "Unsplit synthetic isothermal conservation: cells={}, dt={}, interfacialPressure={}, duration=5 s, evaluations={}, "
-            + "maximumScaledResidual={}, maximumRelativePhaseMassResidual={}",
-        cells, dt, interfacialPressure, evaluations, maximumResidual, maximumMassResidual);
+        "Unsplit synthetic isothermal conservation: cells={}, maximumDt={}, interfacialPressure={}, duration=5 s, "
+            + "evaluations={}, acceptedSubsteps={}, rejectedAttempts={}, minimumDt={}, maximumSpeed={}, "
+            + "maximumPressureDeparturePa={}, maximumScaledResidual={}, maximumRelativePhaseMassResidual={}",
+        cells, dt, interfacialPressure, evaluations, acceptedSubsteps, rejectedAttempts, minimumStep, maximumSpeed,
+        maximumPressureDeparture, maximumResidual, maximumMassResidual);
   }
 
   @Test

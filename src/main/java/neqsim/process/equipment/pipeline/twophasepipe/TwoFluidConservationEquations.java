@@ -105,6 +105,8 @@ public class TwoFluidConservationEquations implements Serializable {
   private double[][] interfacePhasePressure = new double[0][3];
   private TwoFluidSection reconstructedOutlet;
   private TwoFluidSection inletBoundaryState;
+  /** Prescribed phase advection with pressure extrapolated from the current inlet cell. */
+  private boolean inletPhaseFlowPrescribed;
   private boolean inletClosed;
   private boolean outletClosed;
 
@@ -153,10 +155,47 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Set an external inflow state without replacing the first finite-volume cell.
    *
+   * <p>
+   * This legacy boundary prescribes pressure traction as well as phase advection. For a phase-flow inlet paired with a
+   * pressure outlet, use {@link #setInletPhaseFlowBoundaryState(TwoFluidSection)} instead.
+   * </p>
+   *
    * @param state prescribed inflow face state, or null for the cell-based boundary
    */
   public void setInletBoundaryState(TwoFluidSection state) {
     inletBoundaryState = state == null ? null : state.clone();
+    inletPhaseFlowPrescribed = false;
+  }
+
+  /**
+   * Prescribe phase advection while extrapolating inlet pressure from the current finite-volume cell.
+   *
+   * <p>
+   * The supplied face geometry, phase holdups, densities, velocities and enthalpies determine the phase mass, advective
+   * momentum and energy fluxes. Its pressure is ignored: both the pressure traction and the matching holdup-gradient
+   * source use the current trial-cell pressure on every residual evaluation. This supplies a phase-flow inlet without
+   * simultaneously imposing an independent inlet pressure. The state is defensively copied. A closed inlet still
+   * carries no advected mass or energy. Pass null to restore the cell-based boundary.
+   * </p>
+   *
+   * @param state prescribed advective face state, or null for the cell-based boundary
+   */
+  public void setInletPhaseFlowBoundaryState(TwoFluidSection state) {
+    inletBoundaryState = state == null ? null : state.clone();
+    inletPhaseFlowPrescribed = state != null;
+  }
+
+  /** Obtain consistent inlet traction and source metadata without mutating the prescribed state. */
+  private TwoFluidSection inletFaceState(TwoFluidSection inletCell) {
+    if (inletBoundaryState == null) {
+      return inletCell;
+    }
+    if (!inletPhaseFlowPrescribed) {
+      return inletBoundaryState;
+    }
+    TwoFluidSection face = inletBoundaryState.clone();
+    face.setPressure(inletCell.getPressure());
+    return face;
   }
 
   /**
@@ -201,6 +240,9 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    */
   private boolean enableInterfacialPressure = false;
+
+  /** Apply consistent phase pressure forces independently of the optional Bestion stabilization. */
+  private boolean consistentPhasePressureEnabled;
 
   /** Whether the Bestion stabilizer is handled by the time integrator instead of the explicit RHS. */
   private boolean implicitInterfacialPressure = false;
@@ -905,9 +947,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return array of flux values for each conserved variable
    */
   private double[] calcInletFlux(TwoFluidSection sec) {
-    if (inletBoundaryState != null) {
-      sec = inletBoundaryState;
-    }
+    sec = inletFaceState(sec);
     if (inletClosed) {
       return closedFaceFlux(sec);
     }
@@ -1733,8 +1773,9 @@ public class TwoFluidConservationEquations implements Serializable {
    *
    * <p>
    * The geometric source balances the pressure traction on a changing pipe area and is required even in single-phase
-   * flow without interfacial stabilization. It uses the same face areas as the momentum flux. The optional interfacial
-   * term is described below.
+   * flow without interfacial stabilization. It uses the same face areas as the momentum flux. Phase-pressure
+   * consistency can be enabled independently of Bestion stabilization through
+   * {@link #setConsistentPhasePressureEnabled(boolean)}. The legacy interfacial-pressure option enables both.
    * </p>
    *
    * <p>
@@ -1765,6 +1806,7 @@ public class TwoFluidConservationEquations implements Serializable {
       return;
     }
 
+    TwoFluidSection inletFace = inletFaceState(sections[0]);
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
       double area = sec.getArea();
@@ -1775,26 +1817,27 @@ public class TwoFluidConservationEquations implements Serializable {
       }
 
       double[] cellHoldups = { sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup() };
-      TwoFluidSection inletFace = inletBoundaryState == null ? sec : inletBoundaryState;
       double[] inletHoldups = { inletFace.getGasHoldup(), inletFace.getOilHoldup(), inletFace.getWaterHoldup() };
       TwoFluidSection boundary = reconstructedOutlet == null ? sec : reconstructedOutlet;
       double[] outletHoldups = { boundary.getGasHoldup(), boundary.getOilHoldup(), boundary.getWaterHoldup() };
+      double outletPressure = outletClosed || Double.isNaN(outletBoundaryPressure) ? boundary.getPressure()
+          : outletBoundaryPressure;
       double rightArea = i < nCells - 1 ? 0.5 * (area + sections[i + 1].getArea()) : boundary.getArea();
       double leftArea = i > 0 ? 0.5 * (sections[i - 1].getArea() + area) : inletFace.getArea();
-      double pRight = i < nCells - 1 ? interfacePressure[i] : boundary.getPressure();
+      double pRight = i < nCells - 1 ? interfacePressure[i] : outletPressure;
       double pLeft = i > 0 ? interfacePressure[i - 1] : inletFace.getPressure();
       double dp = pRight - pLeft;
       double deltaPi = enableInterfacialPressure ? calcInterfacialPressureDifference(sec) : 0.0;
       for (int phase = 0; phase < 3; phase++) {
         double alphaRight = i < nCells - 1 ? interfacePhaseHoldup[i][phase] : outletHoldups[phase];
         double alphaLeft = i > 0 ? interfacePhaseHoldup[i - 1][phase] : inletHoldups[phase];
-        double phasePRight = i < nCells - 1 ? interfacePhasePressure[i][phase] : boundary.getPressure();
+        double phasePRight = i < nCells - 1 ? interfacePhasePressure[i][phase] : outletPressure;
         double phasePLeft = i > 0 ? interfacePhasePressure[i - 1][phase] : inletFace.getPressure();
         // The wall-area source cancels the pressure force from the variation of face area. Its explicit differences
         // are exactly zero on a uniform-area mesh, preserving the established transport operator there.
         double pressureSource = (rightArea - area) * alphaRight * phasePRight
             - (leftArea - area) * alphaLeft * phasePLeft;
-        if (enableInterfacialPressure) {
+        if (consistentPhasePressureEnabled || enableInterfacialPressure) {
           double spurious = alphaRight * phasePRight - alphaLeft * phasePLeft - cellHoldups[phase] * dp;
           double stabilizer = implicitInterfacialPressure ? 0.0 : deltaPi * (alphaRight - alphaLeft);
           pressureSource += (spurious - stabilizer) * area;
@@ -2426,6 +2469,28 @@ public class TwoFluidConservationEquations implements Serializable {
    */
   public void setEnableInterfacialPressure(boolean enableInterfacialPressure) {
     this.enableInterfacialPressure = enableInterfacialPressure;
+  }
+
+  /**
+   * Apply the phase-holdup pressure source independently of interfacial-pressure stabilization.
+   *
+   * <p>
+   * The source cancels the extra pressure force caused by writing the phase momentum flux as alpha times pressure,
+   * leaving each phase's share of the common pressure gradient. This preserves a stationary constant-pressure contact
+   * even when holdup changes. It does not add a Bestion pressure difference, make the classical two-fluid equations
+   * hyperbolic, or replace the separate stabilization setting. The default is false for legacy operators; enabling
+   * interfacial pressure already includes this consistency term regardless of this flag.
+   * </p>
+   *
+   * @param enabled true to retain phase-pressure consistency when interfacial stabilization is disabled
+   */
+  public void setConsistentPhasePressureEnabled(boolean enabled) {
+    consistentPhasePressureEnabled = enabled;
+  }
+
+  /** @return whether phase-pressure consistency is independently enabled */
+  public boolean isConsistentPhasePressureEnabled() {
+    return consistentPhasePressureEnabled;
   }
 
   /**

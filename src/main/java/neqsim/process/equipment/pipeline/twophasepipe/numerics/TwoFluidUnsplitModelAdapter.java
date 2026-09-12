@@ -254,12 +254,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
 
     TransactionalEvaluation evaluation;
     synchronized (equations) {
-      if (equations.isIncludeEnergyEquation() || equations.isIncludeMassTransfer() || equations.isHeatTransferEnabled()
-          || equations.isImplicitInterfacialPressure() || equations.isStiffBubbleDragEnabled()
-          || equations.isConservativeSlugForceIntegrationEnabled()) {
-        throw new IllegalStateException("Prepared unsplit steps require an isothermal operator without phase transfer "
-            + "or separately split stiff/subcell source integration");
-      }
+      validatePreparedOperator();
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
@@ -285,6 +280,18 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
           + maximumResidual + ", tolerance=" + relativeTolerance);
     }
     return new PreparedStep(endpoint, acceptedTemplates, evaluation, timeStep, startTime, maximumResidual);
+  }
+
+  /** Fail unsupported configurations before an interval controller starts nonlinear attempts. */
+  void validatePreparedOperator() {
+    synchronized (equations) {
+      if (equations.isIncludeEnergyEquation() || equations.isIncludeMassTransfer() || equations.isHeatTransferEnabled()
+          || equations.isImplicitInterfacialPressure() || equations.isStiffBubbleDragEnabled()
+          || equations.isConservativeSlugForceIntegrationEnabled()) {
+        throw new IllegalStateException("Prepared unsplit steps require an isothermal operator without phase transfer "
+            + "or separately split stiff/subcell source integration");
+      }
+    }
   }
 
   /** Immutable, verified candidate; preparation alone does not advance physical time or commit any pipe state. */
