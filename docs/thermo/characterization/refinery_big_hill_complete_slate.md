@@ -472,6 +472,9 @@ for (DoeBigHillVacuumScenarioScreen.PointResult point : screen.getPoints()) {
   double feedMassFlowKgPerHour = point.getScenario().getFeedMassFlowKgPerHour();
   double overheadMassFraction = point.getOverheadMassFraction();
   double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+  DoeBigHillVacuumComponentRecovery recovery = point.getComponentRecovery();
+  double overheadHeavyRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery("DOE_BH_1050_PLUS_PC");
 }
 ```
 
@@ -481,19 +484,27 @@ flow simultaneously use the low/base/high values shown above. Tray topology and 
 remain fixed.
 
 Every scenario must pass the qualified MESH-residual, fallback, mass, component, energy,
-material-product, and boiling-point-order gates. The result returns defensive scenario-point arrays,
-the exact immutable scenario definitions and fractionation results, overhead-yield bounds, and the
-worst external mass closure, component closure, column energy error, and final MESH residual. Any
-failed scenario aborts the complete screen.
+material-product, and boiling-point-order gates. Each point also evaluates
+`DoeBigHillVacuumComponentRecovery` on the same solved model, without rebuilding or solving the
+scenario a second time. It exposes the exact DOE pseudo-component order, positive feed component
+flows in mol/h, product component flows in mol/h, and dimensionless overhead and bottoms recoveries.
+Every product recovery must remain finite and non-negative, and each component's two product
+recoveries must close to unity within 5%.
+
+The screen returns defensive scenario-point arrays, the exact immutable scenario definitions,
+fractionation results, and recovery results, overhead-yield bounds, and the worst external mass
+closure, component closure, component-recovery closure, column energy error, and final MESH
+residual. Any failed fractionation or recovery gate aborts the complete screen.
 
 These three discrete calculations are numerical robustness and interaction-screening evidence only.
-They do not define a continuous or measured operating envelope, response surface, interaction
-correlation, probability distribution, or optimization model. No monotonic trend is required. The
-screen does not establish hydraulic capacity, flooding, weeping, entrainment, pressure drop,
-scale-up, turndown, heat duty, utilities, equipment sizing, calibrated product yield, ASTM D1160 or
-TBP pressure correction, product-specification compliance, or plant agreement. All DOE assay
-provenance, three-cut 650 degF+ normalization, pseudo-component properties, and source-unreported
-engineering-input limitations remain unchanged.
+The component recoveries are numerical pseudo-component partition bookkeeping, not measured or
+calibrated yields. They do not define a continuous or measured operating envelope, response surface,
+interaction correlation, probability distribution, contaminant distribution, or optimization
+model. No monotonic trend is required. The screen does not establish hydraulic capacity, flooding,
+weeping, entrainment, pressure drop, scale-up, turndown, heat duty, utilities, equipment sizing,
+ASTM D1160 or TBP pressure correction, product-specification compliance, or plant agreement. All DOE
+assay provenance, three-cut 650 degF+ normalization, pseudo-component properties, and
+source-unreported engineering-input limitations remain unchanged.
 
 
 ## Pseudo-component recovery diagnostics
