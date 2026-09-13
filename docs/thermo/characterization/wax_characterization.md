@@ -269,6 +269,40 @@ ops.calcWAT();
 double watC = fluid.getTemperature() - 273.15;
 ```
 
+`calcWAT()` now locates the numerical wax onset with independent, freshly initialized
+TP flashes at the current pressure. It brackets the transition through a wax mass
+fraction of **1e-8 of the whole fluid**, then refines the temperature interval to
+**1e-4 K** and repeats both endpoint flashes. The returned temperature is the warm
+endpoint (wax mass fraction at or below the threshold). The fluid retains that
+verified TP phase state; the operation does not append an artificial wax phase.
+Downstream wax amounts should be obtained with a new `TPflash()` at the operating
+temperature.
+
+The initial temperature must lie within the numerical search bounds of **100-1000 K**.
+The operation searches in 10 K increments from that guess and assumes a single
+wax appearance transition in the bracket. These bounds are solver guards, not a
+statement of physical model validity. Wax checks are enabled on the internal
+trials; the caller's wax-check and fluid multiphase-check settings are preserved.
+Enable `setMultiPhaseCheck(true)` before calculation when an aqueous phase must be
+considered. Characterization and `addSolidComplexPhase("wax")` remain prerequisites.
+
+Invalid inputs or missing wax formers/configuration raise `IllegalArgumentException`.
+Failure to find or reproduce a bracket, or a nonfinite/unbalanced TP trial, raises
+`IllegalStateException` with pressure, trial/bracket temperatures and the number
+of TP evaluations. Failure leaves the caller's temperature, phase state and
+overall composition unchanged. Do not treat the initial temperature as a WAT after
+an exception.
+
+This resolves the internal consistency failure in [issue #3709](https://github.com/equinor/neqsim/issues/3709):
+the characterized synthetic oil previously returned 54.4595 °C at 60 bara although
+fresh TP flashes already predicted wax at 64 °C. Regression tests compare direct
+WAT against a refined independent TP appearance bracket at 40, 60 and 80 bara,
+including different initial guesses, reordered/existing wax phases and added water.
+This checks consistency within the selected EOS, wax model and characterization;
+it is not experimental validation. Laboratory WAT and wax-fraction data are still
+needed for fluid-specific prediction, and equilibrium wax appearance does not
+by itself predict deposition rate or location.
+
 ### Step 4: Wax Fraction vs Temperature
 
 ```java

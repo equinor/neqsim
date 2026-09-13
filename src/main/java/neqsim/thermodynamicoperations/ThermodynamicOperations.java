@@ -1519,16 +1519,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * calcWAT.
+   * Calculates the numerical wax appearance temperature at the current pressure.
+   *
+   * <p>
+   * Requires characterized wax formers and {@code addSolidComplexPhase("wax")}. Independent TP flashes bracket the
+   * transition through a wax mass fraction of 1e-8 within 1e-4 K. On success the system contains the verified warm
+   * endpoint phase state; no artificial wax phase is appended. The search is bounded to 100-1000 K and preserves the
+   * configured fluid phase checks. An unsuccessful search leaves the input state unchanged.
+   * </p>
    *
    * @throws neqsim.util.exception.IsNaNException if any.
+   * @throws IllegalArgumentException if feed conditions or wax configuration are invalid
+   * @throws IllegalStateException if the TP appearance bracket or a balanced endpoint cannot be verified
    */
   public void calcWAT() throws IsNaNException {
     operation = new WATcalc(system);
     getOperation().run();
     if (Double.isNaN(system.getTemperature())) {
       throw new neqsim.util.exception.IsNaNException(this, "calcWAT",
-          "Could not find solution - possible no dew point exists");
+          "Could not find a finite wax appearance temperature");
     }
   }
 
