@@ -3,8 +3,6 @@ title: Manifolds
 description: Build and validate production gathering and distribution manifolds with current NeqSim APIs.
 ---
 
-# Manifolds
-
 `neqsim.process.equipment.manifold.Manifold` combines an internal mixer with an internal splitter. Use it when several inlet streams must be gathered and the mixed stream must then be divided between parallel trains or export routes.
 
 The public model boundary is the manifold itself. Add inlet streams with `addStream(StreamInterface)`, define the outlets with `setSplitFactors(double[])`, run the unit, and read the mixed or split streams. The number of outlets is the length of the split-factor array; there is no separate split-count setter.
