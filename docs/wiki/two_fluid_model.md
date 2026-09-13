@@ -1041,6 +1041,21 @@ update. The slip calculation first recovers the prescribed liquid mass flux, spl
 volume flow into oil and water, and synchronizes bulk liquid velocity and momentum with the phase
 momenta. This keeps the phase split consistent with the specified liquid throughput.
 
+For positive flow, the connected outlet retains the feed's total and component flow rates and is
+TP-flashed at the final section pressure and temperature **after** flow normalization. Thermodynamic
+and transport properties are then initialized before publication. Callers can read heat capacity,
+enthalpy and phase properties, or pass `getOutletStream()` directly to another pipe, without an
+additional stream run or TP flash. The outlet's equilibrium phase fractions are distinct from the
+hydraulic in-situ holdups. This fixes the stale phase state and invalid heat capacity tracked in
+[#3685](https://github.com/equinor/neqsim/issues/3685); downstream heat-transfer results produced by
+affected versions should be recalculated. It does not qualify pipeline thermal accuracy against
+experimental data.
+
+The shared transient publication path still uses the accepted interval-average total outlet flux.
+A closed outlet or clamped nonpositive net flux publishes zero inventory, whose intensive
+thermodynamic properties are undefined. Positive-flow outlet flash or property-initialization
+failures throw an exception before replacing the connected outlet fluid.
+
 **What happens during `run()`:**
 
 ```
@@ -1067,9 +1082,9 @@ momenta. This keeps the phase split consistent with the specified liquid through
 │    └─ Converge when max change < tolerance (1e-4)            │
 │                                                              │
 │ 3. updateOutletStream()                                      │
-│    ├─ Flash outlet fluid at outlet P, T                      │
-│    ├─ Calculate outlet mass flow from section state          │
-│    └─ Set outlet stream properties                           │
+│    ├─ Normalize outlet flow to the steady inlet flow         │
+│    ├─ TP-flash at final section pressure and temperature     │
+│    └─ Initialize properties and publish the outlet fluid     │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -1078,7 +1093,7 @@ momenta. This keeps the phase split consistent with the specified liquid through
 - **Iterative convergence:** Pressure, holdup and flashed phase properties must settle together
 - **Terrain-aware holdups:** Liquid accumulates at low points
 - **Single call:** Establishes initial state for subsequent transient runs
-- **Does not throw on failure:** the outcome must be read back (see below)
+- **Convergence limits:** read the outcome report (see below); outlet thermodynamic initialization failures throw
 
 **Example:**
 ```java
