@@ -25,8 +25,8 @@ import org.junit.jupiter.api.io.TempDir;
 /** Compiles and executes the complete production-manifold example published in the guide. */
 public class ManifoldGuideDocumentationTest extends neqsim.NeqSimTest {
   private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -36,8 +36,7 @@ public class ManifoldGuideDocumentationTest extends neqsim.NeqSimTest {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     Path guidePath = repositoryRoot.resolve("docs/process/equipment/manifolds.md");
     String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
-    Path sourcePath =
-        repositoryRoot.resolve("src/main/java/neqsim/process/equipment/manifold/Manifold.java");
+    Path sourcePath = repositoryRoot.resolve("src/main/java/neqsim/process/equipment/manifold/Manifold.java");
     String source = new String(Files.readAllBytes(sourcePath), StandardCharsets.UTF_8);
 
     assertTrue(guide.contains("not a vibration qualification"));
@@ -46,9 +45,9 @@ public class ManifoldGuideDocumentationTest extends neqsim.NeqSimTest {
     assertTrue(source.contains("public StreamInterface getMixedStream()"));
     assertTrue(source.contains("public double getMassBalance(String unit)"));
 
-    for (String stale : Arrays.asList("System.out", "System.err", "setSplitNumber", "getMixer()",
-        "getSplitter()", "setInnerHeaderDiameter", "setInnerBranchDiameter", "setMaxDesignVelocity",
-        "getAverageBranchVelocity", "createWellStream")) {
+    for (String stale : Arrays.asList("System.out", "System.err", "setSplitNumber", "getMixer()", "getSplitter()",
+        "setInnerHeaderDiameter", "setInnerBranchDiameter", "setMaxDesignVelocity", "getAverageBranchVelocity",
+        "createWellStream")) {
       assertFalse(guide.contains(stale), "Stale manifold guide token: " + stale);
     }
 
@@ -69,8 +68,8 @@ public class ManifoldGuideDocumentationTest extends neqsim.NeqSimTest {
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] { temporaryDirectory.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("ProductionManifoldExample", true, loader);
       assertTrue(example.desiredAssertionStatus());
@@ -91,14 +90,12 @@ public class ManifoldGuideDocumentationTest extends neqsim.NeqSimTest {
    */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath,
-        "-d", temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler.getTask(null, manager, diagnostics, options, null,
-          manager.getJavaFileObjects(source.toFile())).call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful),
           "docs/process/equipment/manifolds.md: " + diagnostics.getDiagnostics());
     }
