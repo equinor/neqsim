@@ -1603,7 +1603,7 @@ def test_capabilities():
           comparison.get("coverageStatus") == "CONTRACT_TESTED"
           and comparison.get("benchmarkApplicability")
           == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT"
-          and "test_process_comparison_protocol.py"
+          and "neqsim-mcp-server/test_process_comparison_protocol.py"
           in comparison.get("contractEvidenceSources", [])
           and "canonical ProcessRunner delegation"
           in comparison.get("evidenceBoundary", "")
