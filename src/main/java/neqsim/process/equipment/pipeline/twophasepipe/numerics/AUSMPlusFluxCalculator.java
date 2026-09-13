@@ -174,6 +174,29 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * @return Phase flux at interface
    */
   public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area) {
+    return calcPhaseFlux(left, right, area, 0.0);
+  }
+
+  /**
+   * Calculate a phase flux with an additional collocated face-velocity interpolation.
+   *
+   * <p>
+   * The correction is added to the advective face velocity before selecting its donor. Mass, advective momentum and
+   * enthalpy therefore all use the same signed face transport and donor state. Pressure traction and its reported
+   * interface pressure/holdup are unchanged. An exactly absent donor contributes no advected phase inventory. A zero
+   * correction preserves the original flux bit for bit.
+   * </p>
+   *
+   * @param left left phase state
+   * @param right right phase state
+   * @param area face area in m2
+   * @param faceVelocityCorrection finite signed correction to the advective face velocity in m/s
+   * @return phase flux and pressure-traction metadata
+   */
+  public PhaseFlux calcPhaseFlux(PhaseState left, PhaseState right, double area, double faceVelocityCorrection) {
+    if (!Double.isFinite(faceVelocityCorrection)) {
+      throw new IllegalArgumentException("Face-velocity correction must be finite");
+    }
     PhaseFlux flux = new PhaseFlux();
 
     // Only an exactly absent phase has no flux. A positive trace inventory must use
@@ -195,6 +218,10 @@ public class AUSMPlusFluxCalculator implements Serializable {
     double Mplus = calcMachPlus(ML);
     double Mminus = calcMachMinus(MR);
     double Mhalf = Mplus + Mminus;
+    double faceVelocity = cHalf * Mhalf;
+    if (faceVelocityCorrection != 0.0) {
+      faceVelocity += faceVelocityCorrection;
+    }
 
     // Split pressures. A single interface holdup is used so that the holdup-gradient
     // momentum source can difference the same values and cancel the spurious force exactly.
@@ -203,9 +230,10 @@ public class AUSMPlusFluxCalculator implements Serializable {
         : calcPressurePlus(ML) * left.pressure + calcPressureMinus(MR) * right.pressure;
     double Phalf = alphaHalf * pHalf;
 
-    // Upwind selection based on interface Mach number
+    // The corrected advective velocity owns every donor, independently of pressure traction.
+    boolean donorLeft = faceVelocityCorrection == 0.0 ? Mhalf >= 0.0 : faceVelocity >= 0.0;
     double rho, v, H, alpha;
-    if (Mhalf >= 0) {
+    if (donorLeft) {
       rho = left.density;
       v = left.velocity;
       H = left.enthalpy;
@@ -218,13 +246,15 @@ public class AUSMPlusFluxCalculator implements Serializable {
     }
 
     // Convective mass flux
-    double mDot = cHalf * Mhalf * alpha * rho;
+    double mDot = faceVelocity * alpha * rho;
 
     // Fluxes
     flux.massFlux = mDot * area;
     flux.momentumFlux = mDot * v * area + Phalf * area;
     flux.energyFlux = mDot * H * area;
-    flux.holdupFlux = Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity;
+    flux.holdupFlux = faceVelocityCorrection == 0.0
+        ? (Mhalf >= 0 ? left.holdup * left.velocity : right.holdup * right.velocity)
+        : alpha * faceVelocity;
     flux.interfaceHoldup = alphaHalf;
     flux.interfacePressure = pHalf;
 

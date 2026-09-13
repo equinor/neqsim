@@ -455,6 +455,83 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
+   * Install an admissible conservative endpoint without repairing mass, momentum, energy, holdup or velocity.
+   *
+   * <p>
+   * Phase densities and pressure must already represent the candidate endpoint. The occupied area is checked against
+   * the pipe area, but is never normalized. Every positive inventory, however small, recovers its own velocity as
+   * momentum divided by mass; exactly absent phases require exactly zero momentum. Unlike
+   * {@link #extractPrimitiveVariables()}, this path has no legacy velocity caps or phase-density fallbacks. For an
+   * exactly absent liquid, the unused bulk-liquid density is the supplied oil density. Bulk liquid velocity remains
+   * mass-weighted; superficial liquid velocity instead sums the independent oil and water volume fluxes. It is not a
+   * phase-appearance model. Validation completes before any section field is changed. Only conserved and algebraic
+   * primitive fields are recovered: regime, friction, oil-water correlations and thermodynamic/thermal properties must
+   * be refreshed separately before reporting endpoint closure diagnostics.
+   * </p>
+   *
+   * @param state exactly seven conservative variables in the order returned by {@link #getStateVector()}
+   * @param relativeVolumeTolerance finite positive tolerance for occupied area divided by cell area minus one
+   * @throws IllegalArgumentException if state, properties or occupied volume are inadmissible
+   */
+  public void setConservativeEndpoint(double[] state, double relativeVolumeTolerance) {
+    if (state == null || state.length != 7 || !(relativeVolumeTolerance > 0.0)
+        || !Double.isFinite(relativeVolumeTolerance)) {
+      throw new IllegalArgumentException("An endpoint requires seven variables and a positive finite volume tolerance");
+    }
+    double area = getArea();
+    if (!(area > 0.0) || !Double.isFinite(area) || !(getPressure() > 0.0) || !Double.isFinite(getPressure())) {
+      throw new IllegalArgumentException("Endpoint area and pressure must be positive and finite");
+    }
+    double[] densities = { getGasDensity(), getOilDensity(), getWaterDensity() };
+    double[] holdups = new double[3];
+    double[] velocities = new double[3];
+    double occupiedFraction = 0.0;
+    for (double value : state) {
+      if (!Double.isFinite(value)) {
+        throw new IllegalArgumentException("Endpoint conservative values must be finite");
+      }
+    }
+    for (int phase = 0; phase < 3; phase++) {
+      if (state[phase] < 0.0 || !(densities[phase] > 0.0) || !Double.isFinite(densities[phase])) {
+        throw new IllegalArgumentException("Endpoint mass must be nonnegative and phase density positive and finite");
+      }
+      if (state[phase] == 0.0 && state[phase + 3] != 0.0) {
+        throw new IllegalArgumentException("An absent endpoint phase cannot carry momentum");
+      }
+      velocities[phase] = state[phase] == 0.0 ? 0.0 : state[phase + 3] / state[phase];
+      holdups[phase] = (state[phase] / densities[phase]) / area;
+      if (!Double.isFinite(velocities[phase]) || !Double.isFinite(holdups[phase])
+          || state[phase] > 0.0 && !(holdups[phase] > 0.0)) {
+        throw new IllegalArgumentException("Endpoint primitive values must be finite");
+      }
+      occupiedFraction += holdups[phase];
+    }
+    double liquidMass = state[1] + state[2];
+    double liquidMomentum = state[4] + state[5];
+    double liquidVelocity = liquidMass == 0.0 ? 0.0 : liquidMomentum / liquidMass;
+    double liquidHoldup = holdups[1] + holdups[2];
+    double liquidDensity = liquidHoldup > 0.0 ? liquidMass / (liquidHoldup * area) : densities[1];
+    if (!Double.isFinite(occupiedFraction) || Math.abs(occupiedFraction - 1.0) > relativeVolumeTolerance
+        || !Double.isFinite(liquidMass) || !Double.isFinite(liquidMomentum) || !Double.isFinite(liquidVelocity)
+        || !(liquidDensity > 0.0) || !Double.isFinite(liquidDensity)) {
+      throw new IllegalArgumentException("Endpoint occupied volume or bulk liquid state is inadmissible");
+    }
+
+    setStateVector(state);
+    setGasHoldup(holdups[0]);
+    super.setLiquidHoldup(liquidHoldup);
+    oilHoldup = holdups[1];
+    waterHoldup = holdups[2];
+    waterCut = oilHoldup + waterHoldup > 0.0 ? waterHoldup / (oilHoldup + waterHoldup) : 0.0;
+    oilFractionInLiquid = 1.0 - waterCut;
+    setGasVelocity(velocities[0]);
+    setRecoveredLiquidVelocities(liquidVelocity, velocities[1], velocities[2]);
+    setLiquidDensity(liquidDensity);
+    updateDerivedQuantitiesWithoutNormalization(holdups[0] * velocities[0],
+        holdups[1] * velocities[1] + holdups[2] * velocities[2]);
+  }
+
+  /**
    * Set state from vector (7-equation model with water-oil slip).
    *
    * <p>

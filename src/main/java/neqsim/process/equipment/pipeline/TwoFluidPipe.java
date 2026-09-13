@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
@@ -23,6 +24,13 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.AnchoredIsothermalDensityModel;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitPublication;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator.PreparedInterval;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PhaseDensityModel;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PreparedStep;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.UnsplitTransientSolver;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.TwoFluidPipeResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -223,6 +231,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Elevation profile at each section (m). */
   private double[] elevationProfile;
 
+  /** Explicit elevations at the N+1 finite-volume faces (m), or null for the legacy section-indexed convention. */
+  private double[] cellFaceElevationProfile;
+
   // ============ Discretization ============
 
   /** Pipe sections with state. */
@@ -258,6 +269,24 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Conservation equations solver. */
   private TwoFluidConservationEquations equations;
+
+  /** Experimental pressure interpolation used only by independent unsplit preparation. */
+  private boolean unsplitPressureInterpolationEnabled;
+
+  /** Stage the legacy transient on an isolated serializable candidate; default false. */
+  private boolean transactionalTransientEnabled;
+
+  /** Explicitly selected experimental unsplit solver, or null for the legacy integrator. */
+  private UnsplitTransientSolver unsplitTransientSolver;
+
+  /** Maximum attempted step in the explicitly selected unsplit route (s). */
+  private double unsplitMaximumTimeStep;
+
+  /** Persistent pressure-dependent EOS branches for consecutive accepted unsplit intervals. */
+  private AnchoredIsothermalDensityModel unsplitDensityModel;
+
+  /** Original pressure/temperature conditions defining the persistent frozen phase compositions. */
+  private TwoFluidSection[] unsplitReferenceSections;
 
   /** Opt-in reduced shared mechanical slug closure; legacy correlations remain the default. */
   private boolean sharedSlugForceBalanceEnabled;
@@ -881,10 +910,10 @@ public class TwoFluidPipe extends Pipeline {
   private TwoFluidComponentConservationReport lastComponentConservationReport = null;
 
   /** Accepted component reports retained since the latest steady initialization. */
-  private final List<TwoFluidComponentConservationReport> componentConservationReports = new ArrayList<>();
+  private List<TwoFluidComponentConservationReport> componentConservationReports = new ArrayList<>();
 
   /** Simulation times aligned with {@link #componentConservationReports}. */
-  private final List<Double> componentConservationTimes = new ArrayList<>();
+  private List<Double> componentConservationTimes = new ArrayList<>();
 
   // ============ Results storage ============
 
@@ -959,6 +988,9 @@ public class TwoFluidPipe extends Pipeline {
    * Initialize pipe sections with inlet conditions.
    */
   private void initializeSections() {
+    if (cellFaceElevationProfile != null) {
+      validateCellFaceElevationProfile(cellFaceElevationProfile);
+    }
     if (sectionLengths != null) {
       // Non-uniform mesh: use per-section lengths
       numberOfSections = sectionLengths.length;
@@ -1194,8 +1226,9 @@ public class TwoFluidPipe extends Pipeline {
     double fInit = calcDarcyFrictionFactor(rhoMixInit, Math.abs(vMix), diameter, muMixInit);
     double dPdxInit = fInit * rhoMixInit * vMix * Math.abs(vMix) / (2.0 * diameter);
     // Add average gravity component from elevation profile
-    if (elevationProfile != null && elevationProfile.length > 1) {
-      double totalElevChange = elevationProfile[elevationProfile.length - 1] - elevationProfile[0];
+    double[] initialTerrain = cellFaceElevationProfile != null ? cellFaceElevationProfile : elevationProfile;
+    if (initialTerrain != null && initialTerrain.length > 1) {
+      double totalElevChange = initialTerrain[initialTerrain.length - 1] - initialTerrain[0];
       double avgSinTheta = totalElevChange / length;
       dPdxInit += rhoMixInit * 9.81 * avgSinTheta;
     }
@@ -1225,7 +1258,13 @@ public class TwoFluidPipe extends Pipeline {
       // secDx). atan2 would treat secDx as a horizontal run and return 45 degrees for a vertical
       // cell, leaving a riser with sin(45) = 71% of its hydrostatic head.
       double inclination = previousInclination;
-      if (elevationProfile != null && i < elevationProfile.length - 1 && secDx > 0.0) {
+      if (cellFaceElevationProfile != null) {
+        double leftElevation = cellFaceElevationProfile[i];
+        double rightElevation = cellFaceElevationProfile[i + 1];
+        elevation = 0.5 * leftElevation + 0.5 * rightElevation;
+        // Validation permits only roundoff beyond a vertical cell's unit slope.
+        inclination = Math.asin(Math.max(-1.0, Math.min(1.0, (rightElevation - leftElevation) / secDx)));
+      } else if (elevationProfile != null && i < elevationProfile.length - 1 && secDx > 0.0) {
         double verticalRise = elevationProfile[i + 1] - elevation;
         inclination = Math.asin(Math.max(-1.0, Math.min(1.0, verticalRise / secDx)));
       }
@@ -1327,7 +1366,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Set outlet pressure if not already set
     if (!outletPressureSet) {
-      outletPressure = sections[numberOfSections - 1].getPressure();
+      outletPressure = steadyOutletFacePressure();
     }
 
     // Initialize accumulation tracker
@@ -1379,7 +1418,8 @@ public class TwoFluidPipe extends Pipeline {
     double P_inlet = inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet && !outletPressureSet
         ? inletPressure
         : getInletStream().getFluid().getPressure("Pa");
-    boolean explicitPressureBoundary = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet)
+    boolean explicitPressureBoundary = cellFaceElevationProfile != null
+        || (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet)
         || (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet);
 
     // Fix inlet section pressure to boundary condition
@@ -1432,7 +1472,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure from upstream section gradient
-        double P_new = marchPressure(prev);
+        double P_new = marchPressure(prev, sec);
         sec.setPressure(P_new);
 
         // Holdup and velocities
@@ -1532,7 +1572,7 @@ public class TwoFluidPipe extends Pipeline {
         TwoFluidSection prev = sections[i - 1];
 
         // Pressure drop estimate (simplified steady-state)
-        double P_calc = marchPressure(prev);
+        double P_calc = marchPressure(prev, sec);
         pressureResidualSum += Math.abs(P_calc - sec.getPressure());
 
         // Under-relaxed pressure update
@@ -1768,7 +1808,7 @@ public class TwoFluidPipe extends Pipeline {
 
     // Update outlet pressure from converged profile (if not user-specified)
     if (!outletPressureSet) {
-      outletPressure = sections[numberOfSections - 1].getPressure();
+      outletPressure = steadyOutletFacePressure();
     }
 
     // The steady solver works in primitive pressure, holdup, and velocity variables.
@@ -1923,7 +1963,7 @@ public class TwoFluidPipe extends Pipeline {
   private double calculateSteadyPressureMomentumResidual() {
     double pressureResidualSum = 0.0;
     for (int i = 1; i < numberOfSections; i++) {
-      pressureResidualSum += Math.abs(marchPressure(sections[i - 1]) - sections[i].getPressure());
+      pressureResidualSum += Math.abs(marchPressure(sections[i - 1], sections[i]) - sections[i].getPressure());
     }
     double totalDrop = sections[0].getPressure() - sections[numberOfSections - 1].getPressure();
     return pressureResidualSum / Math.max(Math.abs(totalDrop), 1.0e3);
@@ -1947,19 +1987,30 @@ public class TwoFluidPipe extends Pipeline {
 
     double maximumCorrection = 0.0;
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet) {
-      double pressureShift = outletPressure - sections[numberOfSections - 1].getPressure();
+      TwoFluidSection last = sections[numberOfSections - 1];
+      double targetPressure = outletPressure;
+      if (cellFaceElevationProfile != null) {
+        targetPressure += 0.5 * last.getLength() * estimatePressureGradient(last);
+      }
+      double pressureShift = targetPressure - last.getPressure();
       for (TwoFluidSection sec : sections) {
         maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
-      sections[numberOfSections - 1].setPressure(Math.max(1.0e5, outletPressure));
-    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
-      double pressureShift = inletPressure - sections[0].getPressure();
+      last.setPressure(Math.max(1.0e5, targetPressure));
+    } else if ((inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet)
+        || cellFaceElevationProfile != null) {
+      double targetPressure = inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet ? inletPressure
+          : getInletStream().getFluid().getPressure("Pa");
+      if (cellFaceElevationProfile != null) {
+        targetPressure -= 0.5 * sections[0].getLength() * estimatePressureGradient(sections[0]);
+      }
+      double pressureShift = targetPressure - sections[0].getPressure();
       for (TwoFluidSection sec : sections) {
         maximumCorrection = Math.max(maximumCorrection, Math.abs(pressureShift) / Math.max(sec.getPressure(), 1.0e5));
         sec.setPressure(Math.max(1.0e5, sec.getPressure() + pressureShift));
       }
-      sections[0].setPressure(Math.max(1.0e5, inletPressure));
+      sections[0].setPressure(Math.max(1.0e5, targetPressure));
     }
     return maximumCorrection;
   }
@@ -4010,6 +4061,38 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Integrate between cell centers using the two half-cell gradients for explicit face terrain.
+   *
+   * <p>
+   * With constant density and zero velocity, the gravity part is exactly rho*g times the difference of midpoint
+   * elevations, including on a nonuniform mesh and across changes in slope. Legacy section-indexed terrain retains its
+   * upstream whole-cell march. This geometry convention does not make the steady closure an unsplit fixed point.
+   * </p>
+   *
+   * @param previous upstream cell
+   * @param current downstream cell
+   * @return downstream midpoint pressure in Pa, subject to the existing pressure floor
+   */
+  private double marchPressure(TwoFluidSection previous, TwoFluidSection current) {
+    if (cellFaceElevationProfile == null) {
+      return marchPressure(previous);
+    }
+    double pressureDrop = 0.5 * previous.getLength() * estimatePressureGradient(previous)
+        + 0.5 * current.getLength() * estimatePressureGradient(current);
+    return Math.max(MIN_SECTION_PRESSURE_PA, previous.getPressure() - pressureDrop);
+  }
+
+  /** Extrapolate the last midpoint to its physical boundary only for explicit face terrain. */
+  private double steadyOutletFacePressure() {
+    TwoFluidSection last = sections[numberOfSections - 1];
+    double pressure = last.getPressure();
+    if (cellFaceElevationProfile != null) {
+      pressure -= 0.5 * last.getLength() * estimatePressureGradient(last);
+    }
+    return cellFaceElevationProfile == null ? pressure : Math.max(MIN_SECTION_PRESSURE_PA, pressure);
+  }
+
+  /**
    * Check whether any section pressure rests on the marching floor.
    *
    * @return true when at least one section sits at {@link #MIN_SECTION_PRESSURE_PA}
@@ -4452,6 +4535,11 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public void run(UUID id) {
+    if (cellFaceElevationProfile != null) {
+      validateCellFaceElevationProfile(cellFaceElevationProfile);
+    }
+    unsplitDensityModel = null;
+    unsplitReferenceSections = null;
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
@@ -4479,13 +4567,295 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     // Set up outlet stream
-    updateOutletStream();
+    updateOutletStream(true);
 
     setCalculationIdentifier(id);
   }
 
   /**
+   * Obtain independent snapshots of the current accepted finite-volume sections.
+   *
+   * @return defensive section clones, including conservative state, geometry and closure diagnostics
+   * @throws IllegalStateException if the pipe has not been initialized by run
+   */
+  public synchronized TwoFluidSection[] getSectionSnapshots() {
+    if (sections == null || sections.length == 0) {
+      throw new IllegalStateException("Call run() to initialize the pipe before requesting section snapshots");
+    }
+    TwoFluidSection[] snapshot = new TwoFluidSection[sections.length];
+    for (int cell = 0; cell < sections.length; cell++) {
+      snapshot[cell] = sections[cell].clone();
+    }
+    return snapshot;
+  }
+
+  /**
+   * Enable transient pressure interpolation within the conservative fluxes of unsplit preparation.
+   *
+   * <p>
+   * This couples the alternating cell-pressure mode using the selected temporal weight times each attempted step. It
+   * changes only the experimental prepared candidate. It does not select a production transient solver, retain
+   * face-velocity history, or qualify general hydrostatic balance or severe slugging.
+   * </p>
+   *
+   * @param enabled whether to include pressure interpolation; default false
+   */
+  public synchronized void setUnsplitPressureInterpolationEnabled(boolean enabled) {
+    unsplitPressureInterpolationEnabled = enabled;
+  }
+
+  /** @return whether pressure interpolation is enabled for unsplit preparation */
+  public synchronized boolean isUnsplitPressureInterpolationEnabled() {
+    return unsplitPressureInterpolationEnabled;
+  }
+
+  /**
+   * Snapshot an anchored, frozen-composition SRK/PR density closure for isothermal unsplit qualification.
+   *
+   * <p>
+   * A separate deep reference-fluid copy is flashed once at each accepted cell's pressure and temperature to obtain its
+   * phase compositions. Subsequent density probes retain those compositions and temperatures. A constant specific-
+   * volume offset anchors the EOS response to the accepted phase density, avoiding a density jump at handoff. This does
+   * not transport components, perform transient phase equilibrium, or qualify a production transient route. An absent
+   * inventory whose legacy density is zero receives an explicit constant 1 kg/m3 algebraic extension on the copied
+   * state only. That extension cannot support accepted phase appearance or inflow.
+   * </p>
+   *
+   * @return independent pressure-dependent phase-density closure
+   * @throws IllegalStateException if initialization is absent, named component transport is active, or a flash fails
+   * @throws IllegalArgumentException if an accepted phase has no supported EOS template
+   */
+  public synchronized AnchoredIsothermalDensityModel createUnsplitDensityModel() {
+    TwoFluidSection[] snapshot = getSectionSnapshots();
+    if (referenceFluid == null || componentTransportEnabled) {
+      throw new IllegalStateException(
+          "Frozen reference-phase densities require initialization without component transport");
+    }
+    SystemInterface[] fluids = new SystemInterface[snapshot.length];
+    boolean[][] residualDensityExtension = new boolean[snapshot.length][3];
+    for (int cell = 0; cell < snapshot.length; cell++) {
+      double[] state = snapshot[cell].getStateVector();
+      if (state[0] == 0.0 && snapshot[cell].getGasDensity() == 0.0) {
+        snapshot[cell].setGasDensity(1.0);
+        residualDensityExtension[cell][0] = true;
+      }
+      if (state[1] == 0.0 && snapshot[cell].getOilDensity() == 0.0) {
+        snapshot[cell].setOilDensity(1.0);
+        residualDensityExtension[cell][1] = true;
+      }
+      if (state[2] == 0.0 && snapshot[cell].getWaterDensity() == 0.0) {
+        snapshot[cell].setWaterDensity(1.0);
+        residualDensityExtension[cell][2] = true;
+      }
+      fluids[cell] = SerializationUtils.clone(referenceFluid);
+      fluids[cell].setPressure(snapshot[cell].getPressure(), "Pa");
+      fluids[cell].setTemperature(snapshot[cell].getTemperature(), "K");
+      try {
+        new ThermodynamicOperations(fluids[cell]).TPflash();
+        fluids[cell].init(3);
+      } catch (RuntimeException failure) {
+        throw new IllegalStateException("Cannot prepare frozen phase compositions for cell " + cell, failure);
+      }
+    }
+    AnchoredIsothermalDensityModel model = new AnchoredIsothermalDensityModel(snapshot, fluids);
+    for (int cell = 0; cell < snapshot.length; cell++) {
+      for (int phase = 0; phase < 3; phase++) {
+        if (residualDensityExtension[cell][phase] && model.hasPhase(cell, phase)) {
+          throw new IllegalArgumentException("A reference flash cannot give physical availability to an algebraic "
+              + "density extension in cell " + cell + ", phase " + phase);
+        }
+      }
+    }
+    return model;
+  }
+
+  /**
+   * Prepare, but do not commit, an isothermal unsplit interval using frozen reference-phase EOS densities.
+   *
+   * @param dt requested interval in s
+   * @param solver configured nonlinear solver with relative tolerance no greater than 1e-8
+   * @return independently verified interval and exact accepted-substep transport ledgers
+   * @throws IllegalArgumentException for invalid time, solver or unsupported phase EOS inputs
+   * @throws IllegalStateException for unsupported pipe configuration or unsuccessful interval preparation
+   */
+  public synchronized PreparedInterval prepareUnsplitTransient(double dt, UnsplitTransientSolver solver) {
+    validateUnsplitPreparation(dt, solver);
+    return prepareUnsplitTransient(dt, solver, createUnsplitDensityModel());
+  }
+
+  /**
+   * Prepare an independent unsplit candidate from the current pipe state without advancing the pipe.
+   *
+   * <p>
+   * The operator is deeply copied, including its configured closures. Phase-flow inlet pressure follows the current
+   * trial first cell; prescribed outlet pressure acts only at the external face. Phase-pressure consistency is retained
+   * independently of Bestion stabilization. Legacy RK/IMEX/coupled-pressure settings are unchanged and do not
+   * participate: on the copied operator the physical Bestion term is included at the common time level rather than
+   * omitted for a separate implicit update. Viscosities, sound speeds and cell temperatures remain frozen.
+   * </p>
+   *
+   * <p>
+   * Success and failure both leave sections, clocks, identifiers, reports, trackers, result profiles and streams
+   * unchanged. This method is a qualification/preparation interface; the separately selected unsplit runTransient route
+   * owns publication within its narrower composition contract. In particular this preparation method does not publish
+   * an inlet-composition outlet stream from unequal phase transports; accepted component composition and atomic stream
+   * publication remain separate integration requirements. Caller-supplied density callbacks must be side-effect-free
+   * and match accepted present-phase densities at the initial state.
+   * </p>
+   *
+   * @param dt requested interval in s, with at most eight nonlinear halvings
+   * @param solver configured nonlinear solver with relative tolerance no greater than 1e-8
+   * @param densityModel pressure-dependent isothermal phase density closure
+   * @return complete immutable candidate with defensive endpoints and exact integrated face/source transfers
+   * @throws IllegalArgumentException for invalid time, solver, density or an inconsistent initial density closure
+   * @throws IllegalStateException for unsupported configuration, missing phase composition or preparation failure
+   */
+  public synchronized PreparedInterval prepareUnsplitTransient(double dt, UnsplitTransientSolver solver,
+      PhaseDensityModel densityModel) {
+    return prepareUnsplitTransient(dt, dt, solver, densityModel);
+  }
+
+  /**
+   * Prepare a complete pipe interval with a separate nominal time-step bound, without committing any pipe state.
+   *
+   * <p>
+   * The accepted-substep budget is {@link #getMaximumTransientSubsteps()}; each nominal attempt allows at most eight
+   * nonlinear halvings. Initial occupied volume must already match the cell area within 1e-8.
+   * </p>
+   *
+   * @param dt complete requested interval in s
+   * @param maximumTimeStep positive finite nominal step bound in s; rejected attempts can be subdivided further
+   * @param solver configured nonlinear solver with relative tolerance no greater than 1e-8
+   * @param densityModel side-effect-free isothermal phase-density closure matching the accepted state
+   * @return immutable complete candidate and exact accepted-substep ledgers
+   * @throws IllegalArgumentException for invalid inputs, excessive nominal steps or inconsistent initial densities
+   * @throws IllegalStateException for unsupported configuration, missing phase composition or preparation failure
+   * @see #prepareUnsplitTransient(double, UnsplitTransientSolver, PhaseDensityModel)
+   */
+  public synchronized PreparedInterval prepareUnsplitTransient(double dt, double maximumTimeStep,
+      UnsplitTransientSolver solver, PhaseDensityModel densityModel) {
+    validateUnsplitPreparation(dt, solver);
+    if (densityModel == null || !(maximumTimeStep > 0.0) || !Double.isFinite(maximumTimeStep)) {
+      throw new IllegalArgumentException("An unsplit density model and positive finite nominal time step are required");
+    }
+    TwoFluidSection[] snapshot = getSectionSnapshots();
+    for (int cell = 0; cell < snapshot.length; cell++) {
+      double[] state = snapshot[cell].getStateVector();
+      double[] density = densityModel.calculate(cell, state.clone(), snapshot[cell].getPressure(), simulationTime);
+      double[] acceptedDensity = { snapshot[cell].getGasDensity(), snapshot[cell].getOilDensity(),
+          snapshot[cell].getWaterDensity() };
+      if (density == null || density.length != 3) {
+        throw new IllegalArgumentException("Density model must return gas, oil and water densities");
+      }
+      for (int phase = 0; phase < 3; phase++) {
+        if (!(density[phase] > 0.0) || !Double.isFinite(density[phase])
+            || state[phase] > 0.0 && (!(acceptedDensity[phase] > 0.0) || !Double.isFinite(acceptedDensity[phase])
+                || Math.abs(density[phase] / acceptedDensity[phase] - 1.0) > 1.0e-8)) {
+          throw new IllegalArgumentException(
+              "Density closure does not match accepted cell " + cell + ", phase " + phase);
+        }
+      }
+      double occupiedArea = 0.0;
+      for (int phase = 0; phase < 3; phase++) {
+        if (!Double.isFinite(state[phase]) || state[phase] < 0.0) {
+          throw new IllegalArgumentException("Accepted phase inventories must be finite and nonnegative");
+        }
+        occupiedArea += state[phase] / density[phase];
+      }
+      if (!(snapshot[cell].getArea() > 0.0) || !Double.isFinite(occupiedArea)
+          || Math.abs(occupiedArea / snapshot[cell].getArea() - 1.0) > 1.0e-8) {
+        throw new IllegalArgumentException("Accepted volume closure is inconsistent in cell " + cell);
+      }
+    }
+    TwoFluidConservationEquations trialEquations;
+    synchronized (equations) {
+      trialEquations = SerializationUtils.clone(equations);
+    }
+    trialEquations.setConservativeSlugs(null);
+    trialEquations.setIncludeEnergyEquation(false);
+    trialEquations.setIncludeMassTransfer(false);
+    trialEquations.setConsistentPhasePressureEnabled(true);
+    trialEquations.setImplicitInterfacialPressure(false);
+    trialEquations.getFluxCalculator().setCenteredPressureFluxEnabled(false);
+    trialEquations.setClosedBoundaries(inletBCType == BoundaryCondition.CLOSED,
+        outletBCType == BoundaryCondition.CLOSED);
+    trialEquations.setInletBoundaryState(null);
+    if (inletBCType != BoundaryCondition.CLOSED) {
+      double flow = inletBCType == BoundaryCondition.CONSTANT_FLOW ? inletMassFlow
+          : getInletStream().getFlowRate("kg/sec");
+      if (!Double.isFinite(flow) || flow < 0.0) {
+        throw new IllegalStateException("Unsplit preparation requires finite nonnegative prescribed inlet flow");
+      }
+      TwoFluidSection inletFace = createPrescribedInletFace(snapshot[0], flow,
+          SerializationUtils.clone(getInletStream().getFluid()));
+      if (flow > 0.0 && densityModel instanceof AnchoredIsothermalDensityModel) {
+        AnchoredIsothermalDensityModel frozen = (AnchoredIsothermalDensityModel) densityModel;
+        double[] inletState = inletFace.getStateVector();
+        for (int phase = 0; phase < 3; phase++) {
+          if (inletState[phase] > 0.0 && !frozen.hasPhase(0, phase)) {
+            throw new IllegalStateException("Inlet phase has no frozen composition for phase " + phase);
+          }
+        }
+      }
+      trialEquations.setInletPhaseFlowBoundaryState(inletFace);
+    }
+    TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(trialEquations, densityModel, solver, 8,
+        getMaximumTransientSubsteps());
+    integrator.setPressureInterpolationEnabled(unsplitPressureInterpolationEnabled);
+    PreparedInterval interval = integrator.prepareInterval(snapshot, dx, dt, simulationTime, outletPressure,
+        outletBCType == BoundaryCondition.CONSTANT_PRESSURE, 1.0e-8, maximumTimeStep);
+    if (densityModel instanceof AnchoredIsothermalDensityModel) {
+      AnchoredIsothermalDensityModel frozen = (AnchoredIsothermalDensityModel) densityModel;
+      for (PreparedStep step : interval.getSubsteps()) {
+        TwoFluidSection[] endpoint = step.getEndpointSections();
+        double[][] faces = step.getEvaluation().getPhaseMassFaceFluxes();
+        for (int cell = 0; cell < endpoint.length; cell++) {
+          double[] state = endpoint[cell].getStateVector();
+          for (int phase = 0; phase < 3; phase++) {
+            if (!frozen.hasPhase(cell, phase)
+                && (state[phase] > 0.0 || faces[cell][phase] > 0.0 || faces[cell + 1][phase] < 0.0)) {
+              throw new IllegalStateException(
+                  "Prepared phase appearance or inflow has no frozen composition in cell " + cell + ", phase " + phase);
+            }
+          }
+        }
+      }
+    }
+    return interval;
+  }
+
+  /** Validate the bounded isothermal preparation contract before any trial callback or state change. */
+  private void validateUnsplitPreparation(double dt, UnsplitTransientSolver solver) {
+    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(simulationTime + dt)
+        || simulationTime + dt <= simulationTime || solver == null || solver.getRelativeTolerance() > 1.0e-8) {
+      throw new IllegalArgumentException(
+          "Unsplit preparation requires finite advancing time and solver tolerance <= 1e-8");
+    }
+    if (sections == null || sections.length == 0 || referenceFluid == null) {
+      throw new IllegalStateException("Call run() to initialize the pipe before unsplit preparation");
+    }
+    if (componentTransportEnabled || includeEnergyEquation || includeMassTransfer || enableHeatTransfer
+        || directElectricalHeatingPowerPerMeter != 0.0 || upstreamCompressibleVolume != null
+        || enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED || equations.isStiffBubbleDragEnabled()
+        || equations.isConservativeSlugForceIntegrationEnabled()) {
+      throw new IllegalStateException("Unsplit preparation requires isothermal flow without component/phase transfer, "
+          + "heat, slug tracking, upstream volume or separately integrated bubble/subcell sources");
+    }
+    if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
+        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
+        || !(outletBCType == BoundaryCondition.CLOSED || outletBCType == BoundaryCondition.CONSTANT_PRESSURE)) {
+      throw new IllegalStateException(
+          "Unsplit preparation supports a phase-flow or closed inlet and pressure or closed outlet");
+    }
+  }
+
+  /**
    * Run transient simulation for specified time step.
+   *
+   * <p>
+   * The default legacy route retains completed substeps on an incomplete interval. Selecting a complete transaction or
+   * an experimental unsplit solver instead leaves the entire accepted interval unchanged on failure.
+   * </p>
    *
    * @param dt Requested time step (s)
    * @param id Calculation identifier
@@ -4495,7 +4865,329 @@ public class TwoFluidPipe extends Pipeline {
    * substeps
    */
   @Override
-  public void runTransient(double dt, UUID id) {
+  public synchronized void runTransient(double dt, UUID id) {
+    if (transactionalTransientEnabled || unsplitTransientSolver != null) {
+      runTransactionalTransient(dt, id);
+    } else {
+      runTransientCandidate(dt, id);
+    }
+  }
+
+  /**
+   * Enable complete-interval rollback for the legacy transient route.
+   *
+   * <p>
+   * The pipe and its serializable model graph are evaluated on a private copy. A failed call preserves accepted cells,
+   * component/thermal/slug state, diagnostics, histories, clocks and connected streams. On success the connected inlet
+   * and outlet objects retain their identity; callers holding a model returned by a submodel getter must reacquire it
+   * after acceptance. Copying adds memory and runtime cost. This is an exception transaction, not a guarantee of
+   * concurrent access through unsynchronized getters or arbitrary user-defined stream callbacks. The supported concrete
+   * fluid phases are SRK, PR, SRK-CPA and SRK-CPAs; other EOS helpers and pipe subclasses require a separate
+   * snapshot/commit contract and are rejected before evaluation.
+   * </p>
+   *
+   * @param enabled true to stage the entire interval; default false preserves legacy partial-interval behavior
+   */
+  public synchronized void setTransactionalTransientEnabled(boolean enabled) {
+    transactionalTransientEnabled = enabled;
+  }
+
+  /** @return whether complete-interval staging is selected for the legacy transient route */
+  public synchronized boolean isTransactionalTransientEnabled() {
+    return transactionalTransientEnabled;
+  }
+
+  /**
+   * Select the experimental frozen-phase unsplit route for subsequent {@link #runTransient(double, UUID)} calls.
+   *
+   * <p>
+   * Every call is a complete-interval transaction. The selected solver is defensively copied. Density branches and
+   * phase compositions are frozen on the first accepted call and retained across later calls until {@link #run(UUID)}
+   * reinitializes the pipe. Each phase's composition must be spatially uniform and match the prescribed inlet within
+   * 1e-10 in component mass fraction. Changing composition, energy/phase transfer, slug tracking, upstream storage and
+   * negative phase outlet transfers remain unsupported and reject without publication. Preparation-only diagnostics
+   * retain their broader signed-flow scope. Selection does not establish experimental flow qualification.
+   * </p>
+   *
+   * @param solver nonlinear solver with tolerance no greater than 1e-8, or null to restore the legacy route
+   * @param maximumTimeStep positive finite nominal unsplit step bound in s; ignored when solver is null
+   * @throws IllegalArgumentException for an invalid bound or insufficient solver tolerance
+   */
+  public synchronized void setUnsplitTransientSolver(UnsplitTransientSolver solver, double maximumTimeStep) {
+    if (solver == null) {
+      unsplitTransientSolver = null;
+      unsplitMaximumTimeStep = 0.0;
+      return;
+    }
+    if (!(maximumTimeStep > 0.0) || !Double.isFinite(maximumTimeStep) || solver.getRelativeTolerance() > 1.0e-8) {
+      throw new IllegalArgumentException("Unsplit selection requires a positive finite step and tolerance <= 1e-8");
+    }
+    unsplitTransientSolver = SerializationUtils.clone(solver);
+    unsplitMaximumTimeStep = maximumTimeStep;
+  }
+
+  /** @return defensive solver configuration, or null when the legacy route is selected */
+  public synchronized UnsplitTransientSolver getUnsplitTransientSolver() {
+    return unsplitTransientSolver == null ? null : SerializationUtils.clone(unsplitTransientSolver);
+  }
+
+  /** @return nominal unsplit time-step bound in s, or zero when the legacy route is selected */
+  public synchronized double getUnsplitMaximumTimeStep() {
+    return unsplitMaximumTimeStep;
+  }
+
+  /** Evaluate on a detached graph, then publish only a completely accepted interval. */
+  private void runTransactionalTransient(double dt, UUID id) {
+    if (getClass() != TwoFluidPipe.class) {
+      throw new IllegalStateException("Transactional transient simulation requires a concrete TwoFluidPipe; "
+          + "subclasses need an explicit snapshot and commit contract");
+    }
+    if (!Double.isFinite(dt) || dt <= 0.0 || !Double.isFinite(simulationTime + dt)
+        || simulationTime + dt <= simulationTime || !Double.isFinite(time + dt) || time + dt <= time) {
+      throw new IllegalArgumentException("Transient time step must advance both finite clocks");
+    }
+    if (sections == null || sections.length == 0 || inStream == null || outStream == null) {
+      throw new IllegalStateException("Call run() before transactional transient simulation");
+    }
+    if (inStream == outStream) {
+      throw new IllegalStateException("Transactional publication requires distinct inlet and outlet streams");
+    }
+    validateTransactionalFluid(referenceFluid);
+    validateTransactionalFluid(inStream.getFluid());
+    TwoFluidPipe candidate = SerializationUtils.clone(this);
+    // Section cloning preserves the configured transient oil/water detector and accepted closure result.
+    candidate.sections = getSectionSnapshots();
+    // Java serialization omits this adaptive history; a candidate must retain it.
+    candidate.adaptiveDtFactor = adaptiveDtFactor;
+    if (unsplitTransientSolver == null) {
+      candidate.runTransientCandidate(dt, id);
+    } else {
+      candidate.runUnsplitTransientCandidate(dt, id);
+    }
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.validateCandidateConfiguration(candidate.upstreamCompressibleVolume);
+    }
+    if (thermalCalculator != null) {
+      thermalCalculator.validateCandidateConfiguration(candidate.thermalCalculator);
+    }
+    SystemInterface acceptedOutletFluid = outStream.getFluid();
+    try {
+      outStream.setFluid(candidate.outStream.getFluid());
+    } catch (RuntimeException publicationFailure) {
+      try {
+        outStream.setFluid(acceptedOutletFluid);
+      } catch (RuntimeException rollbackFailure) {
+        publicationFailure.addSuppressed(rollbackFailure);
+      }
+      throw publicationFailure;
+    }
+    if (upstreamCompressibleVolume != null) {
+      upstreamCompressibleVolume.acceptCandidateState(candidate.upstreamCompressibleVolume);
+      candidate.upstreamCompressibleVolume = upstreamCompressibleVolume;
+    }
+    if (thermalCalculator != null) {
+      thermalCalculator.acceptCandidateState(candidate.thermalCalculator);
+      candidate.thermalCalculator = thermalCalculator;
+    }
+    acceptTransientCandidate(candidate);
+  }
+
+  /** Restrict serialized thermodynamic evaluation to phases with supported cache reconstruction. */
+  private static void validateTransactionalFluid(SystemInterface fluid) {
+    if (fluid == null) {
+      throw new IllegalStateException("Transactional transient simulation requires an initialized fluid");
+    }
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      Class<?> type = fluid.getPhase(phase).getClass();
+      if (type != neqsim.thermo.phase.PhaseSrkEos.class && type != neqsim.thermo.phase.PhasePrEos.class
+          && type != neqsim.thermo.phase.PhaseSrkCPA.class && type != neqsim.thermo.phase.PhaseSrkCPAs.class) {
+        throw new IllegalStateException("Transactional transient simulation does not support phase " + type.getName());
+      }
+    }
+  }
+
+  /** Advance the selected frozen-phase route entirely on a private complete-pipe candidate. */
+  private void runUnsplitTransientCandidate(double dt, UUID id) {
+    validateUnsplitPreparation(dt, unsplitTransientSolver);
+    TwoFluidSection[] initial = getSectionSnapshots();
+    if (unsplitDensityModel == null) {
+      unsplitDensityModel = createUnsplitDensityModel();
+      unsplitReferenceSections = getSectionSnapshots();
+    }
+    PreparedInterval interval = prepareUnsplitTransient(dt, unsplitMaximumTimeStep, unsplitTransientSolver,
+        unsplitDensityModel);
+    TwoFluidUnsplitPublication publication = TwoFluidUnsplitPublication.prepare(interval, initial, simulationTime, dt,
+        1.0e-8);
+    TwoFluidSection[] endpoint = publication.getEndpointSections();
+    TwoFluidSection outlet = endpoint[endpoint.length - 1];
+    double pressure = outletBCType == BoundaryCondition.CONSTANT_PRESSURE ? outletPressure : outlet.getPressure();
+    SystemInterface outletFluid = publication.createOutletFluid(referenceFluid,
+        inletBCType == BoundaryCondition.CLOSED ? null : getInletStream().getFluid(), unsplitReferenceSections,
+        pressure, outlet.getTemperature());
+    double elapsed = publication.getElapsedTimeSeconds();
+    double integratorEnd = timeIntegrator.getCurrentTime() + elapsed;
+    if (!Double.isFinite(time + elapsed) || !(time + elapsed > time) || !Double.isFinite(integratorEnd)
+        || !(integratorEnd > timeIntegrator.getCurrentTime())) {
+      throw new IllegalStateException("Accepted unsplit interval cannot advance every finite clock");
+    }
+    // Classification changes diagnostics only. Do not apply legacy primitive recovery to a strict endpoint.
+    for (TwoFluidSection section : endpoint) {
+      flowRegimeDetector.classify(section);
+    }
+    sections = endpoint;
+    clearSevereSluggingSystemClassification();
+    lastMassBalanceReport = new TwoFluidMassBalanceReport(elapsed, publication.getAcceptedSubsteps(),
+        publication.getInitialMassKg(), publication.getFinalMassKg(), publication.getInletMassKg(),
+        publication.getOutletMassKg(), publication.getSourceMassKg());
+    lastThermalEnergyBalanceReport = null;
+    lastComponentConservationReport = null;
+    isTransientMode = true;
+    currentStep = Math.addExact(currentStep, publication.getAcceptedSubsteps());
+    simulationTime = publication.getEndTimeSeconds();
+    time += elapsed;
+    timeIntegrator.setCurrentTime(integratorEnd);
+    outStream.setFluid(outletFluid);
+    updateResultArrays();
+    calcIdentifier = id;
+  }
+
+  /** Install only pipe-owned fields; external equipment connections retain their identity. */
+  private void acceptTransientCandidate(TwoFluidPipe candidate) {
+    transientOutletBackflowClamped = candidate.transientOutletBackflowClamped;
+    implicitInterfacialPressureCoupling = candidate.implicitInterfacialPressureCoupling;
+    coupledPressureMomentumEnabled = candidate.coupledPressureMomentumEnabled;
+    transientCoupledPressureMomentumFailureDetected = candidate.transientCoupledPressureMomentumFailureDetected;
+    transientCoupledPressureMomentumCorrectionLimited = candidate.transientCoupledPressureMomentumCorrectionLimited;
+    transientPressureLimitCount = candidate.transientPressureLimitCount;
+    firstTransientPressureLimitTime = candidate.firstTransientPressureLimitTime;
+    minimumTransientPressureDamping = candidate.minimumTransientPressureDamping;
+    transientCoupledPressureMomentumRejectedSubsteps = candidate.transientCoupledPressureMomentumRejectedSubsteps;
+    transientCoupledPressureMomentumFailureDiagnostic = candidate.transientCoupledPressureMomentumFailureDiagnostic;
+    upstreamCompressibleVolume = candidate.upstreamCompressibleVolume;
+    length = candidate.length;
+    diameter = candidate.diameter;
+    roughness = candidate.roughness;
+    numberOfSections = candidate.numberOfSections;
+    elevationProfile = candidate.elevationProfile;
+    cellFaceElevationProfile = candidate.cellFaceElevationProfile;
+    sections = candidate.sections;
+    dx = candidate.dx;
+    sectionLengths = candidate.sectionLengths;
+    simulationTime = candidate.simulationTime;
+    maximumTransientSubsteps = candidate.maximumTransientSubsteps;
+    maxSimulationTime = candidate.maxSimulationTime;
+    cflNumber = candidate.cflNumber;
+    equations = candidate.equations;
+    unsplitPressureInterpolationEnabled = candidate.unsplitPressureInterpolationEnabled;
+    transactionalTransientEnabled = candidate.transactionalTransientEnabled;
+    unsplitTransientSolver = candidate.unsplitTransientSolver;
+    unsplitMaximumTimeStep = candidate.unsplitMaximumTimeStep;
+    unsplitDensityModel = candidate.unsplitDensityModel;
+    unsplitReferenceSections = candidate.unsplitReferenceSections;
+    sharedSlugForceBalanceEnabled = candidate.sharedSlugForceBalanceEnabled;
+    sharedSlugForceBalance = candidate.sharedSlugForceBalance;
+    timeIntegrator = candidate.timeIntegrator;
+    flowRegimeDetector = candidate.flowRegimeDetector;
+    accumulationTracker = candidate.accumulationTracker;
+    slugTracker = candidate.slugTracker;
+    lagrangianSlugTracker = candidate.lagrangianSlugTracker;
+    slugTrackingMode = candidate.slugTrackingMode;
+    inletBCType = candidate.inletBCType;
+    outletBCType = candidate.outletBCType;
+    outletPressure = candidate.outletPressure;
+    outletPressureSet = candidate.outletPressureSet;
+    inletPressure = candidate.inletPressure;
+    inletPressureSet = candidate.inletPressureSet;
+    inletMassFlow = candidate.inletMassFlow;
+    inletMassFlowSet = candidate.inletMassFlowSet;
+    includeEnergyEquation = candidate.includeEnergyEquation;
+    includeMassTransfer = candidate.includeMassTransfer;
+    enableHeatTransfer = candidate.enableHeatTransfer;
+    surfaceTemperature = candidate.surfaceTemperature;
+    heatTransferCoefficient = candidate.heatTransferCoefficient;
+    stagnantInnerHeatTransferCoefficient = candidate.stagnantInnerHeatTransferCoefficient;
+    heatTransferProfile = candidate.heatTransferProfile;
+    surfaceTemperatureProfile = candidate.surfaceTemperatureProfile;
+    wallThickness = candidate.wallThickness;
+    wallDensity = candidate.wallDensity;
+    wallHeatCapacity = candidate.wallHeatCapacity;
+    wallTemperatureProfile = candidate.wallTemperatureProfile;
+    soilThermalResistance = candidate.soilThermalResistance;
+    directElectricalHeatingPowerPerMeter = candidate.directElectricalHeatingPowerPerMeter;
+    thermalCalculator = candidate.thermalCalculator;
+    multilayerLayerTemperatureProfiles = candidate.multilayerLayerTemperatureProfiles;
+    useMultilayerThermalModel = candidate.useMultilayerThermalModel;
+    enableJouleThomson = candidate.enableJouleThomson;
+    hydrateFormationTemperature = candidate.hydrateFormationTemperature;
+    waxAppearanceTemperature = candidate.waxAppearanceTemperature;
+    localLossKFactors = candidate.localLossKFactors;
+    equivalentLengthFittings = candidate.equivalentLengthFittings;
+    numberOf90DegreeBends = candidate.numberOf90DegreeBends;
+    numberOf45DegreeBends = candidate.numberOf45DegreeBends;
+    inletLossCoefficient = candidate.inletLossCoefficient;
+    outletLossCoefficient = candidate.outletLossCoefficient;
+    hydrateRiskSections = candidate.hydrateRiskSections;
+    waxRiskSections = candidate.waxRiskSections;
+    insulationType = candidate.insulationType;
+    enableSlugTracking = candidate.enableSlugTracking;
+    outletSlugCount = candidate.outletSlugCount;
+    totalSlugVolumeAtOutlet = candidate.totalSlugVolumeAtOutlet;
+    lastSlugArrivalTime = candidate.lastSlugArrivalTime;
+    maxSlugLengthAtOutlet = candidate.maxSlugLengthAtOutlet;
+    maxSlugVolumeAtOutlet = candidate.maxSlugVolumeAtOutlet;
+    countedOutletSlugs = candidate.countedOutletSlugs;
+    olgaModelType = candidate.olgaModelType;
+    minimumLiquidHoldup = candidate.minimumLiquidHoldup;
+    minimumSlipFactor = candidate.minimumSlipFactor;
+    useAdaptiveMinimumOnly = candidate.useAdaptiveMinimumOnly;
+    enforceMinimumSlip = candidate.enforceMinimumSlip;
+    minimumFilmThickness = candidate.minimumFilmThickness;
+    annularEntrainmentFraction = candidate.annularEntrainmentFraction;
+    enableAnnularFilmModel = candidate.enableAnnularFilmModel;
+    enableTerrainTracking = candidate.enableTerrainTracking;
+    terrainSlugCriticalHoldup = candidate.terrainSlugCriticalHoldup;
+    liquidFallbackCoefficient = candidate.liquidFallbackCoefficient;
+    enableSevereSlugModel = candidate.enableSevereSlugModel;
+    useOLGAFlowRegimeMap = candidate.useOLGAFlowRegimeMap;
+    flowRegimeHysteresis = candidate.flowRegimeHysteresis;
+    thermodynamicUpdateInterval = candidate.thermodynamicUpdateInterval;
+    ssUnderRelaxation = candidate.ssUnderRelaxation;
+    ssFlashInterval = candidate.ssFlashInterval;
+    ssMaxWallClockTime = candidate.ssMaxWallClockTime;
+    useSeparatedFrictionModel = candidate.useSeparatedFrictionModel;
+    ssWallClockLimited = candidate.ssWallClockLimited;
+    ssPressureFloorLimited = candidate.ssPressureFloorLimited;
+    ssIterationsUsed = candidate.ssIterationsUsed;
+    ssMaxIterations = candidate.ssMaxIterations;
+    ssConverged = candidate.ssConverged;
+    steadyStateConvergenceReport = candidate.steadyStateConvergenceReport;
+    currentStep = candidate.currentStep;
+    enableAdaptiveTimestepping = candidate.enableAdaptiveTimestepping;
+    adaptiveMaxPressure = candidate.adaptiveMaxPressure;
+    adaptiveMaxPressureChangeRatio = candidate.adaptiveMaxPressureChangeRatio;
+    adaptiveDtFactor = candidate.adaptiveDtFactor;
+    isTransientMode = candidate.isTransientMode;
+    lastMassBalanceReport = candidate.lastMassBalanceReport;
+    lastThermalEnergyBalanceReport = candidate.lastThermalEnergyBalanceReport;
+    componentTransportEnabled = candidate.componentTransportEnabled;
+    componentConservationTolerance = candidate.componentConservationTolerance;
+    storeComponentConservationHistory = candidate.storeComponentConservationHistory;
+    componentTransport = candidate.componentTransport;
+    lastComponentConservationReport = candidate.lastComponentConservationReport;
+    componentConservationReports = candidate.componentConservationReports;
+    componentConservationTimes = candidate.componentConservationTimes;
+    pressureProfile = candidate.pressureProfile;
+    temperatureProfile = candidate.temperatureProfile;
+    liquidHoldupProfile = candidate.liquidHoldupProfile;
+    gasVelocityProfile = candidate.gasVelocityProfile;
+    liquidVelocityProfile = candidate.liquidVelocityProfile;
+    referenceFluid = candidate.referenceFluid;
+    time = candidate.time;
+    calcIdentifier = candidate.calcIdentifier;
+  }
+
+  /** Execute the existing numerical route on its owning graph. */
+  private void runTransientCandidate(double dt, UUID id) {
     if (equations.isConservativeSlugForceIntegrationEnabled()
         && (slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN || !sharedSlugForceBalanceEnabled
             || equations.isStiffBubbleDragEnabled())) {
@@ -4562,9 +5254,10 @@ public class TwoFluidPipe extends Pipeline {
         : null);
 
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
-    // The implicit pressure solve supplies the acoustic response. AUSM's explicit
-    // acoustic velocity diffusion would otherwise retain an acoustic CFL limit.
-    equations.getFluxCalculator().setCenteredPressureFluxEnabled(isIMEX && coupledPressureMomentumEnabled);
+    // Every coupled predictor uses the implicit acoustic response, including Runge-Kutta methods.
+    // The gas-velocity-dependent AUSM pressure split would otherwise feed an additional acoustic
+    // traction into all phase momenta and destabilize countercurrent, liquid-rich states.
+    equations.getFluxCalculator().setCenteredPressureFluxEnabled(coupledPressureMomentumEnabled);
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
@@ -5359,9 +6052,10 @@ public class TwoFluidPipe extends Pipeline {
 
       // Include gravity-wave speed for inclined/vertical sections (critical for risers)
       // Gravity waves propagate at ~sqrt(g * D * |sin(theta)| * (rhoL - rhoG) / rhoMix)
-      if (enableAdaptiveTimestepping && elevationProfile != null && i < numberOfSections - 1) {
-        double sinTheta = Math.abs(elevationProfile[Math.min(i + 1, elevationProfile.length - 1)] - elevationProfile[i])
-            / secDx;
+      if (enableAdaptiveTimestepping
+          && (cellFaceElevationProfile != null || (elevationProfile != null && i < numberOfSections - 1))) {
+        double sinTheta = cellFaceElevationProfile != null ? Math.abs(Math.sin(sec.getInclination()))
+            : Math.abs(elevationProfile[Math.min(i + 1, elevationProfile.length - 1)] - elevationProfile[i]) / secDx;
         if (sinTheta > 0.01) { // Only for significantly inclined sections
           double rhoG = Math.max(sec.getGasDensity(), 0.1);
           double rhoL = Math.max(sec.getLiquidDensity(), 100.0);
@@ -5869,7 +6563,8 @@ public class TwoFluidPipe extends Pipeline {
       // Fix inlet pressure (transient: flow rate computed from momentum balance)
       inlet.setPressure(inletPressure);
       inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
-    } else if (inletBCType == BoundaryCondition.CLOSED) {
+    } else if (inletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
+      // Coupled transients impose zero flow at the external face; the physical cell retains its inertia.
       // Zero velocity at inlet (blocked/no inflow condition)
       // Pressure floats based on mass loss through outlet
       inlet.setGasVelocity(0.0);
@@ -5896,7 +6591,8 @@ public class TwoFluidPipe extends Pipeline {
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
       outlet.setPressure(outletPressure);
-    } else if (outletBCType == BoundaryCondition.CLOSED) {
+    } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
+      // Repeatedly resetting a finite cell's momentum is an artificial impulse, not a closed-face condition.
       // Zero velocity at outlet (blocked/shut-in condition)
       // Pressure floats based on mass accumulation
       outlet.setGasVelocity(0.0);
@@ -5916,7 +6612,11 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Build a feed face without modifying any physical cell inventory or equation-of-state state. */
   private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow) {
-    SystemInterface fluid = getInletStream().getFluid();
+    return createPrescribedInletFace(cell, massFlow, getInletStream().getFluid());
+  }
+
+  /** Build a feed face using the supplied fluid; physical-property caches may be initialized on that fluid. */
+  private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow, SystemInterface fluid) {
     TwoFluidSection face = cell.clone();
     double[] fractions = calculateInletPhaseMassFractions(fluid);
     String[] names = { "gas", "oil", "aqueous" };
@@ -6198,7 +6898,8 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * Steady-state calculations use the inlet mass flow to enforce global steady closure. After a transient call, the
    * stream exposes the interval-average total outlet flux integrated over the accepted internal stages. Phase-resolved
-   * integrals remain available from {@link #getLastMassBalanceReport()}.
+   * integrals remain available from {@link #getLastMassBalanceReport()}. With named-component transport, the outlet
+   * composition also uses those accepted component transfers; its TP flash preserves each component mass flow.
    * </p>
    *
    * <p>
@@ -6208,14 +6909,45 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    */
   private void updateOutletStream() {
+    updateOutletStream(false);
+  }
+
+  /** Publish with an explicit steady-state context so transient pressure never uses a steady-gradient extrapolation. */
+  private void updateOutletStream(boolean steadyPublication) {
     if (sections == null || sections.length == 0) {
       return;
     }
 
     TwoFluidSection outlet = sections[numberOfSections - 1];
+    double publishedPressure = outletStreamPressure(outlet, steadyPublication);
+    if (lastComponentConservationReport != null && lastComponentConservationReport.getElapsedTimeSeconds() > 0.0) {
+      if (componentTransport == null || !lastComponentConservationReport.isConverged()
+          || lastMassBalanceReport == null) {
+        throw new IllegalStateException("Component outlet publication requires verified component and phase ledgers");
+      }
+      double elapsed = lastComponentConservationReport.getElapsedTimeSeconds();
+      if (elapsed != lastMassBalanceReport.getElapsedTimeSeconds()) {
+        throw new IllegalStateException("Component and phase outlet ledgers must cover the same accepted interval");
+      }
+      double componentMass = 0.0;
+      for (double mass : lastComponentConservationReport.getOutletBoundaryMassKg()) {
+        componentMass += mass;
+      }
+      double phaseMass = lastMassBalanceReport.getOutletMassKg(TwoFluidMassBalanceReport.Phase.TOTAL);
+      double tolerance = Math.max(1.0e-10,
+          componentConservationTolerance * Math.max(Math.abs(componentMass), Math.abs(phaseMass)));
+      if (!Double.isFinite(componentMass) || !Double.isFinite(phaseMass)
+          || Math.abs(componentMass - phaseMass) > tolerance) {
+        throw new IllegalStateException("Component and phase outlet transfers do not agree");
+      }
+      SystemInterface componentOutlet = componentTransport.createOutletFluid(referenceFluid, publishedPressure,
+          outlet.getTemperature(), elapsed);
+      getOutletStream().setFluid(componentOutlet);
+      return;
+    }
     SystemInterface outFluid = getInletStream().getFluid().clone();
 
-    outFluid.setPressure(outlet.getPressure() / 1e5, "bara");
+    outFluid.setPressure(publishedPressure / 1e5, "bara");
     outFluid.setTemperature(outlet.getTemperature(), "K");
 
     // Calculate outlet mass flow rate from section state
@@ -6269,6 +7001,27 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     getOutletStream().setFluid(outFluid);
+  }
+
+  /**
+   * Select the external face pressure for the explicit terrain convention.
+   *
+   * <p>
+   * A constant-pressure outlet always uses its boundary value. Other steady outlets use the half-cell extrapolation of
+   * the accepted steady midpoint. Transient outlets retain the current boundary-section value; no steady momentum
+   * gradient is applied to an evolving state. The legacy terrain convention retains its previous section pressure.
+   * </p>
+   */
+  private double outletStreamPressure(TwoFluidSection outlet, boolean steadyPublication) {
+    if (cellFaceElevationProfile != null) {
+      if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+        return outletPressure;
+      }
+      if (steadyPublication) {
+        return steadyOutletFacePressure();
+      }
+    }
+    return outlet.getPressure();
   }
 
   /**
@@ -7452,6 +8205,10 @@ public class TwoFluidPipe extends Pipeline {
    * @param refinementFactor How much finer to make sections at elevation changes (2-10)
    */
   public void generateRefinedMesh(int baseSections, double refinementFactor) {
+    if (cellFaceElevationProfile != null) {
+      throw new IllegalStateException("Explicit cell-face terrain requires elevations resampled on the chosen mesh; "
+          + "set the section lengths and then the matching N+1 face elevations");
+    }
     if (elevationProfile == null || elevationProfile.length < 2) {
       // No elevation profile, use uniform mesh
       this.numberOfSections = baseSections;
@@ -7537,12 +8294,20 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Set elevation profile.
+   * Set the legacy section-indexed elevation profile.
+   *
+   * <p>
+   * This preserves the historical convention: entry i is stored on section i and the next elevation difference is
+   * divided by that section's arc length; the last available inclination is repeated. Use
+   * {@link #setCellFaceElevationProfile(double[])} to specify physical finite-volume faces and midpoint elevations.
+   * Calling this method selects the legacy convention and clears any explicit face profile.
+   * </p>
    *
    * @param elevations Elevation at each section (m)
    */
   public void setElevationProfile(double[] elevations) {
     this.elevationProfile = elevations.clone();
+    this.cellFaceElevationProfile = null;
   }
 
   /**
@@ -7552,6 +8317,72 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double[] getElevationProfile() {
     return elevationProfile == null ? null : elevationProfile.clone();
+  }
+
+  /**
+   * Specify the elevations of all finite-volume faces using the current mesh.
+   *
+   * <p>
+   * Supply N+1 elevations in metres, starting at the inlet face and ending at the outlet face. Cell lengths are arc
+   * lengths along the pipe axis; each cell is represented by a straight segment with sine of inclination equal to its
+   * face elevation rise divided by its length. The cell elevation is the mean of its two face elevations. Thus
+   * integrated gravity uses the specified elevation rise once, including the first and last half cells. Steady
+   * pressures are midpoint values and specified boundary pressures lie at their physical external faces.
+   * </p>
+   *
+   * <p>
+   * Set total length and the uniform or nonuniform mesh before this method. Replace the face profile after changing the
+   * mesh; automatic refinement cannot reinterpret these samples. Invalid inputs are rejected before the previous
+   * profile is replaced and are rechecked before initialization. The legacy elevation profile is cleared. This geometry
+   * convention does not qualify general hydrostatic balance of the transient operator or a steady/transient closure
+   * fixed point.
+   * </p>
+   *
+   * @param elevations finite elevations in metres, one per cell face
+   * @throws IllegalArgumentException if the mesh or elevations are inconsistent or a rise exceeds the cell arc length
+   */
+  public void setCellFaceElevationProfile(double[] elevations) {
+    validateCellFaceElevationProfile(elevations);
+    cellFaceElevationProfile = elevations.clone();
+    elevationProfile = null;
+  }
+
+  /** @return defensive copy of the explicit face elevations in metres, or null for the legacy convention */
+  public double[] getCellFaceElevationProfile() {
+    return cellFaceElevationProfile == null ? null : cellFaceElevationProfile.clone();
+  }
+
+  /** Validate the explicit terrain against arc lengths without changing geometry or accepted state. */
+  private void validateCellFaceElevationProfile(double[] elevations) {
+    int count = sectionLengths == null ? numberOfSections : sectionLengths.length;
+    if (count < 2 || elevations == null || elevations.length != count + 1 || !(length > 0.0)
+        || !Double.isFinite(length)) {
+      throw new IllegalArgumentException(
+          "Cell-face terrain requires N+1 elevations, at least two cells and finite positive length");
+    }
+    for (double elevation : elevations) {
+      if (!Double.isFinite(elevation)) {
+        throw new IllegalArgumentException("Cell-face elevations must be finite");
+      }
+    }
+    double total = 0.0;
+    for (int cell = 0; cell < count; cell++) {
+      double cellLength = sectionLengths == null ? length / count : sectionLengths[cell];
+      if (!(cellLength > 0.0) || !Double.isFinite(cellLength)) {
+        throw new IllegalArgumentException("Cell-face terrain requires finite positive cell arc lengths");
+      }
+      total += cellLength;
+      double rise = elevations[cell + 1] - elevations[cell];
+      double scale = Math.max(cellLength, Math.max(Math.abs(elevations[cell]), Math.abs(elevations[cell + 1])));
+      double roundoff = 8.0 * Math.ulp(scale);
+      if (!Double.isFinite(rise) || Math.abs(rise) - cellLength > roundoff) {
+        throw new IllegalArgumentException("Cell-face elevation rise exceeds the arc length of cell " + cell);
+      }
+    }
+    double roundoff = 16.0 * count * Math.ulp(Math.max(length, total));
+    if (!Double.isFinite(total) || Math.abs(total - length) > roundoff) {
+      throw new IllegalArgumentException("Cell arc lengths must sum to total pipe length for cell-face terrain");
+    }
   }
 
   /**
@@ -8365,6 +9196,12 @@ public class TwoFluidPipe extends Pipeline {
    * remains off by default while the long-horizon liquid-rich and severe-slugging validation suite is being qualified.
    *
    * <p>
+   * All coupled integration methods use centered face pressure for the explicit predictor. The coupled solve supplies
+   * the acoustic pressure response; a separate gas-velocity-dependent AUSM pressure traction must not be added to the
+   * phase momenta. Mass and energy advection retain their AUSM fluxes. Disabling this option restores the original
+   * pressure split.
+   *
+   * <p>
    * Use together with {@link #setEnableInterfacialPressure(boolean)} so the transient momentum equations use the
    * physically correct pressure force and the Bestion hyperbolicity closure.
    *
@@ -9131,6 +9968,22 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isUseEquilibriumLevelAnnularTransition() {
     return flowRegimeDetector.isUseEquilibriumLevelAnnularTransition();
+  }
+
+  /**
+   * Require the inclined annular branch to satisfy the opt-in liquid film-bridging criterion.
+   *
+   * @param enabled true to include the local liquid-inventory constraint; default false
+   * @see FlowRegimeDetector#setUseInclinedFilmBridgingCriterion(boolean)
+   */
+  public synchronized void setUseInclinedFilmBridgingCriterion(boolean enabled) {
+    flowRegimeDetector.setUseInclinedFilmBridgingCriterion(enabled);
+    equations.getFlowRegimeDetector().setUseInclinedFilmBridgingCriterion(enabled);
+  }
+
+  /** @return whether the inclined film-bridging constraint is enabled */
+  public synchronized boolean isUseInclinedFilmBridgingCriterion() {
+    return flowRegimeDetector.isUseInclinedFilmBridgingCriterion();
   }
 
   /**

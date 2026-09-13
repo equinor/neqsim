@@ -91,6 +91,25 @@ class TwoFluidConservativeSlugCouplingTest {
   }
 
   @Test
+  void reconstructedOutletUsesPrescribedPressureInTractionAndPhasePressureSource() {
+    TwoFluidSection[] cells = cells(0.4, 0.0);
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setConsistentPhasePressureEnabled(true);
+    equations.setConservativeSlugs(Collections.singletonList(slug(2.6, 3.2)));
+    equations.setOutletBoundaryPressure(2.1e5);
+    double[][] rates = equations.calcRHS(cells, 1.0);
+    for (int cell = 0; cell < cells.length; cell++) {
+      double[] holdup = { cells[cell].getGasHoldup(), cells[cell].getOilHoldup(), cells[cell].getWaterHoldup() };
+      for (int phase = 0; phase < 3; phase++) {
+        assertEquals(0.0, rates[cell][phase], 1.0e-12);
+        double expected = cell == cells.length - 1 ? -holdup[phase] * cells[cell].getArea() * 1.0e4 : 0.0;
+        assertEquals(expected, rates[cell][phase + 3], 1.0e-8,
+            "External pressure gradient must accelerate each cell phase, not its reconstructed face holdup");
+      }
+    }
+  }
+
+  @Test
   void closedFaceCannotLeakReconstructedSlugMomentum() {
     TwoFluidSection[] cells = cells(0.4, 0.0);
     SlugBubbleUnit slug = slug(2.6, 3.2);

@@ -56,6 +56,9 @@ public class FlowRegimeDetector implements Serializable {
   /** Blend closures across horizontal regime transitions instead of switching at a point. */
   private boolean blendRegimeTransitions = true;
 
+  /** Require the local liquid inventory to admit a thin film before selecting inclined annular flow. */
+  private boolean useInclinedFilmBridgingCriterion;
+
   /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
   private static final double KH_TRANSITION_BAND = 0.15;
 
@@ -156,6 +159,38 @@ public class FlowRegimeDetector implements Serializable {
     this.blendRegimeTransitions = enable;
   }
 
+  /**
+   * Returns whether inclined annular flow must also satisfy the local film-bridging limit.
+   *
+   * @return true when local liquid holdup constrains inclined annular flow
+   */
+  public boolean isUseInclinedFilmBridgingCriterion() {
+    return useInclinedFilmBridgingCriterion;
+  }
+
+  /**
+   * Requires a liquid fraction below 0.24 before the inclined branch can select annular flow.
+   *
+   * <p>
+   * The droplet-lift velocity alone does not establish that an annular film is possible. Barnea (1987), transition J,
+   * also requires enough unoccupied core area to avoid liquid bridging. This opt-in inventory constraint uses the
+   * section's current liquid holdup; all liquid is assigned to the film because this detector has no independently
+   * transported droplet inventory. It excludes thick liquid states even when their gas velocity exceeds the unchanged
+   * droplet-lift threshold. The remaining bubble/slug or downward stratified decisions retain their existing criteria.
+   * </p>
+   *
+   * <p>
+   * This local transient constraint is not the full steady annular-film stability calculation in Barnea's model. It
+   * does not add film reversal, entrainment, a transition band, or countercurrent-flow qualification. It affects only
+   * the mechanistic branch more than ten degrees from horizontal. Disabled by default for compatibility.
+   * </p>
+   *
+   * @param enable true to require the local film-bridging constraint
+   */
+  public void setUseInclinedFilmBridgingCriterion(boolean enable) {
+    useInclinedFilmBridgingCriterion = enable;
+  }
+
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
 
@@ -218,13 +253,17 @@ public class FlowRegimeDetector implements Serializable {
    *
    * <p>
    * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
-   * two-phase regime path even when its superficial velocity is arbitrarily small.
+   * two-phase regime path even when its superficial velocity is arbitrarily small. Co-current backward flow is
+   * evaluated in the direction of flow, reversing both velocities and inclination for the correlations. This does not
+   * change the section's physical state or extend the correlations to countercurrent flow. The upward bubble criterion
+   * also requires a nonnegative inferred void fraction and positive bubble transport velocity.
    * </p>
    *
    * @param section The pipe section with current state
    * @return Detected flow regime
    */
   public FlowRegime detectFlowRegime(PipeSection section) {
+    section = flowOrientedSection(section);
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
     double alphaL = section.getLiquidHoldup();
@@ -259,7 +298,7 @@ public class FlowRegimeDetector implements Serializable {
 
     // Use Barnea's unified model for inclined pipes
     if (Math.abs(theta) > Math.toRadians(10)) {
-      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
+      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma, alphaL);
     } else {
       return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     }
@@ -278,14 +317,46 @@ public class FlowRegimeDetector implements Serializable {
    * @return the dominant flow regime
    */
   public FlowRegime classify(PipeSection section) {
-    FlowRegime regime = detectFlowRegime(section);
+    PipeSection oriented = flowOrientedSection(section);
+    FlowRegime regime = detectFlowRegime(oriented);
     section.setFlowRegime(regime);
 
-    Map<FlowRegime, Double> weights = horizontalRegimeWeights(section, regime);
+    Map<FlowRegime, Double> weights = horizontalRegimeWeights(oriented, regime);
     if (weights != null) {
       section.setRegimeWeights(weights);
     }
     return section.getFlowRegime();
+  }
+
+  /**
+   * Express a co-current state in the positive-flow coordinate assumed by the regime correlations.
+   *
+   * <p>
+   * A stagnant phase follows the moving phase's direction. Complete stagnation and countercurrent flow retain their
+   * existing convention. Only a private classification view is reversed; the signed transport state remains intact.
+   * </p>
+   *
+   * @param section physical section
+   * @return the original section or an independently oriented classification view
+   */
+  private PipeSection flowOrientedSection(PipeSection section) {
+    double gasFlow = section.getSuperficialGasVelocity();
+    double liquidFlow = section.getSuperficialLiquidVelocity();
+    if (!(gasFlow <= 0.0 && liquidFlow <= 0.0 && (gasFlow < 0.0 || liquidFlow < 0.0))) {
+      return section;
+    }
+    PipeSection oriented = section.clone();
+    oriented.setInclination(-section.getInclination());
+    oriented.setGasVelocity(-section.getGasVelocity());
+    oriented.setLiquidVelocity(-section.getLiquidVelocity());
+    if (oriented instanceof TwoFluidSection) {
+      TwoFluidSection phaseView = (TwoFluidSection) oriented;
+      TwoFluidSection physical = (TwoFluidSection) section;
+      phaseView.setOilVelocity(-physical.getOilVelocity());
+      phaseView.setWaterVelocity(-physical.getWaterVelocity());
+    }
+    oriented.updateDerivedQuantitiesWithoutNormalization(-gasFlow, -liquidFlow);
+    return oriented;
   }
 
   /**
@@ -499,10 +570,11 @@ public class FlowRegimeDetector implements Serializable {
    * @param mu_L Liquid viscosity (Pa·s)
    * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
+   * @param liquidHoldup current conservative liquid volume fraction
    * @return Flow regime
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double mu_G, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma, double liquidHoldup) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -515,7 +587,8 @@ public class FlowRegimeDetector implements Serializable {
     // 0.1 m/s override selected churn at arbitrarily large gas velocities and introduced
     // a holdup discontinuity when an annular pipe was tilted upward. A separate film
     // stability criterion would be needed to subdivide this region into churn and annular.
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
+    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)
+        && (!useInclinedFilmBridgingCriterion || liquidHoldup < ANNULAR_BRIDGING_HOLDUP)) {
       return FlowRegime.ANNULAR;
     }
 
@@ -526,9 +599,14 @@ public class FlowRegimeDetector implements Serializable {
       // Bubble to slug transition
       double alpha_G_crit = 0.25; // Critical void fraction for bubble coalescence
 
-      double alpha_G = U_SG / (U_SG + U_SL + U_bubble);
-      if (alpha_G < alpha_G_crit) {
-        return FlowRegime.BUBBLE;
+      double bubbleTransportVelocity = U_SG + U_SL + U_bubble;
+      // Countercurrent flow can make the inferred bubble transport zero or negative. A negative void fraction
+      // does not satisfy the bubble criterion: accepting it would switch closure across the transport pole.
+      if (U_SG >= 0.0 && bubbleTransportVelocity > 0.0) {
+        double alpha_G = U_SG / bubbleTransportVelocity;
+        if (alpha_G < alpha_G_crit) {
+          return FlowRegime.BUBBLE;
+        }
       }
 
       return FlowRegime.SLUG;
