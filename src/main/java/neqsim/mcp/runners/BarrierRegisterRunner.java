@@ -1,7 +1,11 @@
 package neqsim.mcp.runners;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -28,6 +32,18 @@ import neqsim.process.safety.barrier.SafetyCriticalElement;
  */
 public final class BarrierRegisterRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final int MAX_REQUEST_BYTES = 65536;
+  private static final int MAX_COLLECTION_ITEMS = 100;
+  private static final int MAX_OBJECT_MEMBERS = 256;
+  private static final int MAX_TEXT_CHARS = 4096;
+  private static final int MAX_NESTING_DEPTH = 12;
+  private static final Set<String> OBJECT_ARRAY_FIELDS = new HashSet<String>(Arrays.asList("evidence",
+      "performanceStandards", "barriers", "safetyCriticalElements"));
+  private static final Set<String> STRING_ARRAY_FIELDS = new HashSet<String>(Arrays.asList("acceptanceCriteria",
+      "evidenceRefs", "equipmentTags", "linkedEquipmentTags", "hazardIds", "linkedHazardIds", "barrierRefs"));
+  private static final Set<String> NUMERIC_FIELDS = new HashSet<String>(Arrays.asList("page", "confidence",
+      "targetPfd", "requiredAvailability", "proofTestIntervalHours", "responseTimeSeconds", "pfd",
+      "effectiveness"));
 
   /**
    * Private constructor for utility class.
@@ -45,15 +61,21 @@ public final class BarrierRegisterRunner {
     if (json == null || json.trim().isEmpty()) {
       return errorJson("JSON input is null or empty");
     }
+    if (json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
+      return errorJson("REQUEST_TOO_LARGE", "Barrier register request exceeds 65536 UTF-8 bytes");
+    }
     try {
       JsonObject input = JsonParser.parseString(json).getAsJsonObject();
-      JsonObject registerJson = input.has("register") && input.get("register").isJsonObject()
-          ? input.getAsJsonObject("register")
-          : input;
+      validateInputShape(input);
+      JsonObject registerJson = input.has("register") ? input.getAsJsonObject("register") : input;
       ParsedRegister parsed = parseRegister(registerJson);
       JsonObject out = new JsonObject();
       out.addProperty("status", "success");
-      out.addProperty("standard", "NORSOK S-001 / IEC 61511 / ISO 31000");
+      out.addProperty("standard", "NORSOK S-001 / IEC 61511 / ISO 31000 references; project-specific verification required");
+      out.addProperty("screeningOnly", true);
+      out.addProperty("standardConformanceClaimed", false);
+      out.addProperty("advisoryBoundary",
+          "Caller-supplied barrier evidence is screened for software-contract consistency only; qualified process-safety review and accountable approval remain required.");
       out.add("summary", buildSummary(parsed));
       out.add("validation", buildValidation(parsed.register));
       out.add("impairedBarriers", buildImpairedBarriers(parsed.register));
@@ -66,7 +88,90 @@ public final class BarrierRegisterRunner {
       out.add("registerExport", GSON.toJsonTree(parsed.register.toMap()));
       return GSON.toJson(out);
     } catch (Exception e) {
-      return errorJson("Barrier register analysis failed: " + e.getMessage());
+      return errorJson("INVALID_INPUT", "Barrier register analysis failed: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Validates bounded JSON structure before constructing canonical barrier objects.
+   *
+   * @param input parsed request
+   */
+  private static void validateInputShape(JsonObject input) {
+    if (input.has("register") && !input.get("register").isJsonObject()) {
+      throw new IllegalArgumentException("register must be an object");
+    }
+    validateElement(input, 0, "request");
+  }
+
+  /**
+   * Recursively enforces collection, text, object, nesting, and numeric bounds.
+   *
+   * @param element current JSON value
+   * @param depth current nesting depth
+   * @param path diagnostic path
+   */
+  private static void validateElement(JsonElement element, int depth, String path) {
+    if (depth > MAX_NESTING_DEPTH) {
+      throw new IllegalArgumentException(path + " exceeds nesting depth " + MAX_NESTING_DEPTH);
+    }
+    if (element == null || element.isJsonNull()) {
+      return;
+    }
+    if (element.isJsonObject()) {
+      JsonObject object = element.getAsJsonObject();
+      if (object.size() > MAX_OBJECT_MEMBERS) {
+        throw new IllegalArgumentException(path + " exceeds " + MAX_OBJECT_MEMBERS + " object members");
+      }
+      for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+        String childPath = path + "." + entry.getKey();
+        JsonElement value = entry.getValue();
+        if ((OBJECT_ARRAY_FIELDS.contains(entry.getKey()) || STRING_ARRAY_FIELDS.contains(entry.getKey()))
+            && !value.isJsonNull() && !value.isJsonArray()) {
+          throw new IllegalArgumentException(childPath + " must be an array");
+        }
+        if (NUMERIC_FIELDS.contains(entry.getKey()) && !value.isJsonNull()) {
+          if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+            throw new IllegalArgumentException(childPath + " must be numeric");
+          }
+          double number = value.getAsDouble();
+          if (Double.isNaN(number) || Double.isInfinite(number)) {
+            throw new IllegalArgumentException(childPath + " must be finite");
+          }
+        }
+        validateElement(value, depth + 1, childPath);
+        if (value.isJsonArray()) {
+          JsonArray array = value.getAsJsonArray();
+          if (OBJECT_ARRAY_FIELDS.contains(entry.getKey())) {
+            for (JsonElement item : array) {
+              if (!item.isJsonObject()) {
+                throw new IllegalArgumentException(childPath + " items must be objects");
+              }
+            }
+          } else if (STRING_ARRAY_FIELDS.contains(entry.getKey())) {
+            for (JsonElement item : array) {
+              if (!item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()) {
+                throw new IllegalArgumentException(childPath + " items must be strings");
+              }
+            }
+          }
+        }
+      }
+      return;
+    }
+    if (element.isJsonArray()) {
+      JsonArray array = element.getAsJsonArray();
+      if (array.size() > MAX_COLLECTION_ITEMS) {
+        throw new IllegalArgumentException(path + " exceeds " + MAX_COLLECTION_ITEMS + " items");
+      }
+      for (int i = 0; i < array.size(); i++) {
+        validateElement(array.get(i), depth + 1, path + "[" + i + "]");
+      }
+      return;
+    }
+    if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()
+        && element.getAsString().length() > MAX_TEXT_CHARS) {
+      throw new IllegalArgumentException(path + " exceeds " + MAX_TEXT_CHARS + " characters");
     }
   }
 
@@ -956,9 +1061,25 @@ public final class BarrierRegisterRunner {
    * @return JSON string
    */
   private static String errorJson(String message) {
+    return errorJson("INVALID_INPUT", message);
+  }
+
+  /**
+   * Builds a bounded advisory error response.
+   *
+   * @param code stable error code
+   * @param message error detail
+   * @return JSON string
+   */
+  private static String errorJson(String code, String message) {
     JsonObject err = new JsonObject();
     err.addProperty("status", "error");
+    err.addProperty("code", code);
     err.addProperty("message", message);
+    err.addProperty("screeningOnly", true);
+    err.addProperty("standardConformanceClaimed", false);
+    err.addProperty("advisoryBoundary",
+        "No barrier credit or plant action is authorized; qualified process-safety review remains required.");
     return err.toString();
   }
 
