@@ -2090,7 +2090,7 @@ Algorithm per macro-step:
 
 ### Steady-State Solver Tuning
 
-The initial steady-state solve iterates between the transient solver and thermodynamic flashes
+The initial steady-state solve iterates between the hydraulic pressure/holdup sweep and thermodynamic flashes
 until convergence. Four parameters control this:
 
 | Parameter | Setter | Default | Description |
@@ -2127,6 +2127,18 @@ total-pressure-drop update. Every applicable value must be below `getTolerance()
 The mandatory final flash and unrelaxed holdup/oil-water resweep are included in that decision; a
 post-flash state that moves beyond tolerance is refined again instead of being returned under a
 stale convergence flag.
+
+Total source-free phase mass transport is an additional convergence condition.
+`getMassFluxResidual()` reports the largest absolute difference between the section sum of gas,
+oil and water mass flows and the inlet flow, normalized by `max(abs(inletMassFlow), 1e-12 kg/s)`.
+It must be below `getMassFluxTolerance()` (1e-8), both during the final consistency sweep and after
+the conservative-state rebuild. Nonfinite fluxes report an infinite residual. Legacy reports
+constructed without mass diagnostics return `NaN` from these getters.
+
+Steady velocities are calculated from phase continuity without clipping at 100 m/s for gas or
+50 m/s for liquid. Clipping at those numerical limits caused the #3686 high-rate well to report
+convergence with a 2.09% total mass-flux deficit. The transient boundary guards retain their
+existing limits. This correction preserves mass; it does not provide critical-flow qualification.
 
 ```java
 pipe.run();

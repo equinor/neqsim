@@ -1301,12 +1301,27 @@ thermodynamic-property, and total-pressure-drop residuals against `getTolerance(
 includes the mandatory final flash and unrelaxed holdup/split resweep, so that pass cannot silently
 change the state after the convergence flag has been set.
 
+The report also checks source-free total mass transport. `getMassFluxResidual()` is the maximum
+over all sections of `abs(gasMassFlow + oilMassFlow + waterMassFlow - inletMassFlow)` divided by
+`max(abs(inletMassFlow), 1e-12 kg/s)`. It must be below `getMassFluxTolerance()` (1e-8), including
+after the final conservative-state initialization. A nonfinite flux fails this check. Reports
+created with the older constructor have no mass-flux measurement and return `NaN` for these two
+getters; reports produced by a new pipe solve always include the check.
+
+Steady phase velocities follow `massFlow / (density * holdup * area)` without the legacy 100 m/s
+gas or 50 m/s liquid caps. Those caps could discard mass while the pressure and holdup iterations
+appeared settled (#3686). The transient boundary velocity guards are unchanged. Phase changes may
+redistribute gas, oil and water flows, but their sum must remain equal to the inlet. Removing a
+numerical velocity cap does not add a critical-flow or choking model; pressure-floor and all
+existing convergence checks still apply.
+
 ```java
 SteadyStateConvergenceReport report = pipe.getSteadyStateConvergenceReport();
 if (!report.isConverged()) {
   throw new IllegalStateException("Steady state stopped at "
       + report.getTerminationReason() + "; liquid-split residual="
-      + report.getLiquidSplitResidual());
+      + report.getLiquidSplitResidual() + "; mass-flux residual="
+      + report.getMassFluxResidual());
 }
 ```
 
