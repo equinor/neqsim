@@ -7,6 +7,7 @@ agentic workflows. Reports issues with actionable fix suggestions.
 Usage:
     neqsim doctor          # run all checks
     neqsim doctor --fix    # attempt auto-fixes where possible
+    neqsim doctor --skip-jar  # check a CLI installation before the Java build
 
 Inspired by OpenClaw's `openclaw doctor` pattern.
 """
@@ -590,14 +591,20 @@ def check_git():
 # Main
 # ══════════════════════════════════════════════════════════
 
-def main():
+def main(argv=None):
+    """Run health checks, optionally skipping the build artifact for CLI setup."""
+    argv = sys.argv[1:] if argv is None else argv
+    _results.clear()
     print("=" * 60)
     print("  NeqSim Doctor - Environment Diagnostic")
     print("=" * 60)
 
     check_java()
     check_maven()
-    check_neqsim_jar()
+    if "--skip-jar" in argv:
+        _warn("JAR built", "Not checked (--skip-jar); build the JAR before simulations")
+    else:
+        check_neqsim_jar()
     check_python_neqsim()
     check_agent_files()
     check_cross_tool_files()

@@ -442,10 +442,12 @@ folder, so studies can live outside the clone and survive re-cloning. It is save
 `neqsim new-task "title" --task-root "PATH"`, or remove the setting with
 `neqsim --reset-task-root` — existing tasks are never moved.
 
-The report template is saved in the same file and makes every generated
-`Report.docx` inherit your organisation's Word styles, fonts, headers, and footers.
+The report template is saved in the same file and makes every generated Word
+report inherit your organisation's Word styles, fonts, headers, and footers.
 Override one run with `python step3_report/generate_report.py --template "PATH"`
 (or `--no-template`), and remove the setting with `neqsim --reset-report-template`.
+Report files are named after the report title, so a deliverable is identifiable
+outside its task folder.
 
 ### Run tests
 

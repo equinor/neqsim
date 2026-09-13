@@ -8,7 +8,9 @@ Usage:
     neqsim doctor            Check your environment is healthy
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
-    neqsim report [DIR]      Generate Report.docx/html for a task folder
+    neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
+    neqsim report [DIR]      Generate the report (files named after its title)
+    neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim --set-task-root P Set the folder new tasks are created in
     neqsim --show-task-root  Print the folder new tasks are created in
     neqsim --reset-task-root Remove the saved task-root setting
@@ -55,6 +57,10 @@ COMMANDS = {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
     },
+    "tasks": {
+        "module": "task_corpus",
+        "desc": "Work across solved tasks (index/relink/env/duplicates)",
+    },
     "new-skill": {
         "module": "new_skill",
         "desc": "Scaffold a new AI skill",
@@ -98,7 +104,9 @@ def _print_usage():
     for name, info in COMMANDS.items():
         print("  {:<18s} {}".format(name, info["desc"]))
     print("  {:<18s} {}".format("report [DIR]",
-                                "Generate Report.docx/html for a task folder"))
+                                "Generate the report (files named after its title)"))
+    print("  {:<18s} {}".format("work-record [DIR]",
+                                "Generate WORK_RECORD.md (method, data, file map)"))
     print()
     print("Task destination:")
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
@@ -162,16 +170,17 @@ GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
 def _handle_report(argv):
     """Run the canonical report generator against a task folder.
 
-    Task folders vendor their own copy of generate_report.py at creation time,
-    so an old task keeps an old generator. This command always runs the current
-    devtools copy, which is how a template or formatting fix reaches every task.
+    Task folders carry a launcher, not a copy, of generate_report.py, so a
+    template or formatting fix reaches every task. This command is the same
+    entry point without needing the launcher.
 
     Parameters
     ----------
     argv : list of str
         Arguments after the ``report`` command. An optional leading positional
         is the task folder (default: current directory); everything else is
-        forwarded to the generator (--paper, --template PATH, --no-template...).
+        forwarded to the generator (--paper, --template PATH, --no-template,
+        --title TEXT, --author NAME...).
 
     Returns
     -------
@@ -195,7 +204,8 @@ def _handle_report(argv):
         print("ERROR: {} does not look like a task folder "
               "(no results.json, step1_scope_and_research/, or step3_report/)."
               .format(task_dir))
-        print("Usage: neqsim report [TASK_DIR] [--paper] [--template PATH] [--no-template]")
+        print("Usage: neqsim report [TASK_DIR] [--paper] [--template PATH] "
+              "[--no-template] [--title TEXT] [--author NAME]")
         return 2
     if not os.path.isfile(GENERATOR_PATH):
         print("ERROR: report generator not found at {}".format(GENERATOR_PATH))
@@ -204,6 +214,33 @@ def _handle_report(argv):
     cmd = [sys.executable, GENERATOR_PATH, "--task-dir", task_dir] + passthrough
     print("Generating report for {}".format(task_dir))
     return subprocess.call(cmd)
+
+
+def _handle_work_record(argv):
+    """Build the method-and-data record for a task folder.
+
+    The report says what the answer is; the work record says how it was produced
+    and where every input, script, and artifact lives, so the study can be
+    audited or repeated by someone who was not in the conversation.
+
+    Parameters
+    ----------
+    argv : list of str
+        Arguments after the ``work-record`` command. An optional leading
+        positional is the task folder (default: current directory); the rest is
+        forwarded to the generator (--check, --stdout).
+
+    Returns
+    -------
+    int
+        Exit code from the generator.
+    """
+    import generate_work_record
+
+    passthrough = list(argv)
+    if not passthrough or passthrough[0].startswith("-"):
+        passthrough = [os.getcwd()] + passthrough
+    return generate_work_record.main(passthrough)
 
 
 def _handle_report_template(argv):
@@ -362,6 +399,9 @@ def main():
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
 
+    if cmd in ("work-record", "workrecord"):
+        sys.exit(_handle_work_record(sys.argv[2:]))
+
     if cmd not in COMMANDS:
         print("Unknown command: {!r}".format(cmd))
         print("Run `neqsim --help` for available commands.")
@@ -379,7 +419,10 @@ def main():
     # Each module uses `if __name__ == "__main__": main()` pattern.
     # We call main() directly.
     if hasattr(mod, "main"):
-        mod.main()
+        # Propagate a failure code so a refusal is not reported as success.
+        code = mod.main()
+        if code:
+            sys.exit(code)
     else:
         # Fallback: re-run as script (shouldn't normally be needed)
         exec(open(os.path.join(DEVTOOLS_DIR, module_name + ".py")).read())

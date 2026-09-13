@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-09-12 — Chemical-injection nozzle performance, and testing a historian tag before trusting it
+**Type:** E (Feature) / G (Workflow)
+**Keywords:** H2S scavenger, MEA-triazine, chemical injection quill, atomizer nozzle, Sauter mean diameter, Lefebvre pressure-swirl, critical Weber breakup, interfacial area, wall impingement, nozzle turndown, mixing efficiency, dose loop, signal independence
+**Solution:** `neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance` + `ChemicalInjectionNozzlePerformanceTest`; private task folder (redacted)
+**Notes:** NeqSim could size a scavenger's chemistry but had nothing for the hardware that decides whether the chemical ever reaches the gas, so `H2SScavenger.setMixingEfficiency` had to be guessed. The new class computes drop size from Lefebvre for an atomizer and from the critical-Weber aerodynamic limit for a bare quill, then interfacial area, settling velocity, distance to wall contact given off-centre insertion, and a bounded dispersion index — turning a hardware change into a number comparable against drop-size guidance. Two reusable lessons. (1) A fixed-orifice nozzle follows `Q = K√ΔP`, so `SMD ∝ Q^-0.75`: atomisation collapses on turndown, and splitting a given total rate over two nozzles in parallel is always coarser than the better single nozzle, because each sees a quarter of the ΔP. (2) Test a historian tag for independence before deriving anything from it — a controller process value labelled in concentration units tracked its own setpoint through a step change with no movement in the controller output, i.e. it was not measuring the process. A first pass had already produced a load, a stoichiometric demand and a capacity utilisation from it; all were withdrawn and replaced by the chemical-consumption totaliser, which is an independent measurement. The cheap discriminating test is: step the setpoint and watch whether the manipulated variable moves.
+
 ### 2026-08-24 — Solid-argon Helmholtz reference EOS and publication regression
 **Type:** A (Property) / E (Feature)
 **Keywords:** argon, solid, Helmholtz EOS, Buckingham exp-6, FCC lattice, Debye, Einstein, anharmonicity, 16 GPa, Table 8, reference state

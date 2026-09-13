@@ -106,12 +106,13 @@ py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
 .\install.ps1
-neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+neqsim doctor --skip-jar  # checks the CLI setup before building the Java JAR
 
 # 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
 .\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
+neqsim doctor                # full check, including the built JAR
 
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
@@ -138,13 +139,38 @@ by every NeqSim clone and keeps studies outside the repository. Precedence:
 `neqsim --reset-task-root` removes the setting without moving existing tasks.
 
 The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
-footers every generated `Report.docx` inherits — set it once and all later tasks
+footers every generated Word report inherits — set it once and all later tasks
 follow it. It is stored in the same settings file. Precedence:
 `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` > the saved
 default > built-in styling. The template's own body text is dropped (pass
 `--keep-template-content` to keep it), `--no-template` ignores the setting for one
-run, and `neqsim --reset-report-template` removes it. `Paper.docx` keeps journal
-formatting and ignores the template.
+run, and `neqsim --reset-report-template` removes it. The scientific paper keeps
+journal formatting and ignores the template.
+
+Report files are named after the report title — a study titled "Hydrate margin
+for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
+`.html` (paper: `..._Paper.docx`). Report files written under an earlier title
+are deleted on regeneration, so a renamed study leaves no superseded deliverable.
+
+The canonical generator accepts both `benchmark_validation.tests` lists and
+named benchmark mappings. Word and HTML outputs retain the source, numerical
+comparisons, and PASS/FAIL status. Before rendering, the generator checks for
+contradictions between benchmarks, validation, risk, discussions, and conclusions.
+Findings appear in the console and the technical report's **Report Consistency
+Review** section; calculation findings are written to `fixes_needed.json`.
+These checks request review and do not rewrite the study's conclusions.
+
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, and `neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
 
 The document root is the folder the AI agents read source documents from —
 standards, datasheets, P&IDs, vendor documents, historian exports — and **every
@@ -286,7 +312,8 @@ After installation you get a single `neqsim` command:
 ```bash
 neqsim try               # interactive playground — explore NeqSim in 30 seconds
 neqsim onboard           # interactive setup wizard
-neqsim doctor            # check your environment is healthy
+neqsim doctor            # check your environment is healthy (including a built JAR)
+neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim new-skill NAME    # scaffold a new AI skill

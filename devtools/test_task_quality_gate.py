@@ -105,5 +105,6 @@ def test_report_command_generates_into_external_task_folder(tmp_path):
         capture_output=True, text=True,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert (task / "step3_report" / "Report.docx").is_file()
-    assert (task / "step3_report" / "Report.html").is_file()
+    # File names follow the report title, which here comes from the folder name.
+    assert (task / "step3_report" / "Gate_test.docx").is_file()
+    assert (task / "step3_report" / "Gate_test.html").is_file()
