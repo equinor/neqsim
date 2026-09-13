@@ -235,7 +235,7 @@ def test_repeated_order_is_stable(client):
 
 def test_partial_failure_is_visible(client):
     failing = valid_case("Invalid", 80.0)
-    failing["process"][0]["type"] = "NotARealUnit"
+    failing["fluid"]["components"] = {"fakey": 1.0}
     result = assert_success(
         client.call_compare({"cases": [valid_case("Valid", 30.0), failing]})
     )

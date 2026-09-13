@@ -36,7 +36,9 @@ class ProcessComparisonRunnerTest {
   void preservesPartialCanonicalResultsAndCountsFailures() {
     JsonObject request = example();
     JsonObject failingCase = request.getAsJsonArray("cases").get(1).getAsJsonObject();
-    failingCase.getAsJsonArray("process").get(0).getAsJsonObject().addProperty("type", "NotARealUnit");
+    JsonObject invalidComponents = new JsonObject();
+    invalidComponents.addProperty("fakey", 1.0);
+    failingCase.getAsJsonObject("fluid").add("components", invalidComponents);
     JsonObject result = JsonParser.parseString(ProcessComparisonRunner.run(request.toString())).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     assertFalse(result.get("complete").getAsBoolean());
