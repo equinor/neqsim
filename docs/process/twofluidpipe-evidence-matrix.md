@@ -24,7 +24,7 @@ model converged or represents the requested physics.
 
 | Capability and configuration | Implemented | Numerically verified | Experimentally qualified | Evidence and use boundary |
 |---|---:|---:|---:|---|
-| Positive-flow steady gas/liquid pressure, holdup, thermal and terrain profiles | Yes | Yes | No general claim | Require the complete steady convergence report to be converged, every residual below its recorded tolerance, and no pressure-floor or wall-clock termination. Repeat mesh sensitivity for the actual geometry. |
+| Positive-flow steady gas/liquid pressure, holdup, thermal and terrain profiles | Yes | Yes | No general claim | Require the complete steady convergence report to be converged, every residual below its recorded tolerance (including total phase mass flux below `getMassFluxTolerance()`), and no pressure-floor or wall-clock termination. Repeat mesh sensitivity for the actual geometry. |
 | Steady gas/oil/water on the compact 3 km, 10-degree uphill fixture | Yes | Yes | No | The 30/60-cell results differ by 0.538% in arrival pressure and 0.983% in mean liquid holdup. All three phases remain present and the final thermodynamic/holdup reconciliation is inside the unchanged 1e-4 tolerance. The unavailable historical 73.8 km case is not covered. |
 | Liquid-rich unchanged-boundary transient with shared slug force balance, interfacial pressure, and coupled pressure/momentum | Opt-in | Yes | Not applicable | Over 1,800 s, inventory drift is 1.323% at 40 cells and 1.358% at 80 cells, below the declared 2% fixture gate, with total-mass closure. This does not qualify slug loads or another operating envelope. |
 | Default liquid-rich unchanged-boundary transient | Yes | No | No | The recorded 1,800 s inventory drift is 5.757%, above the unchanged 5% gate. Do not infer default-mode qualification from the opt-in shared-force result. |
@@ -48,7 +48,7 @@ Use **TwoFluidPipe** only when the case fits a row above and its runtime evidenc
 
 1. Run steady initialization and inspect the complete immutable convergence report. A stationary
    pressure profile is insufficient if liquid split, holdup, thermodynamics, or total pressure drop
-   remains outside tolerance.
+   remains outside tolerance, or if total phase mass flux does not close against the inlet.
 2. For transient work, require requested elapsed time, phase and total mass balances, positivity,
    and all sticky pressure/momentum, pressure-limiter, rejected-substep, outlet-backflow, component,
    and energy diagnostics applicable to the selected configuration.
@@ -60,6 +60,22 @@ Use **TwoFluidPipe** only when the case fits a row above and its runtime evidenc
 5. Use **PipeBeggsAndBrills** for a correlation-based steady or quasi-steady screen, not for
    conservative distributed line-pack dynamics. Use a separately qualified transient model or a
    controlled experimental study when the requested TwoFluidPipe row is failed or unsupported.
+
+## High-throughput steady mass conservation (#3686)
+
+`TwoFluidPipeSteadyMassFluxTest` reproduces the 3,100 m well with a 0.23 m diameter, 2,380 m rise,
+20 sections, 205 bara and 90 degrees Celsius inlet, and the issue's synthetic SRK fluid and
+stock-tank rates. The original 166.113217788 kg/s case lost 3.473846596 kg/s at the outlet section
+because gas velocity was capped at 100 m/s. At 5% higher flow the deficit was 7.007383459 kg/s;
+the 5% lower-flow case did not reach the cap.
+
+The regression checks all three rates against phase-summed section mass flux with relative
+tolerance 1e-10 and absolute tolerance 1e-12 kg/s. It also requires the original hydraulic and
+thermodynamic residuals to pass. Separate gas, oil and water fixtures exercise the former steady
+gas/liquid caps, and injected 2% and nonfinite reporting errors must prevent convergence even
+when the hydraulic residuals have settled. The existing 30/60-cell three-phase fixture remains
+the free-water and mesh-refinement check. This is conservation and numerical-convergence evidence,
+not experimental or critical-flow qualification.
 
 ## Executable steady and transient example
 
