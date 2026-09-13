@@ -248,12 +248,12 @@ def test_phase0_contract_is_promoted(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.37", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.38", "inventory version drifted", inventory)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("validateInput", {})
     require(
-        limitations.get("contractTestedToolCount") == 37
-        and limitations.get("confirmedGapToolCount") == 14
+        limitations.get("contractTestedToolCount") == 38
+        and limitations.get("confirmedGapToolCount") == 13
         and limitations.get("contractPromotionCandidateCount") == 0
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")

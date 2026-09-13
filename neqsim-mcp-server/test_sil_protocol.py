@@ -261,7 +261,7 @@ def test_collection_text_request_and_calculation_bounds(client):
     assert_error(client.call_sil(request), "CALCULATION_OUT_OF_RANGE")
 
 
-def test_inventory_remains_confirmed_gap(client):
+def test_inventory_promotes_contract_atomically(client):
     response = client.request("tools/call", {"name": "getCapabilities", "arguments": {}})
     content = response.get("result", {}).get("content", [])
     require(content, "getCapabilities returned no content", response)
@@ -270,11 +270,24 @@ def test_inventory_remains_confirmed_gap(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runSIL", {})
     require(
-        inventory.get("inventoryVersion") == "1.37"
-        and limitations.get("contractTestedToolCount") == 37
-        and limitations.get("confirmedGapToolCount") == 14
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification changed inventory classification",
+        inventory.get("inventoryVersion") == "1.38"
+        and limitations.get("contractTestedToolCount") == 38
+        and limitations.get("confirmedGapToolCount") == 13
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"
+        and record.get("contractEvidenceCount") == 8
+        and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+        in record.get("contractEvidenceSources", [])
+        and "src/test/java/neqsim/mcp/runners/SILRunnerTest.java"
+        in record.get("contractEvidenceSources", [])
+        and "neqsim-mcp-server/test_sil_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md"
+        in record.get("contractEvidenceSources", [])
+        and "does not establish SRS completeness" in record.get("evidenceBoundary", "")
+        and "independent functional-safety assessment" in record.get("evidenceBoundary", ""),
+        "SIL promotion did not move inventory and evidence atomically",
         inventory,
     )
 
@@ -291,7 +304,7 @@ def main():
             test_fail_closed_request_and_top_level_inputs,
             test_fail_closed_component_contract,
             test_collection_text_request_and_calculation_bounds,
-            test_inventory_remains_confirmed_gap,
+            test_inventory_promotes_contract_atomically,
         ]
         for scenario in scenarios:
             scenario(client)
