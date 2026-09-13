@@ -60,7 +60,6 @@ import glob
 import json
 import base64
 import io
-import re
 import sqlite3
 from datetime import date
 
@@ -210,8 +209,9 @@ def prune_superseded_outputs(current_files):
         try:
             with open(OUTPUT_MANIFEST_FILE, encoding="utf-8-sig") as manifest:
                 previous.extend(json.load(manifest).get("files", []))
-        except (OSError, ValueError):
-            pass
+        except (OSError, ValueError) as error:
+            print("NOTE: could not read report output manifest; "
+                  "checking legacy output names only ({}).".format(error), file=sys.stderr)
     for name in previous:
         stale = os.path.abspath(os.path.join(REPORT_DIR, os.path.basename(name)))
         if stale in current or not os.path.isfile(stale):
@@ -225,8 +225,9 @@ def prune_superseded_outputs(current_files):
         with open(OUTPUT_MANIFEST_FILE, "w", encoding="utf-8") as manifest:
             json.dump({"files": sorted(os.path.basename(p) for p in current)},
                       manifest, indent=2)
-    except OSError:
-        pass
+    except OSError as error:
+        print("NOTE: could not save report output manifest; cleanup tracking "
+              "may be incomplete next run ({}).".format(error), file=sys.stderr)
 
 # ── Word template (corporate branding) ───────────────────
 # Resolution order: --template PATH, NEQSIM_REPORT_TEMPLATE, the saved
@@ -1340,8 +1341,10 @@ def format_assumptions_text(results):
         parts.append("Information sought but not available, and what was assumed "
                      "in its place:")
         parts.append("")
-        table = ["| # | Information sought | Source | Status | Assumed instead | "
-                 "Effect if wrong |", "|---|---|---|---|---|---|"]
+        table = [
+            "| # | Information sought | Source | Status | Assumed instead | Effect if wrong |",
+            "|---|---|---|---|---|---|",
+        ]
         for index, item in enumerate(gaps, 1):
             if isinstance(item, dict):
                 sought = _assumption_text(
@@ -1471,6 +1474,30 @@ def _prose_to_html(text):
                    for para in _body_paragraphs(text))
 
 
+def _benchmark_tests(results):
+    """Normalize legacy ``tests`` lists and named benchmark mappings for all outputs."""
+    benchmark = (results or {}).get("benchmark_validation") or {}
+    if not isinstance(benchmark, dict):
+        return []
+    if isinstance(benchmark.get("tests"), list):
+        entries = (("Test {}".format(index), value)
+                   for index, value in enumerate(benchmark["tests"], 1))
+    else:
+        entries = benchmark.items()
+    tests = []
+    for name, value in entries:
+        if not isinstance(value, dict):
+            continue
+        test = dict(value)
+        test.setdefault("parameter", name.replace("_", " ").title())
+        if "pass" not in test:
+            status = str(test.get("status", "")).upper()
+            if status in ("PASS", "FAIL"):
+                test["pass"] = status == "PASS"
+        tests.append(test)
+    return tests
+
+
 def auto_executive_summary(results, task_spec):
     """Generate an executive summary from available results data."""
     parts = []
@@ -1516,14 +1543,310 @@ def auto_executive_summary(results, task_spec):
             parts.append("Uncertainty analysis gives P50 {} = {:.4g}.".format(output, p50))
     if results and results.get("validation"):
         failures = _validation_failures(results)
+        failures.extend("benchmark: {}".format(test["parameter"])
+                        for test in _benchmark_tests(results) if test.get("pass") is False)
         if failures:
             parts.append("Validation checks requiring attention: {}.".format(
                 ", ".join(failures)))
         else:
             parts.append("Validation checks did not flag design blockers.")
+    benchmarks = _benchmark_tests(results)
+    if benchmarks:
+        passed = sum(test.get("pass") is True for test in benchmarks)
+        parts.append("{} of {} benchmark comparisons passed.".format(passed, len(benchmarks)))
+    if results and results.get("risk_evaluation", {}).get("overall_risk_level"):
+        parts.append("Overall project risk: {}.".format(
+            results["risk_evaluation"]["overall_risk_level"]))
     if results and results.get("conclusions") and not _is_placeholder_text(results["conclusions"]):
         parts.append(results["conclusions"])
     return "\n\n".join(parts)
+
+
+def check_report_consistency(results):
+    """Check results.json for internal contradictions and inconsistencies.
+
+    Returns a list of dicts with keys: severity, message, fix_type.
+    severity: 'ERROR', 'WARNING', or 'INFO'.
+    fix_type: 'text' (auto-fixable in report), 'calculation' (needs
+    agent to re-run notebook), or 'none' (informational).
+    """
+    if not results:
+        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
+
+    issues = []
+
+    # --- 1. Benchmark failures vs optimistic conclusions ---
+    bmk_tests = _benchmark_tests(results)
+    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
+    n_total = len(bmk_tests)
+    conclusions = results.get("conclusions", "")
+
+    if n_fail > 0:
+        # Check if any failure has large deviation (>20%) => calculation fix
+        large_devs = []
+        for t in bmk_tests:
+            if t.get("pass") is False:
+                dev_pct = t.get("deviation_pct")
+                if dev_pct is not None and abs(dev_pct) > 20:
+                    large_devs.append(t)
+
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met"]
+        conc_lower = conclusions.lower()
+        acknowledges = any(w in conc_lower for w in failure_words)
+
+        if large_devs:
+            params = [t.get("parameter", "?") for t in large_devs]
+            issues.append({
+                "severity": "ERROR",
+                "message": "Benchmark deviation >20% for: {}. Model may need "
+                           "retuning or different EOS/parameters.".format(
+                               ", ".join(params)),
+                "fix_type": "calculation",
+                "action": "Re-run benchmark notebook with revised model "
+                          "parameters (check EOS, BIPs, component characterization).",
+                "parameters": params,
+            })
+
+        if not acknowledges:
+            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                          "within limits", "meets"]
+            if any(w in conc_lower for w in safe_words):
+                issues.append({
+                    "severity": "ERROR",
+                    "message": "Conclusions say \'{}\' but {}/{} benchmark tests FAILED. "
+                               "Conclusions must acknowledge benchmark failures or explain "
+                               "why they are acceptable.".format(
+                                   conclusions[:80], n_fail, n_total),
+                    "fix_type": "text",
+                })
+            else:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "{}/{} benchmark tests failed. Consider addressing this "
+                               "in the conclusions.".format(n_fail, n_total),
+                    "fix_type": "text",
+                })
+
+    # --- 2. Validation failures vs optimistic conclusions ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        if outcome is False:
+            val_failures.append(check)
+        elif (check.endswith(("_pct", "_percent"))
+              and isinstance(outcome, (int, float)) and outcome >= 5.0):
+            val_failures.append("{} ({})".format(check, outcome))
+    if val_failures:
+        conc_lower = conclusions.lower()
+        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                      "all.*pass", "within limits"]
+        if any(w in conc_lower for w in safe_words):
+            issues.append({
+                "severity": "ERROR",
+                "message": "Conclusions claim safety/acceptability but validation checks "
+                           "show issues: {}. Revise conclusions or explain why failures "
+                           "are acceptable.".format(", ".join(val_failures)),
+                "fix_type": "text",
+            })
+        # Check if validation error is large enough to need recalculation
+        large_val = [value for key, value in validation.items()
+                     if key.endswith(("_pct", "_percent"))
+                     and isinstance(value, (int, float)) and value >= 10.0]
+        if large_val:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Validation error >=10% detected ({}). Model accuracy "
+                           "may be insufficient — consider retuning.".format(
+                               ", ".join(val_failures)),
+                "fix_type": "calculation",
+                "action": "Re-run main analysis notebook with tighter convergence "
+                          "tolerances or revised model setup.",
+            })
+
+    # --- 3. High risk level vs unconditionally positive conclusions ---
+    risk_eval = results.get("risk_evaluation", {})
+    overall_risk = risk_eval.get("overall_risk_level", "").lower()
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
+                  or "very high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        conc_lower = conclusions.lower()
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        has_caution = any(w in conc_lower for w in caution_words)
+        if not has_caution and any(
+            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
+                                      "no concern"]
+        ):
+            issues.append({
+                "severity": "WARNING",
+                "message": "{} high-risk items identified ({}), but conclusions don\'t "
+                           "mention risk mitigation. Consider adding caveats.".format(
+                               len(high_risks),
+                               ", ".join(r.get("description", "") for r in high_risks[:3])),
+                "fix_type": "text",
+            })
+
+    # --- 4. High probability of negative outcome vs positive conclusions ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
+                                          "recommend proceed"]):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
+                           "Conclusions should acknowledge the significant downside "
+                           "risk.".format(prob_neg),
+                "fix_type": "text",
+            })
+
+    # --- 5. Discussion recommendations contradict conclusions ---
+    discussions = results.get("figure_discussion", [])
+    recs = [d.get("recommendation", "") for d in discussions
+            if d.get("recommendation")]
+    for rec in recs:
+        rec_lower = rec.lower()
+        conc_lower = conclusions.lower()
+        # Check for direct contradictions
+        if "do not proceed" in rec_lower and "proceed" in conc_lower:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Discussion recommends \'do not proceed\' but conclusions "
+                           "say \'proceed\'. Resolve the contradiction.",
+                "fix_type": "text",
+            })
+        if "further study" in rec_lower or "sensitivity" in rec_lower:
+            if "no further" in conc_lower:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "Discussion recommends further study/sensitivity analysis "
+                               "but conclusions dismiss it. Ensure consistency.",
+                    "fix_type": "text",
+                })
+
+    # --- 6. Missing critical sections ---
+    if not results.get("key_results"):
+        issues.append({
+            "severity": "WARNING",
+            "message": "No key_results in results.json. The Results section will be empty.",
+            "fix_type": "calculation",
+            "action": "Run the main analysis notebook and populate key_results in results.json.",
+        })
+    if not results.get("conclusions") or results["conclusions"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Conclusions are still a placeholder. Fill in conclusions "
+                       "before finalising the report.",
+            "fix_type": "text",
+        })
+    if not results.get("approach") or results["approach"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Approach section is still a placeholder.",
+            "fix_type": "text",
+        })
+
+    # --- 7. Numerical consistency: key_results referenced in discussions ---
+    key_results = results.get("key_results", {})
+    for disc in discussions:
+        obs = disc.get("observation", "")
+        linked = disc.get("linked_results", [])
+        for link_key in linked:
+            if link_key in key_results:
+                expected_val = key_results[link_key]
+                if isinstance(expected_val, float):
+                    # Check if the observation mentions a consistent number
+                    val_strs = [
+                        "{:.4g}".format(expected_val),
+                        "{:.3g}".format(expected_val),
+                        "{:.2g}".format(expected_val),
+                        "{:.1f}".format(expected_val),
+                        str(int(expected_val)) if expected_val == int(expected_val) else "",
+                    ]
+                    val_strs = [v for v in val_strs if v]
+                    if obs and not any(v in obs for v in val_strs):
+                        issues.append({
+                            "severity": "WARNING",
+                            "message": "Discussion links to \'{}\' (value={}) but "
+                                       "observation text doesn\'t mention this value. "
+                                       "Verify numerical consistency.".format(
+                                           link_key, expected_val),
+                            "fix_type": "calculation",
+                            "action": "Verify the value of \'{}\' in the notebook output "
+                                      "and update either key_results or the discussion "
+                                      "observation text.".format(link_key),
+                        })
+
+    # --- 8. Risk level vs uncertainty probability alignment ---
+    if prob_neg is not None and overall_risk:
+        if prob_neg > 40 and overall_risk in ("low",):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of negative outcome is {:.0f}% but overall risk "
+                           "is \'Low\'. These seem inconsistent.".format(prob_neg),
+                "fix_type": "text",
+            })
+        if prob_neg < 5 and overall_risk in ("high", "very high"):
+            issues.append({
+                "severity": "INFO",
+                "message": "Probability of negative outcome is only {:.0f}% but overall "
+                           "risk is \'{}\'. Consider whether the risk rating is driven "
+                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
+                "fix_type": "none",
+            })
+
+    if not issues:
+        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
+
+    return issues
+
+
+def print_consistency_report(issues):
+    """Print the consistency check results with visual formatting."""
+    errors = [i for i in issues if i["severity"] == "ERROR"]
+    warnings = [i for i in issues if i["severity"] == "WARNING"]
+    infos = [i for i in issues if i["severity"] == "INFO"]
+
+    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
+    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
+
+    print("  ===== Report Consistency Check =====")
+    if errors:
+        for i in errors:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [ERROR{}] {}".format(tag, i["message"]))
+    if warnings:
+        for i in warnings:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [WARNING{}] {}".format(tag, i["message"]))
+    if infos and not errors and not warnings:
+        for i in infos:
+            print("  [OK] {}".format(i["message"]))
+
+    if errors:
+        print("")
+        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
+            len(errors)))
+        print("  Errors indicate contradictions that undermine report credibility.")
+    elif warnings:
+        print("")
+        print("  {} WARNING(s) found. Review before finalising.".format(
+            len(warnings)))
+    else:
+        print("  Report is internally consistent.")
+
+    if text_fixes:
+        print("  {} text fix(es) require review before distribution.".format(len(text_fixes)))
+    if calc_fixes:
+        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
+            len(calc_fixes)))
+
+    print("  ====================================")
+    return len(errors)
+
 
 
 def auto_problem_description(results, task_spec):
@@ -1858,8 +2181,9 @@ def record_environment(results):
             with open(RESULTS_FILE, "w", encoding="utf-8") as handle:
                 json.dump(stored, handle, indent=2, ensure_ascii=False)
                 handle.write("\n")
-    except (OSError, ValueError):
-        pass
+    except (OSError, ValueError) as error:
+        print("NOTE: could not persist the report environment in results.json "
+              "({}).".format(error), file=sys.stderr)
     return environment
 
 
@@ -2662,14 +2986,14 @@ def format_benchmark_html(results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return ""
-    h = '<table class="benchmark-table"><thead><tr>'
+    source = bv.get("source", "")
+    h = '<p>Reference source: {}</p>\n'.format(_html_escape(str(source))) if source else ""
+    h += '<table class="benchmark-table"><thead><tr>'
     h += '<th>Test</th><th>Description</th><th>Status</th><th>Details</th>'
     h += '</tr></thead><tbody>\n'
-    for key, val in bv.items():
-        if not isinstance(val, dict):
-            continue
-        label = key.replace("_", " ").title()
-        desc = val.get("description") or val.get("reference") or key
+    for val in _benchmark_tests(results):
+        label = val["parameter"]
+        desc = val.get("description") or val.get("reference") or label
         status = val.get("status")
         if status is None:
             p = val.get("pass")
@@ -2678,7 +3002,7 @@ def format_benchmark_html(results):
         # Gather numeric details
         details = []
         for dk, dv in val.items():
-            if dk in ("description", "status", "reference", "pass", "points"):
+            if dk in ("parameter", "description", "status", "reference", "pass", "points"):
                 continue
             dl = dk.replace("_", " ").title()
             if isinstance(dv, float):
@@ -2844,20 +3168,20 @@ def add_benchmark_word_table(doc, results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return
+    if bv.get("source"):
+        doc.add_paragraph("Reference source: {}".format(bv["source"]))
     headers = ["Test", "Description", "Status", "Details"]
     data_rows = []
-    for key, val in bv.items():
-        if not isinstance(val, dict):
-            continue
-        label = key.replace("_", " ").title()
-        desc = val.get("description") or val.get("reference") or key
+    for val in _benchmark_tests(results):
+        label = val["parameter"]
+        desc = val.get("description") or val.get("reference") or label
         status = val.get("status")
         if status is None:
             p = val.get("pass")
             status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
         details = []
         for dk, dv in val.items():
-            if dk in ("description", "status", "reference", "pass", "points"):
+            if dk in ("parameter", "description", "status", "reference", "pass", "points"):
                 continue
             dl = dk.replace("_", " ").title()
             if isinstance(dv, float):
@@ -3131,7 +3455,8 @@ def _renumber_sections(sections):
     return sections
 
 
-def build_sections(results, task_spec, study_config_warnings=None, study_config=None):
+def build_sections(results, task_spec, study_config_warnings=None, study_config=None,
+                   consistency_issues=None):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
     if study_config_warnings is None:
@@ -3269,6 +3594,17 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "content": validation_text,
     })
     next_section_num += 1
+
+    if consistency_issues:
+        review_items = ["- {}: {}".format(issue["severity"], issue["message"])
+                        for issue in consistency_issues if issue["severity"] != "INFO"]
+        if review_items:
+            sections.append({
+                "heading": "{}. Report Consistency Review".format(next_section_num),
+                "content": "\n".join(review_items),
+                "has_markdown": True,
+            })
+            next_section_num += 1
 
     if study_config_warnings:
         warning_lines = ["- {}".format(warning) for warning in study_config_warnings]
@@ -3646,7 +3982,8 @@ def build_word_report(sections, results=None):
         elif section.get("has_scope") or section.get("has_markdown"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+        elif ("Validation" in section["heading"] and not section.get("has_benchmark")
+              and results and results.get("validation")):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
         elif section.get("has_benchmark") and results:
@@ -4498,7 +4835,8 @@ def build_paper_docx(sections, results=None):
             if disc and not disc.startswith("["):
                 for para_text in _body_paragraphs(disc):
                     doc.add_paragraph(para_text)
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+        elif ("Validation" in section["heading"] and not section.get("has_benchmark")
+              and results and results.get("validation")):
             add_validation_word_table(doc, results)
         elif section.get("has_benchmark") and results:
             add_benchmark_word_table(doc, results)
@@ -4940,6 +5278,15 @@ if __name__ == "__main__":
         print("      results.json so the report states the task up front.")
 
     study_config_warnings = validate_study_config(study_config, results, task_spec)
+    consistency_issues = check_report_consistency(results)
+    print_consistency_report(consistency_issues)
+    calculation_issues = [issue for issue in consistency_issues
+                          if issue.get("fix_type") == "calculation"]
+    fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
+    if calculation_issues or os.path.exists(fixes_path):
+        with open(fixes_path, "w", encoding="utf-8") as handle:
+            json.dump(calculation_issues, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
     if study_config_warnings:
         print("")
         print("Study configuration warnings:")
@@ -4949,7 +5296,7 @@ if __name__ == "__main__":
     if not paper_only:
         # Build report sections and generate technical report
         sections = build_sections(results, task_spec, study_config_warnings,
-                                  study_config)
+                                  study_config, consistency_issues)
         print("")
         build_word_report(sections, results)
         build_html_report(sections, results)

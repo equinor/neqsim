@@ -106,12 +106,13 @@ py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
 .\install.ps1
-neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+neqsim doctor --skip-jar  # checks the CLI setup before building the Java JAR
 
 # 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
 .\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
+neqsim doctor                # full check, including the built JAR
 
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
@@ -150,6 +151,14 @@ Report files are named after the report title — a study titled "Hydrate margin
 for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
 `.html` (paper: `..._Paper.docx`). Report files written under an earlier title
 are deleted on regeneration, so a renamed study leaves no superseded deliverable.
+
+The canonical generator accepts both `benchmark_validation.tests` lists and
+named benchmark mappings. Word and HTML outputs retain the source, numerical
+comparisons, and PASS/FAIL status. Before rendering, the generator checks for
+contradictions between benchmarks, validation, risk, discussions, and conclusions.
+Findings appear in the console and the technical report's **Report Consistency
+Review** section; calculation findings are written to `fixes_needed.json`.
+These checks request review and do not rewrite the study's conclusions.
 
 The document root is the folder the AI agents read source documents from —
 standards, datasheets, P&IDs, vendor documents, historian exports — and **every
@@ -303,7 +312,8 @@ After installation you get a single `neqsim` command:
 ```bash
 neqsim try               # interactive playground — explore NeqSim in 30 seconds
 neqsim onboard           # interactive setup wizard
-neqsim doctor            # check your environment is healthy
+neqsim doctor            # check your environment is healthy (including a built JAR)
+neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim new-skill NAME    # scaffold a new AI skill

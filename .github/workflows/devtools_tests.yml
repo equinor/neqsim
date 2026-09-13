@@ -43,8 +43,12 @@ jobs:
             devtools/test_skill_search.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_report_workflow.py \
+            devtools/test_report_template.py \
+            devtools/test_report_heading_numbering.py \
+            devtools/test_generate_work_record.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
+            devtools/test_neqsim_doctor.py \
             devtools/test_unisim_outputs.py
 
       - name: Run mechanical design mesh contract tests

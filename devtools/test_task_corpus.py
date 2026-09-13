@@ -133,6 +133,31 @@ def test_index_lists_every_task_with_its_headline_results(isolated):
     assert beta["has_results"] is False
 
 
+@pytest.mark.parametrize("flag, column", [
+    ("has_results", 3),
+    ("benchmark_validation", 4),
+    ("uncertainty", 5),
+    ("risk_evaluation", 6),
+    ("work_record", 7),
+    ("sources_md", 8),
+])
+def test_index_keeps_every_status_in_its_declared_column(isolated, flag, column):
+    root = isolated / "root"
+    root.mkdir()
+    task = make_task(root, "2026-01-01_status")
+    record = task_corpus.summarize_task(task)
+    record[flag] = True
+
+    index = task_corpus.render_index([record], [root])
+    rows = [line for line in index.splitlines() if line.startswith("|")]
+    cells = [[cell.strip() for cell in row.strip("|").split("|")] for row in rows]
+
+    assert len(cells[0]) == len(cells[1]) == len(cells[2]) == 9
+    expected = [""] * 6
+    expected[column - 3] = "x"
+    assert cells[2][3:] == expected
+
+
 def test_index_links_stay_valid_for_tasks_outside_the_index_folder(isolated):
     first, second = isolated / "a", isolated / "b"
     first.mkdir()

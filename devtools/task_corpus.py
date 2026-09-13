@@ -339,6 +339,7 @@ def _title(folder, results):
                     if value and not value.startswith("["):
                         return value
         except OSError:
+            # An unreadable config must not prevent indexing; use the fallbacks below.
             pass
     if isinstance(results, dict):
         for key in ("title", "objective", "task_statement"):
@@ -390,7 +391,7 @@ def render_index(records, roots, out_dir=None):
         "Roots: {}".format(describe(roots)),
         "",
         "Legend — R: results.json, B: benchmark validation, U: uncertainty, "
-        "K: risk register, W: work record, S: sources index.",
+        + "K: risk register, W: work record, S: sources index.",
         "",
         "| Date | Task | Title | R | B | U | K | W | S |",
         "|---|---|---|---|---|---|---|---|---|",
@@ -409,7 +410,7 @@ def render_index(records, roots, out_dir=None):
             return Path(record["path"]).as_uri()
 
     for record in sorted(records, key=lambda r: r["folder"], reverse=True):
-        lines.append("| {} | [{}]({}/) | {} | {} | {} | {} | {} | {} |".format(
+        lines.append("| {} | [{}]({}/) | {} | {} | {} | {} | {} | {} | {} |".format(
             record["date"], record["folder"], link(record),
             record["title"].replace("|", "/"),
             mark(record["has_results"]), mark(record["benchmark_validation"]),

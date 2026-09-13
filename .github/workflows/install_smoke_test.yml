@@ -22,6 +22,7 @@ on:
       - "devtools/install_agent.py"
       - "devtools/install_skill.py"
       - "devtools/neqsim_cli.py"
+      - "devtools/neqsim_doctor.py"
       - "install.sh"
       - "install.cmd"
       - ".github/workflows/install_smoke_test.yml"
@@ -31,6 +32,7 @@ on:
       - "devtools/install_agent.py"
       - "devtools/install_skill.py"
       - "devtools/neqsim_cli.py"
+      - "devtools/neqsim_doctor.py"
   schedule:
     # Catalogs live in other repos and can drift independently of this one.
     - cron: "0 5 * * 1"
@@ -60,7 +62,8 @@ jobs:
       - name: CLI is on PATH and reports health
         run: |
           neqsim --help
-          neqsim doctor
+          # This job installs the CLI and agents; the Java build has its own CI.
+          neqsim doctor --skip-jar
 
       - name: List the public community catalogs
         run: |
