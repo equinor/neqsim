@@ -101,7 +101,8 @@ public final class SarirAtmosphericFractionationCase {
    * @return configured connected feed and column case
    * @throws NullPointerException if the heating case or operating inputs are null
    * @throws IllegalArgumentException if the name or operating inputs are invalid
-   * @throws IllegalStateException if the heating case has not solved or its outlet does not match the published boundary
+   * @throws IllegalStateException if the heating case has not solved or its outlet does not match the published
+   * boundary
    */
   public static SarirAtmosphericFractionationCase createFromHeatingCase(String name,
       SarirAtmosphericCrudeHeatingCase heatingCase, OperatingInputs operatingInputs) {
@@ -164,12 +165,9 @@ public final class SarirAtmosphericFractionationCase {
     double expectedFlowKgPerHour = SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour();
     double expectedTemperatureKelvin = SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
     double expectedPressureBara = SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0;
-    requireRelativeClose(feed.getFlowRate("kg/hr"), expectedFlowKgPerHour, 1.0e-10,
-        "Connected feed mass flow");
-    requireAbsoluteClose(feed.getTemperature("K"), expectedTemperatureKelvin, 1.0e-7,
-        "Connected feed temperature");
-    requireAbsoluteClose(feed.getPressure("bara"), expectedPressureBara, 1.0e-10,
-        "Connected feed pressure");
+    requireRelativeClose(feed.getFlowRate("kg/hr"), expectedFlowKgPerHour, 1.0e-10, "Connected feed mass flow");
+    requireAbsoluteClose(feed.getTemperature("K"), expectedTemperatureKelvin, 1.0e-7, "Connected feed temperature");
+    requireAbsoluteClose(feed.getPressure("bara"), expectedPressureBara, 1.0e-10, "Connected feed pressure");
   }
 
   private static void requireRelativeClose(double value, double expected, double relativeTolerance, String label) {
