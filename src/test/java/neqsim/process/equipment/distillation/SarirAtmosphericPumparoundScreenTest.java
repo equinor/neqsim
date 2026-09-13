@@ -32,8 +32,8 @@ public class SarirAtmosphericPumparoundScreenTest {
     SarirAtmosphericFractionationCase model = createModel();
     Mapping top = new Mapping("Top pump around (TPA)", 30, 32, 0.01);
     Mapping bottom = new Mapping("Bottom pump around (BPA)", 12, 15, 0.02);
-    SarirAtmosphericPumparoundScreen screen =
-        SarirAtmosphericPumparoundScreen.configure(model, 20, 1.0e-4, top, bottom);
+    SarirAtmosphericPumparoundScreen screen = SarirAtmosphericPumparoundScreen.configure(model, 20, 1.0e-4, top,
+        bottom);
 
     Mapping[] mappings = screen.getMappings();
     assertEquals(2, mappings.length);
@@ -49,10 +49,8 @@ public class SarirAtmosphericPumparoundScreenTest {
     assertEquals(SarirAtmosphericReference.getPumparound(top.getReferenceName()).getTemperatureDropKelvin(),
         topCircuit.getTemperatureDrop(), 0.0);
 
-    assertEquals(3,
-        SarirAtmosphericReference.getPumparound(top.getReferenceName()).getSourceDrawTrayNumber());
-    assertEquals(1,
-        SarirAtmosphericReference.getPumparound(top.getReferenceName()).getSourceReturnTrayNumber());
+    assertEquals(3, SarirAtmosphericReference.getPumparound(top.getReferenceName()).getSourceDrawTrayNumber());
+    assertEquals(1, SarirAtmosphericReference.getPumparound(top.getReferenceName()).getSourceReturnTrayNumber());
     assertTrue(!SarirAtmosphericReference.hasExplicitPumparoundTrayNumberingBasis());
     assertThrows(IllegalStateException.class, screen::evaluate);
   }
@@ -61,22 +59,17 @@ public class SarirAtmosphericPumparoundScreenTest {
   @Test
   public void invalidMappingsFailClosed() {
     assertThrows(IllegalArgumentException.class, () -> new Mapping("unknown", 30, 32, 0.01));
-    assertThrows(IllegalArgumentException.class,
-        () -> new Mapping("Top pump around (TPA)", -1, 32, 0.01));
-    assertThrows(IllegalArgumentException.class,
-        () -> new Mapping("Top pump around (TPA)", 30, 30, 0.01));
-    assertThrows(IllegalArgumentException.class,
-        () -> new Mapping("Top pump around (TPA)", 30, 32, 0.0));
+    assertThrows(IllegalArgumentException.class, () -> new Mapping("Top pump around (TPA)", -1, 32, 0.01));
+    assertThrows(IllegalArgumentException.class, () -> new Mapping("Top pump around (TPA)", 30, 30, 0.01));
+    assertThrows(IllegalArgumentException.class, () -> new Mapping("Top pump around (TPA)", 30, 32, 0.0));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericPumparoundScreen.configure(createModel(), 20, 1.0e-4));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericPumparoundScreen.configure(createModel(), 20, 1.0e-4,
-            new Mapping("Top pump around (TPA)", 30, 32, 0.01),
-            new Mapping("Top pump around (TPA)", 29, 31, 0.01)));
+            new Mapping("Top pump around (TPA)", 30, 32, 0.01), new Mapping("Top pump around (TPA)", 29, 31, 0.01)));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericPumparoundScreen.configure(createModel(), 20, 1.0e-4,
-            new Mapping("Top pump around (TPA)", 30, 32, 0.01),
-            new Mapping("Bottom pump around (BPA)", 30, 15, 0.02)));
+            new Mapping("Top pump around (TPA)", 30, 32, 0.01), new Mapping("Bottom pump around (BPA)", 30, 15, 0.02)));
   }
 
   /** Require a conservative non-fallback product solve and converged internal circuit. */
@@ -99,11 +92,9 @@ public class SarirAtmosphericPumparoundScreenTest {
     assertNotSame(rows, result.getPumparounds());
     assertEquals(3, rows[0].getSourceDrawTrayNumber());
     assertEquals(1, rows[0].getSourceReturnTrayNumber());
-    assertEquals(SarirAtmosphericReference.getTopPumpAroundRateKgPerHour(),
-        rows[0].getSourceMassFlowKgPerHour(), 0.0);
+    assertEquals(SarirAtmosphericReference.getTopPumpAroundRateKgPerHour(), rows[0].getSourceMassFlowKgPerHour(), 0.0);
     assertTrue(rows[0].getModeledDrawMassFlowKgPerHour() > 0.0);
-    assertEquals(rows[0].getModeledDrawMassFlowKgPerHour(),
-        rows[0].getModeledReturnMassFlowKgPerHour(),
+    assertEquals(rows[0].getModeledDrawMassFlowKgPerHour(), rows[0].getModeledReturnMassFlowKgPerHour(),
         1.0e-8 * rows[0].getModeledDrawMassFlowKgPerHour());
     assertTrue(rows[0].getInternalFlowClosureRelativeError() <= 1.0e-8);
     assertTrue(rows[0].getDutyW() < 0.0);
@@ -113,10 +104,9 @@ public class SarirAtmosphericPumparoundScreenTest {
   }
 
   private static SarirAtmosphericFractionationCase createModel() {
-    OperatingInputs inputs = new OperatingInputs(1.20,
-        SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0, 700.0, 1.0, 24, 0.08,
-        15, 0.15);
-    return SarirAtmosphericFractionationCase.create("Sarir pump-around screen", SPECIFIC_GRAVITY,
-        MOLAR_MASS_KG_PER_MOL, inputs);
+    OperatingInputs inputs = new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0,
+        700.0, 1.0, 24, 0.08, 15, 0.15);
+    return SarirAtmosphericFractionationCase.create("Sarir pump-around screen", SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL,
+        inputs);
   }
 }
