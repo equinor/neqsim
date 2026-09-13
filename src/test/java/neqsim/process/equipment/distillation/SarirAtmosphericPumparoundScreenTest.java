@@ -78,7 +78,7 @@ public class SarirAtmosphericPumparoundScreenTest {
   public void smallExplicitPumparoundProducesQualifiedEvidence() {
     SarirAtmosphericFractionationCase model = createModel();
     SarirAtmosphericPumparoundScreen screen = SarirAtmosphericPumparoundScreen.configure(model, 20, 1.0e-4,
-        new Mapping("Top pump around (TPA)", 30, 32, 0.005));
+        new Mapping("Bottom pump around (BPA)", 12, 15, 0.005));
 
     Result result = screen.run(UUID.randomUUID());
     assertTrue(result.getProductResult().getMassClosureRelativeError() <= 5.0e-2);
@@ -90,9 +90,10 @@ public class SarirAtmosphericPumparoundScreenTest {
     PumparoundResult[] rows = result.getPumparounds();
     assertEquals(1, rows.length);
     assertNotSame(rows, result.getPumparounds());
-    assertEquals(3, rows[0].getSourceDrawTrayNumber());
-    assertEquals(1, rows[0].getSourceReturnTrayNumber());
-    assertEquals(SarirAtmosphericReference.getTopPumpAroundRateKgPerHour(), rows[0].getSourceMassFlowKgPerHour(), 0.0);
+    assertEquals(22, rows[0].getSourceDrawTrayNumber());
+    assertEquals(19, rows[0].getSourceReturnTrayNumber());
+    assertEquals(SarirAtmosphericReference.getBottomPumpAroundRateKgPerHour(), rows[0].getSourceMassFlowKgPerHour(),
+        0.0);
     assertTrue(rows[0].getModeledDrawMassFlowKgPerHour() > 0.0);
     assertEquals(rows[0].getModeledDrawMassFlowKgPerHour(), rows[0].getModeledReturnMassFlowKgPerHour(),
         1.0e-8 * rows[0].getModeledDrawMassFlowKgPerHour());
