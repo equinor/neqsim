@@ -123,6 +123,24 @@ def test_main_landing_routes_to_foundational_package_guides() -> None:
         assert package_landing.is_file()
 
 
+def test_sis_navigation_describes_screening_and_review_boundary() -> None:
+    routes = {
+        DOCS / "index.md": 'href="risk/sis-integration.html"',
+        DOCS / "risk" / "index.md": "[P2: SIS/SIF Integration](sis-integration)",
+        REFERENCE_INDEX: "[docs/risk/sis-integration.md](risk/sis-integration.md)",
+    }
+    bounded_description = "PFD and LOPA screening; independent assessment required"
+
+    for source, route in routes.items():
+        visible = _without_fenced_code(source.read_text(encoding="utf-8"))
+        matching_lines = [line for line in visible.splitlines() if route in line]
+        assert len(matching_lines) == 1, f"{source}: expected one maintained SIS route"
+        description = matching_lines[0]
+        assert bounded_description in description, f"{source}: missing SIS assessment boundary"
+        assert "SIL verification" not in description
+        assert "IEC 61508/61511 compliance" not in description
+
+
 def test_single_landing_directories_are_discoverable() -> None:
     navigation_sources = (
         DOCS / "index.md",
