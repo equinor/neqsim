@@ -1,5 +1,6 @@
 package neqsim.process.equipment.distillation;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import neqsim.process.equipment.distillation.DoeBigHillVacuumComponentRecovery.ProductRecovery;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationCase.OperatingInputs;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult.ProductResult;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumScenarioScreen.PointResult;
@@ -42,6 +44,7 @@ public class DoeBigHillVacuumScenarioScreenTest {
     double expectedMaximumOverhead = Double.NEGATIVE_INFINITY;
     double expectedMaximumMassClosure = 0.0;
     double expectedMaximumComponentClosure = 0.0;
+    double expectedMaximumRecoveryClosure = 0.0;
     double expectedMaximumEnergyError = 0.0;
     double expectedMaximumMeshResidual = 0.0;
 
@@ -49,6 +52,7 @@ public class DoeBigHillVacuumScenarioScreenTest {
       Scenario scenario = point.getScenario();
       OperatingInputs applied = scenario.getOperatingInputs();
       DoeBigHillVacuumFractionationResult result = point.getFractionationResult();
+      DoeBigHillVacuumComponentRecovery recovery = point.getComponentRecovery();
 
       assertEquals(12, applied.getSimpleTrayCount());
       assertEquals(4, applied.getFeedTrayIndex());
@@ -68,11 +72,34 @@ public class DoeBigHillVacuumScenarioScreenTest {
       assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
+      String[] expectedComponentNames = { "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+      assertArrayEquals(expectedComponentNames, recovery.getComponentNames());
+      assertNotSame(recovery.getComponentNames(), recovery.getComponentNames());
+      double[] feedComponentFlows = recovery.getFeedComponentMolarFlowsMolPerHour();
+      ProductRecovery[] recoveredProducts = recovery.getProducts();
+      assertEquals(2, recoveredProducts.length);
+      assertNotSame(recoveredProducts, recovery.getProducts());
+      for (int componentIndex = 0; componentIndex < expectedComponentNames.length; componentIndex++) {
+        double recoverySum = 0.0;
+        for (ProductRecovery recoveredProduct : recoveredProducts) {
+          double componentFlow = recoveredProduct.getComponentMolarFlowsMolPerHour()[componentIndex];
+          double componentRecovery = recoveredProduct.getComponentMolarRecoveries()[componentIndex];
+          assertEquals(componentFlow / feedComponentFlows[componentIndex], componentRecovery, 1.0e-12);
+          assertEquals(componentRecovery,
+              recoveredProduct.getComponentMolarRecovery(expectedComponentNames[componentIndex]), 0.0);
+          recoverySum += componentRecovery;
+        }
+        assertEquals(1.0, recoverySum, BALANCE_TOLERANCE);
+      }
+      assertTrue(recovery.getMaximumComponentRecoveryClosureError() <= BALANCE_TOLERANCE);
+
       expectedMinimumOverhead = Math.min(expectedMinimumOverhead, point.getOverheadMassFraction());
       expectedMaximumOverhead = Math.max(expectedMaximumOverhead, point.getOverheadMassFraction());
       expectedMaximumMassClosure = Math.max(expectedMaximumMassClosure, result.getMassClosureRelativeError());
       expectedMaximumComponentClosure = Math.max(expectedMaximumComponentClosure,
           result.getMaximumComponentMolarClosureRelativeError());
+      expectedMaximumRecoveryClosure = Math.max(expectedMaximumRecoveryClosure,
+          recovery.getMaximumComponentRecoveryClosureError());
       expectedMaximumEnergyError = Math.max(expectedMaximumEnergyError, result.getColumnEnergyBalanceError());
       expectedMaximumMeshResidual = Math.max(expectedMaximumMeshResidual, result.getMeshResidualNorm());
     }
@@ -81,6 +108,7 @@ public class DoeBigHillVacuumScenarioScreenTest {
     assertEquals(expectedMaximumOverhead, screen.getMaximumOverheadMassFraction(), 0.0);
     assertEquals(expectedMaximumMassClosure, screen.getMaximumMassClosureRelativeError(), 0.0);
     assertEquals(expectedMaximumComponentClosure, screen.getMaximumComponentMolarClosureRelativeError(), 0.0);
+    assertEquals(expectedMaximumRecoveryClosure, screen.getMaximumComponentRecoveryClosureError(), 0.0);
     assertEquals(expectedMaximumEnergyError, screen.getMaximumColumnEnergyBalanceError(), 0.0);
     assertEquals(expectedMaximumMeshResidual, screen.getMaximumMeshResidualNorm(), 0.0);
   }
