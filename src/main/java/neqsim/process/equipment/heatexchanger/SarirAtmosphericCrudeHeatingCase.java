@@ -229,7 +229,8 @@ public final class SarirAtmosphericCrudeHeatingCase {
      * Create validated source-unreported heating inputs.
      *
      * @param crudeInletTemperatureKelvin crude temperature before sensible preheat, in kelvin
-     * @param preheatTemperatureKelvin crude temperature between preheater and furnace, in kelvin
+     * @param preheatTemperatureKelvin crude temperature between preheater and furnace, in kelvin; strictly below the
+     * published column-feed temperature
      * @param preheaterPressureLossBara absolute pressure loss across the preheater, in bar
      * @param furnacePressureLossBara absolute pressure loss across the furnace, in bar
      * @param thermalEfficiency fired-heater thermal efficiency in (0, 1]
@@ -237,6 +238,7 @@ public final class SarirAtmosphericCrudeHeatingCase {
      * @param fuelCO2FactorKgPerKg kg CO2 per kg fuel
      * @param noxFactorKgPerGJ kg NOx per GJ fired duty
      * @param stackTemperatureKelvin reported stack temperature in kelvin
+     * @throws IllegalArgumentException if an input is nonphysical or the temperatures are not strictly increasing
      */
     public HeatingInputs(double crudeInletTemperatureKelvin, double preheatTemperatureKelvin,
         double preheaterPressureLossBara, double furnacePressureLossBara, double thermalEfficiency,
@@ -255,6 +257,9 @@ public final class SarirAtmosphericCrudeHeatingCase {
       requireInputFinitePositive(stackTemperatureKelvin, "Stack temperature");
       if (!(crudeInletTemperatureKelvin < preheatTemperatureKelvin)) {
         throw new IllegalArgumentException("Crude inlet temperature must be below the preheat temperature");
+      }
+      if (!(preheatTemperatureKelvin < getPublishedColumnFeedTemperatureKelvin())) {
+        throw new IllegalArgumentException("Preheat temperature must be below the published column-feed temperature");
       }
 
       this.crudeInletTemperatureKelvin = crudeInletTemperatureKelvin;
