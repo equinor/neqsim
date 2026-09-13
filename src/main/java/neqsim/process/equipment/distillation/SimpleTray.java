@@ -150,6 +150,48 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     return enthalpy;
   }
 
+  /**
+   * Sum the enthalpy rates of the published material outlets, including side and pumparound draws.
+   *
+   * <p>
+   * A simultaneous solver can publish phase flows independently of the mixed-stream flash. Energy balances must use
+   * those same phase streams. Non-finite flowing states remain non-finite so residual gates cannot hide them.
+   * </p>
+   *
+   * @return total material outlet enthalpy rate in W
+   */
+  double getMaterialOutletEnthalpy() {
+    double enthalpy = getMaterialStreamEnthalpy(getGasOutStream()) + getMaterialStreamEnthalpy(getLiquidOutStream());
+    if (gasSideDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getGasSideDrawStream());
+    }
+    if (liquidSideDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getLiquidSideDrawStream());
+    }
+    if (liquidPumparoundDrawFraction > 0.0) {
+      enthalpy += getMaterialStreamEnthalpy(getLiquidPumparoundDrawStream());
+    }
+    return enthalpy;
+  }
+
+  /**
+   * Read a material stream's energy contribution without counting zero-flow phase templates.
+   *
+   * @param stream material stream
+   * @return enthalpy rate in W, or a non-finite value for an invalid flowing state
+   */
+  static double getMaterialStreamEnthalpy(StreamInterface stream) {
+    double flow = stream.getFlowRate("kg/hr");
+    if (!Double.isFinite(flow)) {
+      return Double.NaN;
+    }
+    if (Math.abs(flow) <= 1.0e-12) {
+      return 0.0;
+    }
+    stream.getThermoSystem().init(2);
+    return stream.getThermoSystem().getEnthalpy();
+  }
+
   /** {@inheritDoc} */
   @Override
   public double calcMixStreamEnthalpy() {
