@@ -75,8 +75,8 @@ public class SarirAtmosphericCrudeHeatingFractionationIntegrationTest {
     heating.run(UUID.randomUUID());
     heating.getColumnFeedStream().setPressure(2.50, "bara");
 
-    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationCase.createFromHeatingCase(
-        "Sarir connected screen", heating, qualifiedColumnInputs()));
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationCase
+        .createFromHeatingCase("Sarir connected screen", heating, qualifiedColumnInputs()));
   }
 
   private static SarirAtmosphericCrudeHeatingCase createHeatingCase() {
