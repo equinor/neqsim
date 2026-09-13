@@ -73,8 +73,7 @@ public final class SarirAtmosphericCrudeHeatingCase {
     double crudeInletPressureBara = furnaceInletPressureBara + heatingInputs.getPreheaterPressureLossBara();
 
     SystemInterface crude = new SystemSrkEos(heatingInputs.getCrudeInletTemperatureKelvin(), crudeInletPressureBara);
-    OilAssayCharacterisation assay =
-        SarirAtmosphericAssay.create(crude, cutSpecificGravity, cutMolarMassKgPerMol);
+    OilAssayCharacterisation assay = SarirAtmosphericAssay.create(crude, cutSpecificGravity, cutMolarMassKgPerMol);
     assay.apply();
     crude.setMixingRule("classic");
 
@@ -143,10 +142,8 @@ public final class SarirAtmosphericCrudeHeatingCase {
     double sourceFlowKgPerHour = SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour();
     double preheaterFlowKgPerHour = preheater.getOutletStream().getFlowRate("kg/hr");
     double columnFeedFlowKgPerHour = getColumnFeedStream().getFlowRate("kg/hr");
-    requireClose(preheaterFlowKgPerHour, sourceFlowKgPerHour, RELATIVE_FLOW_TOLERANCE,
-        "Preheater mass-flow closure");
-    requireClose(columnFeedFlowKgPerHour, sourceFlowKgPerHour, RELATIVE_FLOW_TOLERANCE,
-        "Furnace mass-flow closure");
+    requireClose(preheaterFlowKgPerHour, sourceFlowKgPerHour, RELATIVE_FLOW_TOLERANCE, "Preheater mass-flow closure");
+    requireClose(columnFeedFlowKgPerHour, sourceFlowKgPerHour, RELATIVE_FLOW_TOLERANCE, "Furnace mass-flow closure");
     requireAbsoluteClose(preheater.getOutletStream().getTemperature("K"), heatingInputs.getPreheatTemperatureKelvin(),
         ABSOLUTE_TEMPERATURE_TOLERANCE_KELVIN, "Preheater outlet temperature");
     requireAbsoluteClose(preheater.getOutletStream().getPressure("bara"),
@@ -167,8 +164,7 @@ public final class SarirAtmosphericCrudeHeatingCase {
     requireFiniteNonNegative(stackLossW, "Furnace stack loss");
     requireClose(firedDutyW, absorbedDutyW / heatingInputs.getThermalEfficiency(), RELATIVE_IDENTITY_TOLERANCE,
         "Fired-duty efficiency identity");
-    requireClose(stackLossW, firedDutyW - absorbedDutyW, RELATIVE_IDENTITY_TOLERANCE,
-        "Stack-loss identity");
+    requireClose(stackLossW, firedDutyW - absorbedDutyW, RELATIVE_IDENTITY_TOLERANCE, "Stack-loss identity");
 
     double fuelKgPerHour = furnace.getFuelConsumption("kg/hr");
     double co2KgPerHour = furnace.getCO2Emissions("kg/hr");
@@ -178,8 +174,8 @@ public final class SarirAtmosphericCrudeHeatingCase {
     requireFiniteNonNegative(noxKgPerHour, "NOx emissions");
     requireClose(fuelKgPerHour, firedDutyW / heatingInputs.getFuelLowerHeatingValueJPerKg() * 3600.0,
         RELATIVE_IDENTITY_TOLERANCE, "Fuel-LHV identity");
-    requireClose(co2KgPerHour, fuelKgPerHour * heatingInputs.getFuelCO2FactorKgPerKg(),
-        RELATIVE_IDENTITY_TOLERANCE, "CO2-factor identity");
+    requireClose(co2KgPerHour, fuelKgPerHour * heatingInputs.getFuelCO2FactorKgPerKg(), RELATIVE_IDENTITY_TOLERANCE,
+        "CO2-factor identity");
     requireClose(noxKgPerHour, firedDutyW / 1.0e9 * heatingInputs.getNoxFactorKgPerGJ() * 3600.0,
         RELATIVE_IDENTITY_TOLERANCE, "NOx-factor identity");
   }
