@@ -1,7 +1,10 @@
 package neqsim.process.equipment.distillation;
 
 import java.util.Objects;
+import java.util.UUID;
+import neqsim.process.equipment.heatexchanger.SarirAtmosphericCrudeHeatingCase;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.SarirAtmosphericAssay;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
@@ -65,17 +68,7 @@ public final class SarirAtmosphericFractionationCase {
    */
   public static SarirAtmosphericFractionationCase create(String name, double[] cutSpecificGravity,
       double[] cutMolarMassKgPerMol, OperatingInputs operatingInputs) {
-    if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException("Case name must be non-blank");
-    }
-    Objects.requireNonNull(operatingInputs, "operatingInputs");
-
-    int sourceTrayCount = SarirAtmosphericReference.getColumnTrayCount();
-    int sourceFeedTrayFromTop = SarirAtmosphericReference.getFeedTrayFromTop();
-    int feedInternalIndex = sourceTrayCount - sourceFeedTrayFromTop + 1;
-    if (sourceTrayCount != SIMPLE_TRAY_COUNT || feedInternalIndex != FEED_INTERNAL_INDEX) {
-      throw new IllegalStateException("Sarir source tray mapping no longer matches the qualified case");
-    }
+    validateNameAndTopology(name, operatingInputs);
 
     double feedTemperatureKelvin = SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
     double feedPressureBara = SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0;
@@ -90,6 +83,52 @@ public final class SarirAtmosphericFractionationCase {
     feed.setPressure(feedPressureBara, "bara");
     feed.run();
 
+    return configureColumn(name, feed, operatingInputs);
+  }
+
+  /**
+   * Create an atmospheric-fractionation case connected to a qualified Sarir heating case.
+   *
+   * <p>
+   * The heating case must have completed a successful run. Its live furnace outlet becomes the column feed; the assay
+   * is not reconstructed. The published flow, temperature, and pressure boundary is checked before the column is
+   * configured.
+   * </p>
+   *
+   * @param name non-blank case name
+   * @param heatingCase successfully solved source-bounded Sarir crude-heating case
+   * @param operatingInputs explicit source-unreported column controls
+   * @return configured connected feed and column case
+   * @throws NullPointerException if the heating case or operating inputs are null
+   * @throws IllegalArgumentException if the name or operating inputs are invalid
+   * @throws IllegalStateException if the heating case has not solved or its outlet does not match the published boundary
+   */
+  public static SarirAtmosphericFractionationCase createFromHeatingCase(String name,
+      SarirAtmosphericCrudeHeatingCase heatingCase, OperatingInputs operatingInputs) {
+    validateNameAndTopology(name, operatingInputs);
+    Objects.requireNonNull(heatingCase, "heatingCase");
+    validateHeatingBoundary(heatingCase);
+
+    Stream connectedFeed = new Stream(name + " feed", heatingCase.getColumnFeedStream());
+    return configureColumn(name, connectedFeed, operatingInputs);
+  }
+
+  private static void validateNameAndTopology(String name, OperatingInputs operatingInputs) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Case name must be non-blank");
+    }
+    Objects.requireNonNull(operatingInputs, "operatingInputs");
+
+    int sourceTrayCount = SarirAtmosphericReference.getColumnTrayCount();
+    int sourceFeedTrayFromTop = SarirAtmosphericReference.getFeedTrayFromTop();
+    int feedInternalIndex = sourceTrayCount - sourceFeedTrayFromTop + 1;
+    if (sourceTrayCount != SIMPLE_TRAY_COUNT || feedInternalIndex != FEED_INTERNAL_INDEX) {
+      throw new IllegalStateException("Sarir source tray mapping no longer matches the qualified case");
+    }
+  }
+
+  private static SarirAtmosphericFractionationCase configureColumn(String name, Stream feed,
+      OperatingInputs operatingInputs) {
     DistillationColumn configuredColumn = new DistillationColumn(name + " column", SIMPLE_TRAY_COUNT, true, true);
     configuredColumn.addFeedStream(feed, FEED_INTERNAL_INDEX);
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
@@ -111,6 +150,38 @@ public final class SarirAtmosphericFractionationCase {
     configuredColumn.setEnforceEnergyBalanceTolerance(true);
 
     return new SarirAtmosphericFractionationCase(feed, configuredColumn, operatingInputs);
+  }
+
+  private static void validateHeatingBoundary(SarirAtmosphericCrudeHeatingCase heatingCase) {
+    double firedDutyW = heatingCase.getFurnace().getFiredDuty("W");
+    if (!Double.isFinite(firedDutyW) || !(firedDutyW > 0.0)) {
+      throw new IllegalStateException("Sarir heating case must complete a successful run before connection");
+    }
+    validateFeedBoundary(heatingCase.getColumnFeedStream());
+  }
+
+  private static void validateFeedBoundary(StreamInterface feed) {
+    double expectedFlowKgPerHour = SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour();
+    double expectedTemperatureKelvin = SarirAtmosphericReference.getColumnFeedTemperatureCelsius() + 273.15;
+    double expectedPressureBara = SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0;
+    requireRelativeClose(feed.getFlowRate("kg/hr"), expectedFlowKgPerHour, 1.0e-10,
+        "Connected feed mass flow");
+    requireAbsoluteClose(feed.getTemperature("K"), expectedTemperatureKelvin, 1.0e-7,
+        "Connected feed temperature");
+    requireAbsoluteClose(feed.getPressure("bara"), expectedPressureBara, 1.0e-10,
+        "Connected feed pressure");
+  }
+
+  private static void requireRelativeClose(double value, double expected, double relativeTolerance, String label) {
+    if (!Double.isFinite(value) || Math.abs(value - expected) > relativeTolerance * Math.max(1.0, Math.abs(expected))) {
+      throw new IllegalStateException(label + " does not match the published Sarir boundary");
+    }
+  }
+
+  private static void requireAbsoluteClose(double value, double expected, double absoluteTolerance, String label) {
+    if (!Double.isFinite(value) || Math.abs(value - expected) > absoluteTolerance) {
+      throw new IllegalStateException(label + " does not match the published Sarir boundary");
+    }
   }
 
   /**
@@ -138,6 +209,20 @@ public final class SarirAtmosphericFractionationCase {
    */
   public OperatingInputs getOperatingInputs() {
     return operatingInputs;
+  }
+
+  /**
+   * Run the connected feed and atmospheric column under one calculation identifier.
+   *
+   * @param id calculation identifier
+   * @throws NullPointerException if {@code id} is null
+   * @throws IllegalStateException if the feed boundary changes before the column solve
+   */
+  public void run(UUID id) {
+    Objects.requireNonNull(id, "id");
+    feedStream.run(id);
+    validateFeedBoundary(feedStream);
+    column.run(id);
   }
 
   /**
