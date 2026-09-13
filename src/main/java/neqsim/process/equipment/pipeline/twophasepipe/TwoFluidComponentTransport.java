@@ -849,16 +849,18 @@ public final class TwoFluidComponentTransport implements Serializable {
           updated[cell][phase][component] = Math.max(0.0, updated[cell][phase][component]);
         }
         componentMassKg = phaseInventory(updated[cell][phase]);
-        if (targetMassKg <= MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG) {
-          Arrays.fill(updated[cell][phase], 0.0);
+        // An empty component phase can coexist with hydrodynamic round-off within the allowance.
+        // A positive trace inventory must still synchronize instead of being discarded by that allowance.
+        if (componentMassKg == 0.0 && targetMassKg <= MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG) {
+          continue;
         } else if (componentMassKg > 0.0) {
           double correction = targetMassKg / componentMassKg;
           for (int component = 0; component < componentNames.length; component++) {
             updated[cell][phase][component] *= correction;
           }
         } else {
-          throw new IllegalStateException(
-              "Positive hydrodynamic " + phaseName(phase) + " mass has no component inventory in cell " + cell);
+          throw new IllegalStateException("Positive hydrodynamic " + phaseName(phase)
+              + " mass has no component inventory in cell " + cell + ": target mass=" + targetMassKg + " kg");
         }
       }
     }

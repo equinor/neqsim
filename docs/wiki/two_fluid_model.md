@@ -1101,6 +1101,11 @@ component ledger rather than the latest inlet composition or the final cell's in
 split. The outlet TP flash preserves total component flow; closed outlets carry zero mass. Each
 component substep stages boundary/source/latent-heat ledgers together with inventory and discards
 all of them on failure. This is component-substep isolation, not whole-pipe transient rollback.
+Positive trace-phase component inventories receive the same bounded synchronization as larger
+inventories instead of being discarded below the `1e-10 kg` hydrodynamic mass allowance. Empty
+component phases tolerate hydrodynamic round-off within that allowance without creating components.
+Mismatches beyond the unchanged
+synchronization allowance reject without changing the accepted component ledgers.
 See the [component publication contract](../process/TWOFLUIDPIPE_MODEL.md#validated-scope-and-fail-loud-boundaries)
 for the supported boundaries and remaining limits.
 
@@ -1111,9 +1116,14 @@ phase appearance impossible to reconstruct. A disappearing phase uses its conser
 composition in a forced single-phase property state; receiving composition still comes from the
 equilibrium flash. The closed wet-gas coupling regression exercises conservative slug/film
 tracking, water condensation, wall cooling, bounded named-component transport, and phase/total/
-component/thermal closure on two outer-step partitions. It gives identical internal-CFL-resolved
-results: `1.5855002575e-9 kg` aqueous-water transfer, `0.0034892651 J` latent heat, and
-`-0.0305006304 K` mean temperature change over 0.05 s. The seeded marker is numerical coupling
+component/thermal closure on three outer-step partitions: 0.05, 0.025 and 0.0125 s over 0.05 s.
+Closed coupled boundaries block the external face flux while retaining physical-cell inertia.
+Aqueous-water transfer is `2.6681e-9` to `2.8518e-9 kg`, latent heat is `0.0058212` to `0.0062209 J`,
+and mean cooling is `0.0305404` to `0.0305461 K`. Adjacent-grid water/heat sensitivity is below 4%;
+marker-displacement sensitivity decreases from 3.14% to 1.99%. Length and accepted age remain
+unchanged by partitioning, and whole-pipe transactions reproduce ordinary execution on the same grid.
+See the [coupled regression results](../process/TWOFLUIDPIPE_MODEL.md#coupled-slugcomponentphasethermal-contract).
+The seeded marker is numerical coupling
 evidence, not spontaneous or experimentally qualified severe slugging.
 
 The four-way conservative slug/film combination is validated with the single-stage Euler

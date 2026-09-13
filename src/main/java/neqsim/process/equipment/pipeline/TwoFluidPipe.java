@@ -6515,7 +6515,8 @@ public class TwoFluidPipe extends Pipeline {
       // Fix inlet pressure (transient: flow rate computed from momentum balance)
       inlet.setPressure(inletPressure);
       inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
-    } else if (inletBCType == BoundaryCondition.CLOSED) {
+    } else if (inletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
+      // Coupled transients impose zero flow at the external face; the physical cell retains its inertia.
       // Zero velocity at inlet (blocked/no inflow condition)
       // Pressure floats based on mass loss through outlet
       inlet.setGasVelocity(0.0);
@@ -6542,7 +6543,8 @@ public class TwoFluidPipe extends Pipeline {
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
       outlet.setPressure(outletPressure);
-    } else if (outletBCType == BoundaryCondition.CLOSED) {
+    } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
+      // Repeatedly resetting a finite cell's momentum is an artificial impulse, not a closed-face condition.
       // Zero velocity at outlet (blocked/shut-in condition)
       // Pressure floats based on mass accumulation
       outlet.setGasVelocity(0.0);

@@ -140,7 +140,12 @@ $$
 
 for every component. After transport, the component sums must match the accepted hydrodynamic phase
 inventories within `componentConservationTolerance`; the implementation only removes floating-point
-round-off and throws if a material mismatch would require a projection. Cell PT flashes are then
+round-off and throws if a material mismatch would require a projection. The absolute synchronization
+error allowance of `1e-10 kg` is not a phase-disappearance cutoff: positive trace inventories receive
+the same bounded phase-mass synchronization as larger inventories instead of being discarded.
+An empty component phase remains empty when hydrodynamic round-off is within that allowance;
+the synchronization never invents components. A phase/component mismatch beyond the unchanged
+allowance rejects the component substep without changing its accepted ledgers. Cell PT flashes are then
 built from total conservative named-component inventories. These flashes update density, viscosity,
 sound speed, phase identity, and phase enthalpy but never overwrite the conserved inventories.
 
@@ -244,12 +249,21 @@ temperature; receiving-phase composition still comes only from the equilibrium s
 
 `TwoFluidPipeCoupledCapabilityTest` seeds a deterministic in-domain marker in a closed four-cell
 wet-gas pipe just above its calculated water dew point, selects conservative film coupling, and
-cools the wall. Over 0.05 s, the 0.05 and 0.025 s outer-step partitions both close phase/total mass,
-every named-component ledger, cellwise interphase transfer, and the wall/latent thermal residual.
-Both transfer `1.5855002575e-9 kg` of water to the aqueous phase, release `0.0034892651 J` of
-composition-resolved latent heat, and cool the mean fluid by `0.0305006304 K`; the recorded
-outer-step sensitivities are zero because both partitions resolve to the same internal CFL steps.
-The tracked slug ages by exactly 0.05 s and its geometry is identical on both partitions. This is a
+cools the wall. Over 0.05 s, three outer-step partitions close phase/total mass, every named-component
+ledger, cellwise interphase transfer, and the wall/latent thermal residual. With trace inventories
+preserved and closed boundaries imposed at external faces, the regression records:
+
+| Outer step (s) | Aqueous-water transfer (kg) | Latent heat (J) | Mean temperature change (K) | Marker displacement (m) |
+| ---: | ---: | ---: | ---: | ---: |
+| 0.05 | 2.6680852621e-9 | 0.0058211670 | -0.0305404392 | 0.0793495261 |
+| 0.025 | 2.7746255186e-9 | 0.0060534204 | -0.0305445011 | 0.0819209781 |
+| 0.0125 | 2.8517992882e-9 | 0.0062209099 | -0.0305460516 | 0.0835877001 |
+
+Outer reporting boundaries truncate the adaptive internal CFL steps, so these are different
+integration grids. Water-transfer and latent-heat sensitivity are below 4% between adjacent grids;
+marker-displacement sensitivity decreases from 3.14% to 1.99% on further refinement. The tracked
+slug ages by exactly 0.05 s and retains its length on every partition. Transactional and ordinary
+execution retain identical results on the same partition. This is a
 coupling and conservation regression around a seeded marker, not evidence for spontaneous slug
 initiation, sustained severe-slug cycles, or experimental slug-load accuracy.
 
@@ -1100,6 +1114,12 @@ A steady-state solution remains a useful long-time comparison, but agreement mus
 transient balances and closure forces rather than overwriting the conserved state.
 
 ### Boundary Conditions
+
+For coupled pressure-momentum transients, a closed boundary imposes zero transport at the external
+face. The adjacent physical cell retains its momentum and responds to the finite pressure and
+friction impulses; applying the boundary must not repeatedly reset that cell's velocity to zero.
+`TwoFluidClosedBoundaryMomentumTest` checks this short-time limit with Euler and RK4 while both
+integrated boundary mass fluxes remain zero. Legacy uncoupled boundary handling is unchanged.
 
 Use `setInletBoundaryCondition(...)` and `setOutletBoundaryCondition(...)` for explicit boundary
 types. Convenience methods such as `closeOutlet()` and `openOutlet(...)` update the type and value
