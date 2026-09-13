@@ -54,7 +54,7 @@ The implementation remains `VisualizationRunner`, exposed through
 direct Java and packaged-MCP evidence. Inventory `1.29 / 20 explicit + 29
 contract-tested + 22 confirmed gaps` atomically recorded
 `generateVisualization` as `CONTRACT_TESTED`. Current inventory `1.39 / 20
-explicit + 38 contract-tested + 12 confirmed gaps` retains that classification
+explicit + 39 contract-tested + 12 confirmed gaps` retains that classification
 while preserving zero queued promotion candidates and
 `scientificValidationComplete=false`.
 

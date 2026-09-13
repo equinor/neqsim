@@ -571,15 +571,12 @@ public final class McpEvidenceInventory {
       evidenceBoundary = "Bounded request, component collection, text, architecture, claimed SIL, proof-test interval, PFD and failure-rate admission, canonical NeqSim SIF calculation and indicative SIL-band presentation, deterministic defaults and component ordering, stable fail-closed errors, explicit caller-input, screening and independent-assessment metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish SRS completeness, validate reliability or lifecycle inputs, verify independence, common cause, architecture suitability, diagnostic coverage, proof-test effectiveness or systematic capability, select or approve SIL, demonstrate IEC 61508/61511, NORSOK, regulatory or project conformance, certify design, authorize plant action, or replace independent functional-safety assessment, qualified engineering judgment and accountable approval";
       break;
     case "compareProcesses":
-      benchmarkApplicability =
-          "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT";
-      evidenceSources = new String[] {
-          "src/main/java/neqsim/mcp/runners/ProcessComparisonRunner.java",
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] { "src/main/java/neqsim/mcp/runners/ProcessComparisonRunner.java",
           "src/main/java/neqsim/mcp/runners/ProcessRunner.java",
           "src/test/java/neqsim/mcp/runners/ProcessComparisonRunnerTest.java",
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-          "neqsim-mcp-server/test_process_comparison_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/test_process_comparison_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/PROCESS_COMPARISON_CONTRACT.md" };
       evidenceBoundary = "Bounded UTF-8 request, case collection and case-name admission, deterministic request order, canonical ProcessRunner delegation, explicit complete and per-case success/failure accounting, partial-result visibility, normal MCP access enforcement, synchronized schema/example discovery, standard response evidence, and packaged transport are contract-tested; this does not establish case comparability, unit or basis consistency between cases, numerical or thermodynamic accuracy, convergence for arbitrary inputs, conservation, uncertainty, optimization quality, facility fidelity, persistence, parallel execution, plant or control authority, certification, or accountable engineering approval";
       break;

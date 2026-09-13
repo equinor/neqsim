@@ -90,8 +90,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("runRiskMatrix"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("runLOPA"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("runSIL"));
-    assertTrue(
-        limitations.getAsJsonArray("contractTestedTools").toString().contains("compareProcesses"));
+    assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("compareProcesses"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("diagnoseAutomation"));
     assertTrue(limitations.getAsJsonArray("contractTestedTools").toString().contains("getAutomationLearningReport"));
     assertEquals(71, coverageRecords.size());
@@ -947,8 +946,7 @@ class McpEvidenceInventoryFoundationTests {
   void testProcessComparisonPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject coverage =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("compareProcesses");
+    JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("compareProcesses");
 
     assertEquals("1.39", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -956,12 +954,12 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("ProcessComparisonRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_process_comparison_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("PROCESS_COMPARISON_CONTRACT.md"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessComparisonRunnerTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_process_comparison_protocol.py"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("PROCESS_COMPARISON_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical ProcessRunner"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("partial-result visibility"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("case comparability"));

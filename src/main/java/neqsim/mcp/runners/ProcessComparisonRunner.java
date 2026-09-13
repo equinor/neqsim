@@ -22,8 +22,7 @@ public final class ProcessComparisonRunner {
   static final int MAX_REQUEST_BYTES = 1024 * 1024;
   static final int MAX_CASES = 32;
   static final int MAX_NAME_LENGTH = 256;
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** Private constructor for utility class. */
   private ProcessComparisonRunner() {
@@ -76,8 +75,8 @@ public final class ProcessComparisonRunner {
         }
         String caseName = caseName(caseObject, index);
         if (caseName == null) {
-          return errorJson("Case " + (index + 1)
-              + " name must be a non-blank string of at most " + MAX_NAME_LENGTH + " characters");
+          return errorJson(
+              "Case " + (index + 1) + " name must be a non-blank string of at most " + MAX_NAME_LENGTH + " characters");
         }
         if (!uniqueNames.add(caseName)) {
           return errorJson("Case names must be unique. Duplicate: " + caseName);
@@ -96,8 +95,7 @@ public final class ProcessComparisonRunner {
         processJson.add("process", caseObject.get("process"));
         JsonObject caseResult;
         try {
-          caseResult =
-              JsonParser.parseString(ProcessRunner.run(GSON.toJson(processJson))).getAsJsonObject();
+          caseResult = JsonParser.parseString(ProcessRunner.run(GSON.toJson(processJson))).getAsJsonObject();
         } catch (Exception exception) {
           caseResult = new JsonObject();
           caseResult.addProperty("status", "error");
@@ -175,8 +173,7 @@ public final class ProcessComparisonRunner {
       JsonObject metric = new JsonObject();
       metric.addProperty("case", names.get(index));
       JsonObject caseResult = results.get(index);
-      if (!hasError(caseResult) && caseResult.has("report")
-          && caseResult.get("report").isJsonObject()) {
+      if (!hasError(caseResult) && caseResult.has("report") && caseResult.get("report").isJsonObject()) {
         JsonObject report = caseResult.getAsJsonObject("report");
         if (report.has("equipment") && report.get("equipment").isJsonArray()) {
           JsonArray equipment = report.getAsJsonArray("equipment");
@@ -204,8 +201,7 @@ public final class ProcessComparisonRunner {
       } else {
         metric.addProperty("equipmentCount", 0);
         metric.addProperty("note",
-            hasError(caseResult) ? "Canonical process execution failed"
-                : "Simulation did not produce a report");
+            hasError(caseResult) ? "Canonical process execution failed" : "Simulation did not produce a report");
       }
       metrics.add(metric);
     }

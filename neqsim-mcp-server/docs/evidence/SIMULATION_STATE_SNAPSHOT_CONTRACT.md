@@ -38,4 +38,4 @@ This classification is deliberately limited to serialization, structural presenc
 
 ## Phase 0 accounting boundary
 
-Inventory version `1.28` atomically moves the paired records from `CONFIRMED_GAP` to `CONTRACT_TESTED`, changing coverage from `20/26/25` to `20/28/23`. Current inventory `1.39 / 20+38+13` retains that paired classification. Coverage remains incomplete and `scientificValidationComplete=false`; the promotion records a bounded software contract and makes no scientific benchmark or facility-suitability claim.
+Inventory version `1.28` atomically moves the paired records from `CONFIRMED_GAP` to `CONTRACT_TESTED`, changing coverage from `20/26/25` to `20/28/23`. Current inventory `1.39 / 20+39+12` retains that paired classification. Coverage remains incomplete and `scientificValidationComplete=false`; the promotion records a bounded software contract and makes no scientific benchmark or facility-suitability claim.

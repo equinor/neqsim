@@ -50,7 +50,7 @@ contract_line = next(
     None,
 )
 if contract_line is None:
-    raise AssertionError(f"{FOUNDATION_PATH}: missing current 38-contract summary")
+    raise AssertionError(f"{FOUNDATION_PATH}: missing current 39-contract summary")
 contract_tools = re.findall(r"`([A-Za-z][A-Za-z0-9]+)`", contract_line)
 if len(contract_tools) != 39 or "runSIL" not in contract_tools or "compareProcesses" not in contract_tools:
     raise AssertionError(
@@ -71,7 +71,7 @@ require(
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.38 / 20 explicit + 39 contract-tested + 12\n"
+    "Current inventory `1.39 / 20 explicit + 39 contract-tested + 12\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )

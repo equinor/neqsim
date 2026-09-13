@@ -12,14 +12,12 @@ import neqsim.mcp.catalog.ExampleCatalog;
 /** Tests the bounded canonical process-comparison contract. */
 class ProcessComparisonRunnerTest {
   private static JsonObject example() {
-    return JsonParser.parseString(ExampleCatalog.getExample("comparison", "two-cases"))
-        .getAsJsonObject();
+    return JsonParser.parseString(ExampleCatalog.getExample("comparison", "two-cases")).getAsJsonObject();
   }
 
   @Test
   void comparesTwoCasesInRequestOrder() {
-    JsonObject result =
-        JsonParser.parseString(ProcessComparisonRunner.run(example().toString())).getAsJsonObject();
+    JsonObject result = JsonParser.parseString(ProcessComparisonRunner.run(example().toString())).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     assertEquals(2, result.get("caseCount").getAsInt());
     assertEquals(2, result.get("successfulCaseCount").getAsInt());
@@ -38,10 +36,8 @@ class ProcessComparisonRunnerTest {
   void preservesPartialCanonicalResultsAndCountsFailures() {
     JsonObject request = example();
     JsonObject failingCase = request.getAsJsonArray("cases").get(1).getAsJsonObject();
-    failingCase.getAsJsonArray("process").get(0).getAsJsonObject()
-        .addProperty("type", "NotARealUnit");
-    JsonObject result =
-        JsonParser.parseString(ProcessComparisonRunner.run(request.toString())).getAsJsonObject();
+    failingCase.getAsJsonArray("process").get(0).getAsJsonObject().addProperty("type", "NotARealUnit");
+    JsonObject result = JsonParser.parseString(ProcessComparisonRunner.run(request.toString())).getAsJsonObject();
     assertEquals("success", result.get("status").getAsString());
     assertFalse(result.get("complete").getAsBoolean());
     assertEquals(1, result.get("successfulCaseCount").getAsInt());
@@ -81,8 +77,8 @@ class ProcessComparisonRunnerTest {
     assertError(request.toString());
 
     request = example();
-    request.getAsJsonArray("cases").get(0).getAsJsonObject()
-        .addProperty("name", repeated('n', ProcessComparisonRunner.MAX_NAME_LENGTH + 1));
+    request.getAsJsonArray("cases").get(0).getAsJsonObject().addProperty("name",
+        repeated('n', ProcessComparisonRunner.MAX_NAME_LENGTH + 1));
     assertError(request.toString());
   }
 
@@ -97,8 +93,7 @@ class ProcessComparisonRunnerTest {
   }
 
   private static void assertError(String request) {
-    JsonObject result =
-        JsonParser.parseString(ProcessComparisonRunner.run(request)).getAsJsonObject();
+    JsonObject result = JsonParser.parseString(ProcessComparisonRunner.run(request)).getAsJsonObject();
     assertEquals("error", result.get("status").getAsString());
     assertTrue(result.has("message"));
   }
