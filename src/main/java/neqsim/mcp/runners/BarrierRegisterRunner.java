@@ -37,13 +37,12 @@ public final class BarrierRegisterRunner {
   private static final int MAX_OBJECT_MEMBERS = 256;
   private static final int MAX_TEXT_CHARS = 4096;
   private static final int MAX_NESTING_DEPTH = 12;
-  private static final Set<String> OBJECT_ARRAY_FIELDS = new HashSet<String>(Arrays.asList("evidence",
-      "performanceStandards", "barriers", "safetyCriticalElements"));
+  private static final Set<String> OBJECT_ARRAY_FIELDS = new HashSet<String>(
+      Arrays.asList("evidence", "performanceStandards", "barriers", "safetyCriticalElements"));
   private static final Set<String> STRING_ARRAY_FIELDS = new HashSet<String>(Arrays.asList("acceptanceCriteria",
       "evidenceRefs", "equipmentTags", "linkedEquipmentTags", "hazardIds", "linkedHazardIds", "barrierRefs"));
-  private static final Set<String> NUMERIC_FIELDS = new HashSet<String>(Arrays.asList("page", "confidence",
-      "targetPfd", "requiredAvailability", "proofTestIntervalHours", "responseTimeSeconds", "pfd",
-      "effectiveness"));
+  private static final Set<String> NUMERIC_FIELDS = new HashSet<String>(Arrays.asList("page", "confidence", "targetPfd",
+      "requiredAvailability", "proofTestIntervalHours", "responseTimeSeconds", "pfd", "effectiveness"));
 
   /**
    * Private constructor for utility class.
@@ -71,7 +70,8 @@ public final class BarrierRegisterRunner {
       ParsedRegister parsed = parseRegister(registerJson);
       JsonObject out = new JsonObject();
       out.addProperty("status", "success");
-      out.addProperty("standard", "NORSOK S-001 / IEC 61511 / ISO 31000 references; project-specific verification required");
+      out.addProperty("standard",
+          "NORSOK S-001 / IEC 61511 / ISO 31000 references; project-specific verification required");
       out.addProperty("screeningOnly", true);
       out.addProperty("standardConformanceClaimed", false);
       out.addProperty("advisoryBoundary",
