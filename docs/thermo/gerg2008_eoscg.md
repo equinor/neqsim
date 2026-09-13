@@ -1,9 +1,11 @@
 ---
 title: "GERG-2008 and EOS-CG Equations of State"
-description: "Guide to NeqSim's GERG-2008 and EOS-CG Helmholtz-energy models for high-accuracy natural-gas and CCS property calculations."
+description: "Guide to NeqSim's GERG-2008 and EOS-CG Helmholtz-energy implementations, model selection, property access, and validation boundaries."
 ---
 
-NeqSim supports the **GERG-2008** and **EOS-CG** equations of state, which are reference-quality models explicit in the Helmholtz free energy. These models are widely used for high-accuracy property calculations in natural gas and CCS (Carbon Capture and Storage) applications.
+NeqSim exposes implementations of the **GERG-2008** and **EOS-CG** equations of state, which are model families explicit in Helmholtz free energy. The published formulations target natural-gas and CCS (Carbon Capture and Storage) property calculations.
+
+The current `SystemGERG2008Eos` and `SystemEOSCGEos` implementations do not advertise analytical composition, pressure, or temperature fugacity derivatives. Positive finite results from the examples below prove API execution and model selection only; they do not establish custody-transfer accuracy, published-range reproduction, or fitness for a particular engineering decision. Validate the selected mixture and operating envelope against controlled reference data before use.
 
 ## 1. Mathematical Framework
 
@@ -34,7 +36,7 @@ $$
 \alpha^r(\delta, \tau, \bar{x}) = \sum_{i=1}^{N} x_i \alpha_{0i}^r(\delta, \tau) + \sum_{i=1}^{N-1} \sum_{j=i+1}^{N} x_i x_j F_{ij} \alpha_{ij}^r(\delta, \tau)
 $$
 
-This structure allows for extremely high accuracy in density, speed of sound, and heat capacity calculations, often superior to cubic equations of state (like SRK or PR), especially in the supercritical region.
+Published reference-EOS formulations can represent density, speed of sound, and heat capacity more directly than cubic equations of state such as SRK or PR. Accuracy from the NeqSim implementation remains mixture-, property-, and state-dependent and requires application-specific validation.
 
 ---
 
@@ -55,34 +57,34 @@ Methane, Nitrogen, Carbon Dioxide, Ethane, Propane, Butanes, Pentanes, Hexane, H
 To use GERG-2008 in NeqSim, use the `SystemGERG2008Eos` class.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class GergExample {
-    public static void main(String[] args) {
-        // Create system
-        SystemInterface fluid = new SystemGERG2008Eos(298.15, 10.0); // T in K, P in bara
+public final class GergExample {
+  private static final Logger logger = LogManager.getLogger(GergExample.class);
 
-        // Add components
-        fluid.addComponent("methane", 0.9);
-        fluid.addComponent("ethane", 0.1);
+  private GergExample() {}
 
-        // Initialize
-        fluid.createDatabase(true);
-        fluid.setMixingRule("classic"); // Not strictly used by GERG but good practice for init
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemGERG2008Eos(298.15, 10.0); // K, bara
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.1);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
 
-        // Flash calculation
-        neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-            new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
-        ops.TPflash();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
 
-        // Retrieve properties
-        // Note: GERG-2008 properties are often accessed via specific methods
-        double density = fluid.getPhase(0).getDensity_GERG2008();
-        double[] props = fluid.getPhase(0).getProperties_GERG2008();
+    double density = fluid.getPhase(0).getDensity_GERG2008();
+    double[] properties = fluid.getPhase(0).getProperties_GERG2008();
+    assert Double.isFinite(density) && density > 0.0 : "GERG density must be finite and positive";
+    assert properties != null && properties.length > 0 : "GERG property vector must be populated";
 
-        System.out.println("Density (GERG): " + density + " kg/m3");
-    }
+    logger.info("GERG-2008 density: {} kg/m3", density);
+  }
 }
 ```
 
@@ -125,38 +127,34 @@ Differences increase with:
 The GERG-2008-H2 model is available through `SystemGERG2008Eos` by enabling the hydrogen-enhanced mode:
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class Gerg2008H2Example {
-    public static void main(String[] args) {
-        // Create system with GERG-2008
-        SystemGERG2008Eos fluid = new SystemGERG2008Eos(300.0, 50.0); // T in K, P in bara
+public final class Gerg2008H2Example {
+  private static final Logger logger = LogManager.getLogger(Gerg2008H2Example.class);
 
-        // Add hydrogen-rich mixture
-        fluid.addComponent("methane", 0.7);
-        fluid.addComponent("hydrogen", 0.3);
+  private Gerg2008H2Example() {}
 
-        // Enable GERG-2008-H2 model with improved hydrogen parameters
-        fluid.useHydrogenEnhancedModel();
-        // or equivalently:
-        // fluid.setGergModelType(GERG2008Type.HYDROGEN_ENHANCED);
+  public static void main(String[] args) {
+    SystemGERG2008Eos fluid = new SystemGERG2008Eos(300.0, 50.0); // K, bara
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("hydrogen", 0.3);
+    fluid.useHydrogenEnhancedModel();
 
-        // Flash calculation
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
 
-        // Retrieve properties
-        double density = fluid.getPhase(0).getDensity();
-        System.out.println("Density (GERG-2008-H2): " + density + " kg/m3");
-        System.out.println("Model: " + fluid.getModelName()); // "GERG2008-H2-EOS"
+    double density = fluid.getPhase(0).getDensity("kg/m3");
+    assert Double.isFinite(density) && density > 0.0 : "H2-mixture density must be finite and positive";
+    assert fluid.getGergModelType() == GERG2008Type.HYDROGEN_ENHANCED;
+    assert fluid.isUsingHydrogenEnhancedModel();
+    assert "GERG2008-H2-EOS".equals(fluid.getModelName());
 
-        // Check which model is active
-        if (fluid.isUsingHydrogenEnhancedModel()) {
-            System.out.println("Using hydrogen-enhanced GERG-2008-H2 model");
-        }
-    }
+    logger.info("GERG-2008-H2 density: {} kg/m3; model: {}", density, fluid.getModelName());
+  }
 }
 ```
 
@@ -192,41 +190,42 @@ GERG-2008-NH3 extends GERG-2008 to include **ammonia (NH₃)** as a fully integr
 | Critical properties | $T_c = 405.56$ K, $\rho_c = 13.696$ mol/L (Gao et al.) |
 | Ideal gas | Planck-Einstein terms with $v = [2.224, 3.148, 0.9579]$ and $\theta = [1646, 3965, 7231]$ K |
 | Binary interactions | Reducing parameters and GBS departure functions for NH₃ with CH₄, N₂, CO₂, H₂O, H₂, and other GERG components (Neumann et al. 2020) |
-| Accuracy | Density deviations $< 0.1\%$ from NIST reference data across 300–500 K and 0.1–10 MPa |
+| Published formulation | Gao and Neumann reference data cover ammonia-containing states; NeqSim results require application-specific validation |
 
 ### Usage in NeqSim
 
 The GERG-2008-NH3 model is available through `SystemGERG2008Eos` by enabling the ammonia-extended mode:
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class Gerg2008NH3Example {
-    public static void main(String[] args) {
-        // Create system
-        SystemGERG2008Eos fluid = new SystemGERG2008Eos(400.0, 50.0); // T in K, P in bara
+public final class Gerg2008NH3Example {
+  private static final Logger logger = LogManager.getLogger(Gerg2008NH3Example.class);
 
-        // Add ammonia-containing mixture
-        fluid.addComponent("nitrogen", 0.02);
-        fluid.addComponent("methane", 0.80);
-        fluid.addComponent("ammonia", 0.18);
+  private Gerg2008NH3Example() {}
 
-        // Enable GERG-2008-NH3 model with full Gao pure-fluid EOS
-        fluid.useAmmoniaExtendedModel();
-        // or equivalently:
-        // fluid.setGergModelType(GERG2008Type.AMMONIA_EXTENDED);
+  public static void main(String[] args) {
+    SystemGERG2008Eos fluid = new SystemGERG2008Eos(400.0, 50.0); // K, bara
+    fluid.addComponent("nitrogen", 0.02);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ammonia", 0.18);
+    fluid.useAmmoniaExtendedModel();
 
-        // Flash calculation
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
 
-        // Retrieve properties
-        double density = fluid.getPhase(0).getDensity("kg/m3");
-        System.out.println("Density (GERG-2008-NH3): " + density + " kg/m3");
-        System.out.println("Model: " + fluid.getModelName()); // "GERG2008-NH3-EOS"
-    }
+    double density = fluid.getPhase(0).getDensity("kg/m3");
+    assert Double.isFinite(density) && density > 0.0 : "NH3-mixture density must be finite and positive";
+    assert fluid.getGergModelType() == GERG2008Type.AMMONIA_EXTENDED;
+    assert fluid.isUsingAmmoniaExtendedModel();
+    assert "GERG2008-NH3-EOS".equals(fluid.getModelName());
+
+    logger.info("GERG-2008-NH3 density: {} kg/m3; model: {}", density, fluid.getModelName());
+  }
 }
 ```
 
@@ -256,32 +255,40 @@ Recent updates refreshed the EOS-CG component tables with the EOS-CG-2021 gas co
 
 ### Usage in NeqSim
 
-To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class.
+To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class. This introductory example
+uses pure CO2 gas at 298.15 K and 10 bara, also covered by the repository's CO2
+density regression. Mixture flashes require separate convergence and accuracy
+validation for the intended composition and operating range.
+
+The previously shown 95 mol% CO2 / 5 mol% SO2 flash at 298.15 K and 50 bara
+fails density-root convergence in the current implementation. The reproducible
+limitation is tracked in [issue #3702](https://github.com/equinor/neqsim/issues/3702).
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemEOSCGEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class EosCgExample {
-    public static void main(String[] args) {
-        // Create system
-        SystemInterface fluid = new SystemEOSCGEos(298.15, 50.0);
+public final class EosCgExample {
+  private static final Logger logger = LogManager.getLogger(EosCgExample.class);
 
-        // Add components (including CCS impurities)
-        fluid.addComponent("CO2", 0.95);
-        fluid.addComponent("SO2", 0.05);
+  private EosCgExample() {}
 
-        // Initialize and Flash
-        fluid.createDatabase(true);
-        neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-            new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
-        ops.TPflash();
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemEOSCGEos(298.15, 10.0); // K, bara
+    fluid.addComponent("CO2", 1.0);
+    fluid.createDatabase(true);
 
-        // Retrieve properties
-        double density = fluid.getPhase(0).getDensity_EOSCG();
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
 
-        System.out.println("Density (EOS-CG): " + density + " kg/m3");
-    }
+    double density = fluid.getPhase(0).getDensity_EOSCG();
+    assert Double.isFinite(density) && density > 0.0 : "EOS-CG density must be finite and positive";
+
+    logger.info("EOS-CG density: {} kg/m3", density);
+  }
 }
 ```
 
