@@ -82,7 +82,7 @@ authoritative `test_mcp_server.py` accounting, and documentation move
 together from 20/30/21 to 20/31/20.
 
 The focused packaged suite adds an inventory-promotion assertion and retains
-all seven behavioral scenarios. Current inventory 1.37 retains the
-classification under 20/37/14 accounting. No promotion candidate remains
+all seven behavioral scenarios. Current inventory 1.38 retains the
+classification under 20/38/13 accounting. No promotion candidate remains
 queued, Phase 0 remains incomplete, and no scientific benchmark or
 facility-suitability claim is introduced.

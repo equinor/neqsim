@@ -36,7 +36,7 @@ public class ControllersAndWellsDocumentationTest extends neqsim.NeqSimTest {
 
   @Test
   void controllerExamplesCompileAndRunWithPhysicalAssertions() throws Exception {
-    compileAndRun("docs/process/controllers.md", 6);
+    compileAndRun("docs/process/controllers.md", 7);
   }
 
   @Test

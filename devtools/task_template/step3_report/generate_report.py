@@ -54,6 +54,7 @@ If results.json or task_spec.md are missing, the report uses placeholder text.
 Customize MANUAL_SECTIONS below for content that can't be auto-generated.
 """
 import os
+import re
 import sys
 import glob
 import json
@@ -236,6 +237,7 @@ TASK_DEFAULTS_FILE = os.path.expanduser("~/.neqsim/task_defaults.json")
 REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
 REPORT_TEMPLATE = None          # set in __main__ from CLI/env/settings
 KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template body
+TEMPLATE_NUMBERS_HEADINGS = False  # template Heading styles carry their own numbering
 
 
 def resolve_report_template(explicit=None, allow_saved=True):
@@ -337,6 +339,7 @@ def _apply_readable_typography(doc):
 
 def _new_document():
     """Return a Word document based on the configured template, if any."""
+    global TEMPLATE_NUMBERS_HEADINGS
     if not REPORT_TEMPLATE:
         doc = Document()
         _apply_readable_typography(doc)
@@ -3484,6 +3487,16 @@ def _add_cover_page(doc):
         rev_table.rows[i].cells[3].text = str(entry.get("author", ""))
 
     doc.add_page_break()
+
+
+def _suppress_paragraph_numbering(paragraph):
+    """Keep a heading out of the template's automatic heading numbering."""
+    p_pr = paragraph._p.get_or_add_pPr()
+    for existing in p_pr.findall(qn("w:numPr")):
+        p_pr.remove(existing)
+    p_pr.append(parse_xml(
+        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(nsdecls("w"))
+    ))
 
 
 def _add_word_toc(doc):

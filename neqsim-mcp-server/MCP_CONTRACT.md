@@ -97,7 +97,7 @@ industrial validation.
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
 | `runRelief` | CALCULATION | v1.3 | PSV sizing per API 520 (gas/liquid/two-phase) and API 521 fire heat input |
 | `runLOPA` | CALCULATION | v1.3 | Bounded caller-supplied LOPA screening with canonical numerical evidence; no IPL, SIL, risk-acceptance, or standards-conformance claim |
-| `runSIL` | CALCULATION | v1.3 | SIL verification per IEC 61508 / 61511 (1oo1, 1oo2, 2oo3 architectures) |
+| `runSIL` | CALCULATION | v1.3 | Bounded caller-supplied SIF PFD screening; indicative SIL band only, with no standards-conformance or approval claim |
 | `runRiskMatrix` | CALCULATION | v1.3 | Bounded generic 5×5 screening; caller owns project criteria and qualified review |
 | `runFlareNetwork` | CALCULATION | v1.3 | Flare radiation profile and API 521 safe-distance contour |
 | `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |

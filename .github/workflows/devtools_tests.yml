@@ -7,11 +7,13 @@ on:
   pull_request:
     paths:
       - "devtools/**"
+      - "examples/mechanical_design_json_to_mesh.py"
       - ".github/workflows/devtools_tests.yml"
   push:
     branches: [master]
     paths:
       - "devtools/**"
+      - "examples/mechanical_design_json_to_mesh.py"
 
 jobs:
   devtools-tests:
@@ -30,7 +32,7 @@ jobs:
           # pytest for the hermetic suites; python-docx + matplotlib for the
           # report-generator tests; scikit-learn so discovery uses the TF-IDF
           # path (it also has a pure-python fallback).
-          python -m pip install pytest python-docx matplotlib scikit-learn
+          python -m pip install pytest python-docx matplotlib scikit-learn trimesh
 
       - name: Run hermetic pytest suites
         run: |
@@ -44,6 +46,9 @@ jobs:
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
             devtools/test_unisim_outputs.py
+
+      - name: Run mechanical design mesh contract tests
+        run: python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
 
       - name: Run report generator integration test (script)
         run: python devtools/test_report_gen.py

@@ -612,6 +612,27 @@ process.add(sep);
 process.run();
 ```
 
+### Automatic recycle insertion (`makeRecycles`)
+
+Do not hand-write a tear stream + `Recycle` per feedback stream. A loop wired
+straight back into an upstream mixer has no tolerance, acceleration or convergence
+report of its own; across `ProcessModel` areas it is closed only by the outer
+Gauss-Seidel pass, which has no relaxation setting.
+
+```java
+List<Recycle> created = process.makeRecycles();   // SCCs of one flowsheet
+List<Recycle> plantRecycles = plant.makeRecycles(); // cross-area streams, then each area
+plant.setAutoRecycles(true);  // or let run()/runUntilConverged(...) do it
+```
+
+Tears the inlet with the smallest recycle ratio (tear flow / total inlet flow of the
+consuming unit), one edge per round, and tunes each generated `Recycle` with
+`setAdaptiveAcceleration(true)` plus an absolute flow tolerance at 1e-6 of the area's
+largest flow. Self-seeding and idempotent. Only `Mixer` / `Manifold` inlets are
+tearable; other loops are logged and left untouched. `setAutoRecycles` defaults to
+**false** because inserting a tear changes how an existing flowsheet iterates.
+See `docs/process/controllers.md#automatic-recycle-insertion`.
+
 ### Separator mechanical design (physical configuration)
 
 Physical dimensions, internals, and design parameters are configured through
@@ -646,6 +667,13 @@ design.readDesignSpecifications();
 design.calcDesign();
 String json = design.toJson();
 ```
+
+For JSON-driven CAD or external design calculations, use `design.toDesignDataJson()`
+after running the process and `calcDesign()`. Read each quantity's unit, source and
+availability; legacy wall-thickness getters use m for vessels/compressors but mm
+for pumps/pipelines/columns. Check `geometryConsistency`, and keep compressor
+envelope dimensions separate from pressure-casing calculation results. See
+`docs/process/mechanical_design.md` and `MechanicalDesignJsonContractTest`.
 
 **Internals classes** (`mechanicaldesign.separator.internals`):
 - `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,

@@ -40,16 +40,16 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   private int numberOfTubes;
 
   /** Tube outer diameter [mm]. */
-  private double tubeOuterDiameter;
+  private double tubeOuterDiameter = Double.NaN;
 
   /** Tube wall thickness [mm]. */
-  private double tubeWallThickness;
+  private double tubeWallThickness = Double.NaN;
 
   /** Tube length [m]. */
-  private double tubeLength;
+  private double tubeLength = Double.NaN;
 
   /** Tube pitch [mm]. */
-  private double tubePitch;
+  private double tubePitch = Double.NaN;
 
   /** Tube layout angle (30°, 45°, 60°, 90°). */
   private int tubeLayoutAngle;
@@ -58,113 +58,110 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   private String tubeMaterial;
 
   /** Shell inner diameter [mm]. */
-  private double shellInnerDiameter;
+  private double shellInnerDiameter = Double.NaN;
 
   /** Shell wall thickness [mm]. */
-  private double shellWallThickness;
-
-  /** Shell material. */
-  private String shellMaterial;
+  private double shellWallThickness = Double.NaN;
 
   /** Baffle type (single segmental, double segmental, no-tubes-in-window). */
   private String baffleType;
 
   /** Baffle cut [%]. */
-  private double baffleCut;
+  private double baffleCut = Double.NaN;
 
   /** Baffle spacing [mm]. */
-  private double baffleSpacing;
+  private double baffleSpacing = Double.NaN;
 
   /** Number of baffles. */
   private int numberOfBaffles;
 
   /** Baffle thickness [mm]. */
-  private double baffleThickness;
+  private double baffleThickness = Double.NaN;
 
   /** Heat transfer area [m²]. */
-  private double heatTransferArea;
+  private double heatTransferArea = Double.NaN;
 
   /** Required heat transfer area [m²]. */
-  private double requiredArea;
+  private double requiredArea = Double.NaN;
 
   /** Area margin [%]. */
-  private double areaMargin;
+  private double areaMargin = Double.NaN;
 
   /** Overall heat transfer coefficient [W/m²K]. */
-  private double overallHeatTransferCoeff;
+  private double overallHeatTransferCoeff = Double.NaN;
 
   /** Heat duty [kW]. */
-  private double heatDuty;
+  private double heatDuty = Double.NaN;
 
   /** Log mean temperature difference [K]. */
-  private double lmtd;
+  private double lmtd = Double.NaN;
 
   /** LMTD correction factor (F). */
-  private double lmtdCorrectionFactor;
+  private double lmtdCorrectionFactor = Double.NaN;
 
   /** Shell-side design pressure [bara]. */
-  private double shellDesignPressure;
+  private double shellDesignPressure = Double.NaN;
 
   /** Shell-side design temperature [°C]. */
-  private double shellDesignTemperature;
+  private double shellDesignTemperature = Double.NaN;
 
   /** Tube-side design pressure [bara]. */
-  private double tubeDesignPressure;
+  private double tubeDesignPressure = Double.NaN;
 
   /** Tube-side design temperature [°C]. */
-  private double tubeDesignTemperature;
+  private double tubeDesignTemperature = Double.NaN;
 
   /** Shell-side pressure drop [bar]. */
-  private double shellPressureDrop;
+  private double shellPressureDrop = Double.NaN;
 
   /** Tube-side pressure drop [bar]. */
-  private double tubePressureDrop;
+  private double tubePressureDrop = Double.NaN;
 
   /** Shell-side fouling resistance [m²K/W]. */
-  private double shellFoulingResistance;
+  private double shellFoulingResistance = Double.NaN;
 
   /** Tube-side fouling resistance [m²K/W]. */
-  private double tubeFoulingResistance;
+  private double tubeFoulingResistance = Double.NaN;
 
   /** Bundle weight [kg]. */
-  private double bundleWeight;
+  private double bundleWeight = Double.NaN;
 
   /** Channel weight [kg]. */
-  private double channelWeight;
+  private double channelWeight = Double.NaN;
 
   // ============================================================================
   // Process Design Parameters (added for TR3500 compliance)
   // ============================================================================
 
   /** Shell-side fouling resistance (design value) [m²K/W]. */
-  private double designShellFoulingResistance;
+  private double designShellFoulingResistance = Double.NaN;
 
   /** Tube-side fouling resistance (design value) [m²K/W]. */
-  private double designTubeFoulingResistance;
+  private double designTubeFoulingResistance = Double.NaN;
 
   /** TEMA equipment class (R, C, or B). */
   private String temaClass;
 
   /** Maximum tube velocity [m/s]. */
-  private double maxTubeVelocity;
+  private double maxTubeVelocity = Double.NaN;
 
   /** Maximum shell velocity [m/s]. */
-  private double maxShellVelocity;
+  private double maxShellVelocity = Double.NaN;
 
   /** Minimum approach temperature [°C]. */
-  private double minApproachTemperature;
+  private double minApproachTemperature = Double.NaN;
 
   /** Maximum tube length [m]. */
-  private double maxTubeLength;
+  private double maxTubeLength = Double.NaN;
 
   /** Vibration analysis required flag. */
   private boolean vibrationAnalysisRequired;
 
   /** Clean overall heat transfer coefficient [W/m²K]. */
-  private double cleanOverallHeatTransferCoeff;
+  private double cleanOverallHeatTransferCoeff = Double.NaN;
 
   /** Fouled overall heat transfer coefficient [W/m²K]. */
-  private double fouledOverallHeatTransferCoeff;
+  private double fouledOverallHeatTransferCoeff = Double.NaN;
 
   // ============================================================================
   // ASME VIII and NACE Parameters
@@ -177,16 +174,16 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   private String tubeMaterialGrade;
 
   /** MAWP shell side [bara] per ASME UG-27. */
-  private double mawpShellSide;
+  private double mawpShellSide = Double.NaN;
 
   /** MAWP tube side [bara] per ASME UG-27. */
-  private double mawpTubeSide;
+  private double mawpTubeSide = Double.NaN;
 
   /** Hydro test pressure shell [bara] per ASME UG-99. */
-  private double hydroTestPressureShell;
+  private double hydroTestPressureShell = Double.NaN;
 
   /** Hydro test pressure tube [bara] per ASME UG-99. */
-  private double hydroTestPressureTube;
+  private double hydroTestPressureTube = Double.NaN;
 
   /** NACE MR0175 sour service required flag. */
   private boolean sourServiceRequired;
@@ -229,6 +226,20 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   public void populateFromHeatExchangerDesign(HeatExchangerMechanicalDesign mecDesign) {
     if (mecDesign == null) {
       return;
+    }
+
+    HeatExchangerSizingResult sizing = mecDesign.getSelectedSizingResult();
+    if (sizing != null) {
+      this.heatExchangerType = sizing.getType().name();
+      this.requiredArea = sizing.getRequiredArea();
+      this.overallHeatTransferCoeff = sizing.getOverallHeatTransferCoefficient();
+      this.lmtd = mecDesign.getLogMeanTemperatureDifference();
+      if (sizing.getType() == HeatExchangerType.SHELL_AND_TUBE) {
+        this.shellInnerDiameter = sizing.getInnerDiameter() * 1000.0;
+        this.shellWallThickness = sizing.getWallThickness() * 1000.0;
+        this.numberOfTubes = sizing.getTubeCount();
+        this.numberOfTubePasses = sizing.getTubePasses();
+      }
     }
 
     // Populate process design parameters
@@ -379,12 +390,12 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
 
   @Override
   public String getShellMaterial() {
-    return shellMaterial;
+    return super.getShellMaterial();
   }
 
   @Override
   public void setShellMaterial(String shellMaterial) {
-    this.shellMaterial = shellMaterial;
+    super.setShellMaterial(shellMaterial);
   }
 
   public String getBaffleType() {

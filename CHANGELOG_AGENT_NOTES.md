@@ -61,6 +61,41 @@ verdict explainable instead of a single number.
 nozzle-versus-quill questions.
 
 **Tests:** `ChemicalInjectionNozzlePerformanceTest`, 6 tests.
+## 2026-09-12 — Automatic recycle insertion: `makeRecycles()` and `setAutoRecycles(...)`
+
+A feedback loop wired straight back into an upstream mixer, with no `Recycle` unit in it, is an
+implicit tear: it converges only because the surrounding sweep re-evaluates it, so it has no
+tolerance, no acceleration and no convergence report of its own. Across `ProcessModel` areas it is
+worse - a stream produced by an area that runs after its consumer can only be closed by the outer
+Gauss-Seidel pass, which has no relaxation setting, so the plant residual sits on a floor that no
+tolerance setting reaches.
+
+**New `neqsim.process.processmodel.AutoRecycleBuilder`** finds those loops and closes them, exposed as:
+
+- `ProcessSystem.makeRecycles()` / `makeRecycles(double tolerance)` — strongly connected components
+  of one flowsheet.
+- `ProcessModel.makeRecycles()` / `makeRecycles(double tolerance)` — cross-area feedback streams
+  first, then every area.
+- `setAutoRecycles(boolean)` on both — do it automatically inside `run()` and therefore inside every
+  `runUntilConverged(...)` overload.
+
+The tear point is the inlet with the smallest recycle ratio (tear flow / total inlet flow of the
+consuming unit), because that ratio sets the contraction rate of a direct-substitution tear. One
+edge is torn per round and the loop structure is recomputed afterwards, so nested cycles get the
+minimum number of tears. Each generated recycle starts on direct substitution with
+`setAdaptiveAcceleration(true)` and gets an absolute flow tolerance at 1e-6 of the largest flow in
+its area.
+
+- **No migration needed.** `setAutoRecycles` defaults to **false**, so nothing changes for an
+  existing model; inserting a tear changes how a flowsheet iterates and must be opted into.
+- `makeRecycles()` seeds itself - it runs the flowsheet once when streams have no fluid yet - and is
+  idempotent, so the old "run, then insert, then run again" ordering is no longer the caller's
+  problem.
+- Only `Mixer` and `Manifold` inlets can be torn (they expose `replaceStream(int, StreamInterface)`).
+  A loop closing on any other equipment is logged and left untouched rather than mis-wired.
+- Replaces hand-written tear helpers in notebooks (a `Stream` clone + `Recycle` per cross-area
+  stream). Documented in
+  [docs/process/controllers.md#automatic-recycle-insertion](docs/process/controllers.md#automatic-recycle-insertion).
 
 ---
 

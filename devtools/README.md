@@ -163,6 +163,18 @@ all subfolders, and `neqsim --reset-document-root` removes the setting. A
 configured folder that no longer exists is reported as an error rather than
 silently ignored.
 
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, and `neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
+
 **Behind a corporate proxy?** Set it for the current session (user-scope, no
 admin) so `git`, `pip`, and agent-catalog downloads work:
 
