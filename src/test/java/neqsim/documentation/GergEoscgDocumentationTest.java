@@ -28,9 +28,9 @@ import org.junit.jupiter.api.io.TempDir;
  * Compiles and executes the published GERG-2008 and EOS-CG examples with assertions enabled.
  */
 public class GergEoscgDocumentationTest extends neqsim.NeqSimTest {
-  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^\x60\x60\x60java\\r?\\n([\\s\\S]*?)^\x60\x60\x60[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -63,11 +63,11 @@ public class GergEoscgDocumentationTest extends neqsim.NeqSimTest {
       Files.write(sourceFile, source.getBytes(StandardCharsets.UTF_8));
       sourceFiles.add(sourceFile);
     }
-    assertEquals(Arrays.asList("GergExample", "Gerg2008H2Example", "Gerg2008NH3Example", "EosCgExample"),
-        classNames, "GERG/EOS-CG example coverage changed");
+    assertEquals(Arrays.asList("GergExample", "Gerg2008H2Example", "Gerg2008NH3Example", "EosCgExample"), classNames,
+        "GERG/EOS-CG example coverage changed");
     compile(compiler, sourceFiles);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       for (String className : classNames) {
@@ -98,12 +98,10 @@ public class GergEoscgDocumentationTest extends neqsim.NeqSimTest {
     String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
     List<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
         temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
           .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjectsFromFiles(files)).call();
-      assertTrue(Boolean.TRUE.equals(successful),
-          "docs/thermo/gerg2008_eoscg.md: " + diagnostics.getDiagnostics());
+      assertTrue(Boolean.TRUE.equals(successful), "docs/thermo/gerg2008_eoscg.md: " + diagnostics.getDiagnostics());
     }
   }
 }

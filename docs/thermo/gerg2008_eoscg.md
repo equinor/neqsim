@@ -255,7 +255,14 @@ Recent updates refreshed the EOS-CG component tables with the EOS-CG-2021 gas co
 
 ### Usage in NeqSim
 
-To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class.
+To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class. This introductory example
+uses pure CO2 gas at 298.15 K and 10 bara, also covered by the repository's CO2
+density regression. Mixture flashes require separate convergence and accuracy
+validation for the intended composition and operating range.
+
+The previously shown 95 mol% CO2 / 5 mol% SO2 flash at 298.15 K and 50 bara
+fails density-root convergence in the current implementation. The reproducible
+limitation is tracked in [issue #3702](https://github.com/equinor/neqsim/issues/3702).
 
 ```java
 import org.apache.logging.log4j.LogManager;
@@ -270,9 +277,8 @@ public final class EosCgExample {
   private EosCgExample() {}
 
   public static void main(String[] args) {
-    SystemInterface fluid = new SystemEOSCGEos(298.15, 50.0); // K, bara
-    fluid.addComponent("CO2", 0.95);
-    fluid.addComponent("SO2", 0.05);
+    SystemInterface fluid = new SystemEOSCGEos(298.15, 10.0); // K, bara
+    fluid.addComponent("CO2", 1.0);
     fluid.createDatabase(true);
 
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
