@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.compressor;
 
+import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
@@ -46,6 +47,18 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
 
   /** Impeller tip speed [m/s]. */
   private double tipSpeed = Double.NaN;
+
+  /** Inlet flow coefficient Q / (D squared * U). */
+  private double flowCoefficient = Double.NaN;
+
+  /** Shaft speed used for impeller sizing [rpm]. */
+  private double impellerSizingSpeedRPM = Double.NaN;
+
+  /** Whether the preliminary coupled impeller sizing checks pass. */
+  private boolean impellerSizingFeasible;
+
+  /** Impeller sizing limit violations and stale-input diagnostics. */
+  private List<String> impellerSizingIssues;
 
   /** Maximum continuous speed [rpm]. */
   private double maxContinuousSpeed = Double.NaN;
@@ -169,6 +182,10 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
     this.impellerDiameter = mecDesign.getImpellerDiameter();
     this.shaftDiameter = mecDesign.getShaftDiameter();
     this.tipSpeed = mecDesign.getTipSpeed();
+    this.flowCoefficient = mecDesign.getFlowCoefficient();
+    this.impellerSizingSpeedRPM = mecDesign.getImpellerSizingSpeedRPM();
+    this.impellerSizingIssues = mecDesign.getImpellerSizingIssues();
+    this.impellerSizingFeasible = impellerSizingIssues.isEmpty();
     this.maxContinuousSpeed = mecDesign.getMaxContinuousSpeed();
     this.tripSpeed = mecDesign.getTripSpeed();
     this.firstCriticalSpeed = mecDesign.getFirstCriticalSpeed();
