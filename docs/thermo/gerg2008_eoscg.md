@@ -254,6 +254,12 @@ The EOS-CG-2021 publication defines a 16-component CCS model: CO₂, water, N₂
 
 Recent updates refreshed the EOS-CG component tables with the EOS-CG-2021 gas constant, MDEA pure-fluid parameters, and binary reducing parameters, improving consistency with the current CCS-mixture model.
 
+The [CO2/SO2 mixture example and numerical validation boundary](eoscg_co2_so2)
+document the initialization-order repair for issue #3702. With that repair, the
+95 mol% CO2 / 5 mol% SO2 flash at 298.15 K and 50 bara converges to gas and liquid;
+the earlier density-root limitation applies to versions without this repair.
+The linked example checks each phase's pressure and the component inventories.
+
 ### Usage in NeqSim
 
 To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class.

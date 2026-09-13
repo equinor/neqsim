@@ -60,6 +60,7 @@ thermo/
 
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
+- [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
 
 ### Acid Gas and Sour Fluid Modeling
 
