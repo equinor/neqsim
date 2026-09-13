@@ -14,11 +14,10 @@ import neqsim.thermo.characterization.SarirAtmosphericReference.PumparoundRefere
  * Source-bounded pump-around screening for a {@link SarirAtmosphericFractionationCase}.
  *
  * <p>
- * The Sarir source publishes pump-around labels, raw tray numbers, circulation rates, and draw and
- * return temperatures, but it does not state the direction used to number trays. This class
- * therefore requires explicit bottom-up NeqSim tray indices and liquid draw fractions from the
- * caller. Published rates and temperatures are retained as comparison evidence and are not used as
- * hidden calibration targets.
+ * The Sarir source publishes pump-around labels, raw tray numbers, circulation rates, and draw and return temperatures,
+ * but it does not state the direction used to number trays. This class therefore requires explicit bottom-up NeqSim
+ * tray indices and liquid draw fractions from the caller. Published rates and temperatures are retained as comparison
+ * evidence and are not used as hidden calibration targets.
  * </p>
  */
 public final class SarirAtmosphericPumparoundScreen {
@@ -28,8 +27,7 @@ public final class SarirAtmosphericPumparoundScreen {
   private final SarirAtmosphericFractionationCase fractionationCase;
   private final Mapping[] mappings;
 
-  private SarirAtmosphericPumparoundScreen(SarirAtmosphericFractionationCase fractionationCase,
-      Mapping[] mappings) {
+  private SarirAtmosphericPumparoundScreen(SarirAtmosphericFractionationCase fractionationCase, Mapping[] mappings) {
     this.fractionationCase = fractionationCase;
     this.mappings = mappings.clone();
   }
@@ -46,9 +44,8 @@ public final class SarirAtmosphericPumparoundScreen {
    * @throws IllegalArgumentException if a mapping set is empty, duplicated, or invalid
    * @throws IllegalStateException if the column was already solved or already has a pump-around
    */
-  public static SarirAtmosphericPumparoundScreen configure(
-      SarirAtmosphericFractionationCase fractionationCase, int maxIterations,
-      double relativeTolerance, Mapping... mappings) {
+  public static SarirAtmosphericPumparoundScreen configure(SarirAtmosphericFractionationCase fractionationCase,
+      int maxIterations, double relativeTolerance, Mapping... mappings) {
     Objects.requireNonNull(fractionationCase, "fractionationCase");
     Objects.requireNonNull(mappings, "mappings");
     if (mappings.length == 0 || mappings.length > SarirAtmosphericReference.getPumparounds().length) {
@@ -86,9 +83,8 @@ public final class SarirAtmosphericPumparoundScreen {
 
     for (Mapping mapping : copiedMappings) {
       PumparoundReference reference = mapping.getReference();
-      column.addLiquidPumparound(reference.getName(), mapping.getDrawTrayNumber(),
-          mapping.getReturnTrayNumber(), mapping.getDrawFraction(),
-          reference.getTemperatureDropKelvin());
+      column.addLiquidPumparound(reference.getName(), mapping.getDrawTrayNumber(), mapping.getReturnTrayNumber(),
+          mapping.getDrawFraction(), reference.getTemperatureDropKelvin());
     }
     column.setMaxPumparoundIterations(maxIterations);
     column.setPumparoundTolerance(relativeTolerance);
@@ -110,12 +106,10 @@ public final class SarirAtmosphericPumparoundScreen {
    * Evaluate a previously solved screen.
    *
    * @return immutable engineering result
-   * @throws IllegalStateException if product qualification, outer-tear convergence, or internal
-   * pump-around state fails
+   * @throws IllegalStateException if product qualification, outer-tear convergence, or internal pump-around state fails
    */
   public Result evaluate() {
-    SarirAtmosphericFractionationResult productResult =
-        SarirAtmosphericFractionationResult.evaluate(fractionationCase);
+    SarirAtmosphericFractionationResult productResult = SarirAtmosphericFractionationResult.evaluate(fractionationCase);
     DistillationColumn column = fractionationCase.getColumn();
     if (!column.isLastColumnTearConverged()) {
       throw new IllegalStateException("Sarir pump-around outer tear must converge before evaluation");
@@ -131,8 +125,8 @@ public final class SarirAtmosphericPumparoundScreen {
       ColumnPumparound pumparound = findByName(configured, mapping.getReferenceName());
       rows[i] = evaluateCircuit(mapping, pumparound);
     }
-    return new Result(productResult, rows, column.getLastPumparoundRelativeChange(),
-        column.getLastColumnTearResidual(), column.getLastColumnTearIterationCount());
+    return new Result(productResult, rows, column.getLastPumparoundRelativeChange(), column.getLastColumnTearResidual(),
+        column.getLastColumnTearIterationCount());
   }
 
   /** @return underlying qualified Sarir atmospheric-fractionation case */
@@ -154,8 +148,7 @@ public final class SarirAtmosphericPumparoundScreen {
     throw new IllegalStateException("Configured Sarir pump-around is missing: " + name);
   }
 
-  private static PumparoundResult evaluateCircuit(Mapping mapping,
-      ColumnPumparound pumparound) {
+  private static PumparoundResult evaluateCircuit(Mapping mapping, ColumnPumparound pumparound) {
     StreamInterface draw = pumparound.getDrawStream();
     StreamInterface returned = pumparound.getReturnStream();
     if (draw == null || returned == null) {
@@ -177,8 +170,7 @@ public final class SarirAtmosphericPumparoundScreen {
     PumparoundReference reference = mapping.getReference();
     double modeledDrop = drawTemperatureCelsius - returnTemperatureCelsius;
     if (!Double.isFinite(modeledDrop)
-        || Math.abs(modeledDrop - reference.getTemperatureDropKelvin())
-            > TEMPERATURE_DROP_TOLERANCE_K) {
+        || Math.abs(modeledDrop - reference.getTemperatureDropKelvin()) > TEMPERATURE_DROP_TOLERANCE_K) {
       throw new IllegalStateException("Modeled pump-around temperature drop changed from its source boundary");
     }
     double dutyW = pumparound.getDuty();
@@ -186,10 +178,9 @@ public final class SarirAtmosphericPumparoundScreen {
       throw new IllegalStateException("A cooled pump-around must report a finite negative duty");
     }
 
-    return new PumparoundResult(mapping, reference.getSourceDrawTrayNumber(),
-        reference.getSourceReturnTrayNumber(), reference.getMassFlowRateKgPerHour(), drawFlow,
-        returnFlow, flowClosure, reference.getDrawTemperatureCelsius(), drawTemperatureCelsius,
-        reference.getReturnTemperatureCelsius(), returnTemperatureCelsius, dutyW);
+    return new PumparoundResult(mapping, reference.getSourceDrawTrayNumber(), reference.getSourceReturnTrayNumber(),
+        reference.getMassFlowRateKgPerHour(), drawFlow, returnFlow, flowClosure, reference.getDrawTemperatureCelsius(),
+        drawTemperatureCelsius, reference.getReturnTemperatureCelsius(), returnTemperatureCelsius, dutyW);
   }
 
   private static void requireFinitePositive(double value, String label) {
@@ -219,12 +210,10 @@ public final class SarirAtmosphericPumparoundScreen {
      * @param returnTrayNumber bottom-up NeqSim return-tray index
      * @param drawFraction fraction of draw-tray liquid traffic circulated, in (0, 1)
      */
-    public Mapping(String referenceName, int drawTrayNumber, int returnTrayNumber,
-        double drawFraction) {
+    public Mapping(String referenceName, int drawTrayNumber, int returnTrayNumber, double drawFraction) {
       PumparoundReference reference = SarirAtmosphericReference.getPumparound(referenceName);
       if (drawTrayNumber < 0 || drawTrayNumber >= SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT
-          || returnTrayNumber < 0
-          || returnTrayNumber >= SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT) {
+          || returnTrayNumber < 0 || returnTrayNumber >= SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT) {
         throw new IllegalArgumentException("Mapped tray indices must be valid bottom-up NeqSim indices");
       }
       if (drawTrayNumber == returnTrayNumber) {
@@ -233,8 +222,7 @@ public final class SarirAtmosphericPumparoundScreen {
       if (!Double.isFinite(drawFraction) || !(drawFraction > 0.0) || !(drawFraction < 1.0)) {
         throw new IllegalArgumentException("Pump-around draw fraction must be finite and in (0, 1)");
       }
-      if (!Double.isFinite(reference.getTemperatureDropKelvin())
-          || !(reference.getTemperatureDropKelvin() > 0.0)) {
+      if (!Double.isFinite(reference.getTemperatureDropKelvin()) || !(reference.getTemperatureDropKelvin() > 0.0)) {
         throw new IllegalStateException("Published Sarir pump-around must define positive cooling");
       }
       this.referenceName = reference.getName();
@@ -283,9 +271,8 @@ public final class SarirAtmosphericPumparoundScreen {
     private final double modeledReturnTemperatureCelsius;
     private final double dutyW;
 
-    private PumparoundResult(Mapping mapping, int sourceDrawTrayNumber,
-        int sourceReturnTrayNumber, double sourceMassFlowKgPerHour,
-        double modeledDrawMassFlowKgPerHour, double modeledReturnMassFlowKgPerHour,
+    private PumparoundResult(Mapping mapping, int sourceDrawTrayNumber, int sourceReturnTrayNumber,
+        double sourceMassFlowKgPerHour, double modeledDrawMassFlowKgPerHour, double modeledReturnMassFlowKgPerHour,
         double internalFlowClosureRelativeError, double sourceDrawTemperatureCelsius,
         double modeledDrawTemperatureCelsius, double sourceReturnTemperatureCelsius,
         double modeledReturnTemperatureCelsius, double dutyW) {
@@ -365,8 +352,7 @@ public final class SarirAtmosphericPumparoundScreen {
 
     /** @return absolute modeled/source circulation-rate error in percent */
     public double getAbsoluteRelativeFlowErrorPercentAgainstSource() {
-      return 100.0 * Math.abs(modeledReturnMassFlowKgPerHour - sourceMassFlowKgPerHour)
-          / sourceMassFlowKgPerHour;
+      return 100.0 * Math.abs(modeledReturnMassFlowKgPerHour - sourceMassFlowKgPerHour) / sourceMassFlowKgPerHour;
     }
 
     /** @return absolute modeled/source draw-temperature difference in kelvin */
@@ -388,9 +374,8 @@ public final class SarirAtmosphericPumparoundScreen {
     private final double lastColumnTearResidual;
     private final int lastColumnTearIterationCount;
 
-    private Result(SarirAtmosphericFractionationResult productResult,
-        PumparoundResult[] pumparounds, double lastPumparoundRelativeChange,
-        double lastColumnTearResidual, int lastColumnTearIterationCount) {
+    private Result(SarirAtmosphericFractionationResult productResult, PumparoundResult[] pumparounds,
+        double lastPumparoundRelativeChange, double lastColumnTearResidual, int lastColumnTearIterationCount) {
       this.productResult = productResult;
       this.pumparounds = pumparounds.clone();
       this.lastPumparoundRelativeChange = lastPumparoundRelativeChange;
