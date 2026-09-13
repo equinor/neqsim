@@ -2008,7 +2008,7 @@ The pressure/volume tolerances, iteration budgets, bubble-domain guard and exper
 acceptance criteria remain unchanged. This repair does not alter the unsplit preparation operator
 or turn its separate failing qualification cases into accepted trajectories.
 
-The complete-transaction, unsplit-execution, film-eligibility and Jacobian update passes
+The complete-transaction, unsplit-execution, film-eligibility and Jacobian update at `1f65f683` passed
 **422 focused tests across 62 classes**: 418 fast tests and four separately selected slow
 component/phase/thermal/reference tests. This includes the existing seeded SRK-CPA four-way
 coupling with and without complete-pipe transactions and the 30/60-cell steady three-phase

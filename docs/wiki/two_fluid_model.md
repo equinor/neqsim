@@ -22,7 +22,7 @@ general experimental accuracy for multiphase transients.
 |---|---|---|
 | Existing defaults | Selected steady-state, stratified-transient and phase-consistency regressions pass | No blanket severe-slugging or long-run inventory qualification |
 | Shared slug force balance with interfacial pressure and coupled pressure/momentum enabled | 1800 s inventory drift: 1.323207% at 40 cells and 1.357668% at 80 cells | Meets the unchanged 2% target for these fixtures; requires explicit opt-in |
-| Conservative Lagrangian tracking with implicit slug/film friction | Earlier 600 s characterization missed amplitude, cycle and pressure-limiter gates; current legacy riser regression fails after the bubble-domain correction | Experimental; disabled by default |
+| Conservative Lagrangian tracking with implicit slug/film friction | Centered coupled pressure traction restores five-second progress; earlier 600 s characterization missed amplitude, cycle and pressure-limiter gates | Experimental; disabled by default |
 
 The under-2% result requires all three settings before initialization:
 `setSharedSlugForceBalanceEnabled(true)`,
@@ -999,7 +999,7 @@ The preceding component/domain/terrain update at `477964b5` passed 365 affected 
 including three slow component/phase/thermal/reference tests and maintained three-phase steady
 refinement. Nine explicit five-second qualification failures remain separate from passing regressions.
 
-The current transaction/execution/Jacobian update passes 422 focused tests across 62 classes,
+The transaction/execution/Jacobian update at `1f65f683` passed 422 focused tests across 62 classes,
 including four slow component/phase/thermal/reference tests. Fifteen riser and one coarse-gas
 five-second cases fail separately. The later coupled-predictor repair restores all five
 coupled-pressure progress regressions: coupled Euler, RK2, RK4, SSP-RK3 and IMEX now consistently

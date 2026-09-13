@@ -22,8 +22,8 @@ model converged or represents the requested physics.
 
 ## Current evidence matrix
 
-The current update passes 422 focused tests in 62 classes, including four separately selected
-slow coupled/reference tests. Fifteen riser and one coarse-gas five-second gates fail separately;
+The transaction/execution update at `1f65f683` passed 422 focused tests in 62 classes, including four
+separately selected slow coupled/reference tests. Fifteen riser and one coarse-gas five-second gates fail separately;
 the subsequent coupled-predictor repair restores all five coupled-pressure progress regressions
 without rejected substeps. These counts distinguish the verified runtime contracts below from
 the incomplete flow qualification.
@@ -35,7 +35,7 @@ the incomplete flow qualification.
 | Liquid-rich unchanged-boundary transient with shared slug force balance, interfacial pressure, and coupled pressure/momentum | Opt-in | Yes | Not applicable | Over 1,800 s, inventory drift is 1.323% at 40 cells and 1.358% at 80 cells, below the declared 2% fixture gate, with total-mass closure. This does not qualify slug loads or another operating envelope. |
 | Default liquid-rich unchanged-boundary transient | Yes | No | No | The recorded 1,800 s inventory drift is 5.757%, above the unchanged 5% gate. Do not infer default-mode qualification from the opt-in shared-force result. |
 | Mohmmed et al. public horizontal air/water slug kinematics | Harness and data implemented | Conservation only | **Failed** | At 40 cells and 0.05 s outer steps, 3/9 comparisons pass, MARE is 1.0402, and maximum absolute relative error is 3.2147. The 40/80-cell and 0.05/0.025 s sweep is non-monotone; steady starts are unconverged and pressure-floor limited and transients clamp outlet backflow. The fixed 20% speed and 30% length/frequency gates remain unchanged. |
-| Conservative severe-slugging characterization against the public Tengesdal envelope | Opt-in | Historical characterization; current regression fails | **Failed** | The earlier 600 s run gave 65.163 kPa, below the 68.6 kPa lower gate, without required repeated settled cycles. After the valid bubble-domain correction, current legacy coupled-riser progress/benchmark tests fail numerically; that previous completion is not current qualification. |
+| Conservative severe-slugging characterization against the public Tengesdal envelope | Opt-in | Five-second coupled progress restored | **Failed** | The earlier 600 s run gave 65.163 kPa, below the 68.6 kPa lower gate, without required repeated settled cycles. Centered pressure traction restores the five-second shared-closure and subcell-force regressions while retaining the valid bubble-domain guard. Short numerical progress does not qualify the experimental amplitude, period or sustained-cycle gates. |
 | Flash-driven phase appearance/disappearance with phase and energy ledgers | Yes | Yes | No | Check gas/oil/water and total mass, transfer closure, temperature sensitivity, and latent-inclusive energy balance. Record EOS, mixing rule, composition, pressure, temperature, relaxation time, mesh, and time step. |
 | Named-component advection for supported positive-flow boundaries | Yes | Yes | No | Require every named-component ledger, bounded normalized phase fractions, phase/component synchronization, and component-sum closure. |
 | Component-resolved downstream outlet and rejected component-substep isolation | Yes | Yes | No | The published component flows equal accepted outlet transfers divided by interval duration, including after TP reflashing. Unequal gas/oil/water transport, delayed composition fronts, reordered names, zero flow and failure isolation are tested. General unsplit component advection remains open. |
