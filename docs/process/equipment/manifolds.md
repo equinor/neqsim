@@ -1,325 +1,159 @@
 ---
 title: Manifolds
-description: Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.
+description: Build and validate production gathering and distribution manifolds with current NeqSim APIs.
 ---
 
-Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.
+# Manifolds
 
-## Table of Contents
-- [Overview](#overview)
-- [Manifold Class](#manifold-class)
-- [Usage Examples](#usage-examples)
-- [Integration Patterns](#integration-patterns)
-- [Related Documentation](#related-documentation)
+`neqsim.process.equipment.manifold.Manifold` combines an internal mixer with an internal splitter. Use it when several inlet streams must be gathered and the mixed stream must then be divided between parallel trains or export routes.
 
----
+The public model boundary is the manifold itself. Add inlet streams with `addStream(StreamInterface)`, define the outlets with `setSplitFactors(double[])`, run the unit, and read the mixed or split streams. The number of outlets is the length of the split-factor array; there is no separate split-count setter.
 
-## Overview
+## Complete production-manifold example
 
-**Location:** `neqsim.process.equipment.manifold`
-
-A manifold is a process equipment that combines the functionality of a mixer and a splitter. It can:
-- Receive multiple input streams
-- Combine them into a single mixed stream
-- Split the combined stream into multiple output streams
-
-This is particularly useful for:
-- Production manifolds (gathering from multiple wells)
-- Distribution headers
-- Subsea collection systems
-- Pipeline routing hubs
-
-| Class | Description |
-|-------|-------------|
-| `Manifold` | Combined mixer/splitter unit |
-
----
-
-## Manifold Class
-
-The `Manifold` class extends `ProcessEquipmentBaseClass` and contains both a `Mixer` and a `Splitter` internally.
-
-### Class Hierarchy
-
-```
-ProcessEquipmentBaseClass
-└── Manifold
-    ├── contains: Mixer
-    └── contains: Splitter
-```
-
-### Key Features
-
-- Multiple input streams (via internal Mixer)
-- Multiple output streams (via internal Splitter)
-- Automatic mixing before splitting
-- Configurable split ratios
-- Mass and energy conservation
-
-### Constructor
+This Java 8 program is compiled and executed from the Markdown source during the repository test suite. Assertions check standard-volume and mass conservation, outlet composition, current geometry methods, capacity-screen availability, and auto-sizing state.
 
 ```java
-import neqsim.process.equipment.manifold.Manifold;
-
-// Basic constructor
-Manifold manifold = new Manifold("PM-101");
-```
-
-### Methods
-
-| Method | Description |
-|--------|-------------|
-| `addStream(Stream)` | Add an input stream to the manifold |
-| `getSplitStream(int index)` | Get a specific output stream by index |
-| `setSplitNumber(int n)` | Set number of output streams |
-| `setSplitFactors(double[])` | Set split ratios for outputs |
-| `getMixer()` | Access the internal mixer |
-| `getSplitter()` | Access the internal splitter |
-| `setInnerHeaderDiameter(double)` | Set header pipe diameter (m) |
-| `setInnerBranchDiameter(double)` | Set branch pipe diameter (m) |
-| `calculateHeaderLOF()` | Calculate header Likelihood of Failure |
-| `calculateBranchLOF()` | Calculate branch Likelihood of Failure |
-| `calculateHeaderFRMS()` | Calculate header RMS force (N/m) |
-| `getCapacityConstraints()` | Get all capacity constraints |
-| `autoSize(double)` | Auto-size header and branch diameters |
-| `run()` | Execute mixing then splitting |
-
----
-
-## Usage Examples
-
-### Basic Manifold Operation
-
-```java
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-// Create input streams (e.g., from multiple wells)
-SystemInterface well1Fluid = new SystemSrkEos(350.0, 100.0);
-well1Fluid.addComponent("methane", 0.85);
-well1Fluid.addComponent("ethane", 0.10);
-well1Fluid.addComponent("propane", 0.05);
-well1Fluid.setMixingRule("classic");
+public class ProductionManifoldExample {
+  private static final Logger logger = LogManager.getLogger(ProductionManifoldExample.class);
 
-Stream well1Stream = new Stream("Well-1", well1Fluid);
-well1Stream.setFlowRate(50000, "Sm3/day");
+  public static void main(String[] args) {
+    SystemInterface wellAFluid = new SystemSrkEos(323.15, 80.0);
+    wellAFluid.addComponent("methane", 90.0);
+    wellAFluid.addComponent("ethane", 8.0);
+    wellAFluid.addComponent("propane", 2.0);
+    wellAFluid.setMixingRule("classic");
 
-SystemInterface well2Fluid = new SystemSrkEos(340.0, 95.0);
-well2Fluid.addComponent("methane", 0.82);
-well2Fluid.addComponent("ethane", 0.12);
-well2Fluid.addComponent("propane", 0.06);
-well2Fluid.setMixingRule("classic");
+    SystemInterface wellBFluid = wellAFluid.clone();
+    wellBFluid.setMolarComposition(new double[] {0.80, 0.15, 0.05});
+    wellBFluid.setTemperature(313.15);
+    wellBFluid.setPressure(78.0);
 
-Stream well2Stream = new Stream("Well-2", well2Fluid);
-well2Stream.setFlowRate(75000, "Sm3/day");
+    Stream wellA = new Stream("Well A", wellAFluid);
+    wellA.setFlowRate(3.0, "MSm3/day");
+    wellA.run();
 
-// Run inlet streams
-well1Stream.run();
-well2Stream.run();
+    Stream wellB = new Stream("Well B", wellBFluid);
+    wellB.setFlowRate(2.0, "MSm3/day");
+    wellB.run();
 
-// Create manifold
-Manifold productionManifold = new Manifold("PM-101");
-productionManifold.addStream(well1Stream);
-productionManifold.addStream(well2Stream);
+    Manifold manifold = new Manifold("PM-101");
+    manifold.addStream(wellA);
+    manifold.addStream(wellB);
+    manifold.setSplitFactors(new double[] {0.60, 0.40});
+    manifold.setHeaderInnerDiameter(304.8, "mm");
+    manifold.setBranchInnerDiameter(202.7, "mm");
+    manifold.run();
 
-// Configure splitting (2 outlet lines)
-productionManifold.setSplitNumber(2);
-productionManifold.setSplitFactors(new double[] {0.6, 0.4});
+    StreamInterface mixed = manifold.getMixedStream();
+    StreamInterface trainA = manifold.getSplitStream(0);
+    StreamInterface trainB = manifold.getSplitStream(1);
+    assert mixed != null;
+    assert trainA != null;
+    assert trainB != null;
 
-// Run manifold
-productionManifold.run();
+    double inletStandardFlow = wellA.getFlowRate("MSm3/day") + wellB.getFlowRate("MSm3/day");
+    double outletStandardFlow =
+        trainA.getFlowRate("MSm3/day") + trainB.getFlowRate("MSm3/day");
+    assert Math.abs(mixed.getFlowRate("MSm3/day") - inletStandardFlow) < 1.0e-6;
+    assert Math.abs(outletStandardFlow - inletStandardFlow) < 1.0e-6;
+    assert Math.abs(trainA.getFlowRate("MSm3/day") - 3.0) < 1.0e-6;
+    assert Math.abs(trainB.getFlowRate("MSm3/day") - 2.0) < 1.0e-6;
 
-// Access output streams
-Stream toSeparator1 = (Stream) productionManifold.getSplitStream(0);
-Stream toSeparator2 = (Stream) productionManifold.getSplitStream(1);
+    double trainAMethane = trainA.getFluid().getComponent(0).getx();
+    double trainBMethane = trainB.getFluid().getComponent(0).getx();
+    assert Math.abs(trainAMethane - trainBMethane) < 1.0e-12;
 
-System.out.println("Total inlet: " + (50000 + 75000) + " Sm3/day");
-System.out.println("Outlet 1: " + toSeparator1.getFlowRate("Sm3/day") + " Sm3/day");
-System.out.println("Outlet 2: " + toSeparator2.getFlowRate("Sm3/day") + " Sm3/day");
-```
+    double inletMassFlow = wellA.getFlowRate("kg/hr") + wellB.getFlowRate("kg/hr");
+    assert Math.abs(manifold.getMassBalance("kg/hr")) < Math.max(1.0e-6, inletMassFlow * 1.0e-10);
+    assert manifold.getHeaderVelocity() > 0.0;
+    assert manifold.getBranchVelocity() > 0.0;
 
-### Production Manifold System
+    Map<String, CapacityConstraint> constraints = manifold.getCapacityConstraints();
+    assert constraints.containsKey("headerVelocity");
+    assert constraints.containsKey("branchVelocity");
+    assert constraints.containsKey("headerLOF");
+    assert constraints.containsKey("headerFRMS");
 
-```java
-import neqsim.process.processmodel.ProcessSystem;
+    manifold.autoSize(1.20);
+    assert manifold.isAutoSized();
+    assert manifold.getHeaderInnerDiameter() > 0.0;
+    assert manifold.getBranchInnerDiameter() > 0.0;
 
-ProcessSystem facility = new ProcessSystem("Offshore Platform");
-
-// Wells
-Stream well1 = createWellStream("Well-1", 50000);
-Stream well2 = createWellStream("Well-2", 45000);
-Stream well3 = createWellStream("Well-3", 60000);
-facility.add(well1);
-facility.add(well2);
-facility.add(well3);
-
-// Production manifold
-Manifold manifold = new Manifold("Production Manifold");
-manifold.addStream(well1);
-manifold.addStream(well2);
-manifold.addStream(well3);
-manifold.setSplitNumber(2);  // Two production trains
-manifold.setSplitFactors(new double[] {0.5, 0.5});
-facility.add(manifold);
-
-// Train separators
-Separator separator1 = new Separator("V-101");
-separator1.setInletStream(manifold.getSplitStream(0));
-facility.add(separator1);
-
-Separator separator2 = new Separator("V-201");
-separator2.setInletStream(manifold.getSplitStream(1));
-facility.add(separator2);
-
-// Run facility
-facility.run();
-```
-
-### Accessing Internal Components
-
-```java
-Manifold manifold = new Manifold("PM-101");
-manifold.addStream(stream1);
-manifold.addStream(stream2);
-
-// Access internal mixer for mixed stream properties
-Mixer mixer = manifold.getMixer();
-mixer.run();
-Stream mixedStream = mixer.getOutletStream();
-System.out.println("Mixed temperature: " + mixedStream.getTemperature("C") + " °C");
-System.out.println("Mixed pressure: " + mixedStream.getPressure("bara") + " bara");
-
-// Access internal splitter
-Splitter splitter = manifold.getSplitter();
-```
-
----
-
-## Integration Patterns
-
-### Well Gathering System
-
-```
-Well-1 ──┐
-         │
-Well-2 ──┼──► [Manifold] ──┬──► Train A
-         │                 │
-Well-3 ──┘                 └──► Train B
-```
-
-### Load Balancing
-
-```java
-// Distribute load evenly across processing trains
-int numTrains = 3;
-double[] splitFactors = new double[numTrains];
-for (int i = 0; i < numTrains; i++) {
-    splitFactors[i] = 1.0 / numTrains;
+    logger.info(
+        "Mixed flow {} MSm3/day; Train A {} MSm3/day; Train B {} MSm3/day; header ID {} mm; branch ID {} mm",
+        mixed.getFlowRate("MSm3/day"),
+        trainA.getFlowRate("MSm3/day"),
+        trainB.getFlowRate("MSm3/day"),
+        manifold.getHeaderInnerDiameter() * 1000.0,
+        manifold.getBranchInnerDiameter() * 1000.0);
+  }
 }
-manifold.setSplitFactors(splitFactors);
 ```
 
-### Dynamic Rerouting
+The example deliberately runs the inlet streams before the manifold. In a flowsheet, add the inlet streams and manifold to a `ProcessSystem` in dependency order and let `ProcessSystem.run()` perform the same sequencing.
 
-```java
-// Redirect all flow to Train A (e.g., Train B offline)
-manifold.setSplitFactors(new double[] {1.0, 0.0});
-manifold.run();
-```
+## Public API and behavior
 
----
+| Task | Current API | Behavior |
+| --- | --- | --- |
+| Add a feed | `addStream(StreamInterface)` | Adds the stream to the internal mixer and refreshes the splitter connection. |
+| Replace a feed | `replaceStream(int, StreamInterface)` | Replaces a zero-based mixer inlet, useful for controlled topology changes. |
+| Configure outlets | `setSplitFactors(double[])` | Defines both the outlet count and split factors. |
+| Inspect split factors | `getSplitFactors()` | Returns the configured factor array. |
+| Read mixed flow | `getMixedStream()` | Returns the internal mixer outlet. |
+| Read one outlet | `getSplitStream(int)` | Returns the selected split stream, or `null` for an invalid index. |
+| Read all boundaries | `getInletStreams()`, `getOutletStreams()` | Exposes the manifold boundary without direct access to internal units. |
+| Check balance | `getMassBalance(String)` | Returns outlet minus inlet flow in the requested unit. |
+| Run | `run()` or `run(UUID)` | Runs the mixer, reconnects the splitter, and runs the split operation. |
 
-## Flow-Induced Vibration (FIV) Analysis
+Do not configure or run the internal mixer and splitter separately. Their implementation is encapsulated; use `getMixedStream()`, `getSplitStream(int)`, and the inlet/outlet list methods.
 
-The `Manifold` class provides FIV analysis for both header and branch piping, implementing `CapacityConstrainedEquipment`.
+## Geometry, FIV, and capacity screening
 
-### FIV Methods
+Set process geometry with `setHeaderInnerDiameter(double[, String])`, `setHeaderWallThickness(double[, String])`, `setBranchInnerDiameter(double[, String])`, and `setBranchWallThickness(double[, String])`. Geometry without a unit string is in metres; supported unit strings for these overloads are `m`, `mm`, `in`, and `inch`.
 
-```java
-Manifold manifold = new Manifold("Production Manifold", inlet1, inlet2);
-manifold.setInnerHeaderDiameter(0.3);  // 12 inch header
-manifold.setInnerBranchDiameter(0.15); // 6 inch branches
-manifold.setMaxDesignVelocity(15.0);   // m/s
-manifold.run();
+After a successful run:
 
-// Header FIV analysis
-double headerLOF = manifold.calculateHeaderLOF();
-double headerFRMS = manifold.calculateHeaderFRMS();
+- `getHeaderVelocity()` and `getBranchVelocity()` report mixture velocities in m/s.
+- `calculateHeaderLOF()` and `calculateBranchLOF()` expose likelihood-of-failure screening values.
+- `calculateHeaderFRMS()` and `calculateBranchFRMS()` expose vibration-intensity screening values.
+- `getCapacityConstraints()` returns named header/branch velocity, LOF, and FRMS constraints.
+- `getBottleneckConstraint()`, `getMaxUtilization()`, and `isCapacityExceeded()` summarize enabled constraints.
 
-// Branch FIV analysis
-double branchLOF = manifold.calculateBranchLOF();
+Use `setMaxHeaderVelocityDesign(double)`, `setMaxBranchVelocityDesign(double)`, `setMaxLOFDesign(double)`, and `setMaxFRMSDesign(double)` only when the project has approved design limits. The defaults and embedded correlations are screening assumptions, not a substitute for piping stress, support, fatigue, slug-load, or vendor review.
 
-// Velocities
-double headerVelocity = manifold.getHeaderVelocity();
-double branchVelocity = manifold.getAverageBranchVelocity();
-```
+The FIV and capacity outputs are screening outputs and are not a vibration qualification or proof of compliance with API RP 14E, ASME B31.3, DNV-ST-F101, or a company standard. Confirm units, geometry, phase behavior, load cases, correlation applicability, acceptance criteria, and accountable engineering approval independently.
 
-### Capacity Constraints
+## Auto-sizing boundary
 
-The manifold provides these constraints:
+`autoSize(double safetyFactor)` selects approximate standard inner diameters from the current simulated volume flow and updates the manifold's screening constraints. Call it only after all feeds and split factors are configured. Treat the selected diameters as an initial screening result; they do not establish pressure containment, schedule availability, erosion allowance, branch reinforcement, fatigue life, or constructability.
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `headerVelocity` | DESIGN | Header velocity vs erosional limit |
-| `branchVelocity` | DESIGN | Branch velocity vs erosional limit |
-| `headerLOF` | SOFT | Header Likelihood of Failure |
-| `headerFRMS` | SOFT | Header RMS force per meter |
-| `branchLOF` | SOFT | Branch Likelihood of Failure |
+For a separate mechanical-design object, call `initMechanicalDesign()` before `getMechanicalDesign()`. The process manifold and mechanical-design calculations remain distinct validation layers.
 
-```java
-// Get all constraints
-Map<String, CapacityConstraint> constraints = manifold.getCapacityConstraints();
+## Integration guidance
 
-// Check bottleneck
-CapacityConstraint bottleneck = manifold.getBottleneckConstraint();
-System.out.println("Bottleneck: " + bottleneck.getName() + 
-                   " at " + bottleneck.getUtilizationPercent() + "%");
-```
+- Keep inlet pressures reasonably aligned. Model upstream choking or control valves explicitly when pressure matching is part of the process definition.
+- Split streams share the mixed composition; split factors route the mixed flow rather than performing component separation.
+- A zero split factor can represent a closed route for scenario screening. Re-run downstream equipment after changing factors.
+- Use `replaceStream(int, StreamInterface)` for controlled rewiring; do not mutate internal equipment references.
+- Verify both standard-volume and mass balances when comparing alternate routing cases.
 
-### AutoSizing
+## Related documentation
 
-```java
-// Auto-size header and branch diameters
-manifold.autoSize(1.2);  // 20% safety factor
-
-// Check sizing report
-System.out.println(manifold.getSizingReport());
-```
-
-For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#flow-induced-vibration-fiv-analysis).
-
----
-
-## Design Considerations
-
-### Pressure Matching
-Input streams should have similar pressures. If pressures differ significantly, use chokes or control valves upstream.
-
-### Temperature Mixing
-The manifold performs adiabatic mixing. The outlet temperature is calculated from energy balance.
-
-### Composition
-The mixed composition is the flow-weighted average of all inlet compositions.
-
----
-
-## Comparison with Mixer/Splitter
-
-| Aspect | Manifold | Mixer + Splitter |
-|--------|----------|------------------|
-| Construction | Single equipment | Two separate units |
-| Modeling | Combined unit | Sequential execution |
-| Use Case | Production headers | General mixing/splitting |
-| Intermediate Access | Via getMixer()/getSplitter() | Direct access |
-
----
-
-## Related Documentation
-
-- [Mixers and Splitters](mixers_splitters) - Stream mixing and splitting
-- [Streams](streams) - Process streams
-- [Subsea Systems](subsea_systems) - Subsea manifold applications
-- [Manifold Mechanical Design](manifold_design) - Detailed manifold mechanical design
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Capacity limits and FIV analysis
-- [Pipelines](pipelines) - Pipeline equipment with FIV support
+- [Mixers and splitters](mixers_splitters)
+- [Streams](streams)
+- [Subsea systems](subsea_systems)
+- [Manifold mechanical design](manifold_design)
+- [Capacity constraint framework](../CAPACITY_CONSTRAINT_FRAMEWORK)
+- [Process-system run status](../processmodel/run_status)
