@@ -3,7 +3,6 @@ title: "EOS-CG CO2/SO2 mixture example"
 description: "Executable CO2/SO2 TP-flash example with pressure closure, phase compositions, material balance, and a bounded numerical validation range."
 ---
 
-# EOS-CG CO2/SO2 mixture example
 
 This example uses 95 mol% CO2 and 5 mol% SO2 at 298.15 K and 50 bara. It requires
 the initialization-order repair for [issue #3702](https://github.com/equinor/neqsim/issues/3702).
