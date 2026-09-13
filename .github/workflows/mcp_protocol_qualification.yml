@@ -48,6 +48,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Check Phase 0 documentation accounting
+        run: python neqsim-mcp-server/test_phase0_documentation.py
+
       - name: Install exact NeqSim core without tests
         run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
 
