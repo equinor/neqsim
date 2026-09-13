@@ -92,6 +92,10 @@ Runs `CompressorMechanicalDesign.calcDesign()` to compute API 617-based sizing:
 | Impeller diameter | `impellerDiameter_mm` | mm |
 | Shaft diameter | `shaftDiameter_mm` | mm |
 | Tip speed | `tipSpeed_ms` | m/s |
+| Preliminary impeller sizing passes | `impellerSizingFeasible` | boolean |
+| Impeller sizing diagnostics | `impellerSizingIssues` | list of strings |
+| Shaft speed used for impeller sizing | `impellerSizingSpeed_rpm` | rpm |
+| Inlet flow coefficient | `inletFlowCoefficient` | - |
 | Bearing span | `bearingSpan_mm` | mm |
 | Casing type | `casingType` | BARREL / HORIZONTALLY_SPLIT / VERTICALLY_SPLIT |
 | Driver power (with margin) | `driverPower_kW` | kW |
@@ -188,7 +192,7 @@ comp.run();
 
 ## Feasibility Checks
 
-The report runs eight automated feasibility checks. Each check can produce issues at three severity levels:
+The report runs nine automated feasibility checks. Each check can produce issues at three severity levels:
 
 | Severity | Meaning | Effect |
 |----------|---------|--------|
@@ -200,6 +204,7 @@ The report runs eight automated feasibility checks. Each check can produce issue
 
 | Check | Category | Blocker Condition | Warning Condition |
 |-------|----------|-------------------|-------------------|
+| Coupled impeller sizing | `IMPELLER_SIZING` | Invalid/stale inputs or infeasible head, diameter, speed, inlet flow coefficient or casing stage count | - |
 | Discharge temperature | `TEMPERATURE` | Exceeds max (API 617 limit) | Within 10% of max |
 | Pressure ratio/stage | `PRESSURE_RATIO` | Exceeds max per stage | - |
 | Impeller tip speed | `TIP_SPEED` | Exceeds 350 m/s (steel limit) | Above 315 m/s |
@@ -208,6 +213,20 @@ The report runs eight automated feasibility checks. Each check can produce issue
 | Rotor dynamics | `ROTOR_DYNAMICS` | - | Operating speed within 15% of critical |
 | Efficiency | `EFFICIENCY` | - | Above 90% or below 65% |
 | Cost reasonableness | `COST` | - | Specific cost above 5,000 or below 100 USD/kW |
+
+The impeller check preserves the specified shaft speed and required total head.
+It may add equal-head stages within the configured casing limit, but it does not
+independently clamp diameter or tip speed to make the geometry look feasible.
+`impellerSizingFeasible` only qualifies the preliminary inlet-stage sizing screen;
+see [Compressor Mechanical Design](CompressorMechanicalDesign#2-impeller-sizing)
+for its fixed work coefficient and limits. A generated map or supplier match does
+not override an `IMPELLER_SIZING` blocker.
+
+Unavailable impeller dimensions, speeds and flow coefficients for invalid sizing
+inputs are represented as `null` rather than non-finite numeric literals.
+Shaft and rotor results, driver sizing, weights and module dimensions that cannot
+be recalculated are also unavailable; an invalid sizing attempt clears previous
+results and removes the casing calculation.
 
 ## Verdicts
 
