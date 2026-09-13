@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.distillation.DistillationColumn.ColumnPumparound;
 import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.OperatingInputs;
 import neqsim.process.equipment.distillation.SarirAtmosphericPumparoundScreen.Mapping;
-import neqsim.process.equipment.distillation.SarirAtmosphericPumparoundScreen.PumparoundResult;
-import neqsim.process.equipment.distillation.SarirAtmosphericPumparoundScreen.Result;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
 
 /** Qualification tests for {@link SarirAtmosphericPumparoundScreen}. */
@@ -72,36 +70,18 @@ public class SarirAtmosphericPumparoundScreenTest {
             new Mapping("Top pump around (TPA)", 30, 32, 0.01), new Mapping("Bottom pump around (BPA)", 30, 15, 0.02)));
   }
 
-  /** Require a conservative non-fallback product solve and converged internal circuit. */
+  /** Reject a solved explicit mapping when its selected draw tray has no liquid traffic. */
   @Test
   @Timeout(value = 240, unit = TimeUnit.SECONDS)
-  public void smallExplicitPumparoundProducesQualifiedEvidence() {
+  public void zeroLiquidTrafficMappingFailsClosed() {
     SarirAtmosphericFractionationCase model = createModel();
     SarirAtmosphericPumparoundScreen screen = SarirAtmosphericPumparoundScreen.configure(model, 20, 1.0e-4,
         new Mapping("Bottom pump around (BPA)", 12, 15, 0.005));
 
-    Result result = screen.run(UUID.randomUUID());
-    assertTrue(result.getProductResult().getMassClosureRelativeError() <= 5.0e-2);
+    IllegalStateException error = assertThrows(IllegalStateException.class, () -> screen.run(UUID.randomUUID()));
+    assertTrue(error.getMessage().contains("draw flow"));
+    assertTrue(model.getColumn().solved(), model.getColumn().getConvergenceDiagnostics());
     assertTrue(model.getColumn().isLastColumnTearConverged(), model.getColumn().getConvergenceDiagnostics());
-    assertTrue(Double.isFinite(result.getLastPumparoundRelativeChange()));
-    assertTrue(Double.isFinite(result.getLastColumnTearResidual()));
-    assertTrue(result.getLastColumnTearIterationCount() > 0);
-
-    PumparoundResult[] rows = result.getPumparounds();
-    assertEquals(1, rows.length);
-    assertNotSame(rows, result.getPumparounds());
-    assertEquals(22, rows[0].getSourceDrawTrayNumber());
-    assertEquals(19, rows[0].getSourceReturnTrayNumber());
-    assertEquals(SarirAtmosphericReference.getBottomPumpAroundRateKgPerHour(), rows[0].getSourceMassFlowKgPerHour(),
-        0.0);
-    assertTrue(rows[0].getModeledDrawMassFlowKgPerHour() > 0.0);
-    assertEquals(rows[0].getModeledDrawMassFlowKgPerHour(), rows[0].getModeledReturnMassFlowKgPerHour(),
-        1.0e-8 * rows[0].getModeledDrawMassFlowKgPerHour());
-    assertTrue(rows[0].getInternalFlowClosureRelativeError() <= 1.0e-8);
-    assertTrue(rows[0].getDutyW() < 0.0);
-    assertTrue(Double.isFinite(rows[0].getAbsoluteRelativeFlowErrorPercentAgainstSource()));
-    assertTrue(Double.isFinite(rows[0].getAbsoluteDrawTemperatureErrorKelvin()));
-    assertTrue(Double.isFinite(rows[0].getAbsoluteReturnTemperatureErrorKelvin()));
   }
 
   private static SarirAtmosphericFractionationCase createModel() {
