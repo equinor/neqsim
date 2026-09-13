@@ -7,8 +7,8 @@ rerun that process, retain requested engineering units and standard envelope evi
 writes without implying numerical or plant-control authority?
 
 Merged #3478 qualifies that bounded software contract. Inventory **1.27 / 20 explicit + 26 contract-tested + 25
-confirmed gaps** atomically recorded `setSimulationVariable` as `CONTRACT_TESTED`. Current inventory **1.38 / 20
-explicit + 38 contract-tested + 13 confirmed gaps** retains that classification. The increment adds one narrow production correctness guard that
+confirmed gaps** atomically recorded `setSimulationVariable` as `CONTRACT_TESTED`. Current inventory **1.39 / 20
+explicit + 38 contract-tested + 12 confirmed gaps** retains that classification. The increment adds one narrow production correctness guard that
 aligns exact known OUTPUT writes with the already documented INPUT-only contract. There are no public schema, canonical
 process representation, thermodynamic model, deployment policy, or companion repository changes.
 

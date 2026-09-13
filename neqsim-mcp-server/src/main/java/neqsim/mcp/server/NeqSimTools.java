@@ -2096,13 +2096,16 @@ public class NeqSimTools {
    * @param comparisonJson JSON with cases array
    * @return JSON string with comparison results
    */
-  @Tool(description = "Compare two or more process configurations side by side. "
-      + "Run multiple process cases and get a comparison table of key outputs "
-      + "(temperatures, pressures, duties, compositions). "
-      + "Use getExample with category 'comparison' for templates.")
+  @Tool(description = "Compare two to 32 process configurations in deterministic request order. "
+      + "Requests are limited to 1 MiB UTF-8; optional unique names are limited to 256 characters. "
+      + "Each case is delegated to canonical ProcessRunner and partial failures remain visible with "
+      + "explicit completion counts. Comparison does not establish compatible bases, accuracy, "
+      + "convergence, facility fidelity, or engineering approval. Use getExample with category "
+      + "'comparison' for templates.")
   public String compareProcesses(
-      @ToolArg(description = "JSON with 'cases' array. Each case has 'name', 'fluid', "
-          + "and 'process' (same format as runProcess). Minimum 2 cases.") String comparisonJson) {
+      @ToolArg(description = "JSON object with a 'cases' array of 2 to 32 entries. Each case has "
+          + "'fluid' and 'process' in runProcess format and may have a unique bounded 'name'.")
+      String comparisonJson) {
     String policyBlocked = enforceToolAccess("compareProcesses");
     if (policyBlocked != null) {
       return policyBlocked;

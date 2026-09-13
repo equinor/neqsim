@@ -1,6 +1,6 @@
 # MCP simulation-state snapshot contract evidence
 
-`saveSimulationState` and `compareSimulationStates` are the existing in-memory lifecycle snapshot surfaces over the canonical solved NeqSim `ProcessSystem`. Merged PR #3500 established the bounded qualification evidence; inventory 1.28 promoted both paired tools, and current inventory 1.38 retains them as `CONTRACT_TESTED` without changing production behavior or public schemas.
+`saveSimulationState` and `compareSimulationStates` are the existing in-memory lifecycle snapshot surfaces over the canonical solved NeqSim `ProcessSystem`. Merged PR #3500 established the bounded qualification evidence; inventory 1.28 promoted both paired tools, and current inventory 1.39 retains them as `CONTRACT_TESTED` without changing production behavior or public schemas.
 
 ## Qualified software behavior
 
@@ -13,7 +13,7 @@ The focused Java regression and packaged STDIO harness exercise:
 - deterministic no-change comparison for an identical emitted snapshot;
 - explicit `version: 1.0 -> 1.1` reporting when only snapshot metadata changes;
 - fail-closed blank process input and blank first or second comparison input;
-- current inventory `1.38 / 20 explicit + 38 contract-tested + 13 confirmed gaps`, with both records retaining applicability, evidence sources and limitations.
+- current inventory `1.39 / 20 explicit + 39 contract-tested + 12 confirmed gaps`, with both records retaining applicability, evidence sources and limitations.
 
 The Java evidence is `McpRunnerContractTest`. The real packaged-MCP evidence is `neqsim-mcp-server/test_simulation_state_snapshot_protocol.py`. The read-only `MCP protocol qualification` workflow runs both before the comprehensive protocol regression. `ProcessSystemStateTest` retains the underlying canonical lifecycle-state coverage.
 
@@ -38,4 +38,4 @@ This classification is deliberately limited to serialization, structural presenc
 
 ## Phase 0 accounting boundary
 
-Inventory version `1.28` atomically moves the paired records from `CONFIRMED_GAP` to `CONTRACT_TESTED`, changing coverage from `20/26/25` to `20/28/23`. Current inventory `1.38 / 20+38+13` retains that paired classification. Coverage remains incomplete and `scientificValidationComplete=false`; the promotion records a bounded software contract and makes no scientific benchmark or facility-suitability claim.
+Inventory version `1.28` atomically moves the paired records from `CONFIRMED_GAP` to `CONTRACT_TESTED`, changing coverage from `20/26/25` to `20/28/23`. Current inventory `1.39 / 20+38+13` retains that paired classification. Coverage remains incomplete and `scientificValidationComplete=false`; the promotion records a bounded software contract and makes no scientific benchmark or facility-suitability claim.
