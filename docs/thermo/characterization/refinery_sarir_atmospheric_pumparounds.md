@@ -45,6 +45,7 @@ SarirAtmosphericPumparoundScreen.Mapping top =
 SarirAtmosphericPumparoundScreen screen =
     SarirAtmosphericPumparoundScreen.configure(fractionation, 20, 1.0e-4, top);
 
+// Only after an engineering study independently qualifies this mapping and positive liquid traffic:
 SarirAtmosphericPumparoundScreen.Result result = screen.run(UUID.randomUUID());
 SarirAtmosphericPumparoundScreen.PumparoundResult evidence =
     result.getPumparounds()[0];
@@ -54,9 +55,12 @@ double sourceFlowKgPerHour = evidence.getSourceMassFlowKgPerHour();
 double coolingDutyW = evidence.getDutyW();
 ```
 
-Indices `30` and `32` and the draw fraction `0.005` above are illustrative engineering inputs, not
-values reported by the source. A real study must document its chosen mapping and fraction. The same
-constructors and getters are callable through JPype.
+Indices `30` and `32` and the draw fraction `0.005` above are configuration syntax only, not values
+reported by the source or a qualified Sarir mapping. Because the source numbering direction is
+unresolved and liquid traffic depends on the explicit case, the repository does not publish a
+qualified source-to-NeqSim tray mapping. A real study must document and independently qualify its
+mapping and fraction. `run` fails closed if the selected draw tray has no positive liquid traffic.
+The same constructors and getters are callable through JPype.
 
 ## Acceptance contract
 
