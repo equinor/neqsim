@@ -290,6 +290,29 @@ targets manipulated through condenser or reboiler temperature.
 - Restores the intended single gas or liquid phase after composition initialization when applying
   no-side-draw products. This prevents initialization from re-expanding both phase slots with the
   same accepted component inventory.
+- Publishes the accepted adjacent-tray phase flows into the existing tray inlet streams before
+  evaluating balances. Reboiler and condenser duties are recalculated from those same material
+  streams, without another tray flash, and copied to calculated `heatDuty` energy ports. Duties
+  are in W: positive adds heat to the column and negative removes heat. A connected energy port
+  in specification mode retains its prescribed value.
+- The applied public state determines acceptance for ordinary columns as well as side-draw
+  columns. A directly accepted result reports `RIGOROUS_CONVERGED`; an unqualified result is
+  rejected and can proceed to the existing coordinated fallback. `getLastEnergyResidual()`
+  describes the published streams and duties, including fixed-temperature terminal stages.
+  MESH energy diagnostics include terminal heat duties and use the published phase outlets,
+  including side and pumparound draws, rather than a separately flashed mixed-stream phase split.
+  Non-finite flowing enthalpies or duties fail the MESH energy check.
+- `getEnergyBalanceError()` initializes cloned material-stream properties before reading their
+  enthalpies, includes any separate condenser liquid product, and preserves non-finite values.
+  Cloning keeps this public diagnostic from changing the adaptive relaxation controller's state.
+  Sequential solvers also refresh their final energy residual after product reconciliation and
+  property finalization, so the reported residual describes the published state.
+- Exact repeated runs retain stream object identities and update calculation identifiers on
+  tray inlets, outlets, and column products. Nearby feed or terminal-temperature changes refresh
+  the retained inlet and product objects when the simultaneous result is accepted. For a column
+  with both terminal stages, cold and changed warm states receive Newton correction unless the
+  full residual already meets the solver tolerance. The percent-level initializer shortcuts
+  remain limited to the reboiler-only topology for which they were introduced.
 - Package-level solver diagnostics record Jacobian base-refinement passes and the residual-vector
   mutation measured after each completed build. The mutation is expected to be bitwise zero; these
   counters support deterministic regression and do not change the public column API.
