@@ -283,9 +283,9 @@ def test_inventory_promoted(client):
     inventory = result.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("streamSimulation", {})
-    require(inventory.get("inventoryVersion") == "1.38"
-            and limitations.get("contractTestedToolCount") == 38
-            and limitations.get("confirmedGapToolCount") == 13
+    require(inventory.get("inventoryVersion") == "1.39"
+            and limitations.get("contractTestedToolCount") == 39
+            and limitations.get("confirmedGapToolCount") == 12
             and limitations.get("contractPromotionCandidateCount") == 0,
             "streaming promotion accounting drifted", inventory)
     require(record.get("coverageStatus") == "CONTRACT_TESTED",

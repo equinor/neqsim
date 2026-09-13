@@ -1569,21 +1569,25 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "ProcessComparisonInput");
-    schema.put("description", "Input for process comparison (compare_processes tool). Each case is a "
-        + "full process definition that will be run and compared.");
+    schema.put("description", "Bounded deterministic process comparison. Each case is delegated "
+        + "to canonical ProcessRunner; comparison output is not engineering validation.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
-
     Map<String, Object> cases = new LinkedHashMap<String, Object>();
     cases.put("type", "array");
-    cases.put("description",
-        "Array of process cases to compare. Each case has a name, fluid definition, " + "and process equipment array.");
+    cases.put("description", "Two to 32 process cases in deterministic request order.");
     cases.put("minItems", 2);
+    cases.put("maxItems", 32);
     Map<String, Object> caseItem = new LinkedHashMap<String, Object>();
     caseItem.put("type", "object");
     Map<String, Object> caseProps = new LinkedHashMap<String, Object>();
-    caseProps.put("name", stringProp("Case name for labelling"));
+    Map<String, Object> name = new LinkedHashMap<String, Object>();
+    name.put("type", "string");
+    name.put("description", "Optional unique case label; defaults to Case N");
+    name.put("minLength", 1);
+    name.put("maxLength", 256);
+    caseProps.put("name", name);
     Map<String, Object> fluid = new LinkedHashMap<String, Object>();
     fluid.put("type", "object");
     fluid.put("description", "Fluid definition (same as run_process fluid block)");
@@ -1593,16 +1597,14 @@ public final class SchemaCatalog {
     process.put("description", "Equipment array (same as run_process process block)");
     caseProps.put("process", process);
     caseItem.put("properties", caseProps);
+    caseItem.put("required", java.util.Arrays.asList("fluid", "process"));
     cases.put("items", caseItem);
     properties.put("cases", cases);
 
     schema.put("properties", properties);
     schema.put("required", Collections.singletonList("cases"));
-
     return GSON.toJson(schema);
   }
-
-  // ========== Session Schemas ==========
 
   /**
    * Returns the JSON Schema for session management input.
