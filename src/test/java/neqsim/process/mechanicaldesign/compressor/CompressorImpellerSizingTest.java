@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -171,6 +172,86 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
     design.calcDesign();
     assertFalse(design.isImpellerSizingFeasible());
     assertTrue(Double.isNaN(design.getImpellerDiameter()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY })
+  void invalidSizingClearsDependentResultsAndRecovers(double speed) {
+    Compressor compressor = runCompressor(18000.0);
+    CompressorMechanicalDesign design = compressor.getMechanicalDesign();
+    design.calcDesign();
+    assertQualified(compressor);
+    double diameter = design.getImpellerDiameter();
+    double weight = design.getWeightTotal();
+    double driverPower = design.getDriverPower();
+    compressor.setSpeed(speed);
+    design.calcDesign();
+    assertUnavailableMechanicalResults(design);
+    JsonObject legacy = JsonParser.parseString(design.toJson()).getAsJsonObject();
+    for (String field : new String[] { "shaftDiameter", "bearingSpan", "headPerStage", "driverPower",
+        "firstCriticalSpeed", "maxContinuousSpeed", "tripSpeed", "rotorWeight", "casingWeight", "bundleWeight",
+        "innerDiameter", "outerDiameter", "wallThickness", "tangentLength", "totalWeight", "moduleLength",
+        "moduleWidth", "moduleHeight", "casingDesign" }) {
+      assertTrue(legacy.get(field).isJsonNull(), field + " must not retain a previous sizing result");
+    }
+    JsonObject cad = JsonParser.parseString(design.toDesignDataJson()).getAsJsonObject();
+    assertEquals("incomplete", cad.get("geometryConsistency").getAsString());
+    for (String field : new String[] { "impellerDiameter", "shaftDiameter", "bearingSpan", "innerDiameter",
+        "outerDiameter", "wallThickness" }) {
+      assertTrue(cad.getAsJsonObject("geometry").getAsJsonObject(field).get("value").isJsonNull(), field);
+    }
+    compressor.setSpeed(18000.0);
+    design.calcDesign();
+    assertQualified(compressor);
+    assertEquals(diameter, design.getImpellerDiameter(), 1e-10);
+    assertEquals(weight, design.getWeightTotal(), 1e-10);
+    assertEquals(driverPower, design.getDriverPower(), 1e-10);
+  }
+
+  @Test
+  void refreshedResponseDropsThePreviousCasingCalculation() {
+    Compressor compressor = runCompressor(18000.0);
+    CompressorMechanicalDesign design = compressor.getMechanicalDesign();
+    design.calcDesign();
+    CompressorMechanicalDesignResponse response = new CompressorMechanicalDesignResponse(design);
+    assertFalse(JsonParser.parseString(response.toJson()).getAsJsonObject().get("casingDesign").isJsonNull());
+    compressor.setSpeed(0.0);
+    design.calcDesign();
+    response.populateFromCompressorDesign(design);
+    assertTrue(JsonParser.parseString(response.toJson()).getAsJsonObject().get("casingDesign").isJsonNull());
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = { false, true })
+  void missingEquipmentCannotRetainQualificationOrPreviousGeometry(boolean detached) {
+    Compressor compressor = runCompressor(18000.0);
+    CompressorMechanicalDesign design = compressor.getMechanicalDesign();
+    design.calcDesign();
+    assertQualified(compressor);
+    Compressor replacement = new Compressor("uninitialized compressor");
+    replacement.setSpeed(18000.0);
+    design.setProcessEquipment(detached ? null : replacement);
+    assertFalse(design.isImpellerSizingFeasible());
+    assertFalse(design.validateDesign().isValid());
+    design.calcDesign();
+    assertUnavailableMechanicalResults(design);
+    assertTrue(Double.isNaN(design.getImpellerDiameter()));
+  }
+
+  private void assertUnavailableMechanicalResults(CompressorMechanicalDesign design) {
+    assertFalse(design.isImpellerSizingFeasible());
+    assertEquals(0, design.getNumberOfStages());
+    assertNull(design.getCasingDesignCalculator());
+    assertFalse(design.validateDesign().getIssues().toString().contains("Infinity"));
+    for (double value : new double[] { design.getShaftDiameter(), design.getBearingSpan(), design.getHeadPerStage(),
+        design.getDriverPower(), design.getPower(), design.getFirstCriticalSpeed(), design.getMaxContinuousSpeed(),
+        design.getTripSpeed(), design.getRotorWeight(), design.getCasingWeight(), design.getBundleWeight(),
+        design.getInnerDiameter(), design.getOuterDiameter(), design.getWallThickness(), design.getTantanLength(),
+        design.getWeightTotal(), design.getWeigthVesselShell(), design.getWeigthInternals(), design.getWeightNozzle(),
+        design.getWeightPiping(), design.getWeightElectroInstrument(), design.getWeightStructualSteel(),
+        design.getModuleLength(), design.getModuleWidth(), design.getModuleHeight() }) {
+      assertTrue(Double.isNaN(value), "Unavailable sizing must clear all dependent results, found " + value);
+    }
   }
 
   @Test

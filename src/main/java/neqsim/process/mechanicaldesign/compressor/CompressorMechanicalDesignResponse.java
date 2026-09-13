@@ -235,9 +235,7 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
 
     // Populate casing design calculation results
     CompressorCasingDesignCalculator casingCalc = mecDesign.getCasingDesignCalculator();
-    if (casingCalc != null) {
-      this.casingDesign = casingCalc.toMap();
-    }
+    this.casingDesign = casingCalc == null ? null : casingCalc.toMap();
   }
 
   // ============================================================================

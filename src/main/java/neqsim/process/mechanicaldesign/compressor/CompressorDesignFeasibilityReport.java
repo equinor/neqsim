@@ -421,6 +421,10 @@ public class CompressorDesignFeasibilityReport {
    */
   private void checkPressureRatioPerStage() {
     int stages = mechanicalDesign.getNumberOfStages();
+    if (stages <= 0) {
+      // The impeller-sizing check already reports that no stage count is available.
+      return;
+    }
     double prPerStage = Math.pow(pressureRatio, 1.0 / stages);
     double maxPR = mechanicalDesign.getMaxPressureRatioPerStage();
     if (prPerStage > maxPR) {

@@ -109,6 +109,13 @@ inlet flow or head produces unavailable impeller quantities (`NaN` in Java, `nul
 in JSON), not a default diameter. Changes to sizing inputs or manual stage/diameter
 overrides invalidate qualification; rerun the process and `calcDesign()`.
 
+Each `calcDesign()` attempt clears the previous calculated geometry, shaft and rotor
+results, driver sizing, weights and module dimensions before recalculating them.
+If the compressor is uninitialized or sizing inputs are invalid, these dependent
+results remain unavailable (`NaN` in Java, `null` in JSON), the stage count is zero,
+and the casing calculator is absent. A reused JSON response also drops the previous
+casing calculation. Restore valid inputs and rerun to obtain a new complete design.
+
 `validateDesign()` includes impeller sizing issues, and `CompressorDesignFeasibilityReport`
 classifies them as `IMPELLER_SIZING` blockers. Passing this screen only checks equal-head
 staging and the inlet-stage flow coefficient; downstream-stage aerodynamics, diffuser

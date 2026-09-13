@@ -224,6 +224,9 @@ not override an `IMPELLER_SIZING` blocker.
 
 Unavailable impeller dimensions, speeds and flow coefficients for invalid sizing
 inputs are represented as `null` rather than non-finite numeric literals.
+Shaft and rotor results, driver sizing, weights and module dimensions that cannot
+be recalculated are also unavailable; an invalid sizing attempt clears previous
+results and removes the casing calculation.
 
 ## Verdicts
 

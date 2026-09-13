@@ -288,16 +288,14 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /** {@inheritDoc} */
   @Override
   public void calcDesign() {
-    impellerSizingCalculated = false;
-    casingDesignCalculator = null;
-    super.calcDesign();
-
+    clearCalculatedDesign();
     Compressor compressor = (Compressor) getProcessEquipment();
-
     // Ensure compressor has been run
-    if (compressor.getThermoSystem() == null) {
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
       return;
     }
+    super.calcDesign();
 
     // Get operating conditions
     double suctionPressure = compressor.getInletStream().getPressure("bara");
@@ -348,6 +346,50 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // Run casing mechanical design per API 617 / ASME Section VIII
     calculateCasingDesign(compressor, shaftPowerKW);
+  }
+
+  /**
+   * Clear calculated results before sizing so an incomplete run cannot expose geometry or weights from an earlier run.
+   * Configured design limits, materials and the process mechanical-loss model are preserved.
+   */
+  private void clearCalculatedDesign() {
+    impellerSizingCalculated = false;
+    casingDesignCalculator = null;
+    impellerSizingSpeedRPM = Double.NaN;
+    impellerSizingFlowM3hr = Double.NaN;
+    impellerSizingHead = Double.NaN;
+    numberOfStages = 0;
+    headPerStage = Double.NaN;
+    impellerDiameter = Double.NaN;
+    tipSpeed = Double.NaN;
+    flowCoefficient = Double.NaN;
+    shaftDiameter = Double.NaN;
+    driverPower = Double.NaN;
+    driverMargin = Double.NaN;
+    setMaxDesignPower(Double.NaN);
+    designPressure = Double.NaN;
+    designTemperature = Double.NaN;
+    maxContinuousSpeed = Double.NaN;
+    tripSpeed = Double.NaN;
+    firstCriticalSpeed = Double.NaN;
+    bearingSpan = Double.NaN;
+    casingWeight = Double.NaN;
+    rotorWeight = Double.NaN;
+    bundleWeight = Double.NaN;
+    innerDiameter = Double.NaN;
+    outerDiameter = Double.NaN;
+    wallThickness = Double.NaN;
+    tantanLength = Double.NaN;
+    setWeigthVesselShell(Double.NaN);
+    setWeigthInternals(Double.NaN);
+    setWeightNozzle(Double.NaN);
+    setWeightPiping(Double.NaN);
+    setWeightElectroInstrument(Double.NaN);
+    setWeightStructualSteel(Double.NaN);
+    setWeightTotal(Double.NaN);
+    moduleLength = Double.NaN;
+    moduleWidth = Double.NaN;
+    moduleHeight = Double.NaN;
   }
 
   /**
@@ -461,6 +503,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     flowCoefficient = Double.NaN;
     if (!Double.isFinite(speedRPM) || speedRPM <= 0.0 || !Double.isFinite(volumeFlowM3hr) || volumeFlowM3hr <= 0.0
         || !Double.isFinite(polytropicHead) || polytropicHead <= 0.0) {
+      numberOfStages = 0;
+      headPerStage = Double.NaN;
       return;
     }
 
@@ -922,6 +966,11 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
       return issues;
     }
     Compressor compressor = (Compressor) getProcessEquipment();
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
+      issues.add("Compressor is missing or not properly initialized; rerun the process and calcDesign().");
+      return issues;
+    }
     if (Double.compare(compressor.getSpeed(), impellerSizingSpeedRPM) != 0
         || Double.compare(compressor.getInletStream().getFlowRate("m3/hr"), impellerSizingFlowM3hr) != 0
         || Double.compare(compressor.getPolytropicFluidHead(), impellerSizingHead) != 0) {
@@ -1546,7 +1595,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     }
 
     Compressor compressor = (Compressor) getProcessEquipment();
-    if (compressor == null || compressor.getThermoSystem() == null) {
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
       result.addIssue("Compressor not properly initialized");
       result.setValid(false);
       return result;
@@ -1570,10 +1620,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double suctionPressure = compressor.getInletStream().getPressure("bara");
     double dischargePressure = compressor.getOutletStream().getPressure("bara");
     double totalPressureRatio = dischargePressure / suctionPressure;
-    double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
-    if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
-      result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage) + " exceeds maximum "
-          + String.format("%.2f", maxPressureRatioPerStage));
+    if (numberOfStages > 0) {
+      double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
+      if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
+        result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage) + " exceeds maximum "
+            + String.format("%.2f", maxPressureRatioPerStage));
+      }
     }
 
     // Validate surge margin

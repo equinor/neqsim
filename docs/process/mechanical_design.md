@@ -377,6 +377,10 @@ the sizing speed (rpm), tip speed (m/s), inlet flow coefficient, head per stage
 for the assumptions and limits. These checks do not establish aerodynamic or
 fabrication qualification.
 
+An invalid compressor sizing attempt clears the previous envelope, shaft, rotor,
+weight and layout results. Their JSON quantities are unavailable instead of
+retaining values from an earlier successful run, and the casing calculation is absent.
+
 The runnable [JSON-to-mesh example](../../examples/mechanical_design_json_to_mesh.py)
 uses `trimesh` and rejects missing units, unavailable dimensions and inconsistent
 shell geometry. With the JSON above saved as `separator-design.json`:
