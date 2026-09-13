@@ -1549,15 +1549,21 @@ by volatile screening components.
 Directly appending a gas phase is not used because `SystemInterface.addPhase()` can expose a stale phase slot whose
 requested type need not survive initialization. Instead, the algorithm snapshots the converged endpoint, clones it,
 resets the clone to a fresh two-phase GAS/liquid estimate, calls `init(0)` and `init(1)`, and runs one nested
-`TPmultiflash`. A thread-local guard and a per-operation one-shot flag prevent reciprocal recursion.
+`TPmultiflash`. The snapshot retains both logical phase roles and their physical phase-array slots. A thread-local guard
+and a per-operation one-shot flag prevent reciprocal recursion.
 
 The trial replaces the retained endpoint only if it preserves every original phase role, adds GAS, stays within the
 configured phase-count limit, and lowers extensive Gibbs energy. An exception, missing phase, non-improving Gibbs
 energy, or rejected trial leaves the snapshot in place; beta, phase compositions, K-values, and initialized properties
-are restored. Thus the Wilson screen triggers an equilibrium calculation but does not itself decide phase stability.
+are restored on their original physical phase-array slots. If phase shifting is disabled, the restart is skipped because
+the trial cannot reliably adopt or restore phase roles. Thus the Wilson screen triggers an equilibrium calculation but
+does not itself decide phase stability.
 
 ```java
 if (oilAndAqueousWithoutGas && neutral && wilsonSubmixtureBracketsTwoPhases) {
+    if (!system.allowPhaseShift()) {
+        return;
+    }
     PhaseSplitSnapshot retained = snapshot(system);
     SystemInterface trial = freshGasLiquidEstimate(system);
     new TPmultiflash(trial, solidCheck).run();
@@ -2267,10 +2273,12 @@ At the reference state, both equations of state must recover the fresh public `T
 within `1e-12` of a bound and from an ordinary two-phase endpoint passed directly to `TPmultiflash`. Reused systems
 must agree with fresh calculations after a nearby pressure change, after return to the reference pressure, and on an
 immediate deterministic repeat. A water-free GAS+OIL control verifies that the aqueous-only guard does not broaden the
-restart to dry flashes.
+restart to dry flashes. A locked-phase regression invokes the bounded restart guard directly and requires the phase-role
+lock, logical-to-physical phase mapping, equilibrium state, and frozen numerical gates to remain unchanged.
 
-The focused class executes 34 complete flashes. That bounded count is the performance evidence for this test-only
-qualification; no wall-clock threshold or production speedup is claimed. Production solver code, public APIs, model
+The focused class executes 35 complete flashes plus one direct locked-phase guard invocation. That bounded count is the
+performance evidence for this test-only qualification; no wall-clock threshold or production speedup is claimed.
+Production solver code, public APIs, model
 parameters/defaults, electrolyte and reactive paths, solids/wax, saturation search, Column Solver, Process Performance,
 and Huldra are outside this tranche.
 

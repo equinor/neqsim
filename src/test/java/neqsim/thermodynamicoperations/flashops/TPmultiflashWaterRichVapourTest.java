@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 
 import neqsim.thermo.phase.PhaseType;
@@ -121,6 +122,31 @@ class TPmultiflashWaterRichVapourTest {
       assertFalse(fluid.hasPhaseType(PhaseType.AQUEOUS), model + " dry aqueous phase");
       assertClosedEquilibrium(fluid, model + " dry control");
     }
+  }
+
+  /** A locked phase-role mapping must make the bounded restart a strict no-op. */
+  @Test
+  void phaseShiftLockedRestartPreservesConvergedEndpoint() throws Exception {
+    SystemInterface reference = flash(false, REFERENCE_WATER_FRACTION, REFERENCE_TEMPERATURE_K, REFERENCE_PRESSURE_BARA,
+        true);
+    SystemInterface locked = reference.clone();
+    int[] phaseIndices = new int[locked.getNumberOfPhases()];
+    for (int phase = 0; phase < locked.getNumberOfPhases(); phase++) {
+      phaseIndices[phase] = locked.getPhaseIndex(phase);
+    }
+    locked.allowPhaseShift(false);
+
+    TPmultiflash operation = new TPmultiflash(locked, false);
+    Method restart = TPmultiflash.class.getDeclaredMethod("restartMultiphaseFromFreshEstimate");
+    restart.setAccessible(true);
+    restart.invoke(operation);
+    locked.init(3);
+
+    assertFalse(locked.allowPhaseShift(), "phase-shift lock");
+    for (int phase = 0; phase < locked.getNumberOfPhases(); phase++) {
+      assertEquals(phaseIndices[phase], locked.getPhaseIndex(phase), "physical phase slot " + phase);
+    }
+    assertEquivalentEquilibrium(reference, locked, NORMALIZATION_TOLERANCE, "phase-shift-locked restart");
   }
 
   private SystemInterface flash(boolean pengRobinson, double waterFraction, double temperature, double pressure,
