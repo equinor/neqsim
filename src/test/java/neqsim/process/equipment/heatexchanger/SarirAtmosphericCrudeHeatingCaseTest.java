@@ -49,8 +49,8 @@ public class SarirAtmosphericCrudeHeatingCaseTest {
   /** Reject missing, nonphysical, or source-boundary-inconsistent assumptions before solving. */
   @Test
   public void invalidHeatingInputsFailClosed() {
-    assertThrows(IllegalArgumentException.class, () -> new HeatingInputs(400.0, 390.0, 0.10, 0.05, 0.85, 48.0e6,
-        2.75, 0.08, 423.15));
+    assertThrows(IllegalArgumentException.class,
+        () -> new HeatingInputs(400.0, 390.0, 0.10, 0.05, 0.85, 48.0e6, 2.75, 0.08, 423.15));
     assertThrows(IllegalArgumentException.class,
         () -> new HeatingInputs(300.0, 500.0, -0.10, 0.05, 0.85, 48.0e6, 2.75, 0.08, 423.15));
     assertThrows(IllegalArgumentException.class,
@@ -64,8 +64,8 @@ public class SarirAtmosphericCrudeHeatingCaseTest {
     assertThrows(IllegalArgumentException.class,
         () -> new HeatingInputs(300.0, 623.15, 0.10, 0.05, 0.85, 48.0e6, 2.75, 0.08, 423.15));
 
-    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericCrudeHeatingCase.create(" ", SPECIFIC_GRAVITY,
-        MOLAR_MASS_KG_PER_MOL, qualifiedInputs()));
+    assertThrows(IllegalArgumentException.class,
+        () -> SarirAtmosphericCrudeHeatingCase.create(" ", SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, qualifiedInputs()));
     assertThrows(NullPointerException.class,
         () -> SarirAtmosphericCrudeHeatingCase.create("Sarir", SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, null));
   }
