@@ -4,11 +4,62 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
+import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseFlux;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseState;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
 
 class AUSMImplicitPressureSplitTest {
+  @ParameterizedTest
+  @EnumSource(TimeIntegrator.Method.class)
+  void coupledPipePressureTractionDoesNotDependOnCountercurrentPhaseVelocities(TimeIntegrator.Method method)
+      throws Exception {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream inlet = new Stream("pressure predictor inlet", fluid);
+    inlet.setFlowRate(0.1, "kg/sec");
+    inlet.run();
+    TwoFluidPipe pipe = new TwoFluidPipe("pressure predictor", inlet);
+    pipe.setLength(10.0);
+    pipe.setDiameter(0.1);
+    pipe.setNumberOfSections(3);
+    pipe.setTimeIntegrationMethod(method);
+    pipe.setEnableCoupledPressureMomentum(true);
+    pipe.run();
+    pipe.runTransient(1.0e-4, UUID.randomUUID());
+    assertTrue(pipe.isCoupledPressureMomentumConverged());
+    assertEquals(1.0e-4, pipe.getLastMassBalanceReport().getElapsedTimeSeconds(), 1.0e-14);
+
+    Field field = TwoFluidPipe.class.getDeclaredField("equations");
+    field.setAccessible(true);
+    AUSMPlusFluxCalculator calculator = ((TwoFluidConservationEquations) field.get(pipe)).getFluxCalculator();
+    double pressure = 2.0e5;
+    PhaseState positive = new PhaseState(2.0, 5.0, pressure, 300.0, 1.0e5, 0.05);
+    PhaseState negative = new PhaseState(2.0, -5.0, pressure, 300.0, 1.0e5, 0.05);
+    PhaseFlux right = calculator.calcPhaseFlux(positive, negative, 0.01);
+    PhaseFlux left = calculator.calcPhaseFlux(negative, positive, 0.01);
+    assertEquals(0.0, right.massFlux, 0.0);
+    assertEquals(0.0, left.massFlux, 0.0);
+    assertEquals(pressure, right.interfacePressure, 0.0);
+    assertEquals(pressure, left.interfacePressure, 0.0);
+    assertEquals(left.momentumFlux, right.momentumFlux, 0.0,
+        "A uniform pressure must not acquire gas-velocity-dependent traction in the coupled predictor");
+
+    pipe.setEnableCoupledPressureMomentum(false);
+    pipe.runTransient(1.0e-4, UUID.randomUUID());
+    PhaseFlux restored = calculator.calcPhaseFlux(positive, negative, 0.01);
+    PhaseFlux original = new AUSMPlusFluxCalculator().calcPhaseFlux(positive, negative, 0.01);
+    assertEquals(original.momentumFlux, restored.momentumFlux, 0.0);
+  }
+
   /**
    * A periodic alternating velocity has zero averaged face mass flow. The AUSM pressure polynomial nevertheless
    * advances it with low-Mach amplification 1-4*(3/4+alpha)*p*dt/(rho*c*dx). Centering the pressure removes this

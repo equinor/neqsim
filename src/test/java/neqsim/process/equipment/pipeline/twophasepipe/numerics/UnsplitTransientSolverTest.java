@@ -2,9 +2,14 @@ package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 
 class UnsplitTransientSolverTest {
@@ -238,6 +243,502 @@ class UnsplitTransientSolverTest {
   }
 
   @Test
+  void solveReevaluatesTheUnperturbedBaseAfterFreezing() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final boolean[] frozen = { false };
+    final boolean[] expectingBase = { false };
+    final double[][][] frozenState = { null };
+    final double[] selectedRate = { 1.0 };
+    UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+      @Override
+      public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+          double[][] closureState, double[] closurePressure, double time, double outletPressure,
+          boolean outletPressureFixed) {
+        if (expectingBase[0]) {
+          assertStateEquals(frozenState[0], midpointState, 0.0);
+          expectingBase[0] = false;
+        }
+        double[][] rates = new double[1][6];
+        rates[0][3] = selectedRate[0];
+        return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+      }
+
+      @Override
+      public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+        assertFalse(frozen[0]);
+        frozen[0] = true;
+        expectingBase[0] = true;
+        frozenState[0] = copy(midpointState);
+        selectedRate[0] = 2.0;
+      }
+
+      @Override
+      public void endLinearization() {
+        assertFalse(expectingBase[0], "The base must be evaluated inside the frozen linearization");
+        frozen[0] = false;
+      }
+    };
+
+    UnsplitTransientSolver.Result result = solverWithTolerance(1.0e-9).solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertTrue(result.isConverged());
+    assertFalse(frozen[0]);
+    assertEquals(0.2, result.getState()[0][3], 1.0e-9,
+        "Both Jacobian differencing and its right-hand side must use the frozen base residual");
+  }
+
+  @Test
+  void reevaluatesEveryActiveSetSwitchAboveTolerance() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final int[] activeVersion = { 0 };
+    final int[] evaluatedVersion = { -1 };
+    final boolean[] frozen = { false };
+    final int[] evaluations = { 0 };
+    UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+      @Override
+      public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+          double[][] closureState, double[] closurePressure, double time, double outletPressure,
+          boolean outletPressureFixed) {
+        evaluations[0]++;
+        evaluatedVersion[0] = activeVersion[0];
+        double[][] rates = new double[1][6];
+        rates[0][3] = 1.0 + activeVersion[0] + midpointState[0][3] * midpointState[0][3];
+        return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+      }
+
+      @Override
+      public boolean updateActiveSet(double[][] midpointState, double[] midpointPressure) {
+        assertFalse(frozen[0], "Refresh is only allowed after releasing the linearization");
+        assertEquals(activeVersion[0], evaluatedVersion[0], "Every switch requires a fresh residual");
+        if (midpointState[0][3] > 0.04 && activeVersion[0] < 2) {
+          double residual = 2.0 * midpointState[0][3]
+              - 0.1 * (1.0 + activeVersion[0] + midpointState[0][3] * midpointState[0][3]);
+          assertTrue(Math.abs(residual) > 1.0e-8, "Exercise switches away from the convergence gate");
+          activeVersion[0]++;
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+        assertEquals(activeVersion[0], evaluatedVersion[0], "Do not reuse a stale active-set residual");
+        frozen[0] = true;
+      }
+
+      @Override
+      public void endLinearization() {
+        frozen[0] = false;
+      }
+    };
+
+    UnsplitTransientSolver.Result result = solverWithTolerance(1.0e-10).solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertTrue(result.isConverged());
+    assertTrue(result.isActiveSetStable());
+    assertEquals(2, activeVersion[0]);
+    assertEquals(evaluations[0], result.getModelEvaluations());
+    assertEquals((1.0 - Math.sqrt(0.97)) / 0.05, result.getState()[0][3], 1.0e-9);
+  }
+
+  @Test
+  void countsEveryResidualProbeIncludingTheFrozenBase() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final int[] evaluations = { 0 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> {
+      evaluations[0]++;
+      double[][] rates = new double[1][6];
+      rates[0][3] = 1.0;
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+
+    UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertTrue(result.isConverged());
+    assertEquals(1, result.getIterations());
+    assertEquals(10, evaluations[0], "Initial residual, frozen base, seven colored probes and one accepted trial");
+    assertEquals(evaluations[0], result.getModelEvaluations());
+    assertEquals(UnsplitTransientSolver.TerminationReason.CONVERGED, result.getTerminationReason());
+  }
+
+  @Test
+  void releasesPartiallyInitializedLinearizationsWhenBeginThrows() {
+    for (boolean diagnostic : new boolean[] { false, true }) {
+      double[][] state = filledState(1);
+      double[] pressure = { 5.0e6 };
+      final boolean[] frozen = { false };
+      final int[] releases = { 0 };
+      IllegalStateException failure = new IllegalStateException("Injected begin failure");
+      UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+        @Override
+        public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+            double[][] closureState, double[] closurePressure, double time, double outletPressure,
+            boolean outletPressureFixed) {
+          double[][] rates = new double[1][6];
+          rates[0][3] = 1.0;
+          return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+        }
+
+        @Override
+        public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+          frozen[0] = true;
+          throw failure;
+        }
+
+        @Override
+        public void endLinearization() {
+          frozen[0] = false;
+          releases[0]++;
+        }
+      };
+      UnsplitTransientSolver solver = new UnsplitTransientSolver();
+
+      IllegalStateException actual = assertThrows(IllegalStateException.class, () -> {
+        if (diagnostic) {
+          solver.scaledJacobian(state, pressure, state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false, model);
+        } else {
+          solver.solve(state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false, model);
+        }
+      });
+
+      assertSame(failure, actual);
+      assertFalse(frozen[0]);
+      assertEquals(1, releases[0]);
+      assertStateEquals(filledState(1), state, 0.0);
+      assertEquals(5.0e6, pressure[0], 0.0);
+    }
+  }
+
+  @Test
+  void preservesProbeFailureWhenLinearizationCleanupAlsoFails() {
+    for (boolean diagnostic : new boolean[] { false, true }) {
+      double[][] state = filledState(1);
+      double[] pressure = { 5.0e6 };
+      final boolean[] frozen = { false };
+      IllegalStateException failure = new IllegalStateException("Injected probe failure");
+      IllegalStateException cleanupFailure = new IllegalStateException("Injected cleanup failure");
+      UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+        @Override
+        public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+            double[][] closureState, double[] closurePressure, double time, double outletPressure,
+            boolean outletPressureFixed) {
+          if (frozen[0]) {
+            throw failure;
+          }
+          double[][] rates = new double[1][6];
+          rates[0][3] = 1.0;
+          return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+        }
+
+        @Override
+        public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+          frozen[0] = true;
+        }
+
+        @Override
+        public void endLinearization() {
+          frozen[0] = false;
+          throw cleanupFailure;
+        }
+      };
+      UnsplitTransientSolver solver = new UnsplitTransientSolver();
+
+      IllegalStateException actual = assertThrows(IllegalStateException.class, () -> {
+        if (diagnostic) {
+          solver.scaledJacobian(state, pressure, state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false, model);
+        } else {
+          solver.solve(state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false, model);
+        }
+      });
+
+      assertSame(failure, actual);
+      assertEquals(1, actual.getSuppressed().length);
+      assertSame(cleanupFailure, actual.getSuppressed()[0]);
+      assertFalse(frozen[0]);
+    }
+  }
+
+  @Test
+  void diagnosticJacobianStabilizesRepeatedChangesBeforeFreezing() {
+    double[][] state = filledState(1);
+    state[0][3] = 1.0;
+    double[] pressure = { 5.0e6 };
+    final int[] version = { 0 };
+    final int[] evaluatedVersion = { -1 };
+    final int[] frozenEvaluations = { 0 };
+    final int[] evaluations = { 0 };
+    final boolean[] frozen = { false };
+    UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+      @Override
+      public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+          double[][] closureState, double[] closurePressure, double time, double outletPressure,
+          boolean outletPressureFixed) {
+        evaluations[0]++;
+        evaluatedVersion[0] = version[0];
+        if (frozen[0] && frozenEvaluations[0]++ == 0) {
+          assertStateEquals(state, midpointState, 0.0);
+        }
+        double[][] rates = new double[1][6];
+        rates[0][3] = version[0] * midpointState[0][3];
+        return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+      }
+
+      @Override
+      public boolean updateActiveSet(double[][] midpointState, double[] midpointPressure) {
+        assertFalse(frozen[0]);
+        assertEquals(version[0], evaluatedVersion[0]);
+        if (version[0] < 3) {
+          version[0]++;
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+        assertEquals(3, version[0]);
+        frozen[0] = true;
+      }
+
+      @Override
+      public void endLinearization() {
+        frozen[0] = false;
+      }
+    };
+
+    double[][] jacobian = new UnsplitTransientSolver().scaledJacobian(state, pressure, state, pressure, unitAreas(1),
+        0.1, 0.0, Double.NaN, false, model);
+
+    assertEquals(0.85, jacobian[3][3], 1.0e-9);
+    assertEquals(8, frozenEvaluations[0], "The base and seven columns must share the frozen operator");
+    assertEquals(12, evaluations[0], "Initial residual, three refresh residuals and eight frozen probes");
+    assertFalse(frozen[0]);
+  }
+
+  @Test
+  void cyclingActiveSetsStopWithinBudgetWithAFreshFinalResidual() {
+    for (boolean diagnostic : new boolean[] { false, true }) {
+      double[][] state = filledState(1);
+      double[] pressure = { 5.0e6 };
+      final int[] updates = { 0 };
+      final int[] evaluations = { 0 };
+      UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+        @Override
+        public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+            double[][] closureState, double[] closurePressure, double time, double outletPressure,
+            boolean outletPressureFixed) {
+          evaluations[0]++;
+          double[][] rates = new double[1][6];
+          rates[0][3] = 1.0 + updates[0] % 2;
+          return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+        }
+
+        @Override
+        public boolean updateActiveSet(double[][] midpointState, double[] midpointPressure) {
+          updates[0]++;
+          return true;
+        }
+
+        @Override
+        public void beginLinearization(double[][] midpointState, double[] midpointPressure) {
+          throw new AssertionError("Cycling choices must not reach a Newton linearization");
+        }
+      };
+      UnsplitTransientSolver solver = new UnsplitTransientSolver();
+      assertEquals(20, solver.getMaximumActiveSetUpdates());
+      assertThrows(IllegalArgumentException.class, () -> solver.setMaximumActiveSetUpdates(0));
+      assertThrows(IllegalArgumentException.class, () -> solver.setMaximumActiveSetUpdates(-1));
+      solver.setMaximumActiveSetUpdates(3);
+
+      if (diagnostic) {
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> solver.scaledJacobian(state,
+            pressure, state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false, model));
+        assertTrue(failure.getMessage().contains("3 refresh attempts"));
+      } else {
+        UnsplitTransientSolver.Result result = solver.solve(state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false,
+            model);
+        assertFalse(result.isConverged());
+        assertFalse(result.isActiveSetStable());
+        assertEquals(UnsplitTransientSolver.TerminationReason.ACTIVE_SET_UPDATE_LIMIT, result.getTerminationReason());
+        assertEquals(0, result.getIterations());
+        assertEquals(0.2, result.getMaximumScaledResidual(), 1.0e-15,
+            "The final switch must be reevaluated even when no refresh attempts remain");
+        assertEquals(evaluations[0], result.getModelEvaluations());
+        assertStateEquals(state, result.getState(), 0.0);
+      }
+      assertEquals(3, updates[0]);
+      assertEquals(4, evaluations[0]);
+    }
+  }
+
+  @Test
+  void stabilityOnTheLastRefreshAttemptIsAccepted() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final int[] updates = { 0 };
+    UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
+      @Override
+      public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
+          double[][] closureState, double[] closurePressure, double time, double outletPressure,
+          boolean outletPressureFixed) {
+        double[][] rates = new double[1][6];
+        rates[0][3] = updates[0] >= 2 ? 0.0 : 1.0;
+        return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+      }
+
+      @Override
+      public boolean updateActiveSet(double[][] midpointState, double[] midpointPressure) {
+        updates[0]++;
+        return updates[0] < 3;
+      }
+    };
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setMaximumActiveSetUpdates(3);
+
+    UnsplitTransientSolver.Result result = solver.solve(state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false,
+        model);
+
+    assertTrue(result.isConverged());
+    assertEquals(3, updates[0]);
+    assertEquals(3, result.getModelEvaluations());
+    assertEquals(0, result.getIterations());
+    assertEquals(UnsplitTransientSolver.TerminationReason.CONVERGED, result.getTerminationReason());
+  }
+
+  @Test
+  void reportsSingularJacobianWithoutClaimingAnAcceptedStep() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final int[] evaluations = { 0 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> {
+      evaluations[0]++;
+      double[][] rates = new double[1][6];
+      rates[0][3] = 1.0;
+      return new UnsplitTransientSolver.Evaluation(rates, constantDensities(1));
+    };
+
+    UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertFalse(result.isConverged());
+    assertEquals(UnsplitTransientSolver.TerminationReason.SINGULAR_JACOBIAN, result.getTerminationReason());
+    assertEquals(1, result.getIterations());
+    assertEquals(9, evaluations[0]);
+    assertEquals(evaluations[0], result.getModelEvaluations());
+    assertStateEquals(state, result.getState(), 0.0);
+  }
+
+  @Test
+  void reportsNoAdmissibleStepWhenAnAbsentPhaseWouldBeWithdrawn() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> {
+      double[][] rates = new double[1][6];
+      rates[0][2] = -1.0;
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+
+    UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+
+    assertFalse(result.isConverged());
+    assertEquals(UnsplitTransientSolver.TerminationReason.NO_ADMISSIBLE_STEP, result.getTerminationReason());
+    assertEquals(9, result.getModelEvaluations());
+    assertStateEquals(state, result.getState(), 0.0);
+  }
+
+  @Test
+  void reportsExhaustedLineSearchAndCountsRejectedProbes() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    final int[] evaluations = { 0 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> {
+      evaluations[0]++;
+      double midpointMomentum = midpointState[0][3];
+      double[][] rates = new double[1][6];
+      // With dt = 1 and zero previous momentum the residual is 1 + q^2.
+      rates[0][3] = 2.0 * midpointMomentum - 1.0 - 4.0 * midpointMomentum * midpointMomentum;
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+
+    UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 1.0, 0.0,
+        Double.NaN, false, model);
+
+    assertFalse(result.isConverged());
+    assertEquals(UnsplitTransientSolver.TerminationReason.LINE_SEARCH_FAILED, result.getTerminationReason());
+    assertEquals(21, evaluations[0], "Initial residual, eight frozen probes and twelve rejected trials");
+    assertEquals(evaluations[0], result.getModelEvaluations());
+    assertStateEquals(state, result.getState(), 0.0);
+    assertEquals(1.0, result.getMaximumScaledResidual(), 0.0);
+  }
+
+  @Test
+  void reportsExhaustedNewtonBudgetWithItsFinalAdmissibleIterate() {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> {
+      double[][] rates = new double[1][6];
+      rates[0][3] = 1.0 + midpointState[0][3] * midpointState[0][3];
+      return new UnsplitTransientSolver.Evaluation(rates, pressureDependentDensities(closurePressure));
+    };
+    UnsplitTransientSolver solver = solverWithTolerance(1.0e-10);
+    solver.setMaximumIterations(1);
+
+    UnsplitTransientSolver.Result result = solver.solve(state, pressure, unitAreas(1), 0.1, 0.0, Double.NaN, false,
+        model);
+
+    assertFalse(result.isConverged());
+    assertTrue(result.isActiveSetStable());
+    assertEquals(UnsplitTransientSolver.TerminationReason.MAXIMUM_ITERATIONS, result.getTerminationReason());
+    assertEquals(1, result.getIterations());
+    assertEquals(0.1, result.getState()[0][3], 1.0e-8);
+    assertTrue(result.getMaximumScaledResidual() > solver.getRelativeTolerance());
+    assertEquals(10, result.getModelEvaluations());
+  }
+
+  @Test
+  void serializedResultPreservesDiagnosticsAndDefensiveArrays() throws Exception {
+    double[][] state = filledState(1);
+    double[] pressure = { 5.0e6 };
+    UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
+        outletPressure, outletPressureFixed) -> new UnsplitTransientSolver.Evaluation(new double[1][6],
+            pressureDependentDensities(closurePressure));
+    UnsplitTransientSolver.Result original = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 0.1, 0.0,
+        Double.NaN, false, model);
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(original);
+    }
+    UnsplitTransientSolver.Result restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (UnsplitTransientSolver.Result) input.readObject();
+    }
+
+    assertEquals(original.getTerminationReason(), restored.getTerminationReason());
+    assertEquals(original.getModelEvaluations(), restored.getModelEvaluations());
+    assertEquals(original.getIterations(), restored.getIterations());
+    assertEquals(original.isActiveSetStable(), restored.isActiveSetStable());
+    assertEquals(original.isConverged(), restored.isConverged());
+    assertEquals(original.getMaximumScaledResidual(), restored.getMaximumScaledResidual(), 0.0);
+    assertEquals(original.getMinimumAcceptedStepLength(), restored.getMinimumAcceptedStepLength(), 0.0);
+    restored.getState()[0][0] = -1.0;
+    restored.getPressure()[0] = -1.0;
+    assertStateEquals(state, restored.getState(), 0.0);
+    assertEquals(pressure[0], restored.getPressure()[0], 0.0);
+  }
+
+  @Test
   void infeasibleMassWithdrawalStopsAtPositiveState() {
     double[][] state = new double[][] { { 1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 17.0 } };
     double[] pressure = { 5.0e6 };
@@ -284,6 +785,14 @@ class UnsplitTransientSolverTest {
       density[2][cell] = WATER_DENSITY;
     }
     return density;
+  }
+
+  private static double[][] pressureDependentDensities(double[] pressure) {
+    double[][] densities = constantDensities(pressure.length);
+    for (int cell = 0; cell < pressure.length; cell++) {
+      densities[0][cell] += 1.0e-6 * (pressure[cell] - 5.0e6);
+    }
+    return densities;
   }
 
   private static double[] unitAreas(int cellCount) {

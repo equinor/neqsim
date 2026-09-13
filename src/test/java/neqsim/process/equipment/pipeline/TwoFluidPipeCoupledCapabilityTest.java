@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
@@ -28,6 +30,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TwoFluidPipeCoupledCapabilityTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidPipeCoupledCapabilityTest.class);
   private static final UUID TRANSIENT_ID = UUID.fromString("00000000-0000-0000-0000-000000002904");
+  private static final double INITIAL_SLUG_FRONT_METRES = 12.0;
 
   @Test
   void componentTransportAndSignedOutletBackflowFailBeforeMutationInEitherSetterOrder() {
@@ -70,6 +73,7 @@ class TwoFluidPipeCoupledCapabilityTest {
   void slugComponentPhaseChangeAndThermalCouplingClosesAndRefines() throws Exception {
     CoupledResult coarse = runCoupledCase(0.05);
     CoupledResult refined = runCoupledCase(0.025);
+    CoupledResult finer = runCoupledCase(0.0125);
 
     assertTrue(coarse.waterTransferKg > 0.0 && refined.waterTransferKg > 0.0,
         "Cooling below the water dew point must create aqueous water on both time grids");
@@ -90,13 +94,43 @@ class TwoFluidPipeCoupledCapabilityTest {
     assertTrue(latentSensitivity < 0.10, "Latent-heat outer-step sensitivity was " + latentSensitivity);
     assertTrue(temperatureSensitivity < 0.10,
         "Mean-temperature-response outer-step sensitivity was " + temperatureSensitivity);
-    assertEquals(coarse.slugFrontMetres, refined.slugFrontMetres, 1.0e-12,
-        "Outer-step partitioning must not change accepted slug travel over the same physical duration");
+    // Reporting boundaries truncate the internal CFL steps, so front travel is a numerical integral on
+    // different grids. Compare displacement (not the arbitrary position offset), and verify a third grid.
+    double travelSensitivity = relativeDifference(coarse.slugFrontMetres - INITIAL_SLUG_FRONT_METRES,
+        refined.slugFrontMetres - INITIAL_SLUG_FRONT_METRES);
+    double finerTravelSensitivity = relativeDifference(refined.slugFrontMetres - INITIAL_SLUG_FRONT_METRES,
+        finer.slugFrontMetres - INITIAL_SLUG_FRONT_METRES);
+    assertTrue(travelSensitivity < 0.10, "Slug-travel outer-step sensitivity was " + travelSensitivity);
+    assertTrue(finerTravelSensitivity < travelSensitivity,
+        "Further partition refinement must reduce slug-travel sensitivity: " + finerTravelSensitivity);
+    assertTrue(relativeDifference(refined.waterTransferKg, finer.waterTransferKg) < 0.10);
+    assertTrue(relativeDifference(refined.latentHeatJ, finer.latentHeatJ) < 0.10);
+    assertTrue(relativeDifference(refined.meanTemperatureChangeK, finer.meanTemperatureChangeK) < 0.10);
+    assertEquals(0.05, finer.slugAgeSeconds, 1.0e-12);
     assertEquals(coarse.slugLengthMetres, refined.slugLengthMetres, 1.0e-12,
         "Outer-step partitioning must not change tracked slug length over the same physical duration");
+    assertEquals(refined.slugLengthMetres, finer.slugLengthMetres, 1.0e-12);
   }
 
   private static CoupledResult runCoupledCase(double outerStepSeconds) throws Exception {
+    return runCoupledCase(outerStepSeconds, false);
+  }
+
+  @Test
+  @Tag("slow")
+  @Timeout(value = 5, unit = TimeUnit.MINUTES)
+  void wholePipeTransactionRetainsCoupledSlugPhaseComponentAndThermalBehavior() throws Exception {
+    CoupledResult legacy = runCoupledCase(0.025, false);
+    CoupledResult transaction = runCoupledCase(0.025, true);
+    assertEquals(legacy.waterTransferKg, transaction.waterTransferKg, 1.0e-16);
+    assertEquals(legacy.latentHeatJ, transaction.latentHeatJ, 1.0e-10);
+    assertEquals(legacy.meanTemperatureChangeK, transaction.meanTemperatureChangeK, 1.0e-10);
+    assertEquals(legacy.slugAgeSeconds, transaction.slugAgeSeconds, 1.0e-12);
+    assertEquals(legacy.slugFrontMetres, transaction.slugFrontMetres, 1.0e-12);
+    assertEquals(legacy.slugLengthMetres, transaction.slugLengthMetres, 1.0e-12);
+  }
+
+  private static CoupledResult runCoupledCase(double outerStepSeconds, boolean transactional) throws Exception {
     SystemInterface wetGas = wetGasNearWaterDewPoint();
     double initialTemperatureK = wetGas.getTemperature("K");
     Stream inlet = new Stream("coupled-inlet-" + outerStepSeconds, wetGas);
@@ -125,9 +159,18 @@ class TwoFluidPipeCoupledCapabilityTest {
     pipe.setHeatTransferCoefficient(5000.0);
     pipe.setSurfaceTemperature(initialTemperatureK - 10.0, "K");
     pipe.setSlugTrackingMode(TwoFluidPipe.SlugTrackingMode.CONSERVATIVE_LAGRANGIAN);
+    assertTrue(pipe.isAdaptiveTimesteppingEnabled(), "Conservative slug selection enables adaptive stepping");
     pipe.getLagrangianSlugTracker().setEnableInletSlugGeneration(false);
     pipe.getLagrangianSlugTracker().setEnableWakeEffects(false);
     SlugBubbleUnit slug = seedSlug(pipe);
+    pipe.setTransactionalTransientEnabled(transactional);
+    if (transactional) {
+      pipe.setMaximumTransientSubsteps(1);
+      byte[] before = SerializationUtils.serialize(pipe);
+      assertThrows(IllegalStateException.class, () -> pipe.runTransient(outerStepSeconds, TRANSIENT_ID));
+      assertArrayEquals(before, SerializationUtils.serialize(pipe));
+      pipe.setMaximumTransientSubsteps(10000);
+    }
 
     double cumulativeWaterTransferKg = 0.0;
     double cumulativeLatentHeatJ = 0.0;
@@ -168,6 +211,14 @@ class TwoFluidPipeCoupledCapabilityTest {
     assertTrue(pipe.getLagrangianSlugTracker().isConservativeFilmCouplingEnabled());
     assertFalse(pipe.isTransientOutletBackflowClamped());
     double finalMeanTemperatureK = mean(pipe.getTemperatureProfile());
+    if (transactional) {
+      // Successful transactions publish new owned tracker snapshots; the seeded marker is the only slug.
+      assertEquals(1, pipe.getLagrangianSlugTracker().getSlugs().size());
+      slug = pipe.getLagrangianSlugTracker().getSlugs().get(0);
+    }
+    logger.info("Coupled case: outerStep={} s, water={} kg, latentHeat={} J, temperatureChange={} K, slugFront={} m",
+        outerStepSeconds, cumulativeWaterTransferKg, cumulativeLatentHeatJ, finalMeanTemperatureK - initialTemperatureK,
+        slug.frontPosition);
     return new CoupledResult(cumulativeWaterTransferKg, cumulativeLatentHeatJ,
         finalMeanTemperatureK - initialTemperatureK, slug.age, slug.frontPosition, slug.slugLength);
   }
@@ -175,7 +226,7 @@ class TwoFluidPipeCoupledCapabilityTest {
   private static SlugBubbleUnit seedSlug(TwoFluidPipe pipe) throws Exception {
     SlugCharacteristics marker = new SlugCharacteristics();
     marker.tailPosition = 2.0;
-    marker.frontPosition = 12.0;
+    marker.frontPosition = INITIAL_SLUG_FRONT_METRES;
     marker.length = 10.0;
     marker.holdup = 0.9;
     marker.volume = marker.length * sections(pipe)[0].getArea() * marker.holdup;

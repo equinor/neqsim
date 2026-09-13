@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
@@ -86,18 +85,18 @@ class TwoFluidMomentumSourceTimeStepTest {
   }
 
   @Test
-  void threePhaseBoundIncludesTheSmallLiquidReceivingInterfaceForce() throws Exception {
+  void threePhaseGasDragRetainsTheCommonLiquidAccelerationTimeScale() throws Exception {
     TwoFluidSection section = section(0.8, 0.01, 3.0, 1.0, 1.0);
     TwoFluidConservationEquations equations = equations(0.0, 0.0, 4.0, false);
     equations.setEnableWaterOilSlip(true);
-    // Viscosities are left unset, so the fallback interface split is 80% oil / 20% water.
-    double liquidInverseMass = Math.max(0.8 / section.getOilMassPerLength(), 0.2 / section.getWaterMassPerLength());
+    // Gas drag uses the bulk liquid velocity, so each liquid receives the same acceleration even with slip enabled.
+    double liquidInverseMass = 1.0 / (section.getOilMassPerLength() + section.getWaterMassPerLength());
     double expectedRate = 4.0 * (1.0 / section.getGasMassPerLength() + liquidInverseMass);
     double dt = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section });
     assertEquals(1.0 / expectedRate, dt, 1.0e-7 / expectedRate);
     equations.setEnableWaterOilSlip(false);
-    assertTrue(equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }) > dt,
-        "Common liquid acceleration must recover the aggregate liquid mass limit");
+    assertEquals(dt, equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }), dt * 1.0e-7,
+        "Both paths use aggregate liquid inertia for the same bulk gas drag");
   }
 
   @Test
