@@ -146,7 +146,10 @@ public class ValveMechanicalDesignTest {
 
     ValveMechanicalDesignResponse response = valve.getMechanicalDesign().getResponse();
 
-    assertEquals(0.0, response.getCvRequired(), 1.0e-12);
+    assertTrue(Double.isNaN(response.getCvRequired()));
+    assertTrue(
+        com.google.gson.JsonParser.parseString(response.toJson()).getAsJsonObject().get("cvRequired").isJsonNull());
+    assertFalse(response.toJson().contains("NaN"));
     assertTrue(response.toJson().contains("NOT_EVALUATED"));
   }
 

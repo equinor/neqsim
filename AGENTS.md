@@ -628,6 +628,13 @@ design.calcDesign();
 String json = design.toJson();
 ```
 
+For JSON-driven CAD or external design calculations, use `design.toDesignDataJson()`
+after running the process and `calcDesign()`. Read each quantity's unit, source and
+availability; legacy wall-thickness getters use m for vessels/compressors but mm
+for pumps/pipelines/columns. Check `geometryConsistency`, and keep compressor
+envelope dimensions separate from pressure-casing calculation results. See
+`docs/process/mechanical_design.md` and `MechanicalDesignJsonContractTest`.
+
 **Internals classes** (`mechanicaldesign.separator.internals`):
 - `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
   carry-over model for wire mesh / vane pack / cyclone demisting devices
