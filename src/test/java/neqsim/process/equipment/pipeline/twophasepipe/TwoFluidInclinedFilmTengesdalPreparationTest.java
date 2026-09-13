@@ -37,8 +37,10 @@ class TwoFluidInclinedFilmTengesdalPreparationTest {
   private static void verify(int count, double maximumStep, boolean faceTerrain, double duration) {
     TwoFluidPipe pipe = faceTerrain ? TwoFluidCellFaceTengesdalPreparationTest.createPipe(count)
         : TwoFluidUnsplitTengesdalPreparationTest.createPipe(count);
-    // Preserve the historical accepted steady state. Only the copied transient closure gains the film constraint.
+    // Preserve the historical accepted steady state. Only the copied transient closure gains the film constraint and
+    // its continuous annular/slug transition.
     pipe.setUseInclinedFilmBridgingCriterion(true);
+    pipe.setBlendInclinedAnnularSlugTransitions(true);
     pipe.setUnsplitPressureInterpolationEnabled(true);
     TwoFluidSection[] initial = pipe.getSectionSnapshots();
     UnsplitTransientSolver solver = new UnsplitTransientSolver();

@@ -9987,6 +9987,22 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Blend the inclined annular and slug closures across their gas-lift and optional film transition bands.
+   *
+   * @param enabled true to enable the opt-in continuous closure weights; default false
+   * @see FlowRegimeDetector#setBlendInclinedAnnularSlugTransitions(boolean)
+   */
+  public synchronized void setBlendInclinedAnnularSlugTransitions(boolean enabled) {
+    flowRegimeDetector.setBlendInclinedAnnularSlugTransitions(enabled);
+    equations.getFlowRegimeDetector().setBlendInclinedAnnularSlugTransitions(enabled);
+  }
+
+  /** @return whether the opt-in inclined annular-to-slug transition blend is enabled */
+  public synchronized boolean isBlendInclinedAnnularSlugTransitions() {
+    return flowRegimeDetector.isBlendInclinedAnnularSlugTransitions();
+  }
+
+  /**
    * Enable or disable full terrain tracking.
    *
    * <p>

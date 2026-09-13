@@ -2030,6 +2030,22 @@ numerical/physical validation are required before promoting these fifteen five-s
 or advancing the unsplit 180/600 s qualification sequence. No phase velocities in this replay
 reach the legacy velocity caps; removing those caps would not address this particular failure.
 
+`setBlendInclinedAnnularSlugTransitions(true)` is the opt-in continuation of that finding. It
+retains the gas-lift criterion and, when selected separately, the `0.24` film-bridging criterion
+as transition centres. Linear dimensionless bands blend the existing annular and slug integrated
+wall, interface and entrainment closures; outside both bands the original pure closure is recovered.
+The default inclined map is unchanged. This is a numerical regularisation of the existing criteria,
+not a new countercurrent correlation or physical qualification.
+
+On the historical backward-Euler/pressure-interpolated five-second gate, the blend moves the
+16-cell/0.1 s and 16-cell/0.05 s stopping times from `0.66328125` and `0.68828125 s` to
+`1.451171875` and `1.6712890625 s`. The 24-cell/0.05 s case moves from `0.8` to `0.95 s`.
+All three still fail line search at the unchanged `1e-9` nonlinear tolerance, so no five-second,
+180-second or 600-second qualification is claimed. The six film-constrained historical/face-terrain
+cases are unchanged, which proves that their earlier blockers occur before this particular thin-film
+gas-lift transition. The next diagnostic must isolate the later active closure or constitutive-domain
+crossing instead of widening the band or weakening the solver gate.
+
 ```bash
 ./mvnw -q -Dtest=TwoFluidPipeTransactionalTest,TwoFluidPipeUnsplitRunTest,TwoFluidUnsplitPublicationTest,FlowRegimeInclinedFilmBridgingTest,UnsplitTraceJacobianTest,TwoFluidInclinedFilmTengesdalPreparationTest test
 # Explicit additional film-bridging five-second gates; currently fail:

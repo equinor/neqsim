@@ -1040,8 +1040,14 @@ fixture results above are historical evidence, not results of the revised Jacobi
 A historical 16-cell backward-Euler replay stops near 0.66328125 s at a countercurrent
 annular/slug switch: a small change in superficial gas velocity changes the interfacial force
 from about 27.02 to 10.81 N/m. None of its phase velocities reaches the legacy caps.
+Selecting `setBlendInclinedAnnularSlugTransitions(true)` removes that point switch by blending
+the existing integrated closures over dimensionless gas-lift and optional film bands. The
+16-cell/0.1 s and 16-cell/0.05 s replays then reach 1.451171875 and 1.6712890625 s; the 24-cell
+case reaches 0.95 s. All three still fail line search before five seconds, and the six separate
+film-constrained gates are unchanged. The option is disabled by default and is numerical
+continuation evidence, not a countercurrent model validation.
 The separate coupled-predictor repair restores the legacy five-second pressure regressions;
-it does not repair this unsplit transition discontinuity or qualify the 600 s experiment.
+it does not qualify the remaining unsplit transitions or the 600 s experiment.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

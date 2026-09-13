@@ -59,11 +59,17 @@ public class FlowRegimeDetector implements Serializable {
   /** Require the local liquid inventory to admit a thin film before selecting inclined annular flow. */
   private boolean useInclinedFilmBridgingCriterion;
 
+  /** Blend inclined annular and slug closures across their gas-lift and optional film boundaries. */
+  private boolean blendInclinedAnnularSlugTransitions;
+
   /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
   private static final double KH_TRANSITION_BAND = 0.15;
 
   /** Half-width of the blending band around the bridging limit, as a liquid-fraction difference. */
   private static final double LEVEL_TRANSITION_BAND = 0.08;
+
+  /** Half-width of the inclined annular gas-lift blend, as a fraction of its critical velocity. */
+  private static final double ANNULAR_GAS_LIFT_TRANSITION_BAND = 0.15;
 
   /** Gas viscosity as a fraction of the liquid viscosity, used only when the section carries none. */
   private static final double DEGENERATE_GAS_VISCOSITY_FRACTION = 0.01;
@@ -191,6 +197,30 @@ public class FlowRegimeDetector implements Serializable {
     useInclinedFilmBridgingCriterion = enable;
   }
 
+  /**
+   * Returns whether the inclined annular-to-slug closures are blended across their transition bands.
+   *
+   * @return true when the opt-in inclined transition blend is active
+   */
+  public boolean isBlendInclinedAnnularSlugTransitions() {
+    return blendInclinedAnnularSlugTransitions;
+  }
+
+  /**
+   * Selects continuous closure weights across the inclined annular-to-slug transition.
+   *
+   * <p>
+   * The existing gas-lift and optional film-bridging criteria remain the transition centres. Enabling this replaces
+   * their point switch by a bounded force blend. It does not change the transition correlations, add hysteresis or
+   * qualify countercurrent flow. Disabled by default for compatibility.
+   * </p>
+   *
+   * @param enable true to blend inclined annular and slug closures
+   */
+  public void setBlendInclinedAnnularSlugTransitions(boolean enable) {
+    blendInclinedAnnularSlugTransitions = enable;
+  }
+
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
 
@@ -310,7 +340,7 @@ public class FlowRegimeDetector implements Serializable {
    * <p>
    * A section sitting on a regime boundary is not wholly one regime or the other. Hard switching there steps hold-up
    * and friction discontinuously as an operating point drifts across the boundary. This sets the regime and, where the
-   * section is on a horizontal transition, the fractional weights the closures should be blended with.
+   * section is on a supported transition, the fractional weights the closures should be blended with.
    * </p>
    *
    * @param section section to classify; its regime and blend weights are updated
@@ -322,6 +352,9 @@ public class FlowRegimeDetector implements Serializable {
     section.setFlowRegime(regime);
 
     Map<FlowRegime, Double> weights = horizontalRegimeWeights(oriented, regime);
+    if (weights == null) {
+      weights = inclinedAnnularSlugWeights(oriented, regime);
+    }
     if (weights != null) {
       section.setRegimeWeights(weights);
     }
@@ -412,6 +445,51 @@ public class FlowRegimeDetector implements Serializable {
     weights.put(stratified, 1.0 - unstableShare);
     weights.put(FlowRegime.ANNULAR, unstableShare * (1.0 - slugShare));
     weights.put(FlowRegime.SLUG, unstableShare * slugShare);
+    return weights;
+  }
+
+  /**
+   * Fractional closure weights across the inclined annular-to-slug transition.
+   *
+   * <p>
+   * The inclined annular branch requires both enough gas lift and, when the opt-in film criterion is selected, a liquid
+   * inventory that cannot bridge the gas core. Those two inequalities define one annular eligibility fraction. Ramping
+   * each dimensionless margin removes the force jump when a Newton step crosses either boundary while retaining the
+   * original single-regime closures outside the transition bands.
+   * </p>
+   *
+   * <p>
+   * This applies only to upward mechanistic flow with the explicit inclined-transition option. The default inclined
+   * map, downward stratified transitions, horizontal transitions and minimum-slip classification are unchanged.
+   * </p>
+   *
+   * @param section section being classified
+   * @param regime the regime already detected for the section
+   * @return annular/slug weights, or null outside the supported transition
+   */
+  private Map<FlowRegime, Double> inclinedAnnularSlugWeights(PipeSection section, FlowRegime regime) {
+    if (!blendRegimeTransitions || !blendInclinedAnnularSlugTransitions
+        || detectionMethod != DetectionMethod.MECHANISTIC || section.getInclination() <= Math.toRadians(10.0)) {
+      return null;
+    }
+    if (regime != FlowRegime.ANNULAR && regime != FlowRegime.SLUG) {
+      return null;
+    }
+
+    double gasLiftShare = rampWeight(annularGasLiftRatio(section.getSuperficialGasVelocity(),
+        section.getLiquidDensity(), section.getGasDensity(), section.getSurfaceTension()), 1.0,
+        ANNULAR_GAS_LIFT_TRANSITION_BAND);
+    double unbridgedShare = useInclinedFilmBridgingCriterion
+        ? 1.0 - rampWeight(section.getLiquidHoldup(), ANNULAR_BRIDGING_HOLDUP, LEVEL_TRANSITION_BAND)
+        : 1.0;
+    double annularShare = gasLiftShare * unbridgedShare;
+    if (annularShare <= 0.0 || annularShare >= 1.0) {
+      return null;
+    }
+
+    Map<FlowRegime, Double> weights = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    weights.put(FlowRegime.SLUG, 1.0 - annularShare);
+    weights.put(FlowRegime.ANNULAR, annularShare);
     return weights;
   }
 
@@ -776,10 +854,15 @@ public class FlowRegimeDetector implements Serializable {
    * @return true if flow is in annular regime
    */
   private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G, double sigma) {
+    return annularGasLiftRatio(U_SG, rho_L, rho_G, sigma) > 1.0;
+  }
+
+  /** Dimensionless gas-lift margin used by the inclined annular transition. */
+  private double annularGasLiftRatio(double U_SG, double rho_L, double rho_G, double sigma) {
     // Minimum gas velocity for annular flow (Taitel-Dukler)
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
-      return false;
+      return 0.0;
     }
 
     // If surface tension is not available or very small, use a default value
@@ -792,7 +875,7 @@ public class FlowRegimeDetector implements Serializable {
 
     double U_SG_crit = 3.1 * Math.pow(sigmaEffective * GRAVITY * deltaRho / (rho_G * rho_G), 0.25);
 
-    return U_SG > U_SG_crit;
+    return U_SG / U_SG_crit;
   }
 
   /**
