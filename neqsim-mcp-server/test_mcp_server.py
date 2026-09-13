@@ -1586,17 +1586,29 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "compareProcesses",
+        "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-eight bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.38"
-          and limitations.get("contractTestedToolCount") == 38
-          and limitations.get("confirmedGapToolCount") == 13
+    check("thirty-nine bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.39"
+          and limitations.get("contractTestedToolCount") == 39
+          and limitations.get("confirmedGapToolCount") == 12
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
           str(limitations))
+    comparison = coverage_records.get("compareProcesses", {})
+    check("process comparison has bounded canonical execution evidence",
+          comparison.get("coverageStatus") == "CONTRACT_TESTED"
+          and comparison.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT"
+          and "test_process_comparison_protocol.py"
+          in comparison.get("contractEvidenceSources", [])
+          and "canonical ProcessRunner delegation"
+          in comparison.get("evidenceBoundary", "")
+          and "case comparability" in comparison.get("evidenceBoundary", ""),
+          str(comparison))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1820,7 +1832,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 13
+          and limitations.get("confirmedGapToolCount") == 12
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2121,29 +2133,46 @@ def test_design_utilities():
 # --- Process comparison tools ---
 
 def test_compare_processes():
-    """Compare two process cases side by side."""
+    """Compare two canonical process cases with explicit completion accounting."""
     print("\n=== Process Comparison ===")
     case = {
         "fluid": {
             "components": {"methane": 0.9, "ethane": 0.1},
             "model": "SRK",
-            "temperature_C": 25.0,
-            "pressure_bara": 50.0,
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "mixingRule": "classic",
         },
-        "process": {
-            "equipment": [
-                {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
-                {"type": "separator", "name": "sep", "inlet": "feed"},
-            ]
-        },
+        "process": [
+            {
+                "type": "Stream",
+                "name": "feed",
+                "properties": {"flowRate": [1000.0, "kg/hr"]},
+            },
+            {"type": "Separator", "name": "sep", "inlet": "feed"},
+        ],
     }
     r = call_tool("compareProcesses", {
-        "cases": json.dumps([
-            {"name": "Case-A", **case},
-            {"name": "Case-B", **case},
-        ]),
+        "comparisonJson": json.dumps({
+            "cases": [
+                {"name": "Case-A", **case},
+                {"name": "Case-B", **case},
+            ]
+        }),
     })
     check("compare status=success", r.get("status") == "success", r.get("message", ""))
+    check("compare complete=true", r.get("complete") is True, str(r))
+    check("compare case accounting",
+          r.get("caseCount") == 2
+          and r.get("successfulCaseCount") == 2
+          and r.get("failedCaseCount") == 0,
+          str(r))
+    check("compare order preserved", r.get("caseNames") == ["Case-A", "Case-B"], str(r))
+    check("compare cases converged",
+          all(item.get("converged") is True
+              and item.get("result", {}).get("status") == "success"
+              for item in r.get("cases", [])),
+          str(r))
 
 
 # --- Validation tools ---

@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.38");
+    inventory.addProperty("inventoryVersion", "1.39");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL. Inventory 1.38 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, compareProcesses. Inventory 1.39 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 38 are CONTRACT_TESTED and 13 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 39 are CONTRACT_TESTED and 12 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -569,6 +569,19 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_sil_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md" };
       evidenceBoundary = "Bounded request, component collection, text, architecture, claimed SIL, proof-test interval, PFD and failure-rate admission, canonical NeqSim SIF calculation and indicative SIL-band presentation, deterministic defaults and component ordering, stable fail-closed errors, explicit caller-input, screening and independent-assessment metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish SRS completeness, validate reliability or lifecycle inputs, verify independence, common cause, architecture suitability, diagnostic coverage, proof-test effectiveness or systematic capability, select or approve SIL, demonstrate IEC 61508/61511, NORSOK, regulatory or project conformance, certify design, authorize plant action, or replace independent functional-safety assessment, qualified engineering judgment and accountable approval";
+      break;
+    case "compareProcesses":
+      benchmarkApplicability =
+          "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {
+          "src/main/java/neqsim/mcp/runners/ProcessComparisonRunner.java",
+          "src/main/java/neqsim/mcp/runners/ProcessRunner.java",
+          "src/test/java/neqsim/mcp/runners/ProcessComparisonRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_process_comparison_protocol.py",
+          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/PROCESS_COMPARISON_CONTRACT.md" };
+      evidenceBoundary = "Bounded UTF-8 request, case collection and case-name admission, deterministic request order, canonical ProcessRunner delegation, explicit complete and per-case success/failure accounting, partial-result visibility, normal MCP access enforcement, synchronized schema/example discovery, standard response evidence, and packaged transport are contract-tested; this does not establish case comparability, unit or basis consistency between cases, numerical or thermodynamic accuracy, convergence for arbitrary inputs, conservation, uncertainty, optimization quality, facility fidelity, persistence, parallel execution, plant or control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

@@ -160,11 +160,11 @@ def test_current_phase0_boundary(client):
     result = payload(client.call_tool("getCapabilities", {}))
     inventory = result.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
-    require(inventory.get("inventoryVersion") == "1.38", "unexpected inventory version", inventory)
+    require(inventory.get("inventoryVersion") == "1.39", "unexpected inventory version", inventory)
     limitations = inventory.get("knownLimitations", {})
     require(
-        limitations.get("contractTestedToolCount") == 38
-        and limitations.get("confirmedGapToolCount") == 13,
+        limitations.get("contractTestedToolCount") == 39
+        and limitations.get("confirmedGapToolCount") == 12,
         "promoted trust accounting drifted",
         limitations,
     )
