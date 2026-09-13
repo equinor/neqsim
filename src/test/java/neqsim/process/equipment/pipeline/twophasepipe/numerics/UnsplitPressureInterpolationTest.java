@@ -27,6 +27,48 @@ class UnsplitPressureInterpolationTest {
   private static final double REFERENCE_PRESSURE = 1.0e5;
   private static final double SAVED_TIME_SCALE = 0.125;
 
+  @ParameterizedTest
+  @EnumSource(TimeIntegrationMethod.class)
+  void openSinglePhaseOutletJacobianAgreesWithAVolumePreservingDirection(TimeIntegrationMethod method) {
+    TwoFluidSection[] accepted = sections(4, false, 0.0, false);
+    for (TwoFluidSection section : accepted) {
+      section.setGasVelocity(0.2);
+      section.updateConservativeVariables();
+    }
+    TwoFluidConservationEquations equations = closedEquations();
+    equations.setClosedBoundaries(false, false);
+    double dt = 0.01;
+    double weight = method == TimeIntegrationMethod.BACKWARD_EULER ? 1.0 : 0.5;
+    UnsplitTransientSolver solver = solver(method);
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 1.0, densityModel(),
+        weight * dt);
+    double[][] previous = states(accepted);
+    double[] pressure = pressures(accepted);
+    double[][] jacobian = solver.scaledJacobian(previous, pressure, previous, pressure, areas(accepted), dt, 0.0,
+        Double.NaN, false, adapter);
+    int last = accepted.length - 1;
+    double epsilon = 1.0e-6;
+    double[][] plus = states(accepted);
+    double[][] minus = states(accepted);
+    double[] pressurePlus = pressures(accepted);
+    double[] pressureMinus = pressures(accepted);
+    // rho is proportional to p, so the simultaneous mass/pressure direction preserves occupied volume.
+    plus[last][0] *= 1.0 + epsilon;
+    minus[last][0] *= 1.0 - epsilon;
+    pressurePlus[last] *= 1.0 + epsilon;
+    pressureMinus[last] *= 1.0 - epsilon;
+    double[] residualPlus = solver.residual(previous, pressure, plus, pressurePlus, areas(accepted), dt, 0.0,
+        Double.NaN, false, adapter);
+    double[] residualMinus = solver.residual(previous, pressure, minus, pressureMinus, areas(accepted), dt, 0.0,
+        Double.NaN, false, adapter);
+    for (int row = 0; row < residualPlus.length; row++) {
+      double direct = (residualPlus[row] - residualMinus[row]) / (2.0 * epsilon);
+      double linearized = jacobian[row][7 * last] * previous[last][0] / Math.max(1.0, previous[last][0])
+          + jacobian[row][7 * last + 6];
+      assertEquals(direct, linearized, 1.0e-4 * Math.max(1.0, Math.abs(direct)), "row " + row);
+    }
+  }
+
   @Test
   void closedHomogeneousCoupledBlockRemainsExactlyZeroDespiteLargeExternalCoefficients() throws Exception {
     double scale = 1.0e8;

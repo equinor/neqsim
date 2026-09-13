@@ -1000,8 +1000,9 @@ including three slow component/phase/thermal/reference tests and maintained thre
 refinement. Nine explicit five-second qualification failures remain separate from passing regressions.
 
 The transaction/execution/Jacobian update at `1f65f683` passed 422 focused tests across 62 classes,
-including four slow component/phase/thermal/reference tests. Fifteen riser and one coarse-gas
-five-second cases fail separately. The later coupled-predictor repair restores all five
+including four slow component/phase/thermal/reference tests. At that revision, fifteen riser
+and one coarse-gas five-second cases failed separately. The outlet-consistency repair below
+clears the coarse-gas case; the fifteen unsplit riser cases still fail. The later coupled-predictor repair restores all five
 coupled-pressure progress regressions: coupled Euler, RK2, RK4, SSP-RK3 and IMEX now consistently
 use centered face pressure while retaining AUSM mass and energy advection. The same pressure
 response must not also include the gas-velocity-dependent explicit AUSM pressure term. The
@@ -1022,17 +1023,25 @@ references across calls. Outlet composition derives from exact phase transfers o
 phase has uniform frozen component mass fractions across cells and inlet. Nonuniform/changing
 composition and negative phase outlet transfer reject without publication. General component
 transport, energy, phase change and tracked slugs remain unsupported in this route.
-Eight- and sixteen-cell gas configurations complete consecutive calls covering five seconds;
-the coarse four-cell/0.1 s case remains an explicit failed gate. This is bounded execution
-evidence, not general single-phase or multiphase mesh qualification.
+Four-cell/0.1 s and eight-/sixteen-cell/0.05 s gas configurations now complete consecutive
+calls covering five seconds at the unchanged `1e-10` nonlinear and `1e-8` conservation gates.
+The outlet now uses the independently recovered phase fractions consistently with internal
+fluxes and pressure sources. This removes a single-phase clipping kink that gave the Newton
+matrix a derivative of the wrong sign. Midpoint/backward-Euler directional regressions
+verify the correction, and the coarse-gas case now runs in ordinary CI. This remains bounded
+execution evidence rather than general single-phase or multiphase mesh qualification.
 
 The opt-in inclined film-bridging constraint closes the captured high-holdup annular/slug branch
 conflict. Phase-relative Jacobian probes and stable phase-volume differences also correct trace
 derivatives without changing tolerances or nonlinear budgets. With both enabled, the corrected-face
-five-second cases reach approximately 1.919/1.882/1.736 s before rejecting at other regime
+five-second cases reach approximately 1.303/1.881/1.736 s before rejecting at other regime
 transitions. All six added gates still fail; the 180/600 s sequence remains blocked. Original
-fixture results above are historical evidence, not results of the revised Jacobian. Current legacy
-coupled-riser CI also fails after the valid bubble-domain correction exposes pressure instability.
+fixture results above are historical evidence, not results of the revised Jacobian and outlet.
+A historical 16-cell backward-Euler replay stops near 0.66328125 s at a countercurrent
+annular/slug switch: a small change in superficial gas velocity changes the interfacial force
+from about 27.02 to 10.81 N/m. None of its phase velocities reaches the legacy caps.
+The separate coupled-predictor repair restores the legacy five-second pressure regressions;
+it does not repair this unsplit transition discontinuity or qualify the 600 s experiment.
 See the [transaction and execution contract](../process/TWOFLUIDPIPE_MODEL.md#complete-transient-transactions-and-experimental-unsplit-execution)
 and [current transition evidence](../process/TWOFLUIDPIPE_MODEL.md#inclined-film-eligibility-and-trace-phase-derivatives).
 

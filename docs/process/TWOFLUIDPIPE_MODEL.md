@@ -1927,17 +1927,36 @@ conservation gate. Select and record solver accuracy and outer-step partitioning
 failed full-interval checks rather than publishing a converged prefix.
 
 The gas execution fixture uses methane/ethane `0.8/0.2` mole fractions, SRK/classic mixing,
-300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Eight and sixteen
-cells with backward Euler, pressure interpolation, `0.05 s` nominal steps and `1e-10` nonlinear
-tolerance complete two consecutive 2.5 s calls. Their five-second total-mass residuals are about
-`-1.03e-9` and `9.65e-10 kg`. A closed, uniform-pressure three-phase fixture separately verifies
-a fixed point. The unchanged coarse four-cell/0.1 s gas case remains an explicit failing gate:
-Newton stalls near local `0.9 s`, subdivision accumulates defects, and the independent complete
-interval gate rejects. The two successful meshes therefore do not establish mesh qualification
-or a universally reliable single-phase route. Reproduce the retained coarse gate with:
+300 K, a 60 bara inlet, `0.1 kg/s`, and a horizontal 40 m by 0.20 m line. Four cells with
+`0.1 s` nominal steps and eight/sixteen cells with `0.05 s` nominal steps now complete two
+consecutive 2.5 s calls using backward Euler, pressure interpolation and the unchanged `1e-10`
+nonlinear tolerance. Every configuration passes the unchanged `1e-8` interval and five-second
+mass gates. A closed, uniform-pressure three-phase fixture separately verifies a fixed point.
+These are conservation and continuation checks across the three selected grids, not a spatial
+accuracy study or general multiphase qualification.
+
+| Cells | Maximum step (s) | Accepted steps over 5 s | Total mass residual (kg) | Maximum relative interval mass residual |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 | 0.1 | 50 | 5.039e-10 | 6.290e-12 |
+| 8 | 0.05 | 100 | 6.380e-9 | 7.027e-11 |
+| 16 | 0.05 | 100 | -7.615e-9 | 7.706e-11 |
+
+These measurements use NeqSim 3.20.0 on OpenJDK 17.0.20 with the outlet repair applied to
+PR head `01b5f3d`. The run needs no timestep subdivision on these three configurations.
+
+The coarse case previously failed cumulative conservation at `2.108527e-7` versus `1e-8`.
+The outlet was independently clipping `mass/(density*area)` while the internal flux and
+pressure source used recovered phase fractions. At a single-phase volume-closed state,
+separate positive mass and pressure Jacobian probes therefore sampled incompatible sides
+of that clipping boundary. The assembled derivative had the wrong sign even along a
+volume-preserving direction. Outlet mass, momentum and energy fluxes now use the same
+independently recovered gas/oil/water fractions as the other face and pressure terms;
+positive trace liquids are never obtained by subtracting gas holdup from one.
+Volume-closed physical states retain their original fluxes. Directional tests cover both
+midpoint and backward Euler. The coarse five-second case now runs in ordinary CI:
 
 ```bash
-./mvnw -q '-Dtest=TwoFluidPipeUnsplitRunTest#coarseGasQualificationMustAlsoCompleteFiveSeconds' -DexcludedTestGroups= -Dneqsim.unsplit.gas.coarse.qualification=true test
+./mvnw -q '-Dtest=TwoFluidPipeUnsplitRunTest,UnsplitPressureInterpolationTest' test
 ```
 
 #### Inclined film eligibility and trace-phase derivatives
@@ -1970,19 +1989,20 @@ depend on pressure, other phases and neighboring cells. Analytic drag/volume and
 tests cover both time methods, nonuniform areas and trace inventories down to `1e-100`;
 subnormal probes establish finite arithmetic, not unlimited derivative accuracy.
 
-With both changes enabled, all six explicit five-second riser preparations still reject their
-complete local prefixes:
+With both changes enabled and the consistent outlet flux above, all six explicit five-second
+riser preparations still reject their complete local prefixes:
 
 | Geometry | Cells / maximum step (s) | Last local time (s) | Prepared steps | Rejections |
 | --- | --- | ---: | ---: | ---: |
-| Historical | 16 / 0.1 | 1.401953125 | 23 | 16 |
+| Historical | 16 / 0.1 | 1.2 | 24 | 21 |
 | Historical | 16 / 0.05 | 1.4533203125 | 33 | 11 |
-| Historical | 24 / 0.05 | 0.95 | 21 | 11 |
-| Explicit faces | 16 / 0.1 | 1.919140625 | 36 | 23 |
-| Explicit faces | 16 / 0.05 | 1.88203125 | 50 | 19 |
+| Historical | 24 / 0.05 | 0.95 | 22 | 12 |
+| Explicit faces | 16 / 0.1 | 1.303125 | 23 | 18 |
+| Explicit faces | 16 / 0.05 | 1.88125 | 61 | 31 |
 | Explicit faces | 24 / 0.05 | 1.7359375 | 59 | 30 |
 
-The historical 24-cell case reaches the Newton iteration limit; the others fail line search.
+The historical 16/0.1 and 24/0.05 cases and explicit-face 16/0.05 case reach the Newton
+iteration limit; the others fail line search.
 Horizontal annular/dispersed-bubble and flow-reversal closure changes now obstruct continuation.
 Legacy trial velocity guards also remain. The original nine historical/correct-face gates are
 retained separately; no 180/600 s continuation or severe-slugging qualification is claimed.
@@ -1994,8 +2014,21 @@ paths relative to the explicitly dated `477964b5` measurements above.
 | Geometry | Method / pressure interpolation | 16 cells / 0.1 s | 16 cells / 0.05 s | 24 cells / 0.05 s |
 | --- | --- | ---: | ---: | ---: |
 | Historical | Midpoint / off | 0.806640625 | 0.80625 | 0.634375 |
-| Historical | Backward Euler / on | 0.668359375 | 0.68828125 | 0.95 |
+| Historical | Backward Euler / on | 0.66328125 | 0.68828125 | 0.8 |
 | Explicit faces | Backward Euler / on | 1.1 | 1.2 | 0.580078125 |
+
+A replay of the historical 16-cell backward-Euler case isolates a countercurrent
+annular/slug closure discontinuity at local `0.66328125 s`. In zero-based cell 9, gas
+superficial velocity changes from `8.998487` to `8.998310 m/s` while liquid superficial
+velocity remains near `-2.46937 m/s`. The regime changes from annular to slug and the
+interfacial force changes from approximately `27.02` to `10.81 N/m`. At the final rejected
+`0.000390625 s` step, the scaled residual is `0.00167423`, compared with the unchanged
+`1e-9` nonlinear gate. Smaller Jacobian probes agree with local directional derivatives;
+the Newton direction crosses the discontinuous closure. The outlet repair does not resolve
+this separate operator limitation. A consistent countercurrent transition closure and its
+numerical/physical validation are required before promoting these fifteen five-second gates
+or advancing the unsplit 180/600 s qualification sequence. No phase velocities in this replay
+reach the legacy velocity caps; removing those caps would not address this particular failure.
 
 ```bash
 ./mvnw -q -Dtest=TwoFluidPipeTransactionalTest,TwoFluidPipeUnsplitRunTest,TwoFluidUnsplitPublicationTest,FlowRegimeInclinedFilmBridgingTest,UnsplitTraceJacobianTest,TwoFluidInclinedFilmTengesdalPreparationTest test
@@ -2032,9 +2065,11 @@ The complete-transaction, unsplit-execution, film-eligibility and Jacobian updat
 **422 focused tests across 62 classes**: 418 fast tests and four separately selected slow
 component/phase/thermal/reference tests. This includes the existing seeded SRK-CPA four-way
 coupling with and without complete-pipe transactions and the 30/60-cell steady three-phase
-gate. The fifteen riser and one coarse-gas five-second qualification cases are separate failed
-gates, not part of that passing total. The subsequent coupled-predictor repair is separate
-evidence; focused regression success is not a full-suite or general-flow qualification claim.
+gate. At that revision, fifteen riser and one coarse-gas five-second qualification cases failed
+separately and were not part of the passing total. The later outlet-consistency repair passes
+the coarse-gas case and promotes it to ordinary CI; the fifteen riser gates still fail as
+reported above. The subsequent coupled-predictor repair is separate evidence; focused
+regression success is not a full-suite or general-flow qualification claim.
 
 ### Standing benchmark acceptance metrics
 

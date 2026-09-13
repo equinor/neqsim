@@ -1048,6 +1048,14 @@ public class TwoFluidConservationEquations implements Serializable {
    * with a well-posed pressure-momentum model and a boundary whose physical interpretation permits fallback.
    * </p>
    *
+   * <p>
+   * Use the recovered phase fractions consistently with the internal faces and pressure source. Nonlinear trial states
+   * need not satisfy volume closure yet. Recomputing and independently clipping mass/(density*area) here would
+   * introduce a kink at a single-phase endpoint and give incompatible mass and pressure Jacobian columns, even along a
+   * direction that preserves volume. At a volume-closed state the recovered fractions have the same phase inventories,
+   * including positive trace phases.
+   * </p>
+   *
    * @param sec the outlet pipe section
    * @return array of flux values for each conserved variable
    */
@@ -1069,8 +1077,7 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!Double.isFinite(rhoG) || rhoG <= 0.0)
       rhoG = 1.0; // Default gas density
     double vG = allowOutletPhaseBackflow ? sec.getGasVelocity() : Math.max(0.0, sec.getGasVelocity());
-    double alphaG = sec.getGasMassPerLength() / (rhoG * A);
-    alphaG = Math.max(0, Math.min(1, alphaG));
+    double alphaG = sec.getGasHoldup();
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
     flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
 
@@ -1079,11 +1086,8 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!Double.isFinite(rhoO) || rhoO <= 0.0)
       rhoO = 700.0; // Default oil density
     double vO = allowOutletPhaseBackflow ? sec.getOilVelocity() : Math.max(0.0, sec.getOilVelocity());
-    double alphaO = sec.getOilMassPerLength() / (rhoO * A);
-    // Each phase owns its conservative inventory. Subtracting nearly unit gas
-    // holdup loses positive trace liquid to cancellation and gives phases an
-    // artificial priority at the outlet.
-    alphaO = Math.max(0, Math.min(1.0, alphaO));
+    // Recover oil and water independently; subtracting gas holdup would erase positive trace liquid.
+    double alphaO = sec.getOilHoldup();
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
     flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
 
@@ -1092,8 +1096,7 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!Double.isFinite(rhoW) || rhoW <= 0.0)
       rhoW = 1000.0; // Default water density
     double vW = allowOutletPhaseBackflow ? sec.getWaterVelocity() : Math.max(0.0, sec.getWaterVelocity());
-    double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
-    alphaW = Math.max(0, Math.min(1.0, alphaW));
+    double alphaW = sec.getWaterHoldup();
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
     flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
 

@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Field;
 import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
-import org.junit.jupiter.api.Tag;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import neqsim.process.equipment.pipeline.TwoFluidMassBalanceReport.Phase;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
@@ -25,6 +25,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public runTransient selection, complete publication and repeated frozen-EOS continuation. */
 class TwoFluidPipeUnsplitRunTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeUnsplitRunTest.class);
+
   @Test
   void selectionIsExplicitDefensiveAndSerializable() {
     TwoFluidPipe pipe = createPipe(false, 4);
@@ -54,8 +56,6 @@ class TwoFluidPipeUnsplitRunTest {
   }
 
   @Test
-  @Tag("slow")
-  @EnabledIfSystemProperty(named = "neqsim.unsplit.gas.coarse.qualification", matches = "true")
   void coarseGasQualificationMustAlsoCompleteFiveSeconds() throws Exception {
     verifyGasContinuation(4, 0.1);
   }
@@ -73,6 +73,7 @@ class TwoFluidPipeUnsplitRunTest {
     double initialMass = pipe.getTotalMassInventory();
     double inletMass = 0.0;
     double outletMass = 0.0;
+    int acceptedSubsteps = 0;
     for (int interval = 0; interval < 2; interval++) {
       UUID id = UUID.randomUUID();
       pipe.runTransient(2.5, id);
@@ -84,6 +85,7 @@ class TwoFluidPipeUnsplitRunTest {
       }
       inletMass += report.getInletMassKg(Phase.TOTAL);
       outletMass += report.getOutletMassKg(Phase.TOTAL);
+      acceptedSubsteps += report.getAcceptedSubsteps();
       assertEquals(report.getOutletMassKg(Phase.TOTAL) / 2.5, outlet.getFlowRate("kg/sec"), 1.0e-12);
       assertSame(id, pipe.getCalculationIdentifier());
       assertEquals(2.5 * (interval + 1), pipe.getSimulationTime(), 0.0);
@@ -106,7 +108,10 @@ class TwoFluidPipeUnsplitRunTest {
         assertEquals(0.0, section.getWaterMassPerLength(), 0.0);
       }
     }
-    assertEquals(0.0, pipe.getTotalMassInventory() - initialMass - inletMass + outletMass, 1.0e-8);
+    double massResidual = pipe.getTotalMassInventory() - initialMass - inletMass + outletMass;
+    assertEquals(0.0, massResidual, 1.0e-8);
+    logger.info("Five-second unsplit gas continuation: cells={}, maximumStep={} s, substeps={}, massResidual={} kg",
+        cells, maximumStep, acceptedSubsteps, massResidual);
     assertSame(inlet, pipe.getInletStream());
     assertSame(outlet, pipe.getOutletStream());
     assertSame(feed, inlet.getFluid());
