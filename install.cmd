@@ -117,7 +117,7 @@ echo Word template for generated reports:
 echo   Default (nothing set): built-in NeqSim report styling
 echo   Change it:  neqsim --set-report-template "C:\path\company template.docx"
 echo   Check it:   neqsim --show-report-template
-echo Every Report.docx then inherits its styles, fonts, headers, and footers.
+echo Every Word report then inherits its styles, fonts, headers, and footers.
 exit /b 0
 
 :err_pip_boot

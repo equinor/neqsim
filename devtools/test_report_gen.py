@@ -1,16 +1,26 @@
 """Quick integration test for the generate_report.py template in new_task.py.
 
-Creates a temporary task folder with all results.json keys populated,
-extracts the report template, and runs it to produce Report.docx + Report.html.
+Creates an external task folder with all results.json keys populated,
+runs its launcher against the canonical generator, and checks title-named outputs.
 Verifies that all new sections (figure_discussion, benchmark, uncertainty, risk)
 are rendered in the HTML output.
 """
 import json
 import os
+import runpy
 import struct
+import subprocess
 import sys
 import tempfile
 import zlib
+from pathlib import Path
+from unittest.mock import patch
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+GENERATOR = PROJECT_ROOT / 'devtools' / 'task_template' / 'step3_report' / 'generate_report.py'
+REPORT_TITLE = 'JT cooling integration'
+REPORT_BASENAME = 'JT_cooling_integration'
 
 
 def make_tiny_png():
@@ -143,12 +153,7 @@ def create_test_task(tmpdir):
 
 
 def extract_template():
-    """Extract the GENERATE_REPORT template from new_task.py.
-
-    We import the variable rather than doing raw text extraction, because
-    the template uses \\' and \\\\n escapes inside a triple-quoted string
-    that Python resolves during evaluation.
-    """
+    """Load the task launcher template with the same generator hint as new-task."""
     import importlib.util
     script_dir = os.path.dirname(os.path.abspath(__file__))
     new_task_path = os.path.join(script_dir, 'new_task.py')
@@ -161,7 +166,7 @@ def extract_template():
         spec.loader.exec_module(mod)
     finally:
         sys.argv = saved_argv
-    return mod.GENERATE_REPORT
+    return mod.GENERATE_REPORT.replace('__GENERATOR_HINT__', str(GENERATOR))
 
 
 def main():
@@ -176,26 +181,25 @@ def main():
     with open(report_script, 'w', encoding='utf-8') as f:
         f.write(template)
 
-    # Run it
-    saved_cwd = os.getcwd()
-    os.chdir(os.path.join(tmpdir, 'step3_report'))
-    try:
-        code = compile(open(report_script, 'r', encoding='utf-8').read(),
-                       report_script, 'exec')
-        exec_globals = {'__file__': report_script, '__name__': '__main__'}
-        exec(code, exec_globals)
-    finally:
-        os.chdir(saved_cwd)
+    # The launcher exits with SystemExit; a child process lets this test continue
+    # through every output assertion instead of exiting after report generation.
+    env = dict(os.environ, NEQSIM_PROJECT_ROOT=str(PROJECT_ROOT))
+    subprocess.run(
+        [sys.executable, report_script, '--title', REPORT_TITLE, '--no-template'],
+        cwd=os.path.join(tmpdir, 'step3_report'), env=env, check=True,
+    )
 
     # Check outputs exist
-    html_path = os.path.join(tmpdir, 'step3_report', 'Report.html')
-    docx_path = os.path.join(tmpdir, 'step3_report', 'Report.docx')
+    html_path = os.path.join(tmpdir, 'step3_report', REPORT_BASENAME + '.html')
+    docx_path = os.path.join(tmpdir, 'step3_report', REPORT_BASENAME + '.docx')
 
     errors = []
     if not os.path.exists(html_path):
-        errors.append("Report.html not created")
+        errors.append(REPORT_BASENAME + '.html not created')
     if not os.path.exists(docx_path):
-        errors.append("Report.docx not created")
+        errors.append(REPORT_BASENAME + '.docx not created')
+    if not os.path.isfile(os.path.join(tmpdir, 'step3_report', 'WORK_RECORD.md')):
+        errors.append('WORK_RECORD.md not created')
 
     if os.path.exists(html_path):
         with open(html_path, 'r', encoding='utf-8') as f:
@@ -216,12 +220,12 @@ def main():
             # Safety-readiness and evidence-gate sections
             'Safety readiness section': 'Safety Study Readiness',
             'Safety readiness verdict': 'SCREENING - DESIGN-GRADE BLOCKED',
-            'Evidence gaps section': 'Evidence Gaps and Design-Grade Blockers',
+            'Evidence gaps section': 'Assumptions and Data Gaps',
             'Evidence gap text': 'Material certificate pending engineering review',
             'Recommendations section': 'Recommendations',
             'Recommendation text': 'controlled-document evidence gaps',
             # Discussion with numbering
-            'Results Discussion section': 'Results Discussion',
+            'Results Discussion section': 'Discussion',
             'discussion-block class': 'discussion-block',
             'discussion numbering': 'Discussion 1:',
             'observation text': 'Max temperature is 25.3',
@@ -229,7 +233,7 @@ def main():
             'recommendation text': 'Proceed with current design',
             'second discussion': 'Pressure Drop Analysis',
             'insight question ref': 'Q1',
-            'recommendation summary': 'Summary of Recommendations',
+            'second recommendation': 'Conduct sensitivity study on pipe roughness',
             # Benchmark
             'Benchmark section': 'Benchmark Validation',
             'benchmark-table class': 'benchmark-table',
@@ -242,7 +246,9 @@ def main():
             'P50 value': 'P50',
             'tornado table': 'Sensitivity Ranking',
             # Risk
-            'Risk section': 'Risk Evaluation',
+            'Risk section': 'Risk Assessment',
+            'Consistency review section': 'Report Consistency Review',
+            'Benchmark contradiction disclosed': 'benchmark tests FAILED',
             'risk-high class': 'risk-high',
             'risk-low class': 'risk-low',
             'ISO 31000': 'ISO 31000',
@@ -262,20 +268,12 @@ def main():
     # ---- Consistency checker tests ----
     print("\n  ---- Consistency Checker Tests ----")
 
-    # Extract check_report_consistency from the generated report script
-    # by executing the template and pulling the function from its namespace
-    saved_cwd2 = os.getcwd()
-    os.chdir(os.path.join(tmpdir, 'step3_report'))
-    try:
-        with open(report_script, 'r', encoding='utf-8') as f:
-            src = f.read()
-        # Compile and exec just the function definitions (stop before __main__)
-        # We need to exec in a namespace that has the imports and helpers
-        ns = {'__file__': report_script, '__name__': '_test_ns_'}
-        exec(compile(src, report_script, 'exec'), ns)
-        check_fn = ns['check_report_consistency']
-    finally:
-        os.chdir(saved_cwd2)
+    # The implementation lives in the canonical generator, not the task launcher.
+    # Keep import-time paths in the temporary task, restoring process state after.
+    with patch.dict(os.environ, {'NEQSIM_TASK_DIR': tmpdir}), \
+            patch.object(sys, 'argv', [str(GENERATOR)]):
+        ns = runpy.run_path(str(GENERATOR), run_name='_test_report_generator_')
+    check_fn = ns['check_report_consistency']
 
     # Test 1: Our mock data has "safe operation" + benchmark FAIL => should flag ERROR
     with open(os.path.join(tmpdir, 'results.json'), 'r') as f:
@@ -331,7 +329,7 @@ def main():
         'key_results': {'temp_C': 25.0},
         'approach': 'Used SRK EOS.',
         'conclusions': 'Results are within acceptable ranges.',
-        'validation': {'mass_balance_pct': 0.01},
+        'validation': {'mass_balance_pct': 0.01, 'reference_pressure_bar': 100.0},
     }
     issues_clean = check_fn(clean_results)
     clean_errors = [i for i in issues_clean if i["severity"] == 'ERROR']

@@ -90,7 +90,7 @@ clone, so task folders can be kept outside the repository. `neqsim --reset-task-
 removes it; existing tasks stay where they are.
 
 Optionally point the report generator at your organisation's Word template so every
-generated `Report.docx` carries the right styles, fonts, headers, and footers:
+generated Word report carries the right styles, fonts, headers, and footers:
 
 ```powershell
 neqsim --set-report-template "C:\Users\you\Documents\company report template.docx"

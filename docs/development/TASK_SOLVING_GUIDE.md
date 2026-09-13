@@ -107,7 +107,7 @@ neqsim --set-report-template "C:/Users/you/Documents/company report template.doc
 neqsim --show-report-template
 ```
 
-`Report.docx` then inherits the template's styles, fonts, theme colours, page
+The Word report then inherits the template's styles, fonts, theme colours, page
 setup, headers, and footers. The template precedence is:
 
 1. `python step3_report/generate_report.py --template "PATH"` for a single run.
@@ -989,16 +989,17 @@ into reports and ensures the report always reflects the latest simulation run.
        json.dump(results, f, indent=2)
    ```
 4. Run `python step3_report/generate_report.py` — produces a professional engineering
-   report (Report.docx + Report.html). The Results, Validation, and Scope sections
-   auto-populate from `results.json` and `task_spec.md`
+   report in Word and HTML, named after the report title (e.g.
+   `Hydrate_margin_for_the_export_line.docx`). The Results, Validation, and Scope
+   sections auto-populate from `results.json` and `task_spec.md`
 5. Scientific papers are only generated when explicitly requested:
-   `python step3_report/generate_report.py --paper` (adds Paper.docx + Paper.html)
+   `python step3_report/generate_report.py --paper` (adds `<Title>_Paper.docx` + `.html`)
 6. **Built-in styled formatting:** The template automatically renders these sections
    when the corresponding keys exist in `results.json`:
    - **Benchmark Validation** (`benchmark_validation`): PASS/FAIL table with color coding
    - **Uncertainty Analysis** (`uncertainty`): input parameters, P10/P50/P90 distribution, tornado table
    - **Risk Assessment** (`risk_evaluation`): summary card with risk badges, color-coded risk table
-   - All four outputs (Report.docx, Report.html, Paper.docx, Paper.html) share the same formatters
+   - All four outputs (report and paper, Word and HTML) share the same formatters
 
 ### Quality Gates
 
@@ -1565,7 +1566,7 @@ coding agent that can read files and run commands can follow the same workflow.
 | `neqsim new-task` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | NeqSim Runner by default; JupyterLab/Colab for interactive debugging |
-| `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
+| `python generate_report.py` | Produces engineering report in Word + HTML, named after the report title | Any terminal |
 | `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
 
