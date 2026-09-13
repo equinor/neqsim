@@ -77,6 +77,29 @@ neqsim --help
 neqsim doctor
 ```
 
+Optionally choose where the agents save solved tasks (otherwise they use
+`<repo>/task_solve`):
+
+```powershell
+neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+```
+
+The setting lives in `~/.neqsim/task_defaults.json` and applies to every NeqSim
+clone, so task folders can be kept outside the repository. `neqsim --reset-task-root`
+removes it; existing tasks stay where they are.
+
+Optionally point the report generator at your organisation's Word template so every
+generated `Report.docx` carries the right styles, fonts, headers, and footers:
+
+```powershell
+neqsim --set-report-template "C:\Users\you\Documents\company report template.docx"
+neqsim --show-report-template
+```
+
+It is stored in the same settings file and applies to every task from then on;
+`neqsim --reset-report-template` returns to the built-in styling.
+
 If `neqsim` is not found, use `python -m neqsim_cli --help` and see
 [devtools/README.md](../../devtools/README.md#troubleshooting-neqsim-not-found).
 If you installed outside a virtual environment, fully quit and reopen VS Code so

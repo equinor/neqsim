@@ -4479,6 +4479,12 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /**
+   * Initialize the steady pipe state and publish its outlet fluid.
+   *
+   * @param id calculation identifier
+   * @throws IllegalStateException if the positive-flow outlet thermodynamic state cannot be initialized
+   */
   @Override
   public void run(UUID id) {
     if (cellFaceElevationProfile != null) {
@@ -4806,8 +4812,9 @@ public class TwoFluidPipe extends Pipeline {
    * @param dt Requested time step (s)
    * @param id Calculation identifier
    * @throws IllegalArgumentException if {@code dt} is not positive and finite
-   * @throws IllegalStateException if initialization is missing or the requested interval cannot be completed; the
-   * balance report and clocks retain only accepted substeps
+   * @throws IllegalStateException if initialization is missing, the requested interval cannot be completed, or the
+   * positive-flow outlet thermodynamic state cannot be initialized; the balance report and clocks retain only accepted
+   * substeps
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
@@ -5199,9 +5206,10 @@ public class TwoFluidPipe extends Pipeline {
         : null);
 
     boolean isIMEX = (timeIntegrator.getMethod() == TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION);
-    // The implicit pressure solve supplies the acoustic response. AUSM's explicit
-    // acoustic velocity diffusion would otherwise retain an acoustic CFL limit.
-    equations.getFluxCalculator().setCenteredPressureFluxEnabled(isIMEX && coupledPressureMomentumEnabled);
+    // Every coupled predictor uses the implicit acoustic response, including Runge-Kutta methods.
+    // The gas-velocity-dependent AUSM pressure split would otherwise feed an additional acoustic
+    // traction into all phase momenta and destabilize countercurrent, liquid-rich states.
+    equations.getFluxCalculator().setCenteredPressureFluxEnabled(coupledPressureMomentumEnabled);
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
 
@@ -6843,6 +6851,12 @@ public class TwoFluidPipe extends Pipeline {
    * integrals remain available from {@link #getLastMassBalanceReport()}. With named-component transport, the outlet
    * composition also uses those accepted component transfers; its TP flash preserves each component mass flow.
    * </p>
+   *
+   * <p>
+   * Positive outlet flow is normalized before the final TP flash and property initialization. Rate normalization resets
+   * phase state, so it must not follow the flash. A zero or reverse net outlet flux publishes an empty fluid; intensive
+   * thermodynamic properties are not defined for that empty stream.
+   * </p>
    */
   private void updateOutletStream() {
     updateOutletStream(false);
@@ -6886,16 +6900,6 @@ public class TwoFluidPipe extends Pipeline {
     outFluid.setPressure(publishedPressure / 1e5, "bara");
     outFluid.setTemperature(outlet.getTemperature(), "K");
 
-    try {
-      ThermodynamicOperations ops = new ThermodynamicOperations(outFluid);
-      ops.TPflash();
-    } catch (Exception e) {
-      if (transactionalTransientEnabled) {
-        throw new IllegalStateException("Transactional outlet flash failed", e);
-      }
-      logger.warn("Outlet flash failed: {}", e.getMessage());
-    }
-
     // Calculate outlet mass flow rate from section state
     double area = Math.PI * diameter * diameter / 4.0;
     double alphaG = outlet.getGasHoldup();
@@ -6931,7 +6935,20 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalStateException(
           "Outlet mass flow must be finite: outlet=" + massFlowOut + " kg/s, inlet=" + massFlowIn + " kg/s");
     }
-    outFluid.setTotalFlowRate(Math.max(0.0, massFlowOut), "kg/sec");
+    if (massFlowOut > 0.0) {
+      // setTotalFlowRate calls init(0), which discards the equilibrium phase split.
+      // Complete every rate mutation before initializing the published state.
+      outFluid.setTotalFlowRate(massFlowOut, "kg/sec");
+      try {
+        new ThermodynamicOperations(outFluid).TPflash();
+        outFluid.initProperties();
+      } catch (Exception e) {
+        throw new IllegalStateException(getName() + ": outlet thermodynamic initialization failed", e);
+      }
+    } else {
+      // Do not flash zero inventory: a closed/clamped outlet must remain empty.
+      outFluid.setEmptyFluid();
+    }
 
     getOutletStream().setFluid(outFluid);
   }
@@ -9127,6 +9144,12 @@ public class TwoFluidPipe extends Pipeline {
    * The option solves the cell-volume pressure equation and corrects phase mass fluxes and phase momenta with the same
    * face pressure gradients. It replaces the post-step steady friction/gravity pressure reconstruction. The option
    * remains off by default while the long-horizon liquid-rich and severe-slugging validation suite is being qualified.
+   *
+   * <p>
+   * All coupled integration methods use centered face pressure for the explicit predictor. The coupled solve supplies
+   * the acoustic pressure response; a separate gas-velocity-dependent AUSM pressure traction must not be added to the
+   * phase momenta. Mass and energy advection retain their AUSM fluxes. Disabling this option restores the original
+   * pressure split.
    *
    * <p>
    * Use together with {@link #setEnableInterfacialPressure(boolean)} so the transient momentum equations use the

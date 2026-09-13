@@ -1356,7 +1356,8 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Getter for the field <code>wallThickness</code>.
    *
-   * @return the wallThickness
+   * @return wall thickness in the equipment-specific legacy unit (m for separators/compressors/heat exchangers; mm for
+   * pumps/pipelines/columns). Use toDesignDataJson for an explicit metre contract.
    */
   public double getWallThickness() {
     return wallThickness;
@@ -1884,7 +1885,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return JSON string representation of the mechanical design
    */
   public String toJson() {
-    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    MechanicalDesignResponse response = getResponse();
     return response.toJson();
   }
 
@@ -1894,7 +1895,7 @@ public class MechanicalDesign implements java.io.Serializable {
    * @return compact JSON string
    */
   public String toCompactJson() {
-    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    MechanicalDesignResponse response = getResponse();
     return response.toCompactJson();
   }
 
@@ -1910,6 +1911,16 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public MechanicalDesignResponse getResponse() {
     return new MechanicalDesignResponse(this);
+  }
+
+  /**
+   * Export a versioned, unit-labelled snapshot for preliminary geometry and design calculations. Run the process and
+   * calcDesign first. Export does not run, certify or track calculation freshness.
+   *
+   * @return strict JSON with explicit unavailable values and source getters
+   */
+  public final String toDesignDataJson() {
+    return new MechanicalDesignData(this).toJson();
   }
 
   // ============================================================================

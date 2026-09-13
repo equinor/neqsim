@@ -24,13 +24,13 @@ model converged or represents the requested physics.
 
 The current update passes 422 focused tests in 62 classes, including four separately selected
 slow coupled/reference tests. Fifteen riser and one coarse-gas five-second gates fail separately;
-legacy coupled-riser CI regressions remain open. These counts distinguish the verified runtime
-contracts below from the incomplete flow qualification.
+the subsequent coupled-predictor repair restores all five coupled-pressure progress regressions
+without rejected substeps. These counts distinguish the verified runtime contracts below from
+the incomplete flow qualification.
 
 | Capability and configuration | Implemented | Numerically verified | Experimentally qualified | Evidence and use boundary |
 |---|---:|---:|---:|---|
 | Positive-flow steady gas/liquid pressure, holdup, thermal and terrain profiles | Yes | Yes | No general claim | Require the complete steady convergence report to be converged, every residual below its recorded tolerance, and no pressure-floor or wall-clock termination. Repeat mesh sensitivity for the actual geometry. |
-| Explicit finite-volume face terrain | Opt-in | Yes | No | N+1 elevations, actual cell arc lengths and midpoint pressure with external-face offsets. Signed gravity/energy and constant-density hydrostatics are checked under nonuniform refinement. This is not general transient well-balancing. |
 | Steady gas/oil/water on the compact 3 km, 10-degree uphill fixture | Yes | Yes | No | The 30/60-cell results differ by 0.538% in arrival pressure and 0.983% in mean liquid holdup. All three phases remain present and the final thermodynamic/holdup reconciliation is inside the unchanged 1e-4 tolerance. The unavailable historical 73.8 km case is not covered. |
 | Liquid-rich unchanged-boundary transient with shared slug force balance, interfacial pressure, and coupled pressure/momentum | Opt-in | Yes | Not applicable | Over 1,800 s, inventory drift is 1.323% at 40 cells and 1.358% at 80 cells, below the declared 2% fixture gate, with total-mass closure. This does not qualify slug loads or another operating envelope. |
 | Default liquid-rich unchanged-boundary transient | Yes | No | No | The recorded 1,800 s inventory drift is 5.757%, above the unchanged 5% gate. Do not infer default-mode qualification from the opt-in shared-force result. |
@@ -44,6 +44,7 @@ contracts below from the incomplete flow qualification.
 | Five-second gas execution and uniform three-phase fixed point | Opt-in | Selected configurations | No | Eight/sixteen-cell gas runs at 0.05 s and nonlinear tolerance 1e-10 preserve mass over consecutive accepted calls. The four-cell/0.1 s gas gate fails near local 0.9 s, so mesh qualification is not established. A separate closed uniform three-phase fixed point passes. |
 | Inclined annular film eligibility and trace-phase Jacobian | Opt-in criterion; derivative correction enabled | Local branch and analytic derivatives | No | The captured 0.594-liquid-holdup annular/slug conflict converges with live classification. Phase-relative probes retain trace drag/volume derivatives. The local 0.24 film constraint does not implement full film/droplet/reversal physics. |
 | Current unsplit Tengesdal five-second matrix with film constraint | Harness implemented | **Failed** | No | Corrected-face 16/0.1, 16/0.05 and 24/0.05 cases stop near 1.919, 1.882 and 1.736 s. All six historical/face cases reject their prefixes; original nine gates remain separate. Horizontal and countercurrent regime transitions, trial velocity guards and 180/600 s qualification remain open. |
+| Explicit finite-volume face terrain | Opt-in | Yes | No | N+1 elevations, actual cell arc lengths and midpoint pressure with external-face offsets. Signed gravity/energy and constant-density hydrostatics are checked under nonuniform refinement. This is not general transient well-balancing. |
 | Conservative slug/film + named components + phase transfer + thermal balance | Yes | Yes | No | Merged in #3547. A closed four-cell wet-gas cooling case transfers 1.5855002575e-9 kg of water, records 0.0034892651 J latent heat and -0.0305006304 K mean temperature change on both outer-step partitions, while a seeded marker preserves accepted-time geometry. This is coupled-ledger evidence, not spontaneous slug initiation. |
 | Reverse outlet inflow with named-component transport and no external composition | **Unsupported** | Fail-closed | No | Configuration is rejected in either setter order. The last interior composition is not a physical external boundary condition. |
 | Multi-stage conservative slug + component + phase-transfer coupling | **Unsupported** | Fail-closed | No | Phase appearance inside an intermediate stage needs stage-local component inventories. The coupled four-way path is currently restricted to single-stage Euler. |

@@ -1,6 +1,7 @@
 ---
 name: "book_creation"
 description: "PaperLab skill for book creation workflows in scientific writing and book production."
+last_verified: "2026-09-12"
 ---
 
 # Skill: Book Creation in PaperLab

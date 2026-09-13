@@ -1,6 +1,7 @@
 ---
 name: neqsim-phase-envelope
 description: "Generate, plot, interpret, validate, and troubleshoot NeqSim PT phase envelopes. USE WHEN: calculating phase envelopes, dew and bubble curves, cricondenbar, cricondentherm, critical points, retrograde regions, envelope segments, or fixing Michelsen continuation and singular-Jacobian failures caused by zero or trace components."
+last_verified: "2026-09-12"
 ---
 
 # NeqSim PT Phase Envelopes

@@ -14,7 +14,10 @@ The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
 
 It creates a `task_solve/` folder, researches the topic, builds a simulation,
 validates results, and generates a Word report — all in one session. The script
-alternative is `neqsim new-task "your task"`. See
+alternative is `neqsim new-task "your task"`. To keep tasks outside the clone,
+set the destination once with `neqsim --set-task-root "PATH"` (`neqsim --show-task-root`
+prints the folder in use), and set your organisation's Word template once with
+`neqsim --set-report-template "PATH"` so every report follows it. See
 `docs/tutorials/solve-engineering-task.md` for a hands-on tutorial or
 `docs/development/TASK_SOLVING_GUIDE.md` for the full reference.
 

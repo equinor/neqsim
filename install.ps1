@@ -175,6 +175,21 @@ Write-Host "If running 'neqsim' shows `"The term 'neqsim' is not recognized`" in
 Write-Host "terminal, fully quit and reopen VS Code - a new integrated terminal is NOT"
 Write-Host "enough (VS Code captures PATH at launch). A virtualenv avoids this."
 
+Write-Host ""
+Write-Host "Where solved tasks are saved:" -ForegroundColor Cyan
+Write-Host "  Default (nothing set): <this repository>\task_solve"
+Write-Host "  Change it:  neqsim --set-task-root `"D:\Engineering Tasks`"   (or 'cwd')"
+Write-Host "  Check it:   neqsim --show-task-root"
+Write-Host "The setting is saved in ~\.neqsim\task_defaults.json and is used by"
+Write-Host "'neqsim new-task' and the AI agents, so tasks can live outside the clone."
+
+Write-Host ""
+Write-Host "Word template for generated reports:" -ForegroundColor Cyan
+Write-Host "  Default (nothing set): built-in NeqSim report styling"
+Write-Host "  Change it:  neqsim --set-report-template `"C:\path\company template.docx`""
+Write-Host "  Check it:   neqsim --show-report-template"
+Write-Host "Every Report.docx then inherits its styles, fonts, headers, and footers."
+
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR
 # (mvnw.cmd install) and the local dev-notebook runtime DO. Check for a JDK

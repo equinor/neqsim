@@ -3,6 +3,7 @@ name: paperlab_book_to_paper_extraction
 description: |
   Extract publishable paper candidates from PaperLab books, including case
   studies, benchmark suites, review syntheses, workflows, and teaching datasets.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Book to Paper Extraction

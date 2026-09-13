@@ -83,6 +83,39 @@ required package is unavailable, report the blocker before changing runtimes.
 
 ## Solving Engineering Tasks (Primary Workflow)
 
+### Configurable Task Destination (Overrides Literal Paths Below)
+
+For new tasks, resolve the parent folder with `neqsim --show-task-root`.
+Precedence: explicit `--task-root PATH`, `NEQSIM_TASK_ROOT`, saved user default
+in `~/.neqsim/task_defaults.json`, then this repository's `task_solve/`.
+Save a default once with `neqsim --set-task-root "PATH"` (or `cwd` to follow the
+terminal's folder); remove it with `neqsim --reset-task-root` (no task files moved).
+The same controls exist as `neqsim new-task --set-default-folder/--show-task-root/--reset-default-folder`.
+All literal `task_solve/` paths below are examples relative to that resolved root.
+Use the absolute task path returned by creation for all artifacts and validators,
+and pass that same path to every child agent, runner, and external tool explicitly.
+Resume existing tasks in place; a changed default applies only to new tasks.
+Keep `NEQSIM_PROJECT_ROOT` pointing at the NeqSim source repository for external
+tasks; `NEQSIM_TASK_DIR` identifies one active task, not the parent destination.
+Never silently fall back if the configured destination cannot be read or written.
+
+### Configurable Document Root (Source Documents for All Tasks)
+
+The document root is **optional** — it is either set or undefined. When set, that
+folder **and all its subfolders** are the source library for every task:
+`neqsim --set-document-root "PATH"`, `neqsim --show-document-root`,
+`neqsim --reset-document-root`, and `neqsim documents [PATTERN]` to search it
+recursively (the dash-less spelling and an unquoted path with spaces both work).
+Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the saved `document_root` in
+`~/.neqsim/task_defaults.json` > none. Each new task records the resolved value as
+`inputs.document_root` in its `study_config.yaml` (empty when undefined), so a
+resumed task and its child agents see the same library. Search it before reporting
+a standard, datasheet, drawing or vendor document as unavailable. It is read-only —
+never write task output there; copy the documents a task uses into that task's
+`step1_scope_and_research/references/<source>/`. When undefined, work from
+user-supplied documents and log the missing evidence as a data gap; a configured
+folder that is missing or unreadable is a reported blocker, not a silent fallback.
+
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an
 engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 
@@ -223,6 +256,11 @@ Regenerate it whenever documents are added and before finalizing the task.
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce a professional
      engineering report (Report.docx + Report.html)
+   - Report.docx follows the user's Word template when one is configured
+     (`neqsim --set-report-template "PATH"`, `NEQSIM_REPORT_TEMPLATE`, or
+     `--template PATH` for a single run), inheriting their organisation's styles,
+     fonts, headers, and footers. Report a missing-template error rather than
+     issuing an unbranded report.
    - Scientific papers (`--paper`) are only generated when explicitly requested
    - **Important:** The template now has built-in styled formatting for
      Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections
@@ -534,6 +572,27 @@ process.add(sep);
 process.run();
 ```
 
+### Automatic recycle insertion (`makeRecycles`)
+
+Do not hand-write a tear stream + `Recycle` per feedback stream. A loop wired
+straight back into an upstream mixer has no tolerance, acceleration or convergence
+report of its own; across `ProcessModel` areas it is closed only by the outer
+Gauss-Seidel pass, which has no relaxation setting.
+
+```java
+List<Recycle> created = process.makeRecycles();   // SCCs of one flowsheet
+List<Recycle> plantRecycles = plant.makeRecycles(); // cross-area streams, then each area
+plant.setAutoRecycles(true);  // or let run()/runUntilConverged(...) do it
+```
+
+Tears the inlet with the smallest recycle ratio (tear flow / total inlet flow of the
+consuming unit), one edge per round, and tunes each generated `Recycle` with
+`setAdaptiveAcceleration(true)` plus an absolute flow tolerance at 1e-6 of the area's
+largest flow. Self-seeding and idempotent. Only `Mixer` / `Manifold` inlets are
+tearable; other loops are logged and left untouched. `setAutoRecycles` defaults to
+**false** because inserting a tear changes how an existing flowsheet iterates.
+See `docs/process/controllers.md#automatic-recycle-insertion`.
+
 ### Separator mechanical design (physical configuration)
 
 Physical dimensions, internals, and design parameters are configured through
@@ -568,6 +627,13 @@ design.readDesignSpecifications();
 design.calcDesign();
 String json = design.toJson();
 ```
+
+For JSON-driven CAD or external design calculations, use `design.toDesignDataJson()`
+after running the process and `calcDesign()`. Read each quantity's unit, source and
+availability; legacy wall-thickness getters use m for vessels/compressors but mm
+for pumps/pipelines/columns. Check `geometryConsistency`, and keep compressor
+envelope dimensions separate from pressure-casing calculation results. See
+`docs/process/mechanical_design.md` and `MechanicalDesignJsonContractTest`.
 
 **Internals classes** (`mechanicaldesign.separator.internals`):
 - `DemistingInternal` — Eu-number pressure drop, Souders-Brown max velocity,
@@ -1187,8 +1253,10 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `devtools/neqsim_runner/`                                               | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `devtools/pdf_to_figures.py`                                            | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `devtools/skill_search.py`                                              | Semantic skill retrieval — TF-IDF + cosine over every SKILL.md `description`. Run `python devtools/skill_search.py "<task title>" --top 5` at the start of a task to load the right skills. Falls back to Jaccard tokens if scikit-learn is missing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `devtools/validate_task_results.py`                                     | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`). Also warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `.github/workflows/task_quality_gate.yml`                               | PR gate: runs `validate_task_results.py` + `consistency_checker.py` on changed task folders only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `devtools/validate_task_results.py`                                     | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`), `--enterprise-gate`. Warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled. With `--enterprise-gate` a Standard/Comprehensive task carrying neither a `benchmark_validation` nor a model-vs-plant comparison **fails** instead of warning. Task folders outside the repo are supported (`neqsim --set-task-root`).                                                                                                                                                                                                                                                          |
+| `devtools/verify_skill_api_refs.py`                                     | API-drift linter: resolves every fully-qualified `neqsim.*` class reference in `.github/skills/` and `.github/agents/` against the Java source tree and fails on unresolved ones; warns on missing or stale `last_verified`. Bare class names are ignored on purpose (false positives). Runs in `skills_agents_lint.yml`.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `neqsim report [TASK_DIR]`                                              | Runs the canonical `devtools/task_template/step3_report/generate_report.py` against **any** task folder (old or new), forwarding `--paper` / `--template PATH` / `--no-template`. Use it instead of copying the generator into a task; equivalent to `--task-dir PATH` / `NEQSIM_TASK_DIR`.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `.github/workflows/task_quality_gate.yml`                               | PR gate: runs `validate_task_results.py --changed --enterprise-gate` + `consistency_checker.py` on changed task folders only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `.github/workflows/task_nip_issues.yml`                                 | On push to master, opens one labelled GitHub issue per newly added `neqsim_improvements.md` (deduped by title).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `step1_scope_and_research/capability_assessment.md` (per task)          | Mandatory artifact for Standard/Comprehensive tasks: capability requirements matrix, NeqSim coverage check, gap implementation plan, skills to load. Auto-scaffolded into every new task by `new_task.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `.github/agents/literature.scout.agent.md`                              | Literature & internal-database scout — pulls papers, standards, and STID/vendor docs into `step1_scope_and_research/references/`, writes `references/manifest.json`, summarises into `notes.md`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -1211,7 +1279,7 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `CHANGELOG_AGENT_NOTES.md`                                              | API changes agents need to know about                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` | Pinch analysis (PinchAnalysis, HeatStream) for heat integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `src/main/java/neqsim/process/equipment/powergeneration/`               | Power generation (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `src/main/java/neqsim/util/agentic/`                                    | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `src/main/java/neqsim/util/agentic/`                                    | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession). `AgentBenchmarkSuite` declares reference problems and `AgentBenchmarkRunner` executes them against NeqSim; `AgentBenchmarkRunnerTest` is the CI accuracy gate (`agent_benchmark` job in `verify_build.yml`) and writes `target/agent_benchmark_summary.txt` for the job summary. Reference values are sourced from CoolProp HEOS via `devtools/source_benchmark_references.py` — regenerate them there rather than editing numbers by hand. Only problems whose reference source is **not** prefixed `UNVERIFIED` are asserted on; the two still unverified are underdetermined (no declared flow rate / vessel volume) and stay visible in the summary.                                                                                                                                              |
 | `.github/agents/reaction.engineering.agent.md`                          | Reaction engineering systems design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `.github/agents/control.system.agent.md`                                | Control system and instrumentation design                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `.github/agents/emissions.environmental.agent.md`                       | Emissions calculation and environmental compliance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |

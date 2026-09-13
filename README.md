@@ -426,7 +426,26 @@ neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
 # 4. Install AI agents into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
+
+# 5. Choose where solved tasks are saved (optional; defaults to <repo>\task_solve)
+neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+
+# 6. Choose the Word template reports are built from (optional)
+neqsim --set-report-template "C:\Users\you\Documents\company report template.docx"
+neqsim --show-report-template
 ```
+
+The task root is where `neqsim new-task` and the AI agents create each dated task
+folder, so studies can live outside the clone and survive re-cloning. It is saved in
+`~/.neqsim/task_defaults.json` and shared by all NeqSim clones. Override one task with
+`neqsim new-task "title" --task-root "PATH"`, or remove the setting with
+`neqsim --reset-task-root` — existing tasks are never moved.
+
+The report template is saved in the same file and makes every generated
+`Report.docx` inherit your organisation's Word styles, fonts, headers, and footers.
+Override one run with `python step3_report/generate_report.py --template "PATH"`
+(or `--no-template`), and remove the setting with `neqsim --reset-report-template`.
 
 ### Run tests
 

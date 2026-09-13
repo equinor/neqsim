@@ -7,6 +7,8 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 
 /**
@@ -75,78 +77,84 @@ public class MechanicalDesignResponse implements java.io.Serializable {
   // ============================================================================
 
   /** Total weight in kg. */
-  private double totalWeight;
+  private double totalWeight = Double.NaN;
 
   /** Vessel shell weight in kg. */
-  private double vesselWeight;
+  private double vesselWeight = Double.NaN;
 
   /** Internals weight in kg. */
-  private double internalsWeight;
+  private double internalsWeight = Double.NaN;
 
   /** Piping weight in kg. */
-  private double pipingWeight;
+  private double pipingWeight = Double.NaN;
 
   /** Nozzles weight in kg. */
-  private double nozzlesWeight;
+  private double nozzlesWeight = Double.NaN;
 
   /** Electrical and instrumentation weight in kg. */
-  private double eiWeight;
+  private double eiWeight = Double.NaN;
 
   /** Structural steel weight in kg. */
-  private double structuralWeight;
+  private double structuralWeight = Double.NaN;
 
   /** Operating weight (with contents) in kg. */
-  private double operatingWeight;
+  private double operatingWeight = Double.NaN;
 
   // ============================================================================
   // Design Conditions
   // ============================================================================
 
   /** Maximum design pressure in bara. */
-  private double maxDesignPressure;
+  private double maxDesignPressure = Double.NaN;
 
   /** Minimum design pressure in bara. */
-  private double minDesignPressure;
+  private double minDesignPressure = Double.NaN;
 
   /** Maximum design temperature in °C. */
-  private double maxDesignTemperature;
+  private double maxDesignTemperature = Double.NaN;
 
   /** Minimum design temperature in °C. */
-  private double minDesignTemperature;
+  private double minDesignTemperature = Double.NaN;
 
   /** Maximum operating pressure in bara. */
-  private double maxOperatingPressure;
+  private double maxOperatingPressure = Double.NaN;
 
   /** Maximum operating temperature in °C. */
-  private double maxOperatingTemperature;
+  private double maxOperatingTemperature = Double.NaN;
 
   // ============================================================================
   // Dimensions
   // ============================================================================
 
   /** Inner diameter in meters. */
-  private double innerDiameter;
+  private double innerDiameter = Double.NaN;
 
   /** Outer diameter in meters. */
-  private double outerDiameter;
+  private double outerDiameter = Double.NaN;
 
   /** Tangent-to-tangent length in meters. */
-  private double tangentLength;
+  private double tangentLength = Double.NaN;
 
-  /** Wall thickness in mm. */
-  private double wallThickness;
+  /** Wall thickness in the legacy getter unit, declared by wallThicknessUnit. */
+  private double wallThickness = Double.NaN;
+
+  /** Unit of the legacy wallThickness field; null if the equipment has no verified unit contract. */
+  private String wallThicknessUnit;
+
+  /** Unit-labelled snapshot for geometry and downstream design calculations. */
+  private MechanicalDesignData designData;
 
   /** Module length (plot space) in meters. */
-  private double moduleLength;
+  private double moduleLength = Double.NaN;
 
   /** Module width (plot space) in meters. */
-  private double moduleWidth;
+  private double moduleWidth = Double.NaN;
 
   /** Module height in meters. */
-  private double moduleHeight;
+  private double moduleHeight = Double.NaN;
 
   /** Total volume in m3. */
-  private double totalVolume;
+  private double totalVolume = Double.NaN;
 
   // ============================================================================
   // Materials
@@ -159,17 +167,17 @@ public class MechanicalDesignResponse implements java.io.Serializable {
   private String headMaterial;
 
   /** Corrosion allowance in mm. */
-  private double corrosionAllowance;
+  private double corrosionAllowance = Double.NaN;
 
   // ============================================================================
   // Utility Requirements
   // ============================================================================
 
   /** Power requirement in kW (positive = consumed, negative = produced). */
-  private double power;
+  private double power = Double.NaN;
 
   /** Heating/Cooling duty in kW (positive = heating, negative = cooling). */
-  private double duty;
+  private double duty = Double.NaN;
 
   // ============================================================================
   // Equipment-Specific Data
@@ -192,31 +200,31 @@ public class MechanicalDesignResponse implements java.io.Serializable {
   private int equipmentCount;
 
   /** Total power required in kW. */
-  private double totalPowerRequired;
+  private double totalPowerRequired = Double.NaN;
 
   /** Total power recovered in kW. */
-  private double totalPowerRecovered;
+  private double totalPowerRecovered = Double.NaN;
 
   /** Net power requirement in kW. */
-  private double netPower;
+  private double netPower = Double.NaN;
 
   /** Total heating duty in kW. */
-  private double totalHeatingDuty;
+  private double totalHeatingDuty = Double.NaN;
 
   /** Total cooling duty in kW. */
-  private double totalCoolingDuty;
+  private double totalCoolingDuty = Double.NaN;
 
   /** Total plot space in m2. */
-  private double totalPlotSpace;
+  private double totalPlotSpace = Double.NaN;
 
   /** Footprint length in m. */
-  private double footprintLength;
+  private double footprintLength = Double.NaN;
 
   /** Footprint width in m. */
-  private double footprintWidth;
+  private double footprintWidth = Double.NaN;
 
   /** Maximum height in m. */
-  private double maxHeight;
+  private double maxHeight = Double.NaN;
 
   /** Weight breakdown by equipment type. */
   private Map<String, Double> weightByType = new LinkedHashMap<String, Double>();
@@ -242,11 +250,11 @@ public class MechanicalDesignResponse implements java.io.Serializable {
 
     private String name;
     private String type;
-    private double weight;
-    private double designPressure;
-    private double designTemperature;
-    private double power;
-    private double duty;
+    private double weight = Double.NaN;
+    private double designPressure = Double.NaN;
+    private double designTemperature = Double.NaN;
+    private double power = Double.NaN;
+    private double duty = Double.NaN;
     private String dimensions;
 
     /**
@@ -379,6 +387,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
 
     // Design conditions
     this.maxDesignPressure = mecDesign.getMaxDesignPressure();
+    this.minDesignPressure = mecDesign.getMinDesignPressure();
     this.maxDesignTemperature = mecDesign.getDesignMaxTemperatureLimit("C");
     this.minDesignTemperature = mecDesign.getDesignMinTemperatureLimit("C");
     this.maxOperatingPressure = mecDesign.getMaxOperationPressure();
@@ -389,6 +398,8 @@ public class MechanicalDesignResponse implements java.io.Serializable {
     this.outerDiameter = mecDesign.getOuterDiameter();
     this.tangentLength = mecDesign.getTantanLength();
     this.wallThickness = mecDesign.getWallThickness();
+    this.wallThicknessUnit = MechanicalDesignData.wallThicknessUnit(mecDesign);
+    this.designData = new MechanicalDesignData(mecDesign);
     this.moduleLength = mecDesign.getModuleLength();
     this.moduleWidth = mecDesign.getModuleWidth();
     this.moduleHeight = mecDesign.getModuleHeight();
@@ -462,7 +473,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
    */
   public String toJson() {
     Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().serializeNulls().create();
-    return gson.toJson(this);
+    return gson.toJson(finiteJson(gson.toJsonTree(this)));
   }
 
   /**
@@ -471,8 +482,30 @@ public class MechanicalDesignResponse implements java.io.Serializable {
    * @return compact JSON representation
    */
   public String toCompactJson() {
-    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
-    return gson.toJson(this);
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().create();
+    return gson.toJson(finiteJson(gson.toJsonTree(this)));
+  }
+
+  /**
+   * Replace non-finite numeric values with explicit JSON nulls, including nested calculator results.
+   *
+   * @param element response tree
+   * @return strict JSON tree
+   */
+  private static JsonElement finiteJson(JsonElement element) {
+    if (element.isJsonObject()) {
+      for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+        entry.setValue(finiteJson(entry.getValue()));
+      }
+    } else if (element.isJsonArray()) {
+      for (int i = 0; i < element.getAsJsonArray().size(); i++) {
+        element.getAsJsonArray().set(i, finiteJson(element.getAsJsonArray().get(i)));
+      }
+    } else if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()
+        && !Double.isFinite(element.getAsDouble())) {
+      return JsonNull.INSTANCE;
+    }
+    return element;
   }
 
   /**
@@ -498,7 +531,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
     }
 
     try {
-      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().serializeNulls().setPrettyPrinting().create();
 
       // Parse both JSONs
       JsonObject mecDesignJson = JsonParser.parseString(toJson()).getAsJsonObject();

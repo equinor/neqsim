@@ -3,6 +3,7 @@ name: paperlab_journal_positioning
 description: |
   Match PaperLab manuscripts to journals and position the title, abstract,
   novelty angle, article type, keywords, and cover letter for submission.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Journal Positioning

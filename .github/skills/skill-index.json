@@ -1783,5 +1783,48 @@
  "water application rate l/min/m2": [
   "neqsim-firewater-deluge-design",
   "neqsim-standards-lookup"
+ ],
+ "compressor anti-surge recycle control": [
+  "neqsim-compressor-antisurge-recycle",
+  "neqsim-dynamic-simulation",
+  "neqsim-controllability-operability"
+ ],
+ "minimum speed recycle controller and surge margin": [
+  "neqsim-compressor-antisurge-recycle",
+  "neqsim-dynamic-simulation"
+ ],
+ "compressor recycle fuel gas and CO2 savings": [
+  "neqsim-compressor-antisurge-recycle",
+  "neqsim-power-generation",
+  "neqsim-optimization-and-doe"
+ ],
+ "pipeline survey processing and as-built profile": [
+  "neqsim-pipeline-survey-processing",
+  "neqsim-flow-assurance",
+  "neqsim-subsea-and-wells"
+ ],
+ "free span and burial cover from survey data": [
+  "neqsim-pipeline-survey-processing",
+  "neqsim-subsea-and-wells",
+  "neqsim-flow-assurance"
+ ],
+ "pipeline elevation profile from KP and depth soundings": [
+  "neqsim-pipeline-survey-processing",
+  "neqsim-flow-assurance"
+ ],
+ "thermodynamic initialization level init(n)": [
+  "neqsim-thermodynamic-initialization",
+  "neqsim-api-patterns",
+  "neqsim-troubleshooting"
+ ],
+ "initProperties before reading viscosity or density": [
+  "neqsim-thermodynamic-initialization",
+  "neqsim-api-patterns",
+  "neqsim-troubleshooting"
+ ],
+ "zero transport properties after flash": [
+  "neqsim-thermodynamic-initialization",
+  "neqsim-troubleshooting",
+  "neqsim-api-patterns"
  ]
 }

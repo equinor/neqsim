@@ -37,6 +37,16 @@ WATER_INVENTORY_PROJECTION_TEST = (
     / "src/test/java/neqsim/process/equipment/reactor/"
     / "AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest.java"
 )
+ELEMENTAL_SULFUR_ALLOCATION = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationElementalSulfurAllocation.java"
+)
+ELEMENTAL_SULFUR_ALLOCATION_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationElementalSulfurAllocationTest.java"
+)
 
 
 class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
@@ -55,6 +65,12 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         )
         cls.water_inventory_projection_test = WATER_INVENTORY_PROJECTION_TEST.read_text(
             encoding="utf-8"
+        )
+        cls.elemental_sulfur_allocation = ELEMENTAL_SULFUR_ALLOCATION.read_text(
+            encoding="utf-8"
+        )
+        cls.elemental_sulfur_allocation_test = (
+            ELEMENTAL_SULFUR_ALLOCATION_TEST.read_text(encoding="utf-8")
         )
         cls.normalized = " ".join(cls.guide.split())
 
@@ -373,6 +389,81 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 
+    def test_sulfur_equivalent_budget_is_documented_and_executable(self):
+        for token in (
+            "Product-agnostic sulfur-equivalent budget",
+            "one mole of sulfur atoms",
+            r"\dot m_{S,\mathrm{equiv},r,i}",
+            r"n_{r,i,\mathrm{reacted}}M_S",
+            "M_S = 0.032065 kg/mol",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "mean sulfur-equivalent loss in kg/h and kg/s",
+            "mass-basis closure residual",
+            "not an elemental-sulfur or S8 yield",
+            "separately qualified stoichiometry and selectivity",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "sulfurEquivalentMassKg(",
+            "getLowerRateMeanSulfurEquivalentMassRateKgPerHour()",
+            "getNominalMeanSulfurEquivalentMassRateKgPerSecond()",
+            "getUpperRateReactedSulfurEquivalentMassKg()",
+            "getLowerRateSulfurEquivalentClosureResidualKg()",
+            "getNominalReactedSulfurEquivalentMassKg()",
+            "getUpperRateSulfurEquivalentClosureResidualKg()",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testSegmentSulfurEquivalentMassUsesSharedAuthorityAndClosesRateIntegral",
+            "testTrajectorySulfurEquivalentMassClosesAllPathsAndSegmentSums",
+            "assertSulfurEquivalentPath(",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
+    def test_elemental_sulfur_allocation_boundary_is_documented_and_executable(self):
+        for token in (
+            "Explicit elemental-sulfur allocation boundary",
+            "`AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(...)`",
+            "caller-defined elemental-sulfur scenario",
+            r"\dot m_{S,\mathrm{allocated}}=f_{ES}\dot m_{S,\mathrm{equiv}}",
+            r"m_{S,\mathrm{unallocated}}=m_{S,\mathrm{equiv}}-m_{S,\mathrm{allocated}}",
+            "unallocated sulfur-equivalent remainder",
+            "presence does not qualify that basis",
+            "must not apply both the original source budget and the unallocated remainder",
+            "does not create S8 molecular amounts",
+            "execute a solid flash",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static Result allocate(",
+            "elementalSulfurAllocationFraction",
+            "allocationBasisIdentifier",
+            "getSourceSulfurEquivalentMassRateKgPerHour()",
+            "getAllocatedElementalSulfurMassRateKgPerHour()",
+            "getUnallocatedSulfurEquivalentMassRateKgPerHour()",
+            "getRateClosureResidualKgPerHour()",
+            "getAllocatedElementalSulfurMassKg()",
+            "getUnallocatedSulfurEquivalentMassKg()",
+            "getMassClosureResidualKg()",
+            "finiteProduct(",
+            "finiteDifference(",
+        ):
+            self.assertIn(token, self.elemental_sulfur_allocation)
+
+        for token in (
+            "testQuarterAllocationClosesEveryFitPathAndPreservesOrdering",
+            "testZeroAndFullAllocationAreExactIdentities",
+            "testAllocationScalesWithWaterInventoryAndIsSegmentSplitInvariant",
+            "testAllocationReceiptIsSerializableAndDeterministic",
+            "testMissingInvalidOrUnrepresentableAllocationFailsClosed",
+        ):
+            self.assertIn(token, self.elemental_sulfur_allocation_test)
+
 
     def test_absolute_reacted_moles_target_is_documented_and_executable(self):
         for token in (
@@ -512,4 +603,3 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

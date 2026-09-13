@@ -389,7 +389,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
-    outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
@@ -425,6 +424,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       innerDiameter = Daim;
       tantanLength = Length2;
     }
+    updateWallThicknessForSizedDiameter();
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
@@ -493,6 +493,18 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Updates pressure-wall thickness and outside diameter after the final sizing decision, before calculating shell,
+   * internals and module weights. Without a pressure-vessel standard, retains the specified wall thickness.
+   */
+  protected void updateWallThicknessForSizedDiameter() {
+    if (getDesignStandard().containsKey("pressure vessel design code")) {
+      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+          .calcWallThickness(innerDiameter);
+    }
+    outerDiameter = innerDiameter + 2.0 * wallThickness;
+  }
+
+  /**
    * Performs the sizing calculations without reading design specifications. This method is called by autoSize() after
    * design specs have been read and any user overrides have been applied.
    */
@@ -531,7 +543,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // Calculate diameter based on the orientation-specific gas area.
     innerDiameter = Math.sqrt(4.0 * (maxDesignVolumeFlow / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
-    outerDiameter = innerDiameter + 2.0 * wallThickness;
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
@@ -554,6 +565,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (separatorTotalLength / innerDiameter > 6 || separatorTotalLength / innerDiameter < 3) {
       tantanLength = innerDiameter * 4.0; // Default to L/D = 5
     }
+
+    updateWallThicknessForSizedDiameter();
 
     // Weight calculations
     emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
@@ -579,6 +592,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     setWeigthVesselShell(emptyVesselWeight);
     setInnerDiameter(innerDiameter);
+    setWeigthInternals(internalsWeight);
     setOuterDiameter(outerDiameter);
     setWeightElectroInstrument(electricalWeight);
     setWeightNozzle(externalNozzelsWeight);
@@ -961,49 +975,67 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate gas outlet nozzle diameter. Based on gas velocity limit (typically 15-20 m/s).
+   * Calculate and store gas outlet nozzle diameter using actual gas flow in m3/s and a 20 m/s velocity limit. Selects
+   * the gas phase by type, independently of its phase index. Rounds upward in 50 mm increments; absent gas or zero gas
+   * flow gives a diameter of zero. Run the separator before sizing.
    *
    * @return gas outlet nozzle ID in meters
    */
   public double calcGasOutletNozzleID() {
     Separator separator = (Separator) getProcessEquipment();
-    double gasFlowRate = separator.getThermoSystem().getPhase(0).getVolume() / 1e5; // m³/hr
+    double gasFlowRate = getActualPhaseFlowRate(separator.getThermoSystem(), "gas");
 
     // Max gas velocity in outlet nozzle: 20 m/s
     double maxVelocity = 20.0;
-    double minArea = (gasFlowRate / 3600.0) / maxVelocity;
+    double minArea = gasFlowRate / maxVelocity;
     gasOutletNozzleID = Math.sqrt(4.0 * minArea / Math.PI);
 
-    // Round up to nearest standard size
+    // Round the calculated diameter upward in 50 mm increments
     gasOutletNozzleID = Math.ceil(gasOutletNozzleID / 0.05) * 0.05;
 
     return gasOutletNozzleID;
   }
 
   /**
-   * Calculate oil outlet nozzle diameter. Based on liquid velocity limit (typically 1-2 m/s).
+   * Calculate and store liquid outlet nozzle diameter using actual liquid flow in m3/s and a 1.5 m/s velocity limit.
+   * For a two-outlet {@link Separator}, includes both oil and aqueous phases in the common liquid outlet. For a
+   * {@link ThreePhaseSeparator}, includes only oil. Selects phases by type, independently of their indices. Rounds
+   * upward in 25 mm increments with a 50 mm minimum, including absent liquid or zero flow. Run the separator before
+   * sizing.
    *
    * @return oil outlet nozzle ID in meters
    */
   public double calcOilOutletNozzleID() {
     Separator separator = (Separator) getProcessEquipment();
-    double oilFlowRate = 0.0;
-    if (separator.getThermoSystem().getNumberOfPhases() > 1) {
-      oilFlowRate = separator.getThermoSystem().getPhase(1).getVolume() / 1e5; // m³/hr
-    }
-    if (oilFlowRate < 1e-10) {
-      return 0.05; // Minimum 50mm
+    SystemInterface fluid = separator.getThermoSystem();
+    double oilFlowRate = getActualPhaseFlowRate(fluid, "oil");
+    if (!(separator instanceof ThreePhaseSeparator)) {
+      oilFlowRate += getActualPhaseFlowRate(fluid, "aqueous");
     }
 
     // Max liquid velocity in outlet nozzle: 1.5 m/s
     double maxVelocity = 1.5;
-    double minArea = (oilFlowRate / 3600.0) / maxVelocity;
+    double minArea = oilFlowRate / maxVelocity;
     oilOutletNozzleID = Math.sqrt(4.0 * minArea / Math.PI);
 
-    // Round up to nearest standard size, minimum 50mm
+    // Round the calculated diameter upward in 25 mm increments, minimum 50 mm
     oilOutletNozzleID = Math.max(0.05, Math.ceil(oilOutletNozzleID / 0.025) * 0.025);
 
     return oilOutletNozzleID;
+  }
+
+  /**
+   * Get actual volumetric flow for a named phase without evaluating density for an empty phase.
+   *
+   * @param fluid the separator fluid after the process calculation
+   * @param phaseType the phase type to select
+   * @return actual volumetric flow in m3/s, or zero for an absent or empty phase
+   */
+  private double getActualPhaseFlowRate(SystemInterface fluid, String phaseType) {
+    if (!fluid.hasPhaseType(phaseType) || fluid.getPhase(phaseType).getNumberOfMolesInPhase() == 0.0) {
+      return 0.0;
+    }
+    return fluid.getPhase(phaseType).getFlowRate("m3/sec");
   }
 
   // ==================== Setters for Level Fractions ====================

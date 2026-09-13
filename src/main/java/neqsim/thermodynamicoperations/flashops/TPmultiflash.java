@@ -2514,6 +2514,8 @@ public class TPmultiflash extends TPflash {
   private static final class PhaseSplitSnapshot {
     private final int numberOfPhases;
     private final PhaseType[] phaseTypes;
+    /** Physical phase-array slot backing each logical phase, so a restore cannot re-map the phases. */
+    private final int[] phaseIndices;
     private final double[] betas;
     private final double[][] compositions;
     private final double[] kValues;
@@ -2522,11 +2524,13 @@ public class TPmultiflash extends TPflash {
       numberOfPhases = source.getNumberOfPhases();
       int numberOfComponents = source.getPhase(0).getNumberOfComponents();
       phaseTypes = new PhaseType[numberOfPhases];
+      phaseIndices = new int[numberOfPhases];
       betas = new double[numberOfPhases];
       compositions = new double[numberOfPhases][numberOfComponents];
       kValues = new double[numberOfComponents];
       for (int phase = 0; phase < numberOfPhases; phase++) {
         phaseTypes[phase] = source.getPhase(phase).getType();
+        phaseIndices[phase] = source.getPhaseIndex(phase);
         betas[phase] = source.getBeta(phase);
         for (int comp = 0; comp < numberOfComponents; comp++) {
           compositions[phase][comp] = source.getPhase(phase).getComponent(comp).getx();
@@ -2541,12 +2545,19 @@ public class TPmultiflash extends TPflash {
   /**
    * Reinstates a retained phase split after a rejected multiphase restart.
    *
+   * <p>
+   * The recorded phase-array slots are reinstated as well. Forcing the logical phases onto slots {@code 0..n-1} instead
+   * would move each phase onto a different physical phase object, and {@link SystemInterface#setPhaseType} is silently
+   * ignored when {@link SystemInterface#allowPhaseShift()} is false, so the compositions and the phase types could end
+   * up describing different phases.
+   * </p>
+   *
    * @param snapshot converged split captured before the restart
    */
   private void restorePhaseSplit(PhaseSplitSnapshot snapshot) {
     system.setNumberOfPhases(snapshot.numberOfPhases);
     for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
-      system.setPhaseIndex(phase, phase);
+      system.setPhaseIndex(phase, snapshot.phaseIndices[phase]);
       system.setPhaseType(phase, snapshot.phaseTypes[phase]);
       system.setBeta(phase, snapshot.betas[phase]);
       for (int comp = 0; comp < snapshot.compositions[phase].length; comp++) {
@@ -2556,6 +2567,25 @@ public class TPmultiflash extends TPflash {
     }
     system.normalizeBeta();
     system.init(1);
+  }
+
+  /**
+   * Checks that an adopted restart endpoint is at least as good as the split it replaced.
+   *
+   * @param referenceGibbs extensive Gibbs energy of the converged endpoint before the restart, in J
+   * @return {@code true} when the adopted split still holds a gas phase and a finite, not worse Gibbs energy
+   */
+  private boolean adoptedSplitIsUsable(double referenceGibbs) {
+    try {
+      if (!system.hasPhaseType(PhaseType.GAS)) {
+        return false;
+      }
+      double gibbs = system.getGibbsEnergy();
+      return !Double.isNaN(gibbs) && !Double.isInfinite(gibbs) && gibbs <= referenceGibbs;
+    } catch (Exception ex) {
+      logger.debug("Vapour-appearance restart verification failed: {}", ex.getMessage());
+      return false;
+    }
   }
 
   /**
@@ -2572,14 +2602,20 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * The restart is accepted only when it keeps every phase type the converged endpoint already had, adds a gas phase,
-   * and lowers the extensive Gibbs energy; otherwise the retained split is reinstated. The repair can therefore only
-   * ever add the missing vapour, never trade an existing liquid phase for it, and the endpoint can never become worse
-   * than the one already converged. Recursion is blocked on two levels: the caller sets the one-shot
-   * {@code vapourPhaseSeedAttempted} flag before entry, and {@link #VAPOUR_RESTART_ACTIVE} stops the nested
-   * {@link TPmultiflash} instance created below from starting a restart of its own.
+   * and lowers the extensive Gibbs energy. The restart runs on a clone, so a rejected restart leaves the converged
+   * split untouched rather than rewriting it. The repair can therefore only ever add the missing vapour, never trade an
+   * existing liquid phase for it, and the endpoint can never become worse than the one already converged. Recursion is
+   * blocked on two levels: the caller sets the one-shot {@code vapourPhaseSeedAttempted} flag before entry, and
+   * {@link #VAPOUR_RESTART_ACTIVE} stops the nested {@link TPmultiflash} instance created below from starting a restart
+   * of its own.
    * </p>
    */
   private void restartMultiphaseFromFreshEstimate() {
+    // Adoption re-types phases, which setPhaseType silently refuses to do when phase shifts are
+    // disallowed; the repair would then leave compositions and phase types describing different phases.
+    if (!system.allowPhaseShift()) {
+      return;
+    }
     double referenceGibbs;
     PhaseSplitSnapshot snapshot;
     try {
@@ -2589,6 +2625,7 @@ public class TPmultiflash extends TPflash {
       logger.debug("Vapour-appearance restart snapshot failed: {}", ex.getMessage());
       return;
     }
+    boolean convergedSplitReplaced = false;
     try {
       SystemInterface trial = system.clone();
       trial.setNumberOfPhases(2);
@@ -2618,13 +2655,19 @@ public class TPmultiflash extends TPflash {
           logger.debug("Vapour-appearance restart recovered a gas phase: G {} -> {} J", referenceGibbs,
               trial.getGibbsEnergy());
         }
+        convergedSplitReplaced = true;
         restorePhaseSplit(new PhaseSplitSnapshot(trial));
-        return;
+        if (!adoptedSplitIsUsable(referenceGibbs)) {
+          logger.debug("Vapour-appearance restart did not survive adoption; keeping the converged endpoint");
+          restorePhaseSplit(snapshot);
+        }
       }
     } catch (Exception ex) {
       logger.debug("Vapour-appearance restart failed: {}", ex.getMessage());
+      if (convergedSplitReplaced) {
+        restorePhaseSplit(snapshot);
+      }
     }
-    restorePhaseSplit(snapshot);
   }
 
   /**

@@ -4,6 +4,7 @@ description: |
   Audit PaperLab books for claim, figure, equation, notebook, citation, and
   unit traceability. Use when a book must become scientifically defensible and
   reproducible, especially for NeqSim-backed quantitative chapters.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Scientific Traceability Audit

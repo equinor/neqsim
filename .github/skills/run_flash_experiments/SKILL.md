@@ -1,6 +1,7 @@
 ---
 name: "run_flash_experiments"
 description: "Execute NeqSim flash calculations in batch mode, collect metrics, and produce"
+last_verified: "2026-09-12"
 ---
 
 # Skill: Run Flash Experiments

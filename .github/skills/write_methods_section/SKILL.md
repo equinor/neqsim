@@ -1,6 +1,7 @@
 ---
 name: "write_methods_section"
 description: "Draft a publication-quality Methods section for a computational thermodynamics"
+last_verified: "2026-09-12"
 ---
 
 # Skill: Write Methods Section

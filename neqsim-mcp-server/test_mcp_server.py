@@ -331,6 +331,15 @@ def test_protocol():
           and "qualified process-safety review" in lopa_description,
           lopa_description)
 
+    sil_tool = next((tool for tool in tools if tool.get("name") == "runSIL"), {})
+    sil_description = sil_tool.get("description", "")
+    check("bounded SIL discovery contract",
+          "16384 UTF-8 bytes" in sil_description
+          and "100 components" in sil_description
+          and "does not select or approve SIL" in sil_description
+          and "independent functional-safety assessment" in sil_description,
+          sil_description)
+
     # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
              "runPlugin", "getProgress", "streamSimulation",
@@ -1515,8 +1524,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 94 protocol scenarios",
-          tests.get("protocolScenarioCount") == 94,
+    check("evidence inventory freezes 95 protocol scenarios",
+          tests.get("protocolScenarioCount") == 95,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1577,13 +1586,13 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-seven bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.37"
-          and limitations.get("contractTestedToolCount") == 37
-          and limitations.get("confirmedGapToolCount") == 14
+    check("thirty-eight bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.38"
+          and limitations.get("contractTestedToolCount") == 38
+          and limitations.get("confirmedGapToolCount") == 13
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1773,6 +1782,27 @@ def test_capabilities():
           and "does not identify hazards" in lopa.get("evidenceBoundary", "")
           and "qualified process-safety review" in lopa.get("evidenceBoundary", ""),
           str(lopa))
+    sil = coverage_records.get("runSIL", {})
+    check("bounded SIF PFD screening has direct contract evidence",
+          sil.get("coverageStatus") == "CONTRACT_TESTED"
+          and sil.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"
+          and sil.get("contractEvidenceCount") == 8
+          and "src/main/java/neqsim/mcp/runners/SILRunner.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SILVerificationResult.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/SILRunnerTest.java"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_sil_protocol.py"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md"
+          in sil.get("contractEvidenceSources", [])
+          and "does not establish SRS completeness" in sil.get("evidenceBoundary", "")
+          and "independent functional-safety assessment" in sil.get("evidenceBoundary", ""),
+          str(sil))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1790,7 +1820,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 14
+          and limitations.get("confirmedGapToolCount") == 13
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2128,6 +2158,43 @@ def test_validate_results():
         "context": "general",
     })
     check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_sil_screening_contract():
+    """Exercise bounded SIF PFD screening without changing inventory status."""
+    print("\n=== SIL Screening Contract ===")
+    r = call_tool("runSIL", {
+        "silJson": json.dumps({
+            "name": "Synthetic shutdown",
+            "claimedSIL": 2,
+            "architecture": "1oo1",
+            "proofTestInterval_hours": 8760,
+            "components": [
+                {"name": "PT", "type": "sensor", "pfd": 0.001},
+                {"name": "Logic", "type": "logic", "pfd": 0.0005},
+                {"name": "Valve", "type": "finalElement", "pfd": 0.005},
+            ],
+        }),
+    })
+    check("SIL screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("SIL screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and r.get("inputBasis") == "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE",
+          str(r))
+    screening = r.get("screening", {})
+    check("SIL canonical component sum is exposed",
+          screening.get("pfdAvg") == 0.0065
+          and screening.get("silBandIsIndicative") is True
+          and screening.get("architectureSuitabilityVerified") is False,
+          str(screening))
+    invalid = call_tool("runSIL", {"silJson": "[]"})
+    error_code = invalid.get("code")
+    if error_code is None and invalid.get("errors"):
+        error_code = invalid["errors"][0].get("code")
+    check("SIL malformed input fails closed",
+          invalid.get("status") == "error" and error_code == "INVALID_INPUT",
+          str(invalid))
 
 
 # --- Cross-validation tools ---
@@ -2588,6 +2655,7 @@ if __name__ == "__main__":
         test_design_utilities()
         test_compare_processes()
         test_validate_results()
+        test_sil_screening_contract()
         test_cross_validate_models()
         test_parametric_study()
 

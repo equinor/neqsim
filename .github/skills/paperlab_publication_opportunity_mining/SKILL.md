@@ -4,6 +4,7 @@ description: |
   Mine NeqSim and PaperLab repositories for publishable scientific papers,
   book chapters, benchmark notes, and review articles. Use when looking for the
   next high-impact PaperLab publication opportunity.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Publication Opportunity Mining

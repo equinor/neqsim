@@ -181,6 +181,7 @@ When writing documentation that includes Java or Python code examples:
 - **Distillation Column**: `DistillationColumn` provides sequential, damped, and inside-out solvers; maintain solver metrics (`lastIterationCount`, `lastMassResidual`, `lastEnergyResidual`) and feed-tray bookkeeping when altering column logic to keep tests like `insideOutSolverMatchesStandardOnDeethanizerCase` green.
 - **ProcessSystem Utilities**: Use `ProcessSystem.add(unit)` to build flowsheets, `run()`/`run(UUID)` for execution, `copy()` when duplicating equipment, `connect()` for explicit connections, and `getAllElements()` to query all equipment, controllers, and measurements; modules can self-initialize through `ModuleInterface` - respect these hooks if you add packaged subsystems.
 - **ProcessModel for Multi-Area Plants (MANDATORY)**: For large plants (platforms, gas plants), split into separate `ProcessSystem` objects per process area then combine with `ProcessModel`. Use `plant.add("area name", processSystem)` to register named areas, `plant.run()` iterates until convergence, `plant.get("area name")` retrieves sub-processes, and `plant.getConvergenceSummary()` reports status. See the reference platform models for the canonical pattern: each area is a Python function returning a `ProcessSystem`, cross-system streams are shared by object reference, and all systems are composed into a `ProcessModel` at the end. **NEVER** add a `ProcessModule` or `ProcessModel` to a `ProcessSystem` - it will throw TypeError.
+- **Automatic recycle insertion (PREFERRED over hand-written tears)**: A loop wired straight back into an upstream mixer, with no `Recycle` in it, has no tolerance, acceleration or convergence report of its own; across `ProcessModel` areas it is closed only by the outer Gauss-Seidel pass. Call `process.makeRecycles()` / `plant.makeRecycles()` (optionally `makeRecycles(tolerance)`, default `1e-2`) to find those loops and close them with seeded, tuned `Recycle` units, or `setAutoRecycles(true)` to have `run()` and every `runUntilConverged(...)` overload do it. The tear point is the inlet with the smallest recycle ratio (tear flow / total inlet flow of the consuming unit), one edge is torn per round, and each generated recycle gets `setAdaptiveAcceleration(true)` plus an absolute flow tolerance at 1e-6 of the area's largest flow. Self-seeding and idempotent; only `Mixer` / `Manifold` inlets are tearable (others are logged and left alone); `setAutoRecycles` defaults to **false**. Backed by `neqsim.process.processmodel.AutoRecycleBuilder`; see `docs/process/controllers.md#automatic-recycle-insertion`.
 - **Self-configuring convergence (do NOT hand-pick numbers)**: `plant.runUntilConverged(maxIterations)` derives its own flow-noise filters (boundary flow floor, absolute flow tolerance, per-unit low-flow bypass) from the plant's own feed rate, and — when no tolerance was set — its own accuracy: `DEFAULT_ENGINEERING_TOLERANCE` (1e-3 relative on flow/T/P) instead of the historical 1e-4, plus acceptance of a residual that stops improving over `AUTO_TOLERANCE_STALL_WINDOW` (5) outer passes while below `getAutoToleranceCeiling()` (1e-2). Report with `getAutoTuningSummary()` / `getAutoToleranceSummary()` (also in `getConvergenceSummary()` and the `autoTuning` / `autoTolerance` blocks of `getConvergenceReportJson()`). Any explicit `setTolerance()` / per-variable setter / `runUntilConverged(n, tol)` marks the tolerance user-owned and disables **both** behaviours — so do not set `1e-3` "to be helpful". Opt out with `setAutoTolerance(false)` / `setAutoConvergenceTuning(false)`.
 - **Automation API (PREFERRED for agents)**: Use `ProcessAutomation` for string-addressable variable access instead of navigating Java class hierarchies. Get the facade via `process.getAutomation()` or `plant.getAutomation()` — **the same cached instance is returned on every call** so diagnostics history, learned corrections, and the dirty flag persist across agent turns. Discover equipment with `getUnitList()`, list variables with `getVariableList("unitName")` (returns `SimulationVariable` with INPUT/OUTPUT type, address, unit, description), read values with `getVariableValue("Unit.stream.property", "unit")`, write with `setVariableValue("Unit.property", value, "unit")`. For multi-area models, use area-qualified addresses: `"Area::Unit.stream.property"` with `getAreaList()` for discovery.
 - **Agentic Automation Extensions**: `ProcessAutomation` now exposes batch and introspection methods that emit a stable JSON schema (`SCHEMA_VERSION = "1.0"`):
@@ -632,6 +633,29 @@ Before finalizing documentation with links:
 See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class import paths and the full getting-results reference.
 
 ## Task-Solving Workflow (MANDATORY)
+
+**Task destination override:** For new tasks use `neqsim --show-task-root`.
+Resolution is explicit `--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved
+`~/.neqsim/task_defaults.json` default > repository `task_solve/`.
+Set it with `neqsim --set-task-root "PATH"` (or `cwd` to follow the terminal's
+folder); reset it with `neqsim --reset-task-root`. Literal `task_solve/` paths in
+these instructions are examples under the resolved root, not a forced repository location.
+Pass the created absolute task path to child agents, tools and validators; keep
+all artifacts under it. Resume existing tasks in place. For external task folders,
+set `NEQSIM_PROJECT_ROOT` to the source repository and `NEQSIM_TASK_DIR` to the
+active task when needed. Report destination failures instead of silently falling back.
+
+**Source documents:** the document root is **optional** - either set or undefined.
+When set, that folder **and all its subfolders** are the source library for every
+task: `neqsim --set-document-root "PATH"`, `neqsim --show-document-root`,
+`neqsim --reset-document-root`, and `neqsim documents [PATTERN]` to search it
+recursively. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > saved
+`document_root` in `~/.neqsim/task_defaults.json` > none. Every new task records
+the resolved value as `inputs.document_root` in its `study_config.yaml` (empty
+when undefined). Search it before declaring a standard, datasheet or drawing
+unavailable; when undefined, work from user-supplied documents and log a data
+gap. It is read-only: copy the documents a task uses into that task's
+`step1_scope_and_research/references/<source>/` instead of writing there.
 
 > **Full workflow is in `docs/development/TASK_SOLVING_GUIDE.md`.** Read it before starting any task.
 > Past solved tasks are indexed in `docs/development/TASK_LOG.md` — search before starting from scratch.

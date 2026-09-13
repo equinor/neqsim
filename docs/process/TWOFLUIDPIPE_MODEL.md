@@ -1983,21 +1983,38 @@ paths relative to the explicitly dated `477964b5` measurements above.
 ./mvnw -q -Dtest=TwoFluidInclinedFilmTengesdalPreparationTest -DexcludedTestGroups= -Dneqsim.unsplit.tengesdal.film-bridging.qualification=true test
 ```
 
-Current CI also exposes a legacy coupled-pressure instability after the corrected bubble-domain
-check. The unchanged five-second shared-closure tests pass with the pre-domain-guard detector
+At revision `1f65f683`, CI exposed a legacy coupled-pressure instability after the corrected bubble-domain
+check. The unchanged five-second shared-closure tests passed with the pre-domain-guard detector
 and fail with the corrected detector against otherwise identical hydrodynamics. Failed states
 show alternating riser pressure and velocities at legacy caps; the old negative inferred bubble
 void fraction had selected strong bubble drag there. Restoring that invalid branch or weakening
-the tests would conceal the problem. Keep these failures and the previous 600 s characterization
-as separate, dated evidence while the stable countercurrent operator remains unfinished.
+the tests would conceal the problem.
+
+The coupled-predictor repair uses centered face pressure for **every** method with coupled
+pressure/momentum enabled, including Euler and all Runge-Kutta methods. Previously only the
+IMEX method selected this existing pressure split. The other methods also added the
+gas-velocity-dependent AUSM pressure term to the common phase-pressure force. In the reproduced
+countercurrent riser this produced growing alternating pressures before reaching a pressure
+bound. The coupled correction already supplies the acoustic pressure response and collocated
+pressure coupling. Mass and energy advection retain their existing AUSM fluxes.
+
+`AUSMImplicitPressureSplitTest` checks constant-pressure traction with alternating phase
+velocities through all five pipe integration methods and checks restoration when coupled
+correction is disabled. Before the repair, the four non-IMEX methods returned 206248.842689 Pa
+for a uniform 200000 Pa field; all five now return the specified pressure. All five
+`CoupledPressureMomentumTengesdalProgressTest` methods pass, including the unchanged
+five-second shared-closure and implicit-subcell-force tests with zero rejected substeps.
+The pressure/volume tolerances, iteration budgets, bubble-domain guard and experimental
+acceptance criteria remain unchanged. This repair does not alter the unsplit preparation operator
+or turn its separate failing qualification cases into accepted trajectories.
 
 The complete-transaction, unsplit-execution, film-eligibility and Jacobian update passes
 **422 focused tests across 62 classes**: 418 fast tests and four separately selected slow
 component/phase/thermal/reference tests. This includes the existing seeded SRK-CPA four-way
 coupling with and without complete-pipe transactions and the 30/60-cell steady three-phase
 gate. The fifteen riser and one coarse-gas five-second qualification cases are separate failed
-gates, not part of that passing total. The prior CI legacy coupled-riser regressions also remain
-open; focused regression success is not a full-suite or general-flow qualification claim.
+gates, not part of that passing total. The subsequent coupled-predictor repair is separate
+evidence; focused regression success is not a full-suite or general-flow qualification claim.
 
 ### Standing benchmark acceptance metrics
 

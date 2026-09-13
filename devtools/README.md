@@ -116,7 +116,47 @@ neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
+
+# 5. Choose where solved tasks are saved (optional; defaults to <repo>\task_solve)
+neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+
+# 6. Choose the Word template reports are built from (optional)
+neqsim --set-report-template "C:\Users\you\Documents\company report template.docx"
+neqsim --show-report-template
+
+# 7. Choose the folder agents read source documents from (optional)
+neqsim --set-document-root "C:\Users\you\Documents\Engineering Documents"
+neqsim --show-document-root
+neqsim documents "C-12345"      # search the root and every subfolder
 ```
+
+The task root is the parent folder `neqsim new-task` and the AI agents create each
+dated task folder in. It is stored in `~/.neqsim/task_defaults.json`, so it is shared
+by every NeqSim clone and keeps studies outside the repository. Precedence:
+`--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved default > `<repo>/task_solve`.
+`neqsim --reset-task-root` removes the setting without moving existing tasks.
+
+The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
+footers every generated `Report.docx` inherits — set it once and all later tasks
+follow it. It is stored in the same settings file. Precedence:
+`generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` > the saved
+default > built-in styling. The template's own body text is dropped (pass
+`--keep-template-content` to keep it), `--no-template` ignores the setting for one
+run, and `neqsim --reset-report-template` removes it. `Paper.docx` keeps journal
+formatting and ignores the template.
+
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, and `neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
 
 **Behind a corporate proxy?** Set it for the current session (user-scope, no
 admin) so `git`, `pip`, and agent-catalog downloads work:

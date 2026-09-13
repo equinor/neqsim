@@ -13,6 +13,18 @@ argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas
   do not create a duplicate folder.
 - **New task:** Otherwise create a task folder immediately.
 
+**Destination:** Use the configured task root, not a hard-coded repository folder.
+`neqsim --show-task-root` resolves `--task-root PATH`, then
+`NEQSIM_TASK_ROOT`, then `~/.neqsim/task_defaults.json`, then repository `task_solve/`.
+The user can save a default with `neqsim --set-task-root "PATH"`.
+Treat every literal `task_solve/` path below as an example under that root.
+Use the absolute path returned by creation and pass it explicitly to every
+delegated agent, runner, validator, and MCP tool that accepts a task/output path.
+Keep `NEQSIM_PROJECT_ROOT` at the source repository for external tasks; do not
+confuse the parent task root with `NEQSIM_TASK_DIR` (one active task).
+If a tool cannot accept an external destination, report that limitation before
+using it; never silently create a second task in its default location.
+
 For new tasks, make only the minimal mental classification needed to choose the
 `--type` flag and a short title. Do not search, draft notes, or build a plan
 before the folder exists.
@@ -1876,6 +1888,16 @@ Document the independent check in `step2_analysis/notes.md` under a
     Only generate a scientific paper if the user explicitly requests it
     (`--paper` or `--paper-only`). The default workflow produces Report.docx
     and Report.html only.
+
+    **Corporate Word template:** Report.docx is automatically built from the
+    template the user configured with `neqsim --set-report-template "PATH"`
+    (or `NEQSIM_REPORT_TEMPLATE`), so it inherits their organisation's styles,
+    fonts, headers, and footers. Do not pass `--no-template` or override the
+    styling unless the user asks. If the generator exits with a missing-template
+    error, report it — do not fall back to unbranded output silently. Tasks
+    created before this support exists carry an older `generate_report.py`; copy
+    `devtools/task_template/step3_report/generate_report.py` over the task copy
+    to enable it.
 
     **Styled section formatting** (built into the template):
     - Risk Assessment: summary card with color-coded badges (High=red,

@@ -4,6 +4,7 @@ description: |
   Define notebook baseline, tolerance, and stale-figure rules for PaperLab
   computational books. Use when notebooks generate figures, tables, or numeric
   claims that must remain stable as NeqSim and dependencies evolve.
+last_verified: "2026-09-12"
 ---
 
 # PaperLab Notebook Regression Baselines

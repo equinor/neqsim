@@ -284,6 +284,82 @@ total-sulfide-loss evidence. They do not consume O2, assign sulfur products, cal
 phase transfer, create signed component sources, mutate pipeline/transient state, or update S8,
 FeS, wall, or sulfur-deposition inventories.
 
+## Product-agnostic sulfur-equivalent budget
+
+The segment and constant-water trajectory results also expose the sulfur-element mass equivalent
+of the qualified total-sulfide loss. One mole of total sulfide contains one mole of sulfur atoms,
+so the conversion is
+
+$
+\dot m_{S,\mathrm{equiv},r,i}
+=\dot n_{r,i}M_S, \qquad
+m_{S,\mathrm{equiv},r,i}
+=n_{r,i,\mathrm{reacted}}M_S.
+$
+
+where `M_S = 0.032065 kg/mol` reuses
+`IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL`. Segment results report lower-rate,
+nominal, and upper-rate mean sulfur-equivalent loss in kg/h and kg/s, plus reacted
+sulfur-equivalent mass in kg. The trajectory result reports cumulative reacted
+sulfur-equivalent mass and the corresponding mass-basis closure residual for every fit-scatter
+path.
+
+For positive duration, the mass-rate integral closes exactly:
+
+$
+\dot m_{S,\mathrm{equiv},r,i}\Delta t_i
+=m_{S,\mathrm{equiv},r,i}.
+$
+
+Zero duration gives exactly zero reacted sulfur-equivalent mass while preserving the finite
+analytical mean-rate limit. The segment sums telescope to the trajectory cumulative mass,
+unchanged-state subdivision is invariant, and all values scale linearly with the caller-supplied
+water inventory. Non-finite or unrepresentable derived mass fails closed.
+
+This is a sulfur-atom conservation view, not an elemental-sulfur or S8 yield. It does not identify
+S8, sulfate, thiosulfate, polysulfides, FeS, or any other product; prescribe selectivity or oxygen
+demand; calculate reaction heat; or update a stream, wall, deposit, filter, or pipeline state.
+Product and deposition calculations require separately qualified stoichiometry and selectivity
+and must compose with the existing sulfur analyser, wall inventory, oxidation source, solid
+flash, and filter implementations.
+
+## Explicit elemental-sulfur allocation boundary
+
+`AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(...)` creates an immutable,
+non-mutating accounting receipt between one qualified segment sulfur-equivalent budget and a
+caller-defined elemental-sulfur scenario. The caller must supply both an allocation fraction
+`f_ES` in `[0, 1]` and a non-blank allocation-basis identifier. The identifier records which
+external basis the caller used; its presence does not qualify that basis or turn the fraction
+into a measured product yield.
+
+For each lower-rate, nominal, and upper-rate fit path, the receipt applies the same explicit
+fraction to mass rate and mass:
+
+$
+\dot m_{S,\mathrm{allocated}}=f_{ES}\dot m_{S,\mathrm{equiv}}, \qquad
+\dot m_{S,\mathrm{unallocated}}=\dot m_{S,\mathrm{equiv}}-\dot m_{S,\mathrm{allocated}},
+$
+
+$
+m_{S,\mathrm{allocated}}=f_{ES}m_{S,\mathrm{equiv}}, \qquad
+m_{S,\mathrm{unallocated}}=m_{S,\mathrm{equiv}}-m_{S,\mathrm{allocated}}.
+$
+
+The result exposes the source sulfur-equivalent budget, allocated elemental-sulfur scenario,
+unallocated sulfur-equivalent remainder, and closure residual on both rate and mass bases.
+Zero allocation leaves the complete source budget unallocated; full allocation leaves an exact
+zero remainder. Values scale linearly with the explicit water inventory, and summing receipts
+from an unchanged-state segment subdivision reproduces the unsplit allocated mass. Missing or
+invalid inputs, numerical overflow, and positive products that underflow to zero fail closed.
+
+Downstream code may consume an allocated elemental-sulfur field once and must carry the
+unallocated remainder separately. It must not apply both the original source budget and the
+unallocated remainder as products, because that would double count sulfur. The receipt itself
+does not create S8 molecular amounts, supply a default fraction, select products, qualify
+stoichiometry or selectivity, consume O2, calculate heat, speciation, pressure, phase transfer or
+water holdup, create a signed source, execute a solid flash, or mutate a stream, wall, deposit,
+filter, corrosion, process, transient, or pipeline state.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
@@ -402,4 +478,3 @@ Electrolyte pH/speciation remains owned by issue #3144. TP flash, dynamics, pipe
 MCP publication remain coordinated with #2937, #2911, the pipeline roadmap, and #3153. Applying
 this atmospheric aqueous correlation to a Northern-Lights-type high-pressure CO2 pipeline requires
 separate phase, pressure, mass-transfer, and composition evidence.
-

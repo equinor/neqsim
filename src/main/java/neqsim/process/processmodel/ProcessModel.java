@@ -55,6 +55,10 @@ public class ProcessModel implements Runnable, Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
+  /** Whether run() closes implicit feedback loops with generated recycles. */
+  private boolean autoRecycles = false;
+  /** Re-entrancy guard so the seeding run inside makeRecycles() does not trigger insertion again. */
+  private transient boolean autoRecycleInProgress = false;
 
   /** Active multi-area transient transaction, or {@code null} outside a trial step. */
   private transient ProcessModelStepTransaction activeTransientStepTransaction = null;
@@ -1169,6 +1173,89 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Closes every feedback loop that has no {@link neqsim.process.equipment.util.Recycle} with an automatically inserted
+   * one.
+   *
+   * <p>
+   * Both loop kinds are covered: a stream produced by an area that runs after its consumer, and a loop entirely inside
+   * one area. A cross-area feedback stream left implicit is only closed by the outer sweep, with no tolerance and no
+   * acceleration of its own, which floors the plant residual; rewiring it through a tear stream and a {@code Recycle}
+   * gives it both. The model is run once first when its streams have no fluid yet, so the tear streams start from a
+   * physical state; calling this again is a no-op for loops that are already closed.
+   * </p>
+   *
+   * @return the recycles created
+   */
+  public java.util.List<neqsim.process.equipment.util.Recycle> makeRecycles() {
+    return makeRecycles(AutoRecycleBuilder.DEFAULT_TOLERANCE);
+  }
+
+  /**
+   * Closes every feedback loop that has no {@link neqsim.process.equipment.util.Recycle} with an automatically inserted
+   * one.
+   *
+   * @param tolerance relative tear tolerance for the created recycles, must be positive
+   * @return the recycles created
+   */
+  public java.util.List<neqsim.process.equipment.util.Recycle> makeRecycles(double tolerance) {
+    if (autoRecycleInProgress) {
+      return new ArrayList<neqsim.process.equipment.util.Recycle>();
+    }
+    autoRecycleInProgress = true;
+    try {
+      if (needsSeedRun()) {
+        run();
+      }
+      return AutoRecycleBuilder.insertRecycles(this, tolerance);
+    } finally {
+      autoRecycleInProgress = false;
+    }
+  }
+
+  /**
+   * Whether {@link #run()} closes implicit feedback loops with generated recycles before iterating.
+   *
+   * @return true when automatic recycle insertion is enabled
+   */
+  public boolean isAutoRecycles() {
+    return autoRecycles;
+  }
+
+  /**
+   * Enables automatic recycle insertion on {@link #run()} and therefore on {@link #runUntilConverged(int)}.
+   *
+   * <p>
+   * With this enabled the caller no longer has to run the plant, call {@link #makeRecycles()} and run again: the first
+   * run seeds and closes every implicit loop, including the cross-area feedback streams that otherwise have no
+   * convergence criterion of their own. Disabled by default, because inserting a tear changes how an existing model
+   * iterates.
+   * </p>
+   *
+   * @param autoRecycles true to close implicit loops automatically
+   */
+  public void setAutoRecycles(boolean autoRecycles) {
+    this.autoRecycles = autoRecycles;
+  }
+
+  /**
+   * Checks whether the model still has streams without a fluid, which a tear stream cannot be seeded from.
+   *
+   * @return true when at least one outlet stream in any area has no fluid yet
+   */
+  private boolean needsSeedRun() {
+    for (ProcessSystem area : processes.values()) {
+      for (neqsim.process.equipment.ProcessEquipmentInterface unit : area.getUnitOperations()) {
+        for (StreamInterface outlet : unit.getOutletStreams()) {
+          if (outlet != null && outlet.getFluid() == null) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Retrieves a process by its name.
    *
    * @param name a {@link java.lang.String} object
@@ -2089,6 +2176,9 @@ public class ProcessModel implements Runnable, Serializable {
    */
   @Override
   public void run() {
+    if (autoRecycles && !autoRecycleInProgress) {
+      makeRecycles();
+    }
     int totalAreas = processes.size();
 
     // Publish model-start event and notify listener

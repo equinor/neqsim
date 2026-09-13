@@ -299,6 +299,7 @@ def check_python_neqsim():
             if cls_check.returncode == 0 and "CLASSPATH_OK" in cls_check.stdout:
                 _check("NeqSim classpath", True,
                        "NeqSim classes load correctly")
+                _check_duplicate_runtime_jars(path)
             else:
                 _check(
                     "NeqSim classpath", False,
@@ -347,6 +348,32 @@ def check_python_neqsim():
             "neqsim package", False, str(e),
             fix_hint="pip install neqsim or run from the repo with devtools"
         )
+
+
+def _check_duplicate_runtime_jars(neqsim_init_path):
+    """Flag several neqsim-*.jar versions sharing the runtime lib/ directory.
+
+    The package adds ``lib/*`` to the classpath, so a leftover older JAR is
+    loaded alongside the current one. Classes then resolve across two versions
+    of the same package and fail late with IllegalAccessError/NoSuchMethodError
+    instead of anything that points at the real cause.
+    """
+    lib_dir = os.path.join(os.path.dirname(neqsim_init_path), "lib")
+    if not os.path.isdir(lib_dir):
+        return
+    jars = [os.path.basename(j)
+            for j in glob.glob(os.path.join(lib_dir, "neqsim-*.jar"))
+            if not any(s in os.path.basename(j)
+                       for s in ("-sources", "-javadoc", "-tests"))]
+    if len(jars) > 1:
+        _check(
+            "Single NeqSim JAR on runtime classpath", False,
+            "{n} versions in {d}: {names}".format(
+                n=len(jars), d=lib_dir, names=", ".join(sorted(jars))),
+            fix_hint="Delete the stale JAR(s); keep only the current version"
+        )
+    elif jars:
+        _check("Single NeqSim JAR on runtime classpath", True, jars[0])
 
 
 def check_agent_files():
@@ -470,6 +497,74 @@ def check_devtools():
         )
 
 
+def check_task_root():
+    """Report the folder new task folders are created in."""
+    print("\n--- Task destination ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        resolved = new_task.resolve_task_root()
+    except Exception as error:
+        _check("Task root", False, str(error),
+               fix_hint="Set a valid folder: neqsim --set-task-root \"PATH\"")
+        return
+    if os.environ.get("NEQSIM_TASK_ROOT"):
+        source = "from NEQSIM_TASK_ROOT"
+    elif os.path.exists(new_task.task_defaults_path()):
+        source = "saved in ~/.neqsim/task_defaults.json"
+    else:
+        source = "repository default - change with: neqsim --set-task-root \"PATH\""
+    _check("New tasks are created in", True,
+           "{root} ({source})".format(root=resolved, source=source))
+
+
+def check_report_template():
+    """Report the Word template every generated task report is built from."""
+    print("\n--- Report template ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        template = new_task.resolve_report_template()
+    except Exception as error:
+        _check("Report template", False, str(error),
+               fix_hint="Set a valid file: neqsim --set-report-template \"PATH\" "
+                        "(or neqsim --reset-report-template)")
+        return
+    if not template:
+        _check("Word reports use", True,
+               "built-in styling - change with: neqsim --set-report-template \"PATH\"")
+        return
+    source = ("from NEQSIM_REPORT_TEMPLATE" if os.environ.get("NEQSIM_REPORT_TEMPLATE")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Word reports are built from", True,
+           "{template} ({source})".format(template=template, source=source))
+
+
+def check_document_root():
+    """Report the folder agents read source documents from."""
+    print("\n--- Source documents ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        root = new_task.resolve_document_root()
+    except Exception as error:
+        _check("Document root", False, str(error),
+               fix_hint="Set an existing folder: neqsim --set-document-root \"PATH\" "
+                        "(or neqsim --reset-document-root)")
+        return
+    if not root:
+        _check("Documents are read from", True,
+               "not configured - set one with: neqsim --set-document-root \"PATH\"")
+        return
+    source = ("from NEQSIM_DOCUMENT_ROOT" if os.environ.get("NEQSIM_DOCUMENT_ROOT")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Documents are read from", True,
+           "{root} and all subfolders ({source})".format(root=root, source=source))
+
+
 def check_git():
     """Check git status."""
     print("\n--- Git ---")
@@ -507,6 +602,9 @@ def main():
     check_agent_files()
     check_cross_tool_files()
     check_devtools()
+    check_task_root()
+    check_report_template()
+    check_document_root()
     check_git()
 
     # Summary

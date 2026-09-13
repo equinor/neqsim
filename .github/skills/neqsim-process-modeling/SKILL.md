@@ -159,6 +159,37 @@ Both switches are re-applied by `run(UUID)`, `run_step(UUID)`,
 `runSequential(UUID)`, `runParallel(UUID)`, `runHybrid(UUID)`,
 `runDataflow(UUID)` and `runTransient(double, UUID)`.
 
+## Closing Feedback Loops Automatically (`makeRecycles`)
+
+Do **not** hand-write a tear stream (`Stream` clone + `Recycle`) per feedback
+stream any more. A loop wired straight back into an upstream mixer, with no
+`Recycle` in it, is an *implicit tear*: it converges only through the surrounding
+sweep, so it has no tolerance, no acceleration and no convergence report. Across
+`ProcessModel` areas it is worse — a stream produced by an area that runs after its
+consumer is closed only by the outer Gauss-Seidel pass, which has no relaxation
+setting, so the plant residual sits on a floor no tolerance can reach.
+
+```python
+created = process.makeRecycles()        # ProcessSystem — SCCs of one flowsheet
+created = plant.makeRecycles()          # ProcessModel — cross-area streams, then each area
+plant.setAutoRecycles(True)             # or let run()/runUntilConverged() do it
+```
+
+- Tear point = inlet with the smallest **recycle ratio** (tear flow / total inlet
+  flow of the consuming unit), which sets the contraction rate of the tear. One edge
+  torn per round, structure recomputed after — nested cycles get the minimum number
+  of tears.
+- Generated recycles start on direct substitution with `setAdaptiveAcceleration(true)`
+  (never pin `setAccelerationMethod(...)` — that sets `accelerationMethodExplicit` and
+  disables the self-upgrade) plus an absolute flow tolerance at 1e-6 of the area's
+  largest flow, so a near-zero leg converges on absolute change.
+- Self-seeding (runs once when streams have no fluid) and idempotent — call order is
+  not your problem, repeat calls insert nothing.
+- Only `Mixer` and `Manifold` inlets are tearable (`replaceStream(int, StreamInterface)`).
+  Loops closing on other equipment are logged and left alone; route them through a mixer.
+- `setAutoRecycles` defaults to **false**: inserting a tear changes how an existing
+  flowsheet iterates, so it must be opted into.
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.

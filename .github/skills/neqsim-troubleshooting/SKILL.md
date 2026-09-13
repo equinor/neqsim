@@ -332,6 +332,34 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 > `HeatExchanger` always overrode both. Apply the same override when adding new
 > multi-port equipment.
 
+### "Converged: YES" while a unit holds NaN
+
+`runUntilConverged()` can return `true` for a plant whose equipment carries
+`NaN` results. The boundary gate compares stream values; a unit whose internal
+solve produced `NaN` can still present a self-consistent (nonsense) outlet, so
+the gate is satisfied. An older build that reports `converged=false` may hold
+the **better** numbers.
+
+Therefore, when comparing two NeqSim versions or bisecting a regression, never
+classify a run by the convergence flag. Classify on physical finiteness of the
+units you care about:
+
+```python
+bad = (not math.isfinite(eta) or not math.isfinite(power)
+       or outlet_temperature_K < 100.0)   # absolute floor, not a tolerance
+```
+
+`TurboExpanderCompressor` is a worked example of how one `NaN` survives:
+`Math.max(x, 1e-6)` **returns NaN when x is NaN**, and `NaN` fails every
+comparison, so `if (N > N_max)` / `if (N < N_min)` speed clamps in the
+Newton speed-matching loop never fire. The `NaN` then reaches efficiency,
+power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
+`Math.max`/`Math.min` clamps and `>`/`<` bound checks are not guards.
+
+> Also check the right object: a standalone `Expander` built only for reporting
+> is not the unit the flowsheet solves. Read the coupled unit actually added to
+> the `ProcessSystem`.
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power
@@ -386,6 +414,40 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 | `ClassCastException` in equipment | Wrong stream type connection | Verify equipment constructors take `StreamInterface` |
 | `java.sql.SQLException` | Component not in database | Check spelling, verify against COMP.csv |
 | `StackOverflowError` in recycle | Infinite loop in process topology | Check for circular references without a Recycle unit |
+| `IllegalAccessError` / `NoSuchMethodError` between two NeqSim classes in the **same** package | Two `neqsim-*.jar` versions on one classpath | See "Stale or Duplicate Runtime JAR" below |
+| `Java package 'neqsim.x.y' has no attribute 'Z'` for a class that exists in `src/` | Installed JAR is older than the repo source | See "Stale or Duplicate Runtime JAR" below |
+
+## Stale or Duplicate Runtime JAR
+
+The Python package adds its `lib/*` folder to the classpath as a flat glob, so a
+JAR left behind by an earlier install is loaded **alongside** the current one.
+Classes then resolve across two versions of the same package.
+
+**Symptom:** an access or linkage error between two classes that are provably in
+the same package and legal in source, e.g.
+`IllegalAccessError: class ...ProcessModelOperatingActionSetEvaluator tried to
+access private method ...HydraulicConstraintBinding.<init>(...)`.
+
+Do **not** go looking for a Java access-modifier bug. Check the JAR count first:
+
+```powershell
+Get-ChildItem <venv>\Lib\site-packages\neqsim\lib\*.jar
+python -c "import importlib.metadata as m; print(m.version('neqsim'))"
+```
+
+Keep only the JAR matching the installed package version. `python
+devtools/neqsim_doctor.py` reports this as "Single NeqSim JAR on runtime
+classpath".
+
+**Related symptom — version skew, not a missing class:** `has no attribute 'X'`
+for a class that exists under `src/main/java/` means the released JAR predates
+`<revision>` in `pom.xml`. Point the run at workspace classes instead:
+`NEQSIM_TEST_CLASSPATH=target/classes` plus dependencies, or use the
+`devtools/neqsim_dev_setup.py` bootstrap.
+
+Replacing a JAR under a **live** JVM (notebook kernel) is a third variant: the
+copy succeeds but any class not already loaded fails to resolve. Restart the
+kernel; a JVM cannot reload a JAR in-process.
 
 ## Phase Envelope Branch Labels Swapped
 

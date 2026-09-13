@@ -1,6 +1,7 @@
 ---
 name: "journal_formatting"
 description: "Apply journal-specific formatting rules to transform a manuscript from Markdown"
+last_verified: "2026-09-12"
 ---
 
 # Skill: Journal Formatting

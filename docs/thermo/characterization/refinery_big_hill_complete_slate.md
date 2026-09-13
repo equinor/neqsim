@@ -435,3 +435,113 @@ All DOE assay provenance and the three-cut 650 degF+ normalization remain unchan
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, optimization, product specifications, hydraulic capacity, or
 plant-agreement evidence.
+
+
+## Combined operating-scenario screening
+
+`DoeBigHillVacuumScenarioScreen.run(...)` independently rebuilds, solves, and evaluates complete
+caller-defined operating scenarios. This is the integration step after the qualified one-factor
+pressure, reflux, feed-temperature, reboiler-temperature, and feed-mass-flow screens. Scenario order
+is preserved; names must be unique, and every scenario supplies its own validated operating inputs
+and positive feed mass flow.
+
+The documented low/base/high scenarios combine only the narrow ranges already exercised by those
+one-factor screens:
+
+```java
+DoeBigHillVacuumScenarioScreen.Scenario[] scenarios = {
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "low",
+        980.0,
+        new OperatingInputs(12, 4, 638.0, 0.1176, 0.0784, 0.1568, 698.0, 0.49)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "base",
+        1000.0,
+        new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.50)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "high",
+        1020.0,
+        new OperatingInputs(12, 4, 642.0, 0.1224, 0.0816, 0.1632, 702.0, 0.51))
+};
+
+DoeBigHillVacuumScenarioScreen screen =
+    DoeBigHillVacuumScenarioScreen.run("Big Hill vacuum combined screen", scenarios);
+
+for (DoeBigHillVacuumScenarioScreen.PointResult point : screen.getPoints()) {
+  String scenarioName = point.getScenario().getName();
+  double feedMassFlowKgPerHour = point.getScenario().getFeedMassFlowKgPerHour();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+  DoeBigHillVacuumComponentRecovery recovery = point.getComponentRecovery();
+  double overheadHeavyRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery("DOE_BH_1050_PLUS_PC");
+}
+```
+
+All three absolute pressures move together by factors 0.98, 1.00, and 1.02 relative to the base
+0.12/0.08/0.16 bara values. The feed and reboiler temperatures, condenser reflux ratio, and feed mass
+flow simultaneously use the low/base/high values shown above. Tray topology and feed composition
+remain fixed.
+
+Every scenario must pass the qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. Each point also evaluates
+`DoeBigHillVacuumComponentRecovery` on the same solved model, without rebuilding or solving the
+scenario a second time. It exposes the exact DOE pseudo-component order, positive feed component
+flows in mol/h, product component flows in mol/h, and dimensionless overhead and bottoms recoveries.
+Every product recovery must remain finite and non-negative, and each component's two product
+recoveries must close to unity within 5%.
+
+The screen returns defensive scenario-point arrays, the exact immutable scenario definitions,
+fractionation results, and recovery results, overhead-yield bounds, and the worst external mass
+closure, component closure, component-recovery closure, column energy error, and final MESH
+residual. Any failed fractionation or recovery gate aborts the complete screen.
+
+These three discrete calculations are numerical robustness and interaction-screening evidence only.
+The component recoveries are numerical pseudo-component partition bookkeeping, not measured or
+calibrated yields. They do not define a continuous or measured operating envelope, response surface,
+interaction correlation, probability distribution, contaminant distribution, or optimization
+model. No monotonic trend is required. The screen does not establish hydraulic capacity, flooding,
+weeping, entrainment, pressure drop, scale-up, turndown, heat duty, utilities, equipment sizing,
+ASTM D1160 or TBP pressure correction, product-specification compliance, or plant agreement. All DOE
+assay provenance, three-cut 650 degF+ normalization, pseudo-component properties, and
+source-unreported engineering-input limitations remain unchanged.
+
+
+## Pseudo-component recovery diagnostics
+
+`DoeBigHillVacuumComponentRecovery.evaluate(...)` adds a molar component-partition audit to an
+already solved and qualified Big Hill vacuum case. It first reuses
+`DoeBigHillVacuumFractionationResult.evaluate(...)`, so the MESH, fallback, mass, energy,
+material-product, boiling-range, and aggregate component-closure gates must pass before recovery
+evidence is returned.
+
+For product $p$ and pseudo-component $c$, the dimensionless recovery is
+$R_{p,c} = \dot n_{p,c} / \dot n_{feed,c}$. The overhead and bottoms recoveries must sum to unity
+within the existing 5% screening tolerance for every component. Component order and exact NeqSim
+component names are preserved from the feed.
+
+```java
+OperatingInputs inputs =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+DoeBigHillVacuumFractionationCase model =
+    DoeBigHillVacuumFractionationCase.create(
+        "Big Hill vacuum component recovery", 1000.0, inputs);
+model.getColumn().run(UUID.randomUUID());
+
+DoeBigHillVacuumComponentRecovery recovery =
+    DoeBigHillVacuumComponentRecovery.evaluate(model);
+for (String componentName : recovery.getComponentNames()) {
+  double overheadRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery(componentName);
+  double bottomsRecovery =
+      recovery.getProduct("Bottoms").getComponentMolarRecovery(componentName);
+}
+```
+
+The returned feed and product quantities use mol/h; recovery fractions are dimensionless. Name,
+flow, recovery, and product arrays are defensive. The result is numerical partition bookkeeping for
+the public DOE-derived three-cut synthetic screening feed. It is not measured cut recovery,
+calibrated yield, ASTM D1160/TBP or simulated-distillation evidence, a sulfur/nitrogen or contaminant
+split, a hydraulic-capacity result, an interaction model, optimization, product-specification
+compliance, or plant agreement. Feed provenance, pseudo-component properties, and every
+source-unreported operating assumption remain unchanged.

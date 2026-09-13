@@ -20,6 +20,7 @@ intake:
 
 inputs:
   prompt_file: ""       # Optional text/markdown file used as the original task prompt.
+  document_root: ""     # Source document library, root + all subfolders. Empty = not configured.
   documents_required: false
   document_extraction_required: auto  # auto | required | optional | skip
   documents:

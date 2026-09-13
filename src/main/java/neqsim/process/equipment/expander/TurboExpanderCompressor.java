@@ -233,6 +233,14 @@ public class TurboExpanderCompressor extends Expander {
     fluid2.init(3);
     double h_out = fluid2.getEnthalpy("kJ/kg");
     h_s = (h_in - h_out) * 1000; // J/kg
+    // sqrt() of a negative drop yields NaN, and NaN then passes every Math.max clamp and every
+    // speed bound below, so the whole unit silently reports NaN efficiency, power and speed.
+    if (!(h_s > 0.0)) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidOutputException(this, "run", "isentropicEnthalpyDrop",
+          "is " + h_s + " J/kg. The expander outlet pressure (" + expanderOutPressure
+              + " bara) must be below the inlet pressure (" + expanderFeedStream.getPressure("bara")
+              + " bara) and the feed must be a valid single- or multi-phase state."));
+    }
     final double C = Math.sqrt(2.0 * h_s);
     Q_exp = expanderFeedStream.getFluid().getFlowRate("m3/sec");
     m_comp = compressorFeedStream.getFluid().getFlowRate("kg/sec");
@@ -296,7 +304,11 @@ public class TurboExpanderCompressor extends Expander {
       qn_ratio2 = (Q_comp * 60.0 / N2) / designQn;
       double CF_eff_comp2 = getEfficiencyFromQN(qn_ratio2);
       CF_eff_comp2 = Math.max(CF_eff_comp2, 1e-6);
-      Hp2 = Hp_design * (N2 / N_design) * (N2 / N_design) * CF_head_comp;
+      // Head must be re-read at the perturbed speed, otherwise the finite difference below omits
+      // the head-curve slope and the Newton step is taken on an inconsistent derivative.
+      double CF_head_comp2 = getHeadFromQN(qn_ratio2);
+      CF_head_comp2 = Math.max(CF_head_comp2, 1e-6);
+      Hp2 = Hp_design * (N2 / N_design) * (N2 / N_design) * CF_head_comp2;
       eta_p2 = CF_eff_comp2 * eta_p_design;
       double W_compressor2 = m_comp * Hp2 / eta_p2 * 1000.0;
       double W_bearing2 = bearingLossPower * (N2 / N_design) * (N2 / N_design);
