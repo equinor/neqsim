@@ -12528,7 +12528,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       updateMeshResiduals();
     }
     // Product reconciliation and property finalization can change the exposed phase streams.
-    // Qualify the published energy balance, not a cached residual from the preceding sweep.
+    // Refresh terminal duties from those same streams before qualifying their energy balance.
+    if (hasReboiler) {
+      getReboiler().updateDutyFromPublishedStreams();
+    }
+    if (hasCondenser) {
+      getCondenser().updateDutyFromPublishedStreams();
+    }
     lastEnergyResidual = getEnergyBalanceError();
     updateLastSolveStatus(productReconciled, fallbackProductsApplied);
     warnOnNonFiniteColumnEndDuty();
