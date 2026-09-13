@@ -997,8 +997,6 @@ public class EOSCGModel {
 
     // Exponents in pure fluid equations
     for (int i = 1; i <= MaxFlds; ++i) {
-      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
-      Tc2[i] = Math.sqrt(Tc[i]);
       coik[i][1] = 0;
       doik[i][1] = 1;
       toik[i][1] = 0.25;
@@ -3982,6 +3980,14 @@ public class EOSCGModel {
     gtij[20][21] = 1; // He-Ar
 
     applyEOSCG2021ReducingParameters();
+
+    // All pure-fluid critical properties, including EOS-CG slots 22-28, must be loaded before
+    // forming binary reducing factors. Computing these in the earlier GERG exponent loop uses
+    // zero critical properties for the added components and poisons mixtures with infinity.
+    for (int i = 1; i <= MaxFlds; ++i) {
+      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      Tc2[i] = Math.sqrt(Tc[i]);
+    }
 
     for (int i = 1; i <= MaxFlds; ++i) {
       bvij[i][i] = 1;
