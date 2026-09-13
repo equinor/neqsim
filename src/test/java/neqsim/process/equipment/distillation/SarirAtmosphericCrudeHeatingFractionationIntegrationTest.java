@@ -30,15 +30,15 @@ public class SarirAtmosphericCrudeHeatingFractionationIntegrationTest {
   @Timeout(value = 240, unit = TimeUnit.SECONDS)
   public void solvedHeatingOutletFeedsQualifiedFractionation() {
     SarirAtmosphericCrudeHeatingCase heating = createHeatingCase();
-    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationCase.createFromHeatingCase(
-        "Sarir connected screen", heating, qualifiedColumnInputs()));
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationCase
+        .createFromHeatingCase("Sarir connected screen", heating, qualifiedColumnInputs()));
 
     UUID id = UUID.randomUUID();
     heating.run(id);
     double[] heatingComposition = heating.getColumnFeedStream().getThermoSystem().getMolarComposition();
 
-    SarirAtmosphericFractionationCase fractionation = SarirAtmosphericFractionationCase.createFromHeatingCase(
-        "Sarir connected screen", heating, qualifiedColumnInputs());
+    SarirAtmosphericFractionationCase fractionation = SarirAtmosphericFractionationCase
+        .createFromHeatingCase("Sarir connected screen", heating, qualifiedColumnInputs());
     assertEquals(SarirAtmosphericReference.getColumnCrudeFeedRateKgPerHour(),
         fractionation.getFeedStream().getFlowRate("kg/hr"), 1.0e-6);
     assertEquals(SarirAtmosphericReference.getColumnFeedTemperatureCelsius(),
@@ -51,10 +51,8 @@ public class SarirAtmosphericCrudeHeatingFractionationIntegrationTest {
     fractionation.run(id);
 
     assertTrue(fractionation.getColumn().solved(), fractionation.getColumn().getConvergenceDiagnostics());
-    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL,
-        fractionation.getColumn().getLastSolverTypeUsed());
-    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS,
-        fractionation.getColumn().getLastSolveStatus());
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, fractionation.getColumn().getLastSolverTypeUsed());
+    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, fractionation.getColumn().getLastSolveStatus());
     assertNotEquals(DistillationColumn.SolveStatus.FAILED, fractionation.getColumn().getLastSolveStatus());
     assertArrayEquals(heatingComposition, fractionation.getFeedStream().getThermoSystem().getMolarComposition(),
         1.0e-12);
@@ -83,12 +81,12 @@ public class SarirAtmosphericCrudeHeatingFractionationIntegrationTest {
 
   private static SarirAtmosphericCrudeHeatingCase createHeatingCase() {
     HeatingInputs inputs = new HeatingInputs(300.0, 500.0, 0.10, 0.05, 0.85, 48.0e6, 2.75, 0.08, 423.15);
-    return SarirAtmosphericCrudeHeatingCase.create("Sarir heating screen", SPECIFIC_GRAVITY,
-        MOLAR_MASS_KG_PER_MOL, inputs);
+    return SarirAtmosphericCrudeHeatingCase.create("Sarir heating screen", SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL,
+        inputs);
   }
 
   private static OperatingInputs qualifiedColumnInputs() {
-    return new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0, 700.0, 1.0, 24,
-        0.08, 15, 0.15);
+    return new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0, 700.0, 1.0, 24, 0.08,
+        15, 0.15);
   }
 }
