@@ -68,6 +68,11 @@ class TwoFluidUnsplitTengesdalPreparationTest {
       UnsplitTransientSolver.TimeIntegrationMethod method, boolean pressureInterpolation) {
     TwoFluidPipe pipe = createPipe(count);
     pipe.setUnsplitPressureInterpolationEnabled(pressureInterpolation);
+    if (pressureInterpolation) {
+      // Exercise the opt-in continuous closure in the backward-Euler qualification lane that exposed the
+      // countercurrent annular/slug force jump. The midpoint compatibility lane remains unchanged.
+      pipe.setBlendInclinedAnnularSlugTransitions(true);
+    }
     TwoFluidSection[] initial = pipe.getSectionSnapshots();
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);

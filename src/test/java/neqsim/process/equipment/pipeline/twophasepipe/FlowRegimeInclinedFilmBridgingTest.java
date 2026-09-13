@@ -3,10 +3,13 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
 
@@ -46,12 +49,29 @@ class FlowRegimeInclinedFilmBridgingTest {
   }
 
   @Test
+  void gasLiftBlendIsIndependentlyOptInWhenFilmEligibilityIsDisabled() {
+    FlowRegimeDetector detector = new FlowRegimeDetector();
+    detector.setBlendInclinedAnnularSlugTransitions(true);
+    TwoFluidSection below = section(0.4, criticalGasVelocity() * (1.0 - 1.0e-8), -2.05, Math.PI / 2.0);
+    TwoFluidSection above = section(0.4, criticalGasVelocity() * (1.0 + 1.0e-8), -2.05, Math.PI / 2.0);
+    assertEquals(FlowRegime.SLUG, detector.classify(below));
+    assertEquals(FlowRegime.ANNULAR, detector.classify(above));
+    assertEquals(0.5, below.getRegimeWeights().get(FlowRegime.ANNULAR), 1.0e-6);
+    assertEquals(0.5, above.getRegimeWeights().get(FlowRegime.ANNULAR), 1.0e-6);
+    assertEquals(blendedInterfaceForce(below), blendedInterfaceForce(above), 1.0e-4);
+  }
+
+  @Test
   void thinFilmRetainsTheOriginalGasLiftBoundaryAndZeroInventoryLimits() {
     FlowRegimeDetector detector = enabledDetector();
-    assertEquals(FlowRegime.SLUG,
-        detector.classify(section(0.1, criticalGasVelocity() * (1.0 - 1.0e-8), 0.1, Math.PI / 2.0)));
-    assertEquals(FlowRegime.ANNULAR,
-        detector.classify(section(0.1, criticalGasVelocity() * (1.0 + 1.0e-8), 0.1, Math.PI / 2.0)));
+    TwoFluidSection below = section(0.1, criticalGasVelocity() * (1.0 - 1.0e-8), 0.1, Math.PI / 2.0);
+    TwoFluidSection above = section(0.1, criticalGasVelocity() * (1.0 + 1.0e-8), 0.1, Math.PI / 2.0);
+    assertEquals(FlowRegime.SLUG, detector.classify(below));
+    assertEquals(FlowRegime.ANNULAR, detector.classify(above));
+    assertEquals(0.5, below.getRegimeWeights().get(FlowRegime.ANNULAR), 1.0e-6);
+    assertEquals(0.5, above.getRegimeWeights().get(FlowRegime.ANNULAR), 1.0e-6);
+    assertEquals(blendedInterfaceForce(below), blendedInterfaceForce(above), 1.0e-4,
+        "An infinitesimal gas-lift crossing must not step the countercurrent interfacial force");
     TwoFluidSection gas = section(0.0, 1.0, 0.0, Math.PI / 2.0);
     assertEquals(FlowRegime.SINGLE_PHASE_GAS, detector.classify(gas));
     TwoFluidSection liquid = section(1.0, 0.0, 1.0, Math.PI / 2.0);
@@ -74,14 +94,19 @@ class FlowRegimeInclinedFilmBridgingTest {
   void compatibilityAndSerializationKeepTheConstraintExplicit() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
     assertFalse(detector.isUseInclinedFilmBridgingCriterion());
+    assertFalse(detector.isBlendInclinedAnnularSlugTransitions());
     TwoFluidSection thick = section(0.6, 1.2 * criticalGasVelocity(), -2.05, Math.PI / 2.0);
     assertEquals(FlowRegime.ANNULAR, detector.classify(thick));
     detector.setUseInclinedFilmBridgingCriterion(true);
+    detector.setBlendInclinedAnnularSlugTransitions(true);
     FlowRegimeDetector copy = SerializationUtils.clone(detector);
     assertTrue(copy.isUseInclinedFilmBridgingCriterion());
+    assertTrue(copy.isBlendInclinedAnnularSlugTransitions());
     assertEquals(FlowRegime.SLUG, copy.classify(thick));
     copy.setUseInclinedFilmBridgingCriterion(false);
     assertEquals(FlowRegime.ANNULAR, copy.classify(thick));
+    copy.setBlendInclinedAnnularSlugTransitions(false);
+    assertFalse(copy.isBlendInclinedAnnularSlugTransitions());
   }
 
   @Test
@@ -100,9 +125,24 @@ class FlowRegimeInclinedFilmBridgingTest {
     assertEquals(legacy.classify(first), enabled.classify(first.clone()));
   }
 
+  @Test
+  void inclinedBlendRetainsPureClosuresOutsideBothTransitionBands() {
+    FlowRegimeDetector detector = enabledDetector();
+    TwoFluidSection lowGas = section(0.1, 0.8 * criticalGasVelocity(), -2.05, Math.PI / 2.0);
+    TwoFluidSection liftedThinFilm = section(0.1, 1.2 * criticalGasVelocity(), -2.05, Math.PI / 2.0);
+    TwoFluidSection liftedBridgedFilm = section(0.4, 1.2 * criticalGasVelocity(), -2.05, Math.PI / 2.0);
+    assertEquals(FlowRegime.SLUG, detector.classify(lowGas));
+    assertEquals(FlowRegime.ANNULAR, detector.classify(liftedThinFilm));
+    assertEquals(FlowRegime.SLUG, detector.classify(liftedBridgedFilm));
+    assertNull(lowGas.getRegimeWeights());
+    assertNull(liftedThinFilm.getRegimeWeights());
+    assertNull(liftedBridgedFilm.getRegimeWeights());
+  }
+
   private static FlowRegimeDetector enabledDetector() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
     detector.setUseInclinedFilmBridgingCriterion(true);
+    detector.setBlendInclinedAnnularSlugTransitions(true);
     return detector;
   }
 
@@ -114,6 +154,12 @@ class FlowRegimeInclinedFilmBridgingTest {
     return new InterfacialFriction().calcInterfacialForce(section.getFlowRegime(), section.getGasVelocity(),
         section.getLiquidVelocity(), section.getGasDensity(), section.getLiquidDensity(), section.getGasViscosity(),
         section.getLiquidViscosity(), section.getLiquidHoldup(), section.getDiameter(), section.getSurfaceTension());
+  }
+
+  private static double blendedInterfaceForce(TwoFluidSection section) {
+    Map<FlowRegime, Double> weights = section.getRegimeWeights();
+    assertTrue(weights != null && weights.size() == 2);
+    return new SlugForceBalance().evaluate(section).interfaceForce;
   }
 
   private static TwoFluidSection section(double liquidHoldup, double gasFlux, double liquidFlux, double inclination) {
