@@ -360,6 +360,40 @@ stoichiometry or selectivity, consume O2, calculate heat, speciation, pressure, 
 water holdup, create a signed source, execute a solid flash, or mutate a stream, wall, deposit,
 filter, corrosion, process, transient, or pipeline state.
 
+## Explicit mass-based S8 transfer receipt
+
+`AqueousHydrogenSulfideOxidationS8Transfer.create(...)` selects exactly one lower-rate, nominal,
+or upper-rate path from an existing elemental-sulfur allocation and creates an immutable transfer
+receipt for NeqSim's existing `S8` component path. The caller must explicitly supply the fit path,
+a product-identity basis identifier, and a downstream idempotency key. The allocation-basis
+identifier and source-segment metadata are preserved.
+
+The receipt copies the selected path on a mass basis without an additional conversion:
+
+$
+\dot m_{S8,\mathrm{transfer}}=\dot m_{S,\mathrm{allocated}}, \qquad
+m_{S8,\mathrm{transfer}}=m_{S,\mathrm{allocated}}.
+$
+
+It also carries the source sulfur-equivalent budget, unallocated remainder, and existing rate- and
+mass-basis closure residuals. This exact kg/h and kg passthrough deliberately avoids calculating
+S8 moles or introducing another molecular-weight constant. Zero allocation gives an exact zero
+transfer, full allocation leaves an exact zero remainder, and the inherited fit-path ordering,
+water-inventory scaling, and unchanged-state segment-split mass sums are preserved.
+
+The product-identity identifier records why the caller selected the `S8` representation; it does
+not qualify that choice as a measured product distribution. The idempotency key is a hook for a
+downstream accounting ledger, not an in-memory consumption lock. A consumer must apply the
+transferred mass only once under that key and carry the unallocated sulfur-equivalent remainder
+separately. It must not also apply the original allocation or source budget as product.
+
+This is the narrow mass-unit seam toward the existing `SulfurDepositionAnalyser`, TP-solid-flash,
+and `SulfurFilter` path. The receipt does not add `S8` to a stream, run equilibrium or a solid
+flash, predict saturation, precipitation, deposition, capture or corrosion, consume O2, calculate
+heat, speciation, phase transfer or water holdup, or mutate any stream, wall, filter, process,
+transient, or pipeline state. Those operations remain separate and require independently
+qualified product identity and application evidence.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a

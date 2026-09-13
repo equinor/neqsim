@@ -47,6 +47,16 @@ ELEMENTAL_SULFUR_ALLOCATION_TEST = (
     / "src/test/java/neqsim/process/equipment/reactor/"
     / "AqueousHydrogenSulfideOxidationElementalSulfurAllocationTest.java"
 )
+S8_TRANSFER = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationS8Transfer.java"
+)
+S8_TRANSFER_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationS8TransferTest.java"
+)
 
 
 class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
@@ -72,6 +82,8 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         cls.elemental_sulfur_allocation_test = (
             ELEMENTAL_SULFUR_ALLOCATION_TEST.read_text(encoding="utf-8")
         )
+        cls.s8_transfer = S8_TRANSFER.read_text(encoding="utf-8")
+        cls.s8_transfer_test = S8_TRANSFER_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
 
     def test_source_equation_and_units_are_explicit(self):
@@ -463,6 +475,60 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "testMissingInvalidOrUnrepresentableAllocationFailsClosed",
         ):
             self.assertIn(token, self.elemental_sulfur_allocation_test)
+
+    def test_mass_based_s8_transfer_receipt_is_documented_and_executable(self):
+        for token in (
+            "Explicit mass-based S8 transfer receipt",
+            "`AqueousHydrogenSulfideOxidationS8Transfer.create(...)`",
+            "selects exactly one lower-rate, nominal, or upper-rate path",
+            r"\dot m_{S8,\mathrm{transfer}}=\dot m_{S,\mathrm{allocated}}",
+            r"m_{S8,\mathrm{transfer}}=m_{S,\mathrm{allocated}}",
+            "avoids calculating S8 moles",
+            "product-identity identifier",
+            "downstream idempotency key",
+            "must apply the transferred mass only once",
+            "narrow mass-unit seam",
+            "does not add `S8` to a stream",
+            "independently qualified product identity and application evidence",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            'public static final String S8_COMPONENT_NAME = "S8"',
+            "public enum FitPath",
+            "LOWER_RATE",
+            "NOMINAL",
+            "UPPER_RATE",
+            "public static Result create(",
+            "getComponentName()",
+            "getFitPath()",
+            "getProductIdentityBasisIdentifier()",
+            "getDownstreamIdempotencyKey()",
+            "getTransferredS8MassRateKgPerHour()",
+            "getTransferredS8MassKg()",
+            "getUnallocatedSulfurEquivalentMassKg()",
+            "Selected allocation closure evidence is inconsistent",
+        ):
+            self.assertIn(token, self.s8_transfer)
+
+        for forbidden in (
+            "SystemInterface",
+            "StreamInterface",
+            "addComponent(",
+            "TPSolidflash(",
+            "SulfurDepositionAnalyser(",
+            "SulfurFilter(",
+        ):
+            self.assertNotIn(forbidden, self.s8_transfer)
+
+        for token in (
+            "testEveryFitPathIsSelectedExplicitlyWithoutMassConversion",
+            "testZeroAndFullAllocationPreserveExactIdentities",
+            "testWaterScalingAndSegmentSplitMassSumsArePreserved",
+            "testReceiptRoundTripsThroughSerializationAndPreservesProvenance",
+            "testMissingOrInvalidTransferEvidenceFailsClosed",
+        ):
+            self.assertIn(token, self.s8_transfer_test)
 
 
     def test_absolute_reacted_moles_target_is_documented_and_executable(self):
