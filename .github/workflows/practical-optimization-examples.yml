@@ -81,7 +81,7 @@ jobs:
           python devtools/check_documentation_search.py
       - name: Retain test reports
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: optimization-documentation-tests
           path: target/surefire-reports/
@@ -111,7 +111,7 @@ jobs:
         run: python devtools/check_optimization_notebooks.py
       - name: Retain executed notebooks, HTML, figures and failure logs
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: optimization-notebooks
           path: target/optimization-notebooks/
