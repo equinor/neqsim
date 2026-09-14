@@ -15,17 +15,16 @@ import neqsim.thermo.system.SystemInterface;
  * Source-bounded equilibrium-contact screen for a Sarir atmospheric side-stripper service.
  *
  * <p>
- * The public Sarir reference reports steam rate, temperature, and pressure for the kerosene and
- * diesel side strippers, but it does not report side-stripper topology, tray count, pressure,
- * injection location, efficiency, steam quality, or enthalpy. This class therefore contacts one
- * already calculated atmospheric-column liquid side draw with one independently prepared steam
- * stream on a single equilibrium {@link SimpleTray}. The caller must supply the contact pressure
- * and auditable steam-state provenance.
+ * The public Sarir reference reports steam rate, temperature, and pressure for the kerosene and diesel side strippers,
+ * but it does not report side-stripper topology, tray count, pressure, injection location, efficiency, steam quality,
+ * or enthalpy. This class therefore contacts one already calculated atmospheric-column liquid side draw with one
+ * independently prepared steam stream on a single equilibrium {@link SimpleTray}. The caller must supply the contact
+ * pressure and auditable steam-state provenance.
  * </p>
  *
  * <p>
- * The result is a screening calculation only. It is not a multistage side-stripper model and must
- * not be treated as a reproduction of plant product quality or yield.
+ * The result is a screening calculation only. It is not a multistage side-stripper model and must not be treated as a
+ * reproduction of plant product quality or yield.
  * </p>
  */
 public final class SarirAtmosphericSideStripperContactScreen {
@@ -48,11 +47,10 @@ public final class SarirAtmosphericSideStripperContactScreen {
   private final SteamInjectionReference sourceReference;
   private final SimpleTray contactStage;
 
-  private SarirAtmosphericSideStripperContactScreen(
-      SarirAtmosphericFractionationCase fractionationCase, SteamInjectionService service,
-      StreamInterface sideDrawStream, StreamInterface steamStream,
-      ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
-      double contactPressureBara, SteamInjectionReference sourceReference, SimpleTray contactStage) {
+  private SarirAtmosphericSideStripperContactScreen(SarirAtmosphericFractionationCase fractionationCase,
+      SteamInjectionService service, StreamInterface sideDrawStream, StreamInterface steamStream,
+      ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis, double contactPressureBara,
+      SteamInjectionReference sourceReference, SimpleTray contactStage) {
     this.fractionationCase = fractionationCase;
     this.service = service;
     this.sideDrawStream = sideDrawStream;
@@ -69,16 +67,15 @@ public final class SarirAtmosphericSideStripperContactScreen {
    *
    * @param fractionationCase already solved qualified Sarir atmospheric case
    * @param service kerosene or diesel side-stripper service
-   * @param preparedSteam independently prepared, essentially pure-water gas stream matching the
-   *        selected published steam row
+   * @param preparedSteam independently prepared, essentially pure-water gas stream matching the selected published
+   * steam row
    * @param reportedPressureBasis explicit absolute or gauge interpretation of source pressure
    * @param thermodynamicStateBasis non-blank description of independent steam-state evidence
    * @param contactPressureBara explicit single-contact pressure in bar absolute
    * @return configured source-bounded equilibrium-contact screen
    */
-  public static SarirAtmosphericSideStripperContactScreen configure(
-      SarirAtmosphericFractionationCase fractionationCase, SteamInjectionService service,
-      StreamInterface preparedSteam, ReportedPressureBasis reportedPressureBasis,
+  public static SarirAtmosphericSideStripperContactScreen configure(SarirAtmosphericFractionationCase fractionationCase,
+      SteamInjectionService service, StreamInterface preparedSteam, ReportedPressureBasis reportedPressureBasis,
       String thermodynamicStateBasis, double contactPressureBara) {
     Objects.requireNonNull(fractionationCase, "fractionationCase");
     Objects.requireNonNull(service, "service");
@@ -90,8 +87,7 @@ public final class SarirAtmosphericSideStripperContactScreen {
     requireQualifiedColumn(fractionationCase);
 
     validatePreparedSteam(preparedSteam, source, reportedPressureBasis);
-    validateMixerCompatibility(fractionationCase.getFeedStream().getFluid(),
-        preparedSteam.getFluid());
+    validateMixerCompatibility(fractionationCase.getFeedStream().getFluid(), preparedSteam.getFluid());
 
     StreamInterface sideDraw = getSideDraw(fractionationCase, service);
     requireFinitePositive(sideDraw.getFlowRate("kg/hr"), "Atmospheric-column side draw");
@@ -99,15 +95,13 @@ public final class SarirAtmosphericSideStripperContactScreen {
       throw new IllegalArgumentException("Prepared steam must be independent of the crude and side draw");
     }
 
-    SimpleTray stage = new SimpleTray("Sarir " + service.name().toLowerCase()
-        + " single equilibrium contact");
+    SimpleTray stage = new SimpleTray("Sarir " + service.name().toLowerCase() + " single equilibrium contact");
     stage.addStream(sideDraw);
     stage.addStream(preparedSteam);
     stage.setPressure(contactPressureBara);
 
-    return new SarirAtmosphericSideStripperContactScreen(fractionationCase, service,
-        sideDraw, preparedSteam, reportedPressureBasis, stateBasis, contactPressureBara, source,
-        stage);
+    return new SarirAtmosphericSideStripperContactScreen(fractionationCase, service, sideDraw, preparedSteam,
+        reportedPressureBasis, stateBasis, contactPressureBara, source, stage);
   }
 
   /**
@@ -122,8 +116,7 @@ public final class SarirAtmosphericSideStripperContactScreen {
     SteamInjectionReference currentSource = requireSourceBoundary(service);
     requireSameSourceBoundary(sourceReference, currentSource);
     validatePreparedSteam(steamStream, currentSource, reportedPressureBasis);
-    requireFinitePositive(sideDrawStream.getFlowRate("kg/hr"),
-        "Atmospheric-column side draw");
+    requireFinitePositive(sideDrawStream.getFlowRate("kg/hr"), "Atmospheric-column side draw");
 
     contactStage.run(id);
     StreamInterface vapor = contactStage.getGasOutStream();
@@ -142,9 +135,9 @@ public final class SarirAtmosphericSideStripperContactScreen {
       throw new IllegalStateException("Sarir side-stripper contact does not close its mass balance");
     }
 
-    return new Result(service, sourceReference.getName(), reportedPressureBasis,
-        thermodynamicStateBasis, contactPressureBara, sourceReference.getMassFlowRateKgPerHour(),
-        steamFlow, sideDrawFlow, vaporFlow, liquidFlow, contactStage.getTemperature(), closure);
+    return new Result(service, sourceReference.getName(), reportedPressureBasis, thermodynamicStateBasis,
+        contactPressureBara, sourceReference.getMassFlowRateKgPerHour(), steamFlow, sideDrawFlow, vaporFlow, liquidFlow,
+        contactStage.getTemperature(), closure);
   }
 
   /** @return selected source side-stripper service */
@@ -179,8 +172,7 @@ public final class SarirAtmosphericSideStripperContactScreen {
 
   private static void requireQualifiedColumn(SarirAtmosphericFractionationCase fractionationCase) {
     DistillationColumn column = fractionationCase.getColumn();
-    if (!column.solved()
-        || column.getLastSolveStatus() != DistillationColumn.SolveStatus.RIGOROUS_CONVERGED) {
+    if (!column.solved() || column.getLastSolveStatus() != DistillationColumn.SolveStatus.RIGOROUS_CONVERGED) {
       throw new IllegalStateException("Sarir atmospheric column must be rigorously solved first");
     }
   }
@@ -196,8 +188,7 @@ public final class SarirAtmosphericSideStripperContactScreen {
     } else {
       throw new IllegalArgumentException("Only Sarir side-stripper services are supported");
     }
-    return fractionationCase.getColumn().getSideDrawStream(trayIndex,
-        DistillationColumn.SideDrawPhase.LIQUID);
+    return fractionationCase.getColumn().getSideDrawStream(trayIndex, DistillationColumn.SideDrawPhase.LIQUID);
   }
 
   private static SteamInjectionReference requireSourceBoundary(SteamInjectionService service) {
@@ -224,11 +215,9 @@ public final class SarirAtmosphericSideStripperContactScreen {
     return source;
   }
 
-  private static void requireSameSourceBoundary(SteamInjectionReference expected,
-      SteamInjectionReference actual) {
+  private static void requireSameSourceBoundary(SteamInjectionReference expected, SteamInjectionReference actual) {
     if (!expected.getName().equals(actual.getName()) || expected.getService() != actual.getService()
-        || Double.compare(expected.getMassFlowRateKgPerHour(),
-            actual.getMassFlowRateKgPerHour()) != 0
+        || Double.compare(expected.getMassFlowRateKgPerHour(), actual.getMassFlowRateKgPerHour()) != 0
         || Double.compare(expected.getTemperatureCelsius(), actual.getTemperatureCelsius()) != 0
         || Double.compare(expected.getPressureKPa(), actual.getPressureKPa()) != 0) {
       throw new IllegalStateException("Published Sarir side-stripper steam boundary changed");
@@ -242,71 +231,59 @@ public final class SarirAtmosphericSideStripperContactScreen {
     return thermodynamicStateBasis.trim();
   }
 
-  private static void validatePreparedSteam(StreamInterface preparedSteam,
-      SteamInjectionReference source, ReportedPressureBasis reportedPressureBasis) {
+  private static void validatePreparedSteam(StreamInterface preparedSteam, SteamInjectionReference source,
+      ReportedPressureBasis reportedPressureBasis) {
     double expectedPressureKPa = source.getPressureKPa()
-        + (reportedPressureBasis == ReportedPressureBasis.GAUGE
-            ? STANDARD_ATMOSPHERIC_PRESSURE_KPA : 0.0);
-    requireRelativeClose(preparedSteam.getFlowRate("kg/hr"),
-        source.getMassFlowRateKgPerHour(), FLOW_RELATIVE_TOLERANCE,
+        + (reportedPressureBasis == ReportedPressureBasis.GAUGE ? STANDARD_ATMOSPHERIC_PRESSURE_KPA : 0.0);
+    requireRelativeClose(preparedSteam.getFlowRate("kg/hr"), source.getMassFlowRateKgPerHour(), FLOW_RELATIVE_TOLERANCE,
         "Prepared steam mass flow");
-    requireAbsoluteClose(preparedSteam.getTemperature("C"), source.getTemperatureCelsius(),
-        TEMPERATURE_TOLERANCE_C, "Prepared steam temperature");
-    requireAbsoluteClose(preparedSteam.getPressure("bara") * 100.0, expectedPressureKPa,
-        PRESSURE_TOLERANCE_KPA, "Prepared steam absolute pressure");
+    requireAbsoluteClose(preparedSteam.getTemperature("C"), source.getTemperatureCelsius(), TEMPERATURE_TOLERANCE_C,
+        "Prepared steam temperature");
+    requireAbsoluteClose(preparedSteam.getPressure("bara") * 100.0, expectedPressureKPa, PRESSURE_TOLERANCE_KPA,
+        "Prepared steam absolute pressure");
 
     SystemInterface fluid = preparedSteam.getFluid();
-    if (fluid == null || fluid.getNumberOfPhases() != 1
-        || fluid.getPhase(0).getType() != PhaseType.GAS) {
+    if (fluid == null || fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != PhaseType.GAS) {
       throw new IllegalArgumentException("Prepared steam must expose exactly one gas phase");
     }
     if (!fluid.getPhase(0).hasComponent("water")) {
       throw new IllegalArgumentException("Prepared steam must contain water");
     }
     double waterMoleFraction = fluid.getPhase(0).getComponent("water").getz();
-    if (!Double.isFinite(waterMoleFraction)
-        || waterMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
+    if (!Double.isFinite(waterMoleFraction) || waterMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
       throw new IllegalArgumentException("Prepared steam must be essentially pure water");
     }
   }
 
-  private static void validateMixerCompatibility(SystemInterface crudeFluid,
-      SystemInterface steamFluid) {
+  private static void validateMixerCompatibility(SystemInterface crudeFluid, SystemInterface steamFluid) {
     if (crudeFluid == null || steamFluid == null || crudeFluid.getNumberOfPhases() == 0
         || steamFluid.getNumberOfPhases() == 0) {
       throw new IllegalArgumentException("Crude and prepared-steam systems must expose a phase");
     }
-    for (int crudeIndex = 0; crudeIndex < crudeFluid.getPhase(0).getNumberOfComponents();
-        crudeIndex++) {
+    for (int crudeIndex = 0; crudeIndex < crudeFluid.getPhase(0).getNumberOfComponents(); crudeIndex++) {
       String crudeName = crudeFluid.getPhase(0).getComponent(crudeIndex).getName();
       int crudeNumber = crudeFluid.getPhase(0).getComponent(crudeIndex).getComponentNumber();
       boolean compatible = false;
-      for (int steamIndex = 0; steamIndex < steamFluid.getPhase(0).getNumberOfComponents();
-          steamIndex++) {
+      for (int steamIndex = 0; steamIndex < steamFluid.getPhase(0).getNumberOfComponents(); steamIndex++) {
         if (crudeName.equals(steamFluid.getPhase(0).getComponent(steamIndex).getName())
-            && crudeNumber
-                == steamFluid.getPhase(0).getComponent(steamIndex).getComponentNumber()) {
+            && crudeNumber == steamFluid.getPhase(0).getComponent(steamIndex).getComponentNumber()) {
           compatible = true;
           break;
         }
       }
       if (!compatible) {
-        throw new IllegalArgumentException(
-            "Prepared steam must retain the crude component slate and numbering");
+        throw new IllegalArgumentException("Prepared steam must retain the crude component slate and numbering");
       }
     }
   }
 
-  private static void requireRelativeClose(double value, double expected,
-      double relativeTolerance, String label) {
-    if (!Double.isFinite(value)
-        || Math.abs(value - expected) > relativeTolerance * Math.max(1.0, Math.abs(expected))) {
+  private static void requireRelativeClose(double value, double expected, double relativeTolerance, String label) {
+    if (!Double.isFinite(value) || Math.abs(value - expected) > relativeTolerance * Math.max(1.0, Math.abs(expected))) {
       throw new IllegalArgumentException(label + " does not match the published Sarir boundary");
     }
   }
 
-  private static void requireAbsoluteClose(double value, double expected,
-      double absoluteTolerance, String label) {
+  private static void requireAbsoluteClose(double value, double expected, double absoluteTolerance, String label) {
     if (!Double.isFinite(value) || Math.abs(value - expected) > absoluteTolerance) {
       throw new IllegalArgumentException(label + " does not match the published Sarir boundary");
     }
@@ -339,12 +316,10 @@ public final class SarirAtmosphericSideStripperContactScreen {
     private final double contactTemperatureKelvin;
     private final double massClosureRelativeError;
 
-    private Result(SteamInjectionService service, String sourceRowName,
-        ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
-        double contactPressureBara, double sourceSteamMassFlowKgPerHour,
-        double modeledSteamMassFlowKgPerHour, double sideDrawMassFlowKgPerHour,
-        double vaporProductMassFlowKgPerHour, double liquidProductMassFlowKgPerHour,
-        double contactTemperatureKelvin, double massClosureRelativeError) {
+    private Result(SteamInjectionService service, String sourceRowName, ReportedPressureBasis reportedPressureBasis,
+        String thermodynamicStateBasis, double contactPressureBara, double sourceSteamMassFlowKgPerHour,
+        double modeledSteamMassFlowKgPerHour, double sideDrawMassFlowKgPerHour, double vaporProductMassFlowKgPerHour,
+        double liquidProductMassFlowKgPerHour, double contactTemperatureKelvin, double massClosureRelativeError) {
       this.service = service;
       this.sourceRowName = sourceRowName;
       this.reportedPressureBasis = reportedPressureBasis;
