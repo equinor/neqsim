@@ -8,6 +8,9 @@ onshore, and subsea manifold concepts. Use it to organize preliminary geometry, 
 temperature, flow, material, support, reinforcement, and weight evidence. It is not a detailed
 piping design package, a code-compliance certificate, or a substitute for discipline review.
 
+Use the [current NeqSim JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html) when
+checking the public API alongside the source contracts described below.
+
 The calculator is the clearest public boundary when inputs and units must be explicit. The
 equipment-owned `ManifoldMechanicalDesign` bridge is described separately because its current
 pressure handoff requires additional verification.
