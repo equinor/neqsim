@@ -35,12 +35,12 @@ public class ManifoldMechanicalDesignGuideDocumentationTest extends neqsim.NeqSi
   void guideMatchesCurrentSourceBoundary() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/process/equipment/manifold_design.md"));
-    String calculator = read(repositoryRoot.resolve(
-        "src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java"));
-    String bridge = read(repositoryRoot.resolve(
-        "src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesign.java"));
-    String baseDesign =
-        read(repositoryRoot.resolve("src/main/java/neqsim/process/mechanicaldesign/MechanicalDesign.java"));
+    String calculator = read(repositoryRoot
+        .resolve("src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java"));
+    String bridge = read(
+        repositoryRoot.resolve("src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesign.java"));
+    String baseDesign = read(
+        repositoryRoot.resolve("src/main/java/neqsim/process/mechanicaldesign/MechanicalDesign.java"));
 
     assertTrue(calculator.contains("Design pressure in MPa"));
     assertTrue(calculator.contains("public void setDesignPressure(double designPressure)"));
