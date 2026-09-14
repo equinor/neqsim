@@ -1,3 +1,8 @@
+---
+title: "Sarir atmospheric side-stripper equilibrium-contact screen"
+description: "Source-bounded single-stage screening for published Sarir side-stripper steam services."
+---
+
 # Sarir atmospheric side-stripper equilibrium-contact screen
 
 `SarirAtmosphericSideStripperContactScreen` adds a deliberately narrow fractionation
@@ -63,4 +68,3 @@ reproduction. It does not claim or infer a tray mapping, tray count, multistage
 topology, tray efficiency, pressure profile, steam quality, water-removal train, heat
 duty, product specification, or plant yield. Those require independent data and a
 separate capability contract.
-
