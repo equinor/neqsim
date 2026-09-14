@@ -17,9 +17,9 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * The Sarir source publishes a main-column steam rate, temperature, and pressure, but it does not
  * publish an injection tray, steam quality, enthalpy, or a complete thermodynamic state. This class
- * therefore requires a bottom-up NeqSim tray index and an independently prepared, single-gas-phase
- * water stream from the caller. A non-blank state-basis description is retained as auditable
- * engineering provenance.
+ * therefore requires a bottom-up NeqSim tray index, an explicit interpretation of the reported
+ * pressure basis, and an independently prepared, single-gas-phase water stream from the caller. A
+ * non-blank state-basis description is retained as auditable engineering provenance.
  * </p>
  *
  * <p>
@@ -34,19 +34,31 @@ public final class SarirAtmosphericMainSteamScreen {
   private static final double TEMPERATURE_TOLERANCE_C = 1.0e-7;
   private static final double PRESSURE_TOLERANCE_KPA = 1.0e-7;
   private static final double TOTAL_CLOSURE_TOLERANCE = 5.0e-2;
+  private static final double STANDARD_ATMOSPHERIC_PRESSURE_KPA = 101.325;
+
+  /** Explicit engineering interpretation of the source pressure column. */
+  public enum ReportedPressureBasis {
+    /** Source pressure is interpreted as absolute. */
+    ABSOLUTE,
+    /** Source pressure is interpreted as gauge relative to 101.325 kPa. */
+    GAUGE
+  }
 
   private final SarirAtmosphericFractionationCase fractionationCase;
   private final int injectionTrayIndex;
   private final StreamInterface steamStream;
+  private final ReportedPressureBasis reportedPressureBasis;
   private final String thermodynamicStateBasis;
   private final SteamInjectionReference sourceReference;
 
   private SarirAtmosphericMainSteamScreen(SarirAtmosphericFractionationCase fractionationCase,
-      int injectionTrayIndex, StreamInterface steamStream, String thermodynamicStateBasis,
+      int injectionTrayIndex, StreamInterface steamStream,
+      ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
       SteamInjectionReference sourceReference) {
     this.fractionationCase = fractionationCase;
     this.injectionTrayIndex = injectionTrayIndex;
     this.steamStream = steamStream;
+    this.reportedPressureBasis = reportedPressureBasis;
     this.thermodynamicStateBasis = thermodynamicStateBasis;
     this.sourceReference = sourceReference;
   }
@@ -58,6 +70,7 @@ public final class SarirAtmosphericMainSteamScreen {
    * @param injectionTrayIndex explicit bottom-up NeqSim tray index
    * @param preparedSteam independently prepared material stream at the published rate, temperature,
    *        and pressure, with exactly one gas phase and essentially pure water composition
+   * @param reportedPressureBasis explicit engineering interpretation of the source pressure column
    * @param thermodynamicStateBasis non-blank description of the independent quality, enthalpy, or
    *        state evidence used to prepare the stream
    * @return configured source-bounded screen
@@ -68,9 +81,11 @@ public final class SarirAtmosphericMainSteamScreen {
    */
   public static SarirAtmosphericMainSteamScreen configure(
       SarirAtmosphericFractionationCase fractionationCase, int injectionTrayIndex,
-      StreamInterface preparedSteam, String thermodynamicStateBasis) {
+      StreamInterface preparedSteam, ReportedPressureBasis reportedPressureBasis,
+      String thermodynamicStateBasis) {
     Objects.requireNonNull(fractionationCase, "fractionationCase");
     Objects.requireNonNull(preparedSteam, "preparedSteam");
+    Objects.requireNonNull(reportedPressureBasis, "reportedPressureBasis");
     String stateBasis = requireStateBasis(thermodynamicStateBasis);
 
     if (injectionTrayIndex < 0
@@ -88,11 +103,11 @@ public final class SarirAtmosphericMainSteamScreen {
     if (preparedSteam == fractionationCase.getFeedStream()) {
       throw new IllegalArgumentException("Steam must be independent of the crude feed stream");
     }
-    validatePreparedSteam(preparedSteam, source);
+    validatePreparedSteam(preparedSteam, source, reportedPressureBasis);
 
     column.addFeedStream(preparedSteam, injectionTrayIndex);
     return new SarirAtmosphericMainSteamScreen(fractionationCase, injectionTrayIndex, preparedSteam,
-        stateBasis, source);
+        reportedPressureBasis, stateBasis, source);
   }
 
   /**
@@ -116,7 +131,7 @@ public final class SarirAtmosphericMainSteamScreen {
   public Result evaluate() {
     SteamInjectionReference currentSource = requireSourceBoundary();
     requireSameSourceBoundary(sourceReference, currentSource);
-    validatePreparedSteam(steamStream, currentSource);
+    validatePreparedSteam(steamStream, currentSource, reportedPressureBasis);
     requireAttachedSteam();
 
     SarirAtmosphericFractionationResult productResult =
@@ -134,8 +149,8 @@ public final class SarirAtmosphericMainSteamScreen {
     }
 
     double vaporMoleFraction = getVaporMoleFraction(steamStream.getFluid());
-    return new Result(productResult, injectionTrayIndex, thermodynamicStateBasis,
-        currentSource.getMassFlowRateKgPerHour(), steamFlow,
+    return new Result(productResult, injectionTrayIndex, reportedPressureBasis,
+        thermodynamicStateBasis, currentSource.getMassFlowRateKgPerHour(), steamFlow,
         currentSource.getTemperatureCelsius(), steamStream.getTemperature("C"),
         currentSource.getPressureKPa(), steamStream.getPressure("bara") * 100.0,
         vaporMoleFraction, totalInletFlow, totalProductFlow, totalClosure,
@@ -155,6 +170,11 @@ public final class SarirAtmosphericMainSteamScreen {
   /** @return caller-supplied prepared steam stream */
   public StreamInterface getSteamStream() {
     return steamStream;
+  }
+
+  /** @return explicit caller interpretation of the source pressure column */
+  public ReportedPressureBasis getReportedPressureBasis() {
+    return reportedPressureBasis;
   }
 
   /** @return retained caller description of the independently established steam state */
@@ -235,16 +255,19 @@ public final class SarirAtmosphericMainSteamScreen {
   }
 
   private static void validatePreparedSteam(StreamInterface preparedSteam,
-      SteamInjectionReference source) {
+      SteamInjectionReference source, ReportedPressureBasis reportedPressureBasis) {
     double flowKgPerHour = preparedSteam.getFlowRate("kg/hr");
     double temperatureCelsius = preparedSteam.getTemperature("C");
     double pressureKPa = preparedSteam.getPressure("bara") * 100.0;
+    double expectedAbsolutePressureKPa = source.getPressureKPa()
+        + (reportedPressureBasis == ReportedPressureBasis.GAUGE
+            ? STANDARD_ATMOSPHERIC_PRESSURE_KPA : 0.0);
     requireRelativeClose(flowKgPerHour, source.getMassFlowRateKgPerHour(),
         FLOW_RELATIVE_TOLERANCE, "Prepared steam mass flow");
     requireAbsoluteClose(temperatureCelsius, source.getTemperatureCelsius(),
         TEMPERATURE_TOLERANCE_C, "Prepared steam temperature");
-    requireAbsoluteClose(pressureKPa, source.getPressureKPa(), PRESSURE_TOLERANCE_KPA,
-        "Prepared steam pressure");
+    requireAbsoluteClose(pressureKPa, expectedAbsolutePressureKPa, PRESSURE_TOLERANCE_KPA,
+        "Prepared steam absolute pressure");
 
     SystemInterface fluid = preparedSteam.getFluid();
     if (fluid == null || fluid.getNumberOfPhases() != 1
@@ -309,6 +332,7 @@ public final class SarirAtmosphericMainSteamScreen {
   public static final class Result {
     private final SarirAtmosphericFractionationResult productResult;
     private final int injectionTrayIndex;
+    private final ReportedPressureBasis reportedPressureBasis;
     private final String thermodynamicStateBasis;
     private final double sourceMassFlowKgPerHour;
     private final double modeledMassFlowKgPerHour;
@@ -324,7 +348,8 @@ public final class SarirAtmosphericMainSteamScreen {
     private final double columnEnergyBalanceError;
 
     private Result(SarirAtmosphericFractionationResult productResult, int injectionTrayIndex,
-        String thermodynamicStateBasis, double sourceMassFlowKgPerHour,
+        ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
+        double sourceMassFlowKgPerHour,
         double modeledMassFlowKgPerHour, double sourceTemperatureCelsius,
         double modeledTemperatureCelsius, double sourcePressureKPa, double modeledPressureKPa,
         double vaporMoleFraction, double totalInletMassFlowKgPerHour,
@@ -332,6 +357,7 @@ public final class SarirAtmosphericMainSteamScreen {
         double columnMassBalanceError, double columnEnergyBalanceError) {
       this.productResult = productResult;
       this.injectionTrayIndex = injectionTrayIndex;
+      this.reportedPressureBasis = reportedPressureBasis;
       this.thermodynamicStateBasis = thermodynamicStateBasis;
       this.sourceMassFlowKgPerHour = sourceMassFlowKgPerHour;
       this.modeledMassFlowKgPerHour = modeledMassFlowKgPerHour;
@@ -355,6 +381,11 @@ public final class SarirAtmosphericMainSteamScreen {
     /** @return explicit bottom-up NeqSim injection-tray index */
     public int getInjectionTrayIndex() {
       return injectionTrayIndex;
+    }
+
+    /** @return explicit caller interpretation of the source pressure column */
+    public ReportedPressureBasis getReportedPressureBasis() {
+      return reportedPressureBasis;
     }
 
     /** @return retained independent steam-state basis */
