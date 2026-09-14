@@ -11,20 +11,19 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Source-bounded main-column steam-injection screening for a
- * {@link SarirAtmosphericFractionationCase}.
+ * Source-bounded main-column steam-injection screening for a {@link SarirAtmosphericFractionationCase}.
  *
  * <p>
- * The Sarir source publishes a main-column steam rate, temperature, and pressure, but it does not
- * publish an injection tray, steam quality, enthalpy, or a complete thermodynamic state. This class
- * therefore requires a bottom-up NeqSim tray index, an explicit interpretation of the reported
- * pressure basis, and an independently prepared, single-gas-phase water stream from the caller. A
- * non-blank state-basis description is retained as auditable engineering provenance.
+ * The Sarir source publishes a main-column steam rate, temperature, and pressure, but it does not publish an injection
+ * tray, steam quality, enthalpy, or a complete thermodynamic state. This class therefore requires a bottom-up NeqSim
+ * tray index, an explicit interpretation of the reported pressure basis, and an independently prepared,
+ * single-gas-phase water stream from the caller. A non-blank state-basis description is retained as auditable
+ * engineering provenance.
  * </p>
  *
  * <p>
- * The two published side-stripper rows are outside this class because the qualified Sarir case does
- * not yet model either side stripper. They are never redirected into the main column.
+ * The two published side-stripper rows are outside this class because the qualified Sarir case does not yet model
+ * either side stripper. They are never redirected into the main column.
  * </p>
  */
 public final class SarirAtmosphericMainSteamScreen {
@@ -51,9 +50,8 @@ public final class SarirAtmosphericMainSteamScreen {
   private final String thermodynamicStateBasis;
   private final SteamInjectionReference sourceReference;
 
-  private SarirAtmosphericMainSteamScreen(SarirAtmosphericFractionationCase fractionationCase,
-      int injectionTrayIndex, StreamInterface steamStream,
-      ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
+  private SarirAtmosphericMainSteamScreen(SarirAtmosphericFractionationCase fractionationCase, int injectionTrayIndex,
+      StreamInterface steamStream, ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
       SteamInjectionReference sourceReference) {
     this.fractionationCase = fractionationCase;
     this.injectionTrayIndex = injectionTrayIndex;
@@ -68,30 +66,27 @@ public final class SarirAtmosphericMainSteamScreen {
    *
    * @param fractionationCase unsolved qualified Sarir atmospheric-fractionation case
    * @param injectionTrayIndex explicit bottom-up NeqSim tray index
-   * @param preparedSteam independently prepared material stream at the published rate, temperature,
-   *        and pressure, with exactly one gas phase and essentially pure water composition
+   * @param preparedSteam independently prepared material stream at the published rate, temperature, and pressure, with
+   * exactly one gas phase and essentially pure water composition
    * @param reportedPressureBasis explicit engineering interpretation of the source pressure column
-   * @param thermodynamicStateBasis non-blank description of the independent quality, enthalpy, or
-   *        state evidence used to prepare the stream
+   * @param thermodynamicStateBasis non-blank description of the independent quality, enthalpy, or state evidence used
+   * to prepare the stream
    * @return configured source-bounded screen
    * @throws NullPointerException if the case or stream is null
    * @throws IllegalArgumentException if the tray, basis, or stream boundary is invalid
-   * @throws IllegalStateException if the source boundary changed, the case was solved, or the column
-   *         already has an additional feed
+   * @throws IllegalStateException if the source boundary changed, the case was solved, or the column already has an
+   * additional feed
    */
-  public static SarirAtmosphericMainSteamScreen configure(
-      SarirAtmosphericFractionationCase fractionationCase, int injectionTrayIndex,
-      StreamInterface preparedSteam, ReportedPressureBasis reportedPressureBasis,
+  public static SarirAtmosphericMainSteamScreen configure(SarirAtmosphericFractionationCase fractionationCase,
+      int injectionTrayIndex, StreamInterface preparedSteam, ReportedPressureBasis reportedPressureBasis,
       String thermodynamicStateBasis) {
     Objects.requireNonNull(fractionationCase, "fractionationCase");
     Objects.requireNonNull(preparedSteam, "preparedSteam");
     Objects.requireNonNull(reportedPressureBasis, "reportedPressureBasis");
     String stateBasis = requireStateBasis(thermodynamicStateBasis);
 
-    if (injectionTrayIndex < 0
-        || injectionTrayIndex >= SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT) {
-      throw new IllegalArgumentException(
-          "Steam injection tray must be a valid bottom-up Sarir NeqSim index");
+    if (injectionTrayIndex < 0 || injectionTrayIndex >= SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT) {
+      throw new IllegalArgumentException("Steam injection tray must be a valid bottom-up Sarir NeqSim index");
     }
 
     SteamInjectionReference source = requireSourceBoundary();
@@ -125,8 +120,8 @@ public final class SarirAtmosphericMainSteamScreen {
    * Evaluate an already solved screen.
    *
    * @return immutable engineering evidence
-   * @throws IllegalStateException if the source boundary, connection, prepared state, column
-   *         qualification, or total material closure fails
+   * @throws IllegalStateException if the source boundary, connection, prepared state, column qualification, or total
+   * material closure fails
    */
   public Result evaluate() {
     SteamInjectionReference currentSource = requireSourceBoundary();
@@ -134,8 +129,7 @@ public final class SarirAtmosphericMainSteamScreen {
     validatePreparedSteam(steamStream, currentSource, reportedPressureBasis);
     requireAttachedSteam();
 
-    SarirAtmosphericFractionationResult productResult =
-        SarirAtmosphericFractionationResult.evaluate(fractionationCase);
+    SarirAtmosphericFractionationResult productResult = SarirAtmosphericFractionationResult.evaluate(fractionationCase);
     DistillationColumn column = fractionationCase.getColumn();
 
     double crudeFlow = fractionationCase.getFeedStream().getFlowRate("kg/hr");
@@ -144,17 +138,15 @@ public final class SarirAtmosphericMainSteamScreen {
     double totalProductFlow = productResult.getProductMassFlowKgPerHour();
     double totalClosure = Math.abs(totalInletFlow - totalProductFlow) / totalInletFlow;
     if (!Double.isFinite(totalClosure) || totalClosure > TOTAL_CLOSURE_TOLERANCE) {
-      throw new IllegalStateException(
-          "Sarir crude-plus-steam inlet does not close against calculated products");
+      throw new IllegalStateException("Sarir crude-plus-steam inlet does not close against calculated products");
     }
 
     double vaporMoleFraction = getVaporMoleFraction(steamStream.getFluid());
-    return new Result(productResult, injectionTrayIndex, reportedPressureBasis,
-        thermodynamicStateBasis, currentSource.getMassFlowRateKgPerHour(), steamFlow,
-        currentSource.getTemperatureCelsius(), steamStream.getTemperature("C"),
-        currentSource.getPressureKPa(), steamStream.getPressure("bara") * 100.0,
-        vaporMoleFraction, totalInletFlow, totalProductFlow, totalClosure,
-        column.getMassBalanceError(), column.getEnergyBalanceError());
+    return new Result(productResult, injectionTrayIndex, reportedPressureBasis, thermodynamicStateBasis,
+        currentSource.getMassFlowRateKgPerHour(), steamFlow, currentSource.getTemperatureCelsius(),
+        steamStream.getTemperature("C"), currentSource.getPressureKPa(), steamStream.getPressure("bara") * 100.0,
+        vaporMoleFraction, totalInletFlow, totalProductFlow, totalClosure, column.getMassBalanceError(),
+        column.getEnergyBalanceError());
   }
 
   /** @return underlying qualified Sarir atmospheric-fractionation case */
@@ -189,8 +181,7 @@ public final class SarirAtmosphericMainSteamScreen {
 
   private static String requireStateBasis(String thermodynamicStateBasis) {
     if (thermodynamicStateBasis == null || thermodynamicStateBasis.trim().isEmpty()) {
-      throw new IllegalArgumentException(
-          "An explicit independent thermodynamic-state basis is required");
+      throw new IllegalArgumentException("An explicit independent thermodynamic-state basis is required");
     }
     return thermodynamicStateBasis.trim();
   }
@@ -199,8 +190,7 @@ public final class SarirAtmosphericMainSteamScreen {
     if (SarirAtmosphericReference.hasExplicitSteamInjectionLocations()
         || SarirAtmosphericReference.hasExplicitSteamQuality()
         || SarirAtmosphericReference.hasExplicitSteamThermodynamicState()) {
-      throw new IllegalStateException(
-          "Sarir steam source semantics changed and require independent requalification");
+      throw new IllegalStateException("Sarir steam source semantics changed and require independent requalification");
     }
     SteamInjectionReference source = SarirAtmosphericReference.getSteamInjection(SOURCE_ROW_NAME);
     if (source.getService() != SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN) {
@@ -212,36 +202,30 @@ public final class SarirAtmosphericMainSteamScreen {
     return source;
   }
 
-  private static void requireSameSourceBoundary(SteamInjectionReference expected,
-      SteamInjectionReference actual) {
+  private static void requireSameSourceBoundary(SteamInjectionReference expected, SteamInjectionReference actual) {
     if (!expected.getName().equals(actual.getName()) || expected.getService() != actual.getService()
-        || Double.compare(expected.getMassFlowRateKgPerHour(),
-            actual.getMassFlowRateKgPerHour()) != 0
+        || Double.compare(expected.getMassFlowRateKgPerHour(), actual.getMassFlowRateKgPerHour()) != 0
         || Double.compare(expected.getTemperatureCelsius(), actual.getTemperatureCelsius()) != 0
         || Double.compare(expected.getPressureKPa(), actual.getPressureKPa()) != 0) {
       throw new IllegalStateException("Published Sarir main-column steam boundary changed");
     }
   }
 
-  private static void requireUnaugmentedColumn(
-      SarirAtmosphericFractionationCase fractionationCase) {
+  private static void requireUnaugmentedColumn(SarirAtmosphericFractionationCase fractionationCase) {
     DistillationColumn column = fractionationCase.getColumn();
     int feedCount = 0;
     for (int tray = 0; tray < SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT; tray++) {
       feedCount += column.getFeedStreams(tray).size();
     }
-    List<StreamInterface> crudeTrayFeeds =
-        column.getFeedStreams(SarirAtmosphericFractionationCase.FEED_INTERNAL_INDEX);
-    if (feedCount != 1 || crudeTrayFeeds.size() != 1
-        || crudeTrayFeeds.get(0) != fractionationCase.getFeedStream()) {
+    List<StreamInterface> crudeTrayFeeds = column.getFeedStreams(SarirAtmosphericFractionationCase.FEED_INTERNAL_INDEX);
+    if (feedCount != 1 || crudeTrayFeeds.size() != 1 || crudeTrayFeeds.get(0) != fractionationCase.getFeedStream()) {
       throw new IllegalStateException(
           "Sarir column must contain only its qualified crude feed before steam configuration");
     }
   }
 
   private void requireAttachedSteam() {
-    List<StreamInterface> trayFeeds =
-        fractionationCase.getColumn().getFeedStreams(injectionTrayIndex);
+    List<StreamInterface> trayFeeds = fractionationCase.getColumn().getFeedStreams(injectionTrayIndex);
     int identityMatches = 0;
     for (StreamInterface trayFeed : trayFeeds) {
       if (trayFeed == steamStream) {
@@ -249,45 +233,38 @@ public final class SarirAtmosphericMainSteamScreen {
       }
     }
     if (identityMatches != 1) {
-      throw new IllegalStateException(
-          "Prepared Sarir main-column steam stream is not attached exactly once");
+      throw new IllegalStateException("Prepared Sarir main-column steam stream is not attached exactly once");
     }
   }
 
-  private static void validatePreparedSteam(StreamInterface preparedSteam,
-      SteamInjectionReference source, ReportedPressureBasis reportedPressureBasis) {
+  private static void validatePreparedSteam(StreamInterface preparedSteam, SteamInjectionReference source,
+      ReportedPressureBasis reportedPressureBasis) {
     double flowKgPerHour = preparedSteam.getFlowRate("kg/hr");
     double temperatureCelsius = preparedSteam.getTemperature("C");
     double pressureKPa = preparedSteam.getPressure("bara") * 100.0;
     double expectedAbsolutePressureKPa = source.getPressureKPa()
-        + (reportedPressureBasis == ReportedPressureBasis.GAUGE
-            ? STANDARD_ATMOSPHERIC_PRESSURE_KPA : 0.0);
-    requireRelativeClose(flowKgPerHour, source.getMassFlowRateKgPerHour(),
-        FLOW_RELATIVE_TOLERANCE, "Prepared steam mass flow");
-    requireAbsoluteClose(temperatureCelsius, source.getTemperatureCelsius(),
-        TEMPERATURE_TOLERANCE_C, "Prepared steam temperature");
+        + (reportedPressureBasis == ReportedPressureBasis.GAUGE ? STANDARD_ATMOSPHERIC_PRESSURE_KPA : 0.0);
+    requireRelativeClose(flowKgPerHour, source.getMassFlowRateKgPerHour(), FLOW_RELATIVE_TOLERANCE,
+        "Prepared steam mass flow");
+    requireAbsoluteClose(temperatureCelsius, source.getTemperatureCelsius(), TEMPERATURE_TOLERANCE_C,
+        "Prepared steam temperature");
     requireAbsoluteClose(pressureKPa, expectedAbsolutePressureKPa, PRESSURE_TOLERANCE_KPA,
         "Prepared steam absolute pressure");
 
     SystemInterface fluid = preparedSteam.getFluid();
-    if (fluid == null || fluid.getNumberOfPhases() != 1
-        || fluid.getPhase(0).getType() != PhaseType.GAS) {
-      throw new IllegalArgumentException(
-          "Prepared steam must expose exactly one independently established gas phase");
+    if (fluid == null || fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != PhaseType.GAS) {
+      throw new IllegalArgumentException("Prepared steam must expose exactly one independently established gas phase");
     }
     if (!fluid.getPhase(0).hasComponent("water")) {
       throw new IllegalArgumentException("Prepared steam must contain water");
     }
     double waterMoleFraction = fluid.getPhase(0).getComponent("water").getz();
-    if (!Double.isFinite(waterMoleFraction)
-        || waterMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
+    if (!Double.isFinite(waterMoleFraction) || waterMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
       throw new IllegalArgumentException("Prepared steam must be essentially pure water");
     }
     double vaporMoleFraction = getVaporMoleFraction(fluid);
-    if (!Double.isFinite(vaporMoleFraction)
-        || vaporMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
-      throw new IllegalArgumentException(
-          "Prepared steam must have an independently established vapor fraction of one");
+    if (!Double.isFinite(vaporMoleFraction) || vaporMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
+      throw new IllegalArgumentException("Prepared steam must have an independently established vapor fraction of one");
     }
   }
 
@@ -301,16 +278,13 @@ public final class SarirAtmosphericMainSteamScreen {
     return fluid.getPhase("gas").getBeta();
   }
 
-  private static void requireRelativeClose(double value, double expected,
-      double relativeTolerance, String label) {
-    if (!Double.isFinite(value)
-        || Math.abs(value - expected) > relativeTolerance * Math.max(1.0, Math.abs(expected))) {
+  private static void requireRelativeClose(double value, double expected, double relativeTolerance, String label) {
+    if (!Double.isFinite(value) || Math.abs(value - expected) > relativeTolerance * Math.max(1.0, Math.abs(expected))) {
       throw new IllegalArgumentException(label + " does not match the published Sarir boundary");
     }
   }
 
-  private static void requireAbsoluteClose(double value, double expected,
-      double absoluteTolerance, String label) {
+  private static void requireAbsoluteClose(double value, double expected, double absoluteTolerance, String label) {
     if (!Double.isFinite(value) || Math.abs(value - expected) > absoluteTolerance) {
       throw new IllegalArgumentException(label + " does not match the published Sarir boundary");
     }
@@ -348,12 +322,10 @@ public final class SarirAtmosphericMainSteamScreen {
     private final double columnEnergyBalanceError;
 
     private Result(SarirAtmosphericFractionationResult productResult, int injectionTrayIndex,
-        ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis,
-        double sourceMassFlowKgPerHour,
-        double modeledMassFlowKgPerHour, double sourceTemperatureCelsius,
-        double modeledTemperatureCelsius, double sourcePressureKPa, double modeledPressureKPa,
-        double vaporMoleFraction, double totalInletMassFlowKgPerHour,
-        double totalProductMassFlowKgPerHour, double totalMassClosureRelativeError,
+        ReportedPressureBasis reportedPressureBasis, String thermodynamicStateBasis, double sourceMassFlowKgPerHour,
+        double modeledMassFlowKgPerHour, double sourceTemperatureCelsius, double modeledTemperatureCelsius,
+        double sourcePressureKPa, double modeledPressureKPa, double vaporMoleFraction,
+        double totalInletMassFlowKgPerHour, double totalProductMassFlowKgPerHour, double totalMassClosureRelativeError,
         double columnMassBalanceError, double columnEnergyBalanceError) {
       this.productResult = productResult;
       this.injectionTrayIndex = injectionTrayIndex;
