@@ -24,10 +24,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Compiles and executes the solution gas-water ratio guide example. */
 public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTest {
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -35,19 +34,14 @@ public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTe
   @Test
   void guideMatchesCurrentSourceBoundary() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String guide =
-        read(repositoryRoot.resolve("docs/pvtsimulation/SolutionGasWaterRatio.md"));
+    String guide = read(repositoryRoot.resolve("docs/pvtsimulation/SolutionGasWaterRatio.md"));
     String normalizedGuide = guide.replaceAll("\\s+", " ");
-    String source =
-        read(
-            repositoryRoot.resolve(
-                "src/main/java/neqsim/pvtsimulation/simulation/SolutionGasWaterRatio.java"));
+    String source = read(
+        repositoryRoot.resolve("src/main/java/neqsim/pvtsimulation/simulation/SolutionGasWaterRatio.java"));
 
     assertTrue(source.contains("public enum CalculationMethod"));
     assertTrue(source.contains("public void setSalinity(double salinity, String unit)"));
-    assertTrue(
-        source.contains(
-            "public void setTemperaturesAndPressures(double[] temperatures, double[] pressures)"));
+    assertTrue(source.contains("public void setTemperaturesAndPressures(double[] temperatures, double[] pressures)"));
     assertTrue(source.contains("public double calculateRsw(double temperatureK, double pressureBara)"));
     assertTrue(source.contains("new SystemSoreideWhitson(temperatureK, pressureBara)"));
     assertTrue(source.contains("new SystemElectrolyteCPAstatoil(temperatureK, pressureBara)"));
@@ -55,22 +49,13 @@ public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTe
     assertTrue(source.contains("salinity / (molarMassNaCl * 1000.0)"));
 
     assertTrue(
-        normalizedGuide.contains(
-            "The source gas composition is ignored. Use only as a methane/brine correlation"));
-    assertTrue(
-        normalizedGuide.contains(
-            "A returned zero is therefore not distinguishable from a physical zero"));
+        normalizedGuide.contains("The source gas composition is ignored. Use only as a methane/brine correlation"));
+    assertTrue(normalizedGuide.contains("A returned zero is therefore not distinguishable from a physical zero"));
     assertTrue(normalizedGuide.contains("assume water density near 1 kg/L"));
     assertTrue(normalizedGuide.contains("defaults to `ELECTROLYTE_CPA`"));
 
-    for (String rejected :
-        Arrays.asList(
-            "System.out",
-            "### Typical Values",
-            "## Comparison with Literature",
-            "Most accurate for saline systems",
-            "Gas type | Any composition",
-            "CO₂ is 20-50× more soluble")) {
+    for (String rejected : Arrays.asList("System.out", "### Typical Values", "## Comparison with Literature",
+        "Most accurate for saline systems", "Gas type | Any composition", "CO₂ is 20-50× more soluble")) {
       assertFalse(guide.contains(rejected), "Rejected Rsw guidance: " + rejected);
     }
   }
@@ -78,8 +63,7 @@ public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTe
   @Test
   void referenceExampleCompilesAndRunsWithAssertions() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String guide =
-        read(repositoryRoot.resolve("docs/pvtsimulation/SolutionGasWaterRatio.md"));
+    String guide = read(repositoryRoot.resolve("docs/pvtsimulation/SolutionGasWaterRatio.md"));
 
     Matcher fences = JAVA_FENCE.matcher(guide);
     assertTrue(fences.find(), "The guide must contain one complete Java example");
@@ -96,23 +80,19 @@ public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTe
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    Path javaSource =
-        temporaryDirectory.resolve("SolutionGasWaterRatioReferenceExample.java");
+    Path javaSource = temporaryDirectory.resolve("SolutionGasWaterRatioReferenceExample.java");
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {temporaryDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      Class<?> example =
-          Class.forName("SolutionGasWaterRatioReferenceExample", true, loader);
+      Class<?> example = Class.forName("SolutionGasWaterRatioReferenceExample", true, loader);
       assertTrue(example.desiredAssertionStatus());
       try {
         example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
       } catch (InvocationTargetException exception) {
-        throw new AssertionError(
-            "SolutionGasWaterRatioReferenceExample failed", exception.getCause());
+        throw new AssertionError("SolutionGasWaterRatioReferenceExample failed", exception.getCause());
       }
     }
   }
@@ -129,35 +109,14 @@ public class SolutionGasWaterRatioGuideDocumentationTest extends neqsim.NeqSimTe
    * @throws Exception if source preparation or compilation fails
    */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty(
-            "surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            temporaryDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(source.toFile()))
-              .call();
-      assertTrue(
-          Boolean.TRUE.equals(successful),
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful),
           "docs/pvtsimulation/SolutionGasWaterRatio.md: " + diagnostics.getDiagnostics());
     }
   }
