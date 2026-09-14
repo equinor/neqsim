@@ -63,6 +63,8 @@ public class SarirAtmosphericMainSteamScreenTest {
 
     assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
         createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.GAUGE, "independent basis"));
+    assertThrows(IllegalArgumentException.class, () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
+        createStandalonePreparedSteam(), ReportedPressureBasis.ABSOLUTE, "independent basis"));
 
     StreamInterface wrongFlow = createPreparedStream("water", PhaseType.GAS);
     wrongFlow.setFlowRate(300.0, "kg/hr");
@@ -112,7 +114,9 @@ public class SarirAtmosphericMainSteamScreenTest {
         .getTemperatureCelsius() + 273.15;
     double pressureBara = SarirAtmosphericReference.getSteamInjection("Main atmospheric column").getPressureKPa()
         / 100.0;
-    SystemInterface fluid = new SystemSrkEos(temperatureKelvin, pressureBara);
+    SystemInterface fluid = createModel().getFeedStream().getFluid().getEmptySystemClone();
+    fluid.setTemperature(temperatureKelvin);
+    fluid.setPressure(pressureBara);
     fluid.addComponent(component, 1.0);
     fluid.setMixingRule("classic");
     fluid.setTotalFlowRate(
@@ -123,6 +127,24 @@ public class SarirAtmosphericMainSteamScreenTest {
     fluid.setPhaseType(0, phaseType);
     fluid.init(3);
     return new Stream("explicit Sarir prepared steam", fluid);
+  }
+
+  private static StreamInterface createStandalonePreparedSteam() {
+    double temperatureKelvin = SarirAtmosphericReference.getSteamInjection("Main atmospheric column")
+        .getTemperatureCelsius() + 273.15;
+    double pressureBara = SarirAtmosphericReference.getSteamInjection("Main atmospheric column").getPressureKPa()
+        / 100.0;
+    SystemInterface fluid = new SystemSrkEos(temperatureKelvin, pressureBara);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.setTotalFlowRate(
+        SarirAtmosphericReference.getSteamInjection("Main atmospheric column").getMassFlowRateKgPerHour(), "kg/hr");
+    fluid.setNumberOfPhases(1);
+    fluid.setMaxNumberOfPhases(1);
+    fluid.setForcePhaseTypes(true);
+    fluid.setPhaseType(0, PhaseType.GAS);
+    fluid.init(3);
+    return new Stream("standalone incompatible Sarir steam", fluid);
   }
 
   private static SarirAtmosphericFractionationCase createModel() {
