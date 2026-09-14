@@ -47,7 +47,9 @@ it does not derive vapor quality from the source temperature and pressure.
 ## Java and JPype-accessible workflow
 
 ~~~java
-SystemInterface water = new SystemSrkEos(150.0 + 273.15, 476.0 / 100.0);
+SystemInterface water = fractionation.getFeedStream().getFluid().getEmptySystemClone();
+water.setTemperature(150.0, "C");
+water.setPressure(476.0, "kPa");
 water.addComponent("water", 1.0);
 water.setMixingRule("classic");
 water.setTotalFlowRate(340.2, "kg/hr");
@@ -87,7 +89,9 @@ Configuration rejects the request before column mutation when any of these condi
 - the column has been solved or already has an additional feed;
 - the prepared stream is the crude feed;
 - prepared flow, temperature, or interpreted absolute pressure differs from the source boundary;
-- water is absent or not essentially pure; or
+- water is absent or not essentially pure;
+- the prepared system does not retain the crude component slate and component numbering from an
+  empty clone; or
 - the prepared state is not exactly one gas phase with vapor mole fraction one.
 
 Evaluation rechecks the immutable source row, connection identity, and prepared-stream state. It
