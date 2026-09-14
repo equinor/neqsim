@@ -54,6 +54,50 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
     return stream.getFlowRate("mol/hr") * stream.getFluid().getMolarComposition()[component];
   }
 
+  @Test
+  void materialInletEnthalpyIgnoresAbsentPhaseTemplates() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.setMixingRule("classic");
+    Stream feed = new Stream("vapor feed", fluid);
+    feed.run();
+    SimpleTray source = new SimpleTray("single-phase source");
+    source.addStream(feed);
+    source.run();
+    StreamInterface absentLiquid = source.getLiquidOutStream();
+    assertEquals(0.0, absentLiquid.getFlowRate("kg/hr"), 1.0e-12);
+    double expectedEnthalpy = enthalpy(feed);
+    for (SimpleTray terminal : new SimpleTray[] { new Reboiler("reboiler"), new Condenser("condenser") }) {
+      terminal.addStream(absentLiquid.clone());
+      assertEquals(0.0, terminal.calcMixStreamEnthalpy0(), 0.0, "An absent phase carries no energy");
+      terminal.addStream(feed.clone());
+      assertEquals(expectedEnthalpy, terminal.calcMixStreamEnthalpy0(), 1.0e-8,
+          "An empty phase must not contaminate the flowing inlet enthalpy");
+    }
+  }
+
+  @Test
+  void materialInletEnthalpyPreservesInvalidFlowingState() {
+    SystemSrkEos invalidFluid = new SystemSrkEos(298.15, 5.0) {
+      private static final long serialVersionUID = 1000L;
+
+      @Override
+      public double getEnthalpy() {
+        return Double.NaN;
+      }
+    };
+    invalidFluid.addComponent("methane", 1.0);
+    invalidFluid.setMixingRule("classic");
+    Stream feed = new Stream("invalid flowing feed", invalidFluid);
+    feed.run();
+    assertTrue(feed.getFlowRate("kg/hr") > 0.0);
+    SimpleTray tray = new SimpleTray("invalid inlet");
+    tray.addStream(feed);
+    assertFalse(Double.isFinite(tray.calcMixStreamEnthalpy0()),
+        "A flowing inlet with invalid enthalpy must fail the energy check");
+  }
+
   private static void assertPublishedBalances(DistillationColumn column) {
     assertPublishedBalances(column, FEED_TRAY);
   }
@@ -205,6 +249,10 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
     for (int i = 0; i < simultaneous.getNumberOfTrays(); i++) {
       assertEquals(simultaneous.getTray(i).getTemperature(), sequential.getTray(i).getTemperature(), 1.0e-5);
     }
+    // Reuse the already populated MESH diagnostic after changing the accepted terminal state.
+    sequential.setReboilerTemperature(81.0, "C");
+    sequential.run();
+    assertPublishedBalances(sequential, 1, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
   }
 
   @Test

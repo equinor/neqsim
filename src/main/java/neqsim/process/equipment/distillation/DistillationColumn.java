@@ -12524,9 +12524,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
-    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
-      updateMeshResiduals();
-    }
     // Product reconciliation and property finalization can change the exposed phase streams.
     // Refresh terminal duties from those same streams before qualifying their energy balance.
     if (hasReboiler) {
@@ -12536,6 +12533,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       getCondenser().updateDutyFromPublishedStreams();
     }
     lastEnergyResidual = getEnergyBalanceError();
+    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
+      updateMeshResiduals();
+    }
     updateLastSolveStatus(productReconciled, fallbackProductsApplied);
     warnOnNonFiniteColumnEndDuty();
     setCalculationIdentifier(id);

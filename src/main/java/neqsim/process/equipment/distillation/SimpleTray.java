@@ -130,23 +130,21 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * calcMixStreamEnthalpy0.
+   * Sum material inlet enthalpy rates, excluding heat input and energy-stream duty.
    *
-   * @return a double
+   * <p>
+   * Absent-phase templates carry no energy. Use the same zero-flow handling as published outlets so initializing an
+   * empty phase cannot contaminate a terminal duty. Invalid flowing states remain non-finite.
+   * </p>
+   *
+   * @return material inlet enthalpy rate in W
    */
   public double calcMixStreamEnthalpy0() {
     double enthalpy = 0;
 
     for (int k = 0; k < streams.size(); k++) {
-      // init(2) is sufficient: getEnthalpy() reads only residual thermodynamic
-      // properties, not the composition derivatives that init(3) additionally computes.
-      // This removes redundant derivative work from the per-tray enthalpy summation.
-      streams.get(k).getThermoSystem().init(2);
-      enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-      // System.out.println("total enthalpy k : " + ( ((Stream)
-      // streams.get(k)).getThermoSystem()).getEnthalpy());
+      enthalpy += getMaterialStreamEnthalpy(streams.get(k));
     }
-    // System.out.println("total enthalpy of streams: " + enthalpy);
     return enthalpy;
   }
 

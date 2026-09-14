@@ -306,7 +306,10 @@ targets manipulated through condenser or reboiler temperature.
   enthalpies, includes any separate condenser liquid product, and preserves non-finite values.
   Cloning keeps this public diagnostic from changing the adaptive relaxation controller's state.
   Sequential solvers also refresh their final energy residual after product reconciliation and
-  property finalization, so the reported residual describes the published state.
+  property finalization, so the reported residual describes the published state. Terminal inlet
+  enthalpy sums exclude zero-flow phase templates, just as outlet sums do; this keeps absent
+  phases from producing non-finite duties in single-phase columns. Invalid flowing enthalpies
+  remain non-finite. Sequential MESH diagnostics are refreshed after the final terminal duties.
 - Exact repeated runs retain stream object identities and update calculation identifiers on
   tray inlets, outlets, and column products. Nearby feed or terminal-temperature changes refresh
   the retained inlet and product objects when the simultaneous result is accepted. For a column
