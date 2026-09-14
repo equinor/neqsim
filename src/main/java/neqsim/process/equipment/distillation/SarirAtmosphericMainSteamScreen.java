@@ -99,6 +99,7 @@ public final class SarirAtmosphericMainSteamScreen {
       throw new IllegalArgumentException("Steam must be independent of the crude feed stream");
     }
     validatePreparedSteam(preparedSteam, source, reportedPressureBasis);
+    validateMixerCompatibility(fractionationCase.getFeedStream().getFluid(), preparedSteam.getFluid());
 
     column.addFeedStream(preparedSteam, injectionTrayIndex);
     return new SarirAtmosphericMainSteamScreen(fractionationCase, injectionTrayIndex, preparedSteam,
@@ -265,6 +266,30 @@ public final class SarirAtmosphericMainSteamScreen {
     double vaporMoleFraction = getVaporMoleFraction(fluid);
     if (!Double.isFinite(vaporMoleFraction) || vaporMoleFraction < WATER_MOLE_FRACTION_MINIMUM) {
       throw new IllegalArgumentException("Prepared steam must have an independently established vapor fraction of one");
+    }
+  }
+
+  private static void validateMixerCompatibility(SystemInterface crudeFluid, SystemInterface steamFluid) {
+    if (crudeFluid == null || steamFluid == null || crudeFluid.getNumberOfPhases() == 0
+        || steamFluid.getNumberOfPhases() == 0) {
+      throw new IllegalArgumentException("Crude and prepared-steam thermodynamic systems must expose a phase");
+    }
+
+    for (int crudeIndex = 0; crudeIndex < crudeFluid.getPhase(0).getNumberOfComponents(); crudeIndex++) {
+      String crudeName = crudeFluid.getPhase(0).getComponent(crudeIndex).getName();
+      int crudeComponentNumber = crudeFluid.getPhase(0).getComponent(crudeIndex).getComponentNumber();
+      boolean compatibleComponent = false;
+      for (int steamIndex = 0; steamIndex < steamFluid.getPhase(0).getNumberOfComponents(); steamIndex++) {
+        if (crudeName.equals(steamFluid.getPhase(0).getComponent(steamIndex).getName())
+            && crudeComponentNumber == steamFluid.getPhase(0).getComponent(steamIndex).getComponentNumber()) {
+          compatibleComponent = true;
+          break;
+        }
+      }
+      if (!compatibleComponent) {
+        throw new IllegalArgumentException(
+            "Prepared steam must retain the crude component slate and numbering, for example from getEmptySystemClone()");
+      }
     }
   }
 
