@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.OperatingInputs;
+import neqsim.process.equipment.distillation.SarirAtmosphericMainSteamScreen.ReportedPressureBasis;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
@@ -35,10 +36,12 @@ public class SarirAtmosphericMainSteamScreenTest {
     SarirAtmosphericFractionationCase model = createModel();
     StreamInterface steam = createPreparedStream("water", PhaseType.GAS);
     SarirAtmosphericMainSteamScreen screen = SarirAtmosphericMainSteamScreen.configure(model, 1,
-        steam, "independent saturated-vapor enthalpy calculation");
+        steam, ReportedPressureBasis.ABSOLUTE,
+        "independent saturated-vapor enthalpy calculation");
 
     assertEquals(1, screen.getInjectionTrayIndex());
     assertSame(steam, screen.getSteamStream());
+    assertEquals(ReportedPressureBasis.ABSOLUTE, screen.getReportedPressureBasis());
     assertEquals("independent saturated-vapor enthalpy calculation",
         screen.getThermodynamicStateBasis());
     assertEquals(340.2, screen.getSourceReference().getMassFlowRateKgPerHour(), 0.0);
@@ -55,34 +58,45 @@ public class SarirAtmosphericMainSteamScreenTest {
   public void invalidOrUnsupportedPreparedStatesFailBeforeMutation() {
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(), -1,
-            createPreparedStream("water", PhaseType.GAS), "independent basis"));
+            createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
+            "independent basis"));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(),
             SarirAtmosphericFractionationCase.SIMPLE_TRAY_COUNT,
-            createPreparedStream("water", PhaseType.GAS), "independent basis"));
+            createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
+            "independent basis"));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
-            createPreparedStream("water", PhaseType.GAS), " "));
+            createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE, " "));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
+            createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.GAUGE,
+            "independent basis"));
 
     StreamInterface wrongFlow = createPreparedStream("water", PhaseType.GAS);
     wrongFlow.setFlowRate(300.0, "kg/hr");
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1, wrongFlow,
-            "independent basis"));
+            ReportedPressureBasis.ABSOLUTE, "independent basis"));
 
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
-            createPreparedStream("methane", PhaseType.GAS), "independent basis"));
+            createPreparedStream("methane", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
+            "independent basis"));
     assertThrows(IllegalArgumentException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(createModel(), 1,
-            createPreparedStream("water", PhaseType.OIL), "independent basis"));
+            createPreparedStream("water", PhaseType.OIL), ReportedPressureBasis.ABSOLUTE,
+            "independent basis"));
 
     SarirAtmosphericFractionationCase augmented = createModel();
     SarirAtmosphericMainSteamScreen.configure(augmented, 1,
-        createPreparedStream("water", PhaseType.GAS), "first independent basis");
+        createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
+        "first independent basis");
     assertThrows(IllegalStateException.class,
         () -> SarirAtmosphericMainSteamScreen.configure(augmented, 2,
-            createPreparedStream("water", PhaseType.GAS), "second independent basis"));
+            createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
+            "second independent basis"));
     assertEquals(1, augmented.getColumn().getFeedStreams(1).size());
     assertEquals(0, augmented.getColumn().getFeedStreams(2).size());
   }
@@ -93,13 +107,14 @@ public class SarirAtmosphericMainSteamScreenTest {
   public void explicitMainColumnSteamScreenRunsConservatively() {
     SarirAtmosphericFractionationCase model = createModel();
     SarirAtmosphericMainSteamScreen screen = SarirAtmosphericMainSteamScreen.configure(model, 1,
-        createPreparedStream("water", PhaseType.GAS),
+        createPreparedStream("water", PhaseType.GAS), ReportedPressureBasis.ABSOLUTE,
         "independent saturated-vapor enthalpy calculation");
 
     SarirAtmosphericMainSteamScreen.Result result = screen.run(UUID.randomUUID());
 
     assertTrue(model.getColumn().solved(), model.getColumn().getConvergenceDiagnostics());
     assertEquals(1, result.getInjectionTrayIndex());
+    assertEquals(ReportedPressureBasis.ABSOLUTE, result.getReportedPressureBasis());
     assertEquals(340.2, result.getSourceMassFlowKgPerHour(), 0.0);
     assertEquals(340.2, result.getModeledMassFlowKgPerHour(), 340.2e-9);
     assertEquals(150.0, result.getModeledTemperatureCelsius(), 1.0e-7);
