@@ -35,6 +35,7 @@ public class ManifoldMechanicalDesignGuideDocumentationTest extends neqsim.NeqSi
   void guideMatchesCurrentSourceBoundary() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/process/equipment/manifold_design.md"));
+    String normalizedGuide = guide.replaceAll("\\s+", " ");
     String calculator = read(repositoryRoot
         .resolve("src/main/java/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.java"));
     String bridge = read(
@@ -50,10 +51,10 @@ public class ManifoldMechanicalDesignGuideDocumentationTest extends neqsim.NeqSi
     assertTrue(bridge.contains("calculator.setDesignPressure(getMaxOperationPressure() * 1.1)"));
     assertTrue(baseDesign.contains("maximum operating pressure in bara"));
 
-    assertTrue(guide.contains("Do not treat that bridge as a unit-safe design calculation"));
-    assertTrue(guide.contains("does not use that value in a collapse or combined-pressure check"));
-    assertTrue(guide.contains("not evidence that a complete standards review was performed"));
-    assertTrue(guide.contains("Neither result is a lifting, transport, installation, or structural design"));
+    assertTrue(normalizedGuide.contains("Do not treat that bridge as a unit-safe design calculation"));
+    assertTrue(normalizedGuide.contains("does not use that value in a collapse or combined-pressure check"));
+    assertTrue(normalizedGuide.contains("not evidence that a complete standards review was performed"));
+    assertTrue(normalizedGuide.contains("Neither result is a lifting, transport, installation, or structural design"));
 
     for (String rejected : Arrays.asList("System.out", "comprehensive mechanical design capabilities",
         "follows these industry standards", "Always specify water depth", "NACE compliant A106-B")) {
