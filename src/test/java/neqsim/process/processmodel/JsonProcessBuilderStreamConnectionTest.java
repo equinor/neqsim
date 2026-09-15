@@ -13,13 +13,11 @@ class JsonProcessBuilderStreamConnectionTest {
   @Test
   void testProductStreamInletTracksEquipmentOutlet() {
     String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 300.0, \"pressure\": 50.0,"
-        + " \"components\": {\"methane\": 1.0}}," + "\"process\": ["
-        + " {\"type\": \"Stream\", \"name\": \"Feed\","
+        + " \"components\": {\"methane\": 1.0}}," + "\"process\": [" + " {\"type\": \"Stream\", \"name\": \"Feed\","
         + "  \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}},"
         + " {\"type\": \"Cooler\", \"name\": \"Cooler\", \"inlet\": \"Feed\","
         + "  \"properties\": {\"outTemperature\": [20.0, \"C\"]}},"
-        + " {\"type\": \"Stream\", \"name\": \"Product\", \"inlet\": \"Cooler.outlet\"}"
-        + "]}";
+        + " {\"type\": \"Stream\", \"name\": \"Product\", \"inlet\": \"Cooler.outlet\"}" + "]}";
 
     SimulationResult result = new JsonProcessBuilder().build(json);
 
