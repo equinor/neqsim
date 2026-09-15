@@ -25,7 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 /** Compiles and executes every Java program in the Java getting-started guide. */
 public class JavaGettingStartedGuideDocumentationTest extends neqsim.NeqSimTest {
   private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^\x60\x60\x60java\\r?\\n([\\s\\S]*?)^\x60\x60\x60[ \\t]*$");
+      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
