@@ -15,9 +15,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Qualification coverage for TP flashes after combining fluids in opposite input orders.
  *
  * <p>
- * The synthetic gas and hydrocarbon-liquid inputs reproduce the public shape reported in issue
- * 1362: a petroleum pseudo-component exists only in one operand. The tests qualify numerical
- * order invariance; they do not reproduce or validate the reporter's unavailable private fluid.
+ * The synthetic gas and hydrocarbon-liquid inputs reproduce the public shape reported in issue 1362: a petroleum
+ * pseudo-component exists only in one operand. The tests qualify numerical order invariance; they do not reproduce or
+ * validate the reporter's unavailable private fluid.
  * </p>
  */
 class TPflashAddFluidOrderTest {
@@ -42,9 +42,8 @@ class TPflashAddFluidOrderTest {
     for (String name : COMPONENTS) {
       assertNotNull(gasThenOil.getComponent(name), "gas-then-oil component " + name);
       assertNotNull(oilThenGas.getComponent(name), "oil-then-gas component " + name);
-      assertEquals(gasThenOil.getComponent(name).getNumberOfmoles(),
-          oilThenGas.getComponent(name).getNumberOfmoles(), NORMALIZATION_TOLERANCE,
-          "feed moles for " + name);
+      assertEquals(gasThenOil.getComponent(name).getNumberOfmoles(), oilThenGas.getComponent(name).getNumberOfmoles(),
+          NORMALIZATION_TOLERANCE, "feed moles for " + name);
     }
   }
 
@@ -69,8 +68,8 @@ class TPflashAddFluidOrderTest {
   }
 
   /**
-   * Poor initialization, state reuse, return continuity, and repeat execution must preserve
-   * order-independent equilibrium.
+   * Poor initialization, state reuse, return continuity, and repeat execution must preserve order-independent
+   * equilibrium.
    */
   @Test
   void poorInitializationAndReuseRemainOrderIndependent() {
@@ -182,16 +181,14 @@ class TPflashAddFluidOrderTest {
             label + " composition " + phase + "/" + name);
         compositionTotal += composition;
       }
-      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE,
-          label + " composition normalization " + phase);
+      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE, label + " composition normalization " + phase);
       assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
           label + " compressibility " + phase);
     }
     assertEquals(1.0, betaTotal, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
     double materialResidual = maximumComponentMaterialBalanceResidual(system);
-    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
-        label + " material-balance residual " + materialResidual);
+    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE, label + " material-balance residual " + materialResidual);
 
     double fugacityResidual = maximumComparableLogFugacityResidual(system);
     assertTrue(fugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + fugacityResidual);
@@ -219,8 +216,7 @@ class TPflashAddFluidOrderTest {
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(name).getx();
       }
-      maximumResidual = Math.max(maximumResidual,
-          Math.abs(system.getPhase(0).getComponent(name).getz() - recovered));
+      maximumResidual = Math.max(maximumResidual, Math.abs(system.getPhase(0).getComponent(name).getz() - recovered));
     }
     return maximumResidual;
   }
