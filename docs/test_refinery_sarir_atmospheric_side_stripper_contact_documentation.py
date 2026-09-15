@@ -3,7 +3,8 @@
 from pathlib import Path
 
 
-DOC = Path(__file__).parent / "refinery_sarir_atmospheric_side_stripper_contact.md"
+DOC = (Path(__file__).parent / "thermo" / "characterization"
+       / "refinery_sarir_atmospheric_side_stripper_contact.md")
 
 
 def test_side_stripper_contact_documentation_keeps_source_and_scope_boundaries():

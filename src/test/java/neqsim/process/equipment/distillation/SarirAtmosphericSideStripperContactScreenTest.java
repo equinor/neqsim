@@ -92,6 +92,26 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     assertTrue(result.getMassClosureRelativeError() <= 1.0e-6);
   }
 
+  /** A converged column with dry side-draw trays must remain inadmissible. */
+  @Test
+  @Timeout(value = 240, unit = TimeUnit.SECONDS)
+  public void rigorouslyConvergedDrySideDrawsFailClosed() {
+    OperatingInputs inputs = new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0,
+        700.0, 1.0, 24, 0.08, 15, 0.15);
+    SarirAtmosphericFractionationCase model = SarirAtmosphericFractionationCase.create("Sarir dry side draws",
+        SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, inputs);
+    model.run(UUID.randomUUID());
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus());
+    for (SteamInjectionService service : new SteamInjectionService[] { SteamInjectionService.KEROSENE_SIDE_STRIPPER,
+        SteamInjectionService.DIESEL_SIDE_STRIPPER }) {
+      StreamInterface steam = createPreparedSteam(model, service);
+      IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+          () -> SarirAtmosphericSideStripperContactScreen.configure(model, service, steam,
+              ReportedPressureBasis.ABSOLUTE, "independent vapor-state calculation", 1.20));
+      assertEquals("Atmospheric-column side draw must be finite and positive", error.getMessage());
+    }
+  }
+
   private static StreamInterface createPreparedSteam(SarirAtmosphericFractionationCase model,
       SteamInjectionService service) {
     String rowName = service == SteamInjectionService.KEROSENE_SIDE_STRIPPER ? "Kerosene side stripper"
@@ -112,8 +132,10 @@ public class SarirAtmosphericSideStripperContactScreenTest {
   }
 
   private static SarirAtmosphericFractionationCase createModel() {
+    // Explicit synthetic locations below the feed retain liquid at these controls.
+    // They are not tray locations inferred from the published steam-service rows.
     OperatingInputs inputs = new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0,
-        700.0, 1.0, 24, 0.08, 15, 0.15);
+        700.0, 1.0, 3, 0.08, 2, 0.15);
     return SarirAtmosphericFractionationCase.create("Sarir side-stripper contact", SPECIFIC_GRAVITY,
         MOLAR_MASS_KG_PER_MOL, inputs);
   }

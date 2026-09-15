@@ -42,6 +42,13 @@ The prepared stream must retain the crude system's component slate and numbering
 example by starting from `getEmptySystemClone()`. This prevents ambiguous mixer
 component mapping.
 
+The Java contact fixture explicitly uses bottom-up liquid draw indices 3 and 2,
+below the feed at index 4, at 700 K reboiler temperature and reflux ratio 1.0.
+These synthetic locations provide nonzero liquid feeds for contact qualification;
+they are not published plant tray locations. With the same controls, the earlier
+indices 24 and 15 can be dry even when the atmospheric column reports convergence.
+Convergence alone therefore does not establish a usable liquid side draw.
+
 ## Calculation and evidence
 
 The selected liquid side draw and steam are added to a standalone `SimpleTray`. A
