@@ -256,6 +256,11 @@ Regenerate it whenever documents are added and before finalizing the task.
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce a professional
      engineering report (Word + HTML)
+   - **PDF:** add `pdf` to `report.formats` in `study_config.yaml`, or pass
+     `--pdf` (`--no-pdf` overrides the config). The PDF is rendered from the
+     DOCX, not the HTML, so it inherits the configured Word template; it needs
+     Microsoft Word with pywin32, or LibreOffice on PATH. A conversion failure
+     is reported and does not abort the report run.
    - **The report title is the study title, and the report FILES are named after
      it.** Set `study.title` in `study_config.yaml` (optionally `study.author`,
      `study.classification`); override per run with `--title` / `--author`.

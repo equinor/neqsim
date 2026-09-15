@@ -461,6 +461,92 @@ def _has_engineering_validation(results: dict) -> bool:
     return False
 
 
+def _read_gate_waivers(task_folder: Path) -> dict:
+    """Read explicitly waived quality gates from study_config.yaml.
+
+    A study may legitimately not need a gate: a measurement review of plant data
+    has no model to benchmark and no propagated uncertainty to quantify. The
+    report generator already honours ``quality_gates.<gate>: skip``, so this
+    validator must agree with it, otherwise the same task passes one gate and is
+    warned by the other. Only an explicit ``skip`` counts - ``auto`` and any
+    other value leave the check in force.
+
+    Parsed with a deliberately small reader rather than a YAML dependency, since
+    only one flat block of scalar values is needed.
+
+    Parameters
+    ----------
+    task_folder : Path
+        Folder holding results.json.
+
+    Returns
+    -------
+    dict
+        Mapping of gate name to True for each gate explicitly set to ``skip``.
+    """
+    config = task_folder / "study_config.yaml"
+    if not config.is_file():
+        return {}
+    waived = {}
+    in_block = False
+    try:
+        text = config.read_text(encoding="utf-8-sig")
+    except OSError:
+        return {}
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+        if not line.startswith((" ", "\t")):
+            in_block = line.strip().rstrip(":") == "quality_gates"
+            continue
+        if not in_block or ":" not in line:
+            continue
+        key, _, value = line.strip().partition(":")
+        if value.strip().strip("'\"").lower() == "skip":
+            waived[key.strip()] = True
+    return waived
+
+
+def apply_gate_waivers(warnings: List[str], waived: dict) -> Tuple[List[str], List[str]]:
+    """Drop warnings for gates the study explicitly waived.
+
+    Returns the waivers as separate notes rather than discarding them, so a
+    reviewer still sees that a gate was turned off and by whose decision.
+
+    Parameters
+    ----------
+    warnings : list of str
+        Warnings produced for this task.
+    waived : dict
+        Output of :func:`_read_gate_waivers`.
+
+    Returns
+    -------
+    tuple
+        ``(kept_warnings, waiver_notes)``.
+    """
+    if not waived:
+        return warnings, []
+    suppress = {
+        "benchmark_validation": ("benchmark_validation: recommended key is missing",
+                                 "engineering validation:"),
+        "uncertainty_analysis": ("uncertainty: recommended key is missing",),
+        "risk_register": ("risk_evaluation: recommended key is missing",),
+    }
+    patterns = []
+    notes = []
+    for gate, prefixes in suppress.items():
+        if waived.get(gate):
+            patterns.extend(prefixes)
+            notes.append(
+                "{}: waived in study_config.yaml (quality_gates.{}: skip)".format(gate, gate))
+    if not patterns:
+        return warnings, []
+    kept = [w for w in warnings if not any(w.startswith(p) for p in patterns)]
+    return kept, notes
+
+
 def find_results_files(roots: List[Path]) -> List[Path]:
     out: List[Path] = []
     for root in roots:
@@ -591,14 +677,19 @@ def main() -> int:
                     "benchmark_validation nor a model-vs-plant comparison — add one"
                 )
                 (errors if args.enterprise_gate else warnings).append(msg)
+        waived = _read_gate_waivers(task_folder)
+        warnings, waiver_notes = apply_gate_waivers(warnings, waived)
+        errors, _ = apply_gate_waivers(errors, waived)
         total_errors += len(errors)
         total_warnings += len(warnings)
-        if errors or warnings:
+        if errors or warnings or waiver_notes:
             print(f"\n--- {rel} ---")
             for e in errors:
                 print(f"  ERROR   {e}")
             for w in warnings:
                 print(f"  WARN    {w}")
+            for n in waiver_notes:
+                print(f"  WAIVED  {n}")
         else:
             print(f"OK      {rel}")
         if errors:
