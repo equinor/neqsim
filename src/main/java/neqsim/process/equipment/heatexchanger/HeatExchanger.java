@@ -89,6 +89,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** Heat transfer area used in rating mode (m2). */
   private double ratingArea = 0.0;
 
+  /** Opt-in single-phase rating with correlated pressure losses on both outlet streams. */
+  private boolean useRatingPressureDrop = false;
+
   // ============ Capacity Constraint Fields ============
   /** Design duty in Watts for capacity constraint. */
   private double designDuty = 0.0;
@@ -491,6 +494,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    // The caller can change geometry or fouling through the mutable rating calculator.
+    if (designMode == DesignMode.RATING) {
+      return true;
+    }
     if (firstTime || inStream[0] == null || inStream[1] == null) {
       return true;
     }
@@ -562,6 +569,10 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (useRatingPressureDrop) {
+      runThermalHydraulicRating(id);
+      return;
+    }
     if (useDeltaT) {
       runDeltaT(id);
       publishHeatDuty();
@@ -917,6 +928,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       boolean heating = outStream[0].getTemperature() > inStream[0].getTemperature();
       ratingCalculator.setTubeSideFluid(tubeDensity, tubeViscosity, tubeCp, tubeConductivity, tubeMassFlow, heating);
     } catch (Exception ex) {
+      if (useRatingPressureDrop) {
+        throw new IllegalStateException("Could not extract tube-side rating properties", ex);
+      }
       // Use defaults if property extraction fails
     }
 
@@ -931,6 +945,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       double shellMassFlow = shellFluid.getFlowRate("kg/sec");
       ratingCalculator.setShellSideFluid(shellDensity, shellViscosity, shellCp, shellConductivity, shellMassFlow);
     } catch (Exception ex) {
+      if (useRatingPressureDrop) {
+        throw new IllegalStateException("Could not extract shell-side rating properties", ex);
+      }
       // Use defaults if property extraction fails
     }
   }
@@ -981,6 +998,152 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    */
   public double getRatingArea() {
     return ratingArea;
+  }
+
+  /**
+   * Enables coupled single-phase thermal-hydraulic rating. Stream 0 is the tube side and stream 1 is the shell side,
+   * independently of which stream is hotter. Correlations use inlet properties; outlet states are PH-flashed at inlet
+   * pressure minus the correlated loss. Rating area is based on the nominal outside tube surface. This mode requires a
+   * rating calculator, positive area and the ordinary UA specification; fixed-temperature and delta-T specifications
+   * are rejected. The default is false, preserving the existing thermal-only rating behavior.
+   *
+   * @param enabled true to apply correlated pressure drops in single-phase rating
+   */
+  public void setUseRatingPressureDrop(boolean enabled) {
+    useRatingPressureDrop = enabled;
+  }
+
+  /**
+   * Reports whether single-phase thermal-hydraulic rating is enabled.
+   *
+   * @return true when correlated rating pressure drops are applied
+   */
+  public boolean isUseRatingPressureDrop() {
+    return useRatingPressureDrop;
+  }
+
+  /**
+   * Runs a fixed-geometry single-phase rating and commits outlet states only after both flashes succeed. The heat
+   * capacity rates are enthalpy secants across the inlet temperature interval, consistent with the legacy rating
+   * calculation. This is a lumped rating approximation, not a segmented boiling or condensation model.
+   *
+   * @param id calculation identifier
+   * @throws IllegalStateException if configuration, phase envelope or pressure budget is unsuitable
+   */
+  private void runThermalHydraulicRating(UUID id) {
+    if (designMode != DesignMode.RATING || ratingCalculator == null || !Double.isFinite(ratingArea) || ratingArea <= 0.0
+        || useDeltaT || getSpecification().equals("out stream") || getSpecification().equals("outTemperature")) {
+      throw new IllegalStateException("Thermal-hydraulic rating requires RATING mode, calculator, positive outside "
+          + "area and a UA specification without fixed outlet temperature or delta-T");
+    }
+    SystemInterface[] inlet = new SystemInterface[2];
+    SystemInterface[] outlet = new SystemInterface[2];
+    double[] inletEnthalpy = new double[2];
+    for (int side = 0; side < 2; side++) {
+      if (inStream[side] == null) {
+        throw new IllegalStateException("Thermal-hydraulic rating requires both inlet streams");
+      }
+      inStream[side].run(id);
+      inlet[side] = inStream[side].getThermoSystem();
+      inlet[side].initProperties();
+      requireSinglePhaseRatingState(inlet[side]);
+      inletEnthalpy[side] = inlet[side].getEnthalpy();
+      outlet[side] = inlet[side].clone();
+    }
+    updateRatingCalculatorFromStreams();
+    ratingCalculator.calculateStrict();
+    double calculatedU = ratingCalculator.getOverallU();
+    double calculatedUA = calculatedU * ratingArea;
+    if (!Double.isFinite(calculatedUA) || calculatedUA <= 0.0) {
+      throw new IllegalStateException("Thermal-hydraulic rating produced invalid UA");
+    }
+    double[] drops = { ratingCalculator.getTubeSidePressureDropBar(), ratingCalculator.getShellSidePressureDropBar() };
+    for (int side = 0; side < 2; side++) {
+      double pressure = inlet[side].getPressure() - drops[side];
+      if (!Double.isFinite(drops[side]) || drops[side] < 0.0 || !Double.isFinite(pressure) || pressure <= 0.0) {
+        throw new IllegalStateException("Correlated pressure drop exhausts the inlet pressure on side " + side);
+      }
+      outlet[side].setPressure(pressure);
+    }
+    double temperatureDifference = inlet[0].getTemperature() - inlet[1].getTemperature();
+    double calculatedNtu = 0.0;
+    double effectiveness = 0.0;
+    double heatFromTube = 0.0;
+    if (Math.abs(temperatureDifference) > 1e-10) {
+      double[] capacities = new double[2];
+      for (int side = 0; side < 2; side++) {
+        SystemInterface limit = inlet[side].clone();
+        limit.setTemperature(inlet[1 - side].getTemperature());
+        new ThermodynamicOperations(limit).TPflash();
+        limit.initProperties();
+        requireSinglePhaseRatingState(limit);
+        if (limit.getPhase(0).getType() != inlet[side].getPhase(0).getType()) {
+          throw new IllegalStateException("Rating temperature interval crosses a phase transition on side " + side);
+        }
+        capacities[side] = Math.abs((limit.getEnthalpy() - inletEnthalpy[side]) / temperatureDifference);
+        if (!Double.isFinite(capacities[side]) || capacities[side] <= 0.0) {
+          throw new IllegalStateException("Thermal-hydraulic rating requires positive finite heat capacity rates");
+        }
+      }
+      double minimumCapacity = Math.min(capacities[0], capacities[1]);
+      double capacityRatio = minimumCapacity / Math.max(capacities[0], capacities[1]);
+      calculatedNtu = calculatedUA / minimumCapacity;
+      // The counterflow limit also removes the 0/0 singularity of the legacy shell-and-tube alias at Cr=1.
+      effectiveness = Math.abs(capacityRatio - 1.0) < 1e-10 && !flowArrangement.equals("concentric tube paralellflow")
+          ? calculatedNtu / (1.0 + calculatedNtu)
+          : calcThermalEffectivenes(calculatedNtu, capacityRatio);
+      heatFromTube = effectiveness * minimumCapacity * temperatureDifference;
+      if (!Double.isFinite(heatFromTube) || !Double.isFinite(effectiveness) || effectiveness < 0.0
+          || effectiveness > 1.0) {
+        throw new IllegalStateException("Thermal-hydraulic rating produced invalid effectiveness or heat duty");
+      }
+    }
+    for (int side = 0; side < 2; side++) {
+      double targetEnthalpy = inletEnthalpy[side] + (side == 0 ? -heatFromTube : heatFromTube);
+      new ThermodynamicOperations(outlet[side]).PHflash(targetEnthalpy);
+      outlet[side].initProperties();
+      requireSinglePhaseRatingState(outlet[side]);
+      if (outlet[side].getPhase(0).getType() != inlet[side].getPhase(0).getType()) {
+        throw new IllegalStateException("Thermal-hydraulic rating outlet changed phase on side " + side);
+      }
+      if (!Double.isFinite(outlet[side].getEnthalpy())
+          || Math.abs(outlet[side].getEnthalpy() - targetEnthalpy) > 1e-5 * Math.max(1.0, Math.abs(targetEnthalpy))) {
+        throw new IllegalStateException("Thermal-hydraulic rating outlet PH flash failed energy closure");
+      }
+    }
+    for (int side = 0; side < 2; side++) {
+      outStream[side].setThermoSystem(outlet[side]);
+      outStream[side].setCalculationIdentifier(id);
+    }
+    ratingU = calculatedU;
+    UAvalue = calculatedUA;
+    NTU = calculatedNtu;
+    thermalEffectiveness = effectiveness;
+    duty = Math.abs(heatFromTube);
+    hotColdDutyBalance = 1.0;
+    firstTime = false;
+    publishHeatDuty();
+    updateLastState();
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Checks the applicability of the inlet-property single-phase correlations.
+   *
+   * @param fluid fluid state to check
+   * @throws IllegalStateException for multiphase, zero-flow or invalid transport states
+   */
+  private static void requireSinglePhaseRatingState(SystemInterface fluid) {
+    double[] properties = { fluid.getFlowRate("kg/sec"), fluid.getDensity("kg/m3"), fluid.getViscosity("kg/msec"),
+        fluid.getCp("J/kgK"), fluid.getThermalConductivity("W/mK"), fluid.getTemperature(), fluid.getPressure() };
+    if (fluid.getNumberOfPhases() != 1) {
+      throw new IllegalStateException("Thermal-hydraulic rating currently supports single-phase streams only");
+    }
+    for (double value : properties) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalStateException("Thermal-hydraulic rating requires positive finite flow and fluid properties");
+      }
+    }
   }
 
   /**

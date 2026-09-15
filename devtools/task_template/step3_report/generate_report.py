@@ -60,7 +60,9 @@ import glob
 import json
 import base64
 import io
+import shutil
 import sqlite3
+import subprocess
 from datetime import date
 
 try:
@@ -126,13 +128,16 @@ REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
 REPORT_BASENAME = "Report"      # replaced by the report title in __main__
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
+PDF_FILE = os.path.join(REPORT_DIR, "Report.pdf")
 PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
 PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
+PAPER_PDF_FILE = os.path.join(REPORT_DIR, "Paper.pdf")
 RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
 TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
 STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
 OUTPUT_MANIFEST_FILE = os.path.join(REPORT_DIR, ".report_outputs.json")
-LEGACY_OUTPUT_NAMES = ("Report.docx", "Report.html", "Paper.docx", "Paper.html")
+LEGACY_OUTPUT_NAMES = ("Report.docx", "Report.html", "Report.pdf",
+                       "Paper.docx", "Paper.html", "Paper.pdf")
 REPORT_NAME_MAX_CHARS = 120
 
 if not os.path.isdir(REPORT_DIR):
@@ -182,13 +187,168 @@ def apply_report_output_names(title):
     str
         The base name used for the generated files.
     """
-    global REPORT_BASENAME, DOCX_FILE, HTML_FILE, PAPER_DOCX_FILE, PAPER_HTML_FILE
+    global REPORT_BASENAME, DOCX_FILE, HTML_FILE, PDF_FILE
+    global PAPER_DOCX_FILE, PAPER_HTML_FILE, PAPER_PDF_FILE
     REPORT_BASENAME = slugify_report_name(title)
     DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".docx")
     HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".html")
+    PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".pdf")
     PAPER_DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.docx")
     PAPER_HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.html")
+    PAPER_PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.pdf")
     return REPORT_BASENAME
+
+
+def _docx_to_pdf_word(docx_path, pdf_path):
+    """Convert through Microsoft Word COM automation (Windows only).
+
+    Preferred backend: Word renders its own format, so the corporate template's
+    fonts, headers, footers and numbering survive the conversion intact.
+
+    Parameters
+    ----------
+    docx_path : str
+        Absolute path of the source Word document.
+    pdf_path : str
+        Absolute path of the PDF to write.
+
+    Returns
+    -------
+    str or None
+        ``None`` on success, otherwise the reason the backend was unusable.
+    """
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError:
+        return "pywin32 is not installed"
+    wd_export_format_pdf = 17
+    pythoncom.CoInitialize()
+    word = None
+    document = None
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = 0
+        document = word.Documents.Open(docx_path, ReadOnly=True, Visible=False)
+        document.ExportAsFixedFormat(pdf_path, wd_export_format_pdf,
+                                     CreateBookmarks=1)
+    except Exception as error:  # pragma: no cover - COM surfaces many types
+        return "Word automation failed ({})".format(error)
+    finally:
+        if document is not None:
+            try:
+                document.Close(0)
+            except Exception:
+                pass
+        if word is not None:
+            try:
+                word.Quit()
+            except Exception:
+                pass
+        pythoncom.CoUninitialize()
+    return None
+
+
+def _docx_to_pdf_libreoffice(docx_path, pdf_path):
+    """Convert through a headless LibreOffice installation.
+
+    Cross-platform fallback. Fidelity to a Word template is good but not exact,
+    so this is only used when Word automation is unavailable.
+
+    Parameters
+    ----------
+    docx_path : str
+        Absolute path of the source Word document.
+    pdf_path : str
+        Absolute path of the PDF to write.
+
+    Returns
+    -------
+    str or None
+        ``None`` on success, otherwise the reason the backend was unusable.
+    """
+    executable = shutil.which("soffice") or shutil.which("libreoffice")
+    if not executable:
+        return "LibreOffice (soffice) is not on PATH"
+    outdir = os.path.dirname(pdf_path)
+    try:
+        completed = subprocess.run(
+            [executable, "--headless", "--convert-to", "pdf", "--outdir",
+             outdir, docx_path],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300)
+    except (OSError, subprocess.SubprocessError) as error:
+        return "LibreOffice call failed ({})".format(error)
+    if completed.returncode != 0:
+        return "LibreOffice exited {}".format(completed.returncode)
+    produced = os.path.join(
+        outdir, os.path.splitext(os.path.basename(docx_path))[0] + ".pdf")
+    if produced != pdf_path and os.path.isfile(produced):
+        shutil.move(produced, pdf_path)
+    return None
+
+
+def convert_docx_to_pdf(docx_path, pdf_path, label="Report"):
+    """Render a generated Word report to PDF for distribution.
+
+    The PDF is produced from the DOCX rather than from the HTML so that it
+    inherits the configured corporate Word template. Backends are tried in
+    descending order of fidelity, and a failure is reported rather than raised:
+    a missing PDF must not discard an otherwise complete report run.
+
+    Parameters
+    ----------
+    docx_path : str
+        Path of the Word report produced by this run.
+    pdf_path : str
+        Path of the PDF to write.
+    label : str, optional
+        Human-readable name used in console messages.
+
+    Returns
+    -------
+    bool
+        True when the PDF was written.
+    """
+    docx_path = os.path.abspath(docx_path)
+    pdf_path = os.path.abspath(pdf_path)
+    if not os.path.isfile(docx_path):
+        print("NOTE: {} PDF skipped, source document is missing: {}".format(
+            label, docx_path))
+        return False
+    reasons = []
+    for backend in (_docx_to_pdf_word, _docx_to_pdf_libreoffice):
+        reason = backend(docx_path, pdf_path)
+        if reason is None and os.path.isfile(pdf_path):
+            print("{} PDF saved: {}".format(label, pdf_path))
+            return True
+        reasons.append(reason or "backend reported success but wrote no file")
+    print("NOTE: {} PDF could not be generated. Tried: {}.".format(
+        label, "; ".join(reasons)))
+    print("      Install Microsoft Word with pywin32, or LibreOffice, "
+          "or export the .docx manually.")
+    return False
+
+
+def want_pdf_output(study_config):
+    """Decide whether this run should also emit PDF.
+
+    Parameters
+    ----------
+    study_config : dict
+        Parsed ``study_config.yaml``.
+
+    Returns
+    -------
+    bool
+        True when ``--pdf`` was passed or ``report.formats`` lists ``pdf``.
+    """
+    if "--pdf" in sys.argv:
+        return True
+    if "--no-pdf" in sys.argv:
+        return False
+    formats = (study_config or {}).get("report", {}).get("formats") or []
+    return any(str(fmt).strip().lower() == "pdf" for fmt in formats)
 
 
 def prune_superseded_outputs(current_files):
@@ -5269,7 +5429,10 @@ if __name__ == "__main__":
 
     print("")
     print("Generating outputs for: {}".format(TITLE))
-    print("Report files: {}.docx / {}.html".format(REPORT_BASENAME, REPORT_BASENAME))
+    pdf_requested = want_pdf_output(study_config)
+    print("Report files: {}.docx / {}.html{}".format(
+        REPORT_BASENAME, REPORT_BASENAME,
+        " / {}.pdf".format(REPORT_BASENAME) if pdf_requested else ""))
     if REPORT_TEMPLATE:
         print("Word template: {}".format(REPORT_TEMPLATE))
     if not TASK_STATEMENT:
@@ -5300,12 +5463,18 @@ if __name__ == "__main__":
         print("")
         build_word_report(sections, results)
         build_html_report(sections, results)
+        report_pdf_written = False
+        if pdf_requested:
+            report_pdf_written = convert_docx_to_pdf(DOCX_FILE, PDF_FILE, "Report")
         print("")
         print("Technical reports generated.")
         print("  Open {} in a browser for navigable view.".format(
             os.path.basename(HTML_FILE)))
         print("  Open {} for formal distribution.".format(
             os.path.basename(DOCX_FILE)))
+        if report_pdf_written:
+            print("  Open {} for read-only distribution.".format(
+                os.path.basename(PDF_FILE)))
 
     if generate_paper:
         # Build paper sections and generate scientific paper
@@ -5313,17 +5482,28 @@ if __name__ == "__main__":
         print("")
         build_paper_docx(paper_sections, results)
         build_paper_html(paper_sections, results)
+        paper_pdf_written = False
+        if pdf_requested:
+            paper_pdf_written = convert_docx_to_pdf(
+                PAPER_DOCX_FILE, PAPER_PDF_FILE, "Paper")
         print("")
         print("Scientific papers generated.")
         print("  Open {} for reading.".format(os.path.basename(PAPER_HTML_FILE)))
         print("  Open {} for journal submission / distribution.".format(
             os.path.basename(PAPER_DOCX_FILE)))
+        if paper_pdf_written:
+            print("  Open {} for read-only distribution.".format(
+                os.path.basename(PAPER_PDF_FILE)))
 
     written = []
     if not paper_only:
         written.extend([DOCX_FILE, HTML_FILE])
+        if pdf_requested:
+            written.append(PDF_FILE)
     if generate_paper:
         written.extend([PAPER_DOCX_FILE, PAPER_HTML_FILE])
+        if pdf_requested:
+            written.append(PAPER_PDF_FILE)
     if written:
         prune_superseded_outputs(written)
 

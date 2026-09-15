@@ -191,6 +191,43 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /** Reference CEPCI for correlations (2019). */
   private double referenceCepci = CEPCI_2019;
 
+  /** Lower validity bound of the Turton compressor correlation, kW. */
+  private static final double COMPRESSOR_MIN_KW = 450.0;
+
+  /** Upper validity bound of the Turton compressor correlation, kW. */
+  private static final double COMPRESSOR_MAX_KW = 3000.0;
+
+  /** Lower validity bound of the Turton centrifugal-pump correlation, kW. */
+  private static final double PUMP_MIN_KW = 1.0;
+
+  /** Upper validity bound of the Turton centrifugal-pump correlation, kW. */
+  private static final double PUMP_MAX_KW = 300.0;
+
+  /**
+   * Evaluates a Turton capacity correlation, splitting an oversized duty into parallel units so the correlation is
+   * never used beyond its validity range.
+   *
+   * @param capacity total duty in the correlation capacity unit
+   * @param minCapacity lower validity bound of the correlation
+   * @param maxCapacity upper validity bound of the correlation
+   * @param k1 correlation constant
+   * @param k2 correlation first-order coefficient
+   * @param k3 correlation second-order coefficient
+   * @param typeFactor multiplier applied to the unit cost, for example 1.3 for reciprocating
+   * @return purchased equipment cost in USD on the current CEPCI basis for the whole duty
+   */
+  private double parallelUnitCost(double capacity, double minCapacity, double maxCapacity, double k1, double k2,
+      double k3, double typeFactor) {
+    int units = (int) Math.ceil(capacity / maxCapacity);
+    if (units < 1) {
+      units = 1;
+    }
+    double perUnit = Math.max(capacity / units, minCapacity);
+    double logS = Math.log10(perUnit);
+    double logCp = k1 + k2 * logS + k3 * logS * logS;
+    return units * Math.pow(10, logCp) * typeFactor * (currentCepci / referenceCepci);
+  }
+
   /** Currency code (default USD). */
   private String currencyCode = "USD";
 
@@ -265,7 +302,11 @@ public class CostEstimationCalculator implements java.io.Serializable {
    *
    * @param shellWeight vessel shell weight in kg
    * @return purchased equipment cost in USD (2019 basis)
+   * @deprecated the Turton vertical-vessel coefficients take the vessel <em>volume in m3</em> as their capacity basis,
+   * not the shell weight, so passing a weight over-estimates a large vessel by orders of magnitude. Use
+   * {@link #calcVerticalVesselCostByVolume(double)}.
    */
+  @Deprecated
   public double calcVerticalVesselCost(double shellWeight) {
     if (shellWeight <= 0) {
       return 0.0;
@@ -317,7 +358,10 @@ public class CostEstimationCalculator implements java.io.Serializable {
    *
    * @param shellWeight vessel shell weight in kg
    * @return purchased equipment cost in USD (current CEPCI basis)
+   * @deprecated the Turton horizontal-vessel coefficients take the vessel <em>volume in m3</em> as their capacity
+   * basis, not the shell weight. Use {@link #calcHorizontalVesselCostByVolume(double)}.
    */
+  @Deprecated
   public double calcHorizontalVesselCost(double shellWeight) {
     if (shellWeight <= 0) {
       return 0.0;
@@ -431,7 +475,10 @@ public class CostEstimationCalculator implements java.io.Serializable {
    *
    * @param weight column shell weight in kg
    * @return purchased equipment cost in USD (current CEPCI basis)
+   * @deprecated delegates to the deprecated weight-based vertical-vessel correlation. Use
+   * {@link #calcVerticalVesselCostByVolume(double)} with the column shell volume.
    */
+  @Deprecated
   public double calcColumnShellCost(double weight) {
     return calcVerticalVesselCost(weight);
   }
@@ -510,46 +557,39 @@ public class CostEstimationCalculator implements java.io.Serializable {
   /**
    * Calculate purchased equipment cost for centrifugal pump.
    *
-   * @param power pump power in kW
-   * @return purchased equipment cost in USD (current CEPCI basis)
+   * <p>
+   * The Turton et al. correlation is valid for 1 to 300 kW of shaft power; a larger duty is costed as parallel pumps
+   * sized inside that range.
+   * </p>
+   *
+   * @param power pump shaft power in kW
+   * @return purchased equipment cost in USD (current CEPCI basis) for the whole duty
    */
   public double calcCentrifugalPumpCost(double power) {
     if (power <= 0) {
       return 0.0;
     }
-    // Turton correlation: log10(Cp) = K1 + K2*log10(S) + K3*(log10(S))^2
-    // where S is size factor (power in kW for pumps)
-    double k1 = 3.3892;
-    double k2 = 0.0536;
-    double k3 = 0.1538;
-
-    double logS = Math.log10(Math.max(power, 1.0));
-    double logCp = k1 + k2 * logS + k3 * logS * logS;
-    double baseCost = Math.pow(10, logCp);
-
-    return baseCost * (currentCepci / referenceCepci);
+    return parallelUnitCost(power, PUMP_MIN_KW, PUMP_MAX_KW, 3.3892, 0.0536, 0.1538, 1.0);
   }
 
   /**
    * Calculate purchased equipment cost for centrifugal compressor.
    *
-   * @param power compressor power in kW
-   * @return purchased equipment cost in USD (current CEPCI basis)
+   * <p>
+   * The Turton et al. correlation is valid for 450 to 3000 kW of fluid power. A duty above that is not one very large
+   * machine but several machines in parallel, so the cost is evaluated as {@code n} equal units sized inside the
+   * correlation range. Extrapolating the correlation directly to a train of tens of megawatts under-predicts the cost
+   * by an order of magnitude, because the quadratic term flattens the curve well before real machines stop scaling.
+   * </p>
+   *
+   * @param power compressor fluid power in kW
+   * @return purchased equipment cost in USD (current CEPCI basis) for the whole duty
    */
   public double calcCentrifugalCompressorCost(double power) {
     if (power <= 0) {
       return 0.0;
     }
-    // Turton correlation for centrifugal compressor
-    double k1 = 2.2897;
-    double k2 = 1.3604;
-    double k3 = -0.1027;
-
-    double logS = Math.log10(Math.max(power, 10.0));
-    double logCp = k1 + k2 * logS + k3 * logS * logS;
-    double baseCost = Math.pow(10, logCp);
-
-    return baseCost * (currentCepci / referenceCepci);
+    return parallelUnitCost(power, COMPRESSOR_MIN_KW, COMPRESSOR_MAX_KW, 2.2897, 1.3604, -0.1027, 1.0);
   }
 
   /**
@@ -562,16 +602,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
     if (power <= 0) {
       return 0.0;
     }
-    // Turton correlation for reciprocating compressor
-    double k1 = 2.2897;
-    double k2 = 1.3604;
-    double k3 = -0.1027;
-
-    double logS = Math.log10(Math.max(power, 10.0));
-    double logCp = k1 + k2 * logS + k3 * logS * logS;
-    double baseCost = Math.pow(10, logCp) * 1.3; // 1.3x centrifugal
-
-    return baseCost * (currentCepci / referenceCepci);
+    return parallelUnitCost(power, COMPRESSOR_MIN_KW, COMPRESSOR_MAX_KW, 2.2897, 1.3604, -0.1027, 1.3);
   }
 
   // ============================================================================

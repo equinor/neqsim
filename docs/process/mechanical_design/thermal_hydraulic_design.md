@@ -87,6 +87,9 @@ System.out.println("Shell-side dP: " + calc.getShellSidePressureDropBar() + " ba
 
 ### Rating Mode in Process Simulation
 
+For uniform tube deposits, reduced flow bore and optional pressure losses applied to outlet
+streams, see [Fouling thermal-hydraulic rating](fouling_thermal_hydraulic_rating).
+
 ```java
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.mechanicaldesign.heatexchanger.ThermalDesignCalculator;

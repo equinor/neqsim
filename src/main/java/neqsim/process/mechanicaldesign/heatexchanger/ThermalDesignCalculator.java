@@ -21,7 +21,8 @@ import neqsim.fluidmechanics.flownode.HeatTransferCoefficientCalculator;
  * <li><b>Tube side:</b> Gnielinski (turbulent), Dittus-Boelter (fallback), plus condensation and evaporation
  * correlations</li>
  * <li><b>Shell side:</b> Kern method (simple), Bell-Delaware method (detailed)</li>
- * <li><b>Overall U:</b> Resistance-in-series model including fouling and tube wall</li>
+ * <li><b>Overall U:</b> Resistance-in-series model including fouling and tube wall; an optional uniform inner-tube
+ * deposit couples cylindrical thermal resistance to the reduced flow diameter</li>
  * <li><b>Pressure drops:</b> Fanning/Kern correlations</li>
  * <li><b>Zone analysis:</b> Divide into sensible/condensing/boiling zones</li>
  * </ul>
@@ -90,6 +91,10 @@ public class ThermalDesignCalculator {
   // ============================================================================
   private double foulingTube = 0.000176; // m2*K/W
   private double foulingShell = 0.000176; // m2*K/W
+  /** Uniform deposit thickness measured inward from the nominal tube inner wall (m). */
+  private double tubeFoulingLayerThicknessM = 0.0;
+  /** Deposit conductivity (W/(m*K)); ignored when the layer thickness is zero. */
+  private double tubeFoulingLayerConductivity = 1.0;
 
   // ============================================================================
   // Results
@@ -133,13 +138,101 @@ public class ThermalDesignCalculator {
    * <p>
    * Calculates tube-side HTC, shell-side HTC, overall U, and pressure drops.
    * </p>
+   *
+   * @throws IllegalArgumentException if geometry changes make the configured deposit block the tube bore
    */
   public void calculate() {
+    if (tubeFoulingLayerThicknessM > 0.0) {
+      validateTubeFoulingLayer(tubeFoulingLayerThicknessM, tubeFoulingLayerConductivity);
+    }
     calculateTubeSide();
     calculateShellSide();
     calculateOverallU();
     calculateTubeSidePressureDrop();
     calculateShellSidePressureDrop();
+  }
+
+  /**
+   * Performs thermal-hydraulic rating after validating the geometry and fluid inputs.
+   *
+   * <p>
+   * Use this entry point when invalid geometry must fail explicitly instead of leaving results from a previous
+   * calculation available to a process rating. The nominal tube count must divide evenly into the number of passes,
+   * both streams must have positive finite flow and transport properties, and the geometry must provide positive flow
+   * areas. A negative finite shell-wall viscosity retains the documented bulk-viscosity fallback. This method validates
+   * numerical and geometric applicability; it does not establish correlation accuracy or phase stability. The
+   * permissive behavior of {@link #calculate()} is unchanged.
+   * </p>
+   *
+   * @throws IllegalArgumentException if any required geometry or fluid input is invalid
+   * @throws IllegalStateException if the correlations produce a nonpositive or nonfinite result
+   */
+  public void calculateStrict() {
+    validateStrictInputs();
+    calculate();
+    double[] results = { tubeSideHTC, shellSideHTC, overallU, tubeSidePressureDrop, shellSidePressureDrop,
+        tubeSideVelocity, shellSideVelocity, tubeSideRe, shellSideRe };
+    for (double value : results) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalStateException("Thermal-hydraulic correlations produced a nonpositive or nonfinite result");
+      }
+    }
+  }
+
+  /**
+   * Validates the input domain for strict thermal-hydraulic rating before any result can be reused.
+   *
+   * @throws IllegalArgumentException if the input configuration cannot support the selected correlations
+   */
+  private void validateStrictInputs() {
+    double[] positiveInputs = { tubeODm, tubeIDm, tubeLengthm, tubePitchm, shellIDm, baffleSpacingm,
+        tubeWallConductivity, tubeDensity, tubeViscosity, tubeCp, tubeConductivity, tubeMassFlowRate, shellDensity,
+        shellViscosity, shellCp, shellConductivity, shellMassFlowRate };
+    for (double value : positiveInputs) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalArgumentException("Strict thermal rating requires positive finite geometry and fluid inputs");
+      }
+    }
+    if (tubeODm <= tubeIDm || tubePitchm <= tubeODm || shellIDm <= tubeODm || baffleSpacingm > tubeLengthm) {
+      throw new IllegalArgumentException("Strict thermal rating requires OD > ID, pitch > OD, shell ID > OD, "
+          + "and baffle spacing no greater than tube length");
+    }
+    if (tubeCount <= 0 || tubePasses <= 0 || tubeCount % tubePasses != 0 || baffleCount < 1) {
+      throw new IllegalArgumentException("Strict thermal rating requires positive tube/pass counts, equal tubes "
+          + "per pass, and at least one baffle");
+    }
+    if (!Double.isFinite(baffleCut) || baffleCut <= 0.0 || baffleCut >= 0.5) {
+      throw new IllegalArgumentException("Strict thermal rating requires baffle cut between zero and one half");
+    }
+    if (!Double.isFinite(foulingTube) || foulingTube < 0.0 || !Double.isFinite(foulingShell) || foulingShell < 0.0) {
+      throw new IllegalArgumentException("Strict thermal rating requires finite nonnegative fouling resistances");
+    }
+    if (!Double.isFinite(shellViscosityWall) || shellViscosityWall == 0.0 || shellSideMethod == null) {
+      throw new IllegalArgumentException("Strict thermal rating requires a shell-side method and finite nonzero "
+          + "wall viscosity (negative selects bulk viscosity)");
+    }
+    validateTubeFoulingLayer(tubeFoulingLayerThicknessM, tubeFoulingLayerConductivity);
+    double flowDiameter = getEffectiveTubeIDm();
+    double tubeFlowArea = Math.PI / 4.0 * flowDiameter * flowDiameter * (tubeCount / tubePasses);
+    double shellFlowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
+    double shellEquivalentDiameter = BellDelawareMethod.calcShellEquivDiameter(tubeODm, tubePitchm, triangularPitch);
+    double[] derivedGeometry = { tubeFlowArea, shellFlowArea, shellEquivalentDiameter, getOutsideHeatTransferArea() };
+    for (double value : derivedGeometry) {
+      if (!Double.isFinite(value) || value <= 0.0) {
+        throw new IllegalArgumentException(
+            "Strict thermal rating requires finite positive flow and heat-transfer geometry");
+      }
+    }
+    if (shellSideMethod == ShellSideMethod.BELL_DELAWARE) {
+      if (!Double.isFinite(tubeToBaffleClearance) || tubeToBaffleClearance < 0.0
+          || tubeToBaffleClearance >= tubePitchm - tubeODm || !Double.isFinite(shellToBaffleClearance)
+          || shellToBaffleClearance < 0.0 || shellToBaffleClearance >= shellIDm || !Double.isFinite(bypassArea)
+          || bypassArea < 0.0 || bypassArea > shellIDm * baffleSpacingm || sealingPairs < 0
+          || (hasSealing && sealingPairs == 0)) {
+        throw new IllegalArgumentException(
+            "Strict Bell-Delaware rating requires valid clearances, bypass area " + "and sealing-strip counts");
+      }
+    }
   }
 
   /**
@@ -150,8 +243,9 @@ public class ThermalDesignCalculator {
       return;
     }
 
-    // Flow area per pass
-    double areaPerTube = Math.PI / 4.0 * tubeIDm * tubeIDm;
+    // The deposit occupies flow area without changing the nominal metal-wall geometry.
+    double flowDiameter = getEffectiveTubeIDm();
+    double areaPerTube = Math.PI / 4.0 * flowDiameter * flowDiameter;
     int tubesPerPass = tubeCount / tubePasses;
     double totalFlowArea = tubesPerPass * areaPerTube;
 
@@ -163,7 +257,7 @@ public class ThermalDesignCalculator {
     tubeSideVelocity = tubeMassFlowRate / (tubeDensity * totalFlowArea);
 
     // Reynolds number
-    tubeSideRe = tubeDensity * tubeSideVelocity * tubeIDm / tubeViscosity;
+    tubeSideRe = tubeDensity * tubeSideVelocity * flowDiameter / tubeViscosity;
 
     // Prandtl number
     double Pr = tubeCp * tubeViscosity / tubeConductivity;
@@ -186,7 +280,7 @@ public class ThermalDesignCalculator {
       Nu = HeatTransferCoefficientCalculator.calculateLaminarNusselt(true);
     }
 
-    tubeSideHTC = Nu * tubeConductivity / tubeIDm;
+    tubeSideHTC = Nu * tubeConductivity / flowDiameter;
   }
 
   /**
@@ -294,7 +388,9 @@ public class ThermalDesignCalculator {
    * </p>
    *
    * <pre>
-   * 1/U_o = 1/h_o + R_fo + (d_o * ln(d_o/d_i))/(2*k_w) + (d_o/d_i)*(R_fi + 1/h_i)
+   * d_f = d_i - 2 * deposit thickness
+   * 1/U_o = 1/h_o + R_fo + d_o*ln(d_o/d_i)/(2*k_w) + (d_o/d_i)*R_fi
+   *         + d_o*ln(d_i/d_f)/(2*k_deposit) + d_o/(d_f*h_i)
    * </pre>
    */
   private void calculateOverallU() {
@@ -310,9 +406,12 @@ public class ThermalDesignCalculator {
     double rFoulShell = foulingShell;
     double rWall = tubeODm * Math.log(doByDi) / (2.0 * tubeWallConductivity);
     double rFoulTube = doByDi * foulingTube;
-    double rTube = doByDi / tubeSideHTC;
+    double rTube = tubeODm / getEffectiveTubeIDm() / tubeSideHTC;
 
     double totalResistance = rShell + rFoulShell + rWall + rFoulTube + rTube;
+    if (tubeFoulingLayerThicknessM > 0.0) {
+      totalResistance += getTubeFoulingLayerResistanceOutside();
+    }
 
     if (totalResistance > 0) {
       overallU = 1.0 / totalResistance;
@@ -327,8 +426,13 @@ public class ThermalDesignCalculator {
    * </p>
    *
    * <pre>
-   * dP_tube = N_p * (f * L / d_i * rho * v ^ 2 / 2 + 2.5 * rho * v ^ 2 / 2)
+   * dP_tube = N_p * (f * L / d_f * rho * v ^ 2 / 2 + 2.5 * rho * v ^ 2 / 2)
    * </pre>
+   *
+   * <p>
+   * The flow diameter d_f includes a configured inner deposit. The existing smooth-tube friction correlation and
+   * return-loss coefficient are retained; deposit roughness and nonuniform blockage are not modeled.
+   * </p>
    */
   private void calculateTubeSidePressureDrop() {
     if (tubeSideRe <= 0 || tubeSideVelocity <= 0) {
@@ -339,7 +443,8 @@ public class ThermalDesignCalculator {
     double f = calcDarcyFriction(tubeSideRe);
 
     // Straight-tube friction
-    double dpFriction = f * tubeLengthm / tubeIDm * tubeDensity * tubeSideVelocity * tubeSideVelocity / 2.0;
+    double dpFriction = f * tubeLengthm / getEffectiveTubeIDm() * tubeDensity * tubeSideVelocity * tubeSideVelocity
+        / 2.0;
 
     // Return losses (2.5 velocity heads per pass)
     double dpReturn = 2.5 * tubeDensity * tubeSideVelocity * tubeSideVelocity / 2.0;
@@ -530,6 +635,10 @@ public class ThermalDesignCalculator {
     tubeResults.put("reynoldsNumber", tubeSideRe);
     tubeResults.put("pressureDrop_Pa", tubeSidePressureDrop);
     tubeResults.put("pressureDrop_bar", tubeSidePressureDrop / 1e5);
+    tubeResults.put("nominalInnerDiameter_m", tubeIDm);
+    tubeResults.put("effectiveInnerDiameter_m", getEffectiveTubeIDm());
+    tubeResults.put("foulingLayerThickness_m", tubeFoulingLayerThicknessM);
+    tubeResults.put("foulingLayerConductivity_WpmK", tubeFoulingLayerConductivity);
     result.put("tubeSide", tubeResults);
 
     Map<String, Object> shellResults = new LinkedHashMap<String, Object>();
@@ -554,6 +663,8 @@ public class ThermalDesignCalculator {
     overall.put("foulingResistanceTube_m2KpW", foulingTube);
     overall.put("foulingResistanceShell_m2KpW", foulingShell);
     overall.put("tubeWallConductivity_WpmK", tubeWallConductivity);
+    overall.put("tubeFoulingLayerResistanceOutside_m2KpW", getTubeFoulingLayerResistanceOutside());
+    overall.put("outsideHeatTransferArea_m2", getOutsideHeatTransferArea());
     result.put("overallHeatTransfer", overall);
 
     return result;
@@ -643,6 +754,66 @@ public class ThermalDesignCalculator {
   // ============================================================================
   // Getters for results
   // ============================================================================
+
+  /**
+   * Gets the tube flow diameter after a uniform inner deposit is applied.
+   *
+   * @return nominal inner diameter minus twice the layer thickness (m)
+   */
+  public double getEffectiveTubeIDm() {
+    return tubeIDm - 2.0 * tubeFoulingLayerThicknessM;
+  }
+
+  /**
+   * Gets the current uniform inner-tube deposit thickness.
+   *
+   * @return deposit thickness (m); zero disables the layer
+   */
+  public double getTubeFoulingLayerThicknessM() {
+    return tubeFoulingLayerThicknessM;
+  }
+
+  /**
+   * Gets the conductivity of the uniform inner-tube deposit.
+   *
+   * @return deposit conductivity (W/(m*K)); irrelevant when the thickness is zero
+   */
+  public double getTubeFoulingLayerConductivity() {
+    return tubeFoulingLayerConductivity;
+  }
+
+  /**
+   * Gets the cylindrical deposit resistance based on the nominal outside tube area.
+   *
+   * <p>
+   * The resistance is d_o * ln(d_i / d_f) / (2 * k_deposit). It excludes the independently configured tube-side and
+   * shell-side fouling resistances and does not include convection or the metal wall.
+   * </p>
+   *
+   * @return outside-area deposit resistance (m2*K/W)
+   * @throws IllegalArgumentException if geometry changes make the configured deposit block the tube bore
+   */
+  public double getTubeFoulingLayerResistanceOutside() {
+    if (tubeFoulingLayerThicknessM == 0.0) {
+      return 0.0;
+    }
+    validateTubeFoulingLayer(tubeFoulingLayerThicknessM, tubeFoulingLayerConductivity);
+    return tubeODm * Math.log(tubeIDm / getEffectiveTubeIDm()) / (2.0 * tubeFoulingLayerConductivity);
+  }
+
+  /**
+   * Gets the nominal outside heat-transfer area of the tube bundle.
+   *
+   * <p>
+   * The area is pi * nominal tube OD * tube length * tube count. Each physical tube is counted once, independently of
+   * the number of passes. An inner deposit leaves this area unchanged.
+   * </p>
+   *
+   * @return nominal outside heat-transfer area (m2)
+   */
+  public double getOutsideHeatTransferArea() {
+    return Math.PI * tubeODm * tubeLengthm * tubeCount;
+  }
 
   /**
    * Gets the tube-side heat transfer coefficient.
@@ -897,12 +1068,62 @@ public class ThermalDesignCalculator {
   }
 
   /**
-   * Sets the tube-side fouling resistance.
+   * Sets the tube-side fouling resistance referenced to the nominal clean inner tube area.
+   *
+   * <p>
+   * This resistance does not change the flow diameter. It is additive to any layer configured with
+   * {@link #setTubeFoulingLayer(double, double)}. Set it to zero when that layer represents all tube-side fouling to
+   * avoid counting the same deposit twice.
+   * </p>
    *
    * @param fouling fouling resistance (m2*K/W)
    */
   public void setFoulingTube(double fouling) {
     this.foulingTube = fouling;
+  }
+
+  /**
+   * Sets a uniform deposit on the inside of every tube.
+   *
+   * <p>
+   * The thickness is an absolute scenario input, not an increment. The deposit reduces the flow diameter by twice its
+   * thickness and adds cylindrical thermal resistance, while preserving the nominal tube diameters and metal wall
+   * resistance. Set thickness to zero to remove the deposit. This is a single-phase screening model: it does not
+   * predict deposition kinetics, roughness, porosity, or nonuniform blockage.
+   * </p>
+   *
+   * <p>
+   * The existing tube-side fouling resistance remains additive. Call {@code setFoulingTube(0.0)} when this layer
+   * accounts for all tube-side fouling. Invalid input leaves the previously configured layer unchanged.
+   * </p>
+   *
+   * @param thicknessM finite nonnegative deposit thickness (m), less than half the nominal tube ID
+   * @param conductivityWmK finite positive deposit conductivity (W/(m*K)), also required for zero thickness
+   * @throws IllegalArgumentException if thickness or conductivity is invalid, or the deposit blocks the tube bore
+   */
+  public void setTubeFoulingLayer(double thicknessM, double conductivityWmK) {
+    validateTubeFoulingLayer(thicknessM, conductivityWmK);
+    tubeFoulingLayerThicknessM = thicknessM;
+    tubeFoulingLayerConductivity = conductivityWmK;
+  }
+
+  /**
+   * Validates a proposed layer against the current nominal tube inner diameter.
+   *
+   * @param thicknessM proposed thickness (m)
+   * @param conductivityWmK proposed conductivity (W/(m*K))
+   * @throws IllegalArgumentException if a parameter is invalid or no positive flow diameter remains
+   */
+  private void validateTubeFoulingLayer(double thicknessM, double conductivityWmK) {
+    if (!Double.isFinite(thicknessM) || thicknessM < 0.0) {
+      throw new IllegalArgumentException("Tube fouling layer thickness must be finite and nonnegative");
+    }
+    if (!Double.isFinite(conductivityWmK) || conductivityWmK <= 0.0) {
+      throw new IllegalArgumentException("Tube fouling layer conductivity must be finite and positive");
+    }
+    if (!Double.isFinite(tubeIDm) || tubeIDm <= 0.0 || tubeIDm - 2.0 * thicknessM <= 0.0) {
+      throw new IllegalArgumentException("Tube fouling layer must leave a finite positive tube flow diameter");
+    }
   }
 
   /**
