@@ -2747,3 +2747,27 @@ These public synthetic fluids qualify numerical closure and lifecycle behavior a
 repair. They do not independently validate UMR-PRU interaction parameters, phase-envelope accuracy,
 or experimental PVT predictions. No solver algorithm, public API, table entry, model default, or
 wall-clock performance claim is introduced by this qualification.
+
+
+## Add-fluid order-invariance qualification
+
+A bounded synthetic SRK regression qualifies TP-flash behavior when two independently constructed
+fluids are combined in opposite orders and a petroleum pseudo-component exists only in the
+hydrocarbon-liquid input. The public case combines methane (0.50 mol) and ethane (0.05 mol) with
+n-heptane (0.40 mol) and a synthetic `C10_PC` TBP fraction (0.05 mol, molar mass 0.142 kg/mol,
+relative density 0.82) at 280 K and 28–32 bara using the classic mixing rule.
+
+The regression executes both ordinary and multiphase-enabled `TPflash()` paths. It compares feed
+inventories and phase compositions by component name rather than array position, resolves phases by
+`PhaseType`, starts from beta values within `1e-12` of a bound, changes and restores pressure on
+reused systems, and repeats the settled calculation. Acceptance requires GAS+OIL topology, beta and
+composition normalization within `1e-12`, component material balance below `1e-10`, maximum
+comparable interphase log-fugacity residual below `1e-8`, and order-to-order beta and composition
+agreement within `1e-10`. Compressibility must be finite and positive, and Gibbs energy and
+enthalpy must be finite.
+
+This is numerical qualification of a public synthetic case related to issue #1362. The original
+Matlab/private-fluid composition is unavailable, so the regression neither reproduces that case nor
+establishes general order invariance for arbitrary pseudo-component characterizations. It changes no
+`addFluid` API, pseudo-component characterization, mixing rule, solver tolerance, or model default.
+The bounded flash count is workload evidence only; no wall-clock performance claim is made.
