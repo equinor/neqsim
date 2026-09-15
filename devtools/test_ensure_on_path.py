@@ -78,3 +78,25 @@ def test_activate_command_covers_both_windows_shells(tmp_path):
         assert "Activate.ps1" in command and "activate.bat" in command
     else:
         assert command.startswith("source ")
+
+
+def test_print_script_dir_emits_only_the_path(monkeypatch, capsys):
+    """The installers parse this, so it must stay a single bare line."""
+    monkeypatch.setattr(ensure_on_path, "find_script_dir", lambda: r"C:\some\Scripts")
+    monkeypatch.setattr(ensure_on_path.sys, "argv",
+                        ["ensure_on_path.py", "--print-script-dir"])
+
+    ensure_on_path.main()
+
+    assert capsys.readouterr().out.strip() == r"C:\some\Scripts"
+
+
+def test_print_script_dir_prints_nothing_when_not_installed(monkeypatch, capsys):
+    """An empty result must not become a PATH entry in the calling installer."""
+    monkeypatch.setattr(ensure_on_path, "find_script_dir", lambda: None)
+    monkeypatch.setattr(ensure_on_path.sys, "argv",
+                        ["ensure_on_path.py", "--print-script-dir"])
+
+    ensure_on_path.main()
+
+    assert capsys.readouterr().out.strip() == ""

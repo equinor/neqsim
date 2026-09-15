@@ -106,11 +106,25 @@ echo ""
 echo "Ensuring the 'neqsim' command is on your PATH..."
 "$PYTHON" "$DEVTOOLS/ensure_on_path.py" || true
 
+# This script runs in a child process, so it cannot change the caller's PATH.
+# Report what the caller's shell will actually see rather than predicting it.
 echo ""
-echo "Done. Verify with:"
-echo "  $PYTHON -m neqsim_cli --help"
-echo "If 'neqsim' is not found in this shell, open a NEW terminal (or 'source'"
-echo "your shell rc file), or use the line above."
+if command -v neqsim >/dev/null 2>&1; then
+    echo "Done. The 'neqsim' command works in this shell:"
+    echo "  $(command -v neqsim)"
+    echo "Try it now:  neqsim doctor --skip-jar"
+else
+    SCRIPT_DIR_FOUND=$("$PYTHON" "$DEVTOOLS/ensure_on_path.py" --print-script-dir 2>/dev/null | tail -n 1)
+    echo "Done, but 'neqsim' is not on PATH in this shell yet."
+    if [ -n "$SCRIPT_DIR_FOUND" ]; then
+        echo "Enable it here and now with:"
+        echo "  export PATH=\"\$PATH:$SCRIPT_DIR_FOUND\""
+        echo "A new terminal picks it up automatically."
+    fi
+    echo "Or use the same entry point, which always works:"
+    echo "  $PYTHON -m neqsim_cli --help"
+    echo "To find out why:  $PYTHON -m neqsim_cli doctor --skip-jar"
+fi
 
 echo ""
 echo "Where solved tasks are saved:"

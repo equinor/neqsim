@@ -293,8 +293,19 @@ def main():
     Always exits 0 so it never fails an install; prints a manual fallback if it
     cannot update PATH automatically.
 
+    With ``--print-script-dir`` it prints only the console-script directory (and
+    nothing else) so the calling installer can prepend it to the PATH of the
+    shell the user is sitting in, which is what makes the command work now
+    rather than in some future terminal.
+
     @return ``None``
     """
+    if "--print-script-dir" in sys.argv[1:]:
+        found = find_script_dir()
+        if found:
+            print(found)
+        return
+
     script_dir = find_script_dir()
 
     # If the script lives in the active virtualenv, do not persist an ephemeral
