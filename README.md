@@ -567,7 +567,7 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1   # activate the venv FIRST so 'neqsim' lands on PATH
-.\install.cmd                  # or .\install.ps1  (append 'uv' for the fast installer)
+.\install.ps1                  # run this from PowerShell (append -Uv for the fast installer)
 neqsim onboard                 # interactive setup (Java, Maven, build, Python, agents)
 ```
 
@@ -584,6 +584,16 @@ neqsim onboard
 > or activate a venv — it only detects an already-active one. Activating first
 > means the package and the `neqsim` command install into the venv and stay on
 > PATH; skip it and you may hit "`neqsim` is not recognized".
+>
+> A venv is activated **per terminal**, so run `.\.venv\Scripts\Activate.ps1`
+> in each new terminal (or pick the interpreter via *Python: Select Interpreter*
+> in VS Code and let it activate for you). Restarting the machine does not
+> change this.
+>
+> Run `.\install.ps1` **from PowerShell**: it puts the command on PATH in the
+> window you are already in, so `neqsim` works immediately. `.\install.cmd`
+> launched from PowerShell runs as a child process and cannot do that — you
+> would need a new terminal.
 >
 > The `install` script finds a working Python for you and runs `python -m pip`
 > under the hood, so it works even when `pip`/`python` are not on PATH. To
