@@ -25,19 +25,18 @@ import org.junit.jupiter.api.io.TempDir;
 /** Compiles and executes every Java program in the Java-from-Colab translation guide. */
 public class JavaFromColabGuideDocumentationTest extends neqsim.NeqSimTest {
   private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void guideMatchesMaintainedApisAndRejectsStalePatterns() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/wiki/java_simulation_from_colab_notebooks.md"));
-    String processSystem = read(repositoryRoot.resolve(
-        "src/main/java/neqsim/process/processmodel/ProcessSystem.java"));
-    String systemInterface =
-        read(repositoryRoot.resolve("src/main/java/neqsim/thermo/system/SystemInterface.java"));
+    String processSystem = read(repositoryRoot.resolve("src/main/java/neqsim/process/processmodel/ProcessSystem.java"));
+    String systemInterface = read(repositoryRoot.resolve("src/main/java/neqsim/thermo/system/SystemInterface.java"));
 
     assertTrue(guide.contains("com.equinor.neqsim:neqsim:3.20.0"));
     assertTrue(guide.contains("GettingStartedWIthNeqSim.ipynb"));
@@ -86,20 +85,18 @@ public class JavaFromColabGuideDocumentationTest extends neqsim.NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath = System.getProperty("surefire.test.class.path",
-        System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager = compiler.getStandardFileManager(
-        diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler.getTask(null, manager, diagnostics, options, null,
-          manager.getJavaFileObjects(javaSource.toFile())).call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful),
           "docs/wiki/java_simulation_from_colab_notebooks.md: " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
