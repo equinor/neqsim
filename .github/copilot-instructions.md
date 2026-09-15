@@ -662,6 +662,11 @@ gap. It is read-only: copy the documents a task uses into that task's
 
 **Key rules (always apply):**
 1. **Create task folder FIRST:** `neqsim new-task "title" --type X --author "Name"`
+   If the terminal reports `neqsim` is not recognized, the console script is not
+   on PATH in that shell — re-run the identical command as
+   `<python-executable> -m neqsim_cli ...` using the interpreter from the Python
+   Runtime rule above. Same entry point, same arguments; applies to every
+   `neqsim ...` command below. Never skip the step or hand-create the folder.
 2. **All output goes to** `task_solve/YYYY-MM-DD_slug/` — never to `examples/`, `docs/`, or workspace root
 3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`, filed into **per-source subfolders** (`stid/`, `pepr/`, `tr2000/`, `maintenance/`, `servicenow/`, `tagreader/`, `seeq/`, `rigga/`, `vendor/`, `lab/`, `literature/`, `web/`, `manual/`). Run `python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` to file loose docs and (re)build the distributable `references/SOURCES.md` + `references/collection_manifest.json` so the whole task folder can be handed to others. The manifest also drives the report's **Information Sources and Evidence Basis** section (how many documents came from STID, SAP, PEPR, …), so regenerate it before the report.
 3b. **State every assumption, especially where data could not be found.** Put `assumptions` and `data_gaps` in results.json (gap fields: `gap`/`blocker`, `source`, `status`, `assumed` — what was used instead — and `effect`). They render as the report's **Assumptions and Data Gaps** section, and the gate warns when a declared source system has no captured evidence but nothing is registered.

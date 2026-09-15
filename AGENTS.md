@@ -162,6 +162,13 @@ Regenerate it whenever documents are added and before finalizing the task.
 
 ### Step-by-step
 
+> **If a terminal reports `neqsim` is not recognized, do not improvise and do not
+> skip the step.** The console script is simply not on PATH in that shell. Re-run
+> the identical command as `<python-executable> -m neqsim_cli ...`, where
+> `<python-executable>` is the interpreter named under "Python Environment
+> Reuse" above — same entry point, same arguments. This applies to every
+> `neqsim ...` command in this document.
+
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
    neqsim new-task "your task title" --type B --author "Name"
