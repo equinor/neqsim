@@ -91,14 +91,20 @@ public class UnifacDatabaseIntegrityTest {
    * Hydrocarbons that no group assignment can express, so they cannot be required to have a row.
    *
    * <p>
-   * Main group 2 offers only substituted olefin subgroups (CH2=CH, CH=CH, CH2=C, CH=C, C=C); none of them stands for a
-   * bare CH2=CH2. DDBST has no assignment for ethylene either, in its original, modified or PSRK sets. Covering it
-   * needs a dedicated regressed group, as Voutsas added for C2H6, and must not be approximated with a substituted
-   * olefin group.
+   * {@code ethylene}: main group 2 offers only substituted olefin subgroups (CH2=CH, CH=CH, CH2=C, CH=C, C=C); none of
+   * them stands for a bare CH2=CH2. DDBST has no assignment for ethylene either, in its original, modified or PSRK
+   * sets. Covering it needs a dedicated regressed group, as Voutsas added for C2H6, and must not be approximated with a
+   * substituted olefin group.
+   * </p>
+   *
+   * <p>
+   * {@code 5-methyl-3-heptyne}: DDBST assigns the alkyne subgroup 66 (C&#8801;C), which has no row in
+   * UNIFACGroupParam.csv, so it has neither R and Q nor interaction parameters. Assigning it would reference a subgroup
+   * the model cannot evaluate; substituting an olefin group would silently give wrong activity coefficients.
    * </p>
    */
   private static final Set<String> HYDROCARBONS_WITHOUT_A_GROUP = Collections
-      .unmodifiableSet(new TreeSet<String>(Collections.singletonList("ethylene")));
+      .unmodifiableSet(new TreeSet<String>(Arrays.asList("ethylene", "5-methyl-3-heptyne")));
 
   /**
    * DDBST published original UNIFAC subgroups, encoded as "secondary;name;maingroup;volumeR;surfaceQ".

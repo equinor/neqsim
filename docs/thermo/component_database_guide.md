@@ -62,10 +62,20 @@ Key characteristics:
 | `ID` | Unique component identifier | - | Internal indexing |
 | `NAME` | Component name for lookup | - | `addComponent("methane", ...)` |
 | `CASnumber` | CAS Registry Number | - | Component identification |
+| `InChIKey` | Structure-derived identifier | - | Identity checking, not used by any model |
 | `COMPTYPE` | Component type classification | - | Model selection (see [Component Types](#component-types)) |
 | `COMPINDEX` | Component index in database | - | Internal ordering |
 | `FORMULA` | Chemical formula | - | Element calculations |
 | `MOLARMASS` | Molar mass | g/mol | All models (stored internally as kg/mol) |
+
+`InChIKey` is a hash of the molecular structure, so it is identical for a
+substance no matter how it is named and differs whenever the structure differs.
+Use it, not the name or the CAS number, to check whether two rows are the same
+molecule: a CAS number may be missing, wrong, or registered separately for each
+stereoisomer, and a row created by copying another keeps the original's values in
+every column that was not edited. A repeated `InChIKey` is either an intentional
+variant pair (a neutral and its ion, a `PVTsim` re-parameterisation, `ice` and
+`water`) or a copy-paste defect.
 
 ### Critical Properties
 
@@ -526,7 +536,7 @@ C2H6 (134). Spin isomers share the parent group, so `ortho-hydrogen` and
 Argon's main group 59 has an interaction parameter only against water, so
 against hydrocarbons argon reduces to the combinatorial term alone.
 
-### Known gap: ethylene
+### Known gaps: ethylene and alkynes
 
 `ethylene` has **no representable assignment**. Main group 2 (C=C) provides
 only substituted subgroups — CH2=CH, CH=CH, CH2=C, CH=C, C=C — and none stands
@@ -534,6 +544,14 @@ for a bare CH2=CH2. DDBST has no assignment for it either, in any of its
 original, modified or PSRK sets. Representing ethylene needs a dedicated fitted
 group, the way `Voutsas` added C2H6 as group 134; it is not a data-entry fix and
 must not be approximated with a substituted olefin group.
+
+`5-methyl-3-heptyne` has the same problem for a different reason: DDBST assigns
+the alkyne subgroup 66, which has no row in `UNIFACGroupParam.csv` and therefore
+neither R and Q nor interaction parameters.
+
+Both are listed in `HYDROCARBONS_WITHOUT_A_GROUP` in `UnifacDatabaseIntegrityTest`
+so the "every hydrocarbon has an assignment" check does not demand a row that
+cannot be written. They remain usable with the cubic equations of state.
 
 ### Missing groups fail loudly
 
@@ -574,6 +592,26 @@ python devtools/screen_component_database.py --tsv > src/test/resources/data/com
 
 Write these files as UTF-8 without a byte order mark. On Windows use Python
 rather than PowerShell redirection, which adds a BOM.
+
+> **The screening scripts and the tests do not report the same findings.** The
+> checks are implemented twice: in Python in `devtools/`, and again in Java
+> inside the tests. `screen_unifac_tables.py` emits no `missing_unifac_row`
+> finding at all, so regenerating `unifac_known_issues.tsv` from it deletes
+> every such entry and the test then reports them all as new. **Take the delta
+> from the test failure output, which lists exactly what to add and remove, and
+> edit the baseline rather than overwriting it.**
+
+> **CI does not run these tests for a data-only change.** The `Detect Java/XML
+> changes` job skips the whole test matrix when a pull request touches no
+> `.java` or `.xml` file, so a change to `COMP.csv` or the UNIFAC tables alone
+> goes green with these gates never executed. Run them locally:
+>
+> ```bash
+> ./mvnw test -Dtest=ComponentDatabaseIntegrityTest,UnifacDatabaseIntegrityTest
+> ```
+>
+> Note the comma: surefire treats `+` as a literal, and `-Dtest=A+B` matches
+> nothing and fails with "No tests matching pattern".
 
 ---
 
