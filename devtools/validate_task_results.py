@@ -350,7 +350,22 @@ def check_document_evidence(task_folder: Path) -> List[str]:
     if not references.exists():
         return warnings
 
-    source_files = [path for path in references.rglob("*") if path.is_file()]
+    # The reference index is generated from the sources; it is not itself a source.
+    # Kept in sync with SKIP_FILES in devtools/generate_sources_md.py.
+    generated = {
+        "SOURCES.md",
+        "README.md",
+        "collection_manifest.json",
+        "manifest.json",
+        "retrieval_manifest.json",
+        "document_evidence_manifest.json",
+        "related_peprs.json",
+    }
+    source_files = [
+        path
+        for path in references.rglob("*")
+        if path.is_file() and path.name not in generated and not path.name.startswith(".")
+    ]
     if not source_files:
         return warnings
 

@@ -783,3 +783,30 @@ from LNG capacity; solve the dehydration specification from the hydrate curve ra
 a sales-gas spec; always check the Joule-Thomson letdown temperature at an onshore reception (it
 landed at -30 degC here, making inlet heating mandatory). See
 `/memories/repo/neqsim-silent-factor-errors.md`.
+
+### 2026-09-15 — Are two named units of a five-unit fleet really the cost and production-loss drivers?
+**Type:** G (Workflow)
+**Keywords:** fleet comparison, worst unit, maintenance cost ranking, production efficiency loss, PE loss, attribution artefact, booking default, permutation test, duty normalisation, running hours, campaign work, gas turbine generator, maintenance API work order costs, man-hours, PEPR loss tag, tag hierarchy sub-tree
+**Solution:** private task folder (redacted); reusable outputs: `devtools/generate_sources_md.py`, `devtools/generate_work_record.py`, `devtools/validate_task_results.py`; enterprise skills `enterprise-maintenance-api`, `enterprise-pepr-actions`, `enterprise-ots-timeseries`, `enterprise-fleet-equipment-benchmarking`
+**Notes:** An internal conclusion named two of five nominally identical units as the drivers of both
+maintenance cost and production loss. Half of it survived, and the two halves failed differently, so
+the reusable result is the gate rather than the ranking. Adjudicate every metric before ranking with
+it: the work-order cost field was populated on corrective orders only and exactly zero on 80% of
+those, covering 8.8% of the population and no planned maintenance, which forced a second metric
+(confirmed man-hours from work-order operations). That metric has its own unit trap -
+`plannedWorkHours` is ALREADY man-hours, so multiplying by `capacityCount` inflated the plant total
+13-fold and the error is invisible in the median. Define a machine as its tag SUB-TREE (866-906 tags
+here); a root-tag-only roll-up named a different leader. Then normalise by measured running hours
+and permute the unit label 20 000 times: the observed max/min spread of 1.94 sat BELOW the null
+median of 2.04 (p = 0.58), i.e. the fleet was more uniform than random allocation produces. On the
+consequence side the loss-record equipment tag turned out to be a booking default - 87% of
+unit-tagged loss value sat on the unit that ran 7.5% of fleet hours, under weather and national-grid
+categories - so consequence must be attributed twice (tag, and the unit the free text names) and
+cross-checked against exposure. Removing fleet-campaign work (same job title on >= 3 units, 19% of
+work orders) changed the leader again. The claimed pair survived in 3 of 7 metrics. Method sanity
+anchor: the identical pipeline returned p = 5e-09 on an earlier recurring-failure study and p = 0.58
+here, which is the evidence that it can return a negative. Also fixed three devtools gaps found on
+the way: `generate_sources_md.py` never wrote the `document_evidence_manifest.json` the quality gate
+requires, the two manifest tools disagreed on which files count as sources, and the work-record
+generator only scanned step 2 so step-1 data-acquisition scripts were falsely reported missing. See
+`/memories/repo/fleet-worst-unit-significance-gate.md`.
