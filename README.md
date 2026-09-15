@@ -312,6 +312,15 @@ neqsim agent install --all --vscode --force   # community + enterprise
 > If `neqsim` is not recognized (no elevated privileges, console script not on
 > PATH), run the same commands as `python -m neqsim_cli ...`.
 
+> **Work with every repo in one VS Code workspace.** Clone NeqSim and the agent /
+> skill repos into one parent folder, open the first with `File → Open Folder...`,
+> add the rest with `File → Add Folder to Workspace...` — plus your task folder,
+> which is *not* a clone — then `File → Save Workspace As...`. Copilot Chat then
+> sees the skill, the agent definition, the NeqSim source, and the task in one
+> conversation, and you can push an improvement back to the right repo without
+> leaving the window. See
+> [Agents & Skills Setup §5.1](docs/integration/agents_and_skills_setup.md#51-keep-every-repo-and-your-task-folder-in-one-vs-code-workspace).
+
 - **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). `private-init` writes and then prints the path to those per-user files (`~/.neqsim/private-agents.yaml` / `private-skills.yaml`) so you can edit them afterwards. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
 

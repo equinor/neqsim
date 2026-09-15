@@ -160,6 +160,64 @@ For agentic task-solving (task folders, notebooks, reports) see
 Workspace-local core agents such as `@solve.task` are available when this NeqSim
 workspace is open; they are distinct from globally exported community agents.
 
+### 5.1 Keep every repo and your task folder in one VS Code workspace
+
+Agents are exported per user and work in any window, but the work is much easier
+when NeqSim, the agent/skill repos, and your task folder are open together — then
+Copilot Chat can read a skill, the agent definition, the NeqSim source, and the
+task you are solving in one conversation, and you can commit an improvement back
+to the right repo without leaving the window.
+
+Clone the repos into one parent folder, open the first with **File → Open
+Folder...**, add the others with **File → Add Folder to Workspace...**, then
+**File → Save Workspace As...** → `neqsim-and-related-repos.code-workspace`.
+
+![VS Code Explorer showing a multi-root workspace with the NeqSim repositories and a separate task folder](figures/vscode_multiroot_workspace.png)
+
+Or write the workspace file yourself and open it:
+
+```json
+{
+  "folders": [
+    { "path": "neqsim" },
+    { "path": "neqsim-community-agents" },
+    { "path": "neqsim-community-skills" },
+    { "name": "neqsim-task-solve", "path": "C:\\Users\\<user>\\neqsim-task-solve" }
+  ],
+  "settings": {}
+}
+```
+
+**The task folder is deliberately not a clone** — task output (evidence,
+notebooks, results, reports) must never be written into a code repository.
+Register it once so every agent and every clone uses it, then add that same folder
+to the workspace:
+
+```powershell
+neqsim --set-task-root "C:\Users\<user>\neqsim-task-solve"
+neqsim --show-task-root
+```
+
+Relative paths in the workspace file resolve from the folder that holds it; the
+task folder uses an absolute path because it lives outside the code folder. On
+macOS use `/Users/<user>/...`. Only add folders you actually work in — unrelated
+folders make agent answers noisier.
+
+### 5.2 Push back what the task taught you
+
+Every task is also a test of NeqSim, the agents, and the skills:
+
+![Continuous-improvement loop: engineering task, AI orchestration with agents and skills, NeqSim physics core, with the improvements committed and pushed back](figures/improvement_loop.png)
+
+When a task needed a workaround or repeated trial and error that a class, agent,
+or skill should have handled, fix it and **push it** — a fix that never leaves your
+machine is lost. Java and tests go to `equinor/neqsim`; API recipes and gotchas go
+to the skill's `SKILL.md`; routing and hand-off problems go to the `*.agent.md`.
+Commit in the repo that owns the fix, then refresh with
+`neqsim agent install --all --vscode --force`. Never push task output or
+company-specific data into a code repo. Full workflow:
+[TASK_SOLVING_GUIDE.md § Phase 6](../development/TASK_SOLVING_GUIDE.md#phase-6-push-the-improvements).
+
 ---
 
 ## 6. Set up your own private enterprise agents and skills
