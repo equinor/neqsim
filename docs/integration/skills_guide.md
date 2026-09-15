@@ -917,7 +917,8 @@ SSO in one command — no hand-editing of YAML required:
 
 ```bash
 # One step: create the catalog, register a private GitHub repo, and sign in
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path reads the catalog published in the repo instead of scanning it
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml --login
 
 # Internal Git server instead of GitHub:
 neqsim skill private-init --url https://git.internal.company.com/neqsim/enterprise-skills.git
@@ -929,6 +930,10 @@ neqsim skill add-repo --repo my-org/another-skills-repo --login
 `private-init` prints the exact catalog file location at the end so you can edit
 it afterwards. Use `private-init` for first-time setup and `add-repo` to register
 additional repos later — they accept the same options. Then:
+
+> If `neqsim` is not recognized (no elevated privileges, console script not on
+> PATH), run the same commands as `python -m neqsim_cli ...` — the arguments are
+> identical.
 
 ```bash
 neqsim skill list --private                 # verify discovered skills
@@ -972,7 +977,7 @@ neqsim skill install neqsim-company-stid
 The identical flow exists for agents — swap `skill` for `agent`:
 
 ```bash
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
 neqsim agent list --private
 neqsim agent install <name> --vscode
 ```

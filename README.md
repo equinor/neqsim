@@ -304,9 +304,13 @@ neqsim skill install --all        # install community skills
 
 neqsim agent private-init         # scaffold a private/enterprise catalog
 # ...or register a private repo AND sign in with browser SSO in one step:
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
+neqsim agent install --all --vscode --force   # community + enterprise
 ```
+
+> If `neqsim` is not recognized (no elevated privileges, console script not on
+> PATH), run the same commands as `python -m neqsim_cli ...`.
 
 - **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). `private-init` writes and then prints the path to those per-user files (`~/.neqsim/private-agents.yaml` / `private-skills.yaml`) so you can edit them afterwards. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.

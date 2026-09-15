@@ -206,8 +206,9 @@ sign you in with browser SSO in a single command:
 
 ```powershell
 # GitHub (registers the repo and runs `gh auth login --web`):
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path points at the catalog file published in the repo
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
 
 # Internal Git server instead of GitHub:
 neqsim agent private-init --url https://git.internal.company.com/neqsim/enterprise-agents.git
@@ -225,6 +226,11 @@ neqsim skill install <name> --target vscode
 > `private-init` and `add-repo` accept the same repo options — use `private-init`
 > for first-time setup and `add-repo` to register additional repos later. Both
 > print the catalog file path when they finish.
+
+> **`neqsim` not recognized?** Without elevated privileges the console script may
+> not be on PATH. Run every command above as `python -m neqsim_cli ...` instead
+> (same arguments), or see
+> [Troubleshooting](#troubleshooting-neqsim-not-found).
 
 **Which file gets edited, and where?** `private-init` writes a per-user catalog:
 
