@@ -77,6 +77,19 @@ every column that was not edited. A repeated `InChIKey` is either an intentional
 variant pair (a neutral and its ion, a `PVTsim` re-parameterisation, `ice` and
 `water`) or a copy-paste defect.
 
+Temporary TBP and wax pseudo-components have no defined molecular structure, so
+their `InChIKey` is left unset. Their database insert names its physical-property
+columns explicitly: optional identity columns must not shift or discard wax
+flags, fusion enthalpies, or other characterization data. This also preserves
+compatibility with component tables that have no `InChIKey` column.
+
+When adding standard components, also update the case-insensitive canonical-name
+index in `ComponentNameResolver`. Loading the extended database also imports any
+standard component names and optional columns absent from `COMP_EXT.csv`.
+Existing extended component properties are retained, and imported rows receive
+new unique IDs; the original extended resource remains unchanged.
+Read CSV names with a CSV parser because systematic names can contain commas.
+
 ### Critical Properties
 
 These parameters are fundamental to all cubic equations of state (SRK, PR, etc.).
