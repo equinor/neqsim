@@ -59,7 +59,7 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1   # activate FIRST so 'neqsim' lands on PATH
-.\install.cmd                  # pure-batch installer; works on locked-down machines
+.\install.ps1                  # run from PowerShell so the command works in THIS window
 ```
 
 macOS / Linux:
@@ -70,11 +70,13 @@ python3 -m venv .venv && source .venv/bin/activate
 ./install.sh
 ```
 
-Keep the virtual environment active and verify in the same terminal:
+Keep the virtual environment active and verify in the same terminal
+(`--skip-jar` because the Java library is not built yet — without it the doctor
+also requires a built JAR and fails on a fresh clone):
 
 ```powershell
 neqsim --help
-neqsim doctor
+neqsim doctor --skip-jar
 ```
 
 Optionally choose where the agents save solved tasks (otherwise they use
