@@ -1,320 +1,259 @@
 ---
 title: Getting Started with NeqSim in Java
-description: Complete guide to using and developing with NeqSim in Java — prerequisites, installation, first calculations, process simulation, and developer setup.
+description: Install NeqSim 3.20.0, run source-verified Java thermodynamics and process examples, and understand model and validation boundaries.
 ---
 
+This guide provides a maintained starting path for NeqSim 3.20.0. It covers the
+published Java distributions, one thermodynamic calculation, one process simulation,
+model selection, and repository development.
 
-This guide covers everything you need to start using NeqSim as a Java library — from installing prerequisites to running your first thermodynamic calculation and building a process simulation.
+## Choose the correct Java distribution
 
-## Prerequisites
+NeqSim 3.20.0 was released on 8 September 2026. Select the runtime before copying an
+example.
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **JDK** | 8 or newer (11+ recommended) | Compile and run NeqSim |
-| **Maven** | 3.6+ | Dependency management (included via wrapper if building from source) |
-| **Git** | Any recent | Clone the repository (only needed for development) |
-| **IDE** (optional) | IntelliJ IDEA, Eclipse, or VS Code | Recommended for development |
+| Use case | Distribution | Required runtime |
+| --- | --- | --- |
+| New Maven or Gradle application | `com.equinor.neqsim:neqsim:3.20.0` | Java 17 or newer |
+| Existing Java 8 application | `neqsim-3.20.0-Java8.jar` release asset | Java 8 or newer |
+| Build or contribute to NeqSim | Repository source and Maven wrapper | Source must remain Java 8 compatible; CI covers Java 8 and 21 |
+| Run the MCP server | MCP runner or container | Follow the [MCP server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) |
 
-### Installing a JDK
+The normal `neqsim-3.20.0.jar` release asset and Maven Central artifact require Java
+17 or newer. The separately published Java 8 asset exists for compatibility. Do not
+silently substitute one artifact for the other.
 
-If you don't have a JDK installed:
+Install a suitable JDK and verify it with `java -version`. A separate Maven
+installation is not needed when building NeqSim itself because the repository includes
+`mvnw` and `mvnw.cmd`.
 
-- **Windows**: Download [Eclipse Temurin](https://adoptium.net/) or [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
-- **macOS**: `brew install temurin` or download from [Adoptium](https://adoptium.net/)
-- **Linux**: `sudo apt install openjdk-11-jdk` (Ubuntu/Debian) or `sudo yum install java-11-openjdk-devel` (RHEL/CentOS)
+## Add NeqSim to a Maven application
 
-Verify your installation:
-
-```bash
-java -version
-# Should show: openjdk version "11.0.x" or similar
-```
-
----
-
-## Using NeqSim as a library
-
-The easiest way to use NeqSim is to add it as a Maven dependency to your project.
-
-### Option 1: Maven Central (recommended)
-
-No authentication required. Add to your `pom.xml`:
+Add the current Maven Central artifact to your application's `pom.xml`:
 
 ```xml
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.6.1</version>
+  <version>3.20.0</version>
 </dependency>
 ```
 
-Run `mvn clean install` and Maven will resolve NeqSim from Central automatically.
+Maven resolves NeqSim and its transitive dependencies. Java 8 users should instead
+download the explicit
+[`neqsim-3.20.0-Java8.jar`](https://github.com/equinor/neqsim/releases/download/v3.20.0/neqsim-3.20.0-Java8.jar)
+asset from the [v3.20.0 release](https://github.com/equinor/neqsim/releases/tag/v3.20.0).
+The large release jar is the supported standalone distribution; a thin project jar
+without its dependencies is not a complete classpath.
 
-### Option 2: Direct JAR download
+## First calculation: TP flash and properties
 
-Download `neqsim-x.x.x.jar` from the [releases page](https://github.com/equinor/neqsim/releases) and add it to your classpath.
-
----
-
-## Your first calculation — TP flash
-
-This example creates a natural gas mixture and calculates its phase equilibrium and physical properties:
+The constructor temperature is in kelvin and pressure is in bara. Component amounts
+are relative mole amounts until a total flow is assigned. The complete program below
+runs a TP flash, initializes physical properties, checks basic physical bounds, and
+reports through Log4j2.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class FirstCalculation {
-    public static void main(String[] args) {
-        // 1. Create fluid at 25°C and 50 bara
-        SystemSrkEos fluid = new SystemSrkEos(273.15 + 25.0, 50.0);
-        fluid.addComponent("methane", 0.90);
-        fluid.addComponent("ethane", 0.06);
-        fluid.addComponent("propane", 0.03);
-        fluid.addComponent("n-butane", 0.01);
-        fluid.setMixingRule("classic");  // ALWAYS set a mixing rule
+public final class FirstCalculation {
+  private static final Logger logger = LogManager.getLogger(FirstCalculation.class);
 
-        // 2. Run flash calculation
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
+  private FirstCalculation() {}
 
-        // 3. Initialize physical properties (REQUIRED before reading density, viscosity, etc.)
-        fluid.initProperties();
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("n-butane", 0.01);
+    fluid.setMixingRule("classic");
 
-        // 4. Read results
-        System.out.println("Phases:       " + fluid.getNumberOfPhases());
-        System.out.println("Density:      " + fluid.getDensity("kg/m3") + " kg/m³");
-        System.out.println("Z-factor:     " + fluid.getPhase("gas").getZ());
-        System.out.println("Viscosity:    " + fluid.getPhase("gas").getViscosity("kg/msec") + " kg/(m·s)");
-        System.out.println("Molar mass:   " + fluid.getMolarMass("kg/mol") * 1000.0 + " g/mol");
-    }
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double densityKgM3 = fluid.getDensity("kg/m3");
+    double compressibility = fluid.getPhase(0).getZ();
+    double molarMassKgMol = fluid.getMolarMass("kg/mol");
+
+    assert fluid.getNumberOfPhases() >= 1;
+    assert Double.isFinite(densityKgM3) && densityKgM3 > 0.0;
+    assert Double.isFinite(compressibility) && compressibility > 0.0;
+    assert molarMassKgMol > 0.01 && molarMassKgMol < 0.10;
+
+    logger.info("Phases: {}", fluid.getNumberOfPhases());
+    logger.info("Density: {} kg/m3", densityKgM3);
+    logger.info("Compressibility factor: {}", compressibility);
+    logger.info("Molar mass: {} kg/mol", molarMassKgMol);
+  }
 }
 ```
 
-### Key pattern to remember
+The sequence is:
 
-```
-Create fluid → Add components → Set mixing rule → Flash → initProperties() → Read results
-```
+`create fluid -> add components -> select model configuration -> flash -> initProperties -> inspect and validate results`
 
-> **Important:** Always call `fluid.initProperties()` after a flash calculation before reading transport properties (density, viscosity, thermal conductivity). The flash itself only solves phase equilibrium — transport properties require the extra initialization step.
+`initProperties()` is required before reading transport properties such as viscosity
+and thermal conductivity. It is also a safe general initialization step before
+reporting derived properties.
 
----
+This example verifies numerical sanity and API behavior. It is not validation against
+laboratory data, a custody-transfer standard, or a design case.
 
-## Process simulation
+## First process: separation, compression, and cooling
 
-Build a flowsheet by chaining equipment together:
+A `ProcessSystem` runs equipment in the order it is added. Use setters that carry
+explicit units at the application boundary.
 
 ```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.separator.Separator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
 
-public class SimpleProcess {
-    public static void main(String[] args) {
-        // Create fluid
-        SystemSrkEos fluid = new SystemSrkEos(273.15 + 30.0, 80.0);
-        fluid.addComponent("methane", 0.80);
-        fluid.addComponent("ethane", 0.12);
-        fluid.addComponent("propane", 0.05);
-        fluid.addComponent("n-butane", 0.03);
-        fluid.setMixingRule("classic");
+public final class SimpleProcess {
+  private static final Logger logger = LogManager.getLogger(SimpleProcess.class);
 
-        // Build flowsheet
-        Stream feed = new Stream("Feed", fluid);
-        feed.setFlowRate(50000.0, "kg/hr");
+  private SimpleProcess() {}
 
-        Separator separator = new Separator("HP Separator", feed);
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(303.15, 80.0);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.12);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-butane", 0.03);
+    fluid.setMixingRule("classic");
 
-        Compressor compressor = new Compressor("Compressor", separator.getGasOutStream());
-        compressor.setOutletPressure(150.0);
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(50000.0, "kg/hr");
 
-        Cooler aftercooler = new Cooler("Aftercooler", compressor.getOutletStream());
-        aftercooler.setOutTemperature(273.15 + 30.0);
+    Separator separator = new Separator("HP Separator", feed);
+    Compressor compressor = new Compressor("Export Compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(150.0, "bara");
+    compressor.setIsentropicEfficiency(0.75);
 
-        // Assemble and run
-        ProcessSystem process = new ProcessSystem();
-        process.add(feed);
-        process.add(separator);
-        process.add(compressor);
-        process.add(aftercooler);
-        process.run();
+    Cooler aftercooler = new Cooler("Aftercooler", compressor.getOutletStream());
+    aftercooler.setOutletTemperature(30.0, "C");
 
-        // Results
-        System.out.println("Compressor power:   " + compressor.getPower("kW") + " kW");
-        System.out.println("Outlet temperature: " + (compressor.getOutletStream().getTemperature() - 273.15) + " °C");
-        System.out.println("Cooling duty:       " + aftercooler.getDuty() / 1000.0 + " kW");
-    }
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    process.add(aftercooler);
+    process.run();
+
+    double powerKw = compressor.getPower("kW");
+    double compressorPressureBara = compressor.getOutletStream().getPressure("bara");
+    double cooledTemperatureC = aftercooler.getOutletStream().getTemperature("C");
+
+    assert Double.isFinite(powerKw) && powerKw > 0.0;
+    assert Math.abs(compressorPressureBara - 150.0) < 0.1;
+    assert Math.abs(cooledTemperatureC - 30.0) < 0.1;
+    assert aftercooler.getOutletStream().getFlowRate("kg/hr") > 0.0;
+
+    logger.info("Compressor power: {} kW", powerKw);
+    logger.info("Compressor outlet pressure: {} bara", compressorPressureBara);
+    logger.info("Aftercooler outlet temperature: {} C", cooledTemperatureC);
+  }
 }
 ```
 
-### Available equipment types
+The checks prove that the published program executes and reaches its specified
+pressure and temperature. They do not qualify compressor maps, separator performance,
+heat-exchanger design, relief loads, controls, or plant operability.
 
-| Category | Equipment classes |
-|----------|-----------------|
-| **Separation** | `Separator`, `ThreePhaseSeparator`, `DistillationColumn`, `MembraneSeparator`, `ComponentSplitter` |
-| **Compression** | `Compressor`, `Pump`, `Expander`, `Ejector` |
-| **Heat transfer** | `Heater`, `Cooler`, `HeatExchanger` |
-| **Flow control** | `ThrottlingValve`, `Splitter`, `Mixer` |
-| **Pipelines** | `PipeBeggsAndBrills`, `AdiabaticPipe` |
-| **Reactors** | `GibbsReactor` |
-| **Utilities** | `Recycle`, `Adjuster`, `SetPoint` |
+## Select a thermodynamic model deliberately
 
----
+There is no universally best equation of state. Start from the fluid chemistry and
+required property, then compare against relevant measurements or a recognized
+reference over the operating envelope.
 
-## Choosing an equation of state
+| Starting point | Suitable screening use | Important boundary |
+| --- | --- | --- |
+| `SystemSrkEos` | General hydrocarbon phase behavior | Validate liquid density and heavy-end characterization for the case |
+| `SystemPrEos` | Alternative cubic-EOS hydrocarbon screening | Validate phase behavior and volume correction against data |
+| `SystemSrkCPAstatoil` | Associating mixtures such as water, glycols, alcohols, and amines | Select the documented CPA mixing rule and validate binary interactions |
+| `SystemGERG2008Eos` | Covered natural-gas properties | Confirm mixture/property coverage; not every derivative or phase-equilibrium path is implemented |
+| `SystemUMRPRUMCEos` | UMR-PRU hydrocarbon screening | Confirm group assignment and validate the intended temperature/composition range |
 
-| EOS class | Best for | Notes |
-|-----------|----------|-------|
-| `SystemSrkEos` | General hydrocarbon systems | Good all-round choice |
-| `SystemPrEos` | Reservoir fluids, liquid density | Better liquid density than SRK |
-| `SystemSrkCPAstatoil` | Water, glycols, alcohols, amines | Handles hydrogen bonding (CPA) |
-| `SystemGERG2008Eos` | Natural gas custody transfer | Highest accuracy for gas properties |
-| `SystemUMRPRUMCEos` | Wide-range mixtures | Predictive, no interaction parameters needed |
+See [thermodynamic models](thermo/thermodynamic_models) and
+[system implementations](thermo/system/) before extending a screening model to
+engineering decisions.
 
-```java
-// SRK for general use
-SystemSrkEos gas = new SystemSrkEos(298.15, 50.0);
+## Common thermodynamic operations
 
-// PR for oil systems
-SystemPrEos oil = new SystemPrEos(350.0, 200.0);
+Create `ThermodynamicOperations` with the fluid, then call the operation that matches
+the known state and specification.
 
-// CPA for water/glycol systems
-SystemSrkCPAstatoil wet = new SystemSrkCPAstatoil(280.0, 60.0);
-wet.addComponent("methane", 0.90);
-wet.addComponent("water", 0.10);
-wet.setMixingRule(10);  // CPA mixing rule
-```
+| Operation | Method | Boundary |
+| --- | --- | --- |
+| Temperature-pressure flash | `TPflash()` | Fluid temperature and pressure must already be set |
+| Pressure-enthalpy flash | `PHflash(enthalpy, type)` | Enthalpy basis and the integer type must match the calling workflow |
+| Pressure-entropy flash | `PSflash(entropy)` | Entropy basis must be consistent with the fluid state |
+| Dew-point temperature | `dewPointTemperatureFlash()` | Requires a meaningful gas composition and starting pressure |
+| Bubble-point pressure | `bubblePointPressureFlash(false)` | Requires a meaningful liquid composition and starting temperature |
+| Hydrate formation temperature | `hydrateFormationTemperature()` | Requires water, hydrate-forming components, and hydrate-phase configuration |
+| Pressure-temperature envelope | `calcPTphaseEnvelope()` | Inspect convergence and the returned branches before reuse |
 
----
+Do not infer accuracy from convergence alone. Check units, phases, material balance,
+physical trends, and case-specific validation evidence.
 
-## Common flash calculations
+## Build and test NeqSim from source
 
-```java
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-ops.TPflash();                          // Temperature-pressure flash
-ops.PHflash(enthalpy, 0);              // Pressure-enthalpy flash
-ops.PSflash(entropy);                   // Pressure-entropy flash
-ops.dewPointTemperatureFlash();         // Dew point temperature
-ops.bubblePointPressureFlash(false);    // Bubble point pressure
-ops.hydrateFormationTemperature();      // Hydrate formation temperature
-ops.calcPTphaseEnvelope();              // Full phase envelope
-```
-
----
-
-## Developing NeqSim — building from source
-
-### Clone and build
+Clone the repository and use its wrapper:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
-./mvnw install        # Linux/macOS
-mvnw.cmd install      # Windows
+./mvnw install
 ```
 
-The Maven wrapper (`mvnw`/`mvnw.cmd`) downloads the correct Maven version automatically — no separate Maven installation needed.
-
-### Run tests
+On Windows use `mvnw.cmd install`. Useful focused commands include:
 
 ```bash
-./mvnw test                                      # all tests
-./mvnw test -Dtest=SeparatorTest                 # single class
-./mvnw test -Dtest=SeparatorTest#testTwoPhase    # single method
+./mvnw test -Dtest=SeparatorTest
+./mvnw test -Dtest=SeparatorTest#testTwoPhase
+python devtools/run_spotless.py apply
+python devtools/run_spotless.py check
+python devtools/check_documentation_search.py
 ```
 
-### Static analysis
+All contributed Java source must remain Java 8 compatible even when the build runs on
+a newer JDK. New behavior needs focused JUnit coverage, documentation impact must be
+assessed, and examples presented as complete programs must compile and execute.
 
-```bash
-./mvnw checkstyle:check     # code style
-./mvnw spotbugs:check       # bug detection
-./mvnw pmd:check            # code quality
-```
+The repository also provides a
+[development container](https://github.com/equinor/neqsim/tree/master/.devcontainer).
+Open the Maven project directly in IntelliJ IDEA, Eclipse, or VS Code and let the IDE
+use the wrapper-managed project configuration.
 
-### Code coverage
+## Repository map
 
-```bash
-./mvnw jacoco:prepare-agent test install jacoco:report
-# Report at target/site/jacoco/index.html
-```
-
-### VS Code with dev container
-
-The repository includes a ready-to-use [dev container](../.devcontainer/) with Maven and recommended extensions pre-installed:
-
-```bash
-git clone https://github.com/equinor/neqsim.git
-cd neqsim
-code .   # VS Code will prompt to reopen in container
-```
-
-### Docker container
-
-To build NeqSim in a self-contained Docker image and use it from both Java and Python (jpype) without a local toolchain, see [Building and Running NeqSim with Docker](docker-getting-started).
-
-### IntelliJ IDEA
-
-1. Open IntelliJ IDEA
-2. **File → Open** → select the cloned `neqsim` folder
-3. IntelliJ auto-detects the Maven project and imports dependencies
-4. Wait for indexing to complete
-5. Right-click any test class → **Run** to verify the setup
-
-### Eclipse
-
-1. **File → Import → Maven → Existing Maven Projects**
-2. Browse to the cloned `neqsim` folder
-3. Select `pom.xml` and finish the import
-4. Right-click the project → **Maven → Update Project**
-
----
-
-## Project structure
-
-```
-src/
-  main/java/neqsim/
-    thermo/                  Thermodynamic models (60+ EOS classes)
-    thermodynamicoperations/ Flash calculations (TP, PH, PS, dew, bubble, phase envelope)
-    physicalproperties/      Transport properties (viscosity, conductivity, diffusion)
-    process/
-      equipment/             33+ unit operations (separator, compressor, HX, valve, ...)
-      processmodel/          ProcessSystem — the flowsheet orchestrator
-      mechanicaldesign/      Wall thickness, cost estimation, ASME/API/DNV standards
-      measurementdevice/     Transmitters, meters, monitors
-      controllerdevice/      PID and advanced controllers
-    pvtsimulation/           PVT lab experiments (CME, CVD, DL, swelling, ...)
-    standards/               Gas quality (ISO 6976), oil quality, sales contracts
-    fluidmechanics/          Pipeline hydraulics
-    chemicalreactions/       Reaction equilibrium and kinetics
-    statistics/              Parameter fitting, regression
-  test/java/neqsim/         JUnit 5 tests (mirrors production structure)
-  main/resources/            Component databases, design data CSVs
-```
-
----
-
-## Key conventions for contributors
-
-1. **Java 8 compatibility** — All code must compile with Java 8. Do not use `var`, `List.of()`, `Map.of()`, text blocks, records, or other Java 9+ features.
-2. **Mixing rule required** — Always call `setMixingRule()` after adding components.
-3. **initProperties() after flash** — Call `fluid.initProperties()` before reading transport properties.
-4. **Tests required** — All new code must have JUnit 5 tests. All tests must pass before merging.
-5. **Checkstyle** — Code must pass `./mvnw checkstyle:check` (Google style with project overrides).
-
----
+| Path | Purpose |
+| --- | --- |
+| `src/main/java/neqsim/thermo` | Thermodynamic systems, phases, components, and properties |
+| `src/main/java/neqsim/thermodynamicoperations` | Flash and saturation operations |
+| `src/main/java/neqsim/process` | Streams, equipment, flowsheets, controls, and engineering utilities |
+| `src/main/java/neqsim/pvtsimulation` | PVT laboratory-test simulations |
+| `src/main/java/neqsim/standards` | Gas and oil quality calculations |
+| `src/main/java/neqsim/chemicalreactions` | Reaction equilibrium and kinetics |
+| `src/test/java/neqsim` | JUnit regression and documentation tests |
+| `docs` | Published guides, contracts, and examples |
 
 ## Next steps
 
-- [NeqSim User Documentation](https://equinor.github.io/neqsim/) — Full docs site
-- [JavaDoc API Reference](https://equinor.github.io/neqsim/javadoc/index.html) — Complete API docs
-- [Java Wiki & examples](https://github.com/equinor/neqsim/wiki) — Usage patterns and guides
-- [Jupyter notebooks](https://github.com/equinor/neqsim/tree/master/examples/notebooks) — 30+ runnable examples
-- [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL) — Try NeqSim interactively
-- [GitHub Discussions](https://github.com/equinor/neqsim/discussions) — Ask questions
-- [CONTRIBUTING.md](https://github.com/equinor/neqsim/blob/master/CONTRIBUTING.md) — How to contribute
+- [NeqSim documentation](https://equinor.github.io/neqsim/)
+- [JavaDoc API reference](https://equinor.github.io/neqsim/javadoc/index.html)
+- [Current releases](https://github.com/equinor/neqsim/releases)
+- [Java examples catalog](examples/)
+- [Docker getting started](docker-getting-started)
+- [Contributing guide](https://github.com/equinor/neqsim/blob/master/CONTRIBUTING.md)
+- [GitHub Discussions](https://github.com/equinor/neqsim/discussions)
