@@ -46,12 +46,14 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    ```powershell
    .\install.cmd            # or: py -m pip install -e devtools/
    ```
-   macOS/Linux: `./install.sh`. This also puts the `neqsim` command on PATH
-   (open a new terminal afterwards; or use `py -m neqsim_cli`).
+   macOS/Linux: `./install.sh`. The installer puts the `neqsim` command on PATH
+   and then tells you whether it resolves; if it does not, use
+   `py -m neqsim_cli` — the same entry point — and carry on.
    > **In VS Code:** if running `neqsim` shows *"The term 'neqsim' is not
    > recognized"*, a new integrated terminal is **not** enough — VS Code captures
-   > PATH at launch, so fully quit and reopen VS Code. (Installing into an
-   > activated virtualenv avoids this entirely.)
+   > PATH at launch, so fully quit and reopen VS Code. A virtualenv does not
+   > remove this step, it replaces it: the command then resolves only in
+   > terminals where the venv is activated.
 3. **Install community agents & skills — no auth needed.** These are the default
    catalog and work immediately:
    ```powershell

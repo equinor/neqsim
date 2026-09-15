@@ -112,6 +112,7 @@ echo Done. The 'neqsim' command is available in this cmd session.
 echo Try it now:  neqsim doctor --skip-jar
 echo If you started install.cmd from PowerShell, that window still needs a new
 echo terminal - or run install.ps1 instead, which fixes the session you are in.
+set "CLI=neqsim"
 goto :cli_ready
 
 :cli_missing
@@ -121,20 +122,22 @@ echo   %PY% -m neqsim_cli --help
 echo To find out why:  %PY% -m neqsim_cli doctor --skip-jar
 echo In a VS Code terminal, fully quit and reopen VS Code -- a new integrated
 echo terminal is NOT enough, because VS Code captures PATH at launch.
+REM Keep the examples below runnable for whoever is reading them.
+set "CLI=%PY% -m neqsim_cli"
 
 :cli_ready
 echo.
 echo Where solved tasks are saved:
 echo   Default (nothing set): ^<this repository^>\task_solve
-echo   Change it:  neqsim --set-task-root "D:\Engineering Tasks"   (or 'cwd')
-echo   Check it:   neqsim --show-task-root
+echo   Change it:  %CLI% --set-task-root "D:\Engineering Tasks"   (or 'cwd')
+echo   Check it:   %CLI% --show-task-root
 echo The setting is saved in %USERPROFILE%\.neqsim\task_defaults.json and is used
 echo by 'neqsim new-task' and the AI agents, so tasks can live outside the clone.
 echo.
 echo Word template for generated reports:
 echo   Default (nothing set): built-in NeqSim report styling
-echo   Change it:  neqsim --set-report-template "C:\path\company template.docx"
-echo   Check it:   neqsim --show-report-template
+echo   Change it:  %CLI% --set-report-template "C:\path\company template.docx"
+echo   Check it:   %CLI% --show-report-template
 echo Every Word report then inherits its styles, fonts, headers, and footers.
 exit /b 0
 

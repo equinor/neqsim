@@ -415,7 +415,7 @@ cd $HOME\Documents\GitHub
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
-# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+# 2. Python devtools in a venv ('neqsim' works in terminals where it is activated)
 py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
