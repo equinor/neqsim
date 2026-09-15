@@ -11,13 +11,15 @@ Usage:
     neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
-    neqsim --set-task-root P Set the folder new tasks are created in
+    neqsim --set-task-root P Set the folder new tasks are created in (created if
+                            missing; --vscode also adds it to the workspace)
     neqsim --show-task-root  Print the folder new tasks are created in
     neqsim --reset-task-root Remove the saved task-root setting
     neqsim --set-report-template P   Build Word reports from template P
     neqsim --show-report-template    Print the configured report template
     neqsim --reset-report-template   Remove the saved report template
     neqsim --set-document-root P     Read source documents from P and its subfolders
+                                     (created if missing; --vscode adds it too)
     neqsim --show-document-root      Print the configured document root
     neqsim --reset-document-root     Remove the saved document root
     neqsim documents [PATTERN]       List documents under the document root
@@ -112,6 +114,8 @@ def _print_usage():
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
     print("  --show-task-root   Print the folder new tasks are created in")
     print("  --reset-task-root  Remove the saved setting (existing tasks are unchanged)")
+    print("                     A missing folder is created; add --vscode to also add")
+    print("                     it to the VS Code workspace.")
     print()
     print("Report template:")
     print("  --set-report-template P  Build Word reports from the .docx/.dotx template P")
@@ -123,6 +127,8 @@ def _print_usage():
     print("  --show-document-root     Print the folder agents read documents from")
     print("  --reset-document-root    Remove the saved document root")
     print("  documents [PATTERN]      List documents under the document root")
+    print("                           Put standards, technical requirements, datasheets,")
+    print("                           and drawings agents must always know about here.")
     print()
     print("Run `neqsim <command> --help` for per-command options.")
     print("Docs: https://equinor.github.io/neqsim/")
@@ -161,6 +167,32 @@ def _setting_value(argv):
     """
     value = " ".join(part for part in argv if part.strip()).strip()
     return value or None
+
+
+VSCODE_FLAGS = ("--vscode", "--add-to-workspace")
+
+
+def _take_option(argv, flags):
+    """Pull an option flag out of the arguments so it is not read as the path."""
+    remaining = [part for part in argv
+                 if ("--" + part.strip().lstrip("-").lower()) not in flags]
+    return len(remaining) != len(argv), remaining
+
+
+def _register_with_vscode(path, requested):
+    """Add a configured folder to the VS Code workspace only when asked to."""
+    import new_task
+
+    if not requested:
+        print("Add it to your editor with File > Add Folder to Workspace "
+              "(or re-run with --vscode).")
+        return
+    added, reason = new_task.add_folder_to_vscode_workspace(path)
+    if added:
+        print("Added to the VS Code workspace.")
+    else:
+        print("Not added to the VS Code workspace: {}".format(reason))
+        print("Add it manually with File > Add Folder to Workspace.")
 
 
 GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
@@ -284,7 +316,8 @@ def _handle_document_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], DOCUMENT_ROOT_FLAGS)
-    value = _setting_value(argv[1:])
+    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    value = _setting_value(rest)
     if flag == "document-root":
         flag = "--set-document-root" if value else "--show-document-root"
 
@@ -299,6 +332,8 @@ def _handle_document_root(argv):
             sys.exit(2)
         print("Document root: {}".format(stored))
         print("Agents read source documents from this folder and all its subfolders.")
+        print("Put standards, technical requirements, datasheets, and drawings here.")
+        _register_with_vscode(stored, add_to_vscode)
     elif flag == "--reset-document-root":
         try:
             new_task.clear_default_document_root()
@@ -341,7 +376,8 @@ def _handle_task_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], TASK_ROOT_FLAGS)
-    value = _setting_value(argv[1:])
+    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    value = _setting_value(rest)
     if flag == "task-root":
         flag = "--set-task-root" if value else "--show-task-root"
     if flag == "--set-task-root":
@@ -356,9 +392,11 @@ def _handle_task_root(argv):
             sys.exit(2)
         if stored == new_task.CWD_TASK_ROOT:
             print("Task root: the terminal's current folder (re-resolved per command).")
+            print("New tasks are created here. Existing tasks are unchanged.")
         else:
             print("Task root: {}".format(stored))
-        print("New tasks are created here. Existing tasks are unchanged.")
+            print("New tasks are created here. Existing tasks are unchanged.")
+            _register_with_vscode(stored, add_to_vscode)
     elif flag == "--reset-task-root":
         new_task.clear_default_task_root()
         print("Saved task root removed. Existing tasks are unchanged.")

@@ -16,6 +16,8 @@ def defaults(tmp_path, monkeypatch):
     monkeypatch.delenv("NEQSIM_TASK_ROOT", raising=False)
     monkeypatch.delenv("NEQSIM_REPORT_TEMPLATE", raising=False)
     monkeypatch.delenv("NEQSIM_DOCUMENT_ROOT", raising=False)
+    # Never launch the editor from a test run.
+    monkeypatch.setenv("NEQSIM_NO_VSCODE", "1")
     return config
 
 
@@ -231,16 +233,73 @@ def test_document_root_cli_and_listing(defaults, tmp_path, monkeypatch, capsys):
     assert new_task.resolve_document_root() is None
 
 
-def test_document_root_cli_rejects_missing_folder(defaults, tmp_path, monkeypatch, capsys):
+def test_document_root_cli_creates_missing_folder(defaults, tmp_path, monkeypatch, capsys):
     import neqsim_cli
 
-    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root",
-                                      str(tmp_path / "missing")])
+    library = tmp_path / "standards library"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root", str(library)])
     with pytest.raises(SystemExit) as exit_info:
         neqsim_cli.main()
-    assert exit_info.value.code == 2
-    assert "not found" in capsys.readouterr().out
+    assert exit_info.value.code == 0
+    assert library.is_dir()
+    assert new_task.resolve_document_root() == str(library)
+    assert "standards" in capsys.readouterr().out
+
+
+def test_roots_rejected_when_path_is_a_file(defaults, tmp_path):
+    occupied = tmp_path / "not-a-folder.txt"
+    occupied.write_text("x", encoding="utf-8")
+    with pytest.raises(ValueError, match="is a file"):
+        new_task.save_default_document_root(str(occupied))
+    with pytest.raises(ValueError, match="is a file"):
+        new_task.save_default_task_root(str(occupied))
     assert not defaults.exists()
+    assert occupied.read_text(encoding="utf-8") == "x"
+
+
+def test_setting_an_existing_root_keeps_its_content(defaults, tmp_path):
+    library = tmp_path / "standards"
+    (library / "norsok").mkdir(parents=True)
+    (library / "norsok" / "P-002.pdf").write_text("standard", encoding="utf-8")
+    tasks = tmp_path / "tasks"
+    (tasks / "2026-01-01_existing").mkdir(parents=True)
+
+    for _ in range(2):
+        new_task.save_default_document_root(str(library))
+        new_task.save_default_task_root(str(tasks))
+
+    assert (library / "norsok" / "P-002.pdf").read_text(encoding="utf-8") == "standard"
+    assert (tasks / "2026-01-01_existing").is_dir()
+
+
+def test_set_root_adds_folder_to_vscode_only_when_asked(defaults, tmp_path, monkeypatch,
+                                                        capsys):
+    import neqsim_cli
+
+    added = []
+    monkeypatch.setattr(new_task, "add_folder_to_vscode_workspace",
+                        lambda path: (added.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert tasks.is_dir()
+    assert added == []
+    assert "Add Folder to Workspace" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks), "--vscode"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == [str(tasks)]
+    assert "Added to the VS Code workspace." in capsys.readouterr().out
+
+    # 'cwd' is re-resolved per command, so there is no single folder to add.
+    added.clear()
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", "cwd", "--vscode"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == []
 
 
 def test_setting_accepts_bare_flag_and_unquoted_path(defaults, tmp_path, monkeypatch):
