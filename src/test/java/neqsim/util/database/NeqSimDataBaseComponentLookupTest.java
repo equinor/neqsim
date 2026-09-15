@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.sql.ResultSet;
+import org.h2.tools.Csv;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,23 +29,16 @@ public class NeqSimDataBaseComponentLookupTest {
    *
    * @param resource classpath resource, e.g. {@code data/COMP.csv}
    * @return the component names in file order
-   * @throws IOException if the resource cannot be read
+   * @throws Exception if the resource cannot be read
    */
-  private static List<String> readNames(String resource) throws IOException {
+  private static List<String> readNames(String resource) throws Exception {
     List<String> names = new ArrayList<String>();
     InputStream in = NeqSimDataBaseComponentLookupTest.class.getClassLoader().getResourceAsStream(resource);
     assertTrue(in != null, resource + " must be on the test classpath");
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
-    try {
-      reader.readLine(); // header
-      String line = reader.readLine();
-      while (line != null) {
-        int first = line.indexOf(',');
-        int second = line.indexOf(',', first + 1);
-        if (first > 0 && second > first) {
-          names.add(line.substring(first + 1, second));
-        }
-        line = reader.readLine();
+    try (ResultSet rows = new Csv().read(reader, null)) {
+      while (rows.next()) {
+        names.add(rows.getString("NAME"));
       }
     } finally {
       reader.close();
@@ -91,19 +85,25 @@ public class NeqSimDataBaseComponentLookupTest {
   }
 
   /**
-   * The extended database must contain every component of the standard database.
+   * The loaded extended database must contain every component of the standard database.
    *
    * <p>
    * {@link NeqSimDataBase#useExtendedComponentDatabase(boolean)} replaces the COMP table, so any component present only
    * in the standard file would silently disappear from fluids created after the switch.
    * </p>
    *
-   * @throws IOException if a resource cannot be read
+   * @throws Exception if a resource cannot be read
    */
   @Test
-  public void extendedDatabaseContainsEveryStandardComponent() throws IOException {
+  public void extendedDatabaseContainsEveryStandardComponent() throws Exception {
     List<String> standard = readNames("data/COMP.csv");
-    Set<String> extended = new HashSet<String>(readNames("data/COMP_EXT.csv"));
+    Set<String> extended;
+    try {
+      NeqSimDataBase.useExtendedComponentDatabase(true);
+      extended = new HashSet<String>(java.util.Arrays.asList(NeqSimDataBase.getComponentNames()));
+    } finally {
+      NeqSimDataBase.useExtendedComponentDatabase(false);
+    }
     List<String> missing = new ArrayList<String>();
     for (int i = 0; i < standard.size(); i++) {
       if (!extended.contains(standard.get(i))) {

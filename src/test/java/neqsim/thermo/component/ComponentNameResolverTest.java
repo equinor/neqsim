@@ -6,10 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.sql.ResultSet;
+import org.h2.tools.Csv;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,24 +35,17 @@ public class ComponentNameResolverTest {
    * Read the component names straight from the CSV resource, so the test fails if the resolver tables drift away from
    * the database rather than from a copy of it.
    *
-   * @throws IOException if the resource cannot be read
+   * @throws Exception if the resource cannot be read
    */
   @BeforeAll
-  public static void loadDatabaseNames() throws IOException {
+  public static void loadDatabaseNames() throws Exception {
     databaseNames = new ArrayList<String>();
     InputStream in = ComponentNameResolverTest.class.getClassLoader().getResourceAsStream("data/COMP.csv");
     assertNotNull(in, "data/COMP.csv must be on the test classpath");
     BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
-    try {
-      reader.readLine(); // header
-      String line = reader.readLine();
-      while (line != null) {
-        int first = line.indexOf(',');
-        int second = line.indexOf(',', first + 1);
-        if (first > 0 && second > first) {
-          databaseNames.add(line.substring(first + 1, second));
-        }
-        line = reader.readLine();
+    try (ResultSet rows = new Csv().read(reader, null)) {
+      while (rows.next()) {
+        databaseNames.add(rows.getString("NAME"));
       }
     } finally {
       reader.close();
