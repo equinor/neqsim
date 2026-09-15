@@ -320,6 +320,35 @@ Regenerate it whenever documents are added and before finalizing the task.
    **and** in `results.json` under `improvements`. If nothing needed changing, say
    so explicitly - silence fails the gate. Never ask permission for this step.
 
+   **Commit and push it — the loop only closes when the fix is pushed.** An
+   improvement that stays in the chat session, the clone, or the task folder is
+   lost when the session ends, and the next engineer hits the same wall. Each
+   repo in the workspace is independent, so commit in the one that owns the fix:
+
+   | What you learned | Repo | Change |
+   |------------------|------|--------|
+   | Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
+   | Wrong API recipe, gotcha, unit trap, better pattern | sibling repos `../neqsim-community-skills/` / `../neqsim-enterprise-skills/` | edit `SKILL.md` |
+   | Wrong skill choice, missed hand-off, bad routing | sibling repos `../neqsim-community-agents/` / `../neqsim-enterprise-agents/` | edit `*.agent.md` |
+   | Useful new multi-agent pipeline | agents repo | record as a composition pattern |
+   | Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
+
+   ```bash
+   cd <the repo that owns the fix>
+   git checkout -b task/<slug>
+   git add <the changed files>
+   git commit -m "<what the task taught>"
+   git push -u origin task/<slug>
+   gh pr create --fill
+   ```
+
+   Rules: never commit task output (evidence, notebooks, results, reports) to a
+   code repo; never commit company data (tags, plant names, document numbers,
+   historian extracts) to a public repo; keep plant-specific content in the
+   enterprise repos and plant-agnostic content in the community repos. After
+   pushing skill/agent changes, refresh the local install with
+   `neqsim agent install --all --vscode --force`.
+
 5. **Create a PR** with reusable outputs:
    ```bash
    git checkout -b task/task-slug
