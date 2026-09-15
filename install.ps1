@@ -166,28 +166,53 @@ Write-Host ""
 Write-Host "Ensuring the 'neqsim' command is on your PATH..." -ForegroundColor Cyan
 & $python[0] @pyArgs (Join-Path $Devtools "ensure_on_path.py")
 
+# A PATH change written to the registry reaches only NEW processes, so without
+# this the command the installer just advertised fails in the window the user is
+# sitting in. This script runs in the caller's PowerShell process, so putting the
+# directory on $env:PATH here makes 'neqsim' work immediately.
+$scriptDir = (& $python[0] @pyArgs (Join-Path $Devtools "ensure_on_path.py") "--print-script-dir" |
+    Select-Object -Last 1)
+if ($scriptDir) { $scriptDir = $scriptDir.Trim() }
+if ($scriptDir -and (Test-Path -LiteralPath $scriptDir)) {
+    $onPath = ($env:PATH -split [IO.Path]::PathSeparator) |
+        Where-Object { $_ -and ($_.TrimEnd('\') -ieq $scriptDir.TrimEnd('\')) }
+    if (-not $onPath) {
+        $env:PATH = $env:PATH + [IO.Path]::PathSeparator + $scriptDir
+    }
+}
+
 Write-Host ""
-Write-Host "Done. Verify with:" -ForegroundColor Green
-Write-Host "  $pythonDisplay -m neqsim_cli --help"
-Write-Host "If 'neqsim' is not found in this window, open a NEW terminal (PATH changes"
-Write-Host "only apply to newly opened terminals), or use the line above."
-Write-Host "If running 'neqsim' shows `"The term 'neqsim' is not recognized`" in a VS Code"
-Write-Host "terminal, fully quit and reopen VS Code - a new integrated terminal is NOT"
-Write-Host "enough (VS Code captures PATH at launch). A virtualenv avoids this."
+$neqsimCommand = Get-Command neqsim -ErrorAction SilentlyContinue
+if ($neqsimCommand) {
+    $cli = "neqsim"
+    Write-Host "Done. The 'neqsim' command works in THIS window:" -ForegroundColor Green
+    Write-Host "  $($neqsimCommand.Source)"
+    Write-Host "Try it now:  neqsim doctor --skip-jar"
+} else {
+    # Keep the examples below runnable: advertising 'neqsim ...' to someone who
+    # cannot run it is what sends people off debugging a working install.
+    $cli = "$pythonDisplay -m neqsim_cli"
+    Write-Host "Done, but the 'neqsim' command is not resolvable here." -ForegroundColor Yellow
+    Write-Host "Use this instead - it is the same entry point and always works:"
+    Write-Host "  $cli --help"
+    Write-Host "To find out why:  $cli doctor --skip-jar"
+    Write-Host "If you are in a VS Code terminal, fully quit and reopen VS Code - a new"
+    Write-Host "integrated terminal is NOT enough (VS Code captures PATH at launch)."
+}
 
 Write-Host ""
 Write-Host "Where solved tasks are saved:" -ForegroundColor Cyan
 Write-Host "  Default (nothing set): <this repository>\task_solve"
-Write-Host "  Change it:  neqsim --set-task-root `"D:\Engineering Tasks`"   (or 'cwd')"
-Write-Host "  Check it:   neqsim --show-task-root"
+Write-Host "  Change it:  $cli --set-task-root `"D:\Engineering Tasks`"   (or 'cwd')"
+Write-Host "  Check it:   $cli --show-task-root"
 Write-Host "The setting is saved in ~\.neqsim\task_defaults.json and is used by"
 Write-Host "'neqsim new-task' and the AI agents, so tasks can live outside the clone."
 
 Write-Host ""
 Write-Host "Word template for generated reports:" -ForegroundColor Cyan
 Write-Host "  Default (nothing set): built-in NeqSim report styling"
-Write-Host "  Change it:  neqsim --set-report-template `"C:\path\company template.docx`""
-Write-Host "  Check it:   neqsim --show-report-template"
+Write-Host "  Change it:  $cli --set-report-template `"C:\path\company template.docx`""
+Write-Host "  Check it:   $cli --show-report-template"
 Write-Host "Every Word report then inherits its styles, fonts, headers, and footers."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────

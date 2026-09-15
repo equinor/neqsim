@@ -101,7 +101,7 @@ cd $HOME\Documents\GitHub
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
-# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+# 2. Python devtools in a venv ('neqsim' works in terminals where it is activated)
 py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
@@ -206,8 +206,9 @@ sign you in with browser SSO in a single command:
 
 ```powershell
 # GitHub (registers the repo and runs `gh auth login --web`):
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path points at the catalog file published in the repo
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
 
 # Internal Git server instead of GitHub:
 neqsim agent private-init --url https://git.internal.company.com/neqsim/enterprise-agents.git
@@ -225,6 +226,11 @@ neqsim skill install <name> --target vscode
 > `private-init` and `add-repo` accept the same repo options — use `private-init`
 > for first-time setup and `add-repo` to register additional repos later. Both
 > print the catalog file path when they finish.
+
+> **`neqsim` not recognized?** Without elevated privileges the console script may
+> not be on PATH. Run every command above as `python -m neqsim_cli ...` instead
+> (same arguments), or see
+> [Troubleshooting](#troubleshooting-neqsim-not-found).
 
 **Which file gets edited, and where?** `private-init` writes a per-user catalog:
 
@@ -326,41 +332,48 @@ Run `neqsim --help` for the full list.
 ### Troubleshooting: `neqsim` not found
 
 If `neqsim` is not recognized after `pip install -e devtools/`, the Python
-Scripts directory is not on your PATH.
+Scripts directory is not on your PATH. The install itself is fine.
 
-**Using a virtual environment (easiest — always works):**
+**Unblock yourself immediately (no setup, always works):**
+```bash
+python -m neqsim_cli --help      # py -m neqsim_cli --help  on Windows
+```
+This is the same entry point the `neqsim` command runs, so every command in this
+README works with it — just substitute it for `neqsim`. Many contributors use
+only this form.
+
+**Find out why, and fix it:**
+```bash
+python -m neqsim_cli doctor --skip-jar   # names the cause under "CLI command"
+python devtools/ensure_on_path.py        # puts the Scripts dir on your user PATH
+```
+Use `ensure_on_path.py` rather than editing PATH by hand: it writes the user
+PATH through the registry, which avoids the truncation and the
+machine-PATH-duplicated-into-user-PATH damage that `setx %PATH%` and
+`SetEnvironmentVariable("PATH", $env:PATH + ...)` cause. Then open a **new**
+terminal — and in VS Code, fully quit and reopen the window, because VS Code
+captures PATH at launch and a new integrated terminal is not enough.
+
+**Using a virtual environment:**
 ```bash
 python -m venv .venv
 # Windows:  .venv\Scripts\Activate.ps1
 # macOS/Linux:  source .venv/bin/activate
 pip install -e devtools/
-neqsim --help   # works immediately — venv puts scripts on PATH
+neqsim --help
 ```
+A venv is activated **per terminal**, so activate it in every new terminal (or
+let VS Code do it via *Python: Select Interpreter*). Restarting the machine does
+not change this. Note that VS Code can set `VIRTUAL_ENV` without actually
+activating the environment — if `neqsim` is missing while `VIRTUAL_ENV` is set,
+that is the cause, and `neqsim doctor` will say so.
 
-**Windows (PowerShell) — without venv:**
-```powershell
-# Check where pip installed it:
-python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-
-# Add it permanently (typical path for Python 3.12):
-$scripts = [System.IO.Path]::Combine($env:APPDATA, 'Python', 'Python312', 'Scripts')
-[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$scripts", "User")
-# Restart your terminal for the change to take effect.
-# If running neqsim later shows "The term 'neqsim' is not recognized" in a VS Code
-# terminal, fully quit and reopen VS Code (a new integrated terminal is not enough
-# — VS Code captures PATH at launch). A virtualenv avoids this.
-```
-
-**Linux / macOS — without venv:**
+**Where did pip put it?**
 ```bash
-# The scripts directory is usually ~/.local/bin
-export PATH="$HOME/.local/bin:$PATH"
-# Add the line above to ~/.bashrc or ~/.zshrc to make it permanent.
-
-# macOS with Homebrew Python: scripts may be at
-#   /opt/homebrew/bin/ (Apple Silicon) or /usr/local/bin/ (Intel)
-# Check with: python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
 ```
+Typical locations: `%APPDATA%\Python\Python312\Scripts` (Windows, no admin),
+`~/.local/bin` (Linux), `/opt/homebrew/bin` or `/usr/local/bin` (macOS Homebrew).
 
 **GitHub Codespaces:**
 

@@ -105,6 +105,12 @@ If `neqsim` is not found, use `python -m neqsim_cli --help` and see
 If you installed outside a virtual environment, fully quit and reopen VS Code so
 its captured PATH is refreshed.
 
+> **Without administrator rights the console script often does not land on PATH.**
+> That is not a failed install — replace `neqsim` with `python -m neqsim_cli`
+> (`python3 -m neqsim_cli` on macOS/Linux) in **every** command on this page; the
+> arguments are identical. Run it from the same environment you installed into,
+> so each skill's Python package is installed for that interpreter.
+
 ---
 
 ## 4. Install the community agents into VS Code
@@ -167,6 +173,17 @@ neqsim agent private-init --repo <company>/<company>-neqsim-enterprise-agents --
 neqsim skill private-init --repo <company>/<company>-neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
 neqsim agent install --all --vscode --force   # community + enterprise
 ```
+
+> **If `neqsim` is not recognized** (common on locked-down machines without
+> elevated privileges, where the console script does not land on PATH), replace
+> `neqsim` with `python -m neqsim_cli` in every command — the arguments are
+> identical:
+>
+> ```powershell
+> python -m neqsim_cli agent private-init --repo <company>/<company>-neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+> python -m neqsim_cli skill private-init --repo <company>/<company>-neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
+> python -m neqsim_cli agent install --all --vscode --force
+> ```
 
 A later refresh only re-installs what changed: a skill's Python package is
 pip-installed again only when its `pyproject.toml` changed. Use

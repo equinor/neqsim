@@ -179,8 +179,8 @@ def _handle_report(argv):
     argv : list of str
         Arguments after the ``report`` command. An optional leading positional
         is the task folder (default: current directory); everything else is
-        forwarded to the generator (--paper, --template PATH, --no-template,
-        --title TEXT, --author NAME...).
+        forwarded to the generator (--paper, --pdf, --no-pdf, --template PATH,
+        --no-template, --title TEXT, --author NAME...).
 
     Returns
     -------
@@ -204,8 +204,8 @@ def _handle_report(argv):
         print("ERROR: {} does not look like a task folder "
               "(no results.json, step1_scope_and_research/, or step3_report/)."
               .format(task_dir))
-        print("Usage: neqsim report [TASK_DIR] [--paper] [--template PATH] "
-              "[--no-template] [--title TEXT] [--author NAME]")
+        print("Usage: neqsim report [TASK_DIR] [--paper] [--pdf] [--no-pdf] "
+              "[--template PATH] [--no-template] [--title TEXT] [--author NAME]")
         return 2
     if not os.path.isfile(GENERATOR_PATH):
         print("ERROR: report generator not found at {}".format(GENERATOR_PATH))

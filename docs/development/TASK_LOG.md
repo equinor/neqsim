@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-09-14 — "Operations already swapped the part, is the spec right?" — a Class 150 valve that is 3 % under its Class 150 line
+**Type:** D (Standards) / G (Workflow)
+**Keywords:** breakdown notification, malfunction report, spec verification, replacement valve, piping class, PCS, VDS, valve element table, ASME B16.5 material group, CF8M, WCB, 275 psig, 285 psig, soft seated, metal seated, trunnion ball, fire-safe, API 607, nameplate, attachment download, jetty drain valve
+**Solution:** private task folder (redacted); skill updates in `enterprise-maintenance-api` and `enterprise-tr2000-api` SKILL.md
+**Notes:** A very common breakdown-notification pattern: the field has already fitted a spare and asks the responsible discipline whether it may stay. Three transferable lessons. (1) **The maintenance API cannot answer the material half of the question** — there is no `/materials` endpoint (three probe paths all 404) and the equipment record's manufacturer/model/part/serial fields are routinely empty. The photographs the reporter attaches carry more specification than the master record would: one nameplate close-up gave manufacturer, figure number, class/size, MWP, body/ball/stem/seat materials and design standard. Downloading them has two traps — the client accessor returns an envelope with `status: ok` and **zero bytes**, and `client.base_url`/`api_version` are `None`, so fetch the binary with an explicit bearer against the literal gateway URL and check the magic bytes. (2) **"Class 150" is not a single number.** ASME B16.5 rates by material group: carbon steel (1.1) is 285 psig at 38 °C = 19.6 barg, cast CF8M (2.2) only 275 psig = 18.96 barg. A carbon-steel Class 150 pipe class carries the 19.6 barg figure, so an honestly-marked stainless Class 150 valve sits ~3 % **below** the design pressure of the Class 150 piping it was just bolted into — the discriminating check is the component's own marked MWP against the class `DesignPress02`, never class label against class label. (3) **Read the class's valve-element table, not just its rating.** The class permitted exactly one live ball VDS, metal-seated trunnion; the generic soft-seated floating-ball spare is outside the class whatever its rating. Also: a P&ID class annotation lacks the two-digit suffix the spec API stores (`A1AP` → `A1AP01`), so a literal lookup returns zero revisions and reads as "no such class"; and older line numbers on the same drawing carry no class at all, which makes the class an inference to declare, not assert.
+
 ### 2026-09-12 — Chemical-injection nozzle performance, and testing a historian tag before trusting it
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** H2S scavenger, MEA-triazine, chemical injection quill, atomizer nozzle, Sauter mean diameter, Lefebvre pressure-swirl, critical Weber breakup, interfacial area, wall impingement, nozzle turndown, mixing efficiency, dose loop, signal independence
@@ -759,3 +765,48 @@ Formula provenance, all verified against rendered ISO page images (not trusted f
 **Solution:** `GasTurbine.buildExhaust` / `GasTurbine.carbonAndHydrogen`; test `src/test/java/neqsim/process/equipment/powergeneration/GasTurbineCombustionTest.java`
 **Notes:** Found while building an incremental-CO2 profile for a subsea tie-back, where the host facility's fuel and flare are booked against the facility rather than the field, so the emissions had to be modelled from the incremental compression duty rather than read from a production forecast. **(1)** `GasTurbine.run` branches: with no driven loads it runs the Brayton path and sets its outlet stream to combustion exhaust via `combustFuel`; with `addDrivenLoad`/`setRequiredPower` it takes `runPowerDemand`, which sized the fuel correctly but then set `outStream` to `thermoSystem.clone()` - **the unburned fuel**. So `getOutletStream()` returned two physically different things depending on a mode the caller may not have thought about, and an emission calculation on a load-driven turbine read the fuel's own CO2 content instead of the combustion products: **60.6 kg/hr against a true 1089.6 kg/hr, a factor of 18 low, with no error and a plausible-looking number**. The right guard here is a carbon balance on the fuel: CO2 out must equal fuel carbon in, and that check is what exposed it. `runPowerDemand` now builds the exhaust the same way the Brayton path does. **(2)** The combustion stoichiometry asked `getElements().getNumberOfElements("C")` of every hydrocarbon, and the pseudo-components of any characterised reservoir fluid are absent from the element database, so a real fluid aborted the whole solve with `Element:getNumberOfElements - Input C component not in element database`. Atom counts are now estimated from molar mass with the paraffinic relation when the database has no entry; `Element.getElementNames()` returns null in that case, so it can be detected without catching an exception. **(3) Found and deliberately not fixed:** `Fluid.create("combustion air")` is `nitrogen 0.78084 / oxygen 0.20946 / CO2 0.033 / water 0.1` - an unnormalised set that works out to **2.9 mol% CO2 and 8.9 mol% water** against atmospheric 0.04 % and about 1 %, so every turbine exhaust CO2 is inflated by air-borne CO2 (75 % in this case). Correcting it to atmospheric values breaks `GasTurbineTest.testRun` with "net power must be positive": the Brayton net power balance is marginal and depends on the humid air as a working fluid, which is a deeper problem than the task warranted. Left alone, with the air-borne CO2 subtracted explicitly where the exhaust is read. Practical guidance also added to the `neqsim-power-generation` skill: build the fuel from real named components (renormalising an export gas onto `nitrogen, CO2, methane..n-hexane` captures over 99.8 mol%), and always cross-check the exhaust against a carbon balance.
 **Validation:** `GasTurbineCombustionTest` 2 tests - exhaust CO2 must close the carbon balance on fuel plus combustion-air CO2 to within 2 %, and a fuel containing a TBP pseudo-component must burn rather than throw. Full `neqsim.process.equipment.powergeneration` package 63 tests, 0 failures, including the pre-existing `GasTurbineTest` (12) that the reverted air-composition change had broken. In the study that found this, the fixed exhaust read and an independent carbon balance agreed to 0.0 % at 1089.6 kg/hr.
+
+### 2026-09-14 — Gas-to-LNG value chain concept evaluation (offshore hub, dense-phase export, FLNG)
+**Type:** F (Design)
+**Keywords:** LNG, liquefaction, SMR, FLNG, dense phase, cricondenbar, gas export hub, gas injection conversion, iceberg scour, trenching, TEG dehydration, hydrate, DNV-ST-F101, NGL extraction, CAPEX, AACE Class 5, Monte Carlo
+**Solution:** private task folder (redacted); reusable outputs: `.github/skills/neqsim-lng-liquefaction/`, `.github/agents/lng.value.chain.agent.md`, `devtools/py_to_notebook.py`
+**Notes:** Seven-notebook single-basis fan-out — one module holds the fluid and the design feed
+rate, every downstream stage reads it and never re-derives it, so the report sections cannot drift.
+Four NeqSim defects found and fixed, three of them silent factor errors caught only by
+independently computed anchors: phase-envelope continuation truncating and under-reporting the
+cricondenbar by 50%; DNV-ST-F101 burst resistance missing a factor 2; cost correlations
+extrapolated 80x beyond validity while weight-based vessel methods overstated columns (net study
+error 3x); and a hard-wired LNG refrigerant inventory giving a specific energy 2.2x outside its own
+published band. Key method points: calibrate an unknown gas composition against published NGL
+yields using GPA 2145 liquid densities rather than EOS densities; derive the feed rate backwards
+from LNG capacity; solve the dehydration specification from the hydrate curve rather than assuming
+a sales-gas spec; always check the Joule-Thomson letdown temperature at an onshore reception (it
+landed at -30 degC here, making inlet heating mandatory). See
+`/memories/repo/neqsim-silent-factor-errors.md`.
+
+### 2026-09-15 — Are two named units of a five-unit fleet really the cost and production-loss drivers?
+**Type:** G (Workflow)
+**Keywords:** fleet comparison, worst unit, maintenance cost ranking, production efficiency loss, PE loss, attribution artefact, booking default, permutation test, duty normalisation, running hours, campaign work, gas turbine generator, maintenance API work order costs, man-hours, PEPR loss tag, tag hierarchy sub-tree
+**Solution:** private task folder (redacted); reusable outputs: `devtools/generate_sources_md.py`, `devtools/generate_work_record.py`, `devtools/validate_task_results.py`; enterprise skills `enterprise-maintenance-api`, `enterprise-pepr-actions`, `enterprise-ots-timeseries`, `enterprise-fleet-equipment-benchmarking`
+**Notes:** An internal conclusion named two of five nominally identical units as the drivers of both
+maintenance cost and production loss. Half of it survived, and the two halves failed differently, so
+the reusable result is the gate rather than the ranking. Adjudicate every metric before ranking with
+it: the work-order cost field was populated on corrective orders only and exactly zero on 80% of
+those, covering 8.8% of the population and no planned maintenance, which forced a second metric
+(confirmed man-hours from work-order operations). That metric has its own unit trap -
+`plannedWorkHours` is ALREADY man-hours, so multiplying by `capacityCount` inflated the plant total
+13-fold and the error is invisible in the median. Define a machine as its tag SUB-TREE (866-906 tags
+here); a root-tag-only roll-up named a different leader. Then normalise by measured running hours
+and permute the unit label 20 000 times: the observed max/min spread of 1.94 sat BELOW the null
+median of 2.04 (p = 0.58), i.e. the fleet was more uniform than random allocation produces. On the
+consequence side the loss-record equipment tag turned out to be a booking default - 87% of
+unit-tagged loss value sat on the unit that ran 7.5% of fleet hours, under weather and national-grid
+categories - so consequence must be attributed twice (tag, and the unit the free text names) and
+cross-checked against exposure. Removing fleet-campaign work (same job title on >= 3 units, 19% of
+work orders) changed the leader again. The claimed pair survived in 3 of 7 metrics. Method sanity
+anchor: the identical pipeline returned p = 5e-09 on an earlier recurring-failure study and p = 0.58
+here, which is the evidence that it can return a negative. Also fixed three devtools gaps found on
+the way: `generate_sources_md.py` never wrote the `document_evidence_manifest.json` the quality gate
+requires, the two manifest tools disagreed on which files count as sources, and the work-record
+generator only scanned step 2 so step-1 data-acquisition scripts were falsely reported missing. See
+`/memories/repo/fleet-worst-unit-significance-gate.md`.

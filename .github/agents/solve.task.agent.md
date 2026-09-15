@@ -32,6 +32,11 @@ before the folder exists.
 1. **Run** `neqsim new-task "TASK TITLE" --type X --author "Agent" --prompt "<verbatim user request>"` in the terminal
    - Pass the user's original chat message verbatim via `--prompt` (or use `--prompt-file path.txt` for long inputs).
    - This populates `user_input.md` so the task can be reproduced later.
+   - If the terminal reports `neqsim` is not recognized, the console script is
+     not on PATH in that shell. Re-run the identical command as
+     `<python-executable> -m neqsim_cli new-task ...` — same entry point, same
+     arguments. Never skip the step or create the folder by hand, and use the
+     same form for every later `neqsim ...` command.
 2. **Confirm** the folder `task_solve/YYYY-MM-DD_task_slug/` was created
 3. **Read** the generated `task_solve/YYYY-MM-DD_task_slug/README.md`
 4. **Open `user_input.md`** and verify section 1 contains the original prompt. If it is empty (e.g. you forgot `--prompt`), paste the verbatim user message there now.

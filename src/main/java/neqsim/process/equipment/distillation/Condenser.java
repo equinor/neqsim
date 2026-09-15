@@ -226,6 +226,27 @@ public class Condenser extends SimpleTray {
     return powerUnit.getValue(unit);
   }
 
+  /**
+   * Publish the heat duty of the applied phase streams without flashing the accepted tray again.
+   */
+  void updateDutyFromPublishedStreams() {
+    duty = getMaterialOutletEnthalpy() - calcMixStreamEnthalpy0();
+    if (getEnergyPort("heatDuty").getMode() == EnergyPortMode.CALCULATED) {
+      getEnergyPort("heatDuty").setDuty(duty);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  double getMaterialOutletEnthalpy() {
+    double enthalpy = super.getMaterialOutletEnthalpy();
+    StreamInterface liquidProduct = getLiquidProductStream();
+    if (!totalCondenser && liquidProduct != null) {
+      enthalpy += getMaterialStreamEnthalpy(liquidProduct);
+    }
+    return enthalpy;
+  }
+
   /** {@inheritDoc} */
   @Override
   public StreamInterface getGasOutStream() {
