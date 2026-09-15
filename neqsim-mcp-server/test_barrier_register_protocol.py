@@ -141,6 +141,7 @@ def valid_register():
             "performanceStandards": [{
                 "id": "PS-1",
                 "title": "Synthetic shutdown standard",
+                "safetyFunction": "Isolate the synthetic vessel on high pressure",
                 "targetPfd": 0.01,
                 "acceptanceCriteria": ["Qualified review required"],
                 "evidenceRefs": ["EV-1"],
@@ -163,6 +164,8 @@ def valid_register():
                     "type": "PREVENTION",
                     "status": "IMPAIRED",
                     "pfd": 0.1,
+                    "performanceStandardId": "PS-1",
+                    "evidenceRefs": ["EV-1"],
                     "equipmentTags": ["V-1"],
                     "hazardIds": ["H-1"],
                 },
@@ -171,7 +174,7 @@ def valid_register():
                 "id": "SCE-1",
                 "tag": "V-1",
                 "name": "Synthetic protected vessel",
-                "barrierRefs": ["B-1"],
+                "barrierRefs": ["B-1", "B-2"],
                 "equipmentTags": ["V-1"],
                 "evidenceRefs": ["EV-1"],
             }],
@@ -205,13 +208,21 @@ def test_traceable_and_impaired_accounting(client):
     summary = result.get("summary", {})
     require(summary.get("barrierCount") == 2 and summary.get("impairedBarrierCount") == 1, "summary drifted", result)
     require(len(result.get("lopaHandoff", {}).get("layers", [])) == 1, "qualified barrier was not handed off", result)
-    require(len(result.get("lopaHandoff", {}).get("excludedBarriers", [])) == 1, "impaired exclusion missing", result)
+    excluded = result.get("lopaHandoff", {}).get("excluded", [])
+    require(len(excluded) == 1 and excluded[0].get("barrierId") == "B-2", "impaired exclusion missing", result)
     require(result.get("equipmentBarrierMap", {}).get("V-1", [])[0].get("id") == "B-1", "source order drifted", result)
 
 
 def test_unqualified_barrier_is_not_credited(client):
     request = valid_register()
     request["register"]["barriers"][0].pop("evidenceRefs")
+    inherited = assert_success(client.call_barriers(request))
+    require(
+        len(inherited.get("lopaHandoff", {}).get("layers", [])) == 1,
+        "performance-standard evidence was not inherited",
+        inherited,
+    )
+    request["register"]["performanceStandards"][0].pop("evidenceRefs")
     result = payload(client.call_barriers(request))
     require(result.get("status") == "success", "advisory validation should preserve findings", result)
     require(len(result.get("lopaHandoff", {}).get("layers", [])) == 0, "untraceable barrier was credited", result)

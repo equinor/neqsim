@@ -122,7 +122,7 @@ class BarrierRegisterRunnerTest {
     assertTrue(first.get("screeningOnly").getAsBoolean());
     assertFalse(first.get("standardConformanceClaimed").getAsBoolean());
     assertEquals(0, first.getAsJsonObject("lopaHandoff").getAsJsonArray("layers").size());
-    assertEquals(2, first.getAsJsonObject("lopaHandoff").getAsJsonArray("excludedBarriers").size());
+    assertEquals(2, first.getAsJsonObject("lopaHandoff").getAsJsonArray("excluded").size());
     assertEquals(1, first.getAsJsonArray("impairedBarriers").size());
   }
 

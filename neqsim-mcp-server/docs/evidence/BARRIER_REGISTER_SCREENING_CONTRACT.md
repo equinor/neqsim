@@ -26,6 +26,14 @@ The returned `screeningOnly=true`, `standardConformanceClaimed=false`, and
 `advisoryBoundary` fields are part of the qualified response. Standards names
 are context references, not conformance claims.
 
+LOPA exclusion records use the existing `lopaHandoff.excluded` array. The
+qualification fixture supplies a safety-function description and links both
+available and impaired barriers to an SCE, a performance standard, and evidence.
+An impaired barrier remains excluded even when its documentation is complete.
+Traceability can come from direct barrier evidence or the linked performance
+standard. The missing-evidence scenario first verifies inherited traceability,
+then removes both routes before requiring exclusion and validation findings.
+
 ## Safety and engineering boundary
 
 The tool does not identify hazards; validate document extraction, scenario
