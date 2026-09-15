@@ -263,6 +263,23 @@ def _add_to_posix_path(new_dir):
     return updated
 
 
+def _activate_command(venv):
+    """Return the shell command that activates ``venv`` on this platform.
+
+    On Windows the correct script depends on the shell, and picking the wrong
+    one fails silently enough to look like a broken install, so both are shown.
+
+    @param venv the virtualenv root directory
+    @return the activation command string to print
+    """
+    if os.name == "nt":
+        return (
+            "{0}\\Scripts\\Activate.ps1      (PowerShell)\n  "
+            "{0}\\Scripts\\activate.bat      (cmd.exe)".format(venv)
+        )
+    return "source {}/bin/activate".format(venv)
+
+
 def main():
     """Entry point: ensure the console-script directory is on PATH.
 
@@ -280,17 +297,43 @@ def main():
     """
     script_dir = find_script_dir()
 
-    # If the script lives in the active virtualenv, it is already on PATH for
-    # that environment; do not persist an ephemeral venv location to the user
-    # PATH.
+    # If the script lives in the active virtualenv, do not persist an ephemeral
+    # venv location to the user PATH -- but verify rather than assume it is on
+    # PATH: VIRTUAL_ENV can be set without the Scripts dir being prepended (VS
+    # Code sets it for a detected interpreter without running the activate
+    # script), and claiming success there sends the user off to debug a PATH
+    # that was never updated.
     venv = os.environ.get("VIRTUAL_ENV")
     if venv and script_dir:
         venv_scripts = os.path.join(venv, "Scripts" if os.name == "nt" else "bin")
         if _same_dir(script_dir, venv_scripts):
-            print(
-                "'{}' is installed in the active virtualenv and already on "
-                "PATH:\n  {}".format(SCRIPT_NAME, script_dir)
-            )
+            if _dir_on_path(script_dir):
+                print(
+                    "'{}' is installed in the active virtualenv and is on "
+                    "PATH:\n  {}".format(SCRIPT_NAME, script_dir)
+                )
+                print(
+                    "Note: it resolves ONLY in terminals where this virtualenv "
+                    "is activated. Activate it in each new terminal with:\n  "
+                    + _activate_command(venv)
+                )
+                print(
+                    "Restarting the machine does not change this -- a "
+                    "virtualenv is activated per terminal, not system-wide."
+                )
+            else:
+                print(
+                    "'{}' is installed in the virtualenv at\n  {}\nbut that "
+                    "folder is NOT on PATH, so the command will not be found. "
+                    "VIRTUAL_ENV is set without the environment being "
+                    "activated in this shell.".format(SCRIPT_NAME, script_dir)
+                )
+                print("Activate it, then the command works:\n  " + _activate_command(venv))
+                print(
+                    "Until then use '{} -m neqsim_cli'. Restarting the machine "
+                    "will not help.".format(
+                        os.path.splitext(os.path.basename(sys.executable))[0])
+                )
             return
 
     if not script_dir:

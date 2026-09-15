@@ -525,10 +525,22 @@ def check_cli_on_path():
     if script_dir:
         message = "installed in {dir} but that folder is not on PATH".format(
             dir=script_dir)
-        fix = ("run '{exe} devtools/ensure_on_path.py', then open a NEW "
-               "terminal -- in VS Code quit and reopen the window, a new "
-               "integrated terminal is not enough. '{mod}' works "
-               "meanwhile.".format(exe=interpreter, mod=module_form))
+        venv = os.environ.get("VIRTUAL_ENV")
+        in_venv = venv and _same_dir(
+            script_dir,
+            os.path.join(venv, "Scripts" if sys.platform.startswith("win") else "bin"))
+        if in_venv:
+            # A venv is activated per terminal, so "open a new terminal" is the
+            # wrong advice here and a reboot changes nothing.
+            fix = ("activate the virtualenv in this terminal ({venv}); it is "
+                   "not activated, only VIRTUAL_ENV is set. A new terminal or "
+                   "a reboot will not help. '{mod}' works "
+                   "meanwhile.".format(venv=venv, mod=module_form))
+        else:
+            fix = ("run '{exe} devtools/ensure_on_path.py', then open a NEW "
+                   "terminal -- in VS Code quit and reopen the window, a new "
+                   "integrated terminal is not enough. '{mod}' works "
+                   "meanwhile.".format(exe=interpreter, mod=module_form))
     else:
         message = "not on PATH, and no installed script was found"
         fix = ("reinstall with 'install.cmd' (Windows) or './install.sh', then "
