@@ -62,8 +62,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus(),
         model.getColumn().getConvergenceDiagnostics());
 
-    SarirAtmosphericProductQualityScreen.Result quality =
-        SarirAtmosphericProductQualityScreen.evaluate(model);
+    SarirAtmosphericProductQualityScreen.Result quality = SarirAtmosphericProductQualityScreen.evaluate(model);
     SarirD86ProductComparison.Result[] comparisons = quality.getComparisons();
     assertEquals(2, comparisons.length);
     String[] expectedLabels = { "Kerosene", "Diesel" };
