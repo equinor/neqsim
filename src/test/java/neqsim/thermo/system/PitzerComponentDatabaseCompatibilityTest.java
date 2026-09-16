@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -9,14 +10,16 @@ import neqsim.thermo.phase.PhasePitzer;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Verifies that the extended component database preserves the standard Pitzer electrolyte identities and results.
+ * Verifies that the extended component database preserves the standard Pitzer electrolyte identities and results. The
+ * mixed-brine fixture uses explicit synthetic zero theta/psi values solely to test database-mode invariance; it is not
+ * a qualified mixed-brine activity benchmark.
  */
 public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest {
   private static final String[] VALUE_NAMES = { "Na+ ionic charge", "Ca++ ionic charge", "Cl- ionic charge",
       "Na+ molar mass", "Ca++ molar mass", "Cl- molar mass", "NaCl beta0", "NaCl beta1", "CaCl2 beta0", "CaCl2 beta1",
       "Na+ activity coefficient", "Ca++ activity coefficient", "Cl- activity coefficient", "water osmotic coefficient",
-      "water activity", "aqueous density", "aqueous molar volume", "aqueous enthalpy", "aqueous entropy",
-      "aqueous Gibbs energy" };
+      "water activity", "aqueous density", "aqueous molar volume", "Pitzer excess enthalpy", "Pitzer excess entropy",
+      "Pitzer excess Gibbs energy" };
 
   /**
    * The standard and extended component databases must produce the same mixed-brine Pitzer state.
@@ -59,8 +62,6 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
     system.addComponent("Cl-", 0.7);
     system.setMixingRule("classic");
     system.init(0);
-    system.init(1);
-    system.initPhysicalProperties();
 
     PhasePitzer phase = (PhasePitzer) system.getPhase(1);
     phase.loadParametersFromDatabase();
@@ -69,6 +70,17 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
     int sodium = phase.getComponent("Na+").getComponentNumber();
     int calcium = phase.getComponent("Ca++").getComponentNumber();
     int chloride = phase.getComponent("Cl-").getComponentNumber();
+
+    // The legacy table supplies binary coefficients, but no Na-Ca theta/psi rows. Keep the fail-closed gate and
+    // supply the same explicit test-only cross interactions in both component-database modes before properties.
+    assertTrue(phase.getPitzerParameterCoverage().getMissingThetaPairs().contains("Ca++|Na+"));
+    assertTrue(phase.getPitzerParameterCoverage().getMissingPsiTuples().contains("Ca++|Na+|Cl-"));
+    assertThrows(IllegalStateException.class, phase::requireCompletePitzerParameterCoverage);
+    phase.setTheta(sodium, calcium, 0.0);
+    phase.setPsi(sodium, calcium, chloride, 0.0);
+    assertTrue(phase.getPitzerParameterCoverage().isComplete());
+    system.init(1);
+    system.initPhysicalProperties();
 
     assertEquals(1.0, phase.getComponent(sodium).getIonicCharge(), 0.0);
     assertEquals(2.0, phase.getComponent(calcium).getIonicCharge(), 0.0);
@@ -90,7 +102,13 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
         phase.getActivityCoefficient(calcium, water), phase.getActivityCoefficient(chloride, water),
         phase.getOsmoticCoefficientOfWater(),
         phase.getActivityCoefficient(water, water) * phase.getComponent(water).getx(), phase.getDensity(),
-        phase.getMolarVolume(), phase.getEnthalpy(), phase.getEntropy(), phase.getGibbsEnergy() };
+        phase.getMolarVolume(), phase.getHresTP(), phase.getSresTP(), phase.getGresTP() };
+
+    // COMP_EXT intentionally retains its own ideal heat capacities and reference properties. Compare the Pitzer
+    // excess contributions above, while requiring the total caloric properties to remain calculable in both modes.
+    assertTrue(Double.isFinite(phase.getEnthalpy()));
+    assertTrue(Double.isFinite(phase.getEntropy()));
+    assertTrue(Double.isFinite(phase.getGibbsEnergy()));
 
     for (int i = 0; i < values.length; i++) {
       assertTrue(Double.isFinite(values[i]), VALUE_NAMES[i] + " must be finite");
