@@ -11,10 +11,9 @@ import java.util.Set;
  * Groups mass-based S8 transfer receipts into one immutable, duplicate-safe accounting batch.
  *
  * <p>
- * This class validates one shared product-identity basis, rejects duplicate downstream idempotency
- * keys, and closes the aggregate sulfur mass budget. It does not persist consumed keys across
- * batches, add S8 to a stream, or run a flash, deposition, filter, wall, corrosion, process,
- * transient, or pipeline model.
+ * This class validates one shared product-identity basis, rejects duplicate downstream idempotency keys, and closes the
+ * aggregate sulfur mass budget. It does not persist consumed keys across batches, add S8 to a stream, or run a flash,
+ * deposition, filter, wall, corrosion, process, transient, or pipeline model.
  * </p>
  *
  * @author esol
@@ -40,8 +39,8 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
       throw new IllegalArgumentException("At least one S8 transfer receipt is required");
     }
 
-    List<AqueousHydrogenSulfideOxidationS8Transfer.Result> copy =
-        new ArrayList<AqueousHydrogenSulfideOxidationS8Transfer.Result>(transfers.size());
+    List<AqueousHydrogenSulfideOxidationS8Transfer.Result> copy = new ArrayList<AqueousHydrogenSulfideOxidationS8Transfer.Result>(
+        transfers.size());
     Set<String> idempotencyKeys = new HashSet<String>();
     String productIdentityBasisIdentifier = null;
     double totalSourceMassKg = 0.0;
@@ -55,27 +54,23 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
       validateTransfer(transfer);
       if (productIdentityBasisIdentifier == null) {
         productIdentityBasisIdentifier = transfer.getProductIdentityBasisIdentifier();
-      } else if (!productIdentityBasisIdentifier.equals(
-          transfer.getProductIdentityBasisIdentifier())) {
-        throw new IllegalArgumentException(
-            "All S8 transfer receipts must use one product-identity basis");
+      } else if (!productIdentityBasisIdentifier.equals(transfer.getProductIdentityBasisIdentifier())) {
+        throw new IllegalArgumentException("All S8 transfer receipts must use one product-identity basis");
       }
       if (!idempotencyKeys.add(transfer.getDownstreamIdempotencyKey())) {
         throw new IllegalArgumentException("Duplicate downstream idempotency key");
       }
 
-      totalSourceMassKg = finiteSum(totalSourceMassKg,
-          transfer.getSourceSulfurEquivalentMassKg(), "Total source sulfur-equivalent mass");
-      totalTransferredMassKg = finiteSum(totalTransferredMassKg,
-          transfer.getTransferredS8MassKg(), "Total transferred S8 mass");
-      totalUnallocatedMassKg = finiteSum(totalUnallocatedMassKg,
-          transfer.getUnallocatedSulfurEquivalentMassKg(),
+      totalSourceMassKg = finiteSum(totalSourceMassKg, transfer.getSourceSulfurEquivalentMassKg(),
+          "Total source sulfur-equivalent mass");
+      totalTransferredMassKg = finiteSum(totalTransferredMassKg, transfer.getTransferredS8MassKg(),
+          "Total transferred S8 mass");
+      totalUnallocatedMassKg = finiteSum(totalUnallocatedMassKg, transfer.getUnallocatedSulfurEquivalentMassKg(),
           "Total unallocated sulfur-equivalent mass");
       copy.add(transfer);
     }
 
-    double accountedMassKg = finiteSum(totalTransferredMassKg, totalUnallocatedMassKg,
-        "Total accounted sulfur mass");
+    double accountedMassKg = finiteSum(totalTransferredMassKg, totalUnallocatedMassKg, "Total accounted sulfur mass");
     double closureResidualKg = totalSourceMassKg - accountedMassKg;
     requireFinite(closureResidualKg, "Aggregate mass closure residual");
     double closureScale = Math.max(Math.abs(totalSourceMassKg), Math.abs(accountedMassKg));
@@ -84,32 +79,24 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
       throw new IllegalArgumentException("Aggregate sulfur mass budget does not close");
     }
 
-    return new Result(validatedBatchIdentifier, productIdentityBasisIdentifier,
-        Collections.unmodifiableList(copy), totalSourceMassKg, totalTransferredMassKg,
-        totalUnallocatedMassKg, closureResidualKg);
+    return new Result(validatedBatchIdentifier, productIdentityBasisIdentifier, Collections.unmodifiableList(copy),
+        totalSourceMassKg, totalTransferredMassKg, totalUnallocatedMassKg, closureResidualKg);
   }
 
-  private static void validateTransfer(
-      AqueousHydrogenSulfideOxidationS8Transfer.Result transfer) {
-    if (!AqueousHydrogenSulfideOxidationS8Transfer.S8_COMPONENT_NAME.equals(
-        transfer.getComponentName())) {
+  private static void validateTransfer(AqueousHydrogenSulfideOxidationS8Transfer.Result transfer) {
+    if (!AqueousHydrogenSulfideOxidationS8Transfer.S8_COMPONENT_NAME.equals(transfer.getComponentName())) {
       throw new IllegalArgumentException("Transfer receipt does not identify the NeqSim S8 component");
     }
-    requireIdentifier(transfer.getProductIdentityBasisIdentifier(),
-        "Product-identity basis identifier");
+    requireIdentifier(transfer.getProductIdentityBasisIdentifier(), "Product-identity basis identifier");
     requireIdentifier(transfer.getDownstreamIdempotencyKey(), "Downstream idempotency key");
-    requireNonNegativeFinite(transfer.getSourceSulfurEquivalentMassKg(),
-        "Source sulfur-equivalent mass");
+    requireNonNegativeFinite(transfer.getSourceSulfurEquivalentMassKg(), "Source sulfur-equivalent mass");
     requireNonNegativeFinite(transfer.getTransferredS8MassKg(), "Transferred S8 mass");
-    requireNonNegativeFinite(transfer.getUnallocatedSulfurEquivalentMassKg(),
-        "Unallocated sulfur-equivalent mass");
+    requireNonNegativeFinite(transfer.getUnallocatedSulfurEquivalentMassKg(), "Unallocated sulfur-equivalent mass");
     requireFinite(transfer.getMassClosureResidualKg(), "Mass closure residual");
 
-    double residual = transfer.getSourceSulfurEquivalentMassKg()
-        - finiteSum(transfer.getTransferredS8MassKg(),
-            transfer.getUnallocatedSulfurEquivalentMassKg(), "Receipt accounted sulfur mass");
-    if (Double.doubleToLongBits(residual)
-        != Double.doubleToLongBits(transfer.getMassClosureResidualKg())) {
+    double residual = transfer.getSourceSulfurEquivalentMassKg() - finiteSum(transfer.getTransferredS8MassKg(),
+        transfer.getUnallocatedSulfurEquivalentMassKg(), "Receipt accounted sulfur mass");
+    if (Double.doubleToLongBits(residual) != Double.doubleToLongBits(transfer.getMassClosureResidualKg())) {
       throw new IllegalArgumentException("Transfer receipt closure evidence is inconsistent");
     }
   }
@@ -117,8 +104,7 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
   private static String requireIdentifier(String identifier, String name) {
     if (identifier == null || identifier.isEmpty() || !identifier.equals(identifier.trim())
         || identifier.length() > MAXIMUM_IDENTIFIER_LENGTH) {
-      throw new IllegalArgumentException(
-          name + " must be non-blank, trimmed, and no longer than 256 characters");
+      throw new IllegalArgumentException(name + " must be non-blank, trimmed, and no longer than 256 characters");
     }
     return identifier;
   }
@@ -154,16 +140,14 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
     private final double massClosureResidualKg;
 
     private Result(String batchIdentifier, String productIdentityBasisIdentifier,
-        List<AqueousHydrogenSulfideOxidationS8Transfer.Result> transfers,
-        double totalSourceSulfurEquivalentMassKg, double totalTransferredS8MassKg,
-        double totalUnallocatedSulfurEquivalentMassKg, double massClosureResidualKg) {
+        List<AqueousHydrogenSulfideOxidationS8Transfer.Result> transfers, double totalSourceSulfurEquivalentMassKg,
+        double totalTransferredS8MassKg, double totalUnallocatedSulfurEquivalentMassKg, double massClosureResidualKg) {
       this.batchIdentifier = batchIdentifier;
       this.productIdentityBasisIdentifier = productIdentityBasisIdentifier;
       this.transfers = transfers;
       this.totalSourceSulfurEquivalentMassKg = totalSourceSulfurEquivalentMassKg;
       this.totalTransferredS8MassKg = totalTransferredS8MassKg;
-      this.totalUnallocatedSulfurEquivalentMassKg =
-          totalUnallocatedSulfurEquivalentMassKg;
+      this.totalUnallocatedSulfurEquivalentMassKg = totalUnallocatedSulfurEquivalentMassKg;
       this.massClosureResidualKg = massClosureResidualKg;
     }
 
@@ -213,3 +197,4 @@ public final class AqueousHydrogenSulfideOxidationS8TransferBatch {
     }
   }
 }
+
