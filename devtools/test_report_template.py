@@ -214,3 +214,94 @@ def test_template_without_builtin_styles_still_renders(tmp_path):
     task = _make_task(tmp_path)
     _run(task, "--template", str(template))
     assert _report_docx(task).is_file()
+
+
+def _landscape_template(path):
+    """A corporate template built for forms: A4 landscape, like the real one."""
+    doc = docx.Document()
+    section = doc.sections[0]
+    section.page_width, section.page_height = section.page_height, section.page_width
+    section.orientation = docx.enum.section.WD_ORIENT.LANDSCAPE
+    doc.save(str(path))
+    return path
+
+
+def test_landscape_template_is_typeset_on_a_portrait_measure(tmp_path):
+    """A landscape template must not force the report onto a 9.5 in measure."""
+    template = _landscape_template(tmp_path / "landscape.docx")
+    task = _make_task(tmp_path)
+    _run(task, "--template", str(template))
+
+    section = docx.Document(str(_report_docx(task))).sections[0]
+    assert section.page_width < section.page_height
+    measure = (section.page_width - section.left_margin - section.right_margin) / 914400
+    assert measure <= 6.75, measure
+
+
+def test_orientation_can_be_kept_as_the_template_declares(tmp_path):
+    template = _landscape_template(tmp_path / "landscape.docx")
+    task = _make_task(tmp_path)
+    _run(task, "--template", str(template), "--orientation", "template")
+
+    section = docx.Document(str(_report_docx(task))).sections[0]
+    assert section.page_width > section.page_height
+
+
+def test_tables_are_captioned_and_repeat_their_header_row(tmp_path):
+    task = _make_task(tmp_path)
+    results = json.loads((task / "results.json").read_text(encoding="utf-8"))
+    results["tables"] = [{
+        "title": "Stage duties",
+        "headers": ["Stage", "Duty (MW)"],
+        "rows": [["1", 3.5], ["2", 4.25]],
+    }]
+    (task / "results.json").write_text(json.dumps(results), encoding="utf-8")
+    _run(task)
+
+    doc = docx.Document(str(_report_docx(task)))
+    captions = [p.text for p in doc.paragraphs if p.style.name == "Caption"]
+    assert any(c.startswith("Table 1") for c in captions), captions
+    assert any("Stage duties" in c for c in captions), captions
+    # A data table titled as Heading 2 would show up in the table of contents.
+    assert "Stage duties" not in [p.text for p in doc.paragraphs
+                                  if p.style.name.startswith("Heading")]
+    from docx.oxml.ns import qn
+    repeating = [t for t in doc.tables
+                 if (t.rows[0]._tr.find(qn("w:trPr")) is not None
+                     and t.rows[0]._tr.find(qn("w:trPr")).find(qn("w:tblHeader"))
+                     is not None)]
+    assert repeating
+
+
+def test_large_counts_are_not_printed_in_scientific_notation(tmp_path):
+    task = _make_task(tmp_path)
+    results = json.loads((task / "results.json").read_text(encoding="utf-8"))
+    results["key_results"]["records_pulled"] = 370523
+    (task / "results.json").write_text(json.dumps(results), encoding="utf-8")
+    _run(task)
+
+    text = "\n".join(
+        cell.text for table in docx.Document(str(_report_docx(task))).tables
+        for row in table.rows for cell in row.cells)
+    assert "370\u00a0523" in text
+    assert "3.705e+05" not in text
+
+
+def test_analytical_depth_moves_are_reported(tmp_path):
+    task = _make_task(tmp_path)
+    results = json.loads((task / "results.json").read_text(encoding="utf-8"))
+    results["contributor_ranking"] = [
+        {"contributor": "Fouling", "share_pct": 62, "basis": "duty deficit"},
+        {"contributor": "Ambient", "share_pct": 21, "basis": "duty deficit"},
+    ]
+    results["ruled_out"] = ["Tube leak: excluded, chloride below 5 mg/l"]
+    (task / "results.json").write_text(json.dumps(results), encoding="utf-8")
+    _run(task)
+
+    doc = docx.Document(str(_report_docx(task)))
+    headings = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
+    assert any("Analytical Depth" in h for h in headings), headings
+    body = "\n".join(p.text for p in doc.paragraphs)
+    assert "2/7 depth moves reported" in body
+    html = next((task / "step3_report").glob("*.html")).read_text(encoding="utf-8")
+    assert "Contributors ranked on a common basis" in html

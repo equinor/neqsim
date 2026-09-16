@@ -75,6 +75,9 @@ report:
     - html
     # - pdf
   depth: auto          # auto | brief | standard | detailed
+  orientation: portrait  # portrait | landscape | template
+  # A corporate Word template is often landscape because it was built for forms;
+  # "template" keeps that, the default puts the report body on a readable measure.
   include_paper: false
   work_record: auto    # auto | required | skip -> step3_report/WORK_RECORD.md
   # The work record is the method-and-provenance companion to the report: what was
