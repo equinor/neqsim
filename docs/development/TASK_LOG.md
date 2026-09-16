@@ -810,3 +810,27 @@ the way: `generate_sources_md.py` never wrote the `document_evidence_manifest.js
 requires, the two manifest tools disagreed on which files count as sources, and the work-record
 generator only scanned step 2 so step-1 data-acquisition scripts were falsely reported missing. See
 `/memories/repo/fleet-worst-unit-significance-gate.md`.
+
+### 2026-09-16 — Instrument review and measurement readout of a first-stage (inlet) separator
+**Type:** B (Process)
+**Keywords:** historian readout, instrument loop, STID tag discovery, frozen mirror namespace,
+level transmitter pegged, discriminating test, recurrence scan, positive control, PI Web API,
+tagreader, produced-water outlet, erosion probe full-scale saturation
+**Solution:** private task folder (redacted); devtools fixes on
+`task/norwegian-task-spec-headings-and-assumption-rendering`
+**Notes:** Two general lessons, both of which produced a WRONG answer before being caught.
+(1) A plant can expose two historian namespaces for the same tag where one is a frozen legacy
+mirror: it returns rows, raises nothing, and yields plausible setpoints and valve outputs that are
+months stale. Prove a series is alive (distinct-value count and last-change timestamp) before
+interpreting any number from it. (2) A single multi-month historian read came back silently
+truncated, and an episode scan over it reported ZERO events when the true answer was nine — which
+would have flipped the conclusion from "recurring operating practice" to "one-off". Chunk long
+reads, concatenate, and assert a known event is inside the assembled frame before believing any
+negative finding. Also: a level transmitter sitting at exactly full scale is not automatically a
+fault — the discriminating test (independent transmitter tracking, surviving signal noise, level
+responding to valve movement with the right lag) showed a real high interface, while an erosion-rate
+tag pinned at exactly full scale for 90 days WAS a dead reading, contradicted by its own accumulated
+metal-loss channel by five orders of magnitude. Same symptom, opposite verdicts, decided by data.
+devtools fixes: `extract_spec_section` matched English headings only, so a fully written Norwegian
+scope section was reported as "lacks source data"; and the work-record generator dumped
+schema-correct assumption/data-gap dicts as raw JSON. Both now covered by tests.
