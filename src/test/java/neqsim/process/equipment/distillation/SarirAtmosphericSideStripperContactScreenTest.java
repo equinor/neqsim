@@ -13,7 +13,6 @@ import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.O
 import neqsim.process.equipment.distillation.SarirAtmosphericMainSteamScreen.ReportedPressureBasis;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.standards.oilquality.SarirD86ProductComparison;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionService;
@@ -62,27 +61,31 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus(),
         model.getColumn().getConvergenceDiagnostics());
 
-    SarirAtmosphericProductQualityScreen.Result quality = SarirAtmosphericProductQualityScreen.evaluate(model);
-    SarirD86ProductComparison.Result[] comparisons = quality.getComparisons();
-    assertEquals(2, comparisons.length);
-    String[] expectedLabels = { "Kerosene", "Diesel" };
-    for (int i = 0; i < comparisons.length; i++) {
-      assertEquals(expectedLabels[i], comparisons[i].getProductName());
-      assertEquals(comparisons[i], quality.getComparison(expectedLabels[i]));
-      assertEquals(95.0, comparisons[i].getRecoveryVolumePercent(), 0.0);
-      assertTrue(Double.isFinite(comparisons[i].getNeqsimT95Celsius()));
-      assertTrue(Double.isFinite(comparisons[i].getNeqsimAbsoluteRelativeErrorPercent()));
-      assertTrue(Double.isFinite(comparisons[i].getHysysAbsoluteRelativeErrorPercent()));
-      assertTrue(Double.isFinite(comparisons[i].getSpecificationMarginCelsius()));
-    }
-    comparisons[0] = null;
-    assertTrue(quality.getComparisons()[0] != null);
-    assertThrows(IllegalArgumentException.class, () -> quality.getComparison(null));
-    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Total Naphtha"));
-    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Residual"));
-
     assertContact(model, SteamInjectionService.KEROSENE_SIDE_STRIPPER, "Kerosene side stripper", 68.04);
     assertContact(model, SteamInjectionService.DIESEL_SIDE_STRIPPER, "Diesel side stripper", 226.8);
+  }
+
+  /** Convergence and closed contacts do not qualify an inverted kerosene/diesel boiling order. */
+  @Test
+  @Timeout(value = 240, unit = TimeUnit.SECONDS)
+  public void rigorouslyConvergedUnorderedProductsFailClosed() {
+    SarirAtmosphericFractionationCase model = createModel();
+    model.run(UUID.randomUUID());
+    DistillationColumn column = model.getColumn();
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+        column.getConvergenceDiagnostics());
+    OperatingInputs inputs = model.getOperatingInputs();
+    double keroseneBoilingPoint = ProductBoilingPointDistribution
+        .from(column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID))
+        .getMeanNormalBoilingPointKelvin();
+    double dieselBoilingPoint = ProductBoilingPointDistribution
+        .from(column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID))
+        .getMeanNormalBoilingPointKelvin();
+    assertTrue(keroseneBoilingPoint > dieselBoilingPoint,
+        "This contact-only fixture must not masquerade as a qualified product-quality case");
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> SarirAtmosphericProductQualityScreen.evaluate(model));
+    assertEquals("Material products must become heavier from the column top to the bottoms", error.getMessage());
   }
 
   private static void assertContact(SarirAtmosphericFractionationCase model, SteamInjectionService service,

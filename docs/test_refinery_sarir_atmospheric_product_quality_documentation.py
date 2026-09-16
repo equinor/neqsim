@@ -12,7 +12,7 @@ DOC = (
 
 
 def test_product_quality_documentation_keeps_source_and_scope_boundaries():
-    text = DOC.read_text(encoding="utf-8")
+    text = " ".join(DOC.read_text(encoding="utf-8").split())
 
     assert "10.66411/jer.v33i.46" in text
     assert "CC BY 4.0" in text
@@ -23,3 +23,5 @@ def test_product_quality_documentation_keeps_source_and_scope_boundaries():
     assert "does not resolve the source's light/heavy naphtha split" in text
     assert "published `550+` specification is nonnumeric" in text
     assert "does not reproduce or calibrate the Sarir plant" in text
+    assert "inverted kerosene/diesel mean boiling-point order" in text
+    assert "does not yet establish a qualified end-to-end Sarir column T95 benchmark" in text

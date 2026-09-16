@@ -35,7 +35,7 @@ calibration targets, or acceptance thresholds.
 ## Java and Python/JPype access
 
 Run a `SarirAtmosphericFractionationCase` first, then evaluate the same solved
-case:
+case only after qualifying material side draws and their boiling order:
 
 ```java
 SarirAtmosphericProductQualityScreen.Result quality =
@@ -58,6 +58,18 @@ unsupported or unresolved products fail closed. Static methods and getters are
 available to Python callers through JPype.
 
 ## Engineering boundaries
+
+The current synthetic side-stripper contact fixture (700 K reboiler, liquid
+draws at internal trays 3 and 2) closes its individual equilibrium contacts but
+has an inverted kerosene/diesel mean boiling-point order. This screen rejects
+that case before calculating T95. The separate 24/15-tray fixture has dry side
+draws and is also rejected. Solver convergence alone is insufficient.
+
+The regression suite verifies these rejection paths and retains the positive
+standalone `SarirD86ProductComparison` tests. It does not yet establish a
+qualified end-to-end Sarir column T95 benchmark; the example above requires a
+caller-supplied case that satisfies all upstream gates and the ASTM correlation
+range. No product-order or ASTM range checks are relaxed to obtain a result.
 
 This is a product-quality screening calculation, not an ASTM laboratory
 procedure or compliance determination. A non-negative specification margin is
