@@ -11,13 +11,12 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Qualification of TP-flash lifecycle behavior for representative hydrocarbons added by the
- * expanded UMR-PRU component and UNIFAC tables.
+ * Qualification of TP-flash lifecycle behavior for representative hydrocarbons added by the expanded UMR-PRU component
+ * and UNIFAC tables.
  *
  * <p>
- * The fluids are synthetic numerical regressions. They verify that new aromatic, cyclic,
- * branched-paraffin, and olefin mixtures remain finite and conservative; they are not independent
- * parameter or experimental PVT validation.
+ * The fluids are synthetic numerical regressions. They verify that new aromatic, cyclic, branched-paraffin, and olefin
+ * mixtures remain finite and conservative; they are not independent parameter or experimental PVT validation.
  * </p>
  */
 class UMRPRUExpandedComponentFlashQualificationTest {
@@ -26,16 +25,14 @@ class UMRPRUExpandedComponentFlashQualificationTest {
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private static final FluidCase[] CASES = {
-      new FluidCase("aromatic", 298.15, 10.0,
-          new String[] {"methane", "1,2,4-trimethylbenzene"}, new double[] {0.90, 0.10}),
+      new FluidCase("aromatic", 298.15, 10.0, new String[] { "methane", "1,2,4-trimethylbenzene" },
+          new double[] { 0.90, 0.10 }),
       new FluidCase("cyclic", 285.15, 20.0,
-          new String[] {"methane", "1,1,2-trimethylcyclopentane",
-              "trans-1,3-dimethylcyclohexane"},
-          new double[] {0.80, 0.10, 0.10}),
-      new FluidCase("branched-paraffin", 280.15, 30.0,
-          new String[] {"methane", "2,4-dimethylheptane"}, new double[] {0.85, 0.15}),
-      new FluidCase("olefin", 285.15, 20.0, new String[] {"methane", "1-hexene"},
-          new double[] {0.88, 0.12})};
+          new String[] { "methane", "1,1,2-trimethylcyclopentane", "trans-1,3-dimethylcyclohexane" },
+          new double[] { 0.80, 0.10, 0.10 }),
+      new FluidCase("branched-paraffin", 280.15, 30.0, new String[] { "methane", "2,4-dimethylheptane" },
+          new double[] { 0.85, 0.15 }),
+      new FluidCase("olefin", 285.15, 20.0, new String[] { "methane", "1-hexene" }, new double[] { 0.88, 0.12 }) };
 
   /** Ordinary, multiphase, and deliberately poor beta estimates must agree at nominal states. */
   @Test
@@ -68,8 +65,8 @@ class UMRPRUExpandedComponentFlashQualificationTest {
       reused.setTemperature(testCase.temperatureK + 1.0);
       reused.setPressure(testCase.pressureBara * 1.02, "bara");
       flash(reused);
-      SystemInterface freshChanged =
-          flash(testCase.create(testCase.temperatureK + 1.0, testCase.pressureBara * 1.02, true));
+      SystemInterface freshChanged = flash(
+          testCase.create(testCase.temperatureK + 1.0, testCase.pressureBara * 1.02, true));
       assertEquivalentState(freshChanged, reused, 1.0e-8, testCase.name + " changed state");
 
       reused.setTemperature(testCase.temperatureK);
@@ -111,16 +108,14 @@ class UMRPRUExpandedComponentFlashQualificationTest {
             label + " composition " + phase + "/" + component);
         compositionTotal += composition;
       }
-      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE,
-          label + " composition normalization " + phase);
+      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE, label + " composition normalization " + phase);
       assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
           label + " compressibility " + phase);
     }
     assertEquals(1.0, betaTotal, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
     double materialResidual = maximumComponentMaterialBalanceResidual(system);
-    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
-        label + " material-balance residual " + materialResidual);
+    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE, label + " material-balance residual " + materialResidual);
 
     if (system.getNumberOfPhases() == 1) {
       assertEquals(1.0, system.getBeta(0), NORMALIZATION_TOLERANCE, label + " single-phase beta");
@@ -131,16 +126,14 @@ class UMRPRUExpandedComponentFlashQualificationTest {
       }
     } else {
       double fugacityResidual = maximumComparableLogFugacityResidual(system);
-      assertTrue(fugacityResidual < FUGACITY_TOLERANCE,
-          label + " fugacity residual " + fugacityResidual);
+      assertTrue(fugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + fugacityResidual);
     }
 
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
     assertTrue(Double.isFinite(system.getEnthalpy()), label + " enthalpy");
   }
 
-  private void assertEquivalentState(SystemInterface expected, SystemInterface actual,
-      double tolerance, String label) {
+  private void assertEquivalentState(SystemInterface expected, SystemInterface actual, double tolerance, String label) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label + " phase count");
     assertClosedState(expected, label + " expected");
     assertClosedState(actual, label + " actual");
@@ -148,25 +141,20 @@ class UMRPRUExpandedComponentFlashQualificationTest {
     for (int expectedPhase = 0; expectedPhase < expected.getNumberOfPhases(); expectedPhase++) {
       PhaseType type = expected.getPhase(expectedPhase).getType();
       int actualPhase = findPhase(actual, type);
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance,
-          label + " beta " + type);
-      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(),
-          tolerance, label + " compressibility " + type);
-      for (int component = 0;
-          component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta " + type);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance,
+          label + " compressibility " + type);
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
             actual.getPhase(actualPhase).getComponent(component).getx(), tolerance,
             label + " composition " + type + "/" + component);
       }
     }
-    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), tolerance,
-        label + " Gibbs energy");
-    assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), tolerance,
-        label + " enthalpy");
+    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), tolerance, label + " Gibbs energy");
+    assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), tolerance, label + " enthalpy");
   }
 
-  private void assertExtensiveEquals(double expected, double actual, double relativeTolerance,
-      String label) {
+  private void assertExtensiveEquals(double expected, double actual, double relativeTolerance, String label) {
     assertEquals(expected, actual, Math.max(1.0e-8, relativeTolerance * Math.abs(expected)), label);
   }
 
@@ -181,8 +169,7 @@ class UMRPRUExpandedComponentFlashQualificationTest {
 
   private double maximumComponentMaterialBalanceResidual(SystemInterface system) {
     double maximumResidual = 0.0;
-    for (int component = 0;
-        component < system.getPhase(0).getNumberOfComponents(); component++) {
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       double recovered = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
@@ -196,23 +183,17 @@ class UMRPRUExpandedComponentFlashQualificationTest {
   private double maximumComparableLogFugacityResidual(SystemInterface system) {
     double maximumResidual = 0.0;
     int comparisons = 0;
-    for (int component = 0;
-        component < system.getPhase(0).getNumberOfComponents(); component++) {
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       for (int firstPhase = 0; firstPhase < system.getNumberOfPhases(); firstPhase++) {
-        for (int secondPhase = firstPhase + 1; secondPhase < system.getNumberOfPhases();
-            secondPhase++) {
+        for (int secondPhase = firstPhase + 1; secondPhase < system.getNumberOfPhases(); secondPhase++) {
           double firstComposition = system.getPhase(firstPhase).getComponent(component).getx();
           double secondComposition = system.getPhase(secondPhase).getComponent(component).getx();
-          double firstCoefficient =
-              system.getPhase(firstPhase).getComponent(component).getFugacityCoefficient();
-          double secondCoefficient =
-              system.getPhase(secondPhase).getComponent(component).getFugacityCoefficient();
-          if (firstComposition > 1.0e-20 && secondComposition > 1.0e-20
-              && Double.isFinite(firstCoefficient) && firstCoefficient > 0.0
-              && Double.isFinite(secondCoefficient) && secondCoefficient > 0.0) {
-            maximumResidual = Math.max(maximumResidual,
-                Math.abs(Math.log(firstComposition * firstCoefficient)
-                    - Math.log(secondComposition * secondCoefficient)));
+          double firstCoefficient = system.getPhase(firstPhase).getComponent(component).getFugacityCoefficient();
+          double secondCoefficient = system.getPhase(secondPhase).getComponent(component).getFugacityCoefficient();
+          if (firstComposition > 1.0e-20 && secondComposition > 1.0e-20 && Double.isFinite(firstCoefficient)
+              && firstCoefficient > 0.0 && Double.isFinite(secondCoefficient) && secondCoefficient > 0.0) {
+            maximumResidual = Math.max(maximumResidual, Math
+                .abs(Math.log(firstComposition * firstCoefficient) - Math.log(secondComposition * secondCoefficient)));
             comparisons++;
           }
         }
@@ -229,8 +210,7 @@ class UMRPRUExpandedComponentFlashQualificationTest {
     private final String[] components;
     private final double[] moles;
 
-    private FluidCase(String name, double temperatureK, double pressureBara, String[] components,
-        double[] moles) {
+    private FluidCase(String name, double temperatureK, double pressureBara, String[] components, double[] moles) {
       this.name = name;
       this.temperatureK = temperatureK;
       this.pressureBara = pressureBara;
