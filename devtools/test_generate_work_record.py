@@ -111,3 +111,34 @@ def test_missing_work_record_is_reported(task):
 
 def test_rejects_non_task_folder(tmp_path):
     assert gwr.main([str(tmp_path)]) == 2
+
+
+def test_assumption_entries_render_as_prose_not_json():
+    """A schema-correct assumption/gap dict must not be dumped as raw JSON."""
+    assumption = gwr._format_assumption({
+        "assumption": "Levels are percent of instrument range",
+        "basis": "Historian unit string is %",
+        "effect": "No volume calculation without the data sheet",
+    })
+    assert assumption.startswith("**Levels are percent of instrument range**")
+    assert "Basis: Historian unit string is %" in assumption
+    assert "Effect: No volume calculation" in assumption
+    assert "{" not in assumption
+
+    gap = gwr._format_assumption({
+        "gap": "No temperature transmitter",
+        "source": "stid",
+        "status": "confirmed absent",
+        "assumed": "No temperature used",
+        "effect": "No energy balance",
+    })
+    assert gap.startswith("**No temperature transmitter**")
+    assert "Source: stid" in gap
+    assert "Assumed instead: No temperature used" in gap
+    assert "{" not in gap
+
+
+def test_assumption_accepts_plain_string_and_unknown_shape():
+    assert gwr._format_assumption("plain text") == "plain text"
+    # An unrecognised dict still has to produce something, not raise.
+    assert gwr._format_assumption({"odd": "shape"})

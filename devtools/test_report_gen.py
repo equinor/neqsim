@@ -372,3 +372,33 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def test_spec_heading_aliases_match_norwegian_headings():
+    """Norwegian task_spec headings must satisfy the English section lookups."""
+    import importlib.util
+    import pathlib
+
+    path = pathlib.Path(__file__).resolve().parent / "task_template" / "step3_report" / "generate_report.py"
+    spec = importlib.util.spec_from_file_location("gr_alias", path)
+    gr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gr)
+
+    spec_text = (
+        "## Akseptkriterier\n"
+        "- Alle instrumenter er listet.\n"
+        "\n"
+        "## Metode\n"
+        "1. Hent tagger fra STID.\n"
+        "\n"
+        "## Gjeldende standarder\n"
+        "Ingen standardsamsvar vurdert.\n"
+    )
+    assert "Alle instrumenter er listet" in gr.extract_spec_section(spec_text, "Acceptance Criteria")
+    assert "Hent tagger fra STID" in gr.extract_spec_section(spec_text, "Calculation Methods")
+    assert "Ingen standardsamsvar" in gr.extract_spec_section(spec_text, "Applicable Standards")
+    # English headings must keep working unchanged.
+    english = "## Acceptance Criteria\n- Mass balance closes.\n"
+    assert "Mass balance closes" in gr.extract_spec_section(english, "Acceptance Criteria")
+    # An unregistered heading must not match anything by accident.
+    assert gr.extract_spec_section(spec_text, "Operating Envelope") == ""
