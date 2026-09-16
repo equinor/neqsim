@@ -75,6 +75,13 @@ report:
     - html
     # - pdf
   depth: auto          # auto | brief | standard | detailed
+  language: en         # en (default) | nb/no | any ISO code
+  # Sets the language of the report: section headings, cover labels, caption
+  # prefixes, and the document language used for spell-check. Write the study
+  # content (results.json, task_spec.md) in the same language. A code with no
+  # built-in wording table still sets the document language; the generated
+  # headings stay English and the generator says so. The scientific paper
+  # (include_paper) stays English for journal submission.
   orientation: portrait  # portrait | landscape | template
   # A corporate Word template is often landscape because it was built for forms;
   # "template" keeps that, the default puts the report body on a readable measure.

@@ -10,11 +10,19 @@ Usage:
     python step3_report/generate_report.py --no-template  # ignore the saved template
     python step3_report/generate_report.py --keep-template-content
     python step3_report/generate_report.py --title "..." --author "..."
+    python step3_report/generate_report.py --language nb
     python devtools/task_template/step3_report/generate_report.py --task-dir PATH
 
 The canonical copy of this script lives in devtools/task_template/. Run it
 against any task folder with `neqsim report <task folder>` (or --task-dir /
 NEQSIM_TASK_DIR) so a fix here applies to task folders created earlier.
+
+The report language is English unless another is configured. Resolution order:
+--language CODE, NEQSIM_REPORT_LANGUAGE, then `report.language` in
+study_config.yaml. It sets the section headings, cover labels, and caption
+prefixes the generator owns, and the document language of the .docx and .html
+so Word spell-checks in that language; authored content is written in that
+language by the study author. The scientific paper (--paper) stays English.
 
 The report title is the STUDY title, and the task is stated at the top of the
 report. Title/author resolution order:
@@ -116,6 +124,105 @@ MIN_SIDE_MARGIN_IN = 0.79         # 20 mm — never narrower when widening margi
 FIGURE_CAPTION_ALLOWANCE_IN = 0.9
 # ISO 80000-1 digit grouping: a non-breaking space, not a comma.
 THOUSANDS_SEP = "\u00a0"
+
+# ── Report language ──────────────────────────────────────
+# Resolved from --language, NEQSIM_REPORT_LANGUAGE, or study_config.yaml
+# (report.language). English is the default. This sets the report furniture the
+# generator owns — section headings, cover labels, caption prefixes, navigation
+# — and the document language of the .docx and .html, so Word spell-checks in
+# the right language. Authored content (results.json, task_spec.md, the manual
+# sections) is written in that language by the study author.
+DEFAULT_REPORT_LANGUAGE = "en"
+REPORT_LANGUAGE = DEFAULT_REPORT_LANGUAGE
+
+# Spellings a user may reasonably write in study_config.yaml.
+LANGUAGE_ALIASES = {
+    "en": "en", "eng": "en", "english": "en", "en-gb": "en", "en-us": "en",
+    "no": "nb", "nb": "nb", "nb-no": "nb", "nn": "nb", "norsk": "nb",
+    "norwegian": "nb", "bokmal": "nb", "bokmål": "nb",
+}
+
+# Written into the .docx (w:lang) and the HTML lang attribute.
+LANGUAGE_LOCALES = {
+    "en": "en-GB",
+    "nb": "nb-NO",
+    "da": "da-DK",
+    "sv": "sv-SE",
+    "de": "de-DE",
+    "fr": "fr-FR",
+    "nl": "nl-NL",
+    "es": "es-ES",
+    "pt": "pt-PT",
+    "it": "it-IT",
+}
+
+# Fixed report wording, keyed by the English phrase used in the code. A language
+# without a table here still gets its document language set; only the furniture
+# stays English, and the generator says so.
+REPORT_STRINGS = {
+    "nb": {
+        # Section headings
+        "Executive Summary": "Sammendrag",
+        "Problem Description": "Problembeskrivelse",
+        "Safety Study Readiness": "Grunnlag for sikkerhetsstudie",
+        "Scope and Standards": "Omfang og standarder",
+        "Information Sources and Evidence Basis":
+            "Informasjonskilder og dokumentasjonsgrunnlag",
+        "Approach": "Fremgangsmåte",
+        "Solution Workflow": "Arbeidsflyt for løsningen",
+        "Results": "Resultater",
+        "Discussion": "Diskusjon",
+        "Analytical Depth": "Analytisk dybde",
+        "Validation Summary": "Valideringssammendrag",
+        "Report Consistency Review": "Konsistenskontroll av rapporten",
+        "Study Configuration Warnings": "Advarsler fra studiekonfigurasjonen",
+        "Benchmark Validation": "Referansevalidering",
+        "Uncertainty Analysis": "Usikkerhetsanalyse",
+        "Risk Assessment": "Risikovurdering",
+        "Assumptions and Data Gaps": "Forutsetninger og datamangler",
+        "Evidence Gaps and Design-Grade Blockers":
+            "Dokumentasjonsmangler og hindringer for designgrunnlag",
+        "Recommendations": "Anbefalinger",
+        "Tooling Improvements Delivered": "Leverte verktøyforbedringer",
+        "Conclusions and Recommendations": "Konklusjoner og anbefalinger",
+        "References": "Referanser",
+        # Front matter and furniture
+        "NeqSim Engineering Report": "NeqSim ingeniørrapport",
+        "Table of Contents": "Innholdsfortegnelse",
+        "List of Figures": "Figurliste",
+        "List of Tables": "Tabelliste",
+        "Contents": "Innhold",
+        "Revision History": "Revisjonshistorikk",
+        "Document Number": "Dokumentnummer",
+        "Document No.": "Dokumentnr.",
+        "Revision": "Revisjon",
+        "Rev": "Rev",
+        "Date": "Dato",
+        "Description": "Beskrivelse",
+        "Author": "Forfatter",
+        "Classification": "Klassifisering",
+        "Initial issue": "Første utgivelse",
+        "(not specified)": "(ikke angitt)",
+        "Task": "Oppgave",
+        "Figure": "Figur",
+        "Table": "Tabell",
+        "Equation": "Ligning",
+    },
+}
+
+
+def _t(text):
+    """Translate fixed report wording into REPORT_LANGUAGE.
+
+    Returns the English phrase unchanged when the language has no table or no
+    entry for it, so adding a heading never breaks a translated report.
+    """
+    return REPORT_STRINGS.get(REPORT_LANGUAGE, {}).get(text, text)
+
+
+def _report_locale():
+    """Return the document locale (``nb-NO``) for the report language."""
+    return LANGUAGE_LOCALES.get(REPORT_LANGUAGE, REPORT_LANGUAGE or "en")
 
 # ── Paths ────────────────────────────────────────────────
 def _resolve_task_dir() -> str:
@@ -384,6 +491,39 @@ def resolve_report_orientation(study_config):
     return value
 
 
+def resolve_report_language(study_config):
+    """Resolve the language the report is written in.
+
+    Order: ``--language CODE`` > ``NEQSIM_REPORT_LANGUAGE`` >
+    ``report.language`` (then ``study.language``) in ``study_config.yaml`` >
+    English.
+
+    Parameters
+    ----------
+    study_config : dict
+        Parsed ``study_config.yaml``.
+
+    Returns
+    -------
+    str
+        Normalized language code, e.g. ``en`` or ``nb``.
+    """
+    value = _cli_option("--language") or os.environ.get("NEQSIM_REPORT_LANGUAGE", "")
+    if not value:
+        config = study_config or {}
+        value = (config.get("report", {}).get("language")
+                 or config.get("study", {}).get("language") or "")
+    value = str(value or "").strip().lower()
+    if value in ("", "auto", "default"):
+        return DEFAULT_REPORT_LANGUAGE
+    code = LANGUAGE_ALIASES.get(value, value)
+    if code != DEFAULT_REPORT_LANGUAGE and code not in REPORT_STRINGS:
+        print("NOTE: no translation table for report language '{}'. Section "
+              "headings and cover labels stay English; the document language "
+              "is set to {}.".format(value, LANGUAGE_LOCALES.get(code, code)))
+    return code
+
+
 def prune_superseded_outputs(current_files):
     """Delete report files this generator wrote under an earlier title.
 
@@ -553,6 +693,46 @@ def _ensure_caption_style(doc):
     style.paragraph_format.keep_with_next = False
 
 
+def _set_run_language(r_pr, locale):
+    """Set ``w:lang`` on a run-properties element, replacing any existing one."""
+    for existing in r_pr.findall(qn("w:lang")):
+        r_pr.remove(existing)
+    r_pr.append(parse_xml(
+        '<w:lang {} w:val="{}" w:eastAsia="{}"/>'.format(
+            nsdecls("w"), locale, locale)))
+
+
+def _apply_document_language(doc):
+    """Set the document language so Word spell-checks in the report language.
+
+    A template built in one language otherwise marks every word of a report
+    written in another as a spelling error.
+    """
+    locale = _report_locale()
+    styles = doc.styles.element
+    defaults = styles.find(qn("w:docDefaults"))
+    if defaults is not None:
+        r_pr_default = defaults.find(qn("w:rPrDefault"))
+        if r_pr_default is None:
+            r_pr_default = parse_xml(
+                '<w:rPrDefault {}/>'.format(nsdecls("w")))
+            defaults.insert(0, r_pr_default)
+        r_pr = r_pr_default.find(qn("w:rPr"))
+        if r_pr is None:
+            r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
+            r_pr_default.append(r_pr)
+        _set_run_language(r_pr, locale)
+    try:
+        normal = doc.styles["Normal"].element
+    except KeyError:
+        return
+    r_pr = normal.find(qn("w:rPr"))
+    if r_pr is None:
+        r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
+        normal.append(r_pr)
+    _set_run_language(r_pr, locale)
+
+
 def _normalize_page_setup(doc):
     """Set the body on a readable measure, whatever the template declares."""
     if REPORT_ORIENTATION == "template":
@@ -594,6 +774,7 @@ def _new_document():
     if not REPORT_TEMPLATE:
         doc = Document()
         _apply_readable_typography(doc)
+        _apply_document_language(doc)
         _normalize_page_setup(doc)
         return doc
     doc = Document(REPORT_TEMPLATE)
@@ -604,6 +785,7 @@ def _new_document():
                           ("Heading 3", HEADING3_PT), ("List Bullet", None)):
         _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
     _apply_readable_typography(doc)
+    _apply_document_language(doc)
     _normalize_page_setup(doc)
     return doc
 
@@ -2842,10 +3024,10 @@ def get_figure_caption(fig_path, results, fig_index):
     if results:
         captions = results.get("figure_captions", {})
     if fig_name in captions:
-        return "Figure {}: {}".format(fig_index, captions[fig_name])
+        return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
     # Auto-generate from filename
     auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
-    return "Figure {}: {}".format(fig_index, auto)
+    return "{} {}: {}".format(_t("Figure"), fig_index, auto)
 
 
 def get_equations(results):
@@ -2931,6 +3113,23 @@ _CAPTION_PREFIX = re.compile(r"^\s*(Figure|Table|Equation)\s+\d+\s*[:.\u2013-]\s
                              re.IGNORECASE)
 
 
+def _strip_caption_prefix(text):
+    """Drop a leading "Figure 3:" so the Word SEQ field owns the numbering.
+
+    Also strips the translated labels, otherwise a report in another language
+    keeps the prefix and Word adds a second one.
+    """
+    cleaned = _CAPTION_PREFIX.sub("", str(text or "")).strip()
+    labels = [_t(label) for label in ("Figure", "Table", "Equation")]
+    labels = [label for label in labels if label]
+    if labels:
+        translated = re.compile(
+            r"^\s*({})\s+\d+\s*[:.\u2013-]\s*".format("|".join(
+                re.escape(label) for label in labels)), re.IGNORECASE)
+        cleaned = translated.sub("", cleaned).strip()
+    return cleaned
+
+
 def _add_seq_field(paragraph, label):
     """Append a { SEQ <label> } field so Word owns the caption numbering."""
     run = paragraph.add_run()
@@ -2958,7 +3157,7 @@ def _add_caption(doc, label, text, keep_with_next=False):
     The number comes from a Word SEQ field, so inserting a figure renumbers the
     rest of the report instead of leaving the captions to drift out of step.
     """
-    text = _CAPTION_PREFIX.sub("", str(text or "")).strip()
+    text = _strip_caption_prefix(text)
     try:
         paragraph = doc.add_paragraph(style="Caption")
     except KeyError:
@@ -3124,8 +3323,8 @@ _HTML_TABLE_COUNTER = {"n": 0}
 def _html_table_caption(title):
     """Return a numbered table caption so HTML and Word agree on the numbering."""
     _HTML_TABLE_COUNTER["n"] += 1
-    text = _CAPTION_PREFIX.sub("", str(title or "")).strip()
-    label = "Table {}".format(_HTML_TABLE_COUNTER["n"])
+    text = _strip_caption_prefix(title)
+    label = "{} {}".format(_t("Table"), _HTML_TABLE_COUNTER["n"])
     if text:
         label = "{}: {}".format(label, text)
     return '<p class="table-caption">{}</p>\n'.format(_html_escape(label))
@@ -3646,7 +3845,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
         caption: optional caption text, numbered and placed above the table.
     """
     if caption:
-        _add_caption(doc, "Table", caption, keep_with_next=True)
+        _add_caption(doc, _t("Table"), caption, keep_with_next=True)
     table = doc.add_table(rows=1, cols=len(headers))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     _set_table_style(table)
@@ -4062,7 +4261,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if _is_placeholder_text(exec_summary):
         exec_summary = MANUAL_SECTIONS["executive_summary"]
     sections.append({
-        "heading": "1. Executive Summary",
+        "heading": "1. {}".format(_t("Executive Summary")),
         "content": exec_summary,
     })
 
@@ -4074,7 +4273,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if _is_placeholder_text(problem_description):
         problem_description = MANUAL_SECTIONS["problem_description"]
     sections.append({
-        "heading": "2. Problem Description",
+        "heading": "2. {}".format(_t("Problem Description")),
         "content": problem_description,
     })
 
@@ -4083,7 +4282,8 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     safety_readiness = format_safety_readiness_text(results) if results else ""
     if safety_readiness:
         sections.append({
-            "heading": "{}. Safety Study Readiness".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Safety Study Readiness")),
             "content": safety_readiness,
         })
         next_section_num += 1
@@ -4108,7 +4308,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "Edit step1_scope_and_research/task_spec.md and re-run.]"
     )
     sections.append({
-        "heading": "{}. Scope and Standards".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Scope and Standards")),
         "content": scope_content,
         "has_scope": True,
     })
@@ -4118,8 +4318,8 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     information_sources = format_information_sources_text(study_config, results)
     if information_sources:
         sections.append({
-            "heading": "{}. Information Sources and Evidence Basis".format(
-                next_section_num),
+            "heading": "{}. {}".format(
+                next_section_num, _t("Information Sources and Evidence Basis")),
             "content": information_sources,
             "has_markdown": True,
         })
@@ -4130,7 +4330,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if results and results.get("approach") and "approach" not in AUTHORED_SECTIONS:
         approach = results["approach"]
     sections.append({
-        "heading": "{}. Approach".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Approach")),
         "content": approach,
         "has_equations": True,
     })
@@ -4139,7 +4339,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     # Solution Workflow (how the task was solved — discovered agents + workflow)
     if results and results.get("agent_workflow_plan"):
         sections.append({
-            "heading": "{}. Solution Workflow".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Solution Workflow")),
             "content": "",
             "has_workflow": True,
         })
@@ -4154,7 +4354,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
             "Save results with the pattern shown in the task README.]"
         )
     sections.append({
-        "heading": "{}. Results".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Results")),
         "content": results_text,
         "has_figures": True,
     })
@@ -4163,7 +4363,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     # Discussion (auto-populated from results.json figure_discussion)
     if results and results.get("figure_discussion"):
         sections.append({
-            "heading": "{}. Discussion".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Discussion")),
             "content": "",
             "has_discussion": True,
         })
@@ -4172,7 +4372,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     # Analytical Depth: the moves that turn a summary into an engineering answer
     if _depth_entries(results):
         sections.append({
-            "heading": "{}. Analytical Depth".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Analytical Depth")),
             "content": "",
             "has_depth": True,
         })
@@ -4187,8 +4387,9 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
             "Add validation checks to your notebook results output.]"
         )
     sections.append({
-        "heading": "{}. Validation Summary".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Validation Summary")),
         "content": validation_text,
+        "has_validation": True,
     })
     next_section_num += 1
 
@@ -4197,7 +4398,8 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
                         for issue in consistency_issues if issue["severity"] != "INFO"]
         if review_items:
             sections.append({
-                "heading": "{}. Report Consistency Review".format(next_section_num),
+                "heading": "{}. {}".format(next_section_num,
+                                           _t("Report Consistency Review")),
                 "content": "\n".join(review_items),
                 "has_markdown": True,
             })
@@ -4206,14 +4408,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if study_config_warnings:
         warning_lines = ["- {}".format(warning) for warning in study_config_warnings]
         sections.append({
-            "heading": "{}. Study Configuration Warnings".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Study Configuration Warnings")),
             "content": "\n".join(warning_lines),
         })
         next_section_num += 1
 
     if results and results.get("benchmark_validation"):
         sections.append({
-            "heading": "{}. Benchmark Validation".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Benchmark Validation")),
             "content": "",
             "has_benchmark": True,
         })
@@ -4222,7 +4425,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     # N. Uncertainty Analysis (if data available)
     if results and results.get("uncertainty"):
         sections.append({
-            "heading": "{}. Uncertainty Analysis".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Uncertainty Analysis")),
             "content": "",
             "has_uncertainty": True,
         })
@@ -4231,7 +4434,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     # N. Risk Assessment (if data available)
     if results and results.get("risk_evaluation"):
         sections.append({
-            "heading": "{}. Risk Assessment".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Risk Assessment")),
             "content": "",
             "has_risk": True,
         })
@@ -4240,14 +4443,16 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     assumptions_text = format_assumptions_text(results)
     if assumptions_text:
         sections.append({
-            "heading": "{}. Assumptions and Data Gaps".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Assumptions and Data Gaps")),
             "content": assumptions_text,
             "has_markdown": True,
         })
         next_section_num += 1
     elif results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
         sections.append({
-            "heading": "{}. Evidence Gaps and Design-Grade Blockers".format(next_section_num),
+            "heading": "{}. {}".format(
+                next_section_num, _t("Evidence Gaps and Design-Grade Blockers")),
             "content": format_list_items_text(
                 results.get("evidence_gaps") or results.get("assumptions_gaps")),
         })
@@ -4255,7 +4460,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
 
     if results and results.get("recommendations"):
         sections.append({
-            "heading": "{}. Recommendations".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Recommendations")),
             "content": format_list_items_text(results.get("recommendations")),
         })
         next_section_num += 1
@@ -4263,7 +4468,8 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     improvements_text = format_improvements_text(results)
     if improvements_text:
         sections.append({
-            "heading": "{}. Tooling Improvements Delivered".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Tooling Improvements Delivered")),
             "content": improvements_text,
             "has_markdown": True,
         })
@@ -4274,7 +4480,8 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if results and results.get("conclusions"):
         conclusions = results["conclusions"]
     sections.append({
-        "heading": "{}. Conclusions and Recommendations".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num,
+                                   _t("Conclusions and Recommendations")),
         "content": conclusions,
     })
     next_section_num += 1
@@ -4292,7 +4499,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
                 ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\n".join(ref_lines)
     sections.append({
-        "heading": "{}. References".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("References")),
         "content": refs_content,
         "has_references": True,
     })
@@ -4337,7 +4544,7 @@ def _add_cover_page(doc):
     # Subtitle line
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("NeqSim Engineering Report")
+    run = subtitle.add_run(_t("NeqSim Engineering Report"))
     run.font.size = Pt(14)
     run.font.color.rgb = RGBColor(100, 100, 100)
 
@@ -4369,11 +4576,11 @@ def _add_cover_page(doc):
     _set_table_style(meta_table)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_data = [
-        ("Document Number", doc_num),
-        ("Revision", REVISION),
-        ("Date", TASK_DATE),
-        ("Author", AUTHOR or "(not specified)"),
-        ("Classification", CLASSIFICATION),
+        (_t("Document Number"), doc_num),
+        (_t("Revision"), REVISION),
+        (_t("Date"), TASK_DATE),
+        (_t("Author"), AUTHOR or _t("(not specified)")),
+        (_t("Classification"), CLASSIFICATION),
     ]
     for i, (label, value) in enumerate(meta_data):
         meta_table.rows[i].cells[0].text = label
@@ -4391,11 +4598,11 @@ def _add_cover_page(doc):
     # Revision history table (if entries exist)
     rev_entries = REVISION_HISTORY or [
         {"rev": REVISION, "date": TASK_DATE,
-         "description": "Initial issue", "author": AUTHOR or ""}
+         "description": _t("Initial issue"), "author": AUTHOR or ""}
     ]
     rev_heading = doc.add_paragraph()
     rev_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run = rev_heading.add_run("Revision History")
+    run = rev_heading.add_run(_t("Revision History"))
     run.font.size = Pt(12)
     run.bold = True
     run.font.color.rgb = RGBColor(47, 84, 150)
@@ -4403,7 +4610,7 @@ def _add_cover_page(doc):
     rev_table = doc.add_table(rows=1 + len(rev_entries), cols=4)
     _set_table_style(rev_table)
     rev_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = ["Rev", "Date", "Description", "Author"]
+    headers = [_t("Rev"), _t("Date"), _t("Description"), _t("Author")]
     for j, h in enumerate(headers):
         cell = rev_table.rows[0].cells[j]
         cell.text = h
@@ -4435,7 +4642,7 @@ def _suppress_paragraph_numbering(paragraph):
 def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
     # Add TOC heading
-    _add_heading(doc, "Table of Contents", level=1, numbered=False)
+    _add_heading(doc, _t("Table of Contents"), level=1, numbered=False)
     _add_toc_field(doc, 'TOC \\o "1-2" \\h \\z \\u')
     # Tell Word to update all fields (incl. this TOC) when the document is opened
     _set_update_fields_on_open(doc)
@@ -4450,12 +4657,12 @@ def _add_figure_and_table_lists(doc, results):
     """
     added = False
     if get_figures():
-        _add_heading(doc, "List of Figures", level=1, numbered=False)
-        _add_toc_field(doc, 'TOC \\h \\z \\c "Figure"')
+        _add_heading(doc, _t("List of Figures"), level=1, numbered=False)
+        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Figure")))
         added = True
     if results and (results.get("tables") or results.get("key_results")):
-        _add_heading(doc, "List of Tables", level=1, numbered=False)
-        _add_toc_field(doc, 'TOC \\h \\z \\c "Table"')
+        _add_heading(doc, _t("List of Tables"), level=1, numbered=False)
+        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Table")))
         added = True
     if added:
         doc.add_page_break()
@@ -4549,7 +4756,7 @@ def _add_task_statement_block(doc):
     if not TASK_STATEMENT:
         return
     heading = doc.add_paragraph()
-    run = heading.add_run("Task")
+    run = heading.add_run(_t("Task"))
     run.bold = True
     run.font.size = Pt(12)
     run.font.color.rgb = RGBColor(47, 84, 150)
@@ -4604,7 +4811,7 @@ def build_word_report(sections, results=None):
         elif section.get("has_scope") or section.get("has_markdown"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
-        elif ("Validation" in section["heading"] and not section.get("has_benchmark")
+        elif (section.get("has_validation") and not section.get("has_benchmark")
               and results and results.get("validation")):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
@@ -4638,7 +4845,7 @@ def build_word_report(sections, results=None):
                 for fig_idx, fig_path in enumerate(figures, 1):
                     caption_text = get_figure_caption(fig_path, results, fig_idx)
                     _add_figure_picture(doc, fig_path)
-                    _add_caption(doc, "Figure", caption_text)
+                    _add_caption(doc, _t("Figure"), caption_text)
             else:
                 doc.add_paragraph(
                     "[No figures found in figures/ directory. "
@@ -4666,7 +4873,7 @@ def build_word_report(sections, results=None):
                         last_para = doc.paragraphs[-1]
                         last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                         last_para.paragraph_format.keep_with_next = True
-                        _add_caption(doc, "Equation", label)
+                        _add_caption(doc, _t("Equation"), label)
                     else:
                         # Fallback: text representation
                         doc.add_paragraph("{}: {}".format(label, latex))
@@ -4687,7 +4894,7 @@ def _build_rev_rows_html():
     """Build HTML table rows for revision history in the HTML report."""
     rev_entries = REVISION_HISTORY or [
         {"rev": REVISION, "date": TASK_DATE,
-         "description": "Initial issue", "author": AUTHOR or ""}
+         "description": _t("Initial issue"), "author": AUTHOR or ""}
     ]
     rows = ""
     for entry in rev_entries:
@@ -4719,9 +4926,10 @@ def _build_task_block_html():
         return ""
     return (
         '<div class="task-statement">\n'
-        '    <h2>Task</h2>\n'
+        '    <h2>{}</h2>\n'
         '    <p>{}</p>\n'
-        '</div>'.format(_html_escape(TASK_STATEMENT))
+        '</div>'.format(_html_escape(_t("Task")),
+                        _html_escape(TASK_STATEMENT))
     )
 
 
@@ -4824,7 +5032,7 @@ def build_html_report(sections, results=None):
         if section.get("has_equations") and equation_html:
             content += equation_html
 
-        if "Validation" in section["heading"] and validation_html:
+        if section.get("has_validation") and validation_html:
             content = validation_html
 
         if section.get("has_benchmark") and results:
@@ -4889,7 +5097,7 @@ def build_html_report(sections, results=None):
     </script>"""
 
     html = """<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5030,29 +5238,29 @@ def build_html_report(sections, results=None):
 </head>
 <body>
     <nav>
-        <h3>Contents</h3>
+        <h3>{contents_label}</h3>
         <ul>
 {nav}
         </ul>
         <hr style="margin: 1rem 0;">
         <p style="font-size: 0.8rem; color: #999;">{doc_num}</p>
-        <p style="font-size: 0.8rem; color: #999;">Rev {rev} | {date}</p>
+        <p style="font-size: 0.8rem; color: #999;">{rev_label} {rev} | {date}</p>
     </nav>
     <main>
         <div class="cover-page">
             <h1>{title}</h1>
-            <p class="subtitle">NeqSim Engineering Report</p>
+            <p class="subtitle">{subtitle}</p>
             {badges}
             <table class="cover-meta">
-                <tr><td>Document No.</td><td>{doc_num}</td></tr>
-                <tr><td>Revision</td><td>{rev}</td></tr>
-                <tr><td>Date</td><td>{date}</td></tr>
-                <tr><td>Author</td><td>{author}</td></tr>
-                <tr><td>Classification</td><td>{classification}</td></tr>
+                <tr><td>{doc_num_label}</td><td>{doc_num}</td></tr>
+                <tr><td>{revision_label}</td><td>{rev}</td></tr>
+                <tr><td>{date_label}</td><td>{date}</td></tr>
+                <tr><td>{author_label}</td><td>{author}</td></tr>
+                <tr><td>{classification_label}</td><td>{classification}</td></tr>
             </table>
-            <h3 style="margin-top: 2rem; color: #2F5496;">Revision History</h3>
+            <h3 style="margin-top: 2rem; color: #2F5496;">{rev_history_label}</h3>
             <table class="rev-table">
-                <thead><tr><th>Rev</th><th>Date</th><th>Description</th><th>Author</th></tr></thead>
+                <thead><tr><th>{rev_label}</th><th>{date_label}</th><th>{description_label}</th><th>{author_label}</th></tr></thead>
                 <tbody>{rev_rows}</tbody>
             </table>
         </div>
@@ -5062,9 +5270,20 @@ def build_html_report(sections, results=None):
 </body>
 </html>""".format(
         title=TITLE,
+        lang=_report_locale(),
+        subtitle=_t("NeqSim Engineering Report"),
+        contents_label=_t("Contents"),
+        doc_num_label=_t("Document No."),
+        revision_label=_t("Revision"),
+        date_label=_t("Date"),
+        author_label=_t("Author"),
+        classification_label=_t("Classification"),
+        description_label=_t("Description"),
+        rev_history_label=_t("Revision History"),
+        rev_label=_t("Rev"),
         badges=_build_badges_html(),
         task_block=_build_task_block_html(),
-        author=AUTHOR or "(not specified)",
+        author=AUTHOR or _t("(not specified)"),
         date=TASK_DATE,
         doc_num=_auto_doc_number(),
         rev=REVISION,
@@ -5899,6 +6118,9 @@ if __name__ == "__main__":
     print("")
     print("Generating outputs for: {}".format(TITLE))
     REPORT_ORIENTATION = resolve_report_orientation(study_config)
+    REPORT_LANGUAGE = resolve_report_language(study_config)
+    if REPORT_LANGUAGE != DEFAULT_REPORT_LANGUAGE:
+        print("Report language: {} ({})".format(REPORT_LANGUAGE, _report_locale()))
     pdf_requested = want_pdf_output(study_config)
     print("Report files: {}.docx / {}.html{}".format(
         REPORT_BASENAME, REPORT_BASENAME,
