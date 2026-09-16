@@ -985,9 +985,8 @@ class McpEvidenceInventoryFoundationTests {
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("BarrierRegisterRunnerTest.java"));
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_barrier_register_protocol.py"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString()
-            .contains("BARRIER_REGISTER_SCREENING_CONTRACT.md"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("BARRIER_REGISTER_SCREENING_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim barrier model"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("does not identify hazards"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runBarrierRegister"));
