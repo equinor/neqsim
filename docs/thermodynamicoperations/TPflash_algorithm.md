@@ -2771,3 +2771,37 @@ Matlab/private-fluid composition is unavailable, so the regression neither repro
 establishes general order invariance for arbitrary pseudo-component characterizations. It changes no
 `addFluid` API, pseudo-component characterization, mixing rule, solver tolerance, or model default.
 The bounded flash count is workload evidence only; no wall-clock performance claim is made.
+
+
+### Expanded UMR-PRU component flash lifecycle
+
+The standard component and `UNIFACcompUMRPRU.csv` tables were expanded together so
+`SystemUMRPRUMCEos` can use additional chromatographic hydrocarbon families through the
+`HV` / `UNIFAC_UMRPRU` mixing rule. Database-integrity and finite-density checks establish
+that the rows load, but they do not qualify complete TP-flash equilibrium or state reuse. The
+expanded-table qualification therefore applies the common lifecycle gates to representative new
+aromatic, cyclic, branched-paraffin, and olefin entries.
+
+The synthetic matrix uses the following nominal states. Mole amounts are normalized by the
+thermodynamic system, and pressure is absolute.
+
+| Case | Components and mole amounts | Temperature (K) | Pressure (bara) |
+| --- | --- | ---: | ---: |
+| Aromatic | methane 0.90, 1,2,4-trimethylbenzene 0.10 | 298.15 | 10.0 |
+| Cyclic | methane 0.80, 1,1,2-trimethylcyclopentane 0.10, trans-1,3-dimethylcyclohexane 0.10 | 285.15 | 20.0 |
+| Branched paraffin | methane 0.85, 2,4-dimethylheptane 0.15 | 280.15 | 30.0 |
+| Olefin | methane 0.88, 1-hexene 0.12 | 285.15 | 20.0 |
+
+The bounded 32-flash regression compares ordinary and explicit-multiphase calculations, starts
+from beta values within `1e-12` of a bound, changes temperature by 1 K and pressure by 2%, returns
+to the nominal state, and repeats the settled calculation. Acceptance requires phase and beta
+normalization within `5e-12`, component material balance below `1e-10`, comparable interphase
+log-fugacity residual below `1e-8`, bounded finite compositions and phase fractions, positive
+compressibility, and finite Gibbs energy and enthalpy. Single-phase states additionally require
+`beta = 1` and `x = z`; the matrix must exercise at least two multiphase endpoints.
+
+These public synthetic fluids qualify numerical closure and lifecycle behavior for the expanded
+tables. They do not independently validate component-property corrections, UMR-PRU group or
+interaction parameters, phase-envelope accuracy, experimental PVT predictions, or the
+missing-interaction policy tracked by issue #3727. No solver algorithm, public API, table entry,
+model default, or wall-clock performance claim is introduced.
