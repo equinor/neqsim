@@ -652,7 +652,11 @@ task: `neqsim --set-document-root "PATH"`, `neqsim --show-document-root`,
 recursively. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > saved
 `document_root` in `~/.neqsim/task_defaults.json` > none. Every new task records
 the resolved value as `inputs.document_root` in its `study_config.yaml` (empty
-when undefined). Search it before declaring a standard, datasheet or drawing
+when undefined), and lists the library's files in
+`step1_scope_and_research/references/document_root_index.md`, so a resumed task
+and every child agent see what is available without running the CLI (refresh it
+with `neqsim documents --index <task_dir>`). Search it before declaring
+a standard, datasheet or drawing
 unavailable; when undefined, work from user-supplied documents and log a data
 gap. It is read-only: copy the documents a task uses into that task's
 `step1_scope_and_research/references/<source>/` instead of writing there.

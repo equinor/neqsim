@@ -334,3 +334,30 @@ def test_task_records_document_root_when_set_and_unset(defaults, tmp_path):
     configured = Path(new_task.create_task("With document library"))
     config = (configured / "study_config.yaml").read_text(encoding="utf-8")
     assert 'document_root: "{}"'.format(str(documents).replace("\\", "\\\\")) in config
+
+
+def test_task_indexes_document_library_for_agents(defaults, tmp_path):
+    documents = tmp_path / "documents"
+    (documents / "standards").mkdir(parents=True)
+    (documents / "standards" / "API 521.pdf").write_text("x", encoding="utf-8")
+    (documents / "design basis.docx").write_text("x", encoding="utf-8")
+    new_task.save_default_task_root(str(tmp_path / "tasks"))
+
+    # An unconfigured library still leaves a file, so its absence never reads
+    # to an agent as "there was nothing to find".
+    unset = Path(new_task.create_task("No library"))
+    index = unset / "step1_scope_and_research" / "references" / "document_root_index.md"
+    assert "No document root is configured" in index.read_text(encoding="utf-8")
+
+    new_task.save_default_document_root(str(documents))
+    task = Path(new_task.create_task("With library"))
+    index = task / "step1_scope_and_research" / "references" / "document_root_index.md"
+    listing = index.read_text(encoding="utf-8")
+    assert str(documents) in listing
+    assert "## standards" in listing
+    assert "- API 521.pdf" in listing
+    assert "- design basis.docx" in listing
+
+    (documents / "standards" / "NORSOK P-002.pdf").write_text("x", encoding="utf-8")
+    new_task.write_document_root_index(str(task))
+    assert "- NORSOK P-002.pdf" in index.read_text(encoding="utf-8")

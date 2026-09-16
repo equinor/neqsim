@@ -168,7 +168,10 @@ It is stored in the same settings file, so one setting covers all tasks, and eac
 new task records the resolved value as `inputs.document_root` in its
 `study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
 saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
-all subfolders, and `neqsim --reset-document-root` removes the setting. A
+all subfolders, `neqsim documents --index [TASK_DIR]` refreshes the per-task
+listing at `step1_scope_and_research/references/document_root_index.md` (written
+at task creation so agents see the library without running the CLI), and
+`neqsim --reset-document-root` removes the setting. A
 configured folder that no longer exists is reported as an error rather than
 silently ignored.
 

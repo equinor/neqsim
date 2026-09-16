@@ -51,6 +51,7 @@ import json
 import shutil
 import subprocess
 import sys
+from collections import OrderedDict
 from datetime import date
 
 
@@ -386,6 +387,108 @@ def find_documents(pattern="", document_root=None, limit=0):
             if limit and len(matches) >= limit:
                 return matches
     return matches
+
+
+DOCUMENT_ROOT_INDEX_NAME = "document_root_index.md"
+
+_DOCUMENT_INDEX_HEADER = """# Source Document Library Index
+
+- Document root: {root}
+- Indexed: {today}
+- Files: {count} (root folder and every subfolder)
+
+This library is **read-only**. Search it before reporting a standard, datasheet,
+drawing, or vendor document as unavailable, then copy the documents this task
+actually uses into a per-source subfolder here (`stid/`, `vendor/`, `literature/`,
+`manual/`, ...) so the task folder stays self-contained.
+
+```bash
+neqsim documents "API 521"          # recursive search of the library
+neqsim documents --index .          # refresh this index after the library changes
+```
+
+File names are indicative only: a document may cover standards its name does not
+mention, so open a likely candidate before concluding the library lacks a source.
+"""
+
+_DOCUMENT_INDEX_NONE = """# Source Document Library Index
+
+No document root is configured, so this task has no local source-document library.
+
+Work from the documents the user supplies directly, and record every source that
+could not be obtained as a data gap in `results.json` (`data_gaps`). Configure a
+library so future tasks can search it:
+
+```bash
+neqsim --set-document-root "PATH"
+```
+"""
+
+_DOCUMENT_INDEX_BLOCKED = """# Source Document Library Index
+
+A document root is configured but could not be read, so no local source library
+is available to this task:
+
+    {error}
+
+Report this as a blocker rather than silently working document-free. Fix the
+setting with `neqsim --set-document-root "PATH"` or clear it with
+`neqsim --reset-document-root`.
+"""
+
+
+def write_document_root_index(task_dir, document_root=None, limit=2000):
+    """Write the task-local listing of the configured source-document library.
+
+    Agents read the task folder, not the user settings, so a configured library
+    stays invisible unless it is listed where they already look. The file is
+    written even when no root is configured, so its absence never reads as
+    "there was nothing to find".
+
+    Parameters
+    ----------
+    task_dir : str
+        Task folder that receives the index under step1_scope_and_research.
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+    limit : int
+        Maximum number of files listed; the rest are reported as a remainder.
+
+    Returns
+    -------
+    str
+        Path of the index file written.
+    """
+    path = os.path.join(task_dir, "step1_scope_and_research", "references",
+                        DOCUMENT_ROOT_INDEX_NAME)
+    try:
+        root = resolve_document_root(document_root)
+    except (OSError, ValueError) as error:
+        _write_file(path, _DOCUMENT_INDEX_BLOCKED.format(error=error))
+        return path
+    if root is None:
+        _write_file(path, _DOCUMENT_INDEX_NONE)
+        return path
+
+    documents = find_documents(document_root=root)
+    sections = OrderedDict()
+    for document in documents[:limit]:
+        folder = os.path.dirname(os.path.relpath(document, root))
+        sections.setdefault(folder.replace("\\", "/") or "(root)", []).append(
+            os.path.basename(document))
+
+    lines = [_DOCUMENT_INDEX_HEADER.format(root=root, today=date.today().isoformat(),
+                                           count=len(documents))]
+    for folder, names in sections.items():
+        lines.append("## {}\n".format(folder))
+        lines.extend("- {}".format(name) for name in names)
+        lines.append("")
+    if len(documents) > limit:
+        lines.append("_{} further file(s) not listed. Search them with "
+                     "`neqsim documents PATTERN`._\n".format(len(documents) - limit))
+    _write_file(path, "\n".join(lines))
+    return path
+
 
 TASK_TYPES = {
     "A": "Property",
@@ -1118,11 +1221,14 @@ Place literature papers, standards documents, and other reference material here.
 
 If the user has configured a document root, it is recorded as `inputs.document_root`
 in `study_config.yaml` and printed by `neqsim --show-document-root`. That folder
-**and all its subfolders** are the source library for this task:
+**and all its subfolders** are the source library for this task. Its file listing
+is in `document_root_index.md` next to this README — read it before concluding a
+standard or datasheet is unavailable.
 
 ```bash
 neqsim --show-document-root       # may be unset - then there is no library
 neqsim documents "API 521"        # recursive search when one is configured
+neqsim documents --index .        # refresh document_root_index.md
 ```
 
 The setting is optional. When it is unset, work from the documents the user
@@ -1964,6 +2070,13 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
                        notebooks, config_file, intake_pause)
 
+    # List the source-document library where agents already look, so a
+    # configured root is discoverable without knowing the CLI exists.
+    try:
+        write_document_root_index(task_dir)
+    except (OSError, ValueError) as error:
+        print("  WARNING: could not index the document root: {}".format(error))
+
     # Fill in the README
     readme_path = os.path.join(task_dir, "README.md")
     with open(readme_path, "r", encoding="utf-8") as f:
@@ -2048,6 +2161,8 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     print("  Document input: {}/step1_scope_and_research/references/".format(task_dir))
     print("  Supported documents include PDFs, Word files, Excel stream tables,")
     print("  P&IDs, vendor data sheets, standards, and lab reports.")
+    print("  Source library listed in: step1_scope_and_research/references/{}".format(
+        DOCUMENT_ROOT_INDEX_NAME))
     intake_setting = normalize_intake_pause(intake_pause) or "auto"
     if intake_setting == "always":
         print("  Intake pause: requested - wait for user confirmation before notebooks.")
