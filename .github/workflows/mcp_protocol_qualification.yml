@@ -178,6 +178,9 @@ jobs:
       - name: Run focused real-MCP process-comparison qualification
         run: cd neqsim-mcp-server && python test_process_comparison_protocol.py
 
+      - name: Run focused real-MCP barrier-register qualification
+        run: cd neqsim-mcp-server && python test_barrier_register_protocol.py
+
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py
 
