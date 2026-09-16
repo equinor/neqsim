@@ -154,6 +154,74 @@ double mdotPeak = sim.peakMassFlow();
 This is the standard handoff between the depressurization model and the flare
 network sizing skill (`neqsim-relief-flare-network`).
 
+## Method 4b — Separators with Live Liquid: Vapour-Only Withdrawal (MANDATORY CHECK)
+
+`DepressurizationSimulator` removes **bulk** composition — `scaleMoles(...)` preserves the
+overall composition of the inventory. That is correct for an all-vapour segment, and
+**wrong for a separator, scrubber or KO drum that holds live liquid**, because the blowdown
+valve takes vapour off the top while the liquid flashes and feeds more vapour into the
+release. On a real first-stage separator the flash gas from the oil holdup can be a third
+of the total flare load, and a gas-space-only calculation understates methane by a similar
+margin. Operator flare reports often quote `vapour fraction = 1.00` for such a segment,
+which means the liquid contribution is not in the approved basis either.
+
+Two defensible ways to handle it:
+
+1. **Decomposed inventory (robust, auditable — prefer this for a deliverable).**
+   Treat the gas space and the liquid holdup as separate, documented streams. Flare load
+   = (gas-space inventory − gas remaining at the flare back pressure) + (vapour formed when
+   the liquid holdup is flashed to the back pressure). Each term is a single TP flash of a
+   stream that exists in the process documentation, so every number is traceable.
+2. **Differential vapour withdrawal (rigorous, path-dependent).** Step the pressure down at
+   constant vessel volume, and at each step remove only the vapour phase until the contents
+   fit the vessel again. Use this as a cross-check; expect it to give slightly more than (1)
+   because continuous stripping of light ends drives further vaporisation.
+
+### Three traps when you write the vapour-withdrawal loop
+
+```java
+// TRAP 1 — phase identification. Below roughly 20 bara NeqSim may label the OIL phase
+// GAS for a rich hydrocarbon mixture. A loop that selects the vapour with
+// getPhase(i).getType() then strips LIQUID out of the vessel, and the mass balance still
+// closes, so nothing throws and nothing warns. Pick the vapour by LOWEST DENSITY:
+int iVap = -1;
+double rhoMin = Double.MAX_VALUE;
+for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+  double rho = fluid.getPhase(i).getDensity("kg/m3");
+  if (rho < rhoMin) { rhoMin = rho; iVap = i; }
+}
+if (rhoMin > 300.0) { iVap = -1; }   // no real vapour phase present
+
+// TRAP 2 — assert the removed stream is actually vapour. A hydrocarbon blowdown stream
+// should stay well under ~45 g/mol. Check it EVERY step; this is what catches trap 1.
+// TRAP 3 — component moles. phase.getComponent(n).getNumberOfMolesInPhase() is not
+// reliably phase-local here. Use the phase total against the phase mole fraction:
+double dnTotal = fraction * fluid.getPhase(iVap).getNumberOfMolesInPhase();
+double dnComponent = dnTotal * fluid.getPhase(iVap).getComponent(name).getx();
+```
+
+Pseudo-component naming: `addTBPfraction("C6gas", ...)` is stored as `C6gas_PC`. Never put
+`+` in a TBP name, and resolve the internal name from `getComponentNames()` by prefix before
+calling `addComponent(name, -moles)`.
+
+### Report both CO2 numbers
+
+For an emissions answer, separate the CO2 **already in the gas** (typically 1–3 mol%, so a
+few hundred kg) from the CO2 **produced by burning the release** (roughly 2.7 kg CO2 per kg
+hydrocarbon, so tonnes). The combustion term is two orders of magnitude larger and is the
+one that goes into emission reporting. State the assumed flare combustion efficiency, and
+give the CO2-equivalent of the unburned methane for the failed-ignition case
+(GWP-100 = 28, IPCC AR5) — that is typically ~5x the climate effect of a successful flaring.
+
+### Time is rarely the binding constraint — temperature is
+
+API 521 §5.20 (half pressure in 15 min) is usually met with a large margin on a correctly
+sized BDV. What actually governs is auto-refrigeration against the vessel MDMT and the
+downstream pipe class design temperature. Always report the minimum temperature next to
+both limits, and recommend throttling a **planned** depressurisation through the pressure
+control valve down to a moderate pressure before opening the BDV, so the fast cold
+excursion is reserved for genuine emergency depressurisation.
+
 ## Method 5 — Coupled Multi-Vessel Blowdown to a Shared Header (API 521 §7)
 
 When several vessels blow down simultaneously into one flare/disposal header, the
