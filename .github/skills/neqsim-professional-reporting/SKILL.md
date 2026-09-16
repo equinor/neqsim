@@ -48,6 +48,41 @@ root-cause/problem-solving report. Record the score in `results.json`
 | 8 | **Report what does not fit** | The observation that disagrees with the model, reported as a disagreement rather than smoothed over or omitted | Presenting only corroborating evidence |
 | 9 | **Convert qualitative asks into specifications** | "Effective oxygen exclusion" → a purity table with the consequence of each grade; "improve filtration" → a micron rating with the mechanism that sets it | Repeating the source's qualitative wording back |
 
+#### Write the moves into `results.json` — the report renders them
+
+The depth work has to reach the reader. `generate_report.py` emits an
+**Analytical Depth** section (Word and HTML) from these keys, turning a list of
+dicts into a numbered table and anything else into bullets:
+
+| `results.json` key | Move |
+|--------------------|------|
+| `contributor_ranking` | 1 — contributors on one basis |
+| `source_recommendation_assessment` | 2 — verdict per source recommendation |
+| `ruled_out` | 3 — quantitative rule-outs |
+| `robustness` | 5 — sensitivity and the crossover |
+| `conservatism` | 6 — direction of each conservatism |
+| `discriminating_test` | 7 — the cheapest discriminating test |
+| `evidence_against` | 8 — evidence that does not fit |
+
+```json
+"contributor_ranking": [
+  {"contributor": "Shell-side fouling", "share_pct": 62, "basis": "duty deficit vs design"},
+  {"contributor": "Seawater inlet temperature", "share_pct": 21, "basis": "duty deficit vs design"}
+],
+"ruled_out": [
+  {"hypothesis": "Tube leak", "test": "Chloride in condensate", "margin": "5 mg/l vs 250 mg/l threshold"}
+],
+"discriminating_test": {"test": "Single-point wall-thickness UT at the first bend",
+                        "decides": "Erosion vs fouling", "cost": "1 shift, no shutdown"},
+"depth_score": "7/9"
+```
+
+`devtools/validate_task_results.py` warns when a study that has figure
+discussion, uncertainty, or a risk register reports fewer than two of them —
+that combination means the task was past quick-answer scale and the depth work
+should exist. If the moves were not achievable, say which and why rather than
+leaving the keys out.
+
 ### Two further depth habits
 
 - **Look for the natural experiment in the data.** Near-identical units with
@@ -378,6 +413,32 @@ the saved `report_template` in `~/.neqsim/task_defaults.json`
 - An older task folder carries its own `generate_report.py`; prefer
   `neqsim report <task folder>`, which always runs the current canonical
   generator, over the stale vendored copy.
+
+### Page measure and captions (handled by the generator — do not fight it)
+
+A corporate `.dotx` is often **A4 landscape**, because it was built for forms.
+Left alone, that sets a 30-page report on a 9.5 in measure — about 140
+characters per line, twice the readable optimum — while every figure and table
+sized for a portrait page leaves a third of the width empty. The generator
+therefore normalises the body to **portrait** and caps the measure at 6.7 in,
+keeping the template's own styles, header, and footer. Override per study with
+`report.orientation: portrait | landscape | template` in `study_config.yaml`, or
+`--orientation VALUE`; `template` keeps whatever the template declares.
+
+The rest follows from the measure and needs nothing from the author:
+
+- Figures and tables are laid out across the full measure, and a tall figure is
+  scaled down so it still fits the printable height with its caption.
+- Figures, tables, and equations get numbered captions in Word's `Caption`
+  style, using `SEQ` fields, so the numbering survives an insertion and Word can
+  build the **List of Figures** and **List of Tables** placed after the contents.
+- A `tables[]` entry's `title` becomes a table caption, not a Heading 2 — a data
+  table does not belong in the table of contents.
+- Table header rows repeat across page breaks, rows are not split, numeric cells
+  are right-aligned, and a table with 7+ columns steps its type size down.
+- Headings carry keep-with-next, so none is stranded at the foot of a page.
+- Numbers are grouped with a non-breaking space per ISO 80000-1 and exact counts
+  are printed in full: `370 523`, never `3.705e+05`.
 
 ## Report file names are the report title
 
