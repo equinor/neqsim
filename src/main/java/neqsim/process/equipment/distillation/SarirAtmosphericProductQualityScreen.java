@@ -56,9 +56,11 @@ public final class SarirAtmosphericProductQualityScreen {
     SarirD86ProductComparison.Result[] comparisons =
         new SarirD86ProductComparison.Result[PRODUCT_LABELS.length];
     for (int i = 0; i < PRODUCT_LABELS.length; i++) {
-      double productMassFlow =
-          fractionationResult.getProduct(PRODUCT_LABELS[i]).getCalculatedMassFlowKgPerHour();
-      if (!Double.isFinite(productMassFlow) || !(productMassFlow > 0.0)) {
+      SarirAtmosphericFractionationResult.ProductResult productResult =
+          fractionationResult.getProduct(PRODUCT_LABELS[i]);
+      double productMassFlow = productResult.getCalculatedMassFlowKgPerHour();
+      if (!Double.isFinite(productMassFlow) || !(productMassFlow > 0.0)
+          || !productResult.hasBoilingPointDistribution()) {
         throw new IllegalStateException(
             "Sarir product-quality screening requires a material " + PRODUCT_LABELS[i] + " draw");
       }
