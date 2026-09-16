@@ -27,7 +27,8 @@ import neqsim.thermo.system.SystemInterface;
 public final class SarirAtmosphericProductQualityScreen {
   private static final String[] PRODUCT_LABELS = { "Kerosene", "Diesel" };
 
-  private SarirAtmosphericProductQualityScreen() {\n  }
+  private SarirAtmosphericProductQualityScreen() {
+  }
 
   /**
    * Evaluate strict T95 evidence for a rigorously solved Sarir atmospheric case.
