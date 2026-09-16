@@ -114,7 +114,7 @@ public class SarirAtmosphericFractionationCaseTest {
   /** Require unreported operating controls and profiles to fail closed. */
   @Test
   public void invalidEngineeringInputsAreRejectedBeforeCaseCreation() {
-    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));
+    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));\n    assertThrows(NullPointerException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(null));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(2.5, 2.0, 700.0, 1.0, 24, 0.08, 15, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 15, 0.08, 24, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 24, 1.0, 15, 0.15));
