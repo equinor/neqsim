@@ -164,4 +164,3 @@ public class AqueousHydrogenSulfideOxidationS8TransferBatchTest extends NeqSimTe
     return new AqueousHydrogenSulfideOxidationTrajectory.Segment(durationHours, 298.15, 8.0, 0.723, 250.0e-6);
   }
 }
-
