@@ -13,8 +13,8 @@ The batch:
 - preserves the source order and every receipt;
 - requires a single caller-supplied S8 product-identity basis;
 - rejects duplicate downstream idempotency keys inside the batch;
-- reports total source sulfur-equivalent mass, transferred S8 mass, unallocated
-  sulfur-equivalent mass, and an aggregate closure residual in kg; and
+- reports total source sulfur-equivalent mass, transferred S8 mass, unallocated sulfur-equivalent mass, and an
+  aggregate closure residual in kg; and
 - returns an unmodifiable defensive copy.
 
 The batch deliberately does not sum segment mass rates. Rates from sequential exposure segments
@@ -22,27 +22,15 @@ are not additive inventories.
 
 ## Accounting equation
 
-For ordered receipts (i=1,ldots,n), the mass-only accounting is
+For ordered receipts `i = 1 ... n`, the mass-only accounting is:
 
-[
-m_{S,mathrm{source}}^{mathrm{batch}} =
-  sum_i m_{S,mathrm{source},i},
-qquad
-m_{S8,mathrm{transfer}}^{mathrm{batch}} =
-  sum_i m_{S8,mathrm{transfer},i},
-]
-
-[
-m_{S,mathrm{unallocated}}^{mathrm{batch}} =
-  sum_i m_{S,mathrm{unallocated},i},
-qquad
-epsilon_m =
-  m_{S,mathrm{source}}^{mathrm{batch}}
-  - left(
-      m_{S8,mathrm{transfer}}^{mathrm{batch}}
-      + m_{S,mathrm{unallocated}}^{mathrm{batch}}
-    ight).
-]
+```text
+batch source mass      = sum(receipt source mass)
+batch transferred mass = sum(receipt transferred S8 mass)
+batch unallocated mass = sum(receipt unallocated sulfur-equivalent mass)
+closure residual       = batch source mass
+                         - (batch transferred mass + batch unallocated mass)
+```
 
 All masses use kg. The implementation requires finite non-negative receipt masses, finite sums,
 and aggregate closure within eight floating-point units in the last place at the total-mass scale.
@@ -66,8 +54,7 @@ non-empty batch identifier no longer than 256 characters.
 
 The batch rejects duplicate `getDownstreamIdempotencyKey()` values among its own receipts. This
 is a bounded duplicate-consumption guard, not a persistent exactly-once service. A downstream
-persistent ledger must still enforce the keys across batches, retries, process restarts, and
-distributed consumers.
+persistent ledger must still enforce the keys across batches, retries, process restarts, and distributed consumers.
 
 A consumer may apply each transferred S8 mass at most once. It must carry each unallocated
 sulfur-equivalent remainder separately and must not also apply the original source sulfur budget
