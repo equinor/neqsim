@@ -156,7 +156,7 @@ request order, canonical `ProcessRunner` delegation, explicit completion and
 per-case success/failure accounting, and partial-result visibility. Synchronized
 schema/example discovery, the comprehensive protocol, and the focused
 `test_process_comparison_protocol.py` move with the machine-readable record
-from 20/38/13 to 20/40/11. The detailed boundary is recorded in
+from 20/38/13 to 20/39/12. The detailed boundary is recorded in
 `docs/evidence/PROCESS_COMPARISON_CONTRACT.md`. This classification does not
 establish case comparability, numerical accuracy, convergence, conservation,
 optimization quality, facility fidelity, plant authority, certification, or
