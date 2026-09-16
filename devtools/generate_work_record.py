@@ -452,6 +452,29 @@ def _data_files(task_dir: Path) -> list:
     return rows
 
 
+def _format_assumption(item) -> str:
+    """Render one assumption or data-gap entry as readable prose.
+
+    Accepts the documented ``assumption``/``basis``/``effect`` and
+    ``gap``/``source``/``status``/``assumed``/``effect`` shapes, so a schema-
+    correct entry is no longer dumped as raw JSON.
+    """
+    if not isinstance(item, dict):
+        return str(item)
+    head = (item.get("assumption") or item.get("gap") or item.get("blocker")
+            or item.get("description") or item.get("text"))
+    if not head:
+        return json.dumps(item, ensure_ascii=False)
+    parts = ["**{}**".format(head)]
+    for key, label in (("basis", "Basis"), ("source", "Source"),
+                       ("status", "Status"), ("assumed", "Assumed instead"),
+                       ("effect", "Effect")):
+        value = item.get(key)
+        if value:
+            parts.append("{}: {}".format(label, value))
+    return " — ".join(parts) if len(parts) > 1 else parts[0]
+
+
 def _reference_summary(task_dir: Path) -> tuple:
     """Return (per-source counts, total, sources_md_exists, data_gaps)."""
     references = task_dir / "step1_scope_and_research" / "references"
@@ -788,18 +811,15 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
     # 8 — Assumptions and gaps --------------------------------------------
     out.append("## 8. Assumptions, limitations and gaps")
     out.append("")
-    for key, label in (("assumptions", "Assumptions"), ("gaps", "Data gaps"),
+    for key, label in (("assumptions", "Assumptions"),
+                       ("data_gaps", "Data gaps"), ("gaps", "Data gaps"),
                        ("limitations", "Limitations")):
         items = results.get(key)
         if isinstance(items, list) and items:
             out.append("**{}** (from `results.json`):".format(label))
             out.append("")
             for item in items:
-                if isinstance(item, dict):
-                    text = item.get("description") or item.get("text") or json.dumps(item)
-                else:
-                    text = str(item)
-                out.append("- {}".format(text))
+                out.append("- {}".format(_format_assumption(item)))
             out.append("")
     out.extend(_narrative(
         "limitations",
