@@ -59,7 +59,7 @@ class S8TransferBatchDocumentationTest(unittest.TestCase):
             "not a persistent exactly-once service",
             "across batches, retries, process restarts, and distributed consumers",
             "apply each transferred S8 mass at most once",
-            "must not also apply the original source sulfur budget as product",
+            "must not also apply the original source sulfur budget",
             "Millero et al. (1987)",
             "https://doi.org/10.1021/es00159a003",
             "introduces no chemical coefficient",
