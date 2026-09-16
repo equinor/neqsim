@@ -70,6 +70,7 @@ try:
     from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.enum.section import WD_ORIENT
     from docx.enum.style import WD_STYLE_TYPE
     from docx.oxml.ns import nsdecls, qn
     from docx.oxml import parse_xml
@@ -101,6 +102,20 @@ BODY_SPACE_AFTER_PT = 6.0
 # picture width instead magnifies a short equation to the width of the page.
 EQ_FONT_PT = 13.0
 EQ_RENDER_DPI = 300
+
+# ── Page measure ─────────────────────────────────────────
+# A corporate .dotx is frequently LANDSCAPE because it is built for forms and
+# presentations. An engineering report set on that 9.5 in measure runs to ~140
+# characters per line, roughly twice the readable optimum, and every figure and
+# table sized for a portrait page leaves a third of the width empty.
+# "template" keeps whatever the template declares.
+REPORT_ORIENTATION = "portrait"   # portrait | landscape | template
+MAX_MEASURE_IN = 6.7              # widest column we set continuous prose on
+MIN_SIDE_MARGIN_IN = 0.79         # 20 mm — never narrower when widening margins
+# Room left under a full-width figure for its caption and the following gap.
+FIGURE_CAPTION_ALLOWANCE_IN = 0.9
+# ISO 80000-1 digit grouping: a non-breaking space, not a comma.
+THOUSANDS_SEP = "\u00a0"
 
 # ── Paths ────────────────────────────────────────────────
 def _resolve_task_dir() -> str:
@@ -351,6 +366,24 @@ def want_pdf_output(study_config):
     return any(str(fmt).strip().lower() == "pdf" for fmt in formats)
 
 
+def resolve_report_orientation(study_config):
+    """Resolve the page orientation for the report body.
+
+    Order: ``--orientation VALUE`` > ``report.orientation`` in
+    ``study_config.yaml`` > portrait. ``template`` keeps whatever the corporate
+    template declares, which is usually landscape.
+    """
+    allowed = ("portrait", "landscape", "template")
+    value = _cli_option("--orientation")
+    if not value:
+        value = (study_config or {}).get("report", {}).get("orientation")
+    value = str(value or "portrait").strip().lower()
+    if value not in allowed:
+        print("NOTE: unknown report.orientation '{}'; using portrait.".format(value))
+        return "portrait"
+    return value
+
+
 def prune_superseded_outputs(current_files):
     """Delete report files this generator wrote under an earlier title.
 
@@ -494,8 +527,65 @@ def _apply_readable_typography(doc):
         body = doc.styles["Normal"].paragraph_format
         if body.space_after is None or body.space_after < Pt(BODY_SPACE_AFTER_PT):
             body.space_after = Pt(BODY_SPACE_AFTER_PT)
+        body.widow_control = True
     except KeyError:
         pass
+    _ensure_caption_style(doc)
+
+
+def _ensure_caption_style(doc):
+    """Give figure and table captions a real Caption style.
+
+    Captions written as ad-hoc italic runs cannot be collected into a list of
+    figures, and Word is free to break the page between a figure and its
+    caption. A styled caption fixes both.
+    """
+    _ensure_paragraph_style(doc, "Caption", CAPTION_PT)
+    try:
+        style = doc.styles["Caption"]
+    except KeyError:
+        return
+    style.font.size = Pt(CAPTION_PT)
+    style.font.italic = True
+    style.font.bold = False
+    style.font.color.rgb = RGBColor(90, 90, 90)
+    style.paragraph_format.space_after = Pt(BODY_SPACE_AFTER_PT)
+    style.paragraph_format.keep_with_next = False
+
+
+def _normalize_page_setup(doc):
+    """Set the body on a readable measure, whatever the template declares."""
+    if REPORT_ORIENTATION == "template":
+        return
+    want_landscape = REPORT_ORIENTATION == "landscape"
+    for section in doc.sections:
+        if (section.page_width > section.page_height) != want_landscape:
+            section.page_width, section.page_height = (
+                section.page_height, section.page_width)
+            section.orientation = (WD_ORIENT.LANDSCAPE if want_landscape
+                                   else WD_ORIENT.PORTRAIT)
+        measure = (section.page_width - section.left_margin
+                   - section.right_margin) / 914400.0
+        if measure <= MAX_MEASURE_IN:
+            continue
+        extra = Inches((measure - MAX_MEASURE_IN) / 2.0)
+        floor = Inches(MIN_SIDE_MARGIN_IN)
+        section.left_margin = max(section.left_margin + extra, floor)
+        section.right_margin = max(section.right_margin + extra, floor)
+
+
+def _text_width_in(doc):
+    """Printable width of the current section, in inches."""
+    section = doc.sections[-1]
+    return max(2.0, (section.page_width - section.left_margin
+                     - section.right_margin) / 914400.0)
+
+
+def _text_height_in(doc):
+    """Printable height of the current section, in inches."""
+    section = doc.sections[-1]
+    return max(2.0, (section.page_height - section.top_margin
+                     - section.bottom_margin) / 914400.0)
 
 
 def _new_document():
@@ -504,6 +594,7 @@ def _new_document():
     if not REPORT_TEMPLATE:
         doc = Document()
         _apply_readable_typography(doc)
+        _normalize_page_setup(doc)
         return doc
     doc = Document(REPORT_TEMPLATE)
     if not KEEP_TEMPLATE_CONTENT:
@@ -513,6 +604,7 @@ def _new_document():
                           ("Heading 3", HEADING3_PT), ("List Bullet", None)):
         _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
     _apply_readable_typography(doc)
+    _normalize_page_setup(doc)
     return doc
 
 
@@ -582,8 +674,44 @@ def _add_heading(doc, text, level=1, numbered=True):
         heading = doc.add_heading(text, level=level)
         if not numbered:
             _suppress_paragraph_numbering(heading)
-        return heading
-    return doc.add_heading(text, level=level)
+    else:
+        heading = doc.add_heading(text, level=level)
+    # A heading stranded at the foot of a page is the most visible layout fault
+    # in an otherwise clean report.
+    heading.paragraph_format.keep_with_next = True
+    heading.paragraph_format.page_break_before = False
+    return heading
+
+
+def _repeat_header_row(table):
+    """Mark row 1 as a header so it repeats when the table breaks across pages."""
+    tr_pr = table.rows[0]._tr.get_or_add_trPr()
+    if tr_pr.find(qn("w:tblHeader")) is None:
+        tr_pr.append(parse_xml('<w:tblHeader {}/>'.format(nsdecls("w"))))
+
+
+def _keep_rows_intact(table):
+    """Stop Word splitting a single table row across a page break."""
+    for row in table.rows:
+        tr_pr = row._tr.get_or_add_trPr()
+        if tr_pr.find(qn("w:cantSplit")) is None:
+            tr_pr.append(parse_xml('<w:cantSplit {}/>'.format(nsdecls("w"))))
+
+
+_NUMERIC_CELL = re.compile(
+    r"^[\s\u00a0]*[<>\u2264\u2265\u00b1~]?[\s\u00a0]*[-+]?[\d\u00a0,. ]*\d"
+    r"(?:[eE][-+]?\d+)?[\s\u00a0]*%?[\s\u00a0]*$")
+
+
+def _align_numeric_cells(table):
+    """Right-align the cells that hold numbers so digits line up by place value."""
+    for row in table.rows[1:]:
+        for cell in row.cells:
+            text = cell.text.strip()
+            if not text or not _NUMERIC_CELL.match(text):
+                continue
+            for paragraph in cell.paragraphs:
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
 
 def _set_table_style(table, name="Table Grid"):
@@ -2748,6 +2876,114 @@ def _add_equation_picture(doc, image_path, max_width_in):
     doc.add_picture(image_path, width=Inches(width_in))
 
 
+def _add_figure_picture(doc, image_path):
+    """Place a figure across the measure, shrunk if it would not fit the page.
+
+    A fixed picture width makes a tall figure overflow the printable height,
+    which Word resolves by pushing it onto its own page and clipping what is
+    left. Scaling on the native aspect ratio keeps every figure on one page.
+    """
+    max_width = _text_width_in(doc)
+    max_height = max(2.0, _text_height_in(doc) - FIGURE_CAPTION_ALLOWANCE_IN)
+    width_in = max_width
+    size = _png_pixel_size(image_path)
+    if size and size[0] > 0 and size[1] > 0:
+        height_in = max_width * size[1] / float(size[0])
+        if height_in > max_height:
+            width_in = max_width * max_height / height_in
+    doc.add_picture(image_path, width=Inches(width_in))
+    picture_para = doc.paragraphs[-1]
+    picture_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # The caption follows the picture, so the picture must not end a page.
+    picture_para.paragraph_format.keep_with_next = True
+    return picture_para
+
+
+_CAPTION_PREFIX = re.compile(r"^\s*(Figure|Table|Equation)\s+\d+\s*[:.\u2013-]\s*",
+                             re.IGNORECASE)
+
+
+def _add_seq_field(paragraph, label):
+    """Append a { SEQ <label> } field so Word owns the caption numbering."""
+    run = paragraph.add_run()
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
+    run._r.append(parse_xml(
+        '<w:instrText {} xml:space="preserve"> SEQ {} \\* ARABIC </w:instrText>'
+        .format(nsdecls("w"), label)))
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
+    placeholder = paragraph.add_run(str(_SEQ_COUNTERS.setdefault(label, 0) + 1))
+    _SEQ_COUNTERS[label] += 1
+    run_end = paragraph.add_run()
+    run_end._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
+    return placeholder
+
+
+_SEQ_COUNTERS = {}
+
+
+def _add_caption(doc, label, text, keep_with_next=False):
+    """Add a numbered, styled caption that a list of figures/tables can collect.
+
+    The number comes from a Word SEQ field, so inserting a figure renumbers the
+    rest of the report instead of leaving the captions to drift out of step.
+    """
+    text = _CAPTION_PREFIX.sub("", str(text or "")).strip()
+    try:
+        paragraph = doc.add_paragraph(style="Caption")
+    except KeyError:
+        paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.keep_with_next = keep_with_next
+    paragraph.add_run("{} ".format(label))
+    _add_seq_field(paragraph, label)
+    if text:
+        paragraph.add_run(": {}".format(text))
+    for run in paragraph.runs:
+        run.font.size = Pt(CAPTION_PT)
+        run.font.italic = True
+    return paragraph
+
+
+def _fmt_number(value, sig=4):
+    """Format a number the way an engineering report prints one.
+
+    "{:.4g}" turns 370523 into "3.705e+05", which reads as a slip rather than a
+    result. Digits are grouped with a non-breaking space per ISO 80000-1 and an
+    exponent is kept only where it is genuinely the clearer form.
+    """
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if number != number or number in (float("inf"), float("-inf")):
+        return str(value)
+    if number == 0:
+        return "0"
+    magnitude = abs(number)
+    # An exact count is not a measurement: rounding 370523 records to 370 500
+    # reads as a sloppy figure rather than a rounded one.
+    if float(number).is_integer() and magnitude < 1e12:
+        return "{:,.0f}".format(number).replace(",", THOUSANDS_SEP)
+    if magnitude >= 1e7 or magnitude < 1e-4:
+        return "{:.{}e}".format(number, max(1, sig - 1))
+    rounded = float("{:.{}g}".format(number, sig))
+    if abs(rounded) >= 1000:
+        return "{:,.0f}".format(rounded).replace(",", THOUSANDS_SEP)
+    return "{:.{}g}".format(rounded, sig)
+
+
+def _fmt_cell(value, sig=4):
+    """Format one table cell, leaving non-numeric values untouched."""
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        return _fmt_number(value, sig)
+    return str(value)
+
+
 def _parse_key_name(key):
     """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
     unit_suffixes = [
@@ -2824,14 +3060,16 @@ def format_validation_html(results):
             status = "PASS" if outcome else "FAIL"
             css_class = ' class="pass"' if outcome else ' class="fail"'
         elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-            css_class = ""
+            status = _fmt_number(outcome)
+            css_class = ' class="num"'
         else:
             status = str(outcome)
             css_class = ""
         rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
             label, css_class, status)
-    return '<table class="validation-table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>\n{}</tbody></table>'.format(rows)
+    return (_html_table_caption("Validation checks")
+            + '<table class="validation-table"><thead><tr><th>Check</th>'
+            '<th>Result</th></tr></thead><tbody>\n{}</tbody></table>'.format(rows))
 
 
 def format_results_html(results):
@@ -2842,17 +3080,27 @@ def format_results_html(results):
     rows = ""
     for key, value in key_results.items():
         label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
         rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td></tr>\n'.format(
-            label, val_str, unit)
+            label, _fmt_cell(value), unit)
     return (
-        '<table class="results-table"><thead>'
+        _html_table_caption("Key results")
+        + '<table class="results-table"><thead>'
         '<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>'
         '</thead><tbody>\n{}</tbody></table>'.format(rows)
     )
+
+
+_HTML_TABLE_COUNTER = {"n": 0}
+
+
+def _html_table_caption(title):
+    """Return a numbered table caption so HTML and Word agree on the numbering."""
+    _HTML_TABLE_COUNTER["n"] += 1
+    text = _CAPTION_PREFIX.sub("", str(title or "")).strip()
+    label = "Table {}".format(_HTML_TABLE_COUNTER["n"])
+    if text:
+        label = "{}: {}".format(label, text)
+    return '<p class="table-caption">{}</p>\n'.format(_html_escape(label))
 
 
 def format_custom_tables_html(results):
@@ -2867,9 +3115,7 @@ def format_custom_tables_html(results):
         data_rows = tbl.get("rows", [])
         if not headers or not data_rows:
             continue
-        h = ""
-        if title:
-            h += '<h3>{}</h3>\n'.format(title)
+        h = _html_table_caption(title)
         h += '<table class="custom-table"><thead><tr>'
         for col in headers:
             h += '<th>{}</th>'.format(col)
@@ -2878,10 +3124,7 @@ def format_custom_tables_html(results):
             h += "<tr>"
             for i, cell in enumerate(row):
                 css = ' class="num"' if i > 0 and isinstance(cell, (int, float)) else ""
-                if isinstance(cell, float):
-                    h += '<td{}>{:.4g}</td>'.format(css, cell)
-                else:
-                    h += '<td{}>{}</td>'.format(css, cell)
+                h += '<td{}>{}</td>'.format(css, _fmt_cell(cell))
             h += "</tr>\n"
         h += "</tbody></table>"
         html_parts.append(h)
@@ -3363,18 +3606,29 @@ def add_benchmark_word_table(doc, results):
                     run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
 
 
-def add_word_table(doc, headers, data_rows, col_widths=None):
+def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
     """Add a professionally styled table to a Word document.
 
     Args:
         doc: Document object.
         headers: list of column header strings.
         data_rows: list of lists (each inner list = one row of cell values).
-        col_widths: optional list of Inches widths per column.
+        col_widths: optional list of Inches widths per column, rescaled to the
+            measure so a template's page size cannot leave the table narrow.
+        caption: optional caption text, numbered and placed above the table.
     """
+    if caption:
+        _add_caption(doc, "Table", caption, keep_with_next=True)
     table = doc.add_table(rows=1, cols=len(headers))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     _set_table_style(table)
+
+    # A wide table only stays legible if the type size comes down with it.
+    body_pt = TABLE_PT
+    if len(headers) >= 9:
+        body_pt = TABLE_PT - 2.0
+    elif len(headers) >= 7:
+        body_pt = TABLE_PT - 1.0
 
     # Header row
     hdr = table.rows[0]
@@ -3385,7 +3639,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None):
         for paragraph in cell.paragraphs:
             for run in paragraph.runs:
                 run.font.bold = True
-                run.font.size = Pt(TABLE_PT)
+                run.font.size = Pt(body_pt)
                 run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         shading = parse_xml(
             '<w:shd {} w:fill="2F5496"/>'.format(nsdecls('w'))
@@ -3396,20 +3650,48 @@ def add_word_table(doc, headers, data_rows, col_widths=None):
     for row_data in data_rows:
         row = table.add_row()
         for i, val in enumerate(row_data):
+            if i >= len(row.cells):
+                break
             cell = row.cells[i]
-            cell.text = str(val)
+            cell.text = _fmt_cell(val)
             for paragraph in cell.paragraphs:
                 for run in paragraph.runs:
-                    run.font.size = Pt(TABLE_PT)
+                    run.font.size = Pt(body_pt)
 
-    # Apply column widths if specified
-    if col_widths:
-        for i, width in enumerate(col_widths):
-            for row in table.rows:
-                row.cells[i].width = width
+    _scale_table_to_measure(doc, table, col_widths)
+    _repeat_header_row(table)
+    _keep_rows_intact(table)
+    _align_numeric_cells(table)
 
     doc.add_paragraph("")  # spacing after table
     return table
+
+
+def _scale_table_to_measure(doc, table, col_widths=None):
+    """Lay the table out across the full measure, keeping column proportions.
+
+    Column widths written in absolute inches were sized for a portrait page; on
+    any other page they leave the table floating in white space or push it into
+    the margin.
+    """
+    measure = _text_width_in(doc)
+    count = len(table.columns)
+    if not count:
+        return
+    if col_widths:
+        shares = [float(width.inches) if hasattr(width, "inches") else float(width)
+                  for width in col_widths[:count]]
+        shares += [sum(shares) / len(shares)] * (count - len(shares))
+    else:
+        shares = [1.0] * count
+    total = sum(shares) or float(count)
+    table.autofit = False
+    for index, share in enumerate(shares):
+        width = Inches(measure * share / total)
+        table.columns[index].width = width
+        for row in table.rows:
+            if index < len(row.cells):
+                row.cells[index].width = width
 
 
 def add_results_word_table(doc, results):
@@ -3421,13 +3703,10 @@ def add_results_word_table(doc, results):
     data_rows = []
     for key, value in key_results.items():
         label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        data_rows.append([label, val_str, unit])
+        data_rows.append([label, _fmt_cell(value), unit])
     add_word_table(doc, headers, data_rows,
-                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)])
+                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)],
+                   caption="Key results")
 
 
 def add_validation_word_table(doc, results):
@@ -3442,12 +3721,13 @@ def add_validation_word_table(doc, results):
         if isinstance(outcome, bool):
             status = "PASS" if outcome else "FAIL"
         elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
+            status = _fmt_number(outcome)
         else:
             status = str(outcome)
         data_rows.append([label, status])
     table = add_word_table(doc, headers, data_rows,
-                           col_widths=[Inches(4.0), Inches(2.0)])
+                           col_widths=[Inches(4.0), Inches(2.0)],
+                           caption="Validation checks")
     # Color-code PASS/FAIL cells
     for row in table.rows[1:]:
         cell = row.cells[1]
@@ -3472,19 +3752,139 @@ def add_custom_word_tables(doc, results):
         data_rows = tbl.get("rows", [])
         if not headers or not data_rows:
             continue
-        if title:
-            _add_heading(doc, title, level=2)
-        # Format numeric values
-        formatted_rows = []
-        for row in data_rows:
-            formatted = []
-            for cell in row:
-                if isinstance(cell, float):
-                    formatted.append("{:.4g}".format(cell))
-                else:
-                    formatted.append(str(cell))
-            formatted_rows.append(formatted)
-        add_word_table(doc, headers, formatted_rows)
+        # A data table titled with Heading 2 lands in the table of contents as
+        # if it were a chapter; a numbered caption is what it actually is.
+        add_word_table(doc, headers, data_rows, caption=title or None)
+
+
+# ── Analytical depth (the nine depth moves) ──────────────
+# A report can pass every hygiene gate and still only restate its source
+# document. These keys carry the analysis that separates an engineering answer
+# from a summary; see the neqsim-professional-reporting skill, Principle 0.
+DEPTH_MOVES = (
+    ("contributor_ranking",
+     "Contributors ranked on a common basis",
+     "Which effects actually carry the result, largest first."),
+    ("source_recommendation_assessment",
+     "Verdict on each source recommendation",
+     "Supported, supported with correction, or challenged \u2014 with the basis."),
+    ("ruled_out",
+     "Hypotheses ruled out quantitatively",
+     "What was excluded, by which test, and with how much margin."),
+    ("robustness",
+     "Robustness and crossover",
+     "How far an input can move before the conclusion flips."),
+    ("conservatism",
+     "Direction of each conservatism",
+     "Whether each assumption bounds the answer from above or below."),
+    ("discriminating_test",
+     "Cheapest discriminating test",
+     "The one measurement that would separate the surviving explanations."),
+    ("evidence_against",
+     "Evidence that does not fit",
+     "Observations the accepted explanation does not account for."),
+)
+
+
+def _depth_entries(results):
+    """Return the depth moves that the study actually produced."""
+    if not results:
+        return []
+    return [(key, title, hint) for key, title, hint in DEPTH_MOVES
+            if results.get(key)]
+
+
+def _depth_rows(payload):
+    """Normalise a depth payload into (headers, rows) for a table, or None."""
+    if isinstance(payload, dict):
+        payload = [payload]
+    if not isinstance(payload, list) or not payload:
+        return None
+    dict_items = [item for item in payload if isinstance(item, dict)]
+    if len(dict_items) != len(payload):
+        return None
+    headers = []
+    for item in dict_items:
+        for key in item:
+            if key not in headers:
+                headers.append(key)
+    rows = [[_fmt_cell(item.get(key, "")) for key in headers]
+            for item in dict_items]
+    return [key.replace("_", " ").title() for key in headers], rows
+
+
+def _depth_bullets(payload):
+    """Render a non-tabular depth payload as bullet lines."""
+    if isinstance(payload, dict):
+        return ["{}: {}".format(key.replace("_", " ").title(), _fmt_cell(value))
+                for key, value in payload.items()]
+    if isinstance(payload, list):
+        return [_format_list_item_text(item) for item in payload]
+    return [str(payload)]
+
+
+def _depth_score_text(results):
+    """Return the declared depth score, or one derived from what is present."""
+    declared = results.get("depth_score") if results else None
+    if declared:
+        return str(declared)
+    return "{}/{} depth moves reported".format(
+        len(_depth_entries(results)), len(DEPTH_MOVES))
+
+
+def format_depth_html(results):
+    """Render the analytical-depth moves as HTML."""
+    entries = _depth_entries(results)
+    if not entries:
+        return ""
+    html = ('<p class="depth-score">Analytical depth: <strong>{}</strong></p>\n'
+            .format(_html_escape(_depth_score_text(results))))
+    for key, title, hint in entries:
+        payload = results.get(key)
+        html += '<h3>{}</h3>\n<p class="depth-hint">{}</p>\n'.format(
+            _html_escape(title), _html_escape(hint))
+        table = _depth_rows(payload)
+        if table:
+            headers, rows = table
+            html += _html_table_caption(title)
+            html += '<table class="custom-table"><thead><tr>'
+            html += "".join('<th>{}</th>'.format(_html_escape(col))
+                            for col in headers)
+            html += '</tr></thead><tbody>\n'
+            for row in rows:
+                html += "<tr>" + "".join(
+                    '<td>{}</td>'.format(_html_escape(cell)) for cell in row
+                ) + "</tr>\n"
+            html += "</tbody></table>\n"
+        else:
+            html += "<ul>\n" + "".join(
+                "  <li>{}</li>\n".format(_html_escape(line))
+                for line in _depth_bullets(payload)) + "</ul>\n"
+    return html
+
+
+def add_depth_word_section(doc, results):
+    """Render the analytical-depth moves into the Word report."""
+    entries = _depth_entries(results)
+    if not entries:
+        return
+    paragraph = doc.add_paragraph()
+    paragraph.add_run("Analytical depth: ").bold = True
+    paragraph.add_run(_depth_score_text(results))
+    for key, title, hint in entries:
+        _add_heading(doc, title, level=2)
+        hint_para = doc.add_paragraph(hint)
+        for run in hint_para.runs:
+            run.font.size = Pt(CAPTION_PT)
+            run.font.italic = True
+            run.font.color.rgb = RGBColor(110, 110, 110)
+        table = _depth_rows(results.get(key))
+        if table:
+            headers, rows = table
+            add_word_table(doc, headers, rows, caption=title)
+        else:
+            for line in _depth_bullets(results.get(key)):
+                doc.add_paragraph(line, style="List Bullet")
 
 
 def format_discussion_html(results):
@@ -3738,6 +4138,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
             "heading": "{}. Discussion".format(next_section_num),
             "content": "",
             "has_discussion": True,
+        })
+        next_section_num += 1
+
+    # Analytical Depth: the moves that turn a summary into an engineering answer
+    if _depth_entries(results):
+        sections.append({
+            "heading": "{}. Analytical Depth".format(next_section_num),
+            "content": "",
+            "has_depth": True,
         })
         next_section_num += 1
 
@@ -3999,7 +4408,33 @@ def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
     # Add TOC heading
     _add_heading(doc, "Table of Contents", level=1, numbered=False)
-    # Insert a Word TOC field (updates when user presses F9 in Word)
+    _add_toc_field(doc, 'TOC \\o "1-2" \\h \\z \\u')
+    # Tell Word to update all fields (incl. this TOC) when the document is opened
+    _set_update_fields_on_open(doc)
+    doc.add_page_break()
+
+
+def _add_figure_and_table_lists(doc, results):
+    """Add a list of figures and a list of tables, when there is anything to list.
+
+    Word builds these from the SEQ fields in the captions, so a reader can find
+    a named figure without scrolling the whole report.
+    """
+    added = False
+    if get_figures():
+        _add_heading(doc, "List of Figures", level=1, numbered=False)
+        _add_toc_field(doc, 'TOC \\h \\z \\c "Figure"')
+        added = True
+    if results and (results.get("tables") or results.get("key_results")):
+        _add_heading(doc, "List of Tables", level=1, numbered=False)
+        _add_toc_field(doc, 'TOC \\h \\z \\c "Table"')
+        added = True
+    if added:
+        doc.add_page_break()
+
+
+def _add_toc_field(doc, instruction):
+    """Insert a Word TOC-family field that populates on open or F9."""
     paragraph = doc.add_paragraph()
     run = paragraph.add_run()
     fldChar1 = parse_xml(
@@ -4008,8 +4443,8 @@ def _add_word_toc(doc):
     run._r.append(fldChar1)
     run2 = paragraph.add_run()
     instrText = parse_xml(
-        '<w:instrText {} xml:space="preserve"> TOC \\o "1-2" \\h \\z \\u </w:instrText>'.format(
-            nsdecls("w")
+        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
+            nsdecls("w"), instruction
         )
     )
     run2._r.append(instrText)
@@ -4026,9 +4461,7 @@ def _add_word_toc(doc):
         '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))
     )
     run5._r.append(fldChar3)
-    # Tell Word to update all fields (incl. this TOC) when the document is opened
-    _set_update_fields_on_open(doc)
-    doc.add_page_break()
+    return paragraph
 
 
 def _set_update_fields_on_open(doc):
@@ -4121,6 +4554,7 @@ def build_word_report(sections, results=None):
 
     # Table of Contents
     _add_word_toc(doc)
+    _add_figure_and_table_lists(doc, results)
 
     # The task this report answers, stated before any analysis
     _add_task_statement_block(doc)
@@ -4161,6 +4595,9 @@ def build_word_report(sections, results=None):
         elif section.get("has_discussion") and results:
             # Discussion section: figure-by-figure interpretation
             add_discussion_word(doc, results)
+        elif section.get("has_depth") and results:
+            # Analytical Depth: ranking, rule-outs, robustness, crossover
+            add_depth_word_section(doc, results)
         else:
             # Regular text content
             for para_text in _body_paragraphs(section["content"]):
@@ -4172,14 +4609,8 @@ def build_word_report(sections, results=None):
             if figures:
                 for fig_idx, fig_path in enumerate(figures, 1):
                     caption_text = get_figure_caption(fig_path, results, fig_idx)
-                    doc.add_picture(fig_path, width=Inches(6.0))
-                    last_para = doc.paragraphs[-1]
-                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption = doc.add_paragraph(caption_text)
-                    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption.runs[0].font.size = Pt(CAPTION_PT)
-                    caption.runs[0].font.italic = True
-                    doc.add_paragraph("")
+                    _add_figure_picture(doc, fig_path)
+                    _add_caption(doc, "Figure", caption_text)
             else:
                 doc.add_paragraph(
                     "[No figures found in figures/ directory. "
@@ -4203,15 +4634,11 @@ def build_word_report(sections, results=None):
                     eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
                     if render_equation_to_image(latex, eq_img_path):
                         doc.add_paragraph("")
-                        _add_equation_picture(doc, eq_img_path, 6.0)
+                        _add_equation_picture(doc, eq_img_path, _text_width_in(doc))
                         last_para = doc.paragraphs[-1]
                         last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption = doc.add_paragraph(
-                            "Equation {}: {}".format(eq_idx, label)
-                        )
-                        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption.runs[0].font.size = Pt(CAPTION_PT)
-                        caption.runs[0].font.italic = True
+                        last_para.paragraph_format.keep_with_next = True
+                        _add_caption(doc, "Equation", label)
                     else:
                         # Fallback: text representation
                         doc.add_paragraph("{}: {}".format(label, latex))
@@ -4387,6 +4814,9 @@ def build_html_report(sections, results=None):
         if section.get("has_discussion") and results:
             content = format_discussion_html(results)
 
+        if section.get("has_depth") and results:
+            content = format_depth_html(results)
+
         if section.get("has_references") and results and results.get("references"):
             content = format_references_html(results)
 
@@ -4484,6 +4914,14 @@ def build_html_report(sections, results=None):
         .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
         .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
                     margin-top: 0.3rem; }}
+        .table-caption {{ font-size: 0.85rem; color: #555; font-style: italic;
+                    margin: 1.4rem 0 0.2rem 0; }}
+        .table-caption + table {{ margin-top: 0; }}
+        .depth-score {{ background: #f3f6fb; border-left: 4px solid #2F5496;
+                    padding: 0.5rem 0.9rem; margin-bottom: 1rem;
+                    border-radius: 0 4px 4px 0; }}
+        .depth-hint {{ font-size: 0.85rem; color: #777; font-style: italic;
+                    margin-bottom: 0.4rem; }}
         .equation-block {{ margin: 1.5rem 0; text-align: center; }}
         .equation {{ font-size: 1.2rem; padding: 0.5rem 0; }}
         .equation-label {{ font-size: 0.85rem; color: #666; font-style: italic;
@@ -4546,13 +4984,18 @@ def build_html_report(sections, results=None):
             main {{ margin-left: 0; padding: 1rem; }}
         }}
         @media print {{
+            @page {{ size: A4 portrait; margin: 20mm 18mm 18mm 20mm; }}
             nav {{ display: none; }}
             main {{ margin-left: 0; max-width: 100%; padding: 0; }}
             body {{ display: block; font-size: 10.5pt; color: #000; }}
             .cover-page {{ page-break-after: always; }}
-            section {{ page-break-inside: avoid; }}
+            section {{ page-break-inside: auto; }}
             .figure, table, .discussion-block {{ page-break-inside: avoid; }}
-            h2 {{ page-break-after: avoid; }}
+            thead {{ display: table-header-group; }}
+            tr {{ page-break-inside: avoid; }}
+            h2, h3 {{ page-break-after: avoid; break-after: avoid; }}
+            .table-caption {{ page-break-after: avoid; }}
+            p {{ orphans: 3; widows: 3; }}
             a {{ color: #000; text-decoration: none; }}
         }}
     </style>
@@ -5056,9 +5499,7 @@ def build_paper_docx(sections, results=None):
                     caption_text = get_figure_caption(
                         fig_path, results, fig_counter[0])
                     doc.add_paragraph("")
-                    doc.add_picture(fig_path, width=Inches(5.5))
-                    last_para = doc.paragraphs[-1]
-                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    _add_figure_picture(doc, fig_path)
                     cap = doc.add_paragraph(caption_text)
                     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     for run in cap.runs:
@@ -5429,6 +5870,7 @@ if __name__ == "__main__":
 
     print("")
     print("Generating outputs for: {}".format(TITLE))
+    REPORT_ORIENTATION = resolve_report_orientation(study_config)
     pdf_requested = want_pdf_output(study_config)
     print("Report files: {}.docx / {}.html{}".format(
         REPORT_BASENAME, REPORT_BASENAME,

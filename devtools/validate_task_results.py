@@ -199,7 +199,41 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
                     if need not in item:
                         warnings.append(f"figure_discussion[{i}].{need}: missing field")
 
+    warnings.extend(_check_analytical_depth(results))
+
     return errors, warnings
+
+
+# The depth moves of Principle 0 in the neqsim-professional-reporting skill.
+# Without them a report can pass every hygiene gate and still only restate its
+# source document, so the absence is reported rather than silently accepted.
+DEPTH_KEYS = (
+    "contributor_ranking",
+    "source_recommendation_assessment",
+    "ruled_out",
+    "robustness",
+    "conservatism",
+    "discriminating_test",
+    "evidence_against",
+)
+DEPTH_MIN_MOVES = 2
+
+
+def _check_analytical_depth(results: dict) -> List[str]:
+    """Warn when a substantial study reports no analytical-depth moves."""
+    present = [key for key in DEPTH_KEYS if results.get(key)]
+    # A study with figure discussion, uncertainty or a risk register is past the
+    # quick-answer scale, so depth is expected of it.
+    substantial = any(results.get(key) for key in
+                      ("figure_discussion", "uncertainty", "risk_evaluation"))
+    if not substantial or len(present) >= DEPTH_MIN_MOVES:
+        return []
+    missing = ", ".join(key for key in DEPTH_KEYS if key not in present)
+    return [
+        "analytical depth: only {}/{} depth moves reported "
+        "(add at least {}). Missing: {}".format(
+            len(present), len(DEPTH_KEYS), DEPTH_MIN_MOVES, missing)
+    ]
 
 
 def check_capability_assessment(task_folder: Path) -> List[str]:
