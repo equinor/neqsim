@@ -1073,15 +1073,43 @@ def load_study_config():
     return config
 
 
+# Norwegian task_spec.md files are common, and heading matching used to be
+# English-only, so a fully written Norwegian scope section was reported as
+# "lacks source data". Each canonical heading therefore carries its aliases.
+SPEC_HEADING_ALIASES = {
+    "applicable standards": ("gjeldende standarder", "standarder", "regelverk",
+                             "scope and standards", "omfang og standarder"),
+    "calculation methods": ("beregningsmetoder", "metode", "metoder",
+                            "framgangsmate", "fremgangsmate"),
+    "acceptance criteria": ("akseptkriterier", "akseptansekriterier"),
+    "operating envelope": ("driftsomrade", "driftsvindu", "operasjonsvindu"),
+    "objective": ("formal", "mal", "hensikt", "oppgave"),
+    "scope": ("omfang", "avgrensning", "bakgrunn og avgrensning"),
+    "data sources": ("datakilder", "kilder"),
+    "deliverables": ("leveranser", "leveranse"),
+}
+
+
+def _heading_variants(heading):
+    """Return the heading plus any language aliases registered for it."""
+    key = str(heading or "").strip().lower()
+    return (key,) + SPEC_HEADING_ALIASES.get(key, ())
+
+
 def extract_spec_section(spec_text, heading):
-    """Extract a section from task_spec.md by heading."""
+    """Extract a section from task_spec.md by heading.
+
+    Matching is case-insensitive and alias-aware, so a Norwegian heading such as
+    "Akseptkriterier" satisfies a request for "Acceptance Criteria".
+    """
     if not spec_text:
         return ""
+    variants = _heading_variants(heading)
     lines = spec_text.split("\n")
     capturing = False
     result = []
     for line in lines:
-        if line.startswith("## ") and heading.lower() in line.lower():
+        if line.startswith("## ") and any(v in line.lower() for v in variants):
             capturing = True
             continue
         elif line.startswith("## ") and capturing:
