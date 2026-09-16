@@ -1369,10 +1369,6 @@ public class JsonProcessBuilder {
    * @return true if the unit has inlet references that need to be resolved
    */
   private boolean needsWiring(JsonObject unitDef) {
-    String type = unitDef.has("type") ? unitDef.get("type").getAsString() : "";
-    if ("Stream".equalsIgnoreCase(type)) {
-      return false;
-    }
     return unitDef.has("inlet") || unitDef.has("inlets");
   }
 

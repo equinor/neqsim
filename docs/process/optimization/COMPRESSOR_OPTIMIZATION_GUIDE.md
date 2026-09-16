@@ -590,7 +590,9 @@ TwoStageResult result = CompressorOptimizationHelper.optimizeTwoStage(
 
 // Inspect both stages before accepting their proposed operating point.
 if (!result.getStage1Result().isFeasible() || !result.getStage2Result().isFeasible()) {
-    throw new IllegalStateException("No feasible two-stage solution");
+    throw new IllegalStateException("No feasible two-stage solution: stage 1: "
+        + result.getStage1Result().getInfeasibilityDiagnosis() + "; stage 2: "
+        + result.getStage2Result().getInfeasibilityDiagnosis());
 }
 
 // Access results
