@@ -242,7 +242,8 @@ def _handle_report(argv):
               "(no results.json, step1_scope_and_research/, or step3_report/)."
               .format(task_dir))
         print("Usage: neqsim report [TASK_DIR] [--paper] [--pdf] [--no-pdf] "
-              "[--template PATH] [--no-template] [--title TEXT] [--author NAME]")
+              "[--template PATH] [--no-template] [--title TEXT] [--author NAME] "
+              "[--language CODE]")
         return 2
     if not os.path.isfile(GENERATOR_PATH):
         print("ERROR: report generator not found at {}".format(GENERATOR_PATH))

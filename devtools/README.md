@@ -152,6 +152,17 @@ for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
 `.html` (paper: `..._Paper.docx`). Report files written under an earlier title
 are deleted on regeneration, so a renamed study leaves no superseded deliverable.
 
+The report language is English unless the task says otherwise. Set
+`report.language` in the task's `study_config.yaml` (`en` default, `nb`/`no` for
+Norwegian, or any ISO code); precedence is `generate_report.py --language CODE` >
+`NEQSIM_REPORT_LANGUAGE` > `report.language` > English. It translates the report
+furniture the generator owns — section headings, cover labels, caption prefixes,
+navigation — and sets the document language of the `.docx` and `.html` so Word
+spell-checks in that language. Write the study content (`results.json`,
+`task_spec.md`) in the same language. A code with no built-in wording table still
+gets its document language set, the headings stay English, and the generator says
+so. The scientific paper stays English for journal submission.
+
 The canonical generator accepts both `benchmark_validation.tests` lists and
 named benchmark mappings. Word and HTML outputs retain the source, numerical
 comparisons, and PASS/FAIL status. Before rendering, the generator checks for

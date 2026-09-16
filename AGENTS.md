@@ -300,6 +300,13 @@ Regenerate it whenever documents are added and before finalizing the task.
      `--template PATH` for a single run), inheriting their organisation's styles,
      fonts, headers, and footers. Report a missing-template error rather than
      issuing an unbranded report.
+   - **Report language:** English by default. A task written in another language
+     sets `report.language` in `study_config.yaml` (`nb`/`no` for Norwegian, or
+     any ISO code); `--language CODE` / `NEQSIM_REPORT_LANGUAGE` override it for
+     one run. It translates the generator's own headings, cover labels, and
+     caption prefixes and sets the document language for spell-check — write
+     `results.json` and `task_spec.md` content in the same language. The
+     scientific paper (`--paper`) stays English.
    - Scientific papers (`--paper`) are only generated when explicitly requested
    - **Important:** The template now has built-in styled formatting for
      Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections
