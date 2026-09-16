@@ -1,5 +1,6 @@
 """Task output destination regression tests, isolated from user settings."""
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -361,3 +362,37 @@ def test_task_indexes_document_library_for_agents(defaults, tmp_path):
     (documents / "standards" / "NORSOK P-002.pdf").write_text("x", encoding="utf-8")
     new_task.write_document_root_index(str(task))
     assert "- NORSOK P-002.pdf" in index.read_text(encoding="utf-8")
+
+
+def test_document_search_reaches_every_subfolder(defaults, tmp_path):
+    documents = tmp_path / "library"
+    deep = documents / "field development" / "instructions" / "appendix"
+    deep.mkdir(parents=True)
+    (documents / "top.pdf").write_text("x", encoding="utf-8")
+    (deep / "buried datasheet.pdf").write_text("x", encoding="utf-8")
+    hidden = documents / ".archive"
+    hidden.mkdir()
+    (hidden / "superseded.pdf").write_text("x", encoding="utf-8")
+    new_task.save_default_document_root(str(documents))
+
+    found = [os.path.relpath(p, str(documents)) for p in new_task.find_documents()]
+    assert os.path.join("field development", "instructions", "appendix",
+                        "buried datasheet.pdf") in found
+    assert "top.pdf" in found
+    # Dot-folders are deliberately out of scope: superseded copies are not evidence.
+    assert not any(name.startswith(".") for name in found)
+
+    # A junction/symlink subfolder must not hide documents, and a link that
+    # points back up must not make the walk run forever. Skip where the
+    # platform refuses to create one.
+    linked = tmp_path / "vendor"
+    linked.mkdir()
+    (linked / "linked manual.pdf").write_text("x", encoding="utf-8")
+    try:
+        (documents / "vendor").symlink_to(linked, target_is_directory=True)
+        (deep / "loop").symlink_to(documents, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlink creation not permitted on this platform")
+    found = [os.path.basename(p) for p in new_task.find_documents()]
+    assert "linked manual.pdf" in found
+    assert found.count("top.pdf") == 1
