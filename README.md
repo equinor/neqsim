@@ -304,9 +304,22 @@ neqsim skill install --all        # install community skills
 
 neqsim agent private-init         # scaffold a private/enterprise catalog
 # ...or register a private repo AND sign in with browser SSO in one step:
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
+neqsim agent install --all --vscode --force   # community + enterprise
 ```
+
+> If `neqsim` is not recognized (no elevated privileges, console script not on
+> PATH), run the same commands as `python -m neqsim_cli ...`.
+
+> **Work with every repo in one VS Code workspace.** Clone NeqSim and the agent /
+> skill repos into one parent folder, open the first with `File → Open Folder...`,
+> add the rest with `File → Add Folder to Workspace...` — plus your task folder,
+> which is *not* a clone — then `File → Save Workspace As...`. Copilot Chat then
+> sees the skill, the agent definition, the NeqSim source, and the task in one
+> conversation, and you can push an improvement back to the right repo without
+> leaving the window. See
+> [Agents & Skills Setup §5.1](docs/integration/agents_and_skills_setup.md#51-keep-every-repo-and-your-task-folder-in-one-vs-code-workspace).
 
 - **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). `private-init` writes and then prints the path to those per-user files (`~/.neqsim/private-agents.yaml` / `private-skills.yaml`) so you can edit them afterwards. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
@@ -411,7 +424,7 @@ cd $HOME\Documents\GitHub
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
-# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+# 2. Python devtools in a venv ('neqsim' works in terminals where it is activated)
 py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
@@ -442,10 +455,12 @@ folder, so studies can live outside the clone and survive re-cloning. It is save
 `neqsim new-task "title" --task-root "PATH"`, or remove the setting with
 `neqsim --reset-task-root` — existing tasks are never moved.
 
-The report template is saved in the same file and makes every generated
-`Report.docx` inherit your organisation's Word styles, fonts, headers, and footers.
+The report template is saved in the same file and makes every generated Word
+report inherit your organisation's Word styles, fonts, headers, and footers.
 Override one run with `python step3_report/generate_report.py --template "PATH"`
 (or `--no-template`), and remove the setting with `neqsim --reset-report-template`.
+Report files are named after the report title, so a deliverable is identifiable
+outside its task folder.
 
 ### Run tests
 
@@ -561,7 +576,7 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1   # activate the venv FIRST so 'neqsim' lands on PATH
-.\install.cmd                  # or .\install.ps1  (append 'uv' for the fast installer)
+.\install.ps1                  # run this from PowerShell (append -Uv for the fast installer)
 neqsim onboard                 # interactive setup (Java, Maven, build, Python, agents)
 ```
 
@@ -578,6 +593,16 @@ neqsim onboard
 > or activate a venv — it only detects an already-active one. Activating first
 > means the package and the `neqsim` command install into the venv and stay on
 > PATH; skip it and you may hit "`neqsim` is not recognized".
+>
+> A venv is activated **per terminal**, so run `.\.venv\Scripts\Activate.ps1`
+> in each new terminal (or pick the interpreter via *Python: Select Interpreter*
+> in VS Code and let it activate for you). Restarting the machine does not
+> change this.
+>
+> Run `.\install.ps1` **from PowerShell**: it puts the command on PATH in the
+> window you are already in, so `neqsim` works immediately. `.\install.cmd`
+> launched from PowerShell runs as a child process and cannot do that — you
+> would need a new terminal.
 >
 > The `install` script finds a working Python for you and runs `python -m pip`
 > under the hood, so it works even when `pip`/`python` are not on PATH. To

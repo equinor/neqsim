@@ -48,6 +48,9 @@ class TwoFluidPipeComponentTransportTest {
     assertEquals(0.0, report.getInterphaseLatentHeatEnergyJ(), 1.0e-12);
     assertTrue(first.getComponentMassFractionProfile(Phase.GAS, "nitrogen")[0] > 0.05,
         "The inlet composition front must enter the first physical cell");
+    assertPublishedComponents(first);
+    assertEquals(0.05, first.getOutletStream().getFluid().getPhase(0).getComponent("nitrogen").getz(), 1.0e-10,
+        "The inlet composition change must not arrive at the outlet ahead of conservative transport");
 
     assertArrayEquals(first.getComponentMassFractionProfile(Phase.GAS, "nitrogen"),
         repeated.getComponentMassFractionProfile(Phase.GAS, "nitrogen"), 0.0);
@@ -103,6 +106,66 @@ class TwoFluidPipeComponentTransportTest {
     assertArrayEquals(new String[] { "methane", "nitrogen" },
         pipe.getLastComponentConservationReport().getComponentNames());
     assertTrue(pipe.getComponentMassFractionProfile(Phase.GAS, "nitrogen")[0] > 0.05);
+    assertPublishedComponents(pipe);
+  }
+
+  @Test
+  void rejectedComponentStepPreservesInventoriesAndEveryIntervalLedger() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidSection[] cells = { section };
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    double[][] sources = new double[1][3];
+    transport.advance(0.1, new double[][] { { 0.1, 0.0, 0.0 }, { 0.1, 0.0, 0.0 } }, sources, cells, fluid, fluid,
+        1.0e-8);
+    String before = transport.createReport(0.1, 1, 1.0e-8).toJson();
+    // The inlet is processed before this unsupported outlet inflow. Neither may enter the accepted ledger.
+    assertThrows(IllegalStateException.class, () -> transport.advance(0.1,
+        new double[][] { { 0.2, 0.0, 0.0 }, { -0.1, 0.0, 0.0 } }, sources, cells, fluid, fluid, 1.0e-8));
+    assertEquals(before, transport.createReport(0.1, 1, 1.0e-8).toJson());
+    // An independently inconsistent hydrodynamic endpoint must also discard the fully evaluated candidate.
+    assertThrows(IllegalStateException.class, () -> transport.advance(0.1,
+        new double[][] { { 0.2, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } }, sources, cells, fluid, fluid, 1.0e-8));
+    assertEquals(before, transport.createReport(0.1, 1, 1.0e-8).toJson());
+    transport.advance(0.1, new double[][] { { 0.1, 0.0, 0.0 }, { 0.1, 0.0, 0.0 } }, sources, cells, fluid, fluid,
+        1.0e-8);
+    assertTrue(transport.createReport(0.2, 2, 1.0e-8).isConverged());
+  }
+
+  @Test
+  void nonFiniteComponentTransportInputsFailBeforeAnyLedgerMutation() {
+    SystemInterface fluid = createGas(0.95, 0.05);
+    TwoFluidSection section = new TwoFluidSection(0.0, 1.0, 0.20, 0.0);
+    section.setPressure(70.0e5);
+    section.setTemperature(288.15);
+    section.setGasMassPerLength(1.0);
+    TwoFluidSection[] cells = { section };
+    TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
+    String before = transport.createReport(0.0, 0, 1.0e-8).toJson();
+    for (double invalid : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+      assertThrows(IllegalArgumentException.class, () -> transport.advance(0.1,
+          new double[][] { { invalid, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } }, new double[1][3], cells, fluid, fluid, 1.0e-8));
+      assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+      assertThrows(IllegalArgumentException.class, () -> transport.advance(0.1, new double[2][3],
+          new double[][] { { invalid, 0.0, 0.0 } }, cells, fluid, fluid, 1.0e-8));
+      assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
+    }
+  }
+
+  private static void assertPublishedComponents(TwoFluidPipe pipe) {
+    TwoFluidComponentConservationReport report = pipe.getLastComponentConservationReport();
+    SystemInterface outlet = pipe.getOutletStream().getFluid();
+    String[] names = report.getComponentNames();
+    double[] transported = report.getOutletBoundaryMassKg();
+    for (int component = 0; component < names.length; component++) {
+      double published = outlet.getTotalNumberOfMoles() * outlet.getPhase(0).getComponent(names[component]).getz()
+          * outlet.getPhase(0).getComponent(names[component]).getMolarMass();
+      assertEquals(transported[component] / report.getElapsedTimeSeconds(), published, 1.0e-10,
+          "Published component flow must use the accepted boundary ledger: " + names[component]);
+    }
   }
 
   @Test

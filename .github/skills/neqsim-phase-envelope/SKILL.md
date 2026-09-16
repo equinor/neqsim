@@ -236,6 +236,37 @@ Report:
 - convergence or filtering warnings
 - benchmark source and deviations for decision-critical work
 
+## Silent Truncation of the Cricondenbar (READ THIS)
+
+`calcPTphaseEnvelope` marches along the saturation curve and reports the highest pressure it
+visits. For mixtures carrying several trace heavy components the march can **terminate early**,
+and the endpoint of the partial trace is then reported as the cricondenbar — with no exception, no
+warning, and a plausible-looking number.
+
+Observed case: a rich natural gas whose true cricondenbar is 123.4 bara at −6 °C was reported at
+62.0 bara at −65.8 °C — **49.8 % low**. Used for a dense-phase pipeline design that would have set
+the minimum operating pressure at 77 bara instead of 138 bara, and the line would have run
+two-phase while believed single-phase.
+
+**Always cross-check any cricondenbar that feeds a design decision.** Use
+`neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.RobustPhaseEnvelope`,
+which finds the boundary by a flash grid plus bisection and is independent of continuation:
+
+```java
+RobustPhaseEnvelope env = new RobustPhaseEnvelope(fluid);
+env.setTemperatureRange(150.0, 350.0);
+env.setPressureRange(1.0, 300.0);
+env.calculate();
+double pcb = env.getCricondenbarPressure();
+boolean suspect = env.continuationLooksTruncated(continuationValue, 0.10);
+```
+
+Symptoms that a continuation result is truncated:
+- The cricondenbar temperature sits at an implausible extreme (well below −50 °C for a
+  hydrocarbon gas).
+- The cricondentherm is far colder than the heaviest component's boiling point suggests.
+- Adding or removing a trace component changes the cricondenbar by more than a few bar.
+
 ## Known Limitations
 
 - Stored branch labels can differ from physical branch identity for bubble-first tracing.

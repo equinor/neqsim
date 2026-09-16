@@ -69,6 +69,63 @@ def test_enterprise_gate_accepts_benchmarked_task(tmp_path):
     assert "engineering validation" not in strict.stdout
 
 
+def _waive(task, *gates):
+    """Write a study_config.yaml that skips the named quality gates."""
+    lines = ["study:", "  title: \"Waiver test\"", "quality_gates:"]
+    lines.extend("  {}: skip".format(gate) for gate in gates)
+    (task / "study_config.yaml").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def test_explicit_waiver_satisfies_enterprise_gate(tmp_path):
+    """A study with no model to benchmark may waive the gate in study_config.
+
+    The report generator honours ``quality_gates.benchmark_validation: skip``,
+    so the validator must agree with it rather than warn about the same task.
+    """
+    task = _write_task(tmp_path, BASE_RESULTS)
+    _waive(task, "benchmark_validation")
+
+    strict = _run_validator(task, "--enterprise-gate")
+    assert strict.returncode == 0
+    assert "ERROR   engineering validation" not in strict.stdout
+    assert "WAIVED  benchmark_validation" in strict.stdout
+
+
+def test_waiver_is_reported_not_silent(tmp_path):
+    """A waived gate is printed, so a reviewer sees the check was turned off."""
+    task = _write_task(tmp_path, BASE_RESULTS)
+    _waive(task, "benchmark_validation", "uncertainty_analysis", "risk_register")
+
+    out = _run_validator(task).stdout
+    assert "WAIVED  uncertainty_analysis" in out
+    assert "WAIVED  risk_register" in out
+    assert "uncertainty: recommended key is missing" not in out
+    assert "risk_evaluation: recommended key is missing" not in out
+
+
+def test_auto_gate_is_not_treated_as_a_waiver(tmp_path):
+    """Only an explicit `skip` waives a gate; `auto` leaves it in force."""
+    task = _write_task(tmp_path, BASE_RESULTS)
+    (task / "study_config.yaml").write_text(
+        "quality_gates:\n  benchmark_validation: auto\n", encoding="utf-8")
+
+    strict = _run_validator(task, "--enterprise-gate")
+    assert strict.returncode == 1
+    assert "ERROR   engineering validation" in strict.stdout
+
+
+def test_waiver_does_not_mask_structural_errors(tmp_path):
+    """Waiving a gate must not suppress a malformed benchmark block."""
+    results = dict(BASE_RESULTS)
+    results["benchmark_validation"] = [{"case": "bad status", "status": "ok"}]
+    task = _write_task(tmp_path, results)
+    _waive(task, "benchmark_validation")
+
+    out = _run_validator(task, "--enterprise-gate")
+    assert out.returncode == 1
+    assert "unexpected 'ok'" in out.stdout
+
+
 def test_enterprise_gate_skips_quick_tasks(tmp_path):
     results = {k: v for k, v in BASE_RESULTS.items() if k != "uncertainty"}
     task = tmp_path / "2026-01-01_quick"
@@ -105,5 +162,6 @@ def test_report_command_generates_into_external_task_folder(tmp_path):
         capture_output=True, text=True,
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    assert (task / "step3_report" / "Report.docx").is_file()
-    assert (task / "step3_report" / "Report.html").is_file()
+    # File names follow the report title, which here comes from the folder name.
+    assert (task / "step3_report" / "Gate_test.docx").is_file()
+    assert (task / "step3_report" / "Gate_test.html").is_file()

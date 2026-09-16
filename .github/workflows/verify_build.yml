@@ -63,7 +63,8 @@ jobs:
       id-token: write
     runs-on: ${{ matrix.os }}
     needs: test_javadoc
-    timeout-minutes: 60
+    # The full fast suite with JaCoCo exceeds one hour on hosted Ubuntu runners.
+    timeout-minutes: 90
     strategy:
       fail-fast: true
       matrix:

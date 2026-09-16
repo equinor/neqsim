@@ -367,6 +367,20 @@ geometric arithmetic only, not pressure-code adequacy. Correct an inconsistent
 source design before meshing it. A missing head type is expected: the separator
 model does not specify a fabrication head profile.
 
+Compressor snapshots also expose `impellerSizingFeasible` and `impellerSizingIssues`.
+Check these before using impeller dimensions: diameter, shaft speed, tip speed,
+equal-stage head and inlet flow coefficient are screened together. An infeasible
+candidate retains its head-based dimensions even outside the sizing limits; shell
+`geometryConsistency` does not qualify it. The unit-labelled `designBasis` includes
+the sizing speed (rpm), tip speed (m/s), inlet flow coefficient, head per stage
+(J/kg) and stage count. See [Compressor Mechanical Design](CompressorMechanicalDesign#2-impeller-sizing)
+for the assumptions and limits. These checks do not establish aerodynamic or
+fabrication qualification.
+
+An invalid compressor sizing attempt clears the previous envelope, shaft, rotor,
+weight and layout results. Their JSON quantities are unavailable instead of
+retaining values from an earlier successful run, and the casing calculation is absent.
+
 The runnable [JSON-to-mesh example](../../examples/mechanical_design_json_to_mesh.py)
 uses `trimesh` and rejects missing units, unavailable dimensions and inconsistent
 shell geometry. With the JSON above saved as `separator-design.json`:

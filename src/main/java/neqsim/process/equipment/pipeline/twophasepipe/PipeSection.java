@@ -139,13 +139,30 @@ public class PipeSection implements Cloneable, Serializable {
       liquidHoldup /= total;
     }
 
+    updateDerivedQuantitiesWithoutNormalization(gasHoldup * gasVelocity, liquidHoldup * liquidVelocity);
+  }
+
+  /**
+   * Update derived values without modifying the supplied holdups.
+   *
+   * <p>
+   * Conservative endpoint recovery uses this only after independently checking the occupied-volume equation. The legacy
+   * public update retains its normalization behavior.
+   * </p>
+   *
+   * @param gasSuperficialVelocity gas volumetric flow divided by pipe area in m/s
+   * @param liquidSuperficialVelocity total oil/water volumetric flow divided by pipe area in m/s
+   */
+  protected void updateDerivedQuantitiesWithoutNormalization(double gasSuperficialVelocity,
+      double liquidSuperficialVelocity) {
+
     // Mixture properties
     mixtureDensity = gasHoldup * gasDensity + liquidHoldup * liquidDensity;
-    mixtureVelocity = gasHoldup * gasVelocity + liquidHoldup * liquidVelocity;
+    mixtureVelocity = gasSuperficialVelocity + liquidSuperficialVelocity;
 
     // Superficial velocities
-    superficialGasVelocity = gasHoldup * gasVelocity;
-    superficialLiquidVelocity = liquidHoldup * liquidVelocity;
+    superficialGasVelocity = gasSuperficialVelocity;
+    superficialLiquidVelocity = liquidSuperficialVelocity;
 
     // Liquid level for stratified flow (simplified circular geometry)
     if (flowRegime == FlowRegime.STRATIFIED_SMOOTH || flowRegime == FlowRegime.STRATIFIED_WAVY) {

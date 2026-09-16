@@ -93,6 +93,64 @@ public final class UpstreamCompressibleVolume implements Serializable {
     solvePressureClosure();
   }
 
+  /**
+   * Validate a privately advanced candidate before a connected pipe publishes any accepted state.
+   *
+   * <p>
+   * The candidate must describe the same fixed volume, acoustic compressibilities and configured source rates. It must
+   * also have a finite, nonnegative phase inventory satisfying the existing pressure/volume closure. Validation does
+   * not change either object. The pipe performs this check before publishing its outlet and then installs only the
+   * candidate's dynamic values through {@link #acceptCandidateState(UpstreamCompressibleVolume)}.
+   * </p>
+   *
+   * @param candidate completed private volume state
+   * @throws IllegalStateException if the storage configuration or candidate pressure closure is incompatible
+   */
+  void validateCandidateConfiguration(UpstreamCompressibleVolume candidate) {
+    if (candidate == null || volumeM3 != candidate.volumeM3
+        || !Arrays.equals(phaseSoundSpeedMS, candidate.phaseSoundSpeedMS)
+        || !Arrays.equals(sourceMassFlowKgS, candidate.sourceMassFlowKgS)) {
+      throw new IllegalStateException("Upstream-volume candidate must retain the connected storage configuration");
+    }
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      if (!Double.isFinite(candidate.phaseMassKg[phase]) || candidate.phaseMassKg[phase] < 0.0
+          || !Double.isFinite(candidate.phaseDensityKgM3[phase]) || candidate.phaseDensityKgM3[phase] <= 0.0) {
+        throw new IllegalStateException("Upstream-volume candidate requires finite phase inventory and density");
+      }
+    }
+    double residual = Math.abs(candidate.calculateOccupiedVolumeM3() - volumeM3) / volumeM3;
+    if (!Double.isFinite(candidate.pressurePa) || candidate.pressurePa <= 0.0
+        || !Double.isFinite(candidate.cumulativeSourceMassKg) || candidate.cumulativeSourceMassKg < 0.0
+        || !Double.isFinite(candidate.cumulativeWithdrawalMassKg)
+        || !Double.isFinite(candidate.maximumRelativeVolumeResidual) || candidate.maximumRelativeVolumeResidual < 0.0
+        || candidate.maximumRelativeVolumeResidual > RELATIVE_VOLUME_TOLERANCE || !Double.isFinite(residual)
+        || residual > RELATIVE_VOLUME_TOLERANCE || candidate.pressureIterations < 0
+        || candidate.pressureIterations > MAXIMUM_ITERATIONS) {
+      throw new IllegalStateException("Upstream-volume candidate must satisfy the accepted pressure/volume closure");
+    }
+  }
+
+  /**
+   * Install a validated candidate's dynamic state while preserving the connected volume object and its configuration.
+   *
+   * <p>
+   * The owning pipe must first call {@link #validateCandidateConfiguration(UpstreamCompressibleVolume)} and keep both
+   * states unchanged between validation and this assignment. This method only copies values into existing arrays; no
+   * pressure solve, user callback or allocation occurs during acceptance.
+   * </p>
+   *
+   * @param candidate previously validated private state
+   */
+  void acceptCandidateState(UpstreamCompressibleVolume candidate) {
+    System.arraycopy(candidate.phaseMassKg, 0, phaseMassKg, 0, PHASE_COUNT);
+    System.arraycopy(candidate.phaseDensityKgM3, 0, phaseDensityKgM3, 0, PHASE_COUNT);
+    pressurePa = candidate.pressurePa;
+    cumulativeSourceMassKg = candidate.cumulativeSourceMassKg;
+    cumulativeWithdrawalMassKg = candidate.cumulativeWithdrawalMassKg;
+    maximumRelativeVolumeResidual = candidate.maximumRelativeVolumeResidual;
+    pressureIterations = candidate.pressureIterations;
+  }
+
   private void solvePressureClosure() {
     pressureIterations = 0;
     for (int iteration = 1; iteration <= MAXIMUM_ITERATIONS; iteration++) {

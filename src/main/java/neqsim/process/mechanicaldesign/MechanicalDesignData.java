@@ -50,6 +50,10 @@ public final class MechanicalDesignData implements Serializable {
   private String geometryConsistency = "incomplete";
   private String orientation;
   private String headType;
+  /** Compressor-only preliminary impeller sizing qualification; null for other equipment. */
+  private Boolean impellerSizingFeasible;
+  /** Compressor-only sizing diagnostics, distinct from shell geometry consistency. */
+  private List<String> impellerSizingIssues;
   private final Map<String, Quantity> geometry = new LinkedHashMap<String, Quantity>();
   private final Map<String, Quantity> operatingConditions = new LinkedHashMap<String, Quantity>();
   private final Map<String, Quantity> designBasis = new LinkedHashMap<String, Quantity>();
@@ -148,6 +152,15 @@ public final class MechanicalDesignData implements Serializable {
     } else if (design instanceof CompressorMechanicalDesign) {
       geometryKind = "compressor_envelope";
       CompressorMechanicalDesign compressorDesign = (CompressorMechanicalDesign) design;
+      impellerSizingIssues = compressorDesign.getImpellerSizingIssues();
+      impellerSizingFeasible = impellerSizingIssues.isEmpty();
+      put(designBasis, "impellerSizingSpeed", compressorDesign.getImpellerSizingSpeedRPM(), "rpm",
+          "getImpellerSizingSpeedRPM", true);
+      put(designBasis, "impellerTipSpeed", compressorDesign.getTipSpeed(), "m/s", "getTipSpeed", true);
+      put(designBasis, "inletFlowCoefficient", compressorDesign.getFlowCoefficient(), "1", "getFlowCoefficient", true);
+      put(designBasis, "headPerStage", compressorDesign.getHeadPerStage() * 1000.0, "J/kg", "getHeadPerStage (kJ/kg)",
+          true);
+      put(designBasis, "numberOfStages", compressorDesign.getNumberOfStages(), "1", "getNumberOfStages", true);
       put(geometry, "impellerDiameter", compressorDesign.getImpellerDiameter() / 1000.0, "m",
           "getImpellerDiameter (mm)", true);
       put(geometry, "shaftDiameter", compressorDesign.getShaftDiameter() / 1000.0, "m", "getShaftDiameter (mm)", true);
@@ -168,6 +181,8 @@ public final class MechanicalDesignData implements Serializable {
       }
       limitations.add(
           "Compressor wallThickness is an envelope gap; use pressureCasingWallThickness for the casing calculation result.");
+      limitations.add(
+          "Check impellerSizingFeasible and impellerSizingIssues before using compressor dimensions; this is an inlet-stage preliminary sizing screen, not aerodynamic or fabrication qualification.");
     } else if (design instanceof PumpMechanicalDesign) {
       geometryKind = "pump_envelope";
       PumpMechanicalDesign pump = (PumpMechanicalDesign) design;

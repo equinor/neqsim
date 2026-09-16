@@ -97,27 +97,48 @@ goto :done
 echo.
 echo Ensuring the 'neqsim' command is on your PATH...
 %PY% "%DEVTOOLS%\ensure_on_path.py"
+
+REM A PATH change written to the registry reaches only NEW processes, so add the
+REM directory to this session too -- otherwise the command advertised below fails
+REM in the very window the user is standing in.
+set "NEQSIM_SCRIPTS="
+for /f "usebackq delims=" %%D in (`%PY% "%DEVTOOLS%\ensure_on_path.py" --print-script-dir 2^>nul`) do set "NEQSIM_SCRIPTS=%%D"
+if defined NEQSIM_SCRIPTS set "PATH=%PATH%;%NEQSIM_SCRIPTS%"
+
 echo.
-echo Done. Verify with:
+where neqsim >nul 2>&1
+if errorlevel 1 goto :cli_missing
+echo Done. The 'neqsim' command is available in this cmd session.
+echo Try it now:  neqsim doctor --skip-jar
+echo If you started install.cmd from PowerShell, that window still needs a new
+echo terminal - or run install.ps1 instead, which fixes the session you are in.
+set "CLI=neqsim"
+goto :cli_ready
+
+:cli_missing
+echo Done, but the 'neqsim' command is not resolvable here.
+echo Use this instead - it is the same entry point and always works:
 echo   %PY% -m neqsim_cli --help
-echo If the 'neqsim' command is not found in this window, open a NEW terminal
-echo (PATH changes only apply to newly opened terminals), or use the line above.
-echo If running 'neqsim' shows "The term 'neqsim' is not recognized" in a VS Code
-echo terminal, fully quit and reopen VS Code -- a new integrated terminal is NOT
-echo enough (VS Code captures PATH at launch). A virtualenv avoids this.
+echo To find out why:  %PY% -m neqsim_cli doctor --skip-jar
+echo In a VS Code terminal, fully quit and reopen VS Code -- a new integrated
+echo terminal is NOT enough, because VS Code captures PATH at launch.
+REM Keep the examples below runnable for whoever is reading them.
+set "CLI=%PY% -m neqsim_cli"
+
+:cli_ready
 echo.
 echo Where solved tasks are saved:
 echo   Default (nothing set): ^<this repository^>\task_solve
-echo   Change it:  neqsim --set-task-root "D:\Engineering Tasks"   (or 'cwd')
-echo   Check it:   neqsim --show-task-root
+echo   Change it:  %CLI% --set-task-root "D:\Engineering Tasks"   (or 'cwd')
+echo   Check it:   %CLI% --show-task-root
 echo The setting is saved in %USERPROFILE%\.neqsim\task_defaults.json and is used
 echo by 'neqsim new-task' and the AI agents, so tasks can live outside the clone.
 echo.
 echo Word template for generated reports:
 echo   Default (nothing set): built-in NeqSim report styling
-echo   Change it:  neqsim --set-report-template "C:\path\company template.docx"
-echo   Check it:   neqsim --show-report-template
-echo Every Report.docx then inherits its styles, fonts, headers, and footers.
+echo   Change it:  %CLI% --set-report-template "C:\path\company template.docx"
+echo   Check it:   %CLI% --show-report-template
+echo Every Word report then inherits its styles, fonts, headers, and footers.
 exit /b 0
 
 :err_pip_boot

@@ -364,7 +364,7 @@ workflow gaps were found.
 
 ## Word output — use the configured template
 
-`Report.docx` is built from the Word template the user configured, so the
+The Word report is built from the template the user configured, so the
 deliverable carries their organisation's styles, fonts, headers and footers.
 Resolution: `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` >
 the saved `report_template` in `~/.neqsim/task_defaults.json`
@@ -374,10 +374,39 @@ the saved `report_template` in `~/.neqsim/task_defaults.json`
   unless the user asks for it.
 - If the generator exits with a missing/invalid-template error, report that —
   do not ship an unbranded report instead.
-- `Paper.docx` (`--paper`) keeps journal formatting and ignores the template.
-- An older task folder carries its own `generate_report.py`; copy
-  `devtools/task_template/step3_report/generate_report.py` over it to enable the
-  template there.
+- The scientific paper (`--paper`) keeps journal formatting and ignores the template.
+- An older task folder carries its own `generate_report.py`; prefer
+  `neqsim report <task folder>`, which always runs the current canonical
+  generator, over the stale vendored copy.
+
+## Report file names are the report title
+
+Report files are named after the study title, so a deliverable is identifiable
+outside its task folder: "Hydrate margin for the export line" produces
+`step3_report/Hydrate_margin_for_the_export_line.docx` and `.html` (paper:
+`..._Paper.docx`). Set `study.title` in `study_config.yaml`, or pass `--title`,
+before generating. Files written under an earlier title are deleted on
+regeneration — a superseded report must never sit beside the current one.
+
+## Title and task statement — the first thing the reader sees
+
+The report title is the **study** title, and the task is stated before any
+analysis. Both are resolved at run time, so nothing has to be edited in the
+generator:
+
+- **Title**: `--title` > `NEQSIM_REPORT_TITLE` > `study_config.yaml`
+  `study.title` > first `#` heading of `task_spec.md` > task folder name.
+  Set `study.title` (and optionally `study.author`, `study.classification`) —
+  a study left at `"[Title]"` degrades to a folder-name title.
+- **Task statement**: `results.json` `task_statement` / `objective` >
+  the `## Objective` section of `task_spec.md` > `"Study scope: <title>."`.
+  Write it as 2-4 sentences saying what was asked and what must be delivered;
+  it is rendered as a "Task" callout at the top of the report body, so a reader
+  who opens the document cold knows the question before the answer.
+- Scaffold prose left inside `[square brackets]` is treated as a placeholder and
+  never quoted — fill it or delete it.
+- Study-depth badges (task type, scale, mode, AACE class, FEL stage) come from
+  `study_config.yaml` `study.*`; values left at `auto` are simply not shown.
 
 ## Validation Checklist (RUN BEFORE FINALIZING)
 

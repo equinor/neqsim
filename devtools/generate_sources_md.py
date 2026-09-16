@@ -74,8 +74,10 @@ SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}
 SOURCE_DESC = {key: desc for key, _name, desc in SOURCE_CATALOG}
 
 # Generated / bookkeeping artifacts that are not "collected documents".
+# Kept in sync with devtools/validate_task_results.py check_document_evidence.
 SKIP_FILES = {
     "SOURCES.md",
+    "README.md",
     "collection_manifest.json",
     "manifest.json",
     "retrieval_manifest.json",
@@ -426,6 +428,55 @@ def render_sources_md(record: dict) -> str:
     return "\n".join(lines)
 
 
+def _default_evidence_status(name: str) -> str:
+    """Machine-readable caches need no extraction; real documents do."""
+    lower = name.lower()
+    structured = (".json", ".csv", ".csv.gz", ".parquet", ".gz", ".ndjson", ".yaml", ".yml")
+    if lower.endswith(structured):
+        return "structured_data"
+    if lower.endswith((".md", ".txt", ".log", ".py")):
+        return "structured_data"
+    return "not_started"
+
+
+def build_document_evidence(record: dict, existing: dict | None) -> dict:
+    """Derive document_evidence_manifest.json from the collection record.
+
+    The task quality gate reads this file, one entry per reference file, and treats
+    ``not_started`` / ``pending`` / ``unprocessed`` as unprocessed. Statuses already
+    recorded by hand or by an extraction agent are preserved.
+    """
+    previous = {}
+    for entry in (existing or {}).get("sources", []) or []:
+        if isinstance(entry, dict) and entry.get("path"):
+            previous[str(entry["path"])] = entry
+
+    sources = []
+    for block in record.get("sources", []):
+        for doc in block.get("documents", []):
+            path = doc["file"]
+            prior = previous.get(path, {})
+            sources.append(
+                {
+                    "path": path,
+                    "source": block["source"],
+                    "system_name": block["system_name"],
+                    "status": prior.get("status") or _default_evidence_status(doc["name"]),
+                    "title": prior.get("title") or doc.get("title") or doc["name"],
+                    "summary": prior.get("summary") or doc.get("summary", ""),
+                    "sha256": doc.get("sha256", ""),
+                    "bytes": doc.get("bytes", 0),
+                }
+            )
+    return {
+        "schema": "document_evidence_manifest.v1",
+        "generated_utc": record["generated_utc"],
+        "task_dir": record["task_dir"],
+        "sources": sources,
+        "totals": {"files": len(sources)},
+    }
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("task_dir", help="Task folder root")
@@ -465,8 +516,19 @@ def main(argv=None) -> int:
     with sources_md_path.open("w", encoding="utf-8") as stream:
         stream.write(render_sources_md(record))
 
+    evidence_path = task_dir / "step1_scope_and_research" / "document_evidence_manifest.json"
+    evidence = build_document_evidence(record, _load_json(evidence_path))
+    with evidence_path.open("w", encoding="utf-8") as stream:
+        json.dump(evidence, stream, indent=2)
+
     print(f"Wrote {sources_md_path}")
     print(f"Wrote {manifest_path}")
+    print(f"Wrote {evidence_path}")
+    unprocessed = sum(
+        1 for entry in evidence["sources"] if entry["status"] == "not_started"
+    )
+    if unprocessed:
+        print(f"  {unprocessed} document(s) still need extraction evidence.")
     print(
         f"  {record['totals']['documents']} document(s) across "
         f"{record['totals']['sources']} source(s)."

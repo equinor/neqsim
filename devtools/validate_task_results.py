@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import List, Tuple
@@ -246,6 +247,101 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
     return warnings
 
 
+def check_tooling_improvements(task_folder: Path, results: dict) -> List[str]:
+    """Return warnings when the task did not record whether it improved the tooling.
+
+    Every task is also a test of NeqSim, the agents and the skills. The record may
+    legitimately say "nothing needed changing", but it may not be silent: a blank
+    record means the question was never asked. Warning, not error, so Quick tasks
+    are not blocked.
+    """
+    warnings: List[str] = []
+    doc = task_folder / "step1_scope_and_research" / "neqsim_improvements.md"
+
+    declared = results.get("improvements")
+    has_json = isinstance(declared, list) and len(declared) > 0
+    if isinstance(declared, str) and declared.strip():
+        has_json = True
+
+    if not doc.exists():
+        if not has_json:
+            warnings.append(
+                f"{task_folder.name}: no tooling-improvement record — add "
+                f"step1_scope_and_research/neqsim_improvements.md or an `improvements` "
+                f"block in results.json (state 'No tooling gaps identified' if none)"
+            )
+        return warnings
+
+    try:
+        text = doc.read_text(encoding="utf-8")
+    except OSError:
+        warnings.append(f"{task_folder.name}: neqsim_improvements.md is unreadable")
+        return warnings
+
+    body_lines = [
+        line for line in text.splitlines()
+        if not line.lstrip().startswith("<!--")
+        # the template tells the author which sentence to write; that instruction
+        # line must not itself satisfy the check
+        and "if nothing needed changing" not in line.lower()
+        and "if no gaps were found" not in line.lower()
+    ]
+    body = "\n".join(body_lines)
+    lowered = body.lower()
+    said_none = ("no tooling gaps identified" in lowered
+                 or "no neqsim gaps identified" in lowered)
+    # The template's own example row must not count as a delivered improvement.
+    template_row = "| 1 | neqsim / agent / skill |" in body
+    has_delivered = ("| 1 |" in body and not template_row) or has_json
+
+    if not (said_none or has_delivered):
+        warnings.append(
+            f"{task_folder.name}: neqsim_improvements.md has no delivered rows and does "
+            f"not state that no gaps were found — record what the task changed in "
+            f"NeqSim / agents / skills, or say explicitly that nothing needed changing"
+        )
+    if has_delivered and not has_json:
+        warnings.append(
+            f"{task_folder.name}: tooling improvements are in neqsim_improvements.md but "
+            f"not in results.json `improvements` — the report and gate read results.json"
+        )
+    return warnings
+
+
+def check_work_record(task_folder: Path) -> List[str]:
+    """Return warnings when the method-and-data record is missing or unfilled.
+
+    The report carries the conclusion; ``step3_report/WORK_RECORD.md`` carries
+    how it was produced — scripts, source systems, data files, and the folder
+    map. A warning (not an error) so Quick tasks are not blocked.
+    """
+    warnings: List[str] = []
+    record = task_folder / "step3_report" / "WORK_RECORD.md"
+    if not record.exists():
+        warnings.append(
+            f"{task_folder.name}: WORK_RECORD.md is missing — run "
+            f"`neqsim work-record <task folder>` (method, data, and file map)"
+        )
+        return warnings
+    try:
+        text = record.read_text(encoding="utf-8")
+    except OSError:
+        warnings.append(f"{task_folder.name}: WORK_RECORD.md is unreadable")
+        return warnings
+
+    blocks = re.findall(
+        r"<!--\s*WORK_RECORD:NARRATIVE id=([A-Za-z0-9_\-]+)\s*-->\n?(.*?)\n?"
+        r"<!--\s*/WORK_RECORD:NARRATIVE\s*-->", text, re.DOTALL)
+    unfilled = [block_id for block_id, body in blocks
+                if re.fullmatch(r"\[[^\]]*\]", (body or "").strip() or "[]")]
+    if unfilled:
+        warnings.append(
+            f"{task_folder.name}: WORK_RECORD.md narrative is still template text "
+            f"({', '.join(unfilled)}) — write the background, method, and limitations"
+        )
+    return warnings
+
+
 def check_document_evidence(task_folder: Path) -> List[str]:
     """Return warnings when reference documents lack extraction evidence."""
     warnings: List[str] = []
@@ -254,7 +350,22 @@ def check_document_evidence(task_folder: Path) -> List[str]:
     if not references.exists():
         return warnings
 
-    source_files = [path for path in references.rglob("*") if path.is_file()]
+    # The reference index is generated from the sources; it is not itself a source.
+    # Kept in sync with SKIP_FILES in devtools/generate_sources_md.py.
+    generated = {
+        "SOURCES.md",
+        "README.md",
+        "collection_manifest.json",
+        "manifest.json",
+        "retrieval_manifest.json",
+        "document_evidence_manifest.json",
+        "related_peprs.json",
+    }
+    source_files = [
+        path
+        for path in references.rglob("*")
+        if path.is_file() and path.name not in generated and not path.name.startswith(".")
+    ]
     if not source_files:
         return warnings
 
@@ -365,6 +476,92 @@ def _has_engineering_validation(results: dict) -> bool:
     return False
 
 
+def _read_gate_waivers(task_folder: Path) -> dict:
+    """Read explicitly waived quality gates from study_config.yaml.
+
+    A study may legitimately not need a gate: a measurement review of plant data
+    has no model to benchmark and no propagated uncertainty to quantify. The
+    report generator already honours ``quality_gates.<gate>: skip``, so this
+    validator must agree with it, otherwise the same task passes one gate and is
+    warned by the other. Only an explicit ``skip`` counts - ``auto`` and any
+    other value leave the check in force.
+
+    Parsed with a deliberately small reader rather than a YAML dependency, since
+    only one flat block of scalar values is needed.
+
+    Parameters
+    ----------
+    task_folder : Path
+        Folder holding results.json.
+
+    Returns
+    -------
+    dict
+        Mapping of gate name to True for each gate explicitly set to ``skip``.
+    """
+    config = task_folder / "study_config.yaml"
+    if not config.is_file():
+        return {}
+    waived = {}
+    in_block = False
+    try:
+        text = config.read_text(encoding="utf-8-sig")
+    except OSError:
+        return {}
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].rstrip()
+        if not line.strip():
+            continue
+        if not line.startswith((" ", "\t")):
+            in_block = line.strip().rstrip(":") == "quality_gates"
+            continue
+        if not in_block or ":" not in line:
+            continue
+        key, _, value = line.strip().partition(":")
+        if value.strip().strip("'\"").lower() == "skip":
+            waived[key.strip()] = True
+    return waived
+
+
+def apply_gate_waivers(warnings: List[str], waived: dict) -> Tuple[List[str], List[str]]:
+    """Drop warnings for gates the study explicitly waived.
+
+    Returns the waivers as separate notes rather than discarding them, so a
+    reviewer still sees that a gate was turned off and by whose decision.
+
+    Parameters
+    ----------
+    warnings : list of str
+        Warnings produced for this task.
+    waived : dict
+        Output of :func:`_read_gate_waivers`.
+
+    Returns
+    -------
+    tuple
+        ``(kept_warnings, waiver_notes)``.
+    """
+    if not waived:
+        return warnings, []
+    suppress = {
+        "benchmark_validation": ("benchmark_validation: recommended key is missing",
+                                 "engineering validation:"),
+        "uncertainty_analysis": ("uncertainty: recommended key is missing",),
+        "risk_register": ("risk_evaluation: recommended key is missing",),
+    }
+    patterns = []
+    notes = []
+    for gate, prefixes in suppress.items():
+        if waived.get(gate):
+            patterns.extend(prefixes)
+            notes.append(
+                "{}: waived in study_config.yaml (quality_gates.{}: skip)".format(gate, gate))
+    if not patterns:
+        return warnings, []
+    kept = [w for w in warnings if not any(w.startswith(p) for p in patterns)]
+    return kept, notes
+
+
 def find_results_files(roots: List[Path]) -> List[Path]:
     out: List[Path] = []
     for root in roots:
@@ -399,7 +596,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate task_solve results.json files")
     parser.add_argument("paths", nargs="*", help="Task folders or results.json files")
     parser.add_argument(
-        "--all", action="store_true", help="Validate every results.json under task_solve/"
+        "--all", action="store_true",
+        help="Validate every results.json in the configured task roots",
+    )
+    parser.add_argument(
+        "--task-root", action="append", metavar="PATH",
+        help="Task root for --all (repeatable). Defaults to NEQSIM_TASK_ROOT, "
+             "the saved neqsim --set-task-root value, then <repo>/task_solve.",
     )
     parser.add_argument(
         "--changed",
@@ -423,9 +626,9 @@ def main() -> int:
 
     roots: List[Path] = []
     if args.all:
-        ts = repo_root / "task_solve"
-        if ts.is_dir():
-            roots.append(ts)
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from task_roots import resolve_task_roots
+        roots.extend(resolve_task_roots(args.task_root))
     if args.changed:
         changed = os.environ.get("CHANGED_FILES", "")
         for line in changed.splitlines():
@@ -469,15 +672,19 @@ def main() -> int:
         errors, warnings = validate_file(f)
         # Add Step 1 evidence checks (once per task folder)
         task_folder = f.parent
-        if str(task_folder) not in capability_warnings_seen:
-            capability_warnings_seen.add(str(task_folder))
-            warnings.extend(check_capability_assessment(task_folder))
-            warnings.extend(check_document_evidence(task_folder))
         try:
             with open(f, "r", encoding="utf-8-sig") as handle:
                 parsed = json.load(handle)
         except (OSError, json.JSONDecodeError):
             parsed = {}
+        if str(task_folder) not in capability_warnings_seen:
+            capability_warnings_seen.add(str(task_folder))
+            warnings.extend(check_capability_assessment(task_folder))
+            warnings.extend(check_document_evidence(task_folder))
+            warnings.extend(check_work_record(task_folder))
+            warnings.extend(
+                check_tooling_improvements(task_folder, parsed if isinstance(parsed, dict) else {})
+            )
         if isinstance(parsed, dict) and _is_standard_or_comprehensive(parsed, task_folder):
             if not _has_engineering_validation(parsed):
                 msg = (
@@ -485,14 +692,19 @@ def main() -> int:
                     "benchmark_validation nor a model-vs-plant comparison — add one"
                 )
                 (errors if args.enterprise_gate else warnings).append(msg)
+        waived = _read_gate_waivers(task_folder)
+        warnings, waiver_notes = apply_gate_waivers(warnings, waived)
+        errors, _ = apply_gate_waivers(errors, waived)
         total_errors += len(errors)
         total_warnings += len(warnings)
-        if errors or warnings:
+        if errors or warnings or waiver_notes:
             print(f"\n--- {rel} ---")
             for e in errors:
                 print(f"  ERROR   {e}")
             for w in warnings:
                 print(f"  WARN    {w}")
+            for n in waiver_notes:
+                print(f"  WAIVED  {n}")
         else:
             print(f"OK      {rel}")
         if errors:

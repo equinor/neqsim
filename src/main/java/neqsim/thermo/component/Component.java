@@ -621,27 +621,49 @@ public abstract class Component implements ComponentInterface {
       }
       index = 1000 + componentNumber;
       if (NeqSimDataBase.createTemporaryTables()) {
-        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber) + ", '" + componentName
-            + "', '00-00-0','" + getComponentType() + "', " + index + ", 'HC', " + (molarMass * 1000.0) + ", "
-            + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
-            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", "
-            + getCpC() + ", " + getCpD() + ", " + getCpE()
+        // Name the legacy columns so optional database extensions do not shift values.
+        // InChIKey is intentionally unset for structure-undefined pseudo-components.
+        String columns = "ID,NAME,CASnumber,COMPTYPE,COMPINDEX,FORMULA,MOLARMASS"
+            + ",LIQDENS,TC,PC,ACSFACT,NORMBOIL,MWAVG,CRITVOL" + ",PVMODEL,Href,CPA,CPB,CPC,CPD,CPE"
+            + ",AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE,DIPOLEMOMENT"
+            + ",VISCFACT,RACKETZ,volcorrSRK_T,LJDIAMETER,LJEPS,SphericalCoreRadius,LIQVISCMODEL"
+            + ",LIQVISC1,LIQVISC2,LIQVISC3,LIQVISC4,GIBBSENERGYOFFORMATION,DIELECTRICPARAMETER1,DIELECTRICPARAMETER2"
+            + ",DIELECTRICPARAMETER3,DIELECTRICPARAMETER4,DIELECTRICPARAMETER5,IONICCHARGE,REFERENCESTATETYPE,HenryCoef1,HenryCoef2"
+            + ",HenryCoef3,HenryCoef4,SCHWARTZENTRUBER1,SCHWARTZENTRUBER2,SCHWARTZENTRUBER3,LIQUIDCONDUCTIVITY1,LIQUIDCONDUCTIVITY2"
+            + ",LIQUIDCONDUCTIVITY3,PARACHOR,HEATOFFUSION,TRIPLEPOINTDENSITY,TRIPLEPOINTPRESSURE,TRIPLEPOINTTEMPERATURE,MELTINGPOINTTEMPERATURE"
+            + ",ENTHALPYOFFORMATION,ABSOLUTEENTROPY,SOLIDDENSITYCOEFS1,SOLIDDENSITYCOEFS2,SOLIDDENSITYCOEFS3,SOLIDDENSITYCOEFS4,SOLIDDENSITYCOEFS5"
+            + ",LIQUIDDENSITYCOEFS1,LIQUIDDENSITYCOEFS2,LIQUIDDENSITYCOEFS3,LIQUIDDENSITYCOEFS4,LIQUIDDENSITYCOEFS5,HEATOFVAPORIZATIONCOEFS1,HEATOFVAPORIZATIONCOEFS2"
+            + ",HEATOFVAPORIZATIONCOEFS3,HEATOFVAPORIZATIONCOEFS4,HEATOFVAPORIZATIONCOEFS5,STDDENS,MC1,MC2,MC3"
+            + ",MC1Solid,MC2Solid,MC3Solid,TwuCoon1,TwuCoon2,TwuCoon3,associationsites"
+            + ",associationscheme,racketZCPA,volcorrCPA_T,associationboundingvolume_SRK,associationenergy,aCPA_SRK,bCPA_SRK"
+            + ",mCPA_SRK,aCPA_PR,bCPA_PR,mCPA_PR,associationboundingvolume_PR,calcActivity,ANTOINESolidA"
+            + ",ANTOINESolidB,ANTOINESolidC,Hsub,criticalViscosity,HydrateA1Small,HydrateB1Small,HydrateA1Large"
+            + ",HydrateB1Large,HydrateA2Small,HydrateB2Small,HydrateA2Large,HydrateB2Large,HydrateFormer,mSAFT"
+            + ",sigmaSAFT,epsikSAFT,associationboundingvolume_PCSAFT,associationenergy_PCSAFT,LJDIAMETERHYDRATE,LJEPSHYDRATE,SphericalCoreRadiusHYDRATE"
+            + ",DeshMatIonicDiameter,waxformer,B2_largeGF,A1_smallGF,B1_smallGF,A1_largeGF,B1_largeGF"
+            + ",A2_smallGF,B2_smallGF,A2_largeGF,CPsolid1,CPsolid2,CPsolid3,CPsolid4"
+            + ",CPsolid5,CPliquid1,CPliquid2,CPliquid3,CPliquid4,CPliquid5,MCPR1"
+            + ",MCPR2,MCPR3,PARACHOR_CPA,lambdaRSAFTVRMie,lambdaASAFTVRMie,mSAFTVRMie,sigmaSAFTVRMie"
+            + ",epsikSAFTVRMie,associationenergy_SAFTVRMie,associationvolume_SAFTVRMie,UMRCPA_MC1,UMRCPA_MC2,UMRCPA_MC3,UMRCPA_MC4"
+            + ",UMRCPA_MC5,UMRCPA_a0,UMRCPA_b,UMRCPA_assocEnergy,UMRCPA_assocVolume,UMRCPA_assocScheme,UMRCPA_associating"
+            + ",UMRCPA_racketZ,UMRCPA_volcorr_T";
+        database.execute("insert into " + databaseName + " (" + columns + ") VALUES (" + (1000 + componentNumber)
+            + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + index + ", 'HC', "
+            + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
+            + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, "
+            + getCpA() + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE()
             + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
             + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
             + getMeltingPointTemperature()
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0," + isW
             + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" + ", 12.0, 6.0, 0, 0, 0, 0, 0"
-            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // Values for the explicitly named UMR-CPA columns
             // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy,
             // UMRCPA_assocVolume,
             // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ,
             // UMRCPA_volcorr_T).
-            // Pseudo-components are non-associating, so all are zero. These must be
-            // present
-            // because comptemp is created as "SELECT * FROM comp" and the
-            // positional INSERT must
-            // match the full column count.
+            // Pseudo-components are non-associating, so these values are zero.
             + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";

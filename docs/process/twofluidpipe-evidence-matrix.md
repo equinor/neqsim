@@ -22,17 +22,34 @@ model converged or represents the requested physics.
 
 ## Current evidence matrix
 
+The transaction/execution update at `1f65f683` passed 422 focused tests in 62 classes, including four
+separately selected slow coupled/reference tests. Fifteen riser and one coarse-gas five-second gates failed separately
+at that revision. The later outlet-consistency repair clears the coarse-gas gate and promotes it to ordinary CI;
+the fifteen unsplit riser gates remain unsuccessful, with a countercurrent annular/slug force discontinuity
+isolated in a failing replay. The subsequent coupled-predictor repair restores all five coupled-pressure progress regressions
+without rejected substeps. These counts distinguish the verified runtime contracts below from
+the incomplete flow qualification.
+
 | Capability and configuration | Implemented | Numerically verified | Experimentally qualified | Evidence and use boundary |
 |---|---:|---:|---:|---|
-| Positive-flow steady gas/liquid pressure, holdup, thermal and terrain profiles | Yes | Yes | No general claim | Require the complete steady convergence report to be converged, every residual below its recorded tolerance, and no pressure-floor or wall-clock termination. Repeat mesh sensitivity for the actual geometry. |
+| Positive-flow steady gas/liquid pressure, holdup, thermal and terrain profiles | Yes | Yes | No general claim | Require the complete steady convergence report to be converged, every residual below its recorded tolerance (including total phase mass flux below `getMassFluxTolerance()`), and no pressure-floor or wall-clock termination. Repeat mesh sensitivity for the actual geometry. |
 | Steady gas/oil/water on the compact 3 km, 10-degree uphill fixture | Yes | Yes | No | The 30/60-cell results differ by 0.538% in arrival pressure and 0.983% in mean liquid holdup. All three phases remain present and the final thermodynamic/holdup reconciliation is inside the unchanged 1e-4 tolerance. The unavailable historical 73.8 km case is not covered. |
 | Liquid-rich unchanged-boundary transient with shared slug force balance, interfacial pressure, and coupled pressure/momentum | Opt-in | Yes | Not applicable | Over 1,800 s, inventory drift is 1.323% at 40 cells and 1.358% at 80 cells, below the declared 2% fixture gate, with total-mass closure. This does not qualify slug loads or another operating envelope. |
 | Default liquid-rich unchanged-boundary transient | Yes | No | No | The recorded 1,800 s inventory drift is 5.757%, above the unchanged 5% gate. Do not infer default-mode qualification from the opt-in shared-force result. |
 | Mohmmed et al. public horizontal air/water slug kinematics | Harness and data implemented | Conservation only | **Failed** | At 40 cells and 0.05 s outer steps, 3/9 comparisons pass, MARE is 1.0402, and maximum absolute relative error is 3.2147. The 40/80-cell and 0.05/0.025 s sweep is non-monotone; steady starts are unconverged and pressure-floor limited and transients clamp outlet backflow. The fixed 20% speed and 30% length/frequency gates remain unchanged. |
-| Conservative severe-slugging characterization against the public Tengesdal envelope | Opt-in | Partial characterization | **Failed** | The 600 s run completes, but its 65.163 kPa pressure amplitude is below the 68.6 kPa lower gate, no required repeated settled cycle is detected, and pressure limiting remains active. It is not a slug-load or extreme-pressure design basis. |
+| Conservative severe-slugging characterization against the public Tengesdal envelope | Opt-in | Five-second coupled progress restored | **Failed** | The earlier 600 s run gave 65.163 kPa, below the 68.6 kPa lower gate, without required repeated settled cycles. Centered pressure traction restores the five-second shared-closure and subcell-force regressions while retaining the valid bubble-domain guard. Short numerical progress does not qualify the experimental amplitude, period or sustained-cycle gates. |
 | Flash-driven phase appearance/disappearance with phase and energy ledgers | Yes | Yes | No | Check gas/oil/water and total mass, transfer closure, temperature sensitivity, and latent-inclusive energy balance. Record EOS, mixing rule, composition, pressure, temperature, relaxation time, mesh, and time step. |
 | Named-component advection for supported positive-flow boundaries | Yes | Yes | No | Require every named-component ledger, bounded normalized phase fractions, phase/component synchronization, and component-sum closure. |
-| Conservative slug/film + named components + phase transfer + thermal balance | Yes | Yes | No | Merged in #3547. A closed four-cell wet-gas cooling case transfers 1.5855002575e-9 kg of water, records 0.0034892651 J latent heat and -0.0305006304 K mean temperature change on both outer-step partitions, while a seeded marker preserves accepted-time geometry. This is coupled-ledger evidence, not spontaneous slug initiation. |
+| Positive trace-phase component inventory at synchronization | Yes | Yes | No | `TwoFluidComponentTraceInventoryTest` checks repeated closed substeps at 1e-11 to 2e-10 kg, conservative condensation through the 1e-10 kg synchronization allowance, and round-off handling without creating components. Larger phase/component mismatches reject without ledger mutation. The synchronization allowance must not erase transported components. |
+| Coupled closed-face momentum response | Yes | Short-time analytical limit | No | `TwoFluidClosedBoundaryMomentumTest` checks Euler and RK4: a finite pressure impulse over 1e-8 s retains adjacent physical-cell inertia, while both integrated external mass fluxes are exactly zero and total mass closes. Legacy uncoupled boundary handling is unchanged. |
+| Component-resolved downstream outlet and rejected component-substep isolation | Yes | Yes | No | The published component flows equal accepted outlet transfers divided by interval duration, including after TP reflashing. Unequal gas/oil/water transport, delayed composition fronts, reordered names, zero flow and failure isolation are tested. General unsplit component advection remains open. |
+| Complete legacy transient transaction | Opt-in | Bounded regression coverage | No | Failed intervals preserve accepted hydro/component/thermal/slug state, reports, histories and clocks. Connected streams, upstream storage, thermal calculators and layers retain identity. Other owned submodels are new snapshots after acceptance. Concrete SRK/PR/SRK-CPA/SRK-CPAs phases are supported; unaudited EOSs and pipe subclasses reject. |
+| Frozen-phase unsplit execution through runTransient | Opt-in | Bounded regression coverage | No | Always stages complete intervals and verifies accepted phase ledgers. Original SRK/PR phase compositions and density branches persist across calls. Spatially nonuniform/changing phase composition, reverse phase outlet flow, energy/phase transfer and tracked slugs remain unsupported. Preparation-only diagnostics have a broader signed-flow scope. |
+| Five-second gas execution and uniform three-phase fixed point | Opt-in | Selected configurations | No | Four-cell gas runs at 0.1 s and eight/sixteen-cell runs at 0.05 s pass consecutive accepted calls with unchanged nonlinear/interval tolerances of 1e-10/1e-8. Consistent outlet phase fractions repair the single-phase Jacobian kink; the coarse case now runs in ordinary CI. These are continuation/conservation checks, not spatial-accuracy qualification. A separate closed uniform three-phase fixed point passes. |
+| Inclined annular film eligibility, transition blending and trace-phase Jacobian | Opt-in criteria; derivative correction enabled | Local branch and analytic derivatives | No | The captured 0.594-liquid-holdup conflict converges with the film constraint. A separate opt-in annular/slug force blend removes the gas-lift point switch and advances the historical backward-Euler 16-cell gates from 0.663/0.688 s to 1.451/1.671 s; the 24-cell gate reaches 0.95 s. All still fail before five seconds. Phase-relative probes retain trace drag/volume derivatives. Neither local criterion implements full film/droplet/reversal physics. |
+| Current unsplit Tengesdal five-second matrix with film constraint | Harness implemented | **Failed** | No | After the outlet repair, corrected-face 16/0.1, 16/0.05 and 24/0.05 cases stop near 1.303, 1.881 and 1.736 s. All six historical/face cases reject their prefixes and are unchanged by the inclined transition blend, showing that their blockers occur earlier. The transition-blended backward-Euler historical lane advances materially but all three cases still fail line search. Later closure/domain transitions, trial velocity guards and unsplit 180/600 s qualification remain open. |
+| Explicit finite-volume face terrain | Opt-in | Yes | No | N+1 elevations, actual cell arc lengths and midpoint pressure with external-face offsets. Signed gravity/energy and constant-density hydrostatics are checked under nonuniform refinement. This is not general transient well-balancing. |
+| Conservative slug/film + named components + phase transfer + thermal balance | Yes | Yes | No | A closed four-cell wet-gas cooling case over 0.05 s closes all ledgers on 0.05/0.025/0.0125 s outer partitions. Adjacent-grid water/heat sensitivity is below 4%; marker-displacement sensitivity decreases from 3.14% to 1.99%. Marker length/age are partition-invariant, and transactions reproduce the same-grid result. See the model guide for numerical values. This is coupled-ledger evidence, not spontaneous slug initiation. |
 | Reverse outlet inflow with named-component transport and no external composition | **Unsupported** | Fail-closed | No | Configuration is rejected in either setter order. The last interior composition is not a physical external boundary condition. |
 | Multi-stage conservative slug + component + phase-transfer coupling | **Unsupported** | Fail-closed | No | Phase appearance inside an intermediate stage needs stage-local component inventories. The coupled four-way path is currently restricted to single-stage Euler. |
 
@@ -48,7 +65,7 @@ Use **TwoFluidPipe** only when the case fits a row above and its runtime evidenc
 
 1. Run steady initialization and inspect the complete immutable convergence report. A stationary
    pressure profile is insufficient if liquid split, holdup, thermodynamics, or total pressure drop
-   remains outside tolerance.
+   remains outside tolerance, or if total phase mass flux does not close against the inlet.
 2. For transient work, require requested elapsed time, phase and total mass balances, positivity,
    and all sticky pressure/momentum, pressure-limiter, rejected-substep, outlet-backflow, component,
    and energy diagnostics applicable to the selected configuration.
@@ -60,6 +77,22 @@ Use **TwoFluidPipe** only when the case fits a row above and its runtime evidenc
 5. Use **PipeBeggsAndBrills** for a correlation-based steady or quasi-steady screen, not for
    conservative distributed line-pack dynamics. Use a separately qualified transient model or a
    controlled experimental study when the requested TwoFluidPipe row is failed or unsupported.
+
+## High-throughput steady mass conservation (#3686)
+
+`TwoFluidPipeSteadyMassFluxTest` reproduces the 3,100 m well with a 0.23 m diameter, 2,380 m rise,
+20 sections, 205 bara and 90 degrees Celsius inlet, and the issue's synthetic SRK fluid and
+stock-tank rates. The original 166.113217788 kg/s case lost 3.473846596 kg/s at the outlet section
+because gas velocity was capped at 100 m/s. At 5% higher flow the deficit was 7.007383459 kg/s;
+the 5% lower-flow case did not reach the cap.
+
+The regression checks all three rates against phase-summed section mass flux with relative
+tolerance 1e-10 and absolute tolerance 1e-12 kg/s. It also requires the original hydraulic and
+thermodynamic residuals to pass. Separate gas, oil and water fixtures exercise the former steady
+gas/liquid caps, and injected 2% and nonfinite reporting errors must prevent convergence even
+when the hydraulic residuals have settled. The existing 30/60-cell three-phase fixture remains
+the free-water and mesh-refinement check. This is conservation and numerical-convergence evidence,
+not experimental or critical-flow qualification.
 
 ## Executable steady and transient example
 

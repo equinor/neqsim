@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 38 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 13 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 39 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 12 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -608,3 +608,24 @@ criteria and qualified safety review. See
 | `neqsim://components/{name}` | Full properties for a component (Tc, Pc, omega, MW, etc.) |
 | `neqsim://standards/{code}` | Parameters for a specific design standard |
 | `neqsim://materials/{type}` | Material grades by type: pipe, plate, casing, etc. |
+
+
+## `compareProcesses` bounded comparison contract
+
+`compareProcesses` accepts one JSON object containing `cases`. The request
+is limited to 1 MiB of UTF-8 text and two to 32 cases. Each case must contain a
+`fluid` object and `process` array in canonical `runProcess` format; an
+optional trimmed case name must be unique and at most 256 characters.
+
+Cases execute sequentially in request order through `ProcessRunner`. The
+response preserves every canonical result and reports `caseCount`,
+`successfulCaseCount`, `failedCaseCount`, and `complete`. When one case
+fails, the outer comparison remains a successful bounded operation with
+`complete=false`, the failed case's canonical error result, and an `errors`
+summary, so partial output cannot be mistaken for full comparison evidence.
+
+The contract validates admission, routing, accounting, discovery, response
+shape, and packaged transport only. Callers remain responsible for compatible
+case definitions, units and comparison bases, convergence, numerical and
+thermodynamic validity, conservation, uncertainty, engineering interpretation,
+and accountable approval.

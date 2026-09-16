@@ -37,9 +37,17 @@ def audit_word(path):
     return headings, "\n".join(full_text)
 
 
+def _find_report(task_dir, suffix):
+    """Return the generated report of this type — its name is the report title."""
+    import glob
+    report_dir = os.path.join(task_dir, "step3_report")
+    matches = [path for path in sorted(glob.glob(os.path.join(report_dir, "*" + suffix)))
+               if "Paper" not in os.path.basename(path)]
+    return matches[0] if matches else os.path.join(report_dir, "Report" + suffix)
+
+
 def main():
-    tmpdir = sys.argv[1] if len(sys.argv) > 1 else None
-    if tmpdir is None:
+    tmpdir = sys.argv[1] if len(sys.argv) > 1 else None    if tmpdir is None:
         # Try to find the latest report_test_* directory in temp
         import glob
         import tempfile
@@ -50,8 +58,8 @@ def main():
         else:
             print("No report_test_* directory found in temp. Run test_report_gen.py first.")
             return 1
-    html_path = os.path.join(tmpdir, "step3_report", "Report.html")
-    docx_path = os.path.join(tmpdir, "step3_report", "Report.docx")
+    html_path = _find_report(tmpdir, ".html")
+    docx_path = _find_report(tmpdir, ".docx")
 
     html_headings, html_text = audit_html(html_path)
     word_headings, word_text = audit_word(docx_path)

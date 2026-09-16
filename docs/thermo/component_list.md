@@ -25,7 +25,7 @@ NeqSim provides two pure component parameter databases:
 
 | Database | Components | Performance | Use Case |
 |----------|------------|-------------|----------|
-| **Standard** | 257 | Fast (embedded) | Typical oil & gas simulations |
+| **Standard** | 389 | Fast (embedded) | Typical oil & gas simulations |
 | **Extended** | 76,704 | Slower (loaded on demand) | Specialty chemicals, research |
 
 The **standard database** is the default and covers most components needed for oil & gas applications. It loads instantly as an embedded database.
@@ -103,6 +103,17 @@ The database CSV files are located in the NeqSim repository:
 
 - **Standard database**: [`src/main/resources/data/COMP.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/COMP.csv)
 - **Extended database**: [`src/main/resources/data/COMP_EXT.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/COMP_EXT.csv)
+- **UMR-PRU group assignments**: [`src/main/resources/data/UNIFACcompUMRPRU.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/UNIFACcompUMRPRU.csv)
+
+The UMR-PRU table is joined to `COMP.csv` on an **exact match of the name**, so a
+component whose name differs between the two files silently ends up with no
+groups. 277 of the 389 standard components carry a group assignment; the rest are
+ions, salts and other species the model does not apply to.
+
+`COMP.csv` also carries an **`InChIKey`** column, a structure-derived identifier
+that is the same for a substance however it is named. It is the reliable way to
+tell whether two rows are the same molecule, since a CAS number can be absent,
+wrong, or registered separately for each stereoisomer.
 
 ### When to Use Extended Database
 
@@ -382,19 +393,32 @@ Legend: ✅ Full support | ⚠️ Partial/limited | ❌ Not supported
 
 ## Complete Component Count by Category
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| Paraffins (alkanes) | ~50 | methane, ethane, n-decane |
-| Naphthenes (cycloalkanes) | ~15 | c-hexane, c-C7, c-C8 |
-| Aromatics | ~20 | benzene, toluene, m-Xylene |
-| Acid gases | 6 | CO2, H2S, SO2, NO, NO2, COS |
-| Inert gases | 5 | N2, O2, Ar, He, H2 |
-| Water and glycols | 5 | water, MEG, DEG, TEG, PG |
-| Amines | 5 | MDEA, DEA, MEA, Piperazine, ammonia |
-| Alcohols | ~10 | methanol, ethanol, 1-propanol |
-| Refrigerants | ~15 | R-134a, R-22, R-32 |
-| Ions | ~15 | Na+, Cl-, Ca++, SO4-- |
-| **Total** | **~150+ pure components** | Plus unlimited TBP fractions |
+Counted from the `COMPTYPE` column of `COMP.csv`:
+
+| Category | `COMPTYPE` | Count | Examples |
+|----------|------------|-------|----------|
+| Hydrocarbons | `HC` | 238 | methane, toluene, 2,4-dimethylheptane |
+| Ions | `ion` | 62 | Na+, Cl-, Ca++, SO4-- |
+| General / unclassified | `GEN`, `0` | 37 | assorted |
+| Inert and light gases | `inert` | 12 | N2, O2, Ar, He, H2 |
+| Other | `other` | 10 | |
+| Glycols | `glycol` | 7 | MEG, DEG, TEG |
+| Acid gases | `acid` | 7 | CO2, H2S, SO2 |
+| Alcohols | `alcohol` | 6 | methanol, ethanol, 1-propanol |
+| Amines | `amine` | 4 | MDEA, DEA, MEA |
+| Water, ice, seawater, salt, chlorine, asphaltene | one each | 6 | |
+| **Total** | | **389** | Plus unlimited TBP fractions |
+
+By structure, the hydrocarbons break down as roughly 94 paraffins, 100
+naphthenes and olefins, 37 aromatics and 11 alkynes or dienes. Many are
+structural isomers, so a shared formula and molar mass between rows is expected
+rather than a duplicate.
+
+> **Not usable with UMR-PRU:** `ethylene`, `C2H4`, `C2H4-` and
+> `5-methyl-3-heptyne` have no group assignment, because no group in the set can
+> represent a bare CH2=CH2 and the alkyne subgroup has no parameters. They work
+> with the cubic equations of state. See the
+> [Component Database Guide](component_database_guide) for the reasoning.
 
 ---
 

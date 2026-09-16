@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.compressor;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -55,7 +57,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /** Typical flow coefficient range for centrifugal impellers. */
   private static final double FLOW_COEFFICIENT_MIN = 0.01;
   private static final double FLOW_COEFFICIENT_MAX = 0.15;
-  private static final double FLOW_COEFFICIENT_DESIGN = 0.05;
+  /** Preliminary head coefficient H [J/kg] / U squared [m2/s2]. */
+  private static final double WORK_COEFFICIENT = 0.50;
+
+  /** Preliminary impeller diameter bounds [mm]. */
+  private static final double MIN_IMPELLER_DIAMETER = 100.0;
+  private static final double MAX_IMPELLER_DIAMETER = 1500.0;
 
   /** Driver sizing margin per API 617. */
   private static final double DRIVER_MARGIN_SMALL = 1.25; // For power < 150 kW
@@ -86,6 +93,21 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
   /** Impeller tip speed [m/s]. */
   private double tipSpeed = 250.0;
+
+  /** Inlet flow coefficient Q / (D squared * U), using actual m3/s and diameter in m. */
+  private double flowCoefficient = Double.NaN;
+
+  /** Shaft speed used for the last impeller sizing [rpm]. */
+  private double impellerSizingSpeedRPM = Double.NaN;
+
+  /** Actual inlet volume flow used for the last sizing [m3/hr]. */
+  private double impellerSizingFlowM3hr = Double.NaN;
+
+  /** Required total polytropic head used for the last sizing [kJ/kg]. */
+  private double impellerSizingHead = Double.NaN;
+
+  /** Whether impeller sizing has run since a manual geometry override. */
+  private boolean impellerSizingCalculated = false;
 
   /** Required driver power [kW]. */
   private double driverPower = 0.0;
@@ -266,14 +288,14 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /** {@inheritDoc} */
   @Override
   public void calcDesign() {
-    super.calcDesign();
-
+    clearCalculatedDesign();
     Compressor compressor = (Compressor) getProcessEquipment();
-
     // Ensure compressor has been run
-    if (compressor.getThermoSystem() == null) {
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
       return;
     }
+    super.calcDesign();
 
     // Get operating conditions
     double suctionPressure = compressor.getInletStream().getPressure("bara");
@@ -297,6 +319,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // Calculate impeller sizing
     calculateImpellerSizing(volumeFlowRate, polytropicHead, compressor.getSpeed());
+    if (!Double.isFinite(impellerDiameter)) {
+      return;
+    }
 
     // Calculate shaft diameter
     calculateShaftDiameter(shaftPowerKW, compressor.getSpeed());
@@ -321,6 +346,50 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // Run casing mechanical design per API 617 / ASME Section VIII
     calculateCasingDesign(compressor, shaftPowerKW);
+  }
+
+  /**
+   * Clear calculated results before sizing so an incomplete run cannot expose geometry or weights from an earlier run.
+   * Configured design limits, materials and the process mechanical-loss model are preserved.
+   */
+  private void clearCalculatedDesign() {
+    impellerSizingCalculated = false;
+    casingDesignCalculator = null;
+    impellerSizingSpeedRPM = Double.NaN;
+    impellerSizingFlowM3hr = Double.NaN;
+    impellerSizingHead = Double.NaN;
+    numberOfStages = 0;
+    headPerStage = Double.NaN;
+    impellerDiameter = Double.NaN;
+    tipSpeed = Double.NaN;
+    flowCoefficient = Double.NaN;
+    shaftDiameter = Double.NaN;
+    driverPower = Double.NaN;
+    driverMargin = Double.NaN;
+    setMaxDesignPower(Double.NaN);
+    designPressure = Double.NaN;
+    designTemperature = Double.NaN;
+    maxContinuousSpeed = Double.NaN;
+    tripSpeed = Double.NaN;
+    firstCriticalSpeed = Double.NaN;
+    bearingSpan = Double.NaN;
+    casingWeight = Double.NaN;
+    rotorWeight = Double.NaN;
+    bundleWeight = Double.NaN;
+    innerDiameter = Double.NaN;
+    outerDiameter = Double.NaN;
+    wallThickness = Double.NaN;
+    tantanLength = Double.NaN;
+    setWeigthVesselShell(Double.NaN);
+    setWeigthInternals(Double.NaN);
+    setWeightNozzle(Double.NaN);
+    setWeightPiping(Double.NaN);
+    setWeightElectroInstrument(Double.NaN);
+    setWeightStructualSteel(Double.NaN);
+    setWeightTotal(Double.NaN);
+    moduleLength = Double.NaN;
+    moduleWidth = Double.NaN;
+    moduleHeight = Double.NaN;
   }
 
   /**
@@ -396,7 +465,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param totalPolytropicHead total polytropic head in kJ/kg
    */
   private void calculateNumberOfStages(double totalPolytropicHead) {
-    if (totalPolytropicHead <= 0) {
+    if (!Double.isFinite(totalPolytropicHead) || totalPolytropicHead <= 0) {
       numberOfStages = 1;
       headPerStage = 0;
       return;
@@ -411,45 +480,60 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate impeller diameter and tip speed.
+   * Size equal-head stages at the specified shaft speed using a fixed preliminary work coefficient.
+   *
+   * <p>
+   * Additional stages may satisfy the diameter, tip-speed and inlet-flow limits. If no stage count up to
+   * {@link #getMaxStagesPerCasing()} is feasible, retain the head-based candidate without clamping its dimensions;
+   * {@link #getImpellerSizingIssues()} reports the violated limits. This is a preliminary inlet-stage screen, not an
+   * aerodynamic performance map or an API 617 qualification.
+   * </p>
    *
    * @param volumeFlowM3hr inlet volume flow rate in m3/hr
    * @param polytropicHead total polytropic head in kJ/kg
    * @param speedRPM shaft speed in rpm
    */
   private void calculateImpellerSizing(double volumeFlowM3hr, double polytropicHead, double speedRPM) {
-    if (speedRPM <= 0 || volumeFlowM3hr <= 0) {
-      impellerDiameter = 300.0; // Default
-      tipSpeed = 0.0;
+    impellerSizingCalculated = true;
+    impellerSizingSpeedRPM = speedRPM;
+    impellerSizingFlowM3hr = volumeFlowM3hr;
+    impellerSizingHead = polytropicHead;
+    impellerDiameter = Double.NaN;
+    tipSpeed = Double.NaN;
+    flowCoefficient = Double.NaN;
+    if (!Double.isFinite(speedRPM) || speedRPM <= 0.0 || !Double.isFinite(volumeFlowM3hr) || volumeFlowM3hr <= 0.0
+        || !Double.isFinite(polytropicHead) || polytropicHead <= 0.0) {
+      numberOfStages = 0;
+      headPerStage = Double.NaN;
       return;
     }
 
-    // Convert volume flow to m3/s
-    double volumeFlowM3s = volumeFlowM3hr / 3600.0;
-
-    // Work coefficient (head coefficient) - typical range 0.4-0.6 for backward curved
-    double workCoefficient = 0.50;
-
-    // Calculate required tip speed from head: U^2 = H * g / (workCoeff * numStages)
-    double headPerStageJ_kg = headPerStage * 1000.0; // J/kg
-    tipSpeed = Math.sqrt(headPerStageJ_kg / workCoefficient);
-
-    // Limit tip speed
-    tipSpeed = Math.min(tipSpeed, MAX_TIP_SPEED);
-
-    // Calculate impeller diameter from tip speed: D = U * 60 / (pi * N)
-    impellerDiameter = (tipSpeed * 60.0) / (Math.PI * speedRPM) * 1000.0; // mm
-
-    // Ensure reasonable range (100-1500 mm typical for process compressors)
-    impellerDiameter = Math.max(100.0, Math.min(1500.0, impellerDiameter));
-
-    // Verify flow coefficient is in acceptable range
-    double flowCoefficient = volumeFlowM3s / (Math.pow(impellerDiameter / 1000.0, 2) * tipSpeed);
-    if (flowCoefficient < FLOW_COEFFICIENT_MIN || flowCoefficient > FLOW_COEFFICIENT_MAX) {
-      // Adjust impeller diameter to achieve design flow coefficient
-      impellerDiameter = Math.sqrt(volumeFlowM3s / (FLOW_COEFFICIENT_DESIGN * tipSpeed)) * 1000.0;
-      impellerDiameter = Math.max(100.0, Math.min(1500.0, impellerDiameter));
+    int headBasedStages = numberOfStages;
+    // Larger stage counts decrease D and U and increase the inlet flow coefficient monotonically.
+    for (int stages = headBasedStages; stages > 0 && stages <= maxStagesPerCasing; stages++) {
+      setImpellerCandidate(stages);
+      if (getImpellerSizingIssues().isEmpty()) {
+        return;
+      }
+      if (impellerDiameter < MIN_IMPELLER_DIAMETER || flowCoefficient > FLOW_COEFFICIENT_MAX) {
+        break;
+      }
     }
+    setImpellerCandidate(headBasedStages);
+  }
+
+  /**
+   * Recompute all coupled quantities for one equal-head stage count, without clipping.
+   *
+   * @param stages number of stages
+   */
+  private void setImpellerCandidate(int stages) {
+    numberOfStages = stages;
+    headPerStage = impellerSizingHead / stages;
+    double requiredTipSpeed = Math.sqrt(headPerStage * 1000.0 / WORK_COEFFICIENT);
+    impellerDiameter = requiredTipSpeed * 60.0 / (Math.PI * impellerSizingSpeedRPM) * 1000.0;
+    tipSpeed = Math.PI * (impellerDiameter / 1000.0) * impellerSizingSpeedRPM / 60.0;
+    flowCoefficient = (impellerSizingFlowM3hr / 3600.0) / (Math.pow(impellerDiameter / 1000.0, 2) * tipSpeed);
   }
 
   /**
@@ -783,6 +867,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    */
   public void setNumberOfStages(int numberOfStages) {
     this.numberOfStages = numberOfStages;
+    impellerSizingCalculated = false;
   }
 
   /**
@@ -801,6 +886,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    */
   public void setImpellerDiameter(double impellerDiameter) {
     this.impellerDiameter = impellerDiameter;
+    impellerSizingCalculated = false;
   }
 
   /**
@@ -828,6 +914,89 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    */
   public double getTipSpeed() {
     return tipSpeed;
+  }
+
+  /**
+   * Get the inlet flow coefficient of the last sizing candidate.
+   *
+   * @return dimensionless Q / (D squared * U), or NaN for unavailable sizing inputs
+   */
+  public double getFlowCoefficient() {
+    return flowCoefficient;
+  }
+
+  /**
+   * Get the fixed shaft speed used to size the impeller.
+   *
+   * @return sizing speed in rpm, or NaN before sizing
+   */
+  public double getImpellerSizingSpeedRPM() {
+    return impellerSizingSpeedRPM;
+  }
+
+  /**
+   * Check the coupled preliminary impeller sizing, including input freshness.
+   *
+   * @return true only when head, speed, flow, diameter and stage-count checks pass
+   */
+  public boolean isImpellerSizingFeasible() {
+    return getImpellerSizingIssues().isEmpty();
+  }
+
+  /**
+   * Describe why the last impeller candidate is infeasible or unavailable.
+   *
+   * <p>
+   * An empty list only qualifies the equal-head, fixed-work-coefficient inlet-stage sizing screen. It does not qualify
+   * downstream-stage aerodynamics, rotor dynamics, casing design or a vendor compressor map.
+   * </p>
+   *
+   * @return independent list of violated limits and stale-input diagnostics
+   */
+  public List<String> getImpellerSizingIssues() {
+    List<String> issues = new ArrayList<String>();
+    if (!impellerSizingCalculated) {
+      issues.add("Impeller sizing has not been calculated or geometry was overridden; run calcDesign().");
+      return issues;
+    }
+    if (!Double.isFinite(impellerSizingSpeedRPM) || impellerSizingSpeedRPM <= 0.0
+        || !Double.isFinite(impellerSizingFlowM3hr) || impellerSizingFlowM3hr <= 0.0
+        || !Double.isFinite(impellerSizingHead) || impellerSizingHead <= 0.0) {
+      issues.add("Impeller sizing requires finite positive shaft speed, inlet volume flow and polytropic head.");
+      return issues;
+    }
+    Compressor compressor = (Compressor) getProcessEquipment();
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
+      issues.add("Compressor is missing or not properly initialized; rerun the process and calcDesign().");
+      return issues;
+    }
+    if (Double.compare(compressor.getSpeed(), impellerSizingSpeedRPM) != 0
+        || Double.compare(compressor.getInletStream().getFlowRate("m3/hr"), impellerSizingFlowM3hr) != 0
+        || Double.compare(compressor.getPolytropicFluidHead(), impellerSizingHead) != 0) {
+      issues.add("Compressor speed, inlet flow or head changed after sizing; rerun the process and calcDesign().");
+    }
+    if (numberOfStages < 1 || numberOfStages > maxStagesPerCasing) {
+      issues.add("Impeller stage count " + numberOfStages + " exceeds the configured casing limit " + maxStagesPerCasing
+          + " or is not positive.");
+    }
+    if (!Double.isFinite(headPerStage) || headPerStage <= 0.0 || headPerStage > MAX_HEAD_PER_STAGE) {
+      issues.add("Impeller head per stage must be positive and at most " + MAX_HEAD_PER_STAGE + " kJ/kg.");
+    }
+    if (!Double.isFinite(impellerDiameter) || impellerDiameter < MIN_IMPELLER_DIAMETER
+        || impellerDiameter > MAX_IMPELLER_DIAMETER) {
+      issues.add("Impeller diameter " + impellerDiameter + " mm is outside " + MIN_IMPELLER_DIAMETER + "-"
+          + MAX_IMPELLER_DIAMETER + " mm.");
+    }
+    if (!Double.isFinite(tipSpeed) || tipSpeed <= 0.0 || tipSpeed > MAX_TIP_SPEED) {
+      issues.add("Impeller tip speed must be positive and at most " + MAX_TIP_SPEED + " m/s.");
+    }
+    if (!Double.isFinite(flowCoefficient) || flowCoefficient < FLOW_COEFFICIENT_MIN
+        || flowCoefficient > FLOW_COEFFICIENT_MAX) {
+      issues.add("Impeller inlet flow coefficient " + flowCoefficient + " is outside " + FLOW_COEFFICIENT_MIN + "-"
+          + FLOW_COEFFICIENT_MAX + " at the specified shaft speed.");
+    }
+    return issues;
   }
 
   /**
@@ -1421,9 +1590,13 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    */
   public CompressorValidationResult validateDesign() {
     CompressorValidationResult result = new CompressorValidationResult();
+    for (String issue : getImpellerSizingIssues()) {
+      result.addIssue(issue);
+    }
 
     Compressor compressor = (Compressor) getProcessEquipment();
-    if (compressor == null || compressor.getThermoSystem() == null) {
+    if (compressor == null || compressor.getThermoSystem() == null || compressor.getInletStream() == null
+        || compressor.getOutletStream() == null) {
       result.addIssue("Compressor not properly initialized");
       result.setValid(false);
       return result;
@@ -1447,10 +1620,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     double suctionPressure = compressor.getInletStream().getPressure("bara");
     double dischargePressure = compressor.getOutletStream().getPressure("bara");
     double totalPressureRatio = dischargePressure / suctionPressure;
-    double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
-    if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
-      result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage) + " exceeds maximum "
-          + String.format("%.2f", maxPressureRatioPerStage));
+    if (numberOfStages > 0) {
+      double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
+      if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
+        result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage) + " exceeds maximum "
+            + String.format("%.2f", maxPressureRatioPerStage));
+      }
     }
 
     // Validate surge margin

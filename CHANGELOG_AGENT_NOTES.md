@@ -9,6 +9,95 @@
 
 ---
 
+## 2026-09-14 — `ChemicalInteractionRule` environment rules no longer fire on unsupplied conditions
+
+**Bug fix** in `neqsim.process.chemistry.ChemicalInteractionRule.environmentMatches`.
+
+A `material_carbon_steel` environment rule whose threshold was not temperature-keyed fell through
+to an unconditional `return true`. The bundled rule set carries such rules keyed on variables the
+assessor does not carry — `velocity>5mps` (NORSOK M-506), `O2<10ppb` (NACE TM0169) — so they fired
+for **every** carbon-steel study regardless of the actual operating condition. The effect was not
+cosmetic: the spurious `velocity>5mps` rule is `HIGH`, so it set `getHighestSeverity()`, pushed
+`getVerdict()` to `INCOMPATIBLE`, and through that raised a `CHEMICAL_INCOMPATIBILITY` candidate in
+`RootCauseAnalyser`. A static chemical-injection cabinet at 25 °C was reported as having a
+flow-induced corrosion problem.
+
+Material rules now route through a private `materialThresholdMatches(String, double)` helper:
+
+* `*` or an empty spec still matches (e.g. `ACID,HF,material_carbon_steel,*`);
+* a `T…` spec still gates on temperature (`T>60C`, `T>120C`, `T>150C`, `T>175C`);
+* any other keyed spec no longer matches, because the condition variable was never supplied.
+
+**Migration:** none for callers. A study that previously reported a velocity- or oxygen-keyed
+carbon-steel issue without supplying a velocity or an oxygen level will now report one fewer issue
+and may drop from `INCOMPATIBLE` to `CAUTION`. That is the corrected result.
+
+**Known remaining gap:** `environmentMatches` still has no branch for `material_316L`,
+`water_high_h2s`, `water_high_chloride`, `water_high_barium`, `water_low_water_cut`,
+`gas_lift_high_co2` or `operating_low_temperature`, so those bundled rules are unreachable.
+Closing that needs a conditions-object signature change and its own regression baseline.
+
+**Tests:** `src/test/java/neqsim/process/chemistry/ChemicalInteractionRuleEnvironmentTest.java`
+(5 cases). Full chemistry suite re-run: 44 tests, 0 failures.
+
+**Agents/skills affected:** `neqsim-production-chemistry` (compatibility screening verdicts),
+`production.chemistry` agent, and any study that calls `ChemicalCompatibilityAssessor` with a
+carbon-steel material.
+
+---
+
+## 2026-09-12 — New `ChemicalInjectionNozzlePerformance` for gas-phase chemical injection
+
+**New class** `neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance`.
+
+NeqSim could size the chemistry of a gas-phase chemical treatment
+(`chemistry.scavenger.H2SScavengerPerformance`) and could apply a mixing efficiency to a scavenger
+unit (`equipment.absorber.H2SScavenger.setMixingEfficiency`), but nothing computed what mixing
+efficiency an injection arrangement actually delivers. `setMixingEfficiency` was a free input. That
+made the common field question — a bare injection quill was replaced by an atomizing nozzle, is the
+chemical now in contact with the gas? — unanswerable with the library.
+
+The new class closes that gap for any liquid chemical injected into a flowing gas line: H2S
+scavenger, corrosion inhibitor, methanol or MEG sprayed into a gas stream.
+
+```java
+ChemicalInjectionNozzlePerformance nozzle = new ChemicalInjectionNozzlePerformance();
+nozzle.setInjectionDevice(ChemicalInjectionNozzlePerformance.InjectionDevice.FULL_CONE_NOZZLE);
+nozzle.setPipeInnerDiameter(0.4889);
+nozzle.setGasVolumeFlow(2.21);          // m3/s at line conditions
+nozzle.setGasDensity(11.76);            // from a flashed NeqSim stream
+nozzle.setGasViscosity(1.229e-5);
+nozzle.setChemicalVolumeFlow(235.0);    // l/h
+nozzle.setChemicalDensity(1080.0);
+nozzle.setChemicalViscosity(8.0e-3);
+nozzle.setSurfaceTension(0.040);
+nozzle.setNozzleDifferentialPressure(6.5);   // bar
+nozzle.setSprayConeAngle(90.0);
+nozzle.setInsertionDepth(0.135);        // from the pipe wall; piping specs limit this
+nozzle.evaluate();
+
+double smd = nozzle.getSauterMeanDiameterMicron();
+double area = nozzle.getInterfacialArea();            // m2/m3
+double reach = nozzle.getWallImpingementLength();     // m before the drops deposit
+double index = nozzle.getDispersionIndex();           // 0-1, feeds setMixingEfficiency
+```
+
+Correlations are all from the open literature: Lefebvre's pressure-swirl Sauter mean diameter for a
+nozzle, the critical-Weber aerodynamic breakup limit (We = 12) for a bare quill, Stokes settling
+with a Schiller-Naumann drag correction, and `a = 6 Q_L / (SMD Q_G)` for the interfacial area. The
+off-centre term is the part specific to real installations: chemical-injection piping
+specifications limit insertion length, so on a large line the nozzle cannot reach the centreline and
+the drop flight path before wall contact is correspondingly shorter.
+
+Named warnings (`gas_velocity_below_quill_limit`, `droplets_too_coarse`, `mist_carryover_risk`,
+`early_wall_impingement`, `partial_cross_section_coverage`, `off_centre_injection`) make a screening
+verdict explainable instead of a single number.
+
+**Agents and skills to update:** `production.chemistry` agent and the
+`neqsim-production-chemistry` skill should reference the class for injection-point placement and
+nozzle-versus-quill questions.
+
+**Tests:** `ChemicalInjectionNozzlePerformanceTest`, 6 tests.
 ## 2026-09-12 — Automatic recycle insertion: `makeRecycles()` and `setAutoRecycles(...)`
 
 A feedback loop wired straight back into an upstream mixer, with no `Recycle` unit in it, is an

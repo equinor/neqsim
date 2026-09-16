@@ -101,17 +101,18 @@ cd $HOME\Documents\GitHub
 git clone https://github.com/equinor/neqsim.git
 cd neqsim
 
-# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+# 2. Python devtools in a venv ('neqsim' works in terminals where it is activated)
 py -3 -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
 .\.venv\Scripts\Activate.ps1
 .\install.ps1
-neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+neqsim doctor --skip-jar  # checks the CLI setup before building the Java JAR
 
 # 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
 .\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
+neqsim doctor                # full check, including the built JAR
 
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
@@ -138,13 +139,38 @@ by every NeqSim clone and keeps studies outside the repository. Precedence:
 `neqsim --reset-task-root` removes the setting without moving existing tasks.
 
 The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
-footers every generated `Report.docx` inherits — set it once and all later tasks
+footers every generated Word report inherits — set it once and all later tasks
 follow it. It is stored in the same settings file. Precedence:
 `generate_report.py --template PATH` > `NEQSIM_REPORT_TEMPLATE` > the saved
 default > built-in styling. The template's own body text is dropped (pass
 `--keep-template-content` to keep it), `--no-template` ignores the setting for one
-run, and `neqsim --reset-report-template` removes it. `Paper.docx` keeps journal
-formatting and ignores the template.
+run, and `neqsim --reset-report-template` removes it. The scientific paper keeps
+journal formatting and ignores the template.
+
+Report files are named after the report title — a study titled "Hydrate margin
+for the export line" produces `Hydrate_margin_for_the_export_line.docx` and
+`.html` (paper: `..._Paper.docx`). Report files written under an earlier title
+are deleted on regeneration, so a renamed study leaves no superseded deliverable.
+
+The canonical generator accepts both `benchmark_validation.tests` lists and
+named benchmark mappings. Word and HTML outputs retain the source, numerical
+comparisons, and PASS/FAIL status. Before rendering, the generator checks for
+contradictions between benchmarks, validation, risk, discussions, and conclusions.
+Findings appear in the console and the technical report's **Report Consistency
+Review** section; calculation findings are written to `fixes_needed.json`.
+These checks request review and do not rewrite the study's conclusions.
+
+The document root is the folder the AI agents read source documents from —
+standards, datasheets, P&IDs, vendor documents, historian exports — and **every
+subfolder below it is in scope**. The setting is optional: it is either set or
+undefined, and when undefined agents simply work from the documents you supply.
+It is stored in the same settings file, so one setting covers all tasks, and each
+new task records the resolved value as `inputs.document_root` in its
+`study_config.yaml`. Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the
+saved default > none. `neqsim documents [PATTERN]` lists matches from the root and
+all subfolders, and `neqsim --reset-document-root` removes the setting. A
+configured folder that no longer exists is reported as an error rather than
+silently ignored.
 
 The document root is the folder the AI agents read source documents from —
 standards, datasheets, P&IDs, vendor documents, historian exports — and **every
@@ -180,8 +206,9 @@ sign you in with browser SSO in a single command:
 
 ```powershell
 # GitHub (registers the repo and runs `gh auth login --web`):
-neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
-neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+# --catalog-path points at the catalog file published in the repo
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
 
 # Internal Git server instead of GitHub:
 neqsim agent private-init --url https://git.internal.company.com/neqsim/enterprise-agents.git
@@ -199,6 +226,11 @@ neqsim skill install <name> --target vscode
 > `private-init` and `add-repo` accept the same repo options — use `private-init`
 > for first-time setup and `add-repo` to register additional repos later. Both
 > print the catalog file path when they finish.
+
+> **`neqsim` not recognized?** Without elevated privileges the console script may
+> not be on PATH. Run every command above as `python -m neqsim_cli ...` instead
+> (same arguments), or see
+> [Troubleshooting](#troubleshooting-neqsim-not-found).
 
 **Which file gets edited, and where?** `private-init` writes a per-user catalog:
 
@@ -286,7 +318,8 @@ After installation you get a single `neqsim` command:
 ```bash
 neqsim try               # interactive playground — explore NeqSim in 30 seconds
 neqsim onboard           # interactive setup wizard
-neqsim doctor            # check your environment is healthy
+neqsim doctor            # check your environment is healthy (including a built JAR)
+neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim new-skill NAME    # scaffold a new AI skill
@@ -299,41 +332,48 @@ Run `neqsim --help` for the full list.
 ### Troubleshooting: `neqsim` not found
 
 If `neqsim` is not recognized after `pip install -e devtools/`, the Python
-Scripts directory is not on your PATH.
+Scripts directory is not on your PATH. The install itself is fine.
 
-**Using a virtual environment (easiest — always works):**
+**Unblock yourself immediately (no setup, always works):**
+```bash
+python -m neqsim_cli --help      # py -m neqsim_cli --help  on Windows
+```
+This is the same entry point the `neqsim` command runs, so every command in this
+README works with it — just substitute it for `neqsim`. Many contributors use
+only this form.
+
+**Find out why, and fix it:**
+```bash
+python -m neqsim_cli doctor --skip-jar   # names the cause under "CLI command"
+python devtools/ensure_on_path.py        # puts the Scripts dir on your user PATH
+```
+Use `ensure_on_path.py` rather than editing PATH by hand: it writes the user
+PATH through the registry, which avoids the truncation and the
+machine-PATH-duplicated-into-user-PATH damage that `setx %PATH%` and
+`SetEnvironmentVariable("PATH", $env:PATH + ...)` cause. Then open a **new**
+terminal — and in VS Code, fully quit and reopen the window, because VS Code
+captures PATH at launch and a new integrated terminal is not enough.
+
+**Using a virtual environment:**
 ```bash
 python -m venv .venv
 # Windows:  .venv\Scripts\Activate.ps1
 # macOS/Linux:  source .venv/bin/activate
 pip install -e devtools/
-neqsim --help   # works immediately — venv puts scripts on PATH
+neqsim --help
 ```
+A venv is activated **per terminal**, so activate it in every new terminal (or
+let VS Code do it via *Python: Select Interpreter*). Restarting the machine does
+not change this. Note that VS Code can set `VIRTUAL_ENV` without actually
+activating the environment — if `neqsim` is missing while `VIRTUAL_ENV` is set,
+that is the cause, and `neqsim doctor` will say so.
 
-**Windows (PowerShell) — without venv:**
-```powershell
-# Check where pip installed it:
-python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
-
-# Add it permanently (typical path for Python 3.12):
-$scripts = [System.IO.Path]::Combine($env:APPDATA, 'Python', 'Python312', 'Scripts')
-[Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$scripts", "User")
-# Restart your terminal for the change to take effect.
-# If running neqsim later shows "The term 'neqsim' is not recognized" in a VS Code
-# terminal, fully quit and reopen VS Code (a new integrated terminal is not enough
-# — VS Code captures PATH at launch). A virtualenv avoids this.
-```
-
-**Linux / macOS — without venv:**
+**Where did pip put it?**
 ```bash
-# The scripts directory is usually ~/.local/bin
-export PATH="$HOME/.local/bin:$PATH"
-# Add the line above to ~/.bashrc or ~/.zshrc to make it permanent.
-
-# macOS with Homebrew Python: scripts may be at
-#   /opt/homebrew/bin/ (Apple Silicon) or /usr/local/bin/ (Intel)
-# Check with: python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))"
+python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
 ```
+Typical locations: `%APPDATA%\Python\Python312\Scripts` (Windows, no admin),
+`~/.local/bin` (Linux), `/opt/homebrew/bin` or `/usr/local/bin` (macOS Homebrew).
 
 **GitHub Codespaces:**
 

@@ -354,6 +354,25 @@ public class Heater extends TwoPortEquipment
     this.temperatureOut = temperature;
   }
 
+  /**
+   * Returns the specified outlet temperature, in the unit it was specified in.
+   *
+   * @return specified outlet temperature, or zero when no outlet temperature has been specified
+   * @see #getSpecifiedOutletTemperatureUnit()
+   */
+  public double getSpecifiedOutletTemperature() {
+    return temperatureOut;
+  }
+
+  /**
+   * Returns the unit of the specified outlet temperature.
+   *
+   * @return temperature unit, for example "K" or "C"
+   */
+  public String getSpecifiedOutletTemperatureUnit() {
+    return temperatureUnit;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setOutTP(double temperature, double pressure) {

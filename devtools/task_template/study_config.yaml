@@ -4,7 +4,9 @@
 # the prompt when an agent plans the task.
 
 study:
-  title: "[Title]"
+  title: "[Title]"        # Also used as the report title.
+  author: ""              # Optional; shown on the report cover page.
+  classification: ""      # Optional; Open | Internal | Confidential.
   task_type: "B"
   scale: auto          # auto | quick | standard | comprehensive
   mode: auto           # auto | screening | design | development
@@ -28,9 +30,27 @@ inputs:
       role: reference_documents
       required: false
       extraction: classify_extract_normalize_validate
+  data_sources_required: false  # true when the answer comes from source systems, not documents
+  data_sources: []
+  # Declare every source system the study reads so the report gate can check that
+  # captured evidence exists for each one.
+  #  - system: sap_maintenance   # historian | stid | sap_maintenance | pdm | synergi | lab | vendor
+  #    scope: "plant 1820, notifications 2015-2026"
+  #    access: read_only
+  #    evidence: step2_analysis/sap_pull.json
+
+analysis:
+  engine: auto           # auto | notebook | script | hybrid
+  resumable_jobs: false  # long source-system pulls must restart without re-reading everything
+  scripts: []
+  # Script-backed studies (API pulls, long batch jobs, non-NeqSim data analysis)
+  # declare their scripts here instead of notebooks, and set notebooks.required: false.
+  #  - file: 01_pull_source_data.py
+  #    purpose: Read the source systems and cache the raw records.
+  #    produces: step2_analysis/raw_records.json
 
 notebooks:
-  required: true
+  required: true                   # false for script-backed studies (see analysis.engine)
   execution_required: true
   execution_engine: neqsim_runner  # neqsim_runner | interactive | auto
   runner_mode: execute             # execute | script
@@ -53,21 +73,32 @@ report:
   formats:
     - docx
     - html
+    # - pdf
   depth: auto          # auto | brief | standard | detailed
   include_paper: false
+  work_record: auto    # auto | required | skip -> step3_report/WORK_RECORD.md
+  # The work record is the method-and-provenance companion to the report: what was
+  # done, how, which data and scripts were used, and where every file lives.
+  # Build it with: neqsim work-record <task folder>
   required_sections:
     - executive_summary
     - scope_and_standards
+    - information_sources   # how many documents from which source system
     - methodology
     - results
     - discussion
     - validation
+    - assumptions_and_gaps  # every assumption, and what was assumed where data was missing
     - conclusions
     - references
 
 quality_gates:
   require_results_json: true
   benchmark_validation: auto     # auto | required | optional | skip
+  benchmark_kind: auto           # auto | reference_data | peer_fleet | plant_data | none
+  provenance_closure: auto       # every declared data source must have captured evidence
+  work_record: auto              # auto | required | skip (method and data record)
+  human_review: auto             # auto | required | optional (decision-grade output)
   uncertainty_analysis: auto     # auto | required | optional | skip
   risk_register: auto            # auto | required | optional | skip
   figure_discussion: required    # required | optional | skip

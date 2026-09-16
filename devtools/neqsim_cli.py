@@ -8,14 +8,18 @@ Usage:
     neqsim doctor            Check your environment is healthy
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
-    neqsim report [DIR]      Generate Report.docx/html for a task folder
-    neqsim --set-task-root P Set the folder new tasks are created in
+    neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
+    neqsim report [DIR]      Generate the report (files named after its title)
+    neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
+    neqsim --set-task-root P Set the folder new tasks are created in (created if
+                            missing; --vscode also adds it to the workspace)
     neqsim --show-task-root  Print the folder new tasks are created in
     neqsim --reset-task-root Remove the saved task-root setting
     neqsim --set-report-template P   Build Word reports from template P
     neqsim --show-report-template    Print the configured report template
     neqsim --reset-report-template   Remove the saved report template
     neqsim --set-document-root P     Read source documents from P and its subfolders
+                                     (created if missing; --vscode adds it too)
     neqsim --show-document-root      Print the configured document root
     neqsim --reset-document-root     Remove the saved document root
     neqsim documents [PATTERN]       List documents under the document root
@@ -54,6 +58,10 @@ COMMANDS = {
     "new-task": {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
+    },
+    "tasks": {
+        "module": "task_corpus",
+        "desc": "Work across solved tasks (index/relink/env/duplicates)",
     },
     "new-skill": {
         "module": "new_skill",
@@ -98,12 +106,16 @@ def _print_usage():
     for name, info in COMMANDS.items():
         print("  {:<18s} {}".format(name, info["desc"]))
     print("  {:<18s} {}".format("report [DIR]",
-                                "Generate Report.docx/html for a task folder"))
+                                "Generate the report (files named after its title)"))
+    print("  {:<18s} {}".format("work-record [DIR]",
+                                "Generate WORK_RECORD.md (method, data, file map)"))
     print()
     print("Task destination:")
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
     print("  --show-task-root   Print the folder new tasks are created in")
     print("  --reset-task-root  Remove the saved setting (existing tasks are unchanged)")
+    print("                     A missing folder is created; add --vscode to also add")
+    print("                     it to the VS Code workspace.")
     print()
     print("Report template:")
     print("  --set-report-template P  Build Word reports from the .docx/.dotx template P")
@@ -115,6 +127,8 @@ def _print_usage():
     print("  --show-document-root     Print the folder agents read documents from")
     print("  --reset-document-root    Remove the saved document root")
     print("  documents [PATTERN]      List documents under the document root")
+    print("                           Put standards, technical requirements, datasheets,")
+    print("                           and drawings agents must always know about here.")
     print()
     print("Run `neqsim <command> --help` for per-command options.")
     print("Docs: https://equinor.github.io/neqsim/")
@@ -155,6 +169,32 @@ def _setting_value(argv):
     return value or None
 
 
+VSCODE_FLAGS = ("--vscode", "--add-to-workspace")
+
+
+def _take_option(argv, flags):
+    """Pull an option flag out of the arguments so it is not read as the path."""
+    remaining = [part for part in argv
+                 if ("--" + part.strip().lstrip("-").lower()) not in flags]
+    return len(remaining) != len(argv), remaining
+
+
+def _register_with_vscode(path, requested):
+    """Add a configured folder to the VS Code workspace only when asked to."""
+    import new_task
+
+    if not requested:
+        print("Add it to your editor with File > Add Folder to Workspace "
+              "(or re-run with --vscode).")
+        return
+    added, reason = new_task.add_folder_to_vscode_workspace(path)
+    if added:
+        print("Added to the VS Code workspace.")
+    else:
+        print("Not added to the VS Code workspace: {}".format(reason))
+        print("Add it manually with File > Add Folder to Workspace.")
+
+
 GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
                               "generate_report.py")
 
@@ -162,16 +202,17 @@ GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
 def _handle_report(argv):
     """Run the canonical report generator against a task folder.
 
-    Task folders vendor their own copy of generate_report.py at creation time,
-    so an old task keeps an old generator. This command always runs the current
-    devtools copy, which is how a template or formatting fix reaches every task.
+    Task folders carry a launcher, not a copy, of generate_report.py, so a
+    template or formatting fix reaches every task. This command is the same
+    entry point without needing the launcher.
 
     Parameters
     ----------
     argv : list of str
         Arguments after the ``report`` command. An optional leading positional
         is the task folder (default: current directory); everything else is
-        forwarded to the generator (--paper, --template PATH, --no-template...).
+        forwarded to the generator (--paper, --pdf, --no-pdf, --template PATH,
+        --no-template, --title TEXT, --author NAME...).
 
     Returns
     -------
@@ -195,7 +236,8 @@ def _handle_report(argv):
         print("ERROR: {} does not look like a task folder "
               "(no results.json, step1_scope_and_research/, or step3_report/)."
               .format(task_dir))
-        print("Usage: neqsim report [TASK_DIR] [--paper] [--template PATH] [--no-template]")
+        print("Usage: neqsim report [TASK_DIR] [--paper] [--pdf] [--no-pdf] "
+              "[--template PATH] [--no-template] [--title TEXT] [--author NAME]")
         return 2
     if not os.path.isfile(GENERATOR_PATH):
         print("ERROR: report generator not found at {}".format(GENERATOR_PATH))
@@ -204,6 +246,33 @@ def _handle_report(argv):
     cmd = [sys.executable, GENERATOR_PATH, "--task-dir", task_dir] + passthrough
     print("Generating report for {}".format(task_dir))
     return subprocess.call(cmd)
+
+
+def _handle_work_record(argv):
+    """Build the method-and-data record for a task folder.
+
+    The report says what the answer is; the work record says how it was produced
+    and where every input, script, and artifact lives, so the study can be
+    audited or repeated by someone who was not in the conversation.
+
+    Parameters
+    ----------
+    argv : list of str
+        Arguments after the ``work-record`` command. An optional leading
+        positional is the task folder (default: current directory); the rest is
+        forwarded to the generator (--check, --stdout).
+
+    Returns
+    -------
+    int
+        Exit code from the generator.
+    """
+    import generate_work_record
+
+    passthrough = list(argv)
+    if not passthrough or passthrough[0].startswith("-"):
+        passthrough = [os.getcwd()] + passthrough
+    return generate_work_record.main(passthrough)
 
 
 def _handle_report_template(argv):
@@ -247,7 +316,8 @@ def _handle_document_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], DOCUMENT_ROOT_FLAGS)
-    value = _setting_value(argv[1:])
+    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    value = _setting_value(rest)
     if flag == "document-root":
         flag = "--set-document-root" if value else "--show-document-root"
 
@@ -262,6 +332,8 @@ def _handle_document_root(argv):
             sys.exit(2)
         print("Document root: {}".format(stored))
         print("Agents read source documents from this folder and all its subfolders.")
+        print("Put standards, technical requirements, datasheets, and drawings here.")
+        _register_with_vscode(stored, add_to_vscode)
     elif flag == "--reset-document-root":
         try:
             new_task.clear_default_document_root()
@@ -304,7 +376,8 @@ def _handle_task_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], TASK_ROOT_FLAGS)
-    value = _setting_value(argv[1:])
+    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    value = _setting_value(rest)
     if flag == "task-root":
         flag = "--set-task-root" if value else "--show-task-root"
     if flag == "--set-task-root":
@@ -319,9 +392,11 @@ def _handle_task_root(argv):
             sys.exit(2)
         if stored == new_task.CWD_TASK_ROOT:
             print("Task root: the terminal's current folder (re-resolved per command).")
+            print("New tasks are created here. Existing tasks are unchanged.")
         else:
             print("Task root: {}".format(stored))
-        print("New tasks are created here. Existing tasks are unchanged.")
+            print("New tasks are created here. Existing tasks are unchanged.")
+            _register_with_vscode(stored, add_to_vscode)
     elif flag == "--reset-task-root":
         new_task.clear_default_task_root()
         print("Saved task root removed. Existing tasks are unchanged.")
@@ -362,6 +437,9 @@ def main():
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
 
+    if cmd in ("work-record", "workrecord"):
+        sys.exit(_handle_work_record(sys.argv[2:]))
+
     if cmd not in COMMANDS:
         print("Unknown command: {!r}".format(cmd))
         print("Run `neqsim --help` for available commands.")
@@ -379,7 +457,10 @@ def main():
     # Each module uses `if __name__ == "__main__": main()` pattern.
     # We call main() directly.
     if hasattr(mod, "main"):
-        mod.main()
+        # Propagate a failure code so a refusal is not reported as success.
+        code = mod.main()
+        if code:
+            sys.exit(code)
     else:
         # Fallback: re-run as script (shouldn't normally be needed)
         exec(open(os.path.join(DEVTOOLS_DIR, module_name + ".py")).read())

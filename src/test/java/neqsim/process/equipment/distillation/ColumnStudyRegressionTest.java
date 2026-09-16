@@ -123,8 +123,8 @@ public class ColumnStudyRegressionTest {
     column.run();
 
     assertTrue(column.solved(), "Column-study case should converge with Naphtali-Sandholm");
-    assertEquals(DistillationColumn.SolveStatus.RECONCILED_PRODUCTS, column.getLastSolveStatus(),
-        "a no-side-draw direct result should preserve the established reconciled-product status");
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+        "the applied no-side-draw state must satisfy the same active gates as its published streams and duties");
     assertEquals(DistillationColumn.SolverType.NAPHTALI_SANDHOLM, column.getLastSolverTypeUsed(),
         "the nominal case must be accepted by the simultaneous solver rather than a premature SR fallback");
     assertTrue(column.getLastIterationCount() > 0, "the nominal rigorous solve should exercise Newton refinement");

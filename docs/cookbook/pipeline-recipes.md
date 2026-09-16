@@ -505,9 +505,11 @@ if not steady.isConverged():
 ```
 
 The report also exposes pressure-momentum, pressure-update, total-holdup,
-thermodynamic-property, and pressure-drop residuals. Its `CONVERGED` result includes the mandatory
-final flash and holdup/oil-water resweep; an iteration-, wall-clock-, or pressure-floor-limited
-profile remains explicitly non-converged.
+thermodynamic-property, and pressure-drop residuals. `getMassFluxResidual()` checks the maximum
+relative total phase mass-flux error against `getMassFluxTolerance()` (1e-8). Its `CONVERGED`
+result includes the mandatory final flash, holdup/oil-water resweep, and mass-flux check of the
+final section state; an iteration-, wall-clock-, or pressure-floor-limited profile remains
+explicitly non-converged.
 
 > **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial) for comprehensive examples including slug visualization and transient analysis.
 

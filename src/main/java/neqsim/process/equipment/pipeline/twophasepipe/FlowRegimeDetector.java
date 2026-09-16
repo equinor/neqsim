@@ -56,11 +56,20 @@ public class FlowRegimeDetector implements Serializable {
   /** Blend closures across horizontal regime transitions instead of switching at a point. */
   private boolean blendRegimeTransitions = true;
 
+  /** Require the local liquid inventory to admit a thin film before selecting inclined annular flow. */
+  private boolean useInclinedFilmBridgingCriterion;
+
+  /** Blend inclined annular and slug closures across their gas-lift and optional film boundaries. */
+  private boolean blendInclinedAnnularSlugTransitions;
+
   /** Half-width of the Kelvin-Helmholtz blending band, as a fraction of the critical gas velocity. */
   private static final double KH_TRANSITION_BAND = 0.15;
 
   /** Half-width of the blending band around the bridging limit, as a liquid-fraction difference. */
   private static final double LEVEL_TRANSITION_BAND = 0.08;
+
+  /** Half-width of the inclined annular gas-lift blend, as a fraction of its critical velocity. */
+  private static final double ANNULAR_GAS_LIFT_TRANSITION_BAND = 0.15;
 
   /** Gas viscosity as a fraction of the liquid viscosity, used only when the section carries none. */
   private static final double DEGENERATE_GAS_VISCOSITY_FRACTION = 0.01;
@@ -156,6 +165,62 @@ public class FlowRegimeDetector implements Serializable {
     this.blendRegimeTransitions = enable;
   }
 
+  /**
+   * Returns whether inclined annular flow must also satisfy the local film-bridging limit.
+   *
+   * @return true when local liquid holdup constrains inclined annular flow
+   */
+  public boolean isUseInclinedFilmBridgingCriterion() {
+    return useInclinedFilmBridgingCriterion;
+  }
+
+  /**
+   * Requires a liquid fraction below 0.24 before the inclined branch can select annular flow.
+   *
+   * <p>
+   * The droplet-lift velocity alone does not establish that an annular film is possible. Barnea (1987), transition J,
+   * also requires enough unoccupied core area to avoid liquid bridging. This opt-in inventory constraint uses the
+   * section's current liquid holdup; all liquid is assigned to the film because this detector has no independently
+   * transported droplet inventory. It excludes thick liquid states even when their gas velocity exceeds the unchanged
+   * droplet-lift threshold. The remaining bubble/slug or downward stratified decisions retain their existing criteria.
+   * </p>
+   *
+   * <p>
+   * This local transient constraint is not the full steady annular-film stability calculation in Barnea's model. It
+   * does not add film reversal, entrainment, a transition band, or countercurrent-flow qualification. It affects only
+   * the mechanistic branch more than ten degrees from horizontal. Disabled by default for compatibility.
+   * </p>
+   *
+   * @param enable true to require the local film-bridging constraint
+   */
+  public void setUseInclinedFilmBridgingCriterion(boolean enable) {
+    useInclinedFilmBridgingCriterion = enable;
+  }
+
+  /**
+   * Returns whether the inclined annular-to-slug closures are blended across their transition bands.
+   *
+   * @return true when the opt-in inclined transition blend is active
+   */
+  public boolean isBlendInclinedAnnularSlugTransitions() {
+    return blendInclinedAnnularSlugTransitions;
+  }
+
+  /**
+   * Selects continuous closure weights across the inclined annular-to-slug transition.
+   *
+   * <p>
+   * The existing gas-lift and optional film-bridging criteria remain the transition centres. Enabling this replaces
+   * their point switch by a bounded force blend. It does not change the transition correlations, add hysteresis or
+   * qualify countercurrent flow. Disabled by default for compatibility.
+   * </p>
+   *
+   * @param enable true to blend inclined annular and slug closures
+   */
+  public void setBlendInclinedAnnularSlugTransitions(boolean enable) {
+    blendInclinedAnnularSlugTransitions = enable;
+  }
+
   /** Drift flux model for slip calculations. */
   private transient DriftFluxModel driftFluxModel;
 
@@ -218,13 +283,17 @@ public class FlowRegimeDetector implements Serializable {
    *
    * <p>
    * Uses conservative phase holdups for single-phase detection. This keeps any positive phase inventory in the
-   * two-phase regime path even when its superficial velocity is arbitrarily small.
+   * two-phase regime path even when its superficial velocity is arbitrarily small. Co-current backward flow is
+   * evaluated in the direction of flow, reversing both velocities and inclination for the correlations. This does not
+   * change the section's physical state or extend the correlations to countercurrent flow. The upward bubble criterion
+   * also requires a nonnegative inferred void fraction and positive bubble transport velocity.
    * </p>
    *
    * @param section The pipe section with current state
    * @return Detected flow regime
    */
   public FlowRegime detectFlowRegime(PipeSection section) {
+    section = flowOrientedSection(section);
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
     double alphaL = section.getLiquidHoldup();
@@ -259,7 +328,7 @@ public class FlowRegimeDetector implements Serializable {
 
     // Use Barnea's unified model for inclined pipes
     if (Math.abs(theta) > Math.toRadians(10)) {
-      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
+      return detectInclinedFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma, alphaL);
     } else {
       return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, mu_G, sigma);
     }
@@ -271,21 +340,56 @@ public class FlowRegimeDetector implements Serializable {
    * <p>
    * A section sitting on a regime boundary is not wholly one regime or the other. Hard switching there steps hold-up
    * and friction discontinuously as an operating point drifts across the boundary. This sets the regime and, where the
-   * section is on a horizontal transition, the fractional weights the closures should be blended with.
+   * section is on a supported transition, the fractional weights the closures should be blended with.
    * </p>
    *
    * @param section section to classify; its regime and blend weights are updated
    * @return the dominant flow regime
    */
   public FlowRegime classify(PipeSection section) {
-    FlowRegime regime = detectFlowRegime(section);
+    PipeSection oriented = flowOrientedSection(section);
+    FlowRegime regime = detectFlowRegime(oriented);
     section.setFlowRegime(regime);
 
-    Map<FlowRegime, Double> weights = horizontalRegimeWeights(section, regime);
+    Map<FlowRegime, Double> weights = horizontalRegimeWeights(oriented, regime);
+    if (weights == null) {
+      weights = inclinedAnnularSlugWeights(oriented, regime);
+    }
     if (weights != null) {
       section.setRegimeWeights(weights);
     }
     return section.getFlowRegime();
+  }
+
+  /**
+   * Express a co-current state in the positive-flow coordinate assumed by the regime correlations.
+   *
+   * <p>
+   * A stagnant phase follows the moving phase's direction. Complete stagnation and countercurrent flow retain their
+   * existing convention. Only a private classification view is reversed; the signed transport state remains intact.
+   * </p>
+   *
+   * @param section physical section
+   * @return the original section or an independently oriented classification view
+   */
+  private PipeSection flowOrientedSection(PipeSection section) {
+    double gasFlow = section.getSuperficialGasVelocity();
+    double liquidFlow = section.getSuperficialLiquidVelocity();
+    if (!(gasFlow <= 0.0 && liquidFlow <= 0.0 && (gasFlow < 0.0 || liquidFlow < 0.0))) {
+      return section;
+    }
+    PipeSection oriented = section.clone();
+    oriented.setInclination(-section.getInclination());
+    oriented.setGasVelocity(-section.getGasVelocity());
+    oriented.setLiquidVelocity(-section.getLiquidVelocity());
+    if (oriented instanceof TwoFluidSection) {
+      TwoFluidSection phaseView = (TwoFluidSection) oriented;
+      TwoFluidSection physical = (TwoFluidSection) section;
+      phaseView.setOilVelocity(-physical.getOilVelocity());
+      phaseView.setWaterVelocity(-physical.getWaterVelocity());
+    }
+    oriented.updateDerivedQuantitiesWithoutNormalization(-gasFlow, -liquidFlow);
+    return oriented;
   }
 
   /**
@@ -341,6 +445,51 @@ public class FlowRegimeDetector implements Serializable {
     weights.put(stratified, 1.0 - unstableShare);
     weights.put(FlowRegime.ANNULAR, unstableShare * (1.0 - slugShare));
     weights.put(FlowRegime.SLUG, unstableShare * slugShare);
+    return weights;
+  }
+
+  /**
+   * Fractional closure weights across the inclined annular-to-slug transition.
+   *
+   * <p>
+   * The inclined annular branch requires both enough gas lift and, when the opt-in film criterion is selected, a liquid
+   * inventory that cannot bridge the gas core. Those two inequalities define one annular eligibility fraction. Ramping
+   * each dimensionless margin removes the force jump when a Newton step crosses either boundary while retaining the
+   * original single-regime closures outside the transition bands.
+   * </p>
+   *
+   * <p>
+   * This applies only to upward mechanistic flow with the explicit inclined-transition option. The default inclined
+   * map, downward stratified transitions, horizontal transitions and minimum-slip classification are unchanged.
+   * </p>
+   *
+   * @param section section being classified
+   * @param regime the regime already detected for the section
+   * @return annular/slug weights, or null outside the supported transition
+   */
+  private Map<FlowRegime, Double> inclinedAnnularSlugWeights(PipeSection section, FlowRegime regime) {
+    if (!blendRegimeTransitions || !blendInclinedAnnularSlugTransitions
+        || detectionMethod != DetectionMethod.MECHANISTIC || section.getInclination() <= Math.toRadians(10.0)) {
+      return null;
+    }
+    if (regime != FlowRegime.ANNULAR && regime != FlowRegime.SLUG) {
+      return null;
+    }
+
+    double gasLiftShare = rampWeight(annularGasLiftRatio(section.getSuperficialGasVelocity(),
+        section.getLiquidDensity(), section.getGasDensity(), section.getSurfaceTension()), 1.0,
+        ANNULAR_GAS_LIFT_TRANSITION_BAND);
+    double unbridgedShare = useInclinedFilmBridgingCriterion
+        ? 1.0 - rampWeight(section.getLiquidHoldup(), ANNULAR_BRIDGING_HOLDUP, LEVEL_TRANSITION_BAND)
+        : 1.0;
+    double annularShare = gasLiftShare * unbridgedShare;
+    if (annularShare <= 0.0 || annularShare >= 1.0) {
+      return null;
+    }
+
+    Map<FlowRegime, Double> weights = new EnumMap<FlowRegime, Double>(FlowRegime.class);
+    weights.put(FlowRegime.SLUG, 1.0 - annularShare);
+    weights.put(FlowRegime.ANNULAR, annularShare);
     return weights;
   }
 
@@ -499,10 +648,11 @@ public class FlowRegimeDetector implements Serializable {
    * @param mu_L Liquid viscosity (Pa·s)
    * @param mu_G Gas viscosity (Pa·s)
    * @param sigma Surface tension (N/m)
+   * @param liquidHoldup current conservative liquid volume fraction
    * @return Flow regime
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta, double rho_L,
-      double rho_G, double mu_L, double mu_G, double sigma) {
+      double rho_G, double mu_L, double mu_G, double sigma, double liquidHoldup) {
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -515,7 +665,8 @@ public class FlowRegimeDetector implements Serializable {
     // 0.1 m/s override selected churn at arbitrarily large gas velocities and introduced
     // a holdup discontinuity when an annular pipe was tilted upward. A separate film
     // stability criterion would be needed to subdivide this region into churn and annular.
-    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)) {
+    if (isAnnularFlow(U_SL, U_SG, D, rho_L, rho_G, sigma)
+        && (!useInclinedFilmBridgingCriterion || liquidHoldup < ANNULAR_BRIDGING_HOLDUP)) {
       return FlowRegime.ANNULAR;
     }
 
@@ -526,9 +677,14 @@ public class FlowRegimeDetector implements Serializable {
       // Bubble to slug transition
       double alpha_G_crit = 0.25; // Critical void fraction for bubble coalescence
 
-      double alpha_G = U_SG / (U_SG + U_SL + U_bubble);
-      if (alpha_G < alpha_G_crit) {
-        return FlowRegime.BUBBLE;
+      double bubbleTransportVelocity = U_SG + U_SL + U_bubble;
+      // Countercurrent flow can make the inferred bubble transport zero or negative. A negative void fraction
+      // does not satisfy the bubble criterion: accepting it would switch closure across the transport pole.
+      if (U_SG >= 0.0 && bubbleTransportVelocity > 0.0) {
+        double alpha_G = U_SG / bubbleTransportVelocity;
+        if (alpha_G < alpha_G_crit) {
+          return FlowRegime.BUBBLE;
+        }
       }
 
       return FlowRegime.SLUG;
@@ -698,10 +854,15 @@ public class FlowRegimeDetector implements Serializable {
    * @return true if flow is in annular regime
    */
   private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G, double sigma) {
+    return annularGasLiftRatio(U_SG, rho_L, rho_G, sigma) > 1.0;
+  }
+
+  /** Dimensionless gas-lift margin used by the inclined annular transition. */
+  private double annularGasLiftRatio(double U_SG, double rho_L, double rho_G, double sigma) {
     // Minimum gas velocity for annular flow (Taitel-Dukler)
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
-      return false;
+      return 0.0;
     }
 
     // If surface tension is not available or very small, use a default value
@@ -714,7 +875,7 @@ public class FlowRegimeDetector implements Serializable {
 
     double U_SG_crit = 3.1 * Math.pow(sigmaEffective * GRAVITY * deltaRho / (rho_G * rho_G), 0.25);
 
-    return U_SG > U_SG_crit;
+    return U_SG / U_SG_crit;
   }
 
   /**

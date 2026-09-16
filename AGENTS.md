@@ -162,6 +162,13 @@ Regenerate it whenever documents are added and before finalizing the task.
 
 ### Step-by-step
 
+> **If a terminal reports `neqsim` is not recognized, do not improvise and do not
+> skip the step.** The console script is simply not on PATH in that shell. Re-run
+> the identical command as `<python-executable> -m neqsim_cli ...`, where
+> `<python-executable>` is the interpreter named under "Python Environment
+> Reuse" above — same entry point, same arguments. This applies to every
+> `neqsim ...` command in this document.
+
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
    neqsim new-task "your task title" --type B --author "Name"
@@ -255,8 +262,37 @@ Regenerate it whenever documents are added and before finalizing the task.
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce a professional
-     engineering report (Report.docx + Report.html)
-   - Report.docx follows the user's Word template when one is configured
+     engineering report (Word + HTML)
+   - **PDF:** add `pdf` to `report.formats` in `study_config.yaml`, or pass
+     `--pdf` (`--no-pdf` overrides the config). The PDF is rendered from the
+     DOCX, not the HTML, so it inherits the configured Word template; it needs
+     Microsoft Word with pywin32, or LibreOffice on PATH. A conversion failure
+     is reported and does not abort the report run.
+   - **The report title is the study title, and the report FILES are named after
+     it.** Set `study.title` in `study_config.yaml` (optionally `study.author`,
+     `study.classification`); override per run with `--title` / `--author`.
+     Without it the generator falls back to the `task_spec.md` heading, then the
+     folder name. A study titled "Hydrate margin for the export line" ships
+     `step3_report/Hydrate_margin_for_the_export_line.docx` (+ `.html`), so the
+     deliverable is identifiable outside its task folder. Report files written
+     under an earlier title are deleted on regeneration — never keep a
+     superseded `Report.docx` beside the current one.
+   - **The task is stated at the top of the report**, before any analysis, from
+     `results.json` `task_statement`/`objective`, else the `## Objective`
+     section of `task_spec.md`. Fill one of them — otherwise the report can only
+     restate the study title.
+   - **The work record is generated automatically with the report** — every
+     `generate_report.py` / `neqsim report` run also writes
+     `step3_report/WORK_RECORD.md`: what was done, how, with which data, every
+     script/notebook and its outputs, every source system and collected document,
+     an annotated folder map, and the commands to reproduce the study. The report
+     carries the conclusion; the work record carries the method and provenance,
+     so a reader who was not in the conversation can audit or repeat the task.
+     Fill the three NARRATIVE blocks (`background`, `method`, `limitations`) by
+     hand — they survive regeneration. Rebuild it alone with
+     `neqsim work-record <task folder>`; check with `--check`; enforce with
+     `report.work_record: required`, or opt out with `skip`, in `study_config.yaml`.
+   - The Word report follows the user's Word template when one is configured
      (`neqsim --set-report-template "PATH"`, `NEQSIM_REPORT_TEMPLATE`, or
      `--template PATH` for a single run), inheriting their organisation's styles,
      fonts, headers, and footers. Report a missing-template error rather than
@@ -270,7 +306,50 @@ Regenerate it whenever documents are added and before finalizing the task.
      figures from ALL notebooks, not just the main one. When design parameters
      change, update hardcoded numbers in MANUAL_SECTIONS.
 
-4. **Create a PR** with reusable outputs:
+4. **Improve the tooling you just used (MANDATORY, every task).**
+   A task is also a test of NeqSim, the agents and the skills. Whenever solving it
+   required a workaround, a rediscovery, or more than one trial-and-error loop that
+   a NeqSim class / agent / skill should have handled, fix it **in this task**:
+   - missing calculation -> Java in `src/main/java/neqsim/` + JUnit test, `mvnw
+     spotless:apply`, then a PR to `equinor/neqsim` before the task closes;
+   - wrong or missing API recipe, gotcha, hand-off -> edit the `SKILL.md` /
+     `*.agent.md` (community vs enterprise repo as appropriate);
+   - a useful new multi-skill or multi-agent pipeline -> record it as a
+     composition pattern and update the "Loaded skills" / router guidance.
+   Record every change in `step1_scope_and_research/neqsim_improvements.md`
+   **and** in `results.json` under `improvements`. If nothing needed changing, say
+   so explicitly - silence fails the gate. Never ask permission for this step.
+
+   **Commit and push it — the loop only closes when the fix is pushed.** An
+   improvement that stays in the chat session, the clone, or the task folder is
+   lost when the session ends, and the next engineer hits the same wall. Each
+   repo in the workspace is independent, so commit in the one that owns the fix:
+
+   | What you learned | Repo | Change |
+   |------------------|------|--------|
+   | Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
+   | Wrong API recipe, gotcha, unit trap, better pattern | sibling repos `../neqsim-community-skills/` / `../neqsim-enterprise-skills/` | edit `SKILL.md` |
+   | Wrong skill choice, missed hand-off, bad routing | sibling repos `../neqsim-community-agents/` / `../neqsim-enterprise-agents/` | edit `*.agent.md` |
+   | Useful new multi-agent pipeline | agents repo | record as a composition pattern |
+   | Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
+
+   ```bash
+   cd <the repo that owns the fix>
+   git checkout -b task/<slug>
+   git add <the changed files>
+   git commit -m "<what the task taught>"
+   git push -u origin task/<slug>
+   gh pr create --fill
+   ```
+
+   Rules: never commit task output (evidence, notebooks, results, reports) to a
+   code repo; never commit company data (tags, plant names, document numbers,
+   historian extracts) to a public repo; keep plant-specific content in the
+   enterprise repos and plant-agnostic content in the community repos. After
+   pushing skill/agent changes, refresh the local install with
+   `neqsim agent install --all --vscode --force`.
+
+5. **Create a PR** with reusable outputs:
    ```bash
    git checkout -b task/task-slug
    # Copy reusable files to proper locations (NEVER commit task_solve/ contents)
@@ -282,7 +361,7 @@ Regenerate it whenever documents are added and before finalizing the task.
    gh pr create --title "Add [description]" --body "From task-solving workflow"
    ```
 
-5. **Fix and improve documentation** encountered during the task:
+6. **Fix and improve documentation** encountered during the task:
    - If you find **errors** in existing docs (wrong API signatures, outdated
      patterns, incorrect examples), fix them and include the fixes in the PR.
    - If you discover **missing documentation** (undocumented classes, missing
@@ -509,6 +588,8 @@ When working iteratively with continuous updates:
 The report generator auto-reads this file to populate Results and Validation sections.
 - **key_results**: Rendered as styled table with auto-detected units (use suffixes like `_C`, `_bar`, `_kg`, `_hours`)
 - **validation**: Rendered as pass/fail table with color coding
+- **Information Sources and Evidence Basis** (no results.json key needed): built from `step1_scope_and_research/references/collection_manifest.json` — how many documents came from each source system (STID, SAP/Maintenance, PEPR, TR2000, historian, vendor, literature …), plus the `inputs.data_sources` systems read with their captured-evidence paths, plus documents sought but not obtained. Run `python devtools/generate_sources_md.py <task> --organize` so the manifest exists.
+- **assumptions / data_gaps** (also accepted: `assumptions_and_gaps: {assumptions: [], data_gaps: []}`, `evidence_gaps`, `assumptions_gaps`): rendered as the **Assumptions and Data Gaps** section. Assumptions may be plain strings, or dicts with `assumption` / `basis` / `effect`. Data gaps should be dicts with `gap` (or `blocker`), `source`, `status`, `assumed` (what was used in its place) and `effect`. The gate warns when a declared data source has no captured evidence but nothing is registered here — a study that could not get a document still reached an answer somehow, and that substitution must be visible.
 - **equations**: KaTeX in HTML, PNG images in Word
 - **figures**: Numbered captions from `figure_captions`
 - **figure_discussion**: Discussion blocks with observation, mechanism, implication, recommendation — rendered as a "Discussion" section (report) or inline in "Results and Discussion" (paper). Links figures to conclusions via traceability chain.
@@ -1256,6 +1337,7 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `devtools/validate_task_results.py`                                     | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`), `--enterprise-gate`. Warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled. With `--enterprise-gate` a Standard/Comprehensive task carrying neither a `benchmark_validation` nor a model-vs-plant comparison **fails** instead of warning. Task folders outside the repo are supported (`neqsim --set-task-root`).                                                                                                                                                                                                                                                          |
 | `devtools/verify_skill_api_refs.py`                                     | API-drift linter: resolves every fully-qualified `neqsim.*` class reference in `.github/skills/` and `.github/agents/` against the Java source tree and fails on unresolved ones; warns on missing or stale `last_verified`. Bare class names are ignored on purpose (false positives). Runs in `skills_agents_lint.yml`.                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `neqsim report [TASK_DIR]`                                              | Runs the canonical `devtools/task_template/step3_report/generate_report.py` against **any** task folder (old or new), forwarding `--paper` / `--template PATH` / `--no-template`. Use it instead of copying the generator into a task; equivalent to `--task-dir PATH` / `NEQSIM_TASK_DIR`.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `neqsim work-record [TASK_DIR]` (`devtools/generate_work_record.py`)    | Writes `step3_report/WORK_RECORD.md` — the method-and-provenance companion to the report, **generated automatically by every report run** (opt out with `report.work_record: skip`): every script/notebook with purpose, outputs and re-run command; declared source systems and whether their captured evidence exists; collected reference documents; cached data files; key results and figures; an annotated folder map; and the reproduction sequence. Built from the folder so it cannot drift. Hand-written NARRATIVE blocks are preserved on regeneration; `--check` fails while one still holds template text or an artifact is missing.                                                                                                 |
 | `.github/workflows/task_quality_gate.yml`                               | PR gate: runs `validate_task_results.py --changed --enterprise-gate` + `consistency_checker.py` on changed task folders only.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `.github/workflows/task_nip_issues.yml`                                 | On push to master, opens one labelled GitHub issue per newly added `neqsim_improvements.md` (deduped by title).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `step1_scope_and_research/capability_assessment.md` (per task)          | Mandatory artifact for Standard/Comprehensive tasks: capability requirements matrix, NeqSim coverage check, gap implementation plan, skills to load. Auto-scaffolded into every new task by `new_task.py`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
