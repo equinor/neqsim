@@ -23,6 +23,7 @@ Usage:
     neqsim --show-document-root      Print the configured document root
     neqsim --reset-document-root     Remove the saved document root
     neqsim documents [PATTERN]       List documents under the document root
+    neqsim documents --index [DIR]   Refresh a task's document_root_index.md
     neqsim new-skill NAME    Scaffold a new AI skill
     neqsim skill CMD         Manage skills (list/search/install/remove/private-init/add-repo)
     neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init/add-repo)
@@ -127,6 +128,7 @@ def _print_usage():
     print("  --show-document-root     Print the folder agents read documents from")
     print("  --reset-document-root    Remove the saved document root")
     print("  documents [PATTERN]      List documents under the document root")
+    print("  documents --index [DIR]  Refresh a task's document_root_index.md")
     print("                           Put standards, technical requirements, datasheets,")
     print("                           and drawings agents must always know about here.")
     print()
@@ -353,6 +355,19 @@ def _handle_document_root(argv):
 def _handle_documents(argv):
     """List documents under the document root, including every subfolder."""
     import new_task
+
+    if argv and argv[0] == "--index":
+        task_dir = os.path.abspath(" ".join(argv[1:]).strip() or ".")
+        if not os.path.isdir(task_dir):
+            print("ERROR: task folder not found: {}".format(task_dir))
+            return 2
+        try:
+            path = new_task.write_document_root_index(task_dir)
+        except (OSError, ValueError) as error:
+            print("ERROR: {}".format(error))
+            return 2
+        print("Wrote {}".format(path))
+        return 0
 
     pattern = " ".join(argv).strip()
     try:
