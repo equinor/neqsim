@@ -56,15 +56,31 @@ references/
    "Which standard governs dense-phase CO2 pipeline material selection?").
    Record them at the top of `literature_findings.md`.
 
-2. **Standards first.** Use `neqsim-standards-lookup` to identify applicable
+2. **Local library first (before any web search).** The user may have a
+   configured document root holding full standards, company technical
+   requirements, and vendor datasheets. Searching it is faster and more
+   authoritative than the open web, and it is free:
+
+   ```bash
+   neqsim --show-document-root     # may be unset - then there is no library
+   neqsim documents "NORSOK"       # recursive, case-insensitive
+   ```
+
+   The same listing is in `references/document_root_index.md` inside the task
+   folder, so a subagent without CLI access can still see what is available.
+   Copy anything used into `references/literature/` (open sources) or
+   `references/manual/` (company documents). File names are indicative only —
+   open a likely candidate before ruling the library out.
+
+3. **Standards next.** Use `neqsim-standards-lookup` to identify applicable
    standards before chasing papers — they often answer the question directly.
    Save standard PDFs (when obtainable) to `literature/`.
 
-3. **Internal corpus (if configured).** If a retrieval backend is available,
+4. **Internal corpus (if configured).** If a retrieval backend is available,
    pull internal/vendor docs via `neqsim-stid-retriever` into their own source
    subfolders (`stid/`, `vendor/`, `manual/`).
 
-4. **Web search.** Use the `fetch_webpage` tool to retrieve and read candidate
+5. **Web search.** Use the `fetch_webpage` tool to retrieve and read candidate
    pages (query = a research question). Prefer authoritative sources (NIST,
    standards bodies, peer-reviewed / DOI, textbook publishers, reputable
    engineering references). For each useful page, save a Markdown extract to
@@ -84,26 +100,26 @@ references/
    Do **not** invent URLs or fabricate content. If a page is paywalled and only
    the abstract is available, save the abstract and say so.
 
-5. **Papers.** Retrieve open-access PDFs (arXiv / DOI / publisher) into
+6. **Papers.** Retrieve open-access PDFs (arXiv / DOI / publisher) into
    `references/literature/`. For paywalled papers, save the abstract + citation
    as a `.md` stub in `literature/` and record the access gap. If a configured
    paper-search backend exists, use it; otherwise list candidates and ask the
    user to confirm downloads.
 
-6. **Extract information.** For each stored PDF, extract the specific facts that
+7. **Extract information.** For each stored PDF, extract the specific facts that
    answer a research question via `neqsim-technical-document-reading` (OCR first
    via `neqsim-pdf-ocr` for scans). For figures/curves/tables, convert PDF pages
    with `devtools/pdf_to_figures.py` and read them with `view_image`; save
    extracted PNGs to the task `figures/` folder.
 
-7. **Write `literature_findings.md`.** One entry per useful source with:
+8. **Write `literature_findings.md`.** One entry per useful source with:
    citation, source path (relative), a two-sentence contribution summary, the
    **specific claim/data** it supports (with page/section/table pointer), and a
    relevance score. Group by research question so each question shows its
    supporting evidence. Triage: keep the strongest ≤ 10; note pruned candidates
    with the reason, so the choice is auditable.
 
-8. **(Re)build the distributable summary.** Run the generator so the papers and
+9. **(Re)build the distributable summary.** Run the generator so the papers and
    web extracts are organized and indexed:
 
    ```bash
@@ -113,10 +129,10 @@ references/
    It files loose files into `literature/` / `web/` and rebuilds
    `references/SOURCES.md` + `references/collection_manifest.json`.
 
-9. **Feed the task.** Copy the strongest entries into `results.json`
-   `references[]`, and use the extracted data (not raw prose) as benchmark /
-   basis inputs for the NeqSim study. Append the `## Literature & Reference
-   Documents` section to `notes.md`.
+10. **Feed the task.** Copy the strongest entries into `results.json`
+    `references[]`, and use the extracted data (not raw prose) as benchmark /
+    basis inputs for the NeqSim study. Append the `## Literature & Reference
+    Documents` section to `notes.md`.
 
 ## `literature_findings.md` skeleton
 

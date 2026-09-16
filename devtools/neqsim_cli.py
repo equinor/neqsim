@@ -23,6 +23,8 @@ Usage:
     neqsim --show-document-root      Print the configured document root
     neqsim --reset-document-root     Remove the saved document root
     neqsim documents [PATTERN]       List documents under the document root
+    neqsim documents --index [DIR]   Refresh a task's document_root_index.md
+    neqsim documents --index --all   Backfill that index into every existing task
     neqsim new-skill NAME    Scaffold a new AI skill
     neqsim skill CMD         Manage skills (list/search/install/remove/private-init/add-repo)
     neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init/add-repo)
@@ -127,6 +129,9 @@ def _print_usage():
     print("  --show-document-root     Print the folder agents read documents from")
     print("  --reset-document-root    Remove the saved document root")
     print("  documents [PATTERN]      List documents under the document root")
+    print("  documents --index [DIR]  Refresh a task's document_root_index.md")
+    print("  documents --index --all  Backfill that index into every existing task")
+    print("                           (add --dry-run first; --all takes an optional root)")
     print("                           Put standards, technical requirements, datasheets,")
     print("                           and drawings agents must always know about here.")
     print()
@@ -350,9 +355,56 @@ def _handle_document_root(argv):
         print(root or "(none — set one with: neqsim --set-document-root \"PATH\")")
 
 
+def _index_all_tasks(new_task, explicit_root, dry_run):
+    """Backfill the document-root index across every existing task folder."""
+    import task_roots
+
+    roots = task_roots.resolve_task_roots(explicit_root or None)
+    folders = task_roots.find_task_folders(roots)
+    if not folders:
+        print("No task folders found in {}".format(task_roots.describe(roots)))
+        return 1
+    print("{} task folder(s) in {}".format(len(folders), task_roots.describe(roots)))
+    if dry_run:
+        for folder in folders:
+            print("  would index {}".format(folder))
+        print("Re-run without --dry-run to write the index files.")
+        return 0
+    written = 0
+    for folder in folders:
+        try:
+            new_task.write_document_root_index(str(folder))
+            written += 1
+        except (OSError, ValueError) as error:
+            print("  SKIPPED {}: {}".format(folder.name, error))
+    print("Indexed {} task folder(s).".format(written))
+    return 0
+
+
 def _handle_documents(argv):
     """List documents under the document root, including every subfolder."""
     import new_task
+
+    if argv and argv[0] == "--index":
+        rest = argv[1:]
+        dry_run = "--dry-run" in rest
+        rest = [item for item in rest if item != "--dry-run"]
+        if rest and rest[0] == "--all":
+            return _index_all_tasks(new_task, " ".join(rest[1:]).strip(), dry_run)
+        task_dir = os.path.abspath(" ".join(rest).strip() or ".")
+        if not os.path.isdir(task_dir):
+            print("ERROR: task folder not found: {}".format(task_dir))
+            return 2
+        if dry_run:
+            print("Would index: {}".format(task_dir))
+            return 0
+        try:
+            path = new_task.write_document_root_index(task_dir)
+        except (OSError, ValueError) as error:
+            print("ERROR: {}".format(error))
+            return 2
+        print("Wrote {}".format(path))
+        return 0
 
     pattern = " ".join(argv).strip()
     try:

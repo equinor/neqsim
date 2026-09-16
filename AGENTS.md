@@ -108,8 +108,11 @@ folder **and all its subfolders** are the source library for every task:
 recursively (the dash-less spelling and an unquoted path with spaces both work).
 Precedence: explicit path > `NEQSIM_DOCUMENT_ROOT` > the saved `document_root` in
 `~/.neqsim/task_defaults.json` > none. Each new task records the resolved value as
-`inputs.document_root` in its `study_config.yaml` (empty when undefined), so a
-resumed task and its child agents see the same library. Search it before reporting
+`inputs.document_root` in its `study_config.yaml` (empty when undefined), and
+lists the library's files in
+`step1_scope_and_research/references/document_root_index.md`, so a resumed task
+and every child agent see what is available without running the CLI (refresh it
+with `neqsim documents --index <task_dir>`). Search it before reporting
 a standard, datasheet, drawing or vendor document as unavailable. It is read-only —
 never write task output there; copy the documents a task uses into that task's
 `step1_scope_and_research/references/<source>/`. When undefined, work from
@@ -328,8 +331,8 @@ Regenerate it whenever documents are added and before finalizing the task.
    | What you learned | Repo | Change |
    |------------------|------|--------|
    | Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
-   | Wrong API recipe, gotcha, unit trap, better pattern | sibling repos `../neqsim-community-skills/` / `../neqsim-enterprise-skills/` | edit `SKILL.md` |
-   | Wrong skill choice, missed hand-off, bad routing | sibling repos `../neqsim-community-agents/` / `../neqsim-enterprise-agents/` | edit `*.agent.md` |
+   | Wrong API recipe, gotcha, unit trap, better pattern | `neqsim-community-skills` / `neqsim-enterprise-skills` | edit `SKILL.md` |
+   | Wrong skill choice, missed hand-off, bad routing | `neqsim-community-agents` / `neqsim-enterprise-agents` | edit `*.agent.md` |
    | Useful new multi-agent pipeline | agents repo | record as a composition pattern |
    | Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
 
