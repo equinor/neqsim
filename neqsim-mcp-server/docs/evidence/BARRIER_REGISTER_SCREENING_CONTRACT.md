@@ -54,8 +54,14 @@ exclusion, and fail-closed structural bounds. The focused
 `test_barrier_register_protocol.py` runs seven scenarios through the packaged
 MCP server.
 
-This qualification intentionally leaves Phase 0 inventory version `1.39` at
-`20 EXPLICIT_TRUST + 39 CONTRACT_TESTED + 12 CONFIRMED_GAP`.
-`runBarrierRegister` remains `CONFIRMED_GAP` until this evidence merges and a
-later atomic promotion re-audits current `master`, updates every accounting
-guard on one exact head, and preserves the limitations above.
+Merged PR #3711 left Phase 0 inventory version `1.39` at
+`20 EXPLICIT_TRUST + 39 CONTRACT_TESTED + 12 CONFIRMED_GAP` while the
+qualification completed exact-head review.
+
+Inventory `1.40 / 20 explicit + 40 contract-tested + 11 confirmed gaps`
+atomically promotes `runBarrierRegister=CONTRACT_TESTED`. The canonical
+machine-readable evidence record, Java assertions, focused packaged protocol,
+authoritative comprehensive protocol accounting, and current-state documentation
+move together on one exact head. No promotion candidate remains queued,
+`scientificValidationComplete=false`, and every safety and engineering
+limitation above remains controlling.

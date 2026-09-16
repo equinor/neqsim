@@ -1586,14 +1586,15 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "compareProcesses",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
+        "compareProcesses",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-nine bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.39"
-          and limitations.get("contractTestedToolCount") == 39
-          and limitations.get("confirmedGapToolCount") == 12
+    check("forty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.40"
+          and limitations.get("contractTestedToolCount") == 40
+          and limitations.get("confirmedGapToolCount") == 11
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1609,6 +1610,18 @@ def test_capabilities():
           in comparison.get("evidenceBoundary", "")
           and "case comparability" in comparison.get("evidenceBoundary", ""),
           str(comparison))
+    barrier_register = coverage_records.get("runBarrierRegister", {})
+    check("barrier-register screening has bounded canonical evidence",
+          barrier_register.get("coverageStatus") == "CONTRACT_TESTED"
+          and barrier_register.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_BARRIER_REGISTER_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_barrier_register_protocol.py"
+          in barrier_register.get("contractEvidenceSources", [])
+          and "canonical NeqSim barrier model"
+          in barrier_register.get("evidenceBoundary", "")
+          and "does not identify hazards"
+          in barrier_register.get("evidenceBoundary", ""),
+          str(barrier_register))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1832,7 +1845,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 12
+          and limitations.get("confirmedGapToolCount") == 11
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
