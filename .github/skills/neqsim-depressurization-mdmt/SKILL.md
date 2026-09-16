@@ -2,7 +2,7 @@
 name: neqsim-depressurization-mdmt
 version: "1.0.0"
 description: "Emergency depressurization (blowdown) per API 521 §5.20 and minimum design metal temperature (MDMT) assessment per ASME UCS-66 / API 579 / EN 13445 — VU-flash transient inventory model, time-to-target-pressure, low-temperature embrittlement screening, and integration with PSV/flare loads. USE WHEN: a task requires sizing a blowdown valve, generating a P-vs-time curve for a vessel under fire / depressurization, checking MDMT against blowdown end-temperature, providing source terms for relief and flare networks, or distinguishing blowdown from trapped-liquid fire rupture screening. Anchors on neqsim.process.safety.depressurization.DepressurizationSimulator and neqsim.process.safety.mdmt.MDMTCalculator."
-last_verified: "2026-04-26"
+last_verified: "2026-09-16"
 requires:
   java_packages:
     - neqsim.process.safety.depressurization
@@ -156,49 +156,60 @@ network sizing skill (`neqsim-relief-flare-network`).
 
 ## Method 4b — Separators with Live Liquid: Vapour-Only Withdrawal (MANDATORY CHECK)
 
-`DepressurizationSimulator` removes **bulk** composition — `scaleMoles(...)` preserves the
-overall composition of the inventory. That is correct for an all-vapour segment, and
-**wrong for a separator, scrubber or KO drum that holds live liquid**, because the blowdown
-valve takes vapour off the top while the liquid flashes and feeds more vapour into the
-release. On a real first-stage separator the flash gas from the oil holdup can be a third
-of the total flare load, and a gas-space-only calculation understates methane by a similar
-margin. Operator flare reports often quote `vapour fraction = 1.00` for such a segment,
-which means the liquid contribution is not in the approved basis either.
+A blowdown valve is mounted on **top** of the vessel, so a separator, scrubber or knock-out
+drum holding live liquid discharges **vapour** while the liquid flashes and feeds more vapour
+into the release. Discharging the bulk composition instead drains heavy liquid through the
+orifice: it understates the flare load and overstates the cooling, and the mass balance still
+closes, so nothing fails.
 
-Two defensible ways to handle it:
+`DepressurizationSimulator` handles this from NeqSim 3.20 onward:
 
-1. **Decomposed inventory (robust, auditable — prefer this for a deliverable).**
-   Treat the gas space and the liquid holdup as separate, documented streams. Flare load
-   = (gas-space inventory − gas remaining at the flare back pressure) + (vapour formed when
-   the liquid holdup is flashed to the back pressure). Each term is a single TP flash of a
-   stream that exists in the process documentation, so every number is traceable.
-2. **Differential vapour withdrawal (rigorous, path-dependent).** Step the pressure down at
-   constant vessel volume, and at each step remove only the vapour phase until the contents
-   fit the vessel again. Use this as a cross-check; expect it to give slightly more than (1)
-   because continuous stripping of light ends drives further vaporisation.
+```java
+import neqsim.process.safety.depressurization.DepressurizationSimulator.WithdrawalMode;
 
-### Three traps when you write the vapour-withdrawal loop
+DepressurizationSimulator sim = new DepressurizationSimulator(fluid, V, dOrifice, Cd, pBack);
+sim.setWithdrawalMode(WithdrawalMode.AUTO);   // default
+DepressurizationResult res = sim.run();
+boolean twoPhase = res.vapourWithdrawalUsed;  // true when a step discharged vapour
+```
+
+- **AUTO** (default) discharges vapour whenever the inventory is multiphase and is identical
+  to BULK for a single-phase inventory, so a dry-gas segment is unaffected.
+- **VAPOUR** forces it; **BULK** restores the legacy behaviour for comparison.
+- On a real first-stage separator the flash gas from the oil holdup can be a third of the
+  total flare load. Operator flare reports often quote `vapour fraction = 1.00` for such a
+  segment, which means the liquid contribution is not in the approved basis either — say so
+  rather than silently matching their number.
+
+### Cross-check the transient against a decomposed inventory
+
+For a deliverable, back the transient with a path-independent inventory calculation:
+flare load = (gas-space inventory − gas remaining at the flare back pressure) + (vapour
+formed when the liquid holdup is flashed to the back pressure). Each term is a single TP
+flash of a stream that exists in the process documentation, so every number is traceable.
+Expect the transient to give slightly more, because continuous stripping of light ends drives
+further vaporisation.
+
+### If you write your own withdrawal loop, three traps
 
 ```java
 // TRAP 1 — phase identification. Below roughly 20 bara NeqSim may label the OIL phase
-// GAS for a rich hydrocarbon mixture. A loop that selects the vapour with
-// getPhase(i).getType() then strips LIQUID out of the vessel, and the mass balance still
-// closes, so nothing throws and nothing warns. Pick the vapour by LOWEST DENSITY:
-int iVap = -1;
-double rhoMin = Double.MAX_VALUE;
-for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-  double rho = fluid.getPhase(i).getDensity("kg/m3");
-  if (rho < rhoMin) { rhoMin = rho; iVap = i; }
-}
-if (rhoMin > 300.0) { iVap = -1; }   // no real vapour phase present
+// GAS for a rich hydrocarbon mixture. Selecting the vapour with getPhase(i).getType() then
+// strips LIQUID out of the vessel, and the mass balance still closes, so nothing throws.
+// Use the helper, which selects by lowest density and returns -1 when no phase is vapour:
+int iVap = DepressurizationSimulator.vapourPhaseIndex(fluid);
 
 // TRAP 2 — assert the removed stream is actually vapour. A hydrocarbon blowdown stream
 // should stay well under ~45 g/mol. Check it EVERY step; this is what catches trap 1.
 // TRAP 3 — component moles. phase.getComponent(n).getNumberOfMolesInPhase() is not
-// reliably phase-local here. Use the phase total against the phase mole fraction:
+// reliably phase-local. Use the phase total against the phase mole fraction:
 double dnTotal = fraction * fluid.getPhase(iVap).getNumberOfMolesInPhase();
 double dnComponent = dnTotal * fluid.getPhase(iVap).getComponent(name).getx();
 ```
+
+Remove at most about a quarter of the vapour phase per step. Emptying most of the vapour
+space in one step makes the constant-volume flash swing, because the liquid flashes back to
+refill it.
 
 Pseudo-component naming: `addTBPfraction("C6gas", ...)` is stored as `C6gas_PC`. Never put
 `+` in a TBP name, and resolve the internal name from `getComponentNames()` by prefix before
