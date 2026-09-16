@@ -41,6 +41,44 @@ NeqSim uses a **continuation method** (Newton-Raphson based) to trace the phase 
 
 6. **Cricondenbar/Cricondentherm Refinement**: After tracing, the discrete maximum-pressure and maximum-temperature estimates are refined using the Michelsen simultaneous Newton method (see [Direct Cricondenbar and Cricondentherm Refinement](#direct-cricondenbar-and-cricondentherm-refinement))
 
+### Convergence and UMR-PRU
+
+The `SystemUMRPRUMCEosNew` tracer uses the current phase composition and phase
+fraction when initializing the volume-corrected PR translation derivatives.
+Changing the phase fraction from a saturation seed must not reuse derivatives
+from the preceding phase inventory or require a second initialization. The PR
+cubic is solved for the untranslated volume before applying the volume shift;
+this preserves liquid roots whose translated volume is below the co-volume.
+
+Continuation accepts a point only after a finite Newton correction below
+`1e-5` and an equilibrium residual below `1e-8`. Iteration exhaustion, a
+non-finite state, a stalled continuation step, or a trivial multicomponent
+`K = 1` solution triggers a bounded retry and, if necessary, the opposite-side
+trace. Rejected points do not contribute to the returned arrays or extrema.
+If neither trace produces a converged point, the calculation throws
+`IllegalStateException`; extrema remain unavailable (`NaN`) instead of being
+replaced with the input temperature and pressure. Reaching the configured
+pressure or point limit also throws, sets both extrema to `NaN`, and makes
+`isEnvelopeClosed()` return false. Converged segments remain available for
+diagnostics after this exception. A partially traced envelope
+can still contain valid points: inspect its segments and `isEnvelopeClosed()`
+before treating it as a complete boundary. This method counts finite points,
+not segment separators, and is not proof that two restarted branches meet.
+
+Branch getters refer to the physical dew and bubble curves regardless of
+which side starts the trace. This corrects older bubble-first calls whose
+branch names were reversed. Remove manual getter-swapping workarounds.
+
+The issue #3739 regression covers the 90/7/3 mol% methane/ethane/propane gas,
+both starting directions, and mixtures with 1 mol% n-heptane or toluene and
+0.5, 1, or 5 mol% cumene. Dry gas and n-heptane cases check finite physical ranges, branch identity
+against separate saturation calculations, fugacity closure and material
+balance. The aromatic cases still reach the configured pressure bound: their
+regressions require explicit failure with unavailable extrema, not a claim of
+a complete aromatic phase envelope. Resolving their remaining branch topology
+and stability is outside this numerical repair. These are numerical consistency checks, not experimental validation
+of the UMR-PRU parameters.
+
 ### Data Structure
 
 The Michelsen continuation method traces the envelope as two logical branches separated by the critical point:
@@ -177,10 +215,10 @@ Use `ops.get(key)` to retrieve specific envelope data:
 
 | Key | Returns | Description |
 |-----|---------|-------------|
-| `"dewT"` | `double[]` | Dew point temperatures (K) - first branch |
-| `"dewP"` | `double[]` | Dew point pressures (bara) - first branch |
-| `"bubT"` | `double[]` | Bubble point temperatures (K) - second branch |
-| `"bubP"` | `double[]` | Bubble point pressures (bara) - second branch |
+| `"dewT"` | `double[]` | Dew point temperatures (K) |
+| `"dewP"` | `double[]` | Dew point pressures (bara) |
+| `"bubT"` | `double[]` | Bubble point temperatures (K) |
+| `"bubP"` | `double[]` | Bubble point pressures (bara) |
 | `"dewT2"` | `null` | Legacy key, returns `null` (Michelsen merges all dew data into `dewT`) |
 | `"dewP2"` | `null` | Legacy key, returns `null` (Michelsen merges all dew data into `dewP`) |
 | `"bubT2"` | `null` | Legacy key, returns `null` (Michelsen merges all bubble data into `bubT`) |
@@ -215,10 +253,10 @@ double[][] allData = ops.getData();
 ops.calcPTphaseEnvelope();
 
 // Get temperatures and pressures for plotting
-double[] dewT = ops.get("dewT");   // First branch temperatures
-double[] dewP = ops.get("dewP");   // First branch pressures
-double[] bubT = ops.get("bubT");   // Second branch temperatures (after critical)
-double[] bubP = ops.get("bubP");   // Second branch pressures
+double[] dewT = ops.get("dewT");   // Dew branch temperatures
+double[] dewP = ops.get("dewP");   // Dew branch pressures
+double[] bubT = ops.get("bubT");   // Bubble branch temperatures
+double[] bubP = ops.get("bubP");   // Bubble branch pressures
 
 // Note: "dew" and "bub" naming depends on bubblePointFirst setting
 // With default (bubblePointFirst=false):
@@ -567,9 +605,9 @@ for (double t : pipelineT) {
 | Envelope doesn't close | Algorithm failed before reaching critical point | Try starting from the other side with `calcPTphaseEnvelope(true)` |
 | Missing branch | Algorithm failed before completing | Try starting from the other side with `calcPTphaseEnvelope(true)` or adjust starting pressure |
 | Cricondentherm too high | Heavy components or characterization | Review plus fraction properties |
-| No dew point found | Fluid too light (dry gas) | Normal for methane-rich gas |
+| No converged points | Initialization or continuation failed | Check composition and model inputs; dry multicomponent natural gas should have a phase envelope |
 | Calculation fails | Near-critical region or bad initial guess | Try different starting pressure with `calcPTphaseEnvelope(true, 0.5)` |
-| NaN values in results | Non-convergence | Check fluid composition, try simpler EoS |
+| Paired NaN entries in flat arrays | Intentional segment separators | Plot as gaps or use the structured segment API; they are not equilibrium points |
 
 ### Understanding Algorithm Behavior
 

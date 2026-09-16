@@ -201,7 +201,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   public void useAsSpecEq(int i) {
     speceq = i;
     specVal = u.get(i, 0);
-    System.out.println("Enforced Scec Variable" + speceq + "  " + specVal);
+    logger.debug("Enforced specification variable {} at {}", speceq, specVal);
   }
 
   /**
@@ -454,7 +454,11 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       try {
         xcoef = a.solve(xg.transpose());
       } catch (Exception ex) {
-        xcoef = xcoefOld.copy();
+        // Repeated specification values can make the cubic history singular. The local tangent remains a valid
+        // predictor and does not borrow another variable's polynomial coefficients.
+        u = Xgij.getMatrix(0, neq - 1, 3, 3).plus(dxds.times(ds));
+        specVal = u.get(speceq, 0);
+        return;
       }
       u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
     }
@@ -647,75 +651,75 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * Solves for a single phase envelope point using damped Newton-Raphson iteration with backtracking. Convergence is
-   * declared when the correction norm falls below 1e-5. Backtracking reduces the arc-length step and re-predicts when
-   * the correction norm increases (divergence safeguard). Maximum 50 local iterations per solve call prevent infinite
-   * loops in pathological cases (e.g., near-singular Jacobians at critical points).
+   * Solve a continuation point with bounded Newton iterations and step-size retries. A point is accepted only when both
+   * its correction and equilibrium residual are small. Failed attempts do not update the converged history.
    *
-   * <p>
-   * Reference: Michelsen &amp; Mollerup (2007), Ch. 12, "Thermodynamic Models: Fundamentals &amp; Computational
-   * Aspects", 2nd ed.
-   * </p>
-   *
-   * @param np the point number along the envelope
+   * @param np point number along the envelope
+   * @throws IllegalStateException if no finite, nontrivial equilibrium point converges after 15 step reductions
    */
   public void solve(int np) {
-    Matrix dx;
-    double dxOldNorm = 1e10;
-    int localIter = 0;
-
-    do {
-      localIter++;
-      iter++;
-      init();
-      setfvec();
-      setJac();
-
-      dx = Jac.solve(fvec);
-      u.minusEquals(dx);
-
-      if (Double.isNaN(dx.norm2()) || Double.isInfinite(dx.norm2())) {
-        if (iter2 >= 15) {
-          // Signal non-convergence with NaN
-          ds = Double.NaN;
-          u.set(numberOfComponents, 0, ds);
-          u.set(numberOfComponents + 1, 0, ds);
+    Matrix previous = Xgij.getMatrix(0, neq - 1, Math.min(np - 1, 3), Math.min(np - 1, 3));
+    for (int retry = 0; retry <= 15; retry++) {
+      if (retry > 0) {
+        ds *= 0.5;
+        u = previous.plus(dxds.times(ds));
+        specVal = u.get(speceq, 0);
+        if (np >= 5) {
+          calcInc2(np);
         }
-        // if the norm is NAN reduce step and try again
-        iter2++;
-        u = uold.copy();
-        ds *= 0.3;
-        calcInc2(np);
-        solve(np);
-      } else if (dxOldNorm < dx.norm2()) {
-        if (iter2 == 0) {
-          uolder = uold.copy();
-        }
-        if (iter2 >= 15) {
-          // Signal non-convergence with NaN
-          ds = Double.NaN;
-          u.set(numberOfComponents, 0, ds);
-          u.set(numberOfComponents + 1, 0, ds);
-        }
-        // if the norm does not reduce there is a danger of entering trivial solution
-        // reduce step and try again to avoid it
-        iter2++;
-        u = uold.copy();
-        ds *= 0.3;
-        calcInc2(np);
-        solve(np);
       }
-
-      if (Double.isNaN(dx.norm2())) {
-        norm = 1e10;
-      } else {
-        norm = dx.norm2();
-        dxOldNorm = norm;
+      if (!Double.isFinite(specVal) || Math.abs(specVal - previous.get(speceq, 0)) < 1.0e-12) {
+        break;
       }
-    } while (norm > 1.e-5 && localIter < 50);
-
+      iter = 0;
+      try {
+        init();
+        setfvec();
+        for (int localIter = 0; localIter < 50; localIter++) {
+          iter++;
+          setJac();
+          Matrix correction = Jac.solve(fvec);
+          double correctionNorm = correction.norm2();
+          double residualNorm = fvec.norm2();
+          if (!Double.isFinite(correctionNorm) || !Double.isFinite(residualNorm)) {
+            break;
+          }
+          // Limit each logarithmic correction before retrying an overly ambitious continuation step.
+          double damping = Math.min(1.0, 1.0 / Math.max(1.0, correction.normInf()));
+          u.minusEquals(correction.times(damping));
+          init();
+          setfvec();
+          if (correctionNorm < 1.0e-5 && fvec.norm2() < 1.0e-8 && isPhysicalPoint() && (np == 1 || Math
+              .abs(system.getTemperature() - Math.exp(previous.get(numberOfComponents, 0))) <= 3.0 * dTmax
+              && Math.abs(system.getPressure() - Math.exp(previous.get(numberOfComponents + 1, 0))) <= 3.0 * dPmax)) {
+            norm = correctionNorm;
+            uold = u.copy();
+            return;
+          }
+        }
+      } catch (RuntimeException ex) {
+        logger.debug("Envelope point {} retry {} failed: {}", np, retry, ex.getMessage());
+      }
+    }
+    u = previous.copy();
     init();
+    throw new IllegalStateException("Phase envelope point " + np + " did not converge after 15 step reductions");
+  }
 
-    uold = u.copy();
+  /**
+   * Reject non-finite states and the trivial multicomponent K=1 solution away from an actual critical crossing.
+   *
+   * @return true if the current equilibrium point can be retained
+   */
+  private boolean isPhysicalPoint() {
+    if (!Double.isFinite(system.getTemperature()) || system.getTemperature() <= 0.0
+        || !Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
+      return false;
+    }
+    double largestLogK = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      largestLogK = Math.max(largestLogK, Math.abs(u.get(i, 0)));
+    }
+    return numberOfComponents == 1 || largestLogK > 1.0e-6;
   }
 }

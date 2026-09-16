@@ -151,20 +151,17 @@ $$
 \mathbf{u}^{(k+1)} = \mathbf{u}^{(k)} - \lambda \cdot \mathbf{J}^{-1} \mathbf{f}
 $$
 
-where the damping factor $\lambda$ is:
-
-$$
-\lambda = \begin{cases} 1 & \text{if } \|\Delta \mathbf{u}^{(k)}\| \le 2 \|\Delta \mathbf{u}^{(k-1)}\| \\ \|\Delta \mathbf{u}^{(k-1)}\| / \|\Delta \mathbf{u}^{(k)}\| & \text{otherwise, clamped to } [0.1, 1] \end{cases}
-$$
-
-This prevents overshooting near turning points and in the critical region.
+The damping factor is $\lambda = \min(1, 1/\max(1, \|\Delta \mathbf{u}\|_\infty))$,
+which limits each logarithmic correction to one before re-evaluating the
+residual. It prevents a single Newton update from making an unbounded
+multiplicative change in temperature, pressure or K-values.
 
 ### 4.2 Convergence Criteria
 
 Convergence requires **both** norms to be small (dual criterion):
 
 $$
-\|\mathbf{J}^{-1} \mathbf{f}\|_2 < 10^{-6} \quad \text{AND} \quad \|\mathbf{f}\|_2 < 10^{-6}
+\|\mathbf{J}^{-1} \mathbf{f}\|_2 < 10^{-5} \quad \text{AND} \quad \|\mathbf{f}_{\mathrm{updated}}\|_2 < 10^{-8}
 $$
 
 The dual check prevents false convergence where the correction is small but the residual is not.
@@ -177,7 +174,16 @@ $$
 \Delta s_{\text{bt}} = \Delta s \cdot 0.5^k, \quad k = 1, 2, \dots, 15
 $$
 
-After 15 failed backtrack attempts, a `RuntimeException` signals failure to `PTPhaseEnvelopeMichelsen`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
+Retries use the tangent predictor until four history points are available,
+then use the cubic predictor. A singular cubic history falls back to the
+current tangent, never coefficients from a different variable. Non-finite
+residuals, trivial multicomponent K=1 solutions and stalled specification
+steps cannot be accepted. Only converged states update the solution history. Corrected points may not
+jump more than three configured temperature or pressure steps from the previous
+accepted point. A pressure or point-limit exit throws and leaves extrema
+unavailable; the cutoff is not a computed cricondenbar.
+
+After 15 failed backtrack attempts, an `IllegalStateException` signals failure to `PTPhaseEnvelopeMichelsen`, which then either terminates the current tracing pass or starts a second pass from the opposite end.
 
 ## 5. Two-Pass Envelope Tracing
 
@@ -190,7 +196,11 @@ The envelope is traced in up to two passes:
 2. Flips `bubblePointFirst` and `phaseFraction`
 3. Restarts from the opposite end
 
-This two-pass approach ensures that both dew and bubble branches are captured even when the continuation method fails near the critical point.
+The second pass can recover the other branch when continuation fails near the
+critical point, but does not guarantee that the two branches meet. If neither
+pass yields any converged point, tracing throws `IllegalStateException` and
+returns no invented extrema. The physical branch labels are independent of
+which side was traced first.
 
 ## 6. Critical Point Detection
 
@@ -224,7 +234,7 @@ Up to 10 Newton iterations are performed with convergence tolerance $\|\mathbf{f
 
 ## 7. Envelope Closure Check
 
-After tracing completes, the envelope is considered **closed** if both branches contain at least 3 points:
+After tracing completes, the envelope is considered **closed** if both branches contain at least 3 finite points (NaN separators do not count):
 
 $$
 \text{closed} = (n_{\text{dew}} \ge 3) \quad \text{AND} \quad (n_{\text{bub}} \ge 3)

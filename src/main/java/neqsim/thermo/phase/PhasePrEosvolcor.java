@@ -36,21 +36,52 @@ public class PhasePrEosvolcor extends PhasePrEos {
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
-    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     cachedCi = null;
     cachedCiT = null;
     cachedCij = null;
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+  }
+
+  /**
+   * Refresh translation properties after component initialization, before the volume and fugacity calculations in
+   * {@link PhaseEos#init(double, int, int, PhaseType, double)} use them.
+   *
+   * @param phase phase whose co-volume is calculated
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
+   * @param numberOfComponents number of components
+   * @return extensive mixture co-volume
+   */
+  @Override
+  public double calcB(PhaseInterface phase, double temperature, double pressure, int numberOfComponents) {
     loc_C = calcC(this, temperature, pressure, numberOfComponents);
     CT = calcCT(this, temperature, pressure, numberOfComponents);
-    if (initType >= 1) {
-      ensureCiCache(numberOfComponents);
+    return super.calcB(phase, temperature, pressure, numberOfComponents);
+  }
+
+  /**
+   * Solve the PR cubic in the untranslated volume, then apply the mixture translation. A translated liquid volume can
+   * be smaller than the co-volume B/n, so the standard solver's B/V &lt; 1 bound must not be applied to that volume.
+   *
+   * @param pressure pressure in bara
+   * @param temperature temperature in K
+   * @param A molar attraction parameter
+   * @param B molar co-volume parameter
+   * @param pt requested vapor or liquid root
+   * @return translated molar volume in NeqSim internal units
+   * @throws neqsim.util.exception.IsNaNException if the translated root is non-finite or non-positive
+   * @throws neqsim.util.exception.TooManyIterationsException if the cubic solver fails
+   */
+  @Override
+  public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    double volume = molarVolumeAnalytical(pressure, temperature, pt) - loc_C / numberOfMolesInPhase;
+    if (!Double.isFinite(volume) || volume <= 0.0) {
+      throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "translated molar volume");
     }
-    if (initType >= 2) {
-      ensureCiTCache(numberOfComponents);
-    }
-    if (initType >= 3) {
-      ensureCijCache(numberOfComponents);
-    }
+    setMolarVolume(volume);
+    Z = pressure * volume / (R * temperature);
+    return volume;
   }
 
   /**
@@ -239,13 +270,13 @@ public class PhasePrEosvolcor extends PhasePrEos {
     }
 
     cachedCij = new double[numbcomp][numbcomp];
+    ensureCiCache(numbcomp);
     ComponentEosInterface[] compArray = (ComponentEosInterface[]) this.getcomponentArray();
     double totalMolesInPhase = getNumberOfMolesInPhase();
     for (int i = 0; i < numbcomp; i++) {
       for (int j = 0; j < numbcomp; j++) {
         double cij = getcij(compArray[i], compArray[j]);
-        cachedCij[i][j] = (2.0 * cij - ((ComponentPRvolcor) compArray[i]).getCi()
-            - ((ComponentPRvolcor) compArray[j]).getCi()) / totalMolesInPhase;
+        cachedCij[i][j] = (2.0 * cij - cachedCi[i] - cachedCi[j]) / totalMolesInPhase;
       }
     }
   }
