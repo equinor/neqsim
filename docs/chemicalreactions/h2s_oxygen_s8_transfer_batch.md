@@ -1,3 +1,8 @@
+---
+title: Immutable S8 transfer batch
+description: Duplicate-safe mass-accounting batches for explicit H2S oxidation S8 transfer receipts.
+---
+
 # Immutable S8 transfer batch
 
 This page extends the [aqueous H2S/O2 kinetics guide](h2s_oxygen_kinetics.md) with a
