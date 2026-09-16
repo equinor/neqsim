@@ -51,6 +51,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - specific-gravity, kg/m3, and API-gravity density inputs;
 - exact API-gravity/SG60/60 round-tripping and explicit bulk density at 60 degF;
 - immutable whole-assay blend screening with ideal additive liquid volumes and mass-linear sulfur/nitrogen;
+- auditable blend-batch mass, additive-volume, specific-gravity, and optimizer-cost receipts;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
