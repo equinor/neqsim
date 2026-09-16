@@ -357,7 +357,9 @@ def _narrative(block_id: str, seed: str) -> list:
 
 def _collect_scripts(task_dir: Path, config: dict) -> list:
     """Return declared + discovered analysis scripts and notebooks."""
-    analysis_dir = task_dir / "step2_analysis"
+    # Data-acquisition scripts legitimately live next to the references they write,
+    # so step 1 is scanned as well as step 2.
+    scan_dirs = [task_dir / "step2_analysis", task_dir / "step1_scope_and_research"]
     declared = {}
     for entry in (config.get("analysis") or {}).get("scripts") or []:
         if isinstance(entry, dict) and entry.get("file"):
@@ -367,13 +369,17 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
             declared[str(entry["file"]).strip()] = entry
 
     found = []
-    if analysis_dir.is_dir():
-        for path in sorted(analysis_dir.rglob("*")):
+    for scan_dir in scan_dirs:
+        if not scan_dir.is_dir():
+            continue
+        for path in sorted(scan_dir.rglob("*")):
             if not path.is_file() or path.suffix.lower() not in (".py", ".ipynb"):
                 continue
             if path.name in SKIP_SCRIPT_NAMES:
                 continue
             if SKIP_SCRIPT_DIRS.intersection(path.parts):
+                continue
+            if "references" in path.parts:
                 continue
             found.append(path)
 

@@ -49,6 +49,7 @@ import argparse
 import os
 import json
 import shutil
+import subprocess
 import sys
 from datetime import date
 
@@ -98,6 +99,72 @@ def _normalize_task_root(task_root):
     return CWD_TASK_ROOT if task_root.strip().lower() in CWD_ALIASES else task_root
 
 
+def ensure_folder(path, label="Folder"):
+    """Create a configured folder so a first-time setting is immediately usable.
+
+    Never deletes, empties, or replaces anything: an existing folder is left
+    exactly as it is, and a path occupied by a file is reported instead of being
+    overwritten.
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder path to create when it does not exist.
+    label : str
+        Human-readable name used in error messages.
+
+    Returns
+    -------
+    bool
+        True when the folder was created by this call, False when it existed.
+
+    Raises
+    ------
+    ValueError
+        If the path exists but is a file, or cannot be created.
+    """
+    if os.path.isdir(path):
+        return False
+    if os.path.exists(path):
+        raise ValueError("{} is a file, not a folder: {}".format(label, path))
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError as error:
+        raise ValueError("Could not create {} {}: {}".format(label.lower(), path, error))
+    return True
+
+
+def add_folder_to_vscode_workspace(path):
+    """Add a folder to the active VS Code workspace through the `code` CLI.
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder to add to the last active VS Code window.
+
+    Returns
+    -------
+    tuple of (bool, str)
+        Whether the folder was handed to VS Code, and a reason when it was not.
+    """
+    if os.environ.get("NEQSIM_NO_VSCODE", "").strip():
+        return False, "disabled by NEQSIM_NO_VSCODE"
+    executable = shutil.which("code") or shutil.which("code-insiders")
+    if not executable:
+        return False, ("VS Code command line not found on PATH "
+                       "(run 'Shell Command: Install code command in PATH')")
+    try:
+        completed = subprocess.run([executable, "--add", path],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as error:
+        return False, "Could not run {}: {}".format(executable, error)
+    if completed.returncode != 0:
+        detail = (completed.stdout or b"").decode("utf-8", "replace").strip()
+        return False, detail or "{} --add exited with {}".format(executable,
+                                                                 completed.returncode)
+    return True, ""
+
+
 def resolve_task_root(task_root=None):
     """Resolve explicit, environment, saved-user, then repository task root."""
     selected = task_root or os.environ.get("NEQSIM_TASK_ROOT")
@@ -109,13 +176,19 @@ def resolve_task_root(task_root=None):
     return os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
 
 
-def save_default_task_root(task_root):
-    """Persist an absolute task root, or '.' to follow the terminal folder."""
+def save_default_task_root(task_root, create=True):
+    """Persist an absolute task root, or '.' to follow the terminal folder.
+
+    A folder that does not exist yet is created, so the setting a user just
+    typed is usable straight away instead of failing at the first task.
+    """
     if not task_root or not task_root.strip():
         raise ValueError("Task root must be a non-empty path string")
     stored = _normalize_task_root(task_root)
     if stored != CWD_TASK_ROOT:
         stored = resolve_task_root(task_root)
+        if create:
+            ensure_folder(stored, "Task root")
     settings = read_task_defaults()
     settings["task_root"] = stored
     _write_task_defaults(settings)
@@ -248,10 +321,20 @@ def resolve_document_root(document_root=None):
     return path
 
 
-def save_default_document_root(document_root):
-    """Persist the folder every task reads source documents from."""
+def save_default_document_root(document_root, create=True):
+    """Persist the folder every task reads source documents from.
+
+    A folder that does not exist yet is created, so a user can point the setting
+    at a new library and start filling it with standards and datasheets. A root
+    that is configured but later disappears still raises on resolve, so the
+    missing library is reported as a blocker rather than silently ignored.
+    """
     if not document_root or not document_root.strip():
         raise ValueError("Document root must be a non-empty folder path")
+    if create:
+        ensure_folder(
+            os.path.abspath(os.path.expandvars(os.path.expanduser(document_root))),
+            "Document root")
     stored = resolve_document_root(document_root)
     settings = read_task_defaults()
     settings["document_root"] = stored

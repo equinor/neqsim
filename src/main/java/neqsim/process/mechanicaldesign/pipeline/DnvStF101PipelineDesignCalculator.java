@@ -37,7 +37,9 @@ public final class DnvStF101PipelineDesignCalculator {
         deratedSmts * input.getSmtsStrengthFactor());
     double gamma = input.getMaterialResistanceFactor() * input.getSafetyClass().getResistanceFactor();
 
-    double burstCharacteristic = 2.0 * thickness * characteristicStrength / (Math.sqrt(3.0) * (diameter - thickness));
+    // DNV-ST-F101 pressure containment, p_b(t) = 2t/(D-t) * f_cb * 2/sqrt(3)
+    double burstCharacteristic = 2.0 * thickness * characteristicStrength / (diameter - thickness) * 2.0
+        / Math.sqrt(3.0);
     double burstResistance = burstCharacteristic / gamma;
     double operatingDemand = positiveDifference(input.getLocalOperatingPressureMPa(), input.getExternalPressureMPa());
     double incidentalDemand = positiveDifference(input.getLocalIncidentalPressureMPa(), input.getExternalPressureMPa());

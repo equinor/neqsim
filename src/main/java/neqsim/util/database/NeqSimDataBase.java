@@ -433,6 +433,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void useExtendedComponentDatabase(boolean useExtendedDatabase) {
     if (useExtendedDatabase) {
       updateTable("COMP", "data/COMP_EXT.csv");
+      includeMissingStandardComponents();
     } else {
       updateTable("COMP", "data/COMP.csv");
     }
@@ -442,6 +443,57 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
           "- failed to (re)load the COMP table (extended=" + useExtendedDatabase + "). The component "
               + "database is now unusable until useExtendedComponentDatabase or replaceTable('COMP', ...) "
               + "is called again successfully."));
+    }
+  }
+
+  /**
+   * Preserve standard components and optional columns when loading the extended database.
+   *
+   * <p>
+   * The extended resource is maintained independently. Existing extended rows retain their properties; newly added
+   * standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including optional identity metadata.
+   * </p>
+   */
+  private static void includeMissingStandardComponents() {
+    URL standard = NeqSimDataBase.class.getClassLoader().getResource("data/COMP.csv");
+    String source = "CSVREAD('file:" + standard + "')";
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      java.util.Set<String> extendedColumns = new java.util.HashSet<String>();
+      try (ResultSet columns = database.getResultSet("SELECT * FROM COMP WHERE 1=0")) {
+        java.sql.ResultSetMetaData metadata = columns.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+          extendedColumns.add(metadata.getColumnName(i));
+        }
+      }
+      java.util.List<String> standardColumns = new java.util.ArrayList<String>();
+      try (ResultSet columns = database.getResultSet("SELECT * FROM " + source + " WHERE 1=0")) {
+        java.sql.ResultSetMetaData metadata = columns.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+          standardColumns.add(metadata.getColumnName(i));
+        }
+      }
+      StringBuilder names = new StringBuilder();
+      StringBuilder values = new StringBuilder();
+      for (String column : standardColumns) {
+        String quoted = "\"" + column.replace("\"", "\"\"") + "\"";
+        if (!extendedColumns.contains(column)) {
+          database.execute("ALTER TABLE COMP ADD " + quoted + " VARCHAR");
+        }
+        if (names.length() > 0) {
+          names.append(',');
+          values.append(',');
+        }
+        names.append(quoted);
+        if ("ID".equalsIgnoreCase(column)) {
+          values.append("(SELECT COALESCE(MAX(CAST(ID AS BIGINT)),0) FROM COMP) + ROW_NUMBER() OVER ()");
+        } else {
+          values.append("standard.").append(quoted);
+        }
+      }
+      database.execute("INSERT INTO COMP (" + names + ") SELECT " + values + " FROM " + source
+          + " standard WHERE NOT EXISTS (SELECT 1 FROM COMP extended WHERE extended.NAME=standard.NAME)");
+    } catch (Exception ex) {
+      throw new IllegalStateException("Failed to preserve standard components in the extended database", ex);
     }
   }
 

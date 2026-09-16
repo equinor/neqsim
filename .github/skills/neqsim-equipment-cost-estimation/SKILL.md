@@ -43,6 +43,31 @@ The preferred NeqSim path is mechanical-design driven: call each unit's
 | 2     | Detailed      | −15% / +20%   | Detailed quantity takeoff     |
 | 1     | Final         | −10% / +15%   | Vendor quotes                 |
 
+## Correlation Validity Range (READ THIS FIRST)
+
+The Turton correlations are fitted over a stated capacity range. NeqSim does **not** refuse a
+capacity outside that range — it evaluates the polynomial anyway and returns a number that looks
+ordinary.
+
+Observed case: a 239 MW compression duty evaluated against a correlation valid to 3000 kW
+returned about 6 MUSD — roughly **80× too low**, with no warning. In the same study the
+weight-based `calcColumnShellCost` returned ~500 MUSD for a single contactor because it feeds a
+shell **weight** into coefficients fitted on **volume**. The two errors partly cancelled, and the
+study total was wrong by a factor of three while appearing internally consistent.
+
+Rules:
+
+1. **Check the range before calling.** Compressors 450–3000 kW; pumps 1–300 kW; vessels by volume.
+2. **Oversized duties are parallel units, not extrapolation.** Split the duty into
+   `ceil(capacity / max_capacity)` units at `capacity / n` each and cost each inside the range.
+   `CostEstimationCalculator` now does this internally for compressors and pumps.
+3. **Never use the weight-based vessel/column methods.** `calcVerticalVesselCost`,
+   `calcHorizontalVesselCost` and `calcColumnShellCost` are deprecated: their capacity basis is
+   volume, not shell weight. Use `calcVerticalVesselCostByVolume` and pass the actual volume.
+4. **Anchor the total.** Cross-check specific CAPEX against a published comparable for the concept
+   type before believing the sum. A result outside the expected band by more than a factor of 1.5
+   is a bug until proven otherwise.
+
 ## Pattern 1 — Bare-module Cost for a Vessel
 
 ```java

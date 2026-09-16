@@ -162,6 +162,13 @@ Regenerate it whenever documents are added and before finalizing the task.
 
 ### Step-by-step
 
+> **If a terminal reports `neqsim` is not recognized, do not improvise and do not
+> skip the step.** The console script is simply not on PATH in that shell. Re-run
+> the identical command as `<python-executable> -m neqsim_cli ...`, where
+> `<python-executable>` is the interpreter named under "Python Environment
+> Reuse" above — same entry point, same arguments. This applies to every
+> `neqsim ...` command in this document.
+
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
    neqsim new-task "your task title" --type B --author "Name"
@@ -256,6 +263,11 @@ Regenerate it whenever documents are added and before finalizing the task.
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce a professional
      engineering report (Word + HTML)
+   - **PDF:** add `pdf` to `report.formats` in `study_config.yaml`, or pass
+     `--pdf` (`--no-pdf` overrides the config). The PDF is rendered from the
+     DOCX, not the HTML, so it inherits the configured Word template; it needs
+     Microsoft Word with pywin32, or LibreOffice on PATH. A conversion failure
+     is reported and does not abort the report run.
    - **The report title is the study title, and the report FILES are named after
      it.** Set `study.title` in `study_config.yaml` (optionally `study.author`,
      `study.classification`); override per run with `--title` / `--author`.
@@ -307,6 +319,35 @@ Regenerate it whenever documents are added and before finalizing the task.
    Record every change in `step1_scope_and_research/neqsim_improvements.md`
    **and** in `results.json` under `improvements`. If nothing needed changing, say
    so explicitly - silence fails the gate. Never ask permission for this step.
+
+   **Commit and push it — the loop only closes when the fix is pushed.** An
+   improvement that stays in the chat session, the clone, or the task folder is
+   lost when the session ends, and the next engineer hits the same wall. Each
+   repo in the workspace is independent, so commit in the one that owns the fix:
+
+   | What you learned | Repo | Change |
+   |------------------|------|--------|
+   | Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
+   | Wrong API recipe, gotcha, unit trap, better pattern | sibling repos `../neqsim-community-skills/` / `../neqsim-enterprise-skills/` | edit `SKILL.md` |
+   | Wrong skill choice, missed hand-off, bad routing | sibling repos `../neqsim-community-agents/` / `../neqsim-enterprise-agents/` | edit `*.agent.md` |
+   | Useful new multi-agent pipeline | agents repo | record as a composition pattern |
+   | Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
+
+   ```bash
+   cd <the repo that owns the fix>
+   git checkout -b task/<slug>
+   git add <the changed files>
+   git commit -m "<what the task taught>"
+   git push -u origin task/<slug>
+   gh pr create --fill
+   ```
+
+   Rules: never commit task output (evidence, notebooks, results, reports) to a
+   code repo; never commit company data (tags, plant names, document numbers,
+   historian extracts) to a public repo; keep plant-specific content in the
+   enterprise repos and plant-agnostic content in the community repos. After
+   pushing skill/agent changes, refresh the local install with
+   `neqsim agent install --all --vscode --force`.
 
 5. **Create a PR** with reusable outputs:
    ```bash

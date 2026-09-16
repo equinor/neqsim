@@ -84,6 +84,24 @@ public class LNGProcessBuilder {
   /** Expander isentropic efficiency. */
   private double expanderEfficiency = 0.82;
 
+  /** Optional mixed-refrigerant component names overriding the cycle default. */
+  private String[] refrigerantComponents;
+
+  /** Optional mixed-refrigerant mole fractions overriding the cycle default. */
+  private double[] refrigerantFractions;
+
+  /** Optional refrigerant mass circulation ratio; NaN keeps the cycle default. */
+  private double refrigerantCirculationRatio = Double.NaN;
+
+  /** Optional refrigerant suction pressure in bara; NaN keeps the cycle default. */
+  private double refrigerantSuctionPressureBara = Double.NaN;
+
+  /** Optional refrigerant discharge pressure in bara; NaN keeps the cycle default. */
+  private double refrigerantDischargePressureBara = Double.NaN;
+
+  /** Refrigerant inter/after-cooling outlet temperature in Celsius. */
+  private double refrigerantCoolingTemperatureC = 30.0;
+
   /**
    * Sets the process name.
    *
@@ -322,6 +340,91 @@ public class LNGProcessBuilder {
   }
 
   /**
+   * Sets the mixed-refrigerant inventory used by the SMR, C3MR, and DMR cycles.
+   *
+   * <p>
+   * Specific liquefaction power is dominated by how well the refrigerant boiling curve matches the natural-gas cooling
+   * curve, so the built-in inventory is only a starting point. Supplying a composition calibrated to the actual feed is
+   * normally required before the model is inside a published specific-energy band.
+   * </p>
+   *
+   * @param components component names, for example nitrogen, methane, ethane, propane, i-butane
+   * @param moleFractions relative mole fractions with the same length as components, each non-negative and not all zero
+   * @return this builder
+   */
+  public LNGProcessBuilder setRefrigerantComposition(String[] components, double[] moleFractions) {
+    if (components == null || moleFractions == null) {
+      throw new IllegalArgumentException("components and moleFractions cannot be null");
+    }
+    if (components.length == 0 || components.length != moleFractions.length) {
+      throw new IllegalArgumentException("components and moleFractions must be non-empty and of equal length");
+    }
+    double sum = 0.0;
+    for (int i = 0; i < moleFractions.length; i++) {
+      if (components[i] == null || components[i].trim().isEmpty()) {
+        throw new IllegalArgumentException("component name at index " + i + " cannot be null or empty");
+      }
+      if (moleFractions[i] < 0.0) {
+        throw new IllegalArgumentException("moleFractions cannot be negative");
+      }
+      sum += moleFractions[i];
+    }
+    if (sum <= 0.0) {
+      throw new IllegalArgumentException("moleFractions must sum to a positive value");
+    }
+    this.refrigerantComponents = components.clone();
+    this.refrigerantFractions = moleFractions.clone();
+    return this;
+  }
+
+  /**
+   * Sets the refrigerant mass circulation rate as a multiple of the natural-gas feed rate.
+   *
+   * @param circulationRatio refrigerant mass flow divided by feed mass flow, greater than zero
+   * @return this builder
+   */
+  public LNGProcessBuilder setRefrigerantCirculationRatio(double circulationRatio) {
+    validatePositive(circulationRatio, "circulationRatio");
+    this.refrigerantCirculationRatio = circulationRatio;
+    return this;
+  }
+
+  /**
+   * Sets the refrigerant compressor suction pressure.
+   *
+   * @param suctionPressureBara suction pressure in bara, greater than zero
+   * @return this builder
+   */
+  public LNGProcessBuilder setRefrigerantSuctionPressure(double suctionPressureBara) {
+    validatePositive(suctionPressureBara, "suctionPressureBara");
+    this.refrigerantSuctionPressureBara = suctionPressureBara;
+    return this;
+  }
+
+  /**
+   * Sets the refrigerant compressor discharge pressure.
+   *
+   * @param dischargePressureBara discharge pressure in bara, greater than zero
+   * @return this builder
+   */
+  public LNGProcessBuilder setRefrigerantDischargePressure(double dischargePressureBara) {
+    validatePositive(dischargePressureBara, "dischargePressureBara");
+    this.refrigerantDischargePressureBara = dischargePressureBara;
+    return this;
+  }
+
+  /**
+   * Sets the refrigerant inter- and after-cooling outlet temperature.
+   *
+   * @param coolingTemperatureC cooling outlet temperature in Celsius
+   * @return this builder
+   */
+  public LNGProcessBuilder setRefrigerantCoolingTemperature(double coolingTemperatureC) {
+    this.refrigerantCoolingTemperatureC = coolingTemperatureC;
+    return this;
+  }
+
+  /**
    * Builds the selected closed-loop process.
    *
    * @return runnable LNG process model
@@ -353,12 +456,16 @@ public class LNGProcessBuilder {
     // would otherwise replace the cold tear seed before the exchanger can establish a
     // feasible first state.
     context.process.setUseOptimizedExecution(false);
+    double suctionPressure = resolveRefrigerantSuctionPressure(1.0);
+    double dischargePressure = resolveRefrigerantDischargePressure(30.0);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.15, 0.75, 0.08, 0.02 }, 20.0, 1.0,
-        context.feedFlowKgPerHour * 5.0);
+        resolveRefrigerantComponents(new String[] { "nitrogen", "methane", "ethane", "propane" }),
+        resolveRefrigerantFractions(new double[] { 0.15, 0.75, 0.08, 0.02 }), 20.0, suctionPressure,
+        context.feedFlowKgPerHour * resolveRefrigerantCirculationRatio(5.0));
     context.process.add(mrSuction);
 
-    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
+    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, dischargePressure,
+        compressorEfficiency);
 
     double mrExpansionInletSeedTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
@@ -580,6 +687,56 @@ public class LNGProcessBuilder {
   }
 
   /**
+   * Resolves the refrigerant component names for a cycle.
+   *
+   * @param cycleDefault component names used when no override is configured
+   * @return resolved component names
+   */
+  private String[] resolveRefrigerantComponents(String[] cycleDefault) {
+    return refrigerantComponents == null ? cycleDefault : refrigerantComponents.clone();
+  }
+
+  /**
+   * Resolves the refrigerant mole fractions for a cycle.
+   *
+   * @param cycleDefault mole fractions used when no override is configured
+   * @return resolved mole fractions
+   */
+  private double[] resolveRefrigerantFractions(double[] cycleDefault) {
+    return refrigerantFractions == null ? cycleDefault : refrigerantFractions.clone();
+  }
+
+  /**
+   * Resolves the refrigerant mass circulation ratio for a cycle.
+   *
+   * @param cycleDefault ratio used when no override is configured
+   * @return resolved circulation ratio
+   */
+  private double resolveRefrigerantCirculationRatio(double cycleDefault) {
+    return Double.isNaN(refrigerantCirculationRatio) ? cycleDefault : refrigerantCirculationRatio;
+  }
+
+  /**
+   * Resolves the refrigerant suction pressure for a cycle.
+   *
+   * @param cycleDefault pressure in bara used when no override is configured
+   * @return resolved suction pressure in bara
+   */
+  private double resolveRefrigerantSuctionPressure(double cycleDefault) {
+    return Double.isNaN(refrigerantSuctionPressureBara) ? cycleDefault : refrigerantSuctionPressureBara;
+  }
+
+  /**
+   * Resolves the refrigerant discharge pressure for a cycle.
+   *
+   * @param cycleDefault pressure in bara used when no override is configured
+   * @return resolved discharge pressure in bara
+   */
+  private double resolveRefrigerantDischargePressure(double cycleDefault) {
+    return Double.isNaN(refrigerantDischargePressureBara) ? cycleDefault : refrigerantDischargePressureBara;
+  }
+
+  /**
    * Creates a mixed-refrigerant suction stream.
    *
    * @param streamName stream name
@@ -648,7 +805,7 @@ public class LNGProcessBuilder {
     context.process.add(first);
 
     Cooler intercooler = new Cooler(unitPrefix + " intercooler", first.getOutletStream());
-    intercooler.setOutTemperature(303.15);
+    intercooler.setOutletTemperature(refrigerantCoolingTemperatureC + 273.15);
     context.process.add(intercooler);
 
     Compressor second = new Compressor(unitPrefix + " compressor stage 2", intercooler.getOutletStream());
@@ -658,7 +815,7 @@ public class LNGProcessBuilder {
     context.process.add(second);
 
     Cooler aftercooler = new Cooler(unitPrefix + " aftercooler", second.getOutletStream());
-    aftercooler.setOutTemperature(303.15);
+    aftercooler.setOutletTemperature(refrigerantCoolingTemperatureC + 273.15);
     context.process.add(aftercooler);
 
     return new CompressionTrain(aftercooler.getOutletStream());

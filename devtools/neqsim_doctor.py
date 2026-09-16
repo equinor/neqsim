@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import sysconfig
 from datetime import datetime
 
 
@@ -479,6 +480,86 @@ def check_cross_tool_files():
         )
 
 
+def check_cli_on_path():
+    """Check that the ``neqsim`` console script resolves on PATH.
+
+    Every docs page, agent instruction and install message is written as
+    ``neqsim <command>``. When the script directory is missing from PATH the
+    command is "not recognized" and the user falls back to
+    ``python -m neqsim_cli`` -- which works, so a broken PATH is easy to live
+    with and easy to never report.
+
+    @return ``None``
+    """
+    print("\n--- CLI command ---")
+    interpreter = os.path.splitext(os.path.basename(sys.executable))[0]
+    module_form = "{exe} -m neqsim_cli".format(exe=interpreter)
+    resolved = shutil.which("neqsim")
+
+    if resolved:
+        _check("'neqsim' command", True, resolved)
+        try:
+            own_scripts = sysconfig.get_path("scripts")
+        except (KeyError, ValueError):
+            own_scripts = None
+        if own_scripts and not _same_dir(os.path.dirname(resolved), own_scripts):
+            _warn(
+                "'neqsim' interpreter",
+                "the command on PATH comes from {found}, not from the "
+                "interpreter running this check ({own})".format(
+                    found=os.path.dirname(resolved), own=own_scripts),
+                fix_hint="These are different installs and can disagree. Use "
+                         "'{mod}' to be certain which one you "
+                         "run.".format(mod=module_form),
+            )
+        return
+
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import ensure_on_path
+        script_dir = ensure_on_path.find_script_dir()
+    except Exception:
+        script_dir = None
+
+    if script_dir:
+        message = "installed in {dir} but that folder is not on PATH".format(
+            dir=script_dir)
+        venv = os.environ.get("VIRTUAL_ENV")
+        in_venv = venv and _same_dir(
+            script_dir,
+            os.path.join(venv, "Scripts" if sys.platform.startswith("win") else "bin"))
+        if in_venv:
+            # A venv is activated per terminal, so "open a new terminal" is the
+            # wrong advice here and a reboot changes nothing.
+            fix = ("activate the virtualenv in this terminal ({venv}); it is "
+                   "not activated, only VIRTUAL_ENV is set. A new terminal or "
+                   "a reboot will not help. '{mod}' works "
+                   "meanwhile.".format(venv=venv, mod=module_form))
+        else:
+            fix = ("run '{exe} devtools/ensure_on_path.py', then open a NEW "
+                   "terminal -- in VS Code quit and reopen the window, a new "
+                   "integrated terminal is not enough. '{mod}' works "
+                   "meanwhile.".format(exe=interpreter, mod=module_form))
+    else:
+        message = "not on PATH, and no installed script was found"
+        fix = ("reinstall with 'install.cmd' (Windows) or './install.sh', then "
+               "open a new terminal. '{mod}' works "
+               "meanwhile.".format(mod=module_form))
+    _check("'neqsim' command", False, message, fix_hint=fix)
+
+
+def _same_dir(a, b):
+    """Return whether two paths refer to the same directory.
+
+    @param a first path
+    @param b second path
+    @return ``True`` when both normalize to the same directory
+    """
+    return (os.path.normcase(os.path.normpath(a))
+            == os.path.normcase(os.path.normpath(b)))
+
+
 def check_devtools():
     """Check devtools scripts are available."""
     print("\n--- DevTools ---")
@@ -606,6 +687,7 @@ def main(argv=None):
     else:
         check_neqsim_jar()
     check_python_neqsim()
+    check_cli_on_path()
     check_agent_files()
     check_cross_tool_files()
     check_devtools()

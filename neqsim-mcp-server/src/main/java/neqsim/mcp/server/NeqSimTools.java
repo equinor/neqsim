@@ -2353,9 +2353,11 @@ public class NeqSimTools {
    * @return JSON string with validation findings and safety-analysis handoffs
    */
   @Tool(description = "Validate and transform an evidence-linked safety barrier register. "
-      + "Accepts extracted document evidence, performance standards, safety barriers, "
-      + "and safety critical elements (SCEs). Returns validation findings plus handoff "
-      + "blocks for LOPA, SIL verification, bow-tie analysis, and QRA screening.")
+      + "Accepts at most 65536 UTF-8 bytes, 100 items per collection, 256 object members, "
+      + "4096 characters per text value, and 12 nested levels. Returns advisory validation "
+      + "findings and screening handoffs for LOPA, SIL, bow-tie, and QRA. It does not identify "
+      + "hazards, verify barrier independence/effectiveness, establish standards compliance, "
+      + "authorize plant action, or replace qualified process-safety review.")
   public String runBarrierRegister(
       @ToolArg(description = "JSON with 'register' containing registerId, evidence, "
           + "performanceStandards, barriers, and safetyCriticalElements. Use getExample "

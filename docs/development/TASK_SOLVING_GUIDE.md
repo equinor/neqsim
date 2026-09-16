@@ -518,6 +518,47 @@ at high pressure. JT coefficient = 0.35 K/bar at 200 bar, 40°C.
 CPA not needed since no water in this case.
 ```
 
+### Phase 6: Push the improvements
+
+Every task is also a test of NeqSim, the agents, and the skills. The loop
+**engineering task → AI orchestration → NeqSim physics core → back again** only
+closes when what the task taught is committed and pushed — a fix left in the chat
+session or in the task folder is lost, and the next engineer hits the same wall.
+
+![Continuous-improvement loop: engineering task, AI orchestration with agents and skills, NeqSim physics core, with the improvements committed and pushed back](../integration/figures/improvement_loop.png)
+
+Each folder in the workspace is an independent repository; commit in the one that
+owns the fix:
+
+| What you learned | Repo | Change |
+|------------------|------|--------|
+| Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
+| Wrong API recipe, gotcha, unit trap, better pattern | `neqsim-community-skills` / `neqsim-enterprise-skills` | edit `SKILL.md` |
+| Wrong skill choice, missed hand-off, bad routing | `neqsim-community-agents` / `neqsim-enterprise-agents` | edit `*.agent.md` |
+| Useful new multi-agent pipeline | agents repo | record as a composition pattern |
+| Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
+
+```bash
+cd <repo that owns the fix>
+git checkout -b task/<slug>
+git add <changed files>
+git commit -m "<what the task taught>"
+git push -u origin task/<slug>
+gh pr create --fill
+```
+
+Never push task output (evidence, notebooks, results, reports) or company data
+into a code repo — only the reusable distillation. Record each change in
+`step1_scope_and_research/neqsim_improvements.md` and in `results.json` under
+`improvements`, and refresh your local install afterwards with
+`neqsim agent install --all --vscode --force`.
+
+> **Tip — keep every repo in one VS Code workspace.** `File → Add Folder to
+> Workspace...` for `neqsim`, the agent/skill repos, and your task folder (which
+> is *not* a clone), then `File → Save Workspace As...`. Copilot Chat then sees
+> the skill, the agent definition, the NeqSim source, and the task in the same
+> conversation, which is what makes this phase a two-minute step.
+
 ---
 
 ## Task Classification
