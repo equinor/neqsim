@@ -12,28 +12,11 @@ import neqsim.util.database.NeqSimDataBase;
  * Verifies that the extended component database preserves the standard Pitzer electrolyte identities and results.
  */
 public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest {
-  private static final String[] VALUE_NAMES = {
-    "Na+ ionic charge",
-    "Ca++ ionic charge",
-    "Cl- ionic charge",
-    "Na+ molar mass",
-    "Ca++ molar mass",
-    "Cl- molar mass",
-    "NaCl beta0",
-    "NaCl beta1",
-    "CaCl2 beta0",
-    "CaCl2 beta1",
-    "Na+ activity coefficient",
-    "Ca++ activity coefficient",
-    "Cl- activity coefficient",
-    "water osmotic coefficient",
-    "water activity",
-    "aqueous density",
-    "aqueous molar volume",
-    "aqueous enthalpy",
-    "aqueous entropy",
-    "aqueous Gibbs energy"
-  };
+  private static final String[] VALUE_NAMES = { "Na+ ionic charge", "Ca++ ionic charge", "Cl- ionic charge",
+      "Na+ molar mass", "Ca++ molar mass", "Cl- molar mass", "NaCl beta0", "NaCl beta1", "CaCl2 beta0", "CaCl2 beta1",
+      "Na+ activity coefficient", "Ca++ activity coefficient", "Cl- activity coefficient", "water osmotic coefficient",
+      "water activity", "aqueous density", "aqueous molar volume", "aqueous enthalpy", "aqueous entropy",
+      "aqueous Gibbs energy" };
 
   /**
    * The standard and extended component databases must produce the same mixed-brine Pitzer state.
@@ -99,28 +82,15 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
     assertTrue(Math.abs(phase.getBeta1ij(calcium, chloride)) > 0.0,
         "CaCl2 beta1 must be loaded from the legacy Pitzer database");
 
-    double[] values = {
-      phase.getComponent(sodium).getIonicCharge(),
-      phase.getComponent(calcium).getIonicCharge(),
-      phase.getComponent(chloride).getIonicCharge(),
-      phase.getComponent(sodium).getMolarMass(),
-      phase.getComponent(calcium).getMolarMass(),
-      phase.getComponent(chloride).getMolarMass(),
-      phase.getBeta0ij(sodium, chloride),
-      phase.getBeta1ij(sodium, chloride),
-      phase.getBeta0ij(calcium, chloride),
-      phase.getBeta1ij(calcium, chloride),
-      phase.getActivityCoefficient(sodium, water),
-      phase.getActivityCoefficient(calcium, water),
-      phase.getActivityCoefficient(chloride, water),
-      phase.getOsmoticCoefficientOfWater(),
-      phase.getActivityCoefficient(water, water) * phase.getComponent(water).getx(),
-      phase.getDensity(),
-      phase.getMolarVolume(),
-      phase.getEnthalpy(),
-      phase.getEntropy(),
-      phase.getGibbsEnergy()
-    };
+    double[] values = { phase.getComponent(sodium).getIonicCharge(), phase.getComponent(calcium).getIonicCharge(),
+        phase.getComponent(chloride).getIonicCharge(), phase.getComponent(sodium).getMolarMass(),
+        phase.getComponent(calcium).getMolarMass(), phase.getComponent(chloride).getMolarMass(),
+        phase.getBeta0ij(sodium, chloride), phase.getBeta1ij(sodium, chloride), phase.getBeta0ij(calcium, chloride),
+        phase.getBeta1ij(calcium, chloride), phase.getActivityCoefficient(sodium, water),
+        phase.getActivityCoefficient(calcium, water), phase.getActivityCoefficient(chloride, water),
+        phase.getOsmoticCoefficientOfWater(),
+        phase.getActivityCoefficient(water, water) * phase.getComponent(water).getx(), phase.getDensity(),
+        phase.getMolarVolume(), phase.getEnthalpy(), phase.getEntropy(), phase.getGibbsEnergy() };
 
     for (int i = 0; i < values.length; i++) {
       assertTrue(Double.isFinite(values[i]), VALUE_NAMES[i] + " must be finite");
