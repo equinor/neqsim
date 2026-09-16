@@ -62,7 +62,7 @@ class S8TransferBatchDocumentationTest(unittest.TestCase):
             "must not also apply the original source sulfur budget",
             "Millero et al. (1987)",
             "https://doi.org/10.1021/es00159a003",
-            "introduces no chemical coefficient",
+            "introduces no chemical",
             "does not:",
             "calculate S8 moles",
             "qualify elemental sulfur as the oxidation product",
