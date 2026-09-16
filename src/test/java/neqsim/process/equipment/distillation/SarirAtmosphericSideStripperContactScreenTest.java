@@ -13,6 +13,7 @@ import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.O
 import neqsim.process.equipment.distillation.SarirAtmosphericMainSteamScreen.ReportedPressureBasis;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.standards.oilquality.SarirD86ProductComparison;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionReference;
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionService;
@@ -33,6 +34,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
   @Test
   public void incompleteOrUnsupportedBoundariesFailClosed() {
     SarirAtmosphericFractionationCase unsolved = createModel();
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(unsolved));
     StreamInterface keroseneSteam = createPreparedSteam(unsolved, SteamInjectionService.KEROSENE_SIDE_STRIPPER);
 
     assertThrows(IllegalStateException.class,
@@ -59,6 +61,26 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     model.run(UUID.randomUUID());
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus(),
         model.getColumn().getConvergenceDiagnostics());
+
+    SarirAtmosphericProductQualityScreen.Result quality =
+        SarirAtmosphericProductQualityScreen.evaluate(model);
+    SarirD86ProductComparison.Result[] comparisons = quality.getComparisons();
+    assertEquals(2, comparisons.length);
+    String[] expectedLabels = { "Kerosene", "Diesel" };
+    for (int i = 0; i < comparisons.length; i++) {
+      assertEquals(expectedLabels[i], comparisons[i].getProductName());
+      assertEquals(comparisons[i], quality.getComparison(expectedLabels[i]));
+      assertEquals(95.0, comparisons[i].getRecoveryVolumePercent(), 0.0);
+      assertTrue(Double.isFinite(comparisons[i].getNeqsimT95Celsius()));
+      assertTrue(Double.isFinite(comparisons[i].getNeqsimAbsoluteRelativeErrorPercent()));
+      assertTrue(Double.isFinite(comparisons[i].getHysysAbsoluteRelativeErrorPercent()));
+      assertTrue(Double.isFinite(comparisons[i].getSpecificationMarginCelsius()));
+    }
+    comparisons[0] = null;
+    assertTrue(quality.getComparisons()[0] != null);
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison(null));
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Total Naphtha"));
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Residual"));
 
     assertContact(model, SteamInjectionService.KEROSENE_SIDE_STRIPPER, "Kerosene side stripper", 68.04);
     assertContact(model, SteamInjectionService.DIESEL_SIDE_STRIPPER, "Diesel side stripper", 226.8);
@@ -102,6 +124,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
         SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, inputs);
     model.run(UUID.randomUUID());
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus());
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(model));
     for (SteamInjectionService service : new SteamInjectionService[] { SteamInjectionService.KEROSENE_SIDE_STRIPPER,
         SteamInjectionService.DIESEL_SIDE_STRIPPER }) {
       StreamInterface steam = createPreparedSteam(model, service);
