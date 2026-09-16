@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.OperatingInputs;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.standards.oilquality.SarirD86ProductComparison;
 import neqsim.thermo.characterization.SarirAtmosphericReference;
 
 /** Qualification tests for {@link SarirAtmosphericFractionationCase}. */
@@ -52,6 +53,7 @@ public class SarirAtmosphericFractionationCaseTest {
     assertEquals(0.15, inputs.getDieselSideDrawFraction(), 0.0);
     assertTrue(inputs == model.getOperatingInputs());
     assertThrows(IllegalStateException.class, () -> SarirAtmosphericFractionationResult.evaluate(model));
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(model));
 
     column.run(UUID.randomUUID());
 
@@ -109,12 +111,38 @@ public class SarirAtmosphericFractionationCaseTest {
     assertTrue(result.getProducts()[0] != null);
     assertThrows(IllegalArgumentException.class, () -> result.getProduct(null));
     assertThrows(IllegalArgumentException.class, () -> result.getProduct("Naphtha"));
+
+    SarirAtmosphericProductQualityScreen.Result quality =
+        SarirAtmosphericProductQualityScreen.evaluate(model);
+    assertEquals(result.getFeedMassFlowKgPerHour(),
+        quality.getFractionationResult().getFeedMassFlowKgPerHour(), 1.0e-8);
+    SarirD86ProductComparison.Result[] comparisons = quality.getComparisons();
+    assertEquals(2, comparisons.length);
+    String[] qualityLabels = { "Kerosene", "Diesel" };
+    for (int i = 0; i < comparisons.length; i++) {
+      assertEquals(qualityLabels[i], comparisons[i].getProductName());
+      assertEquals(comparisons[i], quality.getComparison(qualityLabels[i]));
+      assertEquals(95.0, comparisons[i].getRecoveryVolumePercent(), 0.0);
+      assertTrue(Double.isFinite(comparisons[i].getNeqsimT95Celsius()));
+      assertTrue(Double.isFinite(comparisons[i].getLaboratoryT95Celsius()));
+      assertTrue(Double.isFinite(comparisons[i].getHysysT95Celsius()));
+      assertTrue(Double.isFinite(comparisons[i].getSpecificationT95Celsius()));
+      assertTrue(Double.isFinite(comparisons[i].getNeqsimAbsoluteRelativeErrorPercent()));
+      assertTrue(Double.isFinite(comparisons[i].getHysysAbsoluteRelativeErrorPercent()));
+      assertTrue(Double.isFinite(comparisons[i].getSpecificationMarginCelsius()));
+    }
+    comparisons[0] = null;
+    assertTrue(quality.getComparisons()[0] != null);
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison(null));
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Total Naphtha"));
+    assertThrows(IllegalArgumentException.class, () -> quality.getComparison("Residual"));
   }
 
   /** Require unreported operating controls and profiles to fail closed. */
   @Test
   public void invalidEngineeringInputsAreRejectedBeforeCaseCreation() {
-    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));\n    assertThrows(NullPointerException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(null));
+    assertThrows(NullPointerException.class, () -> SarirAtmosphericFractionationResult.evaluate(null));
+    assertThrows(NullPointerException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(null));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(2.5, 2.0, 700.0, 1.0, 24, 0.08, 15, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 15, 0.08, 24, 0.15));
     assertThrows(IllegalArgumentException.class, () -> new OperatingInputs(1.2, 2.33, 700.0, 1.0, 24, 1.0, 15, 0.15));
