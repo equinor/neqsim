@@ -375,7 +375,15 @@ def find_documents(pattern="", document_root=None, limit=0):
             "No document root configured. Set one: neqsim --set-document-root \"PATH\"")
     needle = (pattern or "").strip().lower()
     matches = []
-    for folder, subfolders, files in os.walk(root):
+    visited = set()
+    # followlinks reaches a junction/symlink subfolder, which a library assembled
+    # from several drives relies on; visited real paths stop the resulting cycles.
+    for folder, subfolders, files in os.walk(root, followlinks=True):
+        real = os.path.realpath(folder)
+        if real in visited:
+            subfolders[:] = []
+            continue
+        visited.add(real)
         subfolders[:] = sorted(name for name in subfolders if not name.startswith("."))
         for name in sorted(files):
             if name.startswith("."):
