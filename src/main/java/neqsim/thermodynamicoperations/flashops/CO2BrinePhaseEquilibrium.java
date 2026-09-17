@@ -20,6 +20,7 @@ public final class CO2BrinePhaseEquilibrium {
   private static final double TOLERANCE = 1.0e-8;
   private final SystemInterface system;
   private double minimumTrialDistance = Double.NaN;
+  private PhaseType acceptedRoot;
 
   /**
    * Creates a fluid-phase calculation without modifying the supplied system.
@@ -37,9 +38,18 @@ public final class CO2BrinePhaseEquilibrium {
    * @return true for water-rich, non-reactive electrolyte-CPA CO2/water with optional explicit ions
    */
   public static boolean isApplicable(SystemInterface fluid) {
-    if (!(fluid instanceof SystemElectrolyteCPAstatoil) || fluid.isChemicalSystem() || fluid.doSolidPhaseCheck()
-        || fluid.isForcePhaseTypes() || !fluid.getPhase(0).hasComponent("CO2")
-        || !fluid.getPhase(0).hasComponent("water")) {
+    return !fluid.isChemicalSystem() && hasSupportedComposition(fluid);
+  }
+
+  /**
+   * Checks the frozen-species scope shared with the reactive CO2/brine coupling.
+   *
+   * @param fluid system to inspect
+   * @return whether only CO2, water and aqueous ions are present in the supported model
+   */
+  static boolean hasSupportedComposition(SystemInterface fluid) {
+    if (!(fluid instanceof SystemElectrolyteCPAstatoil) || fluid.doSolidPhaseCheck() || fluid.isForcePhaseTypes()
+        || !fluid.getPhase(0).hasComponent("CO2") || !fluid.getPhase(0).hasComponent("water")) {
       return false;
     }
     double water = fluid.getPhase(0).getComponent("water").getNumberOfmoles();
@@ -65,6 +75,7 @@ public final class CO2BrinePhaseEquilibrium {
    */
   public void run() {
     minimumTrialDistance = Double.NaN;
+    acceptedRoot = null;
     if (!isApplicable(system)) {
       throw new IllegalArgumentException("CO2/brine phase selection requires non-reactive electrolyte-CPA CO2/water");
     }
@@ -133,6 +144,12 @@ public final class CO2BrinePhaseEquilibrium {
       system.setPhaseType(phase, phase == 0 ? bestRoot : PhaseType.AQUEOUS);
       system.setBeta(phase, best.getBeta(phase));
     }
+    acceptedRoot = bestRoot;
+  }
+
+  /** @return requested EOS root of the accepted first phase, or null before a successful solve */
+  PhaseType getAcceptedRoot() {
+    return acceptedRoot;
   }
 
   /**

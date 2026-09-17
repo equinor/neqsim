@@ -1789,12 +1789,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       } else {
         run();
       }
+    } catch (java.util.concurrent.CancellationException ex) {
+      throw ex;
     } catch (IllegalStateException ex) {
-      if (ex.getMessage() == null || !ex.getMessage().startsWith("Hydrate fluid inventory")) {
+      if (ex.getMessage() == null || (!ex.getMessage().startsWith("Hydrate fluid inventory")
+          && !ex.getMessage().startsWith("Reactive CO2/brine"))) {
         throw ex;
       }
       // The operation restores the original feed and reports NaN before rejecting an
-      // invalid phase split. The no-argument wrapper may retry from another temperature.
+      // invalid phase split or reactive equilibrium. The no-argument wrapper may retry from another temperature.
     }
   }
 
