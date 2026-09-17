@@ -274,7 +274,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     // Test deprecated setOutTemperature still works
     Pump pump4 = new Pump("pump-deprecated", feed);
     pump4.setOutletPressure(10.0, "bara");
-    pump4.setOutTemperature(273.15 + 35.0);
+    pump4.setOutletTemperature(273.15 + 35.0);
     pump4.run();
 
     double outTemp4_C = pump4.getOutletStream().getTemperature("C");

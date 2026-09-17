@@ -140,7 +140,7 @@ public class CompressorChartTest {
 
     double temperatureOut = 273.15 + 84;
     comp1.setOutletPressure(96.0);
-    comp1.setOutTemperature(temperatureOut);
+    comp1.setOutletTemperature(temperatureOut);
     operations.run();
     double polytropicHead = comp1.getPolytropicHead();
     double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");

@@ -135,7 +135,7 @@ public final class SarirAtmosphericFractionationCase {
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
     configuredColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    configuredColumn.getReboiler().setOutTemperature(operatingInputs.getReboilerTemperatureKelvin());
+    configuredColumn.getReboiler().setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
     configuredColumn.setCondenserRefluxRatio(operatingInputs.getCondenserRefluxRatio());
     configuredColumn.setLiquidSideDrawFraction(operatingInputs.getKeroseneSideDrawTray(),
         operatingInputs.getKeroseneSideDrawFraction());

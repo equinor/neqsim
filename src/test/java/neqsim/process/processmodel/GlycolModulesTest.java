@@ -156,7 +156,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     glycol_flash_valve.setOutletPressure(7.513533287063168);
 
     Heater heatEx2 = new Heater("rich TEG heat exchanger 1", glycol_flash_valve.getOutletStream());
-    heatEx2.setOutTemperature(273.15 + 90);
+    heatEx2.setOutletTemperature(273.15 + 90);
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
     feedWater.setMolarComposition(
@@ -178,7 +178,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     filter.setDeltaP(0.0, "bara");
 
     Heater heatEx = new Heater("lean/rich TEG heat-exchanger", filter.getOutletStream());
-    heatEx.setOutTemperature(273.15 + 105.0);
+    heatEx.setOutletTemperature(273.15 + 105.0);
 
     ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutletStream());
     glycol_flash_valve2.setOutletPressure(1.1714901511485545);
@@ -197,15 +197,15 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + 201.86991706268591);
-    column.getCondenser().setOutTemperature(273.15 + 112.80145109927442);
+    column.getReboiler().setOutletTemperature(273.15 + 201.86991706268591);
+    column.getCondenser().setOutletTemperature(273.15 + 112.80145109927442);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(1.1582401511485543);
     column.setBottomPressure(1.1714901511485545);
     column.setInternalDiameter(0.56);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 17.685590621935702);
+    coolerRegenGas.setOutletTemperature(273.15 + 17.685590621935702);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -264,7 +264,7 @@ public class GlycolModulesTest extends neqsim.NeqSimTest {
     hotLeanTEGPump.setIsentropicEfficiency(0.9);
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", hotLeanTEGPump.getOutletStream());
-    coolerhOTteg3.setOutTemperature(273.15 + 35.009563114341454);
+    coolerhOTteg3.setOutletTemperature(273.15 + 35.009563114341454);
 
     condHeat.setEnergyStream(column.getCondenser().getEnergyStream());
 

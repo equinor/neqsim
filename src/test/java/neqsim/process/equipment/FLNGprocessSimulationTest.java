@@ -80,28 +80,28 @@ class FLNGprocessSimulationTest {
 
     // ---- 4. Pre-cooling (C3 refrigerant stages) ----
     Cooler precool1 = new Cooler("Pre-cool Stage 1", cryoFeedCheck.getGasOutStream());
-    precool1.setOutTemperature(273.15 - 5.0);
+    precool1.setOutletTemperature(273.15 - 5.0);
     process.add(precool1);
 
     Cooler precool2 = new Cooler("Pre-cool Stage 2", precool1.getOutletStream());
-    precool2.setOutTemperature(273.15 - 20.0);
+    precool2.setOutletTemperature(273.15 - 20.0);
     process.add(precool2);
 
     Cooler precool3 = new Cooler("Pre-cool Stage 3", precool2.getOutletStream());
-    precool3.setOutTemperature(273.15 - 35.0);
+    precool3.setOutletTemperature(273.15 - 35.0);
     process.add(precool3);
 
     // ---- 5. Main Cryogenic Heat Exchanger stages (MR cooling) ----
     Cooler mche1 = new Cooler("MCHE Stage 1", precool3.getOutletStream());
-    mche1.setOutTemperature(273.15 - 80.0);
+    mche1.setOutletTemperature(273.15 - 80.0);
     process.add(mche1);
 
     Cooler mche2 = new Cooler("MCHE Stage 2", mche1.getOutletStream());
-    mche2.setOutTemperature(273.15 - 120.0);
+    mche2.setOutletTemperature(273.15 - 120.0);
     process.add(mche2);
 
     Cooler mche3 = new Cooler("MCHE Stage 3", mche2.getOutletStream());
-    mche3.setOutTemperature(273.15 - 157.0);
+    mche3.setOutletTemperature(273.15 - 157.0);
     process.add(mche3);
 
     // ---- 6. JT valve (letdown to near-atmospheric pressure) ----

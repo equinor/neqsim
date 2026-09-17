@@ -818,7 +818,7 @@ public class FlowRateOptimizerTest {
     // Interstage Cooler
     neqsim.process.equipment.heatexchanger.Cooler interStageCooler = new neqsim.process.equipment.heatexchanger.Cooler(
         "Interstage Cooler", firstStageCompressor.getOutletStream());
-    interStageCooler.setOutTemperature(273.15 + 40.0);
+    interStageCooler.setOutletTemperature(273.15 + 40.0);
     process.add(interStageCooler);
 
     // Second Stage Compressor

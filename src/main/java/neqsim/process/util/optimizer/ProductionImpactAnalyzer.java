@@ -419,10 +419,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // For heaters/coolers, set to no heat transfer
       if (equipment instanceof Heater) {
-        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutletTemperature(((Heater) equipment).getInletStream().getTemperature());
       }
       if (equipment instanceof Cooler) {
-        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutletTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
 
       result.addAffectedEquipment(equipmentName);

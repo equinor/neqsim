@@ -54,12 +54,12 @@ public class RawTimingBenchmarkTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
       Separator sep2 = new Separator("sep2-" + t, cool.getOutletStream());
       sys.add(sep2);
       Heater h = new Heater("heat" + t, sep2.getGasOutStream());
-      h.setOutTemperature(340.0);
+      h.setOutletTemperature(340.0);
       sys.add(h);
     }
     return sys;

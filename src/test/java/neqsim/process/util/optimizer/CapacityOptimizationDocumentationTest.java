@@ -264,7 +264,7 @@ class CapacityOptimizationDocumentationTest {
   void installedHeaterStrategyRetainsTheCompleteStrategyContract() {
     Stream feed = gasFeed(1000.0);
     Heater heater = new Heater("Process Heater", feed);
-    heater.setOutTemperature(350.0);
+    heater.setOutletTemperature(350.0);
     heater.run();
     InstalledHeaterDutyStrategy strategy = new InstalledHeaterDutyStrategy();
     assertTrue(strategy.supports(heater));

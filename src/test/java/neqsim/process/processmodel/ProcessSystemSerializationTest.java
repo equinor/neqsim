@@ -183,15 +183,15 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + 202.0);
-    column.getCondenser().setOutTemperature(273.15 + 89.0);
+    column.getReboiler().setOutletTemperature(273.15 + 202.0);
+    column.getCondenser().setOutletTemperature(273.15 + 89.0);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
     column.setInternalDiameter(0.56);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 15.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 15.0);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
     Stream gasToFlare = new Stream("gas to flare", sepregenGas.getGasOutStream());
@@ -234,7 +234,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     // makeupMixer.addStream(makeupTEG);
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", makeupMixer.getOutletStream());
-    coolerhOTteg3.setOutTemperature(273.15 + 40.0);
+    coolerhOTteg3.setOutletTemperature(273.15 + 40.0);
 
     condHeat.setEnergyStream(column.getCondenser().getEnergyStream());
 

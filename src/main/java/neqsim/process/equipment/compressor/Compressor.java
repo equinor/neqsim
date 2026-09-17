@@ -6568,7 +6568,7 @@ public class Compressor extends TwoPortEquipment
       compressor.setMinimumSpeed(minSpeed);
 
       if (useOutTemperature && outTemperature > 0) {
-        compressor.setOutTemperature(outTemperature);
+        compressor.setOutletTemperature(outTemperature);
       }
 
       if (maxOutletPressure > 0) {

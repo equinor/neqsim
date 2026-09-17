@@ -689,7 +689,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     testPipe.setDiameter(2.69);
     testPipe.setPressureOutLimit(80.0);
     testPipe.setFlowLimit(producedOilStream.getFlowRate("kg/hr") * 0.4, "kg/hr");
-    testPipe.setOutTemperature(273.15 + 50.0);
+    testPipe.setOutletTemperature(273.15 + 50.0);
     testPipe.run();
     System.out.println(" flow limit " + producedOilStream.getFlowRate("kg/hr") * 0.4);
     System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));

@@ -62,7 +62,7 @@ public class RecycleSpeedBenchmarkTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(310.0);
+      cool.setOutletTemperature(310.0);
       sys.add(cool);
       trainOut[t] = (Stream) cool.getOutletStream();
     }

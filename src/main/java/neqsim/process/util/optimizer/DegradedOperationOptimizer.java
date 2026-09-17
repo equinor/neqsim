@@ -389,9 +389,9 @@ public class DegradedOperationOptimizer implements Serializable {
         Pump pump = (Pump) equipment;
         pump.setOutletPressure(pump.getInletStream().getPressure());
       } else if (equipment instanceof Heater) {
-        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutletTemperature(((Heater) equipment).getInletStream().getTemperature());
       } else if (equipment instanceof Cooler) {
-        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutletTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
     }
   }

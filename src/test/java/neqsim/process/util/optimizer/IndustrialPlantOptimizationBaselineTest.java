@@ -384,7 +384,7 @@ class IndustrialPlantOptimizationBaselineTest {
       compressor.setOutletPressure(120.0, "bara");
       compressor.setIsentropicEfficiency(0.78);
       Cooler cooler = new Cooler(prefix + " Aftercooler", compressor.getOutletStream());
-      cooler.setOutTemperature(308.15);
+      cooler.setOutletTemperature(308.15);
       Separator scrubber = new Separator(prefix + " Scrubber", cooler.getOutletStream());
       scrubber.setInternalDiameter(1.5);
       PipeBeggsAndBrills outletPipe = pipe(prefix + " Outlet Pipe", scrubber.getGasOutStream(), 100.0, 0.45);

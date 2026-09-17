@@ -66,7 +66,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("deethanizer_" + solverType.name(), 5, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(50);
@@ -84,7 +84,7 @@ public class DistillationSolverBenchmarkTest {
   private void applyDeethanizerTemperatureProfile(DistillationColumn column, int trayCount) {
     for (int trayIndex = 1; trayIndex <= trayCount; trayIndex++) {
       double trayFraction = trayCount <= 1 ? 0.0 : (trayIndex - 1.0) / (trayCount - 1.0);
-      column.getTray(trayIndex).setOutTemperature(273.15 + 90.0 - trayFraction * 135.0);
+      column.getTray(trayIndex).setOutletTemperature(273.15 + 90.0 - trayFraction * 135.0);
     }
   }
 
@@ -101,7 +101,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("profiled_deethanizer_" + solverType.name(), 5, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 5);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
@@ -134,8 +134,8 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn(name, 5, true, true);
     column.addFeedStream(feed, 3);
-    column.getCondenser().setOutTemperature(298.15);
-    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setOutletTemperature(298.15);
+    column.getReboiler().setOutletTemperature(348.15);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -181,8 +181,8 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn(name, 5, true, true);
     column.addFeedStream(feed, 3);
-    column.getCondenser().setOutTemperature(298.15);
-    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setOutletTemperature(298.15);
+    column.getReboiler().setOutletTemperature(348.15);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -353,8 +353,8 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("large_matrix_binary_column", 12, true, true);
     column.addFeedStream(feed, 7);
-    column.getCondenser().setOutTemperature(298.15);
-    column.getReboiler().setOutTemperature(348.15);
+    column.getCondenser().setOutletTemperature(298.15);
+    column.getReboiler().setOutletTemperature(348.15);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -434,8 +434,8 @@ public class DistillationSolverBenchmarkTest {
 
       DistillationColumn column = new DistillationColumn("binary_col_" + solver.name(), 5, true, true);
       column.addFeedStream(feed, 3);
-      column.getCondenser().setOutTemperature(298.15);
-      column.getReboiler().setOutTemperature(348.15);
+      column.getCondenser().setOutletTemperature(298.15);
+      column.getReboiler().setOutletTemperature(348.15);
       column.getCondenser().setRefluxRatio(2.0);
       column.getReboiler().setRefluxRatio(2.0);
       column.setTopPressure(10.0);
@@ -601,7 +601,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("component_balance_column", 5, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 5);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
@@ -668,7 +668,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("mesh_spec_column", 5, true, true);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 5);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
@@ -931,7 +931,7 @@ public class DistillationSolverBenchmarkTest {
     double bottomPressure = 4.05 + COLUMN4_ATM_BARA;
     column.setTopPressure(topPressure);
     column.setBottomPressure(topPressure + (bottomPressure - topPressure) * (10.0 / 9.0));
-    column.getReboiler().setOutTemperature(273.15 + 88.05);
+    column.getReboiler().setOutletTemperature(273.15 + 88.05);
     column.setMurphreeEfficiency(1.0);
     column.setMurphreeEfficiency(0, 1.0);
     column.setSolverType(solverType);
@@ -1030,7 +1030,7 @@ public class DistillationSolverBenchmarkTest {
 
       DistillationColumn column = new DistillationColumn("large_col_" + solver.name(), 10, true, false);
       column.addFeedStream(feed, 5);
-      column.getReboiler().setOutTemperature(105.0 + 273.15);
+      column.getReboiler().setOutletTemperature(105.0 + 273.15);
       applyDeethanizerTemperatureProfile(column, 10);
       column.setTopPressure(30.0);
       column.setBottomPressure(32.0);
@@ -1065,8 +1065,8 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("TEG regen Wegstein", 1, true, true);
     column.addFeedStream(richTEGStream, 1);
-    column.getReboiler().setOutTemperature(273.15 + 202);
-    column.getCondenser().setOutTemperature(273.15 + 88.165861);
+    column.getReboiler().setOutletTemperature(273.15 + 202);
+    column.getCondenser().setOutletTemperature(273.15 + 88.165861);
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setMaxNumberOfIterations(80);
@@ -1146,7 +1146,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("io_large_col", 10, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 10);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
@@ -1191,7 +1191,7 @@ public class DistillationSolverBenchmarkTest {
     feed1.run();
     DistillationColumn withInner = new DistillationColumn("col_with_inner", 5, true, false);
     withInner.addFeedStream(feed1, 5);
-    withInner.getReboiler().setOutTemperature(105.0 + 273.15);
+    withInner.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(withInner, 5);
     withInner.setTopPressure(30.0);
     withInner.setBottomPressure(32.0);
@@ -1205,7 +1205,7 @@ public class DistillationSolverBenchmarkTest {
     feed2.run();
     DistillationColumn noInner = new DistillationColumn("col_no_inner", 5, true, false);
     noInner.addFeedStream(feed2, 5);
-    noInner.getReboiler().setOutTemperature(105.0 + 273.15);
+    noInner.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(noInner, 5);
     noInner.setTopPressure(30.0);
     noInner.setBottomPressure(32.0);
@@ -1256,7 +1256,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("io_inner_large_col", 10, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 10);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
@@ -1350,7 +1350,7 @@ public class DistillationSolverBenchmarkTest {
 
     DistillationColumn column = new DistillationColumn("newton_large_col", 10, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     applyDeethanizerTemperatureProfile(column, 10);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);

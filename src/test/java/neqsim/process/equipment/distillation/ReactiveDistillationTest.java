@@ -49,8 +49,8 @@ public class ReactiveDistillationTest {
     DistillationColumn column = new DistillationColumn("Reactive WGS Column", 3, true, true);
     column.setReactive(true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 250.0);
-    column.getCondenser().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 250.0);
+    column.getCondenser().setOutletTemperature(273.15 + 100.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
 
@@ -89,8 +89,8 @@ public class ReactiveDistillationTest {
     DistillationColumn column = new DistillationColumn("Partial Reactive", 5, true, true);
     column.setReactive(true, 1, 3);
     column.addFeedStream(feed, 3);
-    column.getReboiler().setOutTemperature(273.15 + 250.0);
-    column.getCondenser().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 250.0);
+    column.getCondenser().setOutletTemperature(273.15 + 100.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
 
@@ -129,8 +129,8 @@ public class ReactiveDistillationTest {
     // Standard column for baseline
     DistillationColumn stdColumn = new DistillationColumn("Standard HC", 3, true, true);
     stdColumn.addFeedStream(feed, 2);
-    stdColumn.getReboiler().setOutTemperature(273.15 - 20.0);
-    stdColumn.getCondenser().setOutTemperature(273.15 - 80.0);
+    stdColumn.getReboiler().setOutletTemperature(273.15 - 20.0);
+    stdColumn.getCondenser().setOutletTemperature(273.15 - 80.0);
     stdColumn.setTopPressure(15.0);
     stdColumn.setBottomPressure(15.0);
     stdColumn.setMaxNumberOfIterations(100);
@@ -146,8 +146,8 @@ public class ReactiveDistillationTest {
     DistillationColumn column = new DistillationColumn("Reactive HC", 3, true, true);
     column.setReactive(true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 - 20.0);
-    column.getCondenser().setOutTemperature(273.15 - 80.0);
+    column.getReboiler().setOutletTemperature(273.15 - 20.0);
+    column.getCondenser().setOutletTemperature(273.15 - 80.0);
     column.setTopPressure(15.0);
     column.setBottomPressure(15.0);
     column.setMaxNumberOfIterations(100);
@@ -240,8 +240,8 @@ public class ReactiveDistillationTest {
     // Standard column
     DistillationColumn stdColumn = new DistillationColumn("Standard", 3, true, true);
     stdColumn.addFeedStream(feed, 2);
-    stdColumn.getReboiler().setOutTemperature(273.15 - 20.0);
-    stdColumn.getCondenser().setOutTemperature(273.15 - 80.0);
+    stdColumn.getReboiler().setOutletTemperature(273.15 - 20.0);
+    stdColumn.getCondenser().setOutletTemperature(273.15 - 80.0);
     stdColumn.setTopPressure(15.0);
     stdColumn.setBottomPressure(15.0);
     stdColumn.run();
@@ -256,8 +256,8 @@ public class ReactiveDistillationTest {
     DistillationColumn rxnColumn = new DistillationColumn("Reactive", 3, true, true);
     rxnColumn.setReactive(true);
     rxnColumn.addFeedStream(feed, 2);
-    rxnColumn.getReboiler().setOutTemperature(273.15 - 20.0);
-    rxnColumn.getCondenser().setOutTemperature(273.15 - 80.0);
+    rxnColumn.getReboiler().setOutletTemperature(273.15 - 20.0);
+    rxnColumn.getCondenser().setOutletTemperature(273.15 - 80.0);
     rxnColumn.setTopPressure(15.0);
     rxnColumn.setBottomPressure(15.0);
     rxnColumn.run();
@@ -292,7 +292,7 @@ public class ReactiveDistillationTest {
     DistillationColumn column = new DistillationColumn("API Test", 2, true, false);
     column.setReactive(true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 200.0);
+    column.getReboiler().setOutletTemperature(273.15 + 200.0);
     column.setTopPressure(5.0);
     column.setBottomPressure(5.0);
 
@@ -397,7 +397,7 @@ public class ReactiveDistillationTest {
     DistillationColumn column = new DistillationColumn("WGS Column", 2, true, false);
     column.setReactive(true);
     column.addFeedStream(feed, 2);
-    column.getReboiler().setOutTemperature(273.15 + 350.0);
+    column.getReboiler().setOutletTemperature(273.15 + 350.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
     column.setMaxNumberOfIterations(100);

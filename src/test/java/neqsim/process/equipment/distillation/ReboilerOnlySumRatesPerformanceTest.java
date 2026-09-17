@@ -36,7 +36,7 @@ public class ReboilerOnlySumRatesPerformanceTest {
     DistillationColumn column = new DistillationColumn(name, 10, true, false);
     column.addFeedStream(gasFeed, 1);
     column.addFeedStream(solventFeed, column.getNumberOfTrays() - 1);
-    column.getReboiler().setOutTemperature(330.15);
+    column.getReboiler().setOutletTemperature(330.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(30.0);
     column.setMaxNumberOfIterations(400);
