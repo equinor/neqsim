@@ -35,15 +35,15 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
   void guideMatchesCurrentDensityApisAndBoundaries() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/physical_properties/density_models.md"));
-    String systemInterface = read(repositoryRoot.resolve("src/main/java/neqsim/thermo/system/SystemInterface.java"));
-    String physicalProperties = read(
-        repositoryRoot.resolve("src/main/java/neqsim/physicalproperties/system/PhysicalProperties.java"));
     String costaldTest = read(repositoryRoot.resolve(
         "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/" + "density/CostaldTest.java"));
 
-    assertTrue(systemInterface.contains("setLiquidDensityModel(String model)"));
-    assertTrue(systemInterface.contains("getDensityAtReferenceConditions(double referenceTemperature"));
-    assertTrue(physicalProperties.contains("setDensityModel(String densityModel)"));
+    assertNotNull(neqsim.thermo.system.SystemInterface.class.getMethod("setLiquidDensityModel", String.class));
+    assertEquals(double.class,
+        neqsim.thermo.system.SystemInterface.class
+            .getMethod("getDensityAtReferenceConditions", double.class, String.class, double.class, String.class)
+            .getReturnType());
+    assertNotNull(neqsim.physicalproperties.system.PhysicalProperties.class.getMethod("setDensityModel", String.class));
     assertTrue(costaldTest.contains("setLiquidDensityModel(\"COSTALD\")"));
 
     for (String required : Arrays.asList("\"Peneloux\"", "\"COSTALD\"", "\"NASTALD\"", "\"Rackett\"",
