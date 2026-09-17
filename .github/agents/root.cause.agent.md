@@ -1,6 +1,6 @@
 ---
 name: diagnose equipment root cause
-description: "Performs root cause analysis on process equipment using NeqSim's diagnostics framework — integrates multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), plant historian time-series, STID design conditions, and process simulation to produce ranked failure hypotheses with Bayesian confidence scoring."
+description: "Performs root cause analysis on process equipment — compressor trips and vibration, pump and compressor efficiency loss, separator carryover, heat-exchanger fouling and U-value degradation, cooling-water and cooling-medium performance loss, valve and capacity limitations — using NeqSim's diagnostics framework, which integrates multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), plant historian time-series, STID design conditions, and process simulation into ranked failure hypotheses with Bayesian confidence scoring."
 argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 tripping on high vibration, increasing trend over 2 weeks', 'separator V-200 liquid carryover to gas outlet', 'heat exchanger E-300 approach temperature increasing', or 'pump P-400 efficiency dropped from 82% to 65%'."
 ---
 
@@ -191,6 +191,8 @@ historian tag or STID document, making the diagnosis fully auditable.
 - **Missing design limits**: Without design limits, threshold analysis cannot run
 - **Simulation without calibration**: Process model must match current operating conditions
 - **Ignoring correlations**: Parameter correlations often point to the root cause faster than individual trends
+- **Trusting a correlation the controller manufactures**: if a control loop links the two signals, the raw correlation is expected under the null hypothesis and proves nothing — difference both series, scan lags in both directions, and state the expected lag before looking (see the correlation section of `neqsim-root-cause-analysis`)
+- **Accepting an external cause for "it got worse"**: screen the loop for saturation first; a valve on its stop lets unchanged disturbances through and looks exactly like a new external problem
 - **Over-reading simulation verification**: `UNKNOWN`, `UNSUPPORTED`, and `FAILED` are neutral but distinct; only `EVALUATED` scores are evidence, and low coverage limits the conclusion
 
 ## Post-Trip Analysis: Detect → Trace → Restart
