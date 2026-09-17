@@ -392,14 +392,34 @@ double totalVolumeM3At60F = batch.getTotalAdditiveVolumeM3At60F();
 double batchSpecificGravity = batch.getSpecificGravity();
 ```
 
+Pair the qualified batch with unique caller identifiers when downstream evidence must be
+label-addressable:
+
+```java
+RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    batch);
+
+RefineryBlendSourceLedger.SourceReceipt first =
+    ledger.getSourceReceipt("DOE/OEDI sample 50146");
+double firstSourceMassKg = first.getMassKg();
+double firstSourceVolumeM3At60F = first.getAdditiveVolumeM3At60F();
+```
+
+The identifiers are caller metadata in exact batch-array order. They must be nonblank, free of
+surrounding whitespace, and unique. The ledger defensively preserves source order, mass fraction,
+mass, specific gravity, additive volume, and zero-contribution sources. It does not infer assay
+identity, query a source database, or attest provenance.
+
 The specific-gravity endpoints are the published DOE/OEDI COA values for samples 50146 and 56337
 from the [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23). The 60/40 receipt
 is transparent arithmetic integration evidence, not a measured multi-crude blend. It preserves the
 same ideal-additive-volume result as `RefineryAssayBlend`.
 
-The receipt does not model blend contraction, temperature correction, tank gauging, viscosity
-extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions, control
-actions, or certified product compliance. It does not create or mix thermodynamic streams.
+The receipt and source ledger do not model blend contraction, temperature correction, tank gauging,
+viscosity extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions,
+control actions, or certified product compliance. The ledger does not create tanks or thermodynamic
+streams.
 Zero-contribution sources need no fabricated specific gravity; every positive contribution fails
 closed unless its fraction and density basis are finite and valid.
 
