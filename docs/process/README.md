@@ -50,7 +50,8 @@ This documentation is organized into the following sections:
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [energy_streams.md](energy_streams) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
-| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
+| [json_process_models_and_systems.md](json_process_models_and_systems) | **Process JSON builder input** — schema, validation, stream wiring, ports, supported equipment, and ProcessModel areas |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON model export** — portable ProcessSystem and ProcessModel JSON from live models, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
 | [model-impact-analysis.md](model-impact-analysis) | **Cross-model impact analysis** — configurable propagation rules, recalculation order, cycle detection, and reapproval work |
