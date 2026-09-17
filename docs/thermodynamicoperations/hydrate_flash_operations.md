@@ -191,8 +191,39 @@ constrained component balances and molecular fugacity equations. Conserved
 candidate states are ranked by Gibbs energy. A single aqueous result is accepted
 only when both normalized CO2 stability trials are non-negative within numerical
 tolerance. This path uses the existing EOS and hydrate parameters. Other gases,
-MEG/methanol mixtures, reactive systems, prescribed phase types and solid-phase
+MEG/methanol mixtures, prescribed phase types and solid-phase
 calculations retain their existing fluid solver.
+
+Water-rich reactive `SystemElectrolyteCPAstatoil` fluids with CO2 and water as
+their only molecular components use `ReactiveCO2BrinePhaseEquilibrium` during
+both temperature iteration and independent verification. Add the input species,
+call `chemicalReactionInit()`, and then set the mixing rule and hydrate check.
+Component insertion order is preserved and must not change the equilibrium.
+
+The coupling alternates the existing constrained phase solver at fixed species
+amounts with chemical equilibrium on an isolated aqueous phase. Only the
+reaction-induced changes in aqueous species amounts are transferred to the full
+fluid inventory. Acceptance requires molecular log-fugacity residuals below
+`1e-8`, reaction `ln(Q/K)` residuals below `2e-6`, aqueous charge below `1e-8` mol
+of elementary charge, and conserved feed elements, including spectator ions.
+Unlike non-reactive calculations, the total number of moles and individual
+molecular species amounts may change through reactions.
+
+Each fluid evaluation allows at most 30 coupling iterations and checks thread
+interruption between iterations. Failed chemistry or conservation returns an
+explicit diagnostic instead of continuing failed generic multiphase iterations.
+The no-argument temperature method retries rejected reactive starts from the
+restored feed; the explicit-temperature overload reports the failure directly.
+Only qualified fluid states are committed. This bounded coupling is not a hard
+wall-clock deadline for the inner EOS or chemical solver.
+
+The regression for issue #3758 uses 10 mol CO2, 1 kg water, 3 wt% NaCl and
+2 wt% KCl on a water-plus-salts basis at 50 bara. Four insertion orders return
+approximately 280.6501 K (7.5001 °C) with reactions enabled. Without reactions,
+the same feed retains its previous value of 280.6780 K. These are numerical
+regression values, not experimental validation of a drilling-fluid formulation.
+Other molecular components, unsupported models and solid-phase calculations
+retain their existing solvers.
 
 ```java
 SystemInterface brine = new SystemElectrolyteCPAstatoil(283.15, 200.0);

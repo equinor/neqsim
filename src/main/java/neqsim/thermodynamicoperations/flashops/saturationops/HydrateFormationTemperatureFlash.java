@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.flashops.CO2BrinePhaseEquilibrium;
+import neqsim.thermodynamicoperations.flashops.ReactiveCO2BrinePhaseEquilibrium;
 
 /**
  * HydrateFormationTemperatureFlash class.
@@ -277,6 +278,10 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   private void updateFluidAndHydrate(ThermodynamicOperations ops, double[] conservedMoles) {
     if (CO2BrinePhaseEquilibrium.isApplicable(system)) {
       CO2BrinePhaseEquilibrium fluidFlash = new CO2BrinePhaseEquilibrium(system);
+      fluidFlash.run();
+      minimumCo2TrialDistance = fluidFlash.getMinimumTrialDistance();
+    } else if (ReactiveCO2BrinePhaseEquilibrium.isApplicable(system)) {
+      ReactiveCO2BrinePhaseEquilibrium fluidFlash = new ReactiveCO2BrinePhaseEquilibrium(system);
       fluidFlash.run();
       minimumCo2TrialDistance = fluidFlash.getMinimumTrialDistance();
     } else {
@@ -561,6 +566,8 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       reference.getPhase(4).getComponent("water").setx(1.0);
       if (CO2BrinePhaseEquilibrium.isApplicable(reference)) {
         new CO2BrinePhaseEquilibrium(reference).run();
+      } else if (ReactiveCO2BrinePhaseEquilibrium.isApplicable(reference)) {
+        new ReactiveCO2BrinePhaseEquilibrium(reference).run();
       } else {
         new ThermodynamicOperations(reference).TPflash();
       }
@@ -575,6 +582,8 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
       double residual = 1.0
           - (reference.getPhase(4).getFugacity("water") / reference.getPhase(waterPhase).getFugacity("water"));
       return Double.isFinite(residual) && Math.abs(residual) < VERIFICATION_TOLERANCE;
+    } catch (java.util.concurrent.CancellationException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.debug("Hydrate equilibrium verification flash failed", ex);
       return false;
