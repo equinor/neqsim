@@ -53,6 +53,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - immutable whole-assay blend screening with ideal additive liquid volumes and mass-linear sulfur/nitrogen;
 - auditable optimizer property bounds, margins, and binding-constraint receipts;
 - auditable blend-batch mass, additive-volume, specific-gravity, and optimizer-cost receipts;
+- immutable label-addressable source ledgers for qualified blend batches;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.util.concurrent.CancellationException;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -19,7 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.flashops.ReactiveCO2BrinePhaseEquilibrium;
 import neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix;
 
-/** Reactive hydrate permutation regressions for issue 3758. */
+/** Reactive hydrate permutation regressions for issue 3758, run in the uninstrumented slow-test shards. */
+@Tag("slow")
 class ReactiveCO2BrineHydrateOrderTest {
   static SystemInterface brine(int order, double pressure, double saltScale, boolean reactive) {
     String[] names = { "CO2", "water", "Na+", "K+", "Cl-" };
