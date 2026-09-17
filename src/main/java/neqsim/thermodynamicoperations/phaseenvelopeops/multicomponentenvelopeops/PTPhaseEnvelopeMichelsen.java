@@ -138,18 +138,21 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   // --- Critical point and characteristic points ---
   private double[] cricondenTherm = new double[3];
   private double[] cricondenBar = new double[3];
-  private double[] cricondenThermX = new double[100];
-  private double[] cricondenThermY = new double[100];
-  private double[] cricondenBarX = new double[100];
-  private double[] cricondenBarY = new double[100];
+  // Sized to the component count in traceEnvelope; these hold one mole fraction
+  // per component, so a fixed length caps the number of components the envelope
+  // can handle.
+  private double[] cricondenThermX = new double[0];
+  private double[] cricondenThermY = new double[0];
+  private double[] cricondenBarX = new double[0];
+  private double[] cricondenBarY = new double[0];
 
   // --- Saved first-pass data for merging after restart ---
   private double[] cricondenThermFirst = new double[3];
   private double[] cricondenBarFirst = new double[3];
-  private double[] cricondenThermXFirst = new double[100];
-  private double[] cricondenThermYFirst = new double[100];
-  private double[] cricondenBarXFirst = new double[100];
-  private double[] cricondenBarYFirst = new double[100];
+  private double[] cricondenThermXFirst = new double[0];
+  private double[] cricondenThermYFirst = new double[0];
+  private double[] cricondenBarXFirst = new double[0];
+  private double[] cricondenBarYFirst = new double[0];
 
   // --- Critical points (supports multiple CPs for complex mixtures) ---
   private ArrayList<double[]> criticalPoints = new ArrayList<double[]>();
@@ -241,10 +244,29 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     }
   }
 
+  /**
+   * Allocate the cricondentherm and cricondenbar composition arrays for the current fluid.
+   *
+   * <p>
+   * Each array holds one mole fraction per component, and the tracking loops index them with the component counter, so
+   * the length has to follow the fluid rather than a fixed constant. They were previously declared with length 100,
+   * which threw {@code ArrayIndexOutOfBoundsException} for any fluid with more than 100 components.
+   * </p>
+   */
+  private void allocateCricondenCompositions() {
+    int numberOfComponents = system.getPhase(0).getNumberOfComponents();
+    cricondenThermX = new double[numberOfComponents];
+    cricondenThermY = new double[numberOfComponents];
+    cricondenBarX = new double[numberOfComponents];
+    cricondenBarY = new double[numberOfComponents];
+  }
+
   /** Trace the phase envelope after model-specific calculation state has been configured. */
   private void traceEnvelope() {
     double initialTemp = system.getTemperature();
     double initialPres = system.getPressure();
+
+    allocateCricondenCompositions();
 
     // isDewPhase determines which list receives each traced point.
     // When starting from dew side (bubblePointFirst=false, phaseFraction~1),
@@ -272,10 +294,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
         // Reset tracking for second pass
         cricondenTherm = new double[3];
         cricondenBar = new double[3];
-        cricondenThermX = new double[100];
-        cricondenThermY = new double[100];
-        cricondenBarX = new double[100];
-        cricondenBarY = new double[100];
+        allocateCricondenCompositions();
 
         // Flip conditions for second pass
         phaseFraction = 1.0 - phaseFraction;
