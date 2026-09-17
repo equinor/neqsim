@@ -121,8 +121,8 @@ source fluid.
 
 The iterative wiring pass also resolves forward references once the referenced upstream outlet is
 available. Use `inlet` or `inlets` for physical process wiring. The optional root `connections`
-array records topology metadata for interchange and diagrams; it does not replace those wiring
-fields.
+array records topology metadata for interchange and diagrams;
+it does not replace those wiring fields.
 
 This complete example creates an independent feed, cools it to 20 °C, and exposes the cooler outlet
 as the connected `Product` stream:
