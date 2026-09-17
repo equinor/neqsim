@@ -9,12 +9,9 @@ import neqsim.util.exception.InvalidInputException;
  * @author esol
  * @version $Id: $Id
  */
-public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjustedUnit {
+public class PressureUnit extends neqsim.util.unit.BaseUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-
-  private static final String[] ALLOWED_UNITS = { "bara", "bar", "barg", "psi", "psia", "psig", "Pa", "kPa", "MPa",
-      "atm" };
 
   /**
    * Constructor for PressureUnit.
@@ -26,103 +23,108 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
     super(value, unit);
   }
 
-  private static final double PSI_TO_BAR = 0.0689475729317831;
-
   /**
-   * Convert a pressure value to SI unit (Pascals).
+   * getConversionFactor.
    *
-   * @param value pressure value
-   * @param unit source unit (bara, barg, psi, psia, psig, Pa, kPa, MPa, atm)
-   * @return value in Pascals
-   * @throws RuntimeException if unit is not supported
+   * @param name a {@link java.lang.String} object
+   * @return a double
    */
-  @Override
-  public double toSIvalue(double value, String unit) {
+  public double getConversionFactor(String name) {
+    double conversionFactor = 1.0;
+    switch (name) {
+    case "bara":
+      conversionFactor = 1.0;
+      break;
+    case "bar":
+      conversionFactor = 1.0;
+      break;
+    case "barg":
+      conversionFactor = 1.0;
+      break;
+    case "psi":
+      conversionFactor = 0.0689475729317831;
+      break;
+    case "psia":
+      conversionFactor = 0.0689475729317831;
+      break;
+    case "psig":
+      conversionFactor = 0.0689475729317831;
+      break;
+    case "Pa":
+      conversionFactor = 1.0e-5;
+      break;
+    case "kPa":
+      conversionFactor = 1.0e-2;
+      break;
+    case "MPa":
+      conversionFactor = 10.0;
+      break;
+    case "atm":
+      conversionFactor = ThermodynamicConstantsInterface.referencePressure;
+      break;
+    default:
+      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supproted"));
+    }
+
+    return conversionFactor;
+  }
+
+  private double toAbsoluteBar(double value, String unit) {
     switch (unit) {
     case "bara":
     case "bar":
-      return value * 1.0e5;
-    case "barg":
-      return (value + ThermodynamicConstantsInterface.referencePressure) * 1.0e5;
-    case "psi":
-    case "psia":
-      return value * PSI_TO_BAR * 1.0e5;
-    case "psig":
-      return (value * PSI_TO_BAR + ThermodynamicConstantsInterface.referencePressure) * 1.0e5;
-    case "Pa":
       return value;
-    case "kPa":
-      return value * 1.0e3;
-    case "MPa":
-      return value * 1.0e6;
+    case "barg":
+      return value + ThermodynamicConstantsInterface.referencePressure;
+    case "psi":
+    case "psia":
+      return value * getConversionFactor("psi");
+    case "psig":
+      return value * getConversionFactor("psi") + ThermodynamicConstantsInterface.referencePressure;
     case "atm":
-      return value * ThermodynamicConstantsInterface.referencePressure * 1.0e5;
+      return value * ThermodynamicConstantsInterface.referencePressure;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "toSIvalue", unit, "unit not supported"));
+      return value * getConversionFactor(unit);
     }
   }
 
-  /**
-   * Convert a pressure value from SI unit (Pascals) to specified unit.
-   *
-   * @param siValue pressure value in Pascals
-   * @param unit target unit (bara, barg, psi, psia, psig, Pa, kPa, MPa, atm)
-   * @return value in specified unit
-   * @throws RuntimeException if unit is not supported
-   */
-  @Override
-  public double fromSIvalue(double siValue, String unit) {
+  private double fromAbsoluteBar(double value, String unit) {
     switch (unit) {
     case "bara":
     case "bar":
-      return siValue / 1.0e5;
+      return value;
     case "barg":
-      return siValue / 1.0e5 - ThermodynamicConstantsInterface.referencePressure;
+      return value - ThermodynamicConstantsInterface.referencePressure;
     case "psi":
     case "psia":
-      return siValue / 1.0e5 / PSI_TO_BAR;
+      return value / getConversionFactor("psi");
     case "psig":
-      return siValue / 1.0e5 / PSI_TO_BAR - ThermodynamicConstantsInterface.referencePressure / PSI_TO_BAR;
-    case "Pa":
-      return siValue;
-    case "kPa":
-      return siValue / 1.0e3;
-    case "MPa":
-      return siValue / 1.0e6;
+      return value / getConversionFactor("psi")
+          - ThermodynamicConstantsInterface.referencePressure / getConversionFactor("psi");
     case "atm":
-      return siValue / 1.0e5 / ThermodynamicConstantsInterface.referencePressure;
+      return value / ThermodynamicConstantsInterface.referencePressure;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "fromSIvalue", unit, "unit not supported"));
+      return value / getConversionFactor(unit);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public String getSIUnit() {
-    return "Pa";
   }
 
   /** {@inheritDoc} */
   @Override
   public double getSIvalue() {
-    return toSIvalue(invalue, inunit);
+    return getValue("Pa");
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String toUnit) {
-    return fromSIvalue(getSIvalue(), toUnit);
+  public double getValue(double val, String fromunit, String tounit) {
+    double absBar = toAbsoluteBar(val, fromunit);
+    return fromAbsoluteBar(absBar, tounit);
   }
 
-  /**
-   * Convert a pressure value between supported units.
-   *
-   * @param value value to convert
-   * @param unit source unit
-   * @param toUnit target unit
-   * @return converted value
-   */
-  public static double convert(double value, String unit, String toUnit) {
-    return new PressureUnit(value, unit).getValue(toUnit);
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String tounit) {
+    double absBar = toAbsoluteBar(invalue, inunit);
+    return fromAbsoluteBar(absBar, tounit);
   }
 }
