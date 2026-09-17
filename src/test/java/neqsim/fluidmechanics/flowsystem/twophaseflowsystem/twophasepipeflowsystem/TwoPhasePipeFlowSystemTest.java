@@ -517,7 +517,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>The velocity profiles are computed for both phases</li>
    * <li>The results are physically reasonable (non-negative pressures, etc.)</li>
    * </ul>
-   * </p>
    *
    * <p>
    * <b>Key setup steps for realistic pressure drop:</b>
@@ -526,7 +525,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>Flash the system to establish two-phase equilibrium</li>
    * <li>Set velocities on each node after init()</li>
    * </ol>
-   * </p>
    *
    * <p>
    * For comparison with empirical correlations like Beggs-Brill, see the process equipment tests:
@@ -534,7 +532,6 @@ public class TwoPhasePipeFlowSystemTest {
    * <li>TwoFluidVsBeggsBrillComparisonTest - compares TwoFluidPipe with Beggs-Brill</li>
    * <li>TwoPhasePressureDropValidationTest - validates against experimental data</li>
    * </ul>
-   * </p>
    */
   @Disabled("Long-running comparison test")
   @Test
