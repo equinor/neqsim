@@ -53,10 +53,10 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
     assertTrue(costaldTest.contains("setLiquidDensityModel(\"COSTALD\")"));
 
     for (String required : Arrays.asList(
-        "\"Peneloux\",
-        "\"COSTALD\",
-        "\"NASTALD\",
-        "\"Rackett\",
+        "\"Peneloux\"",
+        "\"COSTALD\"",
+        "\"NASTALD\"",
+        "\"Rackett\"",
         "Do not tune `setVolumeCorrectionConst(...)` from a single density point",
         "validate against independent data")) {
       assertTrue(guide.contains(required), "Missing maintained density guidance: " + required);
