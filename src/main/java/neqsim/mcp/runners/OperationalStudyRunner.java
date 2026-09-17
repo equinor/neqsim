@@ -49,7 +49,8 @@ public final class OperationalStudyRunner {
   private static final int MAX_REQUEST_BYTES = 1048576;
   private static final String ADVISORY_BOUNDARY =
       "Operational studies run on a local NeqSim simulation copy only; they do not write to plant systems, "
-          + "establish causality, validate controller or safety adequacy, authorize operation, or replace qualified engineering review.";
+          + "establish causality, validate controller or safety adequacy, authorize operation, or replace "
+          + "qualified engineering review.";
 
   /**
    * Private constructor for utility class.
