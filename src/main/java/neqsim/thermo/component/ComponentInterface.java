@@ -1134,10 +1134,16 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setNumberOfmoles(double newmoles);
 
   /**
-   * getAntoineVaporPressure.
+   * Calculate pure-component vapor pressure using the stored correlation coefficients.
    *
-   * @param temp a double
-   * @return a double
+   * <p>
+   * A nonzero DIPPR exponent ({@code |E| > 1e-12}) selects {@code exp(A + B/T + C*ln(T) + D*T^E) / 100000}, including
+   * legacy {@code log}/{@code exp} labels. Explicit {@code pow10} and {@code pow10KPa} labels retain precedence.
+   * Correlation selection does not validate the stored parameters or their temperature range.
+   * </p>
+   *
+   * @param temp temperature in K, within the correlation's validity range
+   * @return vapor pressure in bar
    */
   public double getAntoineVaporPressure(double temp);
 
@@ -1408,10 +1414,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVoli();
 
   /**
-   * getAntoineVaporPressuredT.
+   * Calculate the temperature derivative of the stored vapor-pressure correlation where implemented. DIPPR-101 uses the
+   * same coefficient selection as {@link #getAntoineVaporPressure(double)}.
    *
-   * @param temp a double
-   * @return a double
+   * @param temp temperature in K, within the correlation's validity range
+   * @return vapor-pressure derivative in bar/K, or zero for correlation types without a derivative
    */
   public double getAntoineVaporPressuredT(double temp);
 

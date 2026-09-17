@@ -1466,10 +1466,25 @@ public abstract class Component implements ComponentInterface {
     componentNumber = numb;
   }
 
+  /**
+   * Identify the five-parameter DIPPR correlation, including database rows labelled {@code log}. Explicit base-ten
+   * correlation labels retain their existing precedence.
+   *
+   * @return true when the nonzero exponent selects DIPPR-101
+   */
+  private boolean usesDipprVaporPressureCorrelation() {
+    return Math.abs(AntoineE) > 1e-12 && !"pow10".equals(antoineLiqVapPresType)
+        && !"pow10KPa".equals(antoineLiqVapPresType);
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressure(double temp) {
-    if (antoineLiqVapPresType.equals("pow10")) {
+    if (usesDipprVaporPressureCorrelation()) {
+      // DIPPR-101 coefficients produce pressure in Pa; convert to bar.
+      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
+          / 100000;
+    } else if (antoineLiqVapPresType.equals("pow10")) {
       // equation and parameter from properties of gases (poling 5th ed)
       // correlation returns pressure in bar
       return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
@@ -1479,9 +1494,6 @@ public abstract class Component implements ComponentInterface {
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // equation and parameter from properties o and gases (poling 5th ed)
       return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
-    } else if (Math.abs(AntoineE) > 1e-12) {
-      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
-          / 100000;
     } else {
       double x = 1 - (temp / criticalTemperature);
       return (Math
@@ -1494,7 +1506,10 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressuredT(double temp) {
-    if (antoineLiqVapPresType.equals("pow10")) {
+    if (usesDipprVaporPressureCorrelation()) {
+      return getAntoineVaporPressure(temp)
+          * (-AntoineB / (temp * temp) + AntoineC / temp + AntoineD * AntoineE * Math.pow(temp, AntoineE - 1.0));
+    } else if (antoineLiqVapPresType.equals("pow10")) {
       // derivative of Antoine correlation returning pressure in bar
       double denom = AntoineC + temp - 273.15;
       double pressure = Math.pow(10.0, AntoineA - AntoineB / denom);
