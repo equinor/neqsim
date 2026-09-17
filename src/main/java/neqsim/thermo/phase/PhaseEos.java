@@ -320,7 +320,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    * @return molar volume [m3/mol * 1e5]
    * @throws neqsim.util.exception.IsNaNException if no real roots are found
    */
-  private double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
+  protected double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
       throws neqsim.util.exception.IsNaNException {
     double a = geta();
     double b = getb();

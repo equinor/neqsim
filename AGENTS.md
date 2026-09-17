@@ -633,23 +633,16 @@ double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
 double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
 ```
 
-### Phase envelope (CRITICAL: branch labels are swapped)
+### Phase envelope branch labels
 
-When using `calcPTphaseEnvelope(true, 1.0)` (bubblePointFirst=true), the getter
-method names are SWAPPED — `getBubblePointTemperatures()` returns physically DEW
-curve data and vice versa. **Always classify branches by physical reasoning:**
-
-```python
-branch_A_T = np.array(envelope.getBubblePointTemperatures())
-branch_B_T = np.array(envelope.getDewPointTemperatures())
-# The DEW curve always has the higher max temperature (contains cricondentherm)
-if branch_A_T.max() > branch_B_T.max():
-    dew_T = branch_A_T   # "bubble" getter returns dew data (swapped!)
-    bub_T = branch_B_T
-else:
-    dew_T = branch_B_T
-    bub_T = branch_A_T
-```
+`getDewPointTemperatures()` / `get("dewT")` contain the physical dew branch and
+`getBubblePointTemperatures()` / `get("bubT")` contain the physical bubble branch,
+including when `calcPTphaseEnvelope(true, 1.0)` starts from the bubble side.
+Do not swap the getters based on trace order. Flat arrays can contain paired
+NaN separators between disjoint segments; use the structured segment API for
+finite points without separators. No converged points raises an
+`IllegalStateException`; pressure/point-limit truncation also throws and leaves
+extrema as NaN. The input state is never substituted for an extremum.
 
 ### Process simulation
 
