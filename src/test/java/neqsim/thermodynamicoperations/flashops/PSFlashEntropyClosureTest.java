@@ -133,6 +133,13 @@ class PSFlashEntropyClosureTest {
   }
 
   @Test
+  void pureComponentPostconditionRetainsStrictEntropyTolerance() {
+    SystemInterface state = fluid("", 298.15);
+    double target = state.getEntropy() + 2.0 * PSFlash.entropyTolerance(state, state.getEntropy());
+    assertThrows(IllegalStateException.class, () -> PSFlash.validateResult(state, target, state.getPressure()));
+  }
+
+  @Test
   void iterationLimitThrowsAndRestoresWarmStartSetting() {
     boolean previousWarm = ThermodynamicModelSettings.isUseWarmStartKValues();
     try {

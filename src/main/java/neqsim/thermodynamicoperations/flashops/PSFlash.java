@@ -7,8 +7,9 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Normal return requires finite state variables, normalized phase fractions and a total entropy residual within
- * {@code max(1e-8 * n, 1e-10 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
- * an {@link IllegalStateException}.
+ * {@code max(1e-7 * n, 1e-9 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
+ * an {@link IllegalStateException}. Iteration normally requires one tenth of this residual; the larger bound is used
+ * only after a cold sign-changing bracket reaches floating-point temperature resolution.
  * </p>
  *
  * @author even solbraa
@@ -21,6 +22,8 @@ public class PSFlash extends QfuncFlash {
   private static final double MOLAR_ENTROPY_TOLERANCE = 1.0e-8;
   /** Relative total-entropy tolerance for the temperature iteration. */
   private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-10;
+  /** Maximum residual at a cold root bracket narrower than floating-point temperature resolution. */
+  private static final double ENTROPY_RESOLUTION_FACTOR = 10.0;
   /** Number of non-improving Newton iterations before a cold bracket recovery. */
   private static final int STAGNATION_LIMIT = 8;
   /** Maximum number of safeguarded temperature iterations. */
@@ -31,6 +34,9 @@ public class PSFlash extends QfuncFlash {
   private static final double MIN_BRACKET_TEMPERATURE = 1.0;
   /** Highest temperature considered by the generic cold-bracket recovery in K. */
   private static final double MAX_BRACKET_TEMPERATURE = 5000.0;
+
+  /** Whether this solve has exhausted a cold entropy bracket's floating-point temperature resolution. */
+  private boolean temperatureResolutionReached = false;
 
   double Sspec = 0;
   Flash tpFlash;
@@ -188,6 +194,19 @@ public class PSFlash extends QfuncFlash {
       if (Math.abs(residual) <= tolerance) {
         return trialTemperature;
       }
+      if (upperTemperature - lowerTemperature <= 4.0 * Math.ulp(trialTemperature)) {
+        // TP stability/phase iteration has finite entropy resolution even when no
+        // representable temperature remains between the two sides of the root.
+        double lowerResidual = evaluateColdResidual(lowerTemperature);
+        double upperResidual = evaluateColdResidual(upperTemperature);
+        trialTemperature = Math.abs(lowerResidual) < Math.abs(upperResidual) ? lowerTemperature : upperTemperature;
+        residual = evaluateColdResidual(trialTemperature);
+        if (Math.abs(residual) <= ENTROPY_RESOLUTION_FACTOR * tolerance) {
+          temperatureResolutionReached = true;
+          return trialTemperature;
+        }
+        throw convergenceFailure(system, Sspec, "cold bracket reached temperature resolution");
+      }
       if (residual < 0.0) {
         lowerTemperature = trialTemperature;
       } else {
@@ -250,11 +269,23 @@ public class PSFlash extends QfuncFlash {
    * @throws IllegalStateException if the flash has not satisfied its specification
    */
   static void validateResult(SystemInterface fluid, double entropy, double pressure) {
+    validateResult(fluid, entropy, pressure, entropyTolerance(fluid, entropy));
+  }
+
+  /**
+   * Validate a mixture result using only the residual tolerance justified by its solve.
+   *
+   * @param fluid solved fluid
+   * @param entropy specified total entropy in J/K
+   * @param pressure specified pressure in bara
+   * @param tolerance residual limit justified by the temperature iteration
+   * @throws IllegalStateException if the residual or state postcondition is not satisfied
+   */
+  private static void validateResult(SystemInterface fluid, double entropy, double pressure, double tolerance) {
     fluid.init(2);
     double residual = fluid.getEntropy() - entropy;
-    if (!Double.isFinite(residual) || Math.abs(residual) > entropyTolerance(fluid, entropy)
-        || !Double.isFinite(fluid.getTemperature()) || fluid.getTemperature() <= 0.0
-        || !Double.isFinite(fluid.getPressure()) || fluid.getPressure() <= 0.0
+    if (!Double.isFinite(residual) || Math.abs(residual) > tolerance || !Double.isFinite(fluid.getTemperature())
+        || fluid.getTemperature() <= 0.0 || !Double.isFinite(fluid.getPressure()) || fluid.getPressure() <= 0.0
         || Math.abs(fluid.getPressure() - pressure) > 1.0e-10 * Math.max(1.0, pressure)) {
       throw convergenceFailure(fluid, entropy, "entropy or state postcondition failed");
     }
@@ -311,6 +342,7 @@ public class PSFlash extends QfuncFlash {
   @Override
   public void run() {
     validateInput(system, Sspec);
+    temperatureResolutionReached = false;
     double specifiedPressure = system.getPressure();
     // First TPflash runs COLD (Wilson initial K) so that stale K from a
     // previous unrelated flash (at different P/T) does not bias the solution.
@@ -339,7 +371,9 @@ public class PSFlash extends QfuncFlash {
       if (Math.abs(system.getEntropy() - Sspec) > entropyTolerance(system, Sspec)) {
         solveQ();
       }
-      validateResult(system, Sspec, specifiedPressure);
+      double tolerance = entropyTolerance(system, Sspec);
+      validateResult(system, Sspec, specifiedPressure,
+          temperatureResolutionReached ? ENTROPY_RESOLUTION_FACTOR * tolerance : tolerance);
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }
