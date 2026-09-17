@@ -105,6 +105,9 @@ jobs:
       - name: Run focused process-comparison Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ProcessComparisonRunnerTest test -ntp
 
+      - name: Run focused bounded operational-study Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.OperationalStudyRunnerTest test -ntp
+
       - name: Run focused reporting Java contracts
         run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
 
@@ -180,6 +183,9 @@ jobs:
 
       - name: Run focused real-MCP barrier-register qualification
         run: cd neqsim-mcp-server && python test_barrier_register_protocol.py
+
+      - name: Run focused real-MCP operational-study qualification
+        run: cd neqsim-mcp-server && python test_operational_study_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py

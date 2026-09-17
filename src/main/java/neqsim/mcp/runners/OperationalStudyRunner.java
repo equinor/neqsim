@@ -1,5 +1,6 @@
 package neqsim.mcp.runners;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,10 @@ import neqsim.util.validation.ValidationResult.ValidationIssue;
  */
 public final class OperationalStudyRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final int MAX_REQUEST_BYTES = 1048576;
+  private static final String ADVISORY_BOUNDARY =
+      "Operational studies run on a local NeqSim simulation copy only; they do not write to plant systems, "
+          + "establish causality, validate controller or safety adequacy, authorize operation, or replace qualified engineering review.";
 
   /**
    * Private constructor for utility class.
@@ -60,43 +65,52 @@ public final class OperationalStudyRunner {
    */
   public static String run(String json) {
     if (json == null || json.trim().isEmpty()) {
-      return errorJson("INPUT_ERROR", "JSON input is null or empty",
-          "Provide an operational study JSON object with an 'action' field.");
+      return withAdvisoryBoundary(errorJson("INPUT_ERROR", "JSON input is null or empty",
+          "Provide an operational study JSON object with an 'action' field."));
+    }
+    if (json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
+      return withAdvisoryBoundary(errorJson("REQUEST_TOO_LARGE",
+          "Operational study request exceeds 1048576 UTF-8 bytes",
+          "Reduce process, scenario, tag, field-data, history, or time-series input."));
     }
 
     JsonObject input;
     try {
       input = JsonParser.parseString(json).getAsJsonObject();
     } catch (RuntimeException ex) {
-      return errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + ex.getMessage(),
-          "Ensure the operational study input is valid JSON.");
+      return withAdvisoryBoundary(errorJson("JSON_PARSE_ERROR", "Failed to parse JSON: " + ex.getMessage(),
+          "Ensure the operational study input is a valid JSON object."));
     }
 
     String action = getString(input, "action", "getSchema");
     try {
+      String response;
       if ("getSchema".equalsIgnoreCase(action)) {
-        return getSchema();
+        response = getSchema();
       } else if ("validateTagMap".equalsIgnoreCase(action)) {
-        return validateTagMap(input);
+        response = validateTagMap(input);
       } else if ("applyFieldData".equalsIgnoreCase(action)) {
-        return applyFieldData(input);
+        response = applyFieldData(input);
       } else if ("runScenario".equalsIgnoreCase(action)) {
-        return runScenario(input);
+        response = runScenario(input);
       } else if ("runEvidencePackage".equalsIgnoreCase(action)) {
-        return runEvidencePackage(input);
+        response = runEvidencePackage(input);
       } else if ("evaluateControllerResponse".equalsIgnoreCase(action)) {
-        return evaluateControllerResponse(input);
+        response = evaluateControllerResponse(input);
       } else if ("analyzePipeSections".equalsIgnoreCase(action)) {
-        return analyzePipeSections(input);
+        response = analyzePipeSections(input);
       } else if ("evaluateOperatingEnvelope".equalsIgnoreCase(action)) {
-        return evaluateOperatingEnvelope(input);
+        response = evaluateOperatingEnvelope(input);
+      } else {
+        return withAdvisoryBoundary(errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
+            "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
+                + "evaluateControllerResponse, analyzePipeSections, or evaluateOperatingEnvelope."));
       }
-      return errorJson("UNKNOWN_ACTION", "Unknown operational study action: " + action,
-          "Use getSchema, validateTagMap, applyFieldData, runScenario, runEvidencePackage, "
-              + "evaluateControllerResponse, analyzePipeSections, or evaluateOperatingEnvelope.");
+      return withAdvisoryBoundary(response);
     } catch (RuntimeException ex) {
-      return errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
-          "Check the processJson, tagBindings, fieldData, action list, and units.");
+      return withAdvisoryBoundary(errorJson("OPERATIONAL_STUDY_ERROR",
+          "Operational study failed: " + ex.getMessage(),
+          "Check the processJson, tagBindings, fieldData, action list, and units."));
     }
   }
 
@@ -112,6 +126,7 @@ public final class OperationalStudyRunner {
     root.addProperty("description",
         "Run plant-agnostic operational studies from P&ID semantics, tag maps, valve actions, "
             + "automation variables, and controller response time series.");
+    root.addProperty("maxRequestBytes", MAX_REQUEST_BYTES);
 
     JsonArray actions = new JsonArray();
     actions.add("getSchema");
@@ -784,6 +799,20 @@ public final class OperationalStudyRunner {
         result.addProperty("processReport", report);
       }
     }
+  }
+
+  /**
+   * Adds the invariant local-copy and qualified-review boundary to every result.
+   *
+   * @param responseJson action response JSON
+   * @return bounded advisory response JSON
+   */
+  private static String withAdvisoryBoundary(String responseJson) {
+    JsonObject response = JsonParser.parseString(responseJson).getAsJsonObject();
+    response.addProperty("screeningOnly", true);
+    response.addProperty("plantWritePerformed", false);
+    response.addProperty("advisoryBoundary", ADVISORY_BOUNDARY);
+    return GSON.toJson(response);
   }
 
   /**
