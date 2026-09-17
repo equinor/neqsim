@@ -107,6 +107,19 @@ results = c.search("*COMP*", timeout=30)
 > column — a value with bad quality (e.g. status 2) must not be trusted as a
 > current-operation input.
 
+> **Block suffixes select what a point returns.** On PI sources the same
+> instrument commonly exposes a family of blocks under
+> `<PREFIX>.<TAG>/<BLOCK>/PRIM`: `Meas1`/`Meas` = measured value,
+> `SPntOut` = setpoint, `ConOut` = controller output, `Manual` = mode,
+> `OutControl` = valve output/position demand, `Position` = valve position
+> feedback, and `Running`/`Start`/`Stop`/`PowerDemand` = motor status. Pick the
+> block deliberately — a "flow" or "power" point may be a status block that
+> holds a near-constant code rather than a measurement, so check
+> `series.nunique()` before trusting it. Prefix casing can differ between tags on
+> the same source, so search case-insensitively instead of hand-building names.
+> Site-specific source names, prefixes and suffix families are recorded in the
+> enterprise `enterprise-plant-data` skill.
+
 Returns a list of tuples: `[(tag_name, description), ...]`
 
 ### Reading Data
