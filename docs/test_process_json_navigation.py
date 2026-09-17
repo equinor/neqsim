@@ -27,7 +27,7 @@ class ProcessJsonNavigationDocumentationTest(unittest.TestCase):
         routes = {
             "site home": (
                 self.site_home,
-                'href="process/README.html"',
+                "<strong>Process Equipment</strong>",
                 'href="process/json_process_models_and_systems.html"',
                 'href="process/process_json_export_and_e300_fluids.html"',
                 "Build Processes from JSON",
