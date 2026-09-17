@@ -41,7 +41,7 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
     String costaldTest = read(repositoryRoot.resolve(
         "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/" + "density/CostaldTest.java"));
 
-    assertTrue(systemInterface.contains("setLiquidDensityModel(String densityModel)"));
+    assertTrue(systemInterface.contains("setLiquidDensityModel(String model)"));
     assertTrue(systemInterface.contains("getDensityAtReferenceConditions(double referenceTemperature"));
     assertTrue(physicalProperties.contains("setDensityModel(String densityModel)"));
     assertTrue(costaldTest.contains("setLiquidDensityModel(\"COSTALD\")"));
