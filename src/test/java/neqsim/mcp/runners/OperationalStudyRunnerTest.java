@@ -27,7 +27,7 @@ class OperationalStudyRunnerTest {
     assertEquals(1048576, result.get("maxRequestBytes").getAsInt());
     assertTrue(result.get("screeningOnly").getAsBoolean());
     assertTrue(!result.get("plantWritePerformed").getAsBoolean());
-    assertTrue(result.get("advisoryBoundary").getAsString().contains("does not write to plant systems"));
+    assertTrue(result.get("advisoryBoundary").getAsString().contains("do not write to plant systems"));
   }
 
   /**
