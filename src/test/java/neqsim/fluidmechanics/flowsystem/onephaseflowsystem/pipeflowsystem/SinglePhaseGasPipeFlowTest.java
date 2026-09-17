@@ -28,7 +28,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Compositional tracking in dynamic simulations</li>
  * <li>Physical reasonableness of results</li>
  * </ul>
- * </p>
  *
  * <p>
  * The solver implements a staggered grid finite volume method with TDMA (Tri-Diagonal Matrix Algorithm) for solving:
@@ -38,7 +37,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Energy conservation: ∂(ρh)/∂t + ∂(ρvh)/∂x = Q_wall + ρvg·sin(θ)</li>
  * <li>Component mass: ∂(ρω_i)/∂t + ∂(ρvω_i)/∂x = 0 for each component i</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  */

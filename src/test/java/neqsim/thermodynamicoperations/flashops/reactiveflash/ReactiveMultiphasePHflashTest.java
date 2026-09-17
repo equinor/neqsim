@@ -20,7 +20,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * TP flash at the found temperature.</li>
  * <li><b>Multiple systems:</b> WGS reaction, steam methane reforming, ammonia synthesis, non- reactive baseline.</li>
  * </ol>
- * </p>
  *
  * @author copilot
  * @version 1.0
