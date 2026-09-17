@@ -154,6 +154,54 @@ class UMRPRUPhaseEnvelopeRegressionTest {
   }
 
   @Test
+  void criticalRefinementPreservesTheAcceptedEquilibriumState() throws Exception {
+    SystemInterface fluid = gas("NEW", "none", 0.0);
+    fluid.setTemperature(175.0);
+    fluid.setPressure(1.0);
+    new ThermodynamicOperations(fluid).dewPointTemperatureFlash();
+    fluid.setBeta(1.0 - 1.0e-10);
+    SysNewtonRhapsonPhaseEnvelope solver = new SysNewtonRhapsonPhaseEnvelope(fluid, 2, 3);
+    for (int point = 1; point <= 20; point++) {
+      solver.calcInc(point);
+      solver.solve(point);
+    }
+    SystemInterface accepted = fluid.clone();
+    double[] state = solver.u.getColumnPackedCopy();
+    solver.calcCrit();
+    assertArrayEquals(state, solver.u.getColumnPackedCopy());
+    assertEquals(accepted.getTemperature(), fluid.getTemperature(), 0.0);
+    assertEquals(accepted.getPressure(), fluid.getPressure(), 0.0);
+    for (int phase = 0; phase < 2; phase++) {
+      assertEquals(accepted.getPhase(phase).getMolarVolume(), fluid.getPhase(phase).getMolarVolume(), 0.0);
+      for (int component = 0; component < 3; component++) {
+        assertEquals(accepted.getPhase(phase).getComponent(component).getx(),
+            fluid.getPhase(phase).getComponent(component).getx(), 0.0);
+        assertEquals(accepted.getPhase(phase).getComponent(component).getLogFugacityCoefficient(),
+            fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient(), 0.0);
+      }
+    }
+    solver.setfvec();
+    assertTrue(solver.fvec.norm2() < 1.0e-8, "critical refinement must not contaminate the accepted residual");
+  }
+
+  @ParameterizedTest
+  @CsvSource({ "false", "true" })
+  void configuredPressureLimitCannotFabricateExtrema(boolean bubbleFirst) {
+    PTPhaseEnvelopeMichelsen envelope = new PTPhaseEnvelopeMichelsen(gas("NEW", "none", 0.0), null,
+        bubbleFirst ? 1.0e-10 : 1.0 - 1.0e-10, 1.0, bubbleFirst);
+    envelope.setMaxPressure(20.0);
+    assertThrows(IllegalStateException.class, envelope::run);
+    assertTrue(!envelope.isEnvelopeClosed());
+    assertTrue(Arrays.stream(envelope.get("cricondenbar")).allMatch(Double::isNaN));
+    assertTrue(Arrays.stream(envelope.get("cricondentherm")).allMatch(Double::isNaN));
+    for (String branch : new String[] { "dew", "bub" }) {
+      assertTrue(Arrays.stream(envelope.get(branch + "P")).filter(Double::isFinite).count() > 10);
+      assertTrue(Arrays.stream(envelope.get(branch + "P")).filter(Double::isFinite)
+          .allMatch(pressure -> pressure > 0.0 && pressure <= 20.0));
+    }
+  }
+
+  @Test
   void tinyCorrectionCannotHideAnUnconvergedResidual() throws Exception {
     SystemInterface fluid = gas("SRK", "none", 0.0);
     fluid.setTemperature(175.0);

@@ -49,6 +49,8 @@ Changing the phase fraction from a saturation seed must not reuse derivatives
 from the preceding phase inventory or require a second initialization. The PR
 cubic is solved for the untranslated volume before applying the volume shift;
 this preserves liquid roots whose translated volume is below the co-volume.
+Level-zero initialization also refreshes translation properties, including a
+user-specified temperature derivative.
 
 Continuation accepts a point only after a finite Newton correction below
 `1e-5` and an equilibrium residual below `1e-8`. Iteration exhaustion, a
@@ -64,6 +66,11 @@ diagnostics after this exception. A partially traced envelope
 can still contain valid points: inspect its segments and `isEnvelopeClosed()`
 before treating it as a complete boundary. This method counts finite points,
 not segment separators, and is not proof that two restarted branches meet.
+The opposite-side restart is traced independently: its temperature can exceed
+the last temperature on the failed branch without indicating that the branches
+have met. Critical-point refinement uses a private system so trial critical
+states cannot change the temperature, pressure, compositions or properties of
+an accepted envelope point.
 
 Branch getters refer to the physical dew and bubble curves regardless of
 which side starts the trace. This corrects older bubble-first calls whose
@@ -78,6 +85,13 @@ regressions require explicit failure with unavailable extrema, not a claim of
 a complete aromatic phase envelope. Resolving their remaining branch topology
 and stability is outside this numerical repair. These are numerical consistency checks, not experimental validation
 of the UMR-PRU parameters.
+
+The same explicit limit behavior applies to the SRK 95/5 mol% methane/n-decane
+and 5/85/10 mol% hydrogen/methane/ethane regression cases. They reach the
+default 1,000 bara bound without completing the trace; the returned diagnostic
+segments do not establish global extrema or stable phase topology. For a
+dew temperature at one pressure, use `dewPointTemperatureFlash()` directly;
+completion of an entire envelope is not required for that calculation.
 
 ### Data Structure
 
@@ -258,10 +272,7 @@ double[] dewP = ops.get("dewP");   // Dew branch pressures
 double[] bubT = ops.get("bubT");   // Bubble branch temperatures
 double[] bubP = ops.get("bubP");   // Bubble branch pressures
 
-// Note: "dew" and "bub" naming depends on bubblePointFirst setting
-// With default (bubblePointFirst=false):
-//   dewT/dewP = dew point curve (before critical)
-//   bubT/bubP = bubble point curve (after critical)
+// Branch names retain their physical meaning for either starting direction.
 
 // Critical point
 double[] crit = ops.get("criticalPoint1");

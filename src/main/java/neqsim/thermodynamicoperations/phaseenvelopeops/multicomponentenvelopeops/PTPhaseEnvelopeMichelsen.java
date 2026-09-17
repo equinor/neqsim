@@ -54,7 +54,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Non-recursive restart (no stack overflow risk)</li>
  * <li>Dynamic ArrayList storage (no fixed 10,000-point limit)</li>
  * <li>Configurable step limits and pressure bounds</li>
- * <li>K-value reset and Tmin stopping criterion for restart branch</li>
+ * <li>K-value reset and independent opposite-side restart</li>
  * <li>Clean separated data output for bubble and dew point branches</li>
  * </ul>
  *
@@ -283,7 +283,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     isDewPhase = !bubblePointFirst;
 
     boolean needRestart = false;
-    double restartTmin = 0.0;
 
     // === Two-pass loop: primary trace + optional restart ===
     for (int pass = 0; pass < 2; pass++) {
@@ -411,17 +410,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
           if (pass == 0) {
             // Primary trace crashed: schedule restart from opposite side
             needRestart = true;
-            if (np > 2) {
-              // Use recent stored temperature as Tmin for second pass
-              ArrayList<Double> tempList = isDewPhase ? dewPointTemperatures : bubblePointTemperatures;
-              if (!tempList.isEmpty()) {
-                restartTmin = tempList.get(tempList.size() - 1);
-              } else {
-                restartTmin = system.getTemperature();
-              }
-            } else {
-              restartTmin = system.getTemperature();
-            }
           }
           np = np - 1;
           break;
@@ -442,7 +430,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             / system.getPhase(1).getComponent(nonLinSolver.hc).getx();
 
         if (!nonLinSolver.etterCP) {
-          if (Kvallc < 1.05 && Kvalhc > 0.95) {
+          // A pure component has K=1 along its entire saturation curve, not just at criticality.
+          if (nonLinSolver.numberOfComponents > 1 && Kvallc < 1.05 && Kvalhc > 0.95) {
             nonLinSolver.npCrit = np;
             system.invertPhaseTypes();
             nonLinSolver.etterCP = true;
@@ -467,7 +456,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             // Additional safety guards: must be far enough from first CP (>50
             // steps)
             // and at pressure above 5 bar (not at the tail end of the envelope).
-            if (Kvallc < 1.05 && Kvalhc > 0.95 && (np - nonLinSolver.npCrit) > 50 && currentP > 5.0) {
+            if (Math.abs(Math.log(Kvallc)) < Math.log(1.05) && Math.abs(Math.log(Kvalhc)) < Math.log(1.05)
+                && (np - nonLinSolver.npCrit) > 50 && currentP > 5.0) {
               nonLinSolver.npCrit = np;
               system.invertPhaseTypes();
               isDewPhase = !isDewPhase;
@@ -504,9 +494,6 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
         // === Exit criteria ===
         if (currentP < minPressure && passedCricoT) {
-          break;
-        }
-        if (pass == 1 && restartTmin > 0 && currentT > restartTmin) {
           break;
         }
 

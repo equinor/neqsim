@@ -40,6 +40,11 @@ public class PhasePrEosvolcor extends PhasePrEos {
     cachedCiT = null;
     cachedCij = null;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType == 0) {
+      // PhaseEos skips calcB at level zero, but component translation inputs are already initialized.
+      loc_C = calcC(this, temperature, pressure, numberOfComponents);
+      CT = calcCT(this, temperature, pressure, numberOfComponents);
+    }
   }
 
   /**

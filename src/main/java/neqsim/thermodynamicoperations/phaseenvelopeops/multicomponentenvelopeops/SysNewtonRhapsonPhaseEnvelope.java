@@ -482,6 +482,23 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * </p>
    */
   public void calcCrit() {
+    SystemInterface continuationSystem = system;
+    double savedSumx = sumx;
+    double savedSumy = sumy;
+    system = continuationSystem.clone();
+    try {
+      refineCriticalPoint();
+      continuationSystem.setTC(system.getTC());
+      continuationSystem.setPC(system.getPC());
+    } finally {
+      system = continuationSystem;
+      sumx = savedSumx;
+      sumy = savedSumy;
+    }
+  }
+
+  /** Refine on a private system so trial critical states cannot contaminate the accepted continuation point. */
+  private void refineCriticalPoint() {
     // Save all state that will be modified during refinement
     Matrix aa = a.copy();
     Matrix ss = s.copy();
@@ -707,7 +724,8 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   }
 
   /**
-   * Reject non-finite states and the trivial multicomponent K=1 solution away from an actual critical crossing.
+   * Reject non-finite states and trivial equilibrium solutions. Pure-component saturation requires two distinct volume
+   * roots because K=1 holds even for a single phase.
    *
    * @return true if the current equilibrium point can be retained
    */
@@ -720,6 +738,12 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       largestLogK = Math.max(largestLogK, Math.abs(u.get(i, 0)));
     }
-    return numberOfComponents == 1 || largestLogK > 1.0e-6;
+    if (numberOfComponents == 1) {
+      double firstVolume = system.getPhase(0).getMolarVolume();
+      double secondVolume = system.getPhase(1).getMolarVolume();
+      return Double.isFinite(firstVolume) && Double.isFinite(secondVolume) && firstVolume > 0.0 && secondVolume > 0.0
+          && Math.abs(firstVolume - secondVolume) > 1.0e-6 * Math.max(firstVolume, secondVolume);
+    }
+    return largestLogK > 1.0e-6;
   }
 }
