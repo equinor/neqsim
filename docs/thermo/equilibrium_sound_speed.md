@@ -3,8 +3,6 @@ title: "Homogeneous-equilibrium acoustic speed"
 description: "Calculate an explicit isentropic equilibrium acoustic derivative for single-phase and vapor-liquid fluids, with entropy, inventory, convergence and phase-boundary diagnostics."
 ---
 
-# Homogeneous-equilibrium acoustic speed
-
 `SystemInterface.calculateEquilibriumSoundSpeed()` returns the fluid-frame homogeneous-equilibrium
 acoustic speed and diagnostics. It supports single-phase fluids and vapor-liquid equilibrium with
 fixed total component inventory. It is intended for equilibrium decompression studies.
