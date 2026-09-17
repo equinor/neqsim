@@ -447,6 +447,20 @@ fluid.addComponent("water", 0.6);
 | `SystemUMRPRUEos` | Peng-Robinson with UNIFAC mixing |
 | `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman |
 
+Wilson activity-coefficient evaluation stores both the coefficient and its logarithm on each
+component, including coefficients calculated for infinite-dilution reference states. These
+values supply the solvent vapor-pressure and solute Henry-law fugacity calculations. This
+repairs coefficient publication; it does not change or extend the Wilson interaction-energy
+correlation or qualify additional temperature/composition ranges.
+
+Standalone `PhaseGEUniquac`, `ComponentGEUniquac`, and `PhaseGEUniquacmodifiedHV` are
+**unsupported** and throw `UnsupportedOperationException` on direct construction. Their
+activity-coefficient implementation and parameter data are incomplete. Selecting `"UNIQUAC"`
+or the legacy spelling `"UNIQUAQ"` for a Huron–Vidal mixing rule also throws; it no longer
+silently substitutes NRTL. Select a supported model such as NRTL or a suitable UNIFAC variant
+explicitly. UNIFAC subclasses retain their own activity-coefficient implementations; this
+restriction does not apply to them or to the separate Coutinho UNIQUAC wax model.
+
 ---
 
 ## 7. Electrolyte Models
