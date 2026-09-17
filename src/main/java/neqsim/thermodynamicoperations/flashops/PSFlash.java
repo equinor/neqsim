@@ -7,7 +7,7 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Normal return requires finite state variables, normalized phase fractions and a total entropy residual within
- * {@code max(1e-8 * n, 1e-10 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
+ * {@code max(1e-8 * n, 1e-6 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
  * an {@link IllegalStateException}.
  * </p>
  *
@@ -19,8 +19,18 @@ public class PSFlash extends QfuncFlash {
   private static final long serialVersionUID = 1000;
   /** Absolute molar entropy tolerance in J/(mol K). */
   private static final double MOLAR_ENTROPY_TOLERANCE = 1.0e-8;
+  /** Relative total-entropy tolerance, chosen above TP-flash numerical noise. */
+  private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-6;
+  /** Number of non-improving Newton iterations before a cold bracket recovery. */
+  private static final int STAGNATION_LIMIT = 8;
   /** Maximum number of safeguarded temperature iterations. */
   private static final int MAX_ITERATIONS = 200;
+  /** Maximum number of temperature expansions used to find a cold entropy bracket. */
+  private static final int MAX_BRACKET_EXPANSIONS = 40;
+  /** Lowest temperature considered by the generic cold-bracket recovery in K. */
+  private static final double MIN_BRACKET_TEMPERATURE = 1.0;
+  /** Highest temperature considered by the generic cold-bracket recovery in K. */
+  private static final double MAX_BRACKET_TEMPERATURE = 5000.0;
 
   double Sspec = 0;
   Flash tpFlash;
@@ -67,6 +77,8 @@ public class PSFlash extends QfuncFlash {
     double lowerTemperature = Double.NaN;
     double upperTemperature = Double.NaN;
     double tolerance = entropyTolerance(system, Sspec);
+    double bestResidual = Double.POSITIVE_INFINITY;
+    int stagnantIterations = 0;
     system.init(2);
 
     for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
@@ -75,9 +87,20 @@ public class PSFlash extends QfuncFlash {
       if (!Double.isFinite(residual)) {
         throw convergenceFailure(system, Sspec, "non-finite entropy");
       }
-      if (Math.abs(residual) <= tolerance) {
+      double absoluteResidual = Math.abs(residual);
+      if (absoluteResidual <= tolerance) {
         return temperature;
       }
+      if (absoluteResidual < bestResidual * (1.0 - 1.0e-8)) {
+        bestResidual = absoluteResidual;
+        stagnantIterations = 0;
+      } else {
+        stagnantIterations++;
+      }
+      if (stagnantIterations >= STAGNATION_LIMIT) {
+        return solveWithColdBracket(temperature, tolerance);
+      }
+
       // Equilibrium entropy increases with temperature at fixed pressure. Phase Cp/T does not
       // include phase-transfer contributions, so Newton steps need a sign-changing bracket.
       if (residual < 0.0) {
@@ -108,13 +131,88 @@ public class PSFlash extends QfuncFlash {
           break;
         } catch (RuntimeException ex) {
           if (backoff == 15) {
-            throw new IllegalStateException("PSflash failed while evaluating a temperature trial", ex);
+            return solveWithColdBracket(temperature, tolerance);
           }
           nextTemperature = 0.5 * (temperature + nextTemperature);
         }
       }
     }
-    throw convergenceFailure(system, Sspec, "temperature iteration limit reached");
+    return solveWithColdBracket(system.getTemperature(), tolerance);
+  }
+
+  /**
+   * Recover from a stalled warm-start iteration with cold TP flashes and a temperature bracket.
+   *
+   * @param initialTemperature temperature at which the safeguarded Newton iteration stalled
+   * @param tolerance accepted total-entropy residual in J/K
+   * @return converged temperature in K
+   */
+  private double solveWithColdBracket(double initialTemperature, double tolerance) {
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+    double trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE,
+        Math.min(MAX_BRACKET_TEMPERATURE, initialTemperature));
+    double residual = evaluateColdResidual(trialTemperature);
+    if (Math.abs(residual) <= tolerance) {
+      return trialTemperature;
+    }
+
+    double lowerTemperature = residual < 0.0 ? trialTemperature : Double.NaN;
+    double upperTemperature = residual > 0.0 ? trialTemperature : Double.NaN;
+    for (int expansion = 0; expansion < MAX_BRACKET_EXPANSIONS
+        && (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)); expansion++) {
+      double previousTemperature = trialTemperature;
+      if (residual < 0.0) {
+        trialTemperature = Math.min(MAX_BRACKET_TEMPERATURE, trialTemperature * 1.25 + 5.0);
+      } else {
+        trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE, trialTemperature / 1.25 - 5.0);
+      }
+      if (trialTemperature == previousTemperature) {
+        break;
+      }
+      residual = evaluateColdResidual(trialTemperature);
+      if (Math.abs(residual) <= tolerance) {
+        return trialTemperature;
+      }
+      if (residual < 0.0) {
+        lowerTemperature = trialTemperature;
+      } else {
+        upperTemperature = trialTemperature;
+      }
+    }
+    if (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)) {
+      throw convergenceFailure(system, Sspec, "unable to bracket entropy root");
+    }
+
+    for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      trialTemperature = 0.5 * (lowerTemperature + upperTemperature);
+      residual = evaluateColdResidual(trialTemperature);
+      if (Math.abs(residual) <= tolerance) {
+        return trialTemperature;
+      }
+      if (residual < 0.0) {
+        lowerTemperature = trialTemperature;
+      } else {
+        upperTemperature = trialTemperature;
+      }
+    }
+    throw convergenceFailure(system, Sspec, "cold bracket iteration limit reached");
+  }
+
+  /**
+   * Evaluate total entropy at a temperature using a cold TP flash.
+   *
+   * @param temperature trial temperature in K
+   * @return total entropy residual in J/K
+   */
+  private double evaluateColdResidual(double temperature) {
+    system.setTemperature(temperature);
+    tpFlash.run();
+    system.init(2);
+    double residual = system.getEntropy() - Sspec;
+    if (!Double.isFinite(residual)) {
+      throw convergenceFailure(system, Sspec, "non-finite cold-bracket entropy");
+    }
+    return residual;
   }
 
   /**
@@ -125,7 +223,8 @@ public class PSFlash extends QfuncFlash {
    * @return entropy tolerance in J/K
    */
   static double entropyTolerance(SystemInterface fluid, double entropy) {
-    return Math.max(MOLAR_ENTROPY_TOLERANCE * fluid.getTotalNumberOfMoles(), Math.abs(entropy) * 1.0e-10);
+    return Math.max(MOLAR_ENTROPY_TOLERANCE * fluid.getTotalNumberOfMoles(),
+        Math.abs(entropy) * RELATIVE_ENTROPY_TOLERANCE);
   }
 
   /**

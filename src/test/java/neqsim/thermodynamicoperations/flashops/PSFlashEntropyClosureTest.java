@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPCSAFT;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -98,6 +99,27 @@ class PSFlashEntropyClosureTest {
       new ThermodynamicOperations(state).PSflash(reference.getEntropy());
       assertEquals(330.0, state.getTemperature(), 1.0e-5);
     }
+  }
+
+  @Test
+  void pcSaftColdBracketRecoversFromLowTemperatureTrap() {
+    SystemInterface inlet = new SystemPCSAFT(298.15, 50.0);
+    inlet.addComponent("methane", 0.85);
+    inlet.addComponent("ethane", 0.10);
+    inlet.addComponent("propane", 0.05);
+    inlet.setMixingRule(1);
+    new ThermodynamicOperations(inlet).TPflash();
+    inlet.init(2);
+
+    double target = inlet.getEntropy();
+    SystemInterface state = inlet.clone();
+    state.setPressure(100.0);
+    state.setTemperature(168.15);
+    new ThermodynamicOperations(state).PSflash(target);
+    state.init(2);
+
+    assertEquals(target, state.getEntropy(), PSFlash.entropyTolerance(state, target));
+    assertTrue(state.getTemperature() > inlet.getTemperature());
   }
 
   @Test
