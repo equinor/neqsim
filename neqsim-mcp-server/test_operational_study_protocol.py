@@ -221,7 +221,7 @@ def test_schema_and_advisory_boundary(client):
         result,
     )
     require(
-        "does not write to plant systems" in result.get("advisoryBoundary", ""),
+        "do not write to plant systems" in result.get("advisoryBoundary", ""),
         "advisory boundary drifted",
         result,
     )
