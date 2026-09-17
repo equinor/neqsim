@@ -441,9 +441,7 @@ When creating or editing markdown documentation files:
 - Always include a blank line before and after tables
 - Use consistent column separator widths: `|----------|` not `|---|`
 - Ensure header separator row has same column count as data rows
-   `summary` attribute, no `@see` with plain text, and remember that `<ul>`/`<ol>`
-   implicitly close the current paragraph so a trailing `</p>` after the list will
-   break JavaDoc HTML. Run `./mvnw javadoc:javadoc`
+
 ### List Formatting
 
 - Always include a blank line before numbered/bullet lists
