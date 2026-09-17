@@ -9,10 +9,10 @@ import java.util.List;
  * Reconciles two immutable S8 transfer-ledger states as an exact ordered-prefix transition.
  *
  * <p>
- * This class rebuilds both supplied ledgers through their existing validation contract, then proves
- * that every batch and transfer in the prior state is bitwise identical and in the same position in
- * the candidate state. It reports only accounting deltas. It does not mutate either ledger, append a
- * batch, persist state, coordinate writers, or apply S8 to a process model.
+ * This class rebuilds both supplied ledgers through their existing validation contract, then proves that every batch
+ * and transfer in the prior state is bitwise identical and in the same position in the candidate state. It reports only
+ * accounting deltas. It does not mutate either ledger, append a batch, persist state, coordinate writers, or apply S8
+ * to a process model.
  * </p>
  *
  * @author esol
@@ -28,8 +28,8 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerDelta {
    * @param prior persisted prior ledger state
    * @param candidate candidate successor ledger state
    * @return immutable reconciliation receipt
-   * @throws IllegalArgumentException if either state is invalid or the candidate is not an exact
-   *         ordered extension of the prior state
+   * @throws IllegalArgumentException if either state is invalid or the candidate is not an exact ordered extension of
+   * the prior state
    */
   public static Result reconcile(AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior,
       AqueousHydrogenSulfideOxidationS8TransferLedger.Result candidate) {
@@ -37,10 +37,10 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerDelta {
       throw new IllegalArgumentException("Prior and candidate S8 transfer ledgers are required");
     }
 
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result validatedPrior =
-        AqueousHydrogenSulfideOxidationS8TransferLedger.create(prior.getBatches(), prior.getLedgerIdentifier());
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result validatedCandidate =
-        AqueousHydrogenSulfideOxidationS8TransferLedger.create(candidate.getBatches(), candidate.getLedgerIdentifier());
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result validatedPrior = AqueousHydrogenSulfideOxidationS8TransferLedger
+        .create(prior.getBatches(), prior.getLedgerIdentifier());
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result validatedCandidate = AqueousHydrogenSulfideOxidationS8TransferLedger
+        .create(candidate.getBatches(), candidate.getLedgerIdentifier());
 
     if (!validatedPrior.getLedgerIdentifier().equals(validatedCandidate.getLedgerIdentifier())) {
       throw new IllegalArgumentException("Ledger identifiers do not match");
@@ -62,9 +62,8 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerDelta {
       }
     }
 
-    List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> addedBatches =
-        new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(validatedCandidate.getBatches()
-            .subList(validatedPrior.getBatchCount(), validatedCandidate.getBatchCount()));
+    List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> addedBatches = new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(
+        validatedCandidate.getBatches().subList(validatedPrior.getBatchCount(), validatedCandidate.getBatchCount()));
     int addedTransferCount = validatedCandidate.getTransferCount() - validatedPrior.getTransferCount();
     double sourceMassDeltaKg = nonNegativeDifference(validatedCandidate.getTotalSourceSulfurEquivalentMassKg(),
         validatedPrior.getTotalSourceSulfurEquivalentMassKg(), "Source sulfur-equivalent mass delta");
@@ -158,8 +157,8 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerDelta {
         double unallocatedSulfurEquivalentMassDeltaKg, double massClosureResidualDeltaKg) {
       this.ledgerIdentifier = ledgerIdentifier;
       this.productIdentityBasisIdentifier = productIdentityBasisIdentifier;
-      this.addedBatches = Collections.unmodifiableList(
-          new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(addedBatches));
+      this.addedBatches = Collections
+          .unmodifiableList(new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(addedBatches));
       this.addedTransferCount = addedTransferCount;
       this.sourceSulfurEquivalentMassDeltaKg = sourceSulfurEquivalentMassDeltaKg;
       this.transferredS8MassDeltaKg = transferredS8MassDeltaKg;

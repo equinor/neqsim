@@ -78,7 +78,8 @@ class S8TransferLedgerDeltaDocumentationTest(unittest.TestCase):
     def test_production_contract_is_executable(self):
         for token in (
             "public static Result reconcile(",
-            "AqueousHydrogenSulfideOxidationS8TransferLedger.create(",
+            ".create(prior.getBatches(), prior.getLedgerIdentifier())",
+            ".create(candidate.getBatches(), candidate.getLedgerIdentifier())",
             "Candidate ledger truncates the prior state",
             "Candidate ledger does not preserve the exact prior batch prefix",
             "Double.doubleToLongBits(left) == Double.doubleToLongBits(right)",
