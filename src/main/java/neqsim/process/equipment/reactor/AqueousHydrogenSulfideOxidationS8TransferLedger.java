@@ -203,10 +203,9 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedger {
         double totalUnallocatedSulfurEquivalentMassKg, double massClosureResidualKg) {
       this.ledgerIdentifier = ledgerIdentifier;
       this.productIdentityBasisIdentifier = productIdentityBasisIdentifier;
-      this.batches = Collections.unmodifiableList(
-          new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(batches));
-      this.downstreamIdempotencyKeys =
-          Collections.unmodifiableSet(new HashSet<String>(downstreamIdempotencyKeys));
+      this.batches = Collections
+          .unmodifiableList(new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(batches));
+      this.downstreamIdempotencyKeys = Collections.unmodifiableSet(new HashSet<String>(downstreamIdempotencyKeys));
       this.transferCount = transferCount;
       this.totalSourceSulfurEquivalentMassKg = totalSourceSulfurEquivalentMassKg;
       this.totalTransferredS8MassKg = totalTransferredS8MassKg;
