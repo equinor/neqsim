@@ -118,7 +118,11 @@ public final class RefineryLinearBlendOptimizer {
     if (!Double.isFinite(unitCostPerMass)) {
       throw new IllegalStateException("Calculated blend unit cost must be finite");
     }
-    return new Result(massFractions, assayBlend, viscosityBlend, unitCostPerMass);
+    QualityConstraintReceipt qualityConstraintReceipt = new QualityConstraintReceipt(assayBlend.getApiGravity(),
+        minimumApiGravity, maximumApiGravity, assayBlend.getSulfurMassFraction(), maximumSulfurMassFraction,
+        assayBlend.getNitrogenMassFraction(), maximumNitrogenMassFraction, viscosityBlend.getKinematicViscosityCSt(),
+        minimumKinematicViscosityCSt, maximumKinematicViscosityCSt, temperatureCelsius);
+    return new Result(massFractions, assayBlend, viscosityBlend, unitCostPerMass, qualityConstraintReceipt);
   }
 
   private static int requireSourceArrays(double[] sourceCostsPerMass, double[] sourceSpecificGravities,
@@ -225,13 +229,15 @@ public final class RefineryLinearBlendOptimizer {
     private final RefineryAssayBlend assayBlend;
     private final RefineryViscosityBlend viscosityBlend;
     private final double unitCostPerMass;
+    private final QualityConstraintReceipt qualityConstraintReceipt;
 
     private Result(double[] sourceMassFractions, RefineryAssayBlend assayBlend, RefineryViscosityBlend viscosityBlend,
-        double unitCostPerMass) {
+        double unitCostPerMass, QualityConstraintReceipt qualityConstraintReceipt) {
       this.sourceMassFractions = Arrays.copyOf(sourceMassFractions, sourceMassFractions.length);
       this.assayBlend = assayBlend;
       this.viscosityBlend = viscosityBlend;
       this.unitCostPerMass = unitCostPerMass;
+      this.qualityConstraintReceipt = qualityConstraintReceipt;
     }
 
     /** @return defensive copy of optimized source mass fractions */
@@ -252,6 +258,196 @@ public final class RefineryLinearBlendOptimizer {
     /** @return optimized blend cost in the caller's common currency/mass basis */
     public double getUnitCostPerMass() {
       return unitCostPerMass;
+    }
+
+    /** @return immutable realized-property, bound, margin, and binding evidence */
+    public QualityConstraintReceipt getQualityConstraintReceipt() {
+      return qualityConstraintReceipt;
+    }
+  }
+
+  /** Immutable quality-constraint evidence retained from one qualified optimization. */
+  public static final class QualityConstraintReceipt implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double apiGravity;
+    private final double minimumApiGravity;
+    private final double maximumApiGravity;
+    private final double apiLowerMargin;
+    private final double apiUpperMargin;
+    private final double sulfurMassFraction;
+    private final double maximumSulfurMassFraction;
+    private final double sulfurMargin;
+    private final double nitrogenMassFraction;
+    private final double maximumNitrogenMassFraction;
+    private final double nitrogenMargin;
+    private final double kinematicViscosityCSt;
+    private final double minimumKinematicViscosityCSt;
+    private final double maximumKinematicViscosityCSt;
+    private final double viscosityLowerMarginCSt;
+    private final double viscosityUpperMarginCSt;
+    private final double temperatureCelsius;
+
+    private QualityConstraintReceipt(double apiGravity, double minimumApiGravity, double maximumApiGravity,
+        double sulfurMassFraction, double maximumSulfurMassFraction, double nitrogenMassFraction,
+        double maximumNitrogenMassFraction, double kinematicViscosityCSt, double minimumKinematicViscosityCSt,
+        double maximumKinematicViscosityCSt, double temperatureCelsius) {
+      this.apiGravity = apiGravity;
+      this.minimumApiGravity = minimumApiGravity;
+      this.maximumApiGravity = maximumApiGravity;
+      apiLowerMargin = lowerMargin(apiGravity, minimumApiGravity, "API-gravity lower");
+      apiUpperMargin = upperMargin(apiGravity, maximumApiGravity, "API-gravity upper");
+      this.sulfurMassFraction = sulfurMassFraction;
+      this.maximumSulfurMassFraction = maximumSulfurMassFraction;
+      sulfurMargin = upperMargin(sulfurMassFraction, maximumSulfurMassFraction, "sulfur");
+      this.nitrogenMassFraction = nitrogenMassFraction;
+      this.maximumNitrogenMassFraction = maximumNitrogenMassFraction;
+      nitrogenMargin = upperMargin(nitrogenMassFraction, maximumNitrogenMassFraction, "nitrogen");
+      this.kinematicViscosityCSt = kinematicViscosityCSt;
+      this.minimumKinematicViscosityCSt = minimumKinematicViscosityCSt;
+      this.maximumKinematicViscosityCSt = maximumKinematicViscosityCSt;
+      viscosityLowerMarginCSt = lowerMargin(kinematicViscosityCSt, minimumKinematicViscosityCSt, "viscosity lower");
+      viscosityUpperMarginCSt = upperMargin(kinematicViscosityCSt, maximumKinematicViscosityCSt, "viscosity upper");
+      this.temperatureCelsius = temperatureCelsius;
+    }
+
+    private static double lowerMargin(double value, double lowerBound, String propertyName) {
+      return checkedMargin(value - lowerBound, value, lowerBound, propertyName);
+    }
+
+    private static double upperMargin(double value, double upperBound, String propertyName) {
+      return checkedMargin(upperBound - value, value, upperBound, propertyName);
+    }
+
+    private static double checkedMargin(double margin, double value, double bound, String propertyName) {
+      double tolerance = bindingTolerance(value, bound);
+      if (!Double.isFinite(margin) || margin < -tolerance) {
+        throw new IllegalStateException("Optimized " + propertyName + " margin is invalid");
+      }
+      return Math.max(0.0, margin);
+    }
+
+    private static double bindingTolerance(double value, double bound) {
+      return PROPERTY_TOLERANCE * Math.max(1.0, Math.max(Math.abs(value), Math.abs(bound)));
+    }
+
+    private static boolean isBinding(double margin, double value, double bound) {
+      return margin <= bindingTolerance(value, bound);
+    }
+
+    /** @return realized blend API gravity */
+    public double getApiGravity() {
+      return apiGravity;
+    }
+
+    /** @return inclusive minimum API-gravity constraint */
+    public double getMinimumApiGravity() {
+      return minimumApiGravity;
+    }
+
+    /** @return inclusive maximum API-gravity constraint */
+    public double getMaximumApiGravity() {
+      return maximumApiGravity;
+    }
+
+    /** @return non-negative realized API gravity minus its minimum */
+    public double getApiLowerMargin() {
+      return apiLowerMargin;
+    }
+
+    /** @return non-negative maximum API gravity minus its realized value */
+    public double getApiUpperMargin() {
+      return apiUpperMargin;
+    }
+
+    /** @return whether the minimum API-gravity constraint is active within solver tolerance */
+    public boolean isMinimumApiGravityBinding() {
+      return isBinding(apiLowerMargin, apiGravity, minimumApiGravity);
+    }
+
+    /** @return whether the maximum API-gravity constraint is active within solver tolerance */
+    public boolean isMaximumApiGravityBinding() {
+      return isBinding(apiUpperMargin, apiGravity, maximumApiGravity);
+    }
+
+    /** @return realized sulfur mass fraction on a 0-1 basis */
+    public double getSulfurMassFraction() {
+      return sulfurMassFraction;
+    }
+
+    /** @return inclusive maximum sulfur mass-fraction constraint */
+    public double getMaximumSulfurMassFraction() {
+      return maximumSulfurMassFraction;
+    }
+
+    /** @return non-negative sulfur mass-fraction constraint margin */
+    public double getSulfurMargin() {
+      return sulfurMargin;
+    }
+
+    /** @return whether the sulfur constraint is active within solver tolerance */
+    public boolean isSulfurBinding() {
+      return isBinding(sulfurMargin, sulfurMassFraction, maximumSulfurMassFraction);
+    }
+
+    /** @return realized nitrogen mass fraction on a 0-1 basis */
+    public double getNitrogenMassFraction() {
+      return nitrogenMassFraction;
+    }
+
+    /** @return inclusive maximum nitrogen mass-fraction constraint */
+    public double getMaximumNitrogenMassFraction() {
+      return maximumNitrogenMassFraction;
+    }
+
+    /** @return non-negative nitrogen mass-fraction constraint margin */
+    public double getNitrogenMargin() {
+      return nitrogenMargin;
+    }
+
+    /** @return whether the nitrogen constraint is active within solver tolerance */
+    public boolean isNitrogenBinding() {
+      return isBinding(nitrogenMargin, nitrogenMassFraction, maximumNitrogenMassFraction);
+    }
+
+    /** @return realized Refutas-blended kinematic viscosity in cSt */
+    public double getKinematicViscosityCSt() {
+      return kinematicViscosityCSt;
+    }
+
+    /** @return inclusive minimum kinematic-viscosity constraint in cSt */
+    public double getMinimumKinematicViscosityCSt() {
+      return minimumKinematicViscosityCSt;
+    }
+
+    /** @return inclusive maximum kinematic-viscosity constraint in cSt */
+    public double getMaximumKinematicViscosityCSt() {
+      return maximumKinematicViscosityCSt;
+    }
+
+    /** @return non-negative realized viscosity minus its minimum in cSt */
+    public double getViscosityLowerMarginCSt() {
+      return viscosityLowerMarginCSt;
+    }
+
+    /** @return non-negative maximum viscosity minus its realized value in cSt */
+    public double getViscosityUpperMarginCSt() {
+      return viscosityUpperMarginCSt;
+    }
+
+    /** @return whether the minimum viscosity constraint is active within solver tolerance */
+    public boolean isMinimumViscosityBinding() {
+      return isBinding(viscosityLowerMarginCSt, kinematicViscosityCSt, minimumKinematicViscosityCSt);
+    }
+
+    /** @return whether the maximum viscosity constraint is active within solver tolerance */
+    public boolean isMaximumViscosityBinding() {
+      return isBinding(viscosityUpperMarginCSt, kinematicViscosityCSt, maximumKinematicViscosityCSt);
+    }
+
+    /** @return common viscosity temperature in degrees Celsius */
+    public double getTemperatureCelsius() {
+      return temperatureCelsius;
     }
   }
 }
