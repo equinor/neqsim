@@ -92,6 +92,8 @@ class VUFlashEOSCGTest {
       PhaseInterface gasPhase = phaseOfType(system, PhaseType.GAS);
       PhaseInterface liquidPhase = otherPhase(system, gasPhase);
       assertNotEquals(gasPhase.getDensity("kg/m3"), liquidPhase.getDensity("kg/m3"), 1.0);
+      assertTrue(gasPhase.getDensity("kg/m3") < liquidPhase.getDensity("kg/m3"));
+      assertSpecifications(system, targetVolumeM3, targetInternalEnergyJ);
     } catch (IllegalStateException expectedFailure) {
       assertTrue(expectedFailure.getMessage().contains("could not find a stable"));
     }
