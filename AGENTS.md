@@ -338,8 +338,8 @@ Regenerate it whenever documents are added and before finalizing the task.
    | What you learned | Repo | Change |
    |------------------|------|--------|
    | Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
-   | Wrong API recipe, gotcha, unit trap, better pattern | sibling repos `../neqsim-community-skills/` / `../neqsim-enterprise-skills/` | edit `SKILL.md` |
-   | Wrong skill choice, missed hand-off, bad routing | sibling repos `../neqsim-community-agents/` / `../neqsim-enterprise-agents/` | edit `*.agent.md` |
+   | Wrong API recipe, gotcha, unit trap, better pattern | `neqsim-community-skills` / `neqsim-enterprise-skills` | edit `SKILL.md` |
+   | Wrong skill choice, missed hand-off, bad routing | `neqsim-community-agents` / `neqsim-enterprise-agents` | edit `*.agent.md` |
    | Useful new multi-agent pipeline | agents repo | record as a composition pattern |
    | Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
 

@@ -260,11 +260,16 @@ def test_deterministic_and_inventory_boundary(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runBarrierRegister", {})
     require(
-        inventory.get("inventoryVersion") == "1.39"
-        and limitations.get("contractTestedToolCount") == 39
-        and limitations.get("confirmedGapToolCount") == 12
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification changed inventory before merged promotion",
+        inventory.get("inventoryVersion") == "1.40"
+        and limitations.get("contractTestedToolCount") == 40
+        and limitations.get("confirmedGapToolCount") == 11
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_BOUNDED_BARRIER_REGISTER_SCREENING_SOFTWARE_CONTRACT"
+        and "neqsim-mcp-server/test_barrier_register_protocol.py"
+        in record.get("contractEvidenceSources", [])
+        and "canonical NeqSim barrier model" in record.get("evidenceBoundary", ""),
+        "barrier-register promotion accounting drifted",
         inventory,
     )
 

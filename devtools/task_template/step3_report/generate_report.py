@@ -1538,13 +1538,44 @@ def _has_safety_context(results):
     return any(token in text for token in ("safety", "rupture", "fire", "blowdown"))
 
 
+# Validation keys whose NAME asserts something bad. For these, False is the
+# desired outcome, so it must not be reported as a failed check. The enterprise
+# skills require agents to emit `credentials_disclosed: false`, which otherwise
+# reads as a blocker and flips safety readiness to DESIGN-GRADE BLOCKED.
+_NEGATIVE_VALIDATION_MARKERS = (
+    "disclosed", "exceeded", "violated", "breached", "failed", "failure",
+    "error", "errors", "blocked", "blocker", "blockers", "leaked", "exposed",
+    "inferred", "fabricated", "constructed", "overrun", "overdue",
+)
+
+# A key that already negates itself ("no_data_fabricated") is positive again.
+_VALIDATION_NEGATION_PREFIXES = ("no", "not", "never", "without", "zero", "nil")
+
+
+def _validation_outcome_is_failure(check, outcome):
+    """True when a validation entry should be reported as a failed check.
+
+    A key phrased as an assertion of something undesirable is inverted: for
+    ``credentials_disclosed`` the passing value is False, not True. A key that
+    carries its own negation prefix flips back, so
+    ``no_document_number_inferred`` passes on True.
+    """
+    if outcome not in (True, False):
+        return False
+    tokens = check.lower().split("_")
+    negative = any(marker in tokens for marker in _NEGATIVE_VALIDATION_MARKERS)
+    if negative and tokens and tokens[0] in _VALIDATION_NEGATION_PREFIXES:
+        negative = False
+    return outcome is True if negative else outcome is False
+
+
 def _validation_failures(results):
     """Return validation checks that are false and block design-grade use."""
     failures = []
     validation = results.get("validation", {}) if results else {}
     for check, outcome in validation.items():
-        if outcome is False:
-            failures.append(check.replace("_", " ").title())
+        if _validation_outcome_is_failure(check, outcome):
+            failures.append(_label_from_key(check))
     return failures
 
 
@@ -1966,10 +1997,38 @@ def _body_paragraphs(text):
     return paragraphs
 
 
+_LIST_LINE_RE = re.compile(r"^\s*(?:[-*+\u2022]\s|\d+[.)]\s)")
+_INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+
+
+def _is_line_structured(block):
+    """True when a block's own line breaks carry meaning (list or table)."""
+    lines = [line for line in block.split("\n") if line.strip()]
+    if len(lines) < 2:
+        return False
+    structured = sum(1 for line in lines
+                     if _LIST_LINE_RE.match(line) or line.strip().startswith("|"))
+    return structured >= len(lines) / 2.0
+
+
 def _prose_to_html(text):
-    """Render plain prose as HTML paragraphs using the same splitting rules."""
-    return "".join("<p>{}</p>".format(para.replace("\n", "<br>"))
-                   for para in _body_paragraphs(text))
+    """Render plain prose as HTML paragraphs using the same splitting rules.
+
+    Source markdown is hard-wrapped, and markdown treats a single newline as a
+    space. Only a list or table block keeps its line breaks; wrapped prose is
+    rejoined so sentences are not split mid-clause. Inline `code` spans become
+    <code>, which is how tag and document numbers are written in a task spec.
+    """
+    out = []
+    for para in _body_paragraphs(text):
+        if _is_line_structured(para):
+            body = "<br>".join(line.strip() for line in para.split("\n")
+                               if line.strip())
+        else:
+            body = " ".join(line.strip() for line in para.split("\n")
+                            if line.strip())
+        out.append("<p>{}</p>".format(_INLINE_CODE_RE.sub(r"<code>\1</code>", body)))
+    return "".join(out)
 
 
 def _benchmark_tests(results):
@@ -2356,7 +2415,9 @@ def auto_problem_description(results, task_spec):
             parts.append(text)
             break
     envelope = extract_spec_section(task_spec, "Operating Envelope")
-    if envelope:
+    # A markdown table cannot be flattened into prose without becoming a line of
+    # pipes; Scope and Standards already renders the same section as a table.
+    if envelope and "|" not in envelope:
         parts.append("Operating envelope: " + envelope.replace("\n", " ").strip())
     if results and results.get("objective") and not parts:
         parts.append(str(results["objective"]))
@@ -3211,10 +3272,29 @@ def _fmt_cell(value, sig=4):
     return str(value)
 
 
+def _label_from_key(name_part):
+    """Title-case a snake_case key without destroying acronyms.
+
+    ``.title()`` turns GFC into Gfc and LL into Ll, which reads badly in the
+    headline results table. A token that is already all-uppercase is kept.
+    """
+    words = []
+    for word in name_part.split("_"):
+        if not word:
+            continue
+        words.append(word if word.isupper() and len(word) > 1 else word.capitalize())
+    return " ".join(words)
+
+
 def _parse_key_name(key):
     """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
     unit_suffixes = [
         ("_pct", "%"), ("_percent", "%"),
+        ("_ppm", "ppm"), ("_ppmv", "ppmv"), ("_ppb", "ppb"),
+        ("_l_per_h", "l/h"), ("_l_per_min", "l/min"), ("_l_per_s", "l/s"),
+        ("_degC", "\u00b0C"), ("_degc", "\u00b0C"),
+        ("_MNOK", "MNOK"), ("_MUSD", "MUSD"), ("_NOK", "NOK"), ("_USD", "USD"),
+        ("_days", "days"), ("_years", "years"),
         ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
         ("_psi", "psi"), ("_psia", "psia"),
         ("_C", "°C"), ("_K", "K"), ("_F", "°F"),
@@ -3233,9 +3313,8 @@ def _parse_key_name(key):
     for suffix, unit in unit_suffixes:
         if key.endswith(suffix):
             name_part = key[:len(key) - len(suffix)]
-            label = name_part.replace("_", " ").title()
-            return label, unit
-    return key.replace("_", " ").title(), ""
+            return _label_from_key(name_part), unit
+    return _label_from_key(key), ""
 
 
 def format_results_table(results):
@@ -3264,9 +3343,9 @@ def format_validation_table(results):
         return "[No validation data in results.json]"
     lines = ["Validation Summary:", ""]
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
+            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
             status = "{:.4g}".format(outcome)
         else:
@@ -3282,10 +3361,11 @@ def format_validation_html(results):
         return "<p><em>No validation data in results.json</em></p>"
     rows = ""
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
-            css_class = ' class="pass"' if outcome else ' class="fail"'
+            failed = _validation_outcome_is_failure(check, outcome)
+            status = "FAIL" if failed else "PASS"
+            css_class = ' class="fail"' if failed else ' class="pass"'
         elif isinstance(outcome, (int, float)):
             status = _fmt_number(outcome)
             css_class = ' class="num"'
@@ -3944,9 +4024,9 @@ def add_validation_word_table(doc, results):
     headers = ["Check", "Result"]
     data_rows = []
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
+            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
             status = _fmt_number(outcome)
         else:

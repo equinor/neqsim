@@ -347,6 +347,43 @@ This is a screening optimizer. It does not model excess volume, blend contractio
 viscosity-temperature extrapolation, phase or asphaltene compatibility, uncertainty, nonlinear or
 integer economics, inventory, scheduling, control actions, or certified product compliance.
 
+## Auditable blend-batch receipts
+
+`RefineryBlendBatch` scales a normalized mass-fraction recipe to one requested batch mass and
+returns immutable source mass and ideal-additive source-volume receipts. The source volumes retain
+the existing 60 degrees Fahrenheit basis:
+
+$V_i=\frac{m_i}{SG_i\rho_{w,60F}},\qquad
+V_{blend}=\sum_iV_i,\qquad
+SG_{blend}=\frac{m_{blend}}{V_{blend}\rho_{w,60F}}$
+
+Here $\rho_{w,60F}=999.016\ \mathrm{kg/m^3}$, matching `RefineryAssayBlend`. A recipe may be
+supplied directly or taken from a qualified `RefineryLinearBlendOptimizer.Result`; the latter
+also closes total cost from the optimizer's common currency-per-mass basis.
+
+```java
+RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(
+    10000.0,
+    new double[] {0.60, 0.40},
+    new double[] {0.847, 0.771});
+
+double[] sourceMassesKg = batch.getSourceMassesKg();
+double[] sourceVolumesM3At60F = batch.getSourceVolumesM3At60F();
+double totalVolumeM3At60F = batch.getTotalAdditiveVolumeM3At60F();
+double batchSpecificGravity = batch.getSpecificGravity();
+```
+
+The specific-gravity endpoints are the published DOE/OEDI COA values for samples 50146 and 56337
+from the [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23). The 60/40 receipt
+is transparent arithmetic integration evidence, not a measured multi-crude blend. It preserves the
+same ideal-additive-volume result as `RefineryAssayBlend`.
+
+The receipt does not model blend contraction, temperature correction, tank gauging, viscosity
+extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions, control
+actions, or certified product compliance. It does not create or mix thermodynamic streams.
+Zero-contribution sources need no fabricated specific gravity; every positive contribution fails
+closed unless its fraction and density basis are finite and valid.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:

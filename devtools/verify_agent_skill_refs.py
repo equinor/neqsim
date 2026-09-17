@@ -13,6 +13,9 @@ Checks:
 6. Every agent file (except README.md/router) references at least one skill
 7. Generates a skill-keyword index for agent discovery (--generate-index)
 
+Bare mentions of the four supported sibling agent/skill repositories are not
+skill references. Explicit skill paths and Load directives are still checked.
+
 Usage:
     python devtools/verify_agent_skill_refs.py
     python devtools/verify_agent_skill_refs.py --generate-index
@@ -28,6 +31,17 @@ import os
 import re
 import sys
 from pathlib import Path
+
+
+# Repository identifiers used by agent_search and skill_search discovery, not
+# individual skills. Keep this list exact: arbitrary *-skills/*-agents names may
+# still be real (or misspelled) skills and must go through reference validation.
+SIBLING_REPOSITORY_NAMES = frozenset({
+    "neqsim-community-agents",
+    "neqsim-community-skills",
+    "neqsim-enterprise-agents",
+    "neqsim-enterprise-skills",
+})
 
 
 def find_repo_root():
@@ -57,7 +71,11 @@ def get_skill_folders(skills_dir):
 
 
 def extract_skill_refs_from_file(filepath):
-    """Extract neqsim-* skill references from a markdown file."""
+    """Extract skill references, excluding bare sibling repository mentions.
+
+    Explicit ``skills/<name>`` paths and ``Load <name>`` directives remain skill
+    references even when the name matches a repository identifier.
+    """
     refs = set()
     try:
         text = filepath.read_text(encoding="utf-8")
@@ -66,14 +84,14 @@ def extract_skill_refs_from_file(filepath):
     # Match skill names in backticks: `neqsim-xxx`
     for match in re.finditer(r"`(neqsim-[\w-]+)`", text):
         refs.add(match.group(1))
-    # Match skill folder paths: skills/neqsim-xxx/
-    for match in re.finditer(r"skills/(neqsim-[\w-]+)", text):
-        refs.add(match.group(1))
     # Match skill names in quotes: "neqsim-xxx"
     for match in re.finditer(r'"(neqsim-[\w-]+)"', text):
         refs.add(match.group(1))
-    # Match skill names after "Load" or "load": load neqsim-xxx
-    for match in re.finditer(r"[Ll]oad\s+(neqsim-[\w-]+)", text):
+    refs.difference_update(SIBLING_REPOSITORY_NAMES)
+    # Explicit skill paths and load directives take precedence over prose.
+    for match in re.finditer(r"skills/(neqsim-[\w-]+)", text):
+        refs.add(match.group(1))
+    for match in re.finditer(r'\bload\s+[`"]?(neqsim-[\w-]+)', text, re.IGNORECASE):
         refs.add(match.group(1))
     return refs
 

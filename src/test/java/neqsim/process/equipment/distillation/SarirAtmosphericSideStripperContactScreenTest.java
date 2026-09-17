@@ -33,6 +33,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
   @Test
   public void incompleteOrUnsupportedBoundariesFailClosed() {
     SarirAtmosphericFractionationCase unsolved = createModel();
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(unsolved));
     StreamInterface keroseneSteam = createPreparedSteam(unsolved, SteamInjectionService.KEROSENE_SIDE_STRIPPER);
 
     assertThrows(IllegalStateException.class,
@@ -62,6 +63,29 @@ public class SarirAtmosphericSideStripperContactScreenTest {
 
     assertContact(model, SteamInjectionService.KEROSENE_SIDE_STRIPPER, "Kerosene side stripper", 68.04);
     assertContact(model, SteamInjectionService.DIESEL_SIDE_STRIPPER, "Diesel side stripper", 226.8);
+  }
+
+  /** Convergence and closed contacts do not qualify an inverted kerosene/diesel boiling order. */
+  @Test
+  @Timeout(value = 240, unit = TimeUnit.SECONDS)
+  public void rigorouslyConvergedUnorderedProductsFailClosed() {
+    SarirAtmosphericFractionationCase model = createModel();
+    model.run(UUID.randomUUID());
+    DistillationColumn column = model.getColumn();
+    assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
+        column.getConvergenceDiagnostics());
+    OperatingInputs inputs = model.getOperatingInputs();
+    double keroseneBoilingPoint = ProductBoilingPointDistribution
+        .from(column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID))
+        .getMeanNormalBoilingPointKelvin();
+    double dieselBoilingPoint = ProductBoilingPointDistribution
+        .from(column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID))
+        .getMeanNormalBoilingPointKelvin();
+    assertTrue(keroseneBoilingPoint > dieselBoilingPoint,
+        "This contact-only fixture must not masquerade as a qualified product-quality case");
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> SarirAtmosphericProductQualityScreen.evaluate(model));
+    assertEquals("Material products must become heavier from the column top to the bottoms", error.getMessage());
   }
 
   private static void assertContact(SarirAtmosphericFractionationCase model, SteamInjectionService service,
@@ -102,6 +126,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
         SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, inputs);
     model.run(UUID.randomUUID());
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus());
+    assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(model));
     for (SteamInjectionService service : new SteamInjectionService[] { SteamInjectionService.KEROSENE_SIDE_STRIPPER,
         SteamInjectionService.DIESEL_SIDE_STRIPPER }) {
       StreamInterface steam = createPreparedSteam(model, service);

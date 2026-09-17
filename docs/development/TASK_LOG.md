@@ -834,3 +834,37 @@ metal-loss channel by five orders of magnitude. Same symptom, opposite verdicts,
 devtools fixes: `extract_spec_section` matched English headings only, so a fully written Norwegian
 scope section was reported as "lacks source data"; and the work-record generator dumped
 schema-correct assumption/data-gap dicts as raw JSON. Both now covered by tests.
+
+### 2026-09-17 — Missing piping isometrics for a chemical-injection system: four-register search
+**Type:** G (Workflow)
+**Keywords:** STID, SAP Maintenance API, PEPR, historian, isometric drawing search, proven negative,
+positive control, tag-form traps, anchor object, P&ID topology reading, dosing regime change point,
+DCS reconciliation, document control
+**Solution:** private task folder (redacted); enterprise skill updates (STID / maintenance / PEPR /
+plant-data)
+**Notes:** A "we cannot find the drawings" request is a search problem, and the failure mode is
+reporting absence when the search was wrong. Four transferable lessons. (1) Query TWO independent
+registers. The engineering document register and the maintenance register disagreed: the maintenance
+register carried a drawing link that the document register did not expose on the line object, so a
+single-system search would have reported a drawing that exists as missing. (2) A negative is only
+worth reporting with a POSITIVE CONTROL. Every zero-row result was re-run against the full corpus,
+the same module and the same size class; the surviving conclusion is "this specific 2004 project
+filed no per-line isometrics", not "this kind of drawing is not registered". Six competing
+explanations (thin corpus, small-bore never drawn, poor module coverage, filed on a work order,
+access failure, malformed query) were each refuted with a count. (3) THE ANCHOR-OBJECT RULE: a
+fabrication isometric is named after the piping segment and filed against the equipment it serves,
+not against every line tag it crosses. When a line-tag search finds nothing, look on the mixer, the
+valve or the package. Reading the P&ID showed the small-bore tubing and the downstream piping were
+one physical run separated only by a spec break — which explained why one drawing was linked to both
+injection valves and the mixer, and turned an apparent two-line gap into probably one. Reading the
+drawings, not just listing them, was what produced the answer. (4) Three tag-form traps each
+sufficient to fake an absence: case (`12mm` stored `12MM`, and the SAP tag lookup is case-sensitive
+while its prefix search is not); the historic-vs-as-built leading zero (drawings filed under `.75"`
+for a line now tagged `0.75"`); and word-valued status filters where the API takes single-letter
+codes and silently returns zero rows. Also: the PEPR `contains` filter is a word-PREFIX match, not a
+substring match — proven with mid-word probes returning zero — so every negative from it must be
+qualified. Operating-data lesson: for a chemical-dosing system a 30-day mean is not the operating
+point once the dose has been stepped; detect the change point and report both, and cross-check a
+dosing rate against the tank level slope because these tags are prone to multi-day frozen segments.
+Report hygiene: the report generator embeds every PNG in `figures/`, so working crops must be moved
+to a subfolder — leaving them in place produced a 100 MB Word file instead of 2.9 MB.
