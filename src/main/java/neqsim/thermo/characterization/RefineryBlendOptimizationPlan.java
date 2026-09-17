@@ -7,10 +7,9 @@ import java.util.Arrays;
  * Immutable, label-addressable plan for one qualified refinery blend optimization.
  *
  * <p>
- * This class composes an existing {@link RefineryLinearBlendOptimizer.Result}, its scaled
- * {@link RefineryBlendBatch}, and a {@link RefineryBlendSourceLedger}. It adds source-level cost
- * receipts and closure checks without re-solving the optimization or changing any qualified
- * property calculation.
+ * This class composes an existing {@link RefineryLinearBlendOptimizer.Result}, its scaled {@link RefineryBlendBatch},
+ * and a {@link RefineryBlendSourceLedger}. It adds source-level cost receipts and closure checks without re-solving the
+ * optimization or changing any qualified property calculation.
  * </p>
  */
 public final class RefineryBlendOptimizationPlan implements Serializable {
@@ -23,8 +22,7 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
   private final SourceCostReceipt[] sourceCostReceipts;
 
   private RefineryBlendOptimizationPlan(String[] sourceIdentifiers, double totalMassKg,
-      double[] sourceSpecificGravities, double[] sourceCostsPerMass,
-      RefineryLinearBlendOptimizer.Result optimization) {
+      double[] sourceSpecificGravities, double[] sourceCostsPerMass, RefineryLinearBlendOptimizer.Result optimization) {
     if (optimization == null) {
       throw new NullPointerException("optimization");
     }
@@ -34,11 +32,9 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
       throw new IllegalArgumentException("Source costs must match the optimization source count");
     }
 
-    batch = RefineryBlendBatch.fromOptimization(totalMassKg, optimization,
-        sourceSpecificGravities);
+    batch = RefineryBlendBatch.fromOptimization(totalMassKg, optimization, sourceSpecificGravities);
     sourceLedger = RefineryBlendSourceLedger.fromBatch(sourceIdentifiers, batch);
-    RefineryBlendSourceLedger.SourceReceipt[] sourceReceipts =
-        sourceLedger.getSourceReceipts();
+    RefineryBlendSourceLedger.SourceReceipt[] sourceReceipts = sourceLedger.getSourceReceipts();
     sourceCostReceipts = new SourceCostReceipt[sourceReceipts.length];
 
     double resolvedUnitCostPerMass = 0.0;
@@ -46,23 +42,19 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
     for (int i = 0; i < sourceReceipts.length; i++) {
       double sourceUnitCostPerMass = sourceCostsPerMass[i];
       if (!Double.isFinite(sourceUnitCostPerMass) || sourceUnitCostPerMass < 0.0) {
-        throw new IllegalArgumentException(
-            "Source costs must be finite and non-negative");
+        throw new IllegalArgumentException("Source costs must be finite and non-negative");
       }
       double sourceTotalCost = sourceReceipts[i].getMassKg() * sourceUnitCostPerMass;
       if (!Double.isFinite(sourceTotalCost) || sourceTotalCost < 0.0) {
         throw new IllegalArgumentException("Source total costs must be finite and non-negative");
       }
-      sourceCostReceipts[i] =
-          new SourceCostReceipt(sourceReceipts[i], sourceUnitCostPerMass, sourceTotalCost);
+      sourceCostReceipts[i] = new SourceCostReceipt(sourceReceipts[i], sourceUnitCostPerMass, sourceTotalCost);
       resolvedUnitCostPerMass += massFractions[i] * sourceUnitCostPerMass;
       resolvedTotalCost += sourceTotalCost;
     }
 
-    requireClosure(resolvedUnitCostPerMass, optimization.getUnitCostPerMass(),
-        "unit cost");
-    requireClosure(resolvedUnitCostPerMass, batch.getUnitCostPerMass(),
-        "batch unit cost");
+    requireClosure(resolvedUnitCostPerMass, optimization.getUnitCostPerMass(), "unit cost");
+    requireClosure(resolvedUnitCostPerMass, batch.getUnitCostPerMass(), "batch unit cost");
     requireClosure(resolvedTotalCost, batch.getTotalCost(), "total cost");
     this.optimization = optimization;
   }
@@ -72,8 +64,7 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
    *
    * @param sourceIdentifiers unique nonblank identifiers in optimization source order
    * @param totalMassKg requested positive batch mass in kg
-   * @param sourceSpecificGravities source specific gravities on the 60 degrees Fahrenheit
-   *        basis
+   * @param sourceSpecificGravities source specific gravities on the 60 degrees Fahrenheit basis
    * @param sourceCostsPerMass source costs in the optimizer's common currency/mass basis
    * @param optimization qualified refinery linear-blend result
    * @return immutable optimized blend plan
@@ -81,21 +72,17 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
    * @throws IllegalArgumentException for invalid, mismatched, or cost-inconsistent inputs
    * @throws IllegalStateException if copied receipts do not close to the qualified batch
    */
-  public static RefineryBlendOptimizationPlan fromOptimization(String[] sourceIdentifiers,
-      double totalMassKg, double[] sourceSpecificGravities, double[] sourceCostsPerMass,
-      RefineryLinearBlendOptimizer.Result optimization) {
-    return new RefineryBlendOptimizationPlan(sourceIdentifiers, totalMassKg,
-        sourceSpecificGravities, sourceCostsPerMass, optimization);
+  public static RefineryBlendOptimizationPlan fromOptimization(String[] sourceIdentifiers, double totalMassKg,
+      double[] sourceSpecificGravities, double[] sourceCostsPerMass, RefineryLinearBlendOptimizer.Result optimization) {
+    return new RefineryBlendOptimizationPlan(sourceIdentifiers, totalMassKg, sourceSpecificGravities,
+        sourceCostsPerMass, optimization);
   }
 
-  private static void requireClosure(double resolvedValue, double expectedValue,
-      String quantity) {
-    double tolerance = CLOSURE_TOLERANCE
-        * Math.max(1.0, Math.max(Math.abs(resolvedValue), Math.abs(expectedValue)));
+  private static void requireClosure(double resolvedValue, double expectedValue, String quantity) {
+    double tolerance = CLOSURE_TOLERANCE * Math.max(1.0, Math.max(Math.abs(resolvedValue), Math.abs(expectedValue)));
     if (!Double.isFinite(resolvedValue) || !Double.isFinite(expectedValue)
         || Math.abs(resolvedValue - expectedValue) > tolerance) {
-      throw new IllegalArgumentException(
-          "Optimized blend plan " + quantity + " does not close");
+      throw new IllegalArgumentException("Optimized blend plan " + quantity + " does not close");
     }
   }
 
@@ -115,8 +102,7 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
   }
 
   /** @return the optimization's immutable quality-constraint receipt */
-  public RefineryLinearBlendOptimizer.QualityConstraintReceipt
-      getQualityConstraintReceipt() {
+  public RefineryLinearBlendOptimizer.QualityConstraintReceipt getQualityConstraintReceipt() {
     return optimization.getQualityConstraintReceipt();
   }
 
@@ -141,8 +127,7 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
         return receipt;
       }
     }
-    throw new IllegalArgumentException(
-        "Unknown optimized blend source identifier: " + sourceIdentifier);
+    throw new IllegalArgumentException("Unknown optimized blend source identifier: " + sourceIdentifier);
   }
 
   /** Immutable cost receipt for one labeled source in an optimized blend plan. */
@@ -153,8 +138,8 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
     private final double unitCostPerMass;
     private final double totalCost;
 
-    private SourceCostReceipt(RefineryBlendSourceLedger.SourceReceipt sourceReceipt,
-        double unitCostPerMass, double totalCost) {
+    private SourceCostReceipt(RefineryBlendSourceLedger.SourceReceipt sourceReceipt, double unitCostPerMass,
+        double totalCost) {
       this.sourceReceipt = sourceReceipt;
       this.unitCostPerMass = unitCostPerMass;
       this.totalCost = totalCost;
@@ -211,3 +196,4 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
     }
   }
 }
+
