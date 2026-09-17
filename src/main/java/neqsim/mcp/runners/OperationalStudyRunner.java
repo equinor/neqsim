@@ -47,10 +47,9 @@ import neqsim.util.validation.ValidationResult.ValidationIssue;
 public final class OperationalStudyRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
   private static final int MAX_REQUEST_BYTES = 1048576;
-  private static final String ADVISORY_BOUNDARY =
-      "Operational studies run on a local NeqSim simulation copy only; they do not write to plant systems, "
-          + "establish causality, validate controller or safety adequacy, authorize operation, or replace "
-          + "qualified engineering review.";
+  private static final String ADVISORY_BOUNDARY = "Operational studies run on a local NeqSim simulation copy only; they do not write to plant systems, "
+      + "establish causality, validate controller or safety adequacy, authorize operation, or replace "
+      + "qualified engineering review.";
 
   /**
    * Private constructor for utility class.
@@ -70,9 +69,9 @@ public final class OperationalStudyRunner {
           "Provide an operational study JSON object with an 'action' field."));
     }
     if (json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
-      return withAdvisoryBoundary(errorJson("REQUEST_TOO_LARGE",
-          "Operational study request exceeds 1048576 UTF-8 bytes",
-          "Reduce process, scenario, tag, field-data, history, or time-series input."));
+      return withAdvisoryBoundary(
+          errorJson("REQUEST_TOO_LARGE", "Operational study request exceeds 1048576 UTF-8 bytes",
+              "Reduce process, scenario, tag, field-data, history, or time-series input."));
     }
 
     JsonObject input;
@@ -109,8 +108,7 @@ public final class OperationalStudyRunner {
       }
       return withAdvisoryBoundary(response);
     } catch (RuntimeException ex) {
-      return withAdvisoryBoundary(errorJson("OPERATIONAL_STUDY_ERROR",
-          "Operational study failed: " + ex.getMessage(),
+      return withAdvisoryBoundary(errorJson("OPERATIONAL_STUDY_ERROR", "Operational study failed: " + ex.getMessage(),
           "Check the processJson, tagBindings, fieldData, action list, and units."));
     }
   }

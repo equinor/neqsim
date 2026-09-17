@@ -40,8 +40,8 @@ class OperationalStudyRunnerTest {
     assertEquals("JSON_PARSE_ERROR", malformed.get("code").getAsString());
     assertTrue(malformed.get("screeningOnly").getAsBoolean());
 
-    JsonObject unknown =
-        JsonParser.parseString(OperationalStudyRunner.run("{\"action\":\"notAnAction\"}")).getAsJsonObject();
+    JsonObject unknown = JsonParser.parseString(OperationalStudyRunner.run("{\"action\":\"notAnAction\"}"))
+        .getAsJsonObject();
     assertEquals("error", unknown.get("status").getAsString());
     assertEquals("UNKNOWN_ACTION", unknown.get("code").getAsString());
     assertTrue(!unknown.get("plantWritePerformed").getAsBoolean());
