@@ -9,8 +9,8 @@ import java.util.Set;
  * Immutable, label-addressable source ledger for a qualified refinery blend batch.
  *
  * <p>
- * Source identifiers are caller metadata in the exact order of the batch arrays. This class copies the already-qualified
- * batch receipts; it does not infer source identity, alter blend calculations, or attest provenance.
+ * Source identifiers are caller metadata in the exact order of the batch arrays. This class copies the
+ * already-qualified batch receipts; it does not infer source identity, alter blend calculations, or attest provenance.
  * </p>
  */
 public final class RefineryBlendSourceLedger implements Serializable {
