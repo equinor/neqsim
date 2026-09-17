@@ -55,9 +55,11 @@ public final class NeqSimQuickStart {
 
 ### Process Simulation
 
-| Package | Documentation | Description |
+| Package / topic | Documentation | Description |
 |---------|---------------|-------------|
 | `neqsim.process` | [process/](process/) | Process equipment, unit operations, controllers, process systems, safety systems |
+| JSON builder input | [process/json_process_models_and_systems.md](process/json_process_models_and_systems.md) | Build hand-written ProcessSystem and ProcessModel JSON with validation, stream wiring, and supported ports |
+| JSON model export | [process/process_json_export_and_e300_fluids.md](process/process_json_export_and_e300_fluids.md) | Export live models to portable JSON, including named and E300-equivalent fluids |
 | `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
 ### Engineering
