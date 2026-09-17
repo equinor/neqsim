@@ -111,6 +111,64 @@ Common aliases accepted by the builder and validator:
 | Splitter/manifold | `Splitter.split0`, `Splitter.split1`, `Splitter.splitStream_0`, `Splitter.splitStream_1` |
 | Heat exchanger | `HX.outlet`, `HX.outlet0`, `HX.outlet1`, `HX.hx0`, `HX.hx1` |
 
+### Standalone sources and connected product streams
+
+A `Stream` without `inlet` or `inlets` is a standalone source. The builder clones the root
+`fluid` (or the named `fluidRef`) for that source, then applies its stream properties. A
+`Stream` with an `inlet` is different: it is a named product-stream wrapper around the resolved
+upstream outlet. It keeps that outlet's live fluid identity instead of creating an independent
+source fluid.
+
+The iterative wiring pass also resolves forward references once the referenced upstream outlet is
+available. Use `inlet` or `inlets` for physical process wiring. The optional root `connections`
+array records topology metadata for interchange and diagrams; it does not replace those wiring
+fields.
+
+This complete example creates an independent feed, cools it to 20 °C, and exposes the cooler outlet
+as the connected `Product` stream:
+
+<!-- connected-json-stream-example:start -->
+```json
+{
+  "fluid": {
+    "model": "SRK",
+    "temperature": 300.0,
+    "pressure": 50.0,
+    "components": {
+      "methane": 1.0
+    }
+  },
+  "autoRun": true,
+  "process": [
+    {
+      "type": "Stream",
+      "name": "Feed",
+      "properties": {
+        "flowRate": [1000.0, "kg/hr"]
+      }
+    },
+    {
+      "type": "Cooler",
+      "name": "Cooler",
+      "inlet": "Feed",
+      "properties": {
+        "outTemperature": [20.0, "C"]
+      }
+    },
+    {
+      "type": "Stream",
+      "name": "Product",
+      "inlet": "Cooler.outlet"
+    }
+  ]
+}
+```
+<!-- connected-json-stream-example:end -->
+
+After the build and run, `Feed` still owns its cloned source fluid, while `Product` and
+`Cooler.outlet` refer to the same live fluid. This makes `Product` suitable as the named inlet for
+subsequent equipment without duplicating the process state.
+
 ## 3.1 Supported equipment types
 
 The JSON builder delegates equipment creation to `EquipmentFactory`, so aliases and support evolve
