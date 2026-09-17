@@ -25,7 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 /** Compiles and executes the maintained density-model workflow from the user guide. */
 public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
   private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
@@ -57,7 +57,7 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
         "\\"COSTALD\\",
         "\\"NASTALD\\",
         "\\"Rackett\\",
-        "Do not tune \`setVolumeCorrectionConst(...)\` from a single density point",
+        "Do not tune `setVolumeCorrectionConst(...)` from a single density point",
         "validate against independent data")) {
       assertTrue(guide.contains(required), "Missing maintained density guidance: " + required);
     }
