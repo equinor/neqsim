@@ -52,8 +52,7 @@ public class JsonProcessStreamConnectionDocumentationTest extends neqsim.NeqSimT
   void guideStatesTheBuilderAndMetadataBoundaries() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/process/json_process_models_and_systems.md"));
-    String builder = read(
-        repositoryRoot.resolve("src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java"));
+    String builder = read(repositoryRoot.resolve("src/main/java/neqsim/process/processmodel/JsonProcessBuilder.java"));
 
     assertTrue(guide.contains("A `Stream` without `inlet` or `inlets` is a standalone source."));
     assertTrue(guide.contains("It keeps that outlet's live fluid identity"));
@@ -65,8 +64,7 @@ public class JsonProcessStreamConnectionDocumentationTest extends neqsim.NeqSimT
   private String extractExample(String guide) {
     int start = guide.indexOf(EXAMPLE_START);
     assertTrue(start >= 0, "Connected-Stream example start marker is missing");
-    assertEquals(-1, guide.indexOf(EXAMPLE_START, start + 1),
-        "Connected-Stream example must appear exactly once");
+    assertEquals(-1, guide.indexOf(EXAMPLE_START, start + 1), "Connected-Stream example must appear exactly once");
     int contentStart = start + EXAMPLE_START.length();
     int end = guide.indexOf(EXAMPLE_END, contentStart);
     assertTrue(end > contentStart, "Connected-Stream example end marker is missing");
