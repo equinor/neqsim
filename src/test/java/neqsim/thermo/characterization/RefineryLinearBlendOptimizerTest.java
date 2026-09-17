@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -74,6 +75,47 @@ public class RefineryLinearBlendOptimizerTest {
     double[] first = result.getSourceMassFractions();
     first[0] = 1.0;
     assertArrayEquals(new double[] { 0.25, 0.75, 0.0 }, result.getSourceMassFractions(), 1.0e-9);
+  }
+
+  @Test
+  public void resultRetainsAuditableQualityConstraintReceipt() {
+    RefineryLinearBlendOptimizer.Result result = threeSourceResult(false);
+    RefineryLinearBlendOptimizer.QualityConstraintReceipt receipt = result.getQualityConstraintReceipt();
+
+    assertEquals(result.getAssayBlend().getApiGravity(), receipt.getApiGravity(), 0.0);
+    assertEquals(30.0, receipt.getMinimumApiGravity(), 0.0);
+    assertEquals(60.0, receipt.getMaximumApiGravity(), 0.0);
+    assertEquals(receipt.getApiGravity() - 30.0, receipt.getApiLowerMargin(), 0.0);
+    assertEquals(60.0 - receipt.getApiGravity(), receipt.getApiUpperMargin(), 0.0);
+    assertEquals(result.getAssayBlend().getSulfurMassFraction(), receipt.getSulfurMassFraction(), 0.0);
+    assertEquals(0.015, receipt.getMaximumSulfurMassFraction(), 0.0);
+    assertEquals(0.0, receipt.getSulfurMargin(), 1.0e-12);
+    assertTrue(receipt.isSulfurBinding());
+    assertEquals(result.getAssayBlend().getNitrogenMassFraction(), receipt.getNitrogenMassFraction(), 0.0);
+    assertEquals(0.01, receipt.getMaximumNitrogenMassFraction(), 0.0);
+    assertEquals(0.01 - receipt.getNitrogenMassFraction(), receipt.getNitrogenMargin(), 0.0);
+    assertFalse(receipt.isNitrogenBinding());
+    assertEquals(result.getViscosityBlend().getKinematicViscosityCSt(), receipt.getKinematicViscosityCSt(), 0.0);
+    assertEquals(50.0, receipt.getMinimumKinematicViscosityCSt(), 0.0);
+    assertEquals(600.0, receipt.getMaximumKinematicViscosityCSt(), 0.0);
+    assertEquals(receipt.getKinematicViscosityCSt() - 50.0, receipt.getViscosityLowerMarginCSt(), 0.0);
+    assertEquals(600.0 - receipt.getKinematicViscosityCSt(), receipt.getViscosityUpperMarginCSt(), 0.0);
+    assertEquals(50.0, receipt.getTemperatureCelsius(), 0.0);
+  }
+
+  @Test
+  public void sourceOrderReversalPreservesQualityConstraintReceipt() {
+    RefineryLinearBlendOptimizer.QualityConstraintReceipt forward =
+        threeSourceResult(false).getQualityConstraintReceipt();
+    RefineryLinearBlendOptimizer.QualityConstraintReceipt reversed =
+        threeSourceResult(true).getQualityConstraintReceipt();
+
+    assertEquals(forward.getApiGravity(), reversed.getApiGravity(), 1.0e-12);
+    assertEquals(forward.getApiLowerMargin(), reversed.getApiLowerMargin(), 1.0e-12);
+    assertEquals(forward.getSulfurMargin(), reversed.getSulfurMargin(), 1.0e-12);
+    assertEquals(forward.getNitrogenMargin(), reversed.getNitrogenMargin(), 1.0e-12);
+    assertEquals(forward.getKinematicViscosityCSt(), reversed.getKinematicViscosityCSt(), 1.0e-9);
+    assertEquals(forward.getViscosityUpperMarginCSt(), reversed.getViscosityUpperMarginCSt(), 1.0e-9);
   }
 
   @Test
