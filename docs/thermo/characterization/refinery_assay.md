@@ -324,6 +324,11 @@ double[] sourceMassFractions = optimum.getSourceMassFractions();
 double unitCost = optimum.getUnitCostPerMass();
 double blendApi = optimum.getAssayBlend().getApiGravity();
 double blendViscosityCSt = optimum.getViscosityBlend().getKinematicViscosityCSt();
+
+RefineryLinearBlendOptimizer.QualityConstraintReceipt quality =
+    optimum.getQualityConstraintReceipt();
+double sulfurMargin = quality.getSulfurMargin();
+boolean sulfurConstraintIsBinding = quality.isSulfurBinding();
 ```
 
 The documented analytical case selects source fractions 0.25, 0.75, and 0.0, with unit cost
@@ -346,6 +351,20 @@ are transparent arithmetic integration cases, not measured multi-crude blend dat
 This is a screening optimizer. It does not model excess volume, blend contraction,
 viscosity-temperature extrapolation, phase or asphaltene compatibility, uncertainty, nonlinear or
 integer economics, inventory, scheduling, control actions, or certified product compliance.
+
+### Optimization quality-constraint receipts
+
+Every successful result retains an immutable `QualityConstraintReceipt`. It reports the realized
+API gravity, sulfur and nitrogen mass fractions, Refutas-blended kinematic viscosity, the exact
+bounds used by the solve, and the common viscosity temperature. Lower/upper or upper-only margins
+are reported on the same basis as their properties. A constraint is marked binding when its margin
+is within the optimizer's documented numerical tolerance.
+
+The receipt is generated only after the optimizer reconstructs and validates the physical blend.
+Negative margins larger than tolerance therefore fail closed; tolerance-scale negative roundoff is
+reported as zero. This is auditable optimization evidence, not sensitivity or uncertainty analysis.
+It does not expose dual prices, predict nonlinear quality behavior, calibrate a plant, or certify a
+product specification.
 
 ## Auditable blend-batch receipts
 
