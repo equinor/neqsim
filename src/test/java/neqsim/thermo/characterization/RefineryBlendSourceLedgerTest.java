@@ -47,8 +47,7 @@ public class RefineryBlendSourceLedgerTest {
     RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10.0, new double[] { 1.0, 0.0 },
         new double[] { 0.82, Double.NaN });
 
-    RefineryBlendSourceLedger ledger =
-        RefineryBlendSourceLedger.fromBatch(new String[] { "feed", "unused" }, batch);
+    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] { "feed", "unused" }, batch);
     RefineryBlendSourceLedger.SourceReceipt unused = ledger.getSourceReceipt("unused");
 
     assertFalse(unused.isContributing());
@@ -75,8 +74,7 @@ public class RefineryBlendSourceLedgerTest {
     assertThrows(IllegalArgumentException.class,
         () -> RefineryBlendSourceLedger.fromBatch(new String[] { "same", "same" }, batch));
 
-    RefineryBlendSourceLedger ledger =
-        RefineryBlendSourceLedger.fromBatch(new String[] { "a", "b" }, batch);
+    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] { "a", "b" }, batch);
     assertThrows(IllegalArgumentException.class, () -> ledger.getSourceReceipt("missing"));
   }
 }
