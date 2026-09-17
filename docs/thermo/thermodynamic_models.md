@@ -422,7 +422,14 @@ import neqsim.thermo.system.SystemUNIFAC;
 SystemInterface fluid = new SystemUNIFAC(300.0, 1.0);
 fluid.addComponent("methanol", 0.3);
 fluid.addComponent("water", 0.7);
+fluid.setMixingRule("classic");
+fluid.init(0);
 ```
+
+UNIFAC group lists and indexed arrays are synchronized automatically during component
+construction and group alignment. Repeated initialization requires no manual group
+copying. `SystemUNIFACpsrk` uses the same group assignments with its temperature-dependent
+interaction parameters; UMR-PRU retains its separate group table.
 
 ### 6.3 NRTL (Non-Random Two-Liquid)
 

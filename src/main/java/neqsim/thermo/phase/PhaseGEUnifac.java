@@ -132,9 +132,14 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
   }
 
   /**
-   * checkGroups.
+   * Align all components to the sorted union of their UNIFAC subgroups without changing group counts. Repeated calls
+   * also reconcile lists edited through the legacy mutable group-list accessor.
    */
   public void checkGroups() {
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentGEUnifac component = (ComponentGEUnifac) getComponent(i);
+      component.setUnifacGroups(component.getUnifacGroups2());
+    }
     ArrayList<neqsim.thermo.atomelement.UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
 
     for (int i = 0; i < numberOfComponents; i++) {
