@@ -24,10 +24,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Compiles and executes the maintained density-model workflow from the user guide. */
 public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -36,38 +35,25 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
   void guideMatchesCurrentDensityApisAndBoundaries() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
     String guide = read(repositoryRoot.resolve("docs/physical_properties/density_models.md"));
-    String systemInterface =
-        read(repositoryRoot.resolve("src/main/java/neqsim/thermo/system/SystemInterface.java"));
-    String physicalProperties =
-        read(repositoryRoot.resolve(
-            "src/main/java/neqsim/physicalproperties/system/PhysicalProperties.java"));
-    String costaldTest =
-        read(repositoryRoot.resolve(
-            "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/"
-                + "density/CostaldTest.java"));
+    String systemInterface = read(repositoryRoot.resolve("src/main/java/neqsim/thermo/system/SystemInterface.java"));
+    String physicalProperties = read(
+        repositoryRoot.resolve("src/main/java/neqsim/physicalproperties/system/PhysicalProperties.java"));
+    String costaldTest = read(repositoryRoot.resolve(
+        "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/" + "density/CostaldTest.java"));
 
     assertTrue(systemInterface.contains("setLiquidDensityModel(String densityModel)"));
-    assertTrue(systemInterface.contains(
-        "getDensityAtReferenceConditions(double referenceTemperature"));
+    assertTrue(systemInterface.contains("getDensityAtReferenceConditions(double referenceTemperature"));
     assertTrue(physicalProperties.contains("setDensityModel(String densityModel)"));
     assertTrue(costaldTest.contains("setLiquidDensityModel(\"COSTALD\")"));
 
-    for (String required : Arrays.asList(
-        "\"Peneloux\"",
-        "\"COSTALD\"",
-        "\"NASTALD\"",
-        "\"Rackett\"",
+    for (String required : Arrays.asList("\"Peneloux\"", "\"COSTALD\"", "\"NASTALD\"", "\"Rackett\"",
         "Do not tune `setVolumeCorrectionConst(...)` from a single density point",
         "validate against independent data")) {
       assertTrue(guide.contains(required), "Missing maintained density guidance: " + required);
     }
 
-    for (String rejected : Arrays.asList(
-        "System.out",
-        "### Tuning Liquid Density",
-        "### High-Pressure Density",
-        "Adjust volume correction to match experimental",
-        "Consider using PC-SAFT or adjusting correction")) {
+    for (String rejected : Arrays.asList("System.out", "### Tuning Liquid Density", "### High-Pressure Density",
+        "Adjust volume correction to match experimental", "Consider using PC-SAFT or adjusting correction")) {
       assertFalse(guide.contains(rejected), "Rejected density guidance: " + rejected);
     }
   }
@@ -112,38 +98,18 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
-      assertTrue(
-          Boolean.TRUE.equals(successful),
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful),
           "docs/physical_properties/density_models.md: " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
