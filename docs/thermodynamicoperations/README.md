@@ -76,6 +76,37 @@ Common state flashes exposed by the facade include:
 lightest phase. It is not a general molar vapour-fraction specification; inspect
 the resulting phase types before interpreting the fraction.
 
+## PS flash convergence
+
+`PSflash(S)`, the unit-qualified `PSflash(S, unit)` overload and `PSflash2(S)`
+return only when the total entropy residual satisfies
+`abs(Sactual - Sspecified) <= max(1e-8 * n, 1e-10 * abs(Sspecified))` J/K,
+where `n` is the system amount in moles. Unit-qualified targets are converted to
+total J/K before applying this criterion. The amount-scaled absolute tolerance
+also applies when the target entropy is zero or negative. Pressure is preserved;
+temperature and pressure must be finite and positive, and phase fractions must
+be finite, bounded by zero and one, and normalized.
+
+The temperature solver uses bounded Newton steps and a sign-changing bracket
+across mixture phase boundaries, then checks the endpoint with a cold TP flash.
+Pure-component two-phase states continue to use saturation temperature and an
+entropy-based phase fraction, since temperature alone cannot span latent entropy
+at a fixed pressure. This covers dense CO2 and CO2-rich mixtures crossing into
+the two-phase region; it does not add solid CO2 equilibrium.
+
+Non-finite entropy targets or invalid initial temperature, pressure or fluid
+amount raise `IllegalArgumentException`. Failure to converge raises
+`IllegalStateException`, including the entropy residual and state when available,
+instead of returning the last iterate as a solution. The fluid is modified in
+place: after an exception, restore a saved inlet or reinitialize before retrying.
+These semantics concern the standard EOS PS methods above; specialized GERG2008,
+Leachman and Vega PS methods have their own implementations.
+
+Regression coverage is in `PSFlashEntropyClosureTest`: fresh and continuation
+starts for CO2/nitrogen and CO2/hydrogen, pure-CO2 phase entry, independent cold
+TP-root comparisons, component inventory and phase checks, entropy units and
+system amounts, and explicit failure behavior.
+
 ## Saturation and phase-aware operations
 
 The same facade provides the following public operations:

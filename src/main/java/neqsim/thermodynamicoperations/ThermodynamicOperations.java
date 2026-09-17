@@ -665,9 +665,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * PSflash.
+   * Solve temperature and phase split at the current pressure and specified total entropy.
    *
-   * @param Sspec a double
+   * <p>
+   * Normal return requires an entropy residual no larger than {@code max(1e-8 * totalMoles, 1e-10 * abs(Sspec))} J/K,
+   * finite positive temperature and pressure, and finite normalized phase fractions. Pure fluids retain the
+   * saturation/phase-fraction solve. The fluid is modified in place; a failed calculation must not be used as a solved
+   * state.
+   * </p>
+   *
+   * @param Sspec total entropy in J/K for the current system amount
+   * @throws IllegalArgumentException if entropy is non-finite or temperature, pressure or amount is invalid
+   * @throws IllegalStateException if the equilibrium calculation cannot satisfy the specification
    */
   public void PSflash(double Sspec) {
     if (system.getPhase(0).getNumberOfComponents() == 1) {
@@ -683,6 +692,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param Sspec is the entropy in the specified unit
    * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
+   * @throws IllegalArgumentException if the converted target or initial state is invalid
+   * @throws IllegalStateException if the convergence postconditions of {@link #PSflash(double)} are not met
    */
   public void PSflash(double Sspec, String unit) {
     double conversionFactor = 1.0;
@@ -772,9 +783,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * PSflash2.
+   * Solve a PS flash directly with the temperature solver, including the entropy postcondition.
    *
-   * @param Sspec a double
+   * @param Sspec total entropy in J/K
+   * @throws IllegalArgumentException if the target or initial state is invalid
+   * @throws IllegalStateException if the entropy specification cannot be satisfied
+   * @see #PSflash(double)
    */
   public void PSflash2(double Sspec) {
     operation = new PSFlash(system, Sspec, 0);

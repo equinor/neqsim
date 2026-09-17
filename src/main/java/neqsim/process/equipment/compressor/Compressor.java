@@ -838,6 +838,25 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Match the PS solver to the entropy reference used for the compressor inlet.
+   *
+   * @param thermoOps operations bound to the compressor fluid
+   * @param targetEntropy total entropy from the selected property model in J/K
+   */
+  private void runPsFlashForSelectedModel(ThermodynamicOperations thermoOps, double targetEntropy) {
+    // Match the precedence used when the inlet entropy and enthalpy are selected in run().
+    if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      thermoOps.PSflashVega(targetEntropy);
+    } else if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      thermoOps.PSflashLeachman(targetEntropy);
+    } else if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
+      thermoOps.PSflashGERG2008(targetEntropy);
+    } else {
+      runRegularPsFlash(thermoOps, targetEntropy);
+    }
+  }
+
+  /**
    * Run a pressure-entropy flash with a robust CPA multiphase shortcut.
    *
    * @param thermoOps thermodynamic operations bound to the compressor thermo system
@@ -1149,16 +1168,7 @@ public class Compressor extends TwoPortEquipment
       } else {
         double MW = thermoSystem.getMolarMass();
         thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-        runRegularPsFlash(thermoOps, entropy);
-        if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PSflashGERG2008(entropy);
-        }
-        if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PSflashLeachman(entropy);
-        }
-        if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-          thermoOps.PSflashVega(entropy);
-        }
+        runPsFlashForSelectedModel(thermoOps, entropy);
         thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double densOutIsentropic = thermoSystem.getDensity("kg/m3");
         double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
@@ -1574,15 +1584,7 @@ public class Compressor extends TwoPortEquipment
             }
             getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
             thermoOps = new ThermodynamicOperations(getThermoSystem());
-            if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashGERG2008(entropy);
-            } else if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashLeachman(entropy);
-            } else if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-              thermoOps.PSflashVega(entropy);
-            } else {
-              runRegularPsFlash(thermoOps, entropy);
-            }
+            runPsFlashForSelectedModel(thermoOps, entropy);
             double newEnt = getThermoSystem().getEnthalpy();
             if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
               double[] gergProps;
@@ -1618,26 +1620,23 @@ public class Compressor extends TwoPortEquipment
           double schultzX = thermoSystem.getTemperature() / thermoSystem.getVolume() * thermoSystem.getdVdTpn() - 1.0;
           double schultzY = -thermoSystem.getPressure() / thermoSystem.getVolume() * thermoSystem.getdVdPtn();
           thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-          runRegularPsFlash(thermoOps, entropy);
+          runPsFlashForSelectedModel(thermoOps, entropy);
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
           if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashGERG2008(entropy);
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
             enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashLeachman(entropy);
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Leachman();
             enthalpyOutIsentropic = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashVega(entropy);
             double[] VegaProps;
             VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
@@ -1668,26 +1667,23 @@ public class Compressor extends TwoPortEquipment
           }
         } else {
           thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-          runRegularPsFlash(thermoOps, entropy);
+          runPsFlashForSelectedModel(thermoOps, entropy);
           thermoSystem.initProperties();
           double densOutIsentropic = thermoSystem.getDensity("kg/m3");
           double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
           if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashGERG2008(entropy);
             double[] gergProps;
             gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_GERG2008();
             enthalpyOutIsentropic = gergProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashLeachman(entropy);
             double[] LeachmanProps;
             LeachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Leachman();
             enthalpyOutIsentropic = LeachmanProps[7] * getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
           }
           if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            thermoOps.PSflashVega(entropy);
             double[] VegaProps;
             VegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
             densOutIsentropic = getThermoSystem().getPhase(0).getDensity_Vega();
@@ -1722,16 +1718,7 @@ public class Compressor extends TwoPortEquipment
       getThermoSystem().setPressure(pressure, pressureUnit);
       // System.out.println("entropy inn.." + entropy);
       thermoOps = new ThermodynamicOperations(getThermoSystem());
-      runRegularPsFlash(thermoOps, entropy);
-      if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-        thermoOps.PSflashGERG2008(entropy);
-      }
-      if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-        thermoOps.PSflashLeachman(entropy);
-      }
-      if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-        thermoOps.PSflashVega(entropy);
-      }
+      runPsFlashForSelectedModel(thermoOps, entropy);
       // double densOutIdeal = getThermoSystem().getDensity();
       double newEnt = getThermoSystem().getEnthalpy();
       if (!powerSet) {
