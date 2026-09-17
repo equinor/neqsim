@@ -27,10 +27,10 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
 
   @Test
   void testLedgerPreservesOrderKeysAndCumulativeClosure() {
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25,
-        PRODUCT_BASIS, "batch-0", "segment-0");
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result second = batch(referenceSegment(6.0), 0.50,
-        PRODUCT_BASIS, "batch-1", "segment-1");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25, PRODUCT_BASIS,
+        "batch-0", "segment-0");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result second = batch(referenceSegment(6.0), 0.50, PRODUCT_BASIS,
+        "batch-1", "segment-1");
 
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = AqueousHydrogenSulfideOxidationS8TransferLedger
         .create(Arrays.asList(first, second), "ledger-A");
@@ -49,19 +49,19 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
         ledger.getTotalSourceSulfurEquivalentMassKg(), 0.0);
     assertEquals(first.getTotalTransferredS8MassKg() + second.getTotalTransferredS8MassKg(),
         ledger.getTotalTransferredS8MassKg(), 0.0);
-    assertEquals(first.getTotalUnallocatedSulfurEquivalentMassKg()
-        + second.getTotalUnallocatedSulfurEquivalentMassKg(),
+    assertEquals(first.getTotalUnallocatedSulfurEquivalentMassKg() + second.getTotalUnallocatedSulfurEquivalentMassKg(),
         ledger.getTotalUnallocatedSulfurEquivalentMassKg(), 0.0);
-    assertEquals(ledger.getTotalSourceSulfurEquivalentMassKg()
-        - (ledger.getTotalTransferredS8MassKg() + ledger.getTotalUnallocatedSulfurEquivalentMassKg()),
+    assertEquals(
+        ledger.getTotalSourceSulfurEquivalentMassKg()
+            - (ledger.getTotalTransferredS8MassKg() + ledger.getTotalUnallocatedSulfurEquivalentMassKg()),
         ledger.getMassClosureResidualKg(), 0.0);
     assertEquals(0.0, ledger.getMassClosureResidualKg(), TOLERANCE);
   }
 
   @Test
   void testDuplicateBatchKeysAndMixedProductBasesFailClosed() {
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25,
-        PRODUCT_BASIS, "batch-0", "duplicate-key");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25, PRODUCT_BASIS,
+        "batch-0", "duplicate-key");
     AqueousHydrogenSulfideOxidationS8TransferBatch.Result duplicateKey = batch(referenceSegment(6.0), 0.50,
         PRODUCT_BASIS, "batch-1", "duplicate-key");
     AqueousHydrogenSulfideOxidationS8TransferBatch.Result duplicateBatch = batch(referenceSegment(6.0), 0.50,
@@ -69,18 +69,18 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
     AqueousHydrogenSulfideOxidationS8TransferBatch.Result mixedBasis = batch(referenceSegment(6.0), 0.50,
         "different-product-basis", "batch-1", "segment-1");
 
-    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8TransferLedger
-        .create(Arrays.asList(first, duplicateKey), "ledger"));
-    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8TransferLedger
-        .create(Arrays.asList(first, duplicateBatch), "ledger"));
-    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8TransferLedger
-        .create(Arrays.asList(first, mixedBasis), "ledger"));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationS8TransferLedger.create(Arrays.asList(first, duplicateKey), "ledger"));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationS8TransferLedger.create(Arrays.asList(first, duplicateBatch), "ledger"));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationS8TransferLedger.create(Arrays.asList(first, mixedBasis), "ledger"));
   }
 
   @Test
   void testSerializedLedgerAppendRejectsPreviouslyConsumedKey() throws Exception {
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25,
-        PRODUCT_BASIS, "batch-0", "persisted-key");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result first = batch(referenceSegment(4.0), 0.25, PRODUCT_BASIS,
+        "batch-0", "persisted-key");
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result original = AqueousHydrogenSulfideOxidationS8TransferLedger
         .create(Collections.singletonList(first), "persistent-ledger");
 
@@ -93,12 +93,12 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
       restored = (AqueousHydrogenSulfideOxidationS8TransferLedger.Result) input.readObject();
     }
 
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result next = batch(referenceSegment(6.0), 0.50,
-        PRODUCT_BASIS, "batch-1", "new-key");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result next = batch(referenceSegment(6.0), 0.50, PRODUCT_BASIS,
+        "batch-1", "new-key");
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result appended = AqueousHydrogenSulfideOxidationS8TransferLedger
         .append(restored, next);
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result duplicate = batch(referenceSegment(6.0), 0.50,
-        PRODUCT_BASIS, "batch-2", "persisted-key");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result duplicate = batch(referenceSegment(6.0), 0.50, PRODUCT_BASIS,
+        "batch-2", "persisted-key");
 
     assertNotSame(original, restored);
     assertNotSame(restored, appended);
@@ -122,14 +122,14 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
     assertEquals(unsplit.getTotalTransferredS8MassKg(), split.getTotalTransferredS8MassKg(), TOLERANCE);
     assertEquals(unsplit.getTotalSourceSulfurEquivalentMassKg(), split.getTotalSourceSulfurEquivalentMassKg(),
         TOLERANCE);
-    assertEquals(unsplit.getTotalUnallocatedSulfurEquivalentMassKg(),
-        split.getTotalUnallocatedSulfurEquivalentMassKg(), TOLERANCE);
+    assertEquals(unsplit.getTotalUnallocatedSulfurEquivalentMassKg(), split.getTotalUnallocatedSulfurEquivalentMassKg(),
+        TOLERANCE);
   }
 
   @Test
   void testMissingOrInvalidLedgerEvidenceFailsClosed() {
-    AqueousHydrogenSulfideOxidationS8TransferBatch.Result valid = batch(referenceSegment(10.0), 0.40,
-        PRODUCT_BASIS, "batch", "segment-0");
+    AqueousHydrogenSulfideOxidationS8TransferBatch.Result valid = batch(referenceSegment(10.0), 0.40, PRODUCT_BASIS,
+        "batch", "segment-0");
     List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> nullBatch = new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>();
     nullBatch.add(null);
     String oversizedIdentifier = new String(new char[257]).replace('\0', 'x');
@@ -146,10 +146,8 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
     assertInvalidIdentifier(valid, oversizedIdentifier);
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationS8TransferLedger.append(null, valid));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8TransferLedger.append(
-            AqueousHydrogenSulfideOxidationS8TransferLedger.create(Collections.singletonList(valid), "ledger"),
-            null));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8TransferLedger.append(
+        AqueousHydrogenSulfideOxidationS8TransferLedger.create(Collections.singletonList(valid), "ledger"), null));
   }
 
   private static void assertInvalidIdentifier(AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch,
@@ -186,8 +184,8 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTest extends NeqSimT
     AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation = AqueousHydrogenSulfideOxidationElementalSulfurAllocation
         .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
             allocationFraction, ALLOCATION_BASIS);
-    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer.create(
-        allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, productBasis, idempotencyKey);
+    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer
+        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, productBasis, idempotencyKey);
     return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer), batchIdentifier);
   }
 

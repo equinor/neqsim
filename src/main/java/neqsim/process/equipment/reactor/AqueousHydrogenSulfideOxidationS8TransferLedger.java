@@ -11,11 +11,10 @@ import java.util.Set;
  * Maintains an immutable, append-only accounting ledger for mass-based S8 transfer batches.
  *
  * <p>
- * This class rejects duplicate batch identifiers and downstream idempotency keys across batches,
- * requires one product-identity basis, and closes the cumulative sulfur mass budget. Persisting the
- * serializable result lets a caller retain this bounded duplicate-consumption evidence across a
- * process restart. The class does not provide distributed locking or mutate a stream, flash,
- * deposition, filter, wall, process, transient, or pipeline model.
+ * This class rejects duplicate batch identifiers and downstream idempotency keys across batches, requires one
+ * product-identity basis, and closes the cumulative sulfur mass budget. Persisting the serializable result lets a
+ * caller retain this bounded duplicate-consumption evidence across a process restart. The class does not provide
+ * distributed locking or mutate a stream, flash, deposition, filter, wall, process, transient, or pipeline model.
  * </p>
  *
  * @author esol
@@ -75,13 +74,12 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedger {
           "Ledger source sulfur-equivalent mass");
       totalTransferredMassKg = finiteSum(totalTransferredMassKg, batch.getTotalTransferredS8MassKg(),
           "Ledger transferred S8 mass");
-      totalUnallocatedMassKg = finiteSum(totalUnallocatedMassKg,
-          batch.getTotalUnallocatedSulfurEquivalentMassKg(), "Ledger unallocated sulfur-equivalent mass");
+      totalUnallocatedMassKg = finiteSum(totalUnallocatedMassKg, batch.getTotalUnallocatedSulfurEquivalentMassKg(),
+          "Ledger unallocated sulfur-equivalent mass");
       copy.add(batch);
     }
 
-    double accountedMassKg = finiteSum(totalTransferredMassKg, totalUnallocatedMassKg,
-        "Ledger accounted sulfur mass");
+    double accountedMassKg = finiteSum(totalTransferredMassKg, totalUnallocatedMassKg, "Ledger accounted sulfur mass");
     double closureResidualKg = totalSourceMassKg - accountedMassKg;
     requireFinite(closureResidualKg, "Ledger mass closure residual");
     double closureScale = Math.max(Math.abs(totalSourceMassKg), Math.abs(accountedMassKg));
@@ -90,17 +88,17 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedger {
       throw new IllegalArgumentException("Ledger sulfur mass budget does not close");
     }
 
-    return new Result(validatedLedgerIdentifier, productIdentityBasisIdentifier,
-        Collections.unmodifiableList(copy), Collections.unmodifiableSet(new HashSet<String>(idempotencyKeys)),
-        transferCount, totalSourceMassKg, totalTransferredMassKg, totalUnallocatedMassKg, closureResidualKg);
+    return new Result(validatedLedgerIdentifier, productIdentityBasisIdentifier, Collections.unmodifiableList(copy),
+        Collections.unmodifiableSet(new HashSet<String>(idempotencyKeys)), transferCount, totalSourceMassKg,
+        totalTransferredMassKg, totalUnallocatedMassKg, closureResidualKg);
   }
 
   /**
    * Append one batch to an existing ledger without mutating the prior result.
    *
    * <p>
-   * A deserialized ledger can be supplied here. Rebuilding the complete ledger rechecks every
-   * recorded batch and idempotency key before the append succeeds.
+   * A deserialized ledger can be supplied here. Rebuilding the complete ledger rechecks every recorded batch and
+   * idempotency key before the append succeeds.
    * </p>
    *
    * @param ledger existing immutable ledger
@@ -130,16 +128,14 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedger {
         || batch.getTransferCount() != batch.getTransfers().size()) {
       throw new IllegalArgumentException("Transfer batch receipt count is inconsistent");
     }
-    requireNonNegativeFinite(batch.getTotalSourceSulfurEquivalentMassKg(),
-        "Batch source sulfur-equivalent mass");
+    requireNonNegativeFinite(batch.getTotalSourceSulfurEquivalentMassKg(), "Batch source sulfur-equivalent mass");
     requireNonNegativeFinite(batch.getTotalTransferredS8MassKg(), "Batch transferred S8 mass");
     requireNonNegativeFinite(batch.getTotalUnallocatedSulfurEquivalentMassKg(),
         "Batch unallocated sulfur-equivalent mass");
     requireFinite(batch.getMassClosureResidualKg(), "Batch mass closure residual");
 
-    double residual = batch.getTotalSourceSulfurEquivalentMassKg()
-        - finiteSum(batch.getTotalTransferredS8MassKg(), batch.getTotalUnallocatedSulfurEquivalentMassKg(),
-            "Batch accounted sulfur mass");
+    double residual = batch.getTotalSourceSulfurEquivalentMassKg() - finiteSum(batch.getTotalTransferredS8MassKg(),
+        batch.getTotalUnallocatedSulfurEquivalentMassKg(), "Batch accounted sulfur mass");
     if (Double.doubleToLongBits(residual) != Double.doubleToLongBits(batch.getMassClosureResidualKg())) {
       throw new IllegalArgumentException("Transfer batch closure evidence is inconsistent");
     }
@@ -202,10 +198,9 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedger {
     private final double massClosureResidualKg;
 
     private Result(String ledgerIdentifier, String productIdentityBasisIdentifier,
-        List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> batches,
-        Set<String> downstreamIdempotencyKeys, int transferCount, double totalSourceSulfurEquivalentMassKg,
-        double totalTransferredS8MassKg, double totalUnallocatedSulfurEquivalentMassKg,
-        double massClosureResidualKg) {
+        List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> batches, Set<String> downstreamIdempotencyKeys,
+        int transferCount, double totalSourceSulfurEquivalentMassKg, double totalTransferredS8MassKg,
+        double totalUnallocatedSulfurEquivalentMassKg, double massClosureResidualKg) {
       this.ledgerIdentifier = ledgerIdentifier;
       this.productIdentityBasisIdentifier = productIdentityBasisIdentifier;
       this.batches = batches;
