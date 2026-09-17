@@ -668,7 +668,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Solve temperature and phase split at the current pressure and specified total entropy.
    *
    * <p>
-   * Normal return requires an entropy residual no larger than {@code max(1e-8 * totalMoles, 1e-6 * abs(Sspec))} J/K,
+   * Normal return requires an entropy residual no larger than {@code max(1e-8 * totalMoles, 1e-10 * abs(Sspec))} J/K,
    * finite positive temperature and pressure, and finite normalized phase fractions. Pure fluids retain the
    * saturation/phase-fraction solve. The fluid is modified in place; a failed calculation must not be used as a solved
    * state.

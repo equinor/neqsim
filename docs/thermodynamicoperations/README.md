@@ -80,7 +80,7 @@ the resulting phase types before interpreting the fraction.
 
 `PSflash(S)`, the unit-qualified `PSflash(S, unit)` overload and `PSflash2(S)`
 return only when the total entropy residual satisfies
-`abs(Sactual - Sspecified) <= max(1e-8 * n, 1e-6 * abs(Sspecified))` J/K,
+`abs(Sactual - Sspecified) <= max(1e-8 * n, 1e-10 * abs(Sspecified))` J/K,
 where `n` is the system amount in moles. Unit-qualified targets are converted to
 total J/K before applying this criterion. The amount-scaled absolute tolerance
 also applies when the target entropy is zero or negative. Pressure is preserved;

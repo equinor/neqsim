@@ -7,7 +7,7 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Normal return requires finite state variables, normalized phase fractions and a total entropy residual within
- * {@code max(1e-8 * n, 1e-6 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
+ * {@code max(1e-8 * n, 1e-10 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
  * an {@link IllegalStateException}.
  * </p>
  *
@@ -19,8 +19,8 @@ public class PSFlash extends QfuncFlash {
   private static final long serialVersionUID = 1000;
   /** Absolute molar entropy tolerance in J/(mol K). */
   private static final double MOLAR_ENTROPY_TOLERANCE = 1.0e-8;
-  /** Relative total-entropy tolerance, chosen above TP-flash numerical noise. */
-  private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-6;
+  /** Relative total-entropy tolerance for the temperature iteration. */
+  private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-10;
   /** Number of non-improving Newton iterations before a cold bracket recovery. */
   private static final int STAGNATION_LIMIT = 8;
   /** Maximum number of safeguarded temperature iterations. */
@@ -149,8 +149,7 @@ public class PSFlash extends QfuncFlash {
    */
   private double solveWithColdBracket(double initialTemperature, double tolerance) {
     neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
-    double trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE,
-        Math.min(MAX_BRACKET_TEMPERATURE, initialTemperature));
+    double trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE, Math.min(MAX_BRACKET_TEMPERATURE, initialTemperature));
     double residual = evaluateColdResidual(trialTemperature);
     if (Math.abs(residual) <= tolerance) {
       return trialTemperature;
