@@ -105,10 +105,10 @@ public class RefineryLinearBlendOptimizerTest {
 
   @Test
   public void sourceOrderReversalPreservesQualityConstraintReceipt() {
-    RefineryLinearBlendOptimizer.QualityConstraintReceipt forward =
-        threeSourceResult(false).getQualityConstraintReceipt();
-    RefineryLinearBlendOptimizer.QualityConstraintReceipt reversed =
-        threeSourceResult(true).getQualityConstraintReceipt();
+    RefineryLinearBlendOptimizer.QualityConstraintReceipt forward = threeSourceResult(false)
+        .getQualityConstraintReceipt();
+    RefineryLinearBlendOptimizer.QualityConstraintReceipt reversed = threeSourceResult(true)
+        .getQualityConstraintReceipt();
 
     assertEquals(forward.getApiGravity(), reversed.getApiGravity(), 1.0e-12);
     assertEquals(forward.getApiLowerMargin(), reversed.getApiLowerMargin(), 1.0e-12);
