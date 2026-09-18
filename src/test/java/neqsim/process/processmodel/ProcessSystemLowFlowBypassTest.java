@@ -34,7 +34,7 @@ public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
     Stream lowFlowFeed = new Stream("lowFlowFeed", makeGas(0.0));
 
     Heater lowHeater = new Heater("lowHeater", lowFlowFeed);
-    lowHeater.setOutTemperature(310.0);
+    lowHeater.setOutletTemperature(310.0);
     lowHeater.setMinimumFlow(1.0);
 
     Mixer mix = new Mixer("mix");
@@ -58,12 +58,12 @@ public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
     Stream feed = new Stream("feed", makeGas(2000.0));
 
     Splitter split = new Splitter("split", feed, 2);
-    split.setSplitFactors(new double[] { 0.5, 0.5 });
+    split.setSplitFactors(new double[] {0.5, 0.5});
 
     Heater hA = new Heater("hA", split.getSplitStream(0));
-    hA.setOutTemperature(320.0);
+    hA.setOutletTemperature(320.0);
     Heater hB = new Heater("hB", split.getSplitStream(1));
-    hB.setOutTemperature(340.0);
+    hB.setOutletTemperature(340.0);
 
     ProcessSystem ps = new ProcessSystem();
     ps.add(feed);
@@ -111,7 +111,7 @@ public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
   public void processModelDeactivateSectionPropagatesToArea() {
     Stream feed = new Stream("mFeed", makeGas(1500.0));
     Heater heater = new Heater("mHeater", feed);
-    heater.setOutTemperature(330.0);
+    heater.setOutletTemperature(330.0);
 
     ProcessSystem area = new ProcessSystem();
     area.add(feed);

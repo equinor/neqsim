@@ -84,15 +84,15 @@ class CapacityOptimizationDocumentationTest {
     assertEquals(400.0, result.getOptimalRate(), 0.5);
     assertEquals(0.0, result.getDecisionVariables().get("totalPower_kW"), 1e-12);
     assertNotNull(result.getBottleneck());
-    LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] { 40.0, 50.0, 60.0 },
-        new double[] { 30.0, 35.0 }, "bara");
+    LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] {40.0, 50.0, 60.0}, new double[] {30.0, 35.0},
+        "bara");
     assertEquals(3, table.countFeasiblePoints());
     assertEquals(400.0, table.getFlowRate(0, 0), 0.5);
     assertEquals(0.0, table.getPower(0, 0), 1e-12);
     assertTrue(Double.isNaN(table.getFlowRate(0, 1)));
     assertTrue(table.toDiagnosticTable().contains("NaN"));
     assertEquals(table.toDiagnosticTable(), table.toEclipseFormat());
-    double[] curve = optimizer.generateCapacityCurve(60.0, new double[] { 30.0, 35.0 }, "bara");
+    double[] curve = optimizer.generateCapacityCurve(60.0, new double[] {30.0, 35.0}, "bara");
     assertEquals(400.0, curve[0], 0.5);
     assertTrue(Double.isNaN(curve[1]));
     // The wrapper restores the original feed pressure, so replay the accepted point explicitly.
@@ -104,9 +104,9 @@ class CapacityOptimizationDocumentationTest {
 
   @Test
   void infeasibleCapacityMatrixIsStrictJsonWithNullNumbers() {
-    LiftCurveTable table = new LiftCurveTable("quoted \"table\"", new double[] { 50.0 }, new double[] { 30.0, 40.0 },
-        new double[][] { { 400.0, Double.NaN } }, new double[][] { { 0.0, Double.POSITIVE_INFINITY } },
-        new String[][] { { "valve", "INFEASIBLE" } }, "bara", "kg/hr");
+    LiftCurveTable table = new LiftCurveTable("quoted \"table\"", new double[] {50.0}, new double[] {30.0, 40.0},
+        new double[][] {{400.0, Double.NaN}}, new double[][] {{0.0, Double.POSITIVE_INFINITY}},
+        new String[][] {{"valve", "INFEASIBLE"}}, "bara", "kg/hr");
     JsonReader reader = new JsonReader(new StringReader(table.toJson()));
     reader.setStrictness(Strictness.STRICT);
     JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
@@ -204,7 +204,7 @@ class CapacityOptimizationDocumentationTest {
     Manifold manifold = new Manifold("Production Manifold");
     manifold.addStream(feed);
     manifold.addStream(feed.clone("Second feed"));
-    manifold.setSplitFactors(new double[] { 0.4, 0.3, 0.3 });
+    manifold.setSplitFactors(new double[] {0.4, 0.3, 0.3});
     manifold.setMaxHeaderVelocityDesign(15.0);
     manifold.setMaxBranchVelocityDesign(15.0);
     manifold.setHeaderInnerDiameter(0.3);
@@ -264,7 +264,7 @@ class CapacityOptimizationDocumentationTest {
   void installedHeaterStrategyRetainsTheCompleteStrategyContract() {
     Stream feed = gasFeed(1000.0);
     Heater heater = new Heater("Process Heater", feed);
-    heater.setOutTemperature(350.0);
+    heater.setOutletTemperature(350.0);
     heater.run();
     InstalledHeaterDutyStrategy strategy = new InstalledHeaterDutyStrategy();
     assertTrue(strategy.supports(heater));
@@ -289,11 +289,11 @@ class CapacityOptimizationDocumentationTest {
     exporter.setDatumDepth(1500.0);
     exporter.setFlowRateType("GAS");
     exporter.setUnitSystem("METRIC");
-    exporter.setFlowRates(new double[] { 10000.0, 20000.0 });
-    exporter.setTHPs(new double[] { 30.0, 40.0 });
-    exporter.setWaterCuts(new double[] { 0.0 });
-    exporter.setGORs(new double[] { 0.0 });
-    exporter.setALQs(new double[] { 0.0 });
+    exporter.setFlowRates(new double[] {10000.0, 20000.0});
+    exporter.setTHPs(new double[] {30.0, 40.0});
+    exporter.setWaterCuts(new double[] {0.0});
+    exporter.setGORs(new double[] {0.0});
+    exporter.setALQs(new double[] {0.0});
     double[][][][][] bhp = new double[2][2][1][1][1];
     bhp[0][0][0][0][0] = 35.0;
     bhp[1][0][0][0][0] = 42.0;

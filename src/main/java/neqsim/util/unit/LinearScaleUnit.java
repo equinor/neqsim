@@ -17,7 +17,7 @@ package neqsim.util.unit;
  * bias).
  * </p>
  *
- * @author esol
+ * @author asmf
  * @version $Id: $Id
  */
 public interface LinearScaleUnit extends Unit {

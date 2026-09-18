@@ -39,10 +39,10 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     feedTEG.addComponent("water", 0.19 - 1 * 0.00005);
     feedTEG.addComponent("TEG", 0.8);
     feedTEG.setMixingRule(10);
-    feedTEG.setMolarComposition(new double[] { 0.00003, 0.2 - 1 * 0.00003, 0.8 });
+    feedTEG.setMolarComposition(new double[] {0.00003, 0.2 - 1 * 0.00003, 0.8});
 
     neqsim.thermo.system.SystemInterface strippingGasToStripperFluid = feedTEG.clone();
-    strippingGasToStripperFluid.setMolarComposition(new double[] { 1.0, 0.0, 0.0 });
+    strippingGasToStripperFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripgas", strippingGasToStripperFluid);
     strippingGas.setFlowRate(13.0, "kg/hr");
@@ -61,8 +61,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(TEGtoRegenerator, 1);
-    column.getReboiler().setOutTemperature(273.15 + 209.0);
-    column.getCondenser().setOutTemperature(273.15 + 104.0);
+    column.getReboiler().setOutletTemperature(273.15 + 209.0);
+    column.getCondenser().setOutletTemperature(273.15 + 104.0);
     column.getTray(1).addStream(gasToReboiler);
     // column.getReboiler().addStream(gasToReboiler);
     column.setTopPressure(0.1 + ThermodynamicConstantsInterface.referencePressure);
@@ -79,10 +79,10 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     Heater coolerPipe = new Heater("heat loss cooling", column.getGasOutStream());
-    coolerPipe.setOutTemperature(273.15 + 81.0);
+    coolerPipe.setOutletTemperature(273.15 + 81.0);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", coolerPipe.getOutletStream());
-    coolerRegenGas.setOutTemperature(273.15 + 25.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 25.0);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -90,7 +90,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     blower.setOutletPressure(0.2, "barg");
 
     Heater gasHeater = new Heater("heater", blower.getOutletStream());
-    gasHeater.setOutTemperature(273.15 + 53.0);
+    gasHeater.setOutletTemperature(273.15 + 53.0);
 
     Recycle recycleGasfEED = new Recycle("FEED gas recirc");
     recycleGasfEED.addStream(gasHeater.getOutletStream());
@@ -98,7 +98,7 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     recycleGasfEED.setPriority(200);
 
     Heater coolerStripper = new Heater("TEG cooler", stripper.getSolventOutStream());
-    coolerStripper.setOutTemperature(273.15 + 98.0);
+    coolerStripper.setOutletTemperature(273.15 + 98.0);
 
     Stream liquidToTreatment = new Stream("water to treatment", sepregenGas.getLiquidOutStream());
 
@@ -190,8 +190,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(feedToRegenerator, 1);
-    column.getReboiler().setOutTemperature(273.15 + 70.0);
-    column.getCondenser().setOutTemperature(273.15 - 10.0);
+    column.getReboiler().setOutletTemperature(273.15 + 70.0);
+    column.getCondenser().setOutletTemperature(273.15 - 10.0);
     column.setTopPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
     column.setBottomPressure(1.0 + ThermodynamicConstantsInterface.referencePressure);
 
@@ -238,8 +238,8 @@ public class GlycolRigTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(feedToRegenerator, 1);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
-    column.getCondenser().setOutTemperature(273.15 + 50.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
+    column.getCondenser().setOutletTemperature(273.15 + 50.0);
     column.setTopPressure(1.0 + 5.01325);
     column.setBottomPressure(1.0 + 5.01325);
 

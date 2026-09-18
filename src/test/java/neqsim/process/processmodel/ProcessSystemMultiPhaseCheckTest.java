@@ -30,7 +30,7 @@ public class ProcessSystemMultiPhaseCheckTest extends neqsim.NeqSimTest {
   private static ProcessSystem buildArea(String name) {
     Stream feed = new Stream(name + " feed", makeGas());
     Heater cooler = new Heater(name + " cooler", feed);
-    cooler.setOutTemperature(280.0);
+    cooler.setOutletTemperature(280.0);
     Separator sep = new Separator(name + " sep", cooler.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();

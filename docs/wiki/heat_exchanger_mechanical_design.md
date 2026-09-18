@@ -14,6 +14,12 @@ The `HeatExchangerMechanicalDesign` class provides sizing estimates for shell-an
 
 ## Prerequisites
 
+For geometry-based gasketed plate rating, use
+[`PlateHeatExchangerDesignCalculator`](../process/mechanical_design/plate_heat_exchanger_design).
+It adds Martin chevron correlations, channel and port losses, effectiveness–NTU,
+fouling, and separate frame and bolt plate limits. The generic `PLATE_AND_FRAME`
+selection described below remains an area estimate.
+
 - Run the process simulation so that the process-side temperatures, pressures, and duty are available.
 - Ensure the equipment has been initialized (`initMechanicalDesign`) before requesting the sizing results.
 

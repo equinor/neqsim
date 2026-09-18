@@ -145,9 +145,9 @@ public class SystemMechanicalDesignTest {
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
-    thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
-        0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
-        0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
+    thermoSystem.setMolarComposition(new double[] {0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908, 0.007751,
+        0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301, 0.002624,
+        0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
     // thermoSystem.prettyPrint();
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
@@ -162,7 +162,7 @@ public class SystemMechanicalDesignTest {
     valve1.setOutletPressure(19.0);
 
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
-    oilHeater.setOutTemperature(359.0);
+    oilHeater.setOutletTemperature(359.0);
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator2ndStage = new neqsim.process.equipment.separator.ThreePhaseSeparator(
         "2nd stage separator", oilHeater.getOutletStream());
@@ -182,7 +182,7 @@ public class SystemMechanicalDesignTest {
     pipeloss1st.setOutletPressure(2.7 - 0.03);
 
     Heater coolerLP = new Heater("cooler LP", pipeloss1st.getOutletStream());
-    coolerLP.setOutTemperature(273.15 + 25.0);
+    coolerLP.setOutletTemperature(273.15 + 25.0);
 
     Separator sepregenGas = new Separator("sepregenGas", coolerLP.getOutletStream());
 

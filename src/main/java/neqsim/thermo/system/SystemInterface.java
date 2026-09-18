@@ -1682,20 +1682,57 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public String[][] getResultTable();
 
   /**
-   * Get the speed of sound of a system. The sound speed is implemented based on a molar average over the phases
+   * Legacy molar-phase-fraction weighted average of phase sound speeds.
+   *
+   * <p>
+   * This is neither a homogeneous-equilibrium derivative nor a frozen-phase mixture acoustic model. For decompression
+   * studies use {@link #calculateEquilibriumSoundSpeed()}.
+   * </p>
    *
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
 
   /**
-   * Get the speed of sound of a system in a specific unit. The sound speed is implemented based on a molar average over
-   * the phases
+   * Legacy molar-phase-fraction weighted average of phase sound speeds in a specified unit.
    *
-   * @param unit Supported units are m/s, km/h
-   * @return speed of sound in m/s
+   * <p>
+   * See {@link #getSoundSpeed()} for the averaging semantics and acoustic-model limitations.
+   * </p>
+   *
+   * @param unit supported units are m/s, km/hr and ft/sec
+   * @return legacy phase average in the requested unit
    */
   public double getSoundSpeed(String unit);
+
+  /**
+   * Calculate the homogeneous-equilibrium sound speed at fixed specific entropy and composition.
+   *
+   * <p>
+   * Uses cloned fluids, EOS total density, checked entropy roots and step refinement. The result includes convergence,
+   * closure and phase-boundary stencil diagnostics. The input is unchanged.
+   * </p>
+   *
+   * @return equilibrium acoustic result in SI units; inspect isConverged before using the speed
+   * @throws IllegalArgumentException for nonphysical input
+   * @see neqsim.thermo.util.EquilibriumSoundSpeed
+   */
+  public default neqsim.thermo.util.EquilibriumSoundSpeed.Result calculateEquilibriumSoundSpeed() {
+    return neqsim.thermo.util.EquilibriumSoundSpeed.calculate(this);
+  }
+
+  /**
+   * Calculate an equilibrium acoustic derivative with a specified initial pressure step.
+   *
+   * @param relativePressureStep pressure increment divided by centre pressure, [1e-6, 0.05]
+   * @return equilibrium acoustic result with convergence and stencil diagnostics
+   * @throws IllegalArgumentException for invalid input or step
+   * @see #calculateEquilibriumSoundSpeed()
+   */
+  public default neqsim.thermo.util.EquilibriumSoundSpeed.Result calculateEquilibriumSoundSpeed(
+      double relativePressureStep) {
+    return neqsim.thermo.util.EquilibriumSoundSpeed.calculate(this, relativePressureStep);
+  }
 
   /**
    * Getter for property standard.

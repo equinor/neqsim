@@ -176,6 +176,10 @@ Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule 
 | `SystemPrCPA` | Peng-Robinson with CPA | 7 |
 | `SystemUMRCPAEoS` | UMR-CPA with UNIFAC | - |
 
+**Liquid-water heat capacity:** the default `SystemSrkCPAstatoil` can be 8–17% low
+at 5–60 °C. An opt-in, caloric-data-fitted water alpha is available through
+`setUseCaloricWaterAlpha(true)`; see the [calibration, benchmarks and limits](cpa_water_caloric.md).
+
 ### 4.3 Association Schemes
 
 | Scheme | Sites | Examples |
@@ -453,6 +457,20 @@ fluid.addComponent("water", 0.6);
 | `SystemUNIFACpsrk` | UNIFAC with PSRK parameters |
 | `SystemUMRPRUEos` | Peng-Robinson with UNIFAC mixing |
 | `SystemUMRPRUMCEos` | UMR-PRU with Mathias-Copeman |
+
+Wilson activity-coefficient evaluation stores both the coefficient and its logarithm on each
+component, including coefficients calculated for infinite-dilution reference states. These
+values supply the solvent vapor-pressure and solute Henry-law fugacity calculations. This
+repairs coefficient publication; it does not change or extend the Wilson interaction-energy
+correlation or qualify additional temperature/composition ranges.
+
+Standalone `PhaseGEUniquac`, `ComponentGEUniquac`, and `PhaseGEUniquacmodifiedHV` are
+**unsupported** and throw `UnsupportedOperationException` on direct construction. Their
+activity-coefficient implementation and parameter data are incomplete. Selecting `"UNIQUAC"`
+or the legacy spelling `"UNIQUAQ"` for a Huron–Vidal mixing rule also throws; it no longer
+silently substitutes NRTL. Select a supported model such as NRTL or a suitable UNIFAC variant
+explicitly. UNIFAC subclasses retain their own activity-coefficient implementations; this
+restriction does not apply to them or to the separate Coutinho UNIQUAC wax model.
 
 ---
 
@@ -891,4 +909,3 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
 
 ---
-

@@ -113,7 +113,7 @@ Parameters for Antoine-type vapor pressure correlations.
 
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
-| `AntoineVapPresLiqType` | Equation type | - | `pow10`, `log`, `exp`, `loglog` |
+| `AntoineVapPresLiqType` | Equation type or availability marker | - | `pow10`, `log`, `exp`, `loglog`; `none` means unavailable |
 | `ANTOINEA` | Antoine A coefficient | - | Vapor pressure calculation |
 | `ANTOINEB` | Antoine B coefficient | - | Vapor pressure calculation |
 | `ANTOINEC` | Antoine C coefficient | - | Vapor pressure calculation |
@@ -124,9 +124,46 @@ Parameters for Antoine-type vapor pressure correlations.
 | `ANTOINESolidC` | Solid vapor pressure C | - | Sublimation pressure |
 
 **Antoine equation forms:**
-- `pow10`: $\log_{10}(P_{sat}) = A - \frac{B}{T + C}$ (P in mmHg, T in °C)
-- `log`: $\ln(P_{sat}) = A + \frac{B}{T} + C \ln(T) + D T^E$
-- `exp`: $P_{sat} = \exp(A - \frac{B}{T + C})$
+- `pow10`: $\log_{10}(P_{sat}) = A - \frac{B}{T + C - 273.15}$ (P in bar absolute, API temperature T in K)
+- For non-`pow10`/`pow10KPa` labels with $|E| > 10^{-12}$, DIPPR-101 gives $P_{sat} = \exp(A + B/T + C \ln(T) + DT^E)/10^5$ in bar, with T in K. This includes legacy `log` and `exp` labels.
+- With zero exponent, `log` and `exp` use $P_{sat} = \exp(A - B/(T+C))$ in bar, with T in K.
+
+**Missing data and applicability:** `none` with zero `ANTOINEA`–`ANTOINEE`
+means no liquid-vapor correlation is available; it does not mean zero vapor
+pressure. The three repeated legacy tuples reported in issue #3771, copied
+water coefficients on unrelated compounds, the `default` pseudo-component
+template, and every charged species are marked this way. Repeated coefficients
+have not been reinterpreted as measured Wagner fits or replaced with guessed data.
+Water and seawater retain their existing correlation. Solid sublimation
+coefficients and EOS parameters are separate and are unchanged.
+
+`ComponentInterface.hasAntoineVaporPressureCorrelation()` distinguishes missing
+data from an available correlation. Availability alone does not certify the
+accuracy or fitted range of older data. `getAntoineVaporPressure(T)` and its
+temperature derivative return `Double.NaN` for missing data, ions, nonpositive or
+nonfinite T, and T above the component's critical temperature. The inverse
+`getAntoineVaporTemperature(P)` returns NaN for missing data, nonpositive or
+nonfinite P, and P above the critical pressure. A fitted correlation may have a
+narrower range; subcritical results are not clipped to Pc and are not a general
+quality guarantee. Below the melting point a liquid correlation can describe a
+metastable liquid, not solid sublimation.
+
+EOS saturation calculations and adsorption estimates already recognize NaN and
+use their own initial guesses or estimation paths. Activity models requiring a
+pure-liquid reference need actual vapor-pressure data or an appropriate Henry
+reference; the `none` marker does not supply either. Selecting the extended
+database applies the standard table's unavailable-data markers and corrected
+acetone coefficients to matching names, preserving other extended properties.
+
+**Acetone provenance:** the [NIST Chemistry WebBook](https://webbook.nist.gov/cgi/cbook.cgi?ID=C67641&Mask=4&Type=ANTOINE)
+reports A = 4.42448, B = 1312.253, C = -32.445 for T in K and P in bar,
+valid from 259.16 to 507.60 K, based on Ambrose, Sprake and Townsend (1974),
+[DOI: 10.1016/0021-9614(74)90119-0](https://doi.org/10.1016/0021-9614(74)90119-0).
+The database stores C = 240.705 to match the existing `pow10` Celsius offset.
+This gives approximately 0.306 bar at 298.15 K and 0.726 bar at 320 K; the
+0.031 bar at 298.15 K quoted in issue #3771 is not the acetone reference value.
+The three numerical coefficients are attributed reference data; no external
+software or compiled database has been imported.
 
 ### Ideal Gas Heat Capacity
 

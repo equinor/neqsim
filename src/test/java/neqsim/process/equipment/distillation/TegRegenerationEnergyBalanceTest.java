@@ -46,7 +46,7 @@ public class TegRegenerationEnergyBalanceTest {
     teg.setPressure(pBottom, "bara");
 
     SystemInterface gasFluid = feedTeg.clone();
-    gasFluid.setMolarComposition(new double[] { 1.0, 0.0, 0.0 });
+    gasFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
     Stream gas = new Stream("gas to reboiler", gasFluid);
     gas.setFlowRate(13.0, "kg/hr");
     gas.setTemperature(199.0, "C");
@@ -58,8 +58,8 @@ public class TegRegenerationEnergyBalanceTest {
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(teg, 1);
-    column.getReboiler().setOutTemperature(273.15 + 209.0);
-    column.getCondenser().setOutTemperature(273.15 + 91.0);
+    column.getReboiler().setOutletTemperature(273.15 + 209.0);
+    column.getCondenser().setOutletTemperature(273.15 + 91.0);
     column.getTray(1).addStream(gas);
     column.setTopPressure(pBottom - 0.02);
     column.setBottomPressure(pBottom);

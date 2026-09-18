@@ -456,8 +456,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getCondenser().setOutTemperature(273.15 + 15.0);
-    column.getReboiler().setOutTemperature(273.15 + 85.0);
+    column.getCondenser().setOutletTemperature(273.15 + 15.0);
+    column.getReboiler().setOutletTemperature(273.15 + 85.0);
     column.setTemperatureTolerance(5.0e-2);
     column.setMassBalanceTolerance(5.0e-2);
     column.setEnthalpyBalanceTolerance(5.0e-2);
@@ -629,8 +629,8 @@ public class ColumnSpecificationTest {
 
     // Use condenser reflux ratio spec and reboiler temperature
     column.setCondenserRefluxRatio(2.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setMaxNumberOfIterations(50);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
@@ -662,8 +662,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(12.0);
     column.setBottomPressure(12.2);
-    column.getCondenser().setOutTemperature(273.15 + 35.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 35.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserRefluxRatio(1.5);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(40);
@@ -705,8 +705,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(12.0);
     column.setBottomPressure(12.2);
-    column.getCondenser().setOutTemperature(273.15 + 35.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 35.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserRefluxRatio(1.5);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(40);
@@ -936,7 +936,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setTemperatureTolerance(1.0e-2);
     column.setMassBalanceTolerance(1.0e-1);
     column.setEnthalpyBalanceTolerance(1.0e-1);
@@ -977,7 +977,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1014,7 +1014,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1051,7 +1051,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1154,46 +1154,46 @@ public class ColumnSpecificationTest {
    */
   private CommercialCase[] commercialCaseBank() {
     return new CommercialCase[] {
-        commercialCase("total condenser C3-C5", new String[] { "propane", "n-butane", "n-pentane" },
-            new double[] { 0.35, 0.45, 0.20 }, 318.15, 10.0, 6, true, true, false, false, false),
-        commercialCase("partial condenser C1-C4", new String[] { "methane", "ethane", "propane", "n-butane" },
-            new double[] { 0.30, 0.25, 0.25, 0.20 }, 250.0, 28.0, 8, true, true, false, false, false),
-        commercialCase("absorber no condenser reboiler", new String[] { "methane", "ethane", "propane" },
-            new double[] { 0.70, 0.20, 0.10 }, 298.15, 50.0, 5, false, false, false, false, false),
-        commercialCase("stripper no condenser", new String[] { "propane", "n-butane", "n-pentane" },
-            new double[] { 0.20, 0.50, 0.30 }, 350.0, 8.0, 6, false, true, false, false, false),
-        commercialCase("narrow butane pentane", new String[] { "i-butane", "n-butane", "n-pentane" },
-            new double[] { 0.25, 0.45, 0.30 }, 330.0, 6.0, 8, true, true, false, false, false),
-        commercialCase("wide boiling C1-C7", new String[] { "methane", "propane", "n-hexane", "n-heptane" },
-            new double[] { 0.40, 0.30, 0.20, 0.10 }, 310.0, 35.0, 10, true, true, false, false, false),
-        commercialCase("sour gas trace H2S", new String[] { "methane", "CO2", "H2S", "ethane", "propane" },
-            new double[] { 0.70, 0.08, 0.02, 0.15, 0.05 }, 285.0, 45.0, 8, true, true, false, false, false),
-        commercialCase("CO2 rich demethanizer", new String[] { "methane", "CO2", "ethane" },
-            new double[] { 0.45, 0.35, 0.20 }, 240.0, 55.0, 8, true, true, false, false, false),
-        commercialCase("water rich hydrocarbon", new String[] { "methane", "CO2", "water" },
-            new double[] { 0.60, 0.10, 0.30 }, 310.0, 20.0, 6, true, true, false, false, false),
-        commercialCase("bad initial guesses", new String[] { "propane", "n-butane", "n-pentane" },
-            new double[] { 0.40, 0.40, 0.20 }, 318.15, 9.0, 6, true, true, false, false, true),
-        commercialCase("side draw fractionator", new String[] { "propane", "n-butane", "n-pentane" },
-            new double[] { 0.25, 0.50, 0.25 }, 320.0, 9.0, 7, true, true, true, false, false),
-        commercialCase("pumparound fractionator", new String[] { "n-butane", "n-pentane", "n-hexane" },
-            new double[] { 0.30, 0.45, 0.25 }, 360.0, 5.0, 8, true, true, false, true, false),
-        commercialCase("low reflux startup", new String[] { "ethane", "propane", "n-butane" },
-            new double[] { 0.30, 0.45, 0.25 }, 300.0, 18.0, 6, true, true, false, false, false),
-        commercialCase("high pressure demethanizer", new String[] { "methane", "ethane", "propane" },
-            new double[] { 0.65, 0.25, 0.10 }, 220.0, 70.0, 8, true, true, false, false, false),
-        commercialCase("vacuum debutanizer", new String[] { "n-butane", "n-pentane", "n-hexane" },
-            new double[] { 0.35, 0.45, 0.20 }, 340.0, 1.5, 8, true, true, false, false, false),
-        commercialCase("near critical rich gas", new String[] { "methane", "ethane", "propane" },
-            new double[] { 0.40, 0.35, 0.25 }, 305.0, 45.0, 8, true, true, false, false, false),
-        commercialCase("nitrogen rich gas", new String[] { "nitrogen", "methane", "ethane" },
-            new double[] { 0.20, 0.65, 0.15 }, 230.0, 40.0, 6, true, true, false, false, false),
-        commercialCase("heavy NGL splitter", new String[] { "n-pentane", "n-hexane", "n-heptane" },
-            new double[] { 0.35, 0.40, 0.25 }, 380.0, 4.0, 8, true, true, false, false, false),
-        commercialCase("wet gas stabilizer", new String[] { "methane", "ethane", "water", "n-butane" },
-            new double[] { 0.55, 0.25, 0.05, 0.15 }, 300.0, 30.0, 7, true, true, false, false, false),
-        commercialCase("lean methane absorber", new String[] { "methane", "ethane", "n-butane" },
-            new double[] { 0.82, 0.12, 0.06 }, 295.0, 60.0, 5, false, false, false, false, false) };
+        commercialCase("total condenser C3-C5", new String[] {"propane", "n-butane", "n-pentane"},
+            new double[] {0.35, 0.45, 0.20}, 318.15, 10.0, 6, true, true, false, false, false),
+        commercialCase("partial condenser C1-C4", new String[] {"methane", "ethane", "propane", "n-butane"},
+            new double[] {0.30, 0.25, 0.25, 0.20}, 250.0, 28.0, 8, true, true, false, false, false),
+        commercialCase("absorber no condenser reboiler", new String[] {"methane", "ethane", "propane"},
+            new double[] {0.70, 0.20, 0.10}, 298.15, 50.0, 5, false, false, false, false, false),
+        commercialCase("stripper no condenser", new String[] {"propane", "n-butane", "n-pentane"},
+            new double[] {0.20, 0.50, 0.30}, 350.0, 8.0, 6, false, true, false, false, false),
+        commercialCase("narrow butane pentane", new String[] {"i-butane", "n-butane", "n-pentane"},
+            new double[] {0.25, 0.45, 0.30}, 330.0, 6.0, 8, true, true, false, false, false),
+        commercialCase("wide boiling C1-C7", new String[] {"methane", "propane", "n-hexane", "n-heptane"},
+            new double[] {0.40, 0.30, 0.20, 0.10}, 310.0, 35.0, 10, true, true, false, false, false),
+        commercialCase("sour gas trace H2S", new String[] {"methane", "CO2", "H2S", "ethane", "propane"},
+            new double[] {0.70, 0.08, 0.02, 0.15, 0.05}, 285.0, 45.0, 8, true, true, false, false, false),
+        commercialCase("CO2 rich demethanizer", new String[] {"methane", "CO2", "ethane"},
+            new double[] {0.45, 0.35, 0.20}, 240.0, 55.0, 8, true, true, false, false, false),
+        commercialCase("water rich hydrocarbon", new String[] {"methane", "CO2", "water"},
+            new double[] {0.60, 0.10, 0.30}, 310.0, 20.0, 6, true, true, false, false, false),
+        commercialCase("bad initial guesses", new String[] {"propane", "n-butane", "n-pentane"},
+            new double[] {0.40, 0.40, 0.20}, 318.15, 9.0, 6, true, true, false, false, true),
+        commercialCase("side draw fractionator", new String[] {"propane", "n-butane", "n-pentane"},
+            new double[] {0.25, 0.50, 0.25}, 320.0, 9.0, 7, true, true, true, false, false),
+        commercialCase("pumparound fractionator", new String[] {"n-butane", "n-pentane", "n-hexane"},
+            new double[] {0.30, 0.45, 0.25}, 360.0, 5.0, 8, true, true, false, true, false),
+        commercialCase("low reflux startup", new String[] {"ethane", "propane", "n-butane"},
+            new double[] {0.30, 0.45, 0.25}, 300.0, 18.0, 6, true, true, false, false, false),
+        commercialCase("high pressure demethanizer", new String[] {"methane", "ethane", "propane"},
+            new double[] {0.65, 0.25, 0.10}, 220.0, 70.0, 8, true, true, false, false, false),
+        commercialCase("vacuum debutanizer", new String[] {"n-butane", "n-pentane", "n-hexane"},
+            new double[] {0.35, 0.45, 0.20}, 340.0, 1.5, 8, true, true, false, false, false),
+        commercialCase("near critical rich gas", new String[] {"methane", "ethane", "propane"},
+            new double[] {0.40, 0.35, 0.25}, 305.0, 45.0, 8, true, true, false, false, false),
+        commercialCase("nitrogen rich gas", new String[] {"nitrogen", "methane", "ethane"},
+            new double[] {0.20, 0.65, 0.15}, 230.0, 40.0, 6, true, true, false, false, false),
+        commercialCase("heavy NGL splitter", new String[] {"n-pentane", "n-hexane", "n-heptane"},
+            new double[] {0.35, 0.40, 0.25}, 380.0, 4.0, 8, true, true, false, false, false),
+        commercialCase("wet gas stabilizer", new String[] {"methane", "ethane", "water", "n-butane"},
+            new double[] {0.55, 0.25, 0.05, 0.15}, 300.0, 30.0, 7, true, true, false, false, false),
+        commercialCase("lean methane absorber", new String[] {"methane", "ethane", "n-butane"},
+            new double[] {0.82, 0.12, 0.06}, 295.0, 60.0, 5, false, false, false, false, false)};
   }
 
   /**
@@ -1249,8 +1249,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(pressure);
     column.setBottomPressure(pressure + 0.2);
-    column.getCondenser().setOutTemperature(condenserTemperature);
-    column.getReboiler().setOutTemperature(reboilerTemperature);
+    column.getCondenser().setOutletTemperature(condenserTemperature);
+    column.getReboiler().setOutletTemperature(reboilerTemperature);
     column.setCondenserRefluxRatio(1.8);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(80);
@@ -1282,7 +1282,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
@@ -1314,11 +1314,11 @@ public class ColumnSpecificationTest {
     column.setTopPressure(regressionCase.pressure);
     column.setBottomPressure(regressionCase.pressure + Math.max(0.1, 0.02 * regressionCase.pressure));
     if (regressionCase.condenser) {
-      column.getCondenser().setOutTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
+      column.getCondenser().setOutletTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
       column.setCondenserRefluxRatio(regressionCase.name.contains("low reflux") ? 0.05 : 1.5);
     }
     if (regressionCase.reboiler) {
-      column.getReboiler().setOutTemperature(regressionCase.feedTemperature + 45.0);
+      column.getReboiler().setOutletTemperature(regressionCase.feedTemperature + 45.0);
     }
     if (regressionCase.sideDraw) {
       column.addSideDrawFlowSpecification(Math.max(1, regressionCase.trays / 2),

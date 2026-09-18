@@ -661,8 +661,9 @@ public class EOSCGModel {
       Expd[i] = Math.exp(-delp[i]);
     }
 
-    // If temperature has changed, calculate temperature dependent parts
-    if (Math.abs(T - Told) > 0.0000001 || Math.abs(Tr.val - Trold2) > 0.0000001) {
+    // Even sub-1e-7 K changes must refresh these terms: flash convergence
+    // must not depend on the sequence of temperatures evaluated.
+    if (T != Told || Tr.val != Trold2) {
       tTermsGERG(lntau, x);
     }
     Told = T;
@@ -4205,8 +4206,8 @@ public class EOSCGModel {
     int iFlag = 0;
     StringW herr = new StringW("");
 
-    double[] x = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+    double[] x = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
 
     test.MolarMassEOSCG(x, Mm);
 

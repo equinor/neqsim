@@ -423,6 +423,37 @@ streams.
 Zero-contribution sources need no fabricated specific gravity; every positive contribution fails
 closed unless its fraction and density basis are finite and valid.
 
+### Complete optimized blend-plan receipts
+
+Use `RefineryBlendOptimizationPlan.fromOptimization(...)` when one downstream record must retain
+the qualified optimizer result, scaled batch, quality-constraint evidence, exact source labels, and
+source costs together:
+
+```java
+RefineryBlendOptimizationPlan plan = RefineryBlendOptimizationPlan.fromOptimization(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    10000.0,
+    sourceSpecificGravities,
+    sourceCostsPerMass,
+    optimization);
+
+RefineryBlendOptimizationPlan.SourceCostReceipt first =
+    plan.getSourceCostReceipt("DOE/OEDI sample 50146");
+double firstSourceCost = first.getTotalCost();
+```
+
+Each ordered receipt copies the source index, identifier, mass fraction, mass, 60 degF specific
+gravity, ideal-additive volume, unit cost, and source total cost. The source-level cost closes to the
+optimizer unit cost and batch total cost. The plan exposes the original immutable
+`QualityConstraintReceipt`, preserves zero-contribution identity with zero mass, volume, and total
+cost, and fails closed on mismatched identifiers, gravities, costs, or cost closure.
+
+This composition layer does not re-solve the optimization or alter any property result. Source
+identifiers remain caller metadata, and the DOE/OEDI labels are public-data regression identifiers,
+not automatic provenance attestation. The plan does not add blend contraction, scheduling, or
+compliance logic; it also does not model temperature correction, tank gauging, control, phase
+compatibility, or thermodynamic stream creation.
+
 ## Per-cut UOP/Watson characterization factor
 
 `AssayCut.getWatsonCharacterizationFactor()` calculates the dimensionless UOP/Watson factor from the same authoritative density and representative-boiling-point inputs used by the assay workflow:

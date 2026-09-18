@@ -49,10 +49,10 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
     Separator sep = new Separator("sep", mix.getOutletStream());
 
     Splitter gasSplit = new Splitter("gasSplit", sep.getGasOutStream(), 2);
-    gasSplit.setSplitFactors(new double[] { 0.9, 0.1 });
+    gasSplit.setSplitFactors(new double[] {0.9, 0.1});
 
     Heater recycleHeater = new Heater("recycleHeater", gasSplit.getSplitStream(1));
-    recycleHeater.setOutTemperature(305.0);
+    recycleHeater.setOutletTemperature(305.0);
 
     Recycle rec = new Recycle("rec");
     rec.addStream(recycleHeater.getOutletStream());
@@ -95,7 +95,7 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
   public void getBypassedUnitsReturnsEmptyByDefault() {
     Stream feed = new Stream("feed", makeGas(1000.0));
     Heater h = new Heater("h", feed);
-    h.setOutTemperature(320.0);
+    h.setOutletTemperature(320.0);
     ProcessSystem ps = new ProcessSystem();
     ps.add(feed);
     ps.add(h);
@@ -107,7 +107,7 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
   public void fractionalThresholdMatchesInletFraction() {
     Stream feed = new Stream("feed", makeGas(1000.0));
     Heater h = new Heater("h", feed);
-    h.setOutTemperature(320.0);
+    h.setOutletTemperature(320.0);
     ProcessSystem ps = new ProcessSystem();
     ps.add(feed);
     ps.add(h);

@@ -110,14 +110,25 @@ System.out.println("Heat output: " + turbine.getHeat() / 1e6 + " MW");
 System.out.println("Ideal air/fuel ratio: " + turbine.calcIdealAirFuelRatio());
 ```
 
-> The internal air-side combustion balances stoichiometric oxygen against the
-> `excessAirFactor` (default 2.5) and burns each hydrocarbon only up to the
-> available oxygen, so the post-combustion flash stays physical. `getPower()`
-> returns the net shaft power (expander work minus the internal air-compressor
-> work); `getHeat()` returns the exhaust heat a HRSG could recover. This is a
-> simplified low-pressure-ratio model — keep `combustionpressure` modest (a few
-> bara) so the expander recovery exceeds the cold air-compression work and the
-> net shaft power stays positive.
+> The detailed cycle sizes combustion air using the stoichiometric oxygen demand
+> and `excessAirFactor` (default 2.5). It obtains the fuel lower heating value from
+> ISO 6976 on a molar basis (kJ/mol), using the 0 C combustion reference to match
+> the EOS sensible-enthalpy reference, then multiplies by mol/s and 1000 to obtain W.
+> This avoids mixing volumetric calorific values with molar flows or inconsistent
+> standard-volume references. Combustion changes the product composition before
+> solving its enthalpy; a heat-capacity temperature estimate initializes that
+> solve, and an unconverged combustion energy balance raises an exception.
+>
+> `getPower()` is positive net shaft output: recovered expander work minus air
+> compressor work. `getHeat()` estimates positive heat recoverable by cooling the
+> exhaust to 288.15 K. `getOutletStream()` contains the hot combustion exhaust
+> leaving the expander so a downstream HRSG can recover that energy. The detailed
+> cycle balances inlet sensible enthalpy plus fuel heat against shaft output and
+> hot exhaust enthalpy; do not add recoverable heat again to that balance.
+> It is a simplified complete-combustion
+> model without dissociation, combustor pressure loss or blade cooling.
+> The optional specified-efficiency and power-demand modes retain their separate
+> fuel-sizing convention and are not detailed-cycle performance predictions.
 
 ---
 

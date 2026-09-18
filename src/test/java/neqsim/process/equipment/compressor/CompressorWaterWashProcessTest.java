@@ -117,7 +117,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     // Compressor with outlet temperature specified
     Compressor compressor1 = new Compressor("27AKA60", feedStream);
     compressor1.setOutletPressure(COMP_POUT);
-    compressor1.setOutTemperature(COMP_TOUT);
+    compressor1.setOutletTemperature(COMP_TOUT);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicMethod("detailed");
     compressor1.setNumberOfCompressorCalcSteps(10);
@@ -258,7 +258,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
   @Test
   void testVaryingWashRate() {
     double polytropicEfficiency = 64.66 * 0.933 / 100.0;
-    double[] washRates = { 0.0, 2000.0, 5000.0 };
+    double[] washRates = {0.0, 2000.0, 5000.0};
     double[] outletTemperatures = new double[washRates.length];
 
     for (int i = 0; i < washRates.length; i++) {

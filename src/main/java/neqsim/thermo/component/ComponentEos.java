@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.component.attractiveeosterm.AtractiveTermMatCopPRUMRNew;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAWaterCaloric;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop;
@@ -235,6 +236,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
     } else if (i == 22) {
       setAttractiveParameter(new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA()));
+    } else if (i == 23) {
+      setAttractiveParameter(
+          "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this) : new AttractiveTermCPAstatoil(this));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
@@ -582,7 +586,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double[] getDeltaEosParameters() {
-    double[] param = { delta1, delta2 };
+    double[] param = {delta1, delta2};
     return param;
   }
 

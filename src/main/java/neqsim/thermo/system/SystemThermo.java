@@ -126,22 +126,22 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** Fraction of moles_in_phase / moles_in_system. Cached. */
   protected double[] beta = new double[MAX_PHASES];
-  protected String[] CapeOpenProperties10 = { "molecularWeight", "speedOfSound", "jouleThomsonCoefficient", "energy",
+  protected String[] CapeOpenProperties10 = {"molecularWeight", "speedOfSound", "jouleThomsonCoefficient", "energy",
       "energy.Dtemperature", "gibbsFreeEnergy", "helmholtzFreeEnergy", "fugacityCoefficient", "logFugacityCoefficient",
       "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure", "logFugacityCoefficient.Dmoles",
       "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature", "enthalpy.Dpressure", "entropy", "entropy.Dtemperature",
       "entropy.Dpressure", "entropy.Dmoles", "heatCapacity", "heatCapacityCv", "density", "density.Dtemperature",
       "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure", "volume.Dtemperature",
-      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles", "compressibilityFactor" };
+      "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles", "compressibilityFactor"};
   // protected ArrayList<String> resultArray1 = new ArrayList<String>();
-  protected String[] CapeOpenProperties11 = { "molecularWeight", "speedOfSound", "jouleThomsonCoefficient",
+  protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound", "jouleThomsonCoefficient",
       "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
       "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
       "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dmoles", "enthalpy.Dtemperature", "enthalpy.Dpressure",
       "entropy", "entropy.Dtemperature", "entropy.Dpressure", "entropy.Dmoles", "heatCapacityCp", "heatCapacityCv",
       "density", "density.Dtemperature", "density.Dpressure", "density.Dmoles", "volume", "volume.Dpressure",
       "volume.Dtemperature", "molecularWeight.Dtemperature", "molecularWeight.Dpressure", "molecularWeight.Dmoles",
-      "compressibilityFactor" };
+      "compressibilityFactor"};
 
   public neqsim.thermo.characterization.Characterise characterization = null;
   protected boolean checkStability = true;
@@ -2218,7 +2218,7 @@ public abstract class SystemThermo implements SystemInterface {
     java.awt.Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new java.awt.BorderLayout());
 
-    String[] names = { "", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4", "Unit" };
+    String[] names = {"", "Feed", "Phase 1", "Phase 2", "Phase 3", "Phase 4", "Unit"};
     String[][] table = createTable(name);
     javax.swing.JTable Jtab = new javax.swing.JTable(table, names);
     javax.swing.JScrollPane scrollpane = new javax.swing.JScrollPane(Jtab);
@@ -4802,7 +4802,7 @@ public abstract class SystemThermo implements SystemInterface {
       beta[i] = 1.0;
     }
 
-    phaseIndex = new int[] { 0, 1, 2, 3, 4, 5 };
+    phaseIndex = new int[] {0, 1, 2, 3, 4, 5};
   }
 
   /** {@inheritDoc} */

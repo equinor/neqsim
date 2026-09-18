@@ -123,7 +123,7 @@ public class ProcessOptimizationExampleTest {
 
     // Interstage Cooler
     interStageCooler = new Cooler("Interstage Cooler", firstStageCompressor.getOutletStream());
-    interStageCooler.setOutTemperature(273.15 + 40.0);
+    interStageCooler.setOutletTemperature(273.15 + 40.0);
     process.add(interStageCooler);
 
     // Second Stage Compressor
@@ -470,7 +470,7 @@ public class ProcessOptimizationExampleTest {
     OptimizationConfig config = new OptimizationConfig(10000.0, 150000.0).rateUnit("kg/hr");
 
     // Test at different inlet pressures
-    double[] inletPressures = { 60.0, 80.0, 100.0 };
+    double[] inletPressures = {60.0, 80.0, 100.0};
 
     logger.info("\n--- Effect of Inlet Pressure ---");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %-15s %-20s %-15s%n", "Inlet P (bara)",

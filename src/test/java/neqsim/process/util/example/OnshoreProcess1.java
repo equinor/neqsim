@@ -317,11 +317,11 @@ public class OnshoreProcess1 {
       // Pipeline
       SimpleTPoutPipeline pipeLine1 = new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutletStream());
       pipeLine1.setOutPressure(55.0);
-      pipeLine1.setOutTemperature(273.15 + 5.0);
+      pipeLine1.setOutletTemperature(273.15 + 5.0);
       pipeLine1.setNumberOfLegs(1);
-      pipeLine1.setPipeDiameters(new double[] { 1.2, 1.2 });
-      pipeLine1.setLegPositions(new double[] { 0, 150000.0 });
-      pipeLine1.setOuterTemperatures(new double[] { 0.0, 0.0 });
+      pipeLine1.setPipeDiameters(new double[] {1.2, 1.2});
+      pipeLine1.setLegPositions(new double[] {0, 150000.0});
+      pipeLine1.setOuterTemperatures(new double[] {0.0, 0.0});
 
       // IronIonSaturationStream ironSatStream = new
       // IronIonSaturationStream(pipeLine1.getOutStream());

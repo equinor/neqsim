@@ -341,7 +341,7 @@ public class DistillationColumnModeTest {
   /** Test that reinitialization preserves the configured multistage pumparound return state. */
   @Test
   public void cooledMultistagePumparoundPreservesReturnState() {
-    double[] temperatureDrops = { 4.0, 5.0 };
+    double[] temperatureDrops = {4.0, 5.0};
     for (double temperatureDrop : temperatureDrops) {
       DistillationColumn column = createMultistagePumparoundColumn(temperatureDrop);
       DistillationColumn.ColumnPumparound pumparound = column.getPumparounds().get(0);
@@ -468,7 +468,7 @@ public class DistillationColumnModeTest {
 
     DistillationColumn column = new DistillationColumn("fractionator pumparound column", 6, true, false);
     column.addFeedStream(feed, 3);
-    column.getReboiler().setOutTemperature(353.15);
+    column.getReboiler().setOutletTemperature(353.15);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
@@ -499,8 +499,8 @@ public class DistillationColumnModeTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.2);
-    column.getCondenser().setOutTemperature(273.15 + 30.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 30.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserRefluxRatio(1.8);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(80);

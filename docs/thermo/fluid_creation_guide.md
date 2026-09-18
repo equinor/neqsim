@@ -311,7 +311,13 @@ fluid.addComponent("water", 0.6);
 
 ### 6.3 GE-Wilson
 
-Wilson equation for activity coefficients.
+Wilson equation for activity coefficients. The calculated coefficients are stored for use by
+both solvent vapor-pressure and solute Henry-law fugacity calculations.
+
+Standalone UNIQUAC is currently unsupported: direct UNIQUAC construction and the
+`"UNIQUAC"`/`"UNIQUAQ"` Huron–Vidal selectors throw `UnsupportedOperationException` because
+the implementation and parameter data are incomplete. Use a supported GE model explicitly;
+see [GE model support](thermodynamic_models.md#64-other-ge-models).
 
 ```java
 import neqsim.thermo.system.SystemGEWilson;

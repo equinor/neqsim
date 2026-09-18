@@ -29,7 +29,7 @@ public class DistillationOptimizationTest {
     assertEquals(0.62, column.getMurphreeEfficiency(3), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
 
-    column.setMurphreeEfficiencies(new double[] { 1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0 });
+    column.setMurphreeEfficiencies(new double[] {1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0});
     assertEquals(1.0, column.getMurphreeEfficiency(0), 1.0e-12);
     assertEquals(0.95, column.getMurphreeEfficiency(1), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
@@ -38,7 +38,7 @@ public class DistillationOptimizationTest {
 
     column.clearPerStageMurphreeEfficiency();
     assertEquals(0.75, column.getMurphreeEfficiency(3), 1.0e-12);
-    assertThrows(IllegalArgumentException.class, () -> column.setMurphreeEfficiencies(new double[] { 0.8, 0.8 }));
+    assertThrows(IllegalArgumentException.class, () -> column.setMurphreeEfficiencies(new double[] {0.8, 0.8}));
     assertThrows(IndexOutOfBoundsException.class, () -> column.getMurphreeEfficiency(7));
   }
 
@@ -60,8 +60,8 @@ public class DistillationOptimizationTest {
     DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
     column.addFeedStream(feed); // Auto-assign
 
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
 
@@ -142,7 +142,7 @@ public class DistillationOptimizationTest {
     DistillationColumn column = new DistillationColumn("Debutanizer", 10, true, true);
     column.getCondenser().setRefluxRatio(0.1);
     column.getCondenser().setTotalCondenser(true);
-    column.getReboiler().setOutTemperature(446.15);
+    column.getReboiler().setOutletTemperature(446.15);
     column.setTopPressure(12.8);
     column.setBottomPressure(15.0);
 
@@ -150,10 +150,10 @@ public class DistillationOptimizationTest {
     assertEquals(9, estimatedFeedTrayNumber);
 
     column.addFeedStream(feed, estimatedFeedTrayNumber);
-    column.getCondenser().setOutTemperature(273.15 + 65.0);
+    column.getCondenser().setOutletTemperature(273.15 + 65.0);
     for (int trayIndex = 1; trayIndex <= 10; trayIndex++) {
       double trayFraction = (trayIndex - 1.0) / 9.0;
-      column.getTray(trayIndex).setOutTemperature(273.15 + 165.0 - trayFraction * 95.0);
+      column.getTray(trayIndex).setOutletTemperature(273.15 + 165.0 - trayFraction * 95.0);
     }
     column.setMaxNumberOfIterations(8);
     column.run();
@@ -178,8 +178,8 @@ public class DistillationOptimizationTest {
 
     DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
     column.addFeedStream(feed);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -218,8 +218,8 @@ public class DistillationOptimizationTest {
 
     DistillationColumn column = new DistillationColumn("DePropanizer", 5, true, true);
     column.addFeedStream(feed);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -266,8 +266,8 @@ public class DistillationOptimizationTest {
 
     DistillationColumn column = new DistillationColumn("BudgetedDePropanizer", 5, true, true);
     column.addFeedStream(feed);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
     column.getCondenser().setRefluxRatio(2.0);
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
@@ -314,8 +314,8 @@ public class DistillationOptimizationTest {
     // Set reasonable estimates for reboiler/condenser
     // Propane sat T @ 10 bar is approx 27C (300K)
     // n-Butane sat T @ 10 bar is approx 75C (348K)
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
 
     // Set reflux ratio to something reasonable for separation
     column.getCondenser().setRefluxRatio(2.0);
@@ -372,8 +372,8 @@ public class DistillationOptimizationTest {
     column.addFeedStream(feed);
 
     // Set reasonable estimates for reboiler/condenser
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
 
     // Set reflux ratio to something reasonable for separation
     column.getCondenser().setRefluxRatio(2.0);

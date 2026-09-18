@@ -144,7 +144,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
       // Interstage cooler (except for last stage if no aftercooler needed)
       if (stage < numStages || basis.getParameter("includeAftercooler", 1.0) > 0) {
         Cooler cooler = new Cooler("Stage " + stage + " Cooler", compressor.getOutletStream());
-        cooler.setOutTemperature(interstageTemp + 273.15); // Convert to K
+        cooler.setOutletTemperature(interstageTemp + 273.15); // Convert to K
         process.add(cooler);
         currentStream = (Stream) cooler.getOutletStream();
       } else {
@@ -209,15 +209,15 @@ public class GasCompressionTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] { "Compressor", "Cooler", "Separator" };
+    return new String[] {"Compressor", "Cooler", "Separator"};
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] { "Compressed Gas - High pressure gas from final stage",
+    return new String[] {"Compressed Gas - High pressure gas from final stage",
         "Knockout Liquids - Condensate from each stage knockout drum",
-        "Compression Power - Total shaft power required" };
+        "Compression Power - Total shaft power required"};
   }
 
   /** {@inheritDoc} */

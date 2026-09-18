@@ -188,8 +188,10 @@ final class EOSCGSinglePhaseVUFlash {
       int liquidPhaseIndex = otherPhaseIndex(saturationSystem, gasPhaseIndex);
       double gasMolarVolume = saturationSystem.getPhase(gasPhaseIndex).getMolarVolume();
       double liquidMolarVolume = saturationSystem.getPhase(liquidPhaseIndex).getMolarVolume();
-      double lowerMolarVolume = Math.min(gasMolarVolume, liquidMolarVolume);
-      double upperMolarVolume = Math.max(gasMolarVolume, liquidMolarVolume);
+      // A vapor root must have the larger volume. Sorting the roots would hide an inverted,
+      // numerically degenerate saturation pair and incorrectly certify a homogeneous state.
+      double lowerMolarVolume = liquidMolarVolume;
+      double upperMolarVolume = gasMolarVolume;
       double rootSeparationTolerance = VUflashPureEOSCG.SPECIFICATION_RELATIVE_TOLERANCE
           * Math.max(upperMolarVolume, 1.0e-30);
       if (upperMolarVolume - lowerMolarVolume <= rootSeparationTolerance) {

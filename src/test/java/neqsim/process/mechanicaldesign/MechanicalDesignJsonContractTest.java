@@ -102,7 +102,7 @@ class MechanicalDesignJsonContractTest {
   @Test
   void heaterDesignSerializesSelectedSizing() {
     Heater heater = new Heater("heater", feed());
-    heater.setOutTemperature(353.15);
+    heater.setOutletTemperature(353.15);
     heater.run();
     heater.getMechanicalDesign().calcDesign();
     JsonObject json = JsonParser.parseString(heater.getMechanicalDesign().toJson()).getAsJsonObject();

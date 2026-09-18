@@ -150,8 +150,14 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
+  public String getSIUnit() {
+    return "mol/sec";
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getSIvalue() {
-    return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
+    return getValue(getSIUnit());
   }
 
   /** {@inheritDoc} */

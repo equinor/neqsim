@@ -440,7 +440,7 @@ public class ProcessProfilingTest {
     sys.add(gasComp);
 
     Cooler gasCool = new Cooler("gas cooler", gasComp.getOutletStream());
-    gasCool.setOutTemperature(310.0);
+    gasCool.setOutletTemperature(310.0);
     sys.add(gasCool);
 
     // Liquid path: LP valve + separator
@@ -452,7 +452,7 @@ public class ProcessProfilingTest {
     sys.add(lpSep);
 
     Heater lpGasHeater = new Heater("LP gas heater", lpSep.getGasOutStream());
-    lpGasHeater.setOutTemperature(330.0);
+    lpGasHeater.setOutletTemperature(330.0);
     sys.add(lpGasHeater);
 
     // Heat exchange between gas and LP gas paths
@@ -480,7 +480,7 @@ public class ProcessProfilingTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
     }
 
@@ -507,7 +507,7 @@ public class ProcessProfilingTest {
     sys.add(gasComp);
 
     Cooler gasCool = new Cooler("gas cooler", gasComp.getOutletStream());
-    gasCool.setOutTemperature(310.0);
+    gasCool.setOutletTemperature(310.0);
     sys.add(gasCool);
 
     ThrottlingValve lpValve = new ThrottlingValve("LP valve", hpSep.getLiquidOutStream());
@@ -518,7 +518,7 @@ public class ProcessProfilingTest {
     sys.add(lpSep);
 
     Heater lpGasHeater = new Heater("LP gas heater", lpSep.getGasOutStream());
-    lpGasHeater.setOutTemperature(330.0);
+    lpGasHeater.setOutletTemperature(330.0);
     sys.add(lpGasHeater);
 
     HeatExchanger hx = new HeatExchanger("HX", gasCool.getOutletStream());
@@ -547,14 +547,14 @@ public class ProcessProfilingTest {
       sys.add(comp);
 
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
 
       Separator sep2 = new Separator("sep2-" + t, cool.getOutletStream());
       sys.add(sep2);
 
       Heater heater = new Heater("heat" + t, sep2.getGasOutStream());
-      heater.setOutTemperature(340.0);
+      heater.setOutletTemperature(340.0);
       sys.add(heater);
     }
 

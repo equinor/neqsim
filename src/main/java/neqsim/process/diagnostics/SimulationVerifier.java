@@ -241,13 +241,13 @@ public class SimulationVerifier implements Serializable {
   private PerturbationResult perturbCooler(Cooler cooler, String failureMode, Hypothesis.Category category) {
     double oldTemperature = cooler.getOutletTemperature();
     if (failureMode.contains("utility") || failureMode.contains("loss") || category == Hypothesis.Category.EXTERNAL) {
-      cooler.setOutTemperature(cooler.getInletTemperature());
+      cooler.setOutletTemperature(cooler.getInletTemperature());
       return PerturbationResult.applied("outletTemperature",
           String.format(Locale.US, "set cooler outlet temperature from %.2f K to inlet temperature %.2f K",
               oldTemperature, cooler.getInletTemperature()));
     }
     if (failureMode.contains("foul") || failureMode.contains("fouling") || failureMode.contains("plugging")) {
-      cooler.setOutTemperature(oldTemperature + 10.0);
+      cooler.setOutletTemperature(oldTemperature + 10.0);
       return PerturbationResult.applied("outletTemperature", String.format(Locale.US,
           "increased cooler outlet temperature from %.2f K to %.2f K", oldTemperature, oldTemperature + 10.0));
     }
@@ -266,7 +266,7 @@ public class SimulationVerifier implements Serializable {
     if (failureMode.contains("foul") || failureMode.contains("fouling") || failureMode.contains("plugging")) {
       double oldTemperature = heater.getOutletTemperature();
       double newTemperature = oldTemperature - 10.0;
-      heater.setOutTemperature(newTemperature);
+      heater.setOutletTemperature(newTemperature);
       return PerturbationResult.applied("outletTemperature", String.format(Locale.US,
           "reduced heater outlet temperature from %.2f K to %.2f K", oldTemperature, newTemperature));
     }
@@ -374,15 +374,15 @@ public class SimulationVerifier implements Serializable {
    */
   private Map<String, Double> readKpis(ProcessAutomation auto) {
     Map<String, Double> kpis = new HashMap<>();
-    String[] properties = { "temperature", "pressure", "flowRate", "power", "polytropicEfficiency",
-        "isentropicEfficiency", "efficiency" };
-    String[] units = { "C", "bara", "kg/hr", "kW", "", "", "" };
+    String[] properties = {"temperature", "pressure", "flowRate", "power", "polytropicEfficiency",
+        "isentropicEfficiency", "efficiency"};
+    String[] units = {"C", "bara", "kg/hr", "kW", "", "", ""};
     for (int i = 0; i < properties.length; i++) {
       readKpi(auto, equipmentName + "." + properties[i], properties[i], units[i], kpis);
     }
 
-    String[] streamProps = { "temperature", "pressure", "flowRate" };
-    String[] streamUnits = { "C", "bara", "kg/hr" };
+    String[] streamProps = {"temperature", "pressure", "flowRate"};
+    String[] streamUnits = {"C", "bara", "kg/hr"};
     for (int i = 0; i < streamProps.length; i++) {
       readKpi(auto, equipmentName + ".outletStream." + streamProps[i], "outlet_" + streamProps[i], streamUnits[i],
           kpis);

@@ -35,7 +35,7 @@ public class ProcessSystemBypassAdjusterTest extends neqsim.NeqSimTest {
     Stream feed = new Stream("feed", makeGas(1000.0));
 
     Heater heater = new Heater("heater", feed);
-    heater.setOutTemperature(320.0);
+    heater.setOutletTemperature(320.0);
 
     Adjuster adj = new Adjuster("adj");
     adj.setAdjustedVariable(feed, "mass flow", "kg/hr");
@@ -68,9 +68,9 @@ public class ProcessSystemBypassAdjusterTest extends neqsim.NeqSimTest {
   public void perUnitThresholdSetterUpdatesOnlyNamedUnit() {
     Stream feed = new Stream("feed", makeGas(1000.0));
     Heater h1 = new Heater("h1", feed);
-    h1.setOutTemperature(320.0);
+    h1.setOutletTemperature(320.0);
     Heater h2 = new Heater("h2", h1.getOutletStream());
-    h2.setOutTemperature(330.0);
+    h2.setOutletTemperature(330.0);
 
     ProcessSystem ps = new ProcessSystem();
     ps.add(feed);
