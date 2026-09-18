@@ -9,7 +9,8 @@ import neqsim.thermo.system.SystemInterface;
  * Normal return requires finite state variables, normalized phase fractions and a total entropy residual within
  * {@code max(1e-7 * n, 1e-9 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
  * an {@link IllegalStateException}. Iteration normally requires one tenth of this residual; the larger bound is used
- * only after a cold sign-changing bracket reaches floating-point temperature resolution.
+ * only after a cold sign-changing bracket reaches floating-point temperature resolution. A final independent cold-root
+ * check accepts the converged continuation root only when it is not a higher-Gibbs state.
  * </p>
  *
  * @author even solbraa
@@ -24,6 +25,10 @@ public class PSFlash extends QfuncFlash {
   private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-10;
   /** Maximum residual at a cold root bracket narrower than floating-point temperature resolution. */
   private static final double ENTROPY_RESOLUTION_FACTOR = 10.0;
+  /** Absolute Gibbs-energy tolerance for independent endpoint comparison in J. */
+  private static final double GIBBS_ENERGY_ABSOLUTE_TOLERANCE = 1.0e-6;
+  /** Relative Gibbs-energy tolerance for independent endpoint comparison. */
+  private static final double GIBBS_ENERGY_RELATIVE_TOLERANCE = 1.0e-8;
   /** Number of non-improving Newton iterations before a cold bracket recovery. */
   private static final int STAGNATION_LIMIT = 8;
   /** Maximum number of safeguarded temperature iterations. */
@@ -234,6 +239,43 @@ public class PSFlash extends QfuncFlash {
   }
 
   /**
+   * Check a converged continuation endpoint against an independent cold TP root without
+   * overwriting the converged state.
+   *
+   * <p>
+   * A cold TP flash can select the opposite cubic root at a phase boundary even when the
+   * continuation root satisfies the entropy specification. The continuation root is retained
+   * only when it is not a higher-Gibbs state than the cold candidate. A lower-Gibbs cold
+   * candidate is replayed on the caller's system and recovered through the cold entropy solver.
+   * </p>
+   *
+   * @param entropyTolerance accepted total-entropy residual in J/K
+   * @return {@code true} when the cold candidate must replace the continuation endpoint
+   */
+  private boolean coldEndpointRequiresRecovery(double entropyTolerance) {
+    system.init(2);
+    double continuationGibbsEnergy = system.getGibbsEnergy();
+
+    SystemInterface coldCandidate = system.clone();
+    new TPflash(coldCandidate).run();
+    coldCandidate.init(2);
+    double coldGibbsEnergy = coldCandidate.getGibbsEnergy();
+    if (!Double.isFinite(continuationGibbsEnergy) || !Double.isFinite(coldGibbsEnergy)) {
+      return true;
+    }
+
+    double gibbsTolerance = Math.max(GIBBS_ENERGY_ABSOLUTE_TOLERANCE,
+        GIBBS_ENERGY_RELATIVE_TOLERANCE
+            * Math.max(Math.abs(continuationGibbsEnergy), Math.abs(coldGibbsEnergy)));
+    if (coldGibbsEnergy < continuationGibbsEnergy - gibbsTolerance) {
+      return true;
+    }
+
+    double coldResidual = coldCandidate.getEntropy() - Sspec;
+    return !Double.isFinite(coldResidual) && Math.abs(system.getEntropy() - Sspec) > entropyTolerance;
+  }
+
+  /**
    * Get an amount-scaled tolerance for total entropy.
    *
    * @param fluid fluid being solved
@@ -364,14 +406,17 @@ public class PSFlash extends QfuncFlash {
         secondOrderSolver.setSpec(Sspec);
         secondOrderSolver.solve(1);
       }
-      // Verify the endpoint with cold K-values before accepting a warm-start solution.
-      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
-      tpFlash.run();
-      system.init(2);
-      if (Math.abs(system.getEntropy() - Sspec) > entropyTolerance(system, Sspec)) {
-        solveQ();
-      }
+      // Verify against an independent cold root without destructively replacing a
+      // converged lower-Gibbs continuation state at a phase boundary.
       double tolerance = entropyTolerance(system, Sspec);
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      if (coldEndpointRequiresRecovery(tolerance)) {
+        tpFlash.run();
+        system.init(2);
+        if (Math.abs(system.getEntropy() - Sspec) > tolerance) {
+          solveQ();
+        }
+      }
       validateResult(system, Sspec, specifiedPressure,
           temperatureResolutionReached ? ENTROPY_RESOLUTION_FACTOR * tolerance : tolerance);
     } finally {
