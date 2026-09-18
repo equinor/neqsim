@@ -29,8 +29,8 @@ class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "260.0, 0.0, 0.0", "300.0, 0.0, 0.0", "350.0, 0.0, 0.0", "260.0, 25.0, 2.0", "300.0, 25.0, 2.0",
-      "350.0, 25.0, 2.0" })
+  @CsvSource({"260.0, 0.0, 0.0", "300.0, 0.0, 0.0", "350.0, 0.0, 0.0", "260.0, 25.0, 2.0", "300.0, 25.0, 2.0",
+      "350.0, 25.0, 2.0"})
   void derivativeMatchesAnalyticalValueAndFiniteDifference(double temperature, double offset, double exponent) {
     Component component = correlation(offset, exponent);
     assertTrue(component.hasAntoineVaporPressureCorrelation());
@@ -48,7 +48,7 @@ class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 260.0, 300.0, 350.0 })
+  @ValueSource(doubles = {260.0, 300.0, 350.0})
   void inverseTemperatureRecoversTarget(double temperature) {
     Component component = correlation(0.0, 0.0);
     double pressure = component.getAntoineVaporPressure(temperature);
@@ -60,8 +60,8 @@ class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
   @Test
   void derivativePreservesUnavailableAndInapplicableResults() {
     Component component = correlation(0.0, 2.0);
-    for (double temperature : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-        component.getTC() + 1.0 }) {
+    for (double temperature : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+        component.getTC() + 1.0}) {
       assertTrue(Double.isNaN(component.getAntoineVaporPressuredT(temperature)));
     }
     component.antoineLiqVapPresType = "none";
