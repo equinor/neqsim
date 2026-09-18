@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Check that current Phase 0 documentation matches canonical source accounting."""
 
+import ast
 import re
 from pathlib import Path
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 SOURCE_PATH = REPOSITORY_ROOT / "src/main/java/neqsim/mcp/runners/McpEvidenceInventory.java"
+PROTOCOL_PATH = REPOSITORY_ROOT / "neqsim-mcp-server/test_mcp_server.py"
 SURFACE_PATH = REPOSITORY_ROOT / "neqsim-mcp-server/docs/SURFACE_INVENTORY.md"
 FOUNDATION_PATH = REPOSITORY_ROOT / "neqsim-mcp-server/docs/FOUNDATION_TRACEABILITY.md"
 API_PATH = REPOSITORY_ROOT / "neqsim-mcp-server/docs/API_REFERENCE.md"
@@ -22,6 +24,18 @@ def require(text, expected, path):
 
 
 source = SOURCE_PATH.read_text(encoding="utf-8")
+# Recount the harness before packaging so newly added scenarios cannot leave
+# the published evidence inventory and its documentation silently out of date.
+protocol_tree = ast.parse(PROTOCOL_PATH.read_text(encoding="utf-8"))
+protocol_scenario_count = sum(
+    isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
+    for node in protocol_tree.body
+)
+require(
+    source,
+    f"int PROTOCOL_SCENARIO_COUNT = {protocol_scenario_count};",
+    SOURCE_PATH,
+)
 require(source, 'inventory.addProperty("inventoryVersion", "1.41")', SOURCE_PATH)
 require(
     source,
@@ -35,6 +49,8 @@ require(source, 'case "runBarrierRegister":', SOURCE_PATH)
 require(source, 'case "runOperationalStudy":', SOURCE_PATH)
 
 surface = SURFACE_PATH.read_text(encoding="utf-8")
+require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
+require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
     "scientifically validated: 10 records remain\n"
@@ -78,4 +94,7 @@ require(
     PLUGIN_PATH,
 )
 
-print("Phase 0 documentation accounting is consistent: 1.41 / 20 + 41 + 10")
+print(
+    "Phase 0 documentation accounting is consistent: 1.41 / 20 + 41 + 10; "
+    f"{protocol_scenario_count} primary protocol scenarios"
+)

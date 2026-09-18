@@ -493,7 +493,7 @@ richGas.addComponent("propane", 0.08);
 richGas.addComponent("i-butane", 0.03);
 richGas.addComponent("n-butane", 0.04);
 richGas.addComponent("n-pentane", 0.02);
-richGas.addTBPfraction("C6+", 0.03, 90.0, 0.70);
+richGas.addTBPfraction("C6+", 0.03, 90.0 / 1000.0, 0.70);
 richGas.setMixingRule("classic");
 
 // Rich gas has larger phase envelope
@@ -509,9 +509,9 @@ oil.addComponent("ethane", 0.05);
 oil.addComponent("propane", 0.04);
 oil.addComponent("n-butane", 0.03);
 oil.addComponent("n-pentane", 0.03);
-oil.addTBPfraction("C7", 0.10, 100.0, 0.74);
-oil.addTBPfraction("C15", 0.20, 210.0, 0.82);
-oil.addTBPfraction("C30+", 0.25, 420.0, 0.90);
+oil.addTBPfraction("C7", 0.10, 100.0 / 1000.0, 0.74);
+oil.addTBPfraction("C15", 0.20, 210.0 / 1000.0, 0.82);
+oil.addTBPfraction("C30+", 0.25, 420.0 / 1000.0, 0.90);
 oil.setMixingRule("classic");
 
 // Oil systems: bubble point line is most important

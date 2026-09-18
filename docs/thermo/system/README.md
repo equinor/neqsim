@@ -276,7 +276,7 @@ fluid.addComponent("methane", 100.0);
 fluid.addComponent(0, 100.0);
 
 // TBP fraction (for plus fractions)
-fluid.addTBPfraction("C7+", 10.0, 150.0, 0.78);  // name, moles, MW, SG
+fluid.addTBPfraction("C7+", 10.0, 150.0 / 1000.0, 0.78);  // name, moles, MW [g/mol], SG
 
 // Set mole fractions directly
 double[] z = {0.85, 0.10, 0.05};
