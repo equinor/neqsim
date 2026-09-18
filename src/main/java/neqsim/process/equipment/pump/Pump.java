@@ -73,11 +73,11 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * double power = pump2.getPower("kW"); // back-calculated
  *
  * // With manufacturer pump curves
- * double[] speed = { 1000.0, 1500.0 };
- * double[][] flow = { { 10, 20, 30 }, { 15, 30, 45 } };
- * double[][] head = { { 100, 95, 85 }, { 225, 214, 191 } };
- * double[][] efficiency = { { 70, 80, 75 }, { 72, 82, 77 } };
- * double[] chartConditions = { 18.0, 298.15, 1.0, 1.0, 998.0 }; // Include ref density
+ * double[] speed = {1000.0, 1500.0};
+ * double[][] flow = {{10, 20, 30}, {15, 30, 45}};
+ * double[][] head = {{100, 95, 85}, {225, 214, 191}};
+ * double[][] efficiency = {{70, 80, 75}, {72, 82, 77}};
+ * double[] chartConditions = {18.0, 298.15, 1.0, 1.0, 998.0}; // Include ref density
  * pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
  * pump.getPumpChart().setHeadUnit("meter");
  * pump.setSpeed(1200.0);
@@ -733,7 +733,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
 
     thermoSystem.initPhysicalProperties();
     String[][] table = new String[50][5];
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";

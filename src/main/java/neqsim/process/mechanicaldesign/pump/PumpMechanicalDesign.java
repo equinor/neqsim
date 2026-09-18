@@ -434,7 +434,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double estimatedSpeed = targetNs * Math.pow(headM, 0.75) / Math.sqrt(flowM3min);
 
     // Round to standard motor speeds (50 Hz)
-    double[] standardSpeeds = { 2950, 1475, 985, 740 };
+    double[] standardSpeeds = {2950, 1475, 985, 740};
     double closestSpeed = standardSpeeds[0];
     double minDiff = Math.abs(estimatedSpeed - closestSpeed);
 
@@ -710,8 +710,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     driverPower = absorbedPowerKW * driverMargin;
 
     // Round up to standard motor sizes (IEC frame sizes)
-    double[] standardPowers = { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0,
-        75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0 };
+    double[] standardPowers = {0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0,
+        75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0};
 
     double selectedPower = PumpApi610DesignCalculator.selectDriverRating(driverPower, standardPowers);
     if (selectedPower > 0.0) {
@@ -758,7 +758,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double dischargeDiameterMm = 2.0 * Math.sqrt(dischargeArea / Math.PI) * 1000.0;
 
     // Convert to standard pipe sizes (inches)
-    double[] standardSizes = { 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0 };
+    double[] standardSizes = {1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0};
 
     for (double size : standardSizes) {
       if (size * 25.4 >= suctionDiameterMm) {
@@ -1266,20 +1266,19 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] columnNames = { "Parameter", "Value", "Unit" };
-    String[][] data = { { "Pump Type", pumpType.toString(), "" },
-        { "Number of Stages", String.valueOf(numberOfStages), "" },
-        { "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
-        { "Specific Speed", String.format("%.1f", specificSpeed), "-" },
-        { "Impeller Diameter", String.format("%.1f", impellerDiameter), "mm" },
-        { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
-        { "Driver Power", String.format("%.1f", driverPower), "kW" },
-        { "Design Pressure", String.format("%.1f", designPressure), "bara" },
-        { "Design Temperature", String.format("%.1f", designTemperature), "°C" },
-        { "NPSHr", String.format("%.1f", npshRequired), "m" },
-        { "Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch" },
-        { "Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch" },
-        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
+    String[] columnNames = {"Parameter", "Value", "Unit"};
+    String[][] data = {{"Pump Type", pumpType.toString(), ""}, {"Number of Stages", String.valueOf(numberOfStages), ""},
+        {"Rated Speed", String.format("%.0f", ratedSpeed), "rpm"},
+        {"Specific Speed", String.format("%.1f", specificSpeed), "-"},
+        {"Impeller Diameter", String.format("%.1f", impellerDiameter), "mm"},
+        {"Shaft Diameter", String.format("%.1f", shaftDiameter), "mm"},
+        {"Driver Power", String.format("%.1f", driverPower), "kW"},
+        {"Design Pressure", String.format("%.1f", designPressure), "bara"},
+        {"Design Temperature", String.format("%.1f", designTemperature), "°C"},
+        {"NPSHr", String.format("%.1f", npshRequired), "m"},
+        {"Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch"},
+        {"Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch"},
+        {"Total Weight", String.format("%.0f", getWeightTotal()), "kg"}};
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);

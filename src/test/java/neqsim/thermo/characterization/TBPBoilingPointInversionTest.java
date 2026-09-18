@@ -36,7 +36,7 @@ public class TBPBoilingPointInversionTest {
   /** The specific gravity must increase monotonically with boiling point at fixed molar mass. */
   @Test
   void testDensityRespondsMonotonicallyToBoilingPoint() {
-    double[] boilingPoints = new double[] { 400.0, 420.0, 447.0, 470.0 };
+    double[] boilingPoints = new double[] {400.0, 420.0, 447.0, 470.0};
     double previous = 0.0;
     for (int i = 0; i < boilingPoints.length; i++) {
       double density = testSystem.calculateDensityFromBoilingPoint(M_C10, boilingPoints[i]);
@@ -90,8 +90,8 @@ public class TBPBoilingPointInversionTest {
   @Test
   void testWatsonKRouteMatchesPureComponents() {
     // name, boiling point [K], Watson K [-], reference specific gravity [g/cm3]
-    double[][] cases = new double[][] { { 371.58, 12.70, 0.6882 }, { 447.30, 12.66, 0.7342 }, { 353.25, 9.74, 0.8844 },
-        { 383.78, 10.13, 0.8719 } };
+    double[][] cases = new double[][] {{371.58, 12.70, 0.6882}, {447.30, 12.66, 0.7342}, {353.25, 9.74, 0.8844},
+        {383.78, 10.13, 0.8719}};
     for (int i = 0; i < cases.length; i++) {
       double density = testSystem.calculateDensityFromBoilingPointAndWatsonK(cases[i][0], cases[i][1]);
       assertEquals(cases[i][2], density, 0.01 * cases[i][2],

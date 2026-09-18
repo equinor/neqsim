@@ -354,7 +354,7 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     double cleanColdOutRun = hx.getOutStream(1).getTemperature("C");
     double uaAfterRun = hx.getUAvalue();
 
-    double[] fractions = new double[] { 1.0, 0.75, 0.5, 0.25, 0.0 };
+    double[] fractions = new double[] {1.0, 0.75, 0.5, 0.25, 0.0};
     HeatExchanger.FoulingScreeningResult result = hx.foulingScreening(5000.0, fractions, "C");
 
     assertEquals("C", result.getTemperatureUnit());

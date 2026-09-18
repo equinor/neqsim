@@ -55,7 +55,7 @@ public class RhonePoulencVelocityTest {
 
       // Corrosive should always be less than non-corrosive
       RhonePoulencVelocity nonCorrosive = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
-      double[] densities = { 1.0, 5.0, 10.0, 50.0, 100.0, 300.0 };
+      double[] densities = {1.0, 5.0, 10.0, 50.0, 100.0, 300.0};
       for (double rho : densities) {
         assertTrue(calc.getMaxVelocity(rho) <= nonCorrosive.getMaxVelocity(rho),
             "Corrosive velocity should be <= non-corrosive at density=" + rho);
@@ -68,7 +68,7 @@ public class RhonePoulencVelocityTest {
       RhonePoulencVelocity calc = new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
 
       double prevVelocity = Double.MAX_VALUE;
-      double[] densities = { 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0 };
+      double[] densities = {0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0};
       for (double rho : densities) {
         double v = calc.getMaxVelocity(rho);
         assertTrue(v <= prevVelocity, "Velocity should decrease with density: at rho=" + rho + " got v=" + v);

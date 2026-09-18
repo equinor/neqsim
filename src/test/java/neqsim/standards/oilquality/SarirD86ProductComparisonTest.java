@@ -27,10 +27,10 @@ class SarirD86ProductComparisonTest {
   @Test
   void strictT95UsesQualifiedStandardAndPreservesSourceEvidence() {
     Standard_ASTM_D86 standard = calculatedStandard();
-    String[] names = { "Light Naphtha", "Heavy Naphtha", "Kerosene", "Diesel" };
-    double[] laboratory = { 90.0, 160.0, 221.0, 346.0 };
-    double[] hysys = { 97.0, 153.0, 214.0, 339.0 };
-    double[] specifications = { 90.0, 160.0, 221.0, 327.0 };
+    String[] names = {"Light Naphtha", "Heavy Naphtha", "Kerosene", "Diesel"};
+    double[] laboratory = {90.0, 160.0, 221.0, 346.0};
+    double[] hysys = {97.0, 153.0, 214.0, 339.0};
+    double[] specifications = {90.0, 160.0, 221.0, 327.0};
     double strictT95 = standard.getQualifiedD86Temperature(95.0);
 
     for (int i = 0; i < names.length; i++) {

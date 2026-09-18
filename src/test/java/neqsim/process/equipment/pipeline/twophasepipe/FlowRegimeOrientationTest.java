@@ -44,7 +44,7 @@ class FlowRegimeOrientationTest {
   void nearHorizontalClosureWeightsAreIndependentOfCoordinateDirection(DetectionMethod method) {
     FlowRegimeDetector detector = detector(method);
     boolean foundBlendedState = false;
-    for (double degrees : new double[] { -3.0, 0.0, 3.0 }) {
+    for (double degrees : new double[] {-3.0, 0.0, 3.0}) {
       for (int sample = 0; sample <= 40; sample++) {
         double gasSuperficialVelocity = 0.5 + 0.1 * sample;
         TwoFluidSection forward = section(Math.toRadians(degrees), 0.95, 0.0, gasSuperficialVelocity / 0.95,
@@ -70,8 +70,8 @@ class FlowRegimeOrientationTest {
   @EnumSource(DetectionMethod.class)
   void aStagnantPresentPhaseUsesTheMovingPhaseDirectionWithoutChangingInventory(DetectionMethod method) {
     FlowRegimeDetector detector = detector(method);
-    double[][] velocities = { { 0.0, -2.0 }, { -2.0, 0.0 }, { -1.0e-12, -2.0 }, { -2.0, -1.0e-12 } };
-    for (double degrees : new double[] { -90.0, -3.0, 0.0, 3.0, 90.0 }) {
+    double[][] velocities = {{0.0, -2.0}, {-2.0, 0.0}, {-1.0e-12, -2.0}, {-2.0, -1.0e-12}};
+    for (double degrees : new double[] {-90.0, -3.0, 0.0, 3.0, 90.0}) {
       for (double[] velocity : velocities) {
         TwoFluidSection backward = section(Math.toRadians(degrees), 0.4, 0.0, velocity[0], velocity[1], 0.0);
         assertTrue(backward.getGasMassPerLength() > 0.0 && backward.getOilMassPerLength() > 0.0);
@@ -84,7 +84,7 @@ class FlowRegimeOrientationTest {
   @EnumSource(DetectionMethod.class)
   void independentOilAndWaterSlipSurvivesDetectionAndClassification(DetectionMethod method) {
     FlowRegimeDetector detector = detector(method);
-    for (double degrees : new double[] { -90.0, -3.0, 0.0, 3.0, 90.0 }) {
+    for (double degrees : new double[] {-90.0, -3.0, 0.0, 3.0, 90.0}) {
       TwoFluidSection backward = section(Math.toRadians(degrees), 0.4, 0.25, -3.0, -2.0, -4.0);
       assertTrue(backward.getOilMassPerLength() > 0.0 && backward.getWaterMassPerLength() > 0.0);
       assertNotEquals(backward.getOilVelocity(), backward.getWaterVelocity());
@@ -109,7 +109,7 @@ class FlowRegimeOrientationTest {
   @EnumSource(DetectionMethod.class)
   void completeStagnationDoesNotSelectAnArtificialReverseDirection(DetectionMethod method) {
     FlowRegimeDetector detector = detector(method);
-    for (double degrees : new double[] { -90.0, 0.0, 90.0 }) {
+    for (double degrees : new double[] {-90.0, 0.0, 90.0}) {
       TwoFluidSection positiveZero = section(Math.toRadians(degrees), 0.4, 0.0, 0.0, 0.0, 0.0);
       TwoFluidSection negativeZero = section(Math.toRadians(degrees), 0.4, 0.0, -0.0, -0.0, -0.0);
       assertEquivalent(detector, positiveZero, negativeZero);
@@ -123,7 +123,7 @@ class FlowRegimeOrientationTest {
   @Test
   void countercurrentInputsAreNotReplacedByAbsolutePhaseVelocities() {
     FlowRegimeDetector detector = detector(DetectionMethod.MECHANISTIC);
-    for (double sign : new double[] { -1.0, 1.0 }) {
+    for (double sign : new double[] {-1.0, 1.0}) {
       TwoFluidSection countercurrent = section(Math.PI / 2.0, 0.4, 0.0, sign * 0.1 / 0.4, -sign * 0.5 / 0.6, 0.0);
       TwoFluidSection before = countercurrent.clone();
       // The signed drift estimate has no admissible bubble void fraction; this is not a countercurrent anchor.

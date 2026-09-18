@@ -30,10 +30,10 @@ public final class RiaziDaubertDistillationConversion {
    * Rows are recovery vol%, a, b, minimum D86 temperature in C, maximum D86 temperature in C, worked-example D86
    * temperature in C, and worked-example TBP temperature in C.
    */
-  private static final double[][] REFERENCE_DATA = { { 0.0, 0.9177, 1.0019, 20.0, 320.0, 36.5, 14.1 },
-      { 10.0, 0.5564, 1.0900, 35.0, 305.0, 54.1, 33.4 }, { 30.0, 0.7617, 1.0425, 50.0, 315.0, 76.9, 68.9 },
-      { 50.0, 0.9013, 1.0176, 55.0, 320.0, 101.5, 101.6 }, { 70.0, 0.8821, 1.0226, 65.0, 330.0, 131.0, 135.1 },
-      { 90.0, 0.9552, 1.0110, 75.0, 345.0, 171.0, 180.5 }, { 95.0, 0.8177, 1.0355, 75.0, 400.0, 186.5, 194.1 } };
+  private static final double[][] REFERENCE_DATA = {{0.0, 0.9177, 1.0019, 20.0, 320.0, 36.5, 14.1},
+      {10.0, 0.5564, 1.0900, 35.0, 305.0, 54.1, 33.4}, {30.0, 0.7617, 1.0425, 50.0, 315.0, 76.9, 68.9},
+      {50.0, 0.9013, 1.0176, 55.0, 320.0, 101.5, 101.6}, {70.0, 0.8821, 1.0226, 65.0, 330.0, 131.0, 135.1},
+      {90.0, 0.9552, 1.0110, 75.0, 345.0, 171.0, 180.5}, {95.0, 0.8177, 1.0355, 75.0, 400.0, 186.5, 194.1}};
 
   private RiaziDaubertDistillationConversion() {
   }

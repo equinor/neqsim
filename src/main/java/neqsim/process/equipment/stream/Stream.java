@@ -850,7 +850,7 @@ public class Stream extends ProcessEquipmentBaseClass
           getClass().getSimpleName(), getName(), pointName, sourceTemperatureK, sourcePressureBara);
       return null;
     }
-    return new double[] { point[0], point[1] };
+    return new double[] {point[0], point[1]};
   }
 
   /**
@@ -1246,18 +1246,17 @@ public class Stream extends ProcessEquipmentBaseClass
     ArrayList<String[]> report = new ArrayList<String[]>();
     report.add(phases.toArray(new String[0]));
     report.add(
-        new String[] { "temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-            neqsim.util.unit.Units.getSymbol("temperature") });
-    report.add(new String[] { "pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure") });
-    report.add(new String[] { "mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow") });
+        new String[] {"temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature")});
+    report.add(new String[] {"pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")});
+    report.add(new String[] {"mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow")});
+    report.add(new String[] {"molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+        neqsim.util.unit.Units.getSymbol("molar flow")});
     report
-        .add(new String[] { "molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
-            neqsim.util.unit.Units.getSymbol("molar flow") });
-    report.add(
-        new String[] { "volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
-            neqsim.util.unit.Units.getSymbol("volume flow") });
+        .add(new String[] {"volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+            neqsim.util.unit.Units.getSymbol("volume flow")});
     return report;
   }
 

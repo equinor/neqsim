@@ -19,14 +19,14 @@ class UnsplitTransientSolverTest {
 
   @Test
   void hydrostaticTerrainKinkIsAnInvariantCommonTimeLevel() {
-    double[] elevations = { 0.0, -2.0, 4.0, 9.0 };
+    double[] elevations = {0.0, -2.0, 4.0, 9.0};
     double mixtureDensity = 0.2 * GAS_DENSITY + 0.8 * OIL_DENSITY;
     double[][] state = filledState(elevations.length);
     double[] pressure = new double[elevations.length];
     for (int cell = 0; cell < pressure.length; cell++) {
       pressure[cell] = 5.0e6 - mixtureDensity * 9.81 * elevations[cell];
     }
-    final int[] linearizations = { 0, 0 };
+    final int[] linearizations = {0, 0};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -74,7 +74,7 @@ class UnsplitTransientSolverTest {
     double[][] state = filledState(2);
     state[0][3] = 10.0;
     state[1][3] = -4.0;
-    double[] pressure = { 5.0e6, 5.0e6 };
+    double[] pressure = {5.0e6, 5.0e6};
     final double decayRate = 2.0;
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
@@ -105,10 +105,10 @@ class UnsplitTransientSolverTest {
 
   @Test
   void fixedOutletPressureActsAtBoundaryFaceAndRetainsLastCellClosure() {
-    double[][] state = new double[][] { { 10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.0 } };
-    double[] pressure = { 5.0e6 };
+    double[][] state = new double[][] {{10.0, 0.0, 0.0, 0.0, 0.0, 0.0, 17.0}};
+    double[] pressure = {5.0e6};
     final double requestedOutletPressure = 4.0e6;
-    final boolean[] boundaryObserved = { false };
+    final boolean[] boundaryObserved = {false};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       boundaryObserved[0] = outletPressureFixed && outletPressure == requestedOutletPressure;
@@ -116,11 +116,11 @@ class UnsplitTransientSolverTest {
       rates[0][0] = -0.1;
       double gasDensity = GAS_DENSITY + 1.0e-5 * (closurePressure[0] - 5.0e6);
       return new UnsplitTransientSolver.Evaluation(rates,
-          new double[][] { { gasDensity }, { OIL_DENSITY }, { WATER_DENSITY } });
+          new double[][] {{gasDensity}, {OIL_DENSITY}, {WATER_DENSITY}});
     };
 
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
-    UnsplitTransientSolver.Result result = solver.solve(state, pressure, new double[] { 1.0 }, 0.1, 0.0,
+    UnsplitTransientSolver.Result result = solver.solve(state, pressure, new double[] {1.0}, 0.1, 0.0,
         requestedOutletPressure, true, model);
 
     assertTrue(result.isConverged());
@@ -191,7 +191,7 @@ class UnsplitTransientSolverTest {
   void rejectsInvalidAcceptedStateAndFixedBoundary() {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
+    double[] pressure = {5.0e6};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure,
         outletPressureFixed) -> new UnsplitTransientSolver.Evaluation(new double[1][6], constantDensities(1));
@@ -207,9 +207,9 @@ class UnsplitTransientSolverTest {
   @Test
   void refreshesChangedActiveSetBeforeDeclaringConvergence() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final boolean[] secondRegime = { false };
-    final int[] updates = { 0 };
+    double[] pressure = {5.0e6};
+    final boolean[] secondRegime = {false};
+    final int[] updates = {0};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -245,11 +245,11 @@ class UnsplitTransientSolverTest {
   @Test
   void solveReevaluatesTheUnperturbedBaseAfterFreezing() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final boolean[] frozen = { false };
-    final boolean[] expectingBase = { false };
-    final double[][][] frozenState = { null };
-    final double[] selectedRate = { 1.0 };
+    double[] pressure = {5.0e6};
+    final boolean[] frozen = {false};
+    final boolean[] expectingBase = {false};
+    final double[][][] frozenState = {null};
+    final double[] selectedRate = {1.0};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -292,11 +292,11 @@ class UnsplitTransientSolverTest {
   @Test
   void reevaluatesEveryActiveSetSwitchAboveTolerance() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final int[] activeVersion = { 0 };
-    final int[] evaluatedVersion = { -1 };
-    final boolean[] frozen = { false };
-    final int[] evaluations = { 0 };
+    double[] pressure = {5.0e6};
+    final int[] activeVersion = {0};
+    final int[] evaluatedVersion = {-1};
+    final boolean[] frozen = {false};
+    final int[] evaluations = {0};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -348,8 +348,8 @@ class UnsplitTransientSolverTest {
   @Test
   void countsEveryResidualProbeIncludingTheFrozenBase() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final int[] evaluations = { 0 };
+    double[] pressure = {5.0e6};
+    final int[] evaluations = {0};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       evaluations[0]++;
@@ -370,11 +370,11 @@ class UnsplitTransientSolverTest {
 
   @Test
   void releasesPartiallyInitializedLinearizationsWhenBeginThrows() {
-    for (boolean diagnostic : new boolean[] { false, true }) {
+    for (boolean diagnostic : new boolean[] {false, true}) {
       double[][] state = filledState(1);
-      double[] pressure = { 5.0e6 };
-      final boolean[] frozen = { false };
-      final int[] releases = { 0 };
+      double[] pressure = {5.0e6};
+      final boolean[] frozen = {false};
+      final int[] releases = {0};
       IllegalStateException failure = new IllegalStateException("Injected begin failure");
       UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
         @Override
@@ -418,10 +418,10 @@ class UnsplitTransientSolverTest {
 
   @Test
   void preservesProbeFailureWhenLinearizationCleanupAlsoFails() {
-    for (boolean diagnostic : new boolean[] { false, true }) {
+    for (boolean diagnostic : new boolean[] {false, true}) {
       double[][] state = filledState(1);
-      double[] pressure = { 5.0e6 };
-      final boolean[] frozen = { false };
+      double[] pressure = {5.0e6};
+      final boolean[] frozen = {false};
       IllegalStateException failure = new IllegalStateException("Injected probe failure");
       IllegalStateException cleanupFailure = new IllegalStateException("Injected cleanup failure");
       UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
@@ -469,12 +469,12 @@ class UnsplitTransientSolverTest {
   void diagnosticJacobianStabilizesRepeatedChangesBeforeFreezing() {
     double[][] state = filledState(1);
     state[0][3] = 1.0;
-    double[] pressure = { 5.0e6 };
-    final int[] version = { 0 };
-    final int[] evaluatedVersion = { -1 };
-    final int[] frozenEvaluations = { 0 };
-    final int[] evaluations = { 0 };
-    final boolean[] frozen = { false };
+    double[] pressure = {5.0e6};
+    final int[] version = {0};
+    final int[] evaluatedVersion = {-1};
+    final int[] frozenEvaluations = {0};
+    final int[] evaluations = {0};
+    final boolean[] frozen = {false};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -524,11 +524,11 @@ class UnsplitTransientSolverTest {
 
   @Test
   void cyclingActiveSetsStopWithinBudgetWithAFreshFinalResidual() {
-    for (boolean diagnostic : new boolean[] { false, true }) {
+    for (boolean diagnostic : new boolean[] {false, true}) {
       double[][] state = filledState(1);
-      double[] pressure = { 5.0e6 };
-      final int[] updates = { 0 };
-      final int[] evaluations = { 0 };
+      double[] pressure = {5.0e6};
+      final int[] updates = {0};
+      final int[] evaluations = {0};
       UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
         @Override
         public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -581,8 +581,8 @@ class UnsplitTransientSolverTest {
   @Test
   void stabilityOnTheLastRefreshAttemptIsAccepted() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final int[] updates = { 0 };
+    double[] pressure = {5.0e6};
+    final int[] updates = {0};
     UnsplitTransientSolver.Model model = new UnsplitTransientSolver.Model() {
       @Override
       public UnsplitTransientSolver.Evaluation evaluate(double[][] midpointState, double[] midpointPressure,
@@ -615,8 +615,8 @@ class UnsplitTransientSolverTest {
   @Test
   void reportsSingularJacobianWithoutClaimingAnAcceptedStep() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final int[] evaluations = { 0 };
+    double[] pressure = {5.0e6};
+    final int[] evaluations = {0};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       evaluations[0]++;
@@ -639,7 +639,7 @@ class UnsplitTransientSolverTest {
   @Test
   void reportsNoAdmissibleStepWhenAnAbsentPhaseWouldBeWithdrawn() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
+    double[] pressure = {5.0e6};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       double[][] rates = new double[1][6];
@@ -659,8 +659,8 @@ class UnsplitTransientSolverTest {
   @Test
   void reportsExhaustedLineSearchAndCountsRejectedProbes() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
-    final int[] evaluations = { 0 };
+    double[] pressure = {5.0e6};
+    final int[] evaluations = {0};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       evaluations[0]++;
@@ -685,7 +685,7 @@ class UnsplitTransientSolverTest {
   @Test
   void reportsExhaustedNewtonBudgetWithItsFinalAdmissibleIterate() {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
+    double[] pressure = {5.0e6};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       double[][] rates = new double[1][6];
@@ -710,7 +710,7 @@ class UnsplitTransientSolverTest {
   @Test
   void serializedResultPreservesDiagnosticsAndDefensiveArrays() throws Exception {
     double[][] state = filledState(1);
-    double[] pressure = { 5.0e6 };
+    double[] pressure = {5.0e6};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> new UnsplitTransientSolver.Evaluation(new double[1][6],
             pressureDependentDensities(closurePressure));
@@ -740,15 +740,15 @@ class UnsplitTransientSolverTest {
 
   @Test
   void infeasibleMassWithdrawalStopsAtPositiveState() {
-    double[][] state = new double[][] { { 1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 17.0 } };
-    double[] pressure = { 5.0e6 };
+    double[][] state = new double[][] {{1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 17.0}};
+    double[] pressure = {5.0e6};
     UnsplitTransientSolver.Model model = (midpointState, midpointPressure, closureState, closurePressure, time,
         outletPressure, outletPressureFixed) -> {
       double[][] rates = new double[1][6];
       rates[0][0] = -20.0;
       double gasDensity = GAS_DENSITY + 1.0e-6 * (closurePressure[0] - 5.0e6);
       return new UnsplitTransientSolver.Evaluation(rates,
-          new double[][] { { gasDensity }, { OIL_DENSITY }, { WATER_DENSITY } });
+          new double[][] {{gasDensity}, {OIL_DENSITY}, {WATER_DENSITY}});
     };
 
     UnsplitTransientSolver.Result result = new UnsplitTransientSolver().solve(state, pressure, unitAreas(1), 0.1, 0.0,

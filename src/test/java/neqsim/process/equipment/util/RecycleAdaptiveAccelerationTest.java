@@ -78,7 +78,7 @@ class RecycleAdaptiveAccelerationTest {
     process.add(separator);
 
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 1.0 - recycleFraction, recycleFraction });
+    splitter.setSplitFactors(new double[] {1.0 - recycleFraction, recycleFraction});
     process.add(splitter);
 
     Recycle recycle = new Recycle("recycle");

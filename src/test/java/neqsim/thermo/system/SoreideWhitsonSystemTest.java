@@ -43,9 +43,9 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases
-    double[] expectedGasFractions = { 1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3 };
-    double[] expectedAqueousFractions = { 4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1 };
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
+    double[] expectedGasFractions = {1.10818E-1, 2.21422E-1, 3.32456E-1, 3.32456E-1, 2.84796E-3};
+    double[] expectedAqueousFractions = {4.43467E-5, 2.07206E-3, 1.26653E-4, 1.29507E-4, 9.97627E-1};
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
     double tolerance = 1e-6;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
@@ -107,9 +107,9 @@ public class SoreideWhitsonSystemTest {
     testOps.TPflash();
 
     // Check phase mole fractions for both gas and aqueous phases (with salinity)
-    double[] expectedGasFractions = { 1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3 };
-    double[] expectedAqueousFractions = { 2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1 };
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "water" };
+    double[] expectedGasFractions = {1.10836E-1, 2.2151E-1, 3.32509E-1, 3.3251E-1, 2.63456E-3};
+    double[] expectedAqueousFractions = {2.53209E-5, 1.55814E-3, 7.67909E-5, 7.0922E-5, 9.98269E-1};
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "water"};
     double tolerance = 0.001;
 
     for (int phaseIdx = 0; phaseIdx < 2; phaseIdx++) {
@@ -141,7 +141,7 @@ public class SoreideWhitsonSystemTest {
     testSystem.setMixingRule(11);
 
     SystemSoreideWhitson testSystem2 = testSystem.clone();
-    double[] molarComposition = { 0.2, 0.4, 0.1, 0.2, 0.1 };
+    double[] molarComposition = {0.2, 0.4, 0.1, 0.2, 0.1};
     testSystem2.setMolarComposition(molarComposition);
     testSystem2.setSalinity(0.00, "mole/sec");
 
@@ -243,10 +243,10 @@ public class SoreideWhitsonSystemTest {
 
   @Test
   public void testChabab2019Table2CO2Solubility() {
-    double[][] points = { { 1.13, 323.02, 53.450, 0.01030, 0.010872 }, { 1.13, 322.97, 75.550, 0.01290, 0.013990 },
-        { 1.13, 323.03, 100.350, 0.01510, 0.016205 }, { 1.13, 323.04, 145.080, 0.01700, 0.018000 },
-        { 3.01, 342.82, 30.391, 0.00441, 0.003586 }, { 3.01, 342.81, 72.559, 0.00880, 0.007407 },
-        { 3.01, 342.82, 100.910, 0.01057, 0.009160 } };
+    double[][] points = {{1.13, 323.02, 53.450, 0.01030, 0.010872}, {1.13, 322.97, 75.550, 0.01290, 0.013990},
+        {1.13, 323.03, 100.350, 0.01510, 0.016205}, {1.13, 323.04, 145.080, 0.01700, 0.018000},
+        {3.01, 342.82, 30.391, 0.00441, 0.003586}, {3.01, 342.81, 72.559, 0.00880, 0.007407},
+        {3.01, 342.82, 100.910, 0.01057, 0.009160}};
     double legacyHighSalinityAbsoluteDeviation = 0.0;
     double chababHighSalinityAbsoluteDeviation = 0.0;
 

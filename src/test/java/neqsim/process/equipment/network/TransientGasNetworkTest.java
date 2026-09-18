@@ -95,14 +95,13 @@ class TransientGasNetworkTest extends neqsim.NeqSimTest {
   void unsupportedAndInfeasibleCasesFailLoudly() {
     TransientGasNetwork reverse = singlePipeNetwork(gas(asgardComposition(), 200.0));
     IllegalArgumentException reverseError = assertThrows(IllegalArgumentException.class,
-        () -> reverse.setSourceSchedule("source", new double[] { 0.0 },
-            new SystemInterface[] { gas(asgardComposition(), 200.0) }, new double[] { -1.0 }));
+        () -> reverse.setSourceSchedule("source", new double[] {0.0},
+            new SystemInterface[] {gas(asgardComposition(), 200.0)}, new double[] {-1.0}));
     assertTrue(reverseError.getMessage().contains("reverse flow"));
 
     TransientGasNetwork pressureLimited = singlePipeNetwork(gas(asgardComposition(), 200.0));
-    pressureLimited.setSourceSchedule("source", new double[] { 0.0 },
-        new SystemInterface[] { gas(asgardComposition(), 200.0) },
-        new double[] { ASGARD_FLOW_KG_S + KRISTIN_FLOW_KG_S });
+    pressureLimited.setSourceSchedule("source", new double[] {0.0},
+        new SystemInterface[] {gas(asgardComposition(), 200.0)}, new double[] {ASGARD_FLOW_KG_S + KRISTIN_FLOW_KG_S});
     pressureLimited.setSourcePressureLimits("source", 110.0, 150.0, "bara");
     IllegalStateException pressureError = assertThrows(IllegalStateException.class,
         () -> pressureLimited.run(1800.0, 1800.0));
@@ -110,17 +109,16 @@ class TransientGasNetworkTest extends neqsim.NeqSimTest {
     assertTrue(pressureLimited.getLastDiagnostic().contains("Infeasible source pressure"));
 
     TransientGasNetwork capacityLimited = singlePipeNetwork(gas(asgardComposition(), 200.0));
-    capacityLimited.setSourceSchedule("source", new double[] { 0.0 },
-        new SystemInterface[] { gas(asgardComposition(), 200.0) },
-        new double[] { ASGARD_FLOW_KG_S + KRISTIN_FLOW_KG_S });
+    capacityLimited.setSourceSchedule("source", new double[] {0.0},
+        new SystemInterface[] {gas(asgardComposition(), 200.0)}, new double[] {ASGARD_FLOW_KG_S + KRISTIN_FLOW_KG_S});
     capacityLimited.setMaximumEdgeVelocity("pipe", 1.0);
     IllegalStateException capacityError = assertThrows(IllegalStateException.class,
         () -> capacityLimited.run(1800.0, 1800.0));
     assertTrue(capacityError.getMessage().contains("edge capacity"));
 
     TransientGasNetwork phaseAppearance = singlePipeNetwork(twoPhaseFluid());
-    phaseAppearance.setSourceSchedule("source", new double[] { 0.0 }, new SystemInterface[] { twoPhaseFluid() },
-        new double[] { 10.0 });
+    phaseAppearance.setSourceSchedule("source", new double[] {0.0}, new SystemInterface[] {twoPhaseFluid()},
+        new double[] {10.0});
     IllegalArgumentException phaseError = assertThrows(IllegalArgumentException.class,
         () -> phaseAppearance.run(60.0, 60.0));
     assertTrue(phaseError.getMessage().contains("phase appearance"));
@@ -169,11 +167,11 @@ class TransientGasNetworkTest extends neqsim.NeqSimTest {
     network.addPipe("asgardBranch", "asgard", "junction", 1.0, 1.0, 50.0e-6, 1, asgard);
     network.addPipe("kristinBranch", "kristin", "junction", 1.0, 1.0, 50.0e-6, 1, kristin);
     network.addPipe("export", "junction", "karsto", 700000.0, 0.987, 50.0e-6, exportCells, mixed);
-    network.setSourceSchedule("asgard", new double[] { 0.0 }, new SystemInterface[] { asgard },
-        new double[] { ASGARD_FLOW_KG_S });
-    network.setSourceSchedule("kristin", new double[] { 0.0, EVENT_START_SECONDS, EVENT_END_SECONDS },
-        new SystemInterface[] { kristin, kristinEvent, kristin },
-        new double[] { KRISTIN_FLOW_KG_S, KRISTIN_EVENT_FLOW_KG_S, KRISTIN_FLOW_KG_S });
+    network.setSourceSchedule("asgard", new double[] {0.0}, new SystemInterface[] {asgard},
+        new double[] {ASGARD_FLOW_KG_S});
+    network.setSourceSchedule("kristin", new double[] {0.0, EVENT_START_SECONDS, EVENT_END_SECONDS},
+        new SystemInterface[] {kristin, kristinEvent, kristin},
+        new double[] {KRISTIN_FLOW_KG_S, KRISTIN_EVENT_FLOW_KG_S, KRISTIN_FLOW_KG_S});
     network.setFixedPressureBoundary("karsto", 110.0, "bara");
     network.setInitialNodePressure("asgard", 200.0, "bara");
     network.setInitialNodePressure("kristin", 200.0, "bara");
@@ -196,7 +194,7 @@ class TransientGasNetworkTest extends neqsim.NeqSimTest {
 
   private static SystemInterface gas(double[] composition, double pressureBara) {
     SystemInterface fluid = new SystemSrkEos(288.15, pressureBara);
-    String[] names = new String[] { "methane", "ethane", "propane", "CO2", "nitrogen" };
+    String[] names = new String[] {"methane", "ethane", "propane", "CO2", "nitrogen"};
     for (int index = 0; index < names.length; index++) {
       fluid.addComponent(names[index], composition[index]);
     }
@@ -205,19 +203,19 @@ class TransientGasNetworkTest extends neqsim.NeqSimTest {
   }
 
   private static double[] asgardComposition() {
-    return new double[] { 0.940, 0.035, 0.006, 0.008, 0.011 };
+    return new double[] {0.940, 0.035, 0.006, 0.008, 0.011};
   }
 
   private static double[] kristinComposition() {
-    return new double[] { 0.925, 0.040, 0.008, 0.012, 0.015 };
+    return new double[] {0.925, 0.040, 0.008, 0.012, 0.015};
   }
 
   private static double[] kristinEventComposition() {
-    return new double[] { 0.897, 0.040, 0.008, 0.040, 0.015 };
+    return new double[] {0.897, 0.040, 0.008, 0.040, 0.015};
   }
 
   private static double[] mixedComposition() {
-    return new double[] { 0.93625, 0.03625, 0.0065, 0.009, 0.012 };
+    return new double[] {0.93625, 0.03625, 0.0065, 0.009, 0.012};
   }
 
   private static SystemInterface twoPhaseFluid() {

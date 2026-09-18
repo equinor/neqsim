@@ -51,10 +51,10 @@ public class TiebackThermalDesign implements Serializable {
   private double internalDiameterM = 0.2032;
 
   /** Candidate steel wall thicknesses in metres. */
-  private double[] wallThicknessesM = { 0.0127, 0.0143, 0.0159, 0.0175, 0.0191, 0.0222 };
+  private double[] wallThicknessesM = {0.0127, 0.0143, 0.0159, 0.0175, 0.0191, 0.0222};
 
   /** Candidate insulation thicknesses in metres. */
-  private double[] insulationThicknessesM = { 0.025, 0.050, 0.075, 0.100, 0.125, 0.150 };
+  private double[] insulationThicknessesM = {0.025, 0.050, 0.075, 0.100, 0.125, 0.150};
 
   /** Insulation thermal conductivity in W/mK. */
   private double insulationConductivity = 0.22;

@@ -9,11 +9,11 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashCpaAqueousStabilityConsistencyTest {
-  private static final String[] COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water" };
+  private static final String[] COMPONENTS = {"nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water"};
 
   @Test
   void ordinaryCpaFlashFindsStableAqueousPhaseAcrossAppearanceBoundary() {
-    double[][] states = { { 230.0, 120.0, 0.01, 0.001 }, { 270.0, 220.0, 0.0002, 0.003 } };
+    double[][] states = {{230.0, 120.0, 0.01, 0.001}, {270.0, 220.0, 0.0002, 0.003}};
 
     for (double[] state : states) {
       SystemInterface ordinary = createAndFlash(state[0], state[1], state[2], state[3], false, false);
@@ -53,7 +53,7 @@ class TPflashCpaAqueousStabilityConsistencyTest {
   private SystemInterface createAndFlash(double temperature, double pressure, double water, double decane,
       boolean multiphaseCheck, boolean poorGuess) {
     SystemInterface system = new SystemSrkCPAstatoil(temperature, pressure);
-    double[] amounts = { 0.02, 0.03, 0.85, 0.06, 0.03, decane, water };
+    double[] amounts = {0.02, 0.03, 0.85, 0.06, 0.03, decane, water};
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], amounts[componentIndex]);
     }

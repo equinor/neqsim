@@ -84,11 +84,11 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   public double calcPropaneNumber() {
     double avgCarbon = iso6976.getAverageCarbonNumber();
 
-    double[][] Amatrix = { { 1.0, 1.0 }, { 1.0, 3.0 } };
+    double[][] Amatrix = {{1.0, 1.0}, {1.0, 3.0}};
     // {thermoSystem.getNumberOfMoles(), //
     // thermoSystem.getNumberOfMoles()*iso6976.getAverageCarbonNumber()}};
-    double[] bmatrix = { (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
-        avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()) };
+    double[] bmatrix = {(thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
+        avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts())};
 
     RealMatrix fmatrixJama = new Array2DRowRealMatrix(Amatrix);
     DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();

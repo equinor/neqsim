@@ -601,7 +601,7 @@ public class Ejector extends ProcessEquipmentBaseClass
         this.run();
         double suctionP = suctionStream.getPressure("bara");
         double cr = suctionP > 0 ? pDischarge / suctionP : 0.0;
-        curve.add(new double[] { pDischarge, getEntrainmentRatio(), cr });
+        curve.add(new double[] {pDischarge, getEntrainmentRatio(), cr});
       } catch (Exception ex) {
         logger.warn("Performance curve point at {} bara failed: {}", pDischarge, ex.getMessage());
       }

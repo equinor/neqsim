@@ -385,8 +385,8 @@ public final class Dexpi20GraphicalProjectionAssessment {
           "Diagram name does not retain project, revision, and controlled source reference", id));
     }
     double[] expected = bounds(projection.getPrimitives());
-    double[] actual = new double[] { directDouble(diagram, "MinX"), directDouble(diagram, "MinY"),
-        directDouble(diagram, "MaxX"), directDouble(diagram, "MaxY") };
+    double[] actual = new double[] {directDouble(diagram, "MinX"), directDouble(diagram, "MinY"),
+        directDouble(diagram, "MaxX"), directDouble(diagram, "MaxY")};
     for (int index = 0; index < expected.length; index++) {
       if (Double.compare(expected[index], actual[index]) != 0) {
         diagnostics.add(error("DEXPI_GRAPHICS_DIAGRAM_BOUNDS_MISMATCH",
@@ -639,7 +639,7 @@ public final class Dexpi20GraphicalProjectionAssessment {
         maxY = Math.max(maxY, value.getY());
       }
     }
-    return new double[] { minX - 10.0, minY - 10.0, maxX + 10.0, maxY + 10.0 };
+    return new double[] {minX - 10.0, minY - 10.0, maxX + 10.0, maxY + 10.0};
   }
 
   private static Diagnostic warning(String code, String message, String subjectId) {

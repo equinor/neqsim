@@ -252,7 +252,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     }
 
     setTotalNumberOfMoles(totalMoles);
-    int[] roleSlots = new int[] { eosGasPhaseSlot, eosOilPhaseSlot, geLiquidPhaseSlot };
+    int[] roleSlots = new int[] {eosGasPhaseSlot, eosOilPhaseSlot, geLiquidPhaseSlot};
     for (int roleSlot : roleSlots) {
       if (roleSlot < 0) {
         continue;
@@ -655,7 +655,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
    * @param activeCount number of active slots
    */
   private void completeInactiveHybridPhaseMapping(int[] activeSlots, int activeCount) {
-    int[] roleSlots = new int[] { eosGasPhaseSlot, eosOilPhaseSlot, geLiquidPhaseSlot };
+    int[] roleSlots = new int[] {eosGasPhaseSlot, eosOilPhaseSlot, geLiquidPhaseSlot};
     int mappingIndex = activeCount;
     for (int roleSlot : roleSlots) {
       boolean active = false;

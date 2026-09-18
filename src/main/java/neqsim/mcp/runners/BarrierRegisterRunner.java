@@ -704,33 +704,33 @@ public final class BarrierRegisterRunner {
    */
   static JsonObject buildDocumentExtractionTemplate() {
     JsonObject template = new JsonObject();
-    template.add("sourceDocuments", toStringArray(new String[] { "P&ID", "C&E chart", "SRS", "SIL verification report",
-        "firewater datasheet", "detector layout", "PFP schedule", "inspection report", "vendor datasheet" }));
-    template.add("targetObjects", toStringArray(new String[] { "DocumentEvidence", "PerformanceStandard",
-        "SafetyBarrier", "SafetyCriticalElement", "BarrierRegister" }));
-    template.add("minimumFields", toStringArray(new String[] { "documentId", "revision", "sourceReference", "excerpt",
-        "confidence", "equipmentTags", "pfd or effectiveness", "status", "performanceStandardId" }));
+    template.add("sourceDocuments", toStringArray(new String[] {"P&ID", "C&E chart", "SRS", "SIL verification report",
+        "firewater datasheet", "detector layout", "PFP schedule", "inspection report", "vendor datasheet"}));
+    template.add("targetObjects", toStringArray(new String[] {"DocumentEvidence", "PerformanceStandard",
+        "SafetyBarrier", "SafetyCriticalElement", "BarrierRegister"}));
+    template.add("minimumFields", toStringArray(new String[] {"documentId", "revision", "sourceReference", "excerpt",
+        "confidence", "equipmentTags", "pfd or effectiveness", "status", "performanceStandardId"}));
     template.add("causeAndEffect",
         buildExtractionSection("Cause-and-effect chart",
-            new String[] { "causeId", "initiatingDetectorTag", "initiatingEvent", "votingLogic", "effectAction",
-                "finalElementTag", "delaySeconds", "resetRequirement", "bypassOrInhibitState", "evidenceRefs" }));
+            new String[] {"causeId", "initiatingDetectorTag", "initiatingEvent", "votingLogic", "effectAction",
+                "finalElementTag", "delaySeconds", "resetRequirement", "bypassOrInhibitState", "evidenceRefs"}));
     template.add("safetyRequirementsSpecification",
         buildExtractionSection("Safety requirements specification",
-            new String[] { "sifId", "safetyFunction", "protectedEquipment", "safeState", "claimedSIL", "targetPfd",
-                "proofTestIntervalHours", "responseTimeSeconds", "architecture", "components", "evidenceRefs" }));
+            new String[] {"sifId", "safetyFunction", "protectedEquipment", "safeState", "claimedSIL", "targetPfd",
+                "proofTestIntervalHours", "responseTimeSeconds", "architecture", "components", "evidenceRefs"}));
     template.add("firewaterDatasheet",
         buildExtractionSection("Firewater and deluge datasheet",
-            new String[] { "delugeZone", "protectedEquipment", "applicationRate", "rateUnit", "firewaterCapacity",
+            new String[] {"delugeZone", "protectedEquipment", "applicationRate", "rateUnit", "firewaterCapacity",
                 "capacityUnit", "minimumPressure", "responseTimeSeconds", "designBasisFire", "standardReference",
-                "evidenceRefs" }));
+                "evidenceRefs"}));
     template.add("detectorLayout",
         buildExtractionSection("Detector layout and F&G coverage",
-            new String[] { "detectorTag", "detectorType", "gasSpecies", "location", "coverageZone", "setpoint",
-                "setpointUnit", "responseTimeSeconds", "votingGroup", "evidenceRefs" }));
+            new String[] {"detectorTag", "detectorType", "gasSpecies", "location", "coverageZone", "setpoint",
+                "setpointUnit", "responseTimeSeconds", "votingGroup", "evidenceRefs"}));
     template.add("pfpSchedule",
         buildExtractionSection("Passive fire protection schedule",
-            new String[] { "protectedTag", "protectedArea", "fireRatingMinutes", "heatFluxRating", "ratingUnit",
-                "material", "thickness", "thicknessUnit", "inspectionStatus", "evidenceRefs" }));
+            new String[] {"protectedTag", "protectedArea", "fireRatingMinutes", "heatFluxRating", "ratingUnit",
+                "material", "thickness", "thicknessUnit", "inspectionStatus", "evidenceRefs"}));
     return template;
   }
 

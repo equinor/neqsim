@@ -100,7 +100,7 @@ public class NButaneIssueTest {
   public void testTPflashWithNButane() {
     logger.info("=== TPflash with n-butane at different temperatures ===\n");
 
-    double[] temps = { 273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15 };
+    double[] temps = {273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15};
 
     for (double temp : temps) {
       SystemInterface fluid = new SystemElectrolyteCPAstatoil(temp, 50.0);

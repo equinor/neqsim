@@ -14,7 +14,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  */
 public final class DoeBigHillVacuumComponentRecovery {
   private static final double RECOVERY_CLOSURE_TOLERANCE = 5.0e-2;
-  private static final String[] PRODUCT_LABELS = { "Overhead", "Bottoms" };
+  private static final String[] PRODUCT_LABELS = {"Overhead", "Bottoms"};
 
   private final String[] componentNames;
   private final double[] feedComponentMolarFlowsMolPerHour;
@@ -52,7 +52,7 @@ public final class DoeBigHillVacuumComponentRecovery {
       requireFinitePositive(feedComponentFlows[componentIndex], "Feed component molar flow");
     }
 
-    StreamInterface[] productStreams = { model.getColumn().getGasOutStream(), model.getColumn().getLiquidOutStream() };
+    StreamInterface[] productStreams = {model.getColumn().getGasOutStream(), model.getColumn().getLiquidOutStream()};
     DoeBigHillVacuumFractionationResult.ProductResult[] qualifiedProducts = fractionationResult.getProducts();
     ProductRecovery[] recoveries = new ProductRecovery[productStreams.length];
     double[] recoverySums = new double[feedComposition.length];

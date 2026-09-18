@@ -19,8 +19,8 @@ class PitzerBinaryVolumetricDatasetProvenanceTest extends neqsim.NeqSimTest {
   private static final double BETA1_DERIVATIVE = -0.7e-10;
   private static final double CPHI_DERIVATIVE = 1.1e-11;
   private static final double STANDARD_UNCERTAINTY = 2.0e-8;
-  private static final double[] CALIBRATION_MOLALITIES = { 0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0 };
-  private static final double[] VALIDATION_MOLALITIES = { 0.1, 1.5, 4.0 };
+  private static final double[] CALIBRATION_MOLALITIES = {0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0};
+  private static final double[] VALIDATION_MOLALITIES = {0.1, 1.5, 4.0};
 
   @Test
   void validatesPermittedRepositoryDatasetsBeforeGroupedEvaluation() {

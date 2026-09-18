@@ -180,7 +180,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
     void testDifferentSolverTypes() {
       setupHorizontalPipeline(20000.0, 0.8);
 
-      int[] solverTypes = { 0, 1, 10, 20 };
+      int[] solverTypes = {0, 1, 10, 20};
 
       for (int solverType : solverTypes) {
         // Reset for each solver type
@@ -412,11 +412,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
 
       // Uphill pipeline
       int numLegs = 5;
-      double[] height = { 0, 100, 200, 300, 400, 500 }; // 500m elevation gain
-      double[] length = { 0, 10000, 20000, 30000, 40000, 50000 };
-      double[] outerTemp = { 278.0, 277.0, 276.0, 275.0, 274.0, 273.0 };
-      double[] outerHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-      double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
+      double[] height = {0, 100, 200, 300, 400, 500}; // 500m elevation gain
+      double[] length = {0, 10000, 20000, 30000, 40000, 50000};
+      double[] outerTemp = {278.0, 277.0, 276.0, 275.0, 274.0, 273.0};
+      double[] outerHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+      double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
       GeometryDefinitionInterface[] pipeGeometry = new PipeData[numLegs + 1];
       for (int i = 0; i <= numLegs; i++) {
@@ -639,10 +639,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Setup time series
-      double[] times = { 0, 5000, 10000 };
+      double[] times = {0, 5000, 10000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -676,7 +676,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       }
 
       // Run transient with constant inlet (should maintain steady state)
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       SystemInterface gas2 = gas.clone();
@@ -684,7 +684,7 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       gas2.init(3);
       gas2.initPhysicalProperties();
 
-      SystemInterface[] systems = { gas.clone(), gas2, gas2 };
+      SystemInterface[] systems = {gas.clone(), gas2, gas2};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(3);
 
@@ -732,11 +732,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       hotGas.setTotalFlowRate(5.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-3000] cold, [3000-6000] hot -> 2 systems
-      SystemInterface[] systems = { coldGas.clone(), hotGas.clone() };
+      SystemInterface[] systems = {coldGas.clone(), hotGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -789,11 +789,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       richGas.setTotalFlowRate(6.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 2000, 4000 };
+      double[] times = {0, 2000, 4000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-2000] lean, [2000-4000] rich -> 2 systems
-      SystemInterface[] systems = { leanGas.clone(), richGas.clone() };
+      SystemInterface[] systems = {leanGas.clone(), richGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -846,11 +846,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       highFlowGas.initPhysicalProperties();
       highFlowGas.setTotalFlowRate(15.0, "MSm3/day"); // 3x flow rate
 
-      double[] times = { 0, 2000, 4000 };
+      double[] times = {0, 2000, 4000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-2000], [2000-4000] -> 2 systems
-      SystemInterface[] systems = { gas.clone(), highFlowGas.clone() };
+      SystemInterface[] systems = {gas.clone(), highFlowGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -900,11 +900,11 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       finalGas.setTotalFlowRate(7.0, "MSm3/day");
 
       // Times array defines time points; systems array has one entry per interval
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
       // 2 intervals: [0-3000] initial, [3000-6000] final -> 2 systems
-      SystemInterface[] systems = { initialGas.clone(), finalGas.clone() };
+      SystemInterface[] systems = {initialGas.clone(), finalGas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
@@ -989,10 +989,10 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Set up transient with closed outlet
-      double[] times = { 0, 1000, 2000 };
+      double[] times = {0, 1000, 2000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
       pipe.getTimeSeries().setOutletClosed();
@@ -1024,15 +1024,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Set up transient with controlled outlet velocity
-      double[] times = { 0, 2000, 4000 };
+      double[] times = {0, 2000, 4000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
       // Set controlled outlet velocities
-      double[] outletVelocities = { 5.0, 4.0 }; // m/s - modest reduction
+      double[] outletVelocities = {5.0, 4.0}; // m/s - modest reduction
       pipe.getTimeSeries().setOutletVelocity(outletVelocities);
 
       // Verify boundary type
@@ -1062,15 +1062,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       pipe.solveSteadyState(10);
 
       // Set up transient with controlled outlet pressure
-      double[] times = { 0, 3000, 6000 };
+      double[] times = {0, 3000, 6000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
       // Set controlled outlet pressures: increase backpressure in second interval
-      double[] outletPressures = { 70.0, 80.0 }; // bar
+      double[] outletPressures = {70.0, 80.0}; // bar
       pipe.getTimeSeries().setOutletPressure(outletPressures);
 
       // Run transient
@@ -1108,15 +1108,15 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertTrue(initialVelocity > 0, "Initial velocity should be positive");
 
       // Set up transient with slightly reduced outlet velocity
-      double[] times = { 0, 1000, 2000 };
+      double[] times = {0, 1000, 2000};
       pipe.getTimeSeries().setTimes(times);
 
-      SystemInterface[] systems = { gas.clone(), gas.clone() };
+      SystemInterface[] systems = {gas.clone(), gas.clone()};
       pipe.getTimeSeries().setInletThermoSystems(systems);
       pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
 
       // Reduce velocity by 20% (not too aggressive)
-      double[] outletVelocities = { initialVelocity, initialVelocity * 0.8 }; // m/s
+      double[] outletVelocities = {initialVelocity, initialVelocity * 0.8}; // m/s
       pipe.getTimeSeries().setOutletVelocity(outletVelocities);
 
       // Run transient
@@ -1143,12 +1143,12 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
       assertFalse(ts.isOutletFlowControlled(), "Should not be flow-controlled when closed");
 
       // Test flow-controlled outlet
-      ts.setOutletVelocity(new double[] { 1.0, 2.0 });
+      ts.setOutletVelocity(new double[] {1.0, 2.0});
       assertTrue(ts.isOutletFlowControlled(), "Should be flow-controlled after setOutletVelocity");
       assertFalse(ts.isOutletClosed(), "Should not be closed when flow-controlled");
 
       // Test pressure-controlled outlet
-      ts.setOutletPressure(new double[] { 50.0, 60.0 });
+      ts.setOutletPressure(new double[] {50.0, 60.0});
       assertTrue(ts.isOutletPressureControlled(), "Should be pressure-controlled after setOutletPressure");
       assertFalse(ts.isOutletFlowControlled(), "Should not be flow-controlled when pressure-controlled");
     }

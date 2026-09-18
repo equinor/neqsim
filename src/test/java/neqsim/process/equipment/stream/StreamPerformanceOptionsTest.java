@@ -110,7 +110,7 @@ class StreamPerformanceOptionsTest extends neqsim.NeqSimTest {
     double rvpBefore = stream.getRVP(37.8, "C", "bara");
 
     // More light ends -> higher vapor pressure.
-    stream.getFluid().setMolarComposition(new double[] { 0.02, 0.05, 0.05, 0.5, 0.00545 });
+    stream.getFluid().setMolarComposition(new double[] {0.02, 0.05, 0.05, 0.5, 0.00545});
     stream.run();
     double rvpAfter = stream.getRVP(37.8, "C", "bara");
 

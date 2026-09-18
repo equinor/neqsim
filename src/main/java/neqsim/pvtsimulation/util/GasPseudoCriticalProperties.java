@@ -183,7 +183,7 @@ public final class GasPseudoCriticalProperties {
     double k = 3.8216 - 0.06534 * fH2SK - 0.42113 * fCO2K - 0.91249 * fN2K + 17.438 * gammaGHC
         - 3.2191 * gammaGHC * gammaGHC;
 
-    return new double[] { j, k };
+    return new double[] {j, k};
   }
 
   // ==================== WICHERT-AZIZ CORRECTION (1972) ====================
@@ -214,7 +214,7 @@ public final class GasPseudoCriticalProperties {
     double tpcCorrR = tpcR - epsilon;
     double ppcCorrPsia = ppcPsia * tpcCorrR / (tpcR + b * (1.0 - b) * epsilon);
 
-    return new double[] { tpcCorrR * R_TO_K, ppcCorrPsia / PSIA_PER_BARA };
+    return new double[] {tpcCorrR * R_TO_K, ppcCorrPsia / PSIA_PER_BARA};
   }
 
   // ==================== REDUCED PROPERTY CALCULATORS ====================

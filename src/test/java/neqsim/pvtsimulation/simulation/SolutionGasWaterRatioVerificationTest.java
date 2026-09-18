@@ -46,7 +46,7 @@ public class SolutionGasWaterRatioVerificationTest {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gas);
 
     // Test conditions: 100°C (373.15 K) at various pressures
-    double[] pressures = { 10.0, 50.0, 100.0, 150.0, 200.0 };
+    double[] pressures = {10.0, 50.0, 100.0, 150.0, 200.0};
     double[] temperatures = new double[pressures.length];
     for (int i = 0; i < pressures.length; i++) {
       temperatures[i] = 373.15; // 100°C
@@ -111,12 +111,12 @@ public class SolutionGasWaterRatioVerificationTest {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gas);
 
     // Fixed conditions: 76.85°C (350 K), 100 bara
-    double[] temperatures = { 350.0 };
-    double[] pressures = { 100.0 };
+    double[] temperatures = {350.0};
+    double[] pressures = {100.0};
     rswCalc.setTemperaturesAndPressures(temperatures, pressures);
 
     // Test various salinities
-    double[] salinities = { 0.0, 1.0, 2.0, 3.5, 5.0 }; // wt% NaCl
+    double[] salinities = {0.0, 1.0, 2.0, 3.5, 5.0}; // wt% NaCl
 
     logger.info("\nConditions: T = 76.85°C (350 K), P = 100 bara");
     logger.info("Gas composition: 95% CH4, 5% CO2");
@@ -180,10 +180,10 @@ public class SolutionGasWaterRatioVerificationTest {
     // Test points from literature
     double[][] testPoints = {
         // {T(K), P(bar), expected Rsw scf/STB low, expected Rsw scf/STB high}
-        { 310.93, 68.9, 8.0, 12.0 }, // 100°F, 1000 psia
-        { 366.48, 68.9, 10.0, 14.0 }, // 200°F, 1000 psia
-        { 366.48, 137.9, 18.0, 25.0 }, // 200°F, 2000 psia
-        { 366.48, 206.8, 25.0, 35.0 }, // 200°F, 3000 psia
+        {310.93, 68.9, 8.0, 12.0}, // 100°F, 1000 psia
+        {366.48, 68.9, 10.0, 14.0}, // 200°F, 1000 psia
+        {366.48, 137.9, 18.0, 25.0}, // 200°F, 2000 psia
+        {366.48, 206.8, 25.0, 35.0}, // 200°F, 3000 psia
     };
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-12s %-18s %-18s %-10s%n", "T (°F)", "P (psia)",
@@ -201,7 +201,7 @@ public class SolutionGasWaterRatioVerificationTest {
       double tempF = (tempK - 273.15) * 9.0 / 5.0 + 32.0;
       double presPsia = presBar * 14.5038;
 
-      rswCalc.setTemperaturesAndPressures(new double[] { tempK }, new double[] { presBar });
+      rswCalc.setTemperaturesAndPressures(new double[] {tempK}, new double[] {presBar});
       rswCalc.runCalc();
       double rswSm3 = rswCalc.getRsw(0);
 
@@ -237,7 +237,7 @@ public class SolutionGasWaterRatioVerificationTest {
     rswCalc.setSalinity(0.0);
 
     // Various temperatures at 100 bara
-    double[] temps = { 300.0, 325.0, 350.0, 375.0, 400.0, 425.0 }; // K
+    double[] temps = {300.0, 325.0, 350.0, 375.0, 400.0, 425.0}; // K
     double[] pressures = new double[temps.length];
     for (int i = 0; i < temps.length; i++) {
       pressures[i] = 100.0;
@@ -295,8 +295,8 @@ public class SolutionGasWaterRatioVerificationTest {
     SolutionGasWaterRatio rswCalc = new SolutionGasWaterRatio(gas);
     rswCalc.setSalinity(0.0);
 
-    double[] pressures = { 20.0, 50.0, 100.0 };
-    double[] temps = { 323.15, 323.15, 323.15 }; // 50°C
+    double[] pressures = {20.0, 50.0, 100.0};
+    double[] temps = {323.15, 323.15, 323.15}; // 50°C
     rswCalc.setTemperaturesAndPressures(temps, pressures);
 
     logger.info("\nConditions: T = 50°C (323.15 K), Pure Water");
@@ -355,8 +355,8 @@ public class SolutionGasWaterRatioVerificationTest {
 
     // Test 1: All methods give positive Rsw
     logger.info("\nTest 1: All methods give positive Rsw at typical conditions");
-    double[] temps = { 350.0 };
-    double[] pres = { 100.0 };
+    double[] temps = {350.0};
+    double[] pres = {100.0};
     rswCalc.setTemperaturesAndPressures(temps, pres);
     rswCalc.setSalinity(0.0);
 
@@ -376,8 +376,8 @@ public class SolutionGasWaterRatioVerificationTest {
     logger.info("\nTest 2: Rsw increases with pressure (McCain method)");
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
     rswCalc.setSalinity(0.0);
-    double[] pressures = { 50.0, 100.0, 150.0 };
-    double[] temperatures = { 350.0, 350.0, 350.0 };
+    double[] pressures = {50.0, 100.0, 150.0};
+    double[] temperatures = {350.0, 350.0, 350.0};
     rswCalc.setTemperaturesAndPressures(temperatures, pressures);
     rswCalc.runCalc();
     double[] rsw = rswCalc.getRsw();
@@ -391,7 +391,7 @@ public class SolutionGasWaterRatioVerificationTest {
 
     // Test 3: Rsw decreases with salinity (McCain)
     logger.info("\nTest 3: Rsw decreases with salinity (McCain method)");
-    rswCalc.setTemperaturesAndPressures(new double[] { 350.0 }, new double[] { 100.0 });
+    rswCalc.setTemperaturesAndPressures(new double[] {350.0}, new double[] {100.0});
 
     rswCalc.setSalinity(0.0);
     rswCalc.runCalc();

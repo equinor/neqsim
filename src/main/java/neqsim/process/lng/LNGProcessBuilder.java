@@ -459,8 +459,8 @@ public class LNGProcessBuilder {
     double suctionPressure = resolveRefrigerantSuctionPressure(1.0);
     double dischargePressure = resolveRefrigerantDischargePressure(30.0);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        resolveRefrigerantComponents(new String[] { "nitrogen", "methane", "ethane", "propane" }),
-        resolveRefrigerantFractions(new double[] { 0.15, 0.75, 0.08, 0.02 }), 20.0, suctionPressure,
+        resolveRefrigerantComponents(new String[] {"nitrogen", "methane", "ethane", "propane"}),
+        resolveRefrigerantFractions(new double[] {0.15, 0.75, 0.08, 0.02}), 20.0, suctionPressure,
         context.feedFlowKgPerHour * resolveRefrigerantCirculationRatio(5.0));
     context.process.add(mrSuction);
 
@@ -516,8 +516,8 @@ public class LNGProcessBuilder {
     // setting it partially condensed during recycle convergence, silently removing
     // refrigerant inventory through the scrubber liquid outlet.
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.04, 0.43, 0.36, 0.17 }, 20.0,
-        0.75, context.feedFlowKgPerHour * 1.75);
+        new String[] {"nitrogen", "methane", "ethane", "propane"}, new double[] {0.04, 0.43, 0.36, 0.17}, 20.0, 0.75,
+        context.feedFlowKgPerHour * 1.75);
     context.process.add(mrSuction);
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 45.0, compressorEfficiency);
 
@@ -559,7 +559,7 @@ public class LNGProcessBuilder {
     BuildContext context = newContext();
 
     Stream warmMrSuction = createMixedRefrigerant(name + " warm MR suction",
-        new String[] { "methane", "ethane", "propane", "n-butane" }, new double[] { 0.12, 0.33, 0.42, 0.13 }, 20.0, 3.5,
+        new String[] {"methane", "ethane", "propane", "n-butane"}, new double[] {0.12, 0.33, 0.42, 0.13}, 20.0, 3.5,
         context.feedFlowKgPerHour * 1.45);
     context.process.add(warmMrSuction);
     CompressionTrain warmTrain = addTwoStageCompression(context, name + " warm MR", warmMrSuction, 18.0,
@@ -570,7 +570,7 @@ public class LNGProcessBuilder {
     context.process.add(warmValve);
 
     Stream coldMrSuction = createMixedRefrigerant(name + " cold MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.08, 0.48, 0.31, 0.13 }, 20.0, 3.0,
+        new String[] {"nitrogen", "methane", "ethane", "propane"}, new double[] {0.08, 0.48, 0.31, 0.13}, 20.0, 3.0,
         context.feedFlowKgPerHour * 1.55);
     context.process.add(coldMrSuction);
     CompressionTrain coldTrain = addTwoStageCompression(context, name + " cold MR", coldMrSuction, 38.0,
@@ -776,8 +776,8 @@ public class LNGProcessBuilder {
    */
   private Stream createPureRefrigerant(String streamName, String component, double temperatureC, double pressureBara,
       double flowKgPerHour) {
-    return createMixedRefrigerant(streamName, new String[] { component }, new double[] { 1.0 }, temperatureC,
-        pressureBara, flowKgPerHour);
+    return createMixedRefrigerant(streamName, new String[] {component}, new double[] {1.0}, temperatureC, pressureBara,
+        flowKgPerHour);
   }
 
   /**

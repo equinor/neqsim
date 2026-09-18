@@ -232,8 +232,8 @@ public class MultiMethodAllocator {
     Map<AllocationMethod, ProductionAllocationResult> results = new LinkedHashMap<>();
     Map<AllocationMethod, Long> runtimeMillis = new LinkedHashMap<>();
 
-    AllocationMethod[] order = new AllocationMethod[] { AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN,
-        AllocationMethod.STAND_ALONE };
+    AllocationMethod[] order = new AllocationMethod[] {AllocationMethod.COMPONENT_RATIO, AllocationMethod.ALL_IN,
+        AllocationMethod.STAND_ALONE};
     for (AllocationMethod method : order) {
       long t0 = System.currentTimeMillis();
       ProductionAllocationResult result = allocate(method);

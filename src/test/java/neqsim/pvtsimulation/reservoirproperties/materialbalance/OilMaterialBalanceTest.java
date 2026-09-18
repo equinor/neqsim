@@ -11,7 +11,7 @@ public class OilMaterialBalanceTest {
   @Test
   public void testDepletionDriveRecoversOoip() {
     double n = 50.0e6;
-    double[] eo = { 0.02, 0.05, 0.09, 0.14, 0.20 };
+    double[] eo = {0.02, 0.05, 0.09, 0.14, 0.20};
     double[] f = new double[eo.length];
     for (int i = 0; i < eo.length; i++) {
       f[i] = n * eo[i];
@@ -25,8 +25,8 @@ public class OilMaterialBalanceTest {
   public void testGasCapDriveRecoversNandM() {
     double n = 40.0e6;
     double m = 0.4;
-    double[] eo = { 0.02, 0.05, 0.09, 0.14, 0.20 };
-    double[] eg = { 0.10, 0.22, 0.35, 0.50, 0.68 };
+    double[] eo = {0.02, 0.05, 0.09, 0.14, 0.20};
+    double[] eg = {0.10, 0.22, 0.35, 0.50, 0.68};
     double[] f = new double[eo.length];
     for (int i = 0; i < eo.length; i++) {
       f[i] = n * eo[i] + n * m * eg[i];
@@ -40,8 +40,8 @@ public class OilMaterialBalanceTest {
   public void testWaterDriveRecoversOoip() {
     double n = 60.0e6;
     double bw = 1.02;
-    double[] eo = { 0.02, 0.05, 0.09, 0.14, 0.20 };
-    double[] we = { 0.5e6, 1.5e6, 3.0e6, 5.0e6, 8.0e6 };
+    double[] eo = {0.02, 0.05, 0.09, 0.14, 0.20};
+    double[] we = {0.5e6, 1.5e6, 3.0e6, 5.0e6, 8.0e6};
     double[] f = new double[eo.length];
     for (int i = 0; i < eo.length; i++) {
       f[i] = n * eo[i] + we[i] * bw;

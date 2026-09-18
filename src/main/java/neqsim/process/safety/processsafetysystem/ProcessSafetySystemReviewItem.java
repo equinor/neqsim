@@ -56,8 +56,8 @@ public class ProcessSafetySystemReviewItem implements Serializable {
     if (sourceDocument != null) {
       item.addSourceReference(String.valueOf(sourceDocument));
     }
-    for (String key : new String[] { "design", "requirements", "instrumentData", "tagreaderData", "operationalData",
-        "secondaryPressureProtection" }) {
+    for (String key : new String[] {"design", "requirements", "instrumentData", "tagreaderData", "operationalData",
+        "secondaryPressureProtection"}) {
       Object nested = source.get(key);
       if (nested instanceof Map<?, ?>) {
         for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {

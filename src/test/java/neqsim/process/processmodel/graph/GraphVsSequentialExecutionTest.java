@@ -171,7 +171,7 @@ public class GraphVsSequentialExecutionTest {
     seqSystem.add(seqFeed);
 
     Splitter seqSplitter = new Splitter("splitter", seqFeed);
-    seqSplitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    seqSplitter.setSplitFactors(new double[] {0.6, 0.4});
     seqSystem.add(seqSplitter);
 
     Heater seqHeater1 = new Heater("heater1", seqSplitter.getSplitStream(0));
@@ -199,7 +199,7 @@ public class GraphVsSequentialExecutionTest {
     parSystem.add(parFeed);
 
     Splitter parSplitter = new Splitter("splitter", parFeed);
-    parSplitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    parSplitter.setSplitFactors(new double[] {0.6, 0.4});
     parSystem.add(parSplitter);
 
     Heater parHeater1 = new Heater("heater1", parSplitter.getSplitStream(0));

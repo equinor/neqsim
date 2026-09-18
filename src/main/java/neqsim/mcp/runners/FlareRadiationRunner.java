@@ -23,11 +23,11 @@ public final class FlareRadiationRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   /** API 521 thresholds (W/m²). */
-  private static final double[] API521_THRESHOLDS_W_M2 = { 1580.0, 4730.0, 6310.0, 9460.0 };
+  private static final double[] API521_THRESHOLDS_W_M2 = {1580.0, 4730.0, 6310.0, 9460.0};
 
   /** API 521 threshold descriptions. */
-  private static final String[] API521_LABELS = { "1.58 kW/m² (continuous personnel exposure)",
-      "4.73 kW/m² (3 s emergency egress)", "6.31 kW/m² (limited personnel access)", "9.46 kW/m² (equipment limit)" };
+  private static final String[] API521_LABELS = {"1.58 kW/m² (continuous personnel exposure)",
+      "4.73 kW/m² (3 s emergency egress)", "6.31 kW/m² (limited personnel access)", "9.46 kW/m² (equipment limit)"};
 
   private FlareRadiationRunner() {
   }
@@ -76,7 +76,7 @@ public final class FlareRadiationRunner {
           distances[i] = d.get(i).getAsDouble();
         }
       } else {
-        distances = new double[] { 15.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0 };
+        distances = new double[] {15.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0};
       }
       for (double d : distances) {
         double flux = flare.estimateRadiationHeatFlux(heatDutyW, d);

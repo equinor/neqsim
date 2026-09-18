@@ -157,7 +157,7 @@ class TubingPerformanceTest {
     tubing.setWellheadPressure(50.0);
     tubing.setCorrelationType(TubingPerformance.CorrelationType.BEGGS_BRILL);
 
-    double[] flowRates = { 0.5, 1.0, 2.0, 3.0, 4.0 };
+    double[] flowRates = {0.5, 1.0, 2.0, 3.0, 4.0};
     double[][] vlpCurve = tubing.generateVLPCurve(flowRates);
 
     assertNotNull(vlpCurve);

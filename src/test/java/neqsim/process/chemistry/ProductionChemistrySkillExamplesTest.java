@@ -281,8 +281,8 @@ public class ProductionChemistrySkillExamplesTest {
   @Test
   void testDemulsifierDoseExample() {
     DemulsifierDoseResponseModel dr = new DemulsifierDoseResponseModel();
-    double[] dose = new double[] { 2.0, 5.0, 10.0, 20.0, 30.0 };
-    double[] observed = new double[] { 180.0, 110.0, 60.0, 35.0, 40.0 };
+    double[] dose = new double[] {2.0, 5.0, 10.0, 20.0, 30.0};
+    double[] observed = new double[] {180.0, 110.0, 60.0, 35.0, 40.0};
     double rms = dr.calibrate(dose, observed, 250.0);
     assertTrue(rms >= 0.0);
     assertTrue(dr.predictOilInWater(250.0, 12.0) > 0.0);

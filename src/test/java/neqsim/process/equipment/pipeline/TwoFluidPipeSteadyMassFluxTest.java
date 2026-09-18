@@ -21,9 +21,9 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
     double oilMass = rateScale * 15069.4462890625 * 859.5 / 86400.0;
     double gasMass = rateScale * 1630701.625 * 0.854 / 86400.0;
     double waterMass = rateScale * 7.13818359375 * 1033.0 / 86400.0;
-    String[] components = { "methane", "ethane", "propane", "nitrogen", "CO2" };
-    double[] fractions = { 0.86, 0.07, 0.035, 0.015, 0.02 };
-    double[] molarMasses = { 0.016043, 0.030070, 0.044097, 0.0280134, 0.04401 };
+    String[] components = {"methane", "ethane", "propane", "nitrogen", "CO2"};
+    double[] fractions = {0.86, 0.07, 0.035, 0.015, 0.02};
+    double[] molarMasses = {0.016043, 0.030070, 0.044097, 0.0280134, 0.04401};
     double gasMolarMass = 0.0;
     for (int i = 0; i < components.length; i++) {
       gasMolarMass += fractions[i] * molarMasses[i];
@@ -56,7 +56,7 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.95, 1.0, 1.05 })
+  @ValueSource(doubles = {0.95, 1.0, 1.05})
   void convergedWellConservesTotalPhaseMassFlux(double rateScale) {
     TwoFluidPipe pipe = makeWell(rateScale);
     pipe.run();
@@ -75,9 +75,9 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
   }
 
   private void assertHydraulicResidualsPassed(SteadyStateConvergenceReport report) {
-    double[] residuals = { report.getPressureMomentumResidual(), report.getPressureUpdateResidual(),
+    double[] residuals = {report.getPressureMomentumResidual(), report.getPressureUpdateResidual(),
         report.getLiquidHoldupResidual(), report.getLiquidSplitResidual(), report.getThermodynamicResidual(),
-        report.getPressureDropResidual() };
+        report.getPressureDropResidual()};
     for (double residual : residuals) {
       assertTrue(Double.isFinite(residual) && residual < report.getTolerance(), "hydraulic residual=" + residual);
     }
@@ -107,7 +107,7 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "methane", "nC10", "water" })
+  @ValueSource(strings = {"methane", "nC10", "water"})
   void singlePhaseSteadyFlowIsNotClipped(String component) {
     SystemInterface fluid = new SystemSrkEos(298.15, 100.0);
     fluid.addComponent(component, 1.0);
@@ -134,7 +134,7 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.98, Double.NaN })
+  @ValueSource(doubles = {0.98, Double.NaN})
   void aSettledHydraulicProfileCannotHideAFluxError(double reportedFraction) {
     SystemInterface fluid = new SystemSrkEos(298.15, 100.0);
     fluid.addComponent("methane", 1.0);
@@ -180,7 +180,7 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.02, Double.NaN, Double.POSITIVE_INFINITY })
+  @ValueSource(doubles = {0.02, Double.NaN, Double.POSITIVE_INFINITY})
   void recordedMassFluxFailurePreventsAConvergedReport(double residual) {
     SteadyStateConvergenceReport report = new SteadyStateConvergenceReport(
         SteadyStateConvergenceReport.TerminationReason.CONVERGED, 1, 1.0e-4, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, residual,

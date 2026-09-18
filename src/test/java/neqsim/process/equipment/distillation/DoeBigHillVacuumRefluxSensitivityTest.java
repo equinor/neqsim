@@ -22,7 +22,7 @@ public class DoeBigHillVacuumRefluxSensitivityTest {
   @Timeout(value = 300, unit = TimeUnit.SECONDS)
   public void refluxScreenReturnsQualifiedImmutablePoints() {
     OperatingInputs baseline = baselineInputs();
-    double[] ratios = { 0.49, 0.50, 0.51 };
+    double[] ratios = {0.49, 0.50, 0.51};
 
     DoeBigHillVacuumRefluxSensitivity sensitivity = DoeBigHillVacuumRefluxSensitivity
         .run("Big Hill vacuum reflux screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, ratios);
@@ -95,23 +95,23 @@ public class DoeBigHillVacuumRefluxSensitivityTest {
     OperatingInputs baseline = baselineInputs();
 
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run(" ",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.49, 0.51 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {0.49, 0.51}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumRefluxSensitivity.run("screen", 0.0, baseline, new double[] { 0.49, 0.51 }));
+        () -> DoeBigHillVacuumRefluxSensitivity.run("screen", 0.0, baseline, new double[] {0.49, 0.51}));
     assertThrows(NullPointerException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 0.49, 0.51 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] {0.49, 0.51}));
     assertThrows(NullPointerException.class,
         () -> DoeBigHillVacuumRefluxSensitivity.run("screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, null));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.5 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {0.5}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.5, 0.5 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {0.5, 0.5}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 0.51, 0.49 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {0.51, 0.49}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { Double.NaN, 0.5 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {Double.NaN, 0.5}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumRefluxSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { -0.1, 0.5 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {-0.1, 0.5}));
   }
 
   private static OperatingInputs baselineInputs() {

@@ -18,9 +18,9 @@ class TPmultiflashHighWaterGasSeedTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double STATE_TOLERANCE = 1.0e-8;
-  private static final double[] WATER_MASS_FRACTIONS = { 0.40, 0.45, 0.50, 0.55, 0.60, 0.70, 0.80 };
-  private static final double[] EXPECTED_GAS_BETAS = { 0.0441902453511, 0.0372773421590, 0.0313666680101,
-      0.0262550011428, 0.0217905845743, 0.0143670367332, 0.00844359351489 };
+  private static final double[] WATER_MASS_FRACTIONS = {0.40, 0.45, 0.50, 0.55, 0.60, 0.70, 0.80};
+  private static final double[] EXPECTED_GAS_BETAS = {0.0441902453511, 0.0372773421590, 0.0313666680101,
+      0.0262550011428, 0.0217905845743, 0.0143670367332, 0.00844359351489};
 
   @Test
   void gasPhasePersistsAcrossHighWaterFractionSweep() {
@@ -56,7 +56,7 @@ class TPmultiflashHighWaterGasSeedTest {
 
   @Test
   void vaporLikeSeedRecoversFromPoorBetaGuessesAtNearbyConditions() {
-    double[][] conditions = { { 312.65, 19.5 }, { 313.15, 20.0 }, { 313.65, 20.5 } };
+    double[][] conditions = {{312.65, 19.5}, {313.15, 20.0}, {313.65, 20.5}};
     for (double[] condition : conditions) {
       SystemInterface system = createFluid(0.55);
       system.setTemperature(condition[0]);
@@ -98,7 +98,7 @@ class TPmultiflashHighWaterGasSeedTest {
   @Test
   void threePhaseSeparatorKeepsContinuousGasProductAcrossFormerPhaseIsland() {
     double previousGasMoles = Double.POSITIVE_INFINITY;
-    for (double waterMassFraction : new double[] { 0.50, 0.55, 0.60, 0.70 }) {
+    for (double waterMassFraction : new double[] {0.50, 0.55, 0.60, 0.70}) {
       Stream feed = new Stream("high-water feed", createFluid(waterMassFraction));
       feed.run();
       ThreePhaseSeparator separator = new ThreePhaseSeparator("three-phase separator", feed);

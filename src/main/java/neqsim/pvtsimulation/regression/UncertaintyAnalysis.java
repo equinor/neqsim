@@ -124,7 +124,7 @@ public class UncertaintyAnalysis {
   public double[] getConfidenceIntervalBounds(int index) {
     double value = parameterValues[index];
     double ci = confidenceIntervals95[index];
-    return new double[] { value - ci, value + ci };
+    return new double[] {value - ci, value + ci};
   }
 
   /**

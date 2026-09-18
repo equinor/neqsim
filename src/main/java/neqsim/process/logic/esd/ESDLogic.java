@@ -21,7 +21,7 @@ import neqsim.process.logic.ProcessLogic;
  * ESDLogic esdLogic = new ESDLogic("ESD Level 1");
  * esdLogic.addAction(new TripValveAction(esdValve), 0.0); // Immediate
  * esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // After 0.5s
- * esdLogic.addAction(new SetSplitterAction(splitter, new double[] { 0.0, 1.0 }), 0.5);
+ * esdLogic.addAction(new SetSplitterAction(splitter, new double[] {0.0, 1.0}), 0.5);
  *
  * // In simulation loop:
  * esdLogic.activate(); // Trigger ESD

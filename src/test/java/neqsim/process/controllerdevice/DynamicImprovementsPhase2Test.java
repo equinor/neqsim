@@ -152,7 +152,7 @@ class DynamicImprovementsPhase2Test {
   void testSFCBasicSequence() {
     SequentialFunctionChart sfc = new SequentialFunctionChart("SFC-1");
 
-    final boolean[] stepActions = { false, false, false };
+    final boolean[] stepActions = {false, false, false};
 
     SequentialFunctionChart.SfcStep stepA = new SequentialFunctionChart.SfcStep("StepA");
     stepA.setEntryAction(new Runnable() {

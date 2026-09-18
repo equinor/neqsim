@@ -26,7 +26,7 @@ class LoopedPipeNetworkOperatingPointTest {
     assertTrue(result.get("arrivalPressure_bara") > 30.0,
         "The selected pressure must differ from the rejected final pressure trial");
     assertOperatingPoint(fixture, result);
-    assertArrayEquals(new double[] { 0.9, 0.1 }, fixture.feed.getFluid().getMolarComposition(), 1e-10);
+    assertArrayEquals(new double[] {0.9, 0.1}, fixture.feed.getFluid().getMolarComposition(), 1e-10);
     assertEquals(313.15, fixture.feed.getTemperature("K"), 1e-10);
 
     // A separately built topside at the reported outlet state must reproduce the selected evidence.
@@ -68,7 +68,7 @@ class LoopedPipeNetworkOperatingPointTest {
     Fixture fixture = new Fixture();
     fixture.network.setWellPrice("choke", 0.25);
     Map<String, double[]> result = fixture.network.productionForecastWithOptimization("res",
-        new double[] { 250.0, 230.0 }, new double[] { 0.0, 1.0 }, 3, 0.01);
+        new double[] {250.0, 230.0}, new double[] {0.0, 1.0}, 3, 0.01);
 
     for (int point = 0; point < 2; point++) {
       assertEquals(1.0, result.get("feasible")[point]);
@@ -89,9 +89,9 @@ class LoopedPipeNetworkOperatingPointTest {
     Fixture fixture = new Fixture();
     fixture.network.setMaxCompressorPowerMW(1e-6);
     Map<String, double[]> result = fixture.network.productionForecastWithOptimization("res",
-        new double[] { 250.0, 230.0 }, new double[] { 0.0, 1.0 }, 1, 0.01);
+        new double[] {250.0, 230.0}, new double[] {0.0, 1.0}, 1, 0.01);
 
-    assertArrayEquals(new double[] { 0.0, 0.0 }, result.get("feasible"), 1e-10);
+    assertArrayEquals(new double[] {0.0, 0.0}, result.get("feasible"), 1e-10);
     for (int point = 0; point < 2; point++) {
       assertTrue(Double.isNaN(result.get("rate_kghr")[point]));
       assertTrue(Double.isNaN(result.get("revenue_usd_hr")[point]));
@@ -148,7 +148,7 @@ class LoopedPipeNetworkOperatingPointTest {
     assertTrue(network.isConverged());
     SystemInterface nodeFluid = network.getNodeFluid("sink");
     StreamInterface outlet = network.getOutletStream("sink");
-    assertArrayEquals(new double[] { 0.7, 0.3 }, outlet.getFluid().getMolarComposition(), 1e-8);
+    assertArrayEquals(new double[] {0.7, 0.3}, outlet.getFluid().getMolarComposition(), 1e-8);
     assertEquals(nodeFluid.getTemperature(), outlet.getTemperature("K"), 1e-8);
     assertEquals(network.getNodePressure("sink"), outlet.getPressure("bara"), 1e-10);
     assertEquals(network.getPipeFlowRate("pipe"), outlet.getFlowRate("kg/hr"), 1e-5);
@@ -186,7 +186,7 @@ class LoopedPipeNetworkOperatingPointTest {
     double initialInventory = reservoir.getReservoirFluid().getMass("kg");
     double intervalYears = 0.03;
     Map<String, double[]> result = fixture.network
-        .productionForecastCoupled(new double[] { 0.0, intervalYears, 2 * intervalYears }, 0, 0.01);
+        .productionForecastCoupled(new double[] {0.0, intervalYears, 2 * intervalYears}, 0, 0.01);
     double inventoryLoss = initialInventory - reservoir.getReservoirFluid().getMass("kg");
 
     assertEquals(inventoryLoss, result.get("cumulative_kg")[2], inventoryLoss * 1e-8);

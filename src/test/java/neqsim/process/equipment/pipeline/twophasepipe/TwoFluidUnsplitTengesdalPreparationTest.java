@@ -32,13 +32,13 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidUnsplitTengesdalPreparationTest.class);
 
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void shortRiserHandoffPreparesConservativelyWithoutPublishing(int cells, double maximumStep) {
     verifyPreparation(cells, maximumStep, 0.1);
   }
 
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void shortPressureInterpolatedRiserHandoffPreparesConservatively(int cells, double maximumStep) {
     verifyPreparation(cells, maximumStep, 0.1, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
   }
@@ -46,7 +46,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void fiveSecondRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
     verifyPreparation(cells, maximumStep, 5.0);
   }
@@ -54,7 +54,7 @@ class TwoFluidUnsplitTengesdalPreparationTest {
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.qualification", matches = "true")
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void fiveSecondPressureInterpolatedRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep) {
     verifyPreparation(cells, maximumStep, 5.0, UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER, true);
   }

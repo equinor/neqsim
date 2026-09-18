@@ -19,9 +19,8 @@ import org.junit.jupiter.params.provider.CsvSource;
  */
 class TwuCriticalPropertiesReferenceTest {
   @ParameterizedTest
-  @CsvSource({ "400.0, 0.74, 580.6598280134665, 26.740842734338823",
-      "550.0, 0.85, 740.1062912506554, 18.54968847037336",
-      "745.2801420983992, 0.94575, 921.5443732930067, 12.051520005768454" })
+  @CsvSource({"400.0, 0.74, 580.6598280134665, 26.740842734338823", "550.0, 0.85, 740.1062912506554, 18.54968847037336",
+      "745.2801420983992, 0.94575, 921.5443732930067, 12.051520005768454"})
   void matchesRankineReference(double boilingPoint, double density, double criticalTemperature,
       double criticalPressure) {
     TBPModelInterface model = new TBPfractionModel().getModel("Twu");

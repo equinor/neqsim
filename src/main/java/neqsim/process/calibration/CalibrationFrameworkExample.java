@@ -69,8 +69,8 @@ public class CalibrationFrameworkExample {
     double wellTemp = 70.0;
 
     // Well configurations: [pressure, flowRate, pipeLength]
-    double[][] configs = { { 100.0, 50000.0, 8000.0 }, { 95.0, 45000.0, 8500.0 }, { 92.0, 55000.0, 7500.0 },
-        { 88.0, 48000.0, 9000.0 } };
+    double[][] configs = {{100.0, 50000.0, 8000.0}, {95.0, 45000.0, 8500.0}, {92.0, 55000.0, 7500.0},
+        {88.0, 48000.0, 9000.0}};
 
     wellStreams = new Stream[NUM_WELLS];
     pipes = new PipeBeggsAndBrills[NUM_WELLS];
@@ -99,10 +99,10 @@ public class CalibrationFrameworkExample {
     }
 
     // Route wells 1-2 to HP, wells 3-4 to LP
-    splitters[0].setSplitFactors(new double[] { 1.0, 0.0 });
-    splitters[1].setSplitFactors(new double[] { 1.0, 0.0 });
-    splitters[2].setSplitFactors(new double[] { 0.0, 1.0 });
-    splitters[3].setSplitFactors(new double[] { 0.0, 1.0 });
+    splitters[0].setSplitFactors(new double[] {1.0, 0.0});
+    splitters[1].setSplitFactors(new double[] {1.0, 0.0});
+    splitters[2].setSplitFactors(new double[] {0.0, 1.0});
+    splitters[3].setSplitFactors(new double[] {0.0, 1.0});
 
     hpManifold = new Mixer("HPManifold");
     lpManifold = new Mixer("LPManifold");
@@ -158,7 +158,7 @@ public class CalibrationFrameworkExample {
     harness.setSeed(42);
 
     // Define true values (ground truth for testing)
-    double[] trueValues = { 12.0, 18.0, 10.0, 22.0 };
+    double[] trueValues = {12.0, 18.0, 10.0, 22.0};
     for (int i = 0; i < NUM_WELLS; i++) {
       harness.addParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", trueValues[i], 1.0, 100.0);
     }
@@ -181,7 +181,7 @@ public class CalibrationFrameworkExample {
 
     // Test 2: Noise Robustness
     System.out.println("\n=== TEST 2: Noise Robustness Test ===");
-    double[] noiseLevels = { 0.5, 1.0, 2.0, 3.0 };
+    double[] noiseLevels = {0.5, 1.0, 2.0, 3.0};
 
     for (double noise : noiseLevels) {
       estimator = createEstimator();
@@ -222,7 +222,7 @@ public class CalibrationFrameworkExample {
     System.out.println("╚══════════════════════════════════════════════════════════════════════╝\n");
 
     // True (unknown) coefficients
-    double[] trueCoeffs = { 12.0, 18.0, 10.0, 22.0 };
+    double[] trueCoeffs = {12.0, 18.0, 10.0, 22.0};
     System.out.println("True coefficients (unknown to estimator):");
     for (int i = 0; i < NUM_WELLS; i++) {
       System.out.printf("  Pipe%d: %.1f W/(m²·K)%n", i + 1, trueCoeffs[i]);

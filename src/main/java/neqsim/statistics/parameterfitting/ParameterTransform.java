@@ -95,15 +95,15 @@ public enum ParameterTransform implements Serializable {
       return null;
     }
     if (this == LINEAR) {
-      return new double[] { lowerBound, upperBound };
+      return new double[] {lowerBound, upperBound};
     }
     if (lowerBound <= 0.0 || upperBound <= 0.0) {
       throw new IllegalArgumentException("Log transforms require positive bounds");
     }
     if (this == LOG) {
-      return new double[] { Math.log(lowerBound), Math.log(upperBound) };
+      return new double[] {Math.log(lowerBound), Math.log(upperBound)};
     }
-    return new double[] { Math.log10(lowerBound), Math.log10(upperBound) };
+    return new double[] {Math.log10(lowerBound), Math.log10(upperBound)};
   }
 
   /**

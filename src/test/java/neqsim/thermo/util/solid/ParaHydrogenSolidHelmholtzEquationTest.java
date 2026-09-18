@@ -18,7 +18,7 @@ class ParaHydrogenSolidHelmholtzEquationTest {
   @Test
   void testPressureInversion() {
     ParaHydrogenSolidHelmholtzEquation equation = new ParaHydrogenSolidHelmholtzEquation();
-    double[][] states = { { 4.2, 0.07042 }, { 20.0, 1000.0 }, { 80.0, 10000.0 } };
+    double[][] states = {{4.2, 0.07042}, {20.0, 1000.0}, {80.0, 10000.0}};
 
     for (double[] state : states) {
       SolidHelmholtzState result = equation.evaluate(state[0], state[1]);

@@ -91,7 +91,7 @@ public class GERG2008NH3ValidationTest {
 
     gerg.PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
-    return new double[] { P.val, Z.val, Cv.val, Cp.val, W.val, H.val, S.val };
+    return new double[] {P.val, Z.val, Cv.val, Cp.val, W.val, H.val, S.val};
   }
 
   /**
@@ -129,8 +129,8 @@ public class GERG2008NH3ValidationTest {
     double T = 400.0;
 
     // Test points: P(kPa), rho_NIST(mol/L), Cp_NIST(J/molK), W_NIST(m/s)
-    double[][] testData = { { 500.0, 0.15299, 40.083, 493.91 }, { 1000.0, 0.31160, 41.617, 488.91 },
-        { 2000.0, 0.64791, 45.119, 478.46 }, { 5000.0, 1.8705, 61.423, 442.30 } };
+    double[][] testData = {{500.0, 0.15299, 40.083, 493.91}, {1000.0, 0.31160, 41.617, 488.91},
+        {2000.0, 0.64791, 45.119, 478.46}, {5000.0, 1.8705, 61.423, 442.30}};
 
     for (double[] pt : testData) {
       double P_kPa = pt[0];
@@ -174,8 +174,8 @@ public class GERG2008NH3ValidationTest {
   public void testPureNH3_500K_Supercritical() {
     double T = 500.0;
 
-    double[][] testData = { { 1000.0, 0.24426, 43.067, 547.34 }, { 5000.0, 1.3042, 48.514, 529.23 },
-        { 10000.0, 2.8633, 57.522, 507.36 } };
+    double[][] testData = {{1000.0, 0.24426, 43.067, 547.34}, {5000.0, 1.3042, 48.514, 529.23},
+        {10000.0, 2.8633, 57.522, 507.36}};
 
     for (double[] pt : testData) {
       double P_kPa = pt[0];
@@ -214,8 +214,8 @@ public class GERG2008NH3ValidationTest {
     double T = 430.0;
 
     // Only test moderate pressures; 10 MPa is too close to Pc for mismatched SFE-12
-    double[][] testData = { { 1000.0, 0.28739, 41.776, 507.74 }, { 3000.0, 0.91503, 46.901, 491.57 },
-        { 5000.0, 1.6327, 53.639, 474.14 } };
+    double[][] testData = {{1000.0, 0.28739, 41.776, 507.74}, {3000.0, 0.91503, 46.901, 491.57},
+        {5000.0, 1.6327, 53.639, 474.14}};
 
     for (double[] pt : testData) {
       double P_kPa = pt[0];
@@ -246,8 +246,8 @@ public class GERG2008NH3ValidationTest {
    */
   @Test
   public void testPressureRecovery_PureNH3() {
-    double[] temperatures = { 300.0, 400.0, 500.0 };
-    double[] pressures = { 100.0, 500.0, 1000.0, 5000.0, 10000.0 };
+    double[] temperatures = {300.0, 400.0, 500.0};
+    double[] pressures = {100.0, 500.0, 1000.0, 5000.0, 10000.0};
 
     double[] x = new double[23];
     x[22] = 1.0;
@@ -274,8 +274,8 @@ public class GERG2008NH3ValidationTest {
    */
   @Test
   public void testThermodynamicConsistency_PureNH3() {
-    double[] temperatures = { 300.0, 350.0, 400.0, 430.0, 500.0 };
-    double[] pressures = { 100.0, 500.0, 1000.0, 5000.0 };
+    double[] temperatures = {300.0, 350.0, 400.0, 430.0, 500.0};
+    double[] pressures = {100.0, 500.0, 1000.0, 5000.0};
 
     for (double T : temperatures) {
       for (double P_kPa : pressures) {
@@ -348,7 +348,7 @@ public class GERG2008NH3ValidationTest {
     double[] propsNh3 = allProperties(gerg, T, D_nh3.val, x);
     double[] propsStd = allProperties(gergStd, T, D_std.val, x);
 
-    String[] names = { "P", "Z", "Cv", "Cp", "W", "H", "S" };
+    String[] names = {"P", "Z", "Cv", "Cp", "W", "H", "S"};
     for (int i = 0; i < names.length; i++) {
       assertEquals(propsStd[i], propsNh3[i], Math.abs(propsStd[i]) * 1e-10,
           names[i] + " must match between standard and NH3-extended models");
@@ -433,6 +433,6 @@ public class GERG2008NH3ValidationTest {
 
     model.PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
-    return new double[] { P.val, Z.val, Cv.val, Cp.val, W.val, H.val, S.val };
+    return new double[] {P.val, Z.val, Cv.val, Cp.val, W.val, H.val, S.val};
   }
 }

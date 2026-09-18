@@ -388,11 +388,11 @@ public class TBPfractionModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefOil = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 },
-        { -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0 } };
-    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
-    double[] TPBracketcoefs = { 0.29441, 0.40768 };
+    double[][] TBPfractionCoefOil = {{163.12, 86.052, 0.43475, -1877.4, 0.0}, {-0.13408, 2.5019, 208.46, -3987.2, 1.0},
+        {0.7431, 0.0048122, 0.0096707, -3.7184e-6, 0.0}};
+    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
+    double[] TPBracketcoefs = {0.29441, 0.40768};
     double[][] TBPfractionCoefs = null;
 
     /** {@inheritDoc} */
@@ -465,13 +465,13 @@ public class TBPfractionModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
-    double[][] TBPfractionCoefsHeavyOil = { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-        { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+    double[][] TBPfractionCoefsHeavyOil = {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+        {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
     double[][] TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
 
     public PedersenTBPModelSRKHeavyOil() {
-      TBPfractionCoefsHeavyOil = new double[][] { { 8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0 },
-          { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 }, { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
+      TBPfractionCoefsHeavyOil = new double[][] {{8.3063e2, 1.75228e1, 4.55911e-2, -1.13484e4, 0.0},
+          {8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25}, {-4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0}};
       TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
     }
   }
@@ -481,11 +481,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR() {
-      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
-      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
+      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
+          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0}, {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[] TPBracketcoefs2 = {0.25969, 0.50033};
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -498,11 +498,11 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPR2() {
-      double[][] TBPfractionCoefOil2 = { { 73.4043, 97.3562, 0.618744, -2059.32, 0.0 },
-          { 0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0 }, { 0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0 } };
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
-      double[] TPBracketcoefs2 = { 0.25969, 0.50033 };
+      double[][] TBPfractionCoefOil2 = {{73.4043, 97.3562, 0.618744, -2059.32, 0.0},
+          {0.0728462, 2.18811, 163.91, -4043.23, 1.0 / 4.0}, {0.373765, 0.00549269, 0.0117934, -4.93049e-6, 0.0}};
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
+      double[] TPBracketcoefs2 = {0.25969, 0.50033};
       TBPfractionCoefOil = TBPfractionCoefOil2;
       TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TPBracketcoefs = TPBracketcoefs2;
@@ -526,8 +526,8 @@ public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     public PedersenTBPModelPRHeavyOil() {
-      double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
-          { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 }, { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
+      double[][] TBPfractionCoefHeavyOil2 = {{9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0},
+          {1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25}, {-2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0}};
       // double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
       // double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
       TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
@@ -1293,8 +1293,8 @@ public class TBPfractionModel implements java.io.Serializable {
    * @return array of available model names
    */
   public static String[] getAvailableModels() {
-    return new String[] { "PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
-        "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing" };
+    return new String[] {"PedersenSRK", "PedersenSRKHeavyOil", "PedersenPR", "PedersenPR2", "PedersenPRHeavyOil",
+        "RiaziDaubert", "Lee-Kesler", "Twu", "Cavett", "Standing"};
   }
 
   /**

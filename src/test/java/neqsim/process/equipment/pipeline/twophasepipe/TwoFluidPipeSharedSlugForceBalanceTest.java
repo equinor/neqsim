@@ -79,7 +79,7 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
     equations.setIncludeEnergyEquation(false);
     section.setInterfacialShear(force.interfaceForce / section.getDiameter());
     section.setInterfacialWidth(section.getDiameter());
-    double[][] source = equations.calcSourceTerms(new TwoFluidSection[] { section });
+    double[][] source = equations.calcSourceTerms(new TwoFluidSection[] {section});
     assertEquals(-force.interfaceForce, source[0][3], 1.0e-10);
     assertEquals(-force.liquidWall, source[0][3] + source[0][4] + source[0][5], 1.0e-10);
     assertArrayEquals(initialState, section.getStateVector(), 0.0,
@@ -133,8 +133,8 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   @Test
   void reverseLiquidWallMotionRemainsDissipative() {
     SlugForceBalance closure = new SlugForceBalance();
-    for (double gasVelocity : new double[] { -4.0, 0.0, 4.0 }) {
-      for (double liquidVelocity : new double[] { -2.0, 0.0, 2.0 }) {
+    for (double gasVelocity : new double[] {-4.0, 0.0, 4.0}) {
+      for (double liquidVelocity : new double[] {-2.0, 0.0, 2.0}) {
         SlugForceBalance.Forces force = closure.evaluate(section(0.5, gasVelocity, liquidVelocity));
         assertTrue(force.liquidWall * liquidVelocity >= 0.0);
         assertTrue(force.interfaceForce * (gasVelocity - liquidVelocity) >= 0.0);
@@ -145,9 +145,9 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   @Test
   void nearbyRatesAndInclinationsRetainMechanicalEquilibrium() {
     SlugForceBalance closure = new SlugForceBalance();
-    for (double gasFlux : new double[] { 1.5, 2.0, 2.5 }) {
-      for (double liquidFlux : new double[] { 0.8, 1.0, 1.2 }) {
-        for (double inclination : new double[] { -0.02, 0.0, 0.02 }) {
+    for (double gasFlux : new double[] {1.5, 2.0, 2.5}) {
+      for (double liquidFlux : new double[] {0.8, 1.0, 1.2}) {
+        for (double inclination : new double[] {-0.02, 0.0, 0.02}) {
           TwoFluidSection section = section(0.5, 4.0, 2.0);
           section.setInclination(inclination);
           double holdup = closure.solveHoldup(section, gasFlux, liquidFlux);

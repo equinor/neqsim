@@ -15,9 +15,9 @@ public class RefineryBlendSourceLedgerTest {
 
   @Test
   public void publicOediIdentifiersPreserveOrderLookupAndClosure() {
-    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10000.0, new double[] { 0.60, 0.40 },
-        new double[] { 0.847, 0.771 });
-    String[] identifiers = { "DOE/OEDI sample 50146", "DOE/OEDI sample 56337" };
+    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10000.0, new double[] {0.60, 0.40},
+        new double[] {0.847, 0.771});
+    String[] identifiers = {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"};
 
     RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(identifiers, batch);
     RefineryBlendSourceLedger.SourceReceipt[] receipts = ledger.getSourceReceipts();
@@ -44,10 +44,10 @@ public class RefineryBlendSourceLedgerTest {
 
   @Test
   public void zeroContributionRetainsIdentityWithoutFabricatedDensity() {
-    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10.0, new double[] { 1.0, 0.0 },
-        new double[] { 0.82, Double.NaN });
+    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10.0, new double[] {1.0, 0.0},
+        new double[] {0.82, Double.NaN});
 
-    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] { "feed", "unused" }, batch);
+    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] {"feed", "unused"}, batch);
     RefineryBlendSourceLedger.SourceReceipt unused = ledger.getSourceReceipt("unused");
 
     assertFalse(unused.isContributing());
@@ -59,22 +59,21 @@ public class RefineryBlendSourceLedgerTest {
 
   @Test
   public void invalidIdentifiersFailClosed() {
-    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10.0, new double[] { 0.5, 0.5 },
-        new double[] { 0.82, 0.84 });
+    RefineryBlendBatch batch = RefineryBlendBatch.fromMassFractions(10.0, new double[] {0.5, 0.5},
+        new double[] {0.82, 0.84});
 
-    assertThrows(NullPointerException.class,
-        () -> RefineryBlendSourceLedger.fromBatch(new String[] { "a", "b" }, null));
+    assertThrows(NullPointerException.class, () -> RefineryBlendSourceLedger.fromBatch(new String[] {"a", "b"}, null));
     assertThrows(IllegalArgumentException.class, () -> RefineryBlendSourceLedger.fromBatch(null, batch));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryBlendSourceLedger.fromBatch(new String[] { "only-one" }, batch));
+        () -> RefineryBlendSourceLedger.fromBatch(new String[] {"only-one"}, batch));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryBlendSourceLedger.fromBatch(new String[] { "", "b" }, batch));
+        () -> RefineryBlendSourceLedger.fromBatch(new String[] {"", "b"}, batch));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryBlendSourceLedger.fromBatch(new String[] { " a", "b" }, batch));
+        () -> RefineryBlendSourceLedger.fromBatch(new String[] {" a", "b"}, batch));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryBlendSourceLedger.fromBatch(new String[] { "same", "same" }, batch));
+        () -> RefineryBlendSourceLedger.fromBatch(new String[] {"same", "same"}, batch));
 
-    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] { "a", "b" }, batch);
+    RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(new String[] {"a", "b"}, batch);
     assertThrows(IllegalArgumentException.class, () -> ledger.getSourceReceipt("missing"));
   }
 }

@@ -32,7 +32,7 @@ class TwoFluidCellFaceTengesdalPreparationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidCellFaceTengesdalPreparationTest.class);
 
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void shortFaceTerrainRiserHandoffPreservesPhysicalRiseAndConservativePreparation(int count, double maximumStep) {
     verifyPreparation(count, maximumStep, 0.1);
   }
@@ -40,7 +40,7 @@ class TwoFluidCellFaceTengesdalPreparationTest {
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.face-terrain.qualification", matches = "true")
   @ParameterizedTest
-  @CsvSource({ "16,0.1", "16,0.05", "24,0.05" })
+  @CsvSource({"16,0.1", "16,0.05", "24,0.05"})
   void fiveSecondFaceTerrainRiserQualificationMustCompleteTheWholeInterval(int count, double maximumStep) {
     verifyPreparation(count, maximumStep, 5.0);
   }

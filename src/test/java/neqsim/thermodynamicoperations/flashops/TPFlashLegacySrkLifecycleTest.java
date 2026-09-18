@@ -28,7 +28,7 @@ class TPFlashLegacySrkLifecycleTest {
     assertEquivalentState(ordinary, multiphase, 1.0e-10, "ordinary versus multiphase");
     assertEquivalentState(multiphase, poorGuess, 1.0e-10, "poor beta initialization");
 
-    for (double pressure : new double[] { 9.5, 10.5 }) {
+    for (double pressure : new double[] {9.5, 10.5}) {
       SystemInterface nearbyOrdinary = flash(REFERENCE_TEMPERATURE_K, pressure, false, false);
       SystemInterface nearbyMultiphase = flash(REFERENCE_TEMPERATURE_K, pressure, true, false);
       assertGasOilEquilibrium(nearbyOrdinary, "ordinary at " + pressure + " bara");

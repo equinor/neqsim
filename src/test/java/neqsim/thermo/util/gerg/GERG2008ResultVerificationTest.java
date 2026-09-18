@@ -73,8 +73,8 @@ public class GERG2008ResultVerificationTest {
     // Compare results
     logger.info("Property                  | Call 1         | Call 2         | Call 3");
     logger.info("--------------------------|----------------|----------------|--------");
-    String[] propNames = { "Pressure (kPa)", "Z-factor", "dPdD", "d2PdD2", "d2PdTD", "dPdT", "U (J/mol)", "H (J/mol)",
-        "S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)", "G (J/mol)", "JT (K/kPa)", "Kappa" };
+    String[] propNames = {"Pressure (kPa)", "Z-factor", "dPdD", "d2PdD2", "d2PdTD", "dPdT", "U (J/mol)", "H (J/mol)",
+        "S (J/mol-K)", "Cv (J/mol-K)", "Cp (J/mol-K)", "W (m/s)", "G (J/mol)", "JT (K/kPa)", "Kappa"};
 
     for (int i = 0; i < Math.min(props1.length, 15); i++) {
       String status = (props1[i] == props2[i] && props2[i] == props3[i]) ? "OK" : "FAIL";

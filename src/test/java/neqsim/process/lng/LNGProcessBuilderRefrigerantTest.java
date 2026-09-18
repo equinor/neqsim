@@ -46,8 +46,8 @@ public class LNGProcessBuilderRefrigerantTest {
     return new LNGProcessBuilder().setName("SMR calibrated").setCycle(LNGProcessCycle.SMR).setFeedFluid(feed())
         .setFeedFlowRate(100000.0).setFeedTemperature(25.0).setFeedPressure(60.0)
         .setTargetLiquefactionTemperature(-158.0)
-        .setRefrigerantComposition(new String[] { "nitrogen", "methane", "ethane", "propane", "i-butane" },
-            new double[] { 0.08, 0.34, 0.34, 0.12, 0.12 })
+        .setRefrigerantComposition(new String[] {"nitrogen", "methane", "ethane", "propane", "i-butane"},
+            new double[] {0.08, 0.34, 0.34, 0.12, 0.12})
         .setRefrigerantCirculationRatio(2.5).setRefrigerantSuctionPressure(4.0).setRefrigerantDischargePressure(45.0)
         .build();
   }
@@ -71,16 +71,16 @@ public class LNGProcessBuilderRefrigerantTest {
     LNGProcessModel.Result low = new LNGProcessBuilder().setName("SMR low").setCycle(LNGProcessCycle.SMR)
         .setFeedFluid(feed()).setFeedFlowRate(100000.0).setFeedTemperature(25.0).setFeedPressure(60.0)
         .setTargetLiquefactionTemperature(-158.0)
-        .setRefrigerantComposition(new String[] { "nitrogen", "methane", "ethane", "propane", "i-butane" },
-            new double[] { 0.08, 0.34, 0.34, 0.12, 0.12 })
+        .setRefrigerantComposition(new String[] {"nitrogen", "methane", "ethane", "propane", "i-butane"},
+            new double[] {0.08, 0.34, 0.34, 0.12, 0.12})
         .setRefrigerantCirculationRatio(2.0).setRefrigerantSuctionPressure(4.0).setRefrigerantDischargePressure(45.0)
         .build().run();
 
     LNGProcessModel.Result high = new LNGProcessBuilder().setName("SMR high").setCycle(LNGProcessCycle.SMR)
         .setFeedFluid(feed()).setFeedFlowRate(100000.0).setFeedTemperature(25.0).setFeedPressure(60.0)
         .setTargetLiquefactionTemperature(-158.0)
-        .setRefrigerantComposition(new String[] { "nitrogen", "methane", "ethane", "propane", "i-butane" },
-            new double[] { 0.08, 0.34, 0.34, 0.12, 0.12 })
+        .setRefrigerantComposition(new String[] {"nitrogen", "methane", "ethane", "propane", "i-butane"},
+            new double[] {0.08, 0.34, 0.34, 0.12, 0.12})
         .setRefrigerantCirculationRatio(3.0).setRefrigerantSuctionPressure(4.0).setRefrigerantDischargePressure(45.0)
         .build().run();
 
@@ -105,11 +105,11 @@ public class LNGProcessBuilderRefrigerantTest {
   void invalidRefrigerantInputIsRejected() {
     LNGProcessBuilder builder = new LNGProcessBuilder();
     assertThrows(IllegalArgumentException.class,
-        () -> builder.setRefrigerantComposition(new String[] { "methane" }, new double[] { 1.0, 2.0 }));
+        () -> builder.setRefrigerantComposition(new String[] {"methane"}, new double[] {1.0, 2.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> builder.setRefrigerantComposition(new String[] { "methane", "ethane" }, new double[] { 0.0, 0.0 }));
+        () -> builder.setRefrigerantComposition(new String[] {"methane", "ethane"}, new double[] {0.0, 0.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> builder.setRefrigerantComposition(new String[] { "methane", "ethane" }, new double[] { 1.0, -0.5 }));
+        () -> builder.setRefrigerantComposition(new String[] {"methane", "ethane"}, new double[] {1.0, -0.5}));
     assertThrows(IllegalArgumentException.class, () -> builder.setRefrigerantCirculationRatio(0.0));
     assertThrows(IllegalArgumentException.class, () -> builder.setRefrigerantSuctionPressure(-1.0));
     assertThrows(IllegalArgumentException.class, () -> builder.setRefrigerantDischargePressure(0.0));

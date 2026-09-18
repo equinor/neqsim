@@ -563,7 +563,7 @@ public class SystemElectrolyteCPAMMTest {
   @DisplayName("Test NaCl activity coefficients at different concentrations")
   void testNaClActivityCoefficientConcentrationDependence() {
     // Test at multiple concentrations to verify concentration dependence
-    double[] molalities = { 0.1, 0.5, 1.0, 2.0 };
+    double[] molalities = {0.1, 0.5, 1.0, 2.0};
     double[] gammaMeanValues = new double[molalities.length];
 
     for (int i = 0; i < molalities.length; i++) {
@@ -850,9 +850,9 @@ public class SystemElectrolyteCPAMMTest {
     // 5.0 | 0.874 | 1.271
     // 6.0 | 0.986 | 1.368
 
-    double[] molalities = { 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0 };
-    double[] gammaLit = { 0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714 };
-    double[] phiLit = { 0.988, 0.968, 0.932, 0.921, 0.936, 1.002, 1.085 };
+    double[] molalities = {0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0};
+    double[] gammaLit = {0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714};
+    double[] phiLit = {0.988, 0.968, 0.932, 0.921, 0.936, 1.002, 1.085};
 
     logger.info("=================================================================");
     logger.info("NaCl in water at 25°C - Comparison to Literature");
@@ -913,8 +913,8 @@ public class SystemElectrolyteCPAMMTest {
   void testCompareToFurstModel() {
     // Compare our MM model with the existing Furst electrolyte model
     // Literature values from Robinson & Stokes (1959) for NaCl at 25C
-    double[] molalities = { 0.1, 0.5, 1.0, 2.0 };
-    double[] gammaLit = { 0.778, 0.681, 0.657, 0.668 }; // from R&S
+    double[] molalities = {0.1, 0.5, 1.0, 2.0};
+    double[] gammaLit = {0.778, 0.681, 0.657, 0.668}; // from R&S
 
     logger.info("=================================================================");
     logger.info("Comparison: MM e-CPA vs Furst Electrolyte Model vs Literature");
@@ -1022,8 +1022,8 @@ public class SystemElectrolyteCPAMMTest {
   @Test
   @DisplayName("Test MM model with short-range term enabled")
   void testMMWithShortRangeEnabled() {
-    double[] molalities = { 0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0 };
-    double[] gammaLit = { 0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714 };
+    double[] molalities = {0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 3.0};
+    double[] gammaLit = {0.965, 0.902, 0.778, 0.681, 0.657, 0.668, 0.714};
 
     logger.info("=================================================================");
     logger.info("NaCl: MM model DH+Born ONLY vs DH+Born+SR (short-range enabled)");
@@ -1113,17 +1113,17 @@ public class SystemElectrolyteCPAMMTest {
     double m = 1.0;
     double molesWater = 55.508;
 
-    String[] labels = { "DH+Born+SR (full)", "Born+SR (no DH)", "DH+SR (no Born)", "SR only (no DH, no Born)",
-        "DH only (no Born, no SR)", "None (pure SRK+CPA)" };
+    String[] labels = {"DH+Born+SR (full)", "Born+SR (no DH)", "DH+SR (no Born)", "SR only (no DH, no Born)",
+        "DH only (no Born, no SR)", "None (pure SRK+CPA)"};
 
     boolean[][] configs = {
         // DH, Born, SR
-        { true, true, true }, // full
-        { false, true, true }, // no DH
-        { true, false, true }, // no Born
-        { false, false, true }, // no DH, no Born
-        { true, false, false }, // DH only
-        { false, false, false } // none
+        {true, true, true}, // full
+        {false, true, true}, // no DH
+        {true, false, true}, // no Born
+        {false, false, true}, // no DH, no Born
+        {true, false, false}, // DH only
+        {false, false, false} // none
     };
 
     logger.info("=================================================================");
@@ -1311,9 +1311,9 @@ public class SystemElectrolyteCPAMMTest {
     double molesWater = 55.508;
 
     // Salt specifications: {cation, anion, nu_cation, nu_anion, molality, gamma_lit}
-    String[][] salts = { { "Na+", "Cl-", "1", "1", "1.0", "0.657" }, { "Ca++", "Cl-", "1", "2", "1.0", "0.518" },
-        { "Ba++", "Cl-", "1", "2", "1.0", "0.500" }, { "Na+", "SO4--", "2", "1", "1.0", "0.445" },
-        { "Mg++", "Cl-", "1", "2", "1.0", "0.529" }, };
+    String[][] salts = {{"Na+", "Cl-", "1", "1", "1.0", "0.657"}, {"Ca++", "Cl-", "1", "2", "1.0", "0.518"},
+        {"Ba++", "Cl-", "1", "2", "1.0", "0.500"}, {"Na+", "SO4--", "2", "1", "1.0", "0.445"},
+        {"Mg++", "Cl-", "1", "2", "1.0", "0.529"},};
 
     System.out.println("==========================================================================");
     logger.info("SCALE POTENTIAL COMPARISON: MM e-CPA vs Pitzer at 1 molal, 298.15 K");
@@ -1876,7 +1876,7 @@ public class SystemElectrolyteCPAMMTest {
     System.out.println("==========================================================================");
 
     // Helper: print phase table for a given system
-    String[] modelNames = { "MM e-CPA", "Pitzer", "CPA-Statoil", "CPA-Advanced" };
+    String[] modelNames = {"MM e-CPA", "Pitzer", "CPA-Statoil", "CPA-Advanced"};
     double[] aqGammas = new double[4];
 
     // ===================== 1. MM e-CPA =====================

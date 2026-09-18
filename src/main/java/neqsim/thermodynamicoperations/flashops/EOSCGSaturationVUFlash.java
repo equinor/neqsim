@@ -90,17 +90,17 @@ final class EOSCGSaturationVUFlash {
         continue;
       }
       if (withinVolumeTolerance(candidate, targetMolarVolume)) {
-        return new Candidate[] { candidate, candidate };
+        return new Candidate[] {candidate, candidate};
       }
       if (!candidate.physical) {
         if (previousCandidate != null && residualSignChanged(previousCandidate, candidate)) {
-          return new Candidate[] { previousCandidate, candidate };
+          return new Candidate[] {previousCandidate, candidate};
         }
         previousCandidate = null;
         continue;
       }
       if (previousCandidate != null && residualSignChanged(previousCandidate, candidate)) {
-        return new Candidate[] { previousCandidate, candidate };
+        return new Candidate[] {previousCandidate, candidate};
       }
       previousCandidate = candidate;
     }
@@ -118,10 +118,10 @@ final class EOSCGSaturationVUFlash {
         continue;
       }
       if (withinVolumeTolerance(candidate, targetMolarVolume)) {
-        return new Candidate[] { candidate, candidate };
+        return new Candidate[] {candidate, candidate};
       }
       if (residualSignChanged(previousPhysicalCandidate, candidate)) {
-        return new Candidate[] { previousPhysicalCandidate, candidate };
+        return new Candidate[] {previousPhysicalCandidate, candidate};
       }
       if (candidate.physical) {
         previousPhysicalCandidate = candidate;

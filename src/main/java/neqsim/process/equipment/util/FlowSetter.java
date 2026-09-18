@@ -25,8 +25,8 @@ public class FlowSetter extends TwoPortEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private static final Logger logger = LogManager.getLogger(FlowSetter.class);
-  double[] pressure = new double[] { 1.01325 };
-  double[] temperature = new double[] { 15.0 };
+  double[] pressure = new double[] {1.01325};
+  double[] temperature = new double[] {15.0};
   String unitT = "C";
   String unitP = "bara";
 

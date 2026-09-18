@@ -30,8 +30,8 @@ public final class ProcessToEngineeringDesignBuilder {
   private double maximumExportVelocityMPerS = 20.0;
   private double maximumExportPressureGradientBarPerKm = 0.5;
   private double driverMarginFraction = 0.10;
-  private double[] driverCandidatesKw = new double[] { 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0, 15000.0,
-      20000.0, 30000.0, 50000.0 };
+  private double[] driverCandidatesKw = new double[] {500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0, 15000.0,
+      20000.0, 30000.0, 50000.0};
 
   private ProcessToEngineeringDesignBuilder(EngineeringProject project) {
     if (project == null) {
@@ -123,7 +123,7 @@ public final class ProcessToEngineeringDesignBuilder {
     if (hasText(pressureInstrumentTag)) {
       project.addEngineeringDesignModule(
           new InstrumentRangeAndResponseDesignModule(pressureInstrumentTag, separatorTag, separatorPressure, "bara",
-              0.20, 0.005, 10.0, 5.0, new double[] { 10.0, 16.0, 25.0, 40.0, 60.0, 100.0, 160.0, 250.0, 400.0 }));
+              0.20, 0.005, 10.0, 5.0, new double[] {10.0, 16.0, 25.0, 40.0, 60.0, 100.0, 160.0, 250.0, 400.0}));
     }
     return project;
   }

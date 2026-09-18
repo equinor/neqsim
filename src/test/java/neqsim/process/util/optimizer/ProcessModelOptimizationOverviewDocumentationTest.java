@@ -198,8 +198,7 @@ public class ProcessModelOptimizationOverviewDocumentationTest extends NeqSimTes
         .matcher(document);
     assertTrue(csv.find(), "The installed-capacity CSV shown below the snippet must be exercised");
     Files.write(output.resolve("installed_capacity.csv"), csv.group(1).getBytes(StandardCharsets.UTF_8));
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       Class<?> examples = loader.loadClass("optimization.documentation.AdvancedOverviewExamples");
       Fixture fixture = throughputFixture();
       ProcessModelThroughputResult throughputResult = (ProcessModelThroughputResult) examples

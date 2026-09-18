@@ -133,7 +133,7 @@ class OptimizationGuideExamplesTest {
           null, units).call();
       assertTrue(compiled, document + " / " + heading + ": " + diagnostics.getDiagnostics());
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { sourceDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {sourceDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.loadClass(className).getMethod("main", String[].class).invoke(null, (Object) new String[0]);
     }

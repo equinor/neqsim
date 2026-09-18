@@ -62,10 +62,10 @@ class PitzerBinaryVolumetricAcousticPublishedWaterTest extends neqsim.NeqSimTest
     double reducedTemperature = temperatureK / criticalTemperatureK;
     double reducedPressure = pressureMpa / criticalPressureMpa;
 
-    double[] coefficients = { 7.423615233e4, -1.571527759e5, 2.742740269e6, -3.599403339e6, -6.379367333e-4,
-        2.357819770e5, 5.469994955e5, 2.225433179e-1, -2.304269454e5, 3.932184362e-7, -2.621801558e-6, 2.991452743e5 };
-    double[] pressureExponents = { 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0 };
-    double[] temperatureExponents = { -5.0, -4.5, -0.5, 3.5, -19.0, 1.0, 7.0, -12.0, 8.0, -26.0, -24.0, 14.0 };
+    double[] coefficients = {7.423615233e4, -1.571527759e5, 2.742740269e6, -3.599403339e6, -6.379367333e-4,
+        2.357819770e5, 5.469994955e5, 2.225433179e-1, -2.304269454e5, 3.932184362e-7, -2.621801558e-6, 2.991452743e5};
+    double[] pressureExponents = {0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 3.0};
+    double[] temperatureExponents = {-5.0, -4.5, -0.5, 3.5, -19.0, 1.0, 7.0, -12.0, 8.0, -26.0, -24.0, 14.0};
 
     double soundSpeedSquared = 0.0;
     for (int index = 0; index < coefficients.length; index++) {

@@ -115,7 +115,7 @@ public final class PitzerParameterDatasets {
     }
     for (int cation : cations) {
       phase.setZetaTemperatureCoefficients(co2, cation, chloride, PHREEQC_REFERENCE_TEMPERATURE_K,
-          new double[] { co2ChlorideZeta.get(phase.getComponent(cation).getComponentName()), 0, 0, 0, 0, 0 });
+          new double[] {co2ChlorideZeta.get(phase.getComponent(cation).getComponentName()), 0, 0, 0, 0, 0});
     }
     phase.enablePhreeqcCommonIonTerms();
     phase.markManualParameterDatasetLoaded();
@@ -240,11 +240,11 @@ public final class PitzerParameterDatasets {
 
     phase.setParameterDatasetId(PHREEQC_CO2_NA2SO4_ID);
     phase.setPhreeqcBinaryTemperatureCoefficients(sodium, sulfate, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { 2.73e-2, 0.0, -5.8, 9.89e-3, 0.0, -1.563e5 },
-        new double[] { 0.956, 2.663e3, 0.0, 1.158e-2, 0.0, -3.194e5 },
-        new double[] { 3.418e-3, -384.0, 0.0, -8.451e-4, 0.0, 5.177e4 });
+        new double[] {2.73e-2, 0.0, -5.8, 9.89e-3, 0.0, -1.563e5},
+        new double[] {0.956, 2.663e3, 0.0, 1.158e-2, 0.0, -3.194e5},
+        new double[] {3.418e-3, -384.0, 0.0, -8.451e-4, 0.0, 5.177e4});
     phase.setLambdaTemperatureCoefficients(carbonDioxide, carbonDioxide, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { -1.34e-2, 348.0, 0.803, 0.0, 0.0, 0.0 });
+        new double[] {-1.34e-2, 348.0, 0.803, 0.0, 0.0, 0.0});
     phase.setLambda(carbonDioxide, sodium, 0.085);
     phase.setLambda(carbonDioxide, sulfate, 0.075);
     phase.setZeta(carbonDioxide, sodium, sulfate, -0.015);
@@ -281,17 +281,17 @@ public final class PitzerParameterDatasets {
 
     phase.setParameterDatasetId(PHREEQC_NA_K_CL_ID);
     phase.setPhreeqcBinaryTemperatureCoefficients(sodium, chloride, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { 7.534e-2, 9598.4, 35.48, -5.8731e-2, 1.798e-5, -5.0e5 },
-        new double[] { 0.2769, 1.377e4, 46.8, -6.9512e-2, 2.0e-5, -7.4823e5 },
-        new double[] { 1.48e-3, -120.5, -0.2081, 0.0, 1.166e-7, 11121.0 });
+        new double[] {7.534e-2, 9598.4, 35.48, -5.8731e-2, 1.798e-5, -5.0e5},
+        new double[] {0.2769, 1.377e4, 46.8, -6.9512e-2, 2.0e-5, -7.4823e5},
+        new double[] {1.48e-3, -120.5, -0.2081, 0.0, 1.166e-7, 11121.0});
     phase.setPhreeqcBinaryTemperatureCoefficients(potassium, chloride, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { 0.04808, -758.48, -4.7062, 0.010072, -3.7599e-6, 0.0 },
-        new double[] { 0.2168, 0.0, -6.895, 2.262e-2, -9.293e-6, -1.0e5 },
-        new double[] { -7.88e-4, 91.27, 0.58643, -1.298e-3, 4.9567e-7, 0.0 });
+        new double[] {0.04808, -758.48, -4.7062, 0.010072, -3.7599e-6, 0.0},
+        new double[] {0.2168, 0.0, -6.895, 2.262e-2, -9.293e-6, -1.0e5},
+        new double[] {-7.88e-4, 91.27, 0.58643, -1.298e-3, 4.9567e-7, 0.0});
     phase.setThetaTemperatureCoefficients(potassium, sodium, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { -0.012, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        new double[] {-0.012, 0.0, 0.0, 0.0, 0.0, 0.0});
     phase.setPsiTemperatureCoefficients(potassium, sodium, chloride, PHREEQC_REFERENCE_TEMPERATURE_K,
-        new double[] { -0.0015, 0.0, 0.0, 1.8e-5, 0.0, 0.0 });
+        new double[] {-0.0015, 0.0, 0.0, 1.8e-5, 0.0, 0.0});
     phase.enablePhreeqcCommonIonTerms();
     phase.markManualParameterDatasetLoaded();
   }
@@ -524,7 +524,7 @@ public final class PitzerParameterDatasets {
       Double potassiumMagnesiumTheta) {
     if (potassiumMagnesiumTheta != null
         && (("K+".equals(first) && "Mg++".equals(second)) || ("Mg++".equals(first) && "K+".equals(second)))) {
-      return new double[] { potassiumMagnesiumTheta, 0, 0, 0, 0, 0 };
+      return new double[] {potassiumMagnesiumTheta, 0, 0, 0, 0, 0};
     }
     return catalog.require(PhreeqcPitzerParameterCatalog.Family.THETA, first, second);
   }

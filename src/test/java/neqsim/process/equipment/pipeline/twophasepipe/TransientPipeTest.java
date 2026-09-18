@@ -46,7 +46,7 @@ class TransientPipeTest {
     pipe.setDiameter(0.3);
     pipe.setNumberOfSections(10);
 
-    double[] elevations = { 0, 0, -5, -10, -10, -5, 0, 0, 5, 10 };
+    double[] elevations = {0, 0, -5, -10, -10, -5, 0, 0, 5, 10};
     pipe.setElevationProfile(elevations);
 
     pipe.initializePipe();
@@ -68,7 +68,7 @@ class TransientPipeTest {
     pipe.setDiameter(0.3);
     pipe.setNumberOfSections(5);
 
-    double[] inclinations = { 0, Math.toRadians(10), Math.toRadians(-5), 0, Math.toRadians(15) };
+    double[] inclinations = {0, Math.toRadians(10), Math.toRadians(-5), 0, Math.toRadians(15)};
     pipe.setInclinationProfile(inclinations);
 
     pipe.initializePipe();
@@ -886,7 +886,7 @@ class TransientPipeTest {
     logger.info("Initial outlet flow: " + outletValve.getOutletStream().getFlowRate("kg/sec") + " kg/s");
 
     // Transient: Change valve opening
-    double[] valveOpenings = { 100.0, 75.0, 50.0, 25.0, 50.0, 75.0, 100.0 };
+    double[] valveOpenings = {100.0, 75.0, 50.0, 25.0, 50.0, 75.0, 100.0};
 
     for (double opening : valveOpenings) {
       outletValve.setPercentValveOpening(opening);
@@ -1240,7 +1240,7 @@ class TransientPipeTest {
     riserPipe.setOutletPressure(55.0); // bara - Lower outlet pressure
 
     // Terrain profile: mostly vertical riser
-    double[] elevations = { -100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100 }; // -100m to +100m
+    double[] elevations = {-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100}; // -100m to +100m
     riserPipe.setElevationProfile(elevations);
 
     logger.info("\nRiser pipe configuration:");

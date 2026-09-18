@@ -50,11 +50,11 @@ class CO2BrineHydratePhaseStateTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "40,10,10,true", "200,10,10,true", "100,5,2,true", "100,5,0.5,false", "100,5,1,false" })
+  @CsvSource({"40,10,10,true", "200,10,10,true", "100,5,2,true", "100,5,0.5,false", "100,5,1,false"})
   void independentInitializationsSelectTheSameState(double pressure, double salt, double co2, boolean saturated)
       throws Exception {
     double reference = Double.NaN;
-    for (double guess : new double[] { 273.15, 283.15 }) {
+    for (double guess : new double[] {273.15, 283.15}) {
       SystemInterface fluid = brine(pressure, salt, co2);
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
       ops.hydrateFormationTemperature(guess);
@@ -84,7 +84,7 @@ class CO2BrineHydratePhaseStateTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "20,5", "39,10", "41,10", "60,5", "100,9.5", "100,10.5", "190,10", "210,10" })
+  @CsvSource({"20,5", "39,10", "41,10", "60,5", "100,9.5", "100,10.5", "190,10", "210,10"})
   void adjacentPressureAndSalinityCasesRemainConservative(double pressure, double salt) throws Exception {
     SystemInterface fluid = brine(pressure, salt, 10.0);
     new ThermodynamicOperations(fluid).hydrateFormationTemperature();
@@ -94,7 +94,7 @@ class CO2BrineHydratePhaseStateTest {
   @Test
   void highPressureSalinityTrendUsesSaturatedStates() throws Exception {
     double previous = Double.POSITIVE_INFINITY;
-    for (double salt : new double[] { 0.0, 5.0, 10.0 }) {
+    for (double salt : new double[] {0.0, 5.0, 10.0}) {
       SystemInterface fluid = brine(200.0, salt, 10.0);
       new ThermodynamicOperations(fluid).hydrateFormationTemperature();
       assertEndpoint(fluid, true);
@@ -181,7 +181,7 @@ class CO2BrineHydratePhaseStateTest {
       assertEquals(fluid.getPhase(0).getComponent(component).getz(), recovered, 1.0e-10);
     }
     if (saturated) {
-      for (String component : new String[] { "CO2", "water" }) {
+      for (String component : new String[] {"CO2", "water"}) {
         double ratio = fluid.getPhase(0).getFugacity(component) / fluid.getPhase(1).getFugacity(component);
         assertEquals(0.0, Math.log(ratio), 1.0e-8, component + " fluid fugacity residual");
       }

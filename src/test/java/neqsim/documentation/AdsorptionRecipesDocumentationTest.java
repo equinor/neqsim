@@ -62,7 +62,7 @@ public class AdsorptionRecipesDocumentationTest extends neqsim.NeqSimTest {
     assertEquals(3, classNames.size(), "Adsorption recipe coverage changed");
     compile(compiler, sourceFiles);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       for (String className : classNames) {

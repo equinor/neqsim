@@ -35,7 +35,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  * ProcessSimulationFunction function = new ProcessSimulationFunction(process);
  * function.addParameter("Pipe1.heatTransferCoefficient", 1.0, 100.0);
  * function.addMeasurement("Manifold.outletStream.temperature");
- * function.setInitialGuess(new double[] { 15.0 });
+ * function.setInitialGuess(new double[] {15.0});
  * }
  * </pre>
  *
@@ -203,7 +203,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
       throw new IllegalArgumentException(
           "Invalid path format: " + path + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
     }
-    return new String[] { path.substring(0, dotIndex), path.substring(dotIndex + 1) };
+    return new String[] {path.substring(0, dotIndex), path.substring(dotIndex + 1)};
   }
 
   /**

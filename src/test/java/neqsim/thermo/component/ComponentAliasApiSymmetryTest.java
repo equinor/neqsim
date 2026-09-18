@@ -58,7 +58,7 @@ public class ComponentAliasApiSymmetryTest {
   @Test
   public void hasComponentAndGetComponentAgree() {
     SystemInterface fluid = fluidWith(SYNONYM);
-    String[] names = new String[] { SYNONYM, DATABASE_NAME };
+    String[] names = new String[] {SYNONYM, DATABASE_NAME};
     for (int i = 0; i < names.length; i++) {
       if (fluid.hasComponent(names[i])) {
         assertNotNull(fluid.getComponent(names[i]),

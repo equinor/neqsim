@@ -47,17 +47,17 @@ class TwoFluidInletPressureBoundaryTest {
     feed.setOilVelocity(0.55);
     feed.setWaterVelocity(-0.45);
     feed.updateConservativeVariables();
-    double[] expectedMass = { feed.getGasMassPerLength() * feed.getGasVelocity(),
-        feed.getOilMassPerLength() * feed.getOilVelocity(), feed.getWaterMassPerLength() * feed.getWaterVelocity() };
-    double[] velocity = { feed.getGasVelocity(), feed.getOilVelocity(), feed.getWaterVelocity() };
+    double[] expectedMass = {feed.getGasMassPerLength() * feed.getGasVelocity(),
+        feed.getOilMassPerLength() * feed.getOilVelocity(), feed.getWaterMassPerLength() * feed.getWaterVelocity()};
+    double[] velocity = {feed.getGasVelocity(), feed.getOilVelocity(), feed.getWaterVelocity()};
     TwoFluidConservationEquations equations = equations();
     equations.setClosedBoundaries(false, true);
     equations.setInletPhaseFlowBoundaryState(feed);
     // Mutating the caller's feed cannot alter the prescribed advection.
     feed.setGasVelocity(100.0);
-    for (double pressure : new double[] { 2.0e5, 3.1e5, 2.0e5 }) {
+    for (double pressure : new double[] {2.0e5, 3.1e5, 2.0e5}) {
       cell.setPressure(pressure);
-      double[][] rhs = equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength());
+      double[][] rhs = equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength());
       assertArrayEquals(expectedMass, equations.getLastMassBalanceRate().getInletMassFlowKgPerSecond(), 1.0e-12);
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(expectedMass[phase] / cell.getLength(), rhs[0][phase], 1.0e-12);
@@ -75,19 +75,19 @@ class TwoFluidInletPressureBoundaryTest {
     feed.setPressure(1.4e5);
     TwoFluidConservationEquations equations = equations();
     equations.setInletPhaseFlowBoundaryState(feed);
-    assertRest(equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength()));
+    assertRest(equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength()));
     equations.setInletBoundaryState(feed);
-    double[][] forced = equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength());
+    double[][] forced = equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength());
     double force = 0.0;
     for (int phase = 0; phase < 3; phase++) {
       force += forced[0][phase + 3] * cell.getLength();
     }
     assertEquals((feed.getPressure() - cell.getPressure()) * cell.getArea(), force, 1.0e-9);
     equations.setInletBoundaryState(null);
-    assertRest(equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength()));
+    assertRest(equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength()));
     equations.setInletPhaseFlowBoundaryState(feed);
     equations.setInletPhaseFlowBoundaryState(null);
-    assertRest(equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength()));
+    assertRest(equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength()));
   }
 
   @Test
@@ -109,7 +109,7 @@ class TwoFluidInletPressureBoundaryTest {
       equations = (TwoFluidConservationEquations) input.readObject();
     }
     assertTrue(equations.isConsistentPhasePressureEnabled());
-    assertRest(equations.calcRHS(new TwoFluidSection[] { cell.clone() }, cell.getLength()));
+    assertRest(equations.calcRHS(new TwoFluidSection[] {cell.clone()}, cell.getLength()));
     assertArrayEquals(new double[3], equations.getLastMassBalanceRate().getInletMassFlowKgPerSecond(), 0.0);
   }
 

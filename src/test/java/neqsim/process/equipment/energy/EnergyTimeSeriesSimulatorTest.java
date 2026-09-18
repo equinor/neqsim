@@ -15,10 +15,10 @@ class EnergyTimeSeriesSimulatorTest {
 
   @Test
   void testProfileInterpolationAndValidation() {
-    EnergyTimeSeriesProfile step = EnergyTimeSeriesProfile.step("step", new double[] { 0.0, 10.0, 20.0 },
-        new double[] { 1.0, 2.0, 4.0 });
-    EnergyTimeSeriesProfile linear = EnergyTimeSeriesProfile.linear("linear", new double[] { 0.0, 10.0 },
-        new double[] { 0.0, 100.0 });
+    EnergyTimeSeriesProfile step = EnergyTimeSeriesProfile.step("step", new double[] {0.0, 10.0, 20.0},
+        new double[] {1.0, 2.0, 4.0});
+    EnergyTimeSeriesProfile linear = EnergyTimeSeriesProfile.linear("linear", new double[] {0.0, 10.0},
+        new double[] {0.0, 100.0});
 
     assertEquals(1.0, step.getValue(9.0), 1.0e-12);
     assertEquals(1.0, step.getValue(Math.nextDown(10.0)), 1.0e-12);
@@ -30,7 +30,7 @@ class EnergyTimeSeriesSimulatorTest {
     assertEquals(100.0, linear.getValue(20.0), 1.0e-12);
 
     assertThrows(IllegalArgumentException.class,
-        () -> EnergyTimeSeriesProfile.step("bad", new double[] { 0.0, 0.0 }, new double[] { 1.0, 2.0 }));
+        () -> EnergyTimeSeriesProfile.step("bad", new double[] {0.0, 0.0}, new double[] {1.0, 2.0}));
     assertThrows(IllegalArgumentException.class, () -> new EnergyTimeSeriesProfile.Point(Double.NaN, 1.0));
     assertThrows(IllegalArgumentException.class, () -> step.getValue(-1.0));
   }
@@ -48,10 +48,9 @@ class EnergyTimeSeriesSimulatorTest {
     simulator.setIntervalSeconds(3600.0);
     simulator.setDurationSeconds(9000.0);
     simulator.addProfile(
-        EnergyTimeSeriesProfile.step("generation", new double[] { 0.0, 7200.0 }, new double[] { 2.0e6, 1.0e6 }),
+        EnergyTimeSeriesProfile.step("generation", new double[] {0.0, 7200.0}, new double[] {2.0e6, 1.0e6}),
         value -> generator.setDuty(value));
-    simulator.addProfile(
-        EnergyTimeSeriesProfile.step("load", new double[] { 0.0, 3600.0 }, new double[] { 1.0e6, 1.5e6 }),
+    simulator.addProfile(EnergyTimeSeriesProfile.step("load", new double[] {0.0, 3600.0}, new double[] {1.0e6, 1.5e6}),
         value -> load.setRequestedPower(value));
 
     EnergyTimeSeriesResult result = simulator.run();

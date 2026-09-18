@@ -186,8 +186,8 @@ public class MercuryRemovalBedContaminantTest {
     double ySat = methanolSaturation();
     MercuryRemovalBed bed = runBed(200.0e-6);
     String json = bed.getContaminantAssessmentJson("methanol", ySat);
-    for (String key : new String[] { "relativeSaturation", "kelvinOnset", "maxAllowablePpmv", "poreFillingFraction",
-        "mechanism", "condensationExpected", "sorbentPoreRadiusNm" }) {
+    for (String key : new String[] {"relativeSaturation", "kelvinOnset", "maxAllowablePpmv", "poreFillingFraction",
+        "mechanism", "condensationExpected", "sorbentPoreRadiusNm"}) {
       assertTrue(json.contains(key), "JSON should report " + key);
     }
   }

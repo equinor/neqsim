@@ -11,8 +11,8 @@ import neqsim.thermo.component.ComponentEosInterface;
 public class AttractiveTermGERG extends AttractiveTermPr {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  protected double[] parametersGERG = { 0.905436, -0.213781, 0.26005 };
-  protected double[] parametersSolidGERG = { 0.106025, 2.683845, -4.75638 };
+  protected double[] parametersGERG = {0.905436, -0.213781, 0.26005};
+  protected double[] parametersSolidGERG = {0.106025, 2.683845, -4.75638};
 
   /**
    * Constructor for AttractiveTermGERG.

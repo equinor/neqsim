@@ -21,12 +21,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 class UMRPRUOilDropoutReproTest {
-  private static final String[] NAMES = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+  private static final String[] NAMES = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
       "i-pentane", "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane", "n-heptane", "benzene", "n-octane", "c-C7",
-      "toluene", "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
-  private static final double[] FEED = { 0.00959, 0.00634, 0.946, 0.0265, 0.00416, 0.00159, 0.00103, 0.000842, 0.000268,
+      "toluene", "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12"};
+  private static final double[] FEED = {0.00959, 0.00634, 0.946, 0.0265, 0.00416, 0.00159, 0.00103, 0.000842, 0.000268,
       0.000418, 0.000127, 0.000216, 0.000857, 0.00016, 2.14e-05, 4.92e-05, 0.000575, 5.5e-05, 4.17e-05, 7.85e-05,
-      3.73e-05, 4.69e-05 * 2, 7.61e-06 * 2, 1e-6 * 2 };
+      3.73e-05, 4.69e-05 * 2, 7.61e-06 * 2, 1e-6 * 2};
   private static final double REFERENCE_TEMPERATURE_C = 18.0;
   private static final double REFERENCE_PRESSURE_BARA = 78.0;
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
@@ -71,7 +71,7 @@ class UMRPRUOilDropoutReproTest {
    */
   @Test
   void ordinaryAndMultiphaseFlashesAgreeAtQualifiedStates() {
-    for (double temperatureC : new double[] { 8.0, REFERENCE_TEMPERATURE_C, 20.0 }) {
+    for (double temperatureC : new double[] {8.0, REFERENCE_TEMPERATURE_C, 20.0}) {
       SystemInterface ordinary = flash(temperatureC, REFERENCE_PRESSURE_BARA, false);
       SystemInterface multiphase = flash(temperatureC, REFERENCE_PRESSURE_BARA, true);
       assertEquivalentEquilibrium(ordinary, multiphase, 1.0e-8, "algorithm agreement at " + temperatureC + " C");
@@ -84,7 +84,7 @@ class UMRPRUOilDropoutReproTest {
   @Test
   void poorInitializationAndNearbyPressuresRecoverClosedEquilibrium() {
     SystemInterface reference = null;
-    for (double pressureBara : new double[] { 77.0, REFERENCE_PRESSURE_BARA, 79.0 }) {
+    for (double pressureBara : new double[] {77.0, REFERENCE_PRESSURE_BARA, 79.0}) {
       SystemInterface fluid = flash(REFERENCE_TEMPERATURE_C, pressureBara, true);
       assertClosedGasOilEquilibrium(fluid, pressureBara + " bara");
       if (pressureBara == REFERENCE_PRESSURE_BARA) {

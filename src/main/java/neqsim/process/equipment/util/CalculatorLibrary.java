@@ -213,7 +213,7 @@ public final class CalculatorLibrary {
       double flowAntiSurge = currentRecycleFlow + 0.5 * (surgeFlow - inletFlow);
       flowAntiSurge = Math.max(flowAntiSurge, inletFlow / 1e6);
 
-      splitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
+      splitter.setFlowRates(new double[] {-1, flowAntiSurge}, "m3/hr");
       splitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
       splitter.getSplitStream(1).run();
     };

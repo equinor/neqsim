@@ -499,8 +499,8 @@ public class EOSComparison implements Serializable {
 
       // Deviations
       JsonObject deviations = new JsonObject();
-      String[] props = { "density", "Z", "gasDensity", "gasViscosity", "gasZ", "gasCp", "oilDensity", "oilViscosity",
-          "enthalpy", "entropy" };
+      String[] props = {"density", "Z", "gasDensity", "gasViscosity", "gasZ", "gasCp", "oilDensity", "oilViscosity",
+          "enthalpy", "entropy"};
       for (String prop : props) {
         double dev = getMaxDeviation(prop);
         if (!Double.isNaN(dev)) {

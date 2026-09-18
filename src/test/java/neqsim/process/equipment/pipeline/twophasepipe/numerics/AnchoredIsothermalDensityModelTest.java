@@ -27,7 +27,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @CsvSource({ "SRK, 295.0, 48.0", "SRK, 305.0, 52.0", "PR, 295.0, 48.0", "PR, 305.0, 52.0" })
+  @CsvSource({"SRK, 295.0, 48.0", "SRK, 305.0, 52.0", "PR, 295.0, 48.0", "PR, 305.0, 52.0"})
   void anchoredVolumeResponseAndDerivativeAgreeWithIndependentSystemEvaluation(String eos, double temperature,
       double pressureBar) {
     SystemInterface fluid = gas(eos, temperature, pressureBar, 0.75);
@@ -38,7 +38,7 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
     double[] state = section.getStateVector();
     assertEquals(section.getGasDensity(), model.calculate(0, state, referencePressure, 5.0)[0], 0.0);
 
-    for (double multiplier : new double[] { 0.98, 1.02 }) {
+    for (double multiplier : new double[] {0.98, 1.02}) {
       double pressure = multiplier * referencePressure;
       double expected = anchoredSystemDensity(fluid, PhaseType.GAS, section, pressure);
       assertEquals(expected, model.calculate(0, state, pressure, 5.0)[0], 1.0e-9 * expected);
@@ -82,12 +82,12 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
     new ThermodynamicOperations(fluid).TPflash();
     fluid.initProperties();
     assertEquals(3, fluid.getNumberOfPhases());
-    PhaseType[] types = { PhaseType.GAS, PhaseType.OIL, PhaseType.AQUEOUS };
+    PhaseType[] types = {PhaseType.GAS, PhaseType.OIL, PhaseType.AQUEOUS};
     TwoFluidSection section = section(fluid);
     section.setGasDensity(fluid.getPhase(PhaseType.GAS).getDensity("kg/m3"));
     section.setOilDensity(fluid.getPhase(PhaseType.OIL).getDensity("kg/m3"));
     section.setWaterDensity(fluid.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"));
-    section.setStateVector(new double[] { 0.2, 0.4, 0.6, 0.0, 0.0, 0.0, 0.0 });
+    section.setStateVector(new double[] {0.2, 0.4, 0.6, 0.0, 0.0, 0.0, 0.0});
     double[] sourceMoles = new double[3];
     for (int phase = 0; phase < types.length; phase++) {
       sourceMoles[phase] = fluid.getPhase(types[phase]).getNumberOfMolesInPhase();
@@ -115,8 +115,8 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
     first.setGasDensity(40.0);
     second.setGasDensity(40.0);
     second.setTemperature(310.0);
-    AnchoredIsothermalDensityModel model = new AnchoredIsothermalDensityModel(new TwoFluidSection[] { first, second },
-        new SystemInterface[] { firstFluid, secondFluid });
+    AnchoredIsothermalDensityModel model = new AnchoredIsothermalDensityModel(new TwoFluidSection[] {first, second},
+        new SystemInterface[] {firstFluid, secondFluid});
     double pressure = 5.2e6;
     double firstDensity = model.calculate(0, first.getStateVector(), pressure, 1.0)[0];
     double secondDensity = model.calculate(1, second.getStateVector(), pressure, 1.0)[0];
@@ -155,8 +155,8 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
   void repeatedProbesSnapshotsClonesAndSerializationRemainIndependent() throws Exception {
     SystemInterface fluid = gas("SRK", 300.0, 50.0, 0.75);
     TwoFluidSection section = section(fluid);
-    TwoFluidSection[] sections = { section };
-    SystemInterface[] fluids = { fluid };
+    TwoFluidSection[] sections = {section};
+    SystemInterface[] fluids = {fluid};
     AnchoredIsothermalDensityModel model = new AnchoredIsothermalDensityModel(sections, fluids);
     AnchoredIsothermalDensityModel cloned = model.clone();
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -243,7 +243,7 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
   }
 
   private static AnchoredIsothermalDensityModel model(TwoFluidSection section, SystemInterface fluid) {
-    return new AnchoredIsothermalDensityModel(new TwoFluidSection[] { section }, new SystemInterface[] { fluid });
+    return new AnchoredIsothermalDensityModel(new TwoFluidSection[] {section}, new SystemInterface[] {fluid});
   }
 
   private static SystemInterface gas(String eos, double temperature, double pressureBar, double methaneFraction) {
@@ -266,7 +266,7 @@ class AnchoredIsothermalDensityModelTest extends neqsim.NeqSimTest {
     section.setGasDensity(fluid.getPhase(PhaseType.GAS).getDensity());
     section.setOilDensity(777.0);
     section.setWaterDensity(1025.0);
-    section.setStateVector(new double[] { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    section.setStateVector(new double[] {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
     return section;
   }
 

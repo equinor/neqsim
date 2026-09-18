@@ -27,7 +27,7 @@ public class ValveSizingMethodComparisonTest {
     double outletPressure = 40.0; // bara (20% pressure drop)
     double temperature = 25.0; // C
 
-    String[] methods = { "default", "IEC 60534", "prod choke" };
+    String[] methods = {"default", "IEC 60534", "prod choke"};
     double[] kvResults = new double[methods.length];
     double[] cvResults = new double[methods.length];
 
@@ -103,7 +103,7 @@ public class ValveSizingMethodComparisonTest {
     double outletPressure = 40.0; // bara
     double temperature = 25.0; // C
 
-    String[] methods = { "default", "IEC 60534", "prod choke" };
+    String[] methods = {"default", "IEC 60534", "prod choke"};
     double[] kvResults = new double[methods.length];
     double[] cvResults = new double[methods.length];
 
@@ -300,7 +300,7 @@ public class ValveSizingMethodComparisonTest {
 
     double flowRateSm3hr = 10000.0;
     double inletPressure = 50.0;
-    double[] outletPressures = { 49.0, 45.0, 40.0, 30.0, 20.0 };
+    double[] outletPressures = {49.0, 45.0, 40.0, 30.0, 20.0};
 
     logger.info("Flow rate: " + flowRateSm3hr + " Sm3/hr");
     logger.info("Inlet P: " + inletPressure + " bara");

@@ -175,7 +175,7 @@ public final class TwoFluidComponentTransport implements Serializable {
         requireFiniteValues(intervalCellInterphaseTransferKg[cell][phase]);
       }
     }
-    requireFiniteValues(new double[] { intervalLatentHeatEnergyJ, maximumPhaseMassSynchronizationErrorKg });
+    requireFiniteValues(new double[] {intervalLatentHeatEnergyJ, maximumPhaseMassSynchronizationErrorKg});
   }
 
   private static void requireFiniteValues(double[] values) {
@@ -295,7 +295,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       }
       double gasSource = phaseSource[GAS];
       if (gasSource > MASS_FLOOR_KG) {
-        for (int donorPhase : new int[] { OIL, WATER }) {
+        for (int donorPhase : new int[] {OIL, WATER}) {
           double withdrawalRate = Math.max(0.0, -phaseSource[donorPhase]);
           if (withdrawalRate <= 0.0) {
             continue;
@@ -315,7 +315,7 @@ public final class TwoFluidComponentTransport implements Serializable {
           throw new IllegalArgumentException("Missing local equilibrium state for condensation in cell " + cell);
         }
         double[][] equilibriumFractions = phaseMassFractions(localEquilibriumStates[cell]);
-        for (int receivingPhase : new int[] { OIL, WATER }) {
+        for (int receivingPhase : new int[] {OIL, WATER}) {
           double additionRate = Math.max(0.0, phaseSource[receivingPhase]);
           if (additionRate <= 0.0) {
             continue;
@@ -736,7 +736,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       throw new IllegalStateException("Direct oil-water component transfer is outside the validated closure");
     }
     if (gasTransfer > 0.0) {
-      for (int donorPhase : new int[] { OIL, WATER }) {
+      for (int donorPhase : new int[] {OIL, WATER}) {
         double withdrawalKg = Math.max(0.0, -phaseTransferKg[donorPhase]);
         if (withdrawalKg <= 0.0) {
           continue;
@@ -756,7 +756,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       SystemInterface equilibrium = createThermodynamicStateFrom(updated, cell, fluidTemplate,
           sections[cell].getPressure(), sections[cell].getTemperature(), "condensation allocation in cell " + cell);
       double[][] equilibriumFractions = phaseMassFractions(equilibrium);
-      for (int receivingPhase : new int[] { OIL, WATER }) {
+      for (int receivingPhase : new int[] {OIL, WATER}) {
         double additionKg = Math.max(0.0, phaseTransferKg[receivingPhase]);
         if (additionKg <= 0.0) {
           continue;
@@ -832,7 +832,7 @@ public final class TwoFluidComponentTransport implements Serializable {
         double targetMassKg = phaseMassKg(sections[cell], phase);
         double componentMassKg = phaseInventory(updated[cell][phase]);
         requireFiniteValues(updated[cell][phase]);
-        requireFiniteValues(new double[] { componentMassKg });
+        requireFiniteValues(new double[] {componentMassKg});
         double errorKg = componentMassKg - targetMassKg;
         maximumPhaseMassSynchronizationErrorKg = Math.max(maximumPhaseMassSynchronizationErrorKg, Math.abs(errorKg));
         double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(componentMassKg), Math.abs(targetMassKg)));

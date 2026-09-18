@@ -290,8 +290,8 @@ public class GERG2008PerformanceBenchmark {
 
     // Benchmark: solveEfficiency for multiple operating points (like Streamlit app)
     int numOperatingPoints = 5;
-    double[] outletTemperatures = { 388.15, 378.15, 368.15, 360.15, 355.15 }; // Various T_out values
-    double[] outletPressures = { 100.0, 95.0, 90.0, 85.0, 80.0 };
+    double[] outletTemperatures = {388.15, 378.15, 368.15, 360.15, 355.15}; // Various T_out values
+    double[] outletPressures = {100.0, 95.0, 90.0, 85.0, 80.0};
 
     logger.info(
         "Running " + numOperatingPoints + " operating points with solveEfficiency (detailed method + GERG-2008)...\n");

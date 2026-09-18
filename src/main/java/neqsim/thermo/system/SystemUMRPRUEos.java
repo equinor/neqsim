@@ -93,11 +93,11 @@ public class SystemUMRPRUEos extends SystemPrEos {
     modelName = "UMR-PRU-EoS";
     attractiveTermNumber = 1;
 
-    CapeOpenProperties11 = new String[] { "speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
+    CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
         "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
         "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
         "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy", "heatCapacityCp",
-        "heatCapacityCv", "density", "volume" };
+        "heatCapacityCv", "density", "volume"};
   }
 
   /** {@inheritDoc} */

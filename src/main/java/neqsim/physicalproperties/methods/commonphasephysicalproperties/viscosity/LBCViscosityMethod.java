@@ -19,8 +19,8 @@ public class LBCViscosityMethod extends Viscosity {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
   private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
-  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = { 0.10230, 0.023364, 0.058533, -0.040758,
-      0.0093324 };
+  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = {0.10230, 0.023364, 0.058533, -0.040758,
+      0.0093324};
 
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
 

@@ -184,7 +184,7 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.25);
-    section.setStateVector(new double[] { 8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0 });
+    section.setStateVector(new double[] {8.0, -1.0, 3.0, 16.0, -2.0, 6.0, 100.0});
 
     section.extractPrimitiveVariables();
 
@@ -203,7 +203,7 @@ public class TwoFluidSectionTest {
     section.setWaterDensity(1000.0);
     section.setLiquidDensity(850.0);
     section.setWaterCut(0.4);
-    section.setStateVector(new double[] { 5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0 });
+    section.setStateVector(new double[] {5.0, 4.0, 6.0, 25.0, 8.0, 18.0, 100.0});
 
     section.extractPrimitiveVariables();
     section.updateWaterOilHoldups();
@@ -323,7 +323,7 @@ public class TwoFluidSectionTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     TwoFluidSection section2 = section.clone();
     section2.setPosition(section.getLength());
-    equations.calcRHS(new TwoFluidSection[] { section, section2 }, section.getLength());
+    equations.calcRHS(new TwoFluidSection[] {section, section2}, section.getLength());
 
     assertTrue(section.getEntrainmentFraction() >= 0.0);
     assertTrue(section.getEntrainedDropletDiameter() >= 0.0);
@@ -343,7 +343,7 @@ public class TwoFluidSectionTest {
 
     TwoFluidSection riserBase2 = riserBase.clone();
     riserBase2.setPosition(riserBase.getLength());
-    equations.calcRHS(new TwoFluidSection[] { riserBase, riserBase2 }, riserBase.getLength());
+    equations.calcRHS(new TwoFluidSection[] {riserBase, riserBase2}, riserBase.getLength());
 
     assertTrue(riserBase.getInclinedSectionGasCarryoverNumber() < 1.0);
     assertTrue(riserBase.isInclinedSectionLiquidFallbackPotential());
@@ -357,7 +357,7 @@ public class TwoFluidSectionTest {
     TwoFluidSection downstream = createThreePhaseBalanceSection(20.0, 1.0, 0.1);
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
-    equations.calcRHS(new TwoFluidSection[] { upstream, valley, downstream }, 10.0);
+    equations.calcRHS(new TwoFluidSection[] {upstream, valley, downstream}, 10.0);
 
     double[] sourceRates = equations.getLastMassBalanceRate().getSourceMassFlowKgPerSecond();
     assertEquals(0.0, sourceRates[0] + sourceRates[1] + sourceRates[2], 1.0e-12,

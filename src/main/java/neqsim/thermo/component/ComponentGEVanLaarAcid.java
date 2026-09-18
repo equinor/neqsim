@@ -114,9 +114,9 @@ public class ComponentGEVanLaarAcid extends ComponentGE {
     }
     double sum = x1 + x2 + x3;
     if (sum <= 0.0) {
-      return new double[] { 1.0, 0.0, 0.0 };
+      return new double[] {1.0, 0.0, 0.0};
     }
-    return new double[] { x1 / sum, x2 / sum, x3 / sum };
+    return new double[] {x1 / sum, x2 / sum, x3 / sum};
   }
 
   /**

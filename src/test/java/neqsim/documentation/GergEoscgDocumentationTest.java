@@ -67,7 +67,7 @@ public class GergEoscgDocumentationTest extends neqsim.NeqSimTest {
         "GERG/EOS-CG example coverage changed");
     compile(compiler, sourceFiles);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       for (String className : classNames) {

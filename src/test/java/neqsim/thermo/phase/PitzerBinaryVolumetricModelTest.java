@@ -53,7 +53,7 @@ class PitzerBinaryVolumetricModelTest extends neqsim.NeqSimTest {
     double referenceMolality = 1.0;
     double referenceVolume = model.calculateApparentMolarVolume(referenceMolality, limitingVolume, parameters);
 
-    for (double molality : new double[] { 0.0, 0.25, 1.0, 3.0, 6.0 }) {
+    for (double molality : new double[] {0.0, 0.25, 1.0, 3.0, 6.0}) {
       double direct = model.calculateApparentMolarVolume(molality, limitingVolume, parameters);
       double relative = model.calculateApparentMolarVolumeFromReference(molality, referenceMolality, referenceVolume,
           parameters);

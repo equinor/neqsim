@@ -187,7 +187,7 @@ public class NetworkPlanningHorizon implements Serializable {
    * @param maximumKg maximum
    */
   public void setLinepackBounds(String edgeName, double minimumKg, double maximumKg) {
-    linepackBoundsKg.put(edgeName, new double[] { minimumKg, maximumKg });
+    linepackBoundsKg.put(edgeName, new double[] {minimumKg, maximumKg});
   }
 
   /**
@@ -276,7 +276,7 @@ public class NetworkPlanningHorizon implements Serializable {
           GasLinepackState closingState = entry.getValue().advance(period.getDurationSeconds(), inletKgS, outletKgS,
               fuelKgS, lossKgS, inletFluid);
           closing.put(edgeName, closingState);
-          periodFlows.put(edgeName, new double[] { inletKgS, outletKgS, fuelKgS, lossKgS });
+          periodFlows.put(edgeName, new double[] {inletKgS, outletKgS, fuelKgS, lossKgS});
 
           double massResidual = Math.abs(closingState.getMassBalanceResidualKg());
           if (massResidual > 1.0e-6) {

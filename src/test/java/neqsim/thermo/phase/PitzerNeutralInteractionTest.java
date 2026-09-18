@@ -67,10 +67,10 @@ class PitzerNeutralInteractionTest extends neqsim.NeqSimTest {
     int sodium = index(phase, "Na+");
     int potassium = index(phase, "K+");
     PitzerTemperatureFunction parameter = new PitzerTemperatureFunction(TEMPERATURE,
-        new double[] { 0.04, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        new double[] {0.04, 0.0, 0.0, 0.0, 0.0, 0.0});
 
     PitzerNeutralInteraction mu = new PitzerNeutralInteraction(PhasePitzer.NEUTRAL_FAMILY_MU,
-        new int[] { carbonDioxide, carbonDioxide, methane }, parameter);
+        new int[] {carbonDioxide, carbonDioxide, methane}, parameter);
     double mCarbonDioxide = molality(phase, carbonDioxide);
     double mMethane = molality(phase, methane);
     assertEquals(6.0 * mCarbonDioxide * mMethane * 0.04, mu.logGammaContribution(carbonDioxide, phase, TEMPERATURE),
@@ -81,7 +81,7 @@ class PitzerNeutralInteractionTest extends neqsim.NeqSimTest {
         1.0e-14);
 
     PitzerNeutralInteraction eta = new PitzerNeutralInteraction(PhasePitzer.NEUTRAL_FAMILY_ETA,
-        new int[] { carbonDioxide, sodium, potassium }, parameter);
+        new int[] {carbonDioxide, sodium, potassium}, parameter);
     double mSodium = molality(phase, sodium);
     double mPotassium = molality(phase, potassium);
     assertEquals(mSodium * mPotassium * 0.04, eta.logGammaContribution(carbonDioxide, phase, TEMPERATURE), 1.0e-14);
@@ -97,7 +97,7 @@ class PitzerNeutralInteractionTest extends neqsim.NeqSimTest {
     int sodium = index(phase, "Na+");
     int potassium = index(phase, "K+");
     int chloride = index(phase, "Cl-");
-    double[] coefficients = { 0.12, 250.0, -0.035, 4.2e-4, -3.1e-7, 18000.0 };
+    double[] coefficients = {0.12, 250.0, -0.035, 4.2e-4, -3.1e-7, 18000.0};
     phase.setLambdaTemperatureCoefficients(carbonDioxide, sodium, TEMPERATURE, coefficients);
     phase.setZetaTemperatureCoefficients(carbonDioxide, sodium, chloride, TEMPERATURE, coefficients);
     phase.setMuTemperatureCoefficients(carbonDioxide, carbonDioxide, methane, TEMPERATURE, coefficients);

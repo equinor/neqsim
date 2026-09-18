@@ -16,9 +16,9 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Regression tests for {@link CO2ImpurityKineticReactor}. */
 public class CO2ImpurityKineticReactorTest extends NeqSimTest {
   private static final Logger logger = LogManager.getLogger(CO2ImpurityKineticReactorTest.class);
-  private static final String[] REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS", "R8SS" };
-  private static final String[] MODELED_SPECIES = { "H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
-      "ammonia" };
+  private static final String[] REACTION_IDS = {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7", "R8CS", "R8SS"};
+  private static final String[] MODELED_SPECIES = {"H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
+      "ammonia"};
 
   private Stream feedStream;
   private CO2ImpurityKineticReactor reactor;
@@ -194,7 +194,7 @@ public class CO2ImpurityKineticReactorTest extends NeqSimTest {
         + 2.0 * moles(system, "oxygen") + moles(system, "water") + 4.0 * moles(system, "H2SO4")
         + 3.0 * moles(system, "HNO3");
     double sulfur = moles(system, "H2S") + moles(system, "SO2") + moles(system, "H2SO4") + 8.0 * moles(system, "S8");
-    return new double[] { hydrogen, nitrogen, oxygen, sulfur };
+    return new double[] {hydrogen, nitrogen, oxygen, sulfur};
   }
 
   private void assertElementConservation(double[] inletElements, SystemInterface outlet) {

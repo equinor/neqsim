@@ -81,7 +81,7 @@ public class AnomalyScanner implements Serializable {
    * @param highLimit high limit, or Double.NaN for none
    */
   public void setDesignLimit(String tag, double lowLimit, double highLimit) {
-    designLimits.put(tag, new double[] { lowLimit, highLimit });
+    designLimits.put(tag, new double[] {lowLimit, highLimit});
   }
 
   /**
@@ -334,7 +334,7 @@ public class AnomalyScanner implements Serializable {
     double meanY = sumY / n;
     double denom = sumX2 - n * meanX * meanX;
     if (Math.abs(denom) < 1e-20) {
-      return new double[] { 0.0, 0.0, meanY };
+      return new double[] {0.0, 0.0, meanY};
     }
     double slope = (sumXY - n * meanX * meanY) / denom;
     double ssTot = 0.0;
@@ -346,7 +346,7 @@ public class AnomalyScanner implements Serializable {
       ssRes += (y - predicted) * (y - predicted);
     }
     double r2 = ssTot > 0.0 ? 1.0 - ssRes / ssTot : 0.0;
-    return new double[] { slope, r2, meanY };
+    return new double[] {slope, r2, meanY};
   }
 
   /**

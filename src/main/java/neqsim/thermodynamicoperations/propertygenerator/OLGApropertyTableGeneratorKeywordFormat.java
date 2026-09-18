@@ -33,10 +33,10 @@ public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynami
   /** Liquid density written when the grid holds no liquid at all, in kg/m3. */
   private static final double DEFAULT_LIQUID_DENSITY = 1000.0;
   /** Gas column keywords, used when the gas branch has to be extrapolated. */
-  private static final String[] GAS_KEYWORDS = { "ROG", "DROGDP", "DROGDT", "VISG", "CPG", "HG", "TCG", "SEG" };
+  private static final String[] GAS_KEYWORDS = {"ROG", "DROGDP", "DROGDT", "VISG", "CPG", "HG", "TCG", "SEG"};
   /** Liquid column keywords, used when the liquid branch has to be extrapolated. */
-  private static final String[] LIQUID_KEYWORDS = { "ROHL", "DROHLDP", "DROHLDT", "VISHL", "CPHL", "HHL", "TCHL",
-      "SEHL" };
+  private static final String[] LIQUID_KEYWORDS = {"ROHL", "DROHLDP", "DROHLDT", "VISHL", "CPHL", "HHL", "TCHL",
+      "SEHL"};
 
   SystemInterface thermoSystem = null;
   ThermodynamicOperations thermoOps = null;
