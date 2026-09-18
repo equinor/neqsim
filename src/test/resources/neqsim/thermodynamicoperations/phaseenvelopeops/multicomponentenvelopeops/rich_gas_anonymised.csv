@@ -1,0 +1,94 @@
+# Anonymised rich natural gas, 84 components, mol percent, sums to 100.
+# Derived from a laboratory gas chromatograph analysis. The reported mole
+# percentages were deliberately perturbed before publication: components were
+# ordered by molar mass and each was scaled by (1 + 0.2*sin(2*pi*2.5*i/i_C10)),
+# methane was additionally scaled by 0.8, and the result renormalised to 100.
+# The component set and the order of magnitude of each fraction are preserved,
+# so the fluid remains a realistic rich gas, but the numbers are not measurements.
+# Rows are ordered by decreasing mole percent so that taking the first N rows
+# yields a sensible N-component subset.
+component,mol_percent
+Methane,81.42966614
+Ethane,8.81123404
+Propane,4.01210801
+CO2,2.14129426
+n-butane,1.05409369
+nitrogen,0.88321734
+i-butane,0.56898479
+n-pentane,0.27778643
+i-pentane,0.27726050
+n-hexane,0.08586976
+cyclohexane,0.06283222
+2-methylpentane,0.05997849
+methylcyclopentane,0.05500052
+Benzene,0.03528316
+3-methylpentane,0.03311064
+methylcyclohexane,0.03281792
+n-heptane,0.02859906
+Toluene,0.02427857
+cyclopentane,0.01871236
+3-methylhexane,0.01594281
+2-methylhexane,0.01528008
+2,3-dimethylbutane,0.00939933
+n-octane,0.00858188
+cis-1,3-dimethylcyclohexane,0.00550434
+2,3-dimethylpentane,0.00516556
+2,2-dimethylbutane,0.00502392
+2,2-dimethylpropane,0.00434345
+m-xylene,0.00354802
+1,1-dimethylcyclopentane,0.00352532
+2-methylheptane,0.00319386
+2,4-dimethylpentane,0.00303529
+ethylcyclohexane,0.00258390
+4-methylheptane,0.00156434
+ethylcyclopentane,0.00152247
+2,2-dimethylpentane,0.00146079
+3-methylheptane,0.00137341
+1,1,3-trimethylcyclopentane,0.00127476
+o-xylene,0.00114725
+p-xylene,0.00101749
+ethylbenzene,0.00099978
+2,4-dimethylhexane,0.00099247
+n-nonane,0.00098938
+2,5-dimethylhexane,0.00089538
+3,3-dimethylpentane,0.00081277
+2,3-dimethylhexane,0.00077214
+3-ethylpentane,0.00072708
+1,1-dimethylcyclohexane,0.00066268
+2,6-dimethylheptane,0.00064241
+3-methyloctane,0.00052007
+1,1,3-TM-cy-C6,0.00048376
+2-methyloctane,0.00043894
+2,4-dimethylheptane,0.00043170
+2,2,3-trimethylbutane,0.00042195
+2,2,5-trimethylhexane,0.00036620
+4-methyloctane,0.00033249
+2,3-dimethylheptane,0.00024482
+3,3-dimethylhexane,0.00023533
+1,1,2-trimethylcyclopentane,0.00022743
+3,4-dimethylhexane,0.00017085
+n-decane,0.00016958
+2,6-Dimethyloctane,0.00016855
+2,2,4-trimethylheptane,0.00016598
+1,2,4-Trimethylbenzene,0.00015969
+n-Propylbenzene,0.00014398
+2,3,4-trimethylpentane,0.00013206
+1-Methyl-2-ethylbenzene,0.00012790
+3,4-dimethylheptane,0.00012530
+isopropylcyclopentane,0.00011843
+2,2,4-trimethylhexane,0.00010921
+cumene,0.00008522
+2,4-Dimethyloctane,0.00007702
+3-methylnonane,0.00006826
+3,5-dimethylheptane,0.00006799
+4-methylnonane,0.00004667
+2,2-Dimethyloctane,0.00003634
+1,2,3-Trimethylbenzene,0.00003544
+n-undecane,0.00003186
+isobutylcyclohexane,0.00003083
+3-Ethylnonane,0.00002857
+2,5-Dimethyloctane,0.00002826
+5-methylnonane,0.00002193
+3-Ethyloctane,0.00001733
+isobutylbenzene,0.00001458
+2,3,3-trimethyloctane,0.00000525
