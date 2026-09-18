@@ -17,6 +17,10 @@ public class PSFlashWarmStartPolicyTest {
   @Test
   public void cpaDisablesInnerWarmStart() {
     SystemInterface system = new SystemSrkCPAstatoil(373.15, 1.2);
+    system.addComponent("methane", 1.0);
+    system.setMixingRule(2);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(2);
     RecordingPSFlash flash = new RecordingPSFlash(system);
     RecordingTPflash innerFlash = new RecordingTPflash(system);
     flash.setInnerFlash(innerFlash);
@@ -26,7 +30,7 @@ public class PSFlashWarmStartPolicyTest {
       ThermodynamicModelSettings.setUseWarmStartKValues(true);
       flash.run();
 
-      assertEquals(1, innerFlash.getRunCount());
+      assertEquals(1, innerFlash.getRunCount(), "The caller's TP flash should only perform the initial cold start");
       assertFalse(innerFlash.wasWarmStartEnabled(), "The first TP flash must use a cold start");
       assertFalse(flash.wasWarmStartEnabledDuringSolve(),
           "CPA PS iterations must not reuse K-values across temperatures");
@@ -41,6 +45,10 @@ public class PSFlashWarmStartPolicyTest {
   @Test
   public void cubicEosRetainsInnerWarmStart() {
     SystemInterface system = new SystemSrkEos(300.15, 20.0);
+    system.addComponent("methane", 1.0);
+    system.setMixingRule(2);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(2);
     RecordingPSFlash flash = new RecordingPSFlash(system);
     RecordingTPflash innerFlash = new RecordingTPflash(system);
     flash.setInnerFlash(innerFlash);
@@ -50,7 +58,7 @@ public class PSFlashWarmStartPolicyTest {
       ThermodynamicModelSettings.setUseWarmStartKValues(false);
       flash.run();
 
-      assertEquals(1, innerFlash.getRunCount());
+      assertEquals(1, innerFlash.getRunCount(), "The caller's TP flash should only perform the initial cold start");
       assertFalse(innerFlash.wasWarmStartEnabled(), "The first TP flash must use a cold start");
       assertTrue(flash.wasWarmStartEnabledDuringSolve(),
           "Cubic-EOS PS iterations should reuse K-values after the first TP flash");
@@ -115,7 +123,7 @@ public class PSFlashWarmStartPolicyTest {
     private boolean warmStartEnabledDuringSolve;
 
     RecordingPSFlash(SystemInterface system) {
-      super(system, 0.0, 0);
+      super(system, system.getEntropy(), 0);
     }
 
     void setInnerFlash(Flash innerFlash) {

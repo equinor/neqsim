@@ -3,7 +3,15 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * PSFlash class.
+ * Pressure-entropy flash with a safeguarded temperature solve.
+ *
+ * <p>
+ * Normal return requires finite state variables, normalized phase fractions and a total entropy residual within
+ * {@code max(1e-7 * n, 1e-9 * abs(Sspec))} J/K, where n is the total amount in moles. Non-convergence is reported with
+ * an {@link IllegalStateException}. Iteration normally requires one tenth of this residual; the larger bound is used
+ * only after a cold sign-changing bracket reaches floating-point temperature resolution. A final independent cold-root
+ * check accepts the converged continuation root only when it is not a higher-Gibbs state.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -11,12 +19,29 @@ import neqsim.thermo.system.SystemInterface;
 public class PSFlash extends QfuncFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Absolute entropy tolerance floor in J/K for total-system entropy residuals. */
-  private static final double MIN_ENTROPY_TOLERANCE = 1.0e-5;
-  /** Entropy residual level where repeated non-improving iterations are numerical noise. */
-  private static final double STAGNANT_ENTROPY_TOLERANCE = 1.0e-4;
-  /** Number of low-residual stagnant iterations allowed before accepting the solution. */
-  private static final int STAGNANT_ITERATION_LIMIT = 5;
+  /** Absolute molar entropy tolerance in J/(mol K). */
+  private static final double MOLAR_ENTROPY_TOLERANCE = 1.0e-8;
+  /** Relative total-entropy tolerance for the temperature iteration. */
+  private static final double RELATIVE_ENTROPY_TOLERANCE = 1.0e-10;
+  /** Maximum residual at a cold root bracket narrower than floating-point temperature resolution. */
+  private static final double ENTROPY_RESOLUTION_FACTOR = 10.0;
+  /** Absolute Gibbs-energy tolerance for independent endpoint comparison in J. */
+  private static final double GIBBS_ENERGY_ABSOLUTE_TOLERANCE = 1.0e-6;
+  /** Relative Gibbs-energy tolerance for independent endpoint comparison. */
+  private static final double GIBBS_ENERGY_RELATIVE_TOLERANCE = 1.0e-8;
+  /** Number of non-improving Newton iterations before a cold bracket recovery. */
+  private static final int STAGNATION_LIMIT = 8;
+  /** Maximum number of safeguarded temperature iterations. */
+  private static final int MAX_ITERATIONS = 200;
+  /** Maximum number of temperature expansions used to find a cold entropy bracket. */
+  private static final int MAX_BRACKET_EXPANSIONS = 40;
+  /** Lowest temperature considered by the generic cold-bracket recovery in K. */
+  private static final double MIN_BRACKET_TEMPERATURE = 1.0;
+  /** Highest temperature considered by the generic cold-bracket recovery in K. */
+  private static final double MAX_BRACKET_TEMPERATURE = 5000.0;
+
+  /** Whether this solve has exhausted a cold entropy bracket's floating-point temperature resolution. */
+  private boolean temperatureResolutionReached = false;
 
   double Sspec = 0;
   Flash tpFlash;
@@ -60,72 +85,276 @@ public class PSFlash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public double solveQ() {
-    double oldTemp = system.getTemperature();
-    double nyTemp = system.getTemperature();
-    int iterations = 1;
-    double error = 1.0;
-    double errorOld = 10.0e10;
-    double factor = 0.8;
-    double entropyTolerance = Math.max(MIN_ENTROPY_TOLERANCE, Math.abs(Sspec) * 1e-10);
-    double stagnantAcceptanceTolerance = Math.min(STAGNANT_ENTROPY_TOLERANCE, entropyTolerance);
+    double lowerTemperature = Double.NaN;
+    double upperTemperature = Double.NaN;
+    double tolerance = entropyTolerance(system, Sspec);
+    double bestResidual = Double.POSITIVE_INFINITY;
     int stagnantIterations = 0;
-
-    boolean correctFactor = true;
-    double newCorr = 1.0;
     system.init(2);
 
-    do {
-      if (error > errorOld && factor > 0.1 && correctFactor) {
-        factor *= 0.5;
-      } else if (error < errorOld && correctFactor) {
-        factor = 1.0;
+    for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      double temperature = system.getTemperature();
+      double residual = system.getEntropy() - Sspec;
+      if (!Double.isFinite(residual)) {
+        throw convergenceFailure(system, Sspec, "non-finite entropy");
       }
-
-      iterations++;
-      oldTemp = system.getTemperature();
-
-      newCorr = factor * calcdQdT() / calcdQdTT();
-      nyTemp = oldTemp - newCorr;
-      if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-        nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-        correctFactor = false;
-      } else if (nyTemp < 0) {
-        nyTemp = Math.abs(system.getTemperature() - 10.0);
-        correctFactor = false;
-      } else if (Double.isNaN(nyTemp)) {
-        nyTemp = oldTemp + 1.0;
-        correctFactor = false;
-      } else {
-        correctFactor = true;
+      double absoluteResidual = Math.abs(residual);
+      if (absoluteResidual <= tolerance) {
+        return temperature;
       }
-
-      system.setTemperature(nyTemp);
-      try {
-        tpFlash.run();
-        system.init(2);
-      } catch (Exception ex) {
-        // EOS solver failed at this temperature, revert and reduce step
-        nyTemp = oldTemp;
-        system.setTemperature(oldTemp);
-        tpFlash.run();
-        system.init(2);
-        factor *= 0.5;
-        correctFactor = false;
-      }
-      errorOld = error;
-      error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
-      if (iterations > 3 && Math.abs(error - errorOld) <= entropyTolerance && error <= stagnantAcceptanceTolerance) {
-        stagnantIterations++;
-      } else {
+      if (absoluteResidual < bestResidual * (1.0 - 1.0e-8)) {
+        bestResidual = absoluteResidual;
         stagnantIterations = 0;
+      } else {
+        stagnantIterations++;
       }
-      // if(error>errorOld) factor *= -1.0;
-      // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-      // " error "+ error + " correction " + newCorr + " factor "+ factor);
-      // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-    } while (((error + errorOld) > entropyTolerance || iterations < 3) && stagnantIterations < STAGNANT_ITERATION_LIMIT
-        && iterations < 200);
-    return nyTemp;
+      if (stagnantIterations >= STAGNATION_LIMIT) {
+        return solveWithColdBracket(temperature, tolerance);
+      }
+
+      // Equilibrium entropy increases with temperature at fixed pressure. Phase Cp/T does not
+      // include phase-transfer contributions, so Newton steps need a sign-changing bracket.
+      if (residual < 0.0) {
+        lowerTemperature = temperature;
+      } else {
+        upperTemperature = temperature;
+      }
+      double derivative = -calcdQdTT();
+      double step = Double.isFinite(derivative) && derivative > 0.0 ? -residual / derivative
+          : -Math.copySign(10.0, residual);
+      step = Math.max(-10.0, Math.min(10.0, step));
+      double nextTemperature = Math.max(0.5 * temperature, temperature + step);
+      if (Double.isFinite(lowerTemperature) && Double.isFinite(upperTemperature)) {
+        double margin = 0.05 * (upperTemperature - lowerTemperature);
+        if (nextTemperature <= lowerTemperature + margin || nextTemperature >= upperTemperature - margin) {
+          nextTemperature = 0.5 * (lowerTemperature + upperTemperature);
+        }
+      }
+      // Reduce a failed EOS step toward the last finite state. Never accept a failed trial.
+      for (int backoff = 0;; backoff++) {
+        system.setTemperature(nextTemperature);
+        try {
+          tpFlash.run();
+          system.init(2);
+          if (!Double.isFinite(system.getEntropy())) {
+            throw convergenceFailure(system, Sspec, "non-finite trial entropy");
+          }
+          break;
+        } catch (RuntimeException ex) {
+          if (backoff == 15) {
+            return solveWithColdBracket(temperature, tolerance);
+          }
+          nextTemperature = 0.5 * (temperature + nextTemperature);
+        }
+      }
+    }
+    return solveWithColdBracket(system.getTemperature(), tolerance);
+  }
+
+  /**
+   * Recover from a stalled warm-start iteration with cold TP flashes and a temperature bracket.
+   *
+   * @param initialTemperature temperature at which the safeguarded Newton iteration stalled
+   * @param tolerance accepted total-entropy residual in J/K
+   * @return converged temperature in K
+   */
+  private double solveWithColdBracket(double initialTemperature, double tolerance) {
+    neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+    double trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE, Math.min(MAX_BRACKET_TEMPERATURE, initialTemperature));
+    double residual = evaluateColdResidual(trialTemperature);
+    if (Math.abs(residual) <= tolerance) {
+      return trialTemperature;
+    }
+
+    double lowerTemperature = residual < 0.0 ? trialTemperature : Double.NaN;
+    double upperTemperature = residual > 0.0 ? trialTemperature : Double.NaN;
+    for (int expansion = 0; expansion < MAX_BRACKET_EXPANSIONS
+        && (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)); expansion++) {
+      double previousTemperature = trialTemperature;
+      if (residual < 0.0) {
+        trialTemperature = Math.min(MAX_BRACKET_TEMPERATURE, trialTemperature * 1.25 + 5.0);
+      } else {
+        trialTemperature = Math.max(MIN_BRACKET_TEMPERATURE, trialTemperature / 1.25 - 5.0);
+      }
+      if (trialTemperature == previousTemperature) {
+        break;
+      }
+      residual = evaluateColdResidual(trialTemperature);
+      if (Math.abs(residual) <= tolerance) {
+        return trialTemperature;
+      }
+      if (residual < 0.0) {
+        lowerTemperature = trialTemperature;
+      } else {
+        upperTemperature = trialTemperature;
+      }
+    }
+    if (!Double.isFinite(lowerTemperature) || !Double.isFinite(upperTemperature)) {
+      throw convergenceFailure(system, Sspec, "unable to bracket entropy root");
+    }
+
+    for (int iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+      trialTemperature = 0.5 * (lowerTemperature + upperTemperature);
+      residual = evaluateColdResidual(trialTemperature);
+      if (Math.abs(residual) <= tolerance) {
+        return trialTemperature;
+      }
+      if (upperTemperature - lowerTemperature <= 4.0 * Math.ulp(trialTemperature)) {
+        // TP stability/phase iteration has finite entropy resolution even when no
+        // representable temperature remains between the two sides of the root.
+        double lowerResidual = evaluateColdResidual(lowerTemperature);
+        double upperResidual = evaluateColdResidual(upperTemperature);
+        trialTemperature = Math.abs(lowerResidual) < Math.abs(upperResidual) ? lowerTemperature : upperTemperature;
+        residual = evaluateColdResidual(trialTemperature);
+        if (Math.abs(residual) <= ENTROPY_RESOLUTION_FACTOR * tolerance) {
+          temperatureResolutionReached = true;
+          return trialTemperature;
+        }
+        throw convergenceFailure(system, Sspec, "cold bracket reached temperature resolution");
+      }
+      if (residual < 0.0) {
+        lowerTemperature = trialTemperature;
+      } else {
+        upperTemperature = trialTemperature;
+      }
+    }
+    throw convergenceFailure(system, Sspec, "cold bracket iteration limit reached");
+  }
+
+  /**
+   * Evaluate total entropy at a temperature using a cold TP flash.
+   *
+   * @param temperature trial temperature in K
+   * @return total entropy residual in J/K
+   */
+  private double evaluateColdResidual(double temperature) {
+    system.setTemperature(temperature);
+    tpFlash.run();
+    system.init(2);
+    double residual = system.getEntropy() - Sspec;
+    if (!Double.isFinite(residual)) {
+      throw convergenceFailure(system, Sspec, "non-finite cold-bracket entropy");
+    }
+    return residual;
+  }
+
+  /**
+   * Check a converged continuation endpoint against an independent cold TP root without overwriting the converged
+   * state.
+   *
+   * <p>
+   * A cold TP flash can select the opposite cubic root at a phase boundary even when the continuation root satisfies
+   * the entropy specification. The continuation root is retained only when it is not a higher-Gibbs state than the cold
+   * candidate. A lower-Gibbs cold candidate is replayed on the caller's system and recovered through the cold entropy
+   * solver.
+   * </p>
+   *
+   * @param entropyTolerance accepted total-entropy residual in J/K
+   * @return {@code true} when the cold candidate must replace the continuation endpoint
+   */
+  private boolean coldEndpointRequiresRecovery(double entropyTolerance) {
+    system.init(2);
+    double continuationGibbsEnergy = system.getGibbsEnergy();
+
+    SystemInterface coldCandidate = system.clone();
+    new TPflash(coldCandidate).run();
+    coldCandidate.init(2);
+    double coldGibbsEnergy = coldCandidate.getGibbsEnergy();
+    if (!Double.isFinite(continuationGibbsEnergy) || !Double.isFinite(coldGibbsEnergy)) {
+      return true;
+    }
+
+    double gibbsTolerance = Math.max(GIBBS_ENERGY_ABSOLUTE_TOLERANCE,
+        GIBBS_ENERGY_RELATIVE_TOLERANCE * Math.max(Math.abs(continuationGibbsEnergy), Math.abs(coldGibbsEnergy)));
+    if (coldGibbsEnergy < continuationGibbsEnergy - gibbsTolerance) {
+      return true;
+    }
+
+    double coldResidual = coldCandidate.getEntropy() - Sspec;
+    return !Double.isFinite(coldResidual) && Math.abs(system.getEntropy() - Sspec) > entropyTolerance;
+  }
+
+  /**
+   * Get an amount-scaled tolerance for total entropy.
+   *
+   * @param fluid fluid being solved
+   * @param entropy specified total entropy in J/K
+   * @return entropy tolerance in J/K
+   */
+  static double entropyTolerance(SystemInterface fluid, double entropy) {
+    return Math.max(MOLAR_ENTROPY_TOLERANCE * fluid.getTotalNumberOfMoles(),
+        Math.abs(entropy) * RELATIVE_ENTROPY_TOLERANCE);
+  }
+
+  /**
+   * Validate the input before either pure-component or mixture PS calculations.
+   *
+   * @param fluid fluid being solved
+   * @param entropy specified total entropy in J/K
+   * @throws IllegalArgumentException if the target or initial state is non-finite or non-physical
+   */
+  static void validateInput(SystemInterface fluid, double entropy) {
+    if (!Double.isFinite(entropy) || !Double.isFinite(fluid.getTemperature()) || fluid.getTemperature() <= 0.0
+        || !Double.isFinite(fluid.getPressure()) || fluid.getPressure() <= 0.0
+        || !Double.isFinite(fluid.getTotalNumberOfMoles()) || fluid.getTotalNumberOfMoles() <= 0.0) {
+      throw new IllegalArgumentException("PSflash requires finite entropy, positive temperature, pressure and amount");
+    }
+  }
+
+  /**
+   * Enforce the common pure-component and mixture PS postcondition.
+   *
+   * @param fluid solved fluid
+   * @param entropy specified total entropy in J/K
+   * @param pressure specified pressure in bara
+   * @throws IllegalStateException if the flash has not satisfied its specification
+   */
+  static void validateResult(SystemInterface fluid, double entropy, double pressure) {
+    validateResult(fluid, entropy, pressure, entropyTolerance(fluid, entropy));
+  }
+
+  /**
+   * Validate a mixture result using only the residual tolerance justified by its solve.
+   *
+   * @param fluid solved fluid
+   * @param entropy specified total entropy in J/K
+   * @param pressure specified pressure in bara
+   * @param tolerance residual limit justified by the temperature iteration
+   * @throws IllegalStateException if the residual or state postcondition is not satisfied
+   */
+  private static void validateResult(SystemInterface fluid, double entropy, double pressure, double tolerance) {
+    fluid.init(2);
+    double residual = fluid.getEntropy() - entropy;
+    if (!Double.isFinite(residual) || Math.abs(residual) > tolerance || !Double.isFinite(fluid.getTemperature())
+        || fluid.getTemperature() <= 0.0 || !Double.isFinite(fluid.getPressure()) || fluid.getPressure() <= 0.0
+        || Math.abs(fluid.getPressure() - pressure) > 1.0e-10 * Math.max(1.0, pressure)) {
+      throw convergenceFailure(fluid, entropy, "entropy or state postcondition failed");
+    }
+    double betaSum = 0.0;
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      double beta = fluid.getBeta(phase);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        throw convergenceFailure(fluid, entropy, "invalid phase fraction");
+      }
+      betaSum += beta;
+    }
+    if (Math.abs(betaSum - 1.0) > 1.0e-8) {
+      throw convergenceFailure(fluid, entropy, "unnormalized phase fractions");
+    }
+  }
+
+  /**
+   * Build a diagnostic exception without hiding the actual entropy mismatch.
+   *
+   * @param fluid current fluid state
+   * @param entropy specified total entropy in J/K
+   * @param reason reason for failure
+   * @return convergence exception
+   */
+  private static IllegalStateException convergenceFailure(SystemInterface fluid, double entropy, String reason) {
+    return new IllegalStateException("PSflash did not converge: " + reason + "; target entropy=" + entropy
+        + " J/K, actual entropy=" + fluid.getEntropy() + " J/K, residual=" + (fluid.getEntropy() - entropy)
+        + " J/K, temperature=" + fluid.getTemperature() + " K, pressure=" + fluid.getPressure() + " bara");
   }
 
   /**
@@ -153,6 +382,9 @@ public class PSFlash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
+    validateInput(system, Sspec);
+    temperatureResolutionReached = false;
+    double specifiedPressure = system.getPressure();
     // First TPflash runs COLD (Wilson initial K) so that stale K from a
     // previous unrelated flash (at different P/T) does not bias the solution.
     // Then enable K-value warm-start for subsequent TPflash iterations only when
@@ -173,10 +405,21 @@ public class PSFlash extends QfuncFlash {
         secondOrderSolver.setSpec(Sspec);
         secondOrderSolver.solve(1);
       }
+      // Verify against an independent cold root without destructively replacing a
+      // converged lower-Gibbs continuation state at a phase boundary.
+      double tolerance = entropyTolerance(system, Sspec);
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      if (coldEndpointRequiresRecovery(tolerance)) {
+        tpFlash.run();
+        system.init(2);
+        if (Math.abs(system.getEntropy() - Sspec) > tolerance) {
+          solveQ();
+        }
+      }
+      validateResult(system, Sspec, specifiedPressure,
+          temperatureResolutionReached ? ENTROPY_RESOLUTION_FACTOR * tolerance : tolerance);
     } finally {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }
-    // System.out.println("Entropy: " + system.getEntropy());
-    // System.out.println("Temperature: " + system.getTemperature());
   }
 }
