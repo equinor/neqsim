@@ -50,8 +50,7 @@ public class ThermalUtilityDocumentationTest extends neqsim.NeqSimTest {
 
     for (String guide : Arrays.asList(hydraulics, quality)) {
       assertTrue(guide.startsWith("---\n"), "Guide must retain Jekyll front matter");
-      assertFalse(DUPLICATE_H1.matcher(guide).find(),
-          "Front-matter title must not be repeated as a Markdown H1");
+      assertFalse(DUPLICATE_H1.matcher(guide).find(), "Front-matter title must not be repeated as a Markdown H1");
       assertFalse(guide.contains("\\["), "Use supported display-math delimiters");
       assertFalse(guide.contains("\\]"), "Use supported display-math delimiters");
       assertFalse(guide.contains("\\("), "Use supported inline-math delimiters");
