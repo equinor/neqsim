@@ -421,6 +421,7 @@ Before using ANY NeqSim field development class:
 2. **Read constructor and method signatures** from the actual source
 3. **Do NOT assume convenience methods or overloads** — check first
 4. **Test with a JUnit test** if creating documentation examples
+5. **Format Java** — after editing any `.java` file, run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) and `git add` the reformatted files; CI runs `spotless:check` and fails on any unformatted file
 
 The field development classes are under active development. Always verify
 that methods exist and have the expected signatures before using them.
