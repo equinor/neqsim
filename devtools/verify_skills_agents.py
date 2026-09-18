@@ -46,6 +46,8 @@ FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 KEBAB_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # Agent plugin ids: lowercase, digits, hyphens; dots are rejected by marketplaces.
 AGENT_ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+# Agent Skills spec cap on SKILL.md description; the excess is silently truncated by clients.
+MAX_DESCRIPTION = 1024
 BARE_PYTHON_LAUNCH_RE = re.compile(
     r"(?<![A-Za-z0-9_./\\-])(?:(python(?:\.exe)?|py)\s+"
     r"(?:-m\s+|-[A-Za-z]|[^\s`]+\.py\b|devtools[\\/]|<)|"
@@ -128,6 +130,12 @@ def check_skills() -> Tuple[List[str], List[str]]:
         elif len(fm["description"]) < 40:
             warnings.append(
                 f"{skill_dir.name}: description is very short (<40 chars), retrieval will suffer"
+            )
+        elif len(fm["description"]) > MAX_DESCRIPTION:
+            errors.append(
+                f"{skill_dir.name}: description is {len(fm['description'])} chars; the Agent "
+                f"Skills cap is {MAX_DESCRIPTION} and clients truncate, silently dropping the "
+                "trigger words used for routing"
             )
     return errors, warnings
 
