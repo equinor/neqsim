@@ -387,10 +387,10 @@ NeqSim supports characterizing heavy oil fractions using TBP (True Boiling Point
 
 ```java
 // Method 1: Add by boiling point and density
-fluid.addTBPfraction("C7", 0.10, 95.0, 0.68);   // Name, moleFrac, MW, SG
-fluid.addTBPfraction("C8", 0.08, 107.0, 0.72);
-fluid.addTBPfraction("C9", 0.06, 121.0, 0.75);
-fluid.addTBPfraction("C10+", 0.04, 200.0, 0.82);
+fluid.addTBPfraction("C7", 0.10, 95.0 / 1000.0, 0.68);   // Name, moleFrac, MW [g/mol], SG
+fluid.addTBPfraction("C8", 0.08, 107.0 / 1000.0, 0.72);
+fluid.addTBPfraction("C9", 0.06, 121.0 / 1000.0, 0.75);
+fluid.addTBPfraction("C10+", 0.04, 200.0 / 1000.0, 0.82);
 
 // Method 2: Using oil characterization
 CharacterisationTBP characterization = new CharacterisationTBP(fluid);
@@ -469,7 +469,7 @@ If a component is not in the database, you can add it manually:
 fluid.addComponent("myComponent", 1.0);  // Will use default properties
 
 // Or use TBP characterization for undefined heavy fractions
-fluid.addTBPfraction("MyHeavy", 0.05, 350.0, 0.88);  // MW=350, SG=0.88
+fluid.addTBPfraction("MyHeavy", 0.05, 350.0 / 1000.0, 0.88);  // MW=350, SG=0.88
 ```
 
 ---
