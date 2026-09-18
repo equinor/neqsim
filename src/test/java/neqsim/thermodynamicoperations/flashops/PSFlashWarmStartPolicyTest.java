@@ -30,7 +30,7 @@ public class PSFlashWarmStartPolicyTest {
       ThermodynamicModelSettings.setUseWarmStartKValues(true);
       flash.run();
 
-      assertEquals(2, innerFlash.getRunCount());
+      assertEquals(1, innerFlash.getRunCount(), "The caller's TP flash should only perform the initial cold start");
       assertFalse(innerFlash.wasWarmStartEnabled(), "The first TP flash must use a cold start");
       assertFalse(flash.wasWarmStartEnabledDuringSolve(),
           "CPA PS iterations must not reuse K-values across temperatures");
@@ -58,7 +58,7 @@ public class PSFlashWarmStartPolicyTest {
       ThermodynamicModelSettings.setUseWarmStartKValues(false);
       flash.run();
 
-      assertEquals(2, innerFlash.getRunCount());
+      assertEquals(1, innerFlash.getRunCount(), "The caller's TP flash should only perform the initial cold start");
       assertFalse(innerFlash.wasWarmStartEnabled(), "The first TP flash must use a cold start");
       assertTrue(flash.wasWarmStartEnabledDuringSolve(),
           "Cubic-EOS PS iterations should reuse K-values after the first TP flash");
