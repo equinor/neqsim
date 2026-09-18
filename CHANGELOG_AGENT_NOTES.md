@@ -34,8 +34,10 @@ repos were normalised:
   `.vscode/mcp.json` must mirror it (linted).
 * **`devtools/build_agent_plugin.py`** emits `neqsim`, `neqsim-community` and
   `neqsim-enterprise` plugins plus a `marketplace.json`, with a content-hash version gate
-  (`--bump patch|minor|major`) and a `SessionStart` hook that `pip install -e` the skills repo
-  into the shared interpreter. `install_agent.render_vscode_agent()` is the shared renderer.
+  (`--bump patch|minor|major`) and a `SessionStart` hook that `pip install -e` the skills repo.
+  The hook is portable: `sh` / PowerShell launchers resolve the interpreter at run time
+  (`NEQSIM_PYTHON`, then PATH); nothing from the build machine is baked in unless `--python`
+  (or `NEQSIM_PLUGIN_PYTHON`) pins a site-specific fallback. `install_agent.render_vscode_agent()` is the shared renderer.
 * Companion changes: community skill folders renamed to their `neqsim-*` manifest names,
   enterprise agents carry the `enterprise-` prefix in `agent.yaml`, and both skills repos
   install all skill packages with one `pip install -e .` (root `setup.py`, which discovers

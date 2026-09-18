@@ -14,7 +14,8 @@ Layout emitted per plugin (https://agent-plugins.org):
       com.github.copilot/
         agents/<id>.agent.md      # rendered with install_agent.render_vscode_agent
         rules/*.instructions.md   # copied from .github/instructions
-        hooks/hooks.json          # SessionStart: pip install -e the skills repo
+        hooks/hooks.json          # SessionStart (sh / PowerShell launchers below)
+      scripts/install_skill_packages.{sh,ps1,py}  # pip install -e the bundled skills
       automations/                # reserved (empty)
       BUILD_MANIFEST.json         # content hash + inputs, drives the version gate
 
@@ -54,9 +55,10 @@ PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MARKETPLACE_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/marketplace.schema.json"
 CANONICAL_MCP = REPO_ROOT / ".github" / "mcp" / "mcp.json"
 CORE_INSTRUCTIONS = REPO_ROOT / ".github" / "instructions"
-# Shared NeqSim interpreter (see AGENTS.md "Python Environment Reuse"). Baked
-# into the hook at build time; override with --python or NEQSIM_PYTHON.
-DEFAULT_PYTHON = os.environ.get("NEQSIM_PYTHON") or sys.executable
+# Optional interpreter pinned into the hook for site-specific builds (--python).
+# Unset by default so the package is portable and the content hash does not
+# depend on the build machine; the hook then resolves NEQSIM_PYTHON at run time.
+DEFAULT_PYTHON = os.environ.get("NEQSIM_PLUGIN_PYTHON") or ""
 SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
 SKIP_SUFFIXES = {".pyc"}
 
@@ -169,50 +171,90 @@ def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
     dest.write_text(content, encoding="utf-8")
 
 
+HOOK_PY = '''"""SessionStart hook: install this plugin's skill packages (editable).
+
+Target interpreter, in order: NEQSIM_PYTHON, a pinned build-time interpreter
+(if any), the interpreter running this script. Never selects or creates an
+environment. Exits 0 on every path so the hook cannot block a chat session;
+pip output goes to stderr because VS Code parses hook stdout as JSON.
+"""
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+PINNED_PYTHON = {pinned!r}
+
+root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
+candidates = [os.environ.get("NEQSIM_PYTHON"), PINNED_PYTHON, sys.executable]
+python = next((p for p in candidates if p and Path(p).exists()), None)
+if python is None:
+    sys.exit(0)
+stamp = Path(os.environ.get("PLUGIN_DATA") or root) / ".skills_installed_version"
+version = (root / "plugin.json").read_text(encoding="utf-8")
+if stamp.exists() and stamp.read_text(encoding="utf-8") == version:
+    sys.exit(0)
+result = subprocess.run(
+    [python, "-m", "pip", "install", "-e", str(root), "--no-deps", "-q"],
+    stdout=sys.stderr, stderr=sys.stderr, check=False)
+if result.returncode == 0:
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    stamp.write_text(version, encoding="utf-8")
+sys.exit(0)
+'''
+
+# POSIX launcher: first interpreter that exists wins; silent no-op otherwise.
+HOOK_SH = '''#!/bin/sh
+# SessionStart launcher; the Python script picks the pip target interpreter.
+root="${PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+for py in "$NEQSIM_PYTHON" python3 python; do
+  [ -n "$py" ] || continue
+  if command -v "$py" >/dev/null 2>&1; then
+    exec "$py" "$root/scripts/install_skill_packages.py"
+  fi
+done
+exit 0
+'''
+
+# Windows launcher: `py -3` before `python` so the Store alias stub is not hit first.
+HOOK_PS1 = '''# SessionStart launcher; the Python script picks the pip target interpreter.
+$root = if ($env:PLUGIN_ROOT) { $env:PLUGIN_ROOT } else { Split-Path -Parent $PSScriptRoot }
+$script = Join-Path $root "scripts/install_skill_packages.py"
+if ($env:NEQSIM_PYTHON -and (Test-Path $env:NEQSIM_PYTHON)) { & $env:NEQSIM_PYTHON $script; exit 0 }
+if (Get-Command py -ErrorAction SilentlyContinue) { & py -3 $script; exit 0 }
+if (Get-Command python -ErrorAction SilentlyContinue) { & python $script; exit 0 }
+exit 0
+'''
+
+
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str) -> None:
     """SessionStart hook that makes the skills' Python packages importable.
 
-    ``${PLUGIN_ROOT}`` is expanded by the client; the interpreter comes from
-    ``NEQSIM_PYTHON`` or the shared NeqSim environment. The hook is idempotent
-    (``pip install -e`` on an unchanged tree is a no-op).
+    The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
+    interpreter at run time (``NEQSIM_PYTHON``, then PATH) and the Python script
+    chooses the pip target the same way. ``python`` optionally pins a
+    site-specific interpreter as a fallback candidate. ``${PLUGIN_ROOT}`` is
+    expanded by the client. Idempotent via a version stamp in ``${PLUGIN_DATA}``.
     """
     if not pip_roots:
         return
     hooks_dir = dest_root / "com.github.copilot" / "hooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
-    script = dest_root / "scripts" / "install_skill_packages.py"
-    script.parent.mkdir(parents=True, exist_ok=True)
-    script.write_text(
-        '"""SessionStart hook: install this plugin\'s skill packages (editable).\n\n'
-        "Uses NEQSIM_PYTHON if set, else the shared NeqSim interpreter; never\n"
-        "selects or creates an environment. Skips silently when the interpreter\n"
-        "is unavailable so a missing Python never blocks the chat session.\n"
-        '"""\n'
-        "import os, subprocess, sys\n"
-        "from pathlib import Path\n\n"
-        "root = Path(os.environ.get('PLUGIN_ROOT') or Path(__file__).resolve().parents[1])\n"
-        "python = os.environ.get('NEQSIM_PYTHON') or r'{python}'\n"
-        "if not Path(python).exists():\n"
-        "    sys.exit(0)\n"
-        "stamp = Path(os.environ.get('PLUGIN_DATA') or root) / '.skills_installed_version'\n"
-        "version = (root / 'plugin.json').read_text(encoding='utf-8')\n"
-        "if stamp.exists() and stamp.read_text(encoding='utf-8') == version:\n"
-        "    sys.exit(0)\n"
-        "subprocess.run([python, '-m', 'pip', 'install', '-e', str(root), '--no-deps', '-q'],\n"
-        "               check=False)\n"
-        "stamp.parent.mkdir(parents=True, exist_ok=True)\n"
-        "stamp.write_text(version, encoding='utf-8')\n".format(python=python),
-        encoding="utf-8",
-    )
-    # Hooks run through a shell, so the launcher must be the shared absolute
-    # interpreter (never bare `python`); the script re-reads NEQSIM_PYTHON for pip.
+    scripts = dest_root / "scripts"
+    scripts.mkdir(parents=True, exist_ok=True)
+    (scripts / "install_skill_packages.py").write_text(
+        HOOK_PY.format(pinned=python or ""), encoding="utf-8")
+    (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
+    (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
     hooks = {
         "hooks": {
             "SessionStart": [
                 {
                     "type": "command",
-                    "command": "\"{python}\" \"${{PLUGIN_ROOT}}/scripts/install_skill_packages.py\"".format(
-                        python=python),
+                    "command": "sh \"${PLUGIN_ROOT}/scripts/install_skill_packages.sh\"",
+                    "windows": "powershell -NoProfile -ExecutionPolicy Bypass -File "
+                               "\"${PLUGIN_ROOT}/scripts/install_skill_packages.ps1\"",
+                    "timeout": 300,
                 }
             ]
         }
@@ -377,7 +419,8 @@ def main(argv=None) -> int:
     parser.add_argument("--bump", choices=["patch", "minor", "major"])
     parser.add_argument("--set-version")
     parser.add_argument("--python", default=DEFAULT_PYTHON,
-                        help="absolute interpreter baked into the SessionStart hook")
+                        help="optional absolute interpreter pinned into the SessionStart hook as a "
+                             "fallback after NEQSIM_PYTHON (default: none; env NEQSIM_PLUGIN_PYTHON)")
     parser.add_argument("--check", action="store_true",
                         help="build to staging only; exit 1 on errors or unbumped changes")
     args = parser.parse_args(argv)

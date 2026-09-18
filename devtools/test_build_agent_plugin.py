@@ -40,7 +40,7 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
 
 
 def _args(**overrides):
-    base = dict(set_version=None, bump=None, check=False, python=r"C:\py\python.exe")
+    base = dict(set_version=None, bump=None, check=False, python="")
     base.update(overrides)
     return SimpleNamespace(**base)
 
@@ -78,9 +78,18 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue(core.startswith("---\nname: core\n"))
         # hook + packaging files for the editable install
         hooks = json.loads((plugin / "com.github.copilot" / "hooks" / "hooks.json").read_text())
-        cmd = hooks["hooks"]["SessionStart"][0]["command"]
-        self.assertIn(r"C:\py\python.exe", cmd)
-        self.assertIn("${PLUGIN_ROOT}/scripts/install_skill_packages.py", cmd)
+        entry = hooks["hooks"]["SessionStart"][0]
+        self.assertIn("${PLUGIN_ROOT}/scripts/install_skill_packages.sh", entry["command"])
+        self.assertIn("${PLUGIN_ROOT}/scripts/install_skill_packages.ps1", entry["windows"])
+        scripts = plugin / "scripts"
+        for name in ("install_skill_packages.sh", "install_skill_packages.ps1",
+                     "install_skill_packages.py"):
+            self.assertTrue((scripts / name).exists(), name)
+        hook_py = (scripts / "install_skill_packages.py").read_text(encoding="utf-8")
+        # portable by default: nothing from the build machine is baked in
+        self.assertIn("PINNED_PYTHON = ''", hook_py)
+        self.assertNotIn(sys.executable, hook_py)
+        self.assertIn('os.environ.get("NEQSIM_PYTHON")', hook_py)
         self.assertTrue((plugin / "pyproject.toml").exists())
         self.assertEqual(result["skills"], 2)
         self.assertEqual(result["agents"], 2)
