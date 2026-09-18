@@ -450,8 +450,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * Preserve standard components and optional columns when loading the extended database.
    *
    * <p>
-   * The extended resource is maintained independently. Existing extended rows retain their properties; newly added
-   * standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including optional identity metadata.
+   * The extended resource is maintained independently. Existing extended rows retain their properties except for
+   * explicitly unavailable liquid-vapor pressure data and the corrected acetone correlation, which are taken from the
+   * standard table. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including
+   * optional identity metadata.
    * </p>
    */
   private static void includeMissingStandardComponents() {
@@ -492,6 +494,22 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
       database.execute("INSERT INTO COMP (" + names + ") SELECT " + values + " FROM " + source
           + " standard WHERE NOT EXISTS (SELECT 1 FROM COMP extended WHERE extended.NAME=standard.NAME)");
+      // Apply only the reviewed vapor-pressure corrections, preserving other extended-table data.
+      String vaporColumns = "AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE";
+      try (
+          ResultSet corrections = database.getResultSet("SELECT NAME," + vaporColumns + " FROM " + source
+              + " WHERE AntoineVapPresLiqType='none' OR NAME='acetone'");
+          java.sql.PreparedStatement update = database.getConnection().prepareStatement(
+              "UPDATE COMP SET AntoineVapPresLiqType=?,ANTOINEA=?,ANTOINEB=?,ANTOINEC=?,ANTOINED=?,ANTOINEE=? WHERE NAME=?")) {
+        while (corrections.next()) {
+          for (int i = 1; i <= 6; i++) {
+            update.setString(i, corrections.getString(i + 1));
+          }
+          update.setString(7, corrections.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
     } catch (Exception ex) {
       throw new IllegalStateException("Failed to preserve standard components in the extended database", ex);
     }

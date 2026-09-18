@@ -259,6 +259,19 @@ document the initialization-order repair for issue #3702. With that repair, the
 the earlier density-root limitation applies to versions without this repair.
 The linked example checks each phase's pressure and the component inventories.
 
+For pure-component EOS-CG volume–energy flashes, the saturation-volume stability
+check requires distinct, physically ordered roots: vapor molar volume must exceed
+liquid molar volume. Inverted or coalesced numerical roots cannot establish a
+stable single phase. The solver attempts a saturation-line solution and throws
+`IllegalStateException` if neither route meets the volume and energy specifications.
+EOS-CG refreshes temperature-dependent Helmholtz terms for every temperature
+change, including the small steps used near saturation. Reusing cached terms
+across successive sub-`1e-7` K changes can otherwise make properties depend on
+the iteration history. The reference-EOS liquid-density root is refined to a
+pressure residual of `max(1e-9 kPa, 1e-11 * abs(pressure in kPa))`, so density
+roundoff does not dominate saturation-line volume closure. The VU solver retains
+its `1e-8` relative volume and energy acceptance tolerances.
+
 ### Usage in NeqSim
 
 To use EOS-CG in NeqSim, use the `SystemEOSCGEos` class. This introductory example
