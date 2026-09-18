@@ -72,6 +72,12 @@
       "prompt": "read this P&ID PDF, extract equipment tags and piping, and build a NeqSim process from it",
       "expect_agent_top3": ["technical-reader", "extract-process"],
       "expect_skills_top5": ["neqsim-technical-document-reading", "neqsim-process-extraction", "neqsim-pid-process-operations"]
+    },
+    {
+      "id": "setup-task-root",
+      "prompt": "how do I set the folder where new tasks are created and the document root for my standards, and check that my NeqSim setup works",
+      "expect_agent_top3": ["solve-task"],
+      "expect_skills_top5": ["neqsim-setup"]
     }
   ],
   "contracts": [

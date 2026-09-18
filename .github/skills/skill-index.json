@@ -222,6 +222,22 @@
  "task workflow": [
   "neqsim-task-workflow"
  ],
+ "neqsim setup": [
+  "neqsim-setup"
+ ],
+ "set task root": [
+  "neqsim-setup"
+ ],
+ "document root": [
+  "neqsim-setup"
+ ],
+ "report template": [
+  "neqsim-setup",
+  "neqsim-professional-reporting"
+ ],
+ "neqsim doctor": [
+  "neqsim-setup"
+ ],
  "solve engineering task": [
   "neqsim-task-workflow",
   "neqsim-professional-reporting"

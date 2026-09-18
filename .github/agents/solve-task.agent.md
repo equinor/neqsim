@@ -3,6 +3,7 @@ name: solve engineering task
 description: "Solves process-engineering problems using the NeqSim Java API with proportional depth: quick answer-first calculations, notebook-backed studies, or full reports. Delivers auditable task folders with validation evidence, runner-executed notebooks/scripts, and reports when needed. When NeqSim lacks a needed capability, extends it with Java classes and tests."
 required_skills:
 - neqsim-task-workflow
+- neqsim-setup
 - neqsim-document-intelligence-extraction
 - neqsim-api-patterns
 - neqsim-notebook-patterns
@@ -33,7 +34,9 @@ argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas
 
 State the environment in your first reply. Never attempt Maven, `target/classes` or
 Java edits outside **Workspace**; never let a missing tool silently downgrade a
-Design/Development deliverable - name what was skipped.
+Design/Development deliverable - name what was skipped. If the task root, document
+root or report template is unset or invalid, run the `neqsim-setup` skill
+(`/neqsim-setup`) before continuing rather than guessing a folder.
 
 **Before writing ANY files, notes, notebooks, or analysis, you MUST do one of these:**
 
@@ -308,7 +311,7 @@ lean:
 
 ## 1-10 ── DETAILED WORKFLOW (loaded from the `neqsim-task-workflow` skill)
 
-Loaded skills: neqsim-task-workflow, neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-autonomous-investigation, neqsim-root-cause-analysis
+Loaded skills: neqsim-task-workflow, neqsim-setup, neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-autonomous-investigation, neqsim-root-cause-analysis
 
 Sections 1-10 - overview, context-window resilience, the phase-by-phase
 workflow with quality gates, benchmark validation, uncertainty and risk,
