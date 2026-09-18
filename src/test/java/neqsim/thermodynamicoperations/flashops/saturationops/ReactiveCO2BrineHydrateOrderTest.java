@@ -62,13 +62,13 @@ class ReactiveCO2BrineHydrateOrderTest {
   @ParameterizedTest
   @CsvSource({ "40,0.9", "60,1.1" })
   void adjacentStatesPreservePermutationInvariance(double pressure, double saltScale) {
-    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> {
-      SystemInterface first = brine(0, pressure, saltScale, true);
-      SystemInterface second = brine(1, pressure, saltScale, true);
-      solveAndVerify(first);
-      solveAndVerify(second);
-      assertEquivalent(first, second);
-    });
+    SystemInterface first = brine(0, pressure, saltScale, true);
+    SystemInterface second = brine(1, pressure, saltScale, true);
+    // Each independent equilibrium solve has its own bounded budget. The denser 60-bar
+    // case can take over 30 seconds per ordering on an uninstrumented CI runner.
+    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> solveAndVerify(first));
+    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> solveAndVerify(second));
+    assertEquivalent(first, second);
   }
 
   @Test
