@@ -937,10 +937,12 @@ public class BottleneckAnalysisOptimizerTest {
 
     // Objective: MINIMIZE max utilization (negative because optimizer maximizes
     // score)
+    // Balance the same chart- and speed-dependent capacity metric enforced in stage 2.
+    // Rated-power ratios can improve while a compressor moves outside its speed envelope.
     OptimizationObjective balanceObjective = new OptimizationObjective("balanceLoad",
-        proc -> -getMaxCompressorUtilization(), 1.0, ObjectiveType.MAXIMIZE); // Max of negative
-                                                                              // =
-    // Min of positive
+        proc -> -proc.getUnitOperations().stream().filter(unit -> unit instanceof Compressor)
+            .mapToDouble(unit -> unit.getMaxUtilization()).max().orElse(0.0),
+        1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult stage1Result = optimizer.optimize(processSystem, splitVariables, stage1Config,
         Collections.singletonList(balanceObjective), Collections.emptyList());
@@ -1005,7 +1007,8 @@ public class BottleneckAnalysisOptimizerTest {
     }
 
     // Assertions
-    Assertions.assertTrue(stage2Result.isFeasible(), "Two-stage result should be feasible");
+    Assertions.assertTrue(stage2Result.isFeasible(),
+        "Two-stage result should be feasible: " + stage2Result.getInfeasibilityDiagnosis());
     Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.02, "Bottleneck should be at or below 100%");
     // Note: After split factor optimization, the original flow may no longer be
     // achievable
