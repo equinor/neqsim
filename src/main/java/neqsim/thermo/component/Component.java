@@ -449,6 +449,7 @@ public abstract class Component implements ComponentInterface {
         // Peneloux shift relations differ. Wrapped in its own guard so that a database CSV
         // without
         // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
+        // test write
         try {
           umrCpaRacketZ = objCOMP.objDictionary.get(name).get("UMRCPA_racketZ");
           umrCpaVolumeCorrectionT = objCOMP.objDictionary.get(name).get("UMRCPA_volcorr_T");
