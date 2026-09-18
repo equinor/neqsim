@@ -1625,7 +1625,9 @@ coding agent that can read files and run commands can follow the same workflow.
   Point it at `TASK_SOLVING_GUIDE.md` and it follows the workflow.
 - **Claude Code**: Same approach — give it the workflow prompt and task folder path.
 - **Cursor**: Supports custom instructions — paste the agent instructions from
-  `.github/agents/solve-task.agent.md` into Cursor's rules.
+  `.github/agents/solve-task.agent.md` (orchestrator) and
+  `.github/skills/neqsim-task-workflow/SKILL.md` (the phase-by-phase procedure)
+  into Cursor's rules.
 - **Google Colab + AI**: Published external examples may use `pip install neqsim`,
   but local task notebooks and runner workflows must use `neqsim_dev_setup.py`.
 

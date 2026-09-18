@@ -60,6 +60,26 @@ repos were normalised:
 **Agents/skills to update:** anything that hard-codes an old `@a.b` handle, a
 `skills/<category>/<unprefixed>` community path, or an underscore paperlab skill name.
 
+### 2026-09-18 (later) — `@solve-task` split, agent eval harness, BM25 retrieval, description cap
+
+* **`solve-task.agent.md` is now a 16 KB orchestrator** (was 141 KB). Sections 1–10 — the
+  phase-by-phase workflow, quality gates, benchmark/uncertainty procedure, task-type guidance,
+  NIPs, interpretation rules, critical rules, lessons learned — moved verbatim into the new core
+  skill **`neqsim-task-workflow`** (section numbers preserved). The agent keeps the mandatory
+  first action, purpose, and section 0 (proportionality, validation, assumption, intent,
+  continuous-improvement rules, deliverable matrix, quick fast path). Quick tasks no longer pay
+  the 141 KB context cost; Standard/Comprehensive load the skill.
+* **`devtools/agent_eval.py` + `agent_eval_cases.json`** — deterministic agent evaluation:
+  12 routing golden prompts (expected agent in top-3, skills in top-5) and 5 `results.json`
+  contract cases; `test_agent_eval.py` runs in `skills_agents_lint.yml`. Sibling-repo
+  expectations are enforced only when those repos are checked out.
+* **`devtools/bm25.py`** replaces the optional scikit-learn / Jaccard scorers in `agent_search`
+  and `skill_search` (dependency-free BM25 with stemming, stopwords, coverage term), so dev and
+  CI rank identically. Agent haystacks include `required_skills`.
+* **SKILL.md `description` capped at 1024 chars** (`maxLength` in the shared manifest schema +
+  `verify_skills_agents.py`); 12 over-long descriptions rewritten. Clients truncate beyond
+  1024 and silently drop the routing vocabulary.
+
 ---
 
 ## 2026-09-14 — `ChemicalInteractionRule` environment rules no longer fire on unsupplied conditions

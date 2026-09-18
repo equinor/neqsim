@@ -219,6 +219,17 @@
  "process simulation": [
   "neqsim-api-patterns"
  ],
+ "task workflow": [
+  "neqsim-task-workflow"
+ ],
+ "solve engineering task": [
+  "neqsim-task-workflow",
+  "neqsim-professional-reporting"
+ ],
+ "quality gate": [
+  "neqsim-task-workflow",
+  "neqsim-professional-reporting"
+ ],
  "gas compression train": [
   "neqsim-process-modeling",
   "neqsim-api-patterns"
