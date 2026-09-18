@@ -49,7 +49,3 @@ loaded with `read_file` at the start of an agent invocation.
 | `thermo-fluid.agent.md` | create a neqsim thermodynamic fluid | `neqsim-phase-envelope`, `neqsim-api-patterns`, `neqsim-input-validation`, `neqsim-troubleshooting`, `neqsim-eos-regression`, `neqsim-electrolyte-systems` |
 | `unisim-reader.agent.md` | read unisim to neqsim | `neqsim-unisim-reader`, `neqsim-api-patterns`, `neqsim-process-extraction`, `neqsim-process-modeling`, `neqsim-notebook-patterns`, `neqsim-troubleshooting` |
 | `utility-design.agent.md` | design neqsim utility systems | `neqsim-utility-design`, `neqsim-utilities-specification`, `neqsim-heat-integration`, `neqsim-api-patterns`, `neqsim-java8-rules`, `neqsim-professional-reporting` |
-
-## Warnings
-
-- paperlab.agent.md: references unknown skill 'paperlab-multireviewer-simulation'

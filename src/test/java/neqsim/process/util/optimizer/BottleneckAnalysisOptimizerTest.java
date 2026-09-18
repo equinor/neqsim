@@ -47,7 +47,6 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Bottleneck detection with compressor performance curves</li>
  * <li>Utilization values remain bounded (max 100%) for feasible solutions</li>
  * </ul>
- * </p>
  *
  * <p>
  * This test replicates the notebook bottleneck_analysis.ipynb functionality.
@@ -674,7 +673,6 @@ public class BottleneckAnalysisOptimizerTest {
    * <li>One equipment is at the bottleneck (close to 100%)</li>
    * <li>Total throughput is maximized</li>
    * </ul>
-   * </p>
    */
   @Test
   public void testMultiVariableOptimizationWithSplitFactors() {
@@ -861,7 +859,6 @@ public class BottleneckAnalysisOptimizerTest {
    * <li>Local optima trapping (Nelder-Mead)</li>
    * <li>Coupling between flow and split variables</li>
    * </ul>
-   * </p>
    *
    * <p>
    * <b>Two-Stage Approach:</b>
@@ -878,7 +875,6 @@ public class BottleneckAnalysisOptimizerTest {
    * <li>Stage 1 uses Nelder-Mead on a smooth objective (min-max utilization)</li>
    * <li>Stage 2 uses deterministic binary search</li>
    * </ul>
-   * </p>
    */
   @Test
   public void testTwoStageOptimizationRecommendedApproach() {

@@ -55,7 +55,7 @@ public class PhaseSplitInitBenchmark {
 
     DistillationColumn column = new DistillationColumn("bench", trayCount, true, false);
     column.addFeedStream(feed, trayCount);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(trayCount <= 5 ? 50 : 80);

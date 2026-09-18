@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>getGasMassTransferCoefficientAtNode() and profile</li>
  * <li>getVolumetricMassTransferCoefficientAtNode() and profile</li>
  * </ul>
- * </p>
  */
 public class TwoPhasePipeFlowSystemMassTransferTest {
   private TwoPhasePipeFlowSystem pipe;

@@ -1134,18 +1134,42 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setNumberOfmoles(double newmoles);
 
   /**
-   * getAntoineVaporPressure.
+   * Whether a liquid-vapor pressure correlation is available for this component.
    *
-   * @param temp a double
-   * @return a double
+   * <p>
+   * False for ions and database rows explicitly marked {@code none}. Availability does not certify the accuracy or
+   * fitted temperature range of legacy correlations.
+   * </p>
+   *
+   * @return true if a correlation is available
+   */
+  public boolean hasAntoineVaporPressureCorrelation();
+
+  /**
+   * Evaluate the liquid-vapor pressure correlation in bar absolute.
+   *
+   * <p>
+   * Returns {@link Double#NaN} when no correlation is available (including ions), for nonpositive or nonfinite
+   * temperature, or above the critical temperature. No estimated correlation is silently substituted. Consult the
+   * source for the fitted temperature range; values below the melting point can represent metastable liquid.
+   * </p>
+   *
+   * <p>
+   * A nonzero DIPPR exponent ({@code |E| > 1e-12}) selects {@code exp(A + B/T + C*ln(T) + D*T^E) / 100000}, including
+   * legacy {@code log}/{@code exp} labels. Explicit {@code pow10} and {@code pow10KPa} labels retain precedence.
+   * </p>
+   *
+   * @param temp temperature in K
+   * @return vapor pressure in bara, or NaN when unavailable or outside the liquid-vapor domain
    */
   public double getAntoineVaporPressure(double temp);
 
   /**
-   * getAntoineVaporTemperature.
+   * Invert the liquid-vapor pressure correlation.
    *
-   * @param pres a double
-   * @return a double
+   * @param pres absolute pressure in bar
+   * @return temperature in K, or NaN when no correlation is available, pressure is nonpositive or nonfinite, or
+   * pressure exceeds the critical pressure
    */
   public double getAntoineVaporTemperature(double pres);
 
@@ -1408,10 +1432,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVoli();
 
   /**
-   * getAntoineVaporPressuredT.
+   * Temperature derivative of the liquid-vapor pressure correlation where implemented. DIPPR-101 uses the same
+   * coefficient selection as {@link #getAntoineVaporPressure(double)}.
    *
-   * @param temp a double
-   * @return a double
+   * @param temp temperature in K
+   * @return derivative in bar/K, or zero for available correlation types without a derivative; NaN under the same
+   * missing-data and domain conditions as {@link #getAntoineVaporPressure(double)}
    */
   public double getAntoineVaporPressuredT(double temp);
 

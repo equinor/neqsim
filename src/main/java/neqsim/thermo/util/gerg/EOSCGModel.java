@@ -661,8 +661,9 @@ public class EOSCGModel {
       Expd[i] = Math.exp(-delp[i]);
     }
 
-    // If temperature has changed, calculate temperature dependent parts
-    if (Math.abs(T - Told) > 0.0000001 || Math.abs(Tr.val - Trold2) > 0.0000001) {
+    // Even sub-1e-7 K changes must refresh these terms: flash convergence
+    // must not depend on the sequence of temperatures evaluated.
+    if (T != Told || Tr.val != Trold2) {
       tTermsGERG(lntau, x);
     }
     Told = T;

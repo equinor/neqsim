@@ -22,7 +22,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Mass transfer between gas and liquid phases in a stirred cell</li>
  * <li>Evolution of K-values and phase fractions over time</li>
  * </ul>
- * </p>
  */
 public class StirredCellMassTransferTest {
   /**

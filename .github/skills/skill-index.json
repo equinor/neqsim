@@ -1832,5 +1832,46 @@
   "neqsim-thermodynamic-initialization",
   "neqsim-troubleshooting",
   "neqsim-api-patterns"
+ ],
+ "spotless check failed": [
+  "neqsim-code-hygiene",
+  "neqsim-java8-rules"
+ ],
+ "checkstyle check failed": [
+  "neqsim-code-hygiene",
+  "neqsim-java8-rules"
+ ],
+ "fix formatting violations": [
+  "neqsim-code-hygiene",
+  "neqsim-java8-rules"
+ ],
+ "import ordering": [
+  "neqsim-code-hygiene"
+ ],
+ "javadoc errors": [
+  "neqsim-code-hygiene",
+  "neqsim-java8-rules"
+ ],
+ "javadocparagraph p tag": [
+  "neqsim-code-hygiene"
+ ],
+ "orphan closing p after list": [
+  "neqsim-code-hygiene"
+ ],
+ "single line param return javadoc": [
+  "neqsim-code-hygiene"
+ ],
+ "html5 table caption javadoc": [
+  "neqsim-code-hygiene"
+ ],
+ "spotless apply": [
+  "neqsim-code-hygiene"
+ ],
+ "make java file ci clean": [
+  "neqsim-code-hygiene",
+  "neqsim-java8-rules"
+ ],
+ "unused variable warning": [
+  "neqsim-code-hygiene"
  ]
 }

@@ -26,7 +26,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Physical behavior during transient: pressure buildup, velocity decay</li>
  * <li>Convenience methods (closeOutlet, openOutlet, closeInlet, openInlet)</li>
  * </ul>
- * </p>
  *
  * @author ESOL
  * @version 1.0

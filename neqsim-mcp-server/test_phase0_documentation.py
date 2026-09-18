@@ -22,22 +22,23 @@ def require(text, expected, path):
 
 
 source = SOURCE_PATH.read_text(encoding="utf-8")
-require(source, 'inventory.addProperty("inventoryVersion", "1.40")', SOURCE_PATH)
+require(source, 'inventory.addProperty("inventoryVersion", "1.41")', SOURCE_PATH)
 require(
     source,
-    "All 71 tools have coverage records; 40 are CONTRACT_TESTED and 11 remain "
+    "All 71 tools have coverage records; 41 are CONTRACT_TESTED and 10 remain "
     "CONFIRMED_GAP.",
     SOURCE_PATH,
 )
 require(source, 'case "runSIL":', SOURCE_PATH)
 require(source, 'case "compareProcesses":', SOURCE_PATH)
 require(source, 'case "runBarrierRegister":', SOURCE_PATH)
+require(source, 'case "runOperationalStudy":', SOURCE_PATH)
 
 surface = SURFACE_PATH.read_text(encoding="utf-8")
 require(
     surface,
-    "scientifically validated: 11 records remain\n"
-    "`CONFIRMED_GAP`, forty are `CONTRACT_TESTED`",
+    "scientifically validated: 10 records remain\n"
+    "`CONFIRMED_GAP`, forty-one are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
 
@@ -46,35 +47,35 @@ contract_line = next(
     (
         line
         for line in foundation.splitlines()
-        if line.startswith("- Forty bounded software contracts")
+        if line.startswith("- Forty-one bounded software contracts")
     ),
     None,
 )
 if contract_line is None:
-    raise AssertionError(f"{FOUNDATION_PATH}: missing current 40-contract summary")
+    raise AssertionError(f"{FOUNDATION_PATH}: missing current 41-contract summary")
 contract_tools = re.findall(r"`([A-Za-z][A-Za-z0-9]+)`", contract_line)
-if len(contract_tools) != 40 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "compareProcesses" not in contract_tools:
+if len(contract_tools) != 41 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "runOperationalStudy" not in contract_tools or "compareProcesses" not in contract_tools:
     raise AssertionError(
-        f"{FOUNDATION_PATH}: expected 40 named contracts including runSIL, runBarrierRegister, and compareProcesses, "
+        f"{FOUNDATION_PATH}: expected 41 named contracts including runSIL, runBarrierRegister, runOperationalStudy, and compareProcesses, "
         f"found {len(contract_tools)}"
     )
-require(foundation, "- 11 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
+require(foundation, "- 10 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
 
 api_reference = API_PATH.read_text(encoding="utf-8")
 require(
     api_reference,
     "all 71 tools\nhave coverage records, but only 20 have tool-specific trust pages; "
-    "40 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
-    "11 remain `CONFIRMED_GAP`",
+    "41 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
+    "10 remain `CONFIRMED_GAP`",
     API_PATH,
 )
 
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.40 / 20 explicit + 40 contract-tested + 11\n"
+    "Current inventory `1.41 / 20 explicit + 41 contract-tested + 10\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )
 
-print("Phase 0 documentation accounting is consistent: 1.40 / 20 + 40 + 11")
+print("Phase 0 documentation accounting is consistent: 1.41 / 20 + 41 + 10")

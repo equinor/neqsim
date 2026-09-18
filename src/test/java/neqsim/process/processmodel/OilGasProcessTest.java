@@ -68,7 +68,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     valve1.setOutletPressure(19.0);
 
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
-    oilHeater.setOutTemperature(359.0);
+    oilHeater.setOutletTemperature(359.0);
 
     neqsim.process.equipment.separator.ThreePhaseSeparator seprator2ndStage = new neqsim.process.equipment.separator.ThreePhaseSeparator(
         "2nd stage separator", oilHeater.getOutletStream());
@@ -88,7 +88,7 @@ public class OilGasProcessTest extends neqsim.NeqSimTest {
     pipeloss1st.setOutletPressure(2.7 - 0.03);
 
     Heater coolerLP = new Heater("cooler LP", pipeloss1st.getOutletStream());
-    coolerLP.setOutTemperature(273.15 + 25.0);
+    coolerLP.setOutletTemperature(273.15 + 25.0);
 
     Separator sepregenGas = new Separator("sepregenGas", coolerLP.getOutletStream());
 

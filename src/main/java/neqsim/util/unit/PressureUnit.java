@@ -110,6 +110,12 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
+  public String getSIUnit() {
+    return "Pa";
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getSIvalue() {
     return getValue("Pa");
   }

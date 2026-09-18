@@ -28,7 +28,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Gonzalez, D.L., et al. (2008). "Modeling of Asphaltene Precipitation Due to Changes in Composition Using the
  * Perturbed Chain SAFT Equation of State." Energy &amp; Fuels, 22(2), 757-762.</li>
  * </ul>
- * </p>
  */
 public class AsphalteneValidationTest {
   private static final Logger logger = LogManager.getLogger(AsphalteneValidationTest.class);

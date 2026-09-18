@@ -392,16 +392,67 @@ double totalVolumeM3At60F = batch.getTotalAdditiveVolumeM3At60F();
 double batchSpecificGravity = batch.getSpecificGravity();
 ```
 
+Pair the qualified batch with unique caller identifiers when downstream evidence must be
+label-addressable:
+
+```java
+RefineryBlendSourceLedger ledger = RefineryBlendSourceLedger.fromBatch(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    batch);
+
+RefineryBlendSourceLedger.SourceReceipt first =
+    ledger.getSourceReceipt("DOE/OEDI sample 50146");
+double firstSourceMassKg = first.getMassKg();
+double firstSourceVolumeM3At60F = first.getAdditiveVolumeM3At60F();
+```
+
+The identifiers are caller metadata in exact batch-array order. They must be nonblank, free of
+surrounding whitespace, and unique. The ledger defensively preserves source order, mass fraction,
+mass, specific gravity, additive volume, and zero-contribution sources. It does not infer assay
+identity, query a source database, or attest provenance.
+
 The specific-gravity endpoints are the published DOE/OEDI COA values for samples 50146 and 56337
 from the [DOE/OEDI COA summary workbook](https://data.openei.org/submissions/23). The 60/40 receipt
 is transparent arithmetic integration evidence, not a measured multi-crude blend. It preserves the
 same ideal-additive-volume result as `RefineryAssayBlend`.
 
-The receipt does not model blend contraction, temperature correction, tank gauging, viscosity
-extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions, control
-actions, or certified product compliance. It does not create or mix thermodynamic streams.
+The receipt and source ledger do not model blend contraction, temperature correction, tank gauging,
+viscosity extrapolation, phase or asphaltene compatibility, inventory or scheduling decisions,
+control actions, or certified product compliance. The ledger does not create tanks or thermodynamic
+streams.
 Zero-contribution sources need no fabricated specific gravity; every positive contribution fails
 closed unless its fraction and density basis are finite and valid.
+
+### Complete optimized blend-plan receipts
+
+Use `RefineryBlendOptimizationPlan.fromOptimization(...)` when one downstream record must retain
+the qualified optimizer result, scaled batch, quality-constraint evidence, exact source labels, and
+source costs together:
+
+```java
+RefineryBlendOptimizationPlan plan = RefineryBlendOptimizationPlan.fromOptimization(
+    new String[] {"DOE/OEDI sample 50146", "DOE/OEDI sample 56337"},
+    10000.0,
+    sourceSpecificGravities,
+    sourceCostsPerMass,
+    optimization);
+
+RefineryBlendOptimizationPlan.SourceCostReceipt first =
+    plan.getSourceCostReceipt("DOE/OEDI sample 50146");
+double firstSourceCost = first.getTotalCost();
+```
+
+Each ordered receipt copies the source index, identifier, mass fraction, mass, 60 degF specific
+gravity, ideal-additive volume, unit cost, and source total cost. The source-level cost closes to the
+optimizer unit cost and batch total cost. The plan exposes the original immutable
+`QualityConstraintReceipt`, preserves zero-contribution identity with zero mass, volume, and total
+cost, and fails closed on mismatched identifiers, gravities, costs, or cost closure.
+
+This composition layer does not re-solve the optimization or alter any property result. Source
+identifiers remain caller metadata, and the DOE/OEDI labels are public-data regression identifiers,
+not automatic provenance attestation. The plan does not add blend contraction, scheduling, or
+compliance logic; it also does not model temperature correction, tank gauging, control, phase
+compatibility, or thermodynamic stream creation.
 
 ## Per-cut UOP/Watson characterization factor
 

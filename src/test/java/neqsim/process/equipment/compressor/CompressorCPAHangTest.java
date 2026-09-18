@@ -169,7 +169,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
 
     Compressor compressor1 = new Compressor("27AKA60", gasStream);
     compressor1.setOutletPressure(compPout, "bara");
-    compressor1.setOutTemperature(273.15 + compTout);
+    compressor1.setOutletTemperature(273.15 + compTout);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicMethod("detailed");
     compressor1.setNumberOfCompressorCalcSteps(10);

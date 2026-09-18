@@ -152,8 +152,8 @@ public class CondenserFixedLiquidRefluxTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getCondenser().setOutTemperature(293.15);
-    column.getReboiler().setOutTemperature(353.15);
+    column.getCondenser().setOutletTemperature(293.15);
+    column.getReboiler().setOutletTemperature(353.15);
     column.setCondenserLiquidReflux(refluxFlowKgPerHour, "kg/hr");
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
     column.setRelaxationFactor(0.2);
@@ -209,7 +209,7 @@ public class CondenserFixedLiquidRefluxTest {
   private static Condenser createCondenser(Stream feed) {
     Condenser condenser = new Condenser("fixed reflux condenser");
     condenser.addStream(feed);
-    condenser.setOutTemperature(278.15);
+    condenser.setOutletTemperature(278.15);
     return condenser;
   }
 

@@ -2522,8 +2522,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
       } else if (mixingRuleGEModel.equals("NRTL_HV")) {
         gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
-      } else if (mixingRuleGEModel.equals("UNIQUAQ")) {
-        gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
+      } else if (mixingRuleGEModel.equalsIgnoreCase("UNIQUAQ") || mixingRuleGEModel.equalsIgnoreCase("UNIQUAC")) {
+        throw new UnsupportedOperationException("UNIQUAC is not supported. Select NRTL or UNIFAC explicitly.");
       } else if (mixingRuleGEModel.equals("UNIFAC")) {
         gePhase = new PhaseGEUnifac(orgPhase, HValpha, HVDij, mixRule, intparam);
       } else if (mixingRuleGEModel.equals("UNIFAC_PSRK")) {
@@ -2545,8 +2545,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, HVDijT, mixRule, intparam);
       } else if (mixingRuleGEModel.equals("NRTL_HV")) {
         gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, mixRule, intparam);
-      } else if (mixingRuleGEModel.equals("UNIQUAQ")) {
-        gePhase = new PhaseGENRTLmodifiedHV(orgPhase, HValpha, HVDij, HVDijT, mixRule, intparam);
+      } else if (mixingRuleGEModel.equalsIgnoreCase("UNIQUAQ") || mixingRuleGEModel.equalsIgnoreCase("UNIQUAC")) {
+        throw new UnsupportedOperationException("UNIQUAC is not supported. Select NRTL or UNIFAC explicitly.");
       } else if (mixingRuleGEModel.equals("UNIFAC")) {
         gePhase = new PhaseGEUnifac(orgPhase, HValpha, HVDij, mixRule, intparam);
       } else if (mixingRuleGEModel.equals("UNIFAC_PSRK")) {

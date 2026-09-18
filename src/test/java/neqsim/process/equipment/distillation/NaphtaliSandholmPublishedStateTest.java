@@ -198,7 +198,7 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
         .get(0);
     Condenser condenser = new Condenser("condenser");
     condenser.addStream(feed);
-    condenser.setOutTemperature(273.15);
+    condenser.setOutletTemperature(273.15);
     condenser.setSeparation_with_liquid_reflux(true, 10.0, "kg/hr");
     condenser.run();
     assertTrue(condenser.getLiquidProductStream().getFlowRate("kg/hr") > 1.0);

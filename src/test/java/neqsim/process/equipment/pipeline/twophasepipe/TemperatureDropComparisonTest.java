@@ -381,7 +381,6 @@ class TemperatureDropComparisonTest {
    * <li>Surface temperature is set (e.g., seabed at 5°C)</li>
    * <li>Heat transfer coefficient is positive</li>
    * </ul>
-   * </p>
    */
   @Test
   void testTwoFluidPipeWithHeatTransfer() {

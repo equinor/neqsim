@@ -42,7 +42,6 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Runs optimization to find maximum feasible production</li>
  * <li>Records cooling duty and production increase</li>
  * </ul>
- * </p>
  *
  * <p>
  * Results can be used to plot:
@@ -51,7 +50,6 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Cooling duty vs cooling temperature</li>
  * <li>Production increase per MW of cooling</li>
  * </ul>
- * </p>
  *
  * @author NeqSim
  * @version 1.0
@@ -1749,7 +1747,6 @@ public class CoolingDutyProductionAnalysisTest {
    * <li>Effect of adding equipment (filters, separators) in the gas path</li>
    * <li>Sensitivity of compressor performance to inlet pressure</li>
    * </ul>
-   * </p>
    */
   @Test
   public void test2027PressureDropEffectNoCooling() {
@@ -2249,7 +2246,6 @@ public class CoolingDutyProductionAnalysisTest {
    * <li>Surge and stonewall limits</li>
    * <li>ASCII visualization of the compressor map</li>
    * </ul>
-   * </p>
    */
   @Test
   public void testCompressorMapOperatingPoints() {

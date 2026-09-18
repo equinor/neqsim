@@ -37,7 +37,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * train.getCompressor().setOutletPressure(85.0);
  * train.getCompressor().setPolytropicEfficiency(0.76);
  * train.getCompressor().setUsePolytropicCalc(true);
- * train.getCooler().setOutTemperature(273.15 + 35.0);
+ * train.getCooler().setOutletTemperature(273.15 + 35.0);
  * train.run();
  *
  * double power = train.getPower("kW");
@@ -114,7 +114,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
 
     if (useAftercooler) {
       aftercooler = new Cooler(getName() + " aftercooler", compressor.getOutletStream());
-      aftercooler.setOutTemperature(aftercoolerTemperature);
+      aftercooler.setOutletTemperature(aftercoolerTemperature);
       setOutletStream(aftercooler.getOutletStream());
     } else {
       setOutletStream(compressor.getOutletStream());
@@ -212,7 +212,7 @@ public class CompressorTrain extends TwoPortEquipment implements CapacityConstra
   public void setAftercoolerTemperature(double temperature) {
     this.aftercoolerTemperature = temperature;
     if (aftercooler != null) {
-      aftercooler.setOutTemperature(temperature);
+      aftercooler.setOutletTemperature(temperature);
     }
   }
 

@@ -129,7 +129,7 @@ public class CompressorCalculationTest extends neqsim.NeqSimTest {
     // logger.info("pressure out " + comp1.getOutletPressure());
     // logger.info("temperature out " + (comp1.getOutTemperature() - 273.15) + " C");
     /*
-     * double temperatureOut = 273.15 + 84; comp1.setOutletPressure(96.0); comp1.setOutTemperature(temperatureOut);
+     * double temperatureOut = 273.15 + 84; comp1.setOutletPressure(96.0); comp1.setOutletTemperature(temperatureOut);
      * operations.run(); double polytropicHead = comp1.getPolytropicHead(); double flowRate =
      * stream_1.getThermoSystem().getFlowRate("m3/hr"); double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate,
      * polytropicHead); logger.info("polytopic head " + polytropicHead); logger.info("polytopic efficiency " +

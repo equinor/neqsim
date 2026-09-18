@@ -264,7 +264,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     expander.run(id);
 
     Cooler cooler1 = new Cooler("cooler1", expander.getOutletStream());
-    cooler1.setOutTemperature(288.15);
+    cooler1.setOutletTemperature(288.15);
     cooler1.run(id);
 
     expanderPower = expander.getPower();

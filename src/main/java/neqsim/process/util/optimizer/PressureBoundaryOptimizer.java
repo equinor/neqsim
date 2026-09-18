@@ -112,7 +112,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * comp.setPolytropicEfficiency(0.75);
  *
  * Cooler cooler = new Cooler("Aftercooler", comp.getOutletStream());
- * cooler.setOutTemperature(313.15);
+ * cooler.setOutletTemperature(313.15);
  *
  * Stream export = new Stream("Export", cooler.getOutletStream());
  *

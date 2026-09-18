@@ -44,7 +44,7 @@ public final class ProcessModelThermodynamicControlBenchmark {
     feed.setFlowRate(50000.0, "kg/hr");
 
     Cooler inletCooler = new Cooler("inlet cooler", feed);
-    inletCooler.setOutTemperature(300.15);
+    inletCooler.setOutletTemperature(300.15);
     Separator inletSeparator = new Separator("inlet separator", inletCooler.getOutletStream());
     ProcessSystem inletArea = new ProcessSystem("inlet area");
     inletArea.add(feed);
@@ -54,7 +54,7 @@ public final class ProcessModelThermodynamicControlBenchmark {
     Compressor firstCompressor = new Compressor("first compressor", inletSeparator.getGasOutStream());
     firstCompressor.setOutletPressure(90.0, "bara");
     Cooler firstAftercooler = new Cooler("first aftercooler", firstCompressor.getOutletStream());
-    firstAftercooler.setOutTemperature(310.15);
+    firstAftercooler.setOutletTemperature(310.15);
     Separator firstScrubber = new Separator("first scrubber", firstAftercooler.getOutletStream());
     ProcessSystem firstCompressionArea = new ProcessSystem("first compression area");
     firstCompressionArea.add(firstCompressor);
@@ -64,7 +64,7 @@ public final class ProcessModelThermodynamicControlBenchmark {
     Compressor secondCompressor = new Compressor("second compressor", firstScrubber.getGasOutStream());
     secondCompressor.setOutletPressure(125.0, "bara");
     Cooler secondAftercooler = new Cooler("second aftercooler", secondCompressor.getOutletStream());
-    secondAftercooler.setOutTemperature(305.15);
+    secondAftercooler.setOutletTemperature(305.15);
     Separator secondScrubber = new Separator("second scrubber", secondAftercooler.getOutletStream());
     ProcessSystem secondCompressionArea = new ProcessSystem("second compression area");
     secondCompressionArea.add(secondCompressor);
@@ -74,7 +74,7 @@ public final class ProcessModelThermodynamicControlBenchmark {
     ThrottlingValve deliveryValve = new ThrottlingValve("delivery valve", secondScrubber.getGasOutStream());
     deliveryValve.setOutletPressure(100.0, "bara");
     Heater deliveryHeater = new Heater("delivery heater", deliveryValve.getOutletStream());
-    deliveryHeater.setOutTemperature(315.15);
+    deliveryHeater.setOutletTemperature(315.15);
     Separator deliverySeparator = new Separator("delivery separator", deliveryHeater.getOutletStream());
     ProcessSystem deliveryArea = new ProcessSystem("delivery area");
     deliveryArea.add(deliveryValve);

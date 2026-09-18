@@ -25,7 +25,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Mass conservation</li>
  * <li>Statistics tracking</li>
  * </ul>
- * </p>
  *
  * @author Test
  */

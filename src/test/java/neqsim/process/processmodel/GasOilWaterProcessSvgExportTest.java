@@ -71,7 +71,6 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
    * <li>Oil export pump</li>
    * <li>Water disposal pump</li>
    * </ul>
-   * </p>
    *
    * @throws IOException if SVG export fails
    */

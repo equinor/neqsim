@@ -67,7 +67,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     DistillationColumn column = new DistillationColumn(name, 10, true, false);
     column.addFeedStream(gasFeed, 1);
     column.addFeedStream(solventFeed, column.getNumberOfTrays() - 1);
-    column.getReboiler().setOutTemperature(330.15);
+    column.getReboiler().setOutletTemperature(330.15);
     column.setTopPressure(pressure);
     column.setBottomPressure(pressure);
     column.setMaxNumberOfIterations(400);
@@ -406,7 +406,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
 
     DistillationColumn condenserOnly = new DistillationColumn("condenser only", 5, false, true);
     condenserOnly.addFeedStream(feed, 0);
-    condenserOnly.getCondenser().setOutTemperature(298.15);
+    condenserOnly.getCondenser().setOutletTemperature(298.15);
     condenserOnly.setTopPressure(10.0);
     condenserOnly.setBottomPressure(10.0);
     condenserOnly.setSolverType(DistillationColumn.SolverType.SUM_RATES);
@@ -415,8 +415,8 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
 
     DistillationColumn fullColumn = new DistillationColumn("full column", 5, true, true);
     fullColumn.addFeedStream(feed, 3);
-    fullColumn.getCondenser().setOutTemperature(298.15);
-    fullColumn.getReboiler().setOutTemperature(348.15);
+    fullColumn.getCondenser().setOutletTemperature(298.15);
+    fullColumn.getReboiler().setOutletTemperature(348.15);
     fullColumn.getCondenser().setRefluxRatio(2.0);
     fullColumn.getReboiler().setRefluxRatio(2.0);
     fullColumn.setTopPressure(10.0);

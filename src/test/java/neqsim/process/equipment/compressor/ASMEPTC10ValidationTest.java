@@ -26,7 +26,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Discharge temperature prediction</li>
  * <li>Gas power calculations</li>
  * </ul>
- * </p>
  *
  * <p>
  * Reference: ASME PTC 10-1997 "Performance Test Code on Compressors and Exhausters"
@@ -53,7 +52,6 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
    * <li>Polytropic efficiency: 76%</li>
    * <li>Gas: Natural gas (primarily methane with C2+)</li>
    * </ul>
-   * </p>
    */
   @Test
   @DisplayName("PTC 10 Case 1: Natural Gas Single Stage Compression")

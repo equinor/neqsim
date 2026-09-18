@@ -76,7 +76,7 @@ public class ReferenceProcessTest extends neqsim.NeqSimTest {
     gasMixer.addStream(secondStageSeparator.getGasOutStream());
     gasMixer.addStream(thirdStageSeparator.getGasOutStream());
     gasMixer.addStream(standardStageSeparator.getGasOutStream());
-    gasMixer.setOutTemperature(288.15);
+    gasMixer.setOutletTemperature(288.15);
 
     neqsim.process.equipment.stream.Stream exportoil = new neqsim.process.equipment.stream.Stream("export oil",
         standardStageSeparator.getOilOutStream());

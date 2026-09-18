@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.util.concurrent.CancellationException;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -19,7 +20,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermodynamicoperations.flashops.ReactiveCO2BrinePhaseEquilibrium;
 import neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix;
 
-/** Reactive hydrate permutation regressions for issue 3758. */
+/** Reactive hydrate permutation regressions for issue 3758, run in the uninstrumented slow-test shards. */
+@Tag("slow")
 class ReactiveCO2BrineHydrateOrderTest {
   static SystemInterface brine(int order, double pressure, double saltScale, boolean reactive) {
     String[] names = { "CO2", "water", "Na+", "K+", "Cl-" };
@@ -62,13 +64,13 @@ class ReactiveCO2BrineHydrateOrderTest {
   @ParameterizedTest
   @CsvSource({ "40,0.9", "60,1.1" })
   void adjacentStatesPreservePermutationInvariance(double pressure, double saltScale) {
-    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> {
-      SystemInterface first = brine(0, pressure, saltScale, true);
-      SystemInterface second = brine(1, pressure, saltScale, true);
-      solveAndVerify(first);
-      solveAndVerify(second);
-      assertEquivalent(first, second);
-    });
+    SystemInterface first = brine(0, pressure, saltScale, true);
+    SystemInterface second = brine(1, pressure, saltScale, true);
+    // Each independent equilibrium solve has its own bounded budget. The denser 60-bar
+    // case can take over 30 seconds per ordering on an uninstrumented CI runner.
+    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> solveAndVerify(first));
+    assertTimeoutPreemptively(Duration.ofSeconds(60), () -> solveAndVerify(second));
+    assertEquivalent(first, second);
   }
 
   @Test

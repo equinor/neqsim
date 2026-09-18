@@ -2404,7 +2404,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       }
 
       if (outStreamSpecificationNumber >= 0 && outTemperature > 0) {
-        hx.setOutTemperature(outTemperature);
+        hx.setOutletTemperature(outTemperature);
       }
 
       return hx;

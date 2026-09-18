@@ -23,7 +23,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Methanol vaporizing into the gas phase</li>
  * <li>Water and other components being absorbed into the liquid methanol</li>
  * </ul>
- * </p>
  */
 public class MassTransferMeOHTest {
   private SystemInterface fluid;

@@ -41,6 +41,13 @@ NeqSim provides comprehensive unit handling capabilities:
 | `BaseUnit` | Abstract base for unit classes |
 | `NeqSimUnitSet` | Complete unit set definition |
 
+`LengthUnit`, `EnergyUnit`, `PowerUnit`, and `TimeUnit` implement `LinearScaleUnit`.
+Their three-argument `getValue(value, fromUnit, toUnit)` converts the supplied value
+without changing the stored value or unit, including when called through `Unit` or
+`LinearScaleUnit`. Implementations extending `BaseUnit` explicitly delegate this
+overload to the interface default because Java gives inherited class methods
+precedence over interface defaults. Unsupported source or target units are rejected.
+
 ---
 
 ## Supported Units

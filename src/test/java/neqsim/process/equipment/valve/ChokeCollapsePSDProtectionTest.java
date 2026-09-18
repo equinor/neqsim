@@ -29,7 +29,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>PSD valve trips and closes when HIHI alarm activates</li>
  * <li>System is protected from overpressure</li>
  * </ul>
- * </p>
  *
  * @author Even Solbraa
  * @version 1.0

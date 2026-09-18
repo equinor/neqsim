@@ -139,13 +139,13 @@ public class OnshoreMEGprocess {
 
     DistillationColumn column = new DistillationColumn("MEG regeneration column", 2, true, true);
     column.addFeedStream(presRedValve4.getOutletStream(), 0);
-    column.getReboiler().setOutTemperature(273.15 + 135.0);
-    column.getCondenser().setOutTemperature(273.15 + 105.0);
+    column.getReboiler().setOutletTemperature(273.15 + 135.0);
+    column.getCondenser().setOutletTemperature(273.15 + 105.0);
     column.setTopPressure(1.0);
     column.setBottomPressure(1.23);
 
     Cooler coolerRegenGas = new Cooler("regeneration overhead  gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 20.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 20.0);
 
     Separator sepregenGas = new Separator("overhead condenser scrubber", coolerRegenGas.getOutletStream());
 
@@ -154,7 +154,7 @@ public class OnshoreMEGprocess {
     Stream waterToSea = new Stream("condensed water from regenerator", sepregenGas.getLiquidOutStream());
 
     Cooler bufferTank = new Cooler("MEG buffer tank", column.getLiquidOutStream());
-    bufferTank.setOutTemperature(273.15 + 130.0);
+    bufferTank.setOutletTemperature(273.15 + 130.0);
 
     Pump hotLeanMEGPump = new Pump("hot lean MEG pump", bufferTank.getOutletStream());
     hotLeanMEGPump.setOutletPressure(105.0);
@@ -165,7 +165,7 @@ public class OnshoreMEGprocess {
     columnPreHeater.setFeedStream(1, streamHotPump);
 
     Cooler coolerHotMEG2 = new Cooler("lean MEG cooler", columnPreHeater.getOutStream(1));
-    coolerHotMEG2.setOutTemperature(273.15 + 20.0);
+    coolerHotMEG2.setOutletTemperature(273.15 + 20.0);
 
     Stream leanMEGtoMixer = new Stream("lean MEG to makeup mixer", coolerHotMEG2.getOutletStream());
 
