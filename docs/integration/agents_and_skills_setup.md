@@ -5,6 +5,12 @@ description: "Single start-here guide for installing NeqSim agentic AI in VS Cod
 
 # Setting up NeqSim Agents and Skills
 
+For a single bundle containing the repository's agents, skills and MCP server,
+see the [NeqSim Copilot Agent Plugin](copilot_plugin.md). It can be registered
+once in VS Code and used across study workspaces. The individual CLI-based
+installation described below remains available for community and enterprise
+repositories.
+
 This is the canonical **start-here** page for using NeqSim agentic AI: install the
 `neqsim` CLI, install the public **community agents and skills** into VS Code with
 GitHub Copilot, and — for organizations — set up your own **private enterprise

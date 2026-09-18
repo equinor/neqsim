@@ -15,6 +15,11 @@ on:
     paths:
       - 'pom*.xml'
       - 'neqsim-mcp-server/**'
+      - '.github/agents/**'
+      - '.github/skills/**'
+      - 'devtools/build_copilot_plugin.py'
+      - 'devtools/smoke_copilot_plugin.py'
+      - 'docs/integration/copilot_plugin.md'
 
 jobs:
   build_mcp_server:
@@ -69,6 +74,22 @@ jobs:
           path: |
             neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar
             neqsim-mcp-server/target/neqsim-mcp-server-*-runner.jar.sha256
+
+      - name: Bundle Copilot agents, skills and matching MCP server
+        run: >-
+          python devtools/build_copilot_plugin.py
+          --mcp-jar neqsim-mcp-server/target/neqsim-mcp-server-${{ steps.mcp_version.outputs.version }}-runner.jar
+          --archive target/neqsim-copilot-java.zip
+
+      - name: Check plugin MCP transport
+        run: python devtools/smoke_copilot_plugin.py target/copilot-plugin/neqsim --timeout 90
+
+      - name: Upload Java Copilot plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: neqsim-copilot-plugin-java
+          path: target/neqsim-copilot-java.zip
+          if-no-files-found: error
 
   build_docker:
     name: Build & push Docker image

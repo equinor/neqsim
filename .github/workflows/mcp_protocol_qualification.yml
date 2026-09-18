@@ -17,6 +17,9 @@ on:
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
       - '.github/workflows/mcp_protocol_qualification.yml'
+      - 'devtools/build_copilot_plugin.py'
+      - 'devtools/smoke_copilot_plugin.py'
+      - 'docs/integration/copilot_plugin.md'
   push:
     branches:
       - master
@@ -26,6 +29,9 @@ on:
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
       - '.github/workflows/mcp_protocol_qualification.yml'
+      - 'devtools/build_copilot_plugin.py'
+      - 'devtools/smoke_copilot_plugin.py'
+      - 'docs/integration/copilot_plugin.md'
 
 jobs:
   phase0_contracts:
@@ -123,6 +129,20 @@ jobs:
 
       - name: Run focused real-MCP API-inspection qualification
         run: cd neqsim-mcp-server && python test_inspect_api_protocol.py
+
+      - name: Assemble and smoke-test the Java Copilot plugin
+        shell: bash
+        run: |
+          MCP_VERSION=$(mvn -f neqsim-mcp-server/pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)
+          python devtools/build_copilot_plugin.py --mcp-jar "neqsim-mcp-server/target/neqsim-mcp-server-${MCP_VERSION}-runner.jar" --archive target/neqsim-copilot-java.zip
+          python devtools/smoke_copilot_plugin.py target/copilot-plugin/neqsim --timeout 90
+
+      - name: Upload qualified Java Copilot plugin
+        uses: actions/upload-artifact@v7
+        with:
+          name: neqsim-copilot-plugin-java
+          path: target/neqsim-copilot-java.zip
+          if-no-files-found: error
 
       - name: Run focused real-MCP validation-profile qualification
         run: cd neqsim-mcp-server && python test_validation_profile_protocol.py

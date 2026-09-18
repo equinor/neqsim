@@ -14,6 +14,11 @@ tool calls under defined constraints.
 Any MCP client — VS Code Copilot, Claude Desktop, Cursor, or others — can
 connect and use these capabilities.
 
+For VS Code Copilot, the [NeqSim agent plugin](../docs/integration/copilot_plugin.md)
+packages the repository's agents and skills with this MCP server. The release
+workflow produces a Java plugin bundle and verifies its STDIO connection before
+upload; a local builder also supports the existing Docker image.
+
 The system is designed to support controlled engineering use through:
 
 - **3-tier tool model** — tools are classified by validation maturity and
