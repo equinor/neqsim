@@ -17,7 +17,7 @@ on:
 
 jobs:
   changes:
-    name: Detect Java/XML changes
+    name: Detect source and numerical-data changes
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request'
     outputs:
@@ -34,6 +34,8 @@ jobs:
             run_tests:
               - '**/*.java'
               - '**/*.xml'
+              - 'src/main/resources/data/**'
+              - 'src/test/resources/**'
               - '.github/workflows/verify_build.yml'
 
   test_javadoc:
@@ -115,6 +117,42 @@ jobs:
           name: codecov
           use_oidc: true
           fail_ci_if_error: true
+
+  model_spec:
+    name: Assert model specifications (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.run_tests == 'true'
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: '8'
+            pom: pomJava8.xml
+          - java: '21'
+            pom: pom.xml
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+      - name: Run numerical and absence contracts
+        run: >-
+          mvn -B test -ntp -f ${{ matrix.pom }} -DskipITs -Djacoco.skip=true
+          "-Dtest=ModelSpec*Test,ComponentCorrelationSpecTest"
+          -DfailIfNoTests=true -Dsurefire.failIfNoSpecifiedTests=true
+      - name: Retain per-case evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: model-spec-java-${{ matrix.java }}
+          path: |
+            target/model-spec/
+            target/surefire-reports/
+          if-no-files-found: error
 
   agent_benchmark:
     name: Assert agentic benchmark accuracy
