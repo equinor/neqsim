@@ -239,14 +239,14 @@ public class PSFlash extends QfuncFlash {
   }
 
   /**
-   * Check a converged continuation endpoint against an independent cold TP root without
-   * overwriting the converged state.
+   * Check a converged continuation endpoint against an independent cold TP root without overwriting the converged
+   * state.
    *
    * <p>
-   * A cold TP flash can select the opposite cubic root at a phase boundary even when the
-   * continuation root satisfies the entropy specification. The continuation root is retained
-   * only when it is not a higher-Gibbs state than the cold candidate. A lower-Gibbs cold
-   * candidate is replayed on the caller's system and recovered through the cold entropy solver.
+   * A cold TP flash can select the opposite cubic root at a phase boundary even when the continuation root satisfies
+   * the entropy specification. The continuation root is retained only when it is not a higher-Gibbs state than the cold
+   * candidate. A lower-Gibbs cold candidate is replayed on the caller's system and recovered through the cold entropy
+   * solver.
    * </p>
    *
    * @param entropyTolerance accepted total-entropy residual in J/K
@@ -265,8 +265,7 @@ public class PSFlash extends QfuncFlash {
     }
 
     double gibbsTolerance = Math.max(GIBBS_ENERGY_ABSOLUTE_TOLERANCE,
-        GIBBS_ENERGY_RELATIVE_TOLERANCE
-            * Math.max(Math.abs(continuationGibbsEnergy), Math.abs(coldGibbsEnergy)));
+        GIBBS_ENERGY_RELATIVE_TOLERANCE * Math.max(Math.abs(continuationGibbsEnergy), Math.abs(coldGibbsEnergy)));
     if (coldGibbsEnergy < continuationGibbsEnergy - gibbsTolerance) {
       return true;
     }
