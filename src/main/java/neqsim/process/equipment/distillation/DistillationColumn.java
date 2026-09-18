@@ -2796,11 +2796,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Set current guess temperatures
       if (adjustTop) {
         double currentTopTemp = (outerIter == 0) ? topTemp0 : topTemp1;
-        getCondenser().setOutTemperature(currentTopTemp);
+        getCondenser().setOutletTemperature(currentTopTemp);
       }
       if (adjustBottom) {
         double currentBottomTemp = (outerIter == 0) ? bottomTemp0 : bottomTemp1;
-        getReboiler().setOutTemperature(currentBottomTemp);
+        getReboiler().setOutletTemperature(currentBottomTemp);
       }
       applySpecificationTemperatureGuess(adjustTop, adjustBottom,
           adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : Double.NaN,
@@ -3614,7 +3614,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Feed streams and the optional top/bottom {@link ColumnSpecification}s are not the whole input. Column pressure and
    * the reboiler/condenser temperature, operating mode, and ratio settings change the solution just as much, and
    * several of their setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
-   * {@code getReboiler().setOutTemperature(...)}) deliberately do not mark the column for re-initialization. Without
+   * {@code getReboiler().setOutletTemperature(...)}) deliberately do not mark the column for re-initialization. Without
    * them in the fingerprint, a parametric sweep or optimizer that varies column pressure or a column-end temperature
    * against an unchanged feed silently receives the previous solution.
    * </p>
@@ -6352,7 +6352,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         reboiler.setRefluxRatio(state.reboilerRefluxRatio);
       }
       if (state.reboilerHasSetTemperature) {
-        reboiler.setOutTemperature(state.reboilerTemperature);
+        reboiler.setOutletTemperature(state.reboilerTemperature);
       }
       trays.add(reboiler);
     }
@@ -6373,7 +6373,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         condenser.setRefluxRatio(state.condenserRefluxRatio);
       }
       if (state.condenserHasSetTemperature) {
-        condenser.setOutTemperature(state.condenserTemperature);
+        condenser.setOutletTemperature(state.condenserTemperature);
       }
       trays.add(condenser);
     }
@@ -11722,7 +11722,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void setReboilerTemperature(double reboilerTemperature) {
     this.reboilerTemperature = reboilerTemperature;
     if (hasReboiler) {
-      getReboiler().setOutTemperature(reboilerTemperature);
+      getReboiler().setOutletTemperature(reboilerTemperature);
     }
   }
 
@@ -11754,7 +11754,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void setCondenserTemperature(double condenserTemperature) {
     this.condenserTemperature = condenserTemperature;
     if (hasCondenser) {
-      getCondenser().setOutTemperature(condenserTemperature);
+      getCondenser().setOutletTemperature(condenserTemperature);
     }
   }
 

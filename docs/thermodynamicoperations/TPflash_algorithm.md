@@ -2805,3 +2805,35 @@ tables. They do not independently validate component-property corrections, UMR-P
 interaction parameters, phase-envelope accuracy, experimental PVT predictions, or the
 missing-interaction policy tracked by issue #3727. No solver algorithm, public API, table entry,
 model default, or wall-clock performance claim is introduced.
+
+
+### Translated Peng-Robinson flash lifecycle
+
+The translated Peng-Robinson system (`SystemPrEosvolcor`) solves the ordinary PR cubic before
+applying its volume shift. This preserves mechanically stable liquid roots whose translated molar
+volume is below the untranslated co-volume. Level-zero phase initialization also refreshes the
+translation properties used by a subsequent flash. These shared phase changes support phase-envelope
+work, but TP-flash equilibrium and state reuse are qualified independently.
+
+The bounded synthetic qualification uses the classic mixing rule and the following nominal states.
+Mole amounts are normalized by the thermodynamic system, and pressure is absolute.
+
+| Case | Components and mole amounts | Temperature (K) | Pressure (bara) |
+| --- | --- | ---: | ---: |
+| Large volatility | methane 0.90, n-heptane 0.10 | 260.0 | 200.0 |
+| Rich gas | nitrogen 0.01, carbon dioxide 0.02, methane 0.72, ethane 0.08, propane 0.06, n-butane 0.05, n-hexane 0.06 | 273.15 | 100.0 |
+| Aromatic | methane 0.90, cumene 0.10 | 298.15 | 10.0 |
+| Light control | methane 0.70, ethane 0.20, n-butane 0.10 | 298.15 | 30.0 |
+
+The 32-flash lifecycle matrix compares ordinary and explicit-multiphase calculations, starts from
+beta values within `1e-12` of a bound, changes temperature by 1 K and pressure by 2%, returns to
+the nominal state, and repeats the settled calculation. Acceptance requires phase and composition
+normalization within `5e-12`, component material balance below `1e-10`, comparable interphase
+log-fugacity residual below `1e-8`, bounded finite compositions and phase fractions, positive
+compressibility, and finite Gibbs energy and enthalpy. Single-phase states additionally require
+`beta = 1` and `x = z`; at least two nominal states must be multiphase.
+
+These public synthetic fluids qualify translated-PR TP-flash closure and lifecycle behavior. They
+do not validate the volume-translation correlation or parameters, phase-envelope accuracy,
+experimental PVT predictions, PS/PH flashes, or acoustic-speed calculations. No production solver,
+public API, model parameter, unit, default, or wall-clock performance claim is introduced.

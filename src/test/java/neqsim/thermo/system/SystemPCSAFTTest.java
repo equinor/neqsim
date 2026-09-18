@@ -197,7 +197,7 @@ public class SystemPCSAFTTest {
     feed.setPressure(100.0, "bara");
 
     Cooler cooler = new Cooler("cooler", feed);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ThrottlingValve valve = new ThrottlingValve("JT valve", cooler.getOutletStream());
     valve.setOutletPressure(30.0);
@@ -235,7 +235,7 @@ public class SystemPCSAFTTest {
     comp.setOutletPressure(50.0, "bara");
 
     Cooler aftercooler = new Cooler("aftercooler", comp.getOutletStream());
-    aftercooler.setOutTemperature(273.15 + 35.0);
+    aftercooler.setOutletTemperature(273.15 + 35.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

@@ -87,7 +87,7 @@ above. Machine-readable coverage, Java assertions,
 `test_compose_workflow_protocol.py`, synchronized focused protocol
 expectations, authoritative `test_mcp_server.py` accounting, and
 documentation moved together from `20/31/20` to `20/32/19`. Current
-inventory `1.40 / 20+40+11` retains that classification.
+inventory `1.41 / 20+41+10` retains that classification.
 
 No promotion candidate remains queued. Phase 0 remains incomplete and
 `scientificValidationComplete=false`; this is a bounded software-contract

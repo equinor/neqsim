@@ -339,7 +339,7 @@ public abstract class Component implements ComponentInterface {
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
         normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
-        if (AntoineA == 0) {
+        if (AntoineA == 0 && !"none".equals(antoineLiqVapPresType)) {
           AntoineA = 1.0;
           AntoineB = getNormalBoilingPoint() - 273.15;
         }
@@ -1479,7 +1479,28 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasAntoineVaporPressureCorrelation() {
+    return ionicCharge == 0 && !isIsIon() && antoineLiqVapPresType != null && !antoineLiqVapPresType.trim().isEmpty()
+        && !"none".equals(antoineLiqVapPresType);
+  }
+
+  /**
+   * Check the liquid-vapor domain without treating a correlation as an equation of state.
+   *
+   * @param temperature temperature in K
+   * @return true if a correlation exists and temperature is positive, finite and no greater than Tc
+   */
+  private boolean isLiquidVaporPressureApplicable(double temperature) {
+    return hasAntoineVaporPressureCorrelation() && Double.isFinite(temperature) && temperature > 0.0
+        && Double.isFinite(criticalTemperature) && temperature <= criticalTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getAntoineVaporPressure(double temp) {
+    if (!isLiquidVaporPressureApplicable(temp)) {
+      return Double.NaN;
+    }
     if (usesDipprVaporPressureCorrelation()) {
       // DIPPR-101 coefficients produce pressure in Pa; convert to bar.
       return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
@@ -1506,6 +1527,9 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressuredT(double temp) {
+    if (!isLiquidVaporPressureApplicable(temp)) {
+      return Double.NaN;
+    }
     if (usesDipprVaporPressureCorrelation()) {
       return getAntoineVaporPressure(temp)
           * (-AntoineB / (temp * temp) + AntoineC / temp + AntoineD * AntoineE * Math.pow(temp, AntoineE - 1.0));
@@ -1526,6 +1550,10 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporTemperature(double pres) {
+    if (!hasAntoineVaporPressureCorrelation() || !Double.isFinite(pres) || pres <= 0.0
+        || !Double.isFinite(criticalPressure) || pres > criticalPressure) {
+      return Double.NaN;
+    }
     double nyPres = 0.0;
     double nyTemp = criticalTemperature * 0.7;
     int iter = 0;
@@ -1548,7 +1576,7 @@ public abstract class Component implements ComponentInterface {
       for (int i = 0; i < 100; i++) {
         nyTemp = 0.5 * (low + high);
         nyPres = getAntoineVaporPressure(nyTemp);
-        if (Math.abs((nyPres - pres) / pres) < 1e-5) {
+        if (Math.abs((nyPres - pres) / pres) < 1e-10) {
           break;
         }
         if (nyPres > pres) {

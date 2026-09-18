@@ -53,7 +53,8 @@ class UnitConversionRecipesDocumentationContracts(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn('case "hp":', power_source)
         self.assertNotIn('case "HP":', power_source)
-        self.assertIn('"ft".equals(name)', length_source)
+        # The parameter name is not part of the case-sensitive unit contract.
+        self.assertRegex(length_source, r'"ft"\.equals\([A-Za-z_$][\w$]*\)')
 
     def test_flow_and_pressure_basis_boundaries_are_explicit(self):
         for phrase in (

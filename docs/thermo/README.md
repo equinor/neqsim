@@ -37,6 +37,7 @@ thermo/
 ### Core Guides
 
 - [CPA Water Caloric Alpha](cpa_water_caloric): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
+- [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
 - [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
 - [Experimental Solid Helmholtz Models](solid_helmholtz_models): **Pure solid-state and freezing-point workflows** for solid argon and para-hydrogen, with explicit units, validity ranges, structured convergence diagnostics, and opt-in limitations.
 - [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.

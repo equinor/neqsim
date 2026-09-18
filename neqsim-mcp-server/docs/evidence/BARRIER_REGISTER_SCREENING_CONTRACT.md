@@ -62,6 +62,7 @@ Inventory `1.40 / 20 explicit + 40 contract-tested + 11 confirmed gaps`
 atomically promotes `runBarrierRegister=CONTRACT_TESTED`. The canonical
 machine-readable evidence record, Java assertions, focused packaged protocol,
 authoritative comprehensive protocol accounting, and current-state documentation
-move together on one exact head. No promotion candidate remains queued,
-`scientificValidationComplete=false`, and every safety and engineering
-limitation above remains controlling.
+move together on one exact head. Current inventory `1.41 / 20 explicit + 41
+contract-tested + 10 confirmed gaps` retains that classification. No promotion
+candidate remains queued, `scientificValidationComplete=false`, and every safety
+and engineering limitation above remains controlling.

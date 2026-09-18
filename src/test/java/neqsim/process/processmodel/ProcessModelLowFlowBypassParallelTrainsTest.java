@@ -54,7 +54,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     k1.setIsentropicEfficiency(0.78);
 
     Heater ic = new Heater(areaName + "_IC", k1.getOutletStream());
-    ic.setOutTemperature(308.15);
+    ic.setOutletTemperature(308.15);
 
     Compressor k2 = new Compressor(areaName + "_K2", ic.getOutletStream());
     k2.setOutletPressure(outletPressureBara);

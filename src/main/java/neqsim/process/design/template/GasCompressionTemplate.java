@@ -144,7 +144,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
       // Interstage cooler (except for last stage if no aftercooler needed)
       if (stage < numStages || basis.getParameter("includeAftercooler", 1.0) > 0) {
         Cooler cooler = new Cooler("Stage " + stage + " Cooler", compressor.getOutletStream());
-        cooler.setOutTemperature(interstageTemp + 273.15); // Convert to K
+        cooler.setOutletTemperature(interstageTemp + 273.15); // Convert to K
         process.add(cooler);
         currentStream = (Stream) cooler.getOutletStream();
       } else {

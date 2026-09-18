@@ -92,13 +92,15 @@ class VUFlashEOSCGTest {
       PhaseInterface gasPhase = phaseOfType(system, PhaseType.GAS);
       PhaseInterface liquidPhase = otherPhase(system, gasPhase);
       assertNotEquals(gasPhase.getDensity("kg/m3"), liquidPhase.getDensity("kg/m3"), 1.0);
+      assertTrue(gasPhase.getDensity("kg/m3") < liquidPhase.getDensity("kg/m3"));
+      assertSpecifications(system, targetVolumeM3, targetInternalEnergyJ);
     } catch (IllegalStateException expectedFailure) {
       assertTrue(expectedFailure.getMessage().contains("could not find a stable"));
     }
   }
 
   @ParameterizedTest
-  @CsvSource({ "0.001", "0.999" })
+  @CsvSource({ "0.0001", "0.001", "0.01", "0.99", "0.999", "0.9999" })
   void nearSaturationLimitStateRemainsTwoPhase(double vaporFraction) throws Exception {
     SystemInterface reference = createSaturationReference(52.0, vaporFraction);
     double targetVolumeM3 = reference.getVolume("m3");

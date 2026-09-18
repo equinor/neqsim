@@ -54,7 +54,7 @@ public class DistillationAcceleratorDiagnosticTest {
 
     DistillationColumn column = new DistillationColumn("deethanizer_" + solverType.name(), 5, true, false);
     column.addFeedStream(feed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(50);

@@ -1,6 +1,8 @@
 package neqsim.process.equipment.capacity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -11,6 +13,25 @@ import neqsim.process.equipment.powergeneration.SteamTurbine;
 
 /** Rating consistency across power generation strategy entry points. */
 class PowerGenerationCapacityStrategyTest extends neqsim.NeqSimTest {
+  @ParameterizedTest
+  @ValueSource(strings = { "gas", "steam", "hrsg", "combined" })
+  void nativeHardLimitsAndAdditionalConstraintsAreEnforced(String type) {
+    ProcessEquipmentInterface equipment = equipment(type);
+    setRating(equipment, 30.0);
+    CapacityConstrainedEquipment nativeEquipment = (CapacityConstrainedEquipment) equipment;
+    PowerGenerationCapacityStrategy strategy = new PowerGenerationCapacityStrategy();
+    CapacityConstraint rating = nativeEquipment.getCapacityConstraints().values().iterator().next();
+    double maximum = rating.getMaxValue();
+    rating.setValueSupplier(() -> maximum - 1.0);
+    assertTrue(strategy.isWithinHardLimits(equipment));
+    rating.setValueSupplier(() -> maximum + 1.0);
+    assertFalse(strategy.isWithinHardLimits(equipment));
+    rating.setValueSupplier(() -> 0.0);
+    nativeEquipment.addCapacityConstraint(new CapacityConstraint("custom", "kW", CapacityConstraint.ConstraintType.HARD)
+        .setMaxValue(1.0).setValueSupplier(() -> 2.0));
+    assertFalse(strategy.isWithinHardLimits(equipment));
+  }
+
   @ParameterizedTest
   @ValueSource(strings = { "gas", "steam", "hrsg", "combined" })
   void equipmentRatingOverridesStrategyDefaultInBothCapacityApis(String type) {

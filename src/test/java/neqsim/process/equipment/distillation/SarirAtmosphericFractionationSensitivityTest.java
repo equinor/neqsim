@@ -127,7 +127,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
     column.setTopPressure(1.20);
     column.setBottomPressure(SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0);
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    column.getReboiler().setOutTemperature(700.0);
+    column.getReboiler().setOutletTemperature(700.0);
     column.setCondenserRefluxRatio(1.0);
     column.setLiquidSideDrawFraction(KEROSENE_SCREEN_TRAY, 0.08);
     column.setLiquidSideDrawFraction(DIESEL_SCREEN_TRAY, 0.15);

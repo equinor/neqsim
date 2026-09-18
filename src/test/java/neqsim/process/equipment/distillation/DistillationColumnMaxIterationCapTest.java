@@ -43,7 +43,7 @@ public class DistillationColumnMaxIterationCapTest {
 
     DistillationColumn column = new DistillationColumn("cap column", 8, true, false);
     column.addFeedStream(feed, 8);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);

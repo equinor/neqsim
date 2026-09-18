@@ -332,7 +332,7 @@ public class BiogasToGridModule extends ProcessModule {
 
     // ── Step 4: Cooling to grid temperature ──
     cooler = new Cooler(getName() + "_cooler", compressedStream);
-    cooler.setOutTemperature(273.15 + gridTemperatureC);
+    cooler.setOutletTemperature(273.15 + gridTemperatureC);
 
     ProcessSystem coolingSystem = new ProcessSystem();
     coolingSystem.add(cooler);

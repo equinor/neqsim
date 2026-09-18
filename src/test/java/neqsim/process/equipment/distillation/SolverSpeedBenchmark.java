@@ -185,7 +185,7 @@ public class SolverSpeedBenchmark {
 
     DistillationColumn column = new DistillationColumn("bench_" + caseName + "_" + solverLabel, trayCount, true, false);
     column.addFeedStream(feed, trayCount);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(trayCount <= 5 ? 50 : 80);
@@ -225,8 +225,8 @@ public class SolverSpeedBenchmark {
     column.addFeedStream(feed, 3);
     column.setTopPressure(pressure);
     column.setBottomPressure(pressure + 0.2);
-    column.getCondenser().setOutTemperature(condenserTemperature);
-    column.getReboiler().setOutTemperature(reboilerTemperature);
+    column.getCondenser().setOutletTemperature(condenserTemperature);
+    column.getReboiler().setOutletTemperature(reboilerTemperature);
     column.setCondenserRefluxRatio(1.8);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
@@ -262,7 +262,7 @@ public class SolverSpeedBenchmark {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(2.0e-1);

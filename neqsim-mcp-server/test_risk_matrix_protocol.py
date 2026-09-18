@@ -324,9 +324,9 @@ def test_inventory_is_promoted(client):
     record = limitations.get("coverageRecords", {}).get("runRiskMatrix", {})
     sources = record.get("contractEvidenceSources", [])
     require(
-        inventory.get("inventoryVersion") == "1.40"
-        and limitations.get("contractTestedToolCount") == 40
-        and limitations.get("confirmedGapToolCount") == 11
+        inventory.get("inventoryVersion") == "1.41"
+        and limitations.get("contractTestedToolCount") == 41
+        and limitations.get("confirmedGapToolCount") == 10
         and limitations.get("contractPromotionCandidateCount") == 0,
         "risk-matrix promotion did not update inventory accounting",
         inventory,

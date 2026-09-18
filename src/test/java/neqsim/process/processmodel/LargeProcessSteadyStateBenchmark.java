@@ -140,11 +140,11 @@ public final class LargeProcessSteadyStateBenchmark {
     StreamInterface current = inlet;
     for (int stage = 0; stage < count; stage++) {
       Heater heater = new Heater(prefix + " heater " + stage, current);
-      heater.setOutTemperature(328.15 + stage % 3);
+      heater.setOutletTemperature(328.15 + stage % 3);
       fixture.heaters.add(heater);
       area.add(heater);
       Cooler cooler = new Cooler(prefix + " cooler " + stage, heater.getOutletStream());
-      cooler.setOutTemperature(298.15 + stage % 3);
+      cooler.setOutletTemperature(298.15 + stage % 3);
       fixture.heaters.add(cooler);
       area.add(cooler);
       ThrottlingValve valve = new ThrottlingValve(prefix + " valve " + stage, cooler.getOutletStream());

@@ -148,13 +148,13 @@ public class DehydrationTemplate implements ProcessTemplate {
     // Rich glycol heater (simulates heat from lean/rich exchanger)
     // Using separate Heater/Cooler instead of HeatExchanger for template simplicity
     Heater richGlycolHeater = new Heater("Rich Glycol Heater", flashDrum.getLiquidOutStream());
-    richGlycolHeater.setOutTemperature(reboilerTemp - 20.0 + 273.15); // Preheat to near reboiler
+    richGlycolHeater.setOutletTemperature(reboilerTemp - 20.0 + 273.15); // Preheat to near reboiler
     // temp
     process.add(richGlycolHeater);
 
     // Regeneration still (simplified as heater + separator)
     Heater reboiler = new Heater("Regeneration Reboiler", richGlycolHeater.getOutletStream());
-    reboiler.setOutTemperature(reboilerTemp + 273.15);
+    reboiler.setOutletTemperature(reboilerTemp + 273.15);
     process.add(reboiler);
 
     Separator regenerator = new Separator("Regeneration Still", reboiler.getOutletStream());
@@ -168,7 +168,7 @@ public class DehydrationTemplate implements ProcessTemplate {
     // Lean glycol cooler
     neqsim.process.equipment.heatexchanger.Cooler glycolCooler = new neqsim.process.equipment.heatexchanger.Cooler(
         "Lean Glycol Cooler", glycolPump.getOutletStream());
-    glycolCooler.setOutTemperature(leanGlycolTemp + 273.15);
+    glycolCooler.setOutletTemperature(leanGlycolTemp + 273.15);
     process.add(glycolCooler);
 
     // TEG makeup mixer (for glycol losses)

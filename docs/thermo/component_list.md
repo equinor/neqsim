@@ -137,7 +137,7 @@ wrong, or registered separately for each stereoisomer.
 `ComponentInterface.getAntoineVaporPressure(T)` takes temperature in K and returns
 pressure in bar. Its coefficients can represent several correlations. Explicit
 `pow10` and `pow10KPa` labels keep their existing interpretation. For other labels,
-`|ANTOINEE| > 1e-12` selects the five-parameter DIPPR-101 form, even when the database
+`|ANTOINEE| > 1e-12` selects the five-parameter DIPPR-101 form for available data, even when the database
 label is the legacy `log` or `exp`:
 
 $$P_{\mathrm{sat}}[\mathrm{bar}] = \frac{\exp(A + B/T + C\ln T + DT^E)}{10^5}$$
@@ -146,7 +146,7 @@ The stored DIPPR coefficients give pressure in Pa before conversion to bar.
 `getAntoineVaporPressuredT(T)` uses the same selection and returns the analytical
 DIPPR derivative in bar/K. This keeps the derivative consistent with the pressure
 used by `getAntoineVaporTemperature(P)` and activity-coefficient models.
-Rows with zero exponent retain their existing correlation selection.
+Available rows with zero exponent retain their existing correlation selection.
 
 For example, the stored coefficients at 298.15 K give 0.91801 bar for `i-pentane`,
 9.53257 bar for `propanePVTsim`, and 2.43661 bar for `nbutanePVTsim`.
@@ -154,12 +154,19 @@ For example, the stored coefficients at 298.15 K give 0.91801 bar for `i-pentane
 trips, finite-difference derivatives, and an independent
 [NIST isopentane correlation](https://webbook.nist.gov/cgi/cbook.cgi?ID=C78784&Mask=4).
 
-Correct dispatch does not validate the coefficients or extend their temperature
-range. Some database entries still contain placeholder or inconsistent parameters;
-bare ions do not have a pure-liquid vapor pressure, and extrapolation above the
-critical temperature is not a saturation calculation. The dispatch correction in
-[#3768](https://github.com/equinor/neqsim/issues/3768) is separate from the database
-quality work in [#3771](https://github.com/equinor/neqsim/issues/3771).
+`hasAntoineVaporPressureCorrelation()` reports missing data explicitly. The known
+shared placeholders, copied water coefficients on unrelated compounds, and all
+ions are marked `none` in the standard table. Pressure, derivative and inverse
+queries return `Double.NaN` for these rows; pressure and derivative also reject
+temperatures above Tc, and inversion rejects pressures above Pc. The extended
+database preserves these corrections and acetone's corrected NIST coefficients.
+See the [database guide](component_database_guide.md#vapor-pressure-parameters)
+for units, applicability, compatibility and acetone provenance.
+
+Correct dispatch does not validate other coefficients or extend their fitted
+temperature range. The dispatch correction in
+[#3768](https://github.com/equinor/neqsim/issues/3768) and missing-data policy in
+[#3771](https://github.com/equinor/neqsim/issues/3771) address distinct defects.
 
 ---
 

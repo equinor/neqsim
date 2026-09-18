@@ -96,7 +96,7 @@ public class MultiVariableAdjusterTest {
     Stream compOut = new Stream("compressor out", compressor.getOutletStream());
 
     Cooler cooler = new Cooler("cooler", compOut);
-    cooler.setOutTemperature(273.15 + 40.0);
+    cooler.setOutletTemperature(273.15 + 40.0);
 
     Stream coolerOut = new Stream("cooler out", cooler.getOutletStream());
 
