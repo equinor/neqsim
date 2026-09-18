@@ -102,4 +102,10 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
   public static double convert(double value, String unit, String toUnit) {
     return new PowerUnit(value, unit).getValue(toUnit);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double value, String fromUnit, String toUnit) {
+    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
+  }
 }

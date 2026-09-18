@@ -63,6 +63,7 @@ public interface LinearScaleUnit extends Unit {
    * @param toUnit target unit
    * @return converted value
    */
+  @Override
   default double getValue(double value, String fromUnit, String toUnit) {
     return value * getConversionFactor(fromUnit) / getConversionFactor(toUnit);
   }

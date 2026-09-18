@@ -117,4 +117,10 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   public static double convert(double value, String unit, String toUnit) {
     return new EnergyUnit(value, unit).getValue(toUnit);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(double value, String fromUnit, String toUnit) {
+    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
+  }
 }
