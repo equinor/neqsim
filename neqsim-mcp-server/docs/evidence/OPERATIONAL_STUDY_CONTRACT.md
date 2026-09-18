@@ -51,8 +51,11 @@ behavior, and the invariant advisory boundary. The focused
 `test_operational_study_protocol.py` runs six scenarios through the packaged
 MCP server.
 
-This qualification intentionally leaves Phase 0 inventory version `1.40` at
-`20 EXPLICIT_TRUST + 40 CONTRACT_TESTED + 11 CONFIRMED_GAP`.
-`runOperationalStudy` remains `CONFIRMED_GAP` until this evidence merges and
-a later atomic promotion re-audits current `master`, updates every accounting
-guard on one exact head, and preserves the limitations above.
+Merged PR #3747 established the direct Java and packaged-MCP qualification
+recorded here. Inventory `1.41 / 20 explicit + 41 contract-tested + 10
+confirmed gaps` atomically promotes `runOperationalStudy=CONTRACT_TESTED`.
+The canonical machine-readable evidence record, Java assertions, focused
+packaged protocol, authoritative comprehensive protocol accounting, and
+current-state documentation move together on one exact head. No promotion
+candidate remains queued, `scientificValidationComplete=false`, and every
+engineering, safety, and advisory limitation above remains controlling.
