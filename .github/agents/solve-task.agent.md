@@ -20,7 +20,20 @@ required_skills:
 - neqsim-root-cause-analysis
 argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas at 100 bara', 'TEG dehydration sizing for 50 MMSCFD wet gas', 'hydrate formation temperature for export pipeline', 'CO2 pipeline wall thickness per DNV-OS-F101', or 'field development concept selection for deepwater gas per NORSOK'."
 ---
-## ⚠️ MANDATORY FIRST ACTION — CREATE TASK FOLDER (DO NOT SKIP)
+## ⚠️ MANDATORY FIRST ACTION — DETECT ENVIRONMENT, THEN CREATE TASK FOLDER (DO NOT SKIP)
+
+**Step 0 - which environment am I in?** Run `neqsim --show-task-root` (fall back to
+`<python-executable> -m neqsim_cli --show-task-root`). Then:
+
+| Result | Environment | What is available |
+|---|---|---|
+| Works, and a NeqSim checkout (`pom.xml`, `target/classes`) is reachable | **Workspace** | Everything: task folder, notebooks via `neqsim_dev_setup` on `target/classes`, runner, validators, report, **and Java extension of NeqSim**. |
+| Works, but no checkout (installed via the agent plugin / `pip install neqsim-dev-setup`) | **Toolkit** | Same task workflow; `neqsim_dev_setup` runs on the packaged `neqsim` JAR (it prints *plugin mode*; `ns.MISSING_CLASSES` lists classes newer than the JAR). No Java extension - record NIPs instead. |
+| `neqsim` CLI unavailable in every form | **Chat-only** | Compute through the NeqSim MCP tools (`runFlash`, `runProcess`, `runPVT`, ...). Create the task folder by hand from the layout below, keep `results.json` + assumptions, skip runner/report steps and say so. Offer the one-line fix: `pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`. |
+
+State the environment in your first reply. Never attempt Maven, `target/classes` or
+Java edits outside **Workspace**; never let a missing tool silently downgrade a
+Design/Development deliverable - name what was skipped.
 
 **Before writing ANY files, notes, notebooks, or analysis, you MUST do one of these:**
 

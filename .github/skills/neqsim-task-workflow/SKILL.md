@@ -99,6 +99,32 @@ unprocessed; record a blocked/manual-review status when extraction cannot run.
 
 ---
 
+## 0.6 ── OPERATING ENVIRONMENTS (what each step needs)
+
+The workflow below was written in the NeqSim source checkout. It also runs from
+the pip-installed toolkit (`neqsim-dev-setup`, installed automatically by the
+core agent plugin's SessionStart hook) and, degraded, from chat with only the
+MCP server. Detect the environment first (agent Step 0) and apply this table.
+
+| Step / tool | Workspace (checkout) | Toolkit (pip, no checkout) | Chat-only (MCP) |
+|---|---|---|---|
+| `neqsim new-task`, `user_input.md`, `study_config.yaml` | yes | yes | create folder by hand from the template layout |
+| `neqsim_dev_setup.neqsim_init()` | `target/classes` (latest Java) | packaged JAR from `pip install neqsim` (`ns.JAR_MODE`, `ns.MISSING_CLASSES`) | not available - use MCP `runFlash`/`runProcess`/`runPVT` |
+| `recompile=True`, `mvnw`, Java classes + JUnit (NIP implementation) | yes | **no** - write the NIP, do not attempt | no |
+| NeqSim Runner (`AgentBridge`, `neqsim_runner`) | yes | yes | no - run scripts directly or use MCP |
+| `validate_task_results`, `consistency_checker`, `TaskResultValidator` | yes | yes (Python validators; the Java `TaskResultValidator` needs the JAR, available) | Python validators not installed - state results.json was not gate-checked |
+| `neqsim report` / `generate_report.py`, `WORK_RECORD.md` | yes | yes (Word template optional) | no - deliver the summary in chat |
+| `skill_search` / `agent_search`, `capability_assessment.md` | yes | yes | by reasoning over the skill catalogue only |
+| Enterprise data readers (STID, SAP, PDM, OTS, Seeq, PEPR) | with credentials | with credentials (enterprise plugin installs the packages) | no |
+| Task log / PR back to NeqSim | yes | NIP + issue only | NIP in the answer |
+
+When a row says **no**, the deliverable matrix in the agent's section 0 still
+applies: do the step by the strongest available means and record what was
+skipped in `results.json` `data_gaps` (or in the chat answer) so the reader knows
+the evidence level.
+
+---
+
 ## 1 ── OVERVIEW
 
 You follow the **3-step AI-Supported Task Solving While Developing** workflow.

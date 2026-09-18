@@ -1660,6 +1660,14 @@ def _candidates():
             yield os.path.join(root, RELATIVE)
     if GENERATOR_HINT:
         yield GENERATOR_HINT
+    # pip-installed toolkit (agent-plugin installs without a source checkout)
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("task_template")
+        for loc in (spec.submodule_search_locations or []) if spec else []:
+            yield os.path.join(loc, "step3_report", "generate_report.py")
+    except (ImportError, ValueError):
+        pass
     here = os.path.abspath(__file__)
     for _ in range(8):
         parent = os.path.dirname(here)

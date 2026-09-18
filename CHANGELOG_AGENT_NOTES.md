@@ -79,6 +79,17 @@ repos were normalised:
 * **SKILL.md `description` capped at 1024 chars** (`maxLength` in the shared manifest schema +
   `verify_skills_agents.py`); 12 over-long descriptions rewritten. Clients truncate beyond
   1024 and silently drop the routing vocabulary.
+* **Plugin-mode fitness for the task workflow.** `devtools/` is now a complete pip package
+  (`neqsim-dev-setup` 0.2.0: `neqsim` CLI, `neqsim_dev_setup`, `new_task`, `neqsim_runner`,
+  validators, consistency checker, work record, report generator + `task_template/`) that
+  depends on the `neqsim` wheel. The core agent plugin's SessionStart hook installs it
+  (`pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git@<ref>#subdirectory=devtools"`,
+  ref from `build_agent_plugin.py --toolkit-ref`). `neqsim_dev_setup.neqsim_init()` falls back
+  to the packaged JAR when no `pom.xml` is reachable (`ns.JAR_MODE`, `ns.MISSING_CLASSES` for
+  classes newer than the JAR; `NEQSIM_JAR` overrides). `@solve-task` Step 0 now detects
+  Workspace / Toolkit / Chat-only and the `neqsim-task-workflow` skill §0.6 says what each step
+  needs. Verified end to end in a fresh venv with no checkout: `neqsim new-task`, JAR-mode
+  flash, validator, `neqsim report` (docx + html + work record).
 
 ---
 

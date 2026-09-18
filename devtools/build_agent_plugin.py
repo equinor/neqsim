@@ -64,6 +64,14 @@ CORE_INSTRUCTIONS = REPO_ROOT / ".github" / "instructions"
 # Unset by default so the package is portable and the content hash does not
 # depend on the build machine; the hook then resolves NEQSIM_PYTHON at run time.
 DEFAULT_PYTHON = os.environ.get("NEQSIM_PLUGIN_PYTHON") or ""
+# The task-solving toolkit (neqsim CLI, neqsim_dev_setup, runner, validators, report
+# generator) is devtools/ packaged as `neqsim-dev-setup`; it pulls the `neqsim` wheel
+# so plugin users get a packaged JAR without a source checkout. `{ref}` is the git ref
+# to install from (--toolkit-ref; a release tag once the tag contains this packaging).
+# Override the whole spec with NEQSIM_TOOLKIT_REQUIREMENT once published to PyPI.
+TOOLKIT_REQUIREMENT_TEMPLATE = (
+    "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git@{ref}#subdirectory=devtools")
+TOOLKIT_REQUIREMENT = os.environ.get("NEQSIM_TOOLKIT_REQUIREMENT") or TOOLKIT_REQUIREMENT_TEMPLATE
 SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
 SKIP_SUFFIXES = {".pyc"}
 
@@ -73,7 +81,8 @@ class PluginSpec:
 
     def __init__(self, name: str, description: str, skills_roots: List[Path],
                  agents_roots: List[Path], rules_roots: List[Path],
-                 include_mcp: bool, pip_install_roots: List[Path]) -> None:
+                 include_mcp: bool, pip_install_roots: List[Path],
+                 pip_targets: Optional[List[str]] = None) -> None:
         self.name = name
         self.description = description
         self.skills_roots = skills_roots
@@ -81,6 +90,8 @@ class PluginSpec:
         self.rules_roots = rules_roots
         self.include_mcp = include_mcp
         self.pip_install_roots = pip_install_roots
+        # Extra pip requirement specs the SessionStart hook installs (non-editable).
+        self.pip_targets = pip_targets or []
 
 
 def default_specs() -> List[PluginSpec]:
@@ -92,9 +103,11 @@ def default_specs() -> List[PluginSpec]:
         PluginSpec(
             "neqsim",
             "NeqSim core: thermodynamics and process-simulation skills, specialist "
-            "agents, and the NeqSim MCP server.",
+            "agents, the NeqSim MCP server, and the task-solving toolkit (neqsim CLI, "
+            "runner, validators, report generator) installed on first session.",
             [REPO_ROOT / ".github" / "skills"], [REPO_ROOT / ".github" / "agents"],
             [CORE_INSTRUCTIONS], True, [],
+            pip_targets=[TOOLKIT_REQUIREMENT],
         ),
         PluginSpec(
             "neqsim-community",
@@ -176,12 +189,14 @@ def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
     dest.write_text(content, encoding="utf-8")
 
 
-HOOK_PY = '''"""SessionStart hook: install this plugin's skill packages (editable).
+HOOK_PY = '''"""SessionStart hook: install this plugin's Python packages.
 
-Target interpreter, in order: NEQSIM_PYTHON, a pinned build-time interpreter
-(if any), the interpreter running this script. Never selects or creates an
-environment. Exits 0 on every path so the hook cannot block a chat session;
-pip output goes to stderr because VS Code parses hook stdout as JSON.
+Targets: the bundled skills (editable, when this plugin ships a pyproject) and
+any pinned requirement specs such as the NeqSim task-solving toolkit. Target
+interpreter, in order: NEQSIM_PYTHON, a pinned build-time interpreter (if any),
+the interpreter running this script. Never selects or creates an environment.
+Exits 0 on every path so the hook cannot block a chat session; pip output goes
+to stderr because VS Code parses hook stdout as JSON.
 """
 import os
 import subprocess
@@ -189,6 +204,8 @@ import sys
 from pathlib import Path
 
 PINNED_PYTHON = {pinned!r}
+EDITABLE_SELF = {editable_self!r}
+REQUIREMENTS = {requirements!r}
 
 root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 candidates = [os.environ.get("NEQSIM_PYTHON"), PINNED_PYTHON, sys.executable]
@@ -199,10 +216,16 @@ stamp = Path(os.environ.get("PLUGIN_DATA") or root) / ".skills_installed_version
 version = (root / "plugin.json").read_text(encoding="utf-8")
 if stamp.exists() and stamp.read_text(encoding="utf-8") == version:
     sys.exit(0)
-result = subprocess.run(
-    [python, "-m", "pip", "install", "-e", str(root), "--no-deps", "-q"],
-    stdout=sys.stderr, stderr=sys.stderr, check=False)
-if result.returncode == 0:
+ok = True
+if EDITABLE_SELF:
+    ok &= subprocess.run(
+        [python, "-m", "pip", "install", "-e", str(root), "--no-deps", "-q"],
+        stdout=sys.stderr, stderr=sys.stderr, check=False).returncode == 0
+for req in REQUIREMENTS:
+    ok &= subprocess.run(
+        [python, "-m", "pip", "install", req, "-q"],
+        stdout=sys.stderr, stderr=sys.stderr, check=False).returncode == 0
+if ok:
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(version, encoding="utf-8")
 sys.exit(0)
@@ -232,8 +255,9 @@ exit 0
 '''
 
 
-def write_hooks(dest_root: Path, pip_roots: List[Path], python: str) -> None:
-    """SessionStart hook that makes the skills' Python packages importable.
+def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
+                requirements: Optional[List[str]] = None) -> None:
+    """SessionStart hook that installs the plugin's Python packages.
 
     The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
     interpreter at run time (``NEQSIM_PYTHON``, then PATH) and the Python script
@@ -241,14 +265,17 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str) -> None:
     site-specific interpreter as a fallback candidate. ``${PLUGIN_ROOT}`` is
     expanded by the client. Idempotent via a version stamp in ``${PLUGIN_DATA}``.
     """
-    if not pip_roots:
+    requirements = list(requirements or [])
+    if not pip_roots and not requirements:
         return
     hooks_dir = dest_root / "com.github.copilot" / "hooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
     scripts = dest_root / "scripts"
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "install_skill_packages.py").write_text(
-        HOOK_PY.format(pinned=python or ""), encoding="utf-8")
+        HOOK_PY.format(pinned=python or "", editable_self=bool(pip_roots),
+                       requirements=requirements),
+        encoding="utf-8")
     (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
     (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
     hooks = {
@@ -378,7 +405,8 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
     if spec.include_mcp:
         write_mcp(staging, args.mcp_version, errors)
 
-    write_hooks(staging, spec.pip_install_roots, args.python)
+    write_hooks(staging, spec.pip_install_roots, args.python,
+                [t.format(ref=args.toolkit_ref) for t in spec.pip_targets])
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
@@ -464,6 +492,10 @@ def main(argv=None) -> int:
     parser.add_argument("--mcp-version", default=None,
                         help="NeqSim release whose MCP server jar the plugin downloads "
                              "(default: root pom <revision> without -SNAPSHOT)")
+    parser.add_argument("--toolkit-ref", default="master",
+                        help="git ref of equinor/neqsim the core plugin's SessionStart hook installs "
+                             "the task toolkit (devtools/) from; pin a release tag that contains the "
+                             "neqsim-dev-setup 0.2 packaging")
     args = parser.parse_args(argv)
     if args.mcp_version is None:
         args.mcp_version = neqsim_release_version()

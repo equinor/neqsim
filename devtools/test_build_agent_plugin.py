@@ -40,7 +40,8 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
 
 
 def _args(**overrides):
-    base = dict(set_version=None, bump=None, check=False, python="", mcp_version="9.9.9")
+    base = dict(set_version=None, bump=None, check=False, python="", mcp_version="9.9.9",
+                toolkit_ref="master")
     base.update(overrides)
     return SimpleNamespace(**base)
 
