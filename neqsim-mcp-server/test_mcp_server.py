@@ -70,6 +70,7 @@ JSON_TOOL_ARGS = {
     "runFieldEconomics": "economicsJson",
     "runDynamic": "dynamicJson",
     "runBioprocess": "bioprocessJson",
+    "runRelief": "reliefJson",
     "sizeEquipment": "sizingJson",
     "designUtilities": "utilityJson",
     "compareProcesses": "comparisonJson",
@@ -2212,6 +2213,45 @@ def test_validate_results():
     check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
 
 
+def test_relief_screening_contract():
+    """Exercise bounded pressure-relief screening without changing inventory status."""
+    print("\n=== Relief Sizing Screening Contract ===")
+    r = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": 10.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+        "compressibility": 0.95,
+        "specificHeatRatio": 1.3,
+    })
+    check("relief screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("relief screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and "qualified pressure-relief" in r.get("advisoryBoundary", "")
+          and "not certification" in r.get("advisoryBoundary", ""),
+          str(r))
+    sizing = r.get("sizing", {})
+    check("relief sizing result is finite and conservative",
+          isinstance(sizing.get("requiredArea_mm2"), (int, float))
+          and math.isfinite(sizing.get("requiredArea_mm2"))
+          and sizing.get("requiredArea_mm2") > 0.0
+          and sizing.get("selectedArea_mm2", 0.0) >= sizing.get("requiredArea_mm2"),
+          str(sizing))
+    invalid = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": -1.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+    })
+    check("relief invalid input fails closed",
+          invalid.get("status") == "error"
+          and invalid.get("screeningOnly") is True,
+          str(invalid))
+
+
 def test_sil_screening_contract():
     """Exercise bounded SIF PFD screening without changing inventory status."""
     print("\n=== SIL Screening Contract ===")
@@ -2707,6 +2747,7 @@ if __name__ == "__main__":
         test_design_utilities()
         test_compare_processes()
         test_validate_results()
+        test_relief_screening_contract()
         test_sil_screening_contract()
         test_cross_validate_models()
         test_parametric_study()
