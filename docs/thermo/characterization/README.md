@@ -55,6 +55,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - auditable blend-batch mass, additive-volume, specific-gravity, and optimizer-cost receipts;
 - immutable label-addressable source ledgers for qualified blend batches;
 - complete optimized blend plans with source-level cost closure and retained quality receipts;
+- stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
@@ -161,6 +162,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 ## Related documentation
 
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
+- [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)
