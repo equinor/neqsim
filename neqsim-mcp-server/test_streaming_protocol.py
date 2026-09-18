@@ -283,7 +283,7 @@ def test_inventory_promoted(client):
     inventory = result.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("streamSimulation", {})
-    require(inventory.get("inventoryVersion") == "1.41"
+    require(inventory.get("inventoryVersion") == "1.42"
             and limitations.get("contractTestedToolCount") == 41
             and limitations.get("confirmedGapToolCount") == 10
             and limitations.get("contractPromotionCandidateCount") == 0,

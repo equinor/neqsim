@@ -52,7 +52,7 @@ behavior, and the invariant advisory boundary. The focused
 MCP server.
 
 Merged PR #3747 established the direct Java and packaged-MCP qualification
-recorded here. Inventory `1.41 / 20 explicit + 41 contract-tested + 10
+recorded here. Inventory `1.42 / 20 explicit + 42 contract-tested + 10
 confirmed gaps` atomically promotes `runOperationalStudy=CONTRACT_TESTED`.
 The canonical machine-readable evidence record, Java assertions, focused
 packaged protocol, authoritative comprehensive protocol accounting, and
