@@ -39,26 +39,26 @@ public class AsphalteneValidationTest {
    */
   private static final double[][] DE_BOER_FIELD_DATA = {
       // Fields WITH asphaltene problems (from De Boer Table 1)
-      { 414.0, 172.0, 694.0, 1.0 }, // Hassi Messaoud, Algeria
-      { 276.0, 138.0, 725.0, 1.0 }, // Mata-Acema, Venezuela
-      { 310.0, 103.0, 720.0, 1.0 }, // Boscan, Venezuela (light zone)
-      { 483.0, 207.0, 680.0, 1.0 }, // Prinos, Greece
-      { 345.0, 145.0, 710.0, 1.0 }, // Ula, North Sea
+      {414.0, 172.0, 694.0, 1.0}, // Hassi Messaoud, Algeria
+      {276.0, 138.0, 725.0, 1.0}, // Mata-Acema, Venezuela
+      {310.0, 103.0, 720.0, 1.0}, // Boscan, Venezuela (light zone)
+      {483.0, 207.0, 680.0, 1.0}, // Prinos, Greece
+      {345.0, 145.0, 710.0, 1.0}, // Ula, North Sea
 
       // Fields WITHOUT asphaltene problems (from De Boer Table 1)
-      { 207.0, 138.0, 780.0, 0.0 }, // Cyrus, North Sea
-      { 241.0, 172.0, 810.0, 0.0 }, // Ula (aquifer zone), North Sea
-      { 138.0, 103.0, 850.0, 0.0 }, // Brent, North Sea
-      { 172.0, 138.0, 830.0, 0.0 }, // Statfjord, North Sea
-      { 207.0, 172.0, 790.0, 0.0 }, // Forties, North Sea
+      {207.0, 138.0, 780.0, 0.0}, // Cyrus, North Sea
+      {241.0, 172.0, 810.0, 0.0}, // Ula (aquifer zone), North Sea
+      {138.0, 103.0, 850.0, 0.0}, // Brent, North Sea
+      {172.0, 138.0, 830.0, 0.0}, // Statfjord, North Sea
+      {207.0, 172.0, 790.0, 0.0}, // Forties, North Sea
   };
 
   /**
    * Field names corresponding to DE_BOER_FIELD_DATA.
    */
-  private static final String[] DE_BOER_FIELD_NAMES = { "Hassi Messaoud (Algeria)", "Mata-Acema (Venezuela)",
+  private static final String[] DE_BOER_FIELD_NAMES = {"Hassi Messaoud (Algeria)", "Mata-Acema (Venezuela)",
       "Boscan Light (Venezuela)", "Prinos (Greece)", "Ula (North Sea)", "Cyrus (North Sea)", "Ula Aquifer (North Sea)",
-      "Brent (North Sea)", "Statfjord (North Sea)", "Forties (North Sea)" };
+      "Brent (North Sea)", "Statfjord (North Sea)", "Forties (North Sea)"};
 
   /**
    * SARA analysis data for common crude oils from Akbarzadeh et al. (2007). Data format: {saturates, aromatics, resins,
@@ -66,17 +66,17 @@ public class AsphalteneValidationTest {
    */
   private static final Object[][] SARA_LITERATURE_DATA = {
       // Stable oils (high R/A ratio, low CII)
-      { "Alaska North Slope", new double[] { 0.64, 0.22, 0.10, 0.04 }, true },
-      { "Arabian Light", new double[] { 0.63, 0.25, 0.09, 0.03 }, true },
-      { "Brent Blend", new double[] { 0.58, 0.28, 0.11, 0.03 }, true },
+      {"Alaska North Slope", new double[] {0.64, 0.22, 0.10, 0.04}, true},
+      {"Arabian Light", new double[] {0.63, 0.25, 0.09, 0.03}, true},
+      {"Brent Blend", new double[] {0.58, 0.28, 0.11, 0.03}, true},
 
       // Moderately stable oils
-      { "Mars (GoM)", new double[] { 0.52, 0.30, 0.13, 0.05 }, true },
-      { "Bonny Light", new double[] { 0.60, 0.26, 0.10, 0.04 }, true },
+      {"Mars (GoM)", new double[] {0.52, 0.30, 0.13, 0.05}, true},
+      {"Bonny Light", new double[] {0.60, 0.26, 0.10, 0.04}, true},
 
       // Potentially unstable oils (low R/A ratio, high CII)
-      { "Maya (Mexico)", new double[] { 0.42, 0.28, 0.18, 0.12 }, false },
-      { "Boscan (Venezuela)", new double[] { 0.25, 0.32, 0.26, 0.17 }, false }, };
+      {"Maya (Mexico)", new double[] {0.42, 0.28, 0.18, 0.12}, false},
+      {"Boscan (Venezuela)", new double[] {0.25, 0.32, 0.26, 0.17}, false},};
 
   /**
    * CII thresholds from literature: - CII < 0.7: Stable - CII 0.7-0.9: Metastable - CII > 0.9: Unstable
@@ -412,8 +412,8 @@ public class AsphalteneValidationTest {
     logger.info("These fields operated without asphaltene problems");
 
     // North Sea stable cases from De Boer
-    Object[][] stableCases = { { "Brent", 138.0, 103.0, 850.0 }, { "Statfjord", 172.0, 138.0, 830.0 },
-        { "Forties", 207.0, 172.0, 790.0 } };
+    Object[][] stableCases = {{"Brent", 138.0, 103.0, 850.0}, {"Statfjord", 172.0, 138.0, 830.0},
+        {"Forties", 207.0, 172.0, 790.0}};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %8s | %8s | %8s | %-16s | %8s%n", "Field", "P_res",
         "P_bub", "Density", "Risk Level", "Index");
@@ -652,7 +652,7 @@ public class AsphalteneValidationTest {
     logger.info("Physical basis: More methane = lower asphaltene solubility");
     logger.info("(De Boer found light oils have more problems)");
 
-    double[] methaneContents = { 0.20, 0.30, 0.40, 0.50, 0.60 };
+    double[] methaneContents = {0.20, 0.30, 0.40, 0.50, 0.60};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s | %-15s | %-15s%n", "Methane Frac", "Bubble Point",
         "Liquid Density");
@@ -712,7 +712,7 @@ public class AsphalteneValidationTest {
 
     logger.info("Reference: Hammami et al. (2000) - Temperature affects AOP");
 
-    double[] temperatures = { 323.15, 348.15, 373.15, 398.15, 423.15 }; // 50-150°C
+    double[] temperatures = {323.15, 348.15, 373.15, 398.15, 423.15}; // 50-150°C
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-15s | %-15s%n", "Temp [°C]", "Bubble Point",
         "Density");
@@ -874,8 +874,8 @@ public class AsphalteneValidationTest {
     logger.info("decreasing asphaltene solubility (higher precipitation tendency).");
 
     // Base oil
-    String[] alkanes = { "n-pentane", "n-heptane", "nC10" };
-    int[] carbonNumbers = { 5, 7, 10 };
+    String[] alkanes = {"n-pentane", "n-heptane", "nC10"};
+    int[] carbonNumbers = {5, 7, 10};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s | %-10s | %-15s | %-15s%n", "Alkane", "C-Number",
         "Bubble Pt [bar]", "Density [kg/m³]");
@@ -1031,7 +1031,7 @@ public class AsphalteneValidationTest {
         "Oil Density");
     logger.info(StringUtils.repeat("-", 50));
 
-    double[] pressures = { 400, 300, 200, 150, 100 };
+    double[] pressures = {400, 300, 200, 150, 100};
     int[] nPhases = new int[pressures.length];
     double[] densities = new double[pressures.length];
 

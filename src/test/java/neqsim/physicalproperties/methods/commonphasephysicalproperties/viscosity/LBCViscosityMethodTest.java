@@ -235,7 +235,7 @@ public class LBCViscosityMethodTest {
     system.initProperties();
     double baseViscosity = system.getPhase("oil").getViscosity("cP");
 
-    double[] tunedParameters = { 0.2, 0.05, 0.10, 0.02, 0.01 };
+    double[] tunedParameters = {0.2, 0.05, 0.10, 0.02, 0.01};
     system.getPhase("oil").getPhysicalProperties().setLbcParameters(tunedParameters);
     system.initPhysicalProperties();
     double tunedViscosity = system.getPhase("oil").getViscosity("cP");

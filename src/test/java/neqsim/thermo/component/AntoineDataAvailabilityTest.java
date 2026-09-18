@@ -17,8 +17,8 @@ import neqsim.util.database.NeqSimDataBase;
 class AntoineDataAvailabilityTest {
   @Test
   void placeholderRowsDoNotPublishSaturationProperties() {
-    for (String name : new String[] { "hydrogen", "argon", "nC20", "MDEA", "formic acid", "NaCl", "1-heptene",
-        "default" }) {
+    for (String name : new String[] {"hydrogen", "argon", "nC20", "MDEA", "formic acid", "NaCl", "1-heptene",
+        "default"}) {
       ComponentInterface component = new ComponentSrk(name, 1.0, 1.0, 0);
       assertFalse(component.hasAntoineVaporPressureCorrelation(), name);
       double temperature = 0.7 * component.getTC();
@@ -59,7 +59,7 @@ class AntoineDataAvailabilityTest {
     assertEquals(0.306, acetone.getAntoineVaporPressure(298.15), 0.001);
     assertEquals(0.7260971861, acetone.getAntoineVaporPressure(320.0), 1.0e-10);
     assertEquals(1.0063984293, acetone.getAntoineVaporPressure(329.22), 1.0e-10);
-    for (double temperature : new double[] { 280.0, 298.15, 320.0, 400.0, 480.0 }) {
+    for (double temperature : new double[] {280.0, 298.15, 320.0, 400.0, 480.0}) {
       double step = 1.0e-3;
       double numerical = (acetone.getAntoineVaporPressure(temperature + step)
           - acetone.getAntoineVaporPressure(temperature - step)) / (2.0 * step);
@@ -72,11 +72,11 @@ class AntoineDataAvailabilityTest {
   @Test
   void saturationPropertiesRejectNonphysicalAndSupercriticalInputs() {
     ComponentInterface methane = new ComponentSrk("methane", 1.0, 1.0, 0);
-    for (double temperature : new double[] { 0.0, -10.0, Double.NaN, Double.POSITIVE_INFINITY, 298.15 }) {
+    for (double temperature : new double[] {0.0, -10.0, Double.NaN, Double.POSITIVE_INFINITY, 298.15}) {
       assertTrue(Double.isNaN(methane.getAntoineVaporPressure(temperature)));
       assertTrue(Double.isNaN(methane.getAntoineVaporPressuredT(temperature)));
     }
-    for (double pressure : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 2.0 * methane.getPC() }) {
+    for (double pressure : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 2.0 * methane.getPC()}) {
       assertTrue(Double.isNaN(methane.getAntoineVaporTemperature(pressure)));
     }
     assertTrue(methane.getAntoineVaporPressure(111.66) > 0.0);

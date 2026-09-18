@@ -319,8 +319,8 @@ public final class SafetyFunctionReliabilityStudy {
       return 0;
     }
     double[] limits = demandMode == SafetyFunctionDesign.DemandMode.LOW_DEMAND
-        ? new double[] { 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5 }
-        : new double[] { 1.0e-6, 1.0e-7, 1.0e-8, 1.0e-9 };
+        ? new double[] {1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5}
+        : new double[] {1.0e-6, 1.0e-7, 1.0e-8, 1.0e-9};
     for (int sil = 1; sil <= limits.length; sil++) {
       if (measure >= limits[sil - 1]) {
         return sil;

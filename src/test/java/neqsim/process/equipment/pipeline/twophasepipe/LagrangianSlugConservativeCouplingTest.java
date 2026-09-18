@@ -135,7 +135,7 @@ class LagrangianSlugConservativeCouplingTest {
 
   @Test
   void testOpenInletRemovesEntireReverseExitWithoutRecordingAnOutletArrival() {
-    for (double inletPosition : new double[] { 0.0, 100.0 }) {
+    for (double inletPosition : new double[] {0.0, 100.0}) {
       TwoFluidSection[] sections = sections();
       double[][] original = new double[sections.length][];
       for (int cell = 0; cell < sections.length; cell++) {
@@ -199,7 +199,7 @@ class LagrangianSlugConservativeCouplingTest {
     LagrangianSlugTracker tracker = tracker();
     SlugBubbleUnit following = initialize(tracker, sections, 1.0, 12.0);
     SlugBubbleUnit leading = initialize(tracker, sections, 16.0, 17.0);
-    SlugBubbleUnit[] markers = { following, leading };
+    SlugBubbleUnit[] markers = {following, leading};
     Method kinematics = LagrangianSlugTracker.class.getDeclaredMethod("conservativeKinematics", SlugBubbleUnit.class,
         PipeSection[].class);
     kinematics.setAccessible(true);

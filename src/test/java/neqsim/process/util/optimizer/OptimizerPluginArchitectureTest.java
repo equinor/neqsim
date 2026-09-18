@@ -198,9 +198,9 @@ public class OptimizerPluginArchitectureTest {
     envelope.setRatedSpeed(10000);
 
     // Set surge line
-    double[] surgeFlows = { 1000, 1500, 2000, 2500 };
-    double[] surgeHeads = { 150, 120, 90, 60 };
-    double[] surgeSpeeds = { 10000, 10000, 10000, 10000 };
+    double[] surgeFlows = {1000, 1500, 2000, 2500};
+    double[] surgeHeads = {150, 120, 90, 60};
+    double[] surgeSpeeds = {10000, 10000, 10000, 10000};
     envelope.setSurgeLine(surgeFlows, surgeHeads, surgeSpeeds);
 
     // Test within envelope
@@ -264,10 +264,10 @@ public class OptimizerPluginArchitectureTest {
   void testEclipseVFPExporter() {
     EclipseVFPExporter exporter = new EclipseVFPExporter(1);
     exporter.setDatumDepth(2500.0);
-    exporter.setFlowRates(new double[] { 100, 500, 1000, 2000, 5000 });
-    exporter.setTHPs(new double[] { 10, 20, 30, 50, 70 });
-    exporter.setWaterCuts(new double[] { 0, 0.2, 0.5, 0.8 });
-    exporter.setGORs(new double[] { 50, 100, 200, 500 });
+    exporter.setFlowRates(new double[] {100, 500, 1000, 2000, 5000});
+    exporter.setTHPs(new double[] {10, 20, 30, 50, 70});
+    exporter.setWaterCuts(new double[] {0, 0.2, 0.5, 0.8});
+    exporter.setGORs(new double[] {50, 100, 200, 500});
     exporter.setTableTitle("Test VFP Table");
     double[][][][][] bhp = new double[5][5][4][4][1];
     for (int f = 0; f < 5; f++) {
@@ -293,8 +293,8 @@ public class OptimizerPluginArchitectureTest {
   void testVFPINJExport() {
     EclipseVFPExporter exporter = new EclipseVFPExporter(2);
     exporter.setFlowRateType("WAT");
-    exporter.setFlowRates(new double[] { 1000, 5000, 10000, 20000 });
-    exporter.setTHPs(new double[] { 50, 100, 150, 200 });
+    exporter.setFlowRates(new double[] {1000, 5000, 10000, 20000});
+    exporter.setTHPs(new double[] {50, 100, 150, 200});
 
     double[][][][][] bhp = new double[4][4][1][1][1];
     for (int f = 0; f < 4; f++) {

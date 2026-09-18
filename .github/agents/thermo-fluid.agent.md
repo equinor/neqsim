@@ -152,3 +152,6 @@ ALWAYS read actual class source files to verify method signatures exist before c
 When producing code that will appear in documentation or examples, write a JUnit test that
 exercises every API call shown. Append to `DocExamplesCompilationTest.java` and run the test
 to confirm it passes. See `neqsim-api-patterns` skill § "Documentation Code Verification".
+After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows:
+`mvnw.cmd spotless:apply`) and `git add` the reformatted files — CI runs `spotless:check`
+and fails on any unformatted file. Never bypass with `git commit --no-verify`.

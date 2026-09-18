@@ -31,8 +31,8 @@ import java.util.function.DoubleSupplier;
  * DoubleSupplier rate = () -&gt; scrubber.getThermoSystem().getPhase(0).getFlowRate("m3/sec");
  *
  * // Calibration points (gas rate Am3/s, observed carry-over kg/h)
- * double[] x = { 2.0, 3.0, 4.5, 5.5 };
- * double[] y = { 0.0, 0.5, 3.0, 12.0 };
+ * double[] x = {2.0, 3.0, 4.5, 5.5};
+ * double[] y = {0.0, 0.5, 3.0, 12.0};
  *
  * EmpiricalCarryOverConstraint co = EmpiricalCarryOverConstraint.fromObservations("carryOver", "kg/h", rate, x, y,
  *     5.0);

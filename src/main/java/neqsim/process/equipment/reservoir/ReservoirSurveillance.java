@@ -200,7 +200,7 @@ public class ReservoirSurveillance implements java.io.Serializable {
       f[i - 1] = OilMaterialBalance.withdrawalF(np[i], rp, bo[i], rs[i], bg[i], wp[i], bw);
       eo[i - 1] = OilMaterialBalance.eo(bo[i], boi, rsi, rs[i], bg[i]);
     }
-    return new double[][] { f, eo };
+    return new double[][] {f, eo};
   }
 
   // ============================================================

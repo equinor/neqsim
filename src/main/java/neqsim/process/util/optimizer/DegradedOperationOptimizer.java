@@ -406,7 +406,7 @@ public class DegradedOperationOptimizer implements Serializable {
     StreamInterface feed = (StreamInterface) feedUnit;
 
     // Search from high to low flow rates
-    double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1 };
+    double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
 
     for (double factor : flowFactors) {
       double testFlow = baselineFlow * factor;

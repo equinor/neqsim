@@ -132,10 +132,10 @@ public class ChungDenseConductivityMethod extends Conductivity implements Thermo
     double lambdaDenseSI = 0.0;
     if (y > 1e-10) {
       // G coefficients from Chung (1988) Table V
-      double[] aC = { 2.4166e0, -5.0924e-1, 6.6107e0, 1.4543e1, 7.9274e-1, -5.8634e0, 9.1089e1 };
-      double[] bC = { 7.4824e-1, -1.5094e0, 5.6207e0, -8.9139e0, 8.2019e-1, 1.2801e1, 1.2811e2 };
-      double[] cC = { -9.1858e-1, -4.9991e1, 6.4760e1, -5.6379e0, -6.9369e-1, 9.5893e0, -5.4217e1 };
-      double[] dC = { 1.2172e2, 6.9983e1, 2.7039e1, 7.4344e1, 6.3173e0, 6.5529e1, 5.2381e2 };
+      double[] aC = {2.4166e0, -5.0924e-1, 6.6107e0, 1.4543e1, 7.9274e-1, -5.8634e0, 9.1089e1};
+      double[] bC = {7.4824e-1, -1.5094e0, 5.6207e0, -8.9139e0, 8.2019e-1, 1.2801e1, 1.2811e2};
+      double[] cC = {-9.1858e-1, -4.9991e1, 6.4760e1, -5.6379e0, -6.9369e-1, 9.5893e0, -5.4217e1};
+      double[] dC = {1.2172e2, 6.9983e1, 2.7039e1, 7.4344e1, 6.3173e0, 6.5529e1, 5.2381e2};
 
       double[] G = new double[7];
       for (int k = 0; k < 7; k++) {

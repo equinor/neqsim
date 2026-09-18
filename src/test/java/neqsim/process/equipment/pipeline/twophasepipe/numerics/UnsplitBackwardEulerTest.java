@@ -27,15 +27,15 @@ class UnsplitBackwardEulerTest {
 
   @Test
   void backwardEulerDampsStiffDecayWhileTheDefaultRetainsMidpointAmplification() {
-    for (double decayRate : new double[] { 100.0, 10000.0 }) {
+    for (double decayRate : new double[] {100.0, 10000.0}) {
       double[][] initial = decayState();
-      double[] pressure = { REFERENCE_PRESSURE };
+      double[] pressure = {REFERENCE_PRESSURE};
       UnsplitTransientSolver midpoint = newSolver(TimeIntegrationMethod.IMPLICIT_MIDPOINT);
       assertSame(TimeIntegrationMethod.IMPLICIT_MIDPOINT, new UnsplitTransientSolver().getTimeIntegrationMethod());
-      Result centered = midpoint.solve(initial, pressure, new double[] { 1.0 }, 1.0, 0.0, Double.NaN, false,
+      Result centered = midpoint.solve(initial, pressure, new double[] {1.0}, 1.0, 0.0, Double.NaN, false,
           decayModel(decayRate));
-      Result damped = newSolver(TimeIntegrationMethod.BACKWARD_EULER).solve(initial, pressure, new double[] { 1.0 },
-          1.0, 0.0, Double.NaN, false, decayModel(decayRate));
+      Result damped = newSolver(TimeIntegrationMethod.BACKWARD_EULER).solve(initial, pressure, new double[] {1.0}, 1.0,
+          0.0, Double.NaN, false, decayModel(decayRate));
 
       assertConverged(centered);
       assertConverged(damped);
@@ -71,7 +71,7 @@ class UnsplitBackwardEulerTest {
   void everyProbeAndActiveSetRefreshUsesTheCapturedEndpointTimeLevel() {
     UnsplitTransientSolver solver = newSolver(TimeIntegrationMethod.BACKWARD_EULER);
     double[][] initial = decayState();
-    double[] pressure = { REFERENCE_PRESSURE };
+    double[] pressure = {REFERENCE_PRESSURE};
     double startTime = 2.0;
     double dt = 0.25;
     int[] counts = new int[4];
@@ -112,7 +112,7 @@ class UnsplitBackwardEulerTest {
       }
     };
 
-    Result result = solver.solve(initial, pressure, new double[] { 1.0 }, dt, startTime, Double.NaN, false, model);
+    Result result = solver.solve(initial, pressure, new double[] {1.0}, dt, startTime, Double.NaN, false, model);
     assertConverged(result);
     assertEquals(initial[0][3] + dt * (startTime + dt), result.getState()[0][3], 1.0e-10);
     assertEquals(counts[0], result.getModelEvaluations());
@@ -123,17 +123,17 @@ class UnsplitBackwardEulerTest {
     assertSame(TimeIntegrationMethod.IMPLICIT_MIDPOINT, solver.getTimeIntegrationMethod());
 
     solver.setTimeIntegrationMethod(TimeIntegrationMethod.BACKWARD_EULER);
-    double[] residual = solver.residual(initial, pressure, result.getState(), result.getPressure(),
-        new double[] { 1.0 }, dt, startTime, Double.NaN, false, model);
+    double[] residual = solver.residual(initial, pressure, result.getState(), result.getPressure(), new double[] {1.0},
+        dt, startTime, Double.NaN, false, model);
     assertArrayEquals(new double[7], residual, 1.0e-10);
     double[][] jacobian = solver.scaledJacobian(initial, pressure, result.getState(), result.getPressure(),
-        new double[] { 1.0 }, dt, startTime, Double.NaN, false, model);
+        new double[] {1.0}, dt, startTime, Double.NaN, false, model);
     assertEquals(1.0, jacobian[3][3], 1.0e-8);
   }
 
   @Test
   void threePhasePreparationUsesCandidateTimeAndEndpointBoundaryTransfersAfterConfigurationChanges() throws Exception {
-    TwoFluidSection[] initial = { flowingSection(0.0, 5.0), flowingSection(5.0, 10.0), flowingSection(15.0, 15.0) };
+    TwoFluidSection[] initial = {flowingSection(0.0, 5.0), flowingSection(5.0, 10.0), flowingSection(15.0, 15.0)};
     double[][] previous = new double[initial.length][];
     double[] pressure = new double[initial.length];
     double[] areas = new double[initial.length];
@@ -151,11 +151,11 @@ class UnsplitBackwardEulerTest {
     TwoFluidConservationEquations.MassBalanceRate published = equations.getLastMassBalanceRate();
     double startTime = 2.0;
     double dt = 0.002;
-    double[] expectedTime = { startTime + dt };
+    double[] expectedTime = {startTime + dt};
     TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, initial, 10.0,
         (cell, state, trialPressure, time) -> {
           assertEquals(expectedTime[0], time, 0.0, "All trial and endpoint densities must use the selected time");
-          return new double[] { 40.0 + 1.0e-6 * (trialPressure - 5.0e6) + 0.25 * (time - startTime), 700.0, 1000.0 };
+          return new double[] {40.0 + 1.0e-6 * (trialPressure - 5.0e6) + 0.25 * (time - startTime), 700.0, 1000.0};
         });
     UnsplitTransientSolver solver = newSolver(TimeIntegrationMethod.BACKWARD_EULER);
     Result candidate = solver.solve(previous, pressure, areas, dt, startTime, 4.999e6, true, adapter);
@@ -207,7 +207,7 @@ class UnsplitBackwardEulerTest {
     UnsplitTransientSolver solver = newSolver(TimeIntegrationMethod.IMPLICIT_MIDPOINT);
     assertThrows(IllegalArgumentException.class, () -> solver.setTimeIntegrationMethod(null));
     assertThrows(IllegalArgumentException.class, () -> roundTrip(solver, ""));
-    Result result = solver.solve(decayState(), new double[] { REFERENCE_PRESSURE }, new double[] { 1.0 }, 0.2, 0.0,
+    Result result = solver.solve(decayState(), new double[] {REFERENCE_PRESSURE}, new double[] {1.0}, 0.2, 0.0,
         Double.NaN, false, decayModel(1.0));
     assertConverged(result);
     UnsplitTransientSolver legacySolver = roundTrip(solver, "timeIntegrationMethod");
@@ -228,11 +228,11 @@ class UnsplitBackwardEulerTest {
   }
 
   private static double[][] decayState() {
-    return new double[][] { { 2.0, 3.0, 5.0, 2.0, -3.0, 5.0, 17.0 } };
+    return new double[][] {{2.0, 3.0, 5.0, 2.0, -3.0, 5.0, 17.0}};
   }
 
   private static double[][] densities(double[] pressure) {
-    return new double[][] { { 10.0 * pressure[0] / REFERENCE_PRESSURE }, { 10.0 }, { 10.0 } };
+    return new double[][] {{10.0 * pressure[0] / REFERENCE_PRESSURE}, {10.0}, {10.0}};
   }
 
   private static Model decayModel(double decayRate) {
@@ -248,10 +248,10 @@ class UnsplitBackwardEulerTest {
   private static double integrateDecay(TimeIntegrationMethod method, int steps) {
     UnsplitTransientSolver solver = newSolver(method);
     double[][] state = decayState();
-    double[] pressure = { REFERENCE_PRESSURE };
+    double[] pressure = {REFERENCE_PRESSURE};
     double dt = 1.0 / steps;
     for (int step = 0; step < steps; step++) {
-      Result result = solver.solve(state, pressure, new double[] { 1.0 }, dt, step * dt, Double.NaN, false,
+      Result result = solver.solve(state, pressure, new double[] {1.0}, dt, step * dt, Double.NaN, false,
           decayModel(1.0));
       assertConverged(result);
       state = result.getState();

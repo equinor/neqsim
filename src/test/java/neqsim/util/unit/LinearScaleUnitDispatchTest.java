@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 class LinearScaleUnitDispatchTest {
   @Test
   void explicitConversionsUseArgumentsAndPreserveStoredValues() {
-    Unit[] units = { new LengthUnit(2.0, "m"), new EnergyUnit(2.0, "J"), new PowerUnit(2.0, "W"),
-        new TimeUnit(2.0, "s") };
-    String[] sources = { "ft", "kWh", "MW", "hr" };
-    String[] targets = { "in", "MJ", "kW", "min" };
-    double[] expected = { 12.0, 3.6, 1000.0, 60.0 };
+    Unit[] units = {new LengthUnit(2.0, "m"), new EnergyUnit(2.0, "J"), new PowerUnit(2.0, "W"),
+        new TimeUnit(2.0, "s")};
+    String[] sources = {"ft", "kWh", "MW", "hr"};
+    String[] targets = {"in", "MJ", "kW", "min"};
+    double[] expected = {12.0, 3.6, 1000.0, 60.0};
     for (int i = 0; i < units.length; i++) {
       Unit unit = units[i];
       assertEquals(expected[i], unit.getValue(1.0, sources[i], targets[i]), 1.0e-10);

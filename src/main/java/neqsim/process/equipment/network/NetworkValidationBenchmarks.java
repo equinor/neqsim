@@ -337,11 +337,11 @@ public class NetworkValidationBenchmarks {
     result.addMetric("Q_AB agreement (kg/hr)", hcQAB, nrQAB, 0.01);
     result.addMetric("Q_BC agreement (kg/hr)", hcQBC, nrQBC, 0.01);
     result.addMetric("P_A agreement (bara)", hcPA, nrPA, 0.5);
-    for (String edge : new String[] { "CA", "CD", "DB" }) {
+    for (String edge : new String[] {"CA", "CD", "DB"}) {
       result.addMetric("Q_" + edge + " agreement (kg/hr)", hcNetwork.getPipeFlowRate(edge),
           nrNetwork.getPipeFlowRate(edge), 0.01);
     }
-    for (LoopedPipeNetwork net : new LoopedPipeNetwork[] { hcNetwork, nrNetwork }) {
+    for (LoopedPipeNetwork net : new LoopedPipeNetwork[] {hcNetwork, nrNetwork}) {
       String prefix = net == hcNetwork ? "HC " : "NR ";
       result.addMetric(prefix + "C demand (kg/hr)", net.getNodeFlowRate("C"), 80.0, 0.01);
       result.addMetric(prefix + "D demand (kg/hr)", net.getNodeFlowRate("D"), 120.0, 0.01);
@@ -470,7 +470,7 @@ public class NetworkValidationBenchmarks {
     result.addMetric("Dense vs Gauss max diff", maxDiffDenseGauss, 0.0, 1e-8);
     result.addMetric("Sparse vs Gauss max diff", maxDiffSparseGauss, 0.0, 1e-8);
     double maxResidual = 0.0;
-    for (double[] solution : new double[][] { xGauss, xDense, xSparse }) {
+    for (double[] solution : new double[][] {xGauss, xDense, xSparse}) {
       for (int i = 0; i < n; i++) {
         double residual = -vecB[i];
         for (int j = 0; j < n; j++) {

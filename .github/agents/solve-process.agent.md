@@ -124,6 +124,7 @@ Key points:
 7. **No hardcoded paths.** The notebook must work from any directory (devtools handles path resolution; Colab uses pip).
 8. **API verification.** If unsure about a method, search the Java source to confirm it exists. Do NOT guess method names.
 9. **Doc code verification.** When producing code that will appear in documentation or examples, write a JUnit test (append to `DocExamplesCompilationTest.java`) that exercises every API call shown, and run it to confirm it passes.
+10. **Format Java.** After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) and `git add` the reformatted files. CI runs `spotless:check` and fails on any unformatted file; never bypass with `git commit --no-verify`.
 
 ---
 

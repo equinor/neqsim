@@ -11,7 +11,7 @@ class PrTranslatedLiquidRootTest {
   void liquidRootBelowCovolumeRemainsOnTheLiquidBranch() {
     SystemInterface reference = new SystemPrEos(280.0, 1.0);
     SystemInterface translated = new SystemPrEosvolcor(280.0, 1.0);
-    for (SystemInterface fluid : new SystemInterface[] { reference, translated }) {
+    for (SystemInterface fluid : new SystemInterface[] {reference, translated}) {
       fluid.addComponent("cumene", 1.0);
       fluid.setMixingRule("classic");
       fluid.init(0);

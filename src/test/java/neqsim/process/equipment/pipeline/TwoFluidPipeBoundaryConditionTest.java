@@ -392,7 +392,7 @@ class TwoFluidPipeBoundaryConditionTest {
   void testConstantFlowStepDoesNotCreateDomainMass() {
     double initialFlowRate = 6.0;
     double timeStep = 1.0e-3;
-    double[] steppedFlowRates = { 12.0, 30.0 };
+    double[] steppedFlowRates = {12.0, 30.0};
     UUID calculationId = UUID.fromString("00000000-0000-0000-0000-000000002718");
 
     for (double steppedFlowRate : steppedFlowRates) {
@@ -608,7 +608,7 @@ class TwoFluidPipeBoundaryConditionTest {
     TwoFluidPipe handoffPipe = createRegressionPipe(name + "-handoff", fluid, flowRateKgSec, inletPressureBara,
         outletPressureBara);
     if ("three-phase".equals(name)) {
-      handoffPipe.setElevationProfile(new double[] { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 });
+      handoffPipe.setElevationProfile(new double[] {0.0, 0.1, 0.2, 0.3, 0.4, 0.5});
     }
     handoffPipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
     handoffPipe.run();

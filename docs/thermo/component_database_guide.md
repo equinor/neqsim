@@ -455,7 +455,7 @@ Add a new row to `COMP.csv` with all required parameters.
 SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
 
 // Add TBP fraction with molar mass and density
-fluid.addTBPfraction("C7_custom", 0.1, 95.0, 0.72);  // name, moles, MW, SG
+fluid.addTBPfraction("C7_custom", 0.1, 95.0 / 1000.0, 0.72);  // name, moles, MW [g/mol], SG
 
 // Or add component and modify properties
 fluid.addComponent("n-heptane", 1.0);

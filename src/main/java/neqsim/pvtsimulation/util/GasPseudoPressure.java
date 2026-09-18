@@ -136,7 +136,7 @@ public class GasPseudoPressure {
       mP[i] = integrateEOS(pressureMin, pressures[i]);
     }
 
-    return new double[][] { pressures, mP };
+    return new double[][] {pressures, mP};
   }
 
   /**

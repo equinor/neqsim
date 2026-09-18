@@ -283,13 +283,13 @@ public final class OilMaterialBalance implements Serializable {
   public static double[] driveIndices(double n, double m, double eoTerm, double egTerm, double efwTerm, double we,
       double bw, double f) {
     if (Math.abs(f) < 1.0e-30) {
-      return new double[] { 0.0, 0.0, 0.0, 0.0 };
+      return new double[] {0.0, 0.0, 0.0, 0.0};
     }
     double ddi = n * eoTerm / f;
     double sdi = n * m * egTerm / f;
     double wdi = we * bw / f;
     double edi = n * efwTerm / f;
-    return new double[] { ddi, sdi, wdi, edi };
+    return new double[] {ddi, sdi, wdi, edi};
   }
 
   // ============================================================
@@ -335,7 +335,7 @@ public final class OilMaterialBalance implements Serializable {
     }
     double a = (s1y * s22 - s2y * s12) / det;
     double b = (s11 * s2y - s12 * s1y) / det;
-    return new double[] { a, b };
+    return new double[] {a, b};
   }
 
   /**

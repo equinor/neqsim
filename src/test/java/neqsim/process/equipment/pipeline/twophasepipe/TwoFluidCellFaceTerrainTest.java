@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidCellFaceTerrainTest {
   @Test
   void uniformCellsUseFaceRisesIncludingBothEndCells() throws Exception {
-    double[] elevations = { 12.0, 14.0, 13.0, 13.0, 11.0 };
-    TwoFluidPipe pipe = pipe(new double[] { 2.0, 2.0, 2.0, 2.0 }, false);
+    double[] elevations = {12.0, 14.0, 13.0, 13.0, 11.0};
+    TwoFluidPipe pipe = pipe(new double[] {2.0, 2.0, 2.0, 2.0}, false);
     pipe.setCellFaceElevationProfile(elevations);
     initialize(pipe);
     TwoFluidSection[] cells = pipe.getSectionSnapshots();
@@ -36,15 +36,15 @@ class TwoFluidCellFaceTerrainTest {
     elevations[0] = -100.0;
     double[] exposed = pipe.getCellFaceElevationProfile();
     exposed[1] = -100.0;
-    assertArrayEquals(new double[] { 12.0, 14.0, 13.0, 13.0, 11.0 }, pipe.getCellFaceElevationProfile(), 0.0);
+    assertArrayEquals(new double[] {12.0, 14.0, 13.0, 13.0, 11.0}, pipe.getCellFaceElevationProfile(), 0.0);
     assertNull(pipe.getElevationProfile());
   }
 
   @Test
   void nonuniformRefinementPreservesSignedGravityAndItsEnergyWork() throws Exception {
-    double[] baseLengths = { 1.0, 2.0, 4.0, 1.0 };
-    double[] baseElevations = { 3.0, 4.0, 3.0, 5.0, 4.0 };
-    for (int subdivision : new int[] { 1, 2, 4 }) {
+    double[] baseLengths = {1.0, 2.0, 4.0, 1.0};
+    double[] baseElevations = {3.0, 4.0, 3.0, 5.0, 4.0};
+    for (int subdivision : new int[] {1, 2, 4}) {
       double[] lengths = new double[baseLengths.length * subdivision];
       double[] elevations = new double[lengths.length + 1];
       for (int base = 0; base < baseLengths.length; base++) {
@@ -71,14 +71,14 @@ class TwoFluidCellFaceTerrainTest {
 
   @Test
   void midpointPressureMarchAndBothBoundaryOffsetsMatchConstantDensityHydrostatics() throws Exception {
-    double[] lengths = { 1.0, 2.0, 4.0, 1.0 };
-    double[] elevations = { 3.0, 4.0, 3.0, 5.0, 4.0 };
+    double[] lengths = {1.0, 2.0, 4.0, 1.0};
+    double[] elevations = {3.0, 4.0, 3.0, 5.0, 4.0};
     TwoFluidPipe pipe = pipe(lengths);
     pipe.setCellFaceElevationProfile(elevations);
     initialize(pipe);
     TwoFluidSection[] cells = cells(pipe);
     for (TwoFluidSection cell : cells) {
-      setConstantPhases(cell, new double[] { 0.0, 0.0, 1.0 }, 0.0);
+      setConstantPhases(cell, new double[] {0.0, 0.0, 1.0}, 0.0);
     }
     double inletPressure = 5.0e5;
     cells[0].setPressure(inletPressure - 1000.0 * 9.81 * (cells[0].getElevation() - elevations[0]));
@@ -111,20 +111,20 @@ class TwoFluidCellFaceTerrainTest {
 
   @Test
   void legacySamplesRetainTheirHistoricalAnglesAndWholeCellPressureMarch() throws Exception {
-    TwoFluidPipe pipe = pipe(new double[] { 2.0, 2.0, 2.0, 2.0 });
-    pipe.setCellFaceElevationProfile(new double[] { 0.0, 1.0, 1.0, 0.0, 0.0 });
-    pipe.setElevationProfile(new double[] { 0.0, 1.0, 1.0, 0.0 });
+    TwoFluidPipe pipe = pipe(new double[] {2.0, 2.0, 2.0, 2.0});
+    pipe.setCellFaceElevationProfile(new double[] {0.0, 1.0, 1.0, 0.0, 0.0});
+    pipe.setElevationProfile(new double[] {0.0, 1.0, 1.0, 0.0});
     assertNull(pipe.getCellFaceElevationProfile());
     initialize(pipe);
     TwoFluidSection[] cells = cells(pipe);
-    double[] historicalSines = { 0.5, 0.0, -0.5, -0.5 };
-    double[] historicalElevations = { 0.0, 1.0, 1.0, 0.0 };
+    double[] historicalSines = {0.5, 0.0, -0.5, -0.5};
+    double[] historicalElevations = {0.0, 1.0, 1.0, 0.0};
     Method march = method("marchPressure", TwoFluidSection.class, TwoFluidSection.class);
     Method historicalMarch = method("marchPressure", TwoFluidSection.class);
     for (int cell = 0; cell < cells.length; cell++) {
       assertEquals(historicalElevations[cell], cells[cell].getElevation(), 0.0);
       assertEquals(historicalSines[cell], Math.sin(cells[cell].getInclination()), 1.0e-15);
-      setConstantPhases(cells[cell], new double[] { 0.0, 0.0, 1.0 }, 0.0);
+      setConstantPhases(cells[cell], new double[] {0.0, 0.0, 1.0}, 0.0);
       if (cell > 0) {
         assertEquals((Double) historicalMarch.invoke(pipe, cells[cell - 1]),
             (Double) march.invoke(pipe, cells[cell - 1], cells[cell]), 0.0);
@@ -137,11 +137,11 @@ class TwoFluidCellFaceTerrainTest {
 
   @Test
   void outletPublicationUsesItsBoundaryPressureAndOnlyExtrapolatesSteadyMidpoints() throws Exception {
-    TwoFluidPipe pipe = pipe(new double[] { 2.0, 2.0 });
-    pipe.setCellFaceElevationProfile(new double[] { 0.0, 1.0, 2.0 });
+    TwoFluidPipe pipe = pipe(new double[] {2.0, 2.0});
+    pipe.setCellFaceElevationProfile(new double[] {0.0, 1.0, 2.0});
     initialize(pipe);
     TwoFluidSection last = cells(pipe)[1];
-    setConstantPhases(last, new double[] { 0.0, 0.0, 1.0 }, 0.0);
+    setConstantPhases(last, new double[] {0.0, 0.0, 1.0}, 0.0);
     last.setPressure(4.5e5);
     pipe.setOutletPressure(4.0e5);
     method("updateOutletStream").invoke(pipe);
@@ -153,7 +153,7 @@ class TwoFluidCellFaceTerrainTest {
     method("updateOutletStream", boolean.class).invoke(pipe, true);
     assertEquals(4.5e5 - 1000.0 * 9.81 * 0.5, pipe.getOutletStream().getFluid().getPressure("Pa"), 1.0e-9);
 
-    pipe.setElevationProfile(new double[] { 0.0, 1.0 });
+    pipe.setElevationProfile(new double[] {0.0, 1.0});
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
     method("updateOutletStream", boolean.class).invoke(pipe, true);
     assertEquals(4.5e5, pipe.getOutletStream().getFluid().getPressure("Pa"), 1.0e-9);
@@ -161,19 +161,19 @@ class TwoFluidCellFaceTerrainTest {
 
   @Test
   void invalidTerrainAndImplicitRemeshingCannotReplaceAValidProfileOrAcceptedCells() throws Exception {
-    TwoFluidPipe pipe = pipe(new double[] { 2.0, 2.0 });
-    double[] valid = { 0.0, 1.0, 2.0 };
+    TwoFluidPipe pipe = pipe(new double[] {2.0, 2.0});
+    double[] valid = {0.0, 1.0, 2.0};
     pipe.setCellFaceElevationProfile(valid);
     initialize(pipe);
     TwoFluidSection[] before = pipe.getSectionSnapshots();
-    double[][] invalid = { null, { 0.0, 1.0 }, { 0.0, Double.NaN, 2.0 }, { 0.0, Double.POSITIVE_INFINITY, 2.0 },
-        { 0.0, 2.01, 2.0 } };
+    double[][] invalid = {null, {0.0, 1.0}, {0.0, Double.NaN, 2.0}, {0.0, Double.POSITIVE_INFINITY, 2.0},
+        {0.0, 2.01, 2.0}};
     for (double[] candidate : invalid) {
       assertThrows(IllegalArgumentException.class, () -> pipe.setCellFaceElevationProfile(candidate));
       assertArrayEquals(valid, pipe.getCellFaceElevationProfile(), 0.0);
     }
     assertThrows(IllegalStateException.class, () -> pipe.generateRefinedMesh(4, 2.0));
-    assertArrayEquals(new double[] { 2.0, 2.0 }, pipe.getSectionLengths(), 0.0);
+    assertArrayEquals(new double[] {2.0, 2.0}, pipe.getSectionLengths(), 0.0);
     pipe.setLength(5.0);
     assertThrows(IllegalArgumentException.class, () -> pipe.run(UUID.randomUUID()));
     TwoFluidSection[] after = pipe.getSectionSnapshots();
@@ -182,7 +182,7 @@ class TwoFluidCellFaceTerrainTest {
       assertEquals(before[cell].getPressure(), after[cell].getPressure(), 0.0);
       assertEquals(before[cell].getInclination(), after[cell].getInclination(), 0.0);
     }
-    for (double[] lengths : new double[][] { { 0.0, 4.0 }, { -1.0, 5.0 }, { Double.NaN, 4.0 }, { 1.0, 1.0 } }) {
+    for (double[] lengths : new double[][] {{0.0, 4.0}, {-1.0, 5.0}, {Double.NaN, 4.0}, {1.0, 1.0}}) {
       pipe.setLength(4.0);
       pipe.setSectionLengths(lengths);
       assertThrows(IllegalArgumentException.class, () -> pipe.setCellFaceElevationProfile(valid));
@@ -190,8 +190,8 @@ class TwoFluidCellFaceTerrainTest {
   }
 
   private static void assertGravityLedger(TwoFluidSection[] cells, double[] elevations, double velocity) {
-    double[] fractions = { 0.4, 0.35, 0.25 };
-    double[] densities = { 10.0, 800.0, 1000.0 };
+    double[] fractions = {0.4, 0.35, 0.25};
+    double[] densities = {10.0, 800.0, 1000.0};
     for (TwoFluidSection cell : cells) {
       setConstantPhases(cell, fractions, velocity);
     }
@@ -228,7 +228,7 @@ class TwoFluidCellFaceTerrainTest {
     cell.setWaterDensity(1000.0);
     cell.setPressure(5.0e5);
     double[] state = new double[7];
-    double[] densities = { 10.0, 800.0, 1000.0 };
+    double[] densities = {10.0, 800.0, 1000.0};
     for (int phase = 0; phase < 3; phase++) {
       state[phase] = fractions[phase] * densities[phase] * cell.getArea();
       state[phase + 3] = state[phase] * velocity;

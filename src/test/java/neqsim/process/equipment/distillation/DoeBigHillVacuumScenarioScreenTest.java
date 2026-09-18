@@ -72,7 +72,7 @@ public class DoeBigHillVacuumScenarioScreenTest {
       assertTrue(result.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
       assertTrue(result.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
-      String[] expectedComponentNames = { "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+      String[] expectedComponentNames = {"DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC"};
       assertArrayEquals(expectedComponentNames, recovery.getComponentNames());
       assertNotSame(recovery.getComponentNames(), recovery.getComponentNames());
       double[] feedComponentFlows = recovery.getFeedComponentMolarFlowsMolPerHour();
@@ -121,11 +121,11 @@ public class DoeBigHillVacuumScenarioScreenTest {
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumScenarioScreen.run(" ", scenarios));
     assertThrows(NullPointerException.class, () -> DoeBigHillVacuumScenarioScreen.run("screen", null));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumScenarioScreen.run("screen", new Scenario[] { scenarios[0] }));
+        () -> DoeBigHillVacuumScenarioScreen.run("screen", new Scenario[] {scenarios[0]}));
     assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumScenarioScreen.run("screen", new Scenario[] { scenarios[0], null }));
+        () -> DoeBigHillVacuumScenarioScreen.run("screen", new Scenario[] {scenarios[0], null}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumScenarioScreen.run("screen",
-        new Scenario[] { scenarios[0], new Scenario("LOW", 1000.0, baselineInputs()) }));
+        new Scenario[] {scenarios[0], new Scenario("LOW", 1000.0, baselineInputs())}));
 
     assertThrows(IllegalArgumentException.class, () -> new Scenario(" ", 1000.0, baselineInputs()));
     assertThrows(IllegalArgumentException.class, () -> new Scenario("invalid", 0.0, baselineInputs()));
@@ -137,8 +137,8 @@ public class DoeBigHillVacuumScenarioScreenTest {
     OperatingInputs low = new OperatingInputs(12, 4, 638.0, 0.1176, 0.0784, 0.1568, 698.0, 0.49);
     OperatingInputs base = baselineInputs();
     OperatingInputs high = new OperatingInputs(12, 4, 642.0, 0.1224, 0.0816, 0.1632, 702.0, 0.51);
-    return new Scenario[] { new Scenario("low", 980.0, low), new Scenario("base", 1000.0, base),
-        new Scenario("high", 1020.0, high) };
+    return new Scenario[] {new Scenario("low", 980.0, low), new Scenario("base", 1000.0, base),
+        new Scenario("high", 1020.0, high)};
   }
 
   private static OperatingInputs baselineInputs() {

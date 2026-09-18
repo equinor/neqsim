@@ -159,9 +159,9 @@ public class ValueChainOptimizationTest {
   @Test
   void testRobustOptimizationPercentiles() {
     RobustOptimizationStudy study = new RobustOptimizationStudy();
-    study.addScenario(new double[] { 1.0 });
-    study.addScenario(new double[] { 2.0 });
-    study.addScenario(new double[] { 3.0 });
+    study.addScenario(new double[] {1.0});
+    study.addScenario(new double[] {2.0});
+    study.addScenario(new double[] {3.0});
 
     // objective = decision * scenario; always feasible.
     RobustOptimizationStudy.ScenarioEvaluator ev = new RobustOptimizationStudy.ScenarioEvaluator() {
@@ -170,7 +170,7 @@ public class ValueChainOptimizationTest {
         return new RobustOptimizationStudy.ScenarioOutcome(decision[0] * scenario[0], true);
       }
     };
-    RobustOptimizationStudy.RobustResult r = study.evaluateDecision(new double[] { 10.0 }, ev);
+    RobustOptimizationStudy.RobustResult r = study.evaluateDecision(new double[] {10.0}, ev);
     assertEquals(20.0, r.getP50(), TOL);
     assertEquals(20.0, r.getMean(), TOL);
     assertEquals(1.0, r.getFeasibleFraction(), TOL);
@@ -185,7 +185,7 @@ public class ValueChainOptimizationTest {
   void testRobustSelectionHonoursConfidence() {
     RobustOptimizationStudy study = new RobustOptimizationStudy().setRequiredConfidence(0.6);
     for (int i = 1; i <= 10; i++) {
-      study.addScenario(new double[] { i });
+      study.addScenario(new double[] {i});
     }
     // Candidate 0 (aggressive): high value but feasible only when scenario <= 3 (30%).
     // Candidate 1 (robust): lower value but always feasible.
@@ -200,8 +200,8 @@ public class ValueChainOptimizationTest {
       }
     };
     List<double[]> candidates = new ArrayList<double[]>();
-    candidates.add(new double[] { 100.0 });
-    candidates.add(new double[] { 30.0 });
+    candidates.add(new double[] {100.0});
+    candidates.add(new double[] {30.0});
     RobustOptimizationStudy.RobustResult chosen = study.selectRobust(candidates, ev);
     assertEquals(30.0, chosen.getDecision()[0], TOL);
     assertEquals(1.0, chosen.getFeasibleFraction(), TOL);
@@ -215,7 +215,7 @@ public class ValueChainOptimizationTest {
     ParallelSweep sweep = new ParallelSweep().setParallelism(4);
     List<double[]> inputs = new ArrayList<double[]>();
     for (int i = 0; i < 20; i++) {
-      inputs.add(new double[] { i });
+      inputs.add(new double[] {i});
     }
     List<Double> out = sweep.run(inputs, new ParallelSweep.SweepEvaluator<Double>() {
       @Override
@@ -241,14 +241,14 @@ public class ValueChainOptimizationTest {
     loop.setReader(new RealTimeOptimizationLoop.PlantReader() {
       @Override
       public double[] read() {
-        return new double[] { 1.0, 2.0 };
+        return new double[] {1.0, 2.0};
       }
     });
     loop.setOptimizer(new RealTimeOptimizationLoop.SetpointOptimizer() {
       @Override
       public double[] optimize() {
         int n = optimizeCalls.incrementAndGet();
-        return new double[] { n * 10.0 };
+        return new double[] {n * 10.0};
       }
     });
     loop.setWriter(new RealTimeOptimizationLoop.SetpointWriter() {

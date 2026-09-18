@@ -317,7 +317,7 @@ public class ComponentGeDuanSun extends ComponentGE {
           * (CB / ((phase.getPressure() + BB) * (CB * Math.log((phase.getPressure() + BB) / (BB + 1000.0)) + EPS)));
 
       // Average partial molar volume
-      double[] Vm = { 0.0, 0.0, 0.0 };
+      double[] Vm = {0.0, 0.0, 0.0};
       Vm[0] = 41.84
           * (0.1 * 7.29 + (100 * 0.92) / (2600 + phase.getPressure()) + 2.07 / (phase.getTemperature() - 288.0)
               - 1.23 * Math.pow(10.0, 4.0) / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
@@ -328,12 +328,12 @@ public class ComponentGeDuanSun extends ComponentGE {
               - 3.0417 * Math.pow(10.0, 4.0) / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
               + 0.3943 * BORN);
 
-      double[] Poynteff = { 0.0, 0.0, 0.0 };
+      double[] Poynteff = {0.0, 0.0, 0.0};
       Poynteff[0] = Vm[0] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
       Poynteff[1] = Vm[1] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
       Poynteff[2] = Vm[2] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
 
-      double[] K = { 0.0, 0.0, 0.0, 0.0 };
+      double[] K = {0.0, 0.0, 0.0, 0.0};
       double a1 = 0.0;
       double a2 = 0.0;
       double a3 = 0.0;

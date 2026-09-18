@@ -46,16 +46,16 @@ public class TurboExpanderCompressorTest {
      */
 
     turboExpander.setUCcurve(
-        new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0 },
-        new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
-            1.0 });
+        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821, 0.9552460269880922,
+            1.0},
+        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+            1.0});
 
-    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
 
-    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
+    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -119,16 +119,16 @@ public class TurboExpanderCompressorTest {
      */
 
     turboExpander.setUCcurve(
-        new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0 },
-        new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
-            1.0 });
+        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821, 0.9552460269880922,
+            1.0},
+        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+            1.0});
 
-    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
 
-    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
+    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -213,16 +213,16 @@ public class TurboExpanderCompressorTest {
      */
 
     turboExpander.setUCcurve(
-        new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0 },
-        new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
-            1.0 });
+        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821, 0.9552460269880922,
+            1.0},
+        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+            1.0});
 
-    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
 
-    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
+    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm
@@ -345,16 +345,16 @@ public class TurboExpanderCompressorTest {
     turboExpander.setCompressorFeedStream(feedStream2);
 
     turboExpander.setUCcurve(
-        new double[] { 0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821,
-            0.9552460269880922, 1.0 },
-        new double[] { 0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
-            1.0 });
+        new double[] {0.9964751359624449, 0.7590835113213541, 0.984295619176559, 0.8827799803397821, 0.9552460269880922,
+            1.0},
+        new double[] {0.984090909090909, 0.796590909090909, 0.9931818181818183, 0.9363636363636364, 0.9943181818181818,
+            1.0});
 
-    turboExpander.setQNEfficiencycurve(new double[] { 0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6 });
+    turboExpander.setQNEfficiencycurve(new double[] {0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.6},
+        new double[] {0.88, 0.91, 0.95, 1.0, 0.97, 0.85, 0.6});
 
-    turboExpander.setQNHeadcurve(new double[] { 0.5, 0.8, 1.0, 1.2, 1.4, 1.6 },
-        new double[] { 1.1, 1.05, 1.0, 0.9, 0.7, 0.4 });
+    turboExpander.setQNHeadcurve(new double[] {0.5, 0.8, 1.0, 1.2, 1.4, 1.6},
+        new double[] {1.1, 1.05, 1.0, 0.9, 0.7, 0.4});
 
     turboExpander.setImpellerDiameter(0.424); // m
     turboExpander.setDesignSpeed(6850.0); // rpm

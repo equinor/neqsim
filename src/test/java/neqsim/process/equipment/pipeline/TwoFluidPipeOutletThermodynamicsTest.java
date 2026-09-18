@@ -75,7 +75,7 @@ class TwoFluidPipeOutletThermodynamicsTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = { 1, 2, 3 })
+  @ValueSource(ints = {1, 2, 3})
   void gasAndLiquidPhaseCombinationsExposeInitializedProperties(int phases) {
     SystemInterface fluid = new SystemSrkEos(298.15, 70.0);
     fluid.addComponent("methane", 1.0);
@@ -196,9 +196,9 @@ class TwoFluidPipeOutletThermodynamicsTest extends neqsim.NeqSimTest {
     double oilMass = 500.0 * 859.5 / 86400.0;
     double gasMass = 120000.0 * 0.854 / 86400.0;
     double waterMass = 250.0 * 1033.0 / 86400.0;
-    String[] components = { "methane", "ethane", "propane", "nitrogen", "CO2" };
-    double[] fractions = { 0.86, 0.07, 0.035, 0.015, 0.02 };
-    double[] molarMasses = { 0.016043, 0.030070, 0.044097, 0.0280134, 0.04401 };
+    String[] components = {"methane", "ethane", "propane", "nitrogen", "CO2"};
+    double[] fractions = {0.86, 0.07, 0.035, 0.015, 0.02};
+    double[] molarMasses = {0.016043, 0.030070, 0.044097, 0.0280134, 0.04401};
     double gasMolarMass = 0.0;
     for (int i = 0; i < fractions.length; i++) {
       gasMolarMass += fractions[i] * molarMasses[i];

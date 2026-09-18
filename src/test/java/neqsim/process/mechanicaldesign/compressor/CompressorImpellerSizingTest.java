@@ -81,7 +81,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 2000.0, 100000.0 })
+  @ValueSource(doubles = {2000.0, 100000.0})
   void diameterBoundsAreReportedWithoutClippingAndConcealingHeadErrors(double speed) {
     Compressor compressor = specifiedHeadCompressor(240.0, 1.0, speed);
     CompressorMechanicalDesign design = compressor.getMechanicalDesign();
@@ -131,7 +131,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY })
+  @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
   void invalidSpeedDoesNotReturnAQualifiedDefaultDiameter(double speed) {
     Compressor compressor = runCompressor(18000.0);
     CompressorMechanicalDesign design = compressor.getMechanicalDesign();
@@ -148,7 +148,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY })
+  @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
   void invalidHeadIsUnavailable(double head) {
     Compressor compressor = specifiedHeadCompressor(head, 1.0, 18000.0);
     CompressorMechanicalDesign design = compressor.getMechanicalDesign();
@@ -175,7 +175,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY })
+  @ValueSource(doubles = {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY})
   void invalidSizingClearsDependentResultsAndRecovers(double speed) {
     Compressor compressor = runCompressor(18000.0);
     CompressorMechanicalDesign design = compressor.getMechanicalDesign();
@@ -188,16 +188,16 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
     design.calcDesign();
     assertUnavailableMechanicalResults(design);
     JsonObject legacy = JsonParser.parseString(design.toJson()).getAsJsonObject();
-    for (String field : new String[] { "shaftDiameter", "bearingSpan", "headPerStage", "driverPower",
+    for (String field : new String[] {"shaftDiameter", "bearingSpan", "headPerStage", "driverPower",
         "firstCriticalSpeed", "maxContinuousSpeed", "tripSpeed", "rotorWeight", "casingWeight", "bundleWeight",
         "innerDiameter", "outerDiameter", "wallThickness", "tangentLength", "totalWeight", "moduleLength",
-        "moduleWidth", "moduleHeight", "casingDesign" }) {
+        "moduleWidth", "moduleHeight", "casingDesign"}) {
       assertTrue(legacy.get(field).isJsonNull(), field + " must not retain a previous sizing result");
     }
     JsonObject cad = JsonParser.parseString(design.toDesignDataJson()).getAsJsonObject();
     assertEquals("incomplete", cad.get("geometryConsistency").getAsString());
-    for (String field : new String[] { "impellerDiameter", "shaftDiameter", "bearingSpan", "innerDiameter",
-        "outerDiameter", "wallThickness" }) {
+    for (String field : new String[] {"impellerDiameter", "shaftDiameter", "bearingSpan", "innerDiameter",
+        "outerDiameter", "wallThickness"}) {
       assertTrue(cad.getAsJsonObject("geometry").getAsJsonObject(field).get("value").isJsonNull(), field);
     }
     compressor.setSpeed(18000.0);
@@ -222,7 +222,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void missingEquipmentCannotRetainQualificationOrPreviousGeometry(boolean detached) {
     Compressor compressor = runCompressor(18000.0);
     CompressorMechanicalDesign design = compressor.getMechanicalDesign();
@@ -243,13 +243,13 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
     assertEquals(0, design.getNumberOfStages());
     assertNull(design.getCasingDesignCalculator());
     assertFalse(design.validateDesign().getIssues().toString().contains("Infinity"));
-    for (double value : new double[] { design.getShaftDiameter(), design.getBearingSpan(), design.getHeadPerStage(),
+    for (double value : new double[] {design.getShaftDiameter(), design.getBearingSpan(), design.getHeadPerStage(),
         design.getDriverPower(), design.getPower(), design.getFirstCriticalSpeed(), design.getMaxContinuousSpeed(),
         design.getTripSpeed(), design.getRotorWeight(), design.getCasingWeight(), design.getBundleWeight(),
         design.getInnerDiameter(), design.getOuterDiameter(), design.getWallThickness(), design.getTantanLength(),
         design.getWeightTotal(), design.getWeigthVesselShell(), design.getWeigthInternals(), design.getWeightNozzle(),
         design.getWeightPiping(), design.getWeightElectroInstrument(), design.getWeightStructualSteel(),
-        design.getModuleLength(), design.getModuleWidth(), design.getModuleHeight() }) {
+        design.getModuleLength(), design.getModuleWidth(), design.getModuleHeight()}) {
       assertTrue(Double.isNaN(value), "Unavailable sizing must clear all dependent results, found " + value);
     }
   }
@@ -264,7 +264,7 @@ class CompressorImpellerSizingTest extends neqsim.NeqSimTest {
     assertTrue(report.getIssues().stream().anyMatch(issue -> "IMPELLER_SIZING".equals(issue.getCategory())
         && issue.getSeverity() == CompressorDesignFeasibilityReport.IssueSeverity.BLOCKER));
     CompressorMechanicalDesign design = report.getMechanicalDesign();
-    for (String export : new String[] { design.toJson(), design.toDesignDataJson() }) {
+    for (String export : new String[] {design.toJson(), design.toDesignDataJson()}) {
       JsonObject json = JsonParser.parseString(export).getAsJsonObject();
       assertFalse(json.get("impellerSizingFeasible").getAsBoolean());
       assertTrue(json.getAsJsonArray("impellerSizingIssues").size() > 0);

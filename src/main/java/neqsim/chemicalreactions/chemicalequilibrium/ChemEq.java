@@ -382,7 +382,7 @@ public class ChemEq implements java.io.Serializable {
     phi = new double[NELE];
 
     // Initialize phi with default Lagrange multiplier estimates (bounds-checked)
-    double[] defaultPhi = { -9.7851, -12.969, -15.222, -10.0, -10.0 };
+    double[] defaultPhi = {-9.7851, -12.969, -15.222, -10.0, -10.0};
     for (int i = 0; i < NELE && i < defaultPhi.length; i++) {
       phi[i] = defaultPhi[i];
     }

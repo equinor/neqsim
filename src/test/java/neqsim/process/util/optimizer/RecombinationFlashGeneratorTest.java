@@ -173,7 +173,7 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15;
     double pressure = 100.0;
 
-    double[] gorValues = { 200, 500, 1000, 2000, 5000 };
+    double[] gorValues = {200, 500, 1000, 2000, 5000};
 
     for (double gor : gorValues) {
       SystemInterface fluid = generator.generateFluid(gor, waterCut, liquidRate, temperature, pressure);
@@ -191,7 +191,7 @@ public class RecombinationFlashGeneratorTest {
     double temperature = 353.15;
     double pressure = 100.0;
 
-    double[] wcValues = { 0.0, 0.10, 0.30, 0.50, 0.70 };
+    double[] wcValues = {0.0, 0.10, 0.30, 0.50, 0.70};
 
     for (double wc : wcValues) {
       SystemInterface fluid = generator.generateFluid(targetGOR, wc, liquidRate, temperature, pressure);

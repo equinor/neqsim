@@ -578,8 +578,8 @@ public class SolutionGasWaterRatio extends BasePVTsimulation {
     rswCalc.setSalinity(3.5, "wt%");
 
     // Set temperature and pressure points
-    double[] temps = { 373.15, 373.15, 373.15, 373.15, 373.15 };
-    double[] pres = { 200.0, 150.0, 100.0, 50.0, 10.0 };
+    double[] temps = {373.15, 373.15, 373.15, 373.15, 373.15};
+    double[] pres = {200.0, 150.0, 100.0, 50.0, 10.0};
     rswCalc.setTemperaturesAndPressures(temps, pres);
 
     // Calculate using McCain correlation

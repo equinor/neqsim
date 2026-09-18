@@ -14,9 +14,9 @@ class InterfacialFrictionTest {
   @Test
   void dispersedBubbleForceMatchesSchillerNaumannDragLaw() {
     InterfacialFriction friction = new InterfacialFriction();
-    double[] diameters = { 0.05, 0.10, 0.30 };
-    double[] liquidHoldups = { 0.80, 0.95, 1.0 - 1.0e-8 };
-    double[] slipVelocities = { -1.0, -0.10, 0.10, 1.0 };
+    double[] diameters = {0.05, 0.10, 0.30};
+    double[] liquidHoldups = {0.80, 0.95, 1.0 - 1.0e-8};
+    double[] slipVelocities = {-1.0, -0.10, 0.10, 1.0};
 
     for (double diameter : diameters) {
       for (double liquidHoldup : liquidHoldups) {

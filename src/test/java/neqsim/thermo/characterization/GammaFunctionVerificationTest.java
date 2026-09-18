@@ -78,7 +78,7 @@ public class GammaFunctionVerificationTest {
   @Test
   void testGammaRecurrenceRelation() {
     // Test the fundamental property: Gamma(x+1) = x * Gamma(x)
-    double[] testValues = { 1.0, 1.5, 2.0, 2.5, 3.0, 0.5 };
+    double[] testValues = {1.0, 1.5, 2.0, 2.5, 3.0, 0.5};
 
     for (double x : testValues) {
       double gammaX = gammaModel.gamma(x);

@@ -60,11 +60,11 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testFluidDefined() {
-    double[] fractions = new double[] { 98.0, 2.0 };
-    List<Double> Sp1 = Arrays.asList(new Double[] { 22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7 });
+    double[] fractions = new double[] {98.0, 2.0};
+    List<Double> Sp1 = Arrays.asList(new Double[] {22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7});
     List<Double> Sp2 = Arrays
-        .asList(new Double[] { 288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 });
-    List<String> components = Arrays.asList(new String[] { "O2", "N2" });
+        .asList(new Double[] {288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7});
+    List<String> components = Arrays.asList(new String[] {"O2", "N2"});
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
 
     for (double d : fractions) {
@@ -134,13 +134,13 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testPropertyFlashUsesComponentAliasTextEquality() {
-    List<Double> pressures = Arrays.asList(new Double[] { 22.0 });
-    List<Double> temperatures = Arrays.asList(new Double[] { 298.15 });
-    List<String> components = Arrays.asList(new String[] { new StringBuilder().append("N").append("2").toString(),
-        new StringBuilder().append("O").append("2").toString() });
+    List<Double> pressures = Arrays.asList(new Double[] {22.0});
+    List<Double> temperatures = Arrays.asList(new Double[] {298.15});
+    List<String> components = Arrays.asList(new String[] {new StringBuilder().append("N").append("2").toString(),
+        new StringBuilder().append("O").append("2").toString()});
     List<List<Double>> onlineFractions = new ArrayList<List<Double>>();
-    onlineFractions.add(Arrays.asList(new Double[] { 98.0 }));
-    onlineFractions.add(Arrays.asList(new Double[] { 2.0 }));
+    onlineFractions.add(Arrays.asList(new Double[] {98.0}));
+    onlineFractions.add(Arrays.asList(new Double[] {2.0}));
 
     SystemInterface fluid = new SystemSrkEos(298.15, 22.0);
     fluid.addComponent("nitrogen", 0.79);
@@ -164,8 +164,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     thermoSystem.init(0);
 
     ThermodynamicOperations thermoOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(thermoSystem);
-    List<Double> jP = Arrays.asList(new Double[] { 10.0 });
-    List<Double> jT = Arrays.asList(new Double[] { 280.0 });
+    List<Double> jP = Arrays.asList(new Double[] {10.0});
+    List<Double> jT = Arrays.asList(new Double[] {280.0});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
 
     // Verify some basic properties
@@ -190,12 +190,10 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testNeqSimPython2() {
-    String[] components = new String[] { "H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6" };
-    double[] fractions = new double[] { 0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036,
-        0.1656 };
+    String[] components = new String[] {"H2O", "N2", "CO2", "C1", "C2", "C3", "iC4", "nC4", "iC5", "nC5", "C6"};
+    double[] fractions = new double[] {0.0003, 1.299, 0.419, 94.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036, 0.1656};
 
-    double[] fractions2 = new double[] { 0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036,
-        0.1656 };
+    double[] fractions2 = new double[] {0.0003, 2.299, 0.419, 93.990, 2.399, 0.355, 0.172, 0.088, 0.076, 0.036, 0.1656};
 
     SystemInterface thermoSystem = new neqsim.thermo.system.SystemSrkEos(100 + 273.15, 60.0);
     thermoSystem.addComponents(components, fractions);
@@ -205,8 +203,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     double temp = 373.15;
     double press = 60.0 + ThermodynamicConstantsInterface.referencePressure;
 
-    List<Double> jP = Arrays.asList(new Double[] { press });
-    List<Double> jT = Arrays.asList(new Double[] { temp });
+    List<Double> jP = Arrays.asList(new Double[] {press});
+    List<Double> jT = Arrays.asList(new Double[] {temp});
     CalculationResult res = thermoOps.propertyFlash(jP, jT, 1, null, null);
     // Assert no calculation failed
     for (String errorMessage : res.calculationError) {
@@ -235,8 +233,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     int numFrac = 3;
     List<List<Double>> onlineFractions2 = createDummyRequest(thermoSystem.getMolarComposition(), numFrac);
 
-    List<Double> jP2 = Arrays.asList(new Double[] { press, press });
-    List<Double> jT2 = Arrays.asList(new Double[] { temp, temp });
+    List<Double> jP2 = Arrays.asList(new Double[] {press, press});
+    List<Double> jT2 = Arrays.asList(new Double[] {temp, temp});
     SystemInterface thermoSystem2 = new neqsim.thermo.system.SystemSrkEos(273.15, 0.0);
     thermoSystem2.addComponents(components, fractions2);
     ThermodynamicOperations thermoOps2 = new neqsim.thermodynamicoperations.ThermodynamicOperations(thermoSystem2);
@@ -290,10 +288,10 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   void testPropertyFlash() {
     SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);
 
-    List<Double> Sp1 = Arrays.asList(new Double[] { 100000.0, 1000000.0, 10000000.0, 20000000.0, 100000.0, 1000000.0,
-        10000000.0, 20000000.0, 100000.0, 1000000.0, 10000000.0, 20000000.0 });
-    List<Double> Sp2 = Arrays.asList(new Double[] { 288.15, 288.15, 288.15, 288.15, 303.15, 303.15, 303.15, 303.15,
-        423.15, 423.15, 423.15, 423.15 });
+    List<Double> Sp1 = Arrays.asList(new Double[] {100000.0, 1000000.0, 10000000.0, 20000000.0, 100000.0, 1000000.0,
+        10000000.0, 20000000.0, 100000.0, 1000000.0, 10000000.0, 20000000.0});
+    List<Double> Sp2 = Arrays.asList(
+        new Double[] {288.15, 288.15, 288.15, 288.15, 303.15, 303.15, 303.15, 303.15, 423.15, 423.15, 423.15, 423.15});
 
     fluid.addComponent("water", 0.01);
     fluid.addComponent("nitrogen", 0.02);
@@ -307,7 +305,7 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     fluid.addComponent("n-pentane", 0.01);
     fluid.addComponent("n-hexane", 0.01);
     fluid.setMolarComposition(
-        new double[] { 0.054, 0.454, 1.514, 89.92, 5.324, 1.535, 0.232, 0.329, 0.094, 0.107, 0.437 });
+        new double[] {0.054, 0.454, 1.514, 89.92, 5.324, 1.535, 0.232, 0.329, 0.094, 0.107, 0.437});
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Sp1, Sp2, 1, null, null);
@@ -322,8 +320,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testpropertyFlashOnline() {
-    String[] components = { "nitrogen", "oxygen" };
-    double[] fractions = { 0.79, 0.21 };
+    String[] components = {"nitrogen", "oxygen"};
+    double[] fractions = {0.79, 0.21};
     int len = 10;
     List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
 
@@ -333,8 +331,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     // fluid.setTotalFlowRate(1, "mole/sec");
     // fluid.init(0);
 
-    Double[] pressure = { 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5 };
-    Double[] temperature = { 301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5 };
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
@@ -344,8 +342,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testpropertyFlashOnlineSingle() {
-    String[] components = { "nitrogen" };
-    double[] fractions = { 0.98 };
+    String[] components = {"nitrogen"};
+    double[] fractions = {0.98};
     int len = 10;
     List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
 
@@ -353,8 +351,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     fluid.addComponents(components);
     fluid.addComponent("oxygen");
 
-    Double[] pressure = new Double[] { 22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7 };
-    Double[] temperature = new Double[] { 288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 };
+    Double[] pressure = new Double[] {22.1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7};
+    Double[] temperature = new Double[] {288.1, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7};
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,
@@ -364,13 +362,13 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
 
   @Test
   void testpropertyFlashOnlineTooFewInputComponents() {
-    String[] components = { "nitrogen", "oxygen" };
-    double[] fractions = { 0.79, 0.21 };
+    String[] components = {"nitrogen", "oxygen"};
+    double[] fractions = {0.79, 0.21};
     int len = 10;
     List<List<Double>> onlineFractions = createDummyRequest(fractions, len);
 
-    Double[] pressure = { 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5 };
-    Double[] temperature = { 301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5 };
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
 
     SystemInterface fluid = new SystemSrkEos(298, 1.0);
     // Add extra component C1
@@ -389,17 +387,17 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
   @Test
   void testPropertyFlashTooManyInputComponents() {
     int len = 10;
-    String[] components_too_many = { "nitrogen", "oxygen", "water" };
-    double[] fractions_to_many = { 0.79, 0.21, 0.01 };
+    String[] components_too_many = {"nitrogen", "oxygen", "water"};
+    double[] fractions_to_many = {0.79, 0.21, 0.01};
 
-    Double[] pressure = { 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5 };
-    Double[] temperature = { 301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5 };
+    Double[] pressure = {1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 4.0, 3.5, 3.0, 2.5};
+    Double[] temperature = {301.0, 301.5, 302.0, 302.5, 303.0, 304.0, 304.0, 303.5, 303.0, 302.5};
 
     List<List<Double>> onlineFractions_too_many = createDummyRequest(fractions_to_many, len);
     SystemInterface fluid = new SystemSrkEos(298, 1.0);
 
     // Add only two components to fluid
-    String[] components = { "nitrogen", "oxygen" };
+    String[] components = {"nitrogen", "oxygen"};
     fluid.addComponents(components);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     CalculationResult s = ops.propertyFlash(Arrays.asList(pressure), Arrays.asList(temperature), 1,

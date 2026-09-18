@@ -2009,7 +2009,7 @@ For a NeqSim gap:
 1. **Implement the Java class** under the appropriate package (Java 8 only)
 2. **Write complete JavaDoc** (per MANDATORY requirements)
 3. **Add a JUnit 5 test** with physical validation
-4. **Format**: `mvnw.cmd spotless:apply`, then verify `mvnw.cmd test -Dtest=...`
+4. **Format**: `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`), then verify `./mvnw test -Dtest=...`. CI runs `spotless:check` and fails on any unformatted file; use the wrapper, never bare `mvn`.
 5. **Use the new class** in the task notebook — a class nothing calls is not evidence
 6. **Include in the PR** as a NeqSim contribution before the task closes
 

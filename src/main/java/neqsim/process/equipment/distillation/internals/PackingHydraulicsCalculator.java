@@ -516,8 +516,8 @@ public class PackingHydraulicsCalculator implements Serializable {
    * @return standard diameter [m]
    */
   private double roundToStandardDiameter(double diameter) {
-    double[] standardSizes = { 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6,
-        2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0 };
+    double[] standardSizes = {0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6,
+        2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0};
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
         return stdSize;

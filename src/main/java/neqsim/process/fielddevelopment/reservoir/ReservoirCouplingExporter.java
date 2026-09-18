@@ -393,7 +393,7 @@ public class ReservoirCouplingExporter implements Serializable {
     vfp.thpValues = pressureRange.clone();
     vfp.wctValues = wctRange.clone();
     vfp.gorValues = gorRange.clone();
-    vfp.almValues = new double[] { 0.0 }; // No artificial lift by default
+    vfp.almValues = new double[] {0.0}; // No artificial lift by default
 
     int nFlow = rateRange.length;
     int nThp = pressureRange.length;

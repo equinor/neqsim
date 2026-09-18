@@ -373,8 +373,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     double chlorideGamma = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterNumber);
     double expectedLogQuotient = Math.log(sodiumMolality * sodiumGamma) + Math.log(chlorideMolality * chlorideGamma);
 
-    ChemicalReaction ionicProduct = new ChemicalReaction("PitzerMolalityProbe", new String[] { "Na+", "Cl-" },
-        new double[] { 1.0, 1.0 }, new double[] { 0.0, 0.0, 0.0, 0.0 }, 0.0, 0.0, 298.15);
+    ChemicalReaction ionicProduct = new ChemicalReaction("PitzerMolalityProbe", new String[] {"Na+", "Cl-"},
+        new double[] {1.0, 1.0}, new double[] {0.0, 0.0, 0.0, 0.0}, 0.0, 0.0, 298.15);
 
     assertEquals(ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY, system.getChemicalReactionConcentrationBasis());
     assertEquals(sodiumMolality * chlorideMolality, ionicProduct.calcKx(system, 1), 1.0e-12);
@@ -391,7 +391,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testNaClActivityAndOsmoticCoefficientAgainstPartanen2020() {
-    assertNaClReferenceValues(new double[][] { { 0.2, 0.735, 0.924 }, { 0.5, 0.684, 0.924 }, { 1.0, 0.662, 0.940 } });
+    assertNaClReferenceValues(new double[][] {{0.2, 0.735, 0.924}, {0.5, 0.684, 0.924}, {1.0, 0.662, 0.940}});
   }
 
   /**
@@ -399,7 +399,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testConcentratedNaClActivityAndOsmoticCoefficientHoldout() {
-    assertNaClReferenceValues(new double[][] { { 2.0, 0.677, 0.989 }, { 3.0, 0.721, 1.047 } });
+    assertNaClReferenceValues(new double[][] {{2.0, 0.677, 0.989}, {3.0, 0.721, 1.047}});
   }
 
   /**
@@ -445,7 +445,7 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.setMixingRule("classic");
     system.init(0);
     system.init(1);
-    system.getPhase(1).getComponent("methane").setHenryCoefParameter(new double[] { 11.2605, 0.0, 0.0, 0.0 });
+    system.getPhase(1).getComponent("methane").setHenryCoefParameter(new double[] {11.2605, 0.0, 0.0, 0.0});
     double henry = system.getPhase(1).getComponent("methane").getHenryCoef(298.15);
     double vap = system.getPhase(1).getComponent("water").getAntoineVaporPressure(298.15);
     assertEquals(1.4e5, henry, 1e3);
@@ -541,8 +541,8 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testAqueousPhasePropertyPackageConsistency() {
-    double[] temperatures = { 298.15, 373.15, 423.15 };
-    double[] pressures = { 1.01325, 50.0, 100.0 };
+    double[] temperatures = {298.15, 373.15, 423.15};
+    double[] pressures = {1.01325, 50.0, 100.0};
 
     for (int i = 0; i < temperatures.length; i++) {
       SystemInterface system = new SystemPitzer(temperatures[i], pressures[i]);
@@ -940,18 +940,18 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testDatabaseLoadAllPopulatedPitzerPairs() {
-    String[][] ionPairs = { { "Na+", "Cl-", "true", "true", "false" }, { "Na+", "SO4--", "true", "true", "false" },
-        { "K+", "Cl-", "true", "true", "false" }, { "K+", "SO4--", "true", "true", "false" },
-        { "Ca++", "Cl-", "true", "true", "false" }, { "Ca++", "SO4--", "true", "true", "true" },
-        { "Mg++", "Cl-", "true", "true", "false" }, { "Mg++", "SO4--", "true", "true", "true" },
-        { "Ba++", "Cl-", "true", "true", "false" }, { "Sr++", "Cl-", "true", "true", "false" },
-        { "Sr++", "SO4--", "true", "true", "true" }, { "Fe++", "Cl-", "true", "true", "false" },
-        { "Fe++", "SO4--", "true", "true", "true" }, { "Na+", "HCO3-", "true", "true", "false" },
-        { "Na+", "CO3--", "true", "true", "false" }, { "Ca++", "HCO3-", "true", "true", "false" },
-        { "Mg++", "HCO3-", "true", "true", "false" }, { "Na+", "OH-", "true", "true", "false" },
-        { "K+", "HCO3-", "true", "true", "false" }, { "K+", "CO3--", "true", "true", "false" },
-        { "H+", "Cl-", "true", "true", "false" }, { "H+", "SO4--", "true", "true", "false" },
-        { "Ba++", "HCO3-", "true", "true", "false" } };
+    String[][] ionPairs = {{"Na+", "Cl-", "true", "true", "false"}, {"Na+", "SO4--", "true", "true", "false"},
+        {"K+", "Cl-", "true", "true", "false"}, {"K+", "SO4--", "true", "true", "false"},
+        {"Ca++", "Cl-", "true", "true", "false"}, {"Ca++", "SO4--", "true", "true", "true"},
+        {"Mg++", "Cl-", "true", "true", "false"}, {"Mg++", "SO4--", "true", "true", "true"},
+        {"Ba++", "Cl-", "true", "true", "false"}, {"Sr++", "Cl-", "true", "true", "false"},
+        {"Sr++", "SO4--", "true", "true", "true"}, {"Fe++", "Cl-", "true", "true", "false"},
+        {"Fe++", "SO4--", "true", "true", "true"}, {"Na+", "HCO3-", "true", "true", "false"},
+        {"Na+", "CO3--", "true", "true", "false"}, {"Ca++", "HCO3-", "true", "true", "false"},
+        {"Mg++", "HCO3-", "true", "true", "false"}, {"Na+", "OH-", "true", "true", "false"},
+        {"K+", "HCO3-", "true", "true", "false"}, {"K+", "CO3--", "true", "true", "false"},
+        {"H+", "Cl-", "true", "true", "false"}, {"H+", "SO4--", "true", "true", "false"},
+        {"Ba++", "HCO3-", "true", "true", "false"}};
 
     for (int i = 0; i < ionPairs.length; i++) {
       assertPopulatedPitzerPairCanBeUsed(ionPairs[i][0], ionPairs[i][1], Boolean.parseBoolean(ionPairs[i][2]),

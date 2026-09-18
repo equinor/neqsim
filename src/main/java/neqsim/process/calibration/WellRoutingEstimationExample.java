@@ -61,12 +61,12 @@ public class WellRoutingEstimationExample {
   private static final double MAX_CHANGE_PER_UPDATE = 3.0;
 
   // ============ True values (for synthetic testing) ============
-  private static final double[] TRUE_HEAT_TRANSFER_COEFFS = { 12.0, 15.0, 18.0, 14.0, 16.0, 20.0, 13.0, 17.0 };
+  private static final double[] TRUE_HEAT_TRANSFER_COEFFS = {12.0, 15.0, 18.0, 14.0, 16.0, 20.0, 13.0, 17.0};
 
   // Well configurations: [pressure bar-a, flowrate kg/hr, pipe length m]
-  private static final double[][] WELL_CONFIGS = { { 100.0, 50000.0, 8000.0 }, { 95.0, 45000.0, 8500.0 },
-      { 92.0, 55000.0, 7500.0 }, { 88.0, 48000.0, 9000.0 }, { 96.0, 52000.0, 7800.0 }, { 90.0, 46000.0, 8200.0 },
-      { 94.0, 51000.0, 8800.0 }, { 86.0, 44000.0, 9200.0 } };
+  private static final double[][] WELL_CONFIGS = {{100.0, 50000.0, 8000.0}, {95.0, 45000.0, 8500.0},
+      {92.0, 55000.0, 7500.0}, {88.0, 48000.0, 9000.0}, {96.0, 52000.0, 7800.0}, {90.0, 46000.0, 8200.0},
+      {94.0, 51000.0, 8800.0}, {86.0, 44000.0, 9200.0}};
 
   // ============ Process equipment ============
   private ProcessSystem process;
@@ -161,7 +161,7 @@ public class WellRoutingEstimationExample {
     process.add(lpManifold);
 
     // Initialize with default routing (all to HP)
-    setRouting(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 });
+    setRouting(new int[] {0, 0, 0, 0, 0, 0, 0, 0});
   }
 
   /**
@@ -173,10 +173,10 @@ public class WellRoutingEstimationExample {
     for (int i = 0; i < NUM_WELLS; i++) {
       if (routing[i] == 0) {
         // Route to HP manifold
-        splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
+        splitters[i].setSplitFactors(new double[] {1.0, 0.0});
       } else {
         // Route to LP manifold
-        splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
+        splitters[i].setSplitFactors(new double[] {0.0, 1.0});
       }
       currentRouting[i] = routing[i];
     }
@@ -272,25 +272,25 @@ public class WellRoutingEstimationExample {
   public int[][] getRoutingSchedule() {
     return new int[][] {
         // Block patterns
-        { 0, 0, 0, 0, 1, 1, 1, 1 }, // Wells 1-4 HP, 5-8 LP
-        { 1, 1, 1, 1, 0, 0, 0, 0 }, // Inverse
+        {0, 0, 0, 0, 1, 1, 1, 1}, // Wells 1-4 HP, 5-8 LP
+        {1, 1, 1, 1, 0, 0, 0, 0}, // Inverse
 
         // Alternating patterns
-        { 0, 1, 0, 1, 0, 1, 0, 1 }, // Odd to HP, even to LP
-        { 1, 0, 1, 0, 1, 0, 1, 0 }, // Inverse
+        {0, 1, 0, 1, 0, 1, 0, 1}, // Odd to HP, even to LP
+        {1, 0, 1, 0, 1, 0, 1, 0}, // Inverse
 
         // Pairs patterns
-        { 0, 0, 1, 1, 0, 0, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0 },
+        {0, 0, 1, 1, 0, 0, 1, 1}, {1, 1, 0, 0, 1, 1, 0, 0},
 
         // Single-well isolation (most informative)
-        { 0, 1, 1, 1, 1, 1, 1, 1 }, // Only Well 1 at HP
-        { 1, 0, 1, 1, 1, 1, 1, 1 }, // Only Well 2 at HP
-        { 1, 1, 0, 1, 1, 1, 1, 1 }, // Only Well 3 at HP
-        { 1, 1, 1, 0, 1, 1, 1, 1 }, // Only Well 4 at HP
-        { 1, 1, 1, 1, 0, 1, 1, 1 }, // Only Well 5 at HP
-        { 1, 1, 1, 1, 1, 0, 1, 1 }, // Only Well 6 at HP
-        { 1, 1, 1, 1, 1, 1, 0, 1 }, // Only Well 7 at HP
-        { 1, 1, 1, 1, 1, 1, 1, 0 }, // Only Well 8 at HP
+        {0, 1, 1, 1, 1, 1, 1, 1}, // Only Well 1 at HP
+        {1, 0, 1, 1, 1, 1, 1, 1}, // Only Well 2 at HP
+        {1, 1, 0, 1, 1, 1, 1, 1}, // Only Well 3 at HP
+        {1, 1, 1, 0, 1, 1, 1, 1}, // Only Well 4 at HP
+        {1, 1, 1, 1, 0, 1, 1, 1}, // Only Well 5 at HP
+        {1, 1, 1, 1, 1, 0, 1, 1}, // Only Well 6 at HP
+        {1, 1, 1, 1, 1, 1, 0, 1}, // Only Well 7 at HP
+        {1, 1, 1, 1, 1, 1, 1, 0}, // Only Well 8 at HP
     };
   }
 

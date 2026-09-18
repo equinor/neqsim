@@ -28,13 +28,13 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class SarirAtmosphericFractionationSensitivityTest {
-  private static final double[] BASE_SPECIFIC_GRAVITY = { 0.641826000, 0.671826000, 0.691826000, 0.711826000,
+  private static final double[] BASE_SPECIFIC_GRAVITY = {0.641826000, 0.671826000, 0.691826000, 0.711826000,
       0.741826000, 0.761826000, 0.781826000, 0.801826000, 0.821826000, 0.841826000, 0.861826000, 0.881826000,
-      0.901826000, 0.921826000, 0.941826000, 0.961826000, 0.981826000, 1.021826000 };
-  private static final double[] BASE_MOLAR_MASS_KG_PER_MOL = { 0.092957679997, 0.105352037330, 0.117746394663,
+      0.901826000, 0.921826000, 0.941826000, 0.961826000, 0.981826000, 1.021826000};
+  private static final double[] BASE_MOLAR_MASS_KG_PER_MOL = {0.092957679997, 0.105352037330, 0.117746394663,
       0.136337930662, 0.161126645328, 0.179718181327, 0.204506895993, 0.223098431993, 0.241689967992, 0.272675861324,
       0.303661754657, 0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318, 0.495774293317, 0.545351722649,
-      0.743661439976 };
+      0.743661439976};
 
   private static final int SIMPLE_TRAY_COUNT = 34;
   private static final int FEED_INTERNAL_INDEX = 4;
@@ -78,7 +78,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
     StreamInterface kerosene = column.getSideDrawStream(KEROSENE_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface diesel = column.getSideDrawStream(DIESEL_SCREEN_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface bottoms = column.getLiquidOutStream();
-    StreamInterface[] products = { overhead, kerosene, diesel, bottoms };
+    StreamInterface[] products = {overhead, kerosene, diesel, bottoms};
 
     assertBalances(column, feed, products);
     assertReadOnlyPlantYieldComparisons(products);
@@ -203,7 +203,7 @@ public class SarirAtmosphericFractionationSensitivityTest {
   }
 
   private static void assertReadOnlyPlantYieldComparisons(StreamInterface[] products) {
-    String[] productLabels = { "Total Naphtha", "Kerosene", "Diesel", "Residual" };
+    String[] productLabels = {"Total Naphtha", "Kerosene", "Diesel", "Residual"};
     assertEquals(productLabels.length, products.length);
     for (int i = 0; i < products.length; i++) {
       ProductYieldReference target = SarirAtmosphericReference.getProductYield(productLabels[i]);

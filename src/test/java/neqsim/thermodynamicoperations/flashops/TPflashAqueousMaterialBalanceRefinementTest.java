@@ -13,8 +13,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousMaterialBalanceRefinementTest {
-  private static final String[] COMPONENTS = { "methane", "nC10", "water" };
-  private static final double[] FEED = { 0.20, 0.60, 0.20 };
+  private static final String[] COMPONENTS = {"methane", "nC10", "water"};
+  private static final double[] FEED = {0.20, 0.60, 0.20};
 
   @Test
   void ordinaryFlashRejectsNonConservativeAqueousEndpoint() {
@@ -47,7 +47,7 @@ class TPflashAqueousMaterialBalanceRefinementTest {
         ((Double) materialBalanceMethod.invoke(flash, invalidPhaseFractionCandidate)).doubleValue());
     assertFalse(((Boolean) feasibilityMethod.invoke(flash, invalidPhaseFractionCandidate)).booleanValue());
 
-    for (double invalidComposition : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+    for (double invalidComposition : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
       SystemInterface invalidCompositionCandidate = createAndFlash(true);
       setRawPhaseComposition(invalidCompositionCandidate, 0, 0, invalidComposition);
       flash = new TPflash(invalidCompositionCandidate);
@@ -57,7 +57,7 @@ class TPflashAqueousMaterialBalanceRefinementTest {
       assertFalse(((Boolean) feasibilityMethod.invoke(flash, invalidCompositionCandidate)).booleanValue());
     }
 
-    for (double invalidComposition : new double[] { -1.0e-6, 1.0 + 1.0e-6 }) {
+    for (double invalidComposition : new double[] {-1.0e-6, 1.0 + 1.0e-6}) {
       SystemInterface invalidCompositionCandidate = createAndFlash(true);
       setRawPhaseComposition(invalidCompositionCandidate, 0, 0, invalidComposition);
       flash = new TPflash(invalidCompositionCandidate);

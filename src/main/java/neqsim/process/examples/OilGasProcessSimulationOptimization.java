@@ -792,7 +792,7 @@ public class OilGasProcessSimulationOptimization {
     // Gas splitter for fuel gas takeoff
     Splitter gasSplitter = new Splitter("splitter", dewPointScrubber2.getGasOutStream());
     gasSplitter.setSplitNumber(2);
-    gasSplitter.setFlowRates(new double[] { -1, 2966.0 }, "kg/hr");
+    gasSplitter.setFlowRates(new double[] {-1, 2966.0}, "kg/hr");
 
     // Fuel gas stream
     gasSplitter.getSplitStream(1).setName("fuel gas");
@@ -1288,10 +1288,10 @@ public class OilGasProcessSimulationOptimization {
     double bestPower = Double.MAX_VALUE;
 
     // Define parameter ranges for optimization
-    double[] feedRateRange = { 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0 }; // kgmole/hr
-    double[] tsep1Range = { 65.0, 67.5, 70.0, 72.5, 75.0 };
-    double[] tsep2Range = { 65.0, 66.0, 67.0, 68.0, 69.0, 70.0 };
-    double[] psep1Range = { 30.0, 31.0, 32.0, 33.0, 34.0, 35.0 };
+    double[] feedRateRange = {5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0}; // kgmole/hr
+    double[] tsep1Range = {65.0, 67.5, 70.0, 72.5, 75.0};
+    double[] tsep2Range = {65.0, 66.0, 67.0, 68.0, 69.0, 70.0};
+    double[] psep1Range = {30.0, 31.0, 32.0, 33.0, 34.0, 35.0};
 
     int iterations = 0;
     int successfulIterations = 0;
@@ -1393,8 +1393,8 @@ public class OilGasProcessSimulationOptimization {
     double bestGasExportRate = 0.0;
 
     // Define parameter ranges - focus on feed rate, use fixed operating conditions
-    double[] feedRateRange = { 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 13000.0, 14000.0,
-        15000.0 };
+    double[] feedRateRange = {5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 13000.0, 14000.0,
+        15000.0};
 
     int successfulIterations = 0;
     int consecutiveFailures = 0;

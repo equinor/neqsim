@@ -18,8 +18,8 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidPipeInletBoundaryStateTest {
   @Test
   void coupledFlowBoundaryPreservesCellStateAndPrescribesThreePhaseMassFlux() throws Exception {
-    for (BoundaryCondition boundary : new BoundaryCondition[] { BoundaryCondition.STREAM_CONNECTED,
-        BoundaryCondition.CONSTANT_FLOW }) {
+    for (BoundaryCondition boundary : new BoundaryCondition[] {BoundaryCondition.STREAM_CONNECTED,
+        BoundaryCondition.CONSTANT_FLOW}) {
       TwoFluidPipe pipe = createPipe(boundary, -1);
       TwoFluidSection[] sections = (TwoFluidSection[]) read(pipe, "sections");
       TwoFluidSection inletCell = sections[0];
@@ -45,8 +45,8 @@ class TwoFluidPipeInletBoundaryStateTest {
 
   @Test
   void prescribedFeedCanIntroduceEachAbsentPhaseWithoutChangingCellInventoryAtBoundaryApplication() throws Exception {
-    for (BoundaryCondition boundary : new BoundaryCondition[] { BoundaryCondition.STREAM_CONNECTED,
-        BoundaryCondition.CONSTANT_FLOW }) {
+    for (BoundaryCondition boundary : new BoundaryCondition[] {BoundaryCondition.STREAM_CONNECTED,
+        BoundaryCondition.CONSTANT_FLOW}) {
       for (int absentPhase = 0; absentPhase < 3; absentPhase++) {
         TwoFluidPipe pipe = createPipe(boundary, absentPhase);
         TwoFluidSection[] sections = (TwoFluidSection[]) read(pipe, "sections");
@@ -99,7 +99,7 @@ class TwoFluidPipeInletBoundaryStateTest {
     }
 
     TwoFluidSection first = new TwoFluidSection(0.0, 10.0, 0.2, 0.0);
-    double[] holdup = { 0.5, 0.2, 0.3 };
+    double[] holdup = {0.5, 0.2, 0.3};
     if (absentPhase >= 0) {
       double remaining = 1.0 - holdup[absentPhase];
       holdup[absentPhase] = 0.0;
@@ -130,15 +130,15 @@ class TwoFluidPipeInletBoundaryStateTest {
     first.setOilVelocity(0.7);
     first.setWaterVelocity(-0.1);
     first.updateConservativeVariables();
-    write(pipe, "sections", new TwoFluidSection[] { first, first.clone() });
+    write(pipe, "sections", new TwoFluidSection[] {first, first.clone()});
     write(pipe, "isTransientMode", true);
     return pipe;
   }
 
   private static double[] prescribedPhaseMassFlows(TwoFluidPipe pipe, BoundaryCondition boundary) {
     SystemInterface fluid = pipe.getInletStream().getFluid();
-    double[] masses = { fluid.getPhase("gas").getMass(), fluid.getPhase("oil").getMass(),
-        fluid.getPhase("aqueous").getMass() };
+    double[] masses = {fluid.getPhase("gas").getMass(), fluid.getPhase("oil").getMass(),
+        fluid.getPhase("aqueous").getMass()};
     double total = masses[0] + masses[1] + masses[2];
     double prescribed = boundary == BoundaryCondition.CONSTANT_FLOW ? 0.17
         : pipe.getInletStream().getFlowRate("kg/sec");
@@ -149,10 +149,10 @@ class TwoFluidPipeInletBoundaryStateTest {
   }
 
   private static double[] cellProperties(TwoFluidSection section) {
-    return new double[] { section.getPressure(), section.getTemperature(), section.getGasDensity(),
+    return new double[] {section.getPressure(), section.getTemperature(), section.getGasDensity(),
         section.getOilDensity(), section.getWaterDensity(), section.getLiquidDensity(), section.getGasHoldup(),
         section.getOilHoldup(), section.getWaterHoldup(), section.getGasVelocity(), section.getOilVelocity(),
-        section.getWaterVelocity() };
+        section.getWaterVelocity()};
   }
 
   private static void applyBoundaryConditions(TwoFluidPipe pipe) throws Exception {

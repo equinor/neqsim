@@ -1668,15 +1668,15 @@ public class TwoFluidPipe extends Pipeline {
         updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
         double maxPropertyChange = 0.0;
         for (int i = 0; i < numberOfSections; i++) {
-          double[] densities = { sections[i].getGasDensity(), sections[i].getOilDensity(),
-              sections[i].getWaterDensity() };
+          double[] densities = {sections[i].getGasDensity(), sections[i].getOilDensity(),
+              sections[i].getWaterDensity()};
           for (int phase = 0; phase < densities.length; phase++) {
             if (densities[phase] > 0.0) {
               maxPropertyChange = Math.max(maxPropertyChange,
                   Math.abs(densities[phase] - propertiesBefore[i][phase]) / densities[phase]);
             }
           }
-          double[] closureProperties = { sections[i].getLiquidViscosity(), sections[i].getSurfaceTension() };
+          double[] closureProperties = {sections[i].getLiquidViscosity(), sections[i].getSurfaceTension()};
           for (int property = 0; property < closureProperties.length; property++) {
             if (closureProperties[property] > 0.0) {
               maxPropertyChange = Math.max(maxPropertyChange,
@@ -1889,7 +1889,7 @@ public class TwoFluidPipe extends Pipeline {
       liquidHoldupResidual = Math.max(liquidHoldupResidual, Math.abs(sec.getLiquidHoldup() - liquidHoldupBefore));
       liquidSplitResidual = Math.max(liquidSplitResidual, Math.abs(sec.getWaterHoldup() - waterHoldupBefore));
     }
-    return new double[] { thermodynamicResidual, liquidHoldupResidual, liquidSplitResidual };
+    return new double[] {thermodynamicResidual, liquidHoldupResidual, liquidSplitResidual};
   }
 
   /**
@@ -1937,14 +1937,14 @@ public class TwoFluidPipe extends Pipeline {
       double massFlow) {
     double maximumResidual = 0.0;
     for (int i = 0; i < numberOfSections; i++) {
-      double[] densities = { sections[i].getGasDensity(), sections[i].getOilDensity(), sections[i].getWaterDensity() };
+      double[] densities = {sections[i].getGasDensity(), sections[i].getOilDensity(), sections[i].getWaterDensity()};
       for (int phase = 0; phase < densities.length; phase++) {
         if (densities[phase] > 0.0) {
           maximumResidual = Math.max(maximumResidual,
               Math.abs(densities[phase] - propertiesBefore[i][phase]) / densities[phase]);
         }
       }
-      double[] closureProperties = { sections[i].getLiquidViscosity(), sections[i].getSurfaceTension() };
+      double[] closureProperties = {sections[i].getLiquidViscosity(), sections[i].getSurfaceTension()};
       for (int property = 0; property < closureProperties.length; property++) {
         if (closureProperties[property] > 0.0) {
           maximumResidual = Math.max(maximumResidual,
@@ -2919,10 +2919,10 @@ public class TwoFluidPipe extends Pipeline {
     double gasMassFlowMagnitude = Math.abs(mDotGas);
     double liquidMassFlowMagnitude = Math.abs(mDotLiq);
     if (liquidMassFlowMagnitude == 0.0) {
-      return new double[] { 0.0, 1.0 }; // Pure gas
+      return new double[] {0.0, 1.0}; // Pure gas
     }
     if (gasMassFlowMagnitude == 0.0) {
-      return new double[] { 1.0, 0.0 }; // Pure liquid
+      return new double[] {1.0, 0.0}; // Pure liquid
     }
 
     // Superficial velocities (based on total area)
@@ -2944,7 +2944,7 @@ public class TwoFluidPipe extends Pipeline {
 
     if (sharedSlugForceBalanceEnabled && SlugForceBalance.applies(sec)) {
       double equilibriumHoldup = sharedSlugForceBalance.solveHoldup(sec, vsG, vsL);
-      return new double[] { equilibriumHoldup, 1.0 - equilibriumHoldup };
+      return new double[] {equilibriumHoldup, 1.0 - equilibriumHoldup};
     }
 
     // Select the literature-inspired NeqSim closure set. Historical enum and helper
@@ -3056,7 +3056,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     alphaL = Math.max(0.0, Math.min(1.0, alphaL));
 
-    return new double[] { alphaL, 1.0 - alphaL };
+    return new double[] {alphaL, 1.0 - alphaL};
   }
 
   /**
@@ -3643,7 +3643,7 @@ public class TwoFluidPipe extends Pipeline {
     // Store entrainment for diagnostic purposes
     this.annularEntrainmentFraction = entrainment;
 
-    return new double[] { totalHoldup, filmHoldup, entrainment };
+    return new double[] {totalHoldup, filmHoldup, entrainment};
   }
 
   /**
@@ -4742,8 +4742,8 @@ public class TwoFluidPipe extends Pipeline {
     for (int cell = 0; cell < snapshot.length; cell++) {
       double[] state = snapshot[cell].getStateVector();
       double[] density = densityModel.calculate(cell, state.clone(), snapshot[cell].getPressure(), simulationTime);
-      double[] acceptedDensity = { snapshot[cell].getGasDensity(), snapshot[cell].getOilDensity(),
-          snapshot[cell].getWaterDensity() };
+      double[] acceptedDensity = {snapshot[cell].getGasDensity(), snapshot[cell].getOilDensity(),
+          snapshot[cell].getWaterDensity()};
       if (density == null || density.length != 3) {
         throw new IllegalArgumentException("Density model must return gas, oil and water densities");
       }
@@ -5350,7 +5350,7 @@ public class TwoFluidPipe extends Pipeline {
       final double[] weightedLatentHeatSources = captureComponentStageFluxes && includeMassTransfer
           ? new double[numberOfSections]
           : null;
-      final int[] phaseStageIndex = { 0 };
+      final int[] phaseStageIndex = {0};
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -5871,16 +5871,16 @@ public class TwoFluidPipe extends Pipeline {
     switch (method) {
     case EULER:
     case IMEX_PRESSURE_CORRECTION:
-      weights = new double[] { 1.0 };
+      weights = new double[] {1.0};
       break;
     case RK2:
-      weights = new double[] { 0.5, 0.5 };
+      weights = new double[] {0.5, 0.5};
       break;
     case RK4:
-      weights = new double[] { 1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0 };
+      weights = new double[] {1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0};
       break;
     case SSP_RK3:
-      weights = new double[] { 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0 };
+      weights = new double[] {1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0};
       break;
     default:
       throw new IllegalStateException("Unsupported time integration method: " + method);
@@ -6086,7 +6086,7 @@ public class TwoFluidPipe extends Pipeline {
     List<LagrangianSlugTracker.SlugBubbleUnit> slugs = lagrangianSlugTracker.getSlugs();
     for (TwoFluidSection cell : sections) {
       SlugFilmCoupling.Reconstruction reconstruction = SlugFilmCoupling.reconstruct(cell, slugs);
-      TwoFluidSection[] states = { reconstruction.getBodyState(), reconstruction.getFilmState() };
+      TwoFluidSection[] states = {reconstruction.getBodyState(), reconstruction.getFilmState()};
       double speed = Math.max(1.0, interfaceSpeed);
       for (TwoFluidSection state : states) {
         speed = Math.max(speed, Math.abs(state.getGasVelocity()) + (acoustic ? state.getGasSoundSpeed() : 0.0));
@@ -6619,8 +6619,8 @@ public class TwoFluidPipe extends Pipeline {
   private TwoFluidSection createPrescribedInletFace(TwoFluidSection cell, double massFlow, SystemInterface fluid) {
     TwoFluidSection face = cell.clone();
     double[] fractions = calculateInletPhaseMassFractions(fluid);
-    String[] names = { "gas", "oil", "aqueous" };
-    double[] densities = { cell.getGasDensity(), cell.getOilDensity(), cell.getWaterDensity() };
+    String[] names = {"gas", "oil", "aqueous"};
+    double[] densities = {cell.getGasDensity(), cell.getOilDensity(), cell.getWaterDensity()};
     double[] volumes = new double[3];
     double totalSpecificVolume = 0.0;
     double liquidEnthalpy = 0.0;
@@ -9449,12 +9449,12 @@ public class TwoFluidPipe extends Pipeline {
     double gasDensity = Math.max(inlet.getGasDensity(), CLOSURE_DENOMINATOR_EPSILON);
     double oilDensity = Math.max(inlet.getOilDensity(), CLOSURE_DENOMINATOR_EPSILON);
     double waterDensity = Math.max(inlet.getWaterDensity(), CLOSURE_DENOMINATOR_EPSILON);
-    double[] phaseMassKg = { gasHoldup * volumeM3 * gasDensity, oilHoldup * volumeM3 * oilDensity,
-        waterHoldup * volumeM3 * waterDensity };
-    double[] phaseDensityKgM3 = { gasDensity, oilDensity, waterDensity };
+    double[] phaseMassKg = {gasHoldup * volumeM3 * gasDensity, oilHoldup * volumeM3 * oilDensity,
+        waterHoldup * volumeM3 * waterDensity};
+    double[] phaseDensityKgM3 = {gasDensity, oilDensity, waterDensity};
     double gasSoundSpeed = Math.max(inlet.getGasSoundSpeed(), CLOSURE_DENOMINATOR_EPSILON);
     double liquidSoundSpeed = Math.max(inlet.getLiquidSoundSpeed(), CLOSURE_DENOMINATOR_EPSILON);
-    double[] phaseSoundSpeedMS = { gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed };
+    double[] phaseSoundSpeedMS = {gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed};
 
     UpstreamCompressibleVolume volume = new UpstreamCompressibleVolume(volumeM3, inlet.getPressure(), phaseMassKg,
         phaseDensityKgM3, phaseSoundSpeedMS);

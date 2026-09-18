@@ -131,7 +131,7 @@ class EngineeringDiagramDeliveryComparisonTest {
         () -> EngineeringDiagramDeliveryComparison.compare(null, secondAssessment));
 
     Path damaged = deliver("damaged", "PLANT-A", "B", "Plant A");
-    Files.write(damaged.resolve("drawing-set.pdf"), new byte[] { 1 }, StandardOpenOption.APPEND);
+    Files.write(damaged.resolve("drawing-set.pdf"), new byte[] {1}, StandardOpenOption.APPEND);
     EngineeringDiagramDeliveryAssessment.Report incomplete = EngineeringDiagramDeliveryAssessment.assess(damaged);
     assertFalse(incomplete.isComplete());
     assertThrows(IllegalArgumentException.class,

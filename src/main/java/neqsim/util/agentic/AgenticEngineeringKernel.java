@@ -678,25 +678,25 @@ public final class AgenticEngineeringKernel implements Serializable {
     addStep(steps, "discover_capabilities", "getCapabilities", "scope",
         "Discover available tool contracts and setup templates", new String[] {}, "schema_ready");
     addStep(steps, "validate_inputs", "validateInput", "scope",
-        "Validate units, components, and process JSON before execution", new String[] { "discover_capabilities" },
+        "Validate units, components, and process JSON before execution", new String[] {"discover_capabilities"},
         "no_blocking_input_errors");
     addStep(steps, "flash_feed", "runFlash", "analysis", "Establish fluid phase state and base properties",
-        new String[] { "validate_inputs" }, "converged_flash");
+        new String[] {"validate_inputs"}, "converged_flash");
     if (domains.contains("process") || input.has("process") || input.has("processJson")) {
       addStep(steps, "run_process", "runProcess", "analysis", "Execute steady-state process simulation",
-          new String[] { "flash_feed" }, "process_converged");
+          new String[] {"flash_feed"}, "process_converged");
     }
     if (domains.contains("pipeline")) {
       addStep(steps, "run_pipeline", "runPipeline", "analysis", "Calculate pipeline hydraulics and pressure drop",
-          new String[] { "flash_feed" }, "hydraulics_completed");
+          new String[] {"flash_feed"}, "hydraulics_completed");
     }
     if (domains.contains("flow-assurance") || domains.contains("ccs") || domains.contains("hydrogen")) {
       addStep(steps, "flow_assurance", "runFlowAssurance", "analysis",
-          "Screen hydrate, wax, corrosion, erosion, or special-fluid risks", new String[] { "flash_feed" },
+          "Screen hydrate, wax, corrosion, erosion, or special-fluid risks", new String[] {"flash_feed"},
           "flow_assurance_screened");
     }
     if (domains.contains("pvt")) {
-      addStep(steps, "pvt_study", "runPVT", "analysis", "Run PVT experiment workflow", new String[] { "flash_feed" },
+      addStep(steps, "pvt_study", "runPVT", "analysis", "Run PVT experiment workflow", new String[] {"flash_feed"},
           "pvt_completed");
     }
     String processDependency = domains.contains("process") || input.has("process") || input.has("processJson")
@@ -704,28 +704,28 @@ public final class AgenticEngineeringKernel implements Serializable {
         : "flash_feed";
     if (domains.contains("dynamic")) {
       addStep(steps, "dynamic_study", "runDynamic", "analysis", "Run transient or controller response simulation",
-          new String[] { processDependency }, "dynamic_completed");
+          new String[] {processDependency}, "dynamic_completed");
     }
     if (domains.contains("economics")) {
       addStep(steps, "economics", "runFieldEconomics", "analysis", "Evaluate economic metrics and uncertainty drivers",
-          new String[] { processDependency }, "economics_completed");
+          new String[] {processDependency}, "economics_completed");
     }
     if (domains.contains("safety")) {
       addStep(steps, "safety_screening", "runHAZOP", "validation",
-          "Generate simulation-backed hazard and safeguard evidence", new String[] { processDependency },
+          "Generate simulation-backed hazard and safeguard evidence", new String[] {processDependency},
           "safety_review_required");
     }
     String primaryAnalysisStep = primaryAnalysisStep(domains, input);
     addStep(steps, "model_risk", "crossValidateModels", "validation", "Quantify EOS and model-selection sensitivity",
-        new String[] { primaryAnalysisStep }, "model_risk_documented");
+        new String[] {primaryAnalysisStep}, "model_risk_documented");
     addStep(steps, "autonomous_study", "runAgenticEngineering", "optimization",
         "Rank candidate design alternatives against objectives and constraints",
-        new String[] { primaryAnalysisStep, "model_risk" }, "best_feasible_case_identified");
+        new String[] {primaryAnalysisStep, "model_risk"}, "best_feasible_case_identified");
     addStep(steps, "evidence_trust", "runAgenticEngineering", "validation",
-        "Build evidence graph and trust score for the result package", new String[] { "autonomous_study" },
+        "Build evidence graph and trust score for the result package", new String[] {"autonomous_study"},
         "trust_score_reported");
     addStep(steps, "report", "generateReport", "reporting", "Generate reviewable engineering deliverable",
-        new String[] { "evidence_trust" }, "report_has_traceability");
+        new String[] {"evidence_trust"}, "report_has_traceability");
     plan.addProperty("planId", intent.get("id").getAsString() + "-workflow");
     plan.addProperty("executionMode", "reviewable_dag");
     plan.add("steps", steps);

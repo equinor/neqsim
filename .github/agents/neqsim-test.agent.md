@@ -16,6 +16,13 @@ You are a test engineer for NeqSim.
 ## Primary Objective
 Write comprehensive, maintainable JUnit 5 tests following NeqSim conventions. Tests must compile with Java 8.
 
+## Formatting (MANDATORY)
+After creating or editing ANY `.java` file (test or production), run `./mvnw spotless:apply`
+(Windows: `mvnw.cmd spotless:apply`) and `git add` the reformatted files before committing.
+AI-generated Java is NOT auto-formatted; CI runs `spotless:check` and fails the build on a
+single unformatted file. Use `./mvnw` (or `mvnw.cmd`), never bare `mvn`, and never
+`git commit --no-verify`.
+
 ## Test Conventions
 - **Base class**: Extend `neqsim.NeqSimTest`
 - **Framework**: JUnit 5 — `@Test`, `@BeforeEach`, `@DisplayName`, `@Disabled`
@@ -280,6 +287,7 @@ void testAutomationAccess() {
 
 ## Build Commands
 ```bash
+./mvnw spotless:apply                          # MANDATORY: format after editing any .java file
 ./mvnw test -Dtest=MySeparatorTest           # Run single test class
 ./mvnw test -Dtest=MySeparatorTest#testOne    # Run single test method
 ./mvnw test                                    # Run all tests
@@ -300,3 +308,7 @@ void testAutomationAccess() {
 When producing code that will appear in documentation or examples, write a JUnit test
 that exercises every API call shown (append to `DocExamplesCompilationTest.java`) and
 run it to confirm it passes. Always read actual source classes before referencing them in docs.
+After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows:
+`mvnw.cmd spotless:apply`) and `git add` the reformatted files before committing —
+CI runs `spotless:check` and fails the build on any unformatted file. Never bypass
+with `git commit --no-verify`.

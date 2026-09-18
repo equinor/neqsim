@@ -36,12 +36,12 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class PTPhaseEnvelopeComponentLimitTest {
   /** Backbone component names, chosen so the mixture actually traces an envelope. */
-  private static final String[] BACKBONE_NAMES = new String[] { "methane", "ethane", "propane", "i-butane", "n-butane",
-      "i-pentane", "n-pentane", "n-hexane" };
+  private static final String[] BACKBONE_NAMES = new String[] {"methane", "ethane", "propane", "i-butane", "n-butane",
+      "i-pentane", "n-pentane", "n-hexane"};
 
   /** Backbone mole fractions, summing to 0.94; the remainder is spread over the filler components. */
-  private static final double[] BACKBONE_FRACTIONS = new double[] { 0.780, 0.080, 0.040, 0.010, 0.015, 0.006, 0.005,
-      0.004 };
+  private static final double[] BACKBONE_FRACTIONS = new double[] {0.780, 0.080, 0.040, 0.010, 0.015, 0.006, 0.005,
+      0.004};
 
   /** Component count used for the over-the-limit cases. */
   private static final int ABOVE_LIMIT = 110;
@@ -50,8 +50,8 @@ public class PTPhaseEnvelopeComponentLimitTest {
   private static final int OLD_FIXED_LENGTH = 100;
 
   /** Names of the four composition arrays exposed through {@code get(String)}. */
-  private static final String[] COMPOSITION_KEYS = new String[] { "cricondenthermX", "cricondenthermY", "cricondenbarX",
-      "cricondenbarY" };
+  private static final String[] COMPOSITION_KEYS = new String[] {"cricondenthermX", "cricondenthermY", "cricondenbarX",
+      "cricondenbarY"};
 
   /**
    * Read hydrocarbon names from the component database, lightest first.

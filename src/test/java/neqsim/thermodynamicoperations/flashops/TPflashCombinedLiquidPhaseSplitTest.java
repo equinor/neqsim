@@ -36,7 +36,7 @@ class TPflashCombinedLiquidPhaseSplitTest {
 
   @Test
   void srkCombinedLiquidKeepsBothLiquidPhasesAcrossSeparatorPressures() {
-    for (double pressure : new double[] { 2.10, 1.62, 1.20, 0.74 }) {
+    for (double pressure : new double[] {2.10, 1.62, 1.20, 0.74}) {
       assertCombinedLiquidStaysLiquid(new SystemSrkEos(273.15 + 30.0, pressure), pressure);
     }
   }

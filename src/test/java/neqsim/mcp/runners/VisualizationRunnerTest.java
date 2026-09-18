@@ -26,7 +26,7 @@ class VisualizationRunnerTest {
 
   @Test
   void tableAliasesReturnCanonicalHtmlContractAndHonorCaption() {
-    for (String type : new String[] { "propertyTable", "styledTable", "table" }) {
+    for (String type : new String[] {"propertyTable", "styledTable", "table"}) {
       JsonObject result = run("{\"type\":\"" + type + "\",\"caption\":\"Stream Summary\","
           + "\"headers\":[\"Property\",\"Value\"],\"rows\":[[\"Pressure\",\"50 bara\"]]}");
 

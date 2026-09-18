@@ -372,8 +372,8 @@ public class TwoFluidConservationEquations implements Serializable {
     if (!split.isActive()) {
       return null;
     }
-    TwoFluidSection[] states = { split.getBodyState(), split.getFilmState() };
-    double[] weights = { split.getBodyFraction(), 1.0 - split.getBodyFraction() };
+    TwoFluidSection[] states = {split.getBodyState(), split.getFilmState()};
+    double[] weights = {split.getBodyFraction(), 1.0 - split.getBodyFraction()};
     double[] forces = new double[4];
     for (int part = 0; part < 2; part++) {
       TwoFluidSection state = states[part];
@@ -422,7 +422,7 @@ public class TwoFluidConservationEquations implements Serializable {
       if (!split.isActive()) {
         continue;
       }
-      TwoFluidSection[] parts = { split.getBodyState(), split.getFilmState() };
+      TwoFluidSection[] parts = {split.getBodyState(), split.getFilmState()};
       double weight = split.getBodyFraction();
       for (int part = 0; part < 2; part++) {
         parts[part].setRegimeWeights(null);
@@ -678,8 +678,8 @@ public class TwoFluidConservationEquations implements Serializable {
     applyInterfacialPressure(sections, dUdt);
     applyVirtualMassCoupling(sections, dUdt);
 
-    double[] inletMassFlow = { inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS] };
-    double[] outletMassFlow = { outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS] };
+    double[] inletMassFlow = {inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS]};
+    double[] outletMassFlow = {outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS]};
     double[] sourceMassFlow = new double[3];
     for (int i = 0; i < nCells; i++) {
       double sectionLength = sections[i].getLength();
@@ -1682,10 +1682,10 @@ public class TwoFluidConservationEquations implements Serializable {
     }
     if (oilMass <= waterMass) {
       double oilForce = force * (oilMass / liquidMass);
-      return new double[] { oilForce, force - oilForce };
+      return new double[] {oilForce, force - oilForce};
     }
     double waterForce = force * (waterMass / liquidMass);
-    return new double[] { force - waterForce, waterForce };
+    return new double[] {force - waterForce, waterForce};
   }
 
   /**
@@ -1949,10 +1949,10 @@ public class TwoFluidConservationEquations implements Serializable {
         continue;
       }
 
-      double[] cellHoldups = { sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup() };
-      double[] inletHoldups = { inletFace.getGasHoldup(), inletFace.getOilHoldup(), inletFace.getWaterHoldup() };
+      double[] cellHoldups = {sec.getGasHoldup(), sec.getOilHoldup(), sec.getWaterHoldup()};
+      double[] inletHoldups = {inletFace.getGasHoldup(), inletFace.getOilHoldup(), inletFace.getWaterHoldup()};
       TwoFluidSection boundary = reconstructedOutlet == null ? sec : reconstructedOutlet;
-      double[] outletHoldups = { boundary.getGasHoldup(), boundary.getOilHoldup(), boundary.getWaterHoldup() };
+      double[] outletHoldups = {boundary.getGasHoldup(), boundary.getOilHoldup(), boundary.getWaterHoldup()};
       double outletPressure = outletClosed || Double.isNaN(outletBoundaryPressure) ? boundary.getPressure()
           : outletBoundaryPressure;
       double rightArea = i < nCells - 1 ? 0.5 * (area + sections[i + 1].getArea()) : boundary.getArea();
@@ -2171,10 +2171,10 @@ public class TwoFluidConservationEquations implements Serializable {
       if (!isDispersedBubbleRegime(regime)) {
         continue;
       }
-      double[] masses = { state[sectionIndex][IDX_GAS_MASS], state[sectionIndex][IDX_OIL_MASS],
-          state[sectionIndex][IDX_WATER_MASS] };
-      double[] momenta = { state[sectionIndex][IDX_GAS_MOMENTUM], state[sectionIndex][IDX_OIL_MOMENTUM],
-          state[sectionIndex][IDX_WATER_MOMENTUM] };
+      double[] masses = {state[sectionIndex][IDX_GAS_MASS], state[sectionIndex][IDX_OIL_MASS],
+          state[sectionIndex][IDX_WATER_MASS]};
+      double[] momenta = {state[sectionIndex][IDX_GAS_MOMENTUM], state[sectionIndex][IDX_OIL_MOMENTUM],
+          state[sectionIndex][IDX_WATER_MOMENTUM]};
       double[] relaxedMomenta = DispersedBubbleDragSolver.relax(regime, masses, momenta, section.getGasDensity(),
           section.getLiquidDensity(), section.getGasViscosity(), section.getLiquidViscosity(),
           section.getLiquidHoldup(), section.getDiameter(), section.getSurfaceTension(), timeStep, interfacialFriction);
@@ -2321,8 +2321,8 @@ public class TwoFluidConservationEquations implements Serializable {
   double[] calcMassTransfer(TwoFluidSection sec) {
     if (thermodynamicCoupling != null) {
       PhaseMassTransfer transfer = calcPhaseMassTransfer(sec);
-      return new double[] { transfer.getGasSourceKgPerMetreSecond(),
-          transfer.getOilSourceKgPerMetreSecond() + transfer.getWaterSourceKgPerMetreSecond() };
+      return new double[] {transfer.getGasSourceKgPerMetreSecond(),
+          transfer.getOilSourceKgPerMetreSecond() + transfer.getWaterSourceKgPerMetreSecond()};
     }
 
     return conservedMassTransferPair(getPrescribedGasSourcePerLength(sec));
@@ -2421,7 +2421,7 @@ public class TwoFluidConservationEquations implements Serializable {
       oilMomentumSource = 0.0;
       waterMomentumSource = 0.0;
     }
-    return new double[] { gasMomentumSource, oilMomentumSource, waterMomentumSource };
+    return new double[] {gasMomentumSource, oilMomentumSource, waterMomentumSource};
   }
 
   private double[] conservedMassTransferPair(double gasSource) {
@@ -2434,7 +2434,7 @@ public class TwoFluidConservationEquations implements Serializable {
       throw new IllegalStateException("Mass transfer source terms must sum to zero");
     }
 
-    return new double[] { gasSource, liquidSource };
+    return new double[] {gasSource, liquidSource};
   }
 
   /**

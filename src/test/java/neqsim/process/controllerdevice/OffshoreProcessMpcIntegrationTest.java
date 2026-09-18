@@ -169,16 +169,16 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
     ModelPredictiveController controller = new ModelPredictiveController("fpsoMpc");
     controller.configureControls("dewPointTemperature", "oilHeaterTemperature", "exportPressure");
 
-    double[] initialControls = new double[] { inputs.get("dewPointSuctionCoolerTemperature"),
-        inputs.get("temperatureOilHeater2"), inputs.get("exportCompressorStage2") };
+    double[] initialControls = new double[] {inputs.get("dewPointSuctionCoolerTemperature"),
+        inputs.get("temperatureOilHeater2"), inputs.get("exportCompressorStage2")};
     controller.setInitialControlValues(initialControls);
     controller.setPreferredControlVector(
-        new double[] { initialControls[0] - 2.0, initialControls[1] - 3.0, initialControls[2] - 10.0 });
+        new double[] {initialControls[0] - 2.0, initialControls[1] - 3.0, initialControls[2] - 10.0});
     controller.setControlLimits("dewPointTemperature", 0.0, 40.0);
     controller.setControlLimits("oilHeaterTemperature", 40.0, 90.0);
     controller.setControlLimits("exportPressure", 200.0, 260.0);
-    controller.setControlWeights(new double[] { 0.05, 0.05, 3.0 });
-    controller.setMoveWeights(new double[] { 0.01, 0.01, 0.2 });
+    controller.setControlWeights(new double[] {0.05, 0.05, 3.0});
+    controller.setMoveWeights(new double[] {0.01, 0.01, 0.2});
 
     double baseGasMeasurement = gasMeasurement.getMeasuredValue();
     double baseWobbeMeasurement = wobbeMeasurement.getMeasuredValue();
@@ -227,11 +227,11 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
   private double[][] computeControlSensitivities(OffshoreProcess process, double[] baseControls,
       GasProductionMeasurement gasMeasurement, WobbeQualityMeasurement wobbeMeasurement,
       OilRvpMeasurement rvpMeasurement) {
-    double[] baseValues = new double[] { gasMeasurement.getMeasuredValue(), wobbeMeasurement.getMeasuredValue(),
-        rvpMeasurement.getMeasuredValue() };
+    double[] baseValues = new double[] {gasMeasurement.getMeasuredValue(), wobbeMeasurement.getMeasuredValue(),
+        rvpMeasurement.getMeasuredValue()};
 
     double[][] sensitivities = new double[3][baseControls.length];
-    double[] stepSizes = new double[] { 1.0, 1.0, 5.0 };
+    double[] stepSizes = new double[] {1.0, 1.0, 5.0};
 
     for (int controlIndex = 0; controlIndex < baseControls.length; controlIndex++) {
       double original = baseControls[controlIndex];
@@ -490,9 +490,9 @@ public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
 
   private SystemInterface createWellFluid() {
     SystemInterface fluid = new SystemPrEos(298.15, 100.0);
-    double[] lightFractions = new double[] { 0.59, 0.001, 66.02, 8.27, 5.0, 0.94, 1.88, 0.7, 0.812, 0.91 };
-    String[] lightComponents = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-        "i-pentane", "n-pentane", "n-hexane" };
+    double[] lightFractions = new double[] {0.59, 0.001, 66.02, 8.27, 5.0, 0.94, 1.88, 0.7, 0.812, 0.91};
+    String[] lightComponents = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+        "i-pentane", "n-pentane", "n-hexane"};
     for (int i = 0; i < lightComponents.length; i++) {
       fluid.addComponent(lightComponents[i], lightFractions[i]);
     }

@@ -69,7 +69,7 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.4, 1.0, 4.0 })
+  @ValueSource(doubles = {0.4, 1.0, 4.0})
   void firstPassAndRepeatedDesignUseFinalDiameter(double initialDiameter) {
     Separator separator = createSeparator(initialDiameter, false, false);
     SeparatorMechanicalDesign design = separator.getMechanicalDesign();
@@ -124,7 +124,7 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.4, 4.0 })
+  @ValueSource(doubles = {0.4, 4.0})
   void autoSizeRefreshesWallAndWeights(double initialDiameter) {
     Separator separator = createSeparator(initialDiameter, false, false);
     separator.autoSize(1.2);
@@ -145,7 +145,7 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "ASME - Pressure Vessel Code", "BS 5500 - Pressure Vessel", "European Code", "legacy" })
+  @ValueSource(strings = {"ASME - Pressure Vessel Code", "BS 5500 - Pressure Vessel", "European Code", "legacy"})
   void explicitDiameterPreservesPressureCodeAndAllowance(String standardName) {
     Separator separator = createSeparator(1.0, false, false);
     SeparatorMechanicalDesign design = separator.getMechanicalDesign();

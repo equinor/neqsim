@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousRootConsistencyTest {
-  private static final double[] FEED = { 0.90, 0.10 };
+  private static final double[] FEED = {0.90, 0.10};
 
   @Test
   void ordinaryAndMultiphaseFlashesRetainSameStableCubicRoot() {

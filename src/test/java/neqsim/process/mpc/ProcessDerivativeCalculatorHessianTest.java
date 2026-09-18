@@ -15,8 +15,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression and analytical checks for scalar process Hessians (issue #3616). */
 class ProcessDerivativeCalculatorHessianTest extends neqsim.NeqSimTest {
-  private static final double[][] FIRST_HESSIAN = { { 6.0, 2.0, 7.0 }, { 2.0, 10.0, -4.0 }, { 7.0, -4.0, 22.0 } };
-  private static final double[][] SECOND_HESSIAN = { { -4.0, 6.0, -3.0 }, { 6.0, 8.0, 8.0 }, { -3.0, 8.0, 1.0 } };
+  private static final double[][] FIRST_HESSIAN = {{6.0, 2.0, 7.0}, {2.0, 10.0, -4.0}, {7.0, -4.0, 22.0}};
+  private static final double[][] SECOND_HESSIAN = {{-4.0, 6.0, -3.0}, {6.0, 8.0, 8.0}, {-3.0, 8.0, 1.0}};
 
   @Test
   void linearStreamWithThreeInputsAndTwoOutputsHasZeroHessian() {
@@ -44,7 +44,7 @@ class ProcessDerivativeCalculatorHessianTest extends neqsim.NeqSimTest {
     assertEquals(inputs[1], feed.getPressure("bara"), 1e-10);
     assertEquals(inputs[2], feed.getTemperature("K"), 1e-10);
     calc.setMethod(ProcessDerivativeCalculator.DerivativeMethod.FORWARD_DIFFERENCE);
-    assertArrayEquals(new double[] { 1.0, 0.0, 0.0 }, calc.getGradient("Feed.flowRate"), 1e-8);
+    assertArrayEquals(new double[] {1.0, 0.0, 0.0}, calc.getGradient("Feed.flowRate"), 1e-8);
   }
 
   @ParameterizedTest
@@ -64,7 +64,7 @@ class ProcessDerivativeCalculatorHessianTest extends neqsim.NeqSimTest {
     assertRestored(process, calc, inputs, outputs);
     // A subsequent forward Jacobian uses the original cached output, not a perturbation.
     calc.setMethod(ProcessDerivativeCalculator.DerivativeMethod.FORWARD_DIFFERENCE);
-    assertArrayEquals(new double[] { 20.0 + 3.0 * 0.02, -13.0 + 5.0 * 0.03, 55.75 + 11.0 * 0.04 },
+    assertArrayEquals(new double[] {20.0 + 3.0 * 0.02, -13.0 + 5.0 * 0.03, 55.75 + 11.0 * 0.04},
         calc.getGradient("Polynomial.first"), 1e-9);
   }
 
@@ -76,9 +76,8 @@ class ProcessDerivativeCalculatorHessianTest extends neqsim.NeqSimTest {
     calc.addOutputVariable("Polynomial.first", "");
     calc.addOutputVariable("Polynomial.second", "");
 
-    assertMatrixEquals(new double[][] { { -4.0, 6.0 }, { 6.0, 8.0 } }, calc.calculateHessian("Polynomial.second"),
-        1e-8);
-    assertMatrixEquals(new double[][] { { 6.0, 2.0 }, { 2.0, 10.0 } }, calc.calculateHessian("Polynomial.first"), 1e-8);
+    assertMatrixEquals(new double[][] {{-4.0, 6.0}, {6.0, 8.0}}, calc.calculateHessian("Polynomial.second"), 1e-8);
+    assertMatrixEquals(new double[][] {{6.0, 2.0}, {2.0, 10.0}}, calc.calculateHessian("Polynomial.first"), 1e-8);
     assertMatrixEquals(new double[2][2], calc.calculateHessian("Polynomial.x"), 1e-8);
   }
 
@@ -145,8 +144,8 @@ class ProcessDerivativeCalculatorHessianTest extends neqsim.NeqSimTest {
 
   private void assertRestored(QuadraticProcess process, ProcessDerivativeCalculator calc, double[] inputs,
       double[] outputs) {
-    assertArrayEquals(inputs, new double[] { process.unit.x, process.unit.y, process.unit.z }, 0.0);
-    assertArrayEquals(outputs, new double[] { process.unit.first, process.unit.second }, 0.0);
+    assertArrayEquals(inputs, new double[] {process.unit.x, process.unit.y, process.unit.z}, 0.0);
+    assertArrayEquals(outputs, new double[] {process.unit.first, process.unit.second}, 0.0);
     int runs = process.runs;
     assertArrayEquals(inputs, calc.getBaseInputValues(), 0.0);
     assertArrayEquals(outputs, calc.getBaseOutputValues(), 0.0);

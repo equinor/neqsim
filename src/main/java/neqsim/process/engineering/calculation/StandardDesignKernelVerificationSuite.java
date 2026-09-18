@@ -443,7 +443,7 @@ public final class StandardDesignKernelVerificationSuite {
     calculator.setNpsh(6.0, 4.0, DataSource.VENDOR_CURVE);
     calculator.setPressureBasis(5.0, 20.0, 90.0, DataSource.VENDOR_CURVE);
     calculator.setHydrostaticTestPressureBara(30.0);
-    calculator.setDriverCriteria(1.10, new double[] { 22.0, 30.0, 37.0 });
+    calculator.setDriverCriteria(1.10, new double[] {22.0, 30.0, 37.0});
     calculator.setBearingData(BearingType.BALL, 100.0, 5.0);
     calculator.setMechanicalEvidence(0.03, 4000.0, 0.8, 2.5);
     return calculator;

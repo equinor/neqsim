@@ -21,14 +21,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 class TPflashIncipientPhaseStabilityTest {
-  private static final String[] SRK_COMPONENTS = { "methane", "ethane", "propane", "n-butane" };
-  private static final double[] SRK_FEED = { 0.5833884211682981, 0.16475359157041228, 0.19866217294783825,
-      0.053195814313451245 };
+  private static final String[] SRK_COMPONENTS = {"methane", "ethane", "propane", "n-butane"};
+  private static final double[] SRK_FEED = {0.5833884211682981, 0.16475359157041228, 0.19866217294783825,
+      0.053195814313451245};
   private static final double SRK_REFERENCE_TEMPERATURE_K = 253.46685189059752;
   private static final double SRK_REFERENCE_PRESSURE_BARA = 77.53775411226596;
 
-  private static final String[] UMR_PRU_COMPONENTS = { "methane", "ethane", "n-pentane", "nC16" };
-  private static final double[] UMR_PRU_FEED = { 0.416683, 0.17522, 0.358009, 0.0500888 };
+  private static final String[] UMR_PRU_COMPONENTS = {"methane", "ethane", "n-pentane", "nC16"};
+  private static final double[] UMR_PRU_FEED = {0.416683, 0.17522, 0.358009, 0.0500888};
   private static final double UMR_PRU_REFERENCE_TEMPERATURE_K = 293.15;
   private static final double UMR_PRU_REFERENCE_PRESSURE_BARA = 90.03461693;
 
@@ -68,7 +68,7 @@ class TPflashIncipientPhaseStabilityTest {
    */
   @Test
   void subResidualTpdDoesNotOverrideExistingUmrPruSolution() {
-    for (double pressureBara : new double[] { UMR_PRU_REFERENCE_PRESSURE_BARA, 90.5 }) {
+    for (double pressureBara : new double[] {UMR_PRU_REFERENCE_PRESSURE_BARA, 90.5}) {
       SystemInterface ordinary = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, pressureBara, false));
       SystemInterface multiphase = flash(createUmrPru(UMR_PRU_REFERENCE_TEMPERATURE_K, pressureBara, true));
 

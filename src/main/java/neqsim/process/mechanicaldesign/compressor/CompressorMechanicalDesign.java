@@ -737,7 +737,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Parameter", "Value", "Unit" };
+    String[] names = {"Parameter", "Value", "Unit"};
     String[][] table = new String[22][3];
 
     int row = 0;

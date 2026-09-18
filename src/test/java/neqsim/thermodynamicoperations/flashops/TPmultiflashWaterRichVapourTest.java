@@ -23,9 +23,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 class TPmultiflashWaterRichVapourTest {
-  private static final String[] HYDROCARBON_NAMES = { "methane", "ethane", "propane", "n-butane", "n-pentane",
-      "n-hexane", "n-heptane", "n-octane" };
-  private static final double[] HYDROCARBON_FRACTIONS = { 0.55, 0.08, 0.05, 0.03, 0.02, 0.02, 0.10, 0.15 };
+  private static final String[] HYDROCARBON_NAMES = {"methane", "ethane", "propane", "n-butane", "n-pentane",
+      "n-hexane", "n-heptane", "n-octane"};
+  private static final double[] HYDROCARBON_FRACTIONS = {0.55, 0.08, 0.05, 0.03, 0.02, 0.02, 0.10, 0.15};
   private static final double REFERENCE_PRESSURE_BARA = 45.62;
   private static final double REFERENCE_TEMPERATURE_K = 273.15 + 30.8;
   private static final double REFERENCE_WATER_FRACTION = 0.83;
@@ -36,7 +36,7 @@ class TPmultiflashWaterRichVapourTest {
   /** Qualifies the full historical SRK water-cut range with strict equilibrium gates. */
   @Test
   void srkWaterCutMatrixHasClosedThreePhaseEquilibrium() {
-    double[] waterFractions = { 0.50, 0.70, 0.76, 0.78, 0.80, 0.83, 0.90, 0.95 };
+    double[] waterFractions = {0.50, 0.70, 0.76, 0.78, 0.80, 0.83, 0.90, 0.95};
     for (double waterFraction : waterFractions) {
       SystemInterface fluid = flash(false, waterFraction, REFERENCE_TEMPERATURE_K, REFERENCE_PRESSURE_BARA, true);
       assertClosedThreePhaseEquilibrium(fluid, "SRK water fraction " + waterFraction);
@@ -46,9 +46,9 @@ class TPmultiflashWaterRichVapourTest {
   /** Qualifies nearby pressures with both supported neutral cubic equations of state. */
   @Test
   void srkAndPrNearbyPressureStatesRemainClosedAndThreePhase() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       String model = pengRobinson ? "PR" : "SRK";
-      for (double pressure : new double[] { 44.62, REFERENCE_PRESSURE_BARA, 46.62 }) {
+      for (double pressure : new double[] {44.62, REFERENCE_PRESSURE_BARA, 46.62}) {
         SystemInterface fluid = flash(pengRobinson, REFERENCE_WATER_FRACTION, REFERENCE_TEMPERATURE_K, pressure, true);
         assertClosedThreePhaseEquilibrium(fluid, model + " at " + pressure + " bara");
       }
@@ -61,7 +61,7 @@ class TPmultiflashWaterRichVapourTest {
    */
   @Test
   void poorInitializationAndExplicitMultiphaseRestartRecoverFreshReference() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       String model = pengRobinson ? "PR" : "SRK";
       SystemInterface reference = flash(pengRobinson, REFERENCE_WATER_FRACTION, REFERENCE_TEMPERATURE_K,
           REFERENCE_PRESSURE_BARA, true);
@@ -88,7 +88,7 @@ class TPmultiflashWaterRichVapourTest {
   /** Reused changed and returned states must match fresh flashes and remain deterministic. */
   @Test
   void changedReturnedAndRepeatedStatesRemainContinuous() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       String model = pengRobinson ? "PR" : "SRK";
       SystemInterface reference = flash(pengRobinson, REFERENCE_WATER_FRACTION, REFERENCE_TEMPERATURE_K,
           REFERENCE_PRESSURE_BARA, true);
@@ -113,7 +113,7 @@ class TPmultiflashWaterRichVapourTest {
   /** Dry feeds are outside the water-rich restart screen and retain the original hydrocarbon split. */
   @Test
   void dryControlRemainsGasOilWithoutAqueousPhase() {
-    for (boolean pengRobinson : new boolean[] { false, true }) {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
       String model = pengRobinson ? "PR" : "SRK";
       SystemInterface fluid = flash(pengRobinson, 0.0, REFERENCE_TEMPERATURE_K, REFERENCE_PRESSURE_BARA, true);
       assertEquals(2, fluid.getNumberOfPhases(), model + " dry topology");

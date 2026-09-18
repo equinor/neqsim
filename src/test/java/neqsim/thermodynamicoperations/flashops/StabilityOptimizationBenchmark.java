@@ -38,9 +38,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public final class StabilityOptimizationBenchmark {
   private static final Logger logger = LogManager.getLogger(StabilityOptimizationBenchmark.class);
-  private static final String[] RICH_NAMES = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
-      "n-butane", "i-pentane", "n-pentane", "n-hexane" };
-  private static final double[] RICH_MOLES = { 3.43, 0.34, 62.51, 15.65, 13.22, 1.61, 2.48, 0.35, 0.29, 0.12 };
+  private static final String[] RICH_NAMES = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+      "i-pentane", "n-pentane", "n-hexane"};
+  private static final double[] RICH_MOLES = {3.43, 0.34, 62.51, 15.65, 13.22, 1.61, 2.48, 0.35, 0.29, 0.12};
 
   static final class FluidCase {
     final String name;
@@ -83,28 +83,28 @@ public final class StabilityOptimizationBenchmark {
 
   static List<FluidCase> cases() {
     return Arrays.asList(
-        new FluidCase("srk-dry-gas", "SRK", 323.15, 20.0, new String[] { "methane", "ethane", "nitrogen" },
-            new double[] { 0.95, 0.04, 0.01 }),
+        new FluidCase("srk-dry-gas", "SRK", 323.15, 20.0, new String[] {"methane", "ethane", "nitrogen"},
+            new double[] {0.95, 0.04, 0.01}),
         new FluidCase("srk-rich-gas", "SRK", 273.15, 60.0, RICH_NAMES, RICH_MOLES),
         new FluidCase("pr-rich-gas", "PR", 273.15, 60.0, RICH_NAMES, RICH_MOLES),
         new FluidCase("pr-near-cricondenbar", "PR", 273.15, 100.0, RICH_NAMES, RICH_MOLES),
-        new FluidCase("srk-trace-water", "SRK", 298.15, 60.0,
-            new String[] { "methane", "ethane", "n-heptane", "water" }, new double[] { 0.85, 0.10, 0.05, 1.0e-12 }),
-        new FluidCase("srk-gas-water", "SRK", 273.15, 300.0, new String[] { "methane", "water" },
-            new double[] { 0.85, 0.15 }),
-        new FluidCase("cpa-gas-water", "CPA", 298.15, 60.0, new String[] { "methane", "water" },
-            new double[] { 0.90, 0.10 }),
+        new FluidCase("srk-trace-water", "SRK", 298.15, 60.0, new String[] {"methane", "ethane", "n-heptane", "water"},
+            new double[] {0.85, 0.10, 0.05, 1.0e-12}),
+        new FluidCase("srk-gas-water", "SRK", 273.15, 300.0, new String[] {"methane", "water"},
+            new double[] {0.85, 0.15}),
+        new FluidCase("cpa-gas-water", "CPA", 298.15, 60.0, new String[] {"methane", "water"},
+            new double[] {0.90, 0.10}),
         new FluidCase("cpa-three-phase", "CPA", 298.15, 60.0,
-            new String[] { "nitrogen", "methane", "ethane", "propane", "n-hexane", "nC10", "MEG", "water" },
-            new double[] { 1.0, 85.0, 5.0, 3.0, 1.0, 1.0, 2.0, 5.0 }),
-        new FluidCase("srk-co2-rich", "SRK", 298.15, 70.0, new String[] { "CO2", "methane", "nitrogen" },
-            new double[] { 0.96, 0.03, 0.01 }),
-        new FluidCase("pr-co2-rich", "PR", 298.15, 70.0, new String[] { "CO2", "methane", "nitrogen" },
-            new double[] { 0.96, 0.03, 0.01 }),
-        new FluidCase("pr-hydrogen-rich", "PR", 148.15, 20.265, new String[] { "hydrogen", "ethane" },
-            new double[] { 0.60, 0.40 }),
+            new String[] {"nitrogen", "methane", "ethane", "propane", "n-hexane", "nC10", "MEG", "water"},
+            new double[] {1.0, 85.0, 5.0, 3.0, 1.0, 1.0, 2.0, 5.0}),
+        new FluidCase("srk-co2-rich", "SRK", 298.15, 70.0, new String[] {"CO2", "methane", "nitrogen"},
+            new double[] {0.96, 0.03, 0.01}),
+        new FluidCase("pr-co2-rich", "PR", 298.15, 70.0, new String[] {"CO2", "methane", "nitrogen"},
+            new double[] {0.96, 0.03, 0.01}),
+        new FluidCase("pr-hydrogen-rich", "PR", 148.15, 20.265, new String[] {"hydrogen", "ethane"},
+            new double[] {0.60, 0.40}),
         new FluidCase("electrolyte-gas-brine", "electrolyte-CPA", 298.15, 10.01325,
-            new String[] { "methane", "water", "Na+", "Cl-" }, new double[] { 0.1, 1.0, 0.001, 0.001 }));
+            new String[] {"methane", "water", "Na+", "Cl-"}, new double[] {0.1, 1.0, 0.001, 0.001}));
   }
 
   private static void number(JsonObject object, String name, double value) {
@@ -278,7 +278,7 @@ public final class StabilityOptimizationBenchmark {
         if (!"all".equals(filter) && !testCase.name.contains(filter)) {
           continue;
         }
-        for (boolean multiphase : new boolean[] { false, true }) {
+        for (boolean multiphase : new boolean[] {false, true}) {
           SystemInterface system = testCase.create(multiphase, false);
           states.add(sample(testCase, system, multiphase, "cold", repeat));
           states.add(sample(testCase, system, multiphase, "unchanged", repeat));

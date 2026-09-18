@@ -187,7 +187,7 @@ public class DifferentiableFlash implements Serializable {
       FugacityJacobian jacL = extractFugacityJacobian(liquidPhaseIndex);
       FugacityJacobian jacV = extractFugacityJacobian(vaporPhaseIndex);
 
-      cachedFugacityJacobians = new FugacityJacobian[] { jacL, jacV };
+      cachedFugacityJacobians = new FugacityJacobian[] {jacL, jacV};
 
       // Get current state
       double[] kValues = new double[nc];

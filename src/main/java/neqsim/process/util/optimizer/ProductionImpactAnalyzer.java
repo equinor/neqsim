@@ -483,7 +483,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       double maxProduction = result.getProductionWithFailure();
 
       // Simple optimization: try reducing flow in steps
-      double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5 };
+      double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5};
 
       for (double factor : flowFactors) {
         double testFlow = currentFlow * factor;

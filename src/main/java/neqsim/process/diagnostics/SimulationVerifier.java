@@ -374,15 +374,15 @@ public class SimulationVerifier implements Serializable {
    */
   private Map<String, Double> readKpis(ProcessAutomation auto) {
     Map<String, Double> kpis = new HashMap<>();
-    String[] properties = { "temperature", "pressure", "flowRate", "power", "polytropicEfficiency",
-        "isentropicEfficiency", "efficiency" };
-    String[] units = { "C", "bara", "kg/hr", "kW", "", "", "" };
+    String[] properties = {"temperature", "pressure", "flowRate", "power", "polytropicEfficiency",
+        "isentropicEfficiency", "efficiency"};
+    String[] units = {"C", "bara", "kg/hr", "kW", "", "", ""};
     for (int i = 0; i < properties.length; i++) {
       readKpi(auto, equipmentName + "." + properties[i], properties[i], units[i], kpis);
     }
 
-    String[] streamProps = { "temperature", "pressure", "flowRate" };
-    String[] streamUnits = { "C", "bara", "kg/hr" };
+    String[] streamProps = {"temperature", "pressure", "flowRate"};
+    String[] streamUnits = {"C", "bara", "kg/hr"};
     for (int i = 0; i < streamProps.length; i++) {
       readKpi(auto, equipmentName + ".outletStream." + streamProps[i], "outlet_" + streamProps[i], streamUnits[i],
           kpis);

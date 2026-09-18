@@ -75,8 +75,8 @@ class GradeEfficiencyCurveTest {
 
   @Test
   void testCustomCurve() {
-    double[] diameters = { 1e-6, 5e-6, 10e-6, 20e-6, 50e-6 };
-    double[] efficiencies = { 0.0, 0.1, 0.5, 0.9, 0.99 };
+    double[] diameters = {1e-6, 5e-6, 10e-6, 20e-6, 50e-6};
+    double[] efficiencies = {0.0, 0.1, 0.5, 0.9, 0.99};
 
     GradeEfficiencyCurve curve = GradeEfficiencyCurve.custom(diameters, efficiencies);
 

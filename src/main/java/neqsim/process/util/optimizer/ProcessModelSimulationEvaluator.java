@@ -3780,7 +3780,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   public List<double[]> getBoundsAsList() {
     List<double[]> bounds = new ArrayList<double[]>();
     for (ParameterDefinition parameter : parameters) {
-      bounds.add(new double[] { parameter.getLowerBound(), parameter.getUpperBound() });
+      bounds.add(new double[] {parameter.getLowerBound(), parameter.getUpperBound()});
     }
     return bounds;
   }

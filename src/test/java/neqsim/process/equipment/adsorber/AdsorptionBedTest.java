@@ -195,7 +195,7 @@ public class AdsorptionBedTest {
    */
   @Test
   public void testMultipleIsothermModels() {
-    IsothermType[] types = new IsothermType[] { IsothermType.LANGMUIR, IsothermType.FREUNDLICH, IsothermType.SIPS };
+    IsothermType[] types = new IsothermType[] {IsothermType.LANGMUIR, IsothermType.FREUNDLICH, IsothermType.SIPS};
 
     for (IsothermType type : types) {
       AdsorptionBed testBed = new AdsorptionBed("Bed_" + type.name(), feedStream);

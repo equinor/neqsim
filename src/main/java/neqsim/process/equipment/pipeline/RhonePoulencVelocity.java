@@ -159,25 +159,25 @@ public class RhonePoulencVelocity implements Serializable {
    * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for non-corrosive gas service. Used for
    * log-log interpolation.
    */
-  private static final double[] TABLE_DENSITY_NON_CORROSIVE = { 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0 };
+  private static final double[] TABLE_DENSITY_NON_CORROSIVE = {1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0};
 
   /**
    * Tabulated maximum velocity values (m/s) corresponding to the density points for non-corrosive gas service. Used for
    * log-log interpolation.
    */
-  private static final double[] TABLE_VELOCITY_NON_CORROSIVE = { 60.0, 45.0, 30.0, 22.0, 16.0, 11.0, 8.0, 5.5, 3.5 };
+  private static final double[] TABLE_VELOCITY_NON_CORROSIVE = {60.0, 45.0, 30.0, 22.0, 16.0, 11.0, 8.0, 5.5, 3.5};
 
   /**
    * Tabulated gas density values (kg/m3) from the standard Rhone-Poulenc curve for corrosive gas service. Used for
    * log-log interpolation.
    */
-  private static final double[] TABLE_DENSITY_CORROSIVE = { 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0 };
+  private static final double[] TABLE_DENSITY_CORROSIVE = {1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0};
 
   /**
    * Tabulated maximum velocity values (m/s) corresponding to the density points for corrosive gas service. Used for
    * log-log interpolation.
    */
-  private static final double[] TABLE_VELOCITY_CORROSIVE = { 30.0, 23.0, 15.0, 11.0, 8.0, 5.5, 4.0, 3.0, 2.0 };
+  private static final double[] TABLE_VELOCITY_CORROSIVE = {30.0, 23.0, 15.0, 11.0, 8.0, 5.5, 4.0, 3.0, 2.0};
 
   /** The selected service type. */
   private ServiceType serviceType = ServiceType.NON_CORROSIVE_GAS;

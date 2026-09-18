@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashCpaHydrocarbonLiquidStabilityTest {
-  private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-heptane", "nC10", "water" };
-  private static final double[] BASE_FEED = { 0.12, 0.03, 0.03, 0.08, 0.09, 0.65 };
+  private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-heptane", "nC10", "water"};
+  private static final double[] BASE_FEED = {0.12, 0.03, 0.03, 0.08, 0.09, 0.65};
 
   @Test
   void ordinaryHighWaterCpaFlashRecoversLowerGibbsOilAqueousState() {
@@ -34,8 +34,8 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
   @Test
   void nearbyStatesCompositionsAndChangedPressureRemainConsistent() {
-    double[][] conditions = { { 280.0, 100.0 }, { 280.0, 200.0 }, { 300.0, 150.0 }, { 300.0, 175.0 }, { 313.15, 200.0 },
-        { 325.0, 225.0 }, { 350.0, 225.0 } };
+    double[][] conditions = {{280.0, 100.0}, {280.0, 200.0}, {300.0, 150.0}, {300.0, 175.0}, {313.15, 200.0},
+        {325.0, 225.0}, {350.0, 225.0}};
     for (double[] condition : conditions) {
       SystemInterface ordinary = createAndFlash(condition[0], condition[1], 0.65, false, false);
       SystemInterface multiphase = createAndFlash(condition[0], condition[1], 0.65, true, false);
@@ -43,7 +43,7 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
       assertEquivalentEquilibrium(multiphase, ordinary);
     }
 
-    for (double waterFraction : new double[] { 0.50, 0.60, 0.65, 0.70, 0.80 }) {
+    for (double waterFraction : new double[] {0.50, 0.60, 0.65, 0.70, 0.80}) {
       SystemInterface ordinary = createAndFlash(300.0, 200.0, waterFraction, false, false);
       SystemInterface multiphase = createAndFlash(300.0, 200.0, waterFraction, true, false);
       assertOilAqueousEquilibrium(ordinary);

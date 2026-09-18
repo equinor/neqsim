@@ -2390,7 +2390,7 @@ public class JsonProcessBuilder {
     if (values.length != 2) {
       return values;
     }
-    return new double[] { values[0], 0.5 * (values[0] + values[1]), values[1] };
+    return new double[] {values[0], 0.5 * (values[0] + values[1]), values[1]};
   }
 
   /**
@@ -2617,7 +2617,7 @@ public class JsonProcessBuilder {
             values[i] = arr.get(i).getAsDouble();
           }
           java.lang.reflect.Method method = target.getClass().getMethod(setterName, double[].class);
-          method.invoke(target, new Object[] { values });
+          method.invoke(target, new Object[] {values});
         } else if (arr.size() >= 2) {
           // Unit-bearing array format: [value, "unit"] — e.g., [50000, "kg/hr"]
           double numValue = arr.get(0).getAsDouble();

@@ -235,7 +235,7 @@ public class CostWeightCoverageTest {
     Manifold manifold = new Manifold("Topside Production Manifold");
     manifold.addStream(feedA);
     manifold.addStream(feedB);
-    manifold.setSplitFactors(new double[] { 0.4, 0.4, 0.2 });
+    manifold.setSplitFactors(new double[] {0.4, 0.4, 0.2});
     manifold.run();
 
     manifold.initMechanicalDesign();

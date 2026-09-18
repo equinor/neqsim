@@ -193,7 +193,7 @@ public class DiffusivityModelsTest {
   @Test
   void testDiffusivityTemperatureDependence() {
     // Test that diffusivity increases with temperature
-    double[] temps = { 280.0, 300.0, 320.0, 340.0 };
+    double[] temps = {280.0, 300.0, 320.0, 340.0};
     double[] diffusivities = new double[temps.length];
 
     for (int t = 0; t < temps.length; t++) {
@@ -396,7 +396,7 @@ public class DiffusivityModelsTest {
    */
   @Test
   void testTemperatureDependenceComparison() {
-    double[] temps = { 280.0, 300.0, 320.0, 350.0 };
+    double[] temps = {280.0, 300.0, 320.0, 350.0};
 
     logger.info("\n=== Temperature Dependence Comparison ===");
     logger.info("System: methane/n-hexane at 10 bar");
@@ -438,7 +438,7 @@ public class DiffusivityModelsTest {
    */
   @Test
   void testHighPressureEffectComparison() {
-    double[] pressures = { 10.0, 50.0, 100.0, 200.0, 400.0 };
+    double[] pressures = {10.0, 50.0, 100.0, 200.0, 400.0};
 
     logger.info("\n=== High-Pressure Effect Comparison ===");
     logger.info("System: methane/n-heptane at 350 K");

@@ -340,7 +340,7 @@ public class Condenser extends SimpleTray {
 
       mixedStreamSplitter = new Splitter("splitter", mixedStream, 2);
       double refluxFraction = refluxRatio <= 0.0 ? 0.0 : refluxRatio / (1.0 + refluxRatio);
-      mixedStreamSplitter.setSplitFactors(new double[] { refluxFraction, 1.0 - refluxFraction });
+      mixedStreamSplitter.setSplitFactors(new double[] {refluxFraction, 1.0 - refluxFraction});
       mixedStreamSplitter.run();
     } else if (!refluxIsSet) {
       UUID oldID = getCalculationIdentifier();
@@ -357,7 +357,7 @@ public class Condenser extends SimpleTray {
       liquidstream.run();
       lastAvailableLiquidReflux = liquidstream.getFlowRate(this.reflux_unit);
       mixedStreamSplitter = new Splitter("splitter", liquidstream, 2);
-      mixedStreamSplitter.setFlowRates(new double[] { this.reflux_value, Splitter.REMAINDER }, this.reflux_unit);
+      mixedStreamSplitter.setFlowRates(new double[] {this.reflux_value, Splitter.REMAINDER}, this.reflux_unit);
       mixedStreamSplitter.run();
       lastFixedLiquidReflux = mixedStreamSplitter.getSplitStream(0).getFlowRate(this.reflux_unit);
       lastFixedLiquidRefluxResidual = reflux_value == 0.0 ? 0.0

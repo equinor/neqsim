@@ -514,9 +514,9 @@ public class SulfurFilter extends Filter {
   public double[] getParticleSizePercentilesUM() {
     if (nucleationModel != null && nucleationModel.isCalculated()) {
       double[] pctiles = nucleationModel.getParticleSizePercentiles();
-      return new double[] { pctiles[0] * 1e6, pctiles[1] * 1e6, pctiles[2] * 1e6 };
+      return new double[] {pctiles[0] * 1e6, pctiles[1] * 1e6, pctiles[2] * 1e6};
     }
-    return new double[] { 0.0, 0.0, 0.0 };
+    return new double[] {0.0, 0.0, 0.0};
   }
 
   /**

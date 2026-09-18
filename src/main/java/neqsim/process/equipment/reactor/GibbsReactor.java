@@ -346,8 +346,7 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Element molar masses in kg/mol, ordered as O, N, C, H, S, Ar, and charge. The charge entry has zero mass.
    */
-  private static final double[] ELEMENT_MOLAR_MASSES = { 0.015999, 0.014007, 0.012011, 0.001008, 0.03206, 0.039948,
-      0.0 };
+  private static final double[] ELEMENT_MOLAR_MASSES = {0.015999, 0.014007, 0.012011, 0.001008, 0.03206, 0.039948, 0.0};
 
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(GibbsReactor.class);
@@ -425,7 +424,7 @@ public class GibbsReactor extends TwoPortEquipment {
   // Results from the last calculation
   private double[] lambda = new double[7]; // O, N, C, H, S, Ar, Z
   private Map<String, Double> lagrangeContributions = new HashMap<>();
-  private String[] elementNames = { "O", "N", "C", "H", "S", "Ar", "Z" };
+  private String[] elementNames = {"O", "N", "C", "H", "S", "Ar", "Z"};
   private List<String> processedComponents = new ArrayList<>();
   private Map<String, Double> objectiveFunctionValues = new HashMap<>();
   // Set of inert components (names in lowercase). Inert components are present in the
@@ -877,11 +876,11 @@ public class GibbsReactor extends TwoPortEquipment {
       double D = system.getComponent(compNumber).getCpD();
 
       // Element heat capacity coefficients [A, B, C, D]
-      double[] cpO = { 12.73, 7.60E-03, -3.58E-06, 6.56E-10 };
-      double[] cpN = { 14.4415, -7.85E-04, 4.04E-06, -1.44E-09 };
-      double[] cpC = { 8.43, 0.00E+00, 0.00E+00, 0.00E+00 };
-      double[] cpH = { 14.544, -9.60E-04, 2.00E-06, -4.35E-10 };
-      double[] cpS = { 17.815, 0.001, 0.000, 0.000 };
+      double[] cpO = {12.73, 7.60E-03, -3.58E-06, 6.56E-10};
+      double[] cpN = {14.4415, -7.85E-04, 4.04E-06, -1.44E-09};
+      double[] cpC = {8.43, 0.00E+00, 0.00E+00, 0.00E+00};
+      double[] cpH = {14.544, -9.60E-04, 2.00E-06, -4.35E-10};
+      double[] cpS = {17.815, 0.001, 0.000, 0.000};
 
       // Calculate dA, dB, dC, dD by subtracting elemental contributions
       // dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
@@ -897,7 +896,7 @@ public class GibbsReactor extends TwoPortEquipment {
       double dD = D - (elements[0] * cpO[3]) - (elements[1] * cpN[3]) - (elements[2] * cpC[3]) - (elements[3] * cpH[3])
           - (elements[4] * cpS[3]);
 
-      return new double[] { dA, dB, dC, dD };
+      return new double[] {dA, dB, dC, dD};
     }
 
     /**

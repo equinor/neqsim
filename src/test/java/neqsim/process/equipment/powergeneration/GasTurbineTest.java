@@ -13,6 +13,8 @@ import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.MechanicalShaft;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.standards.gasquality.Standard_ISO6976;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class GasTurbineTest extends neqsim.NeqSimTest {
@@ -74,6 +76,57 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(Double.isFinite(gasturb.getPower()), "power must be finite");
     Assertions.assertTrue(gasturb.getPower() > 0.0, "net power must be positive");
     Assertions.assertTrue(Double.isFinite(gasturb.getHeat()), "heat must be finite");
+  }
+
+  @Test
+  void detailedCycleClosesFuelEnergyAndPublishesCombustionExhaust() {
+    double previousPower = 0.0;
+    for (double flowRate : new double[] {1000.0, 2000.0}) {
+      SystemInterface fluid = new SystemSrkEos(323.15, 2.0);
+      fluid.addComponent("methane", 1.0);
+      Stream fuel = new Stream("methane fuel", fluid);
+      fuel.setFlowRate(flowRate, "kg/hr");
+      fuel.run();
+      GasTurbine turbine = new GasTurbine("detailed cycle", fuel);
+      turbine.run();
+
+      Standard_ISO6976 calorificValue = fuel.getISO6976("molar", 0.0, 0.0);
+      calorificValue.calculate();
+      double fuelMoles = fuel.getFlowRate("mole/sec");
+      double fuelHeat = calorificValue.getValue("InferiorCalorificValue") * 1000.0 * fuelMoles;
+      SystemInterface air = turbine.airStream.getFluid();
+      SystemInterface exhaust = turbine.getOutletStream().getFluid();
+      fuel.getFluid().init(2);
+      air.init(2);
+      exhaust.init(2);
+
+      Assertions.assertTrue(turbine.getPower() > 0.0 && turbine.getPower() < fuelHeat);
+      Assertions.assertTrue(turbine.getHeat() > 0.0);
+      Assertions.assertTrue(exhaust.getTemperature() > 288.15);
+      assertEquals(fuelHeat + fuel.getFluid().getEnthalpy() + air.getEnthalpy(),
+          turbine.getPower() + exhaust.getEnthalpy(), fuelHeat * 1.0e-6);
+      HRSG recovery = new HRSG("exhaust recovery", turbine.getOutletStream());
+      recovery.run();
+      Assertions.assertTrue(recovery.getHeatTransferred("W") > 0.0);
+      Assertions.assertTrue(recovery.getHeatTransferred("W") < turbine.getHeat());
+      recovery.getOutletStream().getFluid().init(2);
+      assertEquals(exhaust.getEnthalpy(),
+          recovery.getHeatTransferred("W") + recovery.getOutletStream().getFluid().getEnthalpy(), fuelHeat * 1.0e-6);
+      // Database molecular weights are rounded independently; atom balances are exact.
+      double inletMass = fuel.getFlowRate("kg/sec") + turbine.airStream.getFlowRate("kg/sec");
+      assertEquals(inletMass, exhaust.getFlowRate("kg/sec"), inletMass * 1.0e-5);
+      assertEquals(0.0, exhaust.getComponent("methane").getNumberOfmoles(), 1.0e-10);
+      assertEquals(air.getComponent("CO2").getNumberOfmoles() + fuelMoles,
+          exhaust.getComponent("CO2").getNumberOfmoles(), fuelMoles * 1.0e-8);
+      assertEquals(air.getComponent("oxygen").getNumberOfmoles() - 2.0 * fuelMoles,
+          exhaust.getComponent("oxygen").getNumberOfmoles(), fuelMoles * 1.0e-8);
+      assertEquals(air.getComponent("water").getNumberOfmoles() + 2.0 * fuelMoles,
+          exhaust.getComponent("water").getNumberOfmoles(), fuelMoles * 1.0e-8);
+      if (previousPower > 0.0) {
+        assertEquals(2.0 * previousPower, turbine.getPower(), turbine.getPower() * 1.0e-6);
+      }
+      previousPower = turbine.getPower();
+    }
   }
 
   @Test

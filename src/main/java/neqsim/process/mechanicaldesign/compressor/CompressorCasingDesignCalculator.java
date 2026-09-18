@@ -545,8 +545,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
    */
   private double roundUpToStandardThickness(double thicknessMm) {
     // Standard plate thicknesses in mm (metric preferred series)
-    double[] standardThicknesses = { 6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
-        35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0 };
+    double[] standardThicknesses = {6.0, 8.0, 10.0, 12.0, 12.7, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
+        35.0, 38.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 90.0, 100.0};
 
     for (double stdThk : standardThicknesses) {
       if (stdThk >= thicknessMm) {
@@ -653,8 +653,8 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // ASME B16.5 pressure-temperature ratings at ambient (carbon steel group 1.1)
     // Classes and their ambient pressure ratings [barg]
-    int[] classes = { 150, 300, 600, 900, 1500, 2500 };
-    double[] ratingsAtAmbientBarg = { 19.6, 51.1, 102.1, 153.0, 255.0, 425.0 };
+    int[] classes = {150, 300, 600, 900, 1500, 2500};
+    double[] ratingsAtAmbientBarg = {19.6, 51.1, 102.1, 153.0, 255.0, 425.0};
 
     // Temperature derating factor (approximate Group 1.1 materials)
     double tempDeratingFactor = 1.0;
@@ -820,7 +820,7 @@ public class CompressorCasingDesignCalculator implements Serializable {
 
     // Determine bolt size and count
     // Start with M24 (24mm) and iterate if needed
-    double[] standardBoltSizes = { 16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+    double[] standardBoltSizes = {16.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
     // Bolt pitch should be 2.5-4 x bolt diameter per API 617
     double minPitchFactor = 2.5;

@@ -382,7 +382,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
 
-    double[] flowRates = { 1.0, 2.0, 4.0 }; // kg/s - conservative range
+    double[] flowRates = {1.0, 2.0, 4.0}; // kg/s - conservative range
     double[] bbPressureDrops = new double[flowRates.length];
     double[] tfPressureDrops = new double[flowRates.length];
 
@@ -448,7 +448,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
 
-    double[] diameters = { 0.15, 0.20, 0.30 }; // m - avoid very small diameters
+    double[] diameters = {0.15, 0.20, 0.30}; // m - avoid very small diameters
     double[] bbPressureDrops = new double[diameters.length];
     double[] tfPressureDrops = new double[diameters.length];
 
@@ -1027,7 +1027,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
 
     // Print sample positions including valleys and peaks
-    int[] samplePoints = { 0, 10, 25, 37, 50, 62, 75, 87, 99 };
+    int[] samplePoints = {0, 10, 25, 37, 50, 62, 75, 87, 99};
     for (int i : samplePoints) {
       if (i < nSections) {
         String note = "";
@@ -1340,7 +1340,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("--------------------------------------------------------------------------------");
 
     // Print key points along the riser
-    int[] keyPoints = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99 };
+    int[] keyPoints = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99};
     for (int idx : keyPoints) {
       if (idx < nSections) {
         String section;
@@ -1707,7 +1707,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("\n--- Pressure Profile ---");
     logger.info("Position [m]  Elevation [m]  Pressure [bar]  Holdup  Section");
     logger.info("------------------------------------------------------------------------");
-    int[] printPoints = { 0, 10, 20, 30, 40, 50, 55, 60, 64 };
+    int[] printPoints = {0, 10, 20, 30, 40, 50, 55, 60, 64};
     for (int idx : printPoints) {
       if (idx < nSections) {
         String section = (pipeLength * idx / (nSections - 1) <= flowlineLength) ? "Flowline" : "Riser";
@@ -1919,7 +1919,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
 
     // Test different flow rates
-    double[] flowRates = { 0.5, 1.0, 2.0, 4.0, 8.0 }; // kg/s
+    double[] flowRates = {0.5, 1.0, 2.0, 4.0, 8.0}; // kg/s
 
     logger.info("Flow Rate  Inlet P  Outlet P  ΔP     Riser Base  Riser Top  Stability");
     logger.info("[kg/s]     [bar]    [bar]     [bar]  Holdup      Holdup     Assessment");
@@ -2090,7 +2090,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     logger.info("Water Cut  Inlet P  Outlet P  ΔP [bar]  Avg Holdup  Phases");
     logger.info("----------------------------------------------------------------");
 
-    double[] waterMoleFractions = { 0.0, 0.05, 0.10, 0.20, 0.30 };
+    double[] waterMoleFractions = {0.0, 0.05, 0.10, 0.20, 0.30};
 
     for (double waterMole : waterMoleFractions) {
       // Adjust composition - keep total = 1.0
@@ -2543,7 +2543,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
       }
     }
 
-    double[] flowRates = { 2.0, 5.0, 10.0, 20.0 };
+    double[] flowRates = {2.0, 5.0, 10.0, 20.0};
 
     logger.info("Flow Rate  Inlet P  Outlet P  Valley Holdup  Peak Holdup  Ratio");
     logger.info("-------------------------------------------------------------------");
@@ -2850,9 +2850,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double[] temperature = pipe.getTemperatureProfile();
     double[] oilHoldup = pipe.getOilHoldupProfile();
     double[] waterHoldup = pipe.getWaterHoldupProfile();
-    double[][] phaseMassFlow = { pipe.getGasMassFlowProfile(), pipe.getOilMassFlowProfile(),
-        pipe.getWaterMassFlowProfile() };
-    String[] phaseNames = { "gas", "oil", "aqueous" };
+    double[][] phaseMassFlow = {pipe.getGasMassFlowProfile(), pipe.getOilMassFlowProfile(),
+        pipe.getWaterMassFlowProfile()};
+    String[] phaseNames = {"gas", "oil", "aqueous"};
     for (int i = 0; i < nSections; i++) {
       assertTrue(Double.isFinite(pressure[i]) && pressure[i] > 1.0e5,
           "Pressure must remain finite and above the numerical floor at section " + i);

@@ -1450,7 +1450,9 @@ def objective(z):
     return evaluator.evaluateObjective(z * scale) / 1000.0
 
 def constraint_margins(z):
-    return np.asarray(evaluator.getConstraintMargins(z * scale)) / 100.0
+    # Reserve a 1e-6 bara/C interior margin: SLSQP accepts tiny negative residuals,
+    # while the evaluator checks the original engineering limits strictly.
+    return (np.asarray(evaluator.getConstraintMargins(z * scale)) - 1.0e-6) / 100.0
 
 bounds = [(b[0] / scale[i], b[1] / scale[i])
           for i, b in enumerate(evaluator.getBounds())]

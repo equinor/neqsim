@@ -61,8 +61,8 @@ public class EmissionsCalculatorTest {
     system.setSalinity(10.0, "wt%");
 
     // Set gas composition (typical Gudrun)
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.51, 0.44, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.51, 0.44, 0.04, 0.01});
 
     // Run simulation
     system.run();
@@ -260,8 +260,8 @@ public class EmissionsCalculatorTest {
     system.setDegasserPressure(4.0, "bara");
     system.setCFUPressure(1.2, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.50, 0.45, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.50, 0.45, 0.04, 0.01});
 
     // Enable tuned kij parameters
     system.setTunedInteractionParameters(true);
@@ -304,8 +304,8 @@ public class EmissionsCalculatorTest {
     system.setCFUPressure(1.2, "bara");
     system.setCaissonPressure(1.013, "bara");
     system.setSalinity(3.5, "wt%");
-    system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
-        new double[] { 0.50, 0.45, 0.04, 0.01 });
+    system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.50, 0.45, 0.04, 0.01});
 
     // Run
     system.run();

@@ -29,10 +29,10 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   int[][] assosSchemeType = null; // 0- ER - 1 - CR1
   double[][] cpaBetaCross = null;
   double[][] cpaEpsCross = null;
-  final int[] charge4C = { 1, 1, -1, -1 };
-  final int[] charge1A = { -1 };
-  final int[] charge2A = { -1, -1 };
-  final int[] charge2B = { 1, -1 };
+  final int[] charge4C = {1, 1, -1, -1};
+  final int[] charge1A = {-1};
+  final int[] charge2A = {-1, -1};
+  final int[] charge2B = {1, -1};
 
   /**
    * Constructor for CPAMixingRules.
@@ -164,10 +164,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
 
     double eps = 12000.76;
     double beta = 0.03;
-    protected double[][] epsab = { { 0, eps, eps, eps }, { eps, 0, eps, eps }, { eps, eps, 0, eps },
-        { eps, eps, eps, 0 } };
-    protected double[][] betamat = { { 0, beta, beta, beta }, { beta, 0, beta, beta }, { beta, beta, 0, beta },
-        { beta, beta, beta, 0 } };
+    protected double[][] epsab = {{0, eps, eps, eps}, {eps, 0, eps, eps}, {eps, eps, 0, eps}, {eps, eps, eps, 0}};
+    protected double[][] betamat = {{0, beta, beta, beta}, {beta, 0, beta, beta}, {beta, beta, 0, beta},
+        {beta, beta, beta, 0}};
 
     public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {

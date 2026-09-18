@@ -1054,6 +1054,6 @@ public class ErosionPredictionCalculator implements Serializable {
    * @return array of valid completion type strings
    */
   public static String[] getAvailableCompletionTypes() {
-    return new String[] { "natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete" };
+    return new String[] {"natural", "natural_failure", "sas", "ohgp_incomplete", "ohgp_complete"};
   }
 }

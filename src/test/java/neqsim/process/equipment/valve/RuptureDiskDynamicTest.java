@@ -67,7 +67,7 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     // Create splitter for gas outlet - splits to control valve and rupture disk
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 2);
     // Initial split: 99.9% to control valve, 0.1% to rupture disk
-    gasSplitter.setSplitFactors(new double[] { 0.999, 0.001 });
+    gasSplitter.setSplitFactors(new double[] {0.999, 0.001});
     gasSplitter.setCalculateSteadyState(false);
 
     // Create pressure control valve (PCV) for normal operation
@@ -255,7 +255,7 @@ class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
     logger.info("\n===== RUPTURE DISK BEHAVIOR TEST =====");
 
     // Test sequence: pressure rises, then falls
-    double[] testPressures = { 45.0, 49.0, 50.0, 52.5, 55.0, 52.0, 50.0, 48.0, 45.0 };
+    double[] testPressures = {45.0, 49.0, 50.0, 52.5, 55.0, 52.0, 50.0, 48.0, 45.0};
     UUID id = UUID.randomUUID();
 
     for (int i = 0; i < testPressures.length; i++) {

@@ -2132,12 +2132,12 @@ public class NeqSimTools {
    * @param reliefJson JSON spec with relief case and inputs
    * @return JSON string with sizing result
    */
-  @Tool(description = "Size a Pressure Safety Valve (PSV) per API 520 / API 521. "
-      + "Supports four cases: 'gas' (vapour service), 'liquid' (liquid relief), "
-      + "'twoPhase' (Leung omega method, Appendix D), and 'fireHeatInput' (API 521 "
-      + "wetted-area fire heat absorption). Returns required orifice area, recommended "
-      + "API standard orifice letter (D-T), correction factors (Kd/Kb/Kc/Kw/Kv), and "
-      + "validation warnings.")
+  @Tool(description = "Run bounded pressure-relief sizing screening (maximum 16384 UTF-8 bytes) "
+      + "using NeqSim's canonical API 520/API 521-oriented equations. Supports gas, liquid, "
+      + "twoPhase, and fireHeatInput cases. Returns sizing evidence and explicit advisory "
+      + "boundaries; it does not establish scenario completeness, certify standard-edition "
+      + "conformance or installation acceptability, authorize plant action, or replace "
+      + "qualified pressure-relief/process-safety review.")
   public String runRelief(
       @ToolArg(description = "JSON with: 'case' (gas|liquid|twoPhase|fireHeatInput). "
           + "For gas: 'massFlowRate_kg_s', 'setPressure_bara', 'temperature_K', "

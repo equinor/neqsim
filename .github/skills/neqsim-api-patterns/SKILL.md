@@ -261,6 +261,18 @@ Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100
 Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
 acceptable for the gas-phase part of the train but not near or above the critical density.
 
+### CPA liquid-water caloric accuracy
+
+Default `SystemSrkCPAstatoil` water Cp can be 8–17% low at 5–60 °C even when
+density is accurate. For qualified pure-water duty calculations, explicitly
+select `setUseCaloricWaterAlpha(true)`, then TP flash and initialize properties.
+The calibration changes the EOS alpha and its derivatives consistently; never
+patch Cp alone or fit water ideal-gas Cp to compensate for a liquid error.
+Caloric checks cover 5–150 °C and 1–100 bara (stable liquid); density qualification
+is 5–60 °C. Mixtures, electrolytes, hydrates and near-critical states need separate
+validation. See [CPA water caloric guidance](../../../docs/thermo/cpa_water_caloric.md)
+for results, provenance and limitations. Legacy behavior remains the default.
+
 ## Process Equipment Patterns
 
 ### Standard outlet-stream contract

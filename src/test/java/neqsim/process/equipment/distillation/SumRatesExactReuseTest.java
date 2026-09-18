@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression coverage for exact unchanged-input reuse by the native sum-rates solver. */
 public class SumRatesExactReuseTest {
-  private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane", "nC10" };
+  private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-butane", "nC10"};
 
   private static SystemInterface createFluid(double temperature, double[] moles) {
     SystemInterface fluid = new SystemSrkEos(temperature, 30.0);
@@ -34,7 +34,7 @@ public class SumRatesExactReuseTest {
 
   private static DistillationColumn createAbsorber(Stream gasFeed, double solventFlowRate) {
     Stream solventFeed = createFeed("lean solvent",
-        createFluid(298.15, new double[] { 1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0 }), solventFlowRate);
+        createFluid(298.15, new double[] {1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0}), solventFlowRate);
     DistillationColumn column = new DistillationColumn("sum-rates absorber", 10, false, false);
     column.addFeedStream(gasFeed, 0);
     column.addFeedStream(solventFeed, column.getNumberOfTrays() - 1);
@@ -51,10 +51,10 @@ public class SumRatesExactReuseTest {
   /** Exact reuse must be lossless, while a changed feed must execute the solver. */
   @Test
   public void unchangedInputReusesAcceptedStateAndChangedInputInvalidatesIt() {
-    double[][] operatingPoints = { { 313.15, 1200.0 }, { 318.15, 1300.0 } };
+    double[][] operatingPoints = {{313.15, 1200.0}, {318.15, 1300.0}};
     for (int pointIndex = 0; pointIndex < operatingPoints.length; pointIndex++) {
       Stream gasFeed = createFeed("rich gas " + pointIndex,
-          createFluid(operatingPoints[pointIndex][0], new double[] { 0.70, 0.15, 0.10, 0.05, 1.0e-10 }), 1000.0);
+          createFluid(operatingPoints[pointIndex][0], new double[] {0.70, 0.15, 0.10, 0.05, 1.0e-10}), 1000.0);
       DistillationColumn column = createAbsorber(gasFeed, operatingPoints[pointIndex][1]);
 
       column.run();

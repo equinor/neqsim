@@ -25,12 +25,12 @@ import neqsim.thermo.system.SystemPitzer;
  * @version 1.0
  */
 class ChemicalReactionProvenanceTest {
-  private static final double[] STANDARD_CO2_WATER = new double[] { 253.235548, -12865.665607, -39.440767, 0.0 };
-  private static final double[] PITZER_CO2_WATER = new double[] { 653.705141388, -23927.318205735, -108.892446382,
-      0.108492068 };
-  private static final double[] PITZER_H2S_WATER = new double[] { 25.719875488743, -7550.176519927477, 0.0,
-      -0.054939680319 };
-  private static final double[] KENT_CO2_WATER = new double[] { 231.465, -12092.1, -36.7816, 0.0 };
+  private static final double[] STANDARD_CO2_WATER = new double[] {253.235548, -12865.665607, -39.440767, 0.0};
+  private static final double[] PITZER_CO2_WATER = new double[] {653.705141388, -23927.318205735, -108.892446382,
+      0.108492068};
+  private static final double[] PITZER_H2S_WATER = new double[] {25.719875488743, -7550.176519927477, 0.0,
+      -0.054939680319};
+  private static final double[] KENT_CO2_WATER = new double[] {231.465, -12092.1, -36.7816, 0.0};
 
   /** Verify that Kent-Eisenberg explicitly selects its apparent-constant parameter set. */
   @Test

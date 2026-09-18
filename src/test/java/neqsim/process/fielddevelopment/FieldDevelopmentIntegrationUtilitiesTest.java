@@ -80,8 +80,8 @@ class FieldDevelopmentIntegrationUtilitiesTest extends neqsim.NeqSimTest {
     assertTrue(keywords.contains("WCONPROD"));
     assertTrue(keywords.contains("WVFPPROD"));
 
-    String forecastCsv = exporter.exportProductionForecastCsv(new int[] { 2028, 2029 }, new double[] { 1000.0, 900.0 },
-        new double[] { 2.0e6, 1.8e6 }, new double[] { 100.0, 150.0 });
+    String forecastCsv = exporter.exportProductionForecastCsv(new int[] {2028, 2029}, new double[] {1000.0, 900.0},
+        new double[] {2.0e6, 1.8e6}, new double[] {100.0, 150.0});
     assertTrue(forecastCsv.contains("Year,Oil_Sm3d,Gas_Sm3d,Water_Sm3d"));
     assertTrue(forecastCsv.contains("2029"));
   }

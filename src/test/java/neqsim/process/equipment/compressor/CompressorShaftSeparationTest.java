@@ -103,7 +103,7 @@ public class CompressorShaftSeparationTest {
     // Attach a common-speed performance chart to each recompressor body, anchored at ONE common speed so both bodies
     // reach their design discharge at that speed.
     double commonSpeed = rc2.getSpeed();
-    for (Compressor body : new Compressor[] { rc1, rc2 }) {
+    for (Compressor body : new Compressor[] {rc1, rc2}) {
       body.setSpeed(commonSpeed);
       body.generateCompressorChart("normal curves", 5);
       body.getCompressorChart().setUseCompressorChart(true);

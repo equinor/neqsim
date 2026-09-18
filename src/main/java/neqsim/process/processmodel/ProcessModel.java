@@ -3108,7 +3108,7 @@ public class ProcessModel implements Runnable, Serializable {
         double flow = stream.getFlowRate("kg/hr");
         double temp = stream.getTemperature("K");
         double press = stream.getPressure("bara");
-        states.put(boundaryObject, new double[] { flow, temp, press });
+        states.put(boundaryObject, new double[] {flow, temp, press});
       } catch (Exception exception) {
         // Skip streams that cannot be read.
       }
@@ -3290,7 +3290,7 @@ public class ProcessModel implements Runnable, Serializable {
 
     lastBoundaryStreamErrors = streamErrors;
     boundaryStreamErrorCache = nextStreamErrors;
-    return new double[] { maxFlowErr, maxTempErr, maxPressErr };
+    return new double[] {maxFlowErr, maxTempErr, maxPressErr};
   }
 
   /** Returns whether an immutable cached diagnostic exactly represents the current boundary observation. */

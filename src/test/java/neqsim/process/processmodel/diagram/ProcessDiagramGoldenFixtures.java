@@ -56,7 +56,7 @@ public final class ProcessDiagramGoldenFixtures {
     Stream feed = createFeed("branch feed");
     feed.run();
     Splitter splitter = new Splitter("branch splitter", feed);
-    splitter.setSplitFactors(new double[] { 0.4, 0.6 });
+    splitter.setSplitFactors(new double[] {0.4, 0.6});
     splitter.run();
     StreamInterface firstBranch = splitter.getSplitStream(0);
     StreamInterface secondBranch = splitter.getSplitStream(1);

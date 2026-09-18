@@ -35,7 +35,7 @@ public class AntiSurgeControllerTest {
   void testRecycleValveOpensWhenMarginLow() {
     Stream feed = gasStream();
     // stub compressor exposing a controllable surge margin
-    final double[] marginHolder = new double[] { 0.02 };
+    final double[] marginHolder = new double[] {0.02};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 
@@ -81,7 +81,7 @@ public class AntiSurgeControllerTest {
     controller.runTransient(0.0, 1.0);
     Assertions.assertTrue(controller.getValveOpening() <= 60.0);
 
-    final double[] marginHolder = new double[] { -0.5 };
+    final double[] marginHolder = new double[] {-0.5};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 
@@ -102,7 +102,7 @@ public class AntiSurgeControllerTest {
   @Test
   void testPredictiveActionOpensBeforeCurrentMarginCrossesSetpoint() {
     Stream feed = gasStream();
-    final double[] marginHolder = new double[] { 0.30 };
+    final double[] marginHolder = new double[] {0.30};
     Compressor comp = new Compressor("comp", feed) {
       private static final long serialVersionUID = 1L;
 

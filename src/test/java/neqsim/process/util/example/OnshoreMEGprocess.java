@@ -72,7 +72,7 @@ public class OnshoreMEGprocess {
     inletCompressor2ndstage.setOutletPressure(105.0, "bara");
 
     neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
-    feedMEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6 });
+    feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4, 0.6});
 
     Stream MEGFeed = new Stream("lean MEG to header", feedMEG);
     MEGFeed.setFlowRate(1000.0, "kg/hr");
@@ -80,7 +80,7 @@ public class OnshoreMEGprocess {
     MEGFeed.setPressure(105.0, "bara");
 
     Splitter MEGsplitter1 = new Splitter("lean MEG header", MEGFeed);
-    MEGsplitter1.setSplitFactors(new double[] { 0.01, 0.94, 0.05 });
+    MEGsplitter1.setSplitFactors(new double[] {0.01, 0.94, 0.05});
 
     StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");
     MEGmixer1.addStream(inletCompressor2ndstage.getOutletStream());
@@ -170,7 +170,7 @@ public class OnshoreMEGprocess {
     Stream leanMEGtoMixer = new Stream("lean MEG to makeup mixer", coolerHotMEG2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureMEG = feedGas.clone();
-    pureMEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     Stream makeupMEG = new Stream("makeup MEG", pureMEG);
     makeupMEG.setFlowRate(1e-6, "kg/hr");

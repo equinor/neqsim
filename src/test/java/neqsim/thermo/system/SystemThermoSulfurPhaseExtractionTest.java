@@ -19,24 +19,24 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * rich-gas inventories come from the stabilization/recompression reproducer.
  */
 class SystemThermoSulfurPhaseExtractionTest extends neqsim.NeqSimTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
       "i-pentane", "n-pentane", "n-hexane", "H2S", "water", "C7+_cut1_PC", "C7+_cut2_PC", "C7+_cut3_PC", "C7+_cut4_PC",
-      "C7+_cut5_PC", "C7+_cut6_PC", "C7+_cut7_PC", "C7+_cut8_PC", "nitrogen", "oxygen", "S8" };
+      "C7+_cut5_PC", "C7+_cut6_PC", "C7+_cut7_PC", "C7+_cut8_PC", "nitrogen", "oxygen", "S8"};
   // Molar rates [mol/s] before the 33 bara scrubber and the final 180 bara export contact.
-  private static final double[] SCRUBBER_RATES = { 5.426175570833792, 178.6334978118069, 20.187382861471725,
+  private static final double[] SCRUBBER_RATES = {5.426175570833792, 178.6334978118069, 20.187382861471725,
       11.528526408861342, 1.803693632013223, 3.9870963545629756, 1.315713211244905, 1.2042618525798088,
       0.9669327412405113, 1.4961268348889367, 2.5160614583232253, 0.060541220465648235, 0.044453125080732986,
       0.02731484770052652, 0.02179656510319209, 0.0016441754883491889, 6.883946664754348e-05, 1.712724761684427e-06,
-      3.630373386406932e-08, 2.3259326839179675, 0.0032807414050853006, 0.004244665873915542 };
-  private static final double[] EXPORT_RATES = { 5.419922550112308, 178.5622516507791, 20.151883209057278,
+      3.630373386406932e-08, 2.3259326839179675, 0.0032807414050853006, 0.004244665873915542};
+  private static final double[] EXPORT_RATES = {5.419922550112308, 178.5622516507791, 20.151883209057278,
       11.466094330797235, 1.7829961362073965, 3.924793989319542, 1.2728872028782405, 1.1533426110138327,
       0.8638106470108451, 1.4848063962066116, 0.1554436772399516, 0.03203990816062581, 0.015543686242774073,
       0.005318656800335305, 0.000808925102338541, 3.0678468821357016e-06, 4.154473891219739e-09, 2.651976774409522e-12,
-      6.476974682454262e-16, 2.3256092373875337, 7.904738644944889e-06, 0.0006211014396727213 };
+      6.476974682454262e-16, 2.3256092373875337, 7.904738644944889e-06, 0.0006211014396727213};
   // Pedersen SRK TBP cuts: molar mass [kg/mol], normal liquid density [g/cm3].
-  private static final double[][] CUT_PROPERTIES = { { 0.10847, 0.7411 }, { 0.12040000000000001, 0.755 },
-      { 0.13363999999999998, 0.7695 }, { 0.16469999999999999, 0.799 }, { 0.21594, 0.8387 },
-      { 0.27333999999999997, 0.8754 }, { 0.33492, 0.90731 }, { 0.41279000000000005, 0.94575 } };
+  private static final double[][] CUT_PROPERTIES = {{0.10847, 0.7411}, {0.12040000000000001, 0.755},
+      {0.13363999999999998, 0.7695}, {0.16469999999999999, 0.799}, {0.21594, 0.8387}, {0.27333999999999997, 0.8754},
+      {0.33492, 0.90731}, {0.41279000000000005, 0.94575}};
 
   /** Named extraction must not reintroduce the parent's solid sulfur through an inactive gas slot. */
   @Test
@@ -72,7 +72,7 @@ class SystemThermoSulfurPhaseExtractionTest extends neqsim.NeqSimTest {
    * @param dischargePressure compressor and interstage-gas pressure in bara
    */
   @ParameterizedTest
-  @CsvSource({ "true, 90.0", "false, 90.0", "true, 95.0", "false, 95.0" })
+  @CsvSource({"true, 90.0", "false, 90.0", "true, 95.0", "false, 95.0"})
   void extractedWetGasConservesComponentsThroughRecompression(boolean solidCheck, double dischargePressure) {
     SystemInterface source = solidFluid(SCRUBBER_RATES, 305.15, 33.0);
     assertTrue(source.hasPhaseType("gas"));

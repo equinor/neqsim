@@ -351,6 +351,7 @@ Before using any deliverable class:
 2. **Read** constructor and method signatures
 3. **Do NOT assume convenience methods** — check first
 4. **Test with JUnit** if creating documentation examples
+5. **Format Java** — after editing any `.java` file, run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) and `git add` the reformatted files; CI runs `spotless:check` and fails on any unformatted file
 
 ## Engineering Simulator Handoff
 

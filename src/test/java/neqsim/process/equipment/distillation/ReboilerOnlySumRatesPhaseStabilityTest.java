@@ -15,8 +15,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression coverage for phase-stable sum-rates solves of reboiler-only columns. */
 public class ReboilerOnlySumRatesPhaseStabilityTest {
-  private static final String[] COMPONENTS = { "methane", "ethane", "propane", "n-butane", "nC10" };
-  private static final double[] BASE_GAS_COMPOSITION = { 0.70, 0.15, 0.10, 0.05, 1.0e-10 };
+  private static final String[] COMPONENTS = {"methane", "ethane", "propane", "n-butane", "nC10"};
+  private static final double[] BASE_GAS_COMPOSITION = {0.70, 0.15, 0.10, 0.05, 1.0e-10};
   private static final double PHASE_STABLE_REFERENCE_TEMPERATURE_TOLERANCE = 5.0e-6;
 
   /** Column and its external feeds for container and invalidation tests. */
@@ -62,7 +62,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     Stream gasFeed = createFeed(name + " rich gas", createFluid(gasTemperature, pressure, gasComposition), gasFlowRate,
         pressure);
     Stream solventFeed = createFeed(name + " lean solvent",
-        createFluid(298.15, pressure, new double[] { 1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0 }), solventFlowRate,
+        createFluid(298.15, pressure, new double[] {1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0}), solventFlowRate,
         pressure);
     DistillationColumn column = new DistillationColumn(name, 10, true, false);
     column.addFeedStream(gasFeed, 1);
@@ -241,13 +241,12 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   /** Native sum-rates must match the damped phase state and products across the issue envelope. */
   @Test
   public void nativeSumRatesMatchesDampedAcrossNearbyOperatingAndInitializationPoints() {
-    double[][] operatingPoints = { { 313.15, 1200.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05 },
-        { 318.15, 1300.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05 },
-        { 315.15, 1250.0, 29.5, 980.0, 0.69, 0.16, 0.10, 0.05 },
-        { 316.15, 1275.0, 30.5, 1020.0, 0.71, 0.14, 0.09, 0.06 } };
+    double[][] operatingPoints = {{313.15, 1200.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05},
+        {318.15, 1300.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05}, {315.15, 1250.0, 29.5, 980.0, 0.69, 0.16, 0.10, 0.05},
+        {316.15, 1275.0, 30.5, 1020.0, 0.71, 0.14, 0.09, 0.06}};
     for (int pointIndex = 0; pointIndex < operatingPoints.length; pointIndex++) {
       double[] point = operatingPoints[pointIndex];
-      double[] gasComposition = { point[4], point[5], point[6], point[7], 1.0e-10 };
+      double[] gasComposition = {point[4], point[5], point[6], point[7], 1.0e-10};
       ColumnCase damped = createColumnCase("damped " + pointIndex, point[0], point[1], point[2], point[3],
           gasComposition, DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
       ColumnCase sumRates = createColumnCase("sum-rates " + pointIndex, point[0], point[1], point[2], point[3],
@@ -379,7 +378,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
   /** Trace-phase canonicalization must reject multi-phase, non-finite, and non-normalized states. */
   @Test
   public void terminalTracePhaseCandidateRequiresFiniteNormalizedTwoPhaseState() {
-    double[] componentMoles = { 1.0, 2.0 };
+    double[] componentMoles = {1.0, 2.0};
     assertTrue(
         DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9, componentMoles));
     assertFalse(
@@ -388,9 +387,9 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
     assertFalse(
         DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, Double.NaN, componentMoles));
     assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9,
-        new double[] { 1.0, Double.POSITIVE_INFINITY }));
+        new double[] {1.0, Double.POSITIVE_INFINITY}));
     assertFalse(DistillationColumn.isTerminalTracePhaseCanonicalizationCandidate(2, 1.0 - 3.0e-9, 3.0e-9,
-        new double[] { 1.0, -1.0e-12 }));
+        new double[] {1.0, -1.0e-12}));
   }
 
   /** Any condenser configuration must remain routed to damped substitution. */

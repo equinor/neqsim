@@ -14,7 +14,7 @@ class ComponentGEHenryDerivativeTest {
   @Test
   void activeCorrelationReturnsLogarithmicDerivative() {
     ComponentGeNRTL component = new ComponentGeNRTL("CO2", 1.0, 1.0, 0);
-    component.setHenryCoefParameter(new double[] { 10.0, -1200.0, 1.5, 0.002 });
+    component.setHenryCoefParameter(new double[] {10.0, -1200.0, 1.5, 0.002});
     PhasePitzer phase = phaseAt(TEMPERATURE);
 
     double expected = finiteDifferenceLogHenry(component, TEMPERATURE);
@@ -30,7 +30,7 @@ class ComponentGEHenryDerivativeTest {
   @Test
   void pitzerNeutralGasUsesSameLogarithmicDerivative() {
     ComponentGePitzer component = new ComponentGePitzer("CO2", 1.0, 1.0, 0);
-    component.setHenryCoefParameter(new double[] { 8.0, -800.0, 0.5, 0.001 });
+    component.setHenryCoefParameter(new double[] {8.0, -800.0, 0.5, 0.001});
     PhasePitzer phase = phaseAt(TEMPERATURE);
 
     assertEquals(finiteDifferenceLogHenry(component, TEMPERATURE), component.fugcoefDiffTemp(phase), 1.0e-9);
@@ -39,7 +39,7 @@ class ComponentGEHenryDerivativeTest {
   @Test
   void failClosedCorrelationHasZeroReferenceDerivative() {
     ComponentGeNRTL component = new ComponentGeNRTL("CO2", 1.0, 1.0, 0);
-    component.setHenryCoefParameter(new double[] { 1000.0, 0.0, 0.0, 0.0 });
+    component.setHenryCoefParameter(new double[] {1000.0, 0.0, 0.0, 0.0});
 
     assertTrue(Double.isInfinite(component.getHenryCoef(TEMPERATURE)));
     assertEquals(0.0, component.fugcoefDiffTemp(phaseAt(TEMPERATURE)), 0.0);
@@ -48,7 +48,7 @@ class ComponentGEHenryDerivativeTest {
   @Test
   void unsupportedPitzerHydrocarbonHasZeroReferenceDerivative() {
     ComponentGePitzer component = new ComponentGePitzer("methane", 1.0, 1.0, 0);
-    component.setHenryCoefParameter(new double[] { 0.0, 0.0, 0.0, 0.01 });
+    component.setHenryCoefParameter(new double[] {0.0, 0.0, 0.0, 0.01});
 
     double rawLogDerivative = component.getHenryCoefdT(TEMPERATURE) / component.getHenryCoef(TEMPERATURE);
 
@@ -59,11 +59,11 @@ class ComponentGEHenryDerivativeTest {
   @Test
   void waterContainingGePhaseUsesQualifiedIapwsReferenceForLegacySolventRow() {
     PhasePitzer waterPhase = aqueousPhase(false);
-    String[][] gases = { { "hydrogen", "H2" }, { "helium", "He" }, { "argon", "Ar" } };
+    String[][] gases = {{"hydrogen", "H2"}, {"helium", "He"}, {"argon", "Ar"}};
     for (String[] gas : gases) {
       ExposedNrtlComponent component = new ExposedNrtlComponent(gas[0]);
       component.forceReferenceStateType("solvent");
-      component.setHenryCoefParameter(new double[] { 1000.0, 0.0, 0.0, 0.0 });
+      component.setHenryCoefParameter(new double[] {1000.0, 0.0, 0.0, 0.0});
 
       assertTrue(component.exposesUsesHenryReference(waterPhase), gas[0]);
       assertEquals(IapwsHenryLaw.getHenryCoefficientBar(gas[1], TEMPERATURE),
@@ -79,7 +79,7 @@ class ComponentGEHenryDerivativeTest {
   void pitzerMapsPureWaterReferenceAndPreservesUnqualifiedBrineCompatibility() {
     ExposedPitzerComponent methane = new ExposedPitzerComponent("methane");
     ExposedPitzerComponent carbonDioxide = new ExposedPitzerComponent("CO2");
-    carbonDioxide.setHenryCoefParameter(new double[] { 8.0, -800.0, 0.5, 0.001 });
+    carbonDioxide.setHenryCoefParameter(new double[] {8.0, -800.0, 0.5, 0.001});
     PhasePitzer waterPhase = aqueousPhase(false);
     PhasePitzer unqualifiedBrine = aqueousPhase(true);
     PhasePitzer traceIonTopology = aqueousPhaseWithSalt(1.0e-30);

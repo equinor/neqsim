@@ -76,7 +76,7 @@ public class PTphaseEnvelope extends BaseOperation {
   double[] lnKwil;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = { 1, 1 };
+  double[] tm = {1, 1};
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
@@ -100,7 +100,7 @@ public class PTphaseEnvelope extends BaseOperation {
   int np = 0;
   // points[2] = new double[1000];
   int speceq = 0;
-  String[] navn = { "bubble point", "dew point", "bubble point", "dew point", "dew points" };
+  String[] navn = {"bubble point", "dew point", "bubble point", "dew point", "dew points"};
   int npfirst;
   int ncrfirst;
   double Tcfirst;
@@ -813,10 +813,10 @@ public class PTphaseEnvelope extends BaseOperation {
       return cricondenBarY;
     }
     if (name.equals("criticalPoint1")) {
-      return new double[] { system.getTC(), system.getPC() };
+      return new double[] {system.getTC(), system.getPC()};
     }
     if (name.equals("criticalPoint2")) {
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     } else {
       return null;
     }

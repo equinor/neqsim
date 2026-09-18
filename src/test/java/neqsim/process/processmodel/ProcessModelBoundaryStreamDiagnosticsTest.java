@@ -136,7 +136,7 @@ class ProcessModelBoundaryStreamDiagnosticsTest {
     feed.setTemperature(25.0, "C");
     feed.setPressure(50.0, "bara");
     Splitter splitter = new Splitter("gas splitter", feed, 2);
-    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
 
     ProcessSystem upstream = new ProcessSystem("upstream");
     upstream.add(feed);

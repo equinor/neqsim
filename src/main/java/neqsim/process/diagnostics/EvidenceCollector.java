@@ -81,7 +81,7 @@ public class EvidenceCollector implements Serializable {
    * @param highLimit high limit, or Double.NaN if no high limit applies
    */
   public void setDesignLimit(String parameter, double lowLimit, double highLimit) {
-    designLimits.put(parameter, new double[] { lowLimit, highLimit });
+    designLimits.put(parameter, new double[] {lowLimit, highLimit});
   }
 
   /**

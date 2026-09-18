@@ -272,7 +272,7 @@ public class CO2InjectionWellAnalyzer {
   private Map<String, Object> runEnrichmentMap() {
     Map<String, Object> result = new LinkedHashMap<>();
 
-    double[] tempsScan = { 0, 4, 8, 12, 25 };
+    double[] tempsScan = {0, 4, 8, 12, 25};
     for (double tempC : tempsScan) {
       Map<String, Object> tempResult = new LinkedHashMap<>();
       double maxH2 = 0;
@@ -337,7 +337,7 @@ public class CO2InjectionWellAnalyzer {
     double seabedTempC = formationTempTopC;
     double geothermalGrad = (formationTempBottomC - formationTempTopC) / wellDepth;
 
-    double[] testWHPs = { 90, 80, 70, 60, 55, 50, 45 };
+    double[] testWHPs = {90, 80, 70, 60, 55, 50, 45};
     for (double whp : testWHPs) {
       Map<String, Object> whpResult = new LinkedHashMap<>();
       boolean hasTwoPhase = false;

@@ -30,10 +30,10 @@ public class EmpiricalCarryOverConstraintTest {
   private static final double EXACT = 1.0e-12;
 
   /** Calibration operating-variable points [Am3/s]. */
-  private static final double[] X_POINTS = { 2.0, 3.0, 4.5, 5.5 };
+  private static final double[] X_POINTS = {2.0, 3.0, 4.5, 5.5};
 
   /** Calibration carry-over observations [kg/h]. */
-  private static final double[] Y_POINTS = { 0.0, 0.5, 3.0, 12.0 };
+  private static final double[] Y_POINTS = {0.0, 0.5, 3.0, 12.0};
 
   /** Maximum allowable carry-over [kg/h]. */
   private static final double MAX_ALLOWABLE = 5.0;
@@ -159,8 +159,8 @@ public class EmpiricalCarryOverConstraintTest {
   /** Calibration arrays are defensively copied on both input and output. */
   @Test
   public void calibrationArraysAreDefensivelyCopied() {
-    double[] mutableX = { 2.0, 3.0, 4.5, 5.5 };
-    double[] mutableY = { 0.0, 0.5, 3.0, 12.0 };
+    double[] mutableX = {2.0, 3.0, 4.5, 5.5};
+    double[] mutableY = {0.0, 0.5, 3.0, 12.0};
     EmpiricalCarryOverConstraint constraint = new EmpiricalCarryOverConstraint("carryOver", "kg/h",
         new DoubleSupplier() {
           @Override
@@ -201,14 +201,14 @@ public class EmpiricalCarryOverConstraintTest {
         supplier, new double[0], new double[0], MAX_ALLOWABLE));
 
     assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
-        supplier, new double[] { 2.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
+        supplier, new double[] {2.0, 3.0}, new double[] {0.0, 0.5, 3.0}, MAX_ALLOWABLE));
 
     // Not strictly ascending.
     assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
-        supplier, new double[] { 2.0, 3.0, 3.0 }, new double[] { 0.0, 0.5, 3.0 }, MAX_ALLOWABLE));
+        supplier, new double[] {2.0, 3.0, 3.0}, new double[] {0.0, 0.5, 3.0}, MAX_ALLOWABLE));
 
     assertThrows(IllegalArgumentException.class, () -> EmpiricalCarryOverConstraint.fromObservations("co", "kg/h",
-        supplier, new double[] { 4.0, 3.0 }, new double[] { 0.0, 0.5 }, MAX_ALLOWABLE));
+        supplier, new double[] {4.0, 3.0}, new double[] {0.0, 0.5}, MAX_ALLOWABLE));
   }
 
   /** A single calibration point degenerates to a constant rather than dividing by zero. */
@@ -220,7 +220,7 @@ public class EmpiricalCarryOverConstraintTest {
           public double getAsDouble() {
             return driver[0];
           }
-        }, new double[] { 3.0 }, new double[] { 1.25 }, MAX_ALLOWABLE);
+        }, new double[] {3.0}, new double[] {1.25}, MAX_ALLOWABLE);
 
     driver[0] = 1.0;
     assertEquals(1.25, constraint.getCurrentValue(), EXACT);

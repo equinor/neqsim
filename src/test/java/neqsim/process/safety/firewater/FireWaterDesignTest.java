@@ -226,7 +226,7 @@ public class FireWaterDesignTest {
     String monitor = new FireMonitorCoverage(510.0, 10.0).setMonitors(2, 2400.0).toJson();
     String assess = new FireWaterCoverageAssessment(510.0, 5100.0).toJson();
     String screen = new ActiveFireProtectionScreening(FireScenario.GAS_JET_FIRE).toJson();
-    String[] docs = new String[] { demand, layout, monitor, assess, screen };
+    String[] docs = new String[] {demand, layout, monitor, assess, screen};
     for (int i = 0; i < docs.length; i++) {
       assertTrue(docs[i].contains("\"schemaVersion\""));
       com.google.gson.JsonParser.parseString(docs[i]);

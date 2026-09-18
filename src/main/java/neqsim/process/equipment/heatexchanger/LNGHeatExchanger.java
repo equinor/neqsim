@@ -1509,7 +1509,7 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
             + 7.669e-8 * Math.pow(re, 4.429) * Math.pow(alpha, 0.920) * Math.pow(delta, 3.767) * Math.pow(gamma, 0.236),
             0.1);
 
-    return new double[] { j, f };
+    return new double[] {j, f};
   }
 
   // ════════════════════════════════════════════════════════════════════

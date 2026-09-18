@@ -2961,7 +2961,7 @@ public class ProductionOptimizer {
       // Simple case: linear combination
       for (int i = 0; i < gridSize; i++) {
         double w1 = (double) i / (gridSize - 1);
-        combinations.add(new double[] { 1.0 - w1, w1 });
+        combinations.add(new double[] {1.0 - w1, w1});
       }
     } else {
       // General case: recursive simplex grid
@@ -3462,7 +3462,7 @@ public class ProductionOptimizer {
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
       double candidateValue = 0.5 * (low + high);
       Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints,
-          new double[] { candidateValue }, cache);
+          new double[] {candidateValue}, cache);
       boolean feasible = evaluation.utilizationWithinLimits() && evaluation.hardOk();
       recordIteration(iterationHistory, candidateValue, unit, evaluation, feasible);
       if (feasible) {
@@ -3475,8 +3475,8 @@ public class ProductionOptimizer {
     }
 
     if (bestResult == null) {
-      Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints,
-          new double[] { low }, cache);
+      Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {low},
+          cache);
       recordIteration(iterationHistory, low, unit, evaluation,
           evaluation.utilizationWithinLimits() && evaluation.hardOk());
       bestResult = toResult(low, unit, iteration, evaluation, iterationHistory);
@@ -3501,10 +3501,8 @@ public class ProductionOptimizer {
     double c = high - phi * (high - low);
     double d = low + phi * (high - low);
 
-    Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { c },
-        cache);
-    Evaluation evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { d },
-        cache);
+    Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {c}, cache);
+    Evaluation evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {d}, cache);
     recordIteration(iterationHistory, c, unit, evalC, evalC.utilizationWithinLimits() && evalC.hardOk());
     recordIteration(iterationHistory, d, unit, evalD, evalD.utilizationWithinLimits() && evalD.hardOk());
 
@@ -3530,7 +3528,7 @@ public class ProductionOptimizer {
         c = d;
         evalC = evalD;
         d = low + phi * (high - low);
-        evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { d }, cache);
+        evalD = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {d}, cache);
         recordIteration(iterationHistory, d, unit, evalD, evalD.utilizationWithinLimits() && evalD.hardOk());
 
         // Track best feasible solution
@@ -3544,7 +3542,7 @@ public class ProductionOptimizer {
         d = c;
         evalD = evalC;
         c = high - phi * (high - low);
-        evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] { c }, cache);
+        evalC = evaluateCandidate(process, variables, config, objectives, constraints, new double[] {c}, cache);
         recordIteration(iterationHistory, c, unit, evalC, evalC.utilizationWithinLimits() && evalC.hardOk());
 
         // Track best feasible solution

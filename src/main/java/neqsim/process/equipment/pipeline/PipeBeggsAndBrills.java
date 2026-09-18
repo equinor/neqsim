@@ -4279,8 +4279,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private double selectStandardPipeSize(double calculatedDiameterInches) {
     // Standard NPS sizes (nominal pipe size in inches) - using inside diameter
     // approximations
-    double[] standardSizes = { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0,
-        20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+    double[] standardSizes = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0,
+        20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
     // Find the next size up that meets the requirement
     for (double size : standardSizes) {

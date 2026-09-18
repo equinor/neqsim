@@ -424,7 +424,7 @@ public class IntegratedSafetySystemWithLogicExample {
 
     // Gas routing splitter
     gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Normal: to process, BD closed
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Normal: to process, BD closed
 
     // Blowdown valve
     bdValve = new BlowdownValve("BD-301", gasSplitter.getSplitStream(1));
@@ -496,7 +496,7 @@ public class IntegratedSafetySystemWithLogicExample {
     esdLogic = new ESDLogic("ESD Level 1 SIL-2");
     esdLogic.addAction(new CloseValveAction(esdInletValve), 0.0); // Close inlet immediately
     esdLogic.addAction(new ActivateBlowdownAction(bdValve), 0.5); // Open blowdown after 0.5s
-    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] { 0.0, 1.0 }), 0.5); // Route
+    esdLogic.addAction(new SetSplitterAction(gasSplitter, new double[] {0.0, 1.0}), 0.5); // Route
     // to BD
     esdLogic.addAction(new SetSeparatorModeAction(separator, false), 1.0); // Switch to transient
 
@@ -629,7 +629,7 @@ public class IntegratedSafetySystemWithLogicExample {
     // Reset equipment
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0});
     bdValve.reset();
     separator.setCalculateSteadyState(true);
     highPressureFeed.setPressure(55.0, "bara");

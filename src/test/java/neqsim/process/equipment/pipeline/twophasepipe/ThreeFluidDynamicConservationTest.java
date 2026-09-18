@@ -70,7 +70,7 @@ class ThreeFluidDynamicConservationTest {
     section.setHoldups(0.6, 0.2, 0.2);
     section.updateConservativeVariables();
     double gasMass = section.getGasDensity() * section.getArea();
-    section.setStateVector(new double[] { gasMass, 0.0, 0.0, 2.0 * gasMass, 0.0, 0.0, 100.0 });
+    section.setStateVector(new double[] {gasMass, 0.0, 0.0, 2.0 * gasMass, 0.0, 0.0, 100.0});
     section.extractPrimitiveVariables();
     assertEquals(1.0, section.getGasHoldup(), 0.0);
     assertEquals(0.0, section.getLiquidHoldup(), 0.0);
@@ -83,7 +83,7 @@ class ThreeFluidDynamicConservationTest {
   @Test
   void liquidFilledGeometryPartitionsEntireWall() {
     ThreeFluidSection section = createSection();
-    double[] waterFractions = { 0.0, 0.3, 1.0 };
+    double[] waterFractions = {0.0, 0.3, 1.0};
     for (double water : waterFractions) {
       section.setHoldups(0.0, 1.0 - water, water);
       section.updateThreeLayerGeometry();
@@ -97,8 +97,8 @@ class ThreeFluidDynamicConservationTest {
   /** Thin liquid films retain their cross-sectional area without a diameter-dependent thickness floor. */
   @Test
   void thinWaterFilmGeometryRecoversSpecifiedArea() {
-    double[] diameters = { 0.05, 0.5, 2.0 };
-    double[] waterHoldups = { 1e-10, 1e-8, 1.0 - 1e-8 };
+    double[] diameters = {0.05, 0.5, 2.0};
+    double[] waterHoldups = {1e-10, 1e-8, 1.0 - 1e-8};
     for (double diameter : diameters) {
       for (double waterHoldup : waterHoldups) {
         ThreeFluidSection section = new ThreeFluidSection(0.0, 10.0, diameter, 0.0);
@@ -133,7 +133,7 @@ class ThreeFluidDynamicConservationTest {
   void pureOilLowReynoldsFrictionMatchesPoiseuille() {
     ThreeFluidSection section = createSection();
     section.setHoldups(0.0, 1.0, 0.0);
-    double[] velocities = { -1e-4, 1e-4 };
+    double[] velocities = {-1e-4, 1e-4};
     for (double velocity : velocities) {
       section.setOilVelocity(velocity);
       ThreeFluidRHS rhs = new ThreeFluidConservationEquations().calcRHS(section, 0.0, section, section);

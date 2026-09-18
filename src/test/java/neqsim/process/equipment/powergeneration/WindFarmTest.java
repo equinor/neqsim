@@ -91,7 +91,7 @@ public class WindFarmTest extends neqsim.NeqSimTest {
   public void testTimeSeries() {
     WindFarm farm = new WindFarm("TS Farm", 10);
     farm.setRatedPowerPerTurbine(10.0e6);
-    double[] speeds = { 0.0, 3.0, 7.0, 12.0, 15.0, 25.0, 30.0 };
+    double[] speeds = {0.0, 3.0, 7.0, 12.0, 15.0, 25.0, 30.0};
     farm.setWindSpeedTimeSeries(speeds);
     farm.runTimeSeries();
 

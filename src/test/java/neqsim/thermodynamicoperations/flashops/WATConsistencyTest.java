@@ -69,7 +69,7 @@ class WATConsistencyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "40,false", "60,false", "80,false", "40,true", "60,true", "80,true" })
+  @CsvSource({"40,false", "60,false", "80,false", "40,true", "60,true", "80,true"})
   void pressureWaterAndStartingGuessesAgreeWithIndependentBracket(double pressure, boolean water) throws Exception {
     SystemInterface fluid = syntheticOil(water);
     fluid.setPressure(pressure);
@@ -86,7 +86,7 @@ class WATConsistencyTest extends neqsim.NeqSimTest {
         warm = midpoint;
       }
     }
-    for (double guess : new double[] { 35.0, 50.0, 90.0 }) {
+    for (double guess : new double[] {35.0, 50.0, 90.0}) {
       SystemInterface direct = fluid.clone();
       direct.setTemperature(guess, "C");
       new ThermodynamicOperations(direct).calcWAT();

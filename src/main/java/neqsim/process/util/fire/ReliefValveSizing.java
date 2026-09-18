@@ -43,12 +43,12 @@ public final class ReliefValveSizing {
   public static final double R_GAS = 8314.0;
 
   /** Standard API 520 orifice areas [in²]. */
-  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = { 0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
-      3.600, 4.340, 6.380, 11.05, 16.0, 26.0 };
+  public static final double[] STANDARD_ORIFICE_AREAS_IN2 = {0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
+      3.600, 4.340, 6.380, 11.05, 16.0, 26.0};
 
   /** Standard API 520 orifice letter designations. */
-  public static final String[] STANDARD_ORIFICE_LETTERS = { "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q",
-      "R", "T" };
+  public static final String[] STANDARD_ORIFICE_LETTERS = {"D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q",
+      "R", "T"};
 
   /**
    * Result container for PSV sizing calculations.

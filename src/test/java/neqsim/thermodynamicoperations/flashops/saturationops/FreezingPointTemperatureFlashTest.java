@@ -30,7 +30,7 @@ class FreezingPointTemperatureFlashTest {
   /** Verifies that invalid bracket trials do not abort valid para-hydrogen melting states. */
   @Test
   void testParaHydrogenFreezingPointSkipsInvalidBracketTrials() {
-    double[] pressuresBara = { 3.512706909625152, 18.76432785899884 };
+    double[] pressuresBara = {3.512706909625152, 18.76432785899884};
     for (double pressureBara : pressuresBara) {
       SystemInterface system = new SystemLeachmanEos(13.8, pressureBara, "para-hydrogen", true);
       system.setSolidPhaseCheck("para-hydrogen");

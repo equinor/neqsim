@@ -21,7 +21,7 @@ class BlackOilSeparatorTest {
 
   @BeforeAll
   static void setUp() {
-    double[] grid = { 50, 100, 150, 200, 250, 300 };
+    double[] grid = {50, 100, 150, 200, 250, 300};
     List<BlackOilPVTTable.Record> recs = new ArrayList<BlackOilPVTTable.Record>();
     for (double p : grid) {
       // Rs increases with pressure up to bubble point

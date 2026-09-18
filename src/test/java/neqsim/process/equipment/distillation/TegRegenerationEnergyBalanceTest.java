@@ -46,7 +46,7 @@ public class TegRegenerationEnergyBalanceTest {
     teg.setPressure(pBottom, "bara");
 
     SystemInterface gasFluid = feedTeg.clone();
-    gasFluid.setMolarComposition(new double[] { 1.0, 0.0, 0.0 });
+    gasFluid.setMolarComposition(new double[] {1.0, 0.0, 0.0});
     Stream gas = new Stream("gas to reboiler", gasFluid);
     gas.setFlowRate(13.0, "kg/hr");
     gas.setTemperature(199.0, "C");
