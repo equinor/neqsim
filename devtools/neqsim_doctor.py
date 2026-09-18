@@ -204,15 +204,21 @@ def check_java():
             fix_hint=None if major >= 8
             else "NeqSim requires JDK 8 or newer. " + _portable_jdk_hint()
         )
-        # The plugin's MCP server is a Java 21 uber-jar launched via `java File.java`.
-        _check(
-            "Java version >= {n} (MCP server)".format(n=MCP_MIN_JAVA),
-            major >= MCP_MIN_JAVA,
-            "Detected Java {major}".format(major=major),
-            fix_hint=None if major >= MCP_MIN_JAVA
-            else "The NeqSim MCP server needs a JDK {n}+ (winget install "
-                 "EclipseAdoptium.Temurin.{n}.JDK). ".format(n=MCP_MIN_JAVA) + _portable_jdk_hint()
-        )
+        # The installed plugin needs Java 21 for its MCP server. In a source
+        # workspace, older supported JDKs may still run CLI-only checks, so report
+        # the MCP limitation without failing unrelated workspace health checks.
+        mcp_name = "Java version >= {n} (MCP server)".format(n=MCP_MIN_JAVA)
+        mcp_message = "Detected Java {major}".format(major=major)
+        mcp_hint = (
+            "The NeqSim MCP server needs a JDK {n}+ (winget install "
+            "EclipseAdoptium.Temurin.{n}.JDK). "
+        ).format(n=MCP_MIN_JAVA) + _portable_jdk_hint()
+        if major >= MCP_MIN_JAVA:
+            _check(mcp_name, True, mcp_message)
+        elif TOOLKIT_MODE:
+            _check(mcp_name, False, mcp_message, fix_hint=mcp_hint)
+        else:
+            _warn(mcp_name, mcp_message, fix_hint=mcp_hint)
     return major
 
 
