@@ -38,6 +38,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import agent_frontmatter as af
 import install_skill
 
 try:
@@ -472,47 +473,21 @@ def _format_list(value):
 
 def _agent_id_from_path(path):
     """Return a stable install id for an agent path."""
-    path_obj = Path(path)
-    name = path_obj.name
-    if name == "AGENT.md":
-        return path_obj.parent.name.replace(".", "-")
-    if name.endswith(".agent.md"):
-        return name[:-len(".agent.md")].replace(".", "-")
-    return path_obj.stem.replace(".", "-")
-
-
-_LOADED_SKILLS_INLINE_RE = re.compile(
-    r"(?im)^\s*(?:[-*]\s*)?(?:\*\*)?Loaded skills(?:\*\*)?\s*[:\-]\s*(.+)$")
-_LOADED_SKILLS_BLOCK_HEADER_RE = re.compile(
-    r"^\s{0,3}#{1,6}\s+(?:\*\*)?Loaded skills(?:\*\*)?\s*$",
-    re.IGNORECASE)
-_MARKDOWN_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s+\S")
+    return af.agent_id_for_path(path)
 
 
 def _extract_loaded_skill_block_entries(content):
     """Return skill entries listed under markdown Loaded skills headings."""
-    entries = []
-    lines = content.splitlines()
-    for line_number, line in enumerate(lines):
-        if not _LOADED_SKILLS_BLOCK_HEADER_RE.match(line):
-            continue
-        for next_line in lines[line_number + 1:]:
-            if _MARKDOWN_HEADING_RE.match(next_line):
-                break
-            stripped = next_line.strip()
-            if not stripped and entries:
-                break
-            if stripped.startswith(("-", "*")):
-                entries.extend(_normalize_list(stripped[1:].strip()))
-    return entries
+    _, body = af.split_frontmatter(content)
+    inline = set()
+    for match in af.INLINE_LOADED_RE.finditer(body):
+        inline.update(af._tokens(match.group(1)))
+    return [s for s in af.extract_body_skills(body) if s not in inline]
 
 
 def _clean_required_skill_name(skill):
     """Normalize a required skill name from inline or markdown-list text."""
-    cleaned = skill.strip().strip("`").lstrip("@").rstrip(".")
-    if not cleaned:
-        return ""
-    return re.split(r"\s+", cleaned, maxsplit=1)[0].strip("`").rstrip(".")
+    return af._clean_skill(skill)
 
 
 def _extract_required_skills(content, metadata=None):
@@ -521,9 +496,7 @@ def _extract_required_skills(content, metadata=None):
     if metadata:
         required.extend(_normalize_list(metadata.get("required_skills")))
         required.extend(_normalize_list(metadata.get("skills")))
-    for match in _LOADED_SKILLS_INLINE_RE.finditer(content):
-        required.extend(_normalize_list(match.group(1)))
-    required.extend(_extract_loaded_skill_block_entries(content))
+    required.extend(af.extract_required_skills(content))
 
     deduped = []
     for skill in required:
@@ -992,6 +965,21 @@ def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
     return Path.home() / ".copilot" / "agents"
 
 
+def render_vscode_agent(name, main_file):
+    """Return the ``<name>.agent.md`` content for a VS Code / plugin export.
+
+    Pure function shared by the installer and ``build_agent_plugin.py``: reads
+    the agent's main definition and rewrites the frontmatter ``name`` to the
+    export id so agents from different catalogs cannot collide.
+
+    @param name the export id (also the destination filename stem)
+    @param main_file the agent's main markdown definition
+    @return the rendered markdown text
+    """
+    content = Path(main_file).read_text(encoding="utf-8")
+    return _with_vscode_agent_name(content, name)
+
+
 def export_agent_to_vscode(name, main_file, vscode_dir):
     """Copy an installed agent's main definition into a VS Code agents dir.
 
@@ -1008,8 +996,7 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     vscode_dir = Path(vscode_dir)
     vscode_dir.mkdir(parents=True, exist_ok=True)
     dest = vscode_dir / "{name}.agent.md".format(name=name)
-    content = Path(main_file).read_text(encoding="utf-8")
-    dest.write_text(_with_vscode_agent_name(content, name), encoding="utf-8")
+    dest.write_text(render_vscode_agent(name, main_file), encoding="utf-8")
     return dest
 
 

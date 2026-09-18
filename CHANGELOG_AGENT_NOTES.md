@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-09-18 — Agent-plugin readiness: kebab-case ids, `required_skills` frontmatter, canonical MCP, plugin builder
+
+Preparation for packaging NeqSim skills, agents and the MCP server as
+[VS Code Agent Plugins 1.0](https://code.visualstudio.com/docs/agent-customization/agent-plugins).
+Plugin loaders silently skip a skill whose folder name differs from its frontmatter `name`
+or whose name is not kebab-case, and marketplaces reject dotted agent ids, so the source
+repos were normalised:
+
+* **Core skills renamed** to kebab-case (`analyze_convergence` → `analyze-convergence`,
+  `paperlab_*` → `paperlab-*`, `neqsim_in_writing` → `neqsim-in-writing`, …), in both
+  `.github/skills/` and `neqsim-paperlab/skills/` (`devtools/rename_underscore_skills.py`).
+  `figure_discussion` (paperlab-internal duplicate of `figure-discussion`, and a results.json key)
+  is left as-is.
+* **Core agent files renamed** `<a.b>.agent.md` → `<a-b>.agent.md`; the `@handle` is now
+  the kebab id (`@solve-task`, `@capability-scout`, `@process-model`, …). Display `name:`
+  is unchanged (`devtools/rename_dotted_agents.py`).
+* **`required_skills:` frontmatter** is now the canonical skill declaration on every core agent
+  (the prose `Loaded skills:` line stays for run-time loading). `devtools/agent_frontmatter.py`
+  is the single reader used by `install_agent.py`, `agent_search.py`, `paperlab_install.py`,
+  `generate_agent_skill_map.py` and `verify_skills_agents.py`; keep the two in sync with
+  `devtools/sync_agent_required_skills.py --apply` (CI runs `--check`).
+* **Canonical MCP definition** at `.github/mcp/mcp.json` (Agent Plugins `mcpServers` format);
+  `.vscode/mcp.json` must mirror it (linted).
+* **`devtools/build_agent_plugin.py`** emits `neqsim`, `neqsim-community` and
+  `neqsim-enterprise` plugins plus a `marketplace.json`, with a content-hash version gate
+  (`--bump patch|minor|major`) and a `SessionStart` hook that `pip install -e` the skills repo
+  into the shared interpreter. `install_agent.render_vscode_agent()` is the shared renderer.
+* Companion changes: community skill folders renamed to their `neqsim-*` manifest names,
+  enterprise agents carry the `enterprise-` prefix in `agent.yaml`, and both skills repos
+  install all skill packages with one `pip install -e .` (root `setup.py`).
+
+**Agents/skills to update:** anything that hard-codes an old `@a.b` handle, a
+`skills/<category>/<unprefixed>` community path, or an underscore paperlab skill name.
+
+---
+
 ## 2026-09-14 — `ChemicalInteractionRule` environment rules no longer fire on unsupplied conditions
 
 **Bug fix** in `neqsim.process.chemistry.ChemicalInteractionRule.environmentMatches`.
@@ -525,8 +561,8 @@ enabled; a half-neutralised DEA buffer in `SystemFurstElectrolyteEos` returns pH
 (`SystemElectrolyteCPAstatoil`) remains unreliable for amine buffers — pre-existing, and
 affects MDEA equally.
 
-**New skill:** `neqsim-flow-accelerated-corrosion`. Loaded by `@flow.assurance` and
-`@root.cause`.
+**New skill:** `neqsim-flow-accelerated-corrosion`. Loaded by `@flow-assurance` and
+`@root-cause`.
 
 ---
 
@@ -574,8 +610,8 @@ involving a glycol was wrong (TEG heat of combustion was ~25.4 MJ/kg, now
 ~22.2 MJ/kg). Normal enthalpy calculations were unaffected, because the formation
 term is multiplied by zero in that path.
 
-**New skill:** `neqsim-self-heating-ignition`. Loaded by `@safety.depressuring` and
-`@reaction.engineering`; routed from `@router` on "self-ignition, spontaneous
+**New skill:** `neqsim-self-heating-ignition`. Loaded by `@safety-depressuring` and
+`@reaction-engineering`; routed from `@router` on "self-ignition, spontaneous
 combustion, lagging fire, fire with no ignition source".
 
 ---
@@ -2523,7 +2559,7 @@ behaviour; a clean valve keeps `foulingFraction = 0`.
 
 - `neqsim-flow-assurance` skill — new "Valve scale drift" and "Scale / precipitation
   remediation" subsections (section 5-scale) + description keywords.
-- `@flow.assurance` agent — corrosion+scale section references the valve-plugging
+- `@flow-assurance` agent — corrosion+scale section references the valve-plugging
   and remediation-advisor classes.
 
 ---
@@ -2695,7 +2731,7 @@ NeqSim physics change.
   (was `neqsim-*`-backtick only), clearing two false positives
   (`dynamic.equipment.agent`, `paperlab.agent`).
 - **Wired two genuinely-orphaned skills**: `neqsim-wax-calculations` →
-  `flow.assurance.agent`, `neqsim_standard_requirement_extraction` →
+  `flow.assurance.agent`, `neqsim-standard-requirement-extraction` →
   `standards.review.agent`.
 - **`USE WHEN:` trigger check is now case-insensitive** (`Use when:` was missed),
   clearing 65 false NO-TRIGGER warnings. Fixed the one native skill missing a
@@ -2795,7 +2831,7 @@ community + enterprise agent/skill repos gets utilized. No NeqSim physics change
 
 ### Agents/skills to update
 
-- `solve.task.agent.md`, `capability.scout.agent.md`, `router.agent.md`,
+- `solve-task.agent.md`, `capability-scout.agent.md`, `router.agent.md`,
   `neqsim-professional-reporting` — updated in this change.
 
 ---
@@ -3825,7 +3861,7 @@ single `ProcessAutomation` facade.
 
 - `neqsim-api-patterns` — add batch/introspection patterns.
 - `neqsim-pid-process-operations`, `neqsim-plant-data` — recommend `setVariableValueAndRun`.
-- `@process.simulation`, `@plant.data` — note cached facade and dirty tracking.
+- `@process.simulation`, `@plant-data` — note cached facade and dirty tracking.
 
 ---
 
@@ -4128,7 +4164,7 @@ metadata, column internals, skipped utilities, or unsupported types.
 ### Affected Guidance
 
 - `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
+- `.github/agents/unisim-reader.agent.md`
 - `docs/process/unisim-to-neqsim-conversion.md`
 - `devtools/README.md`
 - `AGENTS.md`
@@ -4159,7 +4195,7 @@ Pc, and normal boiling point.
 ### Affected Guidance
 
 - `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
+- `.github/agents/unisim-reader.agent.md`
 - `docs/process/unisim-to-neqsim-conversion.md`
 - `devtools/README.md`
 
@@ -4621,8 +4657,8 @@ process variables simultaneously.
 
 - `neqsim-api-patterns` skill — add rate-based absorber, SQP optimizer, flow correlation, multi-variable adjuster patterns
 - `neqsim-capability-map` skill — update mass transfer, optimization, and multiphase flow sections
-- `@solve.process` agent — can now use RateBasedAbsorber and MultiVariableAdjuster
-- `@mechanical.design` agent — PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
+- `@solve-process` agent — can now use RateBasedAbsorber and MultiVariableAdjuster
+- `@mechanical-design` agent — PipeHagedornBrown/PipeMukherjeeAndBrill for well tubing design
 
 ---
 
@@ -5223,7 +5259,7 @@ UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation
 ### Affected Files
 - `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
 - `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
+- `.github/agents/unisim-reader.agent.md`
 - `AGENTS.md`
 
 ---
@@ -5380,7 +5416,7 @@ UniSim COM attributes (`Orientation`, `VesselOrientation`, `SeparatorOrientation
 ### Affected Files
 - `devtools/unisim_reader.py` — `resolve_neqsim_type()` method, orientation extraction
 - `.github/skills/neqsim-unisim-reader/SKILL.md`
-- `.github/agents/unisim.reader.agent.md`
+- `.github/agents/unisim-reader.agent.md`
 - `AGENTS.md`
 
 ---
@@ -5722,7 +5758,7 @@ with open("my_process.py", "w") as f:
     f.write(python_code)
 ```
 
-**Agents/skills updated:** `unisim.reader.agent.md`, `neqsim-unisim-reader/SKILL.md`,
+**Agents/skills updated:** `unisim-reader.agent.md`, `neqsim-unisim-reader/SKILL.md`,
 `PR_DESCRIPTION_PROCESS_EXTRACTION.md`, `devtools/README.md`.
 
 ---
@@ -6119,8 +6155,8 @@ InstrumentScheduleGenerator instrSchedule = pkg.getInstrumentSchedule();
 
 - `neqsim-capability-map` SKILL — Expanded Measurement Devices table, added Engineering Deliverables subsection
 - `neqsim-api-patterns` SKILL — Added Engineering Deliverables section with instrument schedule pattern
-- `engineering.deliverables.agent.md` — Added instrument schedule deliverable section and code examples
-- `field.development.agent.md` — Added item 17 (instrument schedule), updated StudyClass table and class map
+- `engineering-deliverables.agent.md` — Added instrument schedule deliverable section and code examples
+- `field-development.agent.md` — Added item 17 (instrument schedule), updated StudyClass table and class map
 - `AGENTS.md` — Updated key paths table
 - `CONTEXT.md` — Updated repo map and key locations table
 
@@ -6280,7 +6316,7 @@ behave identically (steady-state) or more correctly (transient now evolves).
 
 ### New Agent
 
-- **`@field.development`** (`.github/agents/field.development.agent.md`) — Expert agent for oil & gas field development workflows: concept selection, subsea tieback, production forecasting, and project economics (NPV/IRR). Orchestrates concept screening through final investment decision.
+- **`@field-development`** (`.github/agents/field-development.agent.md`) — Expert agent for oil & gas field development workflows: concept selection, subsea tieback, production forecasting, and project economics (NPV/IRR). Orchestrates concept screening through final investment decision.
 
 ### New Skills (4)
 
@@ -6295,7 +6331,7 @@ behave identically (steady-state) or more correctly (transient now evolves).
 - `CONTEXT.md` — Updated agent/skill counts (16 agents, 14 skills)
 - `.github/agents/router.agent.md` — Added field development routing
 - `.github/agents/README.md` — Added field development section
-- `.github/agents/solve.task.agent.md` — Added `@field.development` to delegation table
+- `.github/agents/solve-task.agent.md` — Added `@field-development` to delegation table
 - `docs/integration/ai_agents_reference.md` — Added agent entry, 4 skill entries, updated cross-reference tables
 - `docs/integration/ai_agentic_programming_intro.md` — Updated count and added agent to catalog
 - `docs/integration/ai_workflow_examples.md` — Added Example 8: Field Development Concept Selection
@@ -6304,7 +6340,7 @@ behave identically (steady-state) or more correctly (transient now evolves).
 
 ### Migration
 
-No code changes needed. Use `@field.development` for field development tasks that were previously handled by `@solve.task`.
+No code changes needed. Use `@field-development` for field development tasks that were previously handled by `@solve-task`.
 
 ---
 
@@ -6516,7 +6552,7 @@ report.toJson();
 ## 2026-03-21 — Capability Scout Agent and Capability Map Skill
 
 ### New Agent
-- **`@capability.scout`** — Analyzes engineering tasks, identifies required capabilities,
+- **`@capability-scout`** — Analyzes engineering tasks, identifies required capabilities,
   checks NeqSim coverage, identifies gaps, writes NIPs, recommends skills and agent pipelines.
   Use before starting complex multi-discipline tasks.
 
@@ -6526,7 +6562,7 @@ report.toJson();
 | `neqsim-capability-map` | Structured inventory of all NeqSim capabilities by discipline (EOS, equipment, PVT, standards, mechanical design, flow assurance, safety, economics) |
 
 ### Updated Files
-- `solve.task.agent.md` — Phase 1.5 Section 7b.3 now recommends invoking `@capability.scout` for comprehensive tasks
+- `solve-task.agent.md` — Phase 1.5 Section 7b.3 now recommends invoking `@capability-scout` for comprehensive tasks
 - `router.agent.md` — Added capability scout to routing table and Pattern 6 (Capability Assessment + Implementation)
 - `README.md` — Added capability scout to Routing & Help section and capability-map to Skills table
 - `AGENTS.md` — Added capability scout to Key Paths and capability-map to Skills Reference
@@ -6551,7 +6587,7 @@ report.toJson();
 | `neqsim-performance-guide`    | Simulation time estimates and optimization strategies (in notebook-patterns skill)    |
 
 ### Updated Files
-- `solve.task.agent.md` — Added auto-search past solutions (Phase 0, Step 1.5) and cross-discipline consistency gate
+- `solve-task.agent.md` — Added auto-search past solutions (Phase 0, Step 1.5) and cross-discipline consistency gate
 - `README.md` — Updated with new router agent, skills table, and cross-references
 - `neqsim-notebook-patterns/SKILL.md` — Added performance estimation table and optimization tips
 

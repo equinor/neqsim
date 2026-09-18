@@ -1560,73 +1560,73 @@
   "neqsim-reaction-engineering"
  ],
  "flash convergence metrics": [
-  "analyze_convergence"
+  "analyze-convergence"
  ],
  "gibbs convergence metrics": [
-  "analyze_gibbs_convergence"
+  "analyze-gibbs-convergence"
  ],
  "paperlab book creation": [
-  "book_creation"
+  "book-creation"
  ],
  "flash benchmark design": [
-  "design_flash_benchmark"
+  "design-flash-benchmark"
  ],
  "reactor benchmark design": [
-  "design_reactor_benchmark"
+  "design-reactor-benchmark"
  ],
  "paperlab figure discussion": [
   "figure-discussion"
  ],
  "publication figures": [
-  "generate_publication_figures"
+  "generate-publication-figures"
  ],
  "journal formatting": [
-  "journal_formatting"
+  "journal-formatting"
  ],
  "utility design": [
   "neqsim-utility-design"
  ],
  "neqsim scientific writing": [
-  "neqsim_in_writing"
+  "neqsim-in-writing"
  ],
  "standard requirement extraction": [
-  "neqsim_standard_requirement_extraction"
+  "neqsim-standard-requirement-extraction"
  ],
  "paperlab book release": [
-  "paperlab_book_release_orchestration"
+  "paperlab-book-release-orchestration"
  ],
  "book to paper extraction": [
-  "paperlab_book_to_paper_extraction"
+  "paperlab-book-to-paper-extraction"
  ],
  "paperlab journal positioning": [
-  "paperlab_journal_positioning"
+  "paperlab-journal-positioning"
  ],
  "paperlab neqsim api verification": [
-  "paperlab_neqsim_api_claim_verification"
+  "paperlab-neqsim-api-claim-verification"
  ],
  "paperlab notebook regression baselines": [
-  "paperlab_notebook_regression_baselines"
+  "paperlab-notebook-regression-baselines"
  ],
  "paper to book chapter": [
-  "paperlab_paper_to_book_chapter"
+  "paperlab-paper-to-book-chapter"
  ],
  "paperlab publication mining": [
-  "paperlab_publication_opportunity_mining"
+  "paperlab-publication-opportunity-mining"
  ],
  "paperlab reproducibility capsule": [
-  "paperlab_reproducibility_capsule"
+  "paperlab-reproducibility-capsule"
  ],
  "paperlab scientific traceability audit": [
-  "paperlab_scientific_traceability_audit"
+  "paperlab-scientific-traceability-audit"
  ],
  "paperlab student readability": [
-  "paperlab_student_readability"
+  "paperlab-student-readability"
  ],
  "flash experiments": [
-  "run_flash_experiments"
+  "run-flash-experiments"
  ],
  "methods section writing": [
-  "write_methods_section"
+  "write-methods-section"
  ],
  "wax appearance temperature": [
   "neqsim-wax-calculations",

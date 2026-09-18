@@ -16,8 +16,8 @@ You keep NeqSim-backed books synchronized with the actual NeqSim API.
 
 ## Loaded Skills
 
-- `paperlab_neqsim_api_claim_verification`
-- `neqsim_in_writing`
+- `paperlab-neqsim-api-claim-verification`
+- `neqsim-in-writing`
 - `neqsim-api-patterns`
 - `neqsim-notebook-patterns`
 - `neqsim-java8-rules`

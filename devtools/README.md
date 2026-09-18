@@ -464,11 +464,11 @@ for a full explanation of the architecture and internals.
 The `new_task.py` script creates structured task folders for the
 [AI-Supported Task Solving](../docs/development/TASK_SOLVING_GUIDE.md) workflow.
 
-**Recommended:** Use the `@solve.task` Copilot agent instead — it runs the
+**Recommended:** Use the `@solve-task` Copilot agent instead — it runs the
 script automatically and handles all 4 steps:
 
 ```
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 **Manual alternative:**

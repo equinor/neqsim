@@ -97,7 +97,7 @@ capability the agent can invoke when needed.
 
 | Concept | Definition | NeqSim Example |
 |---------|-----------|----------------|
-| **Agent** | An AI with a specific purpose, instructions, and tool access | `@solve.task` solves engineering problems end-to-end |
+| **Agent** | An AI with a specific purpose, instructions, and tool access | `@solve-task` solves engineering problems end-to-end |
 | **Skill** | A knowledge package loaded on-demand by agents | `neqsim-api-patterns` — code recipes for creating fluids |
 | **Tool** | A capability the agent can invoke (read file, run code, search) | Terminal execution, file creation, notebook cell runner |
 | **Physics Engine** | The computational backend that does the math | NeqSim Java library (EOS, flash, equipment models) |
@@ -139,7 +139,7 @@ specialist, and skills provide domain knowledge that agents load on demand.
                     └──┬────────────────┬───┘
                        │                │
             ┌──────────▼───┐    ┌───────▼──────────┐
-            │ @process.model│    │ @flow.assurance  │
+            │ @process-model│    │ @flow-assurance  │
             │ (Pipeline P,T)│    │ (Hydrate curve)  │
             └──────┬───────┘    └───────┬──────────┘
                    │                    │
@@ -187,7 +187,7 @@ These agents help you find the right tool for the job.
 | Agent | Command | What It Does |
 |-------|---------|-------------|
 | **Router** | `@neqsim.help` | Analyzes your request and routes to the correct specialist. Use when unsure which agent to pick. |
-| **Capability Scout** | `@capability.scout` | Checks what NeqSim can do for a task. Identifies gaps and plans implementations. Use before complex multi-discipline work. |
+| **Capability Scout** | `@capability-scout` | Checks what NeqSim can do for a task. Identifies gaps and plans implementations. Use before complex multi-discipline work. |
 
 **Example:**
 ```
@@ -201,23 +201,23 @@ design) and composes a multi-agent pipeline.
 
 | Agent | Command | Engineering Discipline |
 |-------|---------|----------------------|
-| **Thermodynamic Fluid** | `@thermo.fluid` | Create fluids, select EOS, run flash calculations, get properties |
-| **Process Simulation** | `@process.model` | Build flowsheets with separators, compressors, heat exchangers, valves |
-| **PVT Simulation** | `@pvt.simulation` | Run lab experiments (CME, CVD, swelling test, saturation pressure) |
-| **Flow Assurance** | `@flow.assurance` | Hydrate prediction, wax, corrosion, pipeline pressure drop |
-| **Gas Quality** | `@gas.quality` | ISO 6976, EN 16726, Wobbe index, custody transfer |
-| **Mechanical Design** | `@mechanical.design` | Wall thickness, material selection, cost estimation per ASME/DNV/API |
-| **Safety** | `@safety.depressuring` | Blowdown, PSV sizing, fire case, source term generation |
-| **Field Development** | `@field.development` | Concept selection, subsea tieback, economics (NPV/IRR), production forecasting |
+| **Thermodynamic Fluid** | `@thermo-fluid` | Create fluids, select EOS, run flash calculations, get properties |
+| **Process Simulation** | `@process-model` | Build flowsheets with separators, compressors, heat exchangers, valves |
+| **PVT Simulation** | `@pvt-simulation` | Run lab experiments (CME, CVD, swelling test, saturation pressure) |
+| **Flow Assurance** | `@flow-assurance` | Hydrate prediction, wax, corrosion, pipeline pressure drop |
+| **Gas Quality** | `@gas-quality` | ISO 6976, EN 16726, Wobbe index, custody transfer |
+| **Mechanical Design** | `@mechanical-design` | Wall thickness, material selection, cost estimation per ASME/DNV/API |
+| **Safety** | `@safety-depressuring` | Blowdown, PSV sizing, fire case, source term generation |
+| **Field Development** | `@field-development` | Concept selection, subsea tieback, economics (NPV/IRR), production forecasting |
 
 ### Workflow and Productivity
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **Solve Engineering Task** | `@solve.task` | End-to-end task solving with 3-step workflow (scope, simulation, report) |
-| **Quick Process Sim** | `@solve.process` | Fast path to a working simulation notebook |
-| **Jupyter Notebook** | `@notebook.example` | Creates example notebooks with visualization |
-| **Unit Tests** | `@neqsim.test` | Writes JUnit 5 tests for NeqSim code |
+| **Solve Engineering Task** | `@solve-task` | End-to-end task solving with 3-step workflow (scope, simulation, report) |
+| **Quick Process Sim** | `@solve-process` | Fast path to a working simulation notebook |
+| **Jupyter Notebook** | `@notebook-example` | Creates example notebooks with visualization |
+| **Unit Tests** | `@neqsim-test` | Writes JUnit 5 tests for NeqSim code |
 | **Documentation** | `@documentation` | Creates and updates markdown guides and tutorials |
 
 ---
@@ -259,7 +259,7 @@ Skills encode the lessons learned from hundreds of simulations.
 ### How Skills Are Used
 
 Skills are loaded **automatically** based on context. When you ask
-`@process.model` to build a compressor train, it automatically loads:
+`@process-model` to build a compressor train, it automatically loads:
 
 1. `neqsim-api-patterns` — to use the correct Java API calls
 2. `neqsim-input-validation` — to check your pressure and temperature values
@@ -273,7 +273,7 @@ to load based on what you asked for.
 ## 6. The Task-Solving Workflow
 
 NeqSim's most powerful pattern is the **3-step task-solving workflow** that
-the `@solve.task` agent executes automatically.
+the `@solve-task` agent executes automatically.
 
 ### The Three Steps
 
@@ -291,7 +291,7 @@ the `@solve.task` agent executes automatically.
 
 ### Every Task Gets a Folder
 
-When you invoke `@solve.task`, it immediately creates a structured folder:
+When you invoke `@solve-task`, it immediately creates a structured folder:
 
 ```
 task_solve/2026-03-21_hydrate_analysis/
@@ -411,7 +411,7 @@ pip install matplotlib python-docx     # For reports and plots
 Open VS Code Copilot Chat and type:
 
 ```
-@thermo.fluid What is the density of methane at 100 bara and 25 degrees C?
+@thermo-fluid What is the density of methane at 100 bara and 25 degrees C?
 ```
 
 The agent will:
@@ -423,7 +423,7 @@ The agent will:
 ### Example 2: Process Simulation
 
 ```
-@process.model Build a 3-stage compression train from 5 to 150 bara
+@process-model Build a 3-stage compression train from 5 to 150 bara
 with intercooling to 35 degrees C after each stage
 ```
 
@@ -437,7 +437,7 @@ The agent will:
 ### Example 3: Full Engineering Task
 
 ```
-@solve.task Calculate the hydrate formation temperature for a wet natural
+@solve-task Calculate the hydrate formation temperature for a wet natural
 gas at pressures from 20 to 200 bara. The gas composition is 85% methane,
 8% ethane, 4% propane, 2% CO2, 1% N2 with water-saturated conditions.
 Compare against CSMHyd data.
@@ -452,7 +452,7 @@ tables, and references.
 Before starting a complex task, check what NeqSim can do:
 
 ```
-@capability.scout Can NeqSim handle acid gas injection design with
+@capability-scout Can NeqSim handle acid gas injection design with
 H2S/CO2 phase behavior, well casing design, corrosion assessment,
 and NPV economics?
 ```
@@ -466,7 +466,7 @@ implementation plans for any gaps.
 ## 8. Multi-Agent Composition
 
 For complex tasks spanning multiple disciplines, agents can work together
-in pipelines. The router agent or `@solve.task` automatically composes
+in pipelines. The router agent or `@solve-task` automatically composes
 these pipelines when it detects cross-discipline needs.
 
 ### Common Composition Patterns
@@ -476,9 +476,9 @@ these pipelines when it detects cross-discipline needs.
 Task: "Design a 20-inch export pipeline for 150 bara"
 
 ```
-@process.model  →  Get operating conditions (P, T, flow, composition)
+@process-model  →  Get operating conditions (P, T, flow, composition)
        ↓
-@mechanical.design  →  Calculate wall thickness per DNV-OS-F101
+@mechanical-design  →  Calculate wall thickness per DNV-OS-F101
 ```
 
 **Pattern 2: Fluid + Flow Assurance**
@@ -486,9 +486,9 @@ Task: "Design a 20-inch export pipeline for 150 bara"
 Task: "Check for hydrates in a wet gas pipeline"
 
 ```
-@thermo.fluid  →  Create CPA fluid with water and MEG
+@thermo-fluid  →  Create CPA fluid with water and MEG
        ↓
-@flow.assurance  →  Run hydrate curve + pipeline P,T profile
+@flow-assurance  →  Run hydrate curve + pipeline P,T profile
 ```
 
 **Pattern 3: Capability Scout + Specialists**
@@ -496,15 +496,15 @@ Task: "Check for hydrates in a wet gas pipeline"
 Task: "Full field development study with subsea tieback"
 
 ```
-@capability.scout  →  Assess all needed capabilities, identify gaps
+@capability-scout  →  Assess all needed capabilities, identify gaps
        ↓
-@process.model  →  Steady-state process design
+@process-model  →  Steady-state process design
        ↓
-@flow.assurance  →  Pipeline sizing and hydrate management
+@flow-assurance  →  Pipeline sizing and hydrate management
        ↓
-@mechanical.design  →  Equipment sizing and SURF cost estimation
+@mechanical-design  →  Equipment sizing and SURF cost estimation
        ↓
-@solve.task  →  Economics (NPV), uncertainty, risk analysis, report
+@solve-task  →  Economics (NPV), uncertainty, risk analysis, report
 ```
 
 ---
@@ -566,14 +566,14 @@ sequentially with recycle convergence as needed.
    composition in your request
 3. **Mention standards if applicable** — "per ISO 6976" or "per DNV-OS-F101"
    triggers deeper analysis
-4. **Use `@capability.scout` for complex tasks** — check what is available
+4. **Use `@capability-scout` for complex tasks** — check what is available
    before starting
 
 ### For Experienced Users
 
 1. **Go directly to specialist agents** — skip the router if you know which
    discipline applies
-2. **Use `@solve.task` for formal deliverables** — it produces Word + HTML
+2. **Use `@solve-task` for formal deliverables** — it produces Word + HTML
    reports with validation
 3. **Check `TASK_LOG.md` for past solutions** — avoid solving the same problem
    twice
@@ -627,7 +627,7 @@ sequentially with recycle convergence as needed.
 | **Agent** | An AI assistant with specific instructions, domain knowledge, and tool access. Each agent handles one engineering discipline. |
 | **Skill** | A knowledge package (markdown file) loaded by agents to provide domain-specific rules and patterns. |
 | **Router** | The `@neqsim.help` agent that analyzes requests and delegates to specialists. |
-| **Capability Scout** | The `@capability.scout` agent that assesses what NeqSim can do for a given task. |
+| **Capability Scout** | The `@capability-scout` agent that assesses what NeqSim can do for a given task. |
 | **Flash Calculation** | The core thermodynamic calculation that determines phase composition and properties at given conditions. |
 | **EOS** | Equation of State — the mathematical model relating pressure, volume, temperature, and composition. |
 | **CPA** | Cubic-Plus-Association — an EOS extension for hydrogen-bonding molecules (water, alcohols). |

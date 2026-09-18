@@ -2450,8 +2450,8 @@ class TestBookImprovementTools:
         assert "chapter_flow" in dimension_names
         assert "typesetting_release" in dimension_names
         chapter_skills = set(skill_plan["chapter_profiles"][0]["skills"])
-        assert "paperlab_student_readability" in chapter_skills
-        assert "paperlab_chapter_flow_editor" in chapter_skills
+        assert "paperlab-student-readability" in chapter_skills
+        assert "paperlab-chapter-flow-editor" in chapter_skills
         assert graph["summary"]["nodes"] > 2
         assert graph["summary"]["edges"] > 1
         assert (bd / "skill_stack_plan.md").exists()

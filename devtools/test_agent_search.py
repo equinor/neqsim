@@ -28,8 +28,8 @@ def _write(path: Path, text: str) -> None:
 
 class HandleDerivationTest(unittest.TestCase):
     def test_neqsim_flat_agent_handle_strips_agent_suffix(self):
-        p = Path("/x/.github/agents/capability.scout.agent.md")
-        self.assertEqual(agent_search._handle_for_path(p), "capability.scout")
+        p = Path("/x/.github/agents/capability-scout.agent.md")
+        self.assertEqual(agent_search._handle_for_path(p), "capability-scout")
 
     def test_nested_agent_handle_is_parent_dir(self):
         p = Path("/x/agents/hydrate-margin-agent/AGENT.md")

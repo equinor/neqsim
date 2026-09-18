@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "ghcr.io/equinor/neqsim-mcp-server:latest"]
+    }
+  }
+}

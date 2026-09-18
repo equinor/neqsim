@@ -38,7 +38,7 @@ tools with NeqSim's physics-based API. Each task gets its own folder in
 
 ```
 Open VS Code Copilot Chat and type:
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 The agent creates the folder, fills in the task specification, researches the
@@ -576,7 +576,7 @@ point, verification strategy, and AI agent.
 | EOS choice | See EOS Selection table in `CONTEXT.md` |
 | Code goes in | Test (`src/test/`) or notebook (`examples/notebooks/`) |
 | Verify by | Compare against NIST, experiment, or published correlations |
-| AI agent | `@thermo.fluid` |
+| AI agent | `@thermo-fluid` |
 
 ```java
 SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
@@ -602,7 +602,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3"));
 | Look at | `src/test/java/neqsim/process/` for similar flowsheets |
 | Code goes in | Notebook (best for presentation) or test (best for regression) |
 | Verify by | Mass/energy balance, physical reasonableness |
-| AI agent | `@solve.process` or `@process.model` |
+| AI agent | `@solve-process` or `@process-model` |
 
 Key patterns:
 - Equipment connects via streams: `new Compressor("comp", sep.getGasOutStream())`
@@ -624,7 +624,7 @@ Key patterns:
 | Start from | `src/main/java/neqsim/pvtsimulation/simulation/` |
 | Experiments | CME, CVD, DL, SaturationPressure, GOR, SwellingTest, MMP |
 | Verify by | Compare against lab data |
-| AI agent | `@pvt.simulation` |
+| AI agent | `@pvt-simulation` |
 
 ---
 
@@ -636,7 +636,7 @@ Key patterns:
 |--------|--------|
 | Start from | `src/main/java/neqsim/standards/gasquality/` |
 | Verify by | Standard reference values, round-robin test results |
-| AI agent | `@gas.quality` |
+| AI agent | `@gas-quality` |
 
 ---
 
@@ -650,7 +650,7 @@ Key patterns:
 | Read the interface | `*Interface.java` for method contracts |
 | Write tests first | Mirror location in `src/test/java/neqsim/` |
 | Verify by | `.\mvnw.cmd test -Dtest=YourTest` then `checkstyle:check` |
-| AI agent | `@neqsim.test` for test writing |
+| AI agent | `@neqsim-test` for test writing |
 
 ---
 
@@ -662,7 +662,7 @@ Key patterns:
 |--------|--------|
 | Pattern | Mechanical Design section in `.github/copilot-instructions.md` |
 | Design data | `src/main/resources/designdata/` |
-| AI agent | `@mechanical.design` |
+| AI agent | `@mechanical-design` |
 
 ---
 
@@ -676,7 +676,7 @@ Key patterns:
 | Scope | task_spec.md is critical — define ALL standards, methods, deliverables upfront |
 | Notebooks | Multiple numbered notebooks per discipline (01_reservoir_fluid, 02_pipeline, etc.) |
 | Report | Full HTML with navigation sidebar + Word summary |
-| AI agent | `@solve.task` (orchestrates specialist agents) |
+| AI agent | `@solve-task` (orchestrates specialist agents) |
 
 Type G tasks span multiple engineering disciplines and produce a comprehensive
 assessment. The HTML report becomes a navigable multi-section document linking
@@ -753,16 +753,16 @@ types. They share the same codebase context but differ in what they optimize for
 
 | Agent | When to Use | Output |
 |-------|-------------|--------|
-| `@thermo.fluid` | Fluid setup, EOS selection, flash, properties | Java code or notebook cell |
-| `@solve.process` | Complete simulation task → working notebook | Full Jupyter notebook |
-| `@process.model` | Process flowsheet design, equipment sizing | Process code |
-| `@pvt.simulation` | PVT lab experiments | PVT results + plots |
-| `@gas.quality` | Gas quality per ISO/GPA standards | Standards results |
-| `@mechanical.design` | Wall thickness, structural design | Design report JSON |
-| `@neqsim.test` | Writing regression/unit tests | JUnit 5 test class |
-| `@notebook.example` | Creating example notebooks | Jupyter notebook |
-| `@flow.assurance` | Hydrates, wax, corrosion, slugging | Analysis + mitigation |
-| `@safety.depressuring` | Depressurization, PSV, fire cases | Safety analysis |
+| `@thermo-fluid` | Fluid setup, EOS selection, flash, properties | Java code or notebook cell |
+| `@solve-process` | Complete simulation task → working notebook | Full Jupyter notebook |
+| `@process-model` | Process flowsheet design, equipment sizing | Process code |
+| `@pvt-simulation` | PVT lab experiments | PVT results + plots |
+| `@gas-quality` | Gas quality per ISO/GPA standards | Standards results |
+| `@mechanical-design` | Wall thickness, structural design | Design report JSON |
+| `@neqsim-test` | Writing regression/unit tests | JUnit 5 test class |
+| `@notebook-example` | Creating example notebooks | Jupyter notebook |
+| `@flow-assurance` | Hydrates, wax, corrosion, slugging | Analysis + mitigation |
+| `@safety-depressuring` | Depressurization, PSV, fire cases | Safety analysis |
 | `@documentation` | Wiki pages, guides, cookbooks | Markdown files |
 
 ### Chaining Agents
@@ -773,9 +773,9 @@ Specialist agents are shortcuts for well-defined task shapes.
 
 Example of a multi-step task:
 ```
-1. @thermo.fluid  → "Create a CPA fluid for gas with 5% MEG and water"
-2. @solve.process → "Build a TEG dehydration unit using that fluid"
-3. @neqsim.test   → "Write regression tests for the dehydration results"
+1. @thermo-fluid  → "Create a CPA fluid for gas with 5% MEG and water"
+2. @solve-process → "Build a TEG dehydration unit using that fluid"
+3. @neqsim-test   → "Write regression tests for the dehydration results"
 ```
 
 ### What the AI Can See
@@ -1511,17 +1511,17 @@ install the released `neqsim` package for repository task calculations.
 
 | Agent | Best For |
 |-------|----------|
-| `@solve.task` | **Full 3-step workflow** (does everything end-to-end) |
-| `@thermo.fluid` | EOS selection, fluid creation, flash, properties |
-| `@solve.process` | Complete process simulation → working notebook |
-| `@process.model` | Process flowsheet design |
-| `@pvt.simulation` | PVT experiments (CME, CVD, etc.) |
-| `@gas.quality` | Gas quality standards (GCV, Wobbe) |
-| `@mechanical.design` | Wall thickness, ASME/DNV design |
-| `@neqsim.test` | Writing JUnit 5 tests |
-| `@notebook.example` | Creating example notebooks |
-| `@flow.assurance` | Hydrates, wax, corrosion, slugging |
-| `@safety.depressuring` | Depressurization, PSV, fire cases |
+| `@solve-task` | **Full 3-step workflow** (does everything end-to-end) |
+| `@thermo-fluid` | EOS selection, fluid creation, flash, properties |
+| `@solve-process` | Complete process simulation → working notebook |
+| `@process-model` | Process flowsheet design |
+| `@pvt-simulation` | PVT experiments (CME, CVD, etc.) |
+| `@gas-quality` | Gas quality standards (GCV, Wobbe) |
+| `@mechanical-design` | Wall thickness, ASME/DNV design |
+| `@neqsim-test` | Writing JUnit 5 tests |
+| `@notebook-example` | Creating example notebooks |
+| `@flow-assurance` | Hydrates, wax, corrosion, slugging |
+| `@safety-depressuring` | Depressurization, PSV, fire cases |
 | `@documentation` | Writing docs and wiki pages |
 
 ---
@@ -1544,7 +1544,7 @@ Search docs/development/TASK_LOG.md for similar past tasks.
 If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
-2. Open Copilot Chat and type: `@solve.task your engineering question`
+2. Open Copilot Chat and type: `@solve-task your engineering question`
 3. The agent creates the folder, runs the intake gate, then hands back results + reports
 4. Find Word and HTML reports in `task_solve/.../step3_report/`
 
@@ -1615,8 +1615,8 @@ coding agent that can read files and run commands can follow the same workflow.
 
 | Feature | Purpose | Alternative |
 |---------|---------|-------------|
-| `@solve.task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
-| Specialist agents (`@thermo.fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
+| `@solve-task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
+| Specialist agents (`@thermo-fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
 | Notebook cell execution | Run cells from chat | Use `neqsim_runner` for task notebooks; JupyterLab/Colab for quick debugging |
 
 ### Tips for Non-VS-Code AI Tools
@@ -1625,7 +1625,7 @@ coding agent that can read files and run commands can follow the same workflow.
   Point it at `TASK_SOLVING_GUIDE.md` and it follows the workflow.
 - **Claude Code**: Same approach — give it the workflow prompt and task folder path.
 - **Cursor**: Supports custom instructions — paste the agent instructions from
-  `.github/agents/solve.task.agent.md` into Cursor's rules.
+  `.github/agents/solve-task.agent.md` into Cursor's rules.
 - **Google Colab + AI**: Published external examples may use `pip install neqsim`,
   but local task notebooks and runner workflows must use `neqsim_dev_setup.py`.
 
@@ -1704,7 +1704,7 @@ git push -u origin task/your-task-name
 gh pr create --title "Add [description]" --body "From task-solving workflow"
 ```
 
-> **Tip:** The `@solve.task` agent can do this for you — just ask
+> **Tip:** The `@solve-task` agent can do this for you — just ask
 > "create a PR with the test and notebook from this task".
 
 ---
@@ -1716,7 +1716,7 @@ gh pr create --title "Add [description]" --body "From task-solving workflow"
 | `devtools/new_task.py` | Script to create task folders (auto-bootstraps `task_solve/`) |
 | `task_solve/README.md` | AI-supported task-solving workflow (3-step process) |
 | `task_solve/TASK_TEMPLATE/` | Template folder with task_spec, prompts, and report generator |
-| `.github/agents/solve.task.agent.md` | The `@solve.task` Copilot agent (does everything end-to-end) |
+| `.github/agents/solve-task.agent.md` | The `@solve-task` Copilot agent (does everything end-to-end) |
 | `CONTEXT.md` | 60-second repo orientation |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Persistent task memory |

@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-09-18 — Packaging NeqSim skills, agents and MCP as VS Code Agent Plugins
+**Type:** G (Workflow)
+**Keywords:** agent plugins, plugin.json, mcp.json, marketplace, skills, agents, kebab-case, required_skills, frontmatter, install_agent, build_agent_plugin, SessionStart hook, editable install, version gate
+**Solution:** `devtools/build_agent_plugin.py`, `devtools/agent_frontmatter.py`, `devtools/sync_agent_required_skills.py`, `.github/mcp/mcp.json`; renames via `devtools/rename_underscore_skills.py`, `devtools/rename_dotted_agents.py`; sibling-repo changes in community-skills (folder names), enterprise-agents (`enterprise-` prefix), both skills repos (root `setup.py`)
+**Notes:** The Agent Plugins 1.0 layout maps 1:1 onto what already existed (SKILL.md folders → `skills/`, AGENT.md → `com.github.copilot/agents/*.agent.md`, MCP config → `mcp.json`), but three source-repo habits would have made most content vanish silently: 79 community skill folders did not equal their frontmatter `name`, 45 paperlab skills used underscores, and 31 core agents used dotted filenames. All three were fixed at the source and turned into lint errors rather than papered over in the packager. Skill declarations lived in three different parsers (prose `Loaded skills:` line, `## Loaded skills` bullets, `required_skills` yaml) — consolidated into one module so the plugin build validates agent→skill resolution with the same code the installer uses. The packager is a thin copier with a content-hash version gate, because VS Code only updates a plugin on a `version` change. Python packages inside skills are not installed by the plugin; a `SessionStart` hook runs one `pip install -e` of the bundled repo root into the shared interpreter, which required a `setup.py` that aggregates every `skills/*/*/src` package (all 76 + 118 names are unique).
+
 ### 2026-09-14 — "Operations already swapped the part, is the spec right?" — a Class 150 valve that is 3 % under its Class 150 line
 **Type:** D (Standards) / G (Workflow)
 **Keywords:** breakdown notification, malfunction report, spec verification, replacement valve, piping class, PCS, VDS, valve element table, ASME B16.5 material group, CF8M, WCB, 275 psig, 285 psig, soft seated, metal seated, trunnion ball, fire-safe, API 607, nameplate, attachment download, jetty drain valve
@@ -769,7 +775,7 @@ Formula provenance, all verified against rendered ISO page images (not trusted f
 ### 2026-09-14 — Gas-to-LNG value chain concept evaluation (offshore hub, dense-phase export, FLNG)
 **Type:** F (Design)
 **Keywords:** LNG, liquefaction, SMR, FLNG, dense phase, cricondenbar, gas export hub, gas injection conversion, iceberg scour, trenching, TEG dehydration, hydrate, DNV-ST-F101, NGL extraction, CAPEX, AACE Class 5, Monte Carlo
-**Solution:** private task folder (redacted); reusable outputs: `.github/skills/neqsim-lng-liquefaction/`, `.github/agents/lng.value.chain.agent.md`, `devtools/py_to_notebook.py`
+**Solution:** private task folder (redacted); reusable outputs: `.github/skills/neqsim-lng-liquefaction/`, `.github/agents/lng-value-chain.agent.md`, `devtools/py_to_notebook.py`
 **Notes:** Seven-notebook single-basis fan-out — one module holds the fluid and the design feed
 rate, every downstream stage reads it and never re-derives it, so the report sections cannot drift.
 Four NeqSim defects found and fixed, three of them silent factor errors caught only by

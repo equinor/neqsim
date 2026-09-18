@@ -89,7 +89,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 ### AI agent - describe your problem in plain English
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
 The agent scopes the task, builds a NeqSim simulation, validates results, and generates a Word + HTML report with no coding required.
@@ -251,7 +251,7 @@ Every response includes provenance metadata (EOS model, convergence, assumptions
 ### AI task-solving workflow
 
 ```
-@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
+@solve-task TEG dehydration sizing for 50 MMSCFD wet gas
 ```
 
 The agent creates a task folder, runs NeqSim simulations, validates results, and generates a Word + HTML report with no coding required. See the [tutorial](docs/tutorials/solve-engineering-task.md) or [workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
@@ -261,7 +261,7 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 Agentic NeqSim is built from two layers you can mix and extend:
 
 - **Skills = the knowledge layer.** Structured markdown that encodes domain expertise (API patterns, decision rules, reference data). Agents *read* skills to know how to do something correctly.
-- **Agents = the workflow layer.** A role + objective + the skills it loads. Agents *drive* NeqSim to complete a job (e.g. `@solve.task`, `@field.development`).
+- **Agents = the workflow layer.** A role + objective + the skills it loads. Agents *drive* NeqSim to complete a job (e.g. `@solve-task`, `@field-development`).
 
 Content comes from four tiers — **core** (shipped in this repo under `.github/skills` and `.github/agents`, auto-loaded), **community** (public, installable), **enterprise** (company-private/internal), and **local private** (just you):
 
@@ -537,7 +537,7 @@ graph TB
 | Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 21+ (or Docker) |
 | Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.9+, JVM |
 | Embed in a Java application | Maven dependency | Java 17+ (default) or Java 8+ (use the `-Java8` artifact) |
-| Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
+| Full engineering study with reports | `@solve-task` agent in VS Code | VS Code + GitHub Copilot |
 | .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
 #### Java version matrix

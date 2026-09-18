@@ -6,10 +6,10 @@
 
 ## Solve a Task (Start Here)
 
-The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
+The fastest way to solve an engineering task is the `@solve-task` Copilot agent:
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
 It creates a `task_solve/` folder, researches the topic, builds a simulation,
@@ -323,7 +323,7 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Check gas quality | `src/main/java/neqsim/standards/gasquality/` |
 | See a working example | `examples/notebooks/` or `src/test/java/neqsim/process/` |
 | Read documentation | `docs/wiki/` (60+ topics) or `docs/REFERENCE_MANUAL_INDEX.md` |
-| Use an AI agent | `.github/agents/` (17 specialist agents), start with `@neqsim.help` or `@capability.scout` or `@field.development` |
+| Use an AI agent | `.github/agents/` (17 specialist agents), start with `@neqsim.help` or `@capability-scout` or `@field-development` |
 | Check API changes | `CHANGELOG_AGENT_NOTES.md` |
 | Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
 | Find design data | `src/main/resources/designdata/` |
