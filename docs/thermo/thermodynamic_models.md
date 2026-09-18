@@ -176,6 +176,10 @@ Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule 
 | `SystemPrCPA` | Peng-Robinson with CPA | 7 |
 | `SystemUMRCPAEoS` | UMR-CPA with UNIFAC | - |
 
+**Liquid-water heat capacity:** the default `SystemSrkCPAstatoil` can be 8–17% low
+at 5–60 °C. An opt-in, caloric-data-fitted water alpha is available through
+`setUseCaloricWaterAlpha(true)`; see the [calibration, benchmarks and limits](cpa_water_caloric).
+
 ### 4.3 Association Schemes
 
 | Scheme | Sites | Examples |

@@ -154,6 +154,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 
 | Document                  | Path                                                               | Description                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| CPA Water Heat Capacity | [Caloric alpha option](thermo/cpa_water_caloric.md) | Opt-in IAPWS-95-fitted CPA water alpha, benchmarks and validity limits |
 | Thermodynamic Models      | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage  |
 | Solid Helmholtz Models    | [docs/thermo/solid_helmholtz_models.md](thermo/solid_helmholtz_models.md) | Experimental pure solid argon and para-hydrogen state and freezing-point workflows with validity boundaries |
 | Mercury Thermodynamics    | [docs/thermo/mercury_thermodynamics.md](thermo/mercury_thermodynamics.md) | Mercury-focused SRK-TwuCoon-Statoil-EOS usage, TPflash setup, and thesis-linked BIP/correlation guidance |
