@@ -23,8 +23,8 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpointTest exten
 
   @Test
   void testSerializedLedgerProducesIdenticalCheckpoint() throws Exception {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(
-        batch(4.0, 0.25, "batch-0", "segment-0"), batch(6.0, 0.50, "batch-1", "segment-1"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(batch(4.0, 0.25, "batch-0", "segment-0"),
+        batch(6.0, 0.50, "batch-1", "segment-1"));
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result restored = serializeRoundTrip(ledger);
 
     AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint.Result first = AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint
@@ -62,8 +62,7 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpointTest exten
 
   @Test
   void testCheckpointReceiptIsImmutableAndSerializable() throws Exception {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(
-        batch(4.0, 0.25, "batch-0", "segment-0"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint.Result checkpoint = AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint
         .create(ledger);
     byte[] first = checkpoint.getDigestBytes();
@@ -78,8 +77,7 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpointTest exten
 
   @Test
   void testMissingInputsFailClosed() {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(
-        batch(4.0, 0.25, "batch-0", "segment-0"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint.Result checkpoint = AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint
         .create(ledger);
 
@@ -105,8 +103,8 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpointTest exten
     AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation = AqueousHydrogenSulfideOxidationElementalSulfurAllocation
         .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
             allocationFraction, ALLOCATION_BASIS);
-    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer.create(
-        allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
+    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer
+        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
     return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer), batchIdentifier);
   }
 

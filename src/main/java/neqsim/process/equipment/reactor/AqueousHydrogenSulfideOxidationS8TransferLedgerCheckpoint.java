@@ -13,8 +13,8 @@ import java.security.NoSuchAlgorithmException;
  *
  * <p>
  * The checkpoint hashes a versioned canonical encoding of every ledger, batch, and transfer field. It is compact
- * evidence that a restored ledger is bitwise identical to the checkpointed state. It is not a signature,
- * authentication mechanism, durable store, distributed lock, compare-and-swap operation, or exactly-once guarantee.
+ * evidence that a restored ledger is bitwise identical to the checkpointed state. It is not a signature, authentication
+ * mechanism, durable store, distributed lock, compare-and-swap operation, or exactly-once guarantee.
  * </p>
  *
  * @author esol
@@ -99,8 +99,8 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerCheckpoint {
     }
   }
 
-  private static void writeBatch(DataOutputStream output,
-      AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch) throws IOException {
+  private static void writeBatch(DataOutputStream output, AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch)
+      throws IOException {
     writeString(output, batch.getBatchIdentifier());
     writeString(output, batch.getComponentName());
     writeString(output, batch.getProductIdentityBasisIdentifier());
