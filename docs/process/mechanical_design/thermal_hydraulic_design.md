@@ -8,6 +8,10 @@ exchangers. The toolkit connects rigorous thermodynamic property predictions fro
 the process simulation to industry-standard heat transfer and pressure drop
 correlations.
 
+For gasketed plate geometry, Martin chevron correlations, port losses, frame/bolt
+headroom and counterflow effectiveness–NTU, see
+[Plate Heat Exchanger Design](plate_heat_exchanger_design).
+
 > **Two-Phase Services:** For condensation (Shah), boiling (Chen, Gungor-Winterton),
 > two-phase pressure drop (Friedel, MSH), dynamic fouling (Ebert-Panchal),
 > incremental zone analysis, and tube insert enhancement models, see the
