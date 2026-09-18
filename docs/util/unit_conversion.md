@@ -44,9 +44,16 @@ NeqSim provides comprehensive unit handling capabilities:
 `LengthUnit`, `EnergyUnit`, `PowerUnit`, and `TimeUnit` implement `LinearScaleUnit`.
 Their three-argument `getValue(value, fromUnit, toUnit)` converts the supplied value
 without changing the stored value or unit, including when called through `Unit` or
-`LinearScaleUnit`. Implementations extending `BaseUnit` explicitly delegate this
-overload to the interface default because Java gives inherited class methods
-precedence over interface defaults. Unsupported source or target units are rejected.
+`LinearScaleUnit`. Implementations extending `BaseUnit` explicitly implement this
+overload because Java gives inherited class methods precedence over interface
+defaults. Unsupported source or target units are rejected.
+
+`RateUnit.getSIvalue()` returns mol/s using the stored rate and fluid properties.
+Its three-argument `getValue(value, fromUnit, toUnit)` uses those same fluid
+properties without changing the stored rate. The six-argument static
+`RateUnit.convert(value, fromUnit, toUnit, molarmass, stddens, boilp)` requires
+the fluid properties explicitly; the three-argument static overload throws
+`UnsupportedOperationException` because it has no fluid context.
 
 ---
 

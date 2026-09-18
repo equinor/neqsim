@@ -248,13 +248,14 @@ public class Filter extends TwoPortEquipment {
   }
 
   /**
-   * Setter for the field <code>deltaP</code>.
+   * Sets differential pressure using the specified pressure scale, without a gauge-pressure offset.
    *
-   * @param deltaP a double
-   * @param unit a {@link java.lang.String} object
+   * @param deltaP pressure drop; negative values are clamped to zero
+   * @param unit pressure unit; barg and psig use the same differential scale as bar and psi
    */
   public void setDeltaP(double deltaP, String unit) {
-    double pressureDropBar = Math.max(0.0, deltaP) * new PressureUnit(1.0, unit).getConversionFactor(unit);
+    String differentialUnit = "barg".equals(unit) ? "bar" : "psig".equals(unit) ? "psi" : unit;
+    double pressureDropBar = PressureUnit.convert(Math.max(0.0, deltaP), differentialUnit, "bar");
     setDeltaP(pressureDropBar);
   }
 
