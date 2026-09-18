@@ -2,6 +2,7 @@ package neqsim.process.equipment.reactor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,6 +62,8 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerDeltaTest extends Ne
     assertEquals(1, delta.getAddedBatchCount());
     assertEquals(1, delta.getAddedTransferCount());
     assertSame(second, delta.getAddedBatches().get(0));
+    assertNotSame(delta.getAddedBatches(), delta.getAddedBatches());
+    assertEquals(delta.getAddedBatches(), delta.getAddedBatches());
     assertEquals(candidate.getTotalSourceSulfurEquivalentMassKg() - prior.getTotalSourceSulfurEquivalentMassKg(),
         delta.getSourceSulfurEquivalentMassDeltaKg(), 0.0);
     assertEquals(candidate.getTotalTransferredS8MassKg() - prior.getTotalTransferredS8MassKg(),

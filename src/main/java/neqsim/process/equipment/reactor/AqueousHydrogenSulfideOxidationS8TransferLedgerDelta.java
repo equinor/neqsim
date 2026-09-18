@@ -181,9 +181,10 @@ public final class AqueousHydrogenSulfideOxidationS8TransferLedgerDelta {
       return AqueousHydrogenSulfideOxidationS8Transfer.S8_COMPONENT_NAME;
     }
 
-    /** @return ordered, unmodifiable batches added after the exact prior prefix. */
+    /** @return fresh, ordered, unmodifiable copy of batches added after the exact prior prefix. */
     public List<AqueousHydrogenSulfideOxidationS8TransferBatch.Result> getAddedBatches() {
-      return addedBatches;
+      return Collections
+          .unmodifiableList(new ArrayList<AqueousHydrogenSulfideOxidationS8TransferBatch.Result>(addedBatches));
     }
 
     /** @return number of batches added after the exact prior prefix. */
