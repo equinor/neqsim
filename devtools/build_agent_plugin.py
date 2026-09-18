@@ -28,9 +28,9 @@ fails unless ``--bump {patch,minor,major}`` or ``--set-version X.Y.Z`` is given.
 This mirrors VS Code's update rule (a plugin only updates on a version change).
 
 Usage:
-    python devtools/build_agent_plugin.py --out ../neqsim-agent-plugins
-    python devtools/build_agent_plugin.py --out ../neqsim-agent-plugins --bump patch
-    python devtools/build_agent_plugin.py --out ../neqsim-agent-plugins --check   # CI
+    python devtools/build_agent_plugin.py --out ../neqsim-copilot-plugin
+    python devtools/build_agent_plugin.py --out ../neqsim-copilot-plugin --bump patch
+    python devtools/build_agent_plugin.py --out ../neqsim-copilot-plugin --check   # CI
 """
 from __future__ import annotations
 
@@ -218,9 +218,10 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str) -> None:
         }
     }
     (hooks_dir / "hooks.json").write_text(json.dumps(hooks, indent=2) + "\n", encoding="utf-8")
-    # The editable install needs the repo's packaging files beside skills/.
+    # The editable install needs the repo's packaging files beside skills/
+    # (pyproject.toml declares readme = "README.md", so it must travel too).
     for pip_root in pip_roots:
-        for name in ("pyproject.toml", "setup.py"):
+        for name in ("pyproject.toml", "setup.py", "README.md"):
             src = pip_root / name
             if src.exists():
                 shutil.copy2(str(src), str(dest_root / name))
@@ -350,7 +351,7 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
 def write_marketplace(out_root: Path, results: List[Dict[str, object]]) -> None:
     marketplace = {
         "$schema": MARKETPLACE_SCHEMA,
-        "name": "neqsim-agent-plugins",
+        "name": "neqsim-copilot-plugin",
         "owner": {"name": "Equinor / NeqSim"},
         "plugins": [
             {
@@ -371,7 +372,7 @@ def write_marketplace(out_root: Path, results: List[Dict[str, object]]) -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--out", type=Path, default=WORKSPACE / "neqsim-agent-plugins")
+    parser.add_argument("--out", type=Path, default=WORKSPACE / "neqsim-copilot-plugin")
     parser.add_argument("--only", nargs="*", help="plugin names to build (default all)")
     parser.add_argument("--bump", choices=["patch", "minor", "major"])
     parser.add_argument("--set-version")

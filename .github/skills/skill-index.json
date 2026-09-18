@@ -1622,6 +1622,12 @@
  "paperlab student readability": [
   "paperlab-student-readability"
  ],
+ "paperlab reviewer simulation": [
+  "paperlab-multireviewer-simulation"
+ ],
+ "simulated peer review": [
+  "paperlab-multireviewer-simulation"
+ ],
  "flash experiments": [
   "run-flash-experiments"
  ],
