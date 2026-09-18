@@ -101,4 +101,3 @@ public class RefineryBlendOptimizationPlanTest {
     assertThrows(IllegalArgumentException.class, () -> plan.getSourceCostReceipt("missing"));
   }
 }
-

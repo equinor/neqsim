@@ -196,4 +196,3 @@ public final class RefineryBlendOptimizationPlan implements Serializable {
     }
   }
 }
-
