@@ -178,7 +178,7 @@ Where $\Delta^{A_i B_j}$ is the association strength between site A on molecule 
 
 **Liquid-water heat capacity:** the default `SystemSrkCPAstatoil` can be 8–17% low
 at 5–60 °C. An opt-in, caloric-data-fitted water alpha is available through
-`setUseCaloricWaterAlpha(true)`; see the [calibration, benchmarks and limits](cpa_water_caloric).
+`setUseCaloricWaterAlpha(true)`; see the [calibration, benchmarks and limits](cpa_water_caloric.md).
 
 ### 4.3 Association Schemes
 
@@ -909,4 +909,3 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
 
 ---
-

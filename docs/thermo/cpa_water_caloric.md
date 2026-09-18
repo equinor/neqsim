@@ -4,8 +4,6 @@ description: "Opt-in water attraction function fitted to IAPWS-95 heat capacity 
 keywords: "CPA, water, heat capacity, caloric, IAPWS-95, alpha, Mathias-Copeman, enthalpy, Palma"
 ---
 
-# CPA liquid-water heat capacity
-
 The standard `SystemSrkCPAstatoil` water parameterization underpredicts liquid
 isobaric heat capacity by about 8–17% between 5 and 60 °C near atmospheric
 pressure. Its good density predictions do not establish caloric accuracy.
