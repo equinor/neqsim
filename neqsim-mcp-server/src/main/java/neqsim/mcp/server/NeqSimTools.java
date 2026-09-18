@@ -589,10 +589,12 @@ public class NeqSimTools {
       + "tag bindings, NeqSim automation addresses, valve actions, and controller time series. "
       + "Actions: getSchema, validateTagMap, applyFieldData, runScenario, "
       + "runEvidencePackage, evaluateControllerResponse, analyzePipeSections, and "
-      + "evaluateOperatingEnvelope. Use this for questions like what happens if a valve closes, "
-      + "how to bind private historian tags to logical model variables, whether a level/pressure "
-      + "controller response is stable, or which operating margins are closest to trip. This "
-      + "operates on a local simulation copy only and does not write to plant systems.")
+      + "evaluateOperatingEnvelope. Requests are bounded to 1048576 UTF-8 bytes. Use this for "
+      + "questions like what happens if a valve closes, how to bind private historian tags to "
+      + "logical model variables, whether a level/pressure controller response is stable, or "
+      + "which operating margins are closest to trip. This operates on a local simulation copy "
+      + "only, does not write to plant systems, does not establish causality or controller/safety "
+      + "adequacy, and requires qualified engineering review.")
   public String runOperationalStudy(
       @ToolArg(description = "JSON with 'action'. For validateTagMap/applyFieldData/runScenario: "
           + "include 'processJson' plus optional 'tagBindings' and 'fieldData'. Scenario actions "
