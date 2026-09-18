@@ -32,8 +32,7 @@ public class Units {
   private static Map<String, UnitDescription> siUnits = new ConcurrentHashMap<>();
   private static Map<String, UnitDescription> fieldUnits = new ConcurrentHashMap<>();
 
-  private static String[] pressureUnits = new String[] {"Pa", "bara", "bar", "barg", "psi", "psia", "psig", "kPa",
-      "MPa", "atm"};
+  private static String[] pressureUnits = new String[] {"Pa", "bara", "bar", "barg", "psi", "psia", "psig", "kPa", "MPa", "atm"};
   private static String[] temperatureUnits = new String[] {"K", "C", "F", "R"};
   private static String[] molarVolumeUnits = new String[] {"mol/m3", "litre/m3", "ft3/lbmole"};
 
