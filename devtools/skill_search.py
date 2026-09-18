@@ -143,8 +143,6 @@ def _try_sklearn_search(
     return [(scores[i], skills[i][0], skills[i][2]) for i in order[:top]]
 
 
-_fallback_search = _try_sklearn_search
-
 
 def _keyword_index_boosts(query: str, skills_root: Path) -> dict:
     """Return score boosts from skill-index.json keyword entries."""

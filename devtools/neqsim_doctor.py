@@ -311,13 +311,15 @@ def check_packaged_jar():
     jar = jars[-1]
     _check("Packaged NeqSim JAR", True, os.path.basename(jar))
     try:
+        flash_script = "".join([
+            "from neqsim_dev_setup import neqsim_init, neqsim_classes;",
+            "ns=neqsim_classes(neqsim_init(project_root='/nonexistent', verbose=False));",
+            "f=ns.SystemSrkEos(298.15,50.0);f.addComponent('methane',1.0);f.setMixingRule('classic');",
+            "ns.ThermodynamicOperations(f).TPflash();f.initProperties();",
+            "print('FLASH_OK', round(float(f.getDensity('kg/m3')),2), len(ns.MISSING_CLASSES))",
+        ])
         result = subprocess.run(
-            [sys.executable, "-c",
-             "from neqsim_dev_setup import neqsim_init, neqsim_classes;"
-             "ns=neqsim_classes(neqsim_init(project_root='/nonexistent', verbose=False));"
-             "f=ns.SystemSrkEos(298.15,50.0);f.addComponent('methane',1.0);f.setMixingRule('classic');"
-             "ns.ThermodynamicOperations(f).TPflash();f.initProperties();"
-             "print('FLASH_OK', round(float(f.getDensity('kg/m3')),2), len(ns.MISSING_CLASSES))"],
+            [sys.executable, "-c", flash_script],
             capture_output=True, text=True, timeout=120)
         line = next((l for l in result.stdout.splitlines() if l.startswith("FLASH_OK")), None)
         if line:

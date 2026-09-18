@@ -352,7 +352,8 @@ def _jvm_args():
         # Java 22+ warns on JPype's native access unless enabled explicitly.
         if m and int(m.group(1)) >= 22:
             args.append("--enable-native-access=ALL-UNNAMED")
-    except Exception:
+    except (subprocess.SubprocessError, OSError, ValueError):
+        # Version probing is optional; keep the default JVM arguments when it fails.
         pass
     return args
 
