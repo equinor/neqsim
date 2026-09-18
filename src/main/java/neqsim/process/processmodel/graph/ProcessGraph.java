@@ -611,7 +611,7 @@ public class ProcessGraph implements Serializable {
 
     Deque<ProcessNode> stack = new LinkedList<>();
     List<List<ProcessNode>> components = new ArrayList<>();
-    int[] idCounter = { 0 };
+    int[] idCounter = {0};
 
     for (ProcessNode node : nodes) {
       if (ids[node.getIndex()] == -1) {

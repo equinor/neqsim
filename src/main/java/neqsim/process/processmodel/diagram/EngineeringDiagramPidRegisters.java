@@ -61,7 +61,7 @@ public final class EngineeringDiagramPidRegisters {
         row.put("sourceLabel", object.getLabel());
         row.put("sourceProperties", object.getProperties());
         row.put("qualificationStatus", "REVIEW_REQUIRED");
-        for (String field : new String[] { "nominalPipeSize", "pipingClass", "schedule", "materialGrade" }) {
+        for (String field : new String[] {"nominalPipeSize", "pipingClass", "schedule", "materialGrade"}) {
           Object value = object.getProperties().get(field);
           if (value == null || value.toString().trim().isEmpty()) {
             row.put(field, REQUIRED);
@@ -83,7 +83,7 @@ public final class EngineeringDiagramPidRegisters {
       }
     }
     Map<String, List<Map<String, Object>>> registers = new LinkedHashMap<String, List<Map<String, Object>>>();
-    for (String name : new String[] { "nozzles", "valves", "instruments", "controlSignals", "interfaces" }) {
+    for (String name : new String[] {"nozzles", "valves", "instruments", "controlSignals", "interfaces"}) {
       registers.put(name, new ArrayList<Map<String, Object>>());
     }
     Map<String, PidElement> proposals = new LinkedHashMap<String, PidElement>();

@@ -33,7 +33,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = { 0, 1, 2 })
+  @ValueSource(ints = {0, 1, 2})
   void constructedComponentsExposeTheirGroups(int model) {
     ComponentGEUnifac methanol = component(model, "methanol");
     assertEquals(1, methanol.getNumberOfUNIFACgroups());
@@ -45,7 +45,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = { 0, 1, 2 })
+  @ValueSource(ints = {0, 1, 2})
   void replacementCanShrinkAndEmptyTheGroupArray(int model) {
     ComponentGEUnifac component = component(model, "methanol");
     component.addUNIFACgroup(16, 0);
@@ -63,7 +63,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = { 0, 1, 2 })
+  @ValueSource(ints = {0, 1, 2})
   void pseudoComponentRebuildReplacesPaddedGroups(int model) {
     ComponentGEUnifac component = component(model, "C10_PC");
     assertSynchronized(component);
@@ -81,7 +81,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void methanolWaterCanBeConfiguredAndInitializedRepeatedly(boolean psrk) {
     SystemInterface system = psrk ? new SystemUNIFACpsrk(298.15, 1.0) : new SystemUNIFAC(298.15, 1.0);
     system.addComponent("methanol", 0.5);
@@ -117,7 +117,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void pureMethanolActivityCoefficientIsUnity(boolean psrk) {
     SystemInterface system = psrk ? new SystemUNIFACpsrk(300.0, 1.0) : new SystemUNIFAC(300.0, 1.0);
     system.addComponent("methanol", 1.0);
@@ -130,7 +130,7 @@ class UnifacGroupSynchronizationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void checkGroupsReconcilesLegacyListEdits(boolean psrk) {
     SystemInterface system = psrk ? new SystemUNIFACpsrk(300.0, 1.0) : new SystemUNIFAC(300.0, 1.0);
     system.addComponent("methanol", 0.3);

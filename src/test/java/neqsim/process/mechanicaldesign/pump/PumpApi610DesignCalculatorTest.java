@@ -21,7 +21,7 @@ class PumpApi610DesignCalculatorTest {
     calculator.setNpsh(6.0, 4.0, DataSource.VENDOR_CURVE);
     calculator.setPressureBasis(5.0, 20.0, 90.0, DataSource.VENDOR_CURVE);
     calculator.setHydrostaticTestPressureBara(30.0);
-    calculator.setDriverCriteria(1.10, new double[] { 22.0, 30.0, 37.0 });
+    calculator.setDriverCriteria(1.10, new double[] {22.0, 30.0, 37.0});
     calculator.setBearingData(BearingType.BALL, 100.0, 5.0);
     calculator.setMechanicalEvidence(0.03, 4000.0, 0.8, 2.5);
 
@@ -82,8 +82,8 @@ class PumpApi610DesignCalculatorTest {
         PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0, 3000.0, BearingType.BALL), 0.01);
     assertTrue(
         Double.isNaN(PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0, 3000.0, BearingType.SLEEVE)));
-    assertEquals(30.0, PumpApi610DesignCalculator.selectDriverRating(27.5, new double[] { 37.0, 22.0, 30.0 }), 1.0e-12);
-    assertTrue(Double.isNaN(PumpApi610DesignCalculator.selectDriverRating(40.0, new double[] { 22.0, 30.0, 37.0 })));
+    assertEquals(30.0, PumpApi610DesignCalculator.selectDriverRating(27.5, new double[] {37.0, 22.0, 30.0}), 1.0e-12);
+    assertTrue(Double.isNaN(PumpApi610DesignCalculator.selectDriverRating(40.0, new double[] {22.0, 30.0, 37.0})));
   }
 
   @Test

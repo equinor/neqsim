@@ -575,12 +575,12 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    */
   private double[] carbonAndHydrogen(neqsim.thermo.component.ComponentInterface component) {
     if (component.getElements() != null && component.getElements().getElementNames() != null) {
-      return new double[] { component.getElements().getNumberOfElements("C"),
-          component.getElements().getNumberOfElements("H") };
+      return new double[] {component.getElements().getNumberOfElements("C"),
+          component.getElements().getNumberOfElements("H")};
     }
     double molarMassGramPerMol = component.getMolarMass() * 1000.0;
     double carbon = Math.max(1.0, (molarMassGramPerMol - 2.016) / 14.027);
-    return new double[] { carbon, 2.0 * carbon + 2.0 };
+    return new double[] {carbon, 2.0 * carbon + 2.0};
   }
 
   /**

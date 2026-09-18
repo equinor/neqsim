@@ -26,7 +26,7 @@ import com.google.gson.GsonBuilder;
  * WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
  * screener.setFormationWater(400, 10, 5, 0, 150, 10, 35000, 80, 100, 2.0, 6.5);
  * screener.setInjectionWater(20, 0, 0, 0, 100, 2700, 35000, 80, 100, 0.5, 7.0);
- * screener.setMixingRatios(new double[] { 0, 10, 20, 30, 50, 70, 90, 100 });
+ * screener.setMixingRatios(new double[] {0, 10, 20, 30, 50, 70, 90, 100});
  * screener.calculate();
  * System.out.println(screener.toJson());
  * }
@@ -71,7 +71,7 @@ public class WaterCompatibilityScreener implements Serializable {
   private double iwPH = 7.0;
 
   /** Mixing ratios as percentage of injection water (0-100). */
-  private double[] mixingRatios = { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
+  private double[] mixingRatios = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 
   /** Results at each mixing ratio. */
   private List<MixingResult> results = new ArrayList<MixingResult>();

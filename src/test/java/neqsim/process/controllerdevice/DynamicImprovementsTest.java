@@ -152,8 +152,8 @@ class DynamicImprovementsTest {
     pid.setTransmitter(tx);
     pid.setControllerSetPoint(50.0, "C");
 
-    double[] low = { 0.0, 40.0, 80.0 };
-    double[] high = { 40.0, 80.0, 100.0 };
+    double[] low = {0.0, 40.0, 80.0};
+    double[] high = {40.0, 80.0, 100.0};
     SplitRangeControllerStructure sr = new SplitRangeControllerStructure(pid, low, high);
     Assertions.assertEquals(3, sr.getNumberOfElements());
   }

@@ -125,7 +125,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     LTseparator = new Separator("LTseparator", expander.getOutletStream());
 
     Splitter splitter = new Splitter("LTsplitter", LTseparator.getGasOutStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
 
     heatExchanger1.addInStream(splitter.getSplitStream(0));
 

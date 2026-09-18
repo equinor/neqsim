@@ -126,7 +126,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateCCEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantMassExpansion cme = new ConstantMassExpansion(fluid);
-    cme.setPressures(new double[] { pressure });
+    cme.setPressures(new double[] {pressure});
     cme.setTemperature(temperature, "K");
     cme.runCalc();
 
@@ -147,7 +147,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateCVDValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(fluid);
-    cvd.setPressures(new double[] { pressure });
+    cvd.setPressures(new double[] {pressure});
     cvd.setTemperature(temperature, "K");
     cvd.runCalc();
 
@@ -174,7 +174,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    */
   private double calculateDLEValue(SystemInterface fluid, double pressure, double temperature, int propertyIndex) {
     DifferentialLiberation dle = new DifferentialLiberation(fluid);
-    dle.setPressures(new double[] { pressure });
+    dle.setPressures(new double[] {pressure});
     dle.setTemperature(temperature, "K");
     dle.runCalc();
 

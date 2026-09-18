@@ -695,9 +695,9 @@ public class ShellAndTubeDesignCalculator {
    */
   private double roundToStandardShellSize(double diameter) {
     // Standard pipe sizes in mm (NPS converted)
-    double[] standardSizes = { 168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6, 660.4, 711.2,
-        762.0, 812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2, 1270.0, 1320.8, 1371.6, 1422.4,
-        1473.2, 1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0, 1828.8, 1879.6, 1930.4, 1981.2, 2032.0 };
+    double[] standardSizes = {168.3, 219.1, 273.0, 323.9, 355.6, 406.4, 457.2, 508.0, 558.8, 609.6, 660.4, 711.2, 762.0,
+        812.8, 863.6, 914.4, 965.2, 1016.0, 1066.8, 1117.6, 1168.4, 1219.2, 1270.0, 1320.8, 1371.6, 1422.4, 1473.2,
+        1524.0, 1574.8, 1625.6, 1676.4, 1727.2, 1778.0, 1828.8, 1879.6, 1930.4, 1981.2, 2032.0};
 
     for (double size : standardSizes) {
       if (size >= diameter) {
@@ -714,8 +714,8 @@ public class ShellAndTubeDesignCalculator {
    * @return standard thickness
    */
   private double roundToStandardPlateThickness(double thickness) {
-    double[] standardThicknesses = { 3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225, 25.4, 31.75, 38.1,
-        44.45, 50.8 };
+    double[] standardThicknesses = {3.175, 4.763, 6.35, 7.938, 9.525, 12.7, 15.875, 19.05, 22.225, 25.4, 31.75, 38.1,
+        44.45, 50.8};
 
     for (double t : standardThicknesses) {
       if (t >= thickness) {

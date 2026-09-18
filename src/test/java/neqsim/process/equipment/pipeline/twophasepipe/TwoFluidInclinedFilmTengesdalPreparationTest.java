@@ -20,7 +20,7 @@ class TwoFluidInclinedFilmTengesdalPreparationTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidInclinedFilmTengesdalPreparationTest.class);
 
   @ParameterizedTest
-  @CsvSource({ "16,0.1,false", "16,0.05,false", "24,0.05,false", "16,0.1,true", "16,0.05,true", "24,0.05,true" })
+  @CsvSource({"16,0.1,false", "16,0.05,false", "24,0.05,false", "16,0.1,true", "16,0.05,true", "24,0.05,true"})
   void shortFilmConstrainedRiserPreparationRemainsConservative(int cells, double maximumStep, boolean faceTerrain) {
     verify(cells, maximumStep, faceTerrain, 0.1);
   }
@@ -28,7 +28,7 @@ class TwoFluidInclinedFilmTengesdalPreparationTest {
   @Tag("slow")
   @EnabledIfSystemProperty(named = "neqsim.unsplit.tengesdal.film-bridging.qualification", matches = "true")
   @ParameterizedTest
-  @CsvSource({ "16,0.1,false", "16,0.05,false", "24,0.05,false", "16,0.1,true", "16,0.05,true", "24,0.05,true" })
+  @CsvSource({"16,0.1,false", "16,0.05,false", "24,0.05,false", "16,0.1,true", "16,0.05,true", "24,0.05,true"})
   void fiveSecondFilmConstrainedRiserQualificationMustCompleteTheWholeInterval(int cells, double maximumStep,
       boolean faceTerrain) {
     verify(cells, maximumStep, faceTerrain, 5.0);

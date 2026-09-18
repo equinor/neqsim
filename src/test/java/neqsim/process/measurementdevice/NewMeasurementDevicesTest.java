@@ -30,8 +30,8 @@ class NewMeasurementDevicesTest {
 
   @Test
   void differentialPressureTransmitterReportsDelta() {
-    Stream upstream = makeStream("up", 70.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
-    Stream downstream = makeStream("dn", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream upstream = makeStream("up", 70.0, 25.0, new String[] {"methane"}, new double[] {1.0});
+    Stream downstream = makeStream("dn", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     DifferentialPressureTransmitter dp = new DifferentialPressureTransmitter("PDT-001", upstream, downstream);
     assertEquals(40.0, dp.getMeasuredValue("bar"), 1.0e-6);
     assertNotNull(dp.getHighPressureStream());
@@ -41,15 +41,15 @@ class NewMeasurementDevicesTest {
 
   @Test
   void differentialPressureCanBeNegativeForReversedFlow() {
-    Stream upstream = makeStream("up", 20.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
-    Stream downstream = makeStream("dn", 50.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream upstream = makeStream("up", 20.0, 25.0, new String[] {"methane"}, new double[] {1.0});
+    Stream downstream = makeStream("dn", 50.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     DifferentialPressureTransmitter dp = new DifferentialPressureTransmitter(upstream, downstream);
     assertTrue(dp.getMeasuredValue("bar") < 0.0, "ΔP must be negative when low > high");
   }
 
   @Test
   void differentialPressureRejectsNullStreams() {
-    Stream s = makeStream("up", 70.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream s = makeStream("up", 70.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     assertThrows(IllegalArgumentException.class, () -> new DifferentialPressureTransmitter(null, s));
     assertThrows(IllegalArgumentException.class, () -> new DifferentialPressureTransmitter(s, null));
   }
@@ -57,7 +57,7 @@ class NewMeasurementDevicesTest {
   @Test
   void compositionAnalyzerReadsGasMoleFraction() {
     // Methane-rich two-phase mixture at 50 bara, 25C: methane mostly in gas.
-    Stream s = makeStream("two", 50.0, 25.0, new String[] { "methane", "nC10" }, new double[] { 0.6, 0.4 });
+    Stream s = makeStream("two", 50.0, 25.0, new String[] {"methane", "nC10"}, new double[] {0.6, 0.4});
     CompositionAnalyzer aiGas = new CompositionAnalyzer("AI-001", s, "methane", CompositionAnalyzer.AnalyzerPhase.GAS);
     double x = aiGas.getMeasuredValue("");
     assertTrue(x > 0.9, "methane mole fraction in gas phase should be > 0.9, got " + x);
@@ -71,14 +71,14 @@ class NewMeasurementDevicesTest {
 
   @Test
   void compositionAnalyzerReturnsNaNForUnknownComponent() {
-    Stream s = makeStream("two", 50.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream s = makeStream("two", 50.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     CompositionAnalyzer ai = new CompositionAnalyzer(s, "ethane", CompositionAnalyzer.AnalyzerPhase.OVERALL);
     assertTrue(Double.isNaN(ai.getMeasuredValue("")));
   }
 
   @Test
   void compositionAnalyzerRejectsBadInputs() {
-    Stream s = makeStream("s", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream s = makeStream("s", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     assertThrows(IllegalArgumentException.class,
         () -> new CompositionAnalyzer(s, " ", CompositionAnalyzer.AnalyzerPhase.OVERALL));
     assertThrows(IllegalArgumentException.class, () -> new CompositionAnalyzer(s, "methane", null));
@@ -86,8 +86,8 @@ class NewMeasurementDevicesTest {
 
   @Test
   void flowRatioMeterReportsRatioOnMassBasis() {
-    Stream num = makeStream("num", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
-    Stream den = makeStream("den", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream num = makeStream("num", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
+    Stream den = makeStream("den", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     num.setFlowRate(800.0, "kg/hr");
     num.run();
     den.setFlowRate(200.0, "kg/hr");
@@ -99,8 +99,8 @@ class NewMeasurementDevicesTest {
 
   @Test
   void flowRatioMeterReturnsNaNForZeroDenominator() {
-    Stream num = makeStream("num", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
-    Stream den = makeStream("den", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream num = makeStream("num", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
+    Stream den = makeStream("den", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     den.setFlowRate(0.0, "kg/hr");
     den.run();
     FlowRatioMeter meter = new FlowRatioMeter(num, den, FlowRatioMeter.FlowBasis.MASS);
@@ -109,7 +109,7 @@ class NewMeasurementDevicesTest {
 
   @Test
   void flowRatioMeterRejectsBadInputs() {
-    Stream num = makeStream("n", 30.0, 25.0, new String[] { "methane" }, new double[] { 1.0 });
+    Stream num = makeStream("n", 30.0, 25.0, new String[] {"methane"}, new double[] {1.0});
     assertThrows(IllegalArgumentException.class, () -> new FlowRatioMeter(null, num, FlowRatioMeter.FlowBasis.MASS));
     assertThrows(IllegalArgumentException.class, () -> new FlowRatioMeter(num, null, FlowRatioMeter.FlowBasis.MASS));
     assertThrows(IllegalArgumentException.class, () -> new FlowRatioMeter(num, num, null));

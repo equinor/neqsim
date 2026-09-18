@@ -296,7 +296,7 @@ public class GenericTaxModel implements TaxModel {
    */
   public double[] calculateProfitSharing(double grossRevenue, double costRecovery) {
     if (!parameters.isPscSystem()) {
-      return new double[] { 0, grossRevenue - costRecovery };
+      return new double[] {0, grossRevenue - costRecovery};
     }
 
     // Limit cost recovery
@@ -309,7 +309,7 @@ public class GenericTaxModel implements TaxModel {
     double governmentShare = profitOil * parameters.getProfitShareGovernment();
     double contractorShare = profitOil * parameters.getProfitShareContractor();
 
-    return new double[] { governmentShare, contractorShare };
+    return new double[] {governmentShare, contractorShare};
   }
 
   @Override

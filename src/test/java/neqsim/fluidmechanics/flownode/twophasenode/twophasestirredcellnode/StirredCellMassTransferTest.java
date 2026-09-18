@@ -207,7 +207,7 @@ public class StirredCellMassTransferTest {
     testSystem.init(1);
 
     // Test with different stirrer speeds
-    double[] stirrerSpeeds = { 0.5, 1.0, 2.0 };
+    double[] stirrerSpeeds = {0.5, 1.0, 2.0};
 
     for (double speed : stirrerSpeeds) {
       StirredCellNode node = new StirredCellNode(testSystem.clone(), cell);

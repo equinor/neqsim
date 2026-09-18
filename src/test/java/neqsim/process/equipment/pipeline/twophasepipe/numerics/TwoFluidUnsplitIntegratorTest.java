@@ -62,7 +62,7 @@ class TwoFluidUnsplitIntegratorTest {
     };
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(isothermalEquations(), density, solver(), 2,
         4);
-    for (double maximum : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 0.01 }) {
+    for (double maximum : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 0.01}) {
       assertThrows(IllegalArgumentException.class,
           () -> integrator.prepareInterval(nonuniformSections(), 5.0, 1.0, 0.0, 5.0e6, true, 1.0e-8, maximum));
     }
@@ -180,15 +180,15 @@ class TwoFluidUnsplitIntegratorTest {
   @Test
   void rejectsUnsupportedOperatorsBeforeCallingTheDensityModel() {
     TwoFluidSection[] accepted = nonuniformSections();
-    TwoFluidConservationEquations[] unsupported = { isothermalEquations(), isothermalEquations(), isothermalEquations(),
-        isothermalEquations(), isothermalEquations(), isothermalEquations() };
+    TwoFluidConservationEquations[] unsupported = {isothermalEquations(), isothermalEquations(), isothermalEquations(),
+        isothermalEquations(), isothermalEquations(), isothermalEquations()};
     unsupported[0].setIncludeEnergyEquation(true);
     unsupported[1].setIncludeMassTransfer(true);
     unsupported[2].setHeatTransferCoefficient(10.0);
     unsupported[3].setImplicitInterfacialPressure(true);
     unsupported[4].setEnableStiffBubbleDrag(true);
     unsupported[5].setConservativeSlugForceIntegrationEnabled(true);
-    int[] calls = { 0 };
+    int[] calls = {0};
     PhaseDensityModel density = (cell, state, pressure, time) -> {
       calls[0]++;
       throw new AssertionError("Unsupported operators must fail before evaluating densities");
@@ -204,16 +204,15 @@ class TwoFluidUnsplitIntegratorTest {
   @Test
   void rejectsInvalidIntervalsBeforeCallingTheDensityModel() {
     TwoFluidSection[] accepted = nonuniformSections();
-    int[] calls = { 0 };
+    int[] calls = {0};
     PhaseDensityModel density = (cell, state, pressure, time) -> {
       calls[0]++;
       throw new AssertionError("Invalid arguments must fail before evaluating densities");
     };
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(isothermalEquations(), density, solver(), 3,
         8);
-    double[][] invalidTimes = { { 0.0, 0.0 }, { -1.0, 0.0 }, { Double.NaN, 0.0 }, { Double.POSITIVE_INFINITY, 0.0 },
-        { 1.0, Double.NaN }, { 1.0, Double.POSITIVE_INFINITY }, { 1.0, 1.0e20 },
-        { Double.MAX_VALUE, Double.MAX_VALUE } };
+    double[][] invalidTimes = {{0.0, 0.0}, {-1.0, 0.0}, {Double.NaN, 0.0}, {Double.POSITIVE_INFINITY, 0.0},
+        {1.0, Double.NaN}, {1.0, Double.POSITIVE_INFINITY}, {1.0, 1.0e20}, {Double.MAX_VALUE, Double.MAX_VALUE}};
     for (double[] time : invalidTimes) {
       assertThrows(IllegalArgumentException.class,
           () -> integrator.prepareInterval(accepted, 10.0, time[0], time[1], 5.0e6, true, 1.0e-8));
@@ -267,7 +266,7 @@ class TwoFluidUnsplitIntegratorTest {
 
   @Test
   void substepExhaustionDiscardsALocallyAcceptedPrefix() {
-    TwoFluidSection[] accepted = { section(0.0, 10.0) };
+    TwoFluidSection[] accepted = {section(0.0, 10.0)};
     accepted[0].setGasVelocity(0.0);
     accepted[0].setLiquidVelocity(0.0);
     accepted[0].setOilVelocity(0.0);
@@ -282,8 +281,7 @@ class TwoFluidUnsplitIntegratorTest {
     PublishedDiagnostics published = new PublishedDiagnostics(equations);
     // Manufactured incompatible volume closure: the full interval has no pressure root,
     // while its left half is the original quiescent fixed point. This is a rollback fixture.
-    PhaseDensityModel density = (cell, state, pressure,
-        time) -> new double[] { time < 0.5 ? 40.0 : 80.0, 700.0, 1000.0 };
+    PhaseDensityModel density = (cell, state, pressure, time) -> new double[] {time < 0.5 ? 40.0 : 80.0, 700.0, 1000.0};
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations, density, solver(), 2, 1);
 
     IntervalPreparationException failure = assertThrows(IntervalPreparationException.class,
@@ -307,7 +305,7 @@ class TwoFluidUnsplitIntegratorTest {
     equations.calcRHS(cloneSections(accepted), 10.0);
     PublishedDiagnostics published = new PublishedDiagnostics(equations);
     IllegalStateException injected = new IllegalStateException("Injected density callback failure");
-    int[] calls = { 0 };
+    int[] calls = {0};
     PhaseDensityModel density = (cell, state, pressure, time) -> {
       calls[0]++;
       throw injected;
@@ -337,11 +335,11 @@ class TwoFluidUnsplitIntegratorTest {
   }
 
   private static PhaseDensityModel densityModel() {
-    return (cell, state, pressure, time) -> new double[] { 40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0 };
+    return (cell, state, pressure, time) -> new double[] {40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0};
   }
 
   private static TwoFluidSection[] nonuniformSections() {
-    return new TwoFluidSection[] { section(2.5, 5.0), section(10.0, 10.0), section(22.5, 15.0) };
+    return new TwoFluidSection[] {section(2.5, 5.0), section(10.0, 10.0), section(22.5, 15.0)};
   }
 
   private static TwoFluidSection section(double position, double length) {

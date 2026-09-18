@@ -451,7 +451,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
             nonLinSolver.etterCP = true;
             isDewPhase = !isDewPhase;
             nonLinSolver.calcCrit();
-            criticalPoints.add(new double[] { system.getTC(), system.getPC() });
+            criticalPoints.add(new double[] {system.getTC(), system.getPC()});
             kValuesDivergedAfterCP = false;
             addBranchBreak();
           }
@@ -476,7 +476,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
               system.invertPhaseTypes();
               isDewPhase = !isDewPhase;
               nonLinSolver.calcCrit();
-              criticalPoints.add(new double[] { system.getTC(), system.getPC() });
+              criticalPoints.add(new double[] {system.getTC(), system.getPC()});
               kValuesDivergedAfterCP = false;
               addBranchBreak();
             }
@@ -561,16 +561,16 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
     if (dewPointTemperatures.stream().noneMatch(Double::isFinite)
         && bubblePointTemperatures.stream().noneMatch(Double::isFinite)) {
-      cricondenBar = new double[] { Double.NaN, Double.NaN, Double.NaN };
-      cricondenTherm = new double[] { Double.NaN, Double.NaN, Double.NaN };
+      cricondenBar = new double[] {Double.NaN, Double.NaN, Double.NaN};
+      cricondenTherm = new double[] {Double.NaN, Double.NaN, Double.NaN};
       throw new IllegalStateException("Phase envelope tracing failed: no converged equilibrium points");
     }
 
     // Convert ArrayLists to output arrays
     buildOutputArrays();
     if (reachedTraceLimit) {
-      cricondenBar = new double[] { Double.NaN, Double.NaN, Double.NaN };
-      cricondenTherm = new double[] { Double.NaN, Double.NaN, Double.NaN };
+      cricondenBar = new double[] {Double.NaN, Double.NaN, Double.NaN};
+      cricondenTherm = new double[] {Double.NaN, Double.NaN, Double.NaN};
       throw new IllegalStateException("Phase envelope tracing reached its pressure or point limit; "
           + "the retained segments are incomplete and cannot define envelope extrema");
     }
@@ -875,7 +875,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     if (qT == null) {
       return null;
     }
-    return new double[][] { qT, qP, qV, qM };
+    return new double[][] {qT, qP, qV, qM};
   }
 
   /**
@@ -1101,8 +1101,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       oD.add(D[i]);
       oS.add(S[i]);
     }
-    return new double[][] { toDoubleArray(oT), toDoubleArray(oP), toDoubleArray(oH), toDoubleArray(oD),
-        toDoubleArray(oS) };
+    return new double[][] {toDoubleArray(oT), toDoubleArray(oP), toDoubleArray(oH), toDoubleArray(oD),
+        toDoubleArray(oS)};
   }
 
   /**
@@ -1393,7 +1393,7 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   /** {@inheritDoc} */
   @Override
   public double[][] getPoints(int i) {
-    return new double[][] { dewTempArray, dewPresArray, bubTempArray, bubPresArray };
+    return new double[][] {dewTempArray, dewPresArray, bubTempArray, bubPresArray};
   }
 
   /**
@@ -1478,19 +1478,19 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       if (!criticalPoints.isEmpty()) {
         return criticalPoints.get(0);
       }
-      return new double[] { system.getTC(), system.getPC() };
+      return new double[] {system.getTC(), system.getPC()};
     }
     if (name.equals("criticalPoint2")) {
       if (criticalPoints.size() >= 2) {
         return criticalPoints.get(1);
       }
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     }
     if (name.equals("criticalPoint3")) {
       if (criticalPoints.size() >= 3) {
         return criticalPoints.get(2);
       }
-      return new double[] { 0, 0 };
+      return new double[] {0, 0};
     }
     // Quality line keys: qualityT_X, qualityP_X, qualityVolFrac_X, qualityMassFrac_X
     if (name.startsWith("quality")) {

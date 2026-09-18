@@ -45,7 +45,7 @@ public final class OffshoreEnergyReferenceCase {
     simulator.setIntervalSeconds(4.0 * 3600.0);
     simulator.setDurationSeconds(24.0 * 3600.0);
 
-    double[] times = new double[] { 0.0, 4.0 * 3600.0, 8.0 * 3600.0, 12.0 * 3600.0, 16.0 * 3600.0, 20.0 * 3600.0 };
+    double[] times = new double[] {0.0, 4.0 * 3600.0, 8.0 * 3600.0, 12.0 * 3600.0, 16.0 * 3600.0, 20.0 * 3600.0};
     simulator.addProfile(
         EnergyTimeSeriesProfile.step("wind availability", times, megawatts(2.0, 6.0, 16.0, 8.0, 4.0, 1.0)),
         value -> wind.setDuty(value));

@@ -195,32 +195,32 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
   static {
     // NPS -> [OD (m), SCH40 thickness (m), SCH80 thickness (m)]
     STANDARD_PIPE_DIMENSIONS = new HashMap<String, double[]>();
-    STANDARD_PIPE_DIMENSIONS.put("2", new double[] { 0.0603, 0.00391, 0.00554 });
-    STANDARD_PIPE_DIMENSIONS.put("3", new double[] { 0.0889, 0.00549, 0.00762 });
-    STANDARD_PIPE_DIMENSIONS.put("4", new double[] { 0.1143, 0.00602, 0.00851 });
-    STANDARD_PIPE_DIMENSIONS.put("6", new double[] { 0.1683, 0.00711, 0.01097 });
-    STANDARD_PIPE_DIMENSIONS.put("8", new double[] { 0.2191, 0.00823, 0.01270 });
-    STANDARD_PIPE_DIMENSIONS.put("10", new double[] { 0.2731, 0.00927, 0.01270 });
-    STANDARD_PIPE_DIMENSIONS.put("12", new double[] { 0.3239, 0.01048, 0.01270 });
-    STANDARD_PIPE_DIMENSIONS.put("14", new double[] { 0.3556, 0.01118, 0.01270 });
-    STANDARD_PIPE_DIMENSIONS.put("16", new double[] { 0.4064, 0.01270, 0.01588 });
-    STANDARD_PIPE_DIMENSIONS.put("18", new double[] { 0.4572, 0.01422, 0.01778 });
-    STANDARD_PIPE_DIMENSIONS.put("20", new double[] { 0.5080, 0.01270, 0.01588 });
-    STANDARD_PIPE_DIMENSIONS.put("24", new double[] { 0.6096, 0.01422, 0.01778 });
+    STANDARD_PIPE_DIMENSIONS.put("2", new double[] {0.0603, 0.00391, 0.00554});
+    STANDARD_PIPE_DIMENSIONS.put("3", new double[] {0.0889, 0.00549, 0.00762});
+    STANDARD_PIPE_DIMENSIONS.put("4", new double[] {0.1143, 0.00602, 0.00851});
+    STANDARD_PIPE_DIMENSIONS.put("6", new double[] {0.1683, 0.00711, 0.01097});
+    STANDARD_PIPE_DIMENSIONS.put("8", new double[] {0.2191, 0.00823, 0.01270});
+    STANDARD_PIPE_DIMENSIONS.put("10", new double[] {0.2731, 0.00927, 0.01270});
+    STANDARD_PIPE_DIMENSIONS.put("12", new double[] {0.3239, 0.01048, 0.01270});
+    STANDARD_PIPE_DIMENSIONS.put("14", new double[] {0.3556, 0.01118, 0.01270});
+    STANDARD_PIPE_DIMENSIONS.put("16", new double[] {0.4064, 0.01270, 0.01588});
+    STANDARD_PIPE_DIMENSIONS.put("18", new double[] {0.4572, 0.01422, 0.01778});
+    STANDARD_PIPE_DIMENSIONS.put("20", new double[] {0.5080, 0.01270, 0.01588});
+    STANDARD_PIPE_DIMENSIONS.put("24", new double[] {0.6096, 0.01422, 0.01778});
 
     // Material -> [Allowable at 20C, at 100C, at 200C, at 300C, at 400C] in MPa
     ASME_B31_3_ALLOWABLE_STRESSES = new HashMap<String, double[]>();
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-B", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-C", new double[] { 159.0, 159.0, 159.0, 152.0, 139.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A333-6", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP304", new double[] { 138.0, 115.0, 101.0, 90.0, 82.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316", new double[] { 138.0, 115.0, 103.0, 92.0, 84.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] { 115.0, 103.0, 92.0, 83.0, 76.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP321", new double[] { 138.0, 115.0, 103.0, 93.0, 85.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP347", new double[] { 138.0, 127.0, 114.0, 105.0, 97.0 });
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S31803", new double[] { 207.0, 192.0, 177.0, 165.0, 0.0 }); // Duplex
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 }); // Super
-                                                                                                        // duplex
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-B", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-C", new double[] {159.0, 159.0, 159.0, 152.0, 139.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A333-6", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP304", new double[] {138.0, 115.0, 101.0, 90.0, 82.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316", new double[] {138.0, 115.0, 103.0, 92.0, 84.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] {115.0, 103.0, 92.0, 83.0, 76.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP321", new double[] {138.0, 115.0, 103.0, 93.0, 85.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP347", new double[] {138.0, 127.0, 114.0, 105.0, 97.0});
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S31803", new double[] {207.0, 192.0, 177.0, 165.0, 0.0}); // Duplex
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750", new double[] {241.0, 226.0, 211.0, 197.0, 0.0}); // Super
+                                                                                                      // duplex
   }
 
   /**

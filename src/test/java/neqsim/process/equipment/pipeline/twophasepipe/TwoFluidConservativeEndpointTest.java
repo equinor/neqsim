@@ -86,7 +86,7 @@ class TwoFluidConservativeEndpointTest {
     double[] valid = state(section, 0.6, 0.25, 0.15, 2.0, 0.5, -0.1);
     section.setConservativeEndpoint(valid, 1.0e-12);
     double[] primitives = primitives(section);
-    double[][] invalid = { valid.clone(), valid.clone(), valid.clone(), valid.clone(), valid.clone() };
+    double[][] invalid = {valid.clone(), valid.clone(), valid.clone(), valid.clone(), valid.clone()};
     invalid[0][0] = -1.0;
     invalid[1][1] *= 2.0;
     invalid[2][2] = 0.0;
@@ -117,13 +117,13 @@ class TwoFluidConservativeEndpointTest {
     double gasMass = gas * section.getGasDensity() * area;
     double oilMass = oil * section.getOilDensity() * area;
     double waterMass = water * section.getWaterDensity() * area;
-    return new double[] { gasMass, oilMass, waterMass, gasMass * gasVelocity, oilMass * oilVelocity,
-        waterMass * waterVelocity, 1234.0 };
+    return new double[] {gasMass, oilMass, waterMass, gasMass * gasVelocity, oilMass * oilVelocity,
+        waterMass * waterVelocity, 1234.0};
   }
 
   private static double[] primitives(TwoFluidSection section) {
-    return new double[] { section.getGasHoldup(), section.getOilHoldup(), section.getWaterHoldup(),
+    return new double[] {section.getGasHoldup(), section.getOilHoldup(), section.getWaterHoldup(),
         section.getLiquidHoldup(), section.getGasVelocity(), section.getOilVelocity(), section.getWaterVelocity(),
-        section.getLiquidVelocity(), section.getLiquidDensity(), section.getMixtureDensity(), section.getWaterCut() };
+        section.getLiquidVelocity(), section.getLiquidDensity(), section.getMixtureDensity(), section.getWaterCut()};
   }
 }

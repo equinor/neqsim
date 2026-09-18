@@ -344,8 +344,8 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
   /** Built-in electrolyte GE systems expose the same fixed-role contract without Pitzer type checks. */
   @Test
   void electrolyteGeSystemsRegisterSharedHybridTopology() {
-    SystemEosGE[] systems = new SystemEosGE[] { new SystemDesmukhMather(313.15, 5.0),
-        new SystemKentEisenberg(313.15, 5.0) };
+    SystemEosGE[] systems = new SystemEosGE[] {new SystemDesmukhMather(313.15, 5.0),
+        new SystemKentEisenberg(313.15, 5.0)};
     for (SystemEosGE system : systems) {
       assertTrue(system.isHybridEosGeTopologyConfigured());
       assertTrue(system.getEquationOfStatePhase() instanceof PhaseEos);
@@ -461,7 +461,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
   /** Nearby water-rich gas-condensate states retain finite balanced hybrid solutions. */
   @Test
   void waterRichGasCondensateNearbyStatesConverge() {
-    double[][] conditions = new double[][] { { 303.15, 40.0 }, { 323.15, 60.0 } };
+    double[][] conditions = new double[][] {{303.15, 40.0}, {323.15, 60.0}};
     for (double[] condition : conditions) {
       SystemPitzer system = createGasOilAqueousSystem();
       system.setTemperature(condition[0]);

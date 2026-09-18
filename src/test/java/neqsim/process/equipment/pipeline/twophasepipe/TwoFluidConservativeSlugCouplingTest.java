@@ -33,7 +33,7 @@ class TwoFluidConservativeSlugCouplingTest {
 
   @Test
   void internalTransfersCancelForEveryPhaseOnANonuniformMesh() {
-    for (double waterCut : new double[] { 0.0, 0.4, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 0.4, 1.0}) {
       TwoFluidSection[] cells = cells(waterCut, 2.0);
       cells[1].setLength(0.7);
       cells[1].setPosition(1.35);
@@ -71,7 +71,7 @@ class TwoFluidConservativeSlugCouplingTest {
 
   @Test
   void gasFreeRestingLiquidHasNoArtificialPressurePulse() {
-    for (double waterCut : new double[] { 0.0, 0.4, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 0.4, 1.0}) {
       TwoFluidSection[] cells = cells(waterCut, 0.0);
       for (TwoFluidSection cell : cells) {
         cell.setGasHoldup(0.0);
@@ -99,7 +99,7 @@ class TwoFluidConservativeSlugCouplingTest {
     equations.setOutletBoundaryPressure(2.1e5);
     double[][] rates = equations.calcRHS(cells, 1.0);
     for (int cell = 0; cell < cells.length; cell++) {
-      double[] holdup = { cells[cell].getGasHoldup(), cells[cell].getOilHoldup(), cells[cell].getWaterHoldup() };
+      double[] holdup = {cells[cell].getGasHoldup(), cells[cell].getOilHoldup(), cells[cell].getWaterHoldup()};
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(0.0, rates[cell][phase], 1.0e-12);
         double expected = cell == cells.length - 1 ? -holdup[phase] * cells[cell].getArea() * 1.0e4 : 0.0;
@@ -134,7 +134,7 @@ class TwoFluidConservativeSlugCouplingTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setEnableInterfacialPressure(true);
     equations.setInletBoundaryState(feed);
-    double[][] rhs = equations.calcRHS(new TwoFluidSection[] { cell }, 1.0);
+    double[][] rhs = equations.calcRHS(new TwoFluidSection[] {cell}, 1.0);
     for (int variable = 0; variable < 6; variable++) {
       assertEquals(0.0, rhs[0][variable], 1e-8);
     }

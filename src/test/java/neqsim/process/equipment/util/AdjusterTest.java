@@ -183,7 +183,7 @@ public class AdjusterTest {
     neqsim.process.equipment.splitter.Splitter splitter = new neqsim.process.equipment.splitter.Splitter("splitter",
         feed);
     splitter.setSplitNumber(2);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
 
     // Initial guess: split 50/50
     neqsim.process.equipment.stream.Stream stream1 = new neqsim.process.equipment.stream.Stream("stream1",
@@ -207,7 +207,7 @@ public class AdjusterTest {
     // Setter: Adjusts the flow rate of the second outlet (index 1) of the splitter
     // Note: Splitter.setFlowRates takes an array of flow rates. -1 means calculated.
     adjuster.setAdjustedValueSetter((val) -> {
-      splitter.setFlowRates(new double[] { -1, val }, "kg/hr");
+      splitter.setFlowRates(new double[] {-1, val}, "kg/hr");
     });
 
     // Getter: Gets the current flow rate of the second outlet (index 1)

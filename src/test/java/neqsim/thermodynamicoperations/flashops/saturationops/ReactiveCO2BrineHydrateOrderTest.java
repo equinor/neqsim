@@ -24,11 +24,11 @@ import neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix;
 @Tag("slow")
 class ReactiveCO2BrineHydrateOrderTest {
   static SystemInterface brine(int order, double pressure, double saltScale, boolean reactive) {
-    String[] names = { "CO2", "water", "Na+", "K+", "Cl-" };
+    String[] names = {"CO2", "water", "Na+", "K+", "Cl-"};
     double sodium = saltScale * (3.0 / 95.0) / 0.05844277;
     double potassium = saltScale * (2.0 / 95.0) / 0.0745513;
-    double[] amounts = { 10.0, 1.0 / 0.01801528, sodium, potassium, sodium + potassium };
-    int[][] orders = { { 0, 1, 2, 3, 4 }, { 2, 3, 4, 0, 1 }, { 1, 0, 2, 3, 4 }, { 4, 3, 2, 1, 0 } };
+    double[] amounts = {10.0, 1.0 / 0.01801528, sodium, potassium, sodium + potassium};
+    int[][] orders = {{0, 1, 2, 3, 4}, {2, 3, 4, 0, 1}, {1, 0, 2, 3, 4}, {4, 3, 2, 1, 0}};
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(283.15, pressure);
     for (int component : orders[order]) {
       fluid.addComponent(names[component], amounts[component]);
@@ -52,7 +52,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = { 1, 2, 3 })
+  @ValueSource(ints = {1, 2, 3})
   void otherOrdersHaveTheSameQualifiedEndpoint(int order) {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
       SystemInterface fluid = brine(order, 50.0, 1.0, true);
@@ -62,7 +62,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "40,0.9", "60,1.1" })
+  @CsvSource({"40,0.9", "60,1.1"})
   void adjacentStatesPreservePermutationInvariance(double pressure, double saltScale) {
     SystemInterface first = brine(0, pressure, saltScale, true);
     SystemInterface second = brine(1, pressure, saltScale, true);
@@ -200,7 +200,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   private static void assertMolecularFugacitiesEqual(SystemInterface fluid) {
-    for (String component : new String[] { "CO2", "water" }) {
+    for (String component : new String[] {"CO2", "water"}) {
       double ratio = fluid.getPhase(0).getFugacity(component) / fluid.getPhase(1).getFugacity(component);
       assertEquals(0.0, Math.log(ratio), 1.0e-8);
     }

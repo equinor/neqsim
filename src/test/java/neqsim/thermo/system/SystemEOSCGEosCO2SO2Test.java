@@ -28,7 +28,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /** Pressure and material-balance regressions for the CO2/SO2 documentation mixture. */
 class SystemEOSCGEosCO2SO2Test extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @CsvSource({ "298.15, 50.0, 2", "300.0, 50.0, 1", "298.15, 48.0, 1", "350.0, 10.0, 1" })
+  @CsvSource({"298.15, 50.0, 2", "300.0, 50.0, 1", "298.15, 48.0, 1", "350.0, 10.0, 1"})
   void flashPreservesPressureCompositionAndPhaseProperties(double temperature, double pressure, int phaseCount) {
     SystemInterface fluid = new SystemEOSCGEos(temperature, pressure);
     fluid.addComponent("CO2", 0.95);
@@ -115,7 +115,7 @@ class SystemEOSCGEosCO2SO2Test extends neqsim.NeqSimTest {
           files.getJavaFileObjects(source.toFile())).call();
       assertTrue(Boolean.TRUE.equals(compiled), diagnostics.toString());
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { directory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> program = Class.forName("EosCgCo2So2Example", true, loader);

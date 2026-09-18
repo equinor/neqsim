@@ -80,9 +80,9 @@ public class GibbsReactorCO2ScenariosTest {
     // CO2 must be 1e6 moles/sec in all cases
     sys.addComponent("CO2", 1e6, "mole/sec");
     // Initialize other common components to 0 explicitly
-    String[] comps = new String[] { "hydrogen", "N2O3", "N2O", "nitrogen", "N2H4", "COS", "ammonia", "SO2", "SO3",
-        "NO2", "NO", "water", "H2S", "oxygen", "sulfuric acid", "nitric acid", "NH4NO3", "NH4HSO4", "formic acid",
-        "acetic acid", "methanol", "ethanol", "CO", "NH2OH", "S8", "HNO2" };
+    String[] comps = new String[] {"hydrogen", "N2O3", "N2O", "nitrogen", "N2H4", "COS", "ammonia", "SO2", "SO3", "NO2",
+        "NO", "water", "H2S", "oxygen", "sulfuric acid", "nitric acid", "NH4NO3", "NH4HSO4", "formic acid",
+        "acetic acid", "methanol", "ethanol", "CO", "NH2OH", "S8", "HNO2"};
     for (String c : comps) {
       try {
         sys.addComponent(c, 0.0, "mole/sec");
@@ -102,8 +102,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("water", 50.0);
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 30.0);
-    double[] expectedPpm = new double[] { 48.6, 0.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2" };
+    double[] expectedPpm = new double[] {48.6, 0.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "1", expectedNames, expectedPpm);
   }
 
@@ -115,8 +115,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 1.0);
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 30.0);
-    double[] expectedPpm = new double[] { 48.6, 1.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2" };
+    double[] expectedPpm = new double[] {48.6, 1.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
   }
 
@@ -129,8 +129,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 30.0);
     sys.addComponent("NO", 10.0);
-    double[] expectedPpm = new double[] { 47.3, 1.0, 14.5, 25.5, 0.0, 0.0, 1.5, 3.86 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2" };
+    double[] expectedPpm = new double[] {47.3, 1.0, 14.5, 25.5, 0.0, 0.0, 1.5, 3.86};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "3", expectedNames, expectedPpm);
   }
 
@@ -143,8 +143,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 80.0);
     sys.addComponent("NO", 10.0);
-    double[] expectedPpm = new double[] { 47.0, 1.0, 14.8, 75.0, 0.0, 0.0, 2.11, 3.02 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2" };
+    double[] expectedPpm = new double[] {47.0, 1.0, 14.8, 75.0, 0.0, 0.0, 2.11, 3.02};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "4", expectedNames, expectedPpm);
   }
 
@@ -156,8 +156,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 37.0);
     sys.addComponent("oxygen", 133.0);
     sys.addComponent("H2S", 28.0);
-    double[] expectedPpm = new double[] { 37.0, 0.0, 133.0 };
-    String[] expectedNames = new String[] { "SO2", "NO2", "oxygen" };
+    double[] expectedPpm = new double[] {37.0, 0.0, 133.0};
+    String[] expectedNames = new String[] {"SO2", "NO2", "oxygen"};
     runAndPrintWithAssertions(sys, "5", expectedNames, expectedPpm);
   }
 
@@ -168,8 +168,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("water", 10.0);
     sys.addComponent("SO2", 10.0);
     sys.addComponent("H2S", 19.0);
-    double[] expectedPpm = new double[] { 10.0, 10.0, 0.0, 0.0, 19.0 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S" };
+    double[] expectedPpm = new double[] {10.0, 10.0, 0.0, 0.0, 19.0};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S"};
     runAndPrintWithAssertions(sys, "6", expectedNames, expectedPpm);
   }
 
@@ -182,9 +182,9 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 10.0);
     sys.addComponent("H2S", 10.0);
-    double[] expectedPpm = new double[] { 13.7, 16.4, 0.0, 0.0, 0.0, 8.55, 0.0, 0.0, 2.16, 1.44, 0.0, 0.0 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2",
-        "sulfuric acid", "NH4HSO4", "NH4NO3", "S8" };
+    double[] expectedPpm = new double[] {13.7, 16.4, 0.0, 0.0, 0.0, 8.55, 0.0, 0.0, 2.16, 1.44, 0.0, 0.0};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2",
+        "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
     runAndPrintWithAssertions(sys, "7", expectedNames, expectedPpm);
   }
 
@@ -195,8 +195,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("water", 130.0);
     sys.addComponent("SO2", 300.0);
     sys.addComponent("oxygen", 275.0);
-    double[] expectedPpm = new double[] { 130.0, 300.0, 0.0, 275.0 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen" };
+    double[] expectedPpm = new double[] {130.0, 300.0, 0.0, 275.0};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen"};
     runAndPrintWithAssertions(sys, "8", expectedNames, expectedPpm);
   }
 
@@ -209,8 +209,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("SO2", 0.0);
     sys.addComponent("NO2", 100.0);
     sys.addComponent("oxygen", 300.0);
-    double[] expectedPpm = new double[] { 89.5, 0.0, 79.1, 295.6, 0.0, 0.0, 18.7, 2.09 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2" };
+    double[] expectedPpm = new double[] {89.5, 0.0, 79.1, 295.6, 0.0, 0.0, 18.7, 2.09};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
     runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
   }
 
@@ -223,9 +223,9 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 1.5);
     sys.addComponent("oxygen", 10.0);
     sys.addComponent("H2S", 9.9);
-    double[] expectedPpm = new double[] { 35, 15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 0.0, 0.4 };
-    String[] expectedNames = new String[] { "water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2",
-        "sulfuric acid", "NH4HSO4", "NH4NO3", "S8" };
+    double[] expectedPpm = new double[] {35, 15, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.5, 0.0, 0.4};
+    String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2",
+        "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
     runAndPrintWithAssertions(sys, "10", expectedNames, expectedPpm);
   }
 
@@ -275,8 +275,8 @@ public class GibbsReactorCO2ScenariosTest {
 
     // Since reactions are stopped, outlet composition should match inlet composition
     // The components should remain unchanged
-    String[] names = new String[] { "water", "NO2", "oxygen", "H2S" };
-    double[] expectedPpm = new double[] { 50.0, 10.0, 30.0, 5.0 };
+    String[] names = new String[] {"water", "NO2", "oxygen", "H2S"};
+    double[] expectedPpm = new double[] {50.0, 10.0, 30.0, 5.0};
     assertSelectedPpm(outSys, names, expectedPpm, 0.1,
         "Gas Phase Reactions Stopped - compositions should be unchanged");
   }

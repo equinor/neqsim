@@ -226,7 +226,7 @@ public class MaterialStrengthCurve implements Serializable {
           double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
           double tensilePa = dataSet.getDouble("minimumTensileStrength") * PSI_TO_PA;
           if (yieldPa > 0.0 && tensilePa > 0.0) {
-            return new double[] { yieldPa, tensilePa };
+            return new double[] {yieldPa, tensilePa};
           }
         }
       }
@@ -276,7 +276,7 @@ public class MaterialStrengthCurve implements Serializable {
    * @return two-element array with yield and tensile strength in Pa
    */
   private static double[] psiStrengths(double yieldPsi, double tensilePsi) {
-    return new double[] { yieldPsi * PSI_TO_PA, tensilePsi * PSI_TO_PA };
+    return new double[] {yieldPsi * PSI_TO_PA, tensilePsi * PSI_TO_PA};
   }
 
   /**
@@ -285,7 +285,7 @@ public class MaterialStrengthCurve implements Serializable {
    * @return temperature grid in K
    */
   private static double[] defaultCarbonSteelTemperatures() {
-    return new double[] { 293.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15, 1073.15 };
+    return new double[] {293.15, 373.15, 473.15, 573.15, 673.15, 773.15, 873.15, 973.15, 1073.15};
   }
 
   /**
@@ -294,7 +294,7 @@ public class MaterialStrengthCurve implements Serializable {
    * @return retained-strength factors
    */
   private static double[] defaultCarbonSteelFactors() {
-    return new double[] { 1.00, 0.95, 0.85, 0.72, 0.52, 0.32, 0.16, 0.07, 0.03 };
+    return new double[] {1.00, 0.95, 0.85, 0.72, 0.52, 0.32, 0.16, 0.07, 0.03};
   }
 
   /**

@@ -30,7 +30,7 @@ public class MethaneViscosityMethod extends Viscosity {
     }
 
     // The following is exactly the same as LBCViscosityMethod
-    double[] a = { 0.10230, 0.023364, 0.058533, -0.040758, 0.0093324 };
+    double[] a = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
     double T = phase.getPhase().getTemperature();
     double P = phase.getPhase().getPressure() / 10.0; // [MPa]

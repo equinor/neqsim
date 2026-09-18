@@ -21,13 +21,13 @@ public class BWRSComprehensiveTest {
   private static final Logger logger = LogManager.getLogger(BWRSComprehensiveTest.class);
 
   /** Temperatures [K] to test. */
-  private static final double[] TEMPERATURES = { 200.0, 250.0, 298.15, 350.0, 400.0 };
+  private static final double[] TEMPERATURES = {200.0, 250.0, 298.15, 350.0, 400.0};
 
   /** Pressures [bar] to test. */
-  private static final double[] PRESSURES = { 1.0, 5.0, 10.0, 30.0, 50.0 };
+  private static final double[] PRESSURES = {1.0, 5.0, 10.0, 30.0, 50.0};
 
   /** Methane mole fractions for composition sweep. */
-  private static final double[] CH4_FRACTIONS = { 1.0, 0.8, 0.5, 0.2, 0.0 };
+  private static final double[] CH4_FRACTIONS = {1.0, 0.8, 0.5, 0.2, 0.0};
 
   /**
    * Container for property comparison results at a single condition.
@@ -241,7 +241,7 @@ public class BWRSComprehensiveTest {
 
     // Test only at T >= 400K where volume solver reliably converges to gas root,
     // and at moderate pressures (P <= 30 bar) where linear mixing accuracy is reasonable.
-    double[] safePressures = { 1.0, 5.0, 10.0, 30.0 };
+    double[] safePressures = {1.0, 5.0, 10.0, 30.0};
     for (double P : safePressures) {
       PropertyResult r = compareAt(400.0, P, 0.0);
       results.add(r);
@@ -268,8 +268,8 @@ public class BWRSComprehensiveTest {
     List<PropertyResult> results = new ArrayList<PropertyResult>();
 
     // Use T >= 298K where volume solver reliably finds gas root for 80/20 mixture
-    double[] mixTemps = { 298.15, 350.0, 400.0 };
-    double[] mixPressures = { 1.0, 5.0, 10.0, 30.0 };
+    double[] mixTemps = {298.15, 350.0, 400.0};
+    double[] mixPressures = {1.0, 5.0, 10.0, 30.0};
 
     for (double T : mixTemps) {
       for (double P : mixPressures) {

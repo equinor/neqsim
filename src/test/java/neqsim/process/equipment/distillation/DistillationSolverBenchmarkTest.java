@@ -25,14 +25,14 @@ public class DistillationSolverBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(DistillationSolverBenchmarkTest.class);
 
   /** Components used in the column4.py C1 to C5 benchmark. */
-  private static final String[] COLUMN4_COMPONENTS = { "methane", "ethane", "propane", "i-butane", "n-butane",
-      "i-pentane", "n-pentane" };
+  private static final String[] COLUMN4_COMPONENTS = {"methane", "ethane", "propane", "i-butane", "n-butane",
+      "i-pentane", "n-pentane"};
   /** UniSim top vapor composition for the column4.py benchmark. */
-  private static final double[] COLUMN4_UNISIM_TOP_Y = { 0.073309694767772, 0.616960714136994, 7.33096220661988e-2,
-      7.31827732063146e-2, 7.22445086719427e-2, 4.93741528530644e-2, 4.16185342977135e-2 };
+  private static final double[] COLUMN4_UNISIM_TOP_Y = {0.073309694767772, 0.616960714136994, 7.33096220661988e-2,
+      7.31827732063146e-2, 7.22445086719427e-2, 4.93741528530644e-2, 4.16185342977135e-2};
   /** UniSim bottom liquid composition for the column4.py benchmark. */
-  private static final double[] COLUMN4_UNISIM_BOTTOM_X = { 1.08569588192724e-18, 2.15899905392992e-5,
-      1.27950427844865e-6, 2.23374369740334e-3, 1.87466392691616e-2, 0.421251245903268, 0.557745501635349 };
+  private static final double[] COLUMN4_UNISIM_BOTTOM_X = {1.08569588192724e-18, 2.15899905392992e-5,
+      1.27950427844865e-6, 2.23374369740334e-3, 1.87466392691616e-2, 0.421251245903268, 0.557745501635349};
   /** Atmospheric pressure used to convert column4.py barG inputs to bara. */
   private static final double COLUMN4_ATM_BARA = 1.01325;
 
@@ -219,11 +219,11 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void allSolversConvergeOnDeethanizer() {
-    DistillationColumn.SolverType[] solvers = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
         DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL };
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL};
 
     double[] gasFlows = new double[solvers.length];
     double[] liquidFlows = new double[solvers.length];
@@ -415,10 +415,10 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void substitutionSolversHandleSimpleBinarySystem() {
-    DistillationColumn.SolverType[] solvers = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
-        DistillationColumn.SolverType.SUM_RATES };
+        DistillationColumn.SolverType.SUM_RATES};
 
     for (DistillationColumn.SolverType solver : solvers) {
       SystemInterface sys = new SystemSrkEos(323.15, 10.0);
@@ -529,11 +529,11 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void singleTrayFastPathsReportSolvedState() {
-    DistillationColumn.SolverType[] solvers = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
         DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
+        DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
     for (int i = 0; i < solvers.length; i++) {
       DistillationColumn.SolverType solverType = solvers[i];
@@ -610,8 +610,8 @@ public class DistillationSolverBenchmarkTest {
 
     assertTrue(column.solved(), "Component balance case should converge");
 
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane" };
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane"};
 
     for (int i = 0; i < componentNames.length; i++) {
       String componentName = componentNames[i];
@@ -919,10 +919,9 @@ public class DistillationSolverBenchmarkTest {
   private DistillationColumn runColumn4Case(DistillationColumn.SolverType solverType) {
     SystemInterface baseFluid = createColumn4BaseFluid();
     Stream mainFeed = createColumn4Stream(baseFluid, "column4 main feed",
-        new double[] { 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 }, 1059.40430981003, 77.0000001251743, 4.2);
+        new double[] {0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0}, 1059.40430981003, 77.0000001251743, 4.2);
     Stream topFeed = createColumn4Stream(baseFluid, "column4 top feed",
-        new double[] { 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0 }, 1000.0, 32.14,
-        3.7);
+        new double[] {1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0}, 1000.0, 32.14, 3.7);
 
     DistillationColumn column = new DistillationColumn("column4 C1-C5", 10, true, false);
     column.addFeedStream(mainFeed, 6);
@@ -1020,8 +1019,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void solverComparisonOnLargerColumn() {
-    DistillationColumn.SolverType[] solvers = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-        DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.NEWTON };
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+        DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.NEWTON};
 
     for (DistillationColumn.SolverType solver : solvers) {
       Stream feed = new Stream("large_" + solver.name(), createDeethanizerFeed().clone());
@@ -1328,13 +1327,13 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void newtonLineSearchSelectsLowestFiniteTrial() {
-    double[] nonDescentResiduals = { 5.0, Double.NaN, 3.5, 4.0 };
+    double[] nonDescentResiduals = {5.0, Double.NaN, 3.5, 4.0};
     assertEquals(2, DistillationColumn.selectLowestFiniteResidualIndex(nonDescentResiduals, 4),
         "the lowest finite non-descent trial should be retained");
     assertEquals(-1,
-        DistillationColumn.selectLowestFiniteResidualIndex(new double[] { Double.NaN, Double.POSITIVE_INFINITY }, 2),
+        DistillationColumn.selectLowestFiniteResidualIndex(new double[] {Double.NaN, Double.POSITIVE_INFINITY}, 2),
         "an all-non-finite trial set should request restoration");
-    assertEquals(0, DistillationColumn.selectLowestFiniteResidualIndex(new double[] { 1.0, 1.0 }, 2),
+    assertEquals(0, DistillationColumn.selectLowestFiniteResidualIndex(new double[] {1.0, 1.0}, 2),
         "equal residuals should retain the first evaluated trial deterministically");
   }
 
@@ -1454,8 +1453,8 @@ public class DistillationSolverBenchmarkTest {
    */
   @Test
   public void murphreeEfficiencyWithDifferentSolvers() {
-    DistillationColumn.SolverType[] solvers = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
-        DistillationColumn.SolverType.INSIDE_OUT };
+    DistillationColumn.SolverType[] solvers = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+        DistillationColumn.SolverType.INSIDE_OUT};
 
     for (DistillationColumn.SolverType solver : solvers) {
       DistillationColumn column = runBinaryMurphreeColumn("murph_col_" + solver.name(), 0.85, solver);

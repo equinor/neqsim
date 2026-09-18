@@ -37,7 +37,7 @@ class NewtonSolverAnalysisTest {
    */
   @Test
   void benchmarkJAMAvsEJML() {
-    int[] sizes = { 3, 5, 10, 15, 20, 30 };
+    int[] sizes = {3, 5, 10, 15, 20, 30};
     int warmup = 2000;
     int N = 20000;
     Random rng = new Random(42);
@@ -108,7 +108,7 @@ class NewtonSolverAnalysisTest {
 
     // Also benchmark EJML with in-place solve (no copy)
     logger.info("=== EJML In-Place vs Copy Solve ===");
-    for (int n : new int[] { 10, 20 }) {
+    for (int n : new int[] {10, 20}) {
       double[][] aData = new double[n][n];
       double[] bData = new double[n];
       for (int i = 0; i < n; i++) {

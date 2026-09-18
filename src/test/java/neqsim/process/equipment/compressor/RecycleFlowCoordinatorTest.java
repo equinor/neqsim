@@ -20,7 +20,7 @@ class RecycleFlowCoordinatorTest {
     discharge.run();
 
     Splitter splitter = new Splitter("discharge splitter", discharge, 2);
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
     splitter.run();
     ThrottlingValve recycleValve = new ThrottlingValve("recycle valve", splitter.getSplitStream(1));
     recycleValve.getOutletStream().setFlowRate(800.0, "kg/hr");

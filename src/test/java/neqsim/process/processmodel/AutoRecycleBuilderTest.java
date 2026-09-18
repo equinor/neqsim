@@ -46,7 +46,7 @@ public class AutoRecycleBuilderTest {
 
     Separator separator = new Separator("separator", mixer.getOutletStream());
     Splitter splitter = new Splitter("gas splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -94,7 +94,7 @@ public class AutoRecycleBuilderTest {
     mixer.addStream(feed);
     Separator separator = new Separator("separator", mixer.getOutletStream());
     Splitter splitter = new Splitter("gas splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -131,7 +131,7 @@ public class AutoRecycleBuilderTest {
     separation.run();
 
     Splitter splitter = new Splitter("gas splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
     ProcessSystem gasHandling = new ProcessSystem("gas handling");
     gasHandling.add(splitter);
     gasHandling.run();

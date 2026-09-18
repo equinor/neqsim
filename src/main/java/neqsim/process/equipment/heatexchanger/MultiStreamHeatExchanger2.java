@@ -252,7 +252,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   private double[] residualFunctionOneUnknown() {
-    return new double[] { energyDiff() };
+    return new double[] {energyDiff()};
   }
 
   private double[][] numericalJacobiOneUnknown(List<Integer> unknownIndices) {
@@ -283,7 +283,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     if (Math.abs(A[0][0]) < 1e-12) {
       throw new ArithmeticException(SINGULAR_JACOBIAN_MSG);
     }
-    return new double[] { b[0] / A[0][0] };
+    return new double[] {b[0] / A[0][0]};
   }
 
   // ================================================================
@@ -416,7 +416,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       if (Math.abs(pinchResidual) < bestResidual) {
         bestResidual = Math.abs(pinchResidual);
         bestSegment = segment;
-        bestTemperatures = new double[] { outletTemps.get(outerIndex), outletTemps.get(energyBalancedIndex) };
+        bestTemperatures = new double[] {outletTemps.get(outerIndex), outletTemps.get(energyBalancedIndex)};
       }
       if (Math.abs(pinchResidual) < tolerance) {
         return true;
@@ -556,7 +556,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   private double[] residualFunctionTwoUnknowns() {
-    return new double[] { energyDiff(), pinch() - approachTemperature };
+    return new double[] {energyDiff(), pinch() - approachTemperature};
   }
 
   private double[][] numericalJacobiTwoUnknowns(List<Integer> unknownIndices) {
@@ -614,7 +614,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
     double dy = A[0][0] * b[1] - A[1][0] * b[0];
-    return new double[] { dx / det, dy / det };
+    return new double[] {dx / det, dy / det};
   }
 
   /**
@@ -749,7 +749,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   private double[] residualFunctionThreeUnknowns() {
-    return new double[] { energyDiff(), pinch() - approachTemperature, calculateUA() - UA };
+    return new double[] {energyDiff(), pinch() - approachTemperature, calculateUA() - UA};
   }
 
   private double[][] numericalJacobiThreeUnknowns(List<Integer> unknownIndices) {
@@ -790,7 +790,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double Dz = A[0][0] * (A[1][1] * b[2] - b[1] * A[2][1]) - A[0][1] * (A[1][0] * b[2] - b[1] * A[2][0])
         + b[0] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
 
-    return new double[] { Dx / D, Dy / D, Dz / D };
+    return new double[] {Dx / D, Dy / D, Dz / D};
   }
 
   // ================================================================
@@ -830,7 +830,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     /* --- gather every distinct load on either curve -------------------- */
     java.util.Set<Double> loadSet = new java.util.TreeSet<>();
-    for (String t : new String[] { "hot", "cold" }) {
+    for (String t : new String[] {"hot", "cold"}) {
       for (Map<String, Object> p : compositeCurvePoints.get(t)) {
         loadSet.add((Double) p.get("load")); // cast because Map<String,Object>
       }
@@ -945,7 +945,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     compositeCurvePoints = new java.util.HashMap<String, java.util.List<java.util.Map<String, Object>>>();
 
     /* build one curve for "hot" and one for "cold" ------------------- */
-    for (String t : new String[] { "hot", "cold" }) {
+    for (String t : new String[] {"hot", "cold"}) {
       /* ---- collect every unique temperature seen on this curve ---- */
       java.util.Set<Double> tempSet = new java.util.HashSet<>();
       for (int i = 0; i < streamTypes.size(); i++) {
@@ -1207,9 +1207,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
     double inlet = inletTemps.get(index);
     if ("hot".equals(streamTypes.get(index))) {
-      return new double[] { coldestColdInlet + approachTemperature, inlet };
+      return new double[] {coldestColdInlet + approachTemperature, inlet};
     }
-    return new double[] { inlet, hottestHotInlet - approachTemperature };
+    return new double[] {inlet, hottestHotInlet - approachTemperature};
   }
 
   /**

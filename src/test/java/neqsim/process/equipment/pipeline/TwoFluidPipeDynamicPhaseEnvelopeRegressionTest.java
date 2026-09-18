@@ -21,8 +21,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /** Phase-inventory transport and infinitesimal handoff checks, distinct from long-horizon dynamic qualification. */
 class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   private static final double INITIAL_MASS_FLOW = 0.3;
-  private static final String[] PHASE_NAMES = { "gas", "oil", "aqueous" };
-  private static final Phase[] REPORT_PHASES = { Phase.GAS, Phase.OIL, Phase.WATER };
+  private static final String[] PHASE_NAMES = {"gas", "oil", "aqueous"};
+  private static final Phase[] REPORT_PHASES = {Phase.GAS, Phase.OIL, Phase.WATER};
 
   enum PhaseCombination {
     GAS(true, false, false), OIL(false, true, false), WATER(false, false, true), GAS_OIL(true, true, false),
@@ -31,15 +31,15 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
     private final boolean[] present;
 
     PhaseCombination(boolean gas, boolean oil, boolean water) {
-      present = new boolean[] { gas, oil, water };
+      present = new boolean[] {gas, oil, water};
     }
   }
 
   @ParameterizedTest
   @EnumSource(PhaseCombination.class)
   void unchangedBoundariesPreserveSteadySolutionAcrossDynamicInitialization(PhaseCombination mixture) {
-    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] { TimeIntegrator.Method.RK2,
-        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION }) {
+    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] {TimeIntegrator.Method.RK2,
+        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION}) {
       TwoFluidPipe pipe = createPipe(mixture, method);
       double[] initialPressure = pipe.getPressureProfile();
       double[] initialLiquidHoldup = pipe.getLiquidHoldupProfile();
@@ -67,8 +67,8 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   @ParameterizedTest
   @EnumSource(PhaseCombination.class)
   void inletFlowStepConservesEachPhaseIncludingLiquidOnlyLimits(PhaseCombination mixture) {
-    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] { TimeIntegrator.Method.RK2,
-        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION }) {
+    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] {TimeIntegrator.Method.RK2,
+        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION}) {
       TwoFluidPipe pipe = createPipe(mixture, method);
       Stream feed = (Stream) pipe.getInletStream();
       double increasedFlow = 1.1 * INITIAL_MASS_FLOW;
@@ -139,7 +139,7 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
 
   @Test
   void steadyFlashCanIntroduceTheSecondLiquidAtEitherExactEndpoint() throws Exception {
-    for (double previousWaterCut : new double[] { 0.0, 1.0 }) {
+    for (double previousWaterCut : new double[] {0.0, 1.0}) {
       TwoFluidPipe pipe = createUnrunPipe(PhaseCombination.GAS_OIL_WATER, TimeIntegrator.Method.RK2);
       initializeSections(pipe);
       for (TwoFluidSection section : sections(pipe)) {
@@ -164,7 +164,7 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
 
   @Test
   void steadyFlashLiquidDisappearancePreservesTotalHydraulicHoldup() throws Exception {
-    for (PhaseCombination mixture : new PhaseCombination[] { PhaseCombination.GAS_OIL, PhaseCombination.GAS_WATER }) {
+    for (PhaseCombination mixture : new PhaseCombination[] {PhaseCombination.GAS_OIL, PhaseCombination.GAS_WATER}) {
       TwoFluidPipe pipe = createUnrunPipe(mixture, TimeIntegrator.Method.RK2);
       initializeSections(pipe);
       for (TwoFluidSection section : sections(pipe)) {
@@ -187,14 +187,14 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = PhaseCombination.class, names = { "OIL_WATER", "GAS_OIL_WATER" })
+  @EnumSource(value = PhaseCombination.class, names = {"OIL_WATER", "GAS_OIL_WATER"})
   void steadySlipClosureTransportsEachLocalEquilibriumPhaseMassFlow(PhaseCombination mixture) throws Exception {
     TwoFluidPipe pipe = createPipe(mixture, TimeIntegrator.Method.RK2);
     for (TwoFluidSection section : sections(pipe)) {
       SystemInterface flash = localEquilibriumState(pipe, section);
-      double[] actualMassFlow = { section.getGasMassPerLength() * section.getGasVelocity(),
+      double[] actualMassFlow = {section.getGasMassPerLength() * section.getGasVelocity(),
           section.getOilMassPerLength() * section.getOilVelocity(),
-          section.getWaterMassPerLength() * section.getWaterVelocity() };
+          section.getWaterMassPerLength() * section.getWaterVelocity()};
       for (int phase = 0; phase < 3; phase++) {
         double expectedMassFlow = flash.hasPhaseType(PHASE_NAMES[phase])
             ? INITIAL_MASS_FLOW * flash.getPhase(PHASE_NAMES[phase]).getMass() / flash.getMass("kg")
@@ -210,7 +210,7 @@ class TwoFluidPipeDynamicPhaseEnvelopeRegressionTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = PhaseCombination.class, names = { "OIL_WATER", "GAS_OIL_WATER" })
+  @EnumSource(value = PhaseCombination.class, names = {"OIL_WATER", "GAS_OIL_WATER"})
   void finalSteadyLiquidEnthalpyMatchesTheActualSlippingPhaseInventories(PhaseCombination mixture) throws Exception {
     TwoFluidPipe pipe = createPipe(mixture, TimeIntegrator.Method.RK2);
     for (TwoFluidSection section : sections(pipe)) {

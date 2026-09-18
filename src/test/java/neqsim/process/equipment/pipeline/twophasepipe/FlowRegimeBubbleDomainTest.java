@@ -41,7 +41,7 @@ class FlowRegimeBubbleDomainTest {
     FlowRegimeDetector detector = new FlowRegimeDetector();
     double gasFlow = 0.3;
     double rise = bubbleRiseVelocity(GAS_DENSITY, LIQUID_DENSITY);
-    for (double displacement : new double[] { -1.0e-6, -1.0e-9, -1.0e-12, 0.0, 1.0e-12, 1.0e-9, 1.0e-6 }) {
+    for (double displacement : new double[] {-1.0e-6, -1.0e-9, -1.0e-12, 0.0, 1.0e-12, 1.0e-9, 1.0e-6}) {
       TwoFluidSection section = section(gasFlow, -gasFlow - rise + displacement);
       double[] before = section.getStateVector();
       assertEquals(FlowRegime.SLUG, detector.detectFlowRegime(section), "transport displacement=" + displacement);
@@ -53,7 +53,7 @@ class FlowRegimeBubbleDomainTest {
   @Test
   void positiveAdmissibleBubbleFractionsRemainBubbleForCocurrentAndCountercurrentFlow() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
-    for (double liquidFlow : new double[] { -0.05, 0.0, 0.2 }) {
+    for (double liquidFlow : new double[] {-0.05, 0.0, 0.2}) {
       TwoFluidSection section = section(0.02, liquidFlow);
       double inferredVoid = section.getSuperficialGasVelocity() / bubbleTransport(section);
       assertTrue(inferredVoid > 0.0 && inferredVoid < 0.25);

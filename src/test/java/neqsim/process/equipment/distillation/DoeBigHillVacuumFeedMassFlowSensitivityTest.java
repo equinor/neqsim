@@ -21,7 +21,7 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
   @Timeout(value = 300, unit = TimeUnit.SECONDS)
   public void feedMassFlowScreenReturnsQualifiedImmutablePoints() {
     OperatingInputs baseline = baselineInputs();
-    double[] massFlows = { 980.0, 1000.0, 1020.0 };
+    double[] massFlows = {980.0, 1000.0, 1020.0};
 
     DoeBigHillVacuumFeedMassFlowSensitivity sensitivity = DoeBigHillVacuumFeedMassFlowSensitivity
         .run("Big Hill vacuum feed-mass-flow screen", baseline, massFlows);
@@ -95,21 +95,21 @@ public class DoeBigHillVacuumFeedMassFlowSensitivityTest {
     OperatingInputs baseline = baselineInputs();
 
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(" ", baseline, new double[] { 980.0, 1020.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run(" ", baseline, new double[] {980.0, 1020.0}));
     assertThrows(NullPointerException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", null, new double[] { 980.0, 1020.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", null, new double[] {980.0, 1020.0}));
     assertThrows(NullPointerException.class,
         () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, null));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] {1000.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0, Double.NaN }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] {1000.0, Double.NaN}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1000.0, 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] {1000.0, 1000.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 1020.0, 980.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] {1020.0, 980.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] { 0.0, 1000.0 }));
+        () -> DoeBigHillVacuumFeedMassFlowSensitivity.run("screen", baseline, new double[] {0.0, 1000.0}));
   }
 
   private static OperatingInputs baselineInputs() {

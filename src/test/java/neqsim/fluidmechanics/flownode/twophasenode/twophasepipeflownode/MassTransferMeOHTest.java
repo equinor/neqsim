@@ -200,7 +200,7 @@ public class MassTransferMeOHTest {
    */
   @Test
   void testMassTransferWithDifferentLengths() {
-    double[] lengths = { 0.001, 0.01, 0.1 };
+    double[] lengths = {0.001, 0.01, 0.1};
     double[] tegInGasAtLength = new double[lengths.length];
 
     for (int i = 0; i < lengths.length; i++) {

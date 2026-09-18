@@ -8,7 +8,7 @@ import org.netlib.util.doubleW;
 /** Pressure at a state must not depend on the temperature iteration history. */
 class EOSCGTemperatureHistoryTest {
   @ParameterizedTest
-  @ValueSource(doubles = { -5.0e-8, 5.0e-8 })
+  @ValueSource(doubles = {-5.0e-8, 5.0e-8})
   void smallTemperatureStepsMatchFreshState(double temperatureStep) {
     EOSCG reused = new EOSCG();
     double[] composition = new double[29];

@@ -17,7 +17,7 @@ class TwoFluidPressureInterpolationTest {
   @Test
   void zeroCorrectionRetainsEveryOriginalFluxBit() {
     AUSMPlusFluxCalculator calculator = new AUSMPlusFluxCalculator();
-    for (double velocity : new double[] { -20.0, -1.0, -0.0, 0.0, 1.0, 20.0 }) {
+    for (double velocity : new double[] {-20.0, -1.0, -0.0, 0.0, 1.0, 20.0}) {
       PhaseState left = new PhaseState(2.0, velocity, 1.2e5, 10.0, 1.0e5, 0.3);
       PhaseState right = new PhaseState(5.0, 0.5 * velocity, 1.0e5, 12.0, 2.0e5, 0.7);
       PhaseFlux legacy = calculator.calcPhaseFlux(left, right, 0.2);
@@ -27,7 +27,7 @@ class TwoFluidPressureInterpolationTest {
 
     TwoFluidConservationEquations equations = equations();
     assertEquals(0.0, equations.getPressureInterpolationTimeScale(), 0.0);
-    TwoFluidSection[] cells = checkerboard(new double[] { 0.4, 0.3, 0.3 });
+    TwoFluidSection[] cells = checkerboard(new double[] {0.4, 0.3, 0.3});
     double[][] baseline = equations.evaluateTransactional(copy(cells), 1.0).getRates();
     equations.setPressureInterpolationTimeScale(0.01);
     equations.evaluateTransactional(copy(cells), 1.0);
@@ -43,7 +43,7 @@ class TwoFluidPressureInterpolationTest {
     double area = 0.2;
     PhaseFlux original = calculator.calcPhaseFlux(left, right, area);
     double initialFaceVelocity = original.massFlux / (left.holdup * left.density * area);
-    for (double correction : new double[] { -3.0, 3.0 }) {
+    for (double correction : new double[] {-3.0, 3.0}) {
       double faceVelocity = initialFaceVelocity + correction;
       PhaseState donor = faceVelocity >= 0.0 ? left : right;
       PhaseFlux corrected = calculator.calcPhaseFlux(left, right, area, correction);
@@ -75,7 +75,7 @@ class TwoFluidPressureInterpolationTest {
     assertEquals(0.0, calculator.calcPhaseFlux(absent, present, 0.2, 1.0).massFlux, 0.0);
     assertEquals(0.0, calculator.calcPhaseFlux(present, absent, 0.2, -1.0).massFlux, 0.0);
     assertEquals(-0.8, calculator.calcPhaseFlux(absent, present, 0.2, -1.0).massFlux, 1.0e-15);
-    for (double holdup : new double[] { 1.0e-10, 1.0e-16, 1.0e-24 }) {
+    for (double holdup : new double[] {1.0e-10, 1.0e-16, 1.0e-24}) {
       PhaseState trace = new PhaseState(2.0, 0.0, 1.0e5, 10.0, 100.0, holdup);
       PhaseFlux flux = calculator.calcPhaseFlux(trace, present, 0.2, 1.0);
       assertTrue(flux.massFlux > 0.0);
@@ -94,7 +94,7 @@ class TwoFluidPressureInterpolationTest {
    */
   @Test
   void closedPressureModeHasTheExpectedDampingRatesAndConservesEachPhase() {
-    for (double[] fractions : new double[][] { { 1.0, 0.0, 0.0 }, { 0.4, 0.3, 0.3 } }) {
+    for (double[] fractions : new double[][] {{1.0, 0.0, 0.0}, {0.4, 0.3, 0.3}}) {
       TwoFluidSection[] cells = checkerboard(fractions);
       TwoFluidConservationEquations equations = equations();
       TransactionalEvaluation blind = equations.evaluateTransactional(copy(cells), 1.0);
@@ -112,7 +112,7 @@ class TwoFluidPressureInterpolationTest {
       equations.setPressureInterpolationTimeScale(timeScale);
       TransactionalEvaluation corrected = equations.evaluateTransactional(copy(cells), 1.0);
       double[][] rates = corrected.getRates();
-      double[] reference = { -1.0, 3.0, -3.0, 1.0 };
+      double[] reference = {-1.0, 3.0, -3.0, 1.0};
       for (int phase = 0; phase < 3; phase++) {
         double inventoryRate = 0.0;
         double alternatingRate = 0.0;
@@ -136,14 +136,14 @@ class TwoFluidPressureInterpolationTest {
   /** Affine preservation applies to the added term; this does not claim a generally well-balanced gravity operator. */
   @Test
   void constantAndAffinePressuresAddNoFluxOnNonuniformCellsWithChangingAreaAndDensity() {
-    double[] lengths = { 1.0, 2.0, 4.0, 2.0, 1.0, 2.0 };
-    for (double gradient : new double[] { 0.0, -1024.0 }) {
+    double[] lengths = {1.0, 2.0, 4.0, 2.0, 1.0, 2.0};
+    for (double gradient : new double[] {0.0, -1024.0}) {
       TwoFluidSection[] cells = new TwoFluidSection[lengths.length];
       double position = 0.0;
       for (int cell = 0; cell < cells.length; cell++) {
         double center = position + 0.5 * lengths[cell];
         cells[cell] = section(center, lengths[cell], 0.1 + 0.02 * cell, 2.0e6 + gradient * center,
-            new double[] { 0.4, 0.3, 0.3 });
+            new double[] {0.4, 0.3, 0.3});
         cells[cell].setGasDensity(10.0 + cell);
         cells[cell].setOilDensity(800.0 + 10.0 * cell);
         cells[cell].setWaterDensity(1000.0 + 10.0 * cell);
@@ -161,7 +161,7 @@ class TwoFluidPressureInterpolationTest {
 
   @Test
   void externalTransportAndPhaseSourcesRemainInTheExactCellLedger() {
-    TwoFluidSection[] cells = checkerboard(new double[] { 0.4, 0.3, 0.3 });
+    TwoFluidSection[] cells = checkerboard(new double[] {0.4, 0.3, 0.3});
     for (int cell = 0; cell < cells.length; cell++) {
       cells[cell].setGasVelocity(0.4);
       cells[cell].setLiquidVelocity(0.15);
@@ -187,11 +187,11 @@ class TwoFluidPressureInterpolationTest {
   @Test
   void invalidTrialsAndUnsupportedDonorsCannotReplaceRetainedDiagnostics() {
     TwoFluidConservationEquations equations = equations();
-    TwoFluidSection[] cells = checkerboard(new double[] { 0.4, 0.3, 0.3 });
+    TwoFluidSection[] cells = checkerboard(new double[] {0.4, 0.3, 0.3});
     equations.calcRHS(copy(cells), 1.0);
     double[][] retained = equations.getLastPhaseMassFaceFluxes();
     equations.setPressureInterpolationTimeScale(0.01);
-    for (double invalid : new double[] { -0.01, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {-0.01, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> equations.setPressureInterpolationTimeScale(invalid));
       assertEquals(0.01, equations.getPressureInterpolationTimeScale(), 0.0);
     }
@@ -293,10 +293,10 @@ class TwoFluidPressureInterpolationTest {
   }
 
   private static void assertFluxBits(PhaseFlux expected, PhaseFlux actual) {
-    double[] before = { expected.massFlux, expected.momentumFlux, expected.energyFlux, expected.holdupFlux,
-        expected.interfacePressure, expected.interfaceHoldup };
-    double[] after = { actual.massFlux, actual.momentumFlux, actual.energyFlux, actual.holdupFlux,
-        actual.interfacePressure, actual.interfaceHoldup };
+    double[] before = {expected.massFlux, expected.momentumFlux, expected.energyFlux, expected.holdupFlux,
+        expected.interfacePressure, expected.interfaceHoldup};
+    double[] after = {actual.massFlux, actual.momentumFlux, actual.energyFlux, actual.holdupFlux,
+        actual.interfacePressure, actual.interfaceHoldup};
     for (int field = 0; field < before.length; field++) {
       assertEquals(Double.doubleToLongBits(before[field]), Double.doubleToLongBits(after[field]));
     }

@@ -81,7 +81,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
   @Test
   void detailedCycleClosesFuelEnergyAndPublishesCombustionExhaust() {
     double previousPower = 0.0;
-    for (double flowRate : new double[] { 1000.0, 2000.0 }) {
+    for (double flowRate : new double[] {1000.0, 2000.0}) {
       SystemInterface fluid = new SystemSrkEos(323.15, 2.0);
       fluid.addComponent("methane", 1.0);
       Stream fuel = new Stream("methane fuel", fluid);

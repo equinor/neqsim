@@ -150,7 +150,7 @@ class FieldDevelopmentDesignOrchestratorTest {
   @DisplayName("TORG Tests")
   class TorgTests {
     @ParameterizedTest
-    @CsvSource({ "-30.0, 243.15", "15.0, 288.15" })
+    @CsvSource({"-30.0, 243.15", "15.0, 288.15"})
     void shouldPreserveAmbientTemperatureDuringTorgReapplication(double minAmbientCelsius, double expectedKelvin) {
       TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("TEST-001")
           .addStandard(StandardType.API_12J.getDesignStandardCategory(), StandardType.API_12J)

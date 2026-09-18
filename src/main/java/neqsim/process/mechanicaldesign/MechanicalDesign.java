@@ -1772,7 +1772,7 @@ public class MechanicalDesign implements java.io.Serializable {
     table[1][0] = getProcessEquipment().getName();
     table[1][1] = Double.toString(getWeightTotal());
     table[1][2] = Double.toString(getVolumeTotal());
-    String[] names = { "", "Volume", "Weight" };
+    String[] names = {"", "Volume", "Weight"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);

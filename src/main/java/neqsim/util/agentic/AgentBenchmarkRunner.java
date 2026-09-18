@@ -41,8 +41,8 @@ public final class AgentBenchmarkRunner {
 
   /** Problems the declared description does not fully determine, with the missing input. */
   private static final String[][] UNDERDETERMINED = {
-      { "gas_pipeline_pressure_drop", "no flow rate or gas composition declared" },
-      { "vessel_blowdown_50pct_time", "no vessel volume or orifice size declared" } };
+      {"gas_pipeline_pressure_drop", "no flow rate or gas composition declared"},
+      {"vessel_blowdown_50pct_time", "no vessel volume or orifice size declared"}};
 
   /** Utility class. */
   private AgentBenchmarkRunner() {

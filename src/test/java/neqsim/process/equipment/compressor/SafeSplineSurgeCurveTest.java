@@ -24,11 +24,11 @@ public class SafeSplineSurgeCurveTest {
 
   @Test
   public void testSurgeCurve10250() {
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-        6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+        6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-        149.54, 150.0 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+        149.54, 150.0};
 
     // Initialize curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(flow10250, head10250);
@@ -116,17 +116,17 @@ public class SafeSplineSurgeCurveTest {
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-        6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+        6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-        149.54, 150 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+        149.54, 150};
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = process1.addUnit("1st stage anti surge splitter", "splitter");
-    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
+    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
     splitter1.run();
 
     Calculator antisurgeCalculator = process1.addUnit("anti surge calculator", "calculator");
@@ -247,18 +247,18 @@ public class SafeSplineSurgeCurveTest {
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-        6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+        6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-        149.54, 150 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+        149.54, 150};
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = new neqsim.process.equipment.splitter.Splitter("1st stage anti surge splitter",
         firstStageCompressor.getOutletStream());
-    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
+    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
     splitter1.run();
     process1.add(splitter1);
 
@@ -342,8 +342,8 @@ public class SafeSplineSurgeCurveTest {
   @Test
   public void testSinglePointSurge() {
     // Single point surge for a single-speed compressor
-    double[] singleFlow = { 5607.45 }; // Minimum flow point
-    double[] singleHead = { 150.0 }; // Corresponding head
+    double[] singleFlow = {5607.45}; // Minimum flow point
+    double[] singleHead = {150.0}; // Corresponding head
 
     // Create single-point surge curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(singleFlow, singleHead);
@@ -380,8 +380,8 @@ public class SafeSplineSurgeCurveTest {
   @Test
   public void testSinglePointStoneWall() {
     // Single point stone wall for a single-speed compressor
-    double[] singleFlow = { 9758.49 }; // Maximum flow point (choke)
-    double[] singleHead = { 112.65 }; // Corresponding head
+    double[] singleFlow = {9758.49}; // Maximum flow point (choke)
+    double[] singleHead = {112.65}; // Corresponding head
 
     // Create single-point stone wall curve
     SafeSplineStoneWallCurve curve = new SafeSplineStoneWallCurve(singleFlow, singleHead);
@@ -437,26 +437,25 @@ public class SafeSplineSurgeCurveTest {
     comp.setOutletPressure(100.0); // bara
 
     // Set up compressor chart with single speed curve
-    double[] chartConditions = new double[] { 25.0, 50.0, 50.0, 20.0 };
-    double[] speed = new double[] { 10250 };
+    double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
+    double[] speed = new double[] {10250};
     double[][] flow = new double[][] {
-        { 5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49 } };
-    double[][] head = new double[][] {
-        { 150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65 } };
-    double[][] polyEff = new double[][] { { 78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0 } };
+        {5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49}};
+    double[][] head = new double[][] {{150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65}};
+    double[][] polyEff = new double[][] {{78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0}};
 
     comp.setSpeed(10250);
     comp.getCompressorChart().setCurves(chartConditions, speed, flow, head, flow, polyEff);
     comp.getCompressorChart().setHeadUnit("kJ/kg");
 
     // Set single-point surge curve (minimum flow point)
-    double[] surgeFlow = new double[] { 5607.45 };
-    double[] surgeHead = new double[] { 150.0 };
+    double[] surgeFlow = new double[] {5607.45};
+    double[] surgeHead = new double[] {150.0};
     comp.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeFlow, surgeHead);
 
     // Set single-point stone wall curve (maximum flow point)
-    double[] stoneWallFlow = new double[] { 9758.49 };
-    double[] stoneWallHead = new double[] { 112.65 };
+    double[] stoneWallFlow = new double[] {9758.49};
+    double[] stoneWallHead = new double[] {112.65};
     comp.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow, stoneWallHead);
 
     // Run the compressor

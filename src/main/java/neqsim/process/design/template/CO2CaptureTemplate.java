@@ -408,15 +408,15 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] { "SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve" };
+    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve"};
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] { "Treated Gas - CO2-depleted gas stream",
+    return new String[] {"Treated Gas - CO2-depleted gas stream",
         "CO2 Product - High purity CO2 from regenerator overhead", "Flash Gas - Hydrocarbon-rich gas from flash drum",
-        "Heat Duty - Reboiler heat requirement" };
+        "Heat Duty - Reboiler heat requirement"};
   }
 
   /** {@inheritDoc} */

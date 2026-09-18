@@ -36,11 +36,11 @@ public final class DoeBigHillSweetAssay {
   public static final String PIANO_ASSAY_URL = "https://www.spr.doe.gov/reports/Assays/2021/BigHillSwPIANO.xlsx";
 
   private static final double GAS_MASS_PERCENT = 1.70;
-  private static final String[] GAS_COMPONENT_NAMES = { "ethane", "propane", "i-butane", "n-butane" };
-  private static final double[] GAS_COMPONENT_WEIGHT_PERCENT = { 0.09, 10.38, 10.21, 45.95 };
+  private static final String[] GAS_COMPONENT_NAMES = {"ethane", "propane", "i-butane", "n-butane"};
+  private static final double[] GAS_COMPONENT_WEIGHT_PERCENT = {0.09, 10.38, 10.21, 45.95};
   private static final double GAS_SUBSET_WEIGHT_PERCENT = 66.63;
   private static final double C5_175_MOLAR_MASS_KG_PER_MOL = 0.07915383665629189;
-  private static final double[] VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT = { 18.44, 12.84, 11.56 };
+  private static final double[] VACUUM_SCREENING_SOURCE_WEIGHT_PERCENT = {18.44, 12.84, 11.56};
   private static final double VACUUM_SCREENING_WHOLE_CRUDE_MASS_PERCENT = 42.84;
 
   private DoeBigHillSweetAssay() {

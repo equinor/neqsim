@@ -135,7 +135,7 @@ class TwoFluidPipeUnsplitPreparationTest {
 
   @Test
   void frozenEosHandoffMatchesActualSteadyPhaseDensitiesWithoutChangingThePipe() throws Exception {
-    for (boolean threePhase : new boolean[] { false, true }) {
+    for (boolean threePhase : new boolean[] {false, true}) {
       TwoFluidPipe pipe = createPipe(threePhase, true);
       PublishedState published = new PublishedState(pipe);
       PhaseDensityModel density = pipe.createUnsplitDensityModel();
@@ -152,7 +152,7 @@ class TwoFluidPipeUnsplitPreparationTest {
       for (int cell = 0; cell < accepted.length; cell++) {
         TwoFluidSection section = accepted[cell];
         double[] actual = density.calculate(cell, section.getStateVector(), section.getPressure(), 0.0);
-        double[] reference = { section.getGasDensity(), section.getOilDensity(), section.getWaterDensity() };
+        double[] reference = {section.getGasDensity(), section.getOilDensity(), section.getWaterDensity()};
         for (int phase = 0; phase < 3; phase++) {
           assertTrue(Double.isFinite(actual[phase]) && actual[phase] > 0.0);
           if (section.getStateVector()[phase] > 0.0) {
@@ -169,7 +169,7 @@ class TwoFluidPipeUnsplitPreparationTest {
 
   @Test
   void preparesPureGasAndThreePhaseSteadyStatesWithAnIndependentAcceptedMassLedger() throws Exception {
-    for (boolean threePhase : new boolean[] { false, true }) {
+    for (boolean threePhase : new boolean[] {false, true}) {
       TwoFluidPipe pipe = createPipe(threePhase, true);
       pipe.setEnableCoupledPressureMomentum(true);
       pipe.setImplicitInterfacialPressureCoupling(true);
@@ -230,9 +230,9 @@ class TwoFluidPipeUnsplitPreparationTest {
     // double every density at unchanged occupied volume while conserving its total phase mass.
     // Exactly absent phases still need a positive algebraic density during nonlinear probes.
     PhaseDensityModel incompatible = (cell, state, pressure,
-        time) -> new double[] { accepted[cell].getGasDensity() * (time > start ? 2.0 : 1.0),
+        time) -> new double[] {accepted[cell].getGasDensity() * (time > start ? 2.0 : 1.0),
             absentPhaseDensity(accepted[cell].getOilMassPerLength(), accepted[cell].getOilDensity()),
-            absentPhaseDensity(accepted[cell].getWaterMassPerLength(), accepted[cell].getWaterDensity()) };
+            absentPhaseDensity(accepted[cell].getWaterMassPerLength(), accepted[cell].getWaterDensity())};
     UnsplitTransientSolver solver = solver();
     solver.setMaximumIterations(1);
 
@@ -295,7 +295,7 @@ class TwoFluidPipeUnsplitPreparationTest {
     PhaseDensityModel neverCalled = (cell, state, pressure, time) -> {
       throw new AssertionError("Invalid inputs must fail before density evaluation");
     };
-    for (double invalid : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> pipe.prepareUnsplitTransient(invalid, solver(), neverCalled));
     }
     assertThrows(IllegalArgumentException.class, () -> pipe.prepareUnsplitTransient(1.0e-4, null, neverCalled));
@@ -445,14 +445,14 @@ class TwoFluidPipeUnsplitPreparationTest {
 
   /** Numerical section state whose mutation would change accepted profiles or subsequent operators. */
   private static double[] sectionProperties(TwoFluidSection section) {
-    return new double[] { section.getPosition(), section.getLength(), section.getDiameter(), section.getInclination(),
+    return new double[] {section.getPosition(), section.getLength(), section.getDiameter(), section.getInclination(),
         section.getPressure(), section.getTemperature(), section.getGasDensity(), section.getOilDensity(),
         section.getWaterDensity(), section.getLiquidDensity(), section.getGasVelocity(), section.getOilVelocity(),
         section.getWaterVelocity(), section.getLiquidVelocity(), section.getGasHoldup(), section.getOilHoldup(),
         section.getWaterHoldup(), section.getLiquidHoldup(), section.getWaterCut(), section.getGasViscosity(),
         section.getOilViscosity(), section.getWaterViscosity(), section.getLiquidViscosity(),
         section.getGasSoundSpeed(), section.getLiquidSoundSpeed(), section.getGasWallShear(),
-        section.getLiquidWallShear(), section.getInterfacialShear(), section.getEntrainmentFraction() };
+        section.getLiquidWallShear(), section.getInterfacialShear(), section.getEntrainmentFraction()};
   }
 
   /** Compare all rows of a defensive numerical ledger. */
@@ -496,7 +496,7 @@ class TwoFluidPipeUnsplitPreparationTest {
       outlet = pipe.getOutletStream();
       outletFluid = outlet.getFluid();
       inletFluid = pipe.getInletStream().getFluid();
-      outletProperties = new double[] { outlet.getPressure(), outlet.getTemperature(), outlet.getFlowRate("kg/sec") };
+      outletProperties = new double[] {outlet.getPressure(), outlet.getTemperature(), outlet.getFlowRate("kg/sec")};
       outletComposition = outletFluid.getMolarComposition().clone();
       inletComposition = inletFluid.getMolarComposition().clone();
       profiles = profiles(pipe);
@@ -518,7 +518,7 @@ class TwoFluidPipeUnsplitPreparationTest {
       assertSame(outletFluid, pipe.getOutletStream().getFluid());
       assertSame(inletFluid, pipe.getInletStream().getFluid());
       assertArrayEquals(outletProperties,
-          new double[] { outlet.getPressure(), outlet.getTemperature(), outlet.getFlowRate("kg/sec") }, 0.0);
+          new double[] {outlet.getPressure(), outlet.getTemperature(), outlet.getFlowRate("kg/sec")}, 0.0);
       assertArrayEquals(outletComposition, outlet.getFluid().getMolarComposition(), 0.0);
       assertArrayEquals(inletComposition, inletFluid.getMolarComposition(), 0.0);
       assertMatrixEquals(profiles, profiles(pipe));
@@ -536,10 +536,10 @@ class TwoFluidPipeUnsplitPreparationTest {
     }
 
     private static double[][] profiles(TwoFluidPipe pipe) {
-      return new double[][] { pipe.getPressureProfile(), pipe.getTemperatureProfile(), pipe.getLiquidHoldupProfile(),
+      return new double[][] {pipe.getPressureProfile(), pipe.getTemperatureProfile(), pipe.getLiquidHoldupProfile(),
           pipe.getGasVelocityProfile(), pipe.getLiquidVelocityProfile(), pipe.getOilVelocityProfile(),
           pipe.getWaterVelocityProfile(), pipe.getGasMassFlowProfile(), pipe.getOilMassFlowProfile(),
-          pipe.getWaterMassFlowProfile() };
+          pipe.getWaterMassFlowProfile()};
     }
   }
 }

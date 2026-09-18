@@ -207,7 +207,7 @@ public class AdvectionSchemeComparisonTest {
     assertEquals(0.0, FluxLimiter.mc(0.0), 1e-10);
 
     // For any r > 0, MC should be bounded by [0, 2]
-    for (double testR : new double[] { 0.1, 0.5, 1.0, 2.0, 5.0, 10.0 }) {
+    for (double testR : new double[] {0.1, 0.5, 1.0, 2.0, 5.0, 10.0}) {
       double mcTest = FluxLimiter.mc(testR);
       assertTrue(mcTest >= 0 && mcTest <= 2.0, "MC limiter should be in [0, 2] for r=" + testR);
     }

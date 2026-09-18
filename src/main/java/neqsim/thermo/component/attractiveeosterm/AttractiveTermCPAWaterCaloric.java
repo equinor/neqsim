@@ -29,8 +29,8 @@ public class AttractiveTermCPAWaterCaloric extends AttractiveTermMatCop5PRUMR {
    * @throws IllegalArgumentException if the component is not water
    */
   public AttractiveTermCPAWaterCaloric(ComponentEosInterface component) {
-    super(component, new double[] { 0.6670190973128074, -0.25656681951681287, 1.3687767086793399, -3.1891110889699097,
-        5.218580308820144 });
+    super(component, new double[] {0.6670190973128074, -0.25656681951681287, 1.3687767086793399, -3.1891110889699097,
+        5.218580308820144});
     if (!"water".equals(component.getComponentName())) {
       throw new IllegalArgumentException("The caloric CPA alpha calibration is only defined for water");
     }

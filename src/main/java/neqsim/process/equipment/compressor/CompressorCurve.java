@@ -22,10 +22,10 @@ public class CompressorCurve implements java.io.Serializable {
    * Constructor for CompressorCurve.
    */
   public CompressorCurve() {
-    flow = new double[] { 453.2, 600.0, 750.0 };
+    flow = new double[] {453.2, 600.0, 750.0};
     flowPolytropicEfficiency = Arrays.copyOf(flow, flow.length);
-    head = new double[] { 1000.0, 900.0, 800.0 };
-    polytropicEfficiency = new double[] { 78.0, 79.0, 78.0 };
+    head = new double[] {1000.0, 900.0, 800.0};
+    polytropicEfficiency = new double[] {78.0, 79.0, 78.0};
   }
 
   /**

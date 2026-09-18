@@ -288,8 +288,8 @@ public class NeqSimLeachman {
     double dens = getMolarDensity();
     Leachman.propertiesLeachman(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g,
         jt, kappa, A);
-    double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
-        cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
+    double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
+        cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
     return properties;
   }
 

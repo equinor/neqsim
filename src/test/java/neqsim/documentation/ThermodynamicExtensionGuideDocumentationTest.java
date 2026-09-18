@@ -69,7 +69,7 @@ class ThermodynamicExtensionGuideDocumentationTest {
           null, manager.getJavaFileObjectsFromFiles(sources)).call();
       assertTrue(compiled, "Extension guide failed to compile:\n" + diagnostics);
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       Class<?> testClass = loader.loadClass("example.thermo.ExtensionGuideExampleTest");
       Object instance = testClass.getDeclaredConstructor().newInstance();
@@ -90,7 +90,7 @@ class ThermodynamicExtensionGuideDocumentationTest {
 
   @Test
   void phaseEnvelopeApiUsedByPythonReturnsPairedPhysicalCoordinates() {
-    for (SystemInterface fluid : new SystemInterface[] { new SystemSrkEos(250.0, 1.0), new SystemPrEos(250.0, 1.0) }) {
+    for (SystemInterface fluid : new SystemInterface[] {new SystemSrkEos(250.0, 1.0), new SystemPrEos(250.0, 1.0)}) {
       fluid.addComponent("methane", 0.8);
       fluid.addComponent("ethane", 0.1);
       fluid.addComponent("propane", 0.1);

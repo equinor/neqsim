@@ -67,8 +67,8 @@ class EngineeringBlockFlowProjectionTest {
     for (String name : Arrays.asList("separator", "heater", "compressor", "oil", "gas", "fuel")) {
       graph.addNode(new EngineeringNode(name, EngineeringNode.Kind.EQUIPMENT, name, name));
     }
-    String[][] links = { { "separator", "heater" }, { "heater", "oil" }, { "separator", "compressor" },
-        { "compressor", "gas" }, { "compressor", "fuel" }, { "compressor", "separator" }, { "heater", "compressor" } };
+    String[][] links = {{"separator", "heater"}, {"heater", "oil"}, {"separator", "compressor"}, {"compressor", "gas"},
+        {"compressor", "fuel"}, {"compressor", "separator"}, {"heater", "compressor"}};
     for (int index = 0; index < links.length; index++) {
       String id = "c" + (index + 1);
       graph.addNode(new EngineeringNode(id, EngineeringNode.Kind.PIPE_SEGMENT, id, id)

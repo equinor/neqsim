@@ -136,11 +136,11 @@ public class NonEquilibriumPipeFlowTest {
     pipeWithCPA.setNumberOfLegs(2);
     pipeWithCPA.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 3.0, 6.0 };
-    double[] outerTemperature = { 298.0, 298.0, 298.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 3.0, 6.0};
+    double[] outerTemperature = {298.0, 298.0, 298.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipeWithCPA.setLegHeights(height);
     pipeWithCPA.setLegPositions(length);
@@ -183,11 +183,11 @@ public class NonEquilibriumPipeFlowTest {
     pipeWithCPA.setNumberOfLegs(3);
     pipeWithCPA.setNumberOfNodesInLeg(10);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 3.0, 6.0, 9.0 };
-    double[] outerTemperature = { 298.0, 298.0, 298.0, 298.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 3.0, 6.0, 9.0};
+    double[] outerTemperature = {298.0, 298.0, 298.0, 298.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
 
     pipeWithCPA.setLegHeights(height);
     pipeWithCPA.setLegPositions(length);
@@ -231,11 +231,11 @@ public class NonEquilibriumPipeFlowTest {
     hotPipe.setNumberOfLegs(2);
     hotPipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 295.0, 295.0, 295.0 }; // Slightly cold surroundings
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0}; // Slightly cold surroundings
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     hotPipe.setLegHeights(height);
     hotPipe.setLegPositions(length);
@@ -268,11 +268,11 @@ public class NonEquilibriumPipeFlowTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -300,11 +300,11 @@ public class NonEquilibriumPipeFlowTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -332,11 +332,11 @@ public class NonEquilibriumPipeFlowTest {
     pipe.setNumberOfLegs(2);
     pipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {278.0, 278.0, 278.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -438,11 +438,11 @@ public class NonEquilibriumPipeFlowTest {
     tegPipe.setNumberOfLegs(2);
     tegPipe.setNumberOfNodesInLeg(5);
 
-    double[] height = { 0, 0, 0 };
-    double[] length = { 0.0, 1.0, 2.0 };
-    double[] outerTemperature = { 298.0, 298.0, 298.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0 };
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {298.0, 298.0, 298.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     tegPipe.setLegHeights(height);
     tegPipe.setLegPositions(length);
@@ -492,11 +492,11 @@ public class NonEquilibriumPipeFlowTest {
     gasLine.setNumberOfLegs(5);
     gasLine.setNumberOfNodesInLeg(10);
 
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 200.0, 400.0, 600.0, 800.0, 1000.0 };
-    double[] outerTemperature = { 300.0, 300.0, 300.0, 300.0, 300.0, 300.0 };
-    double[] outHeatCoef = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }; // No external heat transfer
-    double[] wallHeatCoef = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }; // No wall heat transfer
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
+    double[] outerTemperature = {300.0, 300.0, 300.0, 300.0, 300.0, 300.0};
+    double[] outHeatCoef = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // No external heat transfer
+    double[] wallHeatCoef = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; // No wall heat transfer
 
     gasLine.setLegHeights(height);
     gasLine.setLegPositions(length);
@@ -569,11 +569,11 @@ public class NonEquilibriumPipeFlowTest {
 
     // Cold surroundings (like seawater)
     double coldTemp = 280.0; // 7°C
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 100.0, 200.0, 300.0 };
-    double[] outerTemperature = { coldTemp, coldTemp, coldTemp, coldTemp };
-    double[] outHeatCoef = { 500.0, 500.0, 500.0, 500.0 }; // High h for seawater
-    double[] wallHeatCoef = { 50.0, 50.0, 50.0, 50.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 100.0, 200.0, 300.0};
+    double[] outerTemperature = {coldTemp, coldTemp, coldTemp, coldTemp};
+    double[] outHeatCoef = {500.0, 500.0, 500.0, 500.0}; // High h for seawater
+    double[] wallHeatCoef = {50.0, 50.0, 50.0, 50.0};
 
     coolingPipe.setLegHeights(height);
     coolingPipe.setLegPositions(length);
@@ -642,14 +642,14 @@ public class NonEquilibriumPipeFlowTest {
     evapPipe.setNumberOfNodesInLeg(20);
 
     // Pipeline configuration - horizontal pipe, 1000m total length
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 200.0, 400.0, 600.0, 800.0, 1000.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
 
     // Surroundings at similar temperature (typical buried pipeline)
     double ambientTemp = 283.15; // 10°C - slightly warmer than fluid, promotes evaporation
-    double[] outerTemperature = { ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 }; // Soil heat transfer
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };
+    double[] outerTemperature = {ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0}; // Soil heat transfer
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     evapPipe.setLegHeights(height);
     evapPipe.setLegPositions(length);
@@ -835,14 +835,14 @@ public class NonEquilibriumPipeFlowTest {
     dissolvePipe.setNumberOfNodesInLeg(20);
 
     // Pipeline configuration - horizontal pipe, 1000m total length (same as evaporation test)
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 200.0, 400.0, 600.0, 800.0, 1000.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
 
     // Surroundings at same temperature (isothermal absorption)
     double ambientTemp = 313.3;
-    double[] outerTemperature = { ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };
+    double[] outerTemperature = {ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     dissolvePipe.setLegHeights(height);
     dissolvePipe.setLegPositions(length);
@@ -1052,11 +1052,11 @@ public class NonEquilibriumPipeFlowTest {
     bubblePipe.setNumberOfLegs(3);
     bubblePipe.setNumberOfNodesInLeg(10);
 
-    double[] height = { 0, 0, 0, 0 };
-    double[] length = { 0.0, 1000.0, 2000.0, 3000.0 };
-    double[] outerTemperature = { 305.0, 305.0, 305.0, 305.0 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0 };
+    double[] height = {0, 0, 0, 0};
+    double[] length = {0.0, 1000.0, 2000.0, 3000.0};
+    double[] outerTemperature = {305.0, 305.0, 305.0, 305.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0};
 
     bubblePipe.setLegHeights(height);
     bubblePipe.setLegPositions(length);
@@ -1165,14 +1165,14 @@ public class NonEquilibriumPipeFlowTest {
     // Note: Mass transfer is fast - composition changes significantly within first ~200m
     // Using 1000m pipe to ensure numerical stability (shorter pipes cause NaN in molarVolume)
     double pipeLength = 1000.0; // meters
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 200.0, 400.0, 600.0, 800.0, 1000.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
 
     // Warm surroundings to promote evaporation
     double ambientTemp = 323.15; // 50°C - warmer than fluid to drive evaporation
-    double[] outerTemperature = { ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp };
-    double[] outHeatCoef = { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 }; // Good heat transfer
-    double[] wallHeatCoef = { 25.0, 25.0, 25.0, 25.0, 25.0, 25.0 };
+    double[] outerTemperature = {ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp};
+    double[] outHeatCoef = {10.0, 10.0, 10.0, 10.0, 10.0, 10.0}; // Good heat transfer
+    double[] wallHeatCoef = {25.0, 25.0, 25.0, 25.0, 25.0, 25.0};
 
     evapPipe.setLegHeights(height);
     evapPipe.setLegPositions(length);
@@ -1349,14 +1349,14 @@ public class NonEquilibriumPipeFlowTest {
     dissolvePipe.setNumberOfNodesInLeg(20); // More nodes for finer resolution
 
     // Pipeline configuration - shorter 100m pipe for dissolution test
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 20.0, 40.0, 60.0, 80.0, 100.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 20.0, 40.0, 60.0, 80.0, 100.0};
 
     // Isothermal conditions (same temperature as fluid)
     double pipeTemp = 305.0;
-    double[] outerTemperature = { pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };
+    double[] outerTemperature = {pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     dissolvePipe.setLegHeights(height);
     dissolvePipe.setLegPositions(length);
@@ -1512,14 +1512,14 @@ public class NonEquilibriumPipeFlowTest {
     evaporatePipe.setNumberOfNodesInLeg(20); // More nodes for finer resolution
 
     // Pipeline configuration - 50m pipe for evaporation test
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 10.0, 20.0, 30.0, 40.0, 50.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 10.0, 20.0, 30.0, 40.0, 50.0};
 
     // Isothermal conditions (same temperature as fluid)
     double pipeTemp = 350.0;
-    double[] outerTemperature = { pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };
+    double[] outerTemperature = {pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     evaporatePipe.setLegHeights(height);
     evaporatePipe.setLegPositions(length);
@@ -1665,12 +1665,12 @@ public class NonEquilibriumPipeFlowTest {
     pipe.setNumberOfLegs(5);
     pipe.setNumberOfNodesInLeg(20);
 
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 20.0, 40.0, 60.0, 80.0, 100.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 20.0, 40.0, 60.0, 80.0, 100.0};
     double pipeTemp = 305.0;
-    double[] outerTemperature = { pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeatCoef = { 20.0, 20.0, 20.0, 20.0, 20.0, 20.0 };
+    double[] outerTemperature = {pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     pipe.setLegHeights(height);
     pipe.setLegPositions(length);
@@ -1750,18 +1750,18 @@ public class NonEquilibriumPipeFlowTest {
 
     // Pipeline configuration - 500 m subsea pipeline with undulating terrain
     // Heights simulate seabed topography (in meters relative to start)
-    double[] height = { 0, -10, -5 }; // Undulating seabed profile
+    double[] height = {0, -10, -5}; // Undulating seabed profile
 
     // Cumulative length positions (meters)
-    double[] length = { 0.0, 250.0, 500.0 };
+    double[] length = {0.0, 250.0, 500.0};
 
     // Seawater temperature: 5°C (278.15 K)
     double seawaterTemp = 278.15;
-    double[] outerTemperature = { seawaterTemp, seawaterTemp, seawaterTemp };
+    double[] outerTemperature = {seawaterTemp, seawaterTemp, seawaterTemp};
 
     // Heat transfer coefficients for subsea pipeline (insulated pipe in seawater)
-    double[] outHeatCoef = { 50.0, 50.0, 50.0 }; // W/m²K external
-    double[] wallHeatCoef = { 10.0, 10.0, 10.0 }; // W/m²K wall (insulated)
+    double[] outHeatCoef = {50.0, 50.0, 50.0}; // W/m²K external
+    double[] wallHeatCoef = {10.0, 10.0, 10.0}; // W/m²K wall (insulated)
 
     pipeline.setLegHeights(height);
     pipeline.setLegPositions(length);
@@ -2023,16 +2023,16 @@ public class NonEquilibriumPipeFlowTest {
     evapPipe.setNumberOfNodesInLeg(10); // 20 nodes total
 
     // Heated pipe configuration - 200 m length with hot oil jacket
-    double[] height = { 0, 0, 0 }; // Horizontal pipe
-    double[] length = { 0.0, 100.0, 200.0 };
+    double[] height = {0, 0, 0}; // Horizontal pipe
+    double[] length = {0.0, 100.0, 200.0};
 
     // External heating: 80°C hot oil jacket to drive rapid evaporation
     double heatingTemp = 353.15; // 80°C
-    double[] outerTemperature = { heatingTemp, heatingTemp, heatingTemp };
+    double[] outerTemperature = {heatingTemp, heatingTemp, heatingTemp};
 
     // High heat transfer for rapid evaporation
-    double[] outHeatCoef = { 100.0, 100.0, 100.0 }; // W/m²K external (hot oil jacket)
-    double[] wallHeatCoef = { 50.0, 50.0, 50.0 }; // W/m²K wall
+    double[] outHeatCoef = {100.0, 100.0, 100.0}; // W/m²K external (hot oil jacket)
+    double[] wallHeatCoef = {50.0, 50.0, 50.0}; // W/m²K wall
 
     evapPipe.setLegHeights(height);
     evapPipe.setLegPositions(length);
@@ -2252,14 +2252,14 @@ public class NonEquilibriumPipeFlowTest {
 
     // Pipeline configuration - 1000 m horizontal pipeline
     double pipeLength = 1000.0;
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 200.0, 400.0, 600.0, 800.0, 1000.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
 
     // Buried pipeline at 15°C
     double ambientTemp = 288.15; // 15°C
-    double[] outerTemperature = { ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 }; // Soil heat transfer
-    double[] wallHeatCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
+    double[] outerTemperature = {ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0}; // Soil heat transfer
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
     pipeline.setLegHeights(height);
     pipeline.setLegPositions(length);
@@ -2381,7 +2381,7 @@ public class NonEquilibriumPipeFlowTest {
     logger.info("Showing gas/liquid temperatures and liquid fraction along pipeline");
     logger.info(StringUtils.repeat("=", 80));
 
-    double[] waterFractions = { 50.0, 10.0, 1.0, 0.1 };
+    double[] waterFractions = {50.0, 10.0, 1.0, 0.1};
 
     for (double waterWtPercent : waterFractions) {
       // Calculate mass flow rates
@@ -2514,7 +2514,7 @@ public class NonEquilibriumPipeFlowTest {
     logger.info("Water%   LiqFrac_in  LiqFrac_out  Evap%   T_gas_in  T_gas_out  T_liq_in  T_liq_out");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] allWaterFractions = { 50.0, 25.0, 10.0, 5.0, 1.0, 0.5, 0.1 };
+    double[] allWaterFractions = {50.0, 25.0, 10.0, 5.0, 1.0, 0.5, 0.1};
     for (double waterWtPercent : allWaterFractions) {
       double totalMassFlow = 1000.0;
       double waterFlow = totalMassFlow * waterWtPercent / 100.0;

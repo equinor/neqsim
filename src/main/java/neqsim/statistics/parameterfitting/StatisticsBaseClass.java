@@ -412,7 +412,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.setLayout(new FlowLayout());
 
     valTable = new String[sampleSet.getLength() + 10][sampleSet.getSample(0).getDependentValues().length + 7];
-    String[] names = { "point", "x", "expY", "calcY", "abs dev [%]", "reference", "description" };
+    String[] names = {"point", "x", "expY", "calcY", "abs dev [%]", "reference", "description"};
     valTable[0][0] = "";
     valTable[0][1] = "";
     valTable[0][2] = "";
@@ -461,7 +461,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.setLayout(new FlowLayout());
 
     String[][] table = new String[15][5];
-    String[] names = { "Parameter", "Value", "Standard deviation", "Uncertatnty ", "--" };
+    String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";
@@ -515,7 +515,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.setLayout(new FlowLayout());
 
     String[][] table = new String[15][5];
-    String[] names = { "Parameter", "Value", "Standard deviation", "Uncertatnty ", "--" };
+    String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
     table[0][0] = "";
     table[0][1] = "";
     table[0][2] = "";

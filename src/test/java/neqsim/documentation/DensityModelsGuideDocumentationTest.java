@@ -108,7 +108,7 @@ public class DensityModelsGuideDocumentationTest extends neqsim.NeqSimTest {
           "docs/physical_properties/density_models.md: " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);

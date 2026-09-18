@@ -29,7 +29,7 @@ public class DistillationOptimizationTest {
     assertEquals(0.62, column.getMurphreeEfficiency(3), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
 
-    column.setMurphreeEfficiencies(new double[] { 1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0 });
+    column.setMurphreeEfficiencies(new double[] {1.0, 0.95, Double.NaN, 0.70, 1.2, 0.10, 0.0});
     assertEquals(1.0, column.getMurphreeEfficiency(0), 1.0e-12);
     assertEquals(0.95, column.getMurphreeEfficiency(1), 1.0e-12);
     assertEquals(0.75, column.getMurphreeEfficiency(2), 1.0e-12);
@@ -38,7 +38,7 @@ public class DistillationOptimizationTest {
 
     column.clearPerStageMurphreeEfficiency();
     assertEquals(0.75, column.getMurphreeEfficiency(3), 1.0e-12);
-    assertThrows(IllegalArgumentException.class, () -> column.setMurphreeEfficiencies(new double[] { 0.8, 0.8 }));
+    assertThrows(IllegalArgumentException.class, () -> column.setMurphreeEfficiencies(new double[] {0.8, 0.8}));
     assertThrows(IndexOutOfBoundsException.class, () -> column.getMurphreeEfficiency(7));
   }
 

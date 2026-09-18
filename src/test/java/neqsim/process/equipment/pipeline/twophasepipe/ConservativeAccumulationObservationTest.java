@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class ConservativeAccumulationObservationTest {
   @Test
   void observationAndMarkerReleasePreserveThreePhaseCountercurrentStates() {
-    for (double waterCut : new double[] { 0.0, 0.4, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 0.4, 1.0}) {
       TwoFluidSection[] sections = sections(waterCut, 0.4);
       LiquidAccumulationTracker tracker = new LiquidAccumulationTracker();
       tracker.identifyAccumulationZones(sections);
@@ -100,7 +100,7 @@ class ConservativeAccumulationObservationTest {
     UUID id = UUID.randomUUID();
     for (int step = 0; step < 3; step++) {
       reference.runTransient(1e-3, id);
-      for (TwoFluidPipe tracked : new TwoFluidPipe[] { simplified, lagrangian }) {
+      for (TwoFluidPipe tracked : new TwoFluidPipe[] {simplified, lagrangian}) {
         tracked.runTransient(1e-3, id);
         assertArrayEquals(reference.getPressureProfile(), tracked.getPressureProfile(), 0.0);
         assertArrayEquals(reference.getLiquidHoldupProfile(), tracked.getLiquidHoldupProfile(), 0.0);
@@ -116,7 +116,7 @@ class ConservativeAccumulationObservationTest {
 
   @Test
   void legacyDriftFluxTrackerRetainsItsSectionOverlay() {
-    PipeSection[] sections = { new PipeSection(1.0, 2.0, 0.3, 0.0), new PipeSection(4.0, 4.0, 0.3, Math.PI / 2.0) };
+    PipeSection[] sections = {new PipeSection(1.0, 2.0, 0.3, 0.0), new PipeSection(4.0, 4.0, 0.3, Math.PI / 2.0)};
     for (PipeSection section : sections) {
       section.setGasHoldup(0.7);
       section.setLiquidHoldup(0.3);
@@ -133,8 +133,8 @@ class ConservativeAccumulationObservationTest {
   }
 
   private static TwoFluidSection[] sections(double waterCut, double holdup) {
-    TwoFluidSection[] result = { new TwoFluidSection(1.0, 2.0, 0.2, -0.1), new TwoFluidSection(4.0, 4.0, 0.3, 0.0),
-        new TwoFluidSection(9.0, 6.0, 0.4, 1.0) };
+    TwoFluidSection[] result = {new TwoFluidSection(1.0, 2.0, 0.2, -0.1), new TwoFluidSection(4.0, 4.0, 0.3, 0.0),
+        new TwoFluidSection(9.0, 6.0, 0.4, 1.0)};
     result[1].setElevation(-1.0);
     for (TwoFluidSection section : result) {
       section.setGasHoldup(1.0 - holdup);
@@ -170,9 +170,9 @@ class ConservativeAccumulationObservationTest {
     double[] state = section.getStateVector();
     double[] result = new double[state.length + 9];
     System.arraycopy(state, 0, result, 0, state.length);
-    double[] primitive = { section.getGasHoldup(), section.getOilHoldup(), section.getWaterHoldup(),
+    double[] primitive = {section.getGasHoldup(), section.getOilHoldup(), section.getWaterHoldup(),
         section.getGasVelocity(), section.getOilVelocity(), section.getWaterVelocity(), section.getLiquidVelocity(),
-        section.getPressure(), section.getMixtureDensity() };
+        section.getPressure(), section.getMixtureDensity()};
     System.arraycopy(primitive, 0, result, state.length, primitive.length);
     return result;
   }
@@ -196,7 +196,7 @@ class ConservativeAccumulationObservationTest {
     pipe.setLength(12.0);
     pipe.setDiameter(0.3);
     pipe.setNumberOfSections(3);
-    pipe.setElevationProfile(new double[] { 0.0, -0.01, 0.0 });
+    pipe.setElevationProfile(new double[] {0.0, -0.01, 0.0});
     pipe.setIncludeMassTransfer(false);
     pipe.setEnableJouleThomson(false);
     pipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);

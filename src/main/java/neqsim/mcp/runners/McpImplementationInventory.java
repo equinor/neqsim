@@ -123,11 +123,11 @@ public final class McpImplementationInventory {
     JsonArray reportPaths = new JsonArray();
     reportPaths
         .add(reportPath("engineering-report", "generateReport", "ReportRunner", "Standardized simulation-result JSON",
-            new String[] { "markdown", "tables", "chartData", "validation", "summary" },
+            new String[] {"markdown", "tables", "chartData", "validation", "summary"},
             "Returned in the bounded MCP response; no file or plant-system write"));
     reportPaths.add(
         reportPath("task-workflow-handoff", "bridgeTaskWorkflow", "TaskWorkflowBridge", "Standardized MCP tool output",
-            new String[] { "resultsJson", "key_results", "validation", "approach", "conclusions" },
+            new String[] {"resultsJson", "key_results", "validation", "approach", "conclusions"},
             "Returns a results.json-compatible handoff; external report rendering is a separate reviewed step"));
     inventory.addProperty("reportPathCount", reportPaths.size());
     inventory.add("reportPaths", reportPaths);

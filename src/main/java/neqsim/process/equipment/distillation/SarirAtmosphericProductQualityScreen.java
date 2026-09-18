@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  */
 public final class SarirAtmosphericProductQualityScreen {
-  private static final String[] PRODUCT_LABELS = { "Kerosene", "Diesel" };
+  private static final String[] PRODUCT_LABELS = {"Kerosene", "Diesel"};
 
   private SarirAtmosphericProductQualityScreen() {
   }
@@ -46,7 +46,7 @@ public final class SarirAtmosphericProductQualityScreen {
     DistillationColumn column = model.getColumn();
     StreamInterface[] productStreams = {
         column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
-        column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID) };
+        column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID)};
 
     SarirD86ProductComparison.Result[] comparisons = new SarirD86ProductComparison.Result[PRODUCT_LABELS.length];
     for (int i = 0; i < PRODUCT_LABELS.length; i++) {

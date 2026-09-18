@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemPitzer;
 /** Tests PHREEQC six-term temperature semantics and Pitzer-family placement. */
 class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
   private static final double REFERENCE_TEMPERATURE = 298.15;
-  private static final double[] COEFFICIENTS = { 0.12, 250.0, -0.035, 4.2e-4, -3.1e-7, 18000.0 };
+  private static final double[] COEFFICIENTS = {0.12, 250.0, -0.035, 4.2e-4, -3.1e-7, 18000.0};
 
   @Test
   void matchesPublicDomainPhreeqcTemperatureFunction() {
@@ -28,10 +28,10 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
 
   @Test
   void mapsKaasaAppendixFCoefficientOrderWithoutChangingSemantics() {
-    double[] kaasaOrder = { 1.0, 2.0e-3, -3.0e-6, 4.0, -0.5, 6.0 };
+    double[] kaasaOrder = {1.0, 2.0e-3, -3.0e-6, 4.0, -0.5, 6.0};
     PitzerTemperatureFunction function = PitzerTemperatureFunction.fromKaasa1998(kaasaOrder);
 
-    assertArrayEquals(new double[] { 1.0, 4.0, -0.5, 2.0e-3, -3.0e-6, 6.0 }, function.getCoefficients(), 0.0);
+    assertArrayEquals(new double[] {1.0, 4.0, -0.5, 2.0e-3, -3.0e-6, 6.0}, function.getCoefficients(), 0.0);
     assertEquals(1.0, function.valueAt(REFERENCE_TEMPERATURE), 0.0);
 
     double temperature = 373.15;
@@ -49,8 +49,8 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> new PitzerTemperatureFunction(0.0, COEFFICIENTS));
     assertThrows(IllegalArgumentException.class,
         () -> new PitzerTemperatureFunction(REFERENCE_TEMPERATURE, new double[5]));
-    assertThrows(IllegalArgumentException.class, () -> new PitzerTemperatureFunction(REFERENCE_TEMPERATURE,
-        new double[] { 0.0, 0.0, Double.NaN, 0.0, 0.0, 0.0 }));
+    assertThrows(IllegalArgumentException.class,
+        () -> new PitzerTemperatureFunction(REFERENCE_TEMPERATURE, new double[] {0.0, 0.0, Double.NaN, 0.0, 0.0, 0.0}));
 
     PitzerTemperatureFunction function = new PitzerTemperatureFunction(REFERENCE_TEMPERATURE, COEFFICIENTS);
     double[] copy = function.getCoefficients();
@@ -83,7 +83,7 @@ class PitzerTemperatureFunctionTest extends neqsim.NeqSimTest {
 
     PhasePitzer clone = phase.clone();
     clone.setThetaTemperatureCoefficients(sodium, potassium, REFERENCE_TEMPERATURE,
-        new double[] { 0.25, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        new double[] {0.25, 0.0, 0.0, 0.0, 0.0, 0.0});
     assertEquals(expected, phase.getThetaij(sodium, potassium, 373.15), 2.0e-15);
     assertEquals(0.25, clone.getThetaij(sodium, potassium, 373.15), 0.0);
   }

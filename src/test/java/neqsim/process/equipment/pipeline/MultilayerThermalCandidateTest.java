@@ -55,8 +55,8 @@ class MultilayerThermalCandidateTest {
     changedGeometry.setInnerRadius(0.11);
     MultilayerThermalCalculator invalidTemperature = SerializationUtils.clone(calculator);
     invalidTemperature.getLayers().get(0).setTemperature(Double.NaN);
-    for (MultilayerThermalCalculator candidate : new MultilayerThermalCalculator[] { null, changedOuterBoundary,
-        changedLayer, changedGeometry, invalidTemperature }) {
+    for (MultilayerThermalCalculator candidate : new MultilayerThermalCalculator[] {null, changedOuterBoundary,
+        changedLayer, changedGeometry, invalidTemperature}) {
       assertThrows(IllegalStateException.class, () -> calculator.validateCandidateConfiguration(candidate));
       assertArrayEquals(before, SerializationUtils.serialize(calculator));
     }

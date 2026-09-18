@@ -65,13 +65,13 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidmechanics.flowsystem.
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    double[] times = { 0.0 };
+    double[] times = {0.0};
     display = new TwoPhasePipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
-    neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
+    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(1);
-    double[] outletFlowRates = { 0.0, 0.0 };
+    double[] outletFlowRates = {0.0, 0.0};
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     flowSolver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
@@ -128,9 +128,9 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidmechanics.flowsystem.
     pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(100); // setter antall nodepunkter (beregningspunkter/grid) pr.
     // leg
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 1.7, 3.5, 5.0, 7.5, 10.4 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -140,7 +140,7 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidmechanics.flowsystem.
     // geometrien
     // for
     // roret
-    double[] pipeDiameter = { 0.02588, 0.02588, 0.02588, 0.02588, 0.02588 };
+    double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.reactor.ReactorData(pipeDiameter[i], 1);
     }

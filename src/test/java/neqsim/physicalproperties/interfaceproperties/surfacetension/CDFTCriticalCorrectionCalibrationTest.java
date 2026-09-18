@@ -37,18 +37,17 @@ class CDFTCriticalCorrectionCalibrationTest {
   private static final double DELTA_MU = MU_ISING - MU_MF;
 
   /** Experimental data: {component, T(K), sigma_exp(mN/m), Tc(K), omega}. */
-  private static final Object[][] DATA = { { "methane", 90.7, 18.90, 190.6, 0.011 },
-      { "methane", 111.0, 14.90, 190.6, 0.011 }, { "methane", 150.0, 6.60, 190.6, 0.011 },
-      { "methane", 170.0, 2.80, 190.6, 0.011 }, { "ethane", 184.0, 17.10, 305.3, 0.099 },
-      { "ethane", 230.0, 9.40, 305.3, 0.099 }, { "ethane", 270.0, 3.60, 305.3, 0.099 },
-      { "propane", 230.0, 13.60, 369.8, 0.152 }, { "propane", 270.0, 8.60, 369.8, 0.152 },
-      { "propane", 320.0, 3.40, 369.8, 0.152 }, { "n-butane", 270.0, 13.20, 425.1, 0.200 },
-      { "n-butane", 320.0, 7.60, 425.1, 0.200 }, { "n-pentane", 300.0, 14.60, 469.7, 0.252 },
-      { "n-pentane", 350.0, 9.10, 469.7, 0.252 }, { "n-hexane", 300.0, 16.30, 507.5, 0.301 },
-      { "n-hexane", 340.0, 12.50, 507.5, 0.301 }, { "n-hexane", 400.0, 5.80, 507.5, 0.301 },
-      { "nitrogen", 77.0, 9.40, 126.2, 0.037 }, { "nitrogen", 90.0, 6.20, 126.2, 0.037 },
-      { "CO2", 220.0, 15.50, 304.2, 0.225 }, { "CO2", 250.0, 8.50, 304.2, 0.225 },
-      { "CO2", 280.0, 2.60, 304.2, 0.225 }, };
+  private static final Object[][] DATA = {{"methane", 90.7, 18.90, 190.6, 0.011},
+      {"methane", 111.0, 14.90, 190.6, 0.011}, {"methane", 150.0, 6.60, 190.6, 0.011},
+      {"methane", 170.0, 2.80, 190.6, 0.011}, {"ethane", 184.0, 17.10, 305.3, 0.099},
+      {"ethane", 230.0, 9.40, 305.3, 0.099}, {"ethane", 270.0, 3.60, 305.3, 0.099},
+      {"propane", 230.0, 13.60, 369.8, 0.152}, {"propane", 270.0, 8.60, 369.8, 0.152},
+      {"propane", 320.0, 3.40, 369.8, 0.152}, {"n-butane", 270.0, 13.20, 425.1, 0.200},
+      {"n-butane", 320.0, 7.60, 425.1, 0.200}, {"n-pentane", 300.0, 14.60, 469.7, 0.252},
+      {"n-pentane", 350.0, 9.10, 469.7, 0.252}, {"n-hexane", 300.0, 16.30, 507.5, 0.301},
+      {"n-hexane", 340.0, 12.50, 507.5, 0.301}, {"n-hexane", 400.0, 5.80, 507.5, 0.301},
+      {"nitrogen", 77.0, 9.40, 126.2, 0.037}, {"nitrogen", 90.0, 6.20, 126.2, 0.037},
+      {"CO2", 220.0, 15.50, 304.2, 0.225}, {"CO2", 250.0, 8.50, 304.2, 0.225}, {"CO2", 280.0, 2.60, 304.2, 0.225},};
 
   /**
    * Sweep lambda with critical correction applied, PR EOS.
@@ -127,9 +126,9 @@ class CDFTCriticalCorrectionCalibrationTest {
         "lambda_opt", "AAD(%)", "AAD_raw(%)");
     logger.info("-------------|--------|------------|------------|----------");
 
-    String[] components = { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane", "nitrogen", "CO2" };
-    double[] omegas = { 0.011, 0.099, 0.152, 0.200, 0.252, 0.301, 0.037, 0.225 };
-    double[] tcs = { 190.6, 305.3, 369.8, 425.1, 469.7, 507.5, 126.2, 304.2 };
+    String[] components = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane", "nitrogen", "CO2"};
+    double[] omegas = {0.011, 0.099, 0.152, 0.200, 0.252, 0.301, 0.037, 0.225};
+    double[] tcs = {190.6, 305.3, 369.8, 425.1, 469.7, 507.5, 126.2, 304.2};
 
     double[] optLambdas = new double[components.length];
 

@@ -65,8 +65,8 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   private static final double DEFAULT_TOLERANCE = 1e-3;
 
   /** Default inert components for CO2/acid gas systems. */
-  private static final String[] DEFAULT_INERT_COMPONENTS = { "CO", "COS", "CO2", "ammonia", "hydrogen", "N2O3",
-      "nitrogen", "N2H4", "N2O" };
+  private static final String[] DEFAULT_INERT_COMPONENTS = {"CO", "COS", "CO2", "ammonia", "hydrogen", "N2O3",
+      "nitrogen", "N2H4", "N2O"};
 
   /** Minimum CO2 density (kg/m³) required for bulk phase reactions to proceed. */
   private static final double MIN_CO2_DENSITY = 300.0;

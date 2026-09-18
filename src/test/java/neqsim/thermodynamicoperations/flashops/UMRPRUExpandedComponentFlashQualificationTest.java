@@ -25,14 +25,14 @@ class UMRPRUExpandedComponentFlashQualificationTest {
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private static final FluidCase[] CASES = {
-      new FluidCase("aromatic", 298.15, 10.0, new String[] { "methane", "1,2,4-trimethylbenzene" },
-          new double[] { 0.90, 0.10 }),
+      new FluidCase("aromatic", 298.15, 10.0, new String[] {"methane", "1,2,4-trimethylbenzene"},
+          new double[] {0.90, 0.10}),
       new FluidCase("cyclic", 285.15, 20.0,
-          new String[] { "methane", "1,1,2-trimethylcyclopentane", "trans-1,3-dimethylcyclohexane" },
-          new double[] { 0.80, 0.10, 0.10 }),
-      new FluidCase("branched-paraffin", 280.15, 30.0, new String[] { "methane", "2,4-dimethylheptane" },
-          new double[] { 0.85, 0.15 }),
-      new FluidCase("olefin", 285.15, 20.0, new String[] { "methane", "1-hexene" }, new double[] { 0.88, 0.12 }) };
+          new String[] {"methane", "1,1,2-trimethylcyclopentane", "trans-1,3-dimethylcyclohexane"},
+          new double[] {0.80, 0.10, 0.10}),
+      new FluidCase("branched-paraffin", 280.15, 30.0, new String[] {"methane", "2,4-dimethylheptane"},
+          new double[] {0.85, 0.15}),
+      new FluidCase("olefin", 285.15, 20.0, new String[] {"methane", "1-hexene"}, new double[] {0.88, 0.12})};
 
   /** Ordinary, multiphase, and deliberately poor beta estimates must agree at nominal states. */
   @Test

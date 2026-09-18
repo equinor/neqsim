@@ -22,7 +22,7 @@ public class DoeBigHillVacuumFeedTemperatureSensitivityTest {
   @Timeout(value = 300, unit = TimeUnit.SECONDS)
   public void temperatureScreenReturnsQualifiedImmutablePoints() {
     OperatingInputs baseline = baselineInputs();
-    double[] temperatures = { 638.0, 640.0, 642.0 };
+    double[] temperatures = {638.0, 640.0, 642.0};
 
     DoeBigHillVacuumFeedTemperatureSensitivity sensitivity = DoeBigHillVacuumFeedTemperatureSensitivity
         .run("Big Hill vacuum feed-temperature screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, temperatures);
@@ -95,23 +95,23 @@ public class DoeBigHillVacuumFeedTemperatureSensitivityTest {
     OperatingInputs baseline = baselineInputs();
 
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run(" ",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 638.0, 642.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {638.0, 642.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen", 0.0, baseline, new double[] { 638.0, 642.0 }));
+        () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen", 0.0, baseline, new double[] {638.0, 642.0}));
     assertThrows(NullPointerException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] { 638.0, 642.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, null, new double[] {638.0, 642.0}));
     assertThrows(NullPointerException.class,
         () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen", FEED_MASS_FLOW_KG_PER_HOUR, baseline, null));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 640.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {640.0}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 640.0, Double.NaN }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {640.0, Double.NaN}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 640.0, 640.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {640.0, 640.0}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 642.0, 640.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {642.0, 640.0}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumFeedTemperatureSensitivity.run("screen",
-        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] { 700.0, 702.0 }));
+        FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {700.0, 702.0}));
   }
 
   private static OperatingInputs baselineInputs() {

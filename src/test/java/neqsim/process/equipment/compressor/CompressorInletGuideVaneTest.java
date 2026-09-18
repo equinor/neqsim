@@ -133,13 +133,12 @@ public class CompressorInletGuideVaneTest {
   @Test
   void testGuideVaneChartFamily() {
     // Two vendor positions: fully open (1.0) makes more head than half open (0.5), on the same speed lines.
-    double[] chartConditions = new double[] { 30.0, 20.0 };
-    double[] speed = new double[] { 8000.0, 10000.0, 12000.0 };
-    double[][] flow = new double[][] { { 1000.0, 1500.0, 2000.0 }, { 1300.0, 1800.0, 2300.0 },
-        { 1600.0, 2100.0, 2600.0 } };
-    double[][] headOpen = new double[][] { { 60.0, 55.0, 46.0 }, { 90.0, 83.0, 70.0 }, { 125.0, 115.0, 98.0 } };
-    double[][] headHalf = new double[][] { { 42.0, 38.0, 32.0 }, { 63.0, 58.0, 49.0 }, { 88.0, 80.0, 69.0 } };
-    double[][] eff = new double[][] { { 0.74, 0.80, 0.75 }, { 0.75, 0.81, 0.76 }, { 0.74, 0.80, 0.75 } };
+    double[] chartConditions = new double[] {30.0, 20.0};
+    double[] speed = new double[] {8000.0, 10000.0, 12000.0};
+    double[][] flow = new double[][] {{1000.0, 1500.0, 2000.0}, {1300.0, 1800.0, 2300.0}, {1600.0, 2100.0, 2600.0}};
+    double[][] headOpen = new double[][] {{60.0, 55.0, 46.0}, {90.0, 83.0, 70.0}, {125.0, 115.0, 98.0}};
+    double[][] headHalf = new double[][] {{42.0, 38.0, 32.0}, {63.0, 58.0, 49.0}, {88.0, 80.0, 69.0}};
+    double[][] eff = new double[][] {{0.74, 0.80, 0.75}, {0.75, 0.81, 0.76}, {0.74, 0.80, 0.75}};
 
     CompressorChartIGV family = new CompressorChartIGV();
     family.setHeadUnit("kJ/kg");

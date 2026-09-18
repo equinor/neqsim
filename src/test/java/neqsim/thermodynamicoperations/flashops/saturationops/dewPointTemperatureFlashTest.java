@@ -56,7 +56,7 @@ public class dewPointTemperatureFlashTest {
     withZeroWater.addComponent("n-butane", 0.1);
     withZeroWater.addComponent("water", 0.1);
     withZeroWater.setMixingRule("classic");
-    withZeroWater.setMolarComposition(new double[] { 0.7, 0.1, 0.1, 0.1, 0.0 });
+    withZeroWater.setMolarComposition(new double[] {0.7, 0.1, 0.1, 0.1, 0.0});
     withZeroWater.setPressure(10.0, "bara");
     withZeroWater.setTemperature(0.0, "C");
 

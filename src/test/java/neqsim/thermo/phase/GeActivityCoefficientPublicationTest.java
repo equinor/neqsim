@@ -103,7 +103,7 @@ class GeActivityCoefficientPublicationTest extends NeqSimTest {
     system.addComponent("methanol", 0.5);
     system.addComponent("water", 0.5);
     PhaseInterface phase = system.getPhase(0);
-    for (String model : new String[] { "UNIQUAQ", "UNIQUAC" }) {
+    for (String model : new String[] {"UNIQUAQ", "UNIQUAC"}) {
       EosMixingRuleHandler handler = new EosMixingRuleHandler();
       handler.setMixingRuleGEModel(model);
       assertUnsupported(() -> handler.new SRKHuronVidal2(phase, new double[2][2], new double[2][2], new String[2][2]));

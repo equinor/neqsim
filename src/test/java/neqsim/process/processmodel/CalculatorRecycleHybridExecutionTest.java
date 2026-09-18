@@ -33,7 +33,7 @@ class CalculatorRecycleHybridExecutionTest {
     mixer.addStream(makeup);
 
     Splitter splitter = new Splitter("splitter", mixer.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.8, 0.2 });
+    splitter.setSplitFactors(new double[] {0.8, 0.2});
 
     Recycle recycle = new Recycle("recycle");
     recycle.addStream(splitter.getSplitStream(1));

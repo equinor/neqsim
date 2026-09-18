@@ -32,7 +32,7 @@ class LiquidAccumulationTrackerTest {
     // Profile: flat -> down -> up -> flat
     // Elevations: 0, 0, -5, -10, -10, -5, 0, 0, 0, 0
     sections = new PipeSection[10];
-    double[] elevations = { 0, 0, -5, -10, -10, -5, 0, 0, 0, 0 };
+    double[] elevations = {0, 0, -5, -10, -10, -5, 0, 0, 0, 0};
 
     for (int i = 0; i < 10; i++) {
       sections[i] = new PipeSection((i + 0.5) * 100, 100, 0.3, 0);
@@ -76,8 +76,8 @@ class LiquidAccumulationTrackerTest {
 
   @Test
   void nonuniformLowPointZoneSpansCellFaces() {
-    PipeSection[] nonuniform = { new PipeSection(1.0, 2.0, 0.3, -0.1), new PipeSection(4.0, 4.0, 0.3, 0.0),
-        new PipeSection(9.0, 6.0, 0.3, 0.1) };
+    PipeSection[] nonuniform = {new PipeSection(1.0, 2.0, 0.3, -0.1), new PipeSection(4.0, 4.0, 0.3, 0.0),
+        new PipeSection(9.0, 6.0, 0.3, 0.1)};
     nonuniform[1].setElevation(-1.0);
     tracker.identifyAccumulationZones(nonuniform);
     assertEquals(1, tracker.getAccumulationZones().size());
@@ -89,7 +89,7 @@ class LiquidAccumulationTrackerTest {
 
   @Test
   void nonuniformRiserBaseZoneSpansCellFaces() {
-    PipeSection[] nonuniform = { new PipeSection(1.0, 2.0, 0.3, 0.0), new PipeSection(4.0, 4.0, 0.3, Math.PI / 2.0) };
+    PipeSection[] nonuniform = {new PipeSection(1.0, 2.0, 0.3, 0.0), new PipeSection(4.0, 4.0, 0.3, Math.PI / 2.0)};
     tracker.identifyAccumulationZones(nonuniform);
     assertEquals(1, tracker.getAccumulationZones().size());
     AccumulationZone zone = tracker.getAccumulationZones().get(0);
@@ -195,7 +195,7 @@ class LiquidAccumulationTrackerTest {
   @Test
   void testMultipleLowPoints() {
     // Create pipeline with two low points
-    double[] elevations = { 0, -5, 0, -5, 0, 0, 0, 0, 0, 0 };
+    double[] elevations = {0, -5, 0, -5, 0, 0, 0, 0, 0, 0};
     for (int i = 0; i < 10; i++) {
       sections[i].setElevation(elevations[i]);
       if (i > 0) {

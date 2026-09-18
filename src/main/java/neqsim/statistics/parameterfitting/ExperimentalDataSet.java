@@ -145,7 +145,7 @@ public final class ExperimentalDataSet implements Serializable {
         validation.addPoint(points.get(i));
       }
     }
-    return new ExperimentalDataSet[] { training, validation };
+    return new ExperimentalDataSet[] {training, validation};
   }
 
   /**

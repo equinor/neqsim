@@ -75,7 +75,7 @@ public class PIDController implements Controller {
     double action = pTerm + iTerm + dTerm;
     action = Math.max(actionMin, Math.min(actionMax, action));
 
-    return new double[] { action };
+    return new double[] {action};
   }
 
   @Override

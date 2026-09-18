@@ -50,7 +50,7 @@ class TwoFluidPipeUnsplitRunTest {
 
   @Test
   void fiveSecondGasRunsPublishAcceptedMassAndContinueWithPersistentEos() throws Exception {
-    for (int cells : new int[] { 8, 16 }) {
+    for (int cells : new int[] {8, 16}) {
       verifyGasContinuation(cells, 0.05);
     }
   }
@@ -141,7 +141,7 @@ class TwoFluidPipeUnsplitRunTest {
     pipe.setUnsplitTransientSolver(solver(), 0.01);
     pipe.runTransient(0.02, UUID.randomUUID());
     TwoFluidMassBalanceReport report = pipe.getLastMassBalanceReport();
-    Phase[] phases = { Phase.GAS, Phase.OIL, Phase.WATER };
+    Phase[] phases = {Phase.GAS, Phase.OIL, Phase.WATER};
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(initial[phase], report.getFinalMassKg(phases[phase]), 1.0e-8);
       assertEquals(0.0, report.getOutletMassKg(phases[phase]), 0.0);
@@ -171,7 +171,7 @@ class TwoFluidPipeUnsplitRunTest {
     pipe.setUnsplitTransientSolver(solver(), 0.001);
     pipe.runTransient(0.001, UUID.randomUUID());
     SystemInterface changed = SerializationUtils.clone(pipe.getInletStream().getFluid());
-    changed.setMolarComposition(new double[] { 0.6, 0.4 });
+    changed.setMolarComposition(new double[] {0.6, 0.4});
     Stream changedStream = new Stream("changed feed", changed);
     changedStream.run();
     pipe.getInletStream().setFluid(changedStream.getFluid());

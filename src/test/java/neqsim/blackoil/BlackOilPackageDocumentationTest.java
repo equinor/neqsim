@@ -79,7 +79,7 @@ public class BlackOilPackageDocumentationTest {
     oil.useVolumeCorrection(true);
     oil.setMultiPhaseCheck(true);
 
-    double[] pressureGrid = { 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0 };
+    double[] pressureGrid = {25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0};
     BlackOilConverter.Result converted = BlackOilConverter.convert(oil, 373.15, pressureGrid, 1.01325, 288.15);
 
     assertTrue(Double.isFinite(converted.rho_o_sc));

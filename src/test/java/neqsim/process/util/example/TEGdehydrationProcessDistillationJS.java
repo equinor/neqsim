@@ -198,7 +198,7 @@ public class TEGdehydrationProcessDistillationJS {
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
-        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
+        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97});
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", waterSaturatedFeedGas);
     feedTPsetterToAbsorber.setOutPressure(absorberFeedGasPressure, "bara");
@@ -310,8 +310,8 @@ public class TEGdehydrationProcessDistillationJS {
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
-    pureTEG.setMolarComposition(
-        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG
+        .setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");

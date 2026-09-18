@@ -115,7 +115,7 @@ class TwoPhasePressureDropValidationTest {
 
       // Downhill flow - 10 degrees (expect negative or very low ΔP)
       new TwoPhaseTestCase("B&B Downhill 10deg", 0.1, 500.0, 30.0, 293.15, 2000.0, 15000.0, -10.0, -0.8, 0.40,
-          "Beggs & Brill 1973 - adapted"), };
+          "Beggs & Brill 1973 - adapted"),};
 
   /**
    * Test cases based on Lockhart-Martinelli (1949) for horizontal flow.
@@ -136,7 +136,7 @@ class TwoPhasePressureDropValidationTest {
 
       // High quality (mostly gas)
       new TwoPhaseTestCase("L-M High Quality (x=0.7)", 0.15, 1000.0, 30.0, 293.15, 8000.0, 10000.0, 0.0, 0.8, 0.25,
-          "Lockhart-Martinelli 1949"), };
+          "Lockhart-Martinelli 1949"),};
 
   /**
    * Industrial-scale test cases for offshore pipelines.
@@ -159,7 +159,7 @@ class TwoPhasePressureDropValidationTest {
 
       // Gas condensate line - 8" pipe, 5 km
       new TwoPhaseTestCase("Gas Condensate", 0.203, 5000.0, 100.0, 313.15, 15000.0, 2000.0, 0.0, 2.0, 0.05,
-          "Industry Correlation"), };
+          "Industry Correlation"),};
 
   @BeforeEach
   void setUp() {
@@ -344,7 +344,7 @@ class TwoPhasePressureDropValidationTest {
   void testPressureDropVsGasLiquidRatio() {
     logger.info("=== Pressure Drop vs Gas-Liquid Ratio ===");
 
-    double[] gasFlowRates = { 100, 500, 1000, 2000, 5000, 10000 }; // kg/hr
+    double[] gasFlowRates = {100, 500, 1000, 2000, 5000, 10000}; // kg/hr
     double liquidFlowRate = 5000.0; // kg/hr constant
 
     double prevDp = 0;
@@ -408,7 +408,7 @@ class TwoPhasePressureDropValidationTest {
   void testPressureDropVsInclination() {
     logger.info("=== Pressure Drop vs Pipe Inclination ===");
 
-    double[] angles = { -45, -30, -15, 0, 15, 30, 45, 60, 90 };
+    double[] angles = {-45, -30, -15, 0, 15, 30, 45, 60, 90};
 
     logger.info("Angle (°) | ΔP (bar) | ΔP Hydrostatic | ΔP Friction | Comment");
     logger.info(StringUtils.repeat("-", 75));
@@ -786,8 +786,8 @@ class TwoPhasePressureDropValidationTest {
     logger.info("=== Flow Regime Detection Test ===");
 
     // Matrix of gas and liquid flow rates
-    double[] gasRates = { 50, 200, 500, 1000, 2000 };
-    double[] liquidRates = { 5000, 2000, 1000, 500, 200 };
+    double[] gasRates = {50, 200, 500, 1000, 2000};
+    double[] liquidRates = {5000, 2000, 1000, 500, 200};
 
     logger.info("Gas (kg/hr) | Liquid (kg/hr) | GLR    | Flow Regime");
     logger.info(org.apache.commons.lang3.StringUtils.repeat("-", 60));

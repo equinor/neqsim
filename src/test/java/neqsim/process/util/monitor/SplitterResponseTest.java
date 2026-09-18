@@ -37,7 +37,7 @@ public class SplitterResponseTest {
     inletStream.run();
 
     splitter = new Splitter("splitter", inletStream, 3);
-    splitter.setSplitFactors(new double[] { 0.8, 0.15, 0.05 });
+    splitter.setSplitFactors(new double[] {0.8, 0.15, 0.05});
     splitter.run();
   }
 

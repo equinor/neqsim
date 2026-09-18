@@ -321,14 +321,14 @@ class TPFlashBenchmarkTest {
   void benchmarkComponentCountScaling() {
     int N = 500;
 
-    String[] components3 = { "methane", "ethane", "propane" };
-    String[] components6 = { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane" };
-    String[] components10 = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane" };
-    String[] components15 = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" };
+    String[] components3 = {"methane", "ethane", "propane"};
+    String[] components6 = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane"};
+    String[] components10 = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane"};
+    String[] components15 = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11"};
 
-    String[][] allComponents = { components3, components6, components10, components15 };
+    String[][] allComponents = {components3, components6, components10, components15};
 
     logger.info("=== Component Count Scaling (two-phase, -20C, 30bar) ===");
     for (String[] comps : allComponents) {
@@ -664,12 +664,12 @@ class TPFlashBenchmarkTest {
     // --- Component scaling ---
     {
       int N = 500;
-      String[][] allComponents = { { "methane", "ethane", "propane" },
-          { "methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane" },
-          { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-              "n-hexane" },
-          { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-              "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11" } };
+      String[][] allComponents = {{"methane", "ethane", "propane"},
+          {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-hexane"},
+          {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+              "n-hexane"},
+          {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+              "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "nC11"}};
 
       sb.append("--- Component Count Scaling (two-phase, -20C, 30bar) ---\n");
       for (String[] comps : allComponents) {

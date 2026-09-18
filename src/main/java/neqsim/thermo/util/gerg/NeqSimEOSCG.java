@@ -211,8 +211,8 @@ public class NeqSimEOSCG {
     doubleW A = new doubleW(0.0);
     eosCG.properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
         dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
-    return new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val, cv.val, cp.val,
-        w.val, g.val, jt.val, kappa.val };
+    return new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val, cv.val, cp.val,
+        w.val, g.val, jt.val, kappa.val};
   }
 
   public void setPhase(PhaseInterface phase) {

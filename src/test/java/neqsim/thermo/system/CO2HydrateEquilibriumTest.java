@@ -35,11 +35,11 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(CO2HydrateEquilibriumTest.class);
 
   /** Deaton and Frost (1946) CO2 Lw-H-V equilibrium temperatures in Kelvin. */
-  private static final double[] REFERENCE_TEMPERATURES = { 273.7, 274.3, 275.4, 276.5, 277.6, 279.3, 280.4, 281.5,
-      282.6 };
+  private static final double[] REFERENCE_TEMPERATURES = {273.7, 274.3, 275.4, 276.5, 277.6, 279.3, 280.4, 281.5,
+      282.6};
 
   /** Deaton and Frost (1946) CO2 Lw-H-V equilibrium pressures in bara. */
-  private static final double[] REFERENCE_PRESSURES = { 12.9, 14.2, 15.4, 17.5, 20.1, 24.4, 27.9, 31.9, 38.5 };
+  private static final double[] REFERENCE_PRESSURES = {12.9, 14.2, 15.4, 17.5, 20.1, 24.4, 27.9, 31.9, 38.5};
 
   /** Molar mass of water in g/mol. */
   private static final double WATER_MOLAR_MASS = 18.015;
@@ -95,7 +95,7 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("NaCl suppresses the CO2 hydrate temperature monotonically")
   public void testSaltSuppressionOfCO2HydrateTemperature() throws Exception {
-    double[] saltMassPercent = { 0.0, 5.0, 10.0, 15.0 };
+    double[] saltMassPercent = {0.0, 5.0, 10.0, 15.0};
     double[] hydrateTemperature = new double[saltMassPercent.length];
 
     for (int point = 0; point < saltMassPercent.length; point++) {
@@ -134,7 +134,7 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
     double referenceFugacityCoefficient = waterFugacityCoefficientWithTraceCO2(0.0);
     assertTrue(Double.isFinite(referenceFugacityCoefficient), "Pure water reference fugacity must be finite");
 
-    double[] traceMoles = { 1.0e-50, 1.0e-45, 1.0e-40, 1.0e-35, 1.0e-30, 1.0e-25, 1.0e-21 };
+    double[] traceMoles = {1.0e-50, 1.0e-45, 1.0e-40, 1.0e-35, 1.0e-30, 1.0e-25, 1.0e-21};
     for (int point = 0; point < traceMoles.length; point++) {
       double fugacityCoefficient = waterFugacityCoefficientWithTraceCO2(traceMoles[point]);
       assertTrue(Double.isFinite(fugacityCoefficient),
@@ -150,7 +150,7 @@ public class CO2HydrateEquilibriumTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Trace associating components leave electrolyte CPA fugacity coefficients finite")
   public void testTraceAssociatingComponentInBrineDoesNotCorruptFugacities() {
-    double[] traceMoles = { 1.0e-50, 1.0e-40, 1.0e-30, 1.0e-25 };
+    double[] traceMoles = {1.0e-50, 1.0e-40, 1.0e-30, 1.0e-25};
     double referenceFugacityCoefficient = Double.NaN;
 
     for (int point = 0; point < traceMoles.length; point++) {

@@ -141,7 +141,7 @@ public final class SlugFilmCoupling {
         double start = Math.max(left, slug.tailPosition);
         double end = Math.min(right, slug.frontPosition);
         if (end > start) {
-          intervals.add(new double[] { start, end });
+          intervals.add(new double[] {start, end});
           if (Double.isFinite(slug.slugHoldup)) {
             targetHoldup = Math.max(targetHoldup, slug.slugHoldup);
           }
@@ -278,7 +278,7 @@ public final class SlugFilmCoupling {
    * @throws IllegalArgumentException if an active phase has no positive density
    */
   private static double[] phaseDensities(TwoFluidSection section) {
-    double[] densities = { section.getGasDensity(), section.getOilDensity(), section.getWaterDensity() };
+    double[] densities = {section.getGasDensity(), section.getOilDensity(), section.getWaterDensity()};
     if (!(densities[1] > 0.0)) {
       densities[1] = section.getLiquidDensity();
     }
@@ -307,8 +307,8 @@ public final class SlugFilmCoupling {
       oilEnthalpy = ((ThreeFluidSection) section).getOilEnthalpy();
       waterEnthalpy = ((ThreeFluidSection) section).getWaterEnthalpy();
     }
-    return new double[] { section.getGasEnthalpy() - section.getPressure() / densities[0],
-        oilEnthalpy - section.getPressure() / densities[1], waterEnthalpy - section.getPressure() / densities[2] };
+    return new double[] {section.getGasEnthalpy() - section.getPressure() / densities[0],
+        oilEnthalpy - section.getPressure() / densities[1], waterEnthalpy - section.getPressure() / densities[2]};
   }
 
   /**

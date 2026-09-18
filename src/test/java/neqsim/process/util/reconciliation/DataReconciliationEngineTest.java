@@ -31,7 +31,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 20.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 15.0));
     engine.addVariable(new ReconciliationVariable("waste", 380.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
 
@@ -53,7 +53,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 10.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 10.0));
     engine.addVariable(new ReconciliationVariable("waste", 400.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
 
@@ -72,7 +72,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 100.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 5.0));
     engine.addVariable(new ReconciliationVariable("waste", 380.0, 5.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
@@ -94,8 +94,8 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("mid1", 400.0, 15.0));
     engine.addVariable(new ReconciliationVariable("mid2", 580.0, 15.0));
     engine.addVariable(new ReconciliationVariable("product", 990.0, 20.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0, 0.0 });
-    engine.addConstraint(new double[] { 0.0, 1.0, 1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0, 0.0});
+    engine.addConstraint(new double[] {0.0, 1.0, 1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
@@ -118,7 +118,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 20.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 20.0));
     engine.addVariable(new ReconciliationVariable("waste", 420.0, 20.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     // Lower threshold to catch the error more easily
     engine.setGrossErrorThreshold(1.5);
@@ -142,9 +142,9 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("leak", 200.0, 20.0)); // gross error
 
     // feed - mid - leak = 0 (leak is wrong: should be ~500)
-    engine.addConstraint(new double[] { 1.0, -1.0, 0.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, 0.0, -1.0});
     // mid - product = 0
-    engine.addConstraint(new double[] { 0.0, 1.0, -1.0, 0.0 });
+    engine.addConstraint(new double[] {0.0, 1.0, -1.0, 0.0});
 
     ReconciliationResult result = engine.reconcileWithGrossErrorElimination(2);
     assertTrue(result.isConverged());
@@ -158,7 +158,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("gas", 600.0, 15.0));
     engine.addVariable(new ReconciliationVariable("liquid", 380.0, 10.0));
 
-    engine.addMassBalanceConstraint("Separator", new String[] { "feed" }, new String[] { "gas", "liquid" });
+    engine.addMassBalanceConstraint("Separator", new String[] {"feed"}, new String[] {"gas", "liquid"});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
@@ -206,7 +206,7 @@ public class DataReconciliationEngineTest {
   @Test
   void testTooManyConstraintsReturnsError() {
     engine.addVariable(new ReconciliationVariable("x", 100.0, 10.0));
-    engine.addConstraint(new double[] { 1.0 });
+    engine.addConstraint(new double[] {1.0});
     ReconciliationResult result = engine.reconcile();
     assertFalse(result.isConverged());
     assertTrue(result.getErrorMessage().contains("more variables"));
@@ -216,7 +216,7 @@ public class DataReconciliationEngineTest {
   void testClearAndReuse() {
     engine.addVariable(new ReconciliationVariable("a", 100.0, 5.0));
     engine.addVariable(new ReconciliationVariable("b", 90.0, 5.0));
-    engine.addConstraint(new double[] { 1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0});
 
     ReconciliationResult r1 = engine.reconcile();
     assertTrue(r1.isConverged());
@@ -228,7 +228,7 @@ public class DataReconciliationEngineTest {
     // Reuse with different data
     engine.addVariable(new ReconciliationVariable("x", 200.0, 10.0));
     engine.addVariable(new ReconciliationVariable("y", 190.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0});
 
     ReconciliationResult r2 = engine.reconcile();
     assertTrue(r2.isConverged());
@@ -241,7 +241,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 20.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 15.0));
     engine.addVariable(new ReconciliationVariable("waste", 380.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     String json = result.toJson();
@@ -257,7 +257,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("feed", 1000.0, 20.0));
     engine.addVariable(new ReconciliationVariable("product", 600.0, 15.0));
     engine.addVariable(new ReconciliationVariable("waste", 380.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     String report = result.toReport();
@@ -272,7 +272,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("a", 100.0, 10.0));
     engine.addVariable(new ReconciliationVariable("b", 50.0, 10.0));
     engine.addVariable(new ReconciliationVariable("c", 50.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isGlobalTestPassed(), "Balanced measurements should pass global test");
@@ -339,7 +339,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("water", 1900.0, 80.0).setUnit("kg/hr"));
 
     // feed - gas - oil - water = 0
-    engine.addMassBalanceConstraint("3-Phase Sep", new String[] { "feed" }, new String[] { "gas", "oil", "water" });
+    engine.addMassBalanceConstraint("3-Phase Sep", new String[] {"feed"}, new String[] {"gas", "oil", "water"});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
@@ -366,11 +366,11 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("pumped_liquid", 2870.0, 70.0));
 
     // Separator: feed - gas - liquid = 0
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0, 0.0, 0.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0, 0.0, 0.0});
     // Compressor: gas - compressed_gas = 0
-    engine.addConstraint(new double[] { 0.0, 1.0, 0.0, -1.0, 0.0 });
+    engine.addConstraint(new double[] {0.0, 1.0, 0.0, -1.0, 0.0});
     // Pump: liquid - pumped_liquid = 0
-    engine.addConstraint(new double[] { 0.0, 0.0, 1.0, 0.0, -1.0 });
+    engine.addConstraint(new double[] {0.0, 0.0, 1.0, 0.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
@@ -388,7 +388,7 @@ public class DataReconciliationEngineTest {
     engine.addVariable(new ReconciliationVariable("a", 100.0, 10.0));
     engine.addVariable(new ReconciliationVariable("b", 60.0, 10.0));
     engine.addVariable(new ReconciliationVariable("c", 30.0, 10.0));
-    engine.addConstraint(new double[] { 1.0, -1.0, -1.0 });
+    engine.addConstraint(new double[] {1.0, -1.0, -1.0});
 
     ReconciliationResult result = engine.reconcile();
     double[] before = result.getConstraintResidualsBefore();

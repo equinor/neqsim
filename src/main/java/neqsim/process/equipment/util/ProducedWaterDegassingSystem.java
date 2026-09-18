@@ -62,8 +62,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * system.setCFUPressure(1.0, "bara");
  *
  * // Set dissolved gas composition (from PVT analysis)
- * system.setDissolvedGasComposition(new String[] { "CO2", "methane", "ethane", "propane" },
- *     new double[] { 0.51, 0.44, 0.04, 0.01 } // mole fractions
+ * system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
+ *     new double[] {0.51, 0.44, 0.04, 0.01} // mole fractions
  * );
  *
  * // Optional: Apply tuned kij parameters from lab calibration

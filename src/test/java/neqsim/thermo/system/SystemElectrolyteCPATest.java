@@ -187,7 +187,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("test salting-out effect for ethane, propane, and pentane")
   public void testSaltingOutVariousHydrocarbons() {
-    String[] hydrocarbons = { "ethane", "propane", "n-pentane" };
+    String[] hydrocarbons = {"ethane", "propane", "n-pentane"};
 
     for (String hc : hydrocarbons) {
       // System without salt

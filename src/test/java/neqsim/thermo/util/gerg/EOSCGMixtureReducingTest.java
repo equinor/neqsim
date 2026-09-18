@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemInterface;
 /** Regression tests for critical-property initialization in the EOS-CG mixture reducing functions. */
 class EOSCGMixtureReducingTest {
   @ParameterizedTest
-  @ValueSource(ints = { 22, 23, 24, 25, 26, 27, 28 })
+  @ValueSource(ints = {22, 23, 24, 25, 26, 27, 28})
   void addedComponentsHaveFiniteCriticalFactorsOnFirstSetup(int component) {
     EOSCGModel model = new EOSCGModel();
     model.SetupEOSCG();
@@ -56,7 +56,7 @@ class EOSCGMixtureReducingTest {
   }
 
   @ParameterizedTest
-  @EnumSource(value = PhaseType.class, names = { "GAS", "LIQUID" })
+  @EnumSource(value = PhaseType.class, names = {"GAS", "LIQUID"})
   void nonconvergedIdealGasFallbackRemainsRejected(PhaseType phaseType) {
     SystemInterface fluid = new SystemEOSCGEos(298.15, 50.0);
     fluid.addComponent("CO2", 0.95);

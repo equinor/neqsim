@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression coverage for cold-state reciprocal stability of water-rich cubic-EOS feeds. */
 class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "nC10", "water" };
-  private static final double[] FEED = { 0.74, 0.15, 0.05, 0.01, 0.05 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "nC10", "water"};
+  private static final double[] FEED = {0.74, 0.15, 0.05, 0.01, 0.05};
 
   @Test
   void coldSeedRecoversBalancedOilAqueousEndpoint() {
@@ -52,8 +52,8 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void nearbyStatesAndChangedFeedRemainContinuousAndDeterministic() {
-    double[][] stablePoints = { { 229.0, 92.0 }, { 229.5, 92.0 }, { 230.0, 90.0 }, { 231.0, 88.0 }, { 231.0, 90.0 },
-        { 231.0, 92.0 }, { 232.0, 88.0 }, { 232.0, 92.0 }, { 234.0, 90.0 } };
+    double[][] stablePoints = {{229.0, 92.0}, {229.5, 92.0}, {230.0, 90.0}, {231.0, 88.0}, {231.0, 90.0}, {231.0, 92.0},
+        {232.0, 88.0}, {232.0, 92.0}, {234.0, 90.0}};
     for (double[] point : stablePoints) {
       SystemInterface ordinary = flash(createSystem(point[0], point[1], FEED, false), false);
       SystemInterface multiphase = flash(createSystem(point[0], point[1], FEED, true), false);
@@ -66,7 +66,7 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
     continued = flash(continued, false);
     assertEquivalentOilAqueousState(continued, flash(createSystem(232.0, 90.0, FEED, true), false));
 
-    double[] nearbyFeed = { 0.75, 0.15, 0.05, 0.01, 0.04 };
+    double[] nearbyFeed = {0.75, 0.15, 0.05, 0.01, 0.04};
     continued.setTemperature(230.0, "K");
     continued.setMolarComposition(nearbyFeed);
     continued = flash(continued, false);
@@ -120,7 +120,7 @@ class TPflashWaterRichColdSeedConsistencyTest extends neqsim.NeqSimTest {
     assertPhysicalEquilibrium(first);
     assertPhysicalEquilibrium(second);
 
-    for (PhaseType type : new PhaseType[] { PhaseType.OIL, PhaseType.AQUEOUS }) {
+    for (PhaseType type : new PhaseType[] {PhaseType.OIL, PhaseType.AQUEOUS}) {
       assertEquals(first.getPhase(type.getDesc()).getBeta(), second.getPhase(type.getDesc()).getBeta(), 1.0e-10);
       assertEquals(first.getPhase(type.getDesc()).getZ(), second.getPhase(type.getDesc()).getZ(), 1.0e-10);
       assertCompositionEquals(phaseComposition(first, type), phaseComposition(second, type), 1.0e-10);

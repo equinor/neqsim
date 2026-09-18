@@ -61,48 +61,48 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   private static Map<String, double[]> createDiffusionLJParams() {
     Map<String, double[]> lj = new HashMap<String, double[]>();
     // Noble gases
-    lj.put("helium", new double[] { 2.551, 10.22 });
-    lj.put("neon", new double[] { 2.820, 32.8 });
-    lj.put("argon", new double[] { 3.542, 93.3 });
-    lj.put("krypton", new double[] { 3.655, 178.9 });
-    lj.put("xenon", new double[] { 4.047, 231.0 });
+    lj.put("helium", new double[] {2.551, 10.22});
+    lj.put("neon", new double[] {2.820, 32.8});
+    lj.put("argon", new double[] {3.542, 93.3});
+    lj.put("krypton", new double[] {3.655, 178.9});
+    lj.put("xenon", new double[] {4.047, 231.0});
     // Diatomic and simple gases
-    lj.put("hydrogen", new double[] { 2.827, 59.7 });
-    lj.put("nitrogen", new double[] { 3.798, 71.4 });
-    lj.put("oxygen", new double[] { 3.467, 106.7 });
-    lj.put("co", new double[] { 3.690, 91.7 });
-    lj.put("no", new double[] { 3.492, 116.7 });
+    lj.put("hydrogen", new double[] {2.827, 59.7});
+    lj.put("nitrogen", new double[] {3.798, 71.4});
+    lj.put("oxygen", new double[] {3.467, 106.7});
+    lj.put("co", new double[] {3.690, 91.7});
+    lj.put("no", new double[] {3.492, 116.7});
     // Common molecules (all keys lowercase for case-insensitive lookup)
-    lj.put("co2", new double[] { 3.941, 195.2 });
-    lj.put("n2o", new double[] { 3.828, 232.4 });
-    lj.put("so2", new double[] { 4.112, 335.4 });
-    lj.put("h2s", new double[] { 3.623, 301.1 });
-    lj.put("nh3", new double[] { 2.900, 558.3 });
-    lj.put("water", new double[] { 2.641, 809.1 });
+    lj.put("co2", new double[] {3.941, 195.2});
+    lj.put("n2o", new double[] {3.828, 232.4});
+    lj.put("so2", new double[] {4.112, 335.4});
+    lj.put("h2s", new double[] {3.623, 301.1});
+    lj.put("nh3", new double[] {2.900, 558.3});
+    lj.put("water", new double[] {2.641, 809.1});
     // Light hydrocarbons
-    lj.put("methane", new double[] { 3.758, 148.6 });
-    lj.put("ethane", new double[] { 4.443, 215.7 });
-    lj.put("propane", new double[] { 5.118, 237.1 });
-    lj.put("n-butane", new double[] { 4.687, 531.4 });
-    lj.put("i-butane", new double[] { 5.278, 330.1 });
-    lj.put("n-pentane", new double[] { 5.784, 341.1 });
-    lj.put("i-pentane", new double[] { 5.464, 381.0 });
-    lj.put("n-hexane", new double[] { 5.949, 399.3 });
-    lj.put("n-heptane", new double[] { 7.451, 205.78 });
-    lj.put("n-octane", new double[] { 7.451, 320.0 });
-    lj.put("cyclohexane", new double[] { 6.182, 297.1 });
+    lj.put("methane", new double[] {3.758, 148.6});
+    lj.put("ethane", new double[] {4.443, 215.7});
+    lj.put("propane", new double[] {5.118, 237.1});
+    lj.put("n-butane", new double[] {4.687, 531.4});
+    lj.put("i-butane", new double[] {5.278, 330.1});
+    lj.put("n-pentane", new double[] {5.784, 341.1});
+    lj.put("i-pentane", new double[] {5.464, 381.0});
+    lj.put("n-hexane", new double[] {5.949, 399.3});
+    lj.put("n-heptane", new double[] {7.451, 205.78});
+    lj.put("n-octane", new double[] {7.451, 320.0});
+    lj.put("cyclohexane", new double[] {6.182, 297.1});
     // Aromatic hydrocarbons
-    lj.put("benzene", new double[] { 5.349, 412.3 });
-    lj.put("toluene", new double[] { 5.926, 412.3 });
+    lj.put("benzene", new double[] {5.349, 412.3});
+    lj.put("toluene", new double[] {5.926, 412.3});
     // Oxygenated compounds
-    lj.put("methanol", new double[] { 3.626, 481.8 });
-    lj.put("ethanol", new double[] { 4.530, 362.6 });
-    lj.put("acetone", new double[] { 4.600, 560.2 });
+    lj.put("methanol", new double[] {3.626, 481.8});
+    lj.put("ethanol", new double[] {4.530, 362.6});
+    lj.put("acetone", new double[] {4.600, 560.2});
     // Halogenated
-    lj.put("ccl4", new double[] { 5.947, 322.7 });
-    lj.put("chcl3", new double[] { 5.389, 340.2 });
-    lj.put("ch2cl2", new double[] { 4.898, 356.3 });
-    lj.put("sf6", new double[] { 5.128, 222.1 });
+    lj.put("ccl4", new double[] {5.947, 322.7});
+    lj.put("chcl3", new double[] {5.389, 340.2});
+    lj.put("ch2cl2", new double[] {4.898, 356.3});
+    lj.put("sf6", new double[] {5.128, 222.1});
     return lj;
   }
 

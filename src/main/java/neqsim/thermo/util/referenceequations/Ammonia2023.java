@@ -27,38 +27,38 @@ public class Ammonia2023 {
   private static final double A1 = -6.59406093943886;
   private static final double A2 = 5.601011519879;
   private static final double C0 = 3.0;
-  private static final double[] IDEAL_N = { 2.224, 3.148, 0.9579 };
-  private static final double[] IDEAL_T = { 4.0585856593352405, 9.776605187888352, 17.829667620080876 };
+  private static final double[] IDEAL_N = {2.224, 3.148, 0.9579};
+  private static final double[] IDEAL_T = {4.0585856593352405, 9.776605187888352, 17.829667620080876};
 
   // --- Residual part parameters ---------------------------------------------
   // coefficients for polynomial/exponential/gaussian terms
-  private static final double[] N = { 0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
+  private static final double[] N = {0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
       -0.84063963, -0.27026327, 6.212578, -5.7844357, 2.4817542, -2.3739168, 0.01493697, -3.7749264, 0.0006254348,
-      -1.7359e-05, -0.13462033, 0.07749072839 };
-  private static final double[] T = { 1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063, 0.655, 1.3, 3.1, 1.4395, 1.623,
-      0.643, 1.13, 4.5, 1.0, 4.0 };
-  private static final double[] D = { 4, 1, 1, 2, 3, 3, 2, 3, 1, 1, 1, 2, 2, 1, 3, 3, 1, 1 };
+      -1.7359e-05, -0.13462033, 0.07749072839};
+  private static final double[] T = {1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063, 0.655, 1.3, 3.1, 1.4395, 1.623,
+      0.643, 1.13, 4.5, 1.0, 4.0};
+  private static final double[] D = {4, 1, 1, 2, 3, 3, 2, 3, 1, 1, 1, 2, 2, 1, 3, 3, 1, 1};
   // exponential terms c_i and g_i
-  private static final double[] L = { 2, 2, 1 };
-  private static final double[] G = { 1, 1, 1 };
+  private static final double[] L = {2, 2, 1};
+  private static final double[] G = {1, 1, 1};
   // gaussian terms parameters
-  private static final double[] ETA = { 0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68 };
-  private static final double[] BETA = { 1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85 };
-  private static final double[] GAMMA = { 1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897, 1.05277 };
-  private static final double[] EPS = { -0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576 };
+  private static final double[] ETA = {0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68};
+  private static final double[] BETA = {1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85};
+  private static final double[] GAMMA = {1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897, 1.05277};
+  private static final double[] EPS = {-0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576};
   // Gao-B terms
-  private static final double[] GAOB_N = { -1.6909858, 0.93739074 };
-  private static final double[] GAOB_T = { 4.3315, 4.015 };
-  private static final double[] GAOB_D = { 1.0, 1.0 };
-  private static final double[] GAOB_ETA = { -2.8452, -2.8342 };
-  private static final double[] GAOB_BETA = { 0.3696, 0.2962 };
-  private static final double[] GAOB_GAMMA = { 1.108, 1.313 };
-  private static final double[] GAOB_EPS = { 0.4478, 0.44689 };
-  private static final double[] GAOB_B = { 1.244, 0.6826 };
+  private static final double[] GAOB_N = {-1.6909858, 0.93739074};
+  private static final double[] GAOB_T = {4.3315, 4.015};
+  private static final double[] GAOB_D = {1.0, 1.0};
+  private static final double[] GAOB_ETA = {-2.8452, -2.8342};
+  private static final double[] GAOB_BETA = {0.3696, 0.2962};
+  private static final double[] GAOB_GAMMA = {1.108, 1.313};
+  private static final double[] GAOB_EPS = {0.4478, 0.44689};
+  private static final double[] GAOB_B = {1.244, 0.6826};
 
   // Saturated-liquid density ancillary used only to select the dense EOS root.
-  private static final double[] SAT_LIQ_N = { 2.447, 5.8341, -25.944, 53.383, -54.411, 22.771 };
-  private static final double[] SAT_LIQ_T = { 0.384, 1.65, 2.2, 2.75, 3.35, 4.0 };
+  private static final double[] SAT_LIQ_N = {2.447, 5.8341, -25.944, 53.383, -54.411, 22.771};
+  private static final double[] SAT_LIQ_T = {0.384, 1.65, 2.2, 2.75, 3.35, 4.0};
 
   // --- Simple viscosity correlation coefficients ----------------------------
   // Fitted to CoolProp viscosity data at 293.15 K
@@ -439,7 +439,7 @@ public class Ammonia2023 {
     double rho = getDensity(); // kg/m3
 
     // Dilute-gas contribution: ratio of polynomials in temperature
-    double[] A = { 0.03589, -0.000175, 4.551e-7, 1.685e-10, -4.828e-13 };
+    double[] A = {0.03589, -0.000175, 4.551e-7, 1.685e-10, -4.828e-13};
     double num = 0.0;
     for (int i = 0; i < A.length; i++) {
       num += A[i] * Math.pow(T, i);
@@ -447,8 +447,8 @@ public class Ammonia2023 {
     double lambda0 = num; // denominator is 1.0
 
     // Residual part: polynomial in reduced density
-    double[] Br = { 0.03808645, 0.06647986, -0.0300295, 0.00998779 };
-    int[] d = { 1, 2, 3, 4 };
+    double[] Br = {0.03808645, 0.06647986, -0.0300295, 0.00998779};
+    int[] d = {1, 2, 3, 4};
     double rhoRed = rho / 235.0; // kg/m3 reducing value
     double lambdaR = 0.0;
     for (int i = 0; i < Br.length; i++) {

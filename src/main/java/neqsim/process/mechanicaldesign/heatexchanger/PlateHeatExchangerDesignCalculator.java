@@ -129,7 +129,7 @@ public class PlateHeatExchangerDesignCalculator implements Serializable {
     double channelDrop = fd * passes * getEffectiveFlowLength() / dh * side.density * velocity * velocity / 2.0;
     double portVelocity = 4.0 * side.massFlow / (side.density * Math.PI * diameter * diameter);
     double portDrop = portLossCoefficient * passes * side.density * portVelocity * portVelocity / 2.0;
-    double[] values = { velocity, re, pr, fd, nu, h, channelDrop, portVelocity, portDrop };
+    double[] values = {velocity, re, pr, fd, nu, h, channelDrop, portVelocity, portDrop};
     for (double value : values) {
       nonnegative(value, "channel result");
     }

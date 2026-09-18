@@ -136,8 +136,8 @@ public final class RefineryViscosityBlend implements Serializable {
     firstMassFraction = Math.max(0.0, Math.min(1.0, firstMassFraction));
     double secondMassFraction = 1.0 - firstMassFraction;
 
-    return fromMassBasis(new double[] { firstMassFraction, secondMassFraction },
-        new double[] { firstSourceKinematicViscosityCSt, secondSourceKinematicViscosityCSt }, temperatureCelsius);
+    return fromMassBasis(new double[] {firstMassFraction, secondMassFraction},
+        new double[] {firstSourceKinematicViscosityCSt, secondSourceKinematicViscosityCSt}, temperatureCelsius);
   }
 
   /**

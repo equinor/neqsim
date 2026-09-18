@@ -23,8 +23,8 @@ class FlowRegimeInclinedFilmBridgingTest {
   void liftedGasCannotSelectAnnularWhenTheLiquidCanBridgeTheCore() {
     FlowRegimeDetector detector = enabledDetector();
     double critical = criticalGasVelocity();
-    for (double liquidHoldup : new double[] { 0.24, 0.4, 0.593863293446687, 0.8 }) {
-      for (double multiplier : new double[] { 1.0 - 1.0e-8, 1.0 + 1.0e-8, 2.0 }) {
+    for (double liquidHoldup : new double[] {0.24, 0.4, 0.593863293446687, 0.8}) {
+      for (double multiplier : new double[] {1.0 - 1.0e-8, 1.0 + 1.0e-8, 2.0}) {
         TwoFluidSection cell = section(liquidHoldup, critical * multiplier, -2.05, Math.PI / 2.0);
         double[] initial = cell.getStateVector();
         assertEquals(FlowRegime.SLUG, detector.detectFlowRegime(cell));
@@ -81,7 +81,7 @@ class FlowRegimeInclinedFilmBridgingTest {
   @Test
   void downwardAndReversedCoordinatesApplyTheSameInventoryConstraint() {
     FlowRegimeDetector detector = enabledDetector();
-    for (double inclination : new double[] { -Math.PI / 2.0, -0.4, 0.4, Math.PI / 2.0 }) {
+    for (double inclination : new double[] {-Math.PI / 2.0, -0.4, 0.4, Math.PI / 2.0}) {
       TwoFluidSection forward = section(0.6, 1.2 * criticalGasVelocity(), 0.1, inclination);
       TwoFluidSection reversed = section(0.6, -1.2 * criticalGasVelocity(), -0.1, -inclination);
       FlowRegime forwardRegime = detector.classify(forward);
@@ -113,7 +113,7 @@ class FlowRegimeInclinedFilmBridgingTest {
   void horizontalAndMinimumSlipMapsRemainIndependent() {
     FlowRegimeDetector legacy = new FlowRegimeDetector();
     FlowRegimeDetector enabled = enabledDetector();
-    for (double inclination : new double[] { -Math.toRadians(10.0), 0.0, Math.toRadians(10.0) }) {
+    for (double inclination : new double[] {-Math.toRadians(10.0), 0.0, Math.toRadians(10.0)}) {
       TwoFluidSection first = section(0.6, 1.2 * criticalGasVelocity(), 0.1, inclination);
       TwoFluidSection second = first.clone();
       assertEquals(legacy.classify(first), enabled.classify(second));

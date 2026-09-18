@@ -206,7 +206,7 @@ public final class FluidPropertyEstimator {
     double pSat = estimateSaturationPressure(system, phaseNum, compNum);
     double vm = estimateLiquidMolarVolume(system, phaseNum, compNum);
     double sigma = estimateSurfaceTension(system, phaseNum, compNum, vm);
-    return new double[] { pSat, vm, sigma };
+    return new double[] {pSat, vm, sigma};
   }
 
   /**

@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 class BandedLinearSystemSolverTest {
   @Test
   void solvesDiagonallyDominantPentadiagonalSystem() {
-    double[][] dense = { { 8.0, -2.0, 0.5, 0.0, 0.0, 0.0 }, { -1.0, 9.0, -2.0, 0.25, 0.0, 0.0 },
-        { 0.5, -1.0, 10.0, -2.0, 0.5, 0.0 }, { 0.0, 0.25, -1.0, 10.0, -2.0, 0.5 }, { 0.0, 0.0, 0.5, -1.0, 9.0, -2.0 },
-        { 0.0, 0.0, 0.0, 0.5, -1.0, 8.0 } };
-    double[] expected = { 1.0, -2.0, 3.0, -4.0, 5.0, -6.0 };
+    double[][] dense = {{8.0, -2.0, 0.5, 0.0, 0.0, 0.0}, {-1.0, 9.0, -2.0, 0.25, 0.0, 0.0},
+        {0.5, -1.0, 10.0, -2.0, 0.5, 0.0}, {0.0, 0.25, -1.0, 10.0, -2.0, 0.5}, {0.0, 0.0, 0.5, -1.0, 9.0, -2.0},
+        {0.0, 0.0, 0.0, 0.5, -1.0, 8.0}};
+    double[] expected = {1.0, -2.0, 3.0, -4.0, 5.0, -6.0};
     double[] rightHandSide = multiply(dense, expected);
 
     double[] actual = BandedLinearSystemSolver.solve(compact(dense, 2), 2, 2, rightHandSide);
@@ -21,16 +21,16 @@ class BandedLinearSystemSolverTest {
 
   @Test
   void rejectsUnusablePivotWithRowDiagnostic() {
-    double[][] bands = { { 0.0, 0.0, 1.0 }, { 0.0, 2.0, 0.0 } };
+    double[][] bands = {{0.0, 0.0, 1.0}, {0.0, 2.0, 0.0}};
     assertThrows(IllegalStateException.class,
-        () -> BandedLinearSystemSolver.solve(bands, 1, 1, new double[] { 1.0, 2.0 }));
+        () -> BandedLinearSystemSolver.solve(bands, 1, 1, new double[] {1.0, 2.0}));
   }
 
   @Test
   void rejectsNonFiniteMatrixEntry() {
-    double[][] bands = { { 0.0, 2.0, Double.NaN }, { 0.0, 2.0, 0.0 } };
+    double[][] bands = {{0.0, 2.0, Double.NaN}, {0.0, 2.0, 0.0}};
     assertThrows(IllegalArgumentException.class,
-        () -> BandedLinearSystemSolver.solve(bands, 1, 1, new double[] { 1.0, 2.0 }));
+        () -> BandedLinearSystemSolver.solve(bands, 1, 1, new double[] {1.0, 2.0}));
   }
 
   @Test

@@ -15,11 +15,11 @@ import neqsim.util.database.NeqSimDataBase;
  * a qualified mixed-brine activity benchmark.
  */
 public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest {
-  private static final String[] VALUE_NAMES = { "Na+ ionic charge", "Ca++ ionic charge", "Cl- ionic charge",
+  private static final String[] VALUE_NAMES = {"Na+ ionic charge", "Ca++ ionic charge", "Cl- ionic charge",
       "Na+ molar mass", "Ca++ molar mass", "Cl- molar mass", "NaCl beta0", "NaCl beta1", "CaCl2 beta0", "CaCl2 beta1",
       "Na+ activity coefficient", "Ca++ activity coefficient", "Cl- activity coefficient", "water osmotic coefficient",
       "water activity", "aqueous density", "aqueous molar volume", "Pitzer excess enthalpy", "Pitzer excess entropy",
-      "Pitzer excess Gibbs energy" };
+      "Pitzer excess Gibbs energy"};
 
   /**
    * The standard and extended component databases must produce the same mixed-brine Pitzer state.
@@ -94,7 +94,7 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
     assertTrue(Math.abs(phase.getBeta1ij(calcium, chloride)) > 0.0,
         "CaCl2 beta1 must be loaded from the legacy Pitzer database");
 
-    double[] values = { phase.getComponent(sodium).getIonicCharge(), phase.getComponent(calcium).getIonicCharge(),
+    double[] values = {phase.getComponent(sodium).getIonicCharge(), phase.getComponent(calcium).getIonicCharge(),
         phase.getComponent(chloride).getIonicCharge(), phase.getComponent(sodium).getMolarMass(),
         phase.getComponent(calcium).getMolarMass(), phase.getComponent(chloride).getMolarMass(),
         phase.getBeta0ij(sodium, chloride), phase.getBeta1ij(sodium, chloride), phase.getBeta0ij(calcium, chloride),
@@ -102,7 +102,7 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
         phase.getActivityCoefficient(calcium, water), phase.getActivityCoefficient(chloride, water),
         phase.getOsmoticCoefficientOfWater(),
         phase.getActivityCoefficient(water, water) * phase.getComponent(water).getx(), phase.getDensity(),
-        phase.getMolarVolume(), phase.getHresTP(), phase.getSresTP(), phase.getGresTP() };
+        phase.getMolarVolume(), phase.getHresTP(), phase.getSresTP(), phase.getGresTP()};
 
     // COMP_EXT intentionally retains its own ideal heat capacities and reference properties. Compare the Pitzer
     // excess contributions above, while requiring the total caloric properties to remain calculable in both modes.

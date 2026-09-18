@@ -85,7 +85,7 @@ public class ProfilingBenchmarkTest {
         totalCalls += (long) v[1];
       }
     }
-    return new double[] { totalWall / runs, totalUnit / runs, totalCalls / (double) runs };
+    return new double[] {totalWall / runs, totalUnit / runs, totalCalls / (double) runs};
   }
 
   /** Aggregated per-equipment-class timing across all runs. */
@@ -104,7 +104,7 @@ public class ProfilingBenchmarkTest {
         String cls = nameToClass.getOrDefault(e.getKey(), "?");
         double[] cur = classTotals.get(cls);
         if (cur == null) {
-          cur = new double[] { 0, 0 };
+          cur = new double[] {0, 0};
           classTotals.put(cls, cur);
         }
         cur[0] += e.getValue()[0];
@@ -121,7 +121,7 @@ public class ProfilingBenchmarkTest {
   @Test
   void profileIndependentTrains() throws Exception {
     final int RUNS = 20;
-    int[] trainsCases = { 1, 4, 8 };
+    int[] trainsCases = {1, 4, 8};
 
     logger.info("\n===== PROFILING: Independent trains (where is time spent?) =====");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %10s %10s %10s %10s %10s%n", "trains", "mode",

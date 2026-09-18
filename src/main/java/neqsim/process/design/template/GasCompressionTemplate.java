@@ -209,15 +209,15 @@ public class GasCompressionTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] { "Compressor", "Cooler", "Separator" };
+    return new String[] {"Compressor", "Cooler", "Separator"};
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] { "Compressed Gas - High pressure gas from final stage",
+    return new String[] {"Compressed Gas - High pressure gas from final stage",
         "Knockout Liquids - Condensate from each stage knockout drum",
-        "Compression Power - Total shaft power required" };
+        "Compression Power - Total shaft power required"};
   }
 
   /** {@inheritDoc} */

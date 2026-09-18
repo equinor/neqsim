@@ -309,9 +309,9 @@ public class PTPhaseEnvelopeMichelsenTest {
     testOps.calcPTphaseEnvelope();
 
     // All standard keys should return non-null
-    String[] keys = { "dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
+    String[] keys = {"dewT", "dewP", "bubT", "bubP", "dewH", "dewDens", "dewS", "bubH", "bubDens", "bubS",
         "cricondentherm", "cricondenthermX", "cricondenthermY", "cricondenbar", "cricondenbarX", "cricondenbarY",
-        "criticalPoint1", "criticalPoint2" };
+        "criticalPoint1", "criticalPoint2"};
     for (String key : keys) {
       assertNotNull(testOps.get(key), "get(\"" + key + "\") should not be null");
     }
@@ -486,7 +486,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.25, 0.5, 0.75, 0.9 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.25, 0.5, 0.75, 0.9});
 
     // Check that quality line data is accessible via get()
     double[] qT50 = testOps.get("qualityT_0.5");
@@ -521,7 +521,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.5 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.5});
 
     double[] volFrac = testOps.get("qualityVolFrac_0.5");
     double[] massFrac = testOps.get("qualityMassFrac_0.5");
@@ -557,7 +557,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] { 0.1, 0.5, 0.9 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(new double[] {0.1, 0.5, 0.9});
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) testOps.getOperation();
 
@@ -593,7 +593,7 @@ public class PTPhaseEnvelopeMichelsenTest {
     testSystem.setMixingRule("classic");
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] { 0.25, 0.75 });
+    testOps.calcPTphaseEnvelopeWithQualityLines(true, new double[] {0.25, 0.75});
 
     double[] qT25 = testOps.get("qualityT_0.25");
     double[] qT75 = testOps.get("qualityT_0.75");

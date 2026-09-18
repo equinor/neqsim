@@ -84,9 +84,9 @@ public class Standard_ASTM_D4294 extends neqsim.standards.Standard {
    * Sulfur-bearing component names and the number of sulfur atoms per molecule. Each entry is {componentName,
    * numberOfSulfurAtoms}.
    */
-  private static final Object[][] SULFUR_COMPONENTS = { { "H2S", 1 }, { "hydrogen sulfide", 1 },
-      { "methyl mercaptan", 1 }, { "ethyl mercaptan", 1 }, { "COS", 1 }, { "carbonyl sulfide", 1 }, { "CS2", 2 },
-      { "carbon disulfide", 2 }, { "SO2", 1 }, { "sulfur dioxide", 1 }, { "dimethyl sulfide", 1 }, { "DMS", 1 } };
+  private static final Object[][] SULFUR_COMPONENTS = {{"H2S", 1}, {"hydrogen sulfide", 1}, {"methyl mercaptan", 1},
+      {"ethyl mercaptan", 1}, {"COS", 1}, {"carbonyl sulfide", 1}, {"CS2", 2}, {"carbon disulfide", 2}, {"SO2", 1},
+      {"sulfur dioxide", 1}, {"dimethyl sulfide", 1}, {"DMS", 1}};
 
   /**
    * Constructor for Standard_ASTM_D4294.

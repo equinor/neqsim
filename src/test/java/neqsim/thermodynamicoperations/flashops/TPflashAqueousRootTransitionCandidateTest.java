@@ -13,7 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPflashAqueousRootTransitionCandidateTest {
   @Test
   void acceptsLowerGibbsOilAqueousCandidateAcrossSeparatorPressures() {
-    for (double pressureBara : new double[] { 2.10, 1.62, 1.20, 0.74 }) {
+    for (double pressureBara : new double[] {2.10, 1.62, 1.20, 0.74}) {
       SystemInterface candidate = createOilAqueousCandidate(pressureBara);
       TPflash flash = new TPflash(candidate.clone(), false);
       double referenceGibbsEnergy = candidate.getGibbsEnergy() + 1.0;

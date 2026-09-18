@@ -35,10 +35,10 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
     this.m = val;
     neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
+    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
     if (this.m > 0.49) {
       solve.setOrder(3);
-      acentricConstants = new double[] { 0.01666, -0.164423, 1.48503, (0.379642 - this.m) };
+      acentricConstants = new double[] {0.01666, -0.164423, 1.48503, (0.379642 - this.m)};
     }
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));

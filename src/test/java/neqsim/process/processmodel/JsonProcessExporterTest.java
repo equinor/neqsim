@@ -221,10 +221,10 @@ class JsonProcessExporterTest {
     pipe.setLength(1000.0);
     pipe.setDiameter(0.3);
     pipe.setRoughness(1.0e-5);
-    pipe.setSectionLengths(new double[] { 200.0, 250.0, 300.0, 250.0 });
-    pipe.setElevationProfile(new double[] { 0.0, -5.0, -4.0, 10.0 });
-    pipe.setHeatTransferProfile(new double[] { 4.0, 4.0, 8.0, 8.0 });
-    pipe.setSurfaceTemperatureProfile(new double[] { 277.15, 277.15, 279.15, 279.15 });
+    pipe.setSectionLengths(new double[] {200.0, 250.0, 300.0, 250.0});
+    pipe.setElevationProfile(new double[] {0.0, -5.0, -4.0, 10.0});
+    pipe.setHeatTransferProfile(new double[] {4.0, 4.0, 8.0, 8.0});
+    pipe.setSurfaceTemperatureProfile(new double[] {277.15, 277.15, 279.15, 279.15});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -243,10 +243,10 @@ class JsonProcessExporterTest {
     assertEquals(1000.0, rebuilt.getLength(), 1.0e-12);
     assertEquals(0.3, rebuilt.getDiameter(), 1.0e-12);
     assertEquals(1.0e-5, rebuilt.getRoughness(), 1.0e-12);
-    assertArrayEquals(new double[] { 200.0, 250.0, 300.0, 250.0 }, rebuilt.getSectionLengths(), 1.0e-12);
-    assertArrayEquals(new double[] { 0.0, -5.0, -4.0, 10.0 }, rebuilt.getElevationProfile(), 1.0e-12);
-    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, rebuilt.getHeatTransferProfile(), 1.0e-12);
-    assertArrayEquals(new double[] { 277.15, 277.15, 279.15, 279.15 }, rebuilt.getSurfaceTemperatureProfile(), 1.0e-12);
+    assertArrayEquals(new double[] {200.0, 250.0, 300.0, 250.0}, rebuilt.getSectionLengths(), 1.0e-12);
+    assertArrayEquals(new double[] {0.0, -5.0, -4.0, 10.0}, rebuilt.getElevationProfile(), 1.0e-12);
+    assertArrayEquals(new double[] {4.0, 4.0, 8.0, 8.0}, rebuilt.getHeatTransferProfile(), 1.0e-12);
+    assertArrayEquals(new double[] {277.15, 277.15, 279.15, 279.15}, rebuilt.getSurfaceTemperatureProfile(), 1.0e-12);
   }
 
   @Test
@@ -270,20 +270,20 @@ class JsonProcessExporterTest {
     CompressorChartInterface chart = compressor.getCompressorChart();
     chart.setHeadUnit("kJ/kg");
     chart.setUseRealKappa(true);
-    chart.setCurves(new double[] { 18.0, 288.15, 45.0, 0.9 }, new double[] { 8000.0, 10000.0 },
-        new double[][] { { 800.0, 1000.0, 1200.0 }, { 900.0, 1100.0, 1300.0 } },
-        new double[][] { { 90.0, 85.0, 75.0 }, { 110.0, 103.0, 92.0 } },
-        new double[][] { { 72.0, 78.0, 74.0 }, { 73.0, 79.0, 75.0 } });
-    chart.getSurgeCurve().setCurve(new double[] { 18.0, 288.15, 45.0, 0.9 }, new double[] { 780.0, 830.0, 880.0 },
-        new double[] { 92.0, 101.0, 112.0 });
-    chart.getStoneWallCurve().setCurve(new double[] { 18.0, 288.15, 45.0, 0.9 },
-        new double[] { 1220.0, 1270.0, 1320.0 }, new double[] { 74.0, 82.0, 91.0 });
+    chart.setCurves(new double[] {18.0, 288.15, 45.0, 0.9}, new double[] {8000.0, 10000.0},
+        new double[][] {{800.0, 1000.0, 1200.0}, {900.0, 1100.0, 1300.0}},
+        new double[][] {{90.0, 85.0, 75.0}, {110.0, 103.0, 92.0}},
+        new double[][] {{72.0, 78.0, 74.0}, {73.0, 79.0, 75.0}});
+    chart.getSurgeCurve().setCurve(new double[] {18.0, 288.15, 45.0, 0.9}, new double[] {780.0, 830.0, 880.0},
+        new double[] {92.0, 101.0, 112.0});
+    chart.getStoneWallCurve().setCurve(new double[] {18.0, 288.15, 45.0, 0.9}, new double[] {1220.0, 1270.0, 1320.0},
+        new double[] {74.0, 82.0, 91.0});
     compressor.getAntiSurge().setActive(true);
     compressor.getAntiSurge().setControlStrategy(neqsim.process.equipment.compressor.AntiSurge.ControlStrategy.PID);
     compressor.getAntiSurge().setSurgeControlFactor(1.12);
 
     Splitter antiSurgeSplitter = new Splitter("anti surge splitter", compressor.getOutStream(), 2);
-    antiSurgeSplitter.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
+    antiSurgeSplitter.setFlowRates(new double[] {-1.0, 1.0}, "kg/hr");
 
     Calculator antiSurgeCalculator = new Calculator("anti surge calculator test");
     antiSurgeCalculator.addInputVariable(compressor);
@@ -345,7 +345,7 @@ class JsonProcessExporterTest {
     driver.setMinSpeed(4922.0);
     driver.setMaxSpeed(7383.0);
     driver.setAmbientTemperature(288.15);
-    driver.setMaxPowerSpeedCurve(new double[] { 4922.0, 6000.0, 7383.0 }, new double[] { 21.8, 32.0, 44.4 }, "MW");
+    driver.setMaxPowerSpeedCurve(new double[] {4922.0, 6000.0, 7383.0}, new double[] {21.8, 32.0, 44.4}, "MW");
     compressor.setDriver(driver);
 
     ProcessSystem process = new ProcessSystem();
@@ -460,7 +460,7 @@ class JsonProcessExporterTest {
     feed.setFlowRate(10000.0, "kg/hr");
 
     Splitter splitter = new Splitter("TEE-1", feed, 2);
-    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -599,7 +599,7 @@ class JsonProcessExporterTest {
     feed.setFlowRate(10000.0, "kg/hr");
 
     Splitter splitter = new Splitter("fixed-rate splitter", feed, 2);
-    splitter.setFlowRates(new double[] { 1000.0, -1.0 }, "kg/hr");
+    splitter.setFlowRates(new double[] {1000.0, -1.0}, "kg/hr");
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -960,7 +960,7 @@ class JsonProcessExporterTest {
     Manifold manifold = new Manifold("test manifold");
     manifold.addStream(feedA);
     manifold.addStream(feedB);
-    manifold.setSplitFactors(new double[] { 0.25, 0.75 });
+    manifold.setSplitFactors(new double[] {0.25, 0.75});
 
     ProcessSystem process = new ProcessSystem();
     process.add(feedA);

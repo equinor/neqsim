@@ -202,8 +202,8 @@ public class GasLiftOptimizerTest {
   @Test
   @DisplayName("Test performance curve interpolation")
   void testPerformanceCurveInterpolation() {
-    double[] gasRates = { 0, 10000, 20000, 30000, 40000 };
-    double[] oilRates = { 50, 100, 130, 145, 150 };
+    double[] gasRates = {0, 10000, 20000, 30000, 40000};
+    double[] oilRates = {50, 100, 130, 145, 150};
 
     GasLiftOptimizer.PerformanceCurve curve = new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
 
@@ -218,8 +218,8 @@ public class GasLiftOptimizerTest {
   @Test
   @DisplayName("Test marginal response decreases with gas")
   void testMarginalResponseDecreases() {
-    double[] gasRates = { 0, 10000, 20000, 30000, 40000, 50000 };
-    double[] oilRates = { 50, 100, 130, 145, 150, 148 }; // Decline at high GLR
+    double[] gasRates = {0, 10000, 20000, 30000, 40000, 50000};
+    double[] oilRates = {50, 100, 130, 145, 150, 148}; // Decline at high GLR
 
     GasLiftOptimizer.PerformanceCurve curve = new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
 

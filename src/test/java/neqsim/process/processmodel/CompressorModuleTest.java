@@ -52,9 +52,9 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     thermoSystem.addPlusFraction("C38_C80", 1.0, 662.0 / 1000.0, 0.92);
     thermoSystem.setMixingRule("classic");
     thermoSystem.setMultiPhaseCheck(true);
-    thermoSystem.setMolarComposition(new double[] { 0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908,
-        0.007751, 0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301,
-        0.002624, 0.001857, 0.001320, 0.001426, 0.001164, 0.000916 });
+    thermoSystem.setMolarComposition(new double[] {0.034266, 0.005269, 0.039189, 0.700553, 0.091154, 0.050908, 0.007751,
+        0.014665, 0.004249, 0.004878, 0.004541, 0.007189, 0.006904, 0.004355, 0.007658, 0.003861, 0.003301, 0.002624,
+        0.001857, 0.001320, 0.001426, 0.001164, 0.000916});
 
     Stream feedStream = new Stream("feed stream", thermoSystem);
     feedStream.setFlowRate(604094, "kg/hr");
@@ -96,7 +96,7 @@ public class CompressorModuleTest extends neqsim.NeqSimTest {
     Stream gasFromScrubber = new Stream("gas from scrubber", scrubber1.getGasOutStream());
 
     Splitter gassplitter = new Splitter("gas splitter", gasFromScrubber);
-    gassplitter.setSplitFactors(new double[] { 0.1, 0.9 });
+    gassplitter.setSplitFactors(new double[] {0.1, 0.9});
 
     ThrottlingValve recycleValve = new ThrottlingValve("antisurge valve", gassplitter.getSplitStream(0));
     recycleValve.setOutletPressure(10.0, "bara");

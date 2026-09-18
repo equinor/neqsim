@@ -111,10 +111,10 @@ class EquilibriumSoundSpeedTest extends neqsim.NeqSimTest {
 
   @Test
   void mixtureIsentropesUseCheckedRootsAndConserveComponents() {
-    for (String impurity : new String[] { "nitrogen", "hydrogen" }) {
+    for (String impurity : new String[] {"nitrogen", "hydrogen"}) {
       SystemInterface original = feed(impurity);
       double target = original.getEntropy("J/kgK");
-      for (double pressure : new double[] { 50.0, 40.0, 20.0 }) {
+      for (double pressure : new double[] {50.0, 40.0, 20.0}) {
         SystemInterface fluid = referenceTpRoot(original, pressure, target);
         assertEquals(2, fluid.getNumberOfPhases());
         if (impurity.equals("nitrogen") && pressure == 50.0) {
@@ -162,7 +162,7 @@ class EquilibriumSoundSpeedTest extends neqsim.NeqSimTest {
     SystemInterface fluid = referenceTpRoot(feed("nitrogen"), 40.0, feed("nitrogen").getEntropy("J/kgK"));
     Result baseline = fluid.calculateEquilibriumSoundSpeed();
     check(baseline);
-    for (double step : new double[] { 0.0002, 0.002, 0.01 }) {
+    for (double step : new double[] {0.0002, 0.002, 0.01}) {
       Result result = EquilibriumSoundSpeed.calculate(fluid, step);
       check(result);
       assertEquals(baseline.getSoundSpeed(), result.getSoundSpeed(), baseline.getSoundSpeed() * 0.002);
@@ -246,7 +246,7 @@ class EquilibriumSoundSpeedTest extends neqsim.NeqSimTest {
     assertThrows(IllegalArgumentException.class, () -> EquilibriumSoundSpeed.calculate(null));
     assertThrows(IllegalArgumentException.class, () -> new SystemPrEos().calculateEquilibriumSoundSpeed());
     SystemInterface fluid = feed(null);
-    for (double step : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 0.1 }) {
+    for (double step : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, 0.1}) {
       assertThrows(IllegalArgumentException.class, () -> fluid.calculateEquilibriumSoundSpeed(step));
     }
     fluid.setHydrateCheck(true);

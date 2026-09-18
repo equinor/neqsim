@@ -38,10 +38,10 @@ class RecombinationFlashGeneratorRateConsistencyTest {
   @Test
   void cacheMissAndRescaledHitsMeetStandardLiquidRateAndMoleBalances() {
     RecombinationFlashGenerator generator = new RecombinationFlashGenerator(input());
-    for (double waterCut : new double[] { 0.0, 0.3, 0.7 }) {
-      for (double gor : new double[] { 80.0, 200.0 }) {
+    for (double waterCut : new double[] {0.0, 0.3, 0.7}) {
+      for (double gor : new double[] {80.0, 200.0}) {
         double initialMassRate = 0.0;
-        for (double rate : new double[] { 1000.0, 2000.0, 1000.0 }) {
+        for (double rate : new double[] {1000.0, 2000.0, 1000.0}) {
           SystemInterface fluid = generator.generateFluid(gor, waterCut, rate, 353.15, 50.0);
           assertEquals(353.15, fluid.getTemperature(), 1.0e-9);
           assertEquals(50.0, fluid.getPressure(), 1.0e-9);
@@ -97,7 +97,7 @@ class RecombinationFlashGeneratorRateConsistencyTest {
     FluidMagicInput input = FluidMagicInput.fromFluid(reference);
     input.separateToStandardConditions();
     RecombinationFlashGenerator generator = new RecombinationFlashGenerator(input);
-    for (double rate : new double[] { 1000.0, 2000.0 }) {
+    for (double rate : new double[] {1000.0, 2000.0}) {
       SystemInterface recombined = generator.generateFluid(80.0, 0.1, rate, 353.15, 50.0);
       assertEquals(reference.getClass(), recombined.getClass());
       assertTrue(recombined.getComponent("C7_test_PC").isIsTBPfraction());
