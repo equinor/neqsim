@@ -100,7 +100,7 @@ class VUFlashEOSCGTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "0.001", "0.999" })
+  @CsvSource({ "0.0001", "0.001", "0.01", "0.99", "0.999", "0.9999" })
   void nearSaturationLimitStateRemainsTwoPhase(double vaporFraction) throws Exception {
     SystemInterface reference = createSaturationReference(52.0, vaporFraction);
     double targetVolumeM3 = reference.getVolume("m3");
