@@ -120,11 +120,12 @@ System.out.println("Ideal air/fuel ratio: " + turbine.calcIdealAirFuelRatio());
 > solve, and an unconverged combustion energy balance raises an exception.
 >
 > `getPower()` is positive net shaft output: recovered expander work minus air
-> compressor work. `getHeat()` is positive heat recovered while cooling the
-> exhaust to 288.15 K. `getOutletStream()` contains that cooled combustion
-> exhaust, including condensed water where predicted by the EOS. The detailed
-> cycle balances inlet sensible enthalpy plus fuel heat against shaft output,
-> recovered heat and exhaust enthalpy. It is a simplified complete-combustion
+> compressor work. `getHeat()` estimates positive heat recoverable by cooling the
+> exhaust to 288.15 K. `getOutletStream()` contains the hot combustion exhaust
+> leaving the expander so a downstream HRSG can recover that energy. The detailed
+> cycle balances inlet sensible enthalpy plus fuel heat against shaft output and
+> hot exhaust enthalpy; do not add recoverable heat again to that balance.
+> It is a simplified complete-combustion
 > model without dissociation, combustor pressure loss or blade cooling.
 > The optional specified-efficiency and power-demand modes retain their separate
 > fuel-sizing convention and are not detailed-cycle performance predictions.

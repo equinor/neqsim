@@ -297,7 +297,9 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     // (-expanderPower) - compressorPower.
     power = -expanderPower - compressorPower;
     this.heat = -cooler1.getDuty();
-    outStream.setThermoSystem(cooler1.getOutletStream().getThermoSystem());
+    // The cooler measures recoverable heat; it is not an installed turbine cooler.
+    // Publish hot combustion exhaust so a downstream HRSG can recover that energy.
+    outStream.setThermoSystem(expander.getOutletStream().getThermoSystem());
 
     // Simple-cycle override: when a thermal efficiency (or heat rate) is set, report the net shaft
     // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This

@@ -102,9 +102,16 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
 
       Assertions.assertTrue(turbine.getPower() > 0.0 && turbine.getPower() < fuelHeat);
       Assertions.assertTrue(turbine.getHeat() > 0.0);
-      assertEquals(288.15, exhaust.getTemperature(), 1.0e-8);
+      Assertions.assertTrue(exhaust.getTemperature() > 288.15);
       assertEquals(fuelHeat + fuel.getFluid().getEnthalpy() + air.getEnthalpy(),
-          turbine.getPower() + turbine.getHeat() + exhaust.getEnthalpy(), fuelHeat * 1.0e-6);
+          turbine.getPower() + exhaust.getEnthalpy(), fuelHeat * 1.0e-6);
+      HRSG recovery = new HRSG("exhaust recovery", turbine.getOutletStream());
+      recovery.run();
+      Assertions.assertTrue(recovery.getHeatTransferred("W") > 0.0);
+      Assertions.assertTrue(recovery.getHeatTransferred("W") < turbine.getHeat());
+      recovery.getOutletStream().getFluid().init(2);
+      assertEquals(exhaust.getEnthalpy(),
+          recovery.getHeatTransferred("W") + recovery.getOutletStream().getFluid().getEnthalpy(), fuelHeat * 1.0e-6);
       // Database molecular weights are rounded independently; atom balances are exact.
       double inletMass = fuel.getFlowRate("kg/sec") + turbine.airStream.getFlowRate("kg/sec");
       assertEquals(inletMass, exhaust.getFlowRate("kg/sec"), inletMass * 1.0e-5);
