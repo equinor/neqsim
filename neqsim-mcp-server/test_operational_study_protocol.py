@@ -291,11 +291,16 @@ def test_inventory_remains_qualification_only(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runOperationalStudy", {})
     require(
-        inventory.get("inventoryVersion") == "1.40"
-        and limitations.get("contractTestedToolCount") == 40
-        and limitations.get("confirmedGapToolCount") == 11
-        and record.get("coverageStatus") == "CONFIRMED_GAP",
-        "qualification changed inventory before merged promotion",
+        inventory.get("inventoryVersion") == "1.41"
+        and limitations.get("contractTestedToolCount") == 41
+        and limitations.get("confirmedGapToolCount") == 10
+        and record.get("coverageStatus") == "CONTRACT_TESTED"
+        and record.get("benchmarkApplicability")
+        == "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT"
+        and record.get("contractEvidenceCount") == 6
+        and "neqsim-mcp-server/test_operational_study_protocol.py"
+        in record.get("contractEvidenceSources", []),
+        "operational-study promotion did not update inventory accounting",
         inventory,
     )
 

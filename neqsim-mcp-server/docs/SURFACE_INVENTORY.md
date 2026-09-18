@@ -21,8 +21,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 40 bounded contract-tested software contracts + 11 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.40; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 41 bounded contract-tested software contracts + 10 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.41; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -145,8 +145,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 11 records remain
-`CONFIRMED_GAP`, forty are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 10 records remain
+`CONFIRMED_GAP`, forty-one are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -193,9 +193,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.40 with 20/40/11 coverage accounting while retaining
+now reconciles inventory 1.41 with 20/41/10 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its forty bounded software contracts and requires 11 confirmed gaps. The read-only
+among its forty-one bounded software contracts and requires 10 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -220,7 +220,7 @@ This is software/governance evidence only. The named standards and design factor
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.40 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.41 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -430,7 +430,7 @@ stateful execution, plant/control authority, certification, or accountable
 engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.40. A future transition must again move the
+No promotion candidate remains queued in inventory 1.41. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -695,3 +695,20 @@ PFD, barrier independence or effectiveness, proof testing, SIL, tolerability,
 standards compliance, plant action, or design. Qualified process-safety and
 independent-maintainer review remain mandatory. No promotion candidate is queued
 and `scientificValidationComplete=false`.
+
+### Promoted bounded operational-study orchestration contract
+
+Inventory version 1.41 atomically promotes `runOperationalStudy` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/40/11` to `20/41/10`. Merged PR #3747 supplies bounded request
+admission, fail-closed errors, eight-action discovery, deterministic controller
+screening, canonical local `JsonProcessBuilder` and `ProcessSystem` execution,
+invariant screening-only and no-plant-write metadata, normal access enforcement,
+standard response evidence, focused Java qualification, and six packaged-STDIO
+scenarios. The classification does not establish causality; validate documents,
+tags, P&IDs, instrumentation, controller tuning or stability, process fidelity,
+thermodynamic accuracy, convergence, conservation, equipment condition,
+operating envelopes, trips, mitigations, safe limits, or standards conformance;
+authorize plant or control action; certify design; or replace qualified and
+accountable engineering review. No promotion candidate is queued and
+`scientificValidationComplete=false`.
