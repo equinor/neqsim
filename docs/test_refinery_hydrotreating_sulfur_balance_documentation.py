@@ -1,4 +1,7 @@
 from pathlib import Path
+import re
+import unittest
+from urllib.parse import urlsplit
 
 
 DOC = Path(__file__).parent / "thermo" / "characterization" / (
@@ -6,17 +9,35 @@ DOC = Path(__file__).parent / "thermo" / "characterization" / (
 )
 
 
-def test_hydrotreating_screen_documents_provenance_receipts_and_boundary():
-    text = " ".join(DOC.read_text(encoding="utf-8").split())
+class HydrotreatingSulfurBalanceDocumentationTest(unittest.TestCase):
+    """Verify the screening boundary and the identities of cited references."""
 
-    assert "RefineryHydrotreatingSulfurBalance" in text
-    assert "0.0040867518" in text
-    assert "15 ppm" in text
-    assert "mol H2 per mol sulfur removed" in text
-    assert "hydrogen sulfide produced" in text
-    assert "total-mass residual" in text
-    assert "sulfur residual" in text
-    assert "does not predict kinetics" in text
-    assert "eia.gov/tools/glossary" in text
-    assert "aiche.org/sites/default/files/cep/20211029.pdf" in text
-    assert "webbook.nist.gov" in text
+    def test_screen_documents_provenance_receipts_and_boundary(self):
+        source = DOC.read_text(encoding="utf-8")
+        text = " ".join(source.split())
+
+        for phrase in (
+            "RefineryHydrotreatingSulfurBalance",
+            "0.0040867518",
+            "15 ppm",
+            "mol H2 per mol sulfur removed",
+            "hydrogen sulfide produced",
+            "total-mass residual",
+            "sulfur residual",
+            "does not predict kinetics",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, text)
+
+        references = {
+            (parsed.scheme, parsed.hostname, parsed.path)
+            for target in re.findall(r"\]\((https://[^\s)]+)\)", source)
+            for parsed in (urlsplit(target),)
+        }
+        for reference in (
+            ("https", "www.eia.gov", "/tools/glossary/index.php"),
+            ("https", "www.aiche.org", "/sites/default/files/cep/20211029.pdf"),
+            ("https", "webbook.nist.gov", "/cgi/inchi/InChI%3D1S/H2S/h1H2"),
+        ):
+            with self.subTest(reference=reference):
+                self.assertIn(reference, references)
