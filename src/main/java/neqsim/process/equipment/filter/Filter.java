@@ -23,7 +23,7 @@ import neqsim.util.unit.PressureUnit;
  * loading, breakthrough, backwash/regeneration, and differential-pressure bypass behavior.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class Filter extends TwoPortEquipment {
@@ -33,6 +33,7 @@ public class Filter extends TwoPortEquipment {
   /** Logger object for this class. */
   private static final Logger logger = LogManager.getLogger(Filter.class);
 
+  /** Pressure drop across the filter. Measured in bar. */
   private double deltaP = 0.01;
   private double Cv = 0.0;
   private double cleanDeltaP = Double.NaN;
@@ -255,7 +256,7 @@ public class Filter extends TwoPortEquipment {
    */
   public void setDeltaP(double deltaP, String unit) {
     String differentialUnit = "barg".equals(unit) ? "bar" : "psig".equals(unit) ? "psi" : unit;
-    double pressureDropBar = PressureUnit.convert(Math.max(0.0, deltaP), differentialUnit, "bar");
+    double pressureDropBar = new PressureUnit(Math.max(0.0, deltaP), differentialUnit).getValue("bara");
     setDeltaP(pressureDropBar);
   }
 
