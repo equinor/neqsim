@@ -22,6 +22,12 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
     this.SIvalue = getValue(value, name, "K");
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public String getSIUnit() {
+    return "K";
+  }
+
   /**
    * Get conversion factor for temperature unit conversions to Kelvin. Note: This is primarily for understanding scale,
    * not for direct conversions including offsets.
