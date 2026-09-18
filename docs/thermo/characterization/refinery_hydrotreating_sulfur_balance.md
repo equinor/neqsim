@@ -18,28 +18,24 @@ compliance.
 
 The caller supplies:
 
-- feed mass (F), kg;
-- feed sulfur mass fraction (z_S);
-- target product sulfur mass fraction (x_S); and
-- hydrogen consumption ratio (
-u), mol H2 per mol sulfur removed, with (
-u ge 1).
+- feed mass `F`, kg;
+- feed sulfur mass fraction `zS`;
+- target product sulfur mass fraction `xS`; and
+- hydrogen consumption ratio `nu`, mol H2 per mol sulfur removed, with `nu >= 1`.
 
-The class uses (M_{H2}=0.00201588) kg/mol and derives
-(M_S=M_{H2S}-M_{H2}) from the public NIST hydrogen-sulfide molecular weight
-(M_{H2S}=0.034081) kg/mol. For sulfur removal (R_S), the liquid-mass change per
-kilogram of sulfur removed is
+The class uses `M_H2 = 0.00201588 kg/mol` and derives `M_S = M_H2S - M_H2` from the
+public NIST hydrogen-sulfide molecular weight `M_H2S = 0.034081 kg/mol`. For sulfur
+removal `R_S`, the liquid-mass change per kilogram of sulfur removed is:
 
-[
-a = rac{
-u M_{H2} - M_{H2S}}{M_S}.
-]
+```text
+a = (nu * M_H2 - M_H2S) / M_S
+```
 
-Because the target is defined on the calculated product mass, the closed-form sulfur removal is
+Because the target is defined on the calculated product mass, the closed-form sulfur removal is:
 
-[
-R_S = rac{F z_S - x_S F}{1 + x_S a}.
-]
+```text
+R_S = (F * zS - xS * F) / (1 + xS * a)
+```
 
 The receipt then reports hydrogen consumed, hydrogen sulfide produced, hydrogen retained in the
 liquid, product mass, remaining sulfur, achieved product sulfur fraction, total-mass residual,
@@ -48,8 +44,7 @@ and sulfur residual. Invalid or non-closing inputs fail closed.
 ## Java example
 
 The DOE/OEDI Big Hill assay reconstruction already qualified in NeqSim gives a bulk sulfur mass
-fraction of `0.0040867518`. The 15 ppm target and (
-u=2.0) mol H2/mol S below are
+fraction of `0.0040867518`. The 15 ppm target and `nu = 2.0 mol H2/mol S` below are
 illustrative screening assumptions, not literature-derived design values.
 
 ```java
