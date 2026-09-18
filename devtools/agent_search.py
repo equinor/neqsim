@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -43,6 +42,7 @@ from typing import Dict, List, Optional, Tuple
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import agent_frontmatter as af  # noqa: E402
+import bm25  # noqa: E402
 
 # An agent record is (name, haystack, path, required_skills, repo, handle).
 # ``handle`` is the id used to *invoke* the agent (e.g. "capability.scout" or
@@ -116,8 +116,12 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
         skills = list(fm.get("required_skills") or [])  # type: ignore[arg-type]
         if not skills:
             skills = _extract_loaded_skills_body(text)
-        # Include the handle in the haystack so a query using the @handle matches.
-        haystack = f"{name} {handle} {md.parent.name} {desc}"
+        # Handle so an @handle query matches; required skills because a skill id such
+        # as neqsim-water-hammer is the sharpest routing signal an agent declares. The
+        # folder name is skipped when it merely repeats the handle (agents/<id>/AGENT.md),
+        # otherwise community ids were counted three times and outranked core agents.
+        folder = md.parent.name if md.parent.name != handle else ""
+        haystack = f"{name} {handle} {folder} {desc} {' '.join(skills)}"
         out.append((name, haystack, str(md), skills, repo, handle))
     return out
 
@@ -157,54 +161,13 @@ def _load_agents(repo_root: Path, extra: Optional[List[Path]] = None) -> List[Ag
     return out
 
 
-def _tokenize(s: str) -> List[str]:
-    s = s.lower()
-    return re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", s)
-
-
-def _try_sklearn_search(
+def _bm25_search(
     query: str, agents: List[AgentRecord], top: int
 ) -> List[Tuple[float, AgentRecord]]:
-    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
-    from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
-
-    corpus = [a[1] for a in agents]
-    word_vec = TfidfVectorizer(
-        analyzer="word", ngram_range=(1, 2), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    char_vec = TfidfVectorizer(
-        analyzer="char_wb", ngram_range=(3, 5), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    Xw = word_vec.fit_transform(corpus + [query])
-    Xc = char_vec.fit_transform(corpus + [query])
-    sim_w = cosine_similarity(Xw[-1], Xw[:-1]).ravel()
-    sim_c = cosine_similarity(Xc[-1], Xc[:-1]).ravel()
-    sim = 0.6 * sim_w + 0.4 * sim_c
-    order = sim.argsort()[::-1][:top]
-    return [(float(sim[i]), agents[i]) for i in order]
-
-
-def _fallback_search(
-    query: str, agents: List[AgentRecord], top: int
-) -> List[Tuple[float, AgentRecord]]:
-    q_tokens = set(_tokenize(query))
-    if not q_tokens:
-        return []
-    scored: List[Tuple[float, AgentRecord]] = []
-    for rec in agents:
-        h_tokens = set(_tokenize(rec[1]))
-        if not h_tokens:
-            continue
-        intersection = len(q_tokens & h_tokens)
-        if intersection == 0:
-            scored.append((0.0, rec))
-            continue
-        union = len(q_tokens | h_tokens)
-        jaccard = intersection / union
-        boost = intersection / max(1, len(q_tokens))
-        scored.append((0.5 * jaccard + 0.5 * boost, rec))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return scored[:top]
+    """Rank agents with dependency-free BM25 so dev and CI score identically."""
+    scores = bm25.BM25([a[1] for a in agents]).scores(query)
+    order = sorted(range(len(agents)), key=lambda i: scores[i], reverse=True)
+    return [(scores[i], agents[i]) for i in order[:top]]
 
 
 def search(
@@ -213,10 +176,7 @@ def search(
     agents = _load_agents(repo_root, extra)
     if not agents:
         return []
-    try:
-        return _try_sklearn_search(query, agents, top)
-    except ImportError:
-        return _fallback_search(query, agents, top)
+    return _bm25_search(query, agents, top)
 
 
 def _results_to_payload(query: str, results: List[Tuple[float, AgentRecord]]) -> dict:

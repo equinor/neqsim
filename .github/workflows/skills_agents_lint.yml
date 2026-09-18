@@ -22,6 +22,10 @@ on:
       - "devtools/verify_mcp_tool_references.py"
       - "devtools/agent_search.py"
       - "devtools/skill_search.py"
+      - "devtools/bm25.py"
+      - "devtools/agent_eval.py"
+      - "devtools/agent_eval_cases.json"
+      - "devtools/test_agent_eval.py"
       - "devtools/test_agent_search.py"
       - "devtools/test_skill_search.py"
       - "src/main/java/neqsim/mcp/runners/IndustrialProfile.java"
@@ -65,6 +69,9 @@ jobs:
         run: |
           python -m pip install --quiet pytest
           python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_verify_skill_api_refs.py devtools/test_agent_frontmatter.py devtools/test_build_agent_plugin.py -q
+
+      - name: Agent evaluation (routing golden cases + results.json contracts)
+        run: python -m pytest devtools/test_agent_eval.py -q
 
       - name: Regenerate agent → skill map
         run: python devtools/generate_agent_skill_map.py

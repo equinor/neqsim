@@ -23,10 +23,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import List, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import bm25  # noqa: E402
 
 
 def _parse_skill_md(skill_md: Path) -> Tuple[str, str, str]:
@@ -127,59 +130,20 @@ def _strip_yaml_value(s: str) -> str:
     return s
 
 
-def _tokenize(s: str) -> List[str]:
-    """Lowercase + alphanumeric split. Keeps hyphenated tokens whole."""
-    s = s.lower()
-    return re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", s)
-
-
 def _try_sklearn_search(
     query: str, skills: List[Tuple[str, str, str]], top: int
 ) -> List[Tuple[float, str, str]]:
-    """High-quality TF-IDF + char n-gram + cosine. Requires scikit-learn."""
-    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
-    from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
+    """Rank skills with dependency-free BM25 so dev and CI score identically.
 
-    corpus = [s[1] for s in skills]
-    # Combine word and character n-grams for robustness against typos / partial matches
-    word_vec = TfidfVectorizer(
-        analyzer="word", ngram_range=(1, 2), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    char_vec = TfidfVectorizer(
-        analyzer="char_wb", ngram_range=(3, 5), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    Xw = word_vec.fit_transform(corpus + [query])
-    Xc = char_vec.fit_transform(corpus + [query])
-    sim_w = cosine_similarity(Xw[-1], Xw[:-1]).ravel()
-    sim_c = cosine_similarity(Xc[-1], Xc[:-1]).ravel()
-    sim = 0.6 * sim_w + 0.4 * sim_c
-    order = sim.argsort()[::-1][:top]
-    return [(float(sim[i]), skills[i][0], skills[i][2]) for i in order]
+    Name kept for callers/tests; the scikit-learn path was optional and absent in
+    both the shared interpreter and CI, so the fallback was what actually ran.
+    """
+    scores = bm25.BM25([s[1] for s in skills]).scores(query)
+    order = sorted(range(len(skills)), key=lambda i: scores[i], reverse=True)
+    return [(scores[i], skills[i][0], skills[i][2]) for i in order[:top]]
 
 
-def _fallback_search(
-    query: str, skills: List[Tuple[str, str, str]], top: int
-) -> List[Tuple[float, str, str]]:
-    """Pure-python fallback when sklearn is unavailable. Jaccard over tokens."""
-    q_tokens = set(_tokenize(query))
-    if not q_tokens:
-        return []
-    scored = []
-    for name, hay, path in skills:
-        h_tokens = set(_tokenize(hay))
-        if not h_tokens:
-            continue
-        intersection = len(q_tokens & h_tokens)
-        if intersection == 0:
-            scored.append((0.0, name, path))
-            continue
-        union = len(q_tokens | h_tokens)
-        jaccard = intersection / union
-        # Boost by raw overlap so longer-query matches are not overly penalised
-        boost = intersection / max(1, len(q_tokens))
-        scored.append((0.5 * jaccard + 0.5 * boost, name, path))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return scored[:top]
+_fallback_search = _try_sklearn_search
 
 
 def _keyword_index_boosts(query: str, skills_root: Path) -> dict:
@@ -193,23 +157,30 @@ def _keyword_index_boosts(query: str, skills_root: Path) -> dict:
         return {}
 
     query_lower = query.lower()
-    query_tokens = set(_tokenize(query))
+    query_tokens = set(bm25.tokenize(query))
     boosts = {}
     for key, skill_names in data.items():
         if not isinstance(key, str) or not isinstance(skill_names, list):
             continue
-        key_tokens = set(_tokenize(key))
+        key_tokens = set(bm25.tokenize(key))
         if not key_tokens:
             continue
-        phrase_match = key.lower() in query_lower
-        token_match = key_tokens.issubset(query_tokens)
-        if not phrase_match and not token_match:
+        # Stemmed overlap so "predicting hydrate formation" fires on "hydrate
+        # formation temperature"; a lone shared token is not enough.
+        overlap = len(key_tokens & query_tokens)
+        if key.lower() in query_lower:
+            strength = 1.0
+        elif overlap >= 2 and overlap / len(key_tokens) >= 0.5:
+            strength = overlap / len(key_tokens)
+        elif len(key_tokens) == 1 and overlap == 1:
+            strength = 1.0
+        else:
             continue
         for position, skill_name in enumerate(skill_names):
             if not isinstance(skill_name, str):
                 continue
             # Earlier entries in a curated keyword row are intentionally stronger.
-            boost = 0.35 / float(position + 1)
+            boost = strength * 0.35 / float(position + 1)
             boosts[skill_name] = min(0.70, boosts.get(skill_name, 0.0) + boost)
     return boosts
 
@@ -218,10 +189,7 @@ def search(query: str, skills_root: Path, top: int = 5) -> List[Tuple[float, str
     skills = _load_skills(skills_root)
     if not skills:
         return []
-    try:
-        results = _try_sklearn_search(query, skills, len(skills))
-    except ImportError:
-        results = _fallback_search(query, skills, len(skills))
+    results = _try_sklearn_search(query, skills, len(skills))
 
     boosts = _keyword_index_boosts(query, skills_root)
     if boosts:

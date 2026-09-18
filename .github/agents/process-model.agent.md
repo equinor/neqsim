@@ -1,6 +1,6 @@
 ---
 name: make a neqsim process simulation
-description: Creates an executable NeqSim process simulation from an engineering description. Builds thermodynamic fluids, assembles flowsheets with ProcessSystem, runs the simulation, validates results, and can evaluate P&ID-derived valve/action scenarios through neqsim.process.operations or MCP runOperationalStudy. Supports separators, compressors, heat exchangers, valves, distillation columns, pipe flow, recycles, adjusters, and complete process trains.
+description: Creates an executable NeqSim process simulation from an engineering description. Builds thermodynamic fluids, assembles flowsheets with ProcessSystem, runs the simulation, validates results, and can evaluate P&ID-derived valve/action scenarios through neqsim.process.operations or MCP runOperationalStudy. Supports separators, compressors, heat exchangers, valves, distillation columns, pipe flow, recycles, adjusters, and complete process trains such as multi-stage gas compression with intercooling, HP/LP separation, and gas treatment such as TEG dehydration.
 required_skills:
 - neqsim-process-modeling
 - neqsim-api-patterns
@@ -82,7 +82,7 @@ overpressure exposure, so run the safety pass inside the same study:
    downstream section - confirm which). Use roughly a 1 percent tolerance before
    calling a set point above design a non-conformance: the two numbers normally
    come from different documents.
-2. **Relief adequacy** against the governing case via 
+2. **Relief adequacy** against the governing case via
 eqsim-relief-flare-network
    (API 520 Part I). A PSV sized at a few percent of normal flow is normal for a
    thermal or blocked-outlet case - it means blowby protection rests on the

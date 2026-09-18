@@ -219,6 +219,17 @@
  "process simulation": [
   "neqsim-api-patterns"
  ],
+ "gas compression train": [
+  "neqsim-process-modeling",
+  "neqsim-api-patterns"
+ ],
+ "compression with intercooling": [
+  "neqsim-process-modeling",
+  "neqsim-api-patterns"
+ ],
+ "compressor power and discharge temperature": [
+  "neqsim-process-modeling"
+ ],
  "process flowsheet": [
   "neqsim-process-modeling",
   "neqsim-api-patterns",
@@ -452,6 +463,14 @@
   "neqsim-physics-explanations"
  ],
  "fitting pvt data (cme": [
+  "neqsim-eos-regression"
+ ],
+ "constant mass expansion": [
+  "neqsim-eos-regression",
+  "neqsim-api-patterns"
+ ],
+ "saturation pressure": [
+  "neqsim-api-patterns",
   "neqsim-eos-regression"
  ],
  "fixed": [
@@ -974,6 +993,14 @@
  "tieback analysis": [
   "neqsim-field-development"
  ],
+ "subsea tieback": [
+  "neqsim-field-development",
+  "neqsim-subsea-and-wells",
+  "neqsim-field-economics"
+ ],
+ "standalone fpso": [
+  "neqsim-field-development"
+ ],
  "troubleshooting convergence": [
   "neqsim-distillation-design"
  ],
@@ -1255,6 +1282,14 @@
  ],
  "psv sizing": [
   "neqsim-relief-flare-network"
+ ],
+ "fire case relief": [
+  "neqsim-relief-flare-network",
+  "neqsim-process-safety"
+ ],
+ "api 521": [
+  "neqsim-relief-flare-network",
+  "neqsim-process-safety"
  ],
  "relief valve": [
   "neqsim-relief-flare-network"
