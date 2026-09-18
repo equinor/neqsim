@@ -11,6 +11,8 @@ Layout emitted per plugin (https://agent-plugins.org):
       plugin.json                 # $schema + name/version/description
       skills/<name>/SKILL.md ...  # portable; folder name == frontmatter name
       mcp.json                    # portable; copied from .github/mcp/mcp.json
+      servers/NeqsimMcpLauncher.java   # `java` source-launch: fetch release jar, run it
+      servers/neqsim-mcp-server.properties  # pinned server version (from pom <revision>)
       com.github.copilot/
         agents/<id>.agent.md      # rendered with install_agent.render_vscode_agent
         rules/*.instructions.md   # copied from .github/instructions
@@ -39,6 +41,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -54,6 +57,8 @@ WORKSPACE = REPO_ROOT.parent
 PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 MARKETPLACE_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/marketplace.schema.json"
 CANONICAL_MCP = REPO_ROOT / ".github" / "mcp" / "mcp.json"
+MCP_SERVERS_DIR = REPO_ROOT / ".github" / "mcp" / "servers"
+ROOT_POM = REPO_ROOT / "pom.xml"
 CORE_INSTRUCTIONS = REPO_ROOT / ".github" / "instructions"
 # Optional interpreter pinned into the hook for site-specific builds (--python).
 # Unset by default so the package is portable and the content hash does not
@@ -273,6 +278,37 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str) -> None:
 # hashing / versioning
 # ----------------------------------------------------------------------------
 
+def neqsim_release_version() -> str:
+    """Release version from the root pom ``<revision>`` (``-SNAPSHOT`` stripped)."""
+    match = re.search(r"<revision>\s*([^<\s]+)\s*</revision>", ROOT_POM.read_text(encoding="utf-8"))
+    if not match:
+        raise SystemExit("cannot read <revision> from {}".format(ROOT_POM))
+    return match.group(1).replace("-SNAPSHOT", "")
+
+
+def write_mcp(staging: Path, mcp_version: str, errors: List[str]) -> None:
+    """Copy the canonical mcp.json plus the launcher, pinning the server release.
+
+    The launcher downloads ``neqsim-mcp-server-<version>-runner.jar`` from the
+    matching GitHub release on first start, so the plugin only needs ``java``.
+    """
+    if not CANONICAL_MCP.exists():
+        errors.append("canonical MCP definition missing: {}".format(CANONICAL_MCP))
+        return
+    shutil.copy2(str(CANONICAL_MCP), str(staging / "mcp.json"))
+    servers_out = staging / "servers"
+    if MCP_SERVERS_DIR.is_dir():
+        shutil.copytree(str(MCP_SERVERS_DIR), str(servers_out), ignore=_ignore)
+    else:
+        servers_out.mkdir()
+    (servers_out / "neqsim-mcp-server.properties").write_text(
+        "# Written by build_agent_plugin.py; read by NeqsimMcpLauncher.java.\n"
+        "version={v}\n"
+        "jar=neqsim-mcp-server-{v}-runner.jar\n"
+        "download=https://github.com/equinor/neqsim/releases/download/v{v}/\n".format(v=mcp_version),
+        encoding="utf-8")
+
+
 def content_hash(root: Path) -> str:
     digest = hashlib.sha256()
     for path in sorted(p for p in root.rglob("*") if p.is_file()):
@@ -340,10 +376,7 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
                 shutil.copy2(str(rule), str(rules_out / rule.name))
 
     if spec.include_mcp:
-        if not CANONICAL_MCP.exists():
-            errors.append("canonical MCP definition missing: {}".format(CANONICAL_MCP))
-        else:
-            shutil.copy2(str(CANONICAL_MCP), str(staging / "mcp.json"))
+        write_mcp(staging, args.mcp_version, errors)
 
     write_hooks(staging, spec.pip_install_roots, args.python)
     (staging / "automations").mkdir(exist_ok=True)
@@ -391,19 +424,24 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
 
 
 def write_marketplace(out_root: Path, results: List[Dict[str, object]]) -> None:
+    """List every plugin present in ``out_root`` (a ``--only`` build must not drop the others)."""
+    built = {r["name"]: r["version"] for r in results if not r["errors"]}
+    entries = []
+    for spec in default_specs():
+        manifest = out_root / spec.name / "plugin.json"
+        if spec.name in built:
+            version = built[spec.name]
+        elif manifest.exists():
+            version = json.loads(manifest.read_text(encoding="utf-8")).get("version")
+        else:
+            continue
+        entries.append({"name": spec.name, "version": version,
+                        "source": "./{}".format(spec.name), "description": spec.description})
     marketplace = {
         "$schema": MARKETPLACE_SCHEMA,
         "name": "neqsim-copilot-plugin",
         "owner": {"name": "Equinor / NeqSim"},
-        "plugins": [
-            {
-                "name": r["name"],
-                "version": r["version"],
-                "source": "./{}".format(r["name"]),
-                "description": next(s.description for s in default_specs() if s.name == r["name"]),
-            }
-            for r in results if not r["errors"]
-        ],
+        "plugins": entries,
     }
     (out_root / ".claude-plugin").mkdir(exist_ok=True)
     text = json.dumps(marketplace, indent=2) + "\n"
@@ -423,7 +461,12 @@ def main(argv=None) -> int:
                              "fallback after NEQSIM_PYTHON (default: none; env NEQSIM_PLUGIN_PYTHON)")
     parser.add_argument("--check", action="store_true",
                         help="build to staging only; exit 1 on errors or unbumped changes")
+    parser.add_argument("--mcp-version", default=None,
+                        help="NeqSim release whose MCP server jar the plugin downloads "
+                             "(default: root pom <revision> without -SNAPSHOT)")
     args = parser.parse_args(argv)
+    if args.mcp_version is None:
+        args.mcp_version = neqsim_release_version()
 
     specs = [s for s in default_specs() if not args.only or s.name in args.only]
     specs = [s for s in specs if any(r.is_dir() for r in s.skills_roots + s.agents_roots)]

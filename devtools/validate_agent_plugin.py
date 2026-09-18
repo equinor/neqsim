@@ -45,6 +45,22 @@ def main(root: Path) -> int:
             fm = af.parse_frontmatter(agent.read_text(encoding="utf-8"))
             if not fm.get("name") or not fm.get("description"):
                 problems.append("{}: agent {} lacks name/description".format(entry["name"], agent.name))
+        mcp_path = plugin_dir / "mcp.json"
+        if mcp_path.exists():
+            for srv_name, srv in json.loads(mcp_path.read_text(encoding="utf-8")).get(
+                    "mcpServers", {}).items():
+                cmd = srv.get("command", "")
+                # Spec: one executable token, bare or ./-relative; placeholders not expanded here.
+                if srv.get("type") == "stdio" and (" " in cmd or "${" in cmd
+                                                    or ("/" in cmd and not cmd.startswith("./"))):
+                    problems.append("{}: mcp server '{}' command must be one bare or ./-relative "
+                                    "token, got '{}'".format(entry["name"], srv_name, cmd))
+                for arg in srv.get("args", []):
+                    if "${PLUGIN_ROOT}/" in arg:
+                        rel = arg.split("${PLUGIN_ROOT}/", 1)[1]
+                        if not (plugin_dir / rel).exists():
+                            problems.append("{}: mcp server '{}' arg references missing file {}"
+                                            .format(entry["name"], srv_name, rel))
     for p in problems:
         print("ERROR " + p)
     print("{}: {} plugin(s), {} problem(s)".format(root, len(marketplace["plugins"]), len(problems)))

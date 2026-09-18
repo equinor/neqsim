@@ -31,7 +31,16 @@ repos were normalised:
   `generate_agent_skill_map.py` and `verify_skills_agents.py`; keep the two in sync with
   `devtools/sync_agent_required_skills.py --apply` (CI runs `--check`).
 * **Canonical MCP definition** at `.github/mcp/mcp.json` (Agent Plugins `mcpServers` format);
-  `.vscode/mcp.json` must mirror it (linted).
+  `.vscode/mcp.json` must mirror it (linted: same `command`, canonical args as prefix with
+  `${PLUGIN_ROOT}` → `${workspaceFolder}/.github/mcp`). **The server now starts from the release
+  jar, not Docker:** `command: java`, `args: [${PLUGIN_ROOT}/servers/NeqsimMcpLauncher.java]`.
+  The launcher (`.github/mcp/servers/NeqsimMcpLauncher.java`, Java source-launch, JDK 21+)
+  downloads `neqsim-mcp-server-<version>-runner.jar` + `.sha256` from the GitHub release pinned
+  in `servers/neqsim-mcp-server.properties` (written by the builder from pom `<revision>`,
+  override `--mcp-version`) into `${PLUGIN_DATA}`, verifies it, and runs it with stdio inherited,
+  UTF-8 forced and HTTP transport disabled. Env: `NEQSIM_MCP_JAR`, `NEQSIM_MCP_VERSION`,
+  `NEQSIM_MCP_JAVA_OPTS`. Verified: first start downloads 84 MB, later starts `initialize` in ~2 s,
+  71 tools listed.
 * **`devtools/build_agent_plugin.py`** emits `neqsim`, `neqsim-community` and
   `neqsim-enterprise` plugins plus a `marketplace.json`, with a content-hash version gate
   (`--bump patch|minor|major`) and a `SessionStart` hook that `pip install -e` the skills repo.

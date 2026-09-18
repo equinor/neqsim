@@ -349,12 +349,20 @@ def check_mcp_definition() -> Tuple[List[str], List[str]]:
             if mirror is None:
                 errors.append(f".vscode/mcp.json is missing server '{name}' from .github/mcp/mcp.json")
                 continue
-            for key in ("command", "args", "url"):
-                if server.get(key) != mirror.get(key):
-                    errors.append(
-                        f".vscode/mcp.json server '{name}' key '{key}' differs from the "
-                        "canonical .github/mcp/mcp.json"
-                    )
+            if server.get("command") != mirror.get("command") or server.get("url") != mirror.get("url"):
+                errors.append(
+                    f".vscode/mcp.json server '{name}' command/url differs from the "
+                    "canonical .github/mcp/mcp.json"
+                )
+            # The workspace has no ${PLUGIN_ROOT}: it addresses .github/mcp directly and
+            # may append --root/--data; the canonical args must be its prefix.
+            canonical_args = [a.replace("${PLUGIN_ROOT}", "${workspaceFolder}/.github/mcp")
+                              for a in server.get("args", [])]
+            if mirror.get("args", [])[:len(canonical_args)] != canonical_args:
+                errors.append(
+                    f".vscode/mcp.json server '{name}' args must start with the canonical args "
+                    "with ${PLUGIN_ROOT} -> ${workspaceFolder}/.github/mcp"
+                )
     return errors, warnings
 
 
