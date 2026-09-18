@@ -12,12 +12,11 @@ public class RefineryHydrotreatingHydrogenSupplyBalanceTest {
 
   @Test
   public void publicBigHillScreenClosesMakeupAndOutletGas() {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0040867518, 15.0e-6, 2.0);
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0040867518,
+        15.0e-6, 2.0);
 
-    RefineryHydrotreatingHydrogenSupplyBalance gas =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingHydrogenSupplyBalance gas = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5,
+        0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL);
 
     assertSame(sulfur, gas.getSulfurBalance());
     assertEquals(253.97123337252972, gas.getHydrogenConsumedMoles(), 1.0e-11);
@@ -37,11 +36,10 @@ public class RefineryHydrotreatingHydrogenSupplyBalanceTest {
 
   @Test
   public void stoichiometricPureHydrogenLeavesOnlyHydrogenSulfideGas() {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6, 1.0);
-    RefineryHydrotreatingHydrogenSupplyBalance gas =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.0, 1.0,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6,
+        1.0);
+    RefineryHydrotreatingHydrogenSupplyBalance gas = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.0,
+        1.0, NITROGEN_MOLAR_MASS_KG_PER_MOL);
 
     assertEquals(0.0, gas.getUnreactedHydrogenMoles(), 0.0);
     assertEquals(0.0, gas.getNonHydrogenMoles(), 0.0);
@@ -52,11 +50,9 @@ public class RefineryHydrotreatingHydrogenSupplyBalanceTest {
 
   @Test
   public void zeroSulfurRemovalRequiresNoMakeupGas() {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 0.004, 1.0);
-    RefineryHydrotreatingHydrogenSupplyBalance gas =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 0.004, 1.0);
+    RefineryHydrotreatingHydrogenSupplyBalance gas = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5,
+        0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL);
 
     assertEquals(0.0, gas.getMakeupGasMoles(), 0.0);
     assertEquals(0.0, gas.getMakeupGasMassKg(), 0.0);
@@ -69,48 +65,36 @@ public class RefineryHydrotreatingHydrogenSupplyBalanceTest {
 
   @Test
   public void gasReceiptsScaleWithFeedMass() {
-    RefineryHydrotreatingSulfurBalance one =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6, 2.0);
-    RefineryHydrotreatingSulfurBalance two =
-        RefineryHydrotreatingSulfurBalance.calculate(2000.0, 0.004, 15.0e-6, 2.0);
-    RefineryHydrotreatingHydrogenSupplyBalance first =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(one, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
-    RefineryHydrotreatingHydrogenSupplyBalance second =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(two, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurBalance one = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6, 2.0);
+    RefineryHydrotreatingSulfurBalance two = RefineryHydrotreatingSulfurBalance.calculate(2000.0, 0.004, 15.0e-6, 2.0);
+    RefineryHydrotreatingHydrogenSupplyBalance first = RefineryHydrotreatingHydrogenSupplyBalance.calculate(one, 1.5,
+        0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingHydrogenSupplyBalance second = RefineryHydrotreatingHydrogenSupplyBalance.calculate(two, 1.5,
+        0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL);
 
     assertEquals(2.0 * first.getMakeupGasMassKg(), second.getMakeupGasMassKg(), 1.0e-12);
     assertEquals(2.0 * first.getOutletGasMassKg(), second.getOutletGasMassKg(), 1.0e-12);
-    assertEquals(first.getOutletHydrogenMoleFraction(),
-        second.getOutletHydrogenMoleFraction(), 0.0);
+    assertEquals(first.getOutletHydrogenMoleFraction(), second.getOutletHydrogenMoleFraction(), 0.0);
   }
 
   @Test
   public void invalidInputsFailClosed() {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6, 2.0);
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.004, 15.0e-6,
+        2.0);
 
     assertThrows(NullPointerException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(null, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL));
+        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(null, 1.5, 0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur,
+        0.999, 0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur,
+        Double.NaN, 0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 0.999, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL));
+        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.0, NITROGEN_MOLAR_MASS_KG_PER_MOL));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, Double.NaN,
-            0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL));
+        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 1.01, NITROGEN_MOLAR_MASS_KG_PER_MOL));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.0,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL));
+        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90, Double.NaN));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 1.01,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90,
-            Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90,
-            0.0));
+        () -> RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur, 1.5, 0.90, 0.0));
   }
 }
