@@ -6,9 +6,9 @@ import java.util.Objects;
 /**
  * Immutable sulfur and hydrogen material-balance receipt for a hydrotreating screening case.
  *
- * <p>The calculation is deliberately limited to stoichiometric accounting. It does not predict
- * reaction kinetics, catalyst performance, operating conditions, heat duty, recycle requirements,
- * liquid yield, or product compliance.
+ * <p>
+ * The calculation is deliberately limited to stoichiometric accounting. It does not predict reaction kinetics, catalyst
+ * performance, operating conditions, heat duty, recycle requirements, liquid yield, or product compliance.
  *
  * @author esolbr1
  * @version 1.0
@@ -23,8 +23,8 @@ public final class RefineryHydrotreatingSulfurBalance implements Serializable {
   public static final double HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL = 0.034081;
 
   /** Molecular mass of sulfur derived consistently from hydrogen sulfide and hydrogen. */
-  public static final double SULFUR_MOLAR_MASS_KG_PER_MOL =
-      HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL - HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+  public static final double SULFUR_MOLAR_MASS_KG_PER_MOL = HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL
+      - HYDROGEN_MOLAR_MASS_KG_PER_MOL;
 
   private final double feedMassKg;
   private final double feedSulfurMassFraction;
@@ -41,21 +41,11 @@ public final class RefineryHydrotreatingSulfurBalance implements Serializable {
   private final double totalMassBalanceResidualKg;
   private final double sulfurBalanceResidualKg;
 
-  private RefineryHydrotreatingSulfurBalance(
-      double feedMassKg,
-      double feedSulfurMassFraction,
-      double targetProductSulfurMassFraction,
-      double hydrogenMolesPerSulfurMole,
-      double initialSulfurMassKg,
-      double sulfurRemovedMassKg,
-      double remainingSulfurMassKg,
-      double hydrogenConsumedMassKg,
-      double hydrogenSulfideProducedMassKg,
-      double hydrogenRetainedInLiquidMassKg,
-      double productMassKg,
-      double achievedProductSulfurMassFraction,
-      double totalMassBalanceResidualKg,
-      double sulfurBalanceResidualKg) {
+  private RefineryHydrotreatingSulfurBalance(double feedMassKg, double feedSulfurMassFraction,
+      double targetProductSulfurMassFraction, double hydrogenMolesPerSulfurMole, double initialSulfurMassKg,
+      double sulfurRemovedMassKg, double remainingSulfurMassKg, double hydrogenConsumedMassKg,
+      double hydrogenSulfideProducedMassKg, double hydrogenRetainedInLiquidMassKg, double productMassKg,
+      double achievedProductSulfurMassFraction, double totalMassBalanceResidualKg, double sulfurBalanceResidualKg) {
     this.feedMassKg = feedMassKg;
     this.feedSulfurMassFraction = feedSulfurMassFraction;
     this.targetProductSulfurMassFraction = targetProductSulfurMassFraction;
@@ -77,116 +67,74 @@ public final class RefineryHydrotreatingSulfurBalance implements Serializable {
    *
    * @param feedMassKg feed mass in kilograms
    * @param feedSulfurMassFraction sulfur mass fraction in the feed
-   * @param targetProductSulfurMassFraction requested sulfur mass fraction on the calculated liquid
-   *        product mass
-   * @param hydrogenMolesPerSulfurMole explicit hydrogen consumption assumption in moles of H2 per
-   *        mole of sulfur removed; must be at least one
+   * @param targetProductSulfurMassFraction requested sulfur mass fraction on the calculated liquid product mass
+   * @param hydrogenMolesPerSulfurMole explicit hydrogen consumption assumption in moles of H2 per mole of sulfur
+   * removed; must be at least one
    * @return immutable balance receipt
    */
-  public static RefineryHydrotreatingSulfurBalance calculate(
-      double feedMassKg,
-      double feedSulfurMassFraction,
-      double targetProductSulfurMassFraction,
-      double hydrogenMolesPerSulfurMole) {
+  public static RefineryHydrotreatingSulfurBalance calculate(double feedMassKg, double feedSulfurMassFraction,
+      double targetProductSulfurMassFraction, double hydrogenMolesPerSulfurMole) {
     requireFinitePositive("feedMassKg", feedMassKg);
     requireFraction("feedSulfurMassFraction", feedSulfurMassFraction);
     requireFraction("targetProductSulfurMassFraction", targetProductSulfurMassFraction);
     if (targetProductSulfurMassFraction > feedSulfurMassFraction) {
-      throw new IllegalArgumentException(
-          "targetProductSulfurMassFraction must not exceed feedSulfurMassFraction");
+      throw new IllegalArgumentException("targetProductSulfurMassFraction must not exceed feedSulfurMassFraction");
     }
-    if (!Double.isFinite(hydrogenMolesPerSulfurMole)
-        || hydrogenMolesPerSulfurMole < 1.0) {
-      throw new IllegalArgumentException(
-          "hydrogenMolesPerSulfurMole must be finite and at least one");
+    if (!Double.isFinite(hydrogenMolesPerSulfurMole) || hydrogenMolesPerSulfurMole < 1.0) {
+      throw new IllegalArgumentException("hydrogenMolesPerSulfurMole must be finite and at least one");
     }
 
     double initialSulfurMassKg = feedMassKg * feedSulfurMassFraction;
-    double liquidMassChangePerSulfurMass =
-        (hydrogenMolesPerSulfurMole * HYDROGEN_MOLAR_MASS_KG_PER_MOL
-                - HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL)
-            / SULFUR_MOLAR_MASS_KG_PER_MOL;
-    double denominator =
-        1.0 + targetProductSulfurMassFraction * liquidMassChangePerSulfurMass;
+    double liquidMassChangePerSulfurMass = (hydrogenMolesPerSulfurMole * HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        - HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL) / SULFUR_MOLAR_MASS_KG_PER_MOL;
+    double denominator = 1.0 + targetProductSulfurMassFraction * liquidMassChangePerSulfurMass;
     if (!Double.isFinite(denominator) || denominator <= 0.0) {
       throw new IllegalArgumentException("inputs do not define a positive material balance");
     }
 
-    double sulfurRemovedMassKg =
-        (initialSulfurMassKg - targetProductSulfurMassFraction * feedMassKg) / denominator;
+    double sulfurRemovedMassKg = (initialSulfurMassKg - targetProductSulfurMassFraction * feedMassKg) / denominator;
     double sulfurMolesRemoved = sulfurRemovedMassKg / SULFUR_MOLAR_MASS_KG_PER_MOL;
-    double hydrogenConsumedMassKg =
-        sulfurMolesRemoved
-            * hydrogenMolesPerSulfurMole
-            * HYDROGEN_MOLAR_MASS_KG_PER_MOL;
-    double hydrogenSulfideProducedMassKg =
-        sulfurMolesRemoved * HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
-    double hydrogenRetainedInLiquidMassKg =
-        sulfurMolesRemoved
-            * (hydrogenMolesPerSulfurMole - 1.0)
-            * HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+    double hydrogenConsumedMassKg = sulfurMolesRemoved * hydrogenMolesPerSulfurMole * HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+    double hydrogenSulfideProducedMassKg = sulfurMolesRemoved * HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
+    double hydrogenRetainedInLiquidMassKg = sulfurMolesRemoved * (hydrogenMolesPerSulfurMole - 1.0)
+        * HYDROGEN_MOLAR_MASS_KG_PER_MOL;
     double remainingSulfurMassKg = initialSulfurMassKg - sulfurRemovedMassKg;
-    double productMassKg =
-        feedMassKg + hydrogenConsumedMassKg - hydrogenSulfideProducedMassKg;
+    double productMassKg = feedMassKg + hydrogenConsumedMassKg - hydrogenSulfideProducedMassKg;
     double achievedProductSulfurMassFraction = remainingSulfurMassKg / productMassKg;
-    double totalMassBalanceResidualKg =
-        feedMassKg
-            + hydrogenConsumedMassKg
-            - productMassKg
-            - hydrogenSulfideProducedMassKg;
-    double sulfurBalanceResidualKg =
-        initialSulfurMassKg - remainingSulfurMassKg - sulfurRemovedMassKg;
+    double totalMassBalanceResidualKg = feedMassKg + hydrogenConsumedMassKg - productMassKg
+        - hydrogenSulfideProducedMassKg;
+    double sulfurBalanceResidualKg = initialSulfurMassKg - remainingSulfurMassKg - sulfurRemovedMassKg;
 
     double toleranceKg = 1.0e-12 * Math.max(1.0, feedMassKg);
-    if (!Double.isFinite(productMassKg)
-        || productMassKg <= 0.0
-        || sulfurRemovedMassKg < -toleranceKg
-        || sulfurRemovedMassKg > initialSulfurMassKg + toleranceKg
-        || Math.abs(totalMassBalanceResidualKg) > toleranceKg
+    if (!Double.isFinite(productMassKg) || productMassKg <= 0.0 || sulfurRemovedMassKg < -toleranceKg
+        || sulfurRemovedMassKg > initialSulfurMassKg + toleranceKg || Math.abs(totalMassBalanceResidualKg) > toleranceKg
         || Math.abs(sulfurBalanceResidualKg) > toleranceKg) {
       throw new IllegalArgumentException("inputs do not define a closed material balance");
     }
 
-    return new RefineryHydrotreatingSulfurBalance(
-        feedMassKg,
-        feedSulfurMassFraction,
-        targetProductSulfurMassFraction,
-        hydrogenMolesPerSulfurMole,
-        initialSulfurMassKg,
-        sulfurRemovedMassKg,
-        remainingSulfurMassKg,
-        hydrogenConsumedMassKg,
-        hydrogenSulfideProducedMassKg,
-        hydrogenRetainedInLiquidMassKg,
-        productMassKg,
-        achievedProductSulfurMassFraction,
-        totalMassBalanceResidualKg,
-        sulfurBalanceResidualKg);
+    return new RefineryHydrotreatingSulfurBalance(feedMassKg, feedSulfurMassFraction, targetProductSulfurMassFraction,
+        hydrogenMolesPerSulfurMole, initialSulfurMassKg, sulfurRemovedMassKg, remainingSulfurMassKg,
+        hydrogenConsumedMassKg, hydrogenSulfideProducedMassKg, hydrogenRetainedInLiquidMassKg, productMassKg,
+        achievedProductSulfurMassFraction, totalMassBalanceResidualKg, sulfurBalanceResidualKg);
   }
 
   /**
    * Calculate a receipt using the bulk sulfur reconstructed by an oil assay.
    *
-   * <p>The assay is read but is not mutated.
+   * <p>
+   * The assay is read but is not mutated.
    *
    * @param feedMassKg feed mass in kilograms
    * @param assay oil assay providing the bulk sulfur mass fraction
-   * @param targetProductSulfurMassFraction requested sulfur mass fraction on the calculated liquid
-   *        product mass
-   * @param hydrogenMolesPerSulfurMole explicit hydrogen consumption assumption in moles of H2 per
-   *        mole of sulfur removed
+   * @param targetProductSulfurMassFraction requested sulfur mass fraction on the calculated liquid product mass
+   * @param hydrogenMolesPerSulfurMole explicit hydrogen consumption assumption in moles of H2 per mole of sulfur
+   * removed
    * @return immutable balance receipt
    */
-  public static RefineryHydrotreatingSulfurBalance calculateForAssay(
-      double feedMassKg,
-      OilAssayCharacterisation assay,
-      double targetProductSulfurMassFraction,
-      double hydrogenMolesPerSulfurMole) {
+  public static RefineryHydrotreatingSulfurBalance calculateForAssay(double feedMassKg, OilAssayCharacterisation assay,
+      double targetProductSulfurMassFraction, double hydrogenMolesPerSulfurMole) {
     Objects.requireNonNull(assay, "assay");
-    return calculate(
-        feedMassKg,
-        assay.getBulkSulfurMassFraction(),
-        targetProductSulfurMassFraction,
+    return calculate(feedMassKg, assay.getBulkSulfurMassFraction(), targetProductSulfurMassFraction,
         hydrogenMolesPerSulfurMole);
   }
 
