@@ -72,10 +72,10 @@ public final class ProcessSystemDataflowBenchmark {
       int thermalPairs = imbalanced ? train + 1 : 3;
       for (int stage = 0; stage < thermalPairs; stage++) {
         Heater heater = new Heater(prefix + "heater-" + stage, current);
-        heater.setOutTemperature(308.15 + 2.0 * stage);
+        heater.setOutletTemperature(308.15 + 2.0 * stage);
         process.add(heater);
         Cooler cooler = new Cooler(prefix + "cooler-" + stage, heater.getOutletStream());
-        cooler.setOutTemperature(300.15 + stage);
+        cooler.setOutletTemperature(300.15 + stage);
         process.add(cooler);
         current = cooler.getOutletStream();
       }

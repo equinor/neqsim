@@ -779,7 +779,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     neqsim.process.equipment.heatexchanger.Heater feedHeater = new neqsim.process.equipment.heatexchanger.Heater(
         "deethanizer feed heater", waterDehydration.getSplitStream(0));
-    feedHeater.setOutTemperature(273.15 + 20.0);
+    feedHeater.setOutletTemperature(273.15 + 20.0);
     feedHeater.run();
     processSystem.add(feedHeater);
 
@@ -797,7 +797,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     deethanizer.setEnforceEnergyBalanceTolerance(true);
     deethanizer.addFeedStream(feedHeater.getOutletStream(), 3);
     deethanizer.addFeedStream(lqiuidrefluc, 5);
-    deethanizer.getReboiler().setOutTemperature(273.15 + 78.0);
+    deethanizer.getReboiler().setOutletTemperature(273.15 + 78.0);
     deethanizer.setTopPressure(14.8);
     deethanizer.setBottomPressure(14.8);
     deethanizer.run();
@@ -855,7 +855,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     debutanizer.setTemperatureTolerance(9.0e-3);
     debutanizer.setEnforceEnergyBalanceTolerance(true);
     debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
-    debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    debutanizer.getReboiler().setOutletTemperature(273.15 + 120.0);
     debutanizer.getCondenser().setRefluxRatio(0.1);
     // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0,
     // "kg/hr");
@@ -881,7 +881,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Cooler napthaLiquidToDethanizerCooler = new Cooler("naphta liquid to deethanizer cooler",
         napthaLiquidToDethanizerPump.getOutletStream());
-    napthaLiquidToDethanizerCooler.setOutTemperature(273.15 + 50.0);
+    napthaLiquidToDethanizerCooler.setOutletTemperature(273.15 + 50.0);
     napthaLiquidToDethanizerCooler.run();
     processSystem.add(napthaLiquidToDethanizerCooler);
 

@@ -262,14 +262,14 @@ public class TEGdehydrationProcessDistillationJS {
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 0);
-    column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
-    column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
+    column.getReboiler().setOutletTemperature(273.15 + reboilerTemperature);
+    column.getCondenser().setOutletTemperature(273.15 + condenserTemperature);
     column.getReboiler().addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + regenerationGasCoolerTemperature);
+    coolerRegenGas.setOutletTemperature(273.15 + regenerationGasCoolerTemperature);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -288,7 +288,7 @@ public class TEGdehydrationProcessDistillationJS {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
-    bufferTank.setOutTemperature(273.15 + bufferTankTemperatureTEG);
+    bufferTank.setOutletTemperature(273.15 + bufferTankTemperatureTEG);
 
     Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream());
     hotLeanTEGPump.setOutletPressure(hotTEGpumpPressure);
@@ -299,7 +299,7 @@ public class TEGdehydrationProcessDistillationJS {
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
-    coolerhOTteg3.setOutTemperature(273.15 + leanTEGTemperature);
+    coolerhOTteg3.setOutletTemperature(273.15 + leanTEGTemperature);
 
     Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
     hotLeanTEGPump2.setOutletPressure(absorberFeedGasPressure);

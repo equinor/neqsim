@@ -476,7 +476,7 @@ public class LargeCombinedModelsTest {
     NGLcolumn.setMassBalanceTolerance(1.0);
     NGLcolumn.setEnthalpyBalanceTolerance(1.0);
     NGLcolumn.addFeedStream(NGLfeedvalve.getOutletStream(), 5);
-    NGLcolumn.getReboiler().setOutTemperature(273.15 + inp.nglColumnBottomTemperature);
+    NGLcolumn.getReboiler().setOutletTemperature(273.15 + inp.nglColumnBottomTemperature);
     NGLcolumn.setTopPressure(inp.nglColumnTopPressure);
     NGLcolumn.setBottomPressure(inp.nglColumnBottomPressure);
     process.add(NGLcolumn);

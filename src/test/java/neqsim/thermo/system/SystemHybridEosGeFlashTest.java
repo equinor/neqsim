@@ -137,7 +137,7 @@ class SystemHybridEosGeFlashTest extends neqsim.NeqSimTest {
     Stream feed = new Stream("electrolyte feed", system);
     feed.setFlowRate(1000.0, "kg/hr");
     Heater heater = new Heater("electrolyte heater", feed);
-    heater.setOutTemperature(318.15);
+    heater.setOutletTemperature(318.15);
     ProcessSystem process = new ProcessSystem("electrolyte process property smoke test");
     process.add(feed);
     process.add(heater);

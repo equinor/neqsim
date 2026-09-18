@@ -252,7 +252,7 @@ public class GasificationSynthesisModule extends ProcessModule {
 
     // ── Step 2: Syngas Cooling ──
     Cooler syngasCooler = new Cooler(getName() + "_syngasCooler", syngasStream);
-    syngasCooler.setOutTemperature(273.15 + syngasCoolingTemperatureC);
+    syngasCooler.setOutletTemperature(273.15 + syngasCoolingTemperatureC);
 
     ProcessSystem coolingSystem = new ProcessSystem();
     coolingSystem.add(syngasCooler);

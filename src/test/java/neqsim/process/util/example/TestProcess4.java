@@ -43,7 +43,7 @@ public class TestProcess4 {
     // valve_1.setIsoThermal(true);
 
     // Heater heater = new Heater(valve_1.getOutStream());
-    // heater.setOutTemperature(273.15 + 46);
+    // heater.setOutletTemperature(273.15 + 46);
 
     Stream liquidStream = new Stream("liquidStream", separator.getLiquidOutStream());
 

@@ -930,7 +930,7 @@ public class DocExamplesCompilationTest {
 
     DistillationColumn column = new DistillationColumn("Doc MESH Deethanizer", 5, true, false);
     column.addFeedStream(runFeed, 5);
-    column.getReboiler().setOutTemperature(105.0 + 273.15);
+    column.getReboiler().setOutletTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
     column.setMaxNumberOfIterations(150);
@@ -1256,7 +1256,7 @@ public class DocExamplesCompilationTest {
     feedStream.setFlowRate(1000.0, "kg/hr");
 
     FiredHeater heater = new FiredHeater("Crude Heater", feedStream);
-    heater.setOutTemperature(273.15 + 350.0);
+    heater.setOutletTemperature(273.15 + 350.0);
     heater.setThermalEfficiency(0.85);
     heater.setFuelLHV(48.0e6);
     heater.setFuelCO2Factor(2.75);

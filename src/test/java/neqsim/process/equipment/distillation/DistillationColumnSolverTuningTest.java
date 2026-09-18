@@ -67,7 +67,7 @@ public class DistillationColumnSolverTuningTest {
   @Test
   public void reportedResidualIsUndampedFixedPointMismatch() {
     DistillationColumn column = buildColumn(6);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     column.setSolverType(DistillationColumn.SolverType.DAMPED_SUBSTITUTION);
     column.run();
     assertTrue(column.solved(), column.getConvergenceDiagnostics());

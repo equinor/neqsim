@@ -50,7 +50,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     return column;
   }
@@ -90,7 +90,7 @@ public class DistillationColumnWarmStateCacheTest {
     double firstBottomFlow = column.getLiquidOutStream().getFlowRate("kg/hr");
     assertTrue(firstGasFlow > 0.0, "the first solve should produce overhead flow");
 
-    column.getReboiler().setOutTemperature(273.15 + 110.0);
+    column.getReboiler().setOutletTemperature(273.15 + 110.0);
     column.run();
 
     assertNotEquals(firstGasFlow, column.getGasOutStream().getFlowRate("kg/hr"), 1.0,
@@ -426,7 +426,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     column.setSolverType(DistillationColumn.SolverType.NAPHTALI_SANDHOLM);
     return new ColumnCase(feed, column);
   }
@@ -796,7 +796,7 @@ public class DistillationColumnWarmStateCacheTest {
     assertNextRunReusesExactly(mutated);
 
     int initializationCountBeforeNearbyPoint = mutated.column.getInitializationCount();
-    mutated.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    mutated.column.getReboiler().setOutletTemperature(273.15 + 82.0);
     mutated.column.run();
     assertFalse(mutated.column.wasNaphtaliSandholmWarmStateReused(),
         "a nearby operating point must be solved rather than exactly reused");
@@ -804,7 +804,7 @@ public class DistillationColumnWarmStateCacheTest {
         "an unchanged thermodynamic identity should preserve the iterative warm start");
 
     ColumnCase nearbyColdReference = buildIdentityColumnCase(createIdentityTestFluid(true, "n-butane", 2));
-    nearbyColdReference.column.getReboiler().setOutTemperature(273.15 + 82.0);
+    nearbyColdReference.column.getReboiler().setOutletTemperature(273.15 + 82.0);
     nearbyColdReference.column.run();
     assertColdReferenceEquivalent(nearbyColdReference.column, mutated.column);
     assertPhysicalAndBalanced(mutated);
@@ -852,7 +852,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.addFeedStream(registeredFeed, 2);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     configureDampedSubstitution(column);
 
     column.run();
@@ -894,7 +894,7 @@ public class DistillationColumnWarmStateCacheTest {
     column.getTray(3).addStream(directFeed);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     configureDampedSubstitution(column);
 
     column.run();
@@ -1118,7 +1118,7 @@ public class DistillationColumnWarmStateCacheTest {
         "column initialization must not change the caller-owned feed temperature");
     int baselineInitializationCount = warmCase.column.getInitializationCount();
 
-    warmCase.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    warmCase.column.getReboiler().setOutletTemperature(273.15 + targetTemperatureC);
     warmCase.column.run();
 
     assertTrue(warmCase.column.solved(), warmCase.column.getConvergenceDiagnostics());
@@ -1132,7 +1132,7 @@ public class DistillationColumnWarmStateCacheTest {
 
     ColumnCase coldReference = buildIdentityColumnCase(createIdentityTestFluid(false, "n-butane", 2));
     configureDampedSubstitution(coldReference.column);
-    coldReference.column.getReboiler().setOutTemperature(273.15 + targetTemperatureC);
+    coldReference.column.getReboiler().setOutletTemperature(273.15 + targetTemperatureC);
     coldReference.column.run();
 
     assertTrue(coldReference.column.solved(), coldReference.column.getConvergenceDiagnostics());

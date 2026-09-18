@@ -456,8 +456,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getCondenser().setOutTemperature(273.15 + 15.0);
-    column.getReboiler().setOutTemperature(273.15 + 85.0);
+    column.getCondenser().setOutletTemperature(273.15 + 15.0);
+    column.getReboiler().setOutletTemperature(273.15 + 85.0);
     column.setTemperatureTolerance(5.0e-2);
     column.setMassBalanceTolerance(5.0e-2);
     column.setEnthalpyBalanceTolerance(5.0e-2);
@@ -629,8 +629,8 @@ public class ColumnSpecificationTest {
 
     // Use condenser reflux ratio spec and reboiler temperature
     column.setCondenserRefluxRatio(2.0);
-    column.getCondenser().setOutTemperature(273.15 + 25.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getCondenser().setOutletTemperature(273.15 + 25.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setMaxNumberOfIterations(50);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
@@ -662,8 +662,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(12.0);
     column.setBottomPressure(12.2);
-    column.getCondenser().setOutTemperature(273.15 + 35.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 35.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserRefluxRatio(1.5);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(40);
@@ -705,8 +705,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(12.0);
     column.setBottomPressure(12.2);
-    column.getCondenser().setOutTemperature(273.15 + 35.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 35.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserRefluxRatio(1.5);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(40);
@@ -936,7 +936,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setTemperatureTolerance(1.0e-2);
     column.setMassBalanceTolerance(1.0e-1);
     column.setEnthalpyBalanceTolerance(1.0e-1);
@@ -977,7 +977,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1014,7 +1014,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1051,7 +1051,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.getReboiler().setOutTemperature(273.15 + 75.0);
+    column.getReboiler().setOutletTemperature(273.15 + 75.0);
     column.setTopProductPurity("propane", 0.8);
     column.getTopSpecification().setTolerance(1.0);
     column.getTopSpecification().setMaxIterations(3);
@@ -1249,8 +1249,8 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 3);
     column.setTopPressure(pressure);
     column.setBottomPressure(pressure + 0.2);
-    column.getCondenser().setOutTemperature(condenserTemperature);
-    column.getReboiler().setOutTemperature(reboilerTemperature);
+    column.getCondenser().setOutletTemperature(condenserTemperature);
+    column.getReboiler().setOutletTemperature(reboilerTemperature);
     column.setCondenserRefluxRatio(1.8);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(80);
@@ -1282,7 +1282,7 @@ public class ColumnSpecificationTest {
     column.addFeedStream(feed, 4);
     column.setTopPressure(30.0);
     column.setBottomPressure(31.0);
-    column.getReboiler().setOutTemperature(273.15 + 100.0);
+    column.getReboiler().setOutletTemperature(273.15 + 100.0);
     column.setSolverType(DistillationColumn.SolverType.AUTO);
     column.setMaxNumberOfIterations(80);
     column.setTemperatureTolerance(1.0e-1);
@@ -1314,11 +1314,11 @@ public class ColumnSpecificationTest {
     column.setTopPressure(regressionCase.pressure);
     column.setBottomPressure(regressionCase.pressure + Math.max(0.1, 0.02 * regressionCase.pressure));
     if (regressionCase.condenser) {
-      column.getCondenser().setOutTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
+      column.getCondenser().setOutletTemperature(Math.max(80.0, regressionCase.feedTemperature - 25.0));
       column.setCondenserRefluxRatio(regressionCase.name.contains("low reflux") ? 0.05 : 1.5);
     }
     if (regressionCase.reboiler) {
-      column.getReboiler().setOutTemperature(regressionCase.feedTemperature + 45.0);
+      column.getReboiler().setOutletTemperature(regressionCase.feedTemperature + 45.0);
     }
     if (regressionCase.sideDraw) {
       column.addSideDrawFlowSpecification(Math.max(1, regressionCase.trays / 2),

@@ -83,7 +83,7 @@ public class PressureBoundaryOptimizerTest {
     comp.setPolytropicEfficiency(0.75);
 
     Cooler cooler = new Cooler("Aftercooler", comp.getOutletStream());
-    cooler.setOutTemperature(313.15); // 40°C
+    cooler.setOutletTemperature(313.15); // 40°C
 
     Stream export = new Stream("Export", cooler.getOutletStream());
 
