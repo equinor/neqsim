@@ -24,8 +24,7 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTransitionTest exten
 
   @Test
   void testUnchangedSerializedStatesProduceZeroTransition() throws Exception {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(
-        batch(4.0, 0.25, "batch-0", "segment-0"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result restored = serializeRoundTrip(prior);
 
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result transition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
@@ -85,8 +84,7 @@ public class AqueousHydrogenSulfideOxidationS8TransferLedgerTransitionTest exten
         () -> AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.create(candidate, prior));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.create(prior, reordered));
-    assertFalse(AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.verify(prior, candidate,
-        replacementReceipt));
+    assertFalse(AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.verify(prior, candidate, replacementReceipt));
     assertTrue(AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.verify(prior, candidate, candidateReceipt));
   }
 
