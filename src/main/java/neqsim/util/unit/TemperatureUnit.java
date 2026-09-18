@@ -29,12 +29,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
     return "K";
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public String getSIUnit() {
-    return "K";
-  }
-
   /**
    * Convert a temperature value to SI unit (Kelvin).
    *
