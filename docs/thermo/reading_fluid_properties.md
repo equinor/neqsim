@@ -591,6 +591,13 @@ neqsim.util.unit.Units.activateMetricUnits();
 
 #### Speed of Sound
 - Default unit: m/s (meters per second)
+- `fluid.getPhase(i).getSoundSpeed()` is phase-specific.
+- `fluid.getSoundSpeed()` is the legacy **molar-phase-fraction weighted average**. It is neither
+  a homogeneous-equilibrium derivative nor a frozen-phase mixture acoustic model.
+- `fluid.calculateEquilibriumSoundSpeed()` returns an explicit equilibrium derivative with
+  entropy closure, step convergence and phase-boundary diagnostics. Check `isConverged()` before
+  using its `getSoundSpeed()` value. See [Homogeneous-equilibrium acoustic speed](equilibrium_sound_speed)
+  for the density convention, assumptions, executable example and decompression-wave distinction.
 
 #### Molar Mass
 - `"kg/mol"` - kilograms per mole (default)
