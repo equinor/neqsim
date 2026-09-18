@@ -27,13 +27,11 @@ import neqsim.process.util.fire.ReliefValveSizing.PSVSizingResult;
 public final class ReliefRunner {
 
   static final int MAX_INPUT_BYTES = 16_384;
-  private static final String ADVISORY_BOUNDARY =
-      "Screening only. A qualified pressure-relief/process-safety review must validate scenario "
-          + "completeness, applicable standard edition, relieving rate and properties, allowable "
-          + "accumulation, coefficients, inlet and outlet piping, disposal, reaction loads, and "
-          + "installation suitability. This result is not certification or plant authorization.";
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final String ADVISORY_BOUNDARY = "Screening only. A qualified pressure-relief/process-safety review must validate scenario "
+      + "completeness, applicable standard edition, relieving rate and properties, allowable "
+      + "accumulation, coefficients, inlet and outlet piping, disposal, reaction loads, and "
+      + "installation suitability. This result is not certification or plant authorization.";
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
   private ReliefRunner() {
   }
@@ -277,8 +275,7 @@ public final class ReliefRunner {
   }
 
   private static void requireFraction(String field, double value, boolean allowEndpoints) {
-    if (!Double.isFinite(value) || (allowEndpoints ? value < 0.0 || value > 1.0
-        : value <= 0.0 || value > 1.0)) {
+    if (!Double.isFinite(value) || (allowEndpoints ? value < 0.0 || value > 1.0 : value <= 0.0 || value > 1.0)) {
       String interval = allowEndpoints ? "[0, 1]" : "(0, 1]";
       throw new IllegalArgumentException(field + " must be finite and within " + interval);
     }
@@ -288,8 +285,7 @@ public final class ReliefRunner {
       double backPressureBara) {
     double relievingPressureBara = setPressureBara * (1.0 + overpressureFraction);
     if (backPressureBara >= relievingPressureBara) {
-      throw new IllegalArgumentException(
-          "backPressure_bara must be below calculated relieving pressure");
+      throw new IllegalArgumentException("backPressure_bara must be below calculated relieving pressure");
     }
   }
 
