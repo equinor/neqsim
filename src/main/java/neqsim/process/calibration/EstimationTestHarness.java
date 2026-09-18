@@ -87,6 +87,14 @@ public class EstimationTestHarness implements Serializable {
     public final double minBound;
     public final double maxBound;
 
+    /**
+     * Constructor.
+     *
+     * @param path the parameter path
+     * @param trueValue the true value of the parameter
+     * @param minBound the minimum bound for the parameter
+     * @param maxBound the maximum bound for the parameter
+     */
     public ParameterWithTruth(String path, double trueValue, double minBound, double maxBound) {
       this.path = path;
       this.trueValue = trueValue;

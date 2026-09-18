@@ -10,7 +10,6 @@ package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsyst
  * <li>Literature correlations (Dittus-Boelter, Gnielinski)</li>
  * <li>Non-equilibrium thermodynamics principles from Solbraa (2002)</li>
  * </ul>
- * </p>
  *
  * @author ASMF
  */

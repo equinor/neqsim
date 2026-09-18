@@ -74,7 +74,7 @@ public class PinchAnalyzerTest {
     feed.setFlowRate(10000.0, "kg/hr");
 
     Cooler cooler = new Cooler("cooler", feed);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     SystemInterface cold = new SystemSrkEos(273.15 + 20.0, 50.0);
     cold.addComponent("methane", 0.9);
@@ -85,7 +85,7 @@ public class PinchAnalyzerTest {
     coldFeed.setFlowRate(8000.0, "kg/hr");
 
     Heater heater = new Heater("heater", coldFeed);
-    heater.setOutTemperature(273.15 + 60.0);
+    heater.setOutletTemperature(273.15 + 60.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

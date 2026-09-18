@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>Tzotzi &amp; Andritsos (2013): "Interfacial shear stress in wavy stratified gas-liquid flow"</li>
  * <li>Lamont &amp; Scott (1970): "Turbulent mass transfer in pipe flow"</li>
  * </ul>
- * </p>
  *
  * @author Copilot
  * @version 1.0

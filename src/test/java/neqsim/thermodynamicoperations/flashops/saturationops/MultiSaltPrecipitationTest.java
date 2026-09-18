@@ -99,7 +99,7 @@ class MultiSaltPrecipitationTest extends neqsim.NeqSimTest {
 
     Stream feed = new Stream("scale-equilibrated feed", system);
     Heater heater = new Heater("electrolyte heater", feed);
-    heater.setOutTemperature(308.15);
+    heater.setOutletTemperature(308.15);
     ProcessSystem process = new ProcessSystem("multi-mineral electrolyte process smoke test");
     process.add(feed);
     process.add(heater);

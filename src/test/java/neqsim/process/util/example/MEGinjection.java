@@ -66,7 +66,7 @@ public class MEGinjection {
     feedGasMEGmixer.addStream(MEGFeed);
 
     Heater pipeline = new Heater("gas-MEG pipeline", feedGasMEGmixer.getOutletStream());
-    pipeline.setOutTemperature(273.15 + 35.5);
+    pipeline.setOutletTemperature(273.15 + 35.5);
     pipeline.setOutPressure(80.2);
 
     Stream mixerStream = new Stream("feed gas and MEG", pipeline.getOutletStream());

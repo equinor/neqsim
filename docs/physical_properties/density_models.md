@@ -810,137 +810,118 @@ Reference: Rowland and May (2013),
 
 ---
 
-## Usage Examples
+## Usage Example
 
-### Comparing Density Models
+The following complete Java 8 program compares the maintained liquid-density
+models without changing the equation of state. Constructor inputs are kelvin and
+bara. Assertions are deliberately broad physical checks: model selection still
+requires independent data representative of the fluid and operating envelope.
 
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
-fluid.addComponent("methane", 0.1);
-fluid.addComponent("n-pentane", 0.9);
-fluid.setMixingRule("classic");
+public final class DensityModelComparison {
+  private static final Logger logger = LogManager.getLogger(DensityModelComparison.class);
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+  private DensityModelComparison() {}
 
-// Default density (Peneloux volume shift)
-double densityPeneloux = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Peneloux: " + densityPeneloux + " kg/m3");
+  public static void main(String[] args) {
+    SystemInterface hydrocarbon = createLiquid("n-hexane", 298.15, 10.0);
+    String oilPhase = "oil";
 
-// Switch to COSTALD
-fluid.setLiquidDensityModel("COSTALD");
-double densityCostald = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("COSTALD:  " + densityCostald + " kg/m3");
+    double penelouxDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("COSTALD");
+    double costaldDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("Rackett");
+    double rackettDensity = density(hydrocarbon, oilPhase);
+    hydrocarbon.setLiquidDensityModel("Peneloux");
+    double restoredDensity = density(hydrocarbon, oilPhase);
 
-// Switch to Rackett
-fluid.setLiquidDensityModel("Rackett");
-double densityRackett = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Rackett:  " + densityRackett + " kg/m3");
+    assertPhysicalDensity("Peneloux", penelouxDensity, 500.0, 800.0);
+    assertPhysicalDensity("COSTALD", costaldDensity, 500.0, 800.0);
+    assertPhysicalDensity("Rackett", rackettDensity, 500.0, 800.0);
+    assert Math.abs(restoredDensity - penelouxDensity) < 0.01
+        : "Restoring Peneloux must restore the original density";
 
-// Switch back to Peneloux
-fluid.setLiquidDensityModel("Peneloux");
-double densityBack = fluid.getPhase("oil").getPhysicalProperties().getDensity();
-System.out.println("Peneloux: " + densityBack + " kg/m3");
-```
+    double originalTemperatureK = hydrocarbon.getTemperature("K");
+    double originalPressureBara = hydrocarbon.getPressure("bara");
+    double referenceDensity =
+        hydrocarbon.getDensityAtReferenceConditions(15.0, "C", 1.01325, "bara");
+    assertPhysicalDensity("15 C reference", referenceDensity, 600.0, 720.0);
+    assert Math.abs(hydrocarbon.getTemperature("K") - originalTemperatureK) < 1.0e-10
+        : "Reference-condition calculation changed the live temperature";
+    assert Math.abs(hydrocarbon.getPressure("bara") - originalPressureBara) < 1.0e-10
+        : "Reference-condition calculation changed the live pressure";
 
-### Comparing with NASTALD for Polar Systems
+    SystemInterface water = createLiquid("water", 293.15, 10.0);
+    String waterPhase = water.hasPhaseType("aqueous") ? "aqueous" : "oil";
+    water.setLiquidDensityModel("COSTALD");
+    double waterCostaldDensity = density(water, waterPhase);
+    water.setLiquidDensityModel("NASTALD");
+    double waterNastaldDensity = density(water, waterPhase);
 
-```java
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);
-fluid.addComponent("water", 0.8);
-fluid.addComponent("methanol", 0.2);
-fluid.setMixingRule("classic");
+    assertPhysicalDensity("water COSTALD", waterCostaldDensity, 900.0, 1100.0);
+    assertPhysicalDensity("water NASTALD", waterNastaldDensity, 900.0, 1100.0);
+    assert Math.abs(waterCostaldDensity - waterNastaldDensity) > 0.1
+        : "The polar correction should change the water result";
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
+    logger.info(
+        "n-hexane density kg/m3: Peneloux={}, COSTALD={}, Rackett={}, 15 C reference={}",
+        penelouxDensity,
+        costaldDensity,
+        rackettDensity,
+        referenceDensity);
+    logger.info(
+        "water density kg/m3: COSTALD={}, NASTALD={}",
+        waterCostaldDensity,
+        waterNastaldDensity);
+  }
 
-// COSTALD (V* captures polarity via back-calculation)
-fluid.setLiquidDensityModel("COSTALD");
-double rhoCostald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-System.out.println("COSTALD:  " + rhoCostald + " kg/m3");
+  private static SystemInterface createLiquid(
+      String component, double temperatureK, double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(temperatureK, pressureBara);
+    fluid.addComponent(component, 1.0);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initPhysicalProperties();
+    return fluid;
+  }
 
-// NASTALD (explicit polar correction)
-fluid.setLiquidDensityModel("NASTALD");
-double rhoNastald = fluid.getPhase("aqueous").getPhysicalProperties().getDensity();
-System.out.println("NASTALD:  " + rhoNastald + " kg/m3");
-```
+  private static double density(SystemInterface fluid, String phaseName) {
+    double value = fluid.getPhase(phaseName).getPhysicalProperties().calcDensity();
+    assert Double.isFinite(value) : phaseName + " density is not finite";
+    return value;
+  }
 
-### Tuning Liquid Density
-
-```java
-// Create fluid with known experimental density
-SystemInterface fluid = new SystemSrkEos(293.15, 1.01325);
-fluid.addComponent("n-hexane", 1.0);
-fluid.setMixingRule("classic");
-
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
-
-double expDensity = 659.0;  // kg/m³ at 20°C
-double calcDensity = fluid.getPhase(1).getDensity("kg/m3");
-double error = (calcDensity - expDensity) / expDensity * 100;
-System.out.println("Initial error: " + error + "%");
-
-// Adjust volume correction to match experimental
-double molarMass = fluid.getPhase(1).getMolarMass() * 1000;  // kg/kmol
-double calcMolarVolume = molarMass / calcDensity;  // m³/kmol
-double expMolarVolume = molarMass / expDensity;    // m³/kmol
-double correction = (calcMolarVolume - expMolarVolume) / 1000;  // m³/mol
-
-fluid.getPhase(1).getComponent("n-hexane").setVolumeCorrectionConst(correction);
-fluid.initPhysicalProperties();
-
-double newDensity = fluid.getPhase(1).getDensity("kg/m3");
-System.out.println("Tuned density: " + newDensity + " kg/m³");
-```
-
-### Density vs Temperature
-
-```java
-SystemInterface fluid = new SystemSrkEos(300.0, 10.0);
-fluid.addComponent("n-heptane", 1.0);
-fluid.setMixingRule("classic");
-
-double[] temps = {280, 300, 320, 340, 360, 380};
-
-for (double T : temps) {
-    fluid.setTemperature(T, "K");
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.TPflash();
-
-    if (fluid.getPhase(1).getPhaseTypeName().equals("oil")) {
-        fluid.initPhysicalProperties();
-        double rho = fluid.getPhase(1).getDensity("kg/m3");
-        System.out.println("T=" + T + " K: ρ=" + rho + " kg/m³");
-    }
+  private static void assertPhysicalDensity(
+      String label, double value, double lowerBound, double upperBound) {
+    assert value > lowerBound && value < upperBound
+        : label + " density outside the demonstration bounds: " + value;
+  }
 }
 ```
 
-### High-Pressure Density
+Run with assertions enabled so the physical and state-preservation checks are
+active. The exact program is extracted, compiled with Java 8 source/target
+settings, and executed by the documentation contract.
 
-```java
-// Compressed liquid density at high pressure
-SystemInterface fluid = new SystemSrkEos(300.0, 500.0);  // 500 bar
-fluid.addComponent("n-decane", 1.0);
-fluid.setMixingRule("classic");
+### Interpretation and calibration boundary
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initPhysicalProperties();
-
-double rho = fluid.getPhase(0).getDensity("kg/m3");
-System.out.println("High-P density: " + rho + " kg/m³");
-
-// For high-pressure liquids, Peneloux may be insufficient
-// Consider using PC-SAFT or adjusting correction
-```
+- Peneloux, COSTALD, NASTALD, and Rackett are alternative liquid-density
+  treatments; none is universally best for every composition and state.
+- The broad bounds above catch phase-selection, unit, and non-finite-result
+  errors. They are not experimental qualification.
+- `getDensityAtReferenceConditions(...)` evaluates a reference state without
+  mutating the live fluid temperature or pressure.
+- Do not tune `setVolumeCorrectionConst(...)` from a single density point.
+  Establish parameter provenance, define the applicable temperature-pressure
+  envelope, fit a calibration dataset, and validate against independent data.
+- After changing composition or thermodynamic state, rerun the required flash
+  and physical-property initialization before interpreting density.
 
 ---
 

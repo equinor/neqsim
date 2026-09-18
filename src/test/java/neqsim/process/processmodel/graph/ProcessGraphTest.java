@@ -771,7 +771,7 @@ public class ProcessGraphTest {
     ProcessSystem trainA = new ProcessSystem("Train A");
     Stream streamA = new Stream("streamA", splitter.getSplitStream(0));
     Heater heaterA = new Heater("heaterA", streamA);
-    heaterA.setOutTemperature(350.0);
+    heaterA.setOutletTemperature(350.0);
     heaterA.run();
     trainA.add(streamA);
     trainA.add(heaterA);
@@ -779,7 +779,7 @@ public class ProcessGraphTest {
     ProcessSystem trainB = new ProcessSystem("Train B");
     Stream streamB = new Stream("streamB", splitter.getSplitStream(1));
     Cooler coolerB = new Cooler("coolerB", streamB);
-    coolerB.setOutTemperature(280.0);
+    coolerB.setOutletTemperature(280.0);
     coolerB.run();
     trainB.add(streamB);
     trainB.add(coolerB);
@@ -989,7 +989,7 @@ public class ProcessGraphTest {
     valve1.setOutletPressure(10.0);
 
     Heater oilHeater = new Heater("oil heater", valve1.getOutletStream());
-    oilHeater.setOutTemperature(320.0);
+    oilHeater.setOutletTemperature(320.0);
 
     // Second stage separator
     ThreePhaseSeparator separator2nd = new ThreePhaseSeparator("2nd stage separator", oilHeater.getOutletStream());
@@ -1009,7 +1009,7 @@ public class ProcessGraphTest {
 
     // LP gas processing
     Cooler coolerLP = new Cooler("cooler LP", separator3rd.getGasOutStream());
-    coolerLP.setOutTemperature(273.15 + 25.0);
+    coolerLP.setOutletTemperature(273.15 + 25.0);
 
     Separator gasLiqSep = new Separator("LP gas separator", coolerLP.getOutletStream());
 
@@ -1100,7 +1100,7 @@ public class ProcessGraphTest {
     feed.setPressure(50.0, "bara");
 
     Heater heater1 = new Heater("heater1", feed);
-    heater1.setOutTemperature(320.0);
+    heater1.setOutletTemperature(320.0);
 
     Separator sep1 = new Separator("separator1", heater1.getOutletStream());
 
@@ -1108,7 +1108,7 @@ public class ProcessGraphTest {
     comp1.setOutletPressure(70.0);
 
     Cooler cooler1 = new Cooler("cooler1", comp1.getOutletStream());
-    cooler1.setOutTemperature(300.0);
+    cooler1.setOutletTemperature(300.0);
 
     Separator sep2 = new Separator("separator2", cooler1.getOutletStream());
 
@@ -1182,7 +1182,7 @@ public class ProcessGraphTest {
 
     // Anti-surge cooler
     Cooler recycleHx = new Cooler("recycle cooler", splitter.getSplitStream(1));
-    recycleHx.setOutTemperature(303.0);
+    recycleHx.setOutletTemperature(303.0);
 
     // Anti-surge valve
     ThrottlingValve recycleValve = new ThrottlingValve("recycle valve", recycleHx.getOutletStream());
@@ -1297,7 +1297,7 @@ public class ProcessGraphTest {
     mixer.addStream(recycleStream);
 
     Heater heater = new Heater("heater", mixer.getOutletStream());
-    heater.setOutTemperature(350.0);
+    heater.setOutletTemperature(350.0);
 
     Separator sep = new Separator("separator", heater.getOutletStream());
 
@@ -1562,7 +1562,7 @@ public class ProcessGraphTest {
 
     // First stage: heating and separation
     Heater heater1 = new Heater("heater1", feed);
-    heater1.setOutTemperature(330.0);
+    heater1.setOutletTemperature(330.0);
     process.add(heater1);
 
     Separator sep1 = new Separator("separator1", heater1.getOutletStream());
@@ -1574,7 +1574,7 @@ public class ProcessGraphTest {
     process.add(comp1);
 
     Cooler cooler1 = new Cooler("cooler1", comp1.getOutletStream());
-    cooler1.setOutTemperature(310.0);
+    cooler1.setOutletTemperature(310.0);
     process.add(cooler1);
 
     Separator sep2 = new Separator("separator2", cooler1.getOutletStream());
@@ -1585,12 +1585,12 @@ public class ProcessGraphTest {
     process.add(comp2);
 
     Cooler cooler2 = new Cooler("cooler2", comp2.getOutletStream());
-    cooler2.setOutTemperature(305.0);
+    cooler2.setOutletTemperature(305.0);
     process.add(cooler2);
 
     // Liquid processing
     Heater heater2 = new Heater("heater2", sep1.getLiquidOutStream());
-    heater2.setOutTemperature(340.0);
+    heater2.setOutletTemperature(340.0);
     process.add(heater2);
 
     ThrottlingValve valve1 = new ThrottlingValve("valve1", heater2.getOutletStream());
@@ -1630,7 +1630,7 @@ public class ProcessGraphTest {
 
     // 2. Heater
     Heater heater = new Heater("heater", feed);
-    heater.setOutTemperature(340.0);
+    heater.setOutletTemperature(340.0);
     process.add(heater);
 
     // 3. ThreePhaseSeparator
@@ -1644,7 +1644,7 @@ public class ProcessGraphTest {
 
     // 5. Cooler
     Cooler cooler = new Cooler("cooler", compressor.getOutletStream());
-    cooler.setOutTemperature(305.0);
+    cooler.setOutletTemperature(305.0);
     process.add(cooler);
 
     // 6. Regular Separator
@@ -1743,7 +1743,7 @@ public class ProcessGraphTest {
     process.add(feed);
 
     Heater heater = new Heater("heater", feed);
-    heater.setOutTemperature(320.0);
+    heater.setOutletTemperature(320.0);
     process.add(heater);
 
     Separator separator = new Separator("separator", heater.getOutletStream());
@@ -1810,7 +1810,7 @@ public class ProcessGraphTest {
     process.add(feed);
 
     Heater heater = new Heater("heater", feed);
-    heater.setOutTemperature(350.0);
+    heater.setOutletTemperature(350.0);
     process.add(heater);
 
     Separator separator = new Separator("separator", heater.getOutletStream());
@@ -2165,7 +2165,7 @@ public class ProcessGraphTest {
     process.add(feed1);
 
     Heater heater1 = new Heater("heater1", feed1);
-    heater1.setOutTemperature(350.0);
+    heater1.setOutletTemperature(350.0);
     process.add(heater1);
 
     Separator sep1 = new Separator("separator1", heater1.getOutletStream());
@@ -2179,7 +2179,7 @@ public class ProcessGraphTest {
     process.add(feed2);
 
     Cooler cooler2 = new Cooler("cooler2", feed2);
-    cooler2.setOutTemperature(280.0);
+    cooler2.setOutletTemperature(280.0);
     process.add(cooler2);
 
     Separator sep2 = new Separator("separator2", cooler2.getOutletStream());
@@ -2241,7 +2241,7 @@ public class ProcessGraphTest {
       process.add(feed);
 
       Heater heater = new Heater("heater" + i, feed);
-      heater.setOutTemperature(350.0);
+      heater.setOutletTemperature(350.0);
       process.add(heater);
 
       Separator sep = new Separator("separator" + i, heater.getOutletStream());
@@ -2302,7 +2302,7 @@ public class ProcessGraphTest {
       smallProcess.add(feed);
 
       Heater heater = new Heater("heater", feed);
-      heater.setOutTemperature(350.0);
+      heater.setOutletTemperature(350.0);
       smallProcess.add(heater);
 
       boolean beneficial = smallProcess.isParallelExecutionBeneficial();
@@ -2328,14 +2328,14 @@ public class ProcessGraphTest {
       recycleProcess.add(feed);
 
       Heater heater1 = new Heater("heater1", feed);
-      heater1.setOutTemperature(350.0);
+      heater1.setOutletTemperature(350.0);
       recycleProcess.add(heater1);
 
       Separator sep = new Separator("separator", heater1.getOutletStream());
       recycleProcess.add(sep);
 
       Heater heater2 = new Heater("heater2", sep.getGasOutStream());
-      heater2.setOutTemperature(300.0);
+      heater2.setOutletTemperature(300.0);
       recycleProcess.add(heater2);
 
       // Add a recycle (presence alone should disable parallel)
@@ -2364,7 +2364,7 @@ public class ProcessGraphTest {
         parallelProcess.add(feed);
 
         Heater heater = new Heater("heater" + i, feed);
-        heater.setOutTemperature(350.0);
+        heater.setOutletTemperature(350.0);
         parallelProcess.add(heater);
 
         Separator sep = new Separator("sep" + i, heater.getOutletStream());
@@ -2406,7 +2406,7 @@ public class ProcessGraphTest {
       process.add(feed);
 
       Heater heater = new Heater("heater" + i, feed);
-      heater.setOutTemperature(350.0);
+      heater.setOutletTemperature(350.0);
       process.add(heater);
 
       Separator sep = new Separator("sep" + i, heater.getOutletStream());
@@ -2469,7 +2469,7 @@ public class ProcessGraphTest {
 
     // Add downstream equipment on one of the outputs
     Heater heater = new Heater("heater", manifold.getSplitStream(0));
-    heater.setOutTemperature(350.0);
+    heater.setOutletTemperature(350.0);
     system.add(heater);
 
     // Build and analyze graph

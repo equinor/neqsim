@@ -21,7 +21,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Gas-phase chemical equilibrium (methane combustion)</li>
  * <li>Comparison with standard NeqSim flash for non-reactive systems</li>
  * </ul>
- * </p>
  *
  * @author copilot
  * @version 1.0
@@ -149,7 +148,6 @@ public class ReactiveMultiphaseTPflashTest {
    * <li>Find elevated levels of CO2 and H2O at equilibrium</li>
    * <li>Converge to a solution</li>
    * </ol>
-   * </p>
    */
   @Test
   void testGasPhaseCombustionEquilibrium() {

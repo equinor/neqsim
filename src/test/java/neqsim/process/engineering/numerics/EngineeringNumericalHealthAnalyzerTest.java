@@ -56,7 +56,7 @@ class EngineeringNumericalHealthAnalyzerTest {
     Stream feed = new Stream("FEED", fluid);
     feed.setFlowRate(1000.0, "kg/hr");
     Heater heater = new Heater("HEATER", feed);
-    heater.setOutTemperature(310.0);
+    heater.setOutletTemperature(310.0);
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
     process.add(heater);

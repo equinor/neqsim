@@ -117,7 +117,7 @@ class SystemThermoSulfurPhaseExtractionTest extends neqsim.NeqSimTest {
     mixer.run();
     assertInventory(expected, mixer.getOutStream().getThermoSystem(), "mixer");
     Cooler cooler = new Cooler("aftercooler", mixer.getOutStream());
-    cooler.setOutTemperature(303.15);
+    cooler.setOutletTemperature(303.15);
     cooler.run();
     SystemInterface cooled = cooler.getOutStream().getThermoSystem();
     assertInventory(expected, cooled, "cooler");

@@ -1587,14 +1587,14 @@ def test_capabilities():
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
         "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
-        "compareProcesses",
+        "runOperationalStudy", "compareProcesses",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.40"
-          and limitations.get("contractTestedToolCount") == 40
-          and limitations.get("confirmedGapToolCount") == 11
+    check("forty-one bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.41"
+          and limitations.get("contractTestedToolCount") == 41
+          and limitations.get("confirmedGapToolCount") == 10
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1622,6 +1622,16 @@ def test_capabilities():
           and "does not identify hazards"
           in barrier_register.get("evidenceBoundary", ""),
           str(barrier_register))
+    operational_study = coverage_records.get("runOperationalStudy", {})
+    check("operational-study orchestration has bounded canonical evidence",
+          operational_study.get("coverageStatus") == "CONTRACT_TESTED"
+          and operational_study.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_operational_study_protocol.py"
+          in operational_study.get("contractEvidenceSources", [])
+          and "canonical JsonProcessBuilder" in operational_study.get("evidenceBoundary", "")
+          and "no-plant-write" in operational_study.get("evidenceBoundary", ""),
+          str(operational_study))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1845,7 +1855,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 11
+          and limitations.get("confirmedGapToolCount") == 10
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

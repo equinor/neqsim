@@ -617,7 +617,6 @@ public class NonEquilibriumPipeFlowTest {
    * <li>Pressure drop along the pipeline</li>
    * <li>Liquid fraction profile: tracking how far liquid travels before fully evaporating</li>
    * </ul>
-   * </p>
    */
   @Disabled("Timeout in CI - needs optimization")
   @Test
@@ -1990,7 +1989,6 @@ public class NonEquilibriumPipeFlowTest {
    * <li>Bootstrap/rate correction matrix for mass transfer (accounts for drift flux effects)</li>
    * <li>Thermodynamic corrections (activity coefficient gradients)</li>
    * </ul>
-   * </p>
    *
    * <p>
    * Scenario: n-Decane liquid evaporating into methane gas with external heating. Uses proven two-phase system
@@ -2226,7 +2224,6 @@ public class NonEquilibriumPipeFlowTest {
    * <li>Phase 1: 50/50 wt% water/methane feed for first 200 seconds</li>
    * <li>Phase 2: 0.1 wt% water (dry gas) feed after 200 seconds</li>
    * </ul>
-   * </p>
    */
   @Disabled("Solver optimization needed - times out in CI")
   @Test

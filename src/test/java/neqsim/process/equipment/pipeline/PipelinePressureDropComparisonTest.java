@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>{@link AdiabaticTwoPhasePipe} - Two-phase capable pipe</li>
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill correlation</li>
  * </ul>
- * </p>
  *
  * <p>
  * Reference equations for gas pipeline flow:
@@ -581,7 +580,6 @@ public class PipelinePressureDropComparisonTest {
    * <li>Weymouth equation - conservative, commonly used for transmission lines</li>
    * <li>Panhandle A equation - for medium-large diameter pipelines</li>
    * </ul>
-   * </p>
    *
    * <p>
    * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005 Reference: Mohitpour, M. et al. "Pipeline Design

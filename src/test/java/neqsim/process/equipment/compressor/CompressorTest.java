@@ -149,7 +149,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.run();
     // logger.info("srk polytropic efficiency " +
     // compressor1.getPolytropicEfficiency()*100 + " poly eff");
@@ -175,7 +175,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.setUseGERG2008(true);
     // compressor1.setUseRigorousPolytropicMethod(true);
     compressor1.run();
@@ -355,7 +355,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseLeachman(true); // Enable the use of Leachman method
 
     // Run the compressor
@@ -415,7 +415,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseVega(true); // Enable the use of Vega method
 
     // Run the compressor

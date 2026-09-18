@@ -1268,7 +1268,7 @@ public class AcceleratedCPASolverTest {
     flashValve.setOutletPressure(7.0);
 
     Heater richTEGHeater = new Heater("rich TEG heater", flashValve.getOutletStream());
-    richTEGHeater.setOutTemperature(273.15 + 90.0);
+    richTEGHeater.setOutletTemperature(273.15 + 90.0);
 
     Separator flashSep = new Separator("degassing separator", richTEGHeater.getOutletStream());
     flashSep.setInternalDiameter(1.2);

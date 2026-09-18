@@ -117,7 +117,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
     // Compressor with outlet temperature specified
     Compressor compressor1 = new Compressor("27AKA60", feedStream);
     compressor1.setOutletPressure(COMP_POUT);
-    compressor1.setOutTemperature(COMP_TOUT);
+    compressor1.setOutletTemperature(COMP_TOUT);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicMethod("detailed");
     compressor1.setNumberOfCompressorCalcSteps(10);

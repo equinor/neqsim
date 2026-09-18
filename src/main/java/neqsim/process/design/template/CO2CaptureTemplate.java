@@ -241,12 +241,12 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     // Rich amine heater (simulates heat from lean-rich exchanger)
     // Using separate Heater instead of HeatExchanger for template simplicity
     Heater richAmineHeater = new Heater("Rich Amine Heater", flashDrum.getLiquidOutStream());
-    richAmineHeater.setOutTemperature(reboilerTemp - 15.0 + 273.15);
+    richAmineHeater.setOutletTemperature(reboilerTemp - 15.0 + 273.15);
     process.add(richAmineHeater);
 
     // Regenerator reboiler (simplified as heater + separator)
     Heater reboiler = new Heater("Regenerator Reboiler", richAmineHeater.getOutletStream());
-    reboiler.setOutTemperature(reboilerTemp + 273.15);
+    reboiler.setOutletTemperature(reboilerTemp + 273.15);
     process.add(reboiler);
 
     Separator regenerator = new Separator("Regenerator", reboiler.getOutletStream());
@@ -259,7 +259,7 @@ public class CO2CaptureTemplate implements ProcessTemplate {
 
     // Lean amine cooler
     Cooler amineCooler = new Cooler("Lean Amine Cooler", aminePump.getOutletStream());
-    amineCooler.setOutTemperature(leanAmineTemp + 273.15);
+    amineCooler.setOutletTemperature(leanAmineTemp + 273.15);
     process.add(amineCooler);
 
     // CO2 product stream from regenerator overhead

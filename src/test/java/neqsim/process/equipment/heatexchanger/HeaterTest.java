@@ -73,7 +73,7 @@ public class HeaterTest {
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
 
     Heater heater1 = new Heater("heater 1", inletStream);
-    heater1.setOutTemperature(310.0);
+    heater1.setOutletTemperature(310.0);
     processOps.add(inletStream);
     processOps.add(heater1);
     processOps.run();

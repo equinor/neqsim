@@ -125,7 +125,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(dehydratedGasSetWater);
 
     Heater coolerDehydGas = new Heater("coolerDehydGas", dehydratedGasSetWater);
-    coolerDehydGas.setOutTemperature(273.15 + 10.0);
+    coolerDehydGas.setOutletTemperature(273.15 + 10.0);
     p.add(coolerDehydGas);
 
     Separator sepDehydratedGasSetWater = new Separator("dehyd gas separator", coolerDehydGas.getOutletStream());
@@ -205,8 +205,8 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + 197.5);
-    column.getCondenser().setOutTemperature(273.15 + 85.0);
+    column.getReboiler().setOutletTemperature(273.15 + 197.5);
+    column.getCondenser().setOutletTemperature(273.15 + 85.0);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.2);
@@ -214,7 +214,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     p.add(column);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 47.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 47.0);
     p.add(coolerRegenGas);
 
     HeatExchanger overheadCondHX = new HeatExchanger("overhead condenser heat-exchanger", column.getGasOutStream());
@@ -247,7 +247,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
     Heater bufferTank = new Heater("TEG buffer tank", heatEx.getOutStream(1));
-    bufferTank.setOutTemperature(273.15 + 90.5);
+    bufferTank.setOutletTemperature(273.15 + 90.5);
     p.add(bufferTank);
 
     Pump hotLeanTEGPump = new Pump("lean TEG LP pump", bufferTank.getOutletStream());
@@ -258,7 +258,7 @@ public class MLA_bug_test extends neqsim.NeqSimTest {
     heatEx2.setFeedStream(1, hotLeanTEGPump.getOutletStream());
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
-    coolerhOTteg3.setOutTemperature(273.15 + 48.5);
+    coolerhOTteg3.setOutletTemperature(273.15 + 48.5);
     p.add(coolerhOTteg3);
 
     HeatExchanger coolerhOTteg3HX = new HeatExchanger("lean TEG heat-exchanger 3", heatEx2.getOutStream(1));
