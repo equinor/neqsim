@@ -713,9 +713,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       } else {
         isActive(false);
       }
-    } else
-
-    {
+    } else {
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
         // testOps.TPflash();
         mixedStream.getThermoSystem().init(2);
@@ -838,7 +836,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
