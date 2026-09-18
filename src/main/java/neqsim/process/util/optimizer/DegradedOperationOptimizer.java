@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
-import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -390,8 +389,6 @@ public class DegradedOperationOptimizer implements Serializable {
         pump.setOutletPressure(pump.getInletStream().getPressure());
       } else if (equipment instanceof Heater) {
         ((Heater) equipment).setOutletTemperature(((Heater) equipment).getInletStream().getTemperature());
-      } else if (equipment instanceof Cooler) {
-        ((Cooler) equipment).setOutletTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
     }
   }
