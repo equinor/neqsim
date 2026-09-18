@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -25,10 +24,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** Compiles and executes the maintained thermal-utility screening guides. */
 public class ThermalUtilityDocumentationTest extends neqsim.NeqSimTest {
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern DUPLICATE_H1 = Pattern.compile("(?m)^# ");
 
   @TempDir
@@ -37,23 +35,18 @@ public class ThermalUtilityDocumentationTest extends neqsim.NeqSimTest {
   @Test
   void guidesMatchCurrentApisAndDocumentationBoundaries() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String hydraulics =
-        read(repositoryRoot.resolve("docs/process/thermal_utility_hydraulics.md"));
+    String hydraulics = read(repositoryRoot.resolve("docs/process/thermal_utility_hydraulics.md"));
     String quality = read(repositoryRoot.resolve("docs/process/thermal_utility_quality.md"));
 
-    assertNotNull(neqsim.process.equipment.energy.ThermalUtilityHydraulicModel.class.getMethod(
-        "setGeometry", double.class, double.class, double.class));
-    assertEquals(double.class,
-        neqsim.process.equipment.energy.UtilityEnergyBus.class
-            .getMethod("getMassFlowForDuty", double.class).getReturnType());
+    assertNotNull(neqsim.process.equipment.energy.ThermalUtilityHydraulicModel.class.getMethod("setGeometry",
+        double.class, double.class, double.class));
+    assertEquals(double.class, neqsim.process.equipment.energy.UtilityEnergyBus.class
+        .getMethod("getMassFlowForDuty", double.class).getReturnType());
     assertEquals(boolean.class,
-        neqsim.process.equipment.energy.ThermalUtilityQualityAnalysis.class
-            .getMethod("canServeProcessTemperature",
-                neqsim.process.equipment.energy.UtilityEnergyBus.class, double.class,
-                double.class)
-            .getReturnType());
-    assertNotNull(neqsim.process.equipment.energy.ThermalUtilityConsumer.class.getMethod(
-        "setProcessTemperatureRequirement", double.class, double.class));
+        neqsim.process.equipment.energy.ThermalUtilityQualityAnalysis.class.getMethod("canServeProcessTemperature",
+            neqsim.process.equipment.energy.UtilityEnergyBus.class, double.class, double.class).getReturnType());
+    assertNotNull(neqsim.process.equipment.energy.ThermalUtilityConsumer.class
+        .getMethod("setProcessTemperatureRequirement", double.class, double.class));
 
     for (String guide : Arrays.asList(hydraulics, quality)) {
       assertTrue(guide.startsWith("---\n"), "Guide must retain Jekyll front matter");
@@ -116,24 +109,18 @@ public class ThermalUtilityDocumentationTest extends neqsim.NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8",
-        "-classpath", classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
-      assertTrue(Boolean.TRUE.equals(successful),
-          guidePath + ": " + diagnostics.getDiagnostics());
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), guidePath + ": " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
