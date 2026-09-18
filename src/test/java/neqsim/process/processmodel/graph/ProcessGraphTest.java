@@ -1448,7 +1448,7 @@ public class ProcessGraphTest {
   }
 
   /**
-   * Benchmark graph construction overhead.
+   * Benchmark graph construction overhead and verify cache reuse independently of runner timing.
    */
   @Test
   void testGraphConstructionOverhead() {
@@ -1464,21 +1464,25 @@ public class ProcessGraphTest {
 
     // Measure graph construction time
     long totalBuildTime = 0;
+    ProcessGraph previousGraph = process.buildGraph();
     for (int i = 0; i < iterations; i++) {
       process.invalidateGraph();
       long start = System.nanoTime();
-      process.buildGraph();
+      ProcessGraph rebuiltGraph = process.buildGraph();
       totalBuildTime += System.nanoTime() - start;
+      assertNotSame(previousGraph, rebuiltGraph, "Invalidation must rebuild the graph");
+      previousGraph = rebuiltGraph;
     }
     double avgBuildMs = totalBuildTime / 1_000_000.0 / iterations;
 
     // Measure cached graph retrieval time
     long totalCacheTime = 0;
-    process.buildGraph(); // Ensure cached
+    ProcessGraph cachedGraph = process.buildGraph();
     for (int i = 0; i < iterations; i++) {
       long start = System.nanoTime();
-      process.buildGraph();
+      ProcessGraph retrievedGraph = process.buildGraph();
       totalCacheTime += System.nanoTime() - start;
+      assertSame(cachedGraph, retrievedGraph, "Unchanged process must reuse the cached graph");
     }
     double avgCacheMs = totalCacheTime / 1_000_000.0 / iterations;
 
@@ -1489,8 +1493,7 @@ public class ProcessGraphTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "Cache speedup: %.1fx%n", avgBuildMs / avgCacheMs);
     logger.info("=======================================\n");
 
-    // Cache should be significantly faster
-    assertTrue(avgCacheMs < avgBuildMs / 10, "Cached retrieval should be >10x faster");
+    // Timing remains diagnostic: scheduler pauses and JIT compilation can dominate these short calls.
   }
 
   /**
