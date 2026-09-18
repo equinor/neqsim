@@ -22,25 +22,25 @@ public class CompressorChartMWInterpolationTest {
   private double[] chartConditions;
 
   // Test data for MW = 18 g/mol
-  private double[] speed18 = { 10000, 11000, 12000 };
-  private double[][] flow18 = { { 3000, 3500, 4000, 4500, 5000 }, { 3300, 3800, 4300, 4800, 5300 },
-      { 3600, 4100, 4600, 5100, 5600 } };
-  private double[][] head18 = { { 120, 115, 108, 98, 85 }, { 138, 132, 124, 113, 98 }, { 158, 151, 142, 130, 113 } };
-  private double[][] polyEff18 = { { 75, 78, 80, 78, 73 }, { 74, 77, 79, 77, 72 }, { 73, 76, 78, 76, 71 } };
+  private double[] speed18 = {10000, 11000, 12000};
+  private double[][] flow18 = {{3000, 3500, 4000, 4500, 5000}, {3300, 3800, 4300, 4800, 5300},
+      {3600, 4100, 4600, 5100, 5600}};
+  private double[][] head18 = {{120, 115, 108, 98, 85}, {138, 132, 124, 113, 98}, {158, 151, 142, 130, 113}};
+  private double[][] polyEff18 = {{75, 78, 80, 78, 73}, {74, 77, 79, 77, 72}, {73, 76, 78, 76, 71}};
 
   // Test data for MW = 22 g/mol (lower head capacity due to heavier gas)
-  private double[] speed22 = { 10000, 11000, 12000 };
-  private double[][] flow22 = { { 2800, 3300, 3800, 4300, 4800 }, { 3100, 3600, 4100, 4600, 5100 },
-      { 3400, 3900, 4400, 4900, 5400 } };
-  private double[][] head22 = { { 100, 96, 90, 82, 71 }, { 115, 110, 103, 94, 82 }, { 132, 126, 118, 108, 94 } };
-  private double[][] polyEff22 = { { 73, 76, 78, 76, 71 }, { 72, 75, 77, 75, 70 }, { 71, 74, 76, 74, 69 } };
+  private double[] speed22 = {10000, 11000, 12000};
+  private double[][] flow22 = {{2800, 3300, 3800, 4300, 4800}, {3100, 3600, 4100, 4600, 5100},
+      {3400, 3900, 4400, 4900, 5400}};
+  private double[][] head22 = {{100, 96, 90, 82, 71}, {115, 110, 103, 94, 82}, {132, 126, 118, 108, 94}};
+  private double[][] polyEff22 = {{73, 76, 78, 76, 71}, {72, 75, 77, 75, 70}, {71, 74, 76, 74, 69}};
 
   @BeforeEach
   void setUp() {
     chart = new CompressorChartMWInterpolation();
     chart.setHeadUnit("kJ/kg");
 
-    chartConditions = new double[] { 25.0, 50.0, 50.0, 20.0 };
+    chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
 
     // Add map at MW = 18 g/mol
     chart.addMapAtMW(18.0, chartConditions, speed18, flow18, head18, polyEff18);
@@ -182,11 +182,11 @@ public class CompressorChartMWInterpolationTest {
   @Test
   void testThreeMapsInterpolation() {
     // Add a third map at MW = 20
-    double[] speed20 = { 10000, 11000, 12000 };
-    double[][] flow20 = { { 2900, 3400, 3900, 4400, 4900 }, { 3200, 3700, 4200, 4700, 5200 },
-        { 3500, 4000, 4500, 5000, 5500 } };
-    double[][] head20 = { { 110, 105, 99, 90, 78 }, { 126, 121, 113, 103, 90 }, { 145, 138, 130, 119, 103 } };
-    double[][] polyEff20 = { { 74, 77, 79, 77, 72 }, { 73, 76, 78, 76, 71 }, { 72, 75, 77, 75, 70 } };
+    double[] speed20 = {10000, 11000, 12000};
+    double[][] flow20 = {{2900, 3400, 3900, 4400, 4900}, {3200, 3700, 4200, 4700, 5200},
+        {3500, 4000, 4500, 5000, 5500}};
+    double[][] head20 = {{110, 105, 99, 90, 78}, {126, 121, 113, 103, 90}, {145, 138, 130, 119, 103}};
+    double[][] polyEff20 = {{74, 77, 79, 77, 72}, {73, 76, 78, 76, 71}, {72, 75, 77, 75, 70}};
 
     chart.addMapAtMW(20.0, chartConditions, speed20, flow20, head20, polyEff20);
 
@@ -387,12 +387,12 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation separateFlowChart = new CompressorChartMWInterpolation();
     separateFlowChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = { 10000, 11000 };
-    double[][] flowHead = { { 3000, 3500, 4000, 4500 }, { 3300, 3800, 4300, 4800 } };
-    double[][] heads = { { 120, 115, 108, 98 }, { 138, 132, 124, 113 } };
+    double[] speeds = {10000, 11000};
+    double[][] flowHead = {{3000, 3500, 4000, 4500}, {3300, 3800, 4300, 4800}};
+    double[][] heads = {{120, 115, 108, 98}, {138, 132, 124, 113}};
     // Efficiency measured at different flow points
-    double[][] flowEff = { { 3100, 3600, 4100 }, { 3400, 3900, 4400 } };
-    double[][] effs = { { 76, 79, 77 }, { 75, 78, 76 } };
+    double[][] flowEff = {{3100, 3600, 4100}, {3400, 3900, 4400}};
+    double[][] effs = {{76, 79, 77}, {75, 78, 76}};
 
     // Add map using separate flow arrays
     separateFlowChart.addMapAtMW(20.0, chartConditions, speeds, flowHead, heads, flowEff, effs);
@@ -415,16 +415,16 @@ public class CompressorChartMWInterpolationTest {
     singleSpeedChart.setHeadUnit("kJ/kg");
 
     double speed = 10000;
-    double[] flow = { 3000, 3500, 4000, 4500, 5000 };
-    double[] head = { 120, 115, 108, 98, 85 };
-    double[] eff = { 75, 78, 80, 78, 73 };
+    double[] flow = {3000, 3500, 4000, 4500, 5000};
+    double[] head = {120, 115, 108, 98, 85};
+    double[] eff = {75, 78, 80, 78, 73};
 
     // Add single-speed map at MW = 18
     singleSpeedChart.addMapAtMW(18.0, speed, flow, head, eff);
 
     // Add single-speed map at MW = 22
-    double[] head22 = { 100, 96, 90, 82, 71 };
-    double[] eff22 = { 73, 76, 78, 76, 71 };
+    double[] head22 = {100, 96, 90, 82, 71};
+    double[] eff22 = {73, 76, 78, 76, 71};
     singleSpeedChart.addMapAtMW(22.0, speed, flow, head22, eff22);
 
     assertEquals(2, singleSpeedChart.getNumberOfMaps());
@@ -450,11 +450,11 @@ public class CompressorChartMWInterpolationTest {
     singleSpeedChart.setHeadUnit("kJ/kg");
 
     double speed = 10000;
-    double[] flowHead = { 3000, 3500, 4000, 4500, 5000 };
-    double[] head = { 120, 115, 108, 98, 85 };
+    double[] flowHead = {3000, 3500, 4000, 4500, 5000};
+    double[] head = {120, 115, 108, 98, 85};
     // Efficiency at different flow points
-    double[] flowEff = { 3100, 3600, 4100 };
-    double[] eff = { 76, 79, 77 };
+    double[] flowEff = {3100, 3600, 4100};
+    double[] eff = {76, 79, 77};
 
     // Add map with separate flow arrays
     singleSpeedChart.addMapAtMW(20.0, speed, flowHead, head, flowEff, eff);
@@ -475,7 +475,7 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
     multiSpeedChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = { 10000, 11000, 12000 };
+    double[] speeds = {10000, 11000, 12000};
 
     // Add map at MW = 18 without chartConditions
     multiSpeedChart.addMapAtMW(18.0, speeds, flow18, head18, polyEff18);
@@ -505,12 +505,12 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
     multiSpeedChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = { 10000, 11000 };
-    double[][] flowHead = { { 3000, 3500, 4000, 4500 }, { 3300, 3800, 4300, 4800 } };
-    double[][] heads = { { 120, 115, 108, 98 }, { 138, 132, 124, 113 } };
+    double[] speeds = {10000, 11000};
+    double[][] flowHead = {{3000, 3500, 4000, 4500}, {3300, 3800, 4300, 4800}};
+    double[][] heads = {{120, 115, 108, 98}, {138, 132, 124, 113}};
     // Efficiency at different flow points
-    double[][] flowEff = { { 3100, 3600, 4100 }, { 3400, 3900, 4400 } };
-    double[][] effs = { { 76, 79, 77 }, { 75, 78, 76 } };
+    double[][] flowEff = {{3100, 3600, 4100}, {3400, 3900, 4400}};
+    double[][] effs = {{76, 79, 77}, {75, 78, 76}};
 
     // Add map without chartConditions
     multiSpeedChart.addMapAtMW(20.0, speeds, flowHead, heads, flowEff, effs);

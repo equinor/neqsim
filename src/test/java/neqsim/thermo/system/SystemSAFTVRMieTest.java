@@ -83,9 +83,9 @@ public class SystemSAFTVRMieTest {
    */
   @Test
   public void testMethaneGasDensityVsNIST() {
-    double[] pressures = { 10.0, 50.0, 100.0, 200.0 };
+    double[] pressures = {10.0, 50.0, 100.0, 200.0};
     // NIST reference densities at 300K (interpolated from Setzmann-Wagner EOS)
-    double[] nistDensities = { 6.46, 35.7, 76.0, 155.5 };
+    double[] nistDensities = {6.46, 35.7, 76.0, 155.5};
     double tolerance = 0.05; // 5% relative error
 
     logger.info("=== SAFT-VR Mie vs NIST Methane 300K ===");
@@ -156,7 +156,7 @@ public class SystemSAFTVRMieTest {
    */
   @Test
   public void testZTrend() {
-    double[] pressures = { 1.0, 10.0, 50.0, 100.0, 200.0 };
+    double[] pressures = {1.0, 10.0, 50.0, 100.0, 200.0};
     double prevZ = 2.0;
 
     for (double p : pressures) {
@@ -298,8 +298,8 @@ public class SystemSAFTVRMieTest {
     // (m=1, sigma=3.7412A, eps/k=153.36K, lr=12.65, la=6)
     // Verified against teqp v0.23.1 (NIST) — values match to 4+ significant figures
     // Note: these are MODEL predictions, not NIST experimental data
-    double[] temps = { 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0 };
-    double[] teqpPsat = { 1.9263, 3.7052, 6.4697, 10.478, 15.988, 23.260, 32.567 };
+    double[] temps = {120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0};
+    double[] teqpPsat = {1.9263, 3.7052, 6.4697, 10.478, 15.988, 23.260, 32.567};
     // Actual NIST experimental Psat (bar) for reference:
     // {19.12, 36.87, 64.12, 103.5, 159.4, 236.3, 341.3}
 
@@ -400,7 +400,7 @@ public class SystemSAFTVRMieTest {
     logger.info("sigma=" + sigma + " d=" + d + " x0=" + x0);
     logger.info("cMie=" + cMie + " tau=eps/kT=" + epsOverKT);
 
-    double[] etas = { 0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50 };
+    double[] etas = {0.001, 0.005, 0.01, 0.02, 0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.50};
     logger.info(String.format("%-8s %-10s %-10s %-10s %-10s %-10s %-10s %-10s", "eta", "g_CS", "g_HS_x0", "g1", "g2",
         "exp_arg", "g_Mie", "ratio"));
 
@@ -426,8 +426,8 @@ public class SystemSAFTVRMieTest {
   @Test
   void testEthaneMultiPressureDensity() {
     // NIST ethane isothermal data at 350K (supercritical, Tc=305.32K)
-    double[] pressures = { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0, 150.0, 200.0 };
-    double[] nistDensity = { 10.83, 22.83, 36.30, 51.70, 69.69, 91.23, 149.44, 217.58, 305.46, 343.32 };
+    double[] pressures = {10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0, 150.0, 200.0};
+    double[] nistDensity = {10.83, 22.83, 36.30, 51.70, 69.69, 91.23, 149.44, 217.58, 305.46, 343.32};
 
     logger.info("\n=== Ethane Multi-Pressure Density Diagnostic at 350K ===");
     logger.info(String.format("%-10s %-12s %-12s %-10s %-10s", "P(bar)", "rho_NIST", "rho_SAFT", "err%", "Z"));
@@ -462,7 +462,7 @@ public class SystemSAFTVRMieTest {
 
     // Check if model predicts phase split above real Tc (305.32K)
     logger.info("\n=== Ethane VLE check above real Tc ===");
-    double[] vleTemps = { 310.0, 320.0, 330.0, 340.0, 350.0 };
+    double[] vleTemps = {310.0, 320.0, 330.0, 340.0, 350.0};
     for (double t : vleTemps) {
       SystemInterface sys = new SystemSAFTVRMie(t, 50.0);
       sys.addComponent("ethane", 1.0);
@@ -489,8 +489,8 @@ public class SystemSAFTVRMieTest {
     // teqp reference: SAFT-VR Mie with Lafitte 2013 ethane parameters
     // (m=1.4373, sigma=3.7257A, eps/k=206.12K, lr=12.4, la=6)
     // Note: these are MODEL predictions, not NIST experimental data
-    double[] temps = { 200.0, 220.0, 240.0, 260.0, 280.0 };
-    double[] teqpPsat = { 2.1768, 4.9352, 9.7003, 17.173, 28.137 };
+    double[] temps = {200.0, 220.0, 240.0, 260.0, 280.0};
+    double[] teqpPsat = {2.1768, 4.9352, 9.7003, 17.173, 28.137};
     // Actual NIST experimental Psat (bar) for reference:
     // {3.50, 7.69, 14.82, 25.64, 40.85}
 
@@ -687,8 +687,8 @@ public class SystemSAFTVRMieTest {
     logger.printf(org.apache.logging.log4j.Level.INFO,
         "m=%.4f sigma=%.4e eps/k=%.2f lr=%.1f la=%.1f C=%.6f alpha=%.6f%n", m, sigma, epsk, lr, la, C, alpha);
 
-    double[] temps = { 200.0, 220.0, 240.0, 260.0 };
-    double[] etas = { 0.378, 0.356, 0.330, 0.300 };
+    double[] temps = {200.0, 220.0, 240.0, 260.0};
+    double[] etas = {0.378, 0.356, 0.330, 0.300};
 
     for (int ti = 0; ti < temps.length; ti++) {
       double T = temps[ti];
@@ -728,7 +728,7 @@ public class SystemSAFTVRMieTest {
 
       // Verify numerical derivative stability for g1 with different step sizes
       logger.info("  g1 step-size sensitivity:");
-      double[] relSteps = { 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8 };
+      double[] relSteps = {1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8};
       for (double relStep : relSteps) {
         double g1Test = calcG1ChainWithStep(eta, lr, la, C, x0, relStep);
         logger.printf(org.apache.logging.log4j.Level.INFO, "    relStep=%.0e -> g1=%.10f (diff from default=%.4e)%n",
@@ -878,8 +878,8 @@ public class SystemSAFTVRMieTest {
     logger.info("\n=== Pressure at NIST Liquid Density ===");
 
     // NIST ethane saturation data: T, Psat(bar), rho_liq(kg/m3)
-    double[][] nistData = { { 200.0, 3.503, 602.4 }, { 220.0, 7.691, 568.0 }, { 240.0, 14.82, 530.3 },
-        { 260.0, 25.64, 486.7 }, { 280.0, 40.85, 432.4 } };
+    double[][] nistData = {{200.0, 3.503, 602.4}, {220.0, 7.691, 568.0}, {240.0, 14.82, 530.3}, {260.0, 25.64, 486.7},
+        {280.0, 40.85, 432.4}};
 
     double MW = 30.07e-3; // kg/mol
 
@@ -986,8 +986,7 @@ public class SystemSAFTVRMieTest {
     logger.info("\n=== Methane Pressure at NIST Liquid Density ===");
 
     // NIST methane saturation data: T, Psat(bar), rho_liq(kg/m3)
-    double[][] nistData = { { 100.0, 3.442, 438.9 }, { 120.0, 19.16, 390.3 }, { 140.0, 64.44, 331.0 },
-        { 160.0, 154.3, 249.4 } };
+    double[][] nistData = {{100.0, 3.442, 438.9}, {120.0, 19.16, 390.3}, {140.0, 64.44, 331.0}, {160.0, 154.3, 249.4}};
 
     for (double[] data : nistData) {
       double T = data[0];
@@ -1044,12 +1043,12 @@ public class SystemSAFTVRMieTest {
     // Test cases: substance, sigma, epsk, lr, la, T
     double[][] cases = {
         // methane at various T
-        { 3.7412e-10, 153.36, 12.65, 6.0, 100.0 }, { 3.7412e-10, 153.36, 12.65, 6.0, 120.0 },
-        { 3.7412e-10, 153.36, 12.65, 6.0, 140.0 }, { 3.7412e-10, 153.36, 12.65, 6.0, 200.0 },
-        { 3.7412e-10, 153.36, 12.65, 6.0, 350.0 },
+        {3.7412e-10, 153.36, 12.65, 6.0, 100.0}, {3.7412e-10, 153.36, 12.65, 6.0, 120.0},
+        {3.7412e-10, 153.36, 12.65, 6.0, 140.0}, {3.7412e-10, 153.36, 12.65, 6.0, 200.0},
+        {3.7412e-10, 153.36, 12.65, 6.0, 350.0},
         // ethane
-        { 3.7257e-10, 206.12, 12.4, 6.0, 200.0 }, { 3.7257e-10, 206.12, 12.4, 6.0, 300.0 }, };
-    String[] labels = { "CH4 100K", "CH4 120K", "CH4 140K", "CH4 200K", "CH4 350K", "C2H6 200K", "C2H6 300K" };
+        {3.7257e-10, 206.12, 12.4, 6.0, 200.0}, {3.7257e-10, 206.12, 12.4, 6.0, 300.0},};
+    String[] labels = {"CH4 100K", "CH4 120K", "CH4 140K", "CH4 200K", "CH4 350K", "C2H6 200K", "C2H6 300K"};
 
     for (int ci = 0; ci < cases.length; ci++) {
       double sigma = cases[ci][0];
@@ -1117,7 +1116,7 @@ public class SystemSAFTVRMieTest {
     logger.info("eta        a1_per_seg     a2_per_seg     a3_per_seg     a_disp_total   "
         + "eta*da1/deta   eta*daDisp/deta Z_HS-1         Z_total");
 
-    double[] etas = { 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.376, 0.40, 0.427, 0.45 };
+    double[] etas = {0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.376, 0.40, 0.427, 0.45};
     double m = 1.0;
     double MW = 16.04e-3;
     double NA = 6.02214076e23;
@@ -1153,7 +1152,7 @@ public class SystemSAFTVRMieTest {
     // Now compute the BARE aS1 and B at a few etas for comparison with Clapeyron at contact
     logger.info("\n--- Bare perturbation integrals at key etas ---");
     logger.info("eta        aS1bare_la    Bbare_la      aS1bare_lr    Bbare_lr      " + "aS1+B_la      aS1+B_lr");
-    for (double eta : new double[] { 0.10, 0.20, 0.30, 0.376, 0.427 }) {
+    for (double eta : new double[] {0.10, 0.20, 0.30, 0.376, 0.427}) {
       double as1a = PhaseSAFTVRMie.calcAS1Bare(eta, la);
       double ba = PhaseSAFTVRMie.calcBBare(eta, la, x0);
       double as1r = PhaseSAFTVRMie.calcAS1Bare(eta, lr);
@@ -1227,7 +1226,7 @@ public class SystemSAFTVRMieTest {
 
     // Now compare with numerical dF/dV
     logger.info("\n=== Numerical vs Analytical dFdV ===");
-    double[] testVm = { 4.0e-5, 5.0e-5, 1.0e-4, 5.0e-4, 1.0e-3, 1.0e-2 };
+    double[] testVm = {4.0e-5, 5.0e-5, 1.0e-4, 5.0e-4, 1.0e-3, 1.0e-2};
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-10s %-14s %-14s %-10s%n", "Vm(m3/mol)", "eta",
         "dFdV_anal", "dFdV_numer", "ratio");
 
@@ -1309,9 +1308,9 @@ public class SystemSAFTVRMieTest {
     PhaseSAFTVRMie phase = (PhaseSAFTVRMie) fluid.getPhase(0);
 
     // teqp reference: Vm (m3/mol) -> P (bar)
-    double[] testVm = { 5e-5, 6e-5, 7e-5, 1e-4, 2e-4, 5e-4, 1e-3, 5e-3 };
-    double[] teqpP = { 2124.54, 384.04, 5.26, -52.41, 17.65, 25.62, 17.02, 4.14 };
-    double[] teqpAr00 = { -1.923059, -2.220192, -2.134741, -1.697475, -0.980076, -0.423129, -0.214445, -0.042904 };
+    double[] testVm = {5e-5, 6e-5, 7e-5, 1e-4, 2e-4, 5e-4, 1e-3, 5e-3};
+    double[] teqpP = {2124.54, 384.04, 5.26, -52.41, 17.65, 25.62, 17.02, 4.14};
+    double[] teqpAr00 = {-1.923059, -2.220192, -2.134741, -1.697475, -0.980076, -0.423129, -0.214445, -0.042904};
 
     logger.info("=== Ethane P-V isotherm at T=260K: NeqSim vs teqp ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-10s %-14s %-14s %-10s %-14s %-14s %-14s%n",
@@ -1364,7 +1363,7 @@ public class SystemSAFTVRMieTest {
     double Psat_teqp = 17.1734;
 
     logger.info("\n=== Fugacity check at teqp VLE volumes ===");
-    for (double Vm_SI : new double[] { VmLiq_teqp, VmVap_teqp }) {
+    for (double Vm_SI : new double[] {VmLiq_teqp, VmVap_teqp}) {
       double Vm_nq = Vm_SI * 1.0e5;
       phase.setMolarVolume(Vm_nq);
       phase.volInit();
@@ -1384,7 +1383,7 @@ public class SystemSAFTVRMieTest {
 
     // === Try TPflash at teqp Psat to see if we get two phases ===
     logger.info("\n=== TPflash at P near teqp Psat ===");
-    for (double P : new double[] { 15.0, 17.0, 17.17, 20.0, 25.0, 26.85 }) {
+    for (double P : new double[] {15.0, 17.0, 17.17, 20.0, 25.0, 26.85}) {
       SystemInterface tf = new SystemSAFTVRMie(260.0, P);
       tf.addComponent("ethane", 1.0);
       tf.setMixingRule("classic");
@@ -1440,7 +1439,7 @@ public class SystemSAFTVRMieTest {
     PhaseSAFTVRMie ph240 = (PhaseSAFTVRMie) f240.getPhase(0);
 
     // teqp VLE at 240K: VmL=6.4194e-5, VmV=1.7674e-3, Psat=9.7003
-    for (double Vm_SI : new double[] { 6.4194e-5, 1.7674e-3 }) {
+    for (double Vm_SI : new double[] {6.4194e-5, 1.7674e-3}) {
       double Vm_nq = Vm_SI * 1.0e5;
       ph240.setMolarVolume(Vm_nq);
       ph240.volInit();
@@ -1520,7 +1519,7 @@ public class SystemSAFTVRMieTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-14s %-14s %-14s %-10s %-10s %-10s %-10s%n", "x_CH4",
         "F/n", "F_HC/n", "F_DISP/n", "eta", "mbar", "aHS", "ln_gchain");
 
-    double[] xvals = { 0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0 };
+    double[] xvals = {0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.0};
     for (double x1 : xvals) {
       if (x1 < 1e-10) {
         x1 = 1e-10;
@@ -1654,12 +1653,12 @@ public class SystemSAFTVRMieTest {
 
     // ASSERTION: analytical dFdN matches fresh-system numerical at multiple states
     logger.info("\n=== Analytical vs fresh-system dFdN at multiple states ===");
-    double[][] states = { { 0.30, 14481.0 }, // liquid
-        { 0.60, 1804.0 }, // gas (VLE gas state)
-        { 0.20, 14912.0 }, // liquid (VLE liq state)
-        { 0.50, 10000.0 }, // intermediate
+    double[][] states = {{0.30, 14481.0}, // liquid
+        {0.60, 1804.0}, // gas (VLE gas state)
+        {0.20, 14912.0}, // liquid (VLE liq state)
+        {0.50, 10000.0}, // intermediate
     };
-    String[] labels = { "liq x=0.3 rho=14481", "gas x=0.6 rho=1804", "liq x=0.2 rho=14912", "mid x=0.5 rho=10000" };
+    String[] labels = {"liq x=0.3 rho=14481", "gas x=0.6 rho=1804", "liq x=0.2 rho=14912", "mid x=0.5 rho=10000"};
 
     for (int si = 0; si < states.length; si++) {
       double xCH4 = states[si][0];
@@ -1778,7 +1777,7 @@ public class SystemSAFTVRMieTest {
   public void testBinaryVLE_CH4C2H6_MultiplePressures() {
     double T_K = 250.0;
     // (Pressure, feed z_CH4) chosen to be inside two-phase region
-    double[][] cases = { { 30.0, 0.35 }, { 30.0, 0.25 }, { 30.0, 0.50 }, { 35.0, 0.40 }, };
+    double[][] cases = {{30.0, 0.35}, {30.0, 0.25}, {30.0, 0.50}, {35.0, 0.40},};
 
     logger.info("=== Binary CH4/C2H6 VLE isotherm at T=250K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-8s %-8s %-8s %-10s %-10s %-10s %-10s%n", "P_bar",
@@ -2150,7 +2149,7 @@ public class SystemSAFTVRMieTest {
   @Test
   public void testFiveComponentNaturalGasVLE() {
     double T = 220.0;
-    double[] pressures = { 10.0, 20.0, 30.0 };
+    double[] pressures = {10.0, 20.0, 30.0};
     int convergedCount = 0;
 
     for (double P : pressures) {
@@ -2783,8 +2782,8 @@ public class SystemSAFTVRMieTest {
    */
   @Test
   public void testWaterBubblePointPressure() {
-    double[] temps = { 373.15, 400.0, 450.0 };
-    double[] nistPsat = { 1.01325, 2.458, 9.322 };
+    double[] temps = {373.15, 400.0, 450.0};
+    double[] nistPsat = {1.01325, 2.458, 9.322};
 
     logger.info("=== Water Bubble Point Pressure: SAFT-VR Mie + Association ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-12s %-12s %-8s%n", "T (K)", "Psat_SAFT", "Psat_NIST",
@@ -2876,7 +2875,7 @@ public class SystemSAFTVRMieTest {
     logger.info("\n=== Pressure sweep at T=373.15K ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-12s %-12s %-12s %-12s%n", "P(bar)", "V_liq",
         "V_vap", "phiL", "phiV", "K", "lnK");
-    double[] pressures = { 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0 };
+    double[] pressures = {0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0};
     for (double p : pressures) {
       SystemInterface fl = new SystemSAFTVRMie(373.15, p);
       fl.addComponent("water", 1.0);
@@ -2921,7 +2920,7 @@ public class SystemSAFTVRMieTest {
         "eta", "P_EOS(bar)", "P_ideal(bar)", "ratio");
 
     // Probe volumes from dense gas (V=50) to ideal gas (V=6000)
-    double[] vols = { 50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000, 3100, 3200, 4000, 5000, 6000 };
+    double[] vols = {50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000, 3100, 3200, 4000, 5000, 6000};
     for (double V : vols) {
       gasPhase.setMolarVolume(V);
       gasPhase.volInit();
@@ -3054,7 +3053,7 @@ public class SystemSAFTVRMieTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-12s %-12s %-12s %-12s %-12s%n", "eta", "g_HS_CS",
         "g_HS_x0", "g1", "g2", "g_Mie", "gMie/gHS");
 
-    double[] etas = { 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45 };
+    double[] etas = {0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45};
     for (double eta : etas) {
       double om = 1.0 - eta;
       double gHS_CS = (1.0 - eta / 2.0) / (om * om * om); // simple CS contact
@@ -3216,10 +3215,9 @@ public class SystemSAFTVRMieTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-14s %-14s %-14s %-14s %-14s%n", "rho", "eta",
         "alphar_NeqSim", "alphar_teqp", "relErr%", "a1/NkT_err%");
     // teqp reference alphar values for methane at T=200K:
-    double[] rhos = { 100, 500, 1000, 5000, 10000, 15000, 20000 };
-    double[] teqp_alphar = { -0.00943231, -0.04685630, -0.09298883, -0.43951493, -0.80685502, -1.08452218,
-        -1.24675279 };
-    double[] teqp_a1kBs = { -2.605779, -13.093714, -26.347599, -137.748418, -288.292139, -447.096850, -607.776810 };
+    double[] rhos = {100, 500, 1000, 5000, 10000, 15000, 20000};
+    double[] teqp_alphar = {-0.00943231, -0.04685630, -0.09298883, -0.43951493, -0.80685502, -1.08452218, -1.24675279};
+    double[] teqp_a1kBs = {-2.605779, -13.093714, -26.347599, -137.748418, -288.292139, -447.096850, -607.776810};
 
     for (int i = 0; i < rhos.length; i++) {
       double rr = rhos[i];
@@ -3269,10 +3267,10 @@ public class SystemSAFTVRMieTest {
         T, sigma_m * 1e10, epsk, lr, x0, cMie);
 
     // teqp reference: ethane at T=250K
-    double[] rhos = { 100, 500, 1000, 5000, 10000, 14000 };
-    double[] teqp_alphar = { -0.02299173, -0.11533694, -0.23049466, -1.05441146, -1.82919942, -2.29649029 };
-    double[] teqp_mono = { -0.02246116, -0.11131852, -0.22035669, -1.01976762, -1.79020015, -2.18623052 };
-    double[] teqp_chain = { -0.00053058, -0.00401843, -0.01013798, -0.03464384, -0.03899927, -0.11025977 };
+    double[] rhos = {100, 500, 1000, 5000, 10000, 14000};
+    double[] teqp_alphar = {-0.02299173, -0.11533694, -0.23049466, -1.05441146, -1.82919942, -2.29649029};
+    double[] teqp_mono = {-0.02246116, -0.11131852, -0.22035669, -1.01976762, -1.79020015, -2.18623052};
+    double[] teqp_chain = {-0.00053058, -0.00401843, -0.01013798, -0.03464384, -0.03899927, -0.11025977};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-14s %-14s %-10s %-14s %-14s %-10s%n", "rho", "eta",
         "mono_neqsim", "mono_teqp", "mono_err%", "chain_neqsim", "chain_teqp", "chain_err%");
@@ -3340,10 +3338,10 @@ public class SystemSAFTVRMieTest {
         cMie_duf);
 
     // teqp reference for Lafitte lr=35.823 at T=373.15K
-    double[] rhos = { 100, 1000, 5000, 20000, 30000 };
-    double[] teqp_laf = { -0.00117365, -0.01156402, -0.05410136, -0.14496859, -0.10836449 };
+    double[] rhos = {100, 1000, 5000, 20000, 30000};
+    double[] teqp_laf = {-0.00117365, -0.01156402, -0.05410136, -0.14496859, -0.10836449};
     // teqp reference for Dufal lr=17.02
-    double[] teqp_duf = { -0.00298429, -0.02958600, -0.14272230, 0.0, 0.0 };
+    double[] teqp_duf = {-0.00298429, -0.02958600, -0.14272230, 0.0, 0.0};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %-14s %-14s %-10s %-14s %-14s %-10s%n", "rho",
         "eta_laf", "aR_laf_NQ", "aR_laf_teqp", "laf_err%", "aR_duf_NQ", "aR_duf_teqp", "duf_err%");
@@ -3405,7 +3403,7 @@ public class SystemSAFTVRMieTest {
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-10s %-18s %-18s%n", "rhoStar", "I(Tr,rhoStar)",
         "dI/dRhoStar");
-    double[] rhoStars = { 0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.87, 0.9, 0.95, 1.0 };
+    double[] rhoStars = {0.0, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.87, 0.9, 0.95, 1.0};
     for (double rs : rhoStars) {
       double I = PhaseSAFTVRMie.calcDufalI(Tr_water, rs);
       double dI = PhaseSAFTVRMie.calcDufalIdRhoStar(Tr_water, rs);
@@ -3414,7 +3412,7 @@ public class SystemSAFTVRMieTest {
 
     // Also test at different Tr values
     logger.info("\nI at various Tr, rhoStar=0.5:");
-    double[] Trs = { 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0 };
+    double[] Trs = {0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0};
     for (double tr : Trs) {
       double I = PhaseSAFTVRMie.calcDufalI(tr, 0.5);
       logger.printf(org.apache.logging.log4j.Level.INFO, "Tr=%-6.2f  I=%-18.10e%n", tr, I);
@@ -3432,7 +3430,7 @@ public class SystemSAFTVRMieTest {
     double Tr = T / epsk;
 
     // Liquid water: V_molar ~ 18.8 cm3/mol = 1.88e-5 m3/mol
-    double[] Vmolars_m3 = { 1.80e-5, 1.85e-5, 1.88e-5, 1.95e-5, 2.00e-5, 2.50e-5, 5.0e-5, 1.0e-4 };
+    double[] Vmolars_m3 = {1.80e-5, 1.85e-5, 1.88e-5, 1.95e-5, 2.00e-5, 2.50e-5, 5.0e-5, 1.0e-4};
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %-10s %-12s %-12s %-12s %-12s%n", "V_m3/mol", "rhoStar",
         "I", "F", "delta_mol", "XA_4C");
     for (double Vm : Vmolars_m3) {

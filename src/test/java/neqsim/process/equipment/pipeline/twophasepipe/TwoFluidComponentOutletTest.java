@@ -22,7 +22,7 @@ class TwoFluidComponentOutletTest {
     assertEquals(3, fluid.getNumberOfPhases());
     TwoFluidSection[] cells = cells();
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
-    double[][] faces = { { 2.0, 0.05, 0.01 }, { 2.0, 0.05, 0.01 } };
+    double[][] faces = {{2.0, 0.05, 0.01}, {2.0, 0.05, 0.01}};
     transport.advance(0.01, faces, new double[1][3], cells, fluid, fluid, 1.0e-8);
     TwoFluidComponentConservationReport report = transport.createReport(0.01, 1, 1.0e-8);
     assertTrue(report.isConverged(), report.getMessage());
@@ -77,7 +77,7 @@ class TwoFluidComponentOutletTest {
     changed.getPhase(0).getComponent("methane").setMolarMass(0.020);
     assertThrows(IllegalArgumentException.class, () -> transport.createOutletFluid(changed, 65.0e5, 290.15, 0.1));
     assertThrows(IllegalArgumentException.class, () -> transport.createOutletFluid(null, 65.0e5, 290.15, 0.1));
-    for (double invalid : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> transport.createOutletFluid(fluid, invalid, 290.15, 0.1));
       assertThrows(IllegalArgumentException.class, () -> transport.createOutletFluid(fluid, 65.0e5, invalid, 0.1));
       assertThrows(IllegalArgumentException.class, () -> transport.createOutletFluid(fluid, 65.0e5, 290.15, invalid));
@@ -92,9 +92,9 @@ class TwoFluidComponentOutletTest {
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
     String before = transport.createReport(0.0, 0, 1.0e-8).toJson();
     assertThrows(IllegalStateException.class, () -> transport.advance(Double.MAX_VALUE,
-        new double[][] { { 2.0, 0.0, 0.0 }, { 2.0, 0.0, 0.0 } }, new double[1][3], cells, fluid, fluid, 1.0e-8));
+        new double[][] {{2.0, 0.0, 0.0}, {2.0, 0.0, 0.0}}, new double[1][3], cells, fluid, fluid, 1.0e-8));
     assertEquals(before, transport.createReport(0.0, 0, 1.0e-8).toJson());
-    for (double invalid : new double[] { -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {-1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       TwoFluidSection[] invalidCells = cells();
       invalidCells[0].setGasMassPerLength(invalid);
       assertThrows(IllegalArgumentException.class,
@@ -120,7 +120,7 @@ class TwoFluidComponentOutletTest {
     section.setGasMassPerLength(2.0);
     section.setOilMassPerLength(3.0);
     section.setWaterMassPerLength(4.0);
-    return new TwoFluidSection[] { section };
+    return new TwoFluidSection[] {section};
   }
 
   private static SystemInterface fluid(boolean reversed) {

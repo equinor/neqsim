@@ -16,7 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SolidFlash1Test extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(doubles = { 308.15, 318.15 })
+  @ValueSource(doubles = {308.15, 318.15})
   void selectedSulfurConservesTraceTbpInventories(double temperature) {
     SystemInterface fluid = sulfurWithTraceTbp();
     fluid.setTemperature(temperature);
@@ -53,7 +53,7 @@ public class SolidFlash1Test extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void unsupportedCompetingSolidsDoNotCreateAliasedPhases(boolean checkAllSolids) {
     SystemInterface fluid = sulfurWithTraceTbp();
     fluid.setTemperature(250.0);
@@ -70,7 +70,7 @@ public class SolidFlash1Test extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "water", "heavy1_PC" })
+  @ValueSource(strings = {"water", "heavy1_PC"})
   void multipleSelectedComponentsWithOneStableSolidAreSupported(String otherSolid) {
     SystemInterface fluid = sulfurWithTraceTbp();
     fluid.setSolidPhaseCheck(otherSolid);

@@ -3508,7 +3508,7 @@ public class ProcessSystem extends SimulationBaseClass {
     Collections.sort(entries, (a, b) -> Long.compare(b.getValue()[0], a.getValue()[0]));
     for (Map.Entry<String, long[]> entry : entries) {
       long[] nanos = entry.getValue();
-      result.put(entry.getKey(), new double[] { nanos[0] / 1e6, nanos[1] });
+      result.put(entry.getKey(), new double[] {nanos[0] / 1e6, nanos[1]});
     }
     return result;
   }
@@ -3571,7 +3571,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     long[] timing = executionTimingNanos.get(unitName);
     if (timing == null) {
-      long[] fresh = new long[] { 0L, 0L };
+      long[] fresh = new long[] {0L, 0L};
       long[] existing = ((java.util.concurrent.ConcurrentHashMap<String, long[]>) executionTimingNanos)
           .putIfAbsent(unitName, fresh);
       timing = (existing != null) ? existing : fresh;

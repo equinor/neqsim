@@ -20,7 +20,7 @@ class UpstreamCompressibleVolumeTest {
     double initialPressure = volume.getPressurePa();
     double initialMass = volume.getTotalMassKg();
 
-    volume.advance(2.0, new double[] { 20.0, 2.0, 1.0 });
+    volume.advance(2.0, new double[] {20.0, 2.0, 1.0});
 
     assertEquals(initialPressure, volume.getPressurePa(), 0.0);
     assertEquals(initialMass, volume.getTotalMassKg(), 0.0);
@@ -34,7 +34,7 @@ class UpstreamCompressibleVolumeTest {
     double initialPressure = volume.getPressurePa();
     double initialMass = volume.getTotalMassKg();
 
-    volume.advance(1.0, new double[] { 9.0, 1.0, 0.0 });
+    volume.advance(1.0, new double[] {9.0, 1.0, 0.0});
 
     assertTrue(volume.getPressurePa() > initialPressure);
     assertEquals(initialMass + 1.0, volume.getTotalMassKg(), 1.0e-10);
@@ -48,7 +48,7 @@ class UpstreamCompressibleVolumeTest {
     UpstreamCompressibleVolume volume = createVolume(100.0);
     double initialOilMass = volume.getPhaseMassKg(1);
 
-    volume.advance(1.0, new double[] { 0.0, -0.25, 0.0 });
+    volume.advance(1.0, new double[] {0.0, -0.25, 0.0});
 
     assertEquals(initialOilMass + 0.25, volume.getPhaseMassKg(1), 1.0e-12);
     assertTrue(volume.getPressurePa() > 60.0e5);
@@ -85,7 +85,7 @@ class UpstreamCompressibleVolumeTest {
   @Test
   void phaseDepletionFailsLoudly() {
     UpstreamCompressibleVolume volume = createVolume(1.0);
-    assertThrows(IllegalStateException.class, () -> volume.advance(1.0, new double[] { 1.0e6, 0.0, 0.0 }));
+    assertThrows(IllegalStateException.class, () -> volume.advance(1.0, new double[] {1.0e6, 0.0, 0.0}));
   }
 
   @Test
@@ -94,7 +94,7 @@ class UpstreamCompressibleVolumeTest {
     volume.setSourceMassFlowRates(10.0, 1.0, 0.5);
     UpstreamCompressibleVolume candidate = SerializationUtils.clone(volume);
     byte[] before = SerializationUtils.serialize(volume);
-    candidate.advance(1.0, new double[] { 9.0, -0.25, 0.1 });
+    candidate.advance(1.0, new double[] {9.0, -0.25, 0.1});
 
     volume.validateCandidateConfiguration(candidate);
     assertArrayEquals(before, SerializationUtils.serialize(volume), "Validation must not publish candidate values");
@@ -105,8 +105,8 @@ class UpstreamCompressibleVolumeTest {
     assertEquals(1.0, volume.getSourceMassFlowRateKgS(1), 0.0);
     assertEquals(0.5, volume.getSourceMassFlowRateKgS(2), 0.0);
     // Advancing the retained object again must start from the accepted phase densities as well as its inventory.
-    volume.advance(0.5, new double[] { 4.0, 0.25, 0.2 });
-    candidate.advance(0.5, new double[] { 4.0, 0.25, 0.2 });
+    volume.advance(0.5, new double[] {4.0, 0.25, 0.2});
+    candidate.advance(0.5, new double[] {4.0, 0.25, 0.2});
     assertArrayEquals(SerializationUtils.serialize(candidate), SerializationUtils.serialize(volume));
   }
 
@@ -116,11 +116,11 @@ class UpstreamCompressibleVolumeTest {
     UpstreamCompressibleVolume changedSource = SerializationUtils.clone(volume);
     changedSource.setSourceMassFlowRates(1.0, 0.0, 0.0);
     UpstreamCompressibleVolume changedCompressibility = new UpstreamCompressibleVolume(100.0, 60.0e5,
-        new double[] { 4500.0, 5600.0, 2000.0 }, new double[] { 50.0, 700.0, 1000.0 },
-        new double[] { 351.0, 1200.0, 1450.0 });
+        new double[] {4500.0, 5600.0, 2000.0}, new double[] {50.0, 700.0, 1000.0},
+        new double[] {351.0, 1200.0, 1450.0});
     byte[] before = SerializationUtils.serialize(volume);
-    for (UpstreamCompressibleVolume candidate : new UpstreamCompressibleVolume[] { null, createVolume(101.0),
-        changedSource, changedCompressibility }) {
+    for (UpstreamCompressibleVolume candidate : new UpstreamCompressibleVolume[] {null, createVolume(101.0),
+        changedSource, changedCompressibility}) {
       assertThrows(IllegalStateException.class, () -> volume.validateCandidateConfiguration(candidate));
       assertArrayEquals(before, SerializationUtils.serialize(volume));
     }
@@ -131,15 +131,15 @@ class UpstreamCompressibleVolumeTest {
     UpstreamCompressibleVolume volume = createVolume(100.0);
     UpstreamCompressibleVolume candidate = SerializationUtils.clone(volume);
     byte[] before = SerializationUtils.serialize(volume);
-    assertThrows(IllegalStateException.class, () -> candidate.advance(1.0, new double[] { 1.0, 1.0e6, 0.0 }));
+    assertThrows(IllegalStateException.class, () -> candidate.advance(1.0, new double[] {1.0, 1.0e6, 0.0}));
     assertThrows(IllegalStateException.class, () -> volume.validateCandidateConfiguration(candidate));
     assertArrayEquals(before, SerializationUtils.serialize(volume));
   }
 
   private static UpstreamCompressibleVolume createVolume(double volumeM3) {
-    double[] density = { 50.0, 700.0, 1000.0 };
-    double[] soundSpeed = { 350.0, 1200.0, 1450.0 };
-    double[] mass = { 0.90 * volumeM3 * density[0], 0.08 * volumeM3 * density[1], 0.02 * volumeM3 * density[2] };
+    double[] density = {50.0, 700.0, 1000.0};
+    double[] soundSpeed = {350.0, 1200.0, 1450.0};
+    double[] mass = {0.90 * volumeM3 * density[0], 0.08 * volumeM3 * density[1], 0.02 * volumeM3 * density[2]};
     return new UpstreamCompressibleVolume(volumeM3, 60.0e5, mass, density, soundSpeed);
   }
 }

@@ -58,7 +58,7 @@ public class ProcessSystemLowFlowBypassTest extends neqsim.NeqSimTest {
     Stream feed = new Stream("feed", makeGas(2000.0));
 
     Splitter split = new Splitter("split", feed, 2);
-    split.setSplitFactors(new double[] { 0.5, 0.5 });
+    split.setSplitFactors(new double[] {0.5, 0.5});
 
     Heater hA = new Heater("hA", split.getSplitStream(0));
     hA.setOutletTemperature(320.0);

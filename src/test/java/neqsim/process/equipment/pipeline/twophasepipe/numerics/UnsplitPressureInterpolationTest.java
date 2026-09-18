@@ -72,13 +72,13 @@ class UnsplitPressureInterpolationTest {
   @Test
   void closedHomogeneousCoupledBlockRemainsExactlyZeroDespiteLargeExternalCoefficients() throws Exception {
     double scale = 1.0e8;
-    double[][] matrix = { { 1.0, 1.23456789 * scale, -9.87654321 * scale, 2.0, 0.0712345 * scale },
-        { 0.0, 2.0, 0.5, 0.0, 0.0 }, { 0.0, -0.125, 3.0, 0.0, 1.0 },
-        { 0.25, -0.1234567 * scale, 2.3456789 * scale, 4.0, -1.234567 * scale }, { 0.0, 0.0, 0.25, 0.0, 4.0 } };
-    double[] rightHandSide = { -4.0, 0.0, 0.0, -11.5, 0.0 };
+    double[][] matrix = {{1.0, 1.23456789 * scale, -9.87654321 * scale, 2.0, 0.0712345 * scale},
+        {0.0, 2.0, 0.5, 0.0, 0.0}, {0.0, -0.125, 3.0, 0.0, 1.0},
+        {0.25, -0.1234567 * scale, 2.3456789 * scale, 4.0, -1.234567 * scale}, {0.0, 0.0, 0.25, 0.0, 4.0}};
+    double[] rightHandSide = {-4.0, 0.0, 0.0, -11.5, 0.0};
     // Unknowns 1, 2 and 4 form a coupled closed homogeneous system. Pivots in the forced rows must not seed them.
     double[] solution = solveLinear(matrix, rightHandSide);
-    assertArrayEquals(new double[] { 2.0, 0.0, 0.0, -3.0, 0.0 }, solution, 0.0);
+    assertArrayEquals(new double[] {2.0, 0.0, 0.0, -3.0, 0.0}, solution, 0.0);
     for (int row = 0; row < rightHandSide.length; row++) {
       double product = 0.0;
       for (int column = 0; column < solution.length; column++) {
@@ -90,17 +90,17 @@ class UnsplitPressureInterpolationTest {
 
   @Test
   void zeroRightHandSidesWithForcedDependenciesAreRetainedAndSingularBlocksAreRejected() throws Exception {
-    double[][] dependent = { { 2.0, 1.0, 0.0 }, { 0.0, 3.0, 1.0 }, { 0.0, 0.0, 4.0 } };
-    assertArrayEquals(new double[] { 1.0 / 6.0, -1.0 / 3.0, 1.0 }, solveLinear(dependent, new double[] { 0, 0, 4 }),
+    double[][] dependent = {{2.0, 1.0, 0.0}, {0.0, 3.0, 1.0}, {0.0, 0.0, 4.0}};
+    assertArrayEquals(new double[] {1.0 / 6.0, -1.0 / 3.0, 1.0}, solveLinear(dependent, new double[] {0, 0, 4}),
         1.0e-15);
-    double[][] singular = { { 1.0, 7.0, 9.0 }, { 0.0, 1.0, 1.0 }, { 0.0, 2.0, 2.0 } };
+    double[][] singular = {{1.0, 7.0, 9.0}, {0.0, 1.0, 1.0}, {0.0, 2.0, 2.0}};
     InvocationTargetException failure = assertThrows(InvocationTargetException.class,
-        () -> solveLinear(singular, new double[] { 3.0, 0.0, 0.0 }));
+        () -> solveLinear(singular, new double[] {3.0, 0.0, 0.0}));
     assertTrue(failure.getCause() instanceof IllegalStateException,
         "A homogeneous block must be proved nonsingular before using its zero solution");
-    double[][] nonfiniteCoupling = { { 1.0, Double.NaN }, { 0.0, 1.0 } };
+    double[][] nonfiniteCoupling = {{1.0, Double.NaN}, {0.0, 1.0}};
     InvocationTargetException invalid = assertThrows(InvocationTargetException.class,
-        () -> solveLinear(nonfiniteCoupling, new double[] { 1.0, 0.0 }));
+        () -> solveLinear(nonfiniteCoupling, new double[] {1.0, 0.0}));
     assertTrue(invalid.getCause() instanceof IllegalStateException,
         "Nonfinite coefficients must not disappear when a zero block is isolated");
   }
@@ -145,7 +145,7 @@ class UnsplitPressureInterpolationTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "5,false", "7,false", "5,true", "7,true" })
+  @CsvSource({"5,false", "7,false", "5,true", "7,true"})
   void backwardEulerDampsClosedCheckerboardsWithNonuniformDensityAndConservesEveryPhase(int cells, boolean threePhase) {
     TwoFluidSection[] accepted = sections(cells, threePhase, 1.0, true);
     TwoFluidSection[] original = cloneSections(accepted);
@@ -388,7 +388,7 @@ class UnsplitPressureInterpolationTest {
   }
 
   private static PhaseDensityModel densityModel() {
-    return (cell, state, pressure, time) -> new double[] { gasDensity(cell, pressure), 700.0, 1000.0 };
+    return (cell, state, pressure, time) -> new double[] {gasDensity(cell, pressure), 700.0, 1000.0};
   }
 
   private static double gasDensity(int cell, double pressure) {

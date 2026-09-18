@@ -215,7 +215,7 @@ public class HydrateFormationTemperatureFlashTest {
   @Test
   @DisplayName("Test hydrate curve with MEG + brine")
   public void testHydrateCurveWithMEGAndBrine() throws Exception {
-    double[] pressures = { 50.0, 100.0, 150.0, 200.0 };
+    double[] pressures = {50.0, 100.0, 150.0, 200.0};
     double[] temperatures = new double[pressures.length];
 
     logger.info("=== Hydrate Equilibrium Curve: MEG + Brine ===");
@@ -559,7 +559,7 @@ public class HydrateFormationTemperatureFlashTest {
       logger.info("  Phase fraction (beta): " + fluid.getBeta(p));
 
       // Show fugacity coefficients for key components
-      for (String compName : new String[] { "water", "MEG", "methane", "ethane", "Na+" }) {
+      for (String compName : new String[] {"water", "MEG", "methane", "ethane", "Na+"}) {
         if (fluid.getPhase(p).hasComponent(compName)) {
           double x = fluid.getPhase(p).getComponent(compName).getx();
           double phi = fluid.getPhase(p).getComponent(compName).getFugacityCoefficient();

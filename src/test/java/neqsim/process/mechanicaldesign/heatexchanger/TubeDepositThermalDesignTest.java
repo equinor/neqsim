@@ -68,7 +68,7 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
    * @param thickness deposit thickness (m)
    */
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0001, 0.001, 0.003 })
+  @ValueSource(doubles = {0.0001, 0.001, 0.003})
   void depositMatchesCylindricalResistanceAndLaminarHydraulics(double thickness) {
     ThermalDesignCalculator clean = createLaminarCalculator();
     clean.calculate();
@@ -109,7 +109,7 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
    */
   @Test
   void resistanceOnlyFoulingKeepsNominalAreaBasisAndHydraulics() {
-    for (double thickness : new double[] { 0.0, 0.001 }) {
+    for (double thickness : new double[] {0.0, 0.001}) {
       ThermalDesignCalculator calculator = createLaminarCalculator();
       calculator.setTubeFoulingLayer(thickness, DEPOSIT_CONDUCTIVITY);
       calculator.calculate();
@@ -164,13 +164,13 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
   void invalidLayersAreRejectedWithoutReplacingValidState() {
     ThermalDesignCalculator calculator = createLaminarCalculator();
     calculator.setTubeFoulingLayer(0.001, DEPOSIT_CONDUCTIVITY);
-    for (double thickness : new double[] { -0.001, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
-        ID / 2.0, ID }) {
+    for (double thickness : new double[] {-0.001, Double.NaN, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY,
+        ID / 2.0, ID}) {
       assertThrows(IllegalArgumentException.class,
           () -> calculator.setTubeFoulingLayer(thickness, DEPOSIT_CONDUCTIVITY));
     }
-    for (double conductivity : new double[] { 0.0, -1.0, Double.NaN, Double.NEGATIVE_INFINITY,
-        Double.POSITIVE_INFINITY }) {
+    for (double conductivity : new double[] {0.0, -1.0, Double.NaN, Double.NEGATIVE_INFINITY,
+        Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> calculator.setTubeFoulingLayer(0.001, conductivity));
       assertThrows(IllegalArgumentException.class, () -> calculator.setTubeFoulingLayer(0.0, conductivity));
     }
@@ -187,7 +187,7 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
   void geometryChangesRevalidateLayerBeforeCalculation() {
     ThermalDesignCalculator calculator = createLaminarCalculator();
     calculator.setTubeFoulingLayer(0.001, DEPOSIT_CONDUCTIVITY);
-    for (double diameter : new double[] { 0.002, 0.001, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double diameter : new double[] {0.002, 0.001, 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       calculator.setTubeIDm(diameter);
       assertThrows(IllegalArgumentException.class, calculator::calculate);
       assertThrows(IllegalArgumentException.class, calculator::getTubeFoulingLayerResistanceOutside);
@@ -222,7 +222,7 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
   @Test
   void strictCalculationMatchesValidLegacyCalculation() {
     for (ThermalDesignCalculator.ShellSideMethod method : ThermalDesignCalculator.ShellSideMethod.values()) {
-      for (double thickness : new double[] { 0.0, 0.001 }) {
+      for (double thickness : new double[] {0.0, 0.001}) {
         ThermalDesignCalculator legacy = createLaminarCalculator();
         legacy.setShellSideMethod(method);
         legacy.setTubeFoulingLayer(thickness, DEPOSIT_CONDUCTIVITY);
@@ -270,14 +270,14 @@ class TubeDepositThermalDesignTest extends neqsim.NeqSimTest {
   void strictCalculationRejectsInvalidFluidAndResistanceInputs() {
     for (int property = 0; property < 5; property++) {
       final int invalidIndex = property;
-      for (double invalid : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+      for (double invalid : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
         assertStrictRejects(calculator -> {
-          double[] properties = { DENSITY, VISCOSITY, 2200.0, FLUID_CONDUCTIVITY, MASS_FLOW };
+          double[] properties = {DENSITY, VISCOSITY, 2200.0, FLUID_CONDUCTIVITY, MASS_FLOW};
           properties[invalidIndex] = invalid;
           calculator.setTubeSideFluid(properties[0], properties[1], properties[2], properties[3], properties[4], true);
         });
         assertStrictRejects(calculator -> {
-          double[] properties = { 998.0, 0.001, 4180.0, 0.6, 4.0 };
+          double[] properties = {998.0, 0.001, 4180.0, 0.6, 4.0};
           properties[invalidIndex] = invalid;
           calculator.setShellSideFluid(properties[0], properties[1], properties[2], properties[3], properties[4]);
         });

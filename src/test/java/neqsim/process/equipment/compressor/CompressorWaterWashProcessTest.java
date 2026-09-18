@@ -258,7 +258,7 @@ class CompressorWaterWashProcessTest extends neqsim.NeqSimTest {
   @Test
   void testVaryingWashRate() {
     double polytropicEfficiency = 64.66 * 0.933 / 100.0;
-    double[] washRates = { 0.0, 2000.0, 5000.0 };
+    double[] washRates = {0.0, 2000.0, 5000.0};
     double[] outletTemperatures = new double[washRates.length];
 
     for (int i = 0; i < washRates.length; i++) {

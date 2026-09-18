@@ -59,7 +59,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
-    double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
+    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -76,7 +76,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
-    double[] splitMidgard = { 1e-10, 1 - 1e-10 };
+    double[] splitMidgard = {1e-10, 1 - 1e-10};
     MidgardSplit.setSplitFactors(splitMidgard);
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
@@ -98,7 +98,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
     neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
 
     Stream TEGFeed = new Stream("TEG feed", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
@@ -133,7 +133,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     heatEx2.setUAvalue(1450.0);
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 });
+    feedWater.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
 
     double addedWaterRate = 0.0;
     Stream waterFeed = new Stream("water to absorber", feedWater);
@@ -169,7 +169,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
     neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    stripGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0 * 0.8, "kg/hr");
@@ -208,7 +208,7 @@ public class ProcessSystemSerializationTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));

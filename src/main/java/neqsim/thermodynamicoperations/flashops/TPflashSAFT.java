@@ -504,7 +504,7 @@ public class TPflashSAFT extends TPflash {
       }
     }
 
-    return new double[] { betaV, betaL1 };
+    return new double[] {betaV, betaL1};
   }
 
   /**

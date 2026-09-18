@@ -27,10 +27,10 @@ class AISchemaDiscoveryTest {
   // Sample class with AIExposable annotations for testing
   static class TestThermo {
     @AIExposable(description = "Add a chemical component", category = "composition", example = "addComponent(\"methane\", 0.9)", priority = 100, safe = false, tags = {
-        "fluid", "setup" })
+        "fluid", "setup"})
     public void addComponent(
-        @AIParameter(name = "name", description = "Component name", options = { "methane", "ethane",
-            "propane" }) String name,
+        @AIParameter(name = "name", description = "Component name", options = {"methane", "ethane",
+            "propane"}) String name,
         @AIParameter(name = "moles", description = "Mole fraction", minValue = 0.0, maxValue = 1.0) double moles) {
     }
 

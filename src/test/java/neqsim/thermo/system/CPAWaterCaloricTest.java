@@ -31,9 +31,9 @@ class CPAWaterCaloricTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "278.15,4205.037692495445,999.966633545", "283.15,4195.158885966499,999.702470187",
+  @CsvSource({"278.15,4205.037692495445,999.966633545", "283.15,4195.158885966499,999.702470187",
       "298.15,4181.314990764705,997.047636760", "313.15,4179.4147979899,992.216352873",
-      "333.15,4184.953280467873,983.195824228" })
+      "333.15,4184.953280467873,983.195824228"})
   void issue3762HeatCapacityAndDensity(double temperature, double cp, double density) {
     SystemSrkCPAstatoil fluid = water(temperature, 1.01325, true);
     assertEquals(1, fluid.getNumberOfPhases());
@@ -63,8 +63,8 @@ class CPAWaterCaloricTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "278.15,0.008725751138417176", "298.15,0.03169929338873217", "333.15,0.19946434307815789",
-      "373.15,1.014179966599509", "423.15,4.761645379697582" })
+  @CsvSource({"278.15,0.008725751138417176", "298.15,0.03169929338873217", "333.15,0.19946434307815789",
+      "373.15,1.014179966599509", "423.15,4.761645379697582"})
   void saturationPressureRemainsAccurate(double temperature, double saturationPressure) throws Exception {
     SystemSrkCPAstatoil fluid = water(temperature, 10.0, true);
     fluid.setPressure(saturationPressure);
@@ -73,7 +73,7 @@ class CPAWaterCaloricTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "278.15,1.01325", "305.15,50.0", "333.15,100.0", "423.15,10.0" })
+  @CsvSource({"278.15,1.01325", "305.15,50.0", "333.15,100.0", "423.15,10.0"})
   void caloricPropertiesAreDerivativesOfTheSamePotential(double temperature, double pressure) {
     SystemSrkCPAstatoil fluid = water(temperature, pressure, true);
     double step = 0.01;
@@ -142,7 +142,7 @@ class CPAWaterCaloricTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "278.15", "333.15", "423.15", "647.3" })
+  @CsvSource({"278.15", "333.15", "423.15", "647.3"})
   void alphaDerivativesAreAnalyticAndSmooth(double temperature) {
     SystemSrkCPAstatoil fluid = water(298.15, 1.01325, true);
     AttractiveTermInterface alpha = fluid.getPhase(0).getComponent(0).getAttractiveTerm();

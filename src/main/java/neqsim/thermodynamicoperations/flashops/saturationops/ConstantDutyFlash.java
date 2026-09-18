@@ -35,7 +35,7 @@ public abstract class ConstantDutyFlash implements ConstantDutyFlashInterface {
   double[] lnOldK;
   double[] oldDeltalnK;
   double[] deltalnK;
-  double[] tm = { 1, 1 };
+  double[] tm = {1, 1};
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
   /**

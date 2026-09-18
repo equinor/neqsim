@@ -57,7 +57,7 @@ class TPFlashHighTempTest {
     assertEquivalentState(ordinary, reference, 1.0e-8, modelLabel + " ordinary versus multiphase");
     assertEquivalentState(reference, poorGuess, 1.0e-8, modelLabel + " poor beta initialization");
 
-    for (double temperatureC : new double[] { 267.0, 269.0 }) {
+    for (double temperatureC : new double[] {267.0, 269.0}) {
       SystemInterface nearbyOrdinary = flash(pengRobinson, temperatureC, false, false);
       SystemInterface nearbyMultiphase = flash(pengRobinson, temperatureC, true, false);
       assertClosedEquilibrium(nearbyOrdinary, modelLabel + " ordinary at " + temperatureC + " C");
@@ -141,8 +141,8 @@ class TPFlashHighTempTest {
     system.addComponent("nC19", 1.0);
     system.setMixingRule("classic");
     system.setMolarComposition(
-        new double[] { 1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
-            1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4 });
+        new double[] {1.63e-3, 3.23e-3, 0.0, 3.0e-1, 4.6e-2, 1.4e-2, 2.2e-2, 3.9e-3, 8.8e-3, 2.6e-3, 3.2e-2, 1.2e-1,
+            1.5e-1, 9.8e-2, 7.6e-2, 4.1e-2, 2.5e-2, 1.6e-2, 1.0e-2, 5.6e-3, 2.7e-3, 1.3e-3, 8.7e-4, 3.8e-4});
     return system;
   }
 

@@ -296,7 +296,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
       boolean useMassSetpoint, UUID id) {
     double setpoint = useMassSetpoint ? recycleAtSuction * suctionDensity : recycleAtSuction;
     String setpointUnit = useMassSetpoint ? "kg/hr" : "m3/hr";
-    antiSurgeSplitter.setFlowRates(new double[] { -1, setpoint }, setpointUnit);
+    antiSurgeSplitter.setFlowRates(new double[] {-1, setpoint}, setpointUnit);
     antiSurgeSplitter.getSplitStream(1).setFlowRate(setpoint, setpointUnit);
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);

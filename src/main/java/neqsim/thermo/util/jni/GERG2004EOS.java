@@ -437,8 +437,8 @@ public class GERG2004EOS {
       double c8, double c9, double c10, double c11, double c12, double c13, double c14, double c15, double c16,
       double c17, double c18, double c19, double c20, int IPHASE);
 
-  public String[] nameList = { "methane", "nitrogen", "CO2", "ethane", "propane", "n-butane", "i-butane", "n-pentane",
-      "i-pentane", "n-hexane", "n-heptane", "n-octane", "hydrogen", "oxygen", "CO", "water", "helium", "argon" };
+  public String[] nameList = {"methane", "nitrogen", "CO2", "ethane", "propane", "n-butane", "i-butane", "n-pentane",
+      "i-pentane", "n-hexane", "n-heptane", "n-octane", "hydrogen", "oxygen", "CO", "water", "helium", "argon"};
 
   /**
    * Constructor for GERG2004EOS.

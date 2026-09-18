@@ -18,13 +18,13 @@ public class FeatureExtractor {
   /**
    * Standard feature set for stream properties.
    */
-  public static final String[] STANDARD_STREAM_FEATURES = { "pressure", "temperature", "totalFlowRate", "gasFlowRate",
-      "oilFlowRate", "waterFlowRate", "gor", "waterCut", "density", "viscosity", "z-factor" };
+  public static final String[] STANDARD_STREAM_FEATURES = {"pressure", "temperature", "totalFlowRate", "gasFlowRate",
+      "oilFlowRate", "waterFlowRate", "gor", "waterCut", "density", "viscosity", "z-factor"};
 
   /**
    * Minimal feature set for basic streams.
    */
-  public static final String[] MINIMAL_STREAM_FEATURES = { "pressure", "temperature", "totalFlowRate", "density" };
+  public static final String[] MINIMAL_STREAM_FEATURES = {"pressure", "temperature", "totalFlowRate", "density"};
 
   private FeatureExtractor() {
     // Utility class

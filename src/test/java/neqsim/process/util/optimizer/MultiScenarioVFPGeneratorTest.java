@@ -119,10 +119,10 @@ public class MultiScenarioVFPGeneratorTest {
     MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
     generator.setFlashGenerator(flashGenerator);
 
-    generator.setFlowRates(new double[] { 5000, 10000, 20000 });
-    generator.setOutletPressures(new double[] { 50, 70 });
-    generator.setWaterCuts(new double[] { 0.0, 0.20 });
-    generator.setGORs(new double[] { 500, 1000 });
+    generator.setFlowRates(new double[] {5000, 10000, 20000});
+    generator.setOutletPressures(new double[] {50, 70});
+    generator.setWaterCuts(new double[] {0.0, 0.20});
+    generator.setGORs(new double[] {500, 1000});
 
     assertNotNull(generator.getFlowRates());
     assertEquals(3, generator.getFlowRates().length);
@@ -138,10 +138,10 @@ public class MultiScenarioVFPGeneratorTest {
   void testValidationMissingFlashGenerator() {
     MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(processFactory, "Inlet", "Pipeline");
 
-    generator.setFlowRates(new double[] { 5000, 10000 });
-    generator.setOutletPressures(new double[] { 50, 70 });
-    generator.setWaterCuts(new double[] { 0.0, 0.20 });
-    generator.setGORs(new double[] { 500, 1000 });
+    generator.setFlowRates(new double[] {5000, 10000});
+    generator.setOutletPressures(new double[] {50, 70});
+    generator.setWaterCuts(new double[] {0.0, 0.20});
+    generator.setGORs(new double[] {500, 1000});
 
     // Should fail without flash generator
     assertThrows(IllegalStateException.class, () -> generator.generateVFPTable());
@@ -156,9 +156,9 @@ public class MultiScenarioVFPGeneratorTest {
     generator.setFlashGenerator(flashGenerator);
 
     // Missing flow rates
-    generator.setOutletPressures(new double[] { 50 });
-    generator.setWaterCuts(new double[] { 0.0 });
-    generator.setGORs(new double[] { 500 });
+    generator.setOutletPressures(new double[] {50});
+    generator.setWaterCuts(new double[] {0.0});
+    generator.setGORs(new double[] {500});
 
     assertThrows(IllegalStateException.class, () -> generator.generateVFPTable());
   }
@@ -168,10 +168,10 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableMethods() {
-    double[] rates = { 5000, 10000 };
-    double[] thps = { 50, 60 };
-    double[] wcs = { 0.0, 0.30 };
-    double[] gors = { 500, 1000 };
+    double[] rates = {5000, 10000};
+    double[] thps = {50, 60};
+    double[] wcs = {0.0, 0.30};
+    double[] gors = {500, 1000};
 
     MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
@@ -246,10 +246,10 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTablePrintSlice() {
-    double[] rates = { 5000, 10000 };
-    double[] thps = { 50, 60 };
-    double[] wcs = { 0.0, 0.30 };
-    double[] gors = { 500, 1000 };
+    double[] rates = {5000, 10000};
+    double[] thps = {50, 60};
+    double[] wcs = {0.0, 0.30};
+    double[] gors = {500, 1000};
 
     MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
@@ -285,10 +285,10 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableBHPAccess() {
-    double[] rates = { 5000, 10000 };
-    double[] thps = { 50, 60 };
-    double[] wcs = { 0.0, 0.30 };
-    double[] gors = { 500, 1000 };
+    double[] rates = {5000, 10000};
+    double[] thps = {50, 60};
+    double[] wcs = {0.0, 0.30};
+    double[] gors = {500, 1000};
 
     MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 
@@ -312,10 +312,10 @@ public class MultiScenarioVFPGeneratorTest {
    */
   @Test
   void testVFPTableFlowRateUnit() {
-    double[] rates = { 5000 };
-    double[] thps = { 50 };
-    double[] wcs = { 0.0 };
-    double[] gors = { 500 };
+    double[] rates = {5000};
+    double[] thps = {50};
+    double[] wcs = {0.0};
+    double[] gors = {500};
 
     MultiScenarioVFPGenerator.VFPTable table = new MultiScenarioVFPGenerator.VFPTable(rates, thps, wcs, gors);
 

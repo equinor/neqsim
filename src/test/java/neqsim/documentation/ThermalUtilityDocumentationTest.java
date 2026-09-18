@@ -118,7 +118,7 @@ public class ThermalUtilityDocumentationTest extends neqsim.NeqSimTest {
       assertTrue(Boolean.TRUE.equals(successful), guidePath + ": " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);

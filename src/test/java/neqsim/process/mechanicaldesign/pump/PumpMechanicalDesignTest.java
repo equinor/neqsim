@@ -274,11 +274,11 @@ public class PumpMechanicalDesignTest {
 
   @Test
   public void testVendorCurveDrivesBepSpeedAndNpshInputs() {
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0 } };
-    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0 } };
-    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0 } };
-    double[][] npsh = new double[][] { { 2.0, 2.2, 2.5, 3.0, 3.8, 4.8 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0}};
+    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0}};
+    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0}};
+    double[][] npsh = new double[][] {{2.0, 2.2, 2.5, 3.0, 3.8, 4.8}};
     pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");
     pump.getPumpChart().setNPSHCurve(npsh);

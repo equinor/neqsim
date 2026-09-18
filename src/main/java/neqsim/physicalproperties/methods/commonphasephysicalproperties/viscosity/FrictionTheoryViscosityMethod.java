@@ -47,11 +47,11 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
   protected double kaprrc_fconst = 1.26358e-3;
 
   // Temperature dependent polynomials for attractive and repulsive contributions
-  protected double[][] kapa_fconst = { { -0.114804, 0.246622, -3.94638e-2 }, { 0.246622, -1.15648e-4, 4.18863e-5 },
-      { -3.94638e-2, 4.18863e-5, -5.91999e-9 } };
+  protected double[][] kapa_fconst = {{-0.114804, 0.246622, -3.94638e-2}, {0.246622, -1.15648e-4, 4.18863e-5},
+      {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
 
-  protected double[][] kapr_fconst = { { -0.315903, 0.566713, -7.29995e-2 }, { 0.566713, -1.0086e-4, 5.17459e-5 },
-      { -7.29995e-2, 5.17459e-5, -5.68708e-9 } };
+  protected double[][] kapr_fconst = {{-0.315903, 0.566713, -7.29995e-2}, {0.566713, -1.0086e-4, 5.17459e-5},
+      {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
   // Second-order repulsive term constant
   protected double kaprr_fconst = 1.35994e-8;
@@ -87,10 +87,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     kapac_fconst = -0.165302;
     kaprc_fconst = 6.99574e-3;
     kaprrc_fconst = 1.26358e-3;
-    kapa_fconst = new double[][] { { -0.114804, 0.246622, -3.94638e-2 }, { 0.246622, -1.15648e-4, 4.18863e-5 },
-        { -3.94638e-2, 4.18863e-5, -5.91999e-9 } };
-    kapr_fconst = new double[][] { { -0.315903, 0.566713, -7.29995e-2 }, { 0.566713, -1.0086e-4, 5.17459e-5 },
-        { -7.29995e-2, 5.17459e-5, -5.68708e-9 } };
+    kapa_fconst = new double[][] {{-0.114804, 0.246622, -3.94638e-2}, {0.246622, -1.15648e-4, 4.18863e-5},
+        {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
+    kapr_fconst = new double[][] {{-0.315903, 0.566713, -7.29995e-2}, {0.566713, -1.0086e-4, 5.17459e-5},
+        {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
     kaprr_fconst = 1.35994e-8;
   }
 
@@ -98,10 +98,10 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     kapac_fconst = -0.140464;
     kaprc_fconst = 1.19902e-2;
     kaprrc_fconst = 8.55115e-4;
-    kapa_fconst = new double[][] { { -4.89197e-2, 0.270572, -4.48111e-2 }, { 0.270572, -1.10473e-4, 4.08972e-5 },
-        { -4.48111e-2, 4.08972e-5, -5.79765e-9 } };
-    kapr_fconst = new double[][] { { -0.357875, 0.637572, -7.9024e-2 }, { 0.637572, -6.02128e-5, 3.72408e-5 },
-        { -7.9024e-2, 3.72408e-5, -5.65610e-9 } };
+    kapa_fconst = new double[][] {{-4.89197e-2, 0.270572, -4.48111e-2}, {0.270572, -1.10473e-4, 4.08972e-5},
+        {-4.48111e-2, 4.08972e-5, -5.79765e-9}};
+    kapr_fconst = new double[][] {{-0.357875, 0.637572, -7.9024e-2}, {0.637572, -6.02128e-5, 3.72408e-5},
+        {-7.9024e-2, 3.72408e-5, -5.65610e-9}};
     kaprr_fconst = 1.37290e-8;
   }
 

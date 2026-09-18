@@ -21,14 +21,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression tests for gas-liquid phase appearance and disappearance in {@link TwoFluidPipe}. */
 class TwoFluidPipePhaseDegeneracyTest {
-  private static final double[] LIQUID_MASS_FLOW_SWEEP = { 0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8 };
+  private static final double[] LIQUID_MASS_FLOW_SWEEP = {0.0, 0.5e-10, 0.99e-10, 1.01e-10, 2.0e-10, 1.0e-9, 1.0e-8};
 
   @Test
   void testLocalClosureApproachesPureGasContinuously() throws Exception {
-    OLGAModelType[] modelTypes = { OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX };
-    FlowRegime[] regimes = { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR, FlowRegime.SLUG,
-        FlowRegime.DISPERSED_BUBBLE };
-    double[] inclinations = { 0.0, Math.toRadians(2.0), Math.toRadians(-2.0) };
+    OLGAModelType[] modelTypes = {OLGAModelType.FULL, OLGAModelType.SIMPLIFIED, OLGAModelType.DRIFT_FLUX};
+    FlowRegime[] regimes = {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.ANNULAR, FlowRegime.SLUG,
+        FlowRegime.DISPERSED_BUBBLE};
+    double[] inclinations = {0.0, Math.toRadians(2.0), Math.toRadians(-2.0)};
 
     for (OLGAModelType modelType : modelTypes) {
       for (FlowRegime regime : regimes) {
@@ -221,8 +221,8 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     double gasMassPerLength = 0.8 * 40.0 * area;
     double waterMassPerLength = 0.2 * 1000.0 * area;
-    section.setStateVector(new double[] { gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0,
-        waterMassPerLength * 0.1, 0.0 });
+    section.setStateVector(
+        new double[] {gasMassPerLength, 0.0, waterMassPerLength, gasMassPerLength, 0.0, waterMassPerLength * 0.1, 0.0});
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getOilMassPerLength(), 0.0);
     assertEquals(0.0, section.getOilHoldup(), 0.0);
@@ -230,7 +230,7 @@ class TwoFluidPipePhaseDegeneracyTest {
 
     double oilMassPerLength = 0.2 * 700.0 * area;
     section.setStateVector(
-        new double[] { gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength, oilMassPerLength * 0.1, 0.0, 0.0 });
+        new double[] {gasMassPerLength, oilMassPerLength, 0.0, gasMassPerLength, oilMassPerLength * 0.1, 0.0, 0.0});
     section.extractPrimitiveVariables();
     assertEquals(0.0, section.getWaterMassPerLength(), 0.0);
     assertEquals(0.0, section.getWaterHoldup(), 0.0);
@@ -250,7 +250,7 @@ class TwoFluidPipePhaseDegeneracyTest {
     assertEquals(0.0, section.calcOilWaterInterfacialShear(), 0.0);
 
     double previousShear = 0.0;
-    for (double waterHoldup : new double[] { 1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6 }) {
+    for (double waterHoldup : new double[] {1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6}) {
       section.setWaterHoldup(waterHoldup);
       double shear = section.calcOilWaterInterfacialShear();
       assertTrue(Double.isFinite(shear));

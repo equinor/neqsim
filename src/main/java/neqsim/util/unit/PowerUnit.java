@@ -11,7 +11,7 @@ import neqsim.util.exception.InvalidInputException;
 public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   private static final long serialVersionUID = 1000L;
 
-  private static final String[] ALLOWED_UNITS = { "W", "kW", "MW", "hp", "BTU/hr" };
+  private static final String[] ALLOWED_UNITS = {"W", "kW", "MW", "hp", "BTU/hr"};
 
   /**
    * Constructor for PowerUnit.

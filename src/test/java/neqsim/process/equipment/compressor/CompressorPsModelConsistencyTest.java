@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /** The compressor must solve entropy in the selected property's reference convention. */
 class CompressorPsModelConsistencyTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(strings = { "GERG2008", "Leachman", "Vega" })
+  @ValueSource(strings = {"GERG2008", "Leachman", "Vega"})
   void idealCompressionPreservesSelectedModelEntropy(String model) {
     SystemInterface fluid = new SystemSrkEos(308.15, 85.0);
     String component = model.equals("Vega") ? "helium" : model.equals("Leachman") ? "hydrogen" : "methane";

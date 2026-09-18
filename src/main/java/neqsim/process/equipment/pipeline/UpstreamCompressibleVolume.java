@@ -60,7 +60,7 @@ public final class UpstreamCompressibleVolume implements Serializable {
 
   /** Set phase-resolved source rates entering the volume. */
   public void setSourceMassFlowRates(double gasKgS, double oilKgS, double waterKgS) {
-    double[] rates = { gasKgS, oilKgS, waterKgS };
+    double[] rates = {gasKgS, oilKgS, waterKgS};
     for (int phase = 0; phase < PHASE_COUNT; phase++) {
       if (!Double.isFinite(rates[phase]) || rates[phase] < 0.0) {
         throw new IllegalArgumentException("Source phase mass-flow rates must be finite and non-negative");

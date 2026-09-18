@@ -299,7 +299,7 @@ public final class GeneralCapabilityRunner {
    * @param targetType target Java class
    * @return converted value
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Object convertArgument(JsonElement value, Class<?> targetType) {
     if (value == null || value.isJsonNull()) {
       if (targetType.isPrimitive()) {

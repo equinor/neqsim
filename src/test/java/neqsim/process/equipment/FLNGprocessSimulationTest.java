@@ -391,8 +391,8 @@ class FLNGprocessSimulationTest {
     lngFluid.addComponent("nitrogen", 0.01);
     lngFluid.setMixingRule("classic");
 
-    LNGTank.InsulationType[] types = { LNGTank.InsulationType.MEMBRANE, LNGTank.InsulationType.MOSS,
-        LNGTank.InsulationType.PRISMATIC };
+    LNGTank.InsulationType[] types = {LNGTank.InsulationType.MEMBRANE, LNGTank.InsulationType.MOSS,
+        LNGTank.InsulationType.PRISMATIC};
 
     logger.info("\nLNG Tank Insulation Comparison:");
     logger.info(String.format("%-12s  %-8s  %-12s  %-10s", "Type", "U (W/m2K)", "BOG (%/day)", "BOG (kg/hr)"));

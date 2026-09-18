@@ -99,7 +99,7 @@ public final class CO2BrinePhaseEquilibrium {
     PhaseType bestRoot = PhaseType.AQUEOUS;
     boolean aqueousStable = true;
     minimumTrialDistance = Double.POSITIVE_INFINITY;
-    for (PhaseType root : new PhaseType[] { PhaseType.GAS, PhaseType.OIL }) {
+    for (PhaseType root : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
       SystemInterface trial = initializedFeed();
       trial.setPhaseType(0, root);
       trial.setPhaseType(1, PhaseType.AQUEOUS);

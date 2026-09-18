@@ -201,3 +201,7 @@ Do NOT assume API patterns — check constructors, method names, and parameter t
 When producing code that will appear in documentation or examples, write a JUnit test
 that exercises every API call shown (append to `DocExamplesCompilationTest.java`) and
 run it to confirm it passes. Always read actual source classes before referencing them in docs.
+After creating or editing any `.java` file, run `./mvnw spotless:apply` (Windows:
+`mvnw.cmd spotless:apply`) and `git add` the reformatted files before committing —
+CI runs `spotless:check` and fails the build on any unformatted file. Never bypass
+with `git commit --no-verify`.

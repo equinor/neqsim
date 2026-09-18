@@ -150,7 +150,7 @@ public class testTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
+    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
     splitter.run();
     processSystem.add(splitter);
 
@@ -173,7 +173,7 @@ public class testTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] { 0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0 });
+    splitter2.setSplitFactors(new double[] {0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0});
     splitter2.run();
     processSystem.add(splitter2);
 
@@ -188,7 +188,7 @@ public class testTr {
     manifold.addStream(upstreamCompressorTrain1);
     manifold.addStream(upstreamCompressorTrain2);
     manifold.addStream(upstreamCompressorTrain3);
-    manifold.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     // manifold.setHeaderInnerDiameter(1.5);
     // manifold.setBranchInnerDiameter(0.6);
     manifold.run();
@@ -651,7 +651,7 @@ public class testTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
+    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
     splitter.run();
     processSystem.add(splitter);
 
@@ -671,7 +671,7 @@ public class testTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    splitter2.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     splitter2.run();
     processSystem.add(splitter2);
 
@@ -686,7 +686,7 @@ public class testTr {
     manifold.addStream(upstreamCompressorTrain1);
     manifold.addStream(upstreamCompressorTrain2);
     manifold.addStream(upstreamCompressorTrain3);
-    manifold.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     manifold.setHeaderInnerDiameter(1.5);
     manifold.run();
     processSystem.add(manifold);
@@ -710,8 +710,8 @@ public class testTr {
     // Generate lift curve for different outlet pressures and flow rates
     // Note: Total inlet flow is ~2.1 million kg/hr, split to 1/3 going to compressor train
     // So compressor sees about 700,000 kg/hr at baseline
-    double[] outletPressures = { 90.0, 100.0, 110.0, 120.0, 130.0 };
-    double[] flowRates = { 1500000, 1800000, 2100000, 2400000, 2700000, 3000000 }; // Total inlet
+    double[] outletPressures = {90.0, 100.0, 110.0, 120.0, 130.0};
+    double[] flowRates = {1500000, 1800000, 2100000, 2400000, 2700000, 3000000}; // Total inlet
     // flows
 
     String vfpTable = generateEclipseLiftCurve(processSystem, "Inlet Stream", outletPressures, flowRates);
@@ -747,7 +747,7 @@ public class testTr {
     processSystem.add(saturatedStream);
 
     Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
+    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
     splitter.run();
     processSystem.add(splitter);
 
@@ -770,7 +770,7 @@ public class testTr {
     processSystem.add(finalSeparator);
 
     Splitter splitter2 = new Splitter("Test Splitter2", finalSeparator.getGasOutStream());
-    splitter2.setSplitFactors(new double[] { 0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0 });
+    splitter2.setSplitFactors(new double[] {0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0});
     splitter2.run();
     processSystem.add(splitter2);
 
@@ -785,7 +785,7 @@ public class testTr {
     manifold.addStream(upstreamCompressorTrain1);
     manifold.addStream(upstreamCompressorTrain2);
     manifold.addStream(upstreamCompressorTrain3);
-    manifold.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     manifold.setHeaderInnerDiameter(1.5);
     manifold.setBranchInnerDiameter(0.6);
     manifold.run();
@@ -1136,7 +1136,7 @@ public class testTr {
           double f1 = Math.max(0.2, Math.min(0.5, baseVal + val));
           double f3 = Math.max(0.2, Math.min(0.5, baseVal - val));
           double f2 = 1.0 - f1 - f3;
-          splitUnit.setSplitFactors(new double[] { f1, f2, f3 });
+          splitUnit.setSplitFactors(new double[] {f1, f2, f3});
         });
 
     List<ManipulatedVariable> multiVariables = Arrays.asList(flowVar, balanceVar);
@@ -1232,7 +1232,7 @@ public class testTr {
 
     // Restore best solution from single-variable optimization and show final state
     feedStream.setFlowRate(singleVarResult.getOptimalRate(), "kg/hr");
-    optimizerSplitter.setSplitFactors(new double[] { bestF1, bestF2, bestF3 });
+    optimizerSplitter.setSplitFactors(new double[] {bestF1, bestF2, bestF3});
     processSystem.run();
 
     // Show final compressor power utilization

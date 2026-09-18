@@ -170,8 +170,8 @@ public class ThermalDesignCalculator {
   public void calculateStrict() {
     validateStrictInputs();
     calculate();
-    double[] results = { tubeSideHTC, shellSideHTC, overallU, tubeSidePressureDrop, shellSidePressureDrop,
-        tubeSideVelocity, shellSideVelocity, tubeSideRe, shellSideRe };
+    double[] results = {tubeSideHTC, shellSideHTC, overallU, tubeSidePressureDrop, shellSidePressureDrop,
+        tubeSideVelocity, shellSideVelocity, tubeSideRe, shellSideRe};
     for (double value : results) {
       if (!Double.isFinite(value) || value <= 0.0) {
         throw new IllegalStateException("Thermal-hydraulic correlations produced a nonpositive or nonfinite result");
@@ -185,9 +185,9 @@ public class ThermalDesignCalculator {
    * @throws IllegalArgumentException if the input configuration cannot support the selected correlations
    */
   private void validateStrictInputs() {
-    double[] positiveInputs = { tubeODm, tubeIDm, tubeLengthm, tubePitchm, shellIDm, baffleSpacingm,
+    double[] positiveInputs = {tubeODm, tubeIDm, tubeLengthm, tubePitchm, shellIDm, baffleSpacingm,
         tubeWallConductivity, tubeDensity, tubeViscosity, tubeCp, tubeConductivity, tubeMassFlowRate, shellDensity,
-        shellViscosity, shellCp, shellConductivity, shellMassFlowRate };
+        shellViscosity, shellCp, shellConductivity, shellMassFlowRate};
     for (double value : positiveInputs) {
       if (!Double.isFinite(value) || value <= 0.0) {
         throw new IllegalArgumentException("Strict thermal rating requires positive finite geometry and fluid inputs");
@@ -216,7 +216,7 @@ public class ThermalDesignCalculator {
     double tubeFlowArea = Math.PI / 4.0 * flowDiameter * flowDiameter * (tubeCount / tubePasses);
     double shellFlowArea = BellDelawareMethod.calcCrossflowArea(shellIDm, baffleSpacingm, tubeODm, tubePitchm);
     double shellEquivalentDiameter = BellDelawareMethod.calcShellEquivDiameter(tubeODm, tubePitchm, triangularPitch);
-    double[] derivedGeometry = { tubeFlowArea, shellFlowArea, shellEquivalentDiameter, getOutsideHeatTransferArea() };
+    double[] derivedGeometry = {tubeFlowArea, shellFlowArea, shellEquivalentDiameter, getOutsideHeatTransferArea()};
     for (double value : derivedGeometry) {
       if (!Double.isFinite(value) || value <= 0.0) {
         throw new IllegalArgumentException(

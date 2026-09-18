@@ -1057,7 +1057,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     if (!Double.isFinite(calculatedUA) || calculatedUA <= 0.0) {
       throw new IllegalStateException("Thermal-hydraulic rating produced invalid UA");
     }
-    double[] drops = { ratingCalculator.getTubeSidePressureDropBar(), ratingCalculator.getShellSidePressureDropBar() };
+    double[] drops = {ratingCalculator.getTubeSidePressureDropBar(), ratingCalculator.getShellSidePressureDropBar()};
     for (int side = 0; side < 2; side++) {
       double pressure = inlet[side].getPressure() - drops[side];
       if (!Double.isFinite(drops[side]) || drops[side] < 0.0 || !Double.isFinite(pressure) || pressure <= 0.0) {
@@ -1134,8 +1134,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * @throws IllegalStateException for multiphase, zero-flow or invalid transport states
    */
   private static void requireSinglePhaseRatingState(SystemInterface fluid) {
-    double[] properties = { fluid.getFlowRate("kg/sec"), fluid.getDensity("kg/m3"), fluid.getViscosity("kg/msec"),
-        fluid.getCp("J/kgK"), fluid.getThermalConductivity("W/mK"), fluid.getTemperature(), fluid.getPressure() };
+    double[] properties = {fluid.getFlowRate("kg/sec"), fluid.getDensity("kg/m3"), fluid.getViscosity("kg/msec"),
+        fluid.getCp("J/kgK"), fluid.getThermalConductivity("W/mK"), fluid.getTemperature(), fluid.getPressure()};
     if (fluid.getNumberOfPhases() != 1) {
       throw new IllegalStateException("Thermal-hydraulic rating currently supports single-phase streams only");
     }

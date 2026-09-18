@@ -119,7 +119,7 @@ public final class VisualizationRunner {
         double t = envData[1][i] - 273.15; // Convert to Celsius
         if (!Double.isNaN(p) && !Double.isNaN(t) && !Double.isInfinite(p) && !Double.isInfinite(t) && p > 0
             && t > -274) {
-          validPoints.add(new double[] { t, p });
+          validPoints.add(new double[] {t, p});
           minT = Math.min(minT, t);
           maxT = Math.max(maxT, t);
           minP = Math.min(minP, p);
@@ -350,7 +350,7 @@ public final class VisualizationRunner {
     svg.append(escapeXml(yLabel)).append("</text>\n");
 
     // Bars
-    String[] colors = { "#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B" };
+    String[] colors = {"#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B"};
 
     for (int i = 0; i < n; i++) {
       double v = vals.get(i);
@@ -662,7 +662,7 @@ public final class VisualizationRunner {
     int cy = 180;
     int r = 120;
 
-    String[] colors = { "#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B" };
+    String[] colors = {"#2196F3", "#4CAF50", "#FF9800", "#E91E63", "#9C27B0", "#00BCD4", "#795548", "#607D8B"};
 
     StringBuilder svg = new StringBuilder();
     svg.append("<svg xmlns='http://www.w3.org/2000/svg' ");

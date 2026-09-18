@@ -37,9 +37,9 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
   @TempDir
   Path output;
 
-  private static final String[] GUIDES = { "docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md",
+  private static final String[] GUIDES = {"docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md",
       "docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md",
-      "docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md", "docs/wiki/bottleneck_analysis.md" };
+      "docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md", "docs/wiki/bottleneck_analysis.md"};
 
   // These declarations represent the explicitly required existing plant, ratings and observations in advanced
   // fragments. They allow compilation to check public APIs without inventing missing engineering evidence.
@@ -114,8 +114,8 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
       }
     }
     assertTrue(count >= 90, "The complete Java fragment inventory must remain covered");
-    String[] headings = { "### Basic Production Rate Optimization",
-        "### Full Process Example: Finding Active Constraint", "### Maximum Throughput" };
+    String[] headings = {"### Basic Production Rate Optimization",
+        "### Full Process Example: Finding Active Constraint", "### Maximum Throughput"};
     for (int index = 0; index < headings.length; index++) {
       String doc = index < 2 ? documents[0] : documents[1];
       Matcher block = Pattern.compile("```java\\n(.*?)```", Pattern.DOTALL)
@@ -133,8 +133,7 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
               + feedName + "};\n}\n}");
     }
     compile(files);
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       for (int index = 0; index < headings.length; index++) {
         Object[] values = (Object[]) loader.loadClass("optimization.documentation.CompleteGuide" + index)
             .getMethod("run").invoke(null);
@@ -214,8 +213,7 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
     List<File> files = new ArrayList<>();
     writeSource(files, "CompressorGuideExecution", source);
     compile(files);
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       Class<?> example = loader.loadClass("optimization.documentation.CompressorGuideExecution");
       for (String method : Arrays.asList("single", "multi", "stages")) {
         OptimizationResult result = (OptimizationResult) example.getMethod(method).invoke(null);

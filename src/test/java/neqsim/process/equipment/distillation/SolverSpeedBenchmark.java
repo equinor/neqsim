@@ -38,13 +38,13 @@ public class SolverSpeedBenchmark {
   private static final Logger logger = LogManager.getLogger(SolverSpeedBenchmark.class);
 
   /** Solver labels reported in the profile. */
-  private static final String[] SOLVER_LABELS = { "DIRECT", "INSIDE_OUT", "MATRIX_IO", "NEWTON", "NAPHTALI", "AUTO" };
+  private static final String[] SOLVER_LABELS = {"DIRECT", "INSIDE_OUT", "MATRIX_IO", "NEWTON", "NAPHTALI", "AUTO"};
 
   /** Solver types matching {@link #SOLVER_LABELS}. */
   private static final DistillationColumn.SolverType[] SOLVER_TYPES = {
       DistillationColumn.SolverType.DIRECT_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
       DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.NEWTON,
-      DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO };
+      DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.AUTO};
 
   /**
    * Create a standard deethanizer feed.
@@ -78,7 +78,7 @@ public class SolverSpeedBenchmark {
     StringBuilder report = new StringBuilder();
     appendHeader(report);
 
-    String[] caseNames = { "deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer" };
+    String[] caseNames = {"deethanizer_5", "deethanizer_10", "depropanizer", "debutanizer", "lean_demethanizer"};
     for (int caseIndex = 0; caseIndex < caseNames.length; caseIndex++) {
       for (int solverIndex = 0; solverIndex < SOLVER_LABELS.length; solverIndex++) {
         DistillationColumn column = createBenchmarkColumn(caseNames[caseIndex], SOLVER_TYPES[solverIndex],

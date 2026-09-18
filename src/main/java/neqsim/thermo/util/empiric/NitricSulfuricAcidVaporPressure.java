@@ -469,7 +469,7 @@ public class NitricSulfuricAcidVaporPressure {
     if (total <= 0.0) {
       throw new IllegalArgumentException("At least one mass fraction must be positive");
     }
-    return new double[] { n1 / total, n2 / total, n3 / total };
+    return new double[] {n1 / total, n2 / total, n3 / total};
   }
 
 }

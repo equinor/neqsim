@@ -32,7 +32,7 @@ class EngineeringNumericalHealthAnalyzerTest {
     EngineeringNumericalHealthReport healthy = new EngineeringNumericalHealthAnalyzer(process(), criteria)
         .addEnergyClosure("whole-process", 0.02, 100.0, "kW")
         .addEquationResidual("recycle-flow", 1.0e-7, 1.0e-6, "kg/sec")
-        .sensitivityJacobian(new double[][] { { 1.0, 0.1 }, { 0.2, 2.0 } }).analyze();
+        .sensitivityJacobian(new double[][] {{1.0, 0.1}, {0.2, 2.0}}).analyze();
 
     assertEquals(Status.INCOMPLETE, incomplete.getStatus());
     assertEquals(Status.HEALTHY, healthy.getStatus());
@@ -42,7 +42,7 @@ class EngineeringNumericalHealthAnalyzerTest {
   void closureOrRankFailureBlocksEngineeringAcceptance() {
     EngineeringNumericalHealthReport report = new EngineeringNumericalHealthAnalyzer(process(),
         EngineeringNumericalHealthCriteria.defaults()).addEnergyClosure("whole-process", 2.0, 100.0, "kW")
-        .sensitivityJacobian(new double[][] { { 1.0, 2.0 }, { 2.0, 4.0 } }).analyze();
+        .sensitivityJacobian(new double[][] {{1.0, 2.0}, {2.0, 4.0}}).analyze();
 
     assertEquals(Status.FAILED, report.getStatus());
     assertFalse(report.isAcceptableForEngineering());

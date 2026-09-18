@@ -77,7 +77,7 @@ class MercuryRemovalBedDegradationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 1.0e-10, 100000.0 })
+  @ValueSource(doubles = {1.0e-10, 100000.0})
   void adsorptionConservesMercuryAtCapacityAndGasInventoryLimits(double capacity) {
     bed.setMaxMercuryCapacity(capacity);
     bed.setReactionRateConstant(1.0e8);

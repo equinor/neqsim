@@ -1139,8 +1139,8 @@ public class SubseaWell extends TwoPortEquipment {
     // do {
     reservoirOps.runTransient(60 * 60 * 24 * 1);
     ops.run();
-    res.add(new double[] { reservoirOps.getTime(), producedOilStream.getFluid().getFlowRate("kg/hr"),
-        reservoirOps.getOilProductionTotal("MSm3 oe") });
+    res.add(new double[] {reservoirOps.getTime(), producedOilStream.getFluid().getFlowRate("kg/hr"),
+        reservoirOps.getOilProductionTotal("MSm3 oe")});
     System.out.println("subsea choke DP " + subseaChoke.getDeltaPressure("bara"));
     System.out.println("topside  choke DP " + topsideChoke.getDeltaPressure("bara"));
     System.out.println("oil production " + producedOilStream.getFluid().getFlowRate("kg/hr"));

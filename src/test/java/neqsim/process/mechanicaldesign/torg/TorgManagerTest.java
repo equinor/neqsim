@@ -207,7 +207,7 @@ class TorgManagerTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "-46.0, 227.15", "-30.0, 243.15", "0.0, 273.15", "15.0, 288.15" })
+  @CsvSource({"-46.0, 227.15", "-30.0, 243.15", "0.0, 273.15", "15.0, 288.15"})
   void testApplyWithEnvironmentalConditions(double minAmbientCelsius, double expectedKelvin) {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("ENV-001")
         .environmentalConditions(minAmbientCelsius, 40.0)

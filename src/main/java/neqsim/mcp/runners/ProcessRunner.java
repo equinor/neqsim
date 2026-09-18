@@ -834,8 +834,8 @@ public class ProcessRunner {
     if (properties.has("mechanicalDesign")) {
       return "mechanicalDesign";
     }
-    String[] designProperties = { "compressorChart", "cv", "internalDiameter", "separatorLength", "diameter",
-        "pipeWallThickness", "maxDesignDuty", "designDuty", "maxDesignPower", "maxDesignVolumeFlow" };
+    String[] designProperties = {"compressorChart", "cv", "internalDiameter", "separatorLength", "diameter",
+        "pipeWallThickness", "maxDesignDuty", "designDuty", "maxDesignPower", "maxDesignVolumeFlow"};
     for (String designProperty : designProperties) {
       if (properties.has(designProperty)) {
         return designProperty;
@@ -1544,9 +1544,9 @@ public class ProcessRunner {
       return;
     }
     JsonObject data = new JsonObject();
-    String[] fields = { "processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
+    String[] fields = {"processSystemName", "processModelName", "areaCount", "areas", "report", "convergenceSummary",
         "convergenceReport", "autoSizing", "designReport", "utilizationSnapshot", "bottleneckRanking",
-        "processDefinition", "pythonScript" };
+        "processDefinition", "pythonScript"};
     for (String field : fields) {
       if (response.has(field)) {
         data.add(field, response.get(field));
@@ -1664,7 +1664,7 @@ public class ProcessRunner {
    * @param properties mutable properties object
    */
   private static void normalizeLegacyPropertyObjects(JsonObject properties) {
-    String[] unitAwareKeys = { "flowRate", "temperature", "pressure" };
+    String[] unitAwareKeys = {"flowRate", "temperature", "pressure"};
     for (String key : unitAwareKeys) {
       if (properties.has(key) && properties.get(key).isJsonObject()) {
         JsonObject obj = properties.getAsJsonObject(key);

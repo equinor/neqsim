@@ -586,7 +586,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double[] getDeltaEosParameters() {
-    double[] param = { delta1, delta2 };
+    double[] param = {delta1, delta2};
     return param;
   }
 

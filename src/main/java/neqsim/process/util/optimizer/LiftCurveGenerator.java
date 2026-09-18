@@ -40,8 +40,8 @@ import neqsim.thermo.system.SystemInterface;
  * generator.setMaxVelocity(20.0); // m/s constraint
  *
  * // Define operating envelope
- * double[] flowRates = { 1000, 5000, 10000, 20000, 30000 }; // kg/hr
- * double[] thpValues = { 20, 40, 60, 80 }; // bara
+ * double[] flowRates = {1000, 5000, 10000, 20000, 30000}; // kg/hr
+ * double[] thpValues = {20, 40, 60, 80}; // bara
  *
  * // Generate table
  * LiftCurveTable table = generator.generateTable(flowRates, thpValues, "bara", "kg/hr");

@@ -153,9 +153,9 @@ class MpcAndCompressorGuideDocumentationTest {
         codeAfter(MPC_GUIDE, "### Continuous Model Monitoring", "java"))) {
       Class<?> validator = loader.loadClass("ModelValidator");
       assertTrue((Boolean) validator.getMethod("withinTolerance", double[].class, double[].class, double[].class)
-          .invoke(null, new double[] { 100.0 }, new double[] { 100.5 }, new double[] { 1.0 }));
+          .invoke(null, new double[] {100.0}, new double[] {100.5}, new double[] {1.0}));
       assertFalse((Boolean) validator.getMethod("withinTolerance", double[].class, double[].class, double[].class)
-          .invoke(null, new double[] { 100.0 }, new double[] { Double.NaN }, new double[] { 1.0 }));
+          .invoke(null, new double[] {100.0}, new double[] {Double.NaN}, new double[] {1.0}));
     }
   }
 
@@ -174,7 +174,7 @@ class MpcAndCompressorGuideDocumentationTest {
           .call();
       assertTrue(successful, diagnostics.toString());
     }
-    return new URLClassLoader(new URL[] { classes.toUri().toURL() }, getClass().getClassLoader());
+    return new URLClassLoader(new URL[] {classes.toUri().toURL()}, getClass().getClassLoader());
   }
 
   private static String codeAfter(String document, String heading, String language) throws Exception {

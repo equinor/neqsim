@@ -1301,7 +1301,7 @@ public class ProcessAutomation {
     if (separator <= 0 || separator >= targetAndProperty.length() - 1) {
       throw new IllegalArgumentException("Network address must include target and property");
     }
-    return new String[] { targetAndProperty.substring(0, separator), targetAndProperty.substring(separator + 1) };
+    return new String[] {targetAndProperty.substring(0, separator), targetAndProperty.substring(separator + 1)};
   }
 
   private double convertMassRateFromKgS(double value, String unit, String defaultUnit) {

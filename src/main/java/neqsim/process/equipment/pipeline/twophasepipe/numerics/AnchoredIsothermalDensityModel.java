@@ -92,8 +92,8 @@ public final class AnchoredIsothermalDensityModel implements PhaseDensityModel, 
       requirePositiveFinite(section.getPressure(), "Accepted pressure");
       requirePositiveFinite(section.getTemperature(), "Accepted temperature");
       acceptedPressures[cell] = section.getPressure();
-      acceptedDensities[cell] = new double[] { section.getGasDensity(), section.getOilDensity(),
-          section.getWaterDensity() };
+      acceptedDensities[cell] = new double[] {section.getGasDensity(), section.getOilDensity(),
+          section.getWaterDensity()};
       for (double density : acceptedDensities[cell]) {
         requirePositiveFinite(density, "Every explicit accepted phase density");
       }

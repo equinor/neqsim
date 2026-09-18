@@ -34,8 +34,8 @@ class UMRPRUPhaseEnvelopeRegressionTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "NEW,none,0.0,false", "NEW,none,0.0,true", "MC,none,0.0,false", "SRK,none,0.0,false",
-      "SRK,none,0.0,true", "NEW,n-heptane,0.01,false" })
+  @CsvSource({"NEW,none,0.0,false", "NEW,none,0.0,true", "MC,none,0.0,false", "SRK,none,0.0,false", "SRK,none,0.0,true",
+      "NEW,n-heptane,0.01,false"})
   void gasHasBothPhysicalBranches(String model, String heavy, double fraction, boolean bubbleFirst) throws Exception {
     SystemInterface fluid = gas(model, heavy, fraction);
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
@@ -44,7 +44,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
     assertTrue(envelope.isEnvelopeClosed());
     assertArrayEquals(ops.get("dewT"), envelope.getDewPointTemperatures());
     assertArrayEquals(ops.get("bubT"), envelope.getBubblePointTemperatures());
-    for (String branch : new String[] { "dew", "bub" }) {
+    for (String branch : new String[] {"dew", "bub"}) {
       int count = 0;
       int lowIndex = -1;
       double[] temperatures = ops.get(branch + "T");
@@ -81,7 +81,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "cumene,0.005", "cumene,0.01", "cumene,0.05", "toluene,0.01" })
+  @CsvSource({"cumene,0.005", "cumene,0.01", "cumene,0.05", "toluene,0.01"})
   void truncatedAromaticTraceCannotReportExtrema(String component, double fraction) {
     ThermodynamicOperations ops = new ThermodynamicOperations(gas("NEW", component, fraction));
     IllegalStateException failure = assertThrows(IllegalStateException.class, ops::calcPTphaseEnvelope);
@@ -90,7 +90,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
     assertTrue(!envelope.isEnvelopeClosed());
     assertTrue(Arrays.stream(ops.get("cricondentherm")).allMatch(Double::isNaN));
     assertTrue(Arrays.stream(ops.get("cricondenbar")).allMatch(Double::isNaN));
-    for (String branch : new String[] { "dew", "bub" }) {
+    for (String branch : new String[] {"dew", "bub"}) {
       double[] temperatures = ops.get(branch + "T");
       double[] pressures = ops.get(branch + "P");
       assertTrue(Arrays.stream(temperatures).filter(Double::isFinite).count() > 10);
@@ -111,7 +111,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
     fluid.setTemperature(175.0);
     fluid.setPressure(1.0);
     new ThermodynamicOperations(fluid).dewPointTemperatureFlash();
-    for (double beta : new double[] { 1.0 - 1.0e-10, 0.3, 1.0e-10 }) {
+    for (double beta : new double[] {1.0 - 1.0e-10, 0.3, 1.0e-10}) {
       fluid.setBeta(beta);
       fluid.calc_x_y();
       fluid.init(3);
@@ -185,7 +185,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "false", "true" })
+  @CsvSource({"false", "true"})
   void configuredPressureLimitCannotFabricateExtrema(boolean bubbleFirst) {
     PTPhaseEnvelopeMichelsen envelope = new PTPhaseEnvelopeMichelsen(gas("NEW", "none", 0.0), null,
         bubbleFirst ? 1.0e-10 : 1.0 - 1.0e-10, 1.0, bubbleFirst);
@@ -194,7 +194,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
     assertTrue(!envelope.isEnvelopeClosed());
     assertTrue(Arrays.stream(envelope.get("cricondenbar")).allMatch(Double::isNaN));
     assertTrue(Arrays.stream(envelope.get("cricondentherm")).allMatch(Double::isNaN));
-    for (String branch : new String[] { "dew", "bub" }) {
+    for (String branch : new String[] {"dew", "bub"}) {
       assertTrue(Arrays.stream(envelope.get(branch + "P")).filter(Double::isFinite).count() > 10);
       assertTrue(Arrays.stream(envelope.get(branch + "P")).filter(Double::isFinite)
           .allMatch(pressure -> pressure > 0.0 && pressure <= 20.0));

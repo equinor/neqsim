@@ -25,7 +25,7 @@ public class DoeBigHillVacuumComponentRecoveryTest {
     model.getColumn().run(UUID.randomUUID());
 
     DoeBigHillVacuumComponentRecovery result = DoeBigHillVacuumComponentRecovery.evaluate(model);
-    String[] expectedNames = { "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+    String[] expectedNames = {"DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC"};
     assertArrayEquals(expectedNames, result.getComponentNames());
     assertNotSame(result.getComponentNames(), result.getComponentNames());
 

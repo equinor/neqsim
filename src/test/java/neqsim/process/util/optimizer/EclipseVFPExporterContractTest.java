@@ -52,11 +52,11 @@ class EclipseVFPExporterContractTest {
     exporter.setTableNumber(8);
     exporter.setUnitSystem("FIELD");
     exporter.setDatumDepth(304.8);
-    exporter.setFlowRates(new double[] { 100 * CUBIC_METRES_PER_STB, 200 * CUBIC_METRES_PER_STB });
-    exporter.setTHPs(new double[] { PASCALS_PER_PSI / 1000, PASCALS_PER_PSI / 500 });
-    exporter.setGORs(new double[] { CUBIC_METRES_PER_MSCF / CUBIC_METRES_PER_STB,
-        2 * CUBIC_METRES_PER_MSCF / CUBIC_METRES_PER_STB });
-    exporter.setALQs(new double[] { 0, 10 * CUBIC_METRES_PER_MSCF });
+    exporter.setFlowRates(new double[] {100 * CUBIC_METRES_PER_STB, 200 * CUBIC_METRES_PER_STB});
+    exporter.setTHPs(new double[] {PASCALS_PER_PSI / 1000, PASCALS_PER_PSI / 500});
+    exporter.setGORs(
+        new double[] {CUBIC_METRES_PER_MSCF / CUBIC_METRES_PER_STB, 2 * CUBIC_METRES_PER_MSCF / CUBIC_METRES_PER_STB});
+    exporter.setALQs(new double[] {0, 10 * CUBIC_METRES_PER_MSCF});
     exporter.setBHPTable(pressures(2, 2, 2, 2, 2, PASCALS_PER_PSI / 100000));
     assertSameTable(parse(fixture("vfpprod_field.inc")), parse(exporter.getVFPPRODString()));
   }
@@ -68,9 +68,9 @@ class EclipseVFPExporterContractTest {
     exporter.setFlowRateType("GAS");
     exporter.setWaterCutType("WGR");
     exporter.setGORType("OGR");
-    exporter.setFlowRates(new double[] { 1000, 2000 });
-    exporter.setWaterCuts(new double[] { 0.01, 0.02 });
-    exporter.setGORs(new double[] { 0.03, 0.06 });
+    exporter.setFlowRates(new double[] {1000, 2000});
+    exporter.setWaterCuts(new double[] {0.01, 0.02});
+    exporter.setGORs(new double[] {0.03, 0.06});
     ParsedTable table = parse(exporter.getVFPPRODString());
     assertNear(35.31466672148859, table.axes[0][0]);
     assertNear(70.62933344297718, table.axes[0][1]);
@@ -85,8 +85,8 @@ class EclipseVFPExporterContractTest {
 
   @Test
   void fieldOilAndLiquidFlowShareStockTankBarrelsAndDimensionlessWaterRatios() {
-    for (String flowType : new String[] { "OIL", "LIQ" }) {
-      for (String waterType : new String[] { "WCT", "WOR" }) {
+    for (String flowType : new String[] {"OIL", "LIQ"}) {
+      for (String waterType : new String[] {"WCT", "WOR"}) {
         EclipseVFPExporter exporter = fullExporter();
         exporter.setUnitSystem("FIELD");
         exporter.setFlowRateType(flowType);
@@ -104,17 +104,17 @@ class EclipseVFPExporterContractTest {
 
   @Test
   void declaredRateAndPressureInputUnitsAreConvertedNumerically() {
-    String[] rateUnits = { "Sm3/day", "Sm3/hr", "Sm3/s" };
-    double[] rateInputs = { 86400, 3600, 1 };
-    String[] pressureUnits = { "bara", "Pa", "psia" };
-    double[] pressureInputs = { 10, 1000000, 145.03773773020923 };
+    String[] rateUnits = {"Sm3/day", "Sm3/hr", "Sm3/s"};
+    double[] rateInputs = {86400, 3600, 1};
+    String[] pressureUnits = {"bara", "Pa", "psia"};
+    double[] pressureInputs = {10, 1000000, 145.03773773020923};
     for (int r = 0; r < rateUnits.length; r++) {
       for (int p = 0; p < pressureUnits.length; p++) {
         EclipseVFPExporter exporter = new EclipseVFPExporter();
         exporter.setInputUnits(rateUnits[r], pressureUnits[p]);
-        exporter.setFlowRates(new double[] { rateInputs[r] });
-        exporter.setTHPs(new double[] { pressureInputs[p] });
-        exporter.setBHPTable(new double[][][][][] { { { { { 2 * pressureInputs[p] } } } } });
+        exporter.setFlowRates(new double[] {rateInputs[r]});
+        exporter.setTHPs(new double[] {pressureInputs[p]});
+        exporter.setBHPTable(new double[][][][][] {{{{{2 * pressureInputs[p]}}}}});
         ParsedTable table = parse(exporter.getVFPPRODString());
         assertNear(86400, table.axes[0][0]);
         assertNear(10, table.axes[1][0]);
@@ -128,10 +128,10 @@ class EclipseVFPExporterContractTest {
     ParsedTable table = parse(neutralExporter().getVFPPRODString());
     assertEquals("", table.header.get(6));
     for (int axis = 2; axis < 5; axis++) {
-      assertArrayEquals(new double[] { 0 }, table.axes[axis], 0.0);
+      assertArrayEquals(new double[] {0}, table.axes[axis], 0.0);
     }
     assertEquals(2, table.rows.size());
-    assertArrayEquals(new double[] { 1100, 1101 }, table.rows.get(Arrays.asList(2, 1, 1, 1)), 1e-8);
+    assertArrayEquals(new double[] {1100, 1101}, table.rows.get(Arrays.asList(2, 1, 1, 1)), 1e-8);
   }
 
   @Test
@@ -145,7 +145,7 @@ class EclipseVFPExporterContractTest {
 
   @Test
   void injectionFieldUnitsDistinguishGasFromWater() {
-    for (String type : new String[] { "WAT", "GAS" }) {
+    for (String type : new String[] {"WAT", "GAS"}) {
       EclipseVFPExporter exporter = neutralExporter();
       exporter.setUnitSystem("FIELD");
       exporter.setFlowRateType(type);
@@ -159,16 +159,16 @@ class EclipseVFPExporterContractTest {
   @Test
   void invalidAxesAreRejectedInsteadOfRoundedSortedOrInvented() {
     List<Consumer<EclipseVFPExporter>> invalid = Arrays.asList(e -> e.setFlowRates(null),
-        e -> e.setFlowRates(new double[0]), e -> e.setFlowRates(new double[] { 100, 100 }),
-        e -> e.setFlowRates(new double[] { 200, 100 }), e -> e.setFlowRates(new double[] { -1, 100 }),
-        e -> e.setFlowRates(new double[] { 100, Double.POSITIVE_INFINITY }), e -> e.setTHPs(null),
-        e -> e.setTHPs(new double[] { 0, 20 }), e -> e.setTHPs(new double[] { 20, 10 }),
-        e -> e.setTHPs(new double[] { 10, 10 }), e -> e.setTHPs(new double[] { 10, Double.NaN }),
-        e -> e.setWaterCuts(new double[] { 0.1, 0.1 }), e -> e.setWaterCuts(new double[] { 0.1, 1.1 }),
-        e -> e.setWaterCuts(new double[] { -0.1, 0.4 }), e -> e.setGORs(new double[] { 100, 50 }),
-        e -> e.setGORs(new double[] { 50, 50 }), e -> e.setGORs(new double[] { 50, Double.NaN }),
-        e -> e.setALQs(new double[] { 0, -1 }), e -> e.setALQs(new double[] { 0, 0 }),
-        e -> e.setALQs(new double[] { 0, Double.POSITIVE_INFINITY }));
+        e -> e.setFlowRates(new double[0]), e -> e.setFlowRates(new double[] {100, 100}),
+        e -> e.setFlowRates(new double[] {200, 100}), e -> e.setFlowRates(new double[] {-1, 100}),
+        e -> e.setFlowRates(new double[] {100, Double.POSITIVE_INFINITY}), e -> e.setTHPs(null),
+        e -> e.setTHPs(new double[] {0, 20}), e -> e.setTHPs(new double[] {20, 10}),
+        e -> e.setTHPs(new double[] {10, 10}), e -> e.setTHPs(new double[] {10, Double.NaN}),
+        e -> e.setWaterCuts(new double[] {0.1, 0.1}), e -> e.setWaterCuts(new double[] {0.1, 1.1}),
+        e -> e.setWaterCuts(new double[] {-0.1, 0.4}), e -> e.setGORs(new double[] {100, 50}),
+        e -> e.setGORs(new double[] {50, 50}), e -> e.setGORs(new double[] {50, Double.NaN}),
+        e -> e.setALQs(new double[] {0, -1}), e -> e.setALQs(new double[] {0, 0}),
+        e -> e.setALQs(new double[] {0, Double.POSITIVE_INFINITY}));
     for (Consumer<EclipseVFPExporter> mutation : invalid) {
       assertThrows(RuntimeException.class, () -> {
         EclipseVFPExporter exporter = fullExporter();
@@ -203,7 +203,7 @@ class EclipseVFPExporterContractTest {
 
   @Test
   void infeasibleOrNonfinitePressureCellsNeverBecomeValidBhp() {
-    for (double invalid : new double[] { 0, -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+    for (double invalid : new double[] {0, -1, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
       assertThrows(RuntimeException.class, () -> {
         EclipseVFPExporter exporter = fullExporter();
         double[][][][][] data = pressures(2, 2, 2, 2, 2, 1);
@@ -239,7 +239,7 @@ class EclipseVFPExporterContractTest {
     assertThrows(RuntimeException.class, () -> fullExporter().getVFPINJString());
     assertThrows(RuntimeException.class, () -> {
       EclipseVFPExporter exporter = neutralExporter();
-      exporter.setWaterCuts(new double[] { 0.5 });
+      exporter.setWaterCuts(new double[] {0.5});
       exporter.getVFPINJString();
     });
   }
@@ -289,8 +289,8 @@ class EclipseVFPExporterContractTest {
   @Test
   void distinctCloseAxisValuesRemainDistinctInTheDeck() {
     EclipseVFPExporter exporter = fullExporter();
-    exporter.setFlowRates(new double[] { 1.0000000001, 1.0000000002 });
-    exporter.setTHPs(new double[] { 10.0000000001, 10.0000000002 });
+    exporter.setFlowRates(new double[] {1.0000000001, 1.0000000002});
+    exporter.setTHPs(new double[] {10.0000000001, 10.0000000002});
     ParsedTable table = parse(exporter.getVFPPRODString());
     assertTrue(table.axes[0][1] > table.axes[0][0]);
     assertTrue(table.axes[1][1] > table.axes[1][0]);
@@ -316,19 +316,19 @@ class EclipseVFPExporterContractTest {
     exporter.setWaterCutType("WCT");
     exporter.setGORType("GOR");
     exporter.setALQType("GRAT");
-    exporter.setFlowRates(new double[] { 100, 200 });
-    exporter.setTHPs(new double[] { 10, 20 });
-    exporter.setWaterCuts(new double[] { 0.1, 0.4 });
-    exporter.setGORs(new double[] { 50, 100 });
-    exporter.setALQs(new double[] { 0, 500 });
+    exporter.setFlowRates(new double[] {100, 200});
+    exporter.setTHPs(new double[] {10, 20});
+    exporter.setWaterCuts(new double[] {0.1, 0.4});
+    exporter.setGORs(new double[] {50, 100});
+    exporter.setALQs(new double[] {0, 500});
     exporter.setBHPTable(pressures(2, 2, 2, 2, 2, 1));
     return exporter;
   }
 
   private static EclipseVFPExporter neutralExporter() {
     EclipseVFPExporter exporter = new EclipseVFPExporter();
-    exporter.setFlowRates(new double[] { 100, 200 });
-    exporter.setTHPs(new double[] { 10, 20 });
+    exporter.setFlowRates(new double[] {100, 200});
+    exporter.setTHPs(new double[] {10, 20});
     exporter.setBHPTable(pressures(2, 2, 1, 1, 1, 1));
     return exporter;
   }

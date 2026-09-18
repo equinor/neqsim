@@ -41,8 +41,8 @@ public class CombinedOilGasFieldTest {
     wellFluid.init(0);
 
     neqsim.thermo.system.SystemInterface wellFluidGasWell = (neqsim.thermo.system.SystemInterface) wellFluid.clone();
-    wellFluidGasWell.setMolarComposition(new double[] { 0.108, 3.379, 85.915, 4.250, 1.719, 0.275, 0.549, 0.201, 0.256,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.24, 0.34, 0.33, 0.19, 0.15, 0.69, 0.5, 0.03 });
+    wellFluidGasWell.setMolarComposition(new double[] {0.108, 3.379, 85.915, 4.250, 1.719, 0.275, 0.549, 0.201, 0.256,
+        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.24, 0.34, 0.33, 0.19, 0.15, 0.69, 0.5, 0.03});
 
     ReservoirTPsim reservoirGasTPsim = new ReservoirTPsim("TPreservoir", wellFluidGasWell);
     reservoirGasTPsim.setTemperature(150.0, "C");

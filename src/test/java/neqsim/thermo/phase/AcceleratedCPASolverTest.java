@@ -243,7 +243,7 @@ public class AcceleratedCPASolverTest {
     SystemInterface broyden = createIndustrialSystem("broyden");
     SystemInterface anderson = createIndustrialSystem("anderson");
 
-    for (SystemInterface sys : new SystemInterface[] { standard, implicit, broyden, anderson }) {
+    for (SystemInterface sys : new SystemInterface[] {standard, implicit, broyden, anderson}) {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
       sys.initProperties();
@@ -266,12 +266,12 @@ public class AcceleratedCPASolverTest {
    */
   @Test
   public void testBenchmarkPureWater() {
-    double[] temps = { 273.15 + 10.0, 298.15, 323.15, 373.15, 423.15, 473.15, 523.15 };
+    double[] temps = {273.15 + 10.0, 298.15, 323.15, 373.15, 423.15, 473.15, 523.15};
     double pressure = 10.0;
     int warmup = 3;
     int repeats = 10;
 
-    String[] types = { "standard", "implicit", "broyden", "anderson" };
+    String[] types = {"standard", "implicit", "broyden", "anderson"};
     double[][] densities = new double[types.length][temps.length];
 
     for (int t = 0; t < types.length; t++) {
@@ -341,12 +341,12 @@ public class AcceleratedCPASolverTest {
    */
   @Test
   public void testBenchmarkWaterMethanol() {
-    double[] temps = { 300.0, 320.0, 340.0, 360.0, 380.0 };
+    double[] temps = {300.0, 320.0, 340.0, 360.0, 380.0};
     double pressure = 1.0;
     int warmup = 3;
     int repeats = 10;
 
-    String[] types = { "standard", "implicit", "broyden", "anderson" };
+    String[] types = {"standard", "implicit", "broyden", "anderson"};
 
     logger.info("\n=== CPA Solver Benchmark: Water-Methanol ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-15s %8s%n", "Solver", "Time(ms)");
@@ -476,7 +476,7 @@ public class AcceleratedCPASolverTest {
    */
   @Test
   public void testDiagnosticWaterMethanol() {
-    String[] types = { "standard", "implicit", "broyden", "anderson" };
+    String[] types = {"standard", "implicit", "broyden", "anderson"};
     for (String type : types) {
       SystemInterface sys = createWaterMethanolSystem(type);
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
@@ -540,10 +540,10 @@ public class AcceleratedCPASolverTest {
     int warmup = 5;
     int repeats = 20;
 
-    String[] solverTypes = { "standard", "implicit", "broyden", "anderson" };
-    String[] systemNames = { "Pure water", "Pure methanol", "Pure ethanol", "Pure acetic acid", "Water-methanol",
+    String[] solverTypes = {"standard", "implicit", "broyden", "anderson"};
+    String[] systemNames = {"Pure water", "Pure methanol", "Pure ethanol", "Pure acetic acid", "Water-methanol",
         "Water-ethanol", "Water-acetic acid", "Water-ethanol-acetic acid", "NG + water", "NG + water + MEG",
-        "NG + water + TEG" };
+        "NG + water + TEG"};
 
     double[][] timesMs = new double[systemNames.length][solverTypes.length];
 
@@ -781,7 +781,7 @@ public class AcceleratedCPASolverTest {
     SystemInterface broyden = createIndustrialSystem("broyden");
     SystemInterface reduced = createIndustrialSystem("reduced");
 
-    for (SystemInterface sys : new SystemInterface[] { broyden, reduced }) {
+    for (SystemInterface sys : new SystemInterface[] {broyden, reduced}) {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
       sys.initProperties();
@@ -818,10 +818,10 @@ public class AcceleratedCPASolverTest {
     int warmup = 5;
     int repeats = 20;
 
-    String[] solverTypes = { "standard", "broyden", "reduced" };
-    String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-        "NG + water", "NG + water + MEG", "NG + water + TEG" };
-    int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
+    String[] solverTypes = {"standard", "broyden", "reduced"};
+    String[] systemNames = {"Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
+        "NG + water", "NG + water + MEG", "NG + water + TEG"};
+    int[] systemIndices = {0, 1, 4, 5, 7, 8, 9, 10};
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
@@ -965,7 +965,7 @@ public class AcceleratedCPASolverTest {
     SystemInterface anderson = createIndustrialSystem("anderson");
     SystemInterface andRed = createIndustrialSystem("anderson-reduced");
 
-    for (SystemInterface sys : new SystemInterface[] { standard, anderson, andRed }) {
+    for (SystemInterface sys : new SystemInterface[] {standard, anderson, andRed}) {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
       sys.initProperties();
@@ -1004,10 +1004,10 @@ public class AcceleratedCPASolverTest {
     int warmup = 5;
     int repeats = 20;
 
-    String[] solverTypes = { "standard", "anderson", "reduced", "anderson-reduced" };
-    String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-        "NG + water", "NG + water + MEG", "NG + water + TEG" };
-    int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
+    String[] solverTypes = {"standard", "anderson", "reduced", "anderson-reduced"};
+    String[] systemNames = {"Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
+        "NG + water", "NG + water + MEG", "NG + water + TEG"};
+    int[] systemIndices = {0, 1, 4, 5, 7, 8, 9, 10};
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
@@ -1113,7 +1113,7 @@ public class AcceleratedCPASolverTest {
     SystemInterface reduced = createIndustrialSystem("reduced");
     SystemInterface implRed = createIndustrialSystem("implicit-reduced");
 
-    for (SystemInterface sys : new SystemInterface[] { reduced, implRed }) {
+    for (SystemInterface sys : new SystemInterface[] {reduced, implRed}) {
       ThermodynamicOperations ops = new ThermodynamicOperations(sys);
       ops.TPflash();
       sys.initProperties();
@@ -1150,10 +1150,10 @@ public class AcceleratedCPASolverTest {
     int warmup = 5;
     int repeats = 20;
 
-    String[] solverTypes = { "standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced" };
-    String[] systemNames = { "Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
-        "NG + water", "NG + water + MEG", "NG + water + TEG" };
-    int[] systemIndices = { 0, 1, 4, 5, 7, 8, 9, 10 };
+    String[] solverTypes = {"standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced"};
+    String[] systemNames = {"Pure water", "Pure methanol", "Water-methanol", "Water-ethanol", "Water-EtOH-AcOH",
+        "NG + water", "NG + water + MEG", "NG + water + TEG"};
+    int[] systemIndices = {0, 1, 4, 5, 7, 8, 9, 10};
 
     double[][] timesMs = new double[systemIndices.length][solverTypes.length];
 
@@ -1242,7 +1242,7 @@ public class AcceleratedCPASolverTest {
 
     // Lean TEG stream
     SystemInterface feedTEG = (SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
 
     Stream tegFeed = new Stream("lean TEG to absorber", feedTEG);
     tegFeed.setFlowRate(8000.0, "kg/hr");
@@ -1302,7 +1302,7 @@ public class AcceleratedCPASolverTest {
     double richTEGwaterMoleFrac = richTEG.getFluid().getPhase("aqueous").getComponent("water").getx();
     double dryGasFlowRate = dehydratedGas.getFlowRate("MSm3/day");
 
-    return new double[] { waterDewPoint, dryGasDensity, richTEGwaterMoleFrac, dryGasFlowRate };
+    return new double[] {waterDewPoint, dryGasDensity, richTEGwaterMoleFrac, dryGasFlowRate};
   }
 
   /**
@@ -1387,7 +1387,7 @@ public class AcceleratedCPASolverTest {
     int warmup = 2;
     int repeats = 5;
 
-    String[] solverTypes = { "standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced" };
+    String[] solverTypes = {"standard", "implicit", "reduced", "anderson-reduced", "implicit-reduced"};
     double[] timesMs = new double[solverTypes.length];
 
     logger.info("\n========= TEG DEHYDRATION PROCESS BENCHMARK =========\n");

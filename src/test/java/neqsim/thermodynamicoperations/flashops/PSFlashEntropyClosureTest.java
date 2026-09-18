@@ -28,14 +28,14 @@ class PSFlashEntropyClosureTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "nitrogen", "hydrogen" })
+  @ValueSource(strings = {"nitrogen", "hydrogen"})
   void mixturesCloseEntropyFromFreshAndContinuationStarts(String impurity) {
     SystemInterface inlet = fluid(impurity, 298.15);
     double target = inlet.getEntropy("J/kgK");
     SystemInterface continuation = inlet.clone();
-    for (double pressure : new double[] { 70.0, 50.0, 40.0, 20.0, 10.0 }) {
+    for (double pressure : new double[] {70.0, 50.0, 40.0, 20.0, 10.0}) {
       SystemInterface reference = tpRoot(inlet, pressure, target);
-      for (SystemInterface state : new SystemInterface[] { inlet.clone(), continuation }) {
+      for (SystemInterface state : new SystemInterface[] {inlet.clone(), continuation}) {
         state.setPressure(pressure);
         new ThermodynamicOperations(state).PSflash(target, "J/kgK");
         assertState(inlet, state, pressure, target);
@@ -48,12 +48,12 @@ class PSFlashEntropyClosureTest {
 
   @Test
   void pureCo2ClosesEntropyOnBothSidesOfPhaseEntry() {
-    for (double temperature : new double[] { 283.15, 298.15, 308.15 }) {
+    for (double temperature : new double[] {283.15, 298.15, 308.15}) {
       SystemInterface inlet = fluid("", temperature);
       double target = inlet.getEntropy("J/kgK");
       SystemInterface continuation = inlet.clone();
-      for (double pressure : new double[] { 70.0, 50.0, 46.5, 40.0, 20.0, 10.0 }) {
-        for (SystemInterface state : new SystemInterface[] { inlet.clone(), continuation }) {
+      for (double pressure : new double[] {70.0, 50.0, 46.5, 40.0, 20.0, 10.0}) {
+        for (SystemInterface state : new SystemInterface[] {inlet.clone(), continuation}) {
           state.setPressure(pressure);
           new ThermodynamicOperations(state).PSflash(target, "J/kgK");
           assertState(inlet, state, pressure, target);
@@ -70,12 +70,12 @@ class PSFlashEntropyClosureTest {
 
   @Test
   void entropyUnitsAndSystemAmountDoNotChangeTheSolution() {
-    for (double amount : new double[] { 1.0e-8, 1.0, 1.0e6 }) {
+    for (double amount : new double[] {1.0e-8, 1.0, 1.0e6}) {
       SystemInterface inlet = fluid("nitrogen", 298.15);
       inlet.setTotalNumberOfMoles(amount);
       new ThermodynamicOperations(inlet).TPflash();
       inlet.init(3);
-      for (String unit : new String[] { "J/K", "J/molK", "J/kgK", "kJ/kgK" }) {
+      for (String unit : new String[] {"J/K", "J/molK", "J/kgK", "kJ/kgK"}) {
         SystemInterface state = inlet.clone();
         state.setPressure(50.0);
         new ThermodynamicOperations(state).PSflash(inlet.getEntropy(unit), unit);
@@ -93,7 +93,7 @@ class PSFlashEntropyClosureTest {
     reference.setTemperature(330.0);
     new ThermodynamicOperations(reference).TPflash();
     reference.init(3);
-    for (double initialTemperature : new double[] { 230.0, 500.0 }) {
+    for (double initialTemperature : new double[] {230.0, 500.0}) {
       SystemInterface state = reference.clone();
       state.setTemperature(initialTemperature);
       new ThermodynamicOperations(state).PSflash(reference.getEntropy());
@@ -124,8 +124,8 @@ class PSFlashEntropyClosureTest {
 
   @Test
   void invalidEntropyIsRejectedForPureFluidsAndMixtures() {
-    for (String impurity : new String[] { "", "nitrogen" }) {
-      for (double entropy : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+    for (String impurity : new String[] {"", "nitrogen"}) {
+      for (double entropy : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
         SystemInterface state = fluid(impurity, 298.15);
         assertThrows(IllegalArgumentException.class, () -> new ThermodynamicOperations(state).PSflash(entropy));
       }
@@ -143,7 +143,7 @@ class PSFlashEntropyClosureTest {
   void iterationLimitThrowsAndRestoresWarmStartSetting() {
     boolean previousWarm = ThermodynamicModelSettings.isUseWarmStartKValues();
     try {
-      for (boolean warm : new boolean[] { false, true }) {
+      for (boolean warm : new boolean[] {false, true}) {
         ThermodynamicModelSettings.setUseWarmStartKValues(warm);
         SystemInterface state = fluid("nitrogen", 298.15);
         IllegalStateException failure = assertThrows(IllegalStateException.class,

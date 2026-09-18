@@ -341,7 +341,7 @@ public class DistillationColumnModeTest {
   /** Test that reinitialization preserves the configured multistage pumparound return state. */
   @Test
   public void cooledMultistagePumparoundPreservesReturnState() {
-    double[] temperatureDrops = { 4.0, 5.0 };
+    double[] temperatureDrops = {4.0, 5.0};
     for (double temperatureDrop : temperatureDrops) {
       DistillationColumn column = createMultistagePumparoundColumn(temperatureDrop);
       DistillationColumn.ColumnPumparound pumparound = column.getPumparounds().get(0);

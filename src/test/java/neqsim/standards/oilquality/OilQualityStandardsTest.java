@@ -323,7 +323,7 @@ public class OilQualityStandardsTest {
     Standard_ASTM_D86 standard = new Standard_ASTM_D86(createDiesel());
     standard.calculate();
 
-    double[] recoveryPoints = { 0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0 };
+    double[] recoveryPoints = {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0};
     double[][] curveC = standard.getQualifiedD86Curve();
     double[][] curveK = standard.getQualifiedD86Curve("K");
 

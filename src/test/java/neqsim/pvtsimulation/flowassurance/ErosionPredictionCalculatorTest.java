@@ -92,7 +92,7 @@ public class ErosionPredictionCalculatorTest {
   void testGeometryFactors() {
     // Test that different geometries give different erosion rates
     double[] rates = new double[3];
-    String[] geometries = { "blind_tee", "elbow", "choke" };
+    String[] geometries = {"blind_tee", "elbow", "choke"};
 
     for (int i = 0; i < geometries.length; i++) {
       ErosionPredictionCalculator calc = new ErosionPredictionCalculator();

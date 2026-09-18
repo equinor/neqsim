@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidPipeThreePhaseViscosityConsistencyTest {
   @Test
   void flashedSteadyViscosityIsAlreadyConsistentWithTheHydraulicSplit() throws Exception {
-    for (int interval : new int[] { 1, 3 }) {
+    for (int interval : new int[] {1, 3}) {
       SystemSrkEos fluid = new SystemSrkEos(293.15, 30.0);
       fluid.addComponent("methane", 0.4);
       fluid.addComponent("n-pentane", 0.2);
@@ -28,7 +28,7 @@ class TwoFluidPipeThreePhaseViscosityConsistencyTest {
       pipe.setLength(100.0);
       pipe.setDiameter(0.15);
       pipe.setNumberOfSections(4);
-      pipe.setElevationProfile(new double[] { 0.0, 5.0, 10.0, 15.0 });
+      pipe.setElevationProfile(new double[] {0.0, 5.0, 10.0, 15.0});
       pipe.setSteadyStateFlashInterval(interval);
       pipe.run();
       assertTrue(pipe.isSteadyStateConverged());

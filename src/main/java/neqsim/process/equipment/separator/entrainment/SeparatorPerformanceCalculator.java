@@ -1389,10 +1389,10 @@ public class SeparatorPerformanceCalculator implements Serializable {
         idx.put(headers[i].trim().toLowerCase(), Integer.valueOf(i));
       }
 
-      String[] required = new String[] { "modeled_oil_in_gas", "modeled_water_in_gas", "modeled_gas_in_oil",
+      String[] required = new String[] {"modeled_oil_in_gas", "modeled_water_in_gas", "modeled_gas_in_oil",
           "modeled_gas_in_water", "modeled_oil_in_water", "modeled_water_in_oil", "measured_oil_in_gas",
           "measured_water_in_gas", "measured_gas_in_oil", "measured_gas_in_water", "measured_oil_in_water",
-          "measured_water_in_oil" };
+          "measured_water_in_oil"};
       for (int i = 0; i < required.length; i++) {
         if (!idx.containsKey(required[i])) {
           throw new IOException("Missing required CSV column: " + required[i]);
@@ -1806,12 +1806,12 @@ public class SeparatorPerformanceCalculator implements Serializable {
     double prevGcu = gasCarryUnderCalibrationFactor;
     double prevLiqLiq = liquidLiquidCalibrationFactor;
 
-    double[] ligRatios = new double[] { safeRatio(measuredOilInGas, oilInGasFraction, modelFloor),
-        safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor) };
-    double[] gcuRatios = new double[] { safeRatio(measuredGasInOil, gasInOilFraction, modelFloor),
-        safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor) };
-    double[] liqLiqRatios = new double[] { safeRatio(measuredOilInWater, oilInWaterFraction, modelFloor),
-        safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor) };
+    double[] ligRatios = new double[] {safeRatio(measuredOilInGas, oilInGasFraction, modelFloor),
+        safeRatio(measuredWaterInGas, waterInGasFraction, modelFloor)};
+    double[] gcuRatios = new double[] {safeRatio(measuredGasInOil, gasInOilFraction, modelFloor),
+        safeRatio(measuredGasInWater, gasInWaterFraction, modelFloor)};
+    double[] liqLiqRatios = new double[] {safeRatio(measuredOilInWater, oilInWaterFraction, modelFloor),
+        safeRatio(measuredWaterInOil, waterInOilFraction, modelFloor)};
 
     int ligPoints = countFinite(ligRatios);
     int gcuPoints = countFinite(gcuRatios);

@@ -74,7 +74,7 @@ public class RecycleSpeedBenchmarkTest {
 
     // Tail recycle: split off a small fraction, valve it down, recycle to mixer
     Splitter tailSp = new Splitter("tailSplit", mx.getOutletStream(), 2);
-    tailSp.setSplitFactors(new double[] { 0.95, 0.05 });
+    tailSp.setSplitFactors(new double[] {0.95, 0.05});
     sys.add(tailSp);
 
     ThrottlingValve recValve = new ThrottlingValve("recValve", tailSp.getSplitStream(1));

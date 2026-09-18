@@ -5648,7 +5648,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (lightKey == null || heavyKey == null || lightKey.equalsIgnoreCase(heavyKey)) {
       return null;
     }
-    return new String[] { lightKey, heavyKey };
+    return new String[] {lightKey, heavyKey};
   }
 
   /**
@@ -6073,7 +6073,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double[] getEconomicRatioCandidates(double[] ratios) {
     if (ratios == null || ratios.length == 0) {
-      return new double[] { Double.NaN };
+      return new double[] {Double.NaN};
     }
     double[] sanitized = new double[ratios.length];
     int count = 0;
@@ -6084,7 +6084,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
     if (count == 0) {
-      return new double[] { Double.NaN };
+      return new double[] {Double.NaN};
     }
     double[] result = new double[count];
     System.arraycopy(sanitized, 0, result, 0, count);
@@ -6804,7 +6804,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           energyErr);
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
@@ -7310,7 +7310,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           // Log inner iteration (inner iters don't count in outer iteration budget)
           logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps, innerTempResidual);
           if (convergenceHistory != null) {
-            convergenceHistory.add(new double[] { innerTempResidual, massErr, energyErr, kValueResidual });
+            convergenceHistory.add(new double[] {innerTempResidual, massErr, energyErr, kValueResidual});
           }
           // If inner loop has converged, no need for more inner steps
           if (innerTempResidual < baseTempTolerance * 0.5) {
@@ -7393,7 +7393,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           iter, relaxation, err, massErr, energyErr, kValueResidual, totalFlashSweeps);
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr, kValueResidual });
+        recordConvergence(new double[] {err, massErr, energyErr, kValueResidual});
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
@@ -8161,7 +8161,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("Wegstein iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -8442,7 +8442,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("sum-rates iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -8535,7 +8535,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (convergenceHistory != null) {
         massErr = getMassBalanceError();
         energyErr = getEnergyBalanceError();
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("newton warm-up iteration {} tempErr={}", iter, err);
@@ -8586,7 +8586,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       energyErr = getEnergyBalanceError();
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("newton iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -15559,7 +15559,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @return this builder
      */
     public Builder addFeedStream(StreamInterface feed, int trayIndex) {
-      this.feeds.add(new Object[] { feed, trayIndex });
+      this.feeds.add(new Object[] {feed, trayIndex});
       return this;
     }
 

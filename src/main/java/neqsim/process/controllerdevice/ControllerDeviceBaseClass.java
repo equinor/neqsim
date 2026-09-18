@@ -644,7 +644,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
-    gainSchedule.put(processValue, new double[] { Kp, Ti, Td });
+    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
   }
 
   /** {@inheritDoc} */

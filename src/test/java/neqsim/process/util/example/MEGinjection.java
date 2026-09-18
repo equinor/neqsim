@@ -53,8 +53,8 @@ public class MEGinjection {
     feedGasStream.setPressure(55.00, "bara");
 
     neqsim.thermo.system.SystemInterface feedMEG = feedGas.clone();
-    feedMEG.setMolarComposition(
-        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
+    feedMEG
+        .setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9});
 
     Stream MEGFeed = new Stream("lean MEG feed stream", feedMEG);
     MEGFeed.setFlowRate(1000.0, "kg/hr");
@@ -96,8 +96,8 @@ public class MEGinjection {
     ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator("slug catcher", onshoreChockeValve.getOutletStream());
 
     neqsim.thermo.system.SystemInterface feedMEGOnshore = feedGas.clone();
-    feedMEG.setMolarComposition(
-        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9 });
+    feedMEG
+        .setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9});
 
     Stream MEGFeedOnshore = new Stream("lean MEG feed stream", feedMEGOnshore);
     MEGFeedOnshore.setFlowRate(1000.0, "kg/hr");
@@ -105,7 +105,7 @@ public class MEGinjection {
     MEGFeedOnshore.setPressure(80.0, "bara");
 
     neqsim.process.equipment.splitter.Splitter MEGsplitter = new Splitter("MEG splitter", MEGFeedOnshore);
-    MEGsplitter.setSplitFactors(new double[] { 0.1, 0.1, 0.8 });
+    MEGsplitter.setSplitFactors(new double[] {0.1, 0.1, 0.8});
 
     StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");
     MEGmixer1.addStream(slugCatcher.getGasOutStream());

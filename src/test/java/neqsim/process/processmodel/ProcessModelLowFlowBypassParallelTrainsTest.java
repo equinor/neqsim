@@ -74,7 +74,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] { exportFraction, htFraction });
+    manifold.setSplitFactors(new double[] {exportFraction, htFraction});
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.setName("manifold");
@@ -115,7 +115,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 100000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -155,7 +155,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 80000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -187,7 +187,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 50000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setFlowRates(new double[] { -1.0, 0.5 }, "kg/hr"); // 0.5 kg/hr to HT branch
+    manifold.setFlowRates(new double[] {-1.0, 0.5}, "kg/hr"); // 0.5 kg/hr to HT branch
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.add(feed);
@@ -224,7 +224,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // Upstream gas splitter: export vs HT injection (Pattern A)
     Splitter texSplitter = new Splitter("gas_splitter", feed, 2);
-    texSplitter.setSplitFactors(new double[] { 1.0 - htFractionOfTotal, htFractionOfTotal });
+    texSplitter.setSplitFactors(new double[] {1.0 - htFractionOfTotal, htFractionOfTotal});
     ProcessSystem texArea = new ProcessSystem();
     texArea.setName("upstream process");
     texArea.add(feed);
@@ -232,7 +232,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
 
     // HT manifold: split HT stream A/B
     Splitter htManifold = new Splitter("manifold", texSplitter.getSplitStream(1), 2);
-    htManifold.setSplitFactors(new double[] { aSplit, bSplit });
+    htManifold.setSplitFactors(new double[] {aSplit, bSplit});
     ProcessSystem htManifoldArea = new ProcessSystem();
     htManifoldArea.setName("ht injection compressor manifold");
     htManifoldArea.add(htManifold);
@@ -287,7 +287,7 @@ public class ProcessModelLowFlowBypassParallelTrainsTest extends neqsim.NeqSimTe
     double totalFlow = 100000.0;
     Stream feed = new Stream("feed", makeGas(totalFlow));
     Splitter manifold = new Splitter("manifold", feed, 2);
-    manifold.setSplitFactors(new double[] { 1.0 - 1e-6, 1e-6 });
+    manifold.setSplitFactors(new double[] {1.0 - 1e-6, 1e-6});
 
     ProcessSystem manifoldArea = new ProcessSystem();
     manifoldArea.setName("manifold");

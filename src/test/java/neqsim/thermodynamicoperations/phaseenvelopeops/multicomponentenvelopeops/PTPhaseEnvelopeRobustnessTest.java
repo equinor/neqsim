@@ -677,7 +677,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    double[] betas = { 0.1, 0.5, 0.9 };
+    double[] betas = {0.1, 0.5, 0.9};
     ops.calcPTphaseEnvelopeWithQualityLines(betas);
 
     double[] cricondenbar = ops.get("cricondenbar");
@@ -919,7 +919,7 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertTrue(!((PTPhaseEnvelopeMichelsen) ops.getOperation()).isEnvelopeClosed());
     assertTrue(Arrays.stream(ops.get("cricondenbar")).allMatch(Double::isNaN));
     assertTrue(Arrays.stream(ops.get("cricondentherm")).allMatch(Double::isNaN));
-    for (String branch : new String[] { "dew", "bub" }) {
+    for (String branch : new String[] {"dew", "bub"}) {
       double[] temperatures = ops.get(branch + "T");
       double[] pressures = ops.get(branch + "P");
       assertEquals(temperatures.length, pressures.length);

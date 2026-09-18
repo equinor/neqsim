@@ -95,7 +95,7 @@ public class JavaFromColabGuideDocumentationTest extends neqsim.NeqSimTest {
           "docs/wiki/java_simulation_from_colab_notebooks.md: " + diagnostics.getDiagnostics());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);

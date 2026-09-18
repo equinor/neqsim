@@ -42,7 +42,7 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     assertTrue(deliveryCo2[deliveryCo2.length - 1] < baseline + 2.0e-3,
         "The delivery composition must return close to its initial state after the pulse.");
 
-    for (String edgeName : new String[] { "asgardBranch", "kristinBranch", "export" }) {
+    for (String edgeName : new String[] {"asgardBranch", "kristinBranch", "export"}) {
       TransientSpeciesConservationReport[] reports = history.getEdgeReports(edgeName);
       assertEquals(times.length, reports.length);
       double cumulativeInletMass = sum(reports[reports.length - 1].getInletBoundaryMassKg());
@@ -71,7 +71,7 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     network.run(600.0, TIME_STEP_SECONDS);
     TransientCompositionalPipeNetworkHistory history = network.getSpeciesHistory();
 
-    assertArrayEquals(new String[] { "CO2", "methane" }, history.getComponentNames());
+    assertArrayEquals(new String[] {"CO2", "methane"}, history.getComponentNames());
     double sourceACo2 = massFraction(gas(0.98, 0.02, false), "CO2");
     double sourceBCo2 = massFraction(gas(0.95, 0.05, true), "CO2");
     double expectedInitialJunctionCo2 = 0.5 * (sourceACo2 + sourceBCo2);
@@ -121,8 +121,8 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     reverse.addNode("sink");
     reverse.addPipe("pipe", "source", "sink", 1000.0, 0.3, 4, gas(0.98, 0.02, false));
     IllegalArgumentException reverseError = assertThrows(IllegalArgumentException.class,
-        () -> reverse.setSourceSchedule("source", new double[] { 0.0 },
-            new SystemInterface[] { gas(0.98, 0.02, false) }, new double[] { -1.0 }));
+        () -> reverse.setSourceSchedule("source", new double[] {0.0}, new SystemInterface[] {gas(0.98, 0.02, false)},
+            new double[] {-1.0}));
     assertTrue(reverseError.getMessage().contains("reverse flow"));
 
     TransientCompositionalPipeNetwork phaseAppearance = new TransientCompositionalPipeNetwork("two phase");
@@ -130,8 +130,8 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     phaseAppearance.addNode("sink");
     SystemInterface twoPhase = twoPhaseFluid();
     phaseAppearance.addPipe("pipe", "source", "sink", 1000.0, 0.3, 4, twoPhase);
-    phaseAppearance.setSourceSchedule("source", new double[] { 0.0 }, new SystemInterface[] { twoPhase },
-        new double[] { 10.0 });
+    phaseAppearance.setSourceSchedule("source", new double[] {0.0}, new SystemInterface[] {twoPhase},
+        new double[] {10.0});
     IllegalArgumentException phaseError = assertThrows(IllegalArgumentException.class,
         () -> phaseAppearance.run(60.0, 60.0));
     assertTrue(phaseError.getMessage().contains("phase appearance"));
@@ -141,8 +141,7 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     liquidNetwork.addNode("sink");
     SystemInterface liquid = singlePhaseLiquid();
     liquidNetwork.addPipe("pipe", "source", "sink", 1000.0, 0.3, 4, liquid);
-    liquidNetwork.setSourceSchedule("source", new double[] { 0.0 }, new SystemInterface[] { liquid },
-        new double[] { 10.0 });
+    liquidNetwork.setSourceSchedule("source", new double[] {0.0}, new SystemInterface[] {liquid}, new double[] {10.0});
     IllegalArgumentException liquidError = assertThrows(IllegalArgumentException.class,
         () -> liquidNetwork.run(60.0, 60.0));
     assertTrue(liquidError.getMessage().contains("exactly one gas phase"));
@@ -165,11 +164,11 @@ class TransientCompositionalPipeNetworkTest extends neqsim.NeqSimTest {
     network.addPipe("kristinBranch", "kristin", "junction", 2000.0, 0.4, cells, gas(0.95, 0.05, true));
     network.addPipe("export", "junction", "karsto", 4000.0, 0.4, cells, initialMixed);
 
-    network.setSourceSchedule("asgard", new double[] { 0.0 }, new SystemInterface[] { gas(0.98, 0.02, false) },
-        new double[] { 20.0 });
-    network.setSourceSchedule("kristin", new double[] { 0.0, 600.0, 1800.0 },
-        new SystemInterface[] { gas(0.95, 0.05, true), gas(0.75, 0.25, false), gas(0.95, 0.05, true) },
-        new double[] { 20.0, 18.0, 20.0 });
+    network.setSourceSchedule("asgard", new double[] {0.0}, new SystemInterface[] {gas(0.98, 0.02, false)},
+        new double[] {20.0});
+    network.setSourceSchedule("kristin", new double[] {0.0, 600.0, 1800.0},
+        new SystemInterface[] {gas(0.95, 0.05, true), gas(0.75, 0.25, false), gas(0.95, 0.05, true)},
+        new double[] {20.0, 18.0, 20.0});
     return network;
   }
 

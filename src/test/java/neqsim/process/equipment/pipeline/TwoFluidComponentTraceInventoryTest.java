@@ -17,10 +17,10 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Conservation of positive phase inventories around the absolute synchronization tolerance. */
 class TwoFluidComponentTraceInventoryTest {
   @ParameterizedTest
-  @ValueSource(doubles = { 1.0e-11, 5.0e-11, 1.0e-10, 2.0e-10 })
+  @ValueSource(doubles = {1.0e-11, 5.0e-11, 1.0e-10, 2.0e-10})
   void closedTracePhaseRetainsEveryComponentAcrossRepeatedSubsteps(double gasMassKg) {
     SystemInterface fluid = wetGas();
-    TwoFluidSection[] cells = { cell(gasMassKg) };
+    TwoFluidSection[] cells = {cell(gasMassKg)};
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
     double[] initial = transport.createReport(0.0, 0, 1.0e-8).getInitialInventoryKg();
 
@@ -35,14 +35,14 @@ class TwoFluidComponentTraceInventoryTest {
   @Test
   void prescribedWaterCondensationRetainsTracePhaseAndClosesAcrossTheThreshold() {
     SystemInterface fluid = wetGas();
-    TwoFluidSection[] cells = { cell(1.0) };
+    TwoFluidSection[] cells = {cell(1.0)};
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
     double[] initial = transport.createReport(0.0, 0, 1.0e-8).getInitialInventoryKg();
     double waterPerStepKg = 2.5e-11;
     // Isolate the inventory balance with a prescribed, equal-and-opposite water transfer over one second.
     // This tests bookkeeping only; it does not approximate equilibrium or latent heat.
-    double[][] sources = { { -waterPerStepKg, 0.0, waterPerStepKg } };
-    double[][][] componentSources = { { { 0.0, -waterPerStepKg }, { 0.0, 0.0 }, { 0.0, waterPerStepKg } } };
+    double[][] sources = {{-waterPerStepKg, 0.0, waterPerStepKg}};
+    double[][][] componentSources = {{{0.0, -waterPerStepKg}, {0.0, 0.0}, {0.0, waterPerStepKg}}};
 
     for (int step = 1; step <= 8; step++) {
       double waterMassKg = step * waterPerStepKg;
@@ -63,7 +63,7 @@ class TwoFluidComponentTraceInventoryTest {
   @Test
   void hydrodynamicRoundoffDoesNotCreateComponentsAndLargerMismatchRejects() {
     SystemInterface fluid = wetGas();
-    TwoFluidSection[] cells = { cell(1.0) };
+    TwoFluidSection[] cells = {cell(1.0)};
     TwoFluidComponentTransport transport = new TwoFluidComponentTransport(fluid, cells);
     cells[0].setWaterMassPerLength(5.0e-11);
     transport.advance(1.0, new double[2][3], new double[1][3], cells, fluid, fluid, 1.0e-8);

@@ -474,9 +474,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     }
 
     if (avg0 >= avg1) {
-      return new double[] { in0, out0, in1, out1 };
+      return new double[] {in0, out0, in1, out1};
     }
-    return new double[] { in1, out1, in0, out0 };
+    return new double[] {in1, out1, in0, out0};
   }
 
   private double[] determineSingleStreamTemperatures(Heater heater, UtilityStreamSpecification spec, double duty) {
@@ -521,9 +521,9 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     }
 
     if (heating) {
-      return new double[] { utilitySupply, utilityReturn, processIn, processOut };
+      return new double[] {utilitySupply, utilityReturn, processIn, processOut};
     }
-    return new double[] { processIn, processOut, utilitySupply, utilityReturn };
+    return new double[] {processIn, processOut, utilitySupply, utilityReturn};
   }
 
   private double calculateLmtd(double deltaT1, double deltaT2) {

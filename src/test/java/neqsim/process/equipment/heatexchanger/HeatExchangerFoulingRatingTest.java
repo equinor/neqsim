@@ -93,7 +93,7 @@ class HeatExchangerFoulingRatingTest extends neqsim.NeqSimTest {
 
   @Test
   void eitherSideCanBeHotAndIdentityAndEnergyArePreserved() {
-    for (double tubeTemperature : new double[] { 30.0, 110.0 }) {
+    for (double tubeTemperature : new double[] {30.0, 110.0}) {
       HeatExchanger exchanger = exchanger(tubeTemperature, 140.0 - tubeTemperature);
       UUID id = UUID.randomUUID();
       exchanger.run(id);

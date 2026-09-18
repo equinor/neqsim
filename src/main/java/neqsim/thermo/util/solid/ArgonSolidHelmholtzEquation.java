@@ -52,9 +52,9 @@ public final class ArgonSolidHelmholtzEquation implements SolidHelmholtzEquation
   private static final double C2 = -1.614;
   private static final double C3 = -0.01943;
   private static final double C4 = -27.64;
-  private static final double[] EINSTEIN_WEIGHTS = { 0.0261, 0.03784, 0.04512 };
-  private static final double[] EINSTEIN_TEMPERATURES = { 77.81, 550.0, 45.36 };
-  private static final double[] EINSTEIN_GRUNEISEN = { 6.221, 1.617e-6, 3.1278 };
+  private static final double[] EINSTEIN_WEIGHTS = {0.0261, 0.03784, 0.04512};
+  private static final double[] EINSTEIN_TEMPERATURES = {77.81, 550.0, 45.36};
+  private static final double[] EINSTEIN_GRUNEISEN = {6.221, 1.617e-6, 3.1278};
 
   private static final double Z1 = 140.0;
   private static final double Z2 = 2.34;

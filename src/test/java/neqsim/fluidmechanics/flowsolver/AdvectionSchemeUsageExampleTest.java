@@ -140,8 +140,8 @@ public class AdvectionSchemeUsageExampleTest {
     logger.info("Pipe length: " + (pipeLength / 1000) + " km");
     logger.info("Velocity: " + velocity + " m/s");
 
-    for (AdvectionScheme scheme : new AdvectionScheme[] { AdvectionScheme.FIRST_ORDER_UPWIND,
-        AdvectionScheme.TVD_VAN_LEER, AdvectionScheme.TVD_SUPERBEE }) {
+    for (AdvectionScheme scheme : new AdvectionScheme[] {AdvectionScheme.FIRST_ORDER_UPWIND,
+        AdvectionScheme.TVD_VAN_LEER, AdvectionScheme.TVD_SUPERBEE}) {
       // sigma = sqrt(2 * D_num * t) where D_num = (v*dx/2)*(1-CFL)*reductionFactor
       // sigma_target = sqrt(dx * L * (1-CFL) * reductionFactor)
       // dx = sigma_target^2 / (L * (1-CFL) * reductionFactor)
@@ -173,7 +173,7 @@ public class AdvectionSchemeUsageExampleTest {
     logger.info(String.format("%-8s %-10s %-10s %-10s %-10s", "r", "Minmod", "Van Leer", "Superbee", "Van Albada"));
     logger.info("---------------------------------------------------");
 
-    for (double r : new double[] { -1.0, 0.0, 0.5, 1.0, 2.0, 5.0, 10.0 }) {
+    for (double r : new double[] {-1.0, 0.0, 0.5, 1.0, 2.0, 5.0, 10.0}) {
       System.out.println(String.format("%-8.1f %-10.3f %-10.3f %-10.3f %-10.3f", r, FluxLimiter.minmod(r),
           FluxLimiter.vanLeer(r), FluxLimiter.superbee(r), FluxLimiter.vanAlbada(r)));
     }

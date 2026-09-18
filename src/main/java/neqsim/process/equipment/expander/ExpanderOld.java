@@ -176,7 +176,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
     }
 
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);

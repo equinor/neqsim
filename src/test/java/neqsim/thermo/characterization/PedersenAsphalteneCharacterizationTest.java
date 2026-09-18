@@ -345,7 +345,7 @@ public class PedersenAsphalteneCharacterizationTest {
     logger.info(String.format("%-12s | %-8s | %-12s", "P [bar]", "Phases", "Gas frac"));
     logger.info(StringUtils.repeat("-", 40));
 
-    double[] pressures = { 300, 250, 200, 150, 100, 50, 20 };
+    double[] pressures = {300, 250, 200, 150, 100, 50, 20};
     for (double p : pressures) {
       system.setPressure(p);
       try {
@@ -637,7 +637,7 @@ public class PedersenAsphalteneCharacterizationTest {
     // - Pc decreases
     // - Acentric factor increases
 
-    double[] mwValues = { 600, 800, 1000, 1500, 2000 };
+    double[] mwValues = {600, 800, 1000, 1500, 2000};
     double[] tcValues = new double[mwValues.length];
     double[] pcValues = new double[mwValues.length];
     double[] omegaValues = new double[mwValues.length];
@@ -674,7 +674,7 @@ public class PedersenAsphalteneCharacterizationTest {
     // - Higher critical temperature
     // - Different acentric factor behavior
 
-    double[] densities = { 1.00, 1.05, 1.10, 1.15, 1.20 };
+    double[] densities = {1.00, 1.05, 1.10, 1.15, 1.20};
     double fixedMW = 800.0;
 
     logger.info("\n=== Density Effect Analysis (MW=800) ===");

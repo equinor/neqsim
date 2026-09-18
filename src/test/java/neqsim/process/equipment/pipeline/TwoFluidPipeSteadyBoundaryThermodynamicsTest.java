@@ -62,7 +62,7 @@ class TwoFluidPipeSteadyBoundaryThermodynamicsTest {
   void fixedOutletGasProfileDoesNotDependOnTheFeedPressureInitialGuess() throws Exception {
     TwoFluidPipe reference = createPipe(false, 70.0, 20.0);
     TwoFluidPipe differentGuess = createPipe(false, 90.0, 20.0);
-    for (TwoFluidPipe pipe : new TwoFluidPipe[] { reference, differentGuess }) {
+    for (TwoFluidPipe pipe : new TwoFluidPipe[] {reference, differentGuess}) {
       pipe.setLength(10000.0);
       pipe.setNumberOfSections(40);
       pipe.setElevationProfile(new double[41]);

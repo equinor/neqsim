@@ -27,8 +27,8 @@ class TwoFluidUnsplitModelAdapterTest {
   private static final Logger logger = LogManager.getLogger(TwoFluidUnsplitModelAdapterTest.class);
 
   @ParameterizedTest
-  @CsvSource({ "4, 0.05, false", "4, 0.025, false", "8, 0.05, false", "8, 0.025, false", "4, 0.05, true",
-      "4, 0.025, true", "8, 0.05, true", "8, 0.025, true" })
+  @CsvSource({"4, 0.05, false", "4, 0.025, false", "8, 0.05, false", "8, 0.025, false", "4, 0.05, true",
+      "4, 0.025, true", "8, 0.05, true", "8, 0.025, true"})
   void fiveSecondIsothermalThreePhaseIntervalsConserveTheAcceptedTransportLedger(int cells, double dt,
       boolean interfacialPressure) {
     double length = 40.0;
@@ -55,7 +55,7 @@ class TwoFluidUnsplitModelAdapterTest {
     int steps = (int) Math.round(5.0 / dt);
     UnsplitTransientSolver solver = solver();
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations,
-        (cell, state, pressure, time) -> new double[] { 40.0 * pressure / 5.0e6, 700.0, 1000.0 }, solver);
+        (cell, state, pressure, time) -> new double[] {40.0 * pressure / 5.0e6, 700.0, 1000.0}, solver);
     for (int step = 0; step < steps; step++) {
       double time = step * dt;
       PreparedInterval interval = integrator.prepareInterval(accepted, length / cells, dt, time, 5.0e6, true, 1.0e-8);
@@ -104,7 +104,7 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void quiescentClosedThreePhaseStateRemainsAFixedPointAcrossPreparedSteps() {
-    TwoFluidSection[] accepted = { section(0.0), section(10.0), section(20.0) };
+    TwoFluidSection[] accepted = {section(0.0), section(10.0), section(20.0)};
     for (TwoFluidSection section : accepted) {
       section.setGasVelocity(0.0);
       section.setLiquidVelocity(0.0);
@@ -135,25 +135,25 @@ class TwoFluidUnsplitModelAdapterTest {
     TwoFluidSection template = section(0.0);
     template.setPressure(Double.NaN);
     assertThrows(IllegalArgumentException.class,
-        () -> adapter(isothermalEquations(), new TwoFluidSection[] { template }));
+        () -> adapter(isothermalEquations(), new TwoFluidSection[] {template}));
     template.setPressure(5.0e6);
     template.setOilMassPerLength(-1.0);
     assertThrows(IllegalArgumentException.class,
-        () -> adapter(isothermalEquations(), new TwoFluidSection[] { template }));
+        () -> adapter(isothermalEquations(), new TwoFluidSection[] {template}));
     template.setOilMassPerLength(1.0);
     template.setLength(0.0);
     assertThrows(IllegalArgumentException.class,
-        () -> adapter(isothermalEquations(), new TwoFluidSection[] { template }));
+        () -> adapter(isothermalEquations(), new TwoFluidSection[] {template}));
   }
 
   @Test
   void delegatesActiveSetOwnershipWithDefensiveStateCopies() {
-    TwoFluidSection[] accepted = { section(0.0) };
+    TwoFluidSection[] accepted = {section(0.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setIncludeEnergyEquation(false);
     equations.setIncludeMassTransfer(false);
-    double[][] state = { accepted[0].getStateVector() };
-    double[] pressure = { accepted[0].getPressure() };
+    double[][] state = {accepted[0].getStateVector()};
+    double[] pressure = {accepted[0].getPressure()};
     int[] calls = new int[3];
     TwoFluidUnsplitModelAdapter.ActiveSetController controller = new TwoFluidUnsplitModelAdapter.ActiveSetController() {
       private static final long serialVersionUID = 1L;
@@ -179,7 +179,7 @@ class TwoFluidUnsplitModelAdapterTest {
       }
     };
     TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
-        (cell, conservativeState, cellPressure, time) -> new double[] { 40.0, 700.0, 1000.0 }, controller);
+        (cell, conservativeState, cellPressure, time) -> new double[] {40.0, 700.0, 1000.0}, controller);
 
     adapter.beginLinearization(state, pressure);
     assertTrue(adapter.updateActiveSet(state, pressure));
@@ -195,7 +195,7 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void preparesARealThreePhaseStepWithExactNonuniformMeshLedgerWithoutCommitting() throws Exception {
-    TwoFluidSection[] accepted = { section(0.0), section(5.0), section(15.0) };
+    TwoFluidSection[] accepted = {section(0.0), section(5.0), section(15.0)};
     accepted[0].setLength(5.0);
     accepted[2].setLength(15.0);
     TwoFluidConservationEquations equations = isothermalEquations();
@@ -260,7 +260,7 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void rejectsChangedTimeStepBoundaryAndUnsupportedSourceSplits() {
-    TwoFluidSection[] accepted = { section(0.0), section(10.0) };
+    TwoFluidSection[] accepted = {section(0.0), section(10.0)};
     double[][] before = states(accepted);
     TwoFluidConservationEquations equations = isothermalEquations();
     TwoFluidUnsplitModelAdapter adapter = adapter(equations, accepted);
@@ -294,12 +294,12 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void rejectsAnUnconvergedResultAndAConvergedResultFromAnotherOperator() {
-    TwoFluidSection[] accepted = { section(0.0) };
+    TwoFluidSection[] accepted = {section(0.0)};
     TwoFluidConservationEquations equations = isothermalEquations();
     TwoFluidUnsplitModelAdapter adapter = adapter(equations, accepted);
     UnsplitTransientSolver.Model otherOperator = (state, pressure, closureState, closurePressure, time, outlet,
-        fixed) -> new UnsplitTransientSolver.Evaluation(new double[][] { new double[6] },
-            new double[][] { { 40.0 }, { 700.0 }, { 1000.0 } });
+        fixed) -> new UnsplitTransientSolver.Evaluation(new double[][] {new double[6]},
+            new double[][] {{40.0}, {700.0}, {1000.0}});
     UnsplitTransientSolver.Result unrelated = solver().solve(states(accepted), pressures(accepted), areas(accepted),
         0.1, 0.0, Double.NaN, false, otherOperator);
     assertTrue(unrelated.isConverged());
@@ -307,8 +307,8 @@ class TwoFluidUnsplitModelAdapterTest {
         () -> adapter.prepareStep(unrelated, 0.1, 0.0, Double.NaN, false, 1.0e-8));
 
     UnsplitTransientSolver.Model singularOperator = (state, pressure, closureState, closurePressure, time, outlet,
-        fixed) -> new UnsplitTransientSolver.Evaluation(new double[][] { { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 } },
-            new double[][] { { 40.0 }, { 700.0 }, { 1000.0 } });
+        fixed) -> new UnsplitTransientSolver.Evaluation(new double[][] {{1.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+            new double[][] {{40.0}, {700.0}, {1000.0}});
     UnsplitTransientSolver.Result failed = solver().solve(states(accepted), pressures(accepted), areas(accepted), 0.1,
         0.0, Double.NaN, false, singularOperator);
     assertFalse(failed.isConverged());
@@ -319,7 +319,7 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void restoresTheExternalPressureAndDiagnosticsWhenAnRhsProbeFails() {
-    TwoFluidSection[] accepted = { section(0.0), section(10.0) };
+    TwoFluidSection[] accepted = {section(0.0), section(10.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations() {
       private static final long serialVersionUID = 1L;
 
@@ -346,16 +346,16 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void usesTheSameMidpointCoefficientTimeForResidualAndEndpointPreparation() {
-    TwoFluidSection[] accepted = { section(0.0) };
+    TwoFluidSection[] accepted = {section(0.0)};
     TwoFluidConservationEquations equations = isothermalEquations();
     double start = 1.0;
     double dt = 0.002;
-    int[] evaluations = { 0 };
+    int[] evaluations = {0};
     TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
         (cell, state, pressure, time) -> {
           assertEquals(start + 0.5 * dt, time, 0.0);
           evaluations[0]++;
-          return new double[] { 40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0 };
+          return new double[] {40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0};
         });
     UnsplitTransientSolver.Result result = solver().solve(states(accepted), pressures(accepted), areas(accepted), dt,
         start, Double.NaN, false, adapter);
@@ -379,7 +379,7 @@ class TwoFluidUnsplitModelAdapterTest {
   private static TwoFluidUnsplitModelAdapter adapter(TwoFluidConservationEquations equations,
       TwoFluidSection[] sections) {
     return new TwoFluidUnsplitModelAdapter(equations, sections, 10.0,
-        (cell, state, pressure, time) -> new double[] { 40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0 });
+        (cell, state, pressure, time) -> new double[] {40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0});
   }
 
   private static UnsplitTransientSolver solver() {
@@ -425,7 +425,7 @@ class TwoFluidUnsplitModelAdapterTest {
 
   @Test
   void repeatedResidualProbesAreTransactionalAndUseTheOutletFacePressure() {
-    TwoFluidSection[] accepted = { section(0.0), section(10.0) };
+    TwoFluidSection[] accepted = {section(0.0), section(10.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setIncludeEnergyEquation(false);
     equations.setIncludeMassTransfer(false);
@@ -435,13 +435,12 @@ class TwoFluidUnsplitModelAdapterTest {
     double[][] acceptedFaces = equations.getLastPhaseMassFaceFluxes();
     boolean acceptedBackflow = equations.isOutletBackflowClamped();
 
-    double[][] state = { accepted[0].getStateVector(), accepted[1].getStateVector() };
-    double[][] acceptedState = { state[0].clone(), state[1].clone() };
-    double[] pressure = { accepted[0].getPressure(), accepted[1].getPressure() };
-    double[] area = { accepted[0].getArea(), accepted[1].getArea() };
-    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0,
-        (cell, conservativeState, cellPressure,
-            time) -> new double[] { 40.0 + 1.0e-6 * (cellPressure - 5.0e6), 700.0, 1000.0 });
+    double[][] state = {accepted[0].getStateVector(), accepted[1].getStateVector()};
+    double[][] acceptedState = {state[0].clone(), state[1].clone()};
+    double[] pressure = {accepted[0].getPressure(), accepted[1].getPressure()};
+    double[] area = {accepted[0].getArea(), accepted[1].getArea()};
+    TwoFluidUnsplitModelAdapter adapter = new TwoFluidUnsplitModelAdapter(equations, accepted, 10.0, (cell,
+        conservativeState, cellPressure, time) -> new double[] {40.0 + 1.0e-6 * (cellPressure - 5.0e6), 700.0, 1000.0});
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
 
     double[] free = solver.residual(state, pressure, state, pressure, area, 0.05, 0.0, Double.NaN, false, adapter);
@@ -456,7 +455,7 @@ class TwoFluidUnsplitModelAdapterTest {
     assertEquals(acceptedBackflow, equations.isOutletBackflowClamped());
     assertArrayEquals(acceptedState[0], accepted[0].getStateVector(), 0.0);
     assertArrayEquals(acceptedState[1], accepted[1].getStateVector(), 0.0);
-    assertArrayEquals(pressure, new double[] { accepted[0].getPressure(), accepted[1].getPressure() }, 0.0);
+    assertArrayEquals(pressure, new double[] {accepted[0].getPressure(), accepted[1].getPressure()}, 0.0);
   }
 
   private static TwoFluidSection section(double position) {

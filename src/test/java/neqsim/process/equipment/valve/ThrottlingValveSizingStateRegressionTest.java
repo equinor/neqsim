@@ -30,7 +30,7 @@ class ThrottlingValveSizingStateRegressionTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "bara, false", "barg, false", "kPa, false", "bara, true", "barg, true", "kPa, true" })
+  @CsvSource({"bara, false", "barg, false", "kPa, false", "bara, true", "barg, true", "kPa, true"})
   void pressureInversionPreservesUnitsAndDesignPoint(String unit, boolean isothermal) {
     Stream inlet = gasInlet();
     ThrottlingValve valve = new ThrottlingValve("sized valve", inlet);
@@ -47,7 +47,7 @@ class ThrottlingValveSizingStateRegressionTest extends neqsim.NeqSimTest {
     process.add(inlet);
     process.add(valve);
     double previousDrop = 0.0;
-    for (double factor : new double[] { 0.95, 1.0, 1.05 }) {
+    for (double factor : new double[] {0.95, 1.0, 1.05}) {
       inlet.setFlowRate(14942.5 * factor, "kg/hr");
       process.run();
       double outletPressure = valve.getOutletStream().getPressure("bara");
@@ -66,7 +66,7 @@ class ThrottlingValveSizingStateRegressionTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "bara", "barg", "kPa" })
+  @ValueSource(strings = {"bara", "barg", "kPa"})
   void transientPressureInversionPreservesUnits(String unit) {
     Stream inlet = gasInlet();
     ThrottlingValve valve = new ThrottlingValve("transient valve", inlet);
@@ -81,7 +81,7 @@ class ThrottlingValveSizingStateRegressionTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void copiedCvUsesTheSameEquationBeforeFirstRun(boolean richGas) {
     Stream inlet = gasInlet();
     if (!richGas) {

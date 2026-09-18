@@ -193,8 +193,8 @@ public class BaseContract implements ContractInterface {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Specification", "Value", "Country", "Terminal", "Minimum", "Maximum", "Unit", "Method",
-        "Reference temperature measurement", "Reference temperature of combustion", "Reference pressure", "Comments" };
+    String[] names = {"Specification", "Value", "Country", "Terminal", "Minimum", "Maximum", "Unit", "Method",
+        "Reference temperature measurement", "Reference temperature of combustion", "Reference pressure", "Comments"};
     JTable Jtab = new JTable(getResultTable(), names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);

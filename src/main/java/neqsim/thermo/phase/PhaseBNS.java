@@ -54,13 +54,12 @@ public class PhaseBNS extends PhasePrEos {
    */
   public void setBnsBips(double temperature) {
     double tpcHc = tcs[4];
-    int[][] pairs = { { 4, 0 }, { 4, 1 }, { 4, 2 }, { 4, 3 }, { 0, 1 }, { 0, 2 }, { 0, 3 }, { 1, 2 }, { 1, 3 },
-        { 2, 3 } };
-    double[] consts = { -0.145561, 0.16852, -0.108, -0.0620119, 0.248638, -0.25, -0.247153, -0.204414, 0.0, -0.166253 };
-    double[] slopes = { 0.276572, -0.122378, 0.0605506, 0.0427873, -0.138185, 0.11602, 0.16377, 0.234417, 0.0,
-        0.0788129 };
-    double[] tcsPair = { tpcHc, tpcHc, tpcHc, tpcHc, degRToK(547.416), degRToK(547.416), degRToK(547.416),
-        degRToK(672.12), degRToK(672.12), degRToK(227.16) };
+    int[][] pairs = {{4, 0}, {4, 1}, {4, 2}, {4, 3}, {0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}};
+    double[] consts = {-0.145561, 0.16852, -0.108, -0.0620119, 0.248638, -0.25, -0.247153, -0.204414, 0.0, -0.166253};
+    double[] slopes = {0.276572, -0.122378, 0.0605506, 0.0427873, -0.138185, 0.11602, 0.16377, 0.234417, 0.0,
+        0.0788129};
+    double[] tcsPair = {tpcHc, tpcHc, tpcHc, tpcHc, degRToK(547.416), degRToK(547.416), degRToK(547.416),
+        degRToK(672.12), degRToK(672.12), degRToK(227.16)};
     EosMixingRulesInterface mix = getMixingRule();
     for (int k = 0; k < pairs.length; k++) {
       int i = pairs[k][0];

@@ -121,7 +121,7 @@ class ThreePhaseGasScrubberTest {
       Assertions.assertTrue(scrubber.getOilLevel() <= scrubber.getMaxLiquidHeight() + 1e-6,
           "oil level within vessel at step " + i);
     }
-    return new double[] { scrubber.getWaterLevel(), scrubber.getOilLevel() };
+    return new double[] {scrubber.getWaterLevel(), scrubber.getOilLevel()};
   }
 
   /**

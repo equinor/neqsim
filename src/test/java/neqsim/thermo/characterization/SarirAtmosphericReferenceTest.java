@@ -20,10 +20,10 @@ import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionSe
 public class SarirAtmosphericReferenceTest {
   @Test
   public void tbpEvidencePreservesNumericCurveAndOpenEndedResidue() {
-    double[] expectedTemperatureCelsius = { 70.0, 90.0, 110.0, 150.0, 195.0, 215.0, 255.0, 275.0, 295.0, 335.0, 370.0,
-        400.0, 460.0, 480.0, 500.0, 520.0, 550.0 };
-    double[] expectedVolumePercent = { 7.44, 10.47, 13.83, 21.16, 28.52, 31.54, 38.03, 41.76, 44.68, 51.97, 59.19,
-        63.50, 72.52, 75.61, 78.66, 81.05, 83.70 };
+    double[] expectedTemperatureCelsius = {70.0, 90.0, 110.0, 150.0, 195.0, 215.0, 255.0, 275.0, 295.0, 335.0, 370.0,
+        400.0, 460.0, 480.0, 500.0, 520.0, 550.0};
+    double[] expectedVolumePercent = {7.44, 10.47, 13.83, 21.16, 28.52, 31.54, 38.03, 41.76, 44.68, 51.97, 59.19, 63.50,
+        72.52, 75.61, 78.66, 81.05, 83.70};
 
     assertArrayEquals(expectedTemperatureCelsius, SarirAtmosphericReference.getTbpTemperatureCelsius(), 0.0);
     assertArrayEquals(expectedVolumePercent, SarirAtmosphericReference.getTbpCumulativeVolumePercent(), 0.0);
@@ -122,9 +122,9 @@ public class SarirAtmosphericReferenceTest {
   @Test
   public void productYieldUnitsAndAduMappingsReconcileAcrossPublishedTables() {
     ProductYieldReference[] yields = SarirAtmosphericReference.getProductYields();
-    String[] aduNames = { "Naphtha", "Kerosene product", "Diesel product", "Residual" };
-    double[] plantKgPerHour = { 8706.25, 952.0833333333334, 17709.083333333332, 26937.5 };
-    double[] simulationKgPerHour = { 8675.0, 833.3333333333334, 16375.0, 29420.833333333332 };
+    String[] aduNames = {"Naphtha", "Kerosene product", "Diesel product", "Residual"};
+    double[] plantKgPerHour = {8706.25, 952.0833333333334, 17709.083333333332, 26937.5};
+    double[] simulationKgPerHour = {8675.0, 833.3333333333334, 16375.0, 29420.833333333332};
 
     for (int i = 0; i < yields.length; i++) {
       ProductYieldReference yield = yields[i];

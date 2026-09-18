@@ -14,7 +14,7 @@ import neqsim.process.equipment.powergeneration.SteamTurbine;
 /** Rating consistency across power generation strategy entry points. */
 class PowerGenerationCapacityStrategyTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(strings = { "gas", "steam", "hrsg", "combined" })
+  @ValueSource(strings = {"gas", "steam", "hrsg", "combined"})
   void nativeHardLimitsAndAdditionalConstraintsAreEnforced(String type) {
     ProcessEquipmentInterface equipment = equipment(type);
     setRating(equipment, 30.0);
@@ -33,7 +33,7 @@ class PowerGenerationCapacityStrategyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "gas", "steam", "hrsg", "combined" })
+  @ValueSource(strings = {"gas", "steam", "hrsg", "combined"})
   void equipmentRatingOverridesStrategyDefaultInBothCapacityApis(String type) {
     ProcessEquipmentInterface equipment = equipment(type);
     PowerGenerationCapacityStrategy strategy = new PowerGenerationCapacityStrategy(40000.0);
@@ -44,7 +44,7 @@ class PowerGenerationCapacityStrategyTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "gas", "steam", "hrsg", "combined" })
+  @ValueSource(strings = {"gas", "steam", "hrsg", "combined"})
   void unsetRatingUsesTheConfiguredFallback(String type) {
     ProcessEquipmentInterface equipment = equipment(type);
     assertRating(new PowerGenerationCapacityStrategy(), equipment, type, 50000.0);

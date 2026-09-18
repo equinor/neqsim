@@ -137,7 +137,7 @@ class ThreeFluidConservationEquationsTest {
 
   @Test
   void testStateVectorSetting() {
-    double[] state = { 10.0, 20.0, 15.0, 50.0, 20.0, 12.0, 0.0 };
+    double[] state = {10.0, 20.0, 15.0, 50.0, 20.0, 12.0, 0.0};
 
     equations.setStateVector(section, state);
 

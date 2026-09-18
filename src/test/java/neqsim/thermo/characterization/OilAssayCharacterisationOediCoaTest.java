@@ -20,7 +20,7 @@ public class OilAssayCharacterisationOediCoaTest {
       new CoaCase(60205, "South McCallum, Colorado", 0.765, 53.5, 75.0, 0.741, 19.8, 0.804, 4.2, 0.842, 1.0, 0.873,
           0.759036),
       new CoaCase(68120, "Vermilion Block 14, Louisiana", 0.782, 49.4, 49.7, 0.749, 38.5, 0.805, 0.0, 0.0, 11.8, 0.832,
-          0.780354) };
+          0.780354)};
 
   @Test
   public void testCompleteFourCategoryCoaDensityMatrix() {

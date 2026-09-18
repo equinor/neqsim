@@ -32,8 +32,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 @Tag("slow")
 public class PitzerHydrateSalinityValidationTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(PitzerHydrateSalinityValidationTest.class);
-  private static final String[] CATIONS = { "Na+", "K+", "Ca++", "Mg++" };
-  private static final double[] SALT_MOLAR_MASS = { 0.05844, 0.0745513, 0.11098, 0.095211 };
+  private static final String[] CATIONS = {"Na+", "K+", "Ca++", "Mg++"};
+  private static final double[] SALT_MOLAR_MASS = {0.05844, 0.0745513, 0.11098, 0.095211};
   private static final double TEMPERATURE_CRITERION_K = 1.0;
 
   private Map<String, Double> explicitZeroZeta() {
@@ -65,7 +65,7 @@ public class PitzerHydrateSalinityValidationTest extends neqsim.NeqSimTest {
   }
 
   private SystemPitzer singleSalt(int salt, double weightPercent, double pressure) {
-    double[] massParts = { 100.0 - weightPercent, 0.0, 0.0, 0.0, 0.0 };
+    double[] massParts = {100.0 - weightPercent, 0.0, 0.0, 0.0, 0.0};
     massParts[salt + 1] = weightPercent;
     return brine(massParts, pressure);
   }
@@ -176,11 +176,11 @@ public class PitzerHydrateSalinityValidationTest extends neqsim.NeqSimTest {
     int converged = 0;
     int unavailable = 0;
     for (int salt = 0; salt < CATIONS.length; salt++) {
-      for (double pressure : new double[] { 30.0, 100.0, 300.0 }) {
+      for (double pressure : new double[] {30.0, 100.0, 300.0}) {
         double lastTemperature = Double.POSITIVE_INFINITY;
         double lastActivity = Double.POSITIVE_INFINITY;
         boolean previousUnavailable = false;
-        for (double weightPercent : new double[] { 0.0, 1.0, 2.5, 5.0, 7.5, 10.0, 15.0, 20.0 }) {
+        for (double weightPercent : new double[] {0.0, 1.0, 2.5, 5.0, 7.5, 10.0, 15.0, 20.0}) {
           SystemPitzer fluid = singleSalt(salt, weightPercent, pressure);
           String prefix = CATIONS[salt] + "," + weightPercent + "," + pressure + ",";
           try {
@@ -226,7 +226,7 @@ public class PitzerHydrateSalinityValidationTest extends neqsim.NeqSimTest {
     SystemPitzer fresh = singleSalt(3, 0.0, 30.0);
     solve(fresh);
     // SI converts 200 and 400 mM to 1.90 and 3.81 wt%, respectively. Do not equate molarity and molality.
-    double[][] references = { { 1.90, 0.96 }, { 3.81, 1.57 } };
+    double[][] references = {{1.90, 0.96}, {3.81, 1.57}};
     for (double[] reference : references) {
       SystemPitzer saline = singleSalt(3, reference[0], 30.0);
       solve(saline);
@@ -240,7 +240,7 @@ public class PitzerHydrateSalinityValidationTest extends neqsim.NeqSimTest {
 
   @Test
   void potassiumMagnesiumThetaMustBeExplicitAndFiniteBeforeMutation() {
-    SystemPitzer fluid = brine(new double[] { 90.0, 0.0, 5.0, 0.0, 5.0 }, 100.0);
+    SystemPitzer fluid = brine(new double[] {90.0, 0.0, 5.0, 0.0, 5.0}, 100.0);
     PhasePitzer aqueous = (PhasePitzer) fluid.getPhases()[1];
     fluid.applyPhreeqcCo2ChlorideParameters(explicitZeroZeta(), 0.035);
     String dataset = aqueous.getParameterDatasetId();

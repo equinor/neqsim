@@ -1125,7 +1125,7 @@ public class DistillationColumnTest {
     StreamInterface capturedGas = column.getGasOutStream();
     StreamInterface capturedLiquid = column.getLiquidOutStream();
 
-    double[] feedRamp = { 120.0, 150.0, 150.0, 150.0, 150.0 };
+    double[] feedRamp = {120.0, 150.0, 150.0, 150.0, 150.0};
     for (int i = 0; i < feedRamp.length; i++) {
       feed.setFlowRate(feedRamp[i], "kg/hr");
       process.run();

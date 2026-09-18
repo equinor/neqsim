@@ -55,7 +55,7 @@ public class CombustionCalculatorTest {
         "CO2 fraction out of range: " + r.getFlueMoleFraction("CO2"));
     // major mole fractions sum to 1
     double sum = 0.0;
-    for (String k : new String[] { "N2", "O2", "CO2", "H2O", "Ar", "SO2" }) {
+    for (String k : new String[] {"N2", "O2", "CO2", "H2O", "Ar", "SO2"}) {
       sum += r.getFlueMoleFraction(k);
     }
     assertEquals(1.0, sum, 1.0e-6);

@@ -115,7 +115,7 @@ public class ProcessGraphTest {
     feed.run();
 
     Splitter splitter = new Splitter("splitter", feed);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
     splitter.run();
 
     Heater heater1 = new Heater("heater1", splitter.getSplitStream(0));
@@ -763,7 +763,7 @@ public class ProcessGraphTest {
     feed.setFlowRate(2000.0, "kg/hr");
     feed.run();
     Splitter splitter = new Splitter("splitter", feed);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
     splitter.run();
     feedSystem.add(feed);
     feedSystem.add(splitter);
@@ -1178,7 +1178,7 @@ public class ProcessGraphTest {
 
     // Anti-surge splitter
     Splitter splitter = new Splitter("antisurge splitter", compressor.getOutletStream());
-    splitter.setSplitFactors(new double[] { 0.95, 0.05 });
+    splitter.setSplitFactors(new double[] {0.95, 0.05});
 
     // Anti-surge cooler
     Cooler recycleHx = new Cooler("recycle cooler", splitter.getSplitStream(1));
@@ -1305,7 +1305,7 @@ public class ProcessGraphTest {
     comp.setOutletPressure(60.0);
 
     Splitter splitter = new Splitter("splitter", comp.getOutletStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
 
     ThrottlingValve recycleValve = new ThrottlingValve("recycle valve", splitter.getSplitStream(1));
     recycleValve.setOutletPressure(50.0);
@@ -1653,7 +1653,7 @@ public class ProcessGraphTest {
 
     // 7. Splitter (split gas stream)
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.7, 0.3 });
+    splitter.setSplitFactors(new double[] {0.7, 0.3});
     process.add(splitter);
 
     // 8. Mixer (combine split streams with another)
@@ -1953,7 +1953,7 @@ public class ProcessGraphTest {
     process.add(feed);
 
     ComponentSplitter compSplitter = new ComponentSplitter("comp splitter", feed);
-    compSplitter.setSplitFactors(new double[] { 1.0, 0.5, 0.0 }); // All methane, half ethane
+    compSplitter.setSplitFactors(new double[] {1.0, 0.5, 0.0}); // All methane, half ethane
     process.add(compSplitter);
 
     ProcessGraph graph = process.buildGraph();
@@ -2464,7 +2464,7 @@ public class ProcessGraphTest {
     neqsim.process.equipment.manifold.Manifold manifold = new neqsim.process.equipment.manifold.Manifold("manifold");
     manifold.addStream(inlet1);
     manifold.addStream(inlet2);
-    manifold.setSplitFactors(new double[] { 0.3, 0.5, 0.2 });
+    manifold.setSplitFactors(new double[] {0.3, 0.5, 0.2});
     system.add(manifold);
 
     // Add downstream equipment on one of the outputs

@@ -56,7 +56,7 @@ class TwoFluidPipeFinalReviewTest {
   @Test
   void invalidFixedStepMustRetainOnlyThePreviouslyAcceptedSubstep() throws Exception {
     TwoFluidPipe pipe = createPipe();
-    final int[] attempts = { 0 };
+    final int[] attempts = {0};
     TimeIntegrator integrator = new TimeIntegrator(TimeIntegrator.Method.EULER) {
       @Override
       public double[][] step(double[][] state, RHSFunction rhs, double dt) {

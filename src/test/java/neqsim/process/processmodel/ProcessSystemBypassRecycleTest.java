@@ -49,7 +49,7 @@ public class ProcessSystemBypassRecycleTest extends neqsim.NeqSimTest {
     Separator sep = new Separator("sep", mix.getOutletStream());
 
     Splitter gasSplit = new Splitter("gasSplit", sep.getGasOutStream(), 2);
-    gasSplit.setSplitFactors(new double[] { 0.9, 0.1 });
+    gasSplit.setSplitFactors(new double[] {0.9, 0.1});
 
     Heater recycleHeater = new Heater("recycleHeater", gasSplit.getSplitStream(1));
     recycleHeater.setOutletTemperature(305.0);

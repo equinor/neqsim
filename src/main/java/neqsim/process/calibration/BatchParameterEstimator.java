@@ -428,7 +428,7 @@ public class BatchParameterEstimator implements Serializable {
         }
 
         // Create dependent values array: [dataPointIndex, measurementIndex]
-        double[] dependentValues = new double[] { dpIdx, measIdx };
+        double[] dependentValues = new double[] {dpIdx, measIdx};
 
         // Create sample value with experimental value, std dev, and dependent values
         SampleValue sample = new SampleValue(expValue, meas.getStandardDeviation(), dependentValues);
@@ -621,7 +621,7 @@ public class BatchParameterEstimator implements Serializable {
     double bias = sumDev / n;
     double rSquared = sumSqTot > 0 ? 1.0 - sumSqRes / sumSqTot : Double.NaN;
 
-    return new double[] { mad, bias, rSquared };
+    return new double[] {mad, bias, rSquared};
   }
 
   // ==================== Results Access ====================
