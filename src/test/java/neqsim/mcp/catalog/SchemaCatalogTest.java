@@ -368,8 +368,8 @@ class SchemaCatalogTest {
   void testReliefSchemaMirrorsRunnerFieldNames() {
     JsonObject root = JsonParser.parseString(SchemaCatalog.reliefInputSchema()).getAsJsonObject();
     JsonObject props = root.getAsJsonObject("properties");
-    for (String field : new String[] { "case", "massFlowRate_kg_s", "setPressure_bara", "temperature_K",
-        "molecularWeight_kg_mol", "volumeFlowRate_m3_s", "liquidDensity_kg_m3", "gasMassFraction", "wettedArea_m2" }) {
+    for (String field : new String[] {"case", "massFlowRate_kg_s", "setPressure_bara", "temperature_K",
+        "molecularWeight_kg_mol", "volumeFlowRate_m3_s", "liquidDensity_kg_m3", "gasMassFraction", "wettedArea_m2"}) {
       assertTrue(props.has(field), "run_relief schema missing " + field);
     }
     assertTrue(root.has("allOf"), "case-dependent required fields must be declared");
