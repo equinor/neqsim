@@ -9,7 +9,57 @@
 
 ---
 
-## 2026-09-18 — Agent-plugin readiness: kebab-case ids, `required_skills` frontmatter, canonical MCP, plugin builder
+## 2026-09-18 — MCP tool contracts: schema coverage gate, `validateInput` for every tool, no more silent "success"
+
+An end-to-end probe of the packaged MCP server (`tools/list` + four task chains) found that
+breadth was fine (71 tools) but a model working blind lost turns to three contract defects.
+All three are fixed and gated:
+
+* **Every calculation tool has a real input schema.** `SchemaCatalog` now ships hand-written
+  input schemas for `run_relief`, `run_flare_network`, `run_lopa`, `run_sil`, `run_risk_matrix`,
+  `run_chemistry`, `design_utilities`, `run_hazop_scenario` and `run_parametric_study`; field
+  names and units mirror the runners exactly (`massFlowRate_kg_s`, `setPressure_bara`, …).
+  `SchemaCatalog.hasDetailedInputSchema(tool)` + `SchemaCatalogTest.testEveryCalculationToolHasDetailedInputSchema`
+  fail CI when a new `run_*` / `size_equipment` / `design_utilities` / `calculate_standard`
+  tool is added without one (orchestration tools are listed explicitly). `getSchema` accepts
+  `runRelief`, `run-relief` and `run_relief` (`SchemaCatalog.normalizeToolName`).
+* **`validateInput` validates any tool, not just flash/process.** Wrap the input as
+  `{"tool": "runRelief", "input": {...}}`; `Validator` checks it against the catalog schema with
+  the new dependency-free `neqsim.mcp.catalog.SchemaChecker` (type/required/enum/const/
+  minItems/allOf/anyOf/oneOf/if-then) and returns `SCHEMA_VIOLATION` issues naming the missing
+  or wrong field. Flash/process inputs nested under `input`/`processJson`/… are unwrapped.
+* **Process JSON pre-flight is now strict about the two mistakes that used to run silently.**
+  `UNRESOLVED_INLET` (error): an `inlet`/`inlets` entry that names no unit in the `process`
+  array (forward refs and `unit.port` aliases resolve; `interAreaLinks` targets are exempt).
+  `MISPLACED_UNIT_PARAMETERS` (error): keys beside `properties` on a unit (e.g.
+  `outletPressure_bara`) that the builder ignores. `UNRECOGNIZED_INPUT_SHAPE` (error): an
+  object with `fluid`/`units`/`equipment`/… but no `process`/`areas`/`components`, instead of
+  the misleading `MISSING_COMPONENTS`. `ProcessRunner` additionally refuses to report
+  `status: success` when the builder emitted an `Unresolved inlet` warning (`UNRESOLVED_INLET`).
+* **Hydrate risk never reports NaN as LOW.** `HydrateRiskMapper.RiskLevel.UNKNOWN` replaces the
+  old "assume safe if calculation failed"; the mapper now sets `setHydrateCheck(true)` on the
+  clone (the reason every MCP call returned NaN), refuses fluids without `water`, and exposes
+  `getFailureReasons()` / `getUnknownPointCount()` (also in `toJson()` as `failureReasons`,
+  `unknownPointCount`; `minimumSubcooling_C` is NaN, not `Double.MAX_VALUE`, when nothing
+  converged). `FlowAssuranceRunner` returns `status: error` / `RESULT_NOT_AVAILABLE` with the
+  partial data when a hydrateRiskMap (or waxAppearance) headline result is unavailable.
+  Callers that switched on `RiskLevel` must handle `UNKNOWN`.
+* **CPA fluids built from JSON default to the CPA mixing rule.** Every MCP runner and
+  `JsonProcessBuilder` fell back to `"classic"` (SRK kij database) for `model: "CPA"`, which gave a
+  wet-gas hydrate temperature of −0.04 °C at 100 bara where the CPA rule gives 15.7 °C (SRK
+  classic: 16.3 °C) — a silent wrong answer, not an error. New
+  `EosMixingRuleType.defaultForModel(model)` (→ `CLASSIC_TX_CPA` for any model containing "CPA",
+  `CLASSIC` otherwise) and `neqsim.mcp.runners.FluidDefaults.resolveMixingRule(input, model)` are
+  used by `FlashRunner`, `PVTRunner`, `FlowAssuranceRunner`, `PhaseEnvelopeRunner`,
+  `PropertyTableRunner`, `PipelineRunner`, `ReservoirRunner`, `StandardsRunner`,
+  `EquipmentSizingRunner` and `JsonProcessBuilder`. An explicit `mixingRule` is always honoured;
+  results of CPA inputs that omitted it will change (to the correct value).
+
+Agents: prefer `getSchema(<tool>, input)` → `validateInput({tool, input})` → run. Skills
+`neqsim-flow-assurance` and `neqsim-process-modeling` should mention the `{tool, input}`
+validation form and that a `hydrateRiskMap` fluid must contain water.
+
+---
 
 Preparation for packaging NeqSim skills, agents and the MCP server as
 [VS Code Agent Plugins 1.0](https://code.visualstudio.com/docs/agent-customization/agent-plugins).

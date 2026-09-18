@@ -2082,6 +2082,421 @@ public final class SchemaCatalog {
     return GSON.toJson(schema);
   }
 
+  // ========== Domain tool input schemas (mirror the runner field names exactly) ==========
+
+  /**
+   * Returns the JSON Schema for PSV sizing input (run_relief). Field names mirror {@code ReliefRunner} exactly.
+   *
+   * @return JSON Schema string
+   */
+  public static String reliefInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunReliefInput");
+    schema.put("description", "Input for run_relief: API 520/521 PSV sizing. 'case' selects the required fields. "
+        + "Pressures in bara (absolute), temperature in K, molecular weight in kg/mol (methane = 0.01604).");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("case", enumProp("Relief case (default gas)",
+        Arrays.asList("gas", "liquid", "twoPhase", "two_phase", "fireHeatInput", "fire")));
+    properties.put("massFlowRate_kg_s", numberProp("Required relief mass flow [kg/s] (gas, twoPhase)"));
+    properties.put("setPressure_bara", numberProp("PSV set pressure [bara] (gas, liquid, twoPhase)"));
+    properties.put("overpressureFraction",
+        numberProp("Allowable overpressure fraction; default 0.21 gas (fire), 0.10 liquid/twoPhase"));
+    properties.put("backPressure_bara", numberProp("Total back pressure [bara]; default 1.0"));
+    properties.put("temperature_K", numberProp("Relieving temperature [K] (gas, twoPhase)"));
+    properties.put("molecularWeight_kg_mol", numberProp("Gas molecular weight [kg/mol], e.g. 0.0185 (gas)"));
+    properties.put("compressibility", numberProp("Gas compressibility Z at relieving conditions; default 1.0"));
+    properties.put("specificHeatRatio", numberProp("Cp/Cv ratio k; default 1.3"));
+    properties.put("balancedBellows", boolProp("Balanced-bellows valve (applies Kb/Kw); default false"));
+    properties.put("ruptureDisk", boolProp("Rupture disk upstream (applies Kc = 0.9); default false"));
+    properties.put("volumeFlowRate_m3_s", numberProp("Liquid relief volume flow [m3/s] (liquid)"));
+    properties.put("liquidDensity_kg_m3", numberProp("Liquid density [kg/m3] (liquid, twoPhase)"));
+    properties.put("viscosity_Pa_s", numberProp("Liquid viscosity [Pa.s]; default 1e-3 (liquid)"));
+    properties.put("gasMassFraction", numberProp("Inlet gas mass fraction x [-] (twoPhase)"));
+    properties.put("gasDensity_kg_m3", numberProp("Gas density [kg/m3] (twoPhase)"));
+    properties.put("latentHeat_J_kg", numberProp("Latent heat of vaporisation [J/kg] (twoPhase)"));
+    properties.put("liquidCp_J_kgK", numberProp("Liquid heat capacity [J/(kg.K)] (twoPhase)"));
+    properties.put("wettedArea_m2", numberProp("Wetted vessel area [m2] (fireHeatInput)"));
+    properties.put("hasDrainage", boolProp("Adequate drainage per API 521 (fireHeatInput); default false"));
+    properties.put("hasFireFighting", boolProp("Prompt fire fighting available (fireHeatInput); default false"));
+    schema.put("properties", properties);
+
+    schema.put("allOf",
+        Arrays.asList(
+            selectorRequiredSchema("case", "gas", "massFlowRate_kg_s", "setPressure_bara", "temperature_K",
+                "molecularWeight_kg_mol"),
+            selectorRequiredSchema("case", "liquid", "volumeFlowRate_m3_s", "liquidDensity_kg_m3", "setPressure_bara"),
+            selectorRequiredSchema("case", "twoPhase", "massFlowRate_kg_s", "setPressure_bara", "temperature_K",
+                "gasMassFraction", "gasDensity_kg_m3", "liquidDensity_kg_m3", "latentHeat_J_kg", "liquidCp_J_kgK"),
+            selectorRequiredSchema("case", "fireHeatInput", "wettedArea_m2")));
+
+    Map<String, Object> example = new LinkedHashMap<String, Object>();
+    example.put("case", "gas");
+    example.put("massFlowRate_kg_s", 10.0);
+    example.put("setPressure_bara", 20.0);
+    example.put("temperature_K", 320.0);
+    example.put("molecularWeight_kg_mol", 0.0185);
+    example.put("compressibility", 0.95);
+    example.put("specificHeatRatio", 1.28);
+    schema.put("examples", Collections.singletonList(example));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for flare radiation input (run_flare_network). Mirrors {@code FlareRadiationRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String flareNetworkInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunFlareNetworkInput");
+    schema.put("description", "Input for run_flare_network: API 521 section 6 / API 537 point-source flare radiation. "
+        + "Returns flux at each distance and the safe ground distance for the API 521 thresholds.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("heatDuty_MW", numberProp("Flare heat release [MW] (either this or heatDuty_W)"));
+    properties.put("heatDuty_W", numberProp("Flare heat release [W] (either this or heatDuty_MW)"));
+    properties.put("flameHeight_m", numberProp("Flame height / tip elevation [m]; default from Flare model"));
+    properties.put("radiantFraction", numberProp("Fraction of heat release emitted as radiation; default 0.2-0.3"));
+    properties.put("distances_m", numberArraySchema("Ground distances [m] to evaluate; default 15..200 m"));
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("heatDuty_MW"), requiredSchema("heatDuty_W")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for LOPA screening input (run_lopa). Mirrors {@code LOPARunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String lopaInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunLopaInput");
+    schema.put("description", "Input for run_lopa: caller-supplied initiating-event frequency, target frequency and "
+        + "independent protection layers with PFDs. Screening only; max 100 layers, 16 kB.");
+    schema.put("type", "object");
+
+    Map<String, Object> layer = new LinkedHashMap<String, Object>();
+    layer.put("type", "object");
+    Map<String, Object> layerProps = new LinkedHashMap<String, Object>();
+    layerProps.put("name", stringProp("Protection layer name (<= 256 chars)"));
+    layerProps.put("pfd", numberProp("Probability of failure on demand, 0 < pfd <= 1"));
+    layer.put("properties", layerProps);
+    layer.put("required", Arrays.asList("name", "pfd"));
+    Map<String, Object> layers = new LinkedHashMap<String, Object>();
+    layers.put("type", "array");
+    layers.put("description", "Independent protection layers in order of demand");
+    layers.put("items", layer);
+    layers.put("minItems", 1);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("scenario", stringProp("Scenario name (<= 256 chars); default 'unnamed scenario'"));
+    properties.put("initiatingEventFrequency_per_year", numberProp("Initiating event frequency [1/yr], > 0"));
+    properties.put("targetFrequency_per_year", numberProp("Tolerable mitigated frequency [1/yr], > 0"));
+    properties.put("layers", layers);
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("initiatingEventFrequency_per_year", "targetFrequency_per_year", "layers"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for SIL verification input (run_sil). Mirrors {@code SILRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String silInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunSilInput");
+    schema.put("description", "Input for run_sil: IEC 61508/61511 low-demand SIL screening of one SIF. Provide "
+        + "exactly one of 'pfdAvg' (whole loop) or 'components' (sensor/logic/finalElement contributions).");
+    schema.put("type", "object");
+
+    Map<String, Object> component = new LinkedHashMap<String, Object>();
+    component.put("type", "object");
+    Map<String, Object> componentProps = new LinkedHashMap<String, Object>();
+    componentProps.put("name", stringProp("Component name"));
+    componentProps.put("type", enumProp("Subsystem", Arrays.asList("sensor", "logic", "finalElement")));
+    componentProps.put("pfd", numberProp("Component PFDavg (exactly one of pfd or lambdaDU_per_hr)"));
+    componentProps.put("lambdaDU_per_hr",
+        numberProp("Dangerous undetected failure rate [1/h]; PFD = lambdaDU * TI / 2"));
+    component.put("properties", componentProps);
+    component.put("required", Arrays.asList("name", "type"));
+    Map<String, Object> components = new LinkedHashMap<String, Object>();
+    components.put("type", "array");
+    components.put("description", "Subsystem contributions summed to the loop PFDavg (max 100)");
+    components.put("items", component);
+    components.put("minItems", 1);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("name", stringProp("SIF identifier; default SIF-001"));
+    properties.put("description", stringProp("SIF description; default 'Safety function'"));
+    properties.put("claimedSIL", intProp("Claimed SIL, integer 1-4"));
+    properties.put("architecture", enumProp("Voting architecture", Arrays.asList("1oo1", "1oo2", "2oo3")));
+    properties.put("proofTestInterval_hours", numberProp("Proof-test interval [h], 0 < TI <= 87600; default 8760"));
+    properties.put("pfdAvg", numberProp("Loop PFDavg when not built from components"));
+    properties.put("components", components);
+    schema.put("properties", properties);
+    schema.put("oneOf", Arrays.asList(requiredSchema("pfdAvg"), requiredSchema("components")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for risk-matrix scoring input (run_risk_matrix). Mirrors {@code RiskMatrixRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String riskMatrixInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunRiskMatrixInput");
+    schema.put("description", "Input for run_risk_matrix: 5x5 probability x consequence scoring of risk events. "
+        + "Each event uses exactly one input mode: explicit levels, or failuresPerYear + productionLossPercent.");
+    schema.put("type", "object");
+
+    Map<String, Object> event = new LinkedHashMap<String, Object>();
+    event.put("type", "object");
+    Map<String, Object> eventProps = new LinkedHashMap<String, Object>();
+    eventProps.put("name", stringProp("Event name; default 'Event n'"));
+    eventProps.put("probabilityLevel", intProp("Probability level 1-5 (explicit mode)"));
+    eventProps.put("consequenceLevel", intProp("Consequence level 1-5 (explicit mode)"));
+    eventProps.put("failuresPerYear", numberProp("Event frequency [1/yr], >= 0 (measured mode)"));
+    eventProps.put("productionLossPercent", numberProp("Production loss 0-100 % (measured mode)"));
+    event.put("properties", eventProps);
+    event.put("oneOf", Arrays.asList(requiredSchema("probabilityLevel", "consequenceLevel"),
+        requiredSchema("failuresPerYear", "productionLossPercent")));
+    Map<String, Object> events = new LinkedHashMap<String, Object>();
+    events.put("type", "array");
+    events.put("description", "Risk events to score (1-100)");
+    events.put("items", event);
+    events.put("minItems", 1);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("events", events);
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("events"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for production-chemistry input (run_chemistry). Mirrors {@code ChemistryRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String chemistryInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunChemistryInput");
+    schema.put("description",
+        "Input for run_chemistry. 'analysis' selects the calculator; ion concentrations are "
+            + "mg/L, temperature_C in Celsius, pressure_bara absolute. Electrolyte equilibrium analyses instead take "
+            + "temperature_K plus a 'components' map in mol (must include water) and a COMPSALT 'mineral' name.");
+    schema.put("type", "object");
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("analysis",
+        enumProp("Chemistry analysis",
+            Arrays.asList("electrolyteScale", "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor",
+                "packedBedScavenger", "electrolyteScaleEquilibrium", "electrolyteMultiScaleEquilibrium",
+                "pitzerQualification")));
+    properties.put("temperature_C", numberProp("Temperature [C]; default 60 (scale, corrosion, inhibitor)"));
+    properties.put("pressure_bara", numberProp("Pressure [bara]; default 50 (80 for mechanisticCorrosion)"));
+    properties.put("pH",
+        numberProp("Brine pH; default 6.5 scale / 5.5 corrosion; omit for auto-pH in multiMineralScale"));
+    properties.put("pCO2_bar", numberProp("CO2 partial pressure [bar]"));
+    for (String ion : Arrays.asList("ca", "ba", "sr", "mg", "na", "k", "fe", "cl", "so4", "hco3", "co3")) {
+      properties.put(ion + "_mgL", numberProp(ion.toUpperCase() + " concentration [mg/L]; default 0"));
+    }
+    properties.put("tds_mgL", numberProp("Total dissolved solids [mg/L] (multiMineralScale)"));
+    properties.put("activityModel", enumProp("Activity model (multiMineralScale)", Arrays.asList("DAVIES", "BDOT")));
+    properties.put("waterFlow_LPerDay", numberProp("Produced-water flow [L/day] to report kg/day scale rates"));
+    properties.put("secondOrderPressure", boolProp("Second-order pressure correction (multiMineralScale)"));
+    properties.put("co2_mol", numberProp("CO2 mole fraction in gas (mechanisticCorrosion); default 0.05"));
+    properties.put("h2s_mol", numberProp("H2S mole fraction in gas (mechanisticCorrosion); default 0"));
+    properties.put("bicarb_mgL", numberProp("Bicarbonate [mg/L] (mechanisticCorrosion); default 100"));
+    properties.put("ionicStrength_molL", numberProp("Ionic strength [mol/L] (mechanisticCorrosion); default 0.5"));
+    properties.put("velocity_ms", numberProp("Flow velocity [m/s] (mechanisticCorrosion); default 2"));
+    properties.put("diameter_m", numberProp("Pipe or bed diameter [m]"));
+    properties.put("density_kgm3", numberProp("Liquid density [kg/m3]; default 1000"));
+    properties.put("viscosity_pas", numberProp("Liquid viscosity [Pa.s]; default 1e-3"));
+    properties.put("dose_mgL", numberProp("Inhibitor dose [mg/L]"));
+    properties.put("kAdsRef", numberProp("Langmuir adsorption constant at reference T [L/mol]"));
+    properties.put("dHads_kJmol", numberProp("Adsorption enthalpy [kJ/mol]; default -35"));
+    properties.put("thetaMax", numberProp("Maximum surface coverage; default 0.95"));
+    properties.put("molarMass_gmol", numberProp("Inhibitor molar mass [g/mol]; default 350"));
+    properties.put("targetEfficiency", numberProp("Target inhibition efficiency 0-1 (langmuirInhibitor)"));
+    properties.put("height_m", numberProp("Packed-bed height [m] (packedBedScavenger)"));
+    properties.put("voidage", numberProp("Bed voidage; default 0.4"));
+    properties.put("loading_mol_kg", numberProp("Scavenger capacity [mol/kg]; default 5"));
+    properties.put("bulkDensity_kgm3", numberProp("Bulk density [kg/m3]; default 1100"));
+    properties.put("stoichiometricRatio", numberProp("Stoichiometric ratio; default 1"));
+    properties.put("k_per_s", numberProp("Reaction rate constant [1/s]; default 5"));
+    properties.put("cInlet_molm3", numberProp("Inlet contaminant concentration [mol/m3]; default 1"));
+    properties.put("flow_m3s", numberProp("Volumetric feed flow [m3/s]; default 0.005"));
+    properties.put("nCells", intProp("Axial cells; default 30"));
+    properties.put("nTimeSteps", intProp("Time steps; default 100"));
+    properties.put("simTime_s", numberProp("Simulated time [s]; default 30 days"));
+    properties.put("breakthroughFraction", numberProp("Outlet/inlet fraction defining breakthrough; default 0.05"));
+    properties.put("temperature_K", numberProp("Temperature [K] (electrolyte equilibrium analyses)"));
+    properties.put("components", objectProp("Component amounts in mol incl. water and ions (equilibrium analyses)"));
+    properties.put("mineral", stringProp("COMPSALT mineral name, e.g. CaSO4 (electrolyteScaleEquilibrium)"));
+    properties.put("minerals", stringArraySchema("Mineral names (electrolyteMultiScaleEquilibrium)"));
+    properties.put("model", enumProp("Electrolyte model", Arrays.asList("pitzer", "cpa")));
+    properties.put("dataset", stringProp("Pitzer parameter dataset selector; default phreeqc-ca-mg-cl-so4"));
+    properties.put("validationTarget", stringProp("Qualification target name (pitzerQualification)"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("analysis"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for utility design input (design_utilities). Mirrors {@code UtilityDesignRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String utilityDesignInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "DesignUtilitiesInput");
+    schema.put("description", "Input for design_utilities: screening-level utility package sizing. 'utilityType' "
+        + "selects the designer; duties are kW, temperatures C, pressures bara/barg as named.");
+    schema.put("type", "object");
+
+    Map<String, Object> duty = new LinkedHashMap<String, Object>();
+    duty.put("type", "object");
+    Map<String, Object> dutyProps = new LinkedHashMap<String, Object>();
+    dutyProps.put("name", stringProp("Consumer name"));
+    dutyProps.put("dutyKW", numberProp("Duty [kW]"));
+    duty.put("properties", dutyProps);
+    Map<String, Object> duties = new LinkedHashMap<String, Object>();
+    duties.put("type", "array");
+    duties.put("description", "Consumers served by the package (boiler, refrigeration)");
+    duties.put("items", duty);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("utilityType",
+        enumProp("Utility package", Arrays.asList("boiler", "deaerator", "refrigeration", "nitrogen", "steamNetwork")));
+    properties.put("name", stringProp("Package name"));
+    properties.put("duties", duties);
+    properties.put("dutyKW", numberProp("Single duty [kW] when 'duties' is omitted"));
+    properties.put("boilerEfficiency", numberProp("Boiler fuel efficiency 0-1"));
+    properties.put("fuelLowHeatingValueMJperKg", numberProp("Fuel LHV [MJ/kg]"));
+    properties.put("steamEnthalpyRiseKJperKg", numberProp("Steam enthalpy rise [kJ/kg] (boiler, steamNetwork)"));
+    properties.put("annualOperatingHours", numberProp("Operating hours per year"));
+    properties.put("feedwaterFlowKgh", numberProp("Feedwater flow [kg/h] (deaerator)"));
+    properties.put("feedwaterInletTempC", numberProp("Feedwater inlet temperature [C] (deaerator)"));
+    properties.put("operatingPressureBara", numberProp("Deaerator operating pressure [bara]"));
+    properties.put("refrigerant", stringProp("Refrigerant name, e.g. propane (refrigeration)"));
+    properties.put("evaporatorTempC", numberProp("Evaporator temperature [C]"));
+    properties.put("condenserTempC", numberProp("Condenser temperature [C]"));
+    properties.put("cycleEfficiency", numberProp("Cycle efficiency relative to Carnot 0-1"));
+    properties.put("electricityCostPerKWh", numberProp("Electricity price per kWh"));
+    properties.put("nitrogenDemandNm3h", numberProp("Nitrogen demand [Nm3/h] (nitrogen)"));
+    properties.put("purityPercent", numberProp("Nitrogen purity [%]"));
+    properties.put("deliveryPressureBarg", numberProp("Nitrogen delivery pressure [barg]"));
+    properties.put("generationMethod", stringProp("MEMBRANE, PSA or CRYOGENIC (nitrogen)"));
+    properties.put("specificEnergyOverride", numberProp("Specific energy override [kWh/Nm3]"));
+    properties.put("condensateReturnFraction", numberProp("Condensate return fraction 0-1 (steamNetwork)"));
+    properties.put("levels", typedArraySchema("Steam header levels with name and pressure (steamNetwork)"));
+    properties.put("demands", typedArraySchema("Steam demands per level (steamNetwork)"));
+    properties.put("localGeneration", typedArraySchema("Local steam generation per level (steamNetwork)"));
+    schema.put("properties", properties);
+    schema.put("required", Collections.singletonList("utilityType"));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for simulation-backed HAZOP deviation quantification (run_hazop_scenario).
+   *
+   * @return JSON Schema string
+   */
+  public static String hazopScenarioInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunHazopScenarioInput");
+    schema.put("description", "Input for run_hazop_scenario: runs the process JSON, then quantifies HAZOP "
+        + "deviations (currently compressor/expander MORE TEMPERATURE and valve LESS TEMPERATURE) against limits.");
+    schema.put("type", "object");
+
+    Map<String, Object> limits = new LinkedHashMap<String, Object>();
+    limits.put("type", "object");
+    Map<String, Object> limitProps = new LinkedHashMap<String, Object>();
+    limitProps.put("maxDischargeTemperatureC", numberProp("Plant-wide maximum discharge temperature [C]"));
+    limitProps.put("minDesignMetalTemperatureC", numberProp("Plant-wide minimum design metal temperature [C]"));
+    limitProps.put("maxDischargeTemperatureByUnit", objectProp("Per-unit discharge temperature limits [C]"));
+    limitProps.put("minDesignMetalTemperatureByUnit", objectProp("Per-unit MDMT limits [C]"));
+    limits.put("properties", limitProps);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("process", objectProp("Standard run_process JSON definition (or pass fluid+process at top level)"));
+    properties.put("nodeTag", stringProp("Optional unit-name / node-id filter"));
+    properties.put("guideWord", stringProp("Optional guide word filter, e.g. MORE, LESS"));
+    properties.put("parameter", stringProp("Optional parameter filter, e.g. TEMPERATURE, PRESSURE"));
+    properties.put("limits", limits);
+    schema.put("properties", properties);
+    schema.put("anyOf", Arrays.asList(requiredSchema("process"), requiredSchema("fluid", "process")));
+    return GSON.toJson(schema);
+  }
+
+  /**
+   * Returns the JSON Schema for parametric study input (run_parametric_study). Mirrors {@code ParametricStudyRunner}.
+   *
+   * @return JSON Schema string
+   */
+  public static String parametricStudyInputSchema() {
+    Map<String, Object> schema = new LinkedHashMap<String, Object>();
+    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
+    schema.put("title", "RunParametricStudyInput");
+    schema.put("description", "Input for run_parametric_study: sweeps automation-addressable inputs of a base "
+        + "process definition and records the requested outputs per case.");
+    schema.put("type", "object");
+
+    Map<String, Object> sweep = new LinkedHashMap<String, Object>();
+    sweep.put("type", "object");
+    Map<String, Object> sweepProps = new LinkedHashMap<String, Object>();
+    sweepProps.put("address", stringProp("Automation address, e.g. 'Compressor.outletPressure'"));
+    sweepProps.put("values", numberArraySchema("Explicit values to sweep"));
+    sweepProps.put("from", numberProp("Range start (with to and steps instead of values)"));
+    sweepProps.put("to", numberProp("Range end"));
+    sweepProps.put("steps", intProp("Number of range points (>= 2)"));
+    sweepProps.put("unit", stringProp("Unit of the swept values, e.g. bara, C, kg/hr"));
+    sweep.put("properties", sweepProps);
+    sweep.put("required", Collections.singletonList("address"));
+    sweep.put("anyOf", Arrays.asList(requiredSchema("values"), requiredSchema("from", "to", "steps")));
+    Map<String, Object> sweeps = new LinkedHashMap<String, Object>();
+    sweeps.put("type", "array");
+    sweeps.put("description", "Input variables to sweep");
+    sweeps.put("items", sweep);
+    sweeps.put("minItems", 1);
+
+    Map<String, Object> output = new LinkedHashMap<String, Object>();
+    output.put("type", "object");
+    Map<String, Object> outputProps = new LinkedHashMap<String, Object>();
+    outputProps.put("address", stringProp("Automation address to record, e.g. 'Compressor.power'"));
+    outputProps.put("unit", stringProp("Unit for the recorded value, e.g. kW"));
+    output.put("properties", outputProps);
+    output.put("required", Collections.singletonList("address"));
+    Map<String, Object> outputs = new LinkedHashMap<String, Object>();
+    outputs.put("type", "array");
+    outputs.put("description", "Outputs recorded for every case");
+    outputs.put("items", output);
+
+    Map<String, Object> properties = new LinkedHashMap<String, Object>();
+    properties.put("baseProcess", objectProp("Standard run_process JSON definition"));
+    properties.put("sweeps", sweeps);
+    properties.put("mode",
+        enumProp("Sweep combination mode; default one_at_a_time", Arrays.asList("one_at_a_time", "full_factorial")));
+    properties.put("outputs", outputs);
+    schema.put("properties", properties);
+    schema.put("required", Arrays.asList("baseProcess", "sweeps"));
+    return GSON.toJson(schema);
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -2123,6 +2538,7 @@ public final class SchemaCatalog {
     if (!"input".equals(schemaType) && !"output".equals(schemaType)) {
       return null;
     }
+    toolName = normalizeToolName(toolName);
     if ("run_flash".equals(toolName)) {
       return "input".equals(schemaType) ? flashInputSchema() : flashOutputSchema();
     } else if ("run_process".equals(toolName)) {
@@ -2184,11 +2600,76 @@ public final class SchemaCatalog {
       return "input".equals(schemaType) ? barrierRegisterInputSchema() : barrierRegisterOutputSchema();
     } else if ("run_safety_system_performance".equals(toolName)) {
       return "input".equals(schemaType) ? safetySystemPerformanceInputSchema() : safetySystemPerformanceOutputSchema();
+    } else if ("run_relief".equals(toolName)) {
+      return "input".equals(schemaType) ? reliefInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_flare_network".equals(toolName)) {
+      return "input".equals(schemaType) ? flareNetworkInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_lopa".equals(toolName)) {
+      return "input".equals(schemaType) ? lopaInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_sil".equals(toolName)) {
+      return "input".equals(schemaType) ? silInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_risk_matrix".equals(toolName)) {
+      return "input".equals(schemaType) ? riskMatrixInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_chemistry".equals(toolName)) {
+      return "input".equals(schemaType) ? chemistryInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("design_utilities".equals(toolName)) {
+      return "input".equals(schemaType) ? utilityDesignInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_hazop_scenario".equals(toolName)) {
+      return "input".equals(schemaType) ? hazopScenarioInputSchema() : genericToolOutputSchema(toolName);
+    } else if ("run_parametric_study".equals(toolName)) {
+      return "input".equals(schemaType) ? parametricStudyInputSchema() : genericToolOutputSchema(toolName);
     }
     if (getToolNames().contains(toolName)) {
       return "input".equals(schemaType) ? genericToolInputSchema(toolName) : genericToolOutputSchema(toolName);
     }
     return null;
+  }
+
+  /**
+   * Reports whether a tool has a hand-written input schema that mirrors its runner, as opposed to the generic
+   * placeholder returned for orchestration tools.
+   *
+   * <p>
+   * Every calculation tool (name starting with {@code run_}, plus {@code size_equipment}, {@code design_utilities} and
+   * {@code calculate_standard}) is expected to return {@code true}; {@code SchemaCatalogTest} enforces this so a new
+   * runner cannot ship without a discoverable input contract.
+   * </p>
+   *
+   * @param toolName snake_case tool name
+   * @return true when {@link #getSchema(String, String)} returns a tool-specific input schema
+   */
+  public static boolean hasDetailedInputSchema(String toolName) {
+    String schema = getSchema(toolName, "input");
+    return schema != null && !schema.contains("\"Generic input object for ");
+  }
+
+  /**
+   * Maps an MCP tool name to the catalog key: {@code runRelief}, {@code run-relief} and {@code run_relief} all resolve
+   * to {@code run_relief}. Names already in snake_case are returned unchanged.
+   *
+   * @param toolName tool name in any of the accepted spellings, may be null
+   * @return snake_case catalog key, or null when the input is null
+   */
+  public static String normalizeToolName(String toolName) {
+    if (toolName == null) {
+      return null;
+    }
+    String trimmed = toolName.trim();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < trimmed.length(); i++) {
+      char ch = trimmed.charAt(i);
+      if (ch == '-') {
+        sb.append('_');
+      } else if (Character.isUpperCase(ch)) {
+        if (i > 0 && trimmed.charAt(i - 1) != '_' && !Character.isUpperCase(trimmed.charAt(i - 1))) {
+          sb.append('_');
+        }
+        sb.append(Character.toLowerCase(ch));
+      } else {
+        sb.append(ch);
+      }
+    }
+    return sb.toString();
   }
 
   /**
@@ -2497,12 +2978,26 @@ public final class SchemaCatalog {
    * @return the conditional schema map
    */
   private static Map<String, Object> conditionalRequiredSchema(String action, String... fields) {
+    return selectorRequiredSchema("action", action, fields);
+  }
+
+  /**
+   * Creates a selector-dependent required-field rule for tools whose mode field is not named {@code action}.
+   *
+   * @param selectorField name of the mode-selecting field, e.g. {@code case}
+   * @param selectorValue selector value that activates the rule
+   * @param fields fields required for that selector value
+   * @return the conditional schema map
+   */
+  private static Map<String, Object> selectorRequiredSchema(String selectorField, String selectorValue,
+      String... fields) {
     Map<String, Object> condition = new LinkedHashMap<String, Object>();
-    Map<String, Object> actionSchema = new LinkedHashMap<String, Object>();
-    actionSchema.put("const", action);
+    Map<String, Object> selectorSchema = new LinkedHashMap<String, Object>();
+    selectorSchema.put("const", selectorValue);
     Map<String, Object> conditionProperties = new LinkedHashMap<String, Object>();
-    conditionProperties.put("action", actionSchema);
+    conditionProperties.put(selectorField, selectorSchema);
     condition.put("properties", conditionProperties);
+    condition.put("required", Collections.singletonList(selectorField));
 
     Map<String, Object> rule = new LinkedHashMap<String, Object>();
     rule.put("if", condition);

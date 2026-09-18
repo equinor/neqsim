@@ -901,7 +901,8 @@ public class JsonProcessBuilder {
 
       // Set mixing rule
       if (!fluidDef.has("e300FilePath")) {
-        String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString() : "classic";
+        String mixingRule = fluidDef.has("mixingRule") ? fluidDef.get("mixingRule").getAsString()
+            : neqsim.thermo.mixingrule.EosMixingRuleType.defaultForModel(model).name();
         applyMixingRule(fluid, mixingRule);
       }
 

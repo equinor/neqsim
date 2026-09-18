@@ -211,15 +211,15 @@ public class NeqSimTools {
    * @param inputJson the JSON string to validate
    * @return JSON string with validation results
    */
-  @Tool(description = "Validate a flash or process JSON input before running it. "
-      + "Checks component names, temperature/pressure ranges, EOS compatibility, "
-      + "and process wiring. Process JSON may contain named fluids, fluidRef, plural inlets, "
-      + "forward recycle references, areas, and interAreaLinks. Returns issues with severity "
-      + "and fix suggestions. Validation is pre-flight only; a successful run must still be "
-      + "checked for convergence, warnings, and mass/energy balance closure.")
+  @Tool(description = "Validate a tool input before running it. Flash and process JSON are auto-detected and "
+      + "checked for component names, T/P ranges, EOS compatibility, unresolved inlet references and equipment "
+      + "parameters placed outside 'properties'. Any other tool input is validated against its catalog schema by "
+      + "wrapping it: {\"tool\": \"runRelief\", \"input\": {...}} (camelCase or snake_case tool name). "
+      + "Returns issues with severity and fix suggestions. Validation is pre-flight only; a successful run must still "
+      + "be checked for convergence, warnings, and mass/energy balance closure.")
   public String validateInput(
-      @ToolArg(description = "JSON string to validate. Can be a flash input or "
-          + "process definition - the validator auto-detects the type.") String inputJson) {
+      @ToolArg(description = "JSON string to validate: a flash input, a process definition, or "
+          + "{\"tool\": <toolName>, \"input\": <toolInput>} for schema-based validation of any tool.") String inputJson) {
     String policyBlocked = enforceToolAccess("validateInput");
     if (policyBlocked != null) {
       return policyBlocked;
@@ -305,17 +305,17 @@ public class NeqSimTools {
    * @param schemaType input or output
    * @return JSON schema string
    */
-  @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. "
-      + "For run_process, the input schema is the authoritative discoverable grammar for "
+  @Tool(description = "Get the JSON schema for a NeqSim tool's input or output format. Tool names are snake_case "
+      + "(runRelief -> run_relief). For run_process, the input schema is the authoritative discoverable grammar for "
       + "ProcessSystem and ProcessModel JSON, including equipment types, inlet/inlets wiring, "
       + "port aliases, named fluids, connections, areas, interAreaLinks, and convergence settings. "
-      + "Schema-backed tools include run_flash, run_process, validate_input, "
-      + "list_components, run_batch, get_property_table, get_phase_envelope, "
-      + "get_capabilities, run_pvt, run_flow_assurance, calculate_standard, "
-      + "run_pipeline, run_reservoir, run_field_economics, run_dynamic, "
-      + "run_bioprocess, size_equipment, compare_processes, manage_session, "
-      + "visualize, run_hazop, run_barrier_register, and "
-      + "run_safety_system_performance. Types: input, output.")
+      + "Every calculation tool (run_flash, run_process, run_pvt, run_flow_assurance, run_chemistry, "
+      + "calculate_standard, run_pipeline, run_water_hammer, run_reservoir, run_field_economics, run_dynamic, "
+      + "run_bioprocess, size_equipment, design_utilities, run_relief, run_flare_network, run_lopa, run_sil, "
+      + "run_risk_matrix, run_hazop, run_hazop_scenario, run_barrier_register, run_safety_system_performance, "
+      + "run_materials_review, run_root_cause_analysis, run_parametric_study, compare_processes, ...) has an "
+      + "input schema whose field names and units mirror the runner exactly; pass the same JSON to validateInput "
+      + "as {tool, input} to check it before running. Types: input, output.")
   public String getSchema(
       @ToolArg(description = "Schema-backed tool name, e.g. run_flash, run_process, "
           + "run_dynamic, run_hazop, or run_safety_system_performance") final String toolName,

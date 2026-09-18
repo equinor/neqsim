@@ -28,6 +28,27 @@ uses cooperative Java interruption, so route long-running calculations through a
 `runProcess`. Treat runtime presence as capability evidence, then check tests, benchmark trust, and
 standards before using the result for engineering decisions.
 
+### MCP tool inputs: schema first, validate, then run
+
+Every calculation tool (`run*`, `sizeEquipment`, `designUtilities`, `calculateStandard`) has a
+tool-specific input schema whose field names and units mirror the runner exactly. Do not guess
+field names such as `flowRate_kg_hr` or `setPressure_barg`:
+
+1. `getSchema("run_relief", "input")` — snake_case or camelCase (`runRelief`) both resolve.
+   `required` / `allOf` (mode-dependent, e.g. `case: gas`) / `oneOf` tell you what to send.
+2. `validateInput({"tool": "runRelief", "input": {...}})` — any tool; returns
+   `SCHEMA_VIOLATION` issues naming the missing or mistyped field. Flash and process JSON may
+   also be passed bare (auto-detected).
+3. Run, then read `status`, `qualityGate`, `provenance.converged` and `warnings`.
+
+Process JSON pre-flight is strict: `UNRESOLVED_INLET` (an `inlet` naming no unit — feeds are
+units of `"type": "Stream"`), `MISPLACED_UNIT_PARAMETERS` (keys beside `properties`, e.g.
+`outletPressure_bara`; they are otherwise ignored and the unit runs on defaults) and
+`UNRECOGNIZED_INPUT_SHAPE` (no `process`/`areas`/`components`) are errors, and `runProcess`
+refuses to report success for a disconnected flowsheet. `runFlowAssurance` `hydrateRiskMap`
+requires `water` in the composition; an unavailable hydrate temperature is returned as
+`RESULT_NOT_AVAILABLE`, never as `LOW` risk (`RiskLevel.UNKNOWN` in Java).
+
 ## EOS Selection Guide
 
 | Fluid Type | Java Class | Mixing Rule |

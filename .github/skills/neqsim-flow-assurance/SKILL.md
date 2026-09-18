@@ -101,6 +101,12 @@ ops.hydrateFormationTemperature();
 double hydrateT_C = fluid.getTemperature() - 273.15;
 ```
 
+`setHydrateCheck(true)` is mandatory: without it `hydrateFormationTemperature()` fails
+(no hydrate phase) and any wrapper that swallows the exception reports NaN. The fluid must
+contain `water`. `HydrateRiskMapper` (and MCP `runFlowAssurance` `hydrateRiskMap`) now sets the
+flag itself and returns `RiskLevel.UNKNOWN` / `RESULT_NOT_AVAILABLE` with `failureReasons` when
+no equilibrium temperature exists — never treat an unavailable hydrate temperature as safe.
+
 ### Hydrate Equilibrium Curve (Multiple Pressures)
 
 ```java
