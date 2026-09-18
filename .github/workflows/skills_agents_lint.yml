@@ -51,7 +51,9 @@ jobs:
         run: python devtools/sync_agent_required_skills.py --check
 
       - name: Verify the core agent plugin builds (Agent Plugins 1.0 layout)
-        run: python devtools/build_agent_plugin.py --only neqsim --out /tmp/neqsim-agent-plugins --check
+        run: |
+          python devtools/build_agent_plugin.py --only neqsim --out /tmp/neqsim-copilot-plugin
+          python devtools/validate_agent_plugin.py /tmp/neqsim-copilot-plugin
 
       - name: Verify referenced MCP tool names exist
         run: python devtools/verify_mcp_tool_references.py

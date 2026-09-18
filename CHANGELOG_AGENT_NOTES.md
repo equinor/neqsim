@@ -38,7 +38,13 @@ repos were normalised:
   into the shared interpreter. `install_agent.render_vscode_agent()` is the shared renderer.
 * Companion changes: community skill folders renamed to their `neqsim-*` manifest names,
   enterprise agents carry the `enterprise-` prefix in `agent.yaml`, and both skills repos
-  install all skill packages with one `pip install -e .` (root `setup.py`).
+  install all skill packages with one `pip install -e .` (root `setup.py`, which discovers
+  packages at both `skills/<category>/<skill>/src` and the plugin's flat `skills/<skill>/src`).
+* **Published marketplace:** `equinor/neqsim-copilot-plugin` (internal) is the generated output —
+  never hand-edit it. Release procedure from a checkout with the four sibling repos beside `neqsim`:
+  `python devtools/build_agent_plugin.py --out ../neqsim-copilot-plugin --bump patch`, then
+  `python devtools/validate_agent_plugin.py ../neqsim-copilot-plugin`, then commit + push there.
+  Users add `"chat.plugins.marketplaces": ["equinor/neqsim-copilot-plugin"]`.
 
 **Agents/skills to update:** anything that hard-codes an old `@a.b` handle, a
 `skills/<category>/<unprefixed>` community path, or an underscore paperlab skill name.
