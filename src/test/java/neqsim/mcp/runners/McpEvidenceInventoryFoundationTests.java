@@ -1011,8 +1011,7 @@ class McpEvidenceInventoryFoundationTests {
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OperationalStudyRunnerTest.java"));
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_operational_study_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("OPERATIONAL_STUDY_CONTRACT.md"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OPERATIONAL_STUDY_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical JsonProcessBuilder"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("no-plant-write"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runOperationalStudy"));
