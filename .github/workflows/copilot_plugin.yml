@@ -39,6 +39,13 @@ jobs:
           python-version: '3.12'
       - name: Test packaging and STDIO harness
         run: python -m unittest discover -s devtools -p test_build_copilot_plugin.py -v
+      - name: Test packaging with a non-UTF-8 default encoding
+        if: runner.os == 'Linux'
+        env:
+          LC_ALL: C
+          PYTHONCOERCECLOCALE: '0'
+          PYTHONUTF8: '0'
+        run: python -m unittest discover -s devtools -p test_build_copilot_plugin.py -v
       - name: Assemble plugin
         run: python devtools/build_copilot_plugin.py --archive target/neqsim-copilot-plugin.zip
       - uses: actions/upload-artifact@v7

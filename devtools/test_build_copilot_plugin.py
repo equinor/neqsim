@@ -25,9 +25,10 @@ class CopilotPluginTest(unittest.TestCase):
         self.output = self.base / "installed" / "neqsim"
         for path, text in {
             ".github/skills/example_skill/SKILL.md": (
-                '---\nname: example_skill\ndescription: "Example workflow for plugin packaging tests."\n'
+                '---\nname: example_skill\ndescription: "Example workflow for CO₂ and Δp."\n'
                 'last_verified: "2026-09-18"\n---\n'
                 'Use @thermo.fluid and [data](data.json) or [source](../../../docs/guide.md).\n'
+                'Density ρ₁ is expressed in kg/m³.\n'
             ),
             ".github/skills/example_skill/data.json": '{"value": 42}\n',
             ".github/agents/thermo.fluid.agent.md": (
@@ -55,23 +56,30 @@ class CopilotPluginTest(unittest.TestCase):
         self.output.rename(relocated)
         skill = relocated / "skills/example-skill/SKILL.md"
         agent = relocated / "com.github.copilot/agents/neqsim-thermo-fluid.agent.md"
-        self.assertIn('name: "example-skill"', skill.read_text())
-        self.assertIn("@neqsim-thermo-fluid", skill.read_text())
-        self.assertIn("metadata:\n", skill.read_text())
-        self.assertIn("blob/" + "a" * 40 + "/docs/guide.md", skill.read_text())
-        self.assertIn("../../skills/example-skill/SKILL.md", agent.read_text())
-        self.assertIn("Loaded skills: example-skill", agent.read_text())
-        self.assertEqual(json.loads((skill.parent / "data.json").read_text()), {"value": 42})
-        inventory = json.loads((relocated / "bundle-inventory.json").read_text())
+        skill_text = skill.read_text(encoding="utf-8")
+        agent_text = agent.read_text(encoding="utf-8")
+        self.assertIn('name: "example-skill"', skill_text)
+        self.assertIn("@neqsim-thermo-fluid", skill_text)
+        self.assertIn("metadata:\n", skill_text)
+        self.assertIn("blob/" + "a" * 40 + "/docs/guide.md", skill_text)
+        self.assertEqual(
+            builder.parse_front_matter(skill_text)["description"],
+            "Example workflow for CO₂ and Δp.",
+        )
+        self.assertIn("Density ρ₁ is expressed in kg/m³.", skill_text)
+        self.assertIn("../../skills/example-skill/SKILL.md", agent_text)
+        self.assertIn("Loaded skills: example-skill", agent_text)
+        self.assertEqual(json.loads((skill.parent / "data.json").read_text(encoding="utf-8")), {"value": 42})
+        inventory = json.loads((relocated / "bundle-inventory.json").read_text(encoding="utf-8"))
         self.assertEqual((inventory["agentCount"], inventory["skillCount"]), (1, 1))
         for entry in inventory["files"]:
             self.assertEqual(hashlib.sha256((relocated / entry["path"]).read_bytes()).hexdigest(), entry["sha256"])
-        self.assertIn("example_skill", (self.root / ".github/skills/example_skill/SKILL.md").read_text())
+        self.assertIn("example_skill", (self.root / ".github/skills/example_skill/SKILL.md").read_text(encoding="utf-8"))
 
     def test_rejects_colliding_names_and_does_not_create_partial_output(self):
         duplicate = self.root / ".github/skills/example-skill"
         duplicate.mkdir()
-        (duplicate / "SKILL.md").write_text("---\nname: x\ndescription: y\n---\n")
+        (duplicate / "SKILL.md").write_text("---\nname: x\ndescription: y\n---\n", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "collide"):
             builder.build(self.root, self.output)
         self.assertFalse(self.output.exists())
@@ -79,10 +87,10 @@ class CopilotPluginTest(unittest.TestCase):
     def test_existing_output_and_source_tree_are_preserved(self):
         self.output.mkdir(parents=True)
         sentinel = self.output / "user-file"
-        sentinel.write_text("keep")
+        sentinel.write_text("keep", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "already exists"):
             builder.build(self.root, self.output)
-        self.assertEqual(sentinel.read_text(), "keep")
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "keep")
         with self.assertRaisesRegex(ValueError, "under target"):
             builder.build(self.root, self.root / ".github/generated-plugin")
 
@@ -92,7 +100,7 @@ class CopilotPluginTest(unittest.TestCase):
             archive.writestr("META-INF/MANIFEST.MF", "Main-Class: fixture.Only\n")
             archive.writestr("neqsim/mcp/server/NeqSimTools.class", b"fixture, not executable")
         builder.build(self.root, self.output, jar=jar)
-        config = json.loads((self.output / "mcp.json").read_text())["mcpServers"]["neqsim"]
+        config = json.loads((self.output / "mcp.json").read_text(encoding="utf-8"))["mcpServers"]["neqsim"]
         self.assertEqual(config["command"], "java")
         self.assertIn("-Dquarkus.profile=stdio", config["args"])
         self.assertEqual(config["args"][-1], "${PLUGIN_ROOT}/server/neqsim-mcp-server.jar")
@@ -118,7 +126,7 @@ class CopilotPluginTest(unittest.TestCase):
         self.assertEqual(len(list((self.output / "skills").glob("*/SKILL.md"))), expected_skills)
         self.assertEqual(len(list((self.output / "com.github.copilot/agents").glob("*.agent.md"))), expected_agents)
         for path in (self.output / "skills").glob("*/SKILL.md"):
-            fields = builder.parse_front_matter(path.read_text())
+            fields = builder.parse_front_matter(path.read_text(encoding="utf-8"))
             self.assertEqual(fields["name"], path.parent.name)
             self.assertRegex(fields["name"], r"^[a-z0-9]+(-[a-z0-9]+)*$")
             self.assertLessEqual(len(fields["description"]), 1024)
@@ -135,7 +143,8 @@ class CopilotPluginTest(unittest.TestCase):
             "    if method == 'initialize': result = {'serverInfo': {'name': 'fixture'}}\n"
             "    elif method == 'tools/list': result = {'tools': [{'name': n} for n in ['runFlash', 'runProcess', 'getCapabilities']]}\n"
             "    else: result = {'content': [{'type': 'text', 'text': json.dumps({'status': 'success'})}]}\n"
-            "    print(json.dumps({'jsonrpc': '2.0', 'id': request['id'], 'result': result}), flush=True)\n"
+            "    print(json.dumps({'jsonrpc': '2.0', 'id': request['id'], 'result': result}), flush=True)\n",
+            encoding="utf-8",
         )
         builder.write_json(self.output / "mcp.json", {"mcpServers": {"neqsim": {
             "type": "stdio", "command": sys.executable, "args": ["${PLUGIN_ROOT}/fixture server.py"],
