@@ -113,7 +113,7 @@ Parameters for Antoine-type vapor pressure correlations.
 
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
-| `AntoineVapPresLiqType` | Equation type or availability marker | - | `pow10`, `log`, `exp`, `loglog`; `none` means unavailable |
+| `AntoineVapPresLiqType` | Equation type or availability marker | - | `pow10`, `pow10KPa`, `log`, `exp`, `loglog`; `none` means unavailable |
 | `ANTOINEA` | Antoine A coefficient | - | Vapor pressure calculation |
 | `ANTOINEB` | Antoine B coefficient | - | Vapor pressure calculation |
 | `ANTOINEC` | Antoine C coefficient | - | Vapor pressure calculation |
@@ -125,8 +125,17 @@ Parameters for Antoine-type vapor pressure correlations.
 
 **Antoine equation forms:**
 - `pow10`: $\log_{10}(P_{sat}) = A - \frac{B}{T + C - 273.15}$ (P in bar absolute, API temperature T in K)
+- `pow10KPa`: $P_{sat} = 10^{A-B/(T+C)}/10^5$ in bar absolute, with T in K. The legacy label retains this existing scale; it does not select a kPa-to-bar conversion.
 - For non-`pow10`/`pow10KPa` labels with $|E| > 10^{-12}$, DIPPR-101 gives $P_{sat} = \exp(A + B/T + C \ln(T) + DT^E)/10^5$ in bar, with T in K. This includes legacy `log` and `exp` labels.
 - With zero exponent, `log` and `exp` use $P_{sat} = \exp(A - B/(T+C))$ in bar, with T in K.
+
+`getAntoineVaporPressuredT(T)` returns the analytical derivative for `pow10`,
+`pow10KPa`, DIPPR-101, and the three-parameter `log`/`exp` form, in bar/K.
+For `pow10KPa`, $dP_{sat}/dT = P_{sat}\ln(10)B/(T+C)^2$; explicit base-ten
+labels keep precedence even when `ANTOINEE` is nonzero. The pressure and
+derivative therefore use the same correlation and scale during inverse-temperature
+recovery. The legacy Wagner fallback still returns zero for the derivative;
+correlation availability alone does not establish derivative support for that path.
 
 **Missing data and applicability:** `none` with zero `ANTOINEA`–`ANTOINEE`
 means no liquid-vapor correlation is available; it does not mean zero vapor

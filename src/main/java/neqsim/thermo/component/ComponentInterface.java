@@ -1432,8 +1432,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVoli();
 
   /**
-   * Temperature derivative of the liquid-vapor pressure correlation where implemented. DIPPR-101 uses the same
-   * coefficient selection as {@link #getAntoineVaporPressure(double)}.
+   * Temperature derivative of the liquid-vapor pressure correlation where implemented. DIPPR-101, {@code pow10},
+   * {@code pow10KPa}, and the three-parameter {@code log}/{@code exp} forms use the same coefficient selection and
+   * pressure scale as {@link #getAntoineVaporPressure(double)}. Explicit base-ten labels retain precedence over a
+   * nonzero DIPPR exponent. For {@code pow10KPa}, the derivative is P * ln(10) * B / (T + C)^2 in bar/K.
    *
    * @param temp temperature in K
    * @return derivative in bar/K, or zero for available correlation types without a derivative; NaN under the same

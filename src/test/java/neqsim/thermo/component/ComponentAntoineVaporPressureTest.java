@@ -100,6 +100,8 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
     // Retain the nonzero E to guard the existing priority of explicit base-ten labels.
     double expected = "pow10".equals(label) ? 1.0e5 : 1.0;
     assertEquals(expected, component.getAntoineVaporPressure(300.0), expected * 1.0e-12);
+    double expectedDerivative = expected * Math.log(10.0) / 300.0;
+    assertEquals(expectedDerivative, component.getAntoineVaporPressuredT(300.0), expectedDerivative * 1.0e-12);
   }
 
   @Test
