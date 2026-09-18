@@ -497,7 +497,7 @@ public class ScalePredictionCalculator implements Serializable {
       }
     }
 
-    return new double[] { freeCa, freeSO4, freeCO3, freeHCO3 };
+    return new double[] {freeCa, freeSO4, freeCO3, freeHCO3};
   }
 
   /**

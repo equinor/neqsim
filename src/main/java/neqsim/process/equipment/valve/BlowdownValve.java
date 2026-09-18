@@ -31,7 +31,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // Split gas outlet - one to normal process, one to blowdown
  * Splitter splitter = new Splitter("Gas Splitter", separator.getGasOutStream());
- * splitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+ * splitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
  *
  * // Create blowdown valve (normally closed)
  * BlowdownValve bdValve = new BlowdownValve("BD-101", splitter.getSplitStream(1));
@@ -44,7 +44,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  *
  * // In emergency situation
  * bdValve.activate(); // Open blowdown valve
- * splitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect flow to blowdown
+ * splitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect flow to blowdown
  *
  * // In dynamic simulation loop
  * system.runTransient(dt, UUID.randomUUID());

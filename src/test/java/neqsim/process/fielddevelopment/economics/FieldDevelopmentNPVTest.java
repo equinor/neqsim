@@ -329,7 +329,7 @@ class FieldDevelopmentNPVTest {
 
     // Production profile (GSm3/year -> Sm3 for engine)
     // Typical plateau at ~3.4 GSm3/year then decline
-    double[] yearlyProductionGSm3 = { 3.4, 3.4, 3.2, 3.0, 2.8, 2.5, 2.2, 2.0, 1.8, 1.5, 1.2, 1.0, 0.8, 0.6, 0.4 };
+    double[] yearlyProductionGSm3 = {3.4, 3.4, 3.2, 3.0, 2.8, 2.5, 2.2, 2.0, 1.8, 1.5, 1.2, 1.0, 0.8, 0.6, 0.4};
 
     for (int i = 0; i < yearlyProductionGSm3.length; i++) {
       engine.addAnnualProduction(2025 + i, 0, yearlyProductionGSm3[i] * 1e9, 0);
@@ -357,7 +357,7 @@ class FieldDevelopmentNPVTest {
   @Test
   void testDirectNPVCalculation() {
     // Synthetic production data (MSm3/day gas production for each year)
-    double[] gasProductionRates = { 10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 5.5, 4.5, 3.5, 2.5, 2.0, 1.5, 1.0 };
+    double[] gasProductionRates = {10.0, 9.5, 9.0, 8.5, 8.0, 7.5, 7.0, 6.5, 5.5, 4.5, 3.5, 2.5, 2.0, 1.5, 1.0};
     int productionYears = gasProductionRates.length;
 
     // Yearly gas production in GSm3

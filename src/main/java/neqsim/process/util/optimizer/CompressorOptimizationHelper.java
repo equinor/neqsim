@@ -199,7 +199,7 @@ public class CompressorOptimizationHelper {
     public double[] getRecommendedRange(double marginFraction) {
       double minRecommended = surgeFlow * (1.0 + marginFraction);
       double maxRecommended = stoneWallFlow * (1.0 - marginFraction);
-      return new double[] { minRecommended, maxRecommended };
+      return new double[] {minRecommended, maxRecommended};
     }
 
     @Override
@@ -429,7 +429,7 @@ public class CompressorOptimizationHelper {
       surgeFlows = fullChart.getSurgeCurve().getFlow();
     }
     if (surgeFlows == null || surgeFlows.length == 0) {
-      surgeFlows = new double[] { defaultSurgeFlow };
+      surgeFlows = new double[] {defaultSurgeFlow};
     }
 
     double[] stoneWallFlows = null;
@@ -437,7 +437,7 @@ public class CompressorOptimizationHelper {
       stoneWallFlows = fullChart.getStoneWallCurve().getFlow();
     }
     if (stoneWallFlows == null || stoneWallFlows.length == 0) {
-      stoneWallFlows = new double[] { defaultStoneWall };
+      stoneWallFlows = new double[] {defaultStoneWall};
     }
 
     double surgeFlow = surgeFlows[surgeFlows.length / 2];

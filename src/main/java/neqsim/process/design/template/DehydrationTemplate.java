@@ -233,15 +233,15 @@ public class DehydrationTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] { "SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve" };
+    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler", "ThrottlingValve"};
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] { "Dry Gas - Dehydrated gas meeting pipeline specification",
+    return new String[] {"Dry Gas - Dehydrated gas meeting pipeline specification",
         "Flash Gas - Hydrocarbon-rich gas from flash drum", "Water - Produced water from regeneration still",
-        "TEG Losses - Estimated glycol losses" };
+        "TEG Losses - Estimated glycol losses"};
   }
 
   /** {@inheritDoc} */

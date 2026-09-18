@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkAqueousLowerGibbsRootTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
 
   @Test
   void multiphaseSrkSelectsSameLowerGibbsGasAqueousRootAsOrdinaryFlash() {
@@ -36,7 +36,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
 
   @Test
   void lowerGibbsRootSelectionRemainsContinuousAcrossNearbySrkStates() {
-    double[][] states = { { 260.0, 100.0 }, { 262.5, 105.0 }, { 265.0, 110.0 }, { 260.0, 100.0 } };
+    double[][] states = {{260.0, 100.0}, {262.5, 105.0}, {265.0, 110.0}, {260.0, 100.0}};
     SystemInterface multiphase = createSystem(new SystemSrkEos(states[0][0], states[0][1]), true);
 
     for (double[] state : states) {

@@ -1775,7 +1775,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     // near the ice point but not from the pressure based guess above. Retrying across the range
     // where hydrates of the common formers are stable can recover a verified root. If every
     // attempt fails, report that no result is available; this does not prove the absence of hydrates.
-    double[] retryTemperatures = { 273.15, 268.15, 278.15, 263.15, 283.15, 258.15 };
+    double[] retryTemperatures = {273.15, 268.15, 278.15, 263.15, 283.15, 258.15};
     for (int attempt = 0; attempt < retryTemperatures.length && Double.isNaN(system.getTemperature()); attempt++) {
       system.setTemperature(retryTemperatures[attempt]);
       runHydrateFormationTemperatureFlash();

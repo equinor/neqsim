@@ -35,7 +35,7 @@ public class destillation2 {
     feedGas.setPressure(50.0, "bara");
 
     neqsim.thermo.system.SystemInterface TEGliq2 = testSystem.clone();
-    TEGliq2.setMolarComposition(new double[] { 0.0, 0.001, 1.0 });
+    TEGliq2.setMolarComposition(new double[] {0.0, 0.001, 1.0});
 
     Stream TEGliq = new Stream("TEG liq", TEGliq2);
     TEGliq.setFlowRate(5000.0, "kg/hr");

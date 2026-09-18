@@ -40,17 +40,16 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
   private static final int MINIMUM_INTEGRATION_STEPS = 200;
   private static final int MAXIMUM_INTEGRATION_STEPS = 20000;
 
-  private static final String[] SPECIES = { "H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
-      "ammonia" };
-  private static final String[] REACTION_IDS = { "R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7" };
+  private static final String[] SPECIES = {"H2S", "SO2", "NO2", "NO", "oxygen", "water", "H2SO4", "HNO3", "S8",
+      "ammonia"};
+  private static final String[] REACTION_IDS = {"R1", "R2", "R3A", "R3B", "R4", "R5", "R6", "R7"};
 
   /** Stoichiometry in the same order as {@link #SPECIES}. */
-  private static final double[][] STOICHIOMETRY = { { 0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0 },
-      { -1.0, 1.0, -3.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 }, { 0.0, -1.0, -1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0 },
-      { 0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 2.0, -2.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
-      { 0.0, 0.0, -3.0, 1.0, 0.0, -1.0, 0.0, 2.0, 0.0, 0.0 }, { -1.0, 1.0, 0.0, 0.0, -1.5, 1.0, 0.0, 0.0, 0.0, 0.0 },
-      { -5.0, 5.0, 0.0, -6.0, 0.0, -4.0, 0.0, 0.0, 0.0, 6.0 },
-      { -1.0, 0.0, 0.0, 0.0, -0.5, 1.0, 0.0, 0.0, 0.125, 0.0 } };
+  private static final double[][] STOICHIOMETRY = {{0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0},
+      {-1.0, 1.0, -3.0, 3.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0}, {0.0, -1.0, -1.0, 1.0, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0},
+      {0.0, -1.0, 0.0, 0.0, -0.5, -1.0, 1.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 2.0, -2.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+      {0.0, 0.0, -3.0, 1.0, 0.0, -1.0, 0.0, 2.0, 0.0, 0.0}, {-1.0, 1.0, 0.0, 0.0, -1.5, 1.0, 0.0, 0.0, 0.0, 0.0},
+      {-5.0, 5.0, 0.0, -6.0, 0.0, -4.0, 0.0, 0.0, 0.0, 6.0}, {-1.0, 0.0, 0.0, 0.0, -0.5, 1.0, 0.0, 0.0, 0.125, 0.0}};
 
   private double reactorLength = 200000.0;
   private double fluidVelocity = 2.0;
@@ -62,9 +61,8 @@ public class CO2ImpurityKineticReactor extends TwoPortEquipment {
   private double massFlowGPerHour = 50.0;
   private boolean useGeometryResidenceTime = false;
 
-  private final double[] preExponentialFactors = { 1.0e4, 5.0e7, 1.4e6, 2.13e8, 1.0e5, 2.4e6, 2.0e3, 5.0e5 };
-  private final double[] activationEnergies = { 45000.0, 28000.0, 26000.0, 15000.0, -4400.0, 28000.0, 65000.0,
-      15000.0 };
+  private final double[] preExponentialFactors = {1.0e4, 5.0e7, 1.4e6, 2.13e8, 1.0e5, 2.4e6, 2.0e3, 5.0e5};
+  private final double[] activationEnergies = {45000.0, 28000.0, 26000.0, 15000.0, -4400.0, 28000.0, 65000.0, 15000.0};
   private double carbonSteelR8PreExponentialFactor = 1.5e4;
   private double carbonSteelR8ActivationEnergy = 42000.0;
   private double inertR8PreExponentialFactor = 2.0e3;

@@ -58,8 +58,8 @@
  * PVTRegression regression = new PVTRegression(fluid);
  *
  * // Add experimental data
- * double[] pressures = { 300.0, 250.0, 200.0, 150.0, 100.0 };
- * double[] relativeVolumes = { 0.98, 1.00, 1.08, 1.25, 1.55 };
+ * double[] pressures = {300.0, 250.0, 200.0, 150.0, 100.0};
+ * double[] relativeVolumes = {0.98, 1.00, 1.08, 1.25, 1.55};
  * regression.addCCEData(pressures, relativeVolumes, 373.15);
  *
  * // Add regression parameters

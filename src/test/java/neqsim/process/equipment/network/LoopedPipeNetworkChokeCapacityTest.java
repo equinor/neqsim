@@ -15,9 +15,9 @@ import neqsim.thermo.system.SystemSrkEos;
 class LoopedPipeNetworkChokeCapacityTest {
   @Test
   void gasCapacityAgreesWithStandaloneValveAcrossOpeningAndPressureSweeps() {
-    for (double arrival : new double[] { 90.0, 60.0, 20.0 }) {
+    for (double arrival : new double[] {90.0, 60.0, 20.0}) {
       double previous = 0.0;
-      for (double opening : new double[] { 10.0, 30.0, 60.0, 100.0 }) {
+      for (double opening : new double[] {10.0, 30.0, 60.0, 100.0}) {
         LoopedPipeNetwork network = network(arrival, 10.0, opening);
         network.run();
         assertTrue(network.isConverged(), "arrival=" + arrival + ", opening=" + opening);
@@ -37,7 +37,7 @@ class LoopedPipeNetworkChokeCapacityTest {
   @Test
   void criticalCapacityIsIndependentOfBackpressureButRespondsToKv() {
     double previous = 0.0;
-    for (double kv : new double[] { 1.0, 5.0, 10.0, 20.0 }) {
+    for (double kv : new double[] {1.0, 5.0, 10.0, 20.0}) {
       LoopedPipeNetwork network = network(20.0, kv, 60.0);
       network.run();
       double criticalFlow = network.getTotalSinkFlow();
@@ -62,7 +62,7 @@ class LoopedPipeNetworkChokeCapacityTest {
     assertEquals(120.0, network.getNodePressure("wellhead"), 1e-5);
 
     double previous = 0.0;
-    for (double opening : new double[] { 0.01, 49.99, 50.0, 50.01, 100.0 }) {
+    for (double opening : new double[] {0.01, 49.99, 50.0, 50.01, 100.0}) {
       network.getPipe("choke").setChokeOpening(opening);
       assertFalse(network.isProductionOptimizationApplicable(), "Changed openings require a fresh solve");
       network.run();
@@ -99,8 +99,8 @@ class LoopedPipeNetworkChokeCapacityTest {
     inlet.run();
     double criticalArrival = 120.0 * (1.0 - inlet.getFluid().getGamma2() / 1.4 * 0.5);
     double criticalFlow = referenceFlow(120.0, criticalArrival, 10.0, 60.0);
-    for (double offset : new double[] { -0.001, 0.0, 0.001 }) {
-      for (boolean reverse : new boolean[] { false, true }) {
+    for (double offset : new double[] {-0.001, 0.0, 0.001}) {
+      for (boolean reverse : new boolean[] {false, true}) {
         LoopedPipeNetwork network = new LoopedPipeNetwork("fixed pressure choke");
         network.setFluidTemplate(fluid(120.0));
         network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
@@ -157,12 +157,12 @@ class LoopedPipeNetworkChokeCapacityTest {
   void invalidInputsAndUnsupportedGasModeCasesAreRejectedExplicitly() {
     LoopedPipeNetwork network = network(20.0, 10.0, 60.0);
     LoopedPipeNetwork.NetworkPipe choke = network.getPipe("choke");
-    for (double opening : new double[] { -1.0, 100.01, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double opening : new double[] {-1.0, 100.01, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> choke.setChokeOpening(opening));
     }
     assertThrows(IllegalArgumentException.class, () -> choke.setChokeKv(-1.0));
     assertThrows(IllegalArgumentException.class, () -> choke.setChokeKv(Double.NaN));
-    for (double ratio : new double[] { 0.0, 1.0, Double.NaN }) {
+    for (double ratio : new double[] {0.0, 1.0, Double.NaN}) {
       assertThrows(IllegalArgumentException.class, () -> choke.setChokeCriticalPressureRatio(ratio));
     }
     network.setSolverType(LoopedPipeNetwork.SolverType.HARDY_CROSS);

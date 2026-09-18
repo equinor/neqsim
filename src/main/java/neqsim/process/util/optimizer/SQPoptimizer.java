@@ -52,8 +52,8 @@ import org.apache.logging.log4j.Logger;
  * sqp.setObjectiveFunction(x -&gt; computeNPV(x, process));
  * sqp.addEqualityConstraint(x -&gt; massBalance(x));
  * sqp.addInequalityConstraint(x -&gt; maxPressure - x[0]);
- * sqp.setVariableBounds(new double[] { 50.0, 0.5 }, new double[] { 200.0, 1.0 });
- * sqp.setInitialPoint(new double[] { 100.0, 0.8 });
+ * sqp.setVariableBounds(new double[] {50.0, 0.5}, new double[] {200.0, 1.0});
+ * sqp.setInitialPoint(new double[] {100.0, 0.8});
  * SQPoptimizer.OptimizationResult result = sqp.solve();
  * </pre>
  *

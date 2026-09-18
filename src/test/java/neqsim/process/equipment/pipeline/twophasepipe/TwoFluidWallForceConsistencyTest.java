@@ -23,10 +23,10 @@ class TwoFluidWallForceConsistencyTest {
     WallFrictionResult single = model.calculate(FlowRegime.SINGLE_PHASE_LIQUID, VELOCITY, VELOCITY, DENSITY, DENSITY,
         VISCOSITY, VISCOSITY, 1.0, DIAMETER, ROUGHNESS);
     double expectedForce = -single.liquidWallShear * Math.PI * DIAMETER;
-    for (FlowRegime regime : new FlowRegime[] { FlowRegime.SLUG, FlowRegime.CHURN }) {
-      for (double liquidHoldup : new double[] { 0.1, 0.35, 0.7, 0.9 }) {
+    for (FlowRegime regime : new FlowRegime[] {FlowRegime.SLUG, FlowRegime.CHURN}) {
+      for (double liquidHoldup : new double[] {0.1, 0.35, 0.7, 0.9}) {
         TwoFluidSection section = section(regime, liquidHoldup);
-        double[][] source = equations().calcSourceTerms(new TwoFluidSection[] { section });
+        double[][] source = equations().calcSourceTerms(new TwoFluidSection[] {section});
         assertEquals(expectedForce, source[0][3] + source[0][4] + source[0][5], Math.abs(expectedForce) * 1.0e-12,
             regime + " must not partition the mixture wall force twice");
       }
@@ -35,11 +35,11 @@ class TwoFluidWallForceConsistencyTest {
 
   @Test
   void liquidFilmWetsTheFullWallAfterAStratifiedState() {
-    for (FlowRegime regime : new FlowRegime[] { FlowRegime.ANNULAR, FlowRegime.MIST, FlowRegime.BUBBLE,
-        FlowRegime.DISPERSED_BUBBLE }) {
+    for (FlowRegime regime : new FlowRegime[] {FlowRegime.ANNULAR, FlowRegime.MIST, FlowRegime.BUBBLE,
+        FlowRegime.DISPERSED_BUBBLE}) {
       TwoFluidSection section = section(regime, 0.35);
       WallFrictionResult friction = friction(regime, section);
-      double[][] source = equations().calcSourceTerms(new TwoFluidSection[] { section });
+      double[][] source = equations().calcSourceTerms(new TwoFluidSection[] {section});
       assertEquals(-friction.liquidWallShear * Math.PI * DIAMETER, source[0][4],
           Math.abs(friction.liquidWallShear) * 1.0e-12, regime + " must not reuse the old liquid segment perimeter");
     }
@@ -58,7 +58,7 @@ class TwoFluidWallForceConsistencyTest {
         + 0.6 * slug.gasWallShear * Math.PI * DIAMETER);
     double expectedOilForce = -(0.4 * stratified.liquidWallShear * section.getLiquidWettedPerimeter()
         + 0.6 * slug.liquidWallShear * Math.PI * DIAMETER);
-    double[][] source = equations().calcSourceTerms(new TwoFluidSection[] { section });
+    double[][] source = equations().calcSourceTerms(new TwoFluidSection[] {section});
     assertEquals(expectedGasForce, source[0][3], Math.abs(expectedGasForce) * 1.0e-12);
     assertEquals(expectedOilForce, source[0][4], Math.abs(expectedOilForce) * 1.0e-12);
   }

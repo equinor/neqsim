@@ -794,7 +794,7 @@ public class TwoFluidPipeBenchmarkTest {
     @Test
     @DisplayName("5.1 Pressure drop increases with flow rate")
     void testPressureDropMonotonicity() {
-      double[] flowRates = { 5000.0, 15000.0, 30000.0, 50000.0 };
+      double[] flowRates = {5000.0, 15000.0, 30000.0, 50000.0};
       double prevDp = 0;
 
       logger.info("=== 5.1 Pressure Drop vs Flow Rate ===");
@@ -1062,7 +1062,7 @@ public class TwoFluidPipeBenchmarkTest {
     @DisplayName("7.1 Systematic comparison across GLR range")
     void testCrossValidationGLRSweep() {
       // Vary gas fraction from 0.5 to 0.95
-      double[] gasFractions = { 0.50, 0.65, 0.80, 0.90, 0.95 };
+      double[] gasFractions = {0.50, 0.65, 0.80, 0.90, 0.95};
 
       logger.info("=== 7.1 Cross-Validation GLR Sweep ===");
       logger.info("Gas Frac | TF dP (bar) | BB dP (bar) | Ratio | Status");
@@ -1213,7 +1213,7 @@ public class TwoFluidPipeBenchmarkTest {
     void testHoldupVsGasVelocity() {
       logger.info("=== 8.2 Holdup vs Gas Velocity ===");
 
-      double[] flowRates = { 5000, 15000, 30000, 50000 }; // kg/hr (increasing gas velocity)
+      double[] flowRates = {5000, 15000, 30000, 50000}; // kg/hr (increasing gas velocity)
       double[] avgHoldups = new double[flowRates.length];
 
       for (int i = 0; i < flowRates.length; i++) {
@@ -1368,7 +1368,7 @@ public class TwoFluidPipeBenchmarkTest {
     void testDiameterScaling() {
       logger.info("=== 8.4 Diameter Scaling ===");
 
-      double[] diameters = { 0.102, 0.154, 0.203, 0.305 }; // 4, 6, 8, 12 inch
+      double[] diameters = {0.102, 0.154, 0.203, 0.305}; // 4, 6, 8, 12 inch
       double[] pressureDrops = new double[diameters.length];
 
       for (int i = 0; i < diameters.length; i++) {
@@ -1444,7 +1444,7 @@ public class TwoFluidPipeBenchmarkTest {
       TwoFluidPipe pipe = new TwoFluidPipe("test", inlet);
       pipe.setLength(1000.0);
       pipe.setDiameter(0.3);
-      double[] lengths = { 50, 50, 100, 200, 200, 200, 100, 50, 50 };
+      double[] lengths = {50, 50, 100, 200, 200, 200, 100, 50, 50};
       pipe.setSectionLengths(lengths);
 
       assertEquals(9, pipe.getNumberOfSections());
@@ -1487,7 +1487,7 @@ public class TwoFluidPipeBenchmarkTest {
       TwoFluidPipe nonuniform = new TwoFluidPipe("nonuniform", inlet2);
       nonuniform.setLength(1000.0);
       nonuniform.setDiameter(0.3);
-      double[] lengths = { 50, 50, 100, 150, 200, 150, 100, 100, 50, 50 };
+      double[] lengths = {50, 50, 100, 150, 200, 150, 100, 100, 50, 50};
       nonuniform.setSectionLengths(lengths);
 
       ProcessSystem proc2 = new ProcessSystem();

@@ -126,7 +126,7 @@ public class AttractiveTermMatCop5PRUMR extends AttractiveTermPr {
       double upowKm2 = (k >= 2) ? Math.pow(u, k - 2) : 0.0;
       d2sdt2 += ck * (k * (k - 1) * upowKm2 * dudt * dudt + k * upowKm1 * d2udt2);
     }
-    return new double[] { s, dsdt, d2sdt2 };
+    return new double[] {s, dsdt, d2sdt2};
   }
 
   /** {@inheritDoc} */

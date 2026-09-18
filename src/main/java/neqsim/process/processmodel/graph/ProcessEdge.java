@@ -322,7 +322,7 @@ public class ProcessEdge implements Serializable {
    * @return array with [sourceIndex, targetIndex]
    */
   public int[] getIndexPair() {
-    return new int[] { source.getIndex(), target.getIndex() };
+    return new int[] {source.getIndex(), target.getIndex()};
   }
 
   @Override

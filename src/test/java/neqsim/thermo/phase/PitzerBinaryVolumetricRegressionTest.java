@@ -19,7 +19,7 @@ class PitzerBinaryVolumetricRegressionTest extends neqsim.NeqSimTest {
   private static final double BETA1_DERIVATIVE = -0.7e-10;
   private static final double CPHI_DERIVATIVE = 1.1e-11;
   private static final double STANDARD_UNCERTAINTY = 2.0e-8;
-  private static final double[] MOLALITIES = { 0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0 };
+  private static final double[] MOLALITIES = {0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0};
 
   @Test
   void recoversExactSyntheticParametersAndCovariance() {
@@ -60,7 +60,7 @@ class PitzerBinaryVolumetricRegressionTest extends neqsim.NeqSimTest {
   void reportsDeterministicSourceGroupedResidualsAndOrderInvariantFit() {
     PitzerBinaryVolumetricModel model = calciumChlorideModel();
     PitzerBinaryVolumetricRegression regression = new PitzerBinaryVolumetricRegression(model);
-    double[] noiseInSigma = { 0.2, -0.5, 0.4, -0.1, 0.0, 0.3, -0.2, 0.1, -0.4 };
+    double[] noiseInSigma = {0.2, -0.5, 0.4, -0.1, 0.0, 0.3, -0.2, 0.1, -0.4};
     List<PitzerBinaryVolumetricRegression.Observation> observations = syntheticObservations(model, noiseInSigma);
 
     PitzerBinaryVolumetricRegression.FitResult forward = regression.fit(observations, TEMPERATURE_K, PRESSURE_PA,

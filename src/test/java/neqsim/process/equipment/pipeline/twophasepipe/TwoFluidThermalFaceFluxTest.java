@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 class TwoFluidThermalFaceFluxTest {
   @Test
   void closedExternalFacesAreZeroWhileInternalConvectionRemainsActive() {
-    TwoFluidSection[] sections = new TwoFluidSection[] { createGasSection(0.0, 0.0), createGasSection(10.0, 2.0),
-        createGasSection(20.0, 0.0) };
+    TwoFluidSection[] sections = new TwoFluidSection[] {createGasSection(0.0, 0.0), createGasSection(10.0, 2.0),
+        createGasSection(20.0, 0.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
     equations.calcRHS(sections, 10.0);
@@ -56,7 +56,7 @@ class TwoFluidThermalFaceFluxTest {
 
   @Test
   void singleSectionReturnsClosedBoundaryFacesWithoutAnInternalInterface() {
-    TwoFluidSection[] sections = new TwoFluidSection[] { createGasSection(0.0, 0.0) };
+    TwoFluidSection[] sections = new TwoFluidSection[] {createGasSection(0.0, 0.0)};
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
     double[][] faceFluxes = equations.calcPhaseMassFaceFluxes(sections, 10.0);

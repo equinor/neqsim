@@ -592,7 +592,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     degraded.setUseRealKappa(useRealKappa());
     degraded.setReferenceConditions(refMW, refTemperature, refPressure, refZ);
     double[] conditions = getChartConditions();
-    degraded.setCurves(conditions == null ? new double[] { refMW, refTemperature, refPressure, refZ } : conditions,
+    degraded.setCurves(conditions == null ? new double[] {refMW, refTemperature, refPressure, refZ} : conditions,
         scaledSpeed, scaledFlow, scaledHead, scaledFlowEff, scaledEff);
     degraded.setUseCompressorChart(true);
     // Regenerate surge/stone-wall curves only when there are enough speed lines for the spline fit

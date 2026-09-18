@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class TwoFluidBenchmarkMetricsTest {
   @Test
   void fitsRateSweepExponentInsteadOfOnlyCheckingOneLevel() {
-    double[] rates = { 1.0, 2.0, 4.0, 8.0 };
+    double[] rates = {1.0, 2.0, 4.0, 8.0};
     double[] pressureDrops = new double[rates.length];
     for (int index = 0; index < rates.length; index++) {
       pressureDrops[index] = 3.5 * Math.pow(rates[index], 1.8);
@@ -19,7 +19,7 @@ class TwoFluidBenchmarkMetricsTest {
 
   @Test
   void reportsScaleFreeProfileLocalizationAndMeshSpread() {
-    assertEquals(9.0, TwoFluidBenchmarkMetrics.maximumToMedianRatio(new double[] { 1.0, 1.0, 1.0, 9.0 }), 0.0);
+    assertEquals(9.0, TwoFluidBenchmarkMetrics.maximumToMedianRatio(new double[] {1.0, 1.0, 1.0, 9.0}), 0.0);
     assertEquals(0.2, TwoFluidBenchmarkMetrics.relativeMeshSpread(80.0, 100.0), 1.0e-15);
     assertEquals(0.2, TwoFluidBenchmarkMetrics.relativeMeshSpread(100.0, 80.0), 1.0e-15);
   }

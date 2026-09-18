@@ -633,8 +633,8 @@ public class DryGasSealAnalyzer {
     result.put("max_liquid_vol_pct", maxLiquid);
     result.put("max_liquid_temperature_C", maxLiquidTC);
     result.put("max_liquid_pressure_bara", maxLiquidPBara);
-    result.put("grid_temperature_range_C", new double[] { tMinC, tMaxC });
-    result.put("grid_pressure_range_bara", new double[] { pMin, pMax });
+    result.put("grid_temperature_range_C", new double[] {tMinC, tMaxC});
+    result.put("grid_pressure_range_bara", new double[] {pMin, pMax});
 
     return result;
   }

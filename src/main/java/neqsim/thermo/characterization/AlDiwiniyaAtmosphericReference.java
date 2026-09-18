@@ -31,10 +31,10 @@ public final class AlDiwiniyaAtmosphericReference {
   /** Source publication date in ISO-8601 format. */
   public static final String PUBLICATION_DATE = "2025-09-21";
 
-  private static final double[] TBP_VOLUME_PERCENT = { 2.0, 3.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 25.0, 30.0,
-      35.0, 40.0, 45.0, 50.0, 55.0, 60.0 };
-  private static final double[] TBP_TEMPERATURE_CELSIUS = { 40.0, 52.0, 62.0, 77.0, 95.0, 112.0, 128.0, 143.0, 159.0,
-      189.0, 218.0, 249.0, 279.0, 310.0, 342.0, 373.0, 405.0 };
+  private static final double[] TBP_VOLUME_PERCENT = {2.0, 3.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 25.0, 30.0,
+      35.0, 40.0, 45.0, 50.0, 55.0, 60.0};
+  private static final double[] TBP_TEMPERATURE_CELSIUS = {40.0, 52.0, 62.0, 77.0, 95.0, 112.0, 128.0, 143.0, 159.0,
+      189.0, 218.0, 249.0, 279.0, 310.0, 342.0, 373.0, 405.0};
 
   private static final ProductReference[] PRODUCTS = {
       new ProductReference("Light Naphtha", true, 8.0, 8.0, 110.0, 109.0),
@@ -42,7 +42,7 @@ public final class AlDiwiniyaAtmosphericReference {
       new ProductReference("Kerosene", true, 4.0, 4.0, 180.0, 190.0),
       new ProductReference("Gasoil", true, 10.0, 10.0, 240.0, 235.0),
       new ProductReference("Atmospheric residue", true, 41.0, 41.25, 295.0, 295.0),
-      new ProductReference("Off gas", false, 1.0, 0.75, 60.0, 65.0) };
+      new ProductReference("Off gas", false, 1.0, 0.75, 60.0, 65.0)};
 
   private AlDiwiniyaAtmosphericReference() {
   }
@@ -261,7 +261,7 @@ public final class AlDiwiniyaAtmosphericReference {
 
   /** @return defensive copy of heavy-naphtha draw tray numbers */
   public static int[] getHeavyNaphthaDrawTrays() {
-    return new int[] { 24, 22 };
+    return new int[] {24, 22};
   }
 
   /** @return kerosene draw tray number */

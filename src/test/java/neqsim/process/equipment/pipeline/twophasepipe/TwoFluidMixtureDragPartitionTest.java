@@ -17,8 +17,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 class TwoFluidMixtureDragPartitionTest {
   @Test
   void bothLiquidDisappearanceLimitsRetainFiniteCommonAccelerationAndTraceForce() {
-    for (boolean traceWater : new boolean[] { false, true }) {
-      for (double fraction : new double[] { 0.0, 1.0e-24, 1.0e-16, 1.0e-10, 0.01, 0.5 }) {
+    for (boolean traceWater : new boolean[] {false, true}) {
+      for (double fraction : new double[] {0.0, 1.0e-24, 1.0e-16, 1.0e-10, 0.01, 0.5}) {
         double oil = 0.6 * (traceWater ? 1.0 - fraction : fraction);
         double water = 0.6 * (traceWater ? fraction : 1.0 - fraction);
         TwoFluidSection section = section(oil, water, 2.0, 1.0, 1.0);
@@ -75,15 +75,15 @@ class TwoFluidMixtureDragPartitionTest {
   void linearDragRelaxationUsesTotalLiquidMassAcrossBothTraceLimits() throws Exception {
     double coefficient = 7.0;
     TwoFluidConservationEquations equations = linearDragEquations(coefficient);
-    for (boolean traceWater : new boolean[] { false, true }) {
-      for (double fraction : new double[] { 0.0, 1.0e-24, 1.0e-16, 1.0e-10, 0.01, 0.5 }) {
+    for (boolean traceWater : new boolean[] {false, true}) {
+      for (double fraction : new double[] {0.0, 1.0e-24, 1.0e-16, 1.0e-10, 0.01, 0.5}) {
         double oil = 0.6 * (traceWater ? 1.0 - fraction : fraction);
         double water = 0.6 * (traceWater ? fraction : 1.0 - fraction);
         TwoFluidSection section = section(oil, water, 2.0, 1.0, 1.0);
         double[] state = section.getStateVector();
         // The independent two-body linear-drag eigenvalue uses gas and total liquid inertia.
         double expectedRate = coefficient * (1.0 / state[0] + 1.0 / (state[1] + state[2]));
-        double timeStep = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section });
+        double timeStep = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section});
         assertTrue(Double.isFinite(timeStep) && timeStep > 0.0);
         // Centered probes of the zero-slip quadratic oil-water law leave an O(1e-6) derivative residue.
         assertEquals(1.0 / expectedRate, timeStep, 1.0e-7 / expectedRate);
@@ -103,7 +103,7 @@ class TwoFluidMixtureDragPartitionTest {
     invalid[5] = 0.0;
     section.setStateVector(invalid);
     section.setInterfacialShear(8.0);
-    assertThrows(IllegalStateException.class, () -> equations().calcSourceTerms(new TwoFluidSection[] { section }));
+    assertThrows(IllegalStateException.class, () -> equations().calcSourceTerms(new TwoFluidSection[] {section}));
     assertArrayEquals(invalid, section.getStateVector(), 0.0);
   }
 
@@ -112,9 +112,9 @@ class TwoFluidMixtureDragPartitionTest {
       double shear) {
     assertBulkVelocity(section);
     section.setInterfacialShear(0.0);
-    double[] without = equations.calcSourceTerms(new TwoFluidSection[] { section })[0];
+    double[] without = equations.calcSourceTerms(new TwoFluidSection[] {section})[0];
     section.setInterfacialShear(shear);
-    double[] with = equations.calcSourceTerms(new TwoFluidSection[] { section })[0];
+    double[] with = equations.calcSourceTerms(new TwoFluidSection[] {section})[0];
     double[] change = new double[7];
     for (int variable = 0; variable < change.length; variable++) {
       change[variable] = with[variable] - without[variable];
@@ -155,8 +155,8 @@ class TwoFluidMixtureDragPartitionTest {
     double energy = gasMass * (2.0e5 + 0.5 * gasVelocity * gasVelocity)
         + oilMass * (1.0e5 + 0.5 * oilVelocity * oilVelocity)
         + waterMass * (1.0e5 + 0.5 * waterVelocity * waterVelocity) - 1.0e5 * area;
-    section.setConservativeEndpoint(new double[] { gasMass, oilMass, waterMass, gasMass * gasVelocity,
-        oilMass * oilVelocity, waterMass * waterVelocity, energy }, 1.0e-12);
+    section.setConservativeEndpoint(new double[] {gasMass, oilMass, waterMass, gasMass * gasVelocity,
+        oilMass * oilVelocity, waterMass * waterVelocity, energy}, 1.0e-12);
     section.setFlowRegime(FlowRegime.STRATIFIED_SMOOTH);
     section.setRegimeWeights(null);
     section.setGasWallShear(0.0);

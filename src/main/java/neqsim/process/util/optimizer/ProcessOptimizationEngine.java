@@ -501,7 +501,7 @@ public class ProcessOptimizationEngine implements Serializable {
       double minimumOutletPressure, double minimumFlow, double maximumFlow) {
     validateScreeningAxis(pressures, "inlet pressure");
     validateScreeningAxis(temperatures, "temperature");
-    validateScreeningAxis(new double[] { minimumOutletPressure }, "minimum outlet pressure");
+    validateScreeningAxis(new double[] {minimumOutletPressure}, "minimum outlet pressure");
     if (!Double.isFinite(minimumFlow) || !Double.isFinite(maximumFlow) || minimumFlow < 0.0
         || maximumFlow <= minimumFlow) {
       throw new IllegalArgumentException("Mass-flow bounds must be finite with 0 <= minimum < maximum");

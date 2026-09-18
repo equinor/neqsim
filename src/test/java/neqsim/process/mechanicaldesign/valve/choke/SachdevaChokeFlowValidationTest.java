@@ -59,7 +59,7 @@ public class SachdevaChokeFlowValidationTest {
     @DisplayName("Critical ratio should decrease with increasing gas quality")
     void testCriticalRatioTrend() {
       double prevRatio = 1.0;
-      double[] gasQualities = { 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99 };
+      double[] gasQualities = {0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99};
 
       for (double xg : gasQualities) {
         double ratio = ChokeFlowValidationData.calculateSachdevaCriticalRatio(xg);

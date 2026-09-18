@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Test;
 
 /** Tests the literature-qualified Riazi-Daubert D86/TBP reference conversion. */
 class RiaziDaubertDistillationConversionTest {
-  private static final double[] RECOVERY_PERCENT = { 0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0 };
-  private static final double[] D86_C = { 36.5, 54.1, 76.9, 101.5, 131.0, 171.0, 186.5 };
-  private static final double[] TBP_C = { 14.1, 33.4, 68.9, 101.6, 135.1, 180.5, 194.1 };
+  private static final double[] RECOVERY_PERCENT = {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0};
+  private static final double[] D86_C = {36.5, 54.1, 76.9, 101.5, 131.0, 171.0, 186.5};
+  private static final double[] TBP_C = {14.1, 33.4, 68.9, 101.6, 135.1, 180.5, 194.1};
 
   @Test
   void reproducesPublishedWorkedExample() {

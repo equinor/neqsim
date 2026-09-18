@@ -9,9 +9,9 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousCrossAlgorithmFallbackTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
 
   @Test
   void multiphaseFlashRejectsInvalidHigherGibbsAqueousEndpoint() {
@@ -30,8 +30,7 @@ class TPflashAqueousCrossAlgorithmFallbackTest {
 
   @Test
   void multiphaseFallbackRemainsContinuousAcrossNearbyStates() {
-    double[][] states = { { 260.0, 100.0 }, { 255.0, 100.0 }, { 260.0, 90.0 }, { 260.0, 110.0 }, { 265.0, 100.0 },
-        { 260.0, 100.0 } };
+    double[][] states = {{260.0, 100.0}, {255.0, 100.0}, {260.0, 90.0}, {260.0, 110.0}, {265.0, 100.0}, {260.0, 100.0}};
     SystemInterface multiphase = createSystem(states[0][0], states[0][1], true, true);
 
     for (double[] state : states) {

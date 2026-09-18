@@ -23,9 +23,9 @@ public class PipeSegmentIntegrityTest {
    */
   @Test
   void walksProfileAndRanksSegments() {
-    double[] tC = { 90.0, 70.0, 50.0, 30.0 };
-    double[] pBara = { 120.0, 100.0, 80.0, 60.0 };
-    double[] vMs = { 4.0, 3.5, 3.0, 2.5 };
+    double[] tC = {90.0, 70.0, 50.0, 30.0};
+    double[] pBara = {120.0, 100.0, 80.0, 60.0};
+    double[] vMs = {4.0, 3.5, 3.0, 2.5};
 
     PipeSegmentIntegrity integrity = new PipeSegmentIntegrity();
     integrity.setProfile(tC, pBara, vMs).setPipeAndGas(0.254, 0.03).setBrineChemistry(1500.0, 500.0, 0.0, 0.0, 20000.0,
@@ -49,9 +49,9 @@ public class PipeSegmentIntegrityTest {
    */
   @Test
   void suppliedPHOverridesCorrelation() {
-    double[] tC = { 60.0, 40.0 };
-    double[] pBara = { 80.0, 60.0 };
-    double[] vMs = { 3.0, 2.0 };
+    double[] tC = {60.0, 40.0};
+    double[] pBara = {80.0, 60.0};
+    double[] vMs = {3.0, 2.0};
 
     PipeSegmentIntegrity integrity = new PipeSegmentIntegrity();
     integrity.setProfile(tC, pBara, vMs).setPipeAndGas(0.2, 0.02).setBrinePH(5.0);

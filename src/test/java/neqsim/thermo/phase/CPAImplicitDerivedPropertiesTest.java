@@ -230,8 +230,7 @@ class CPAImplicitDerivedPropertiesTest extends neqsim.NeqSimTest {
    */
   @Test
   void testEnthalpyEntropyConsistency() {
-    double[][] conditions = { { 273.15 + 10, 1.0 }, { 273.15 + 50, 50.0 }, { 273.15 + 80, 100.0 },
-        { 273.15 + 120, 200.0 } };
+    double[][] conditions = {{273.15 + 10, 1.0}, {273.15 + 50, 50.0}, {273.15 + 80, 100.0}, {273.15 + 120, 200.0}};
 
     logger.info("\n=== Enthalpy/Entropy Consistency ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s %12s %12s %12s %12s %12s%n", "T(C)/P(bar)",

@@ -67,7 +67,7 @@ public class TEGdehydrationProcessDistillation3 {
     Stream waterSaturatedFeedGas = new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97});
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(6862.5, "kg/hr");
@@ -102,7 +102,7 @@ public class TEGdehydrationProcessDistillation3 {
     richGLycolHeater2.setOutPressure(1.23);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
-    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    stripGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(90.2, "Sm3/hr");
@@ -161,7 +161,7 @@ public class TEGdehydrationProcessDistillation3 {
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");

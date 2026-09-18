@@ -51,10 +51,10 @@ class ControlBlockTransientStateTransactionTest extends neqsim.NeqSimTest {
     assertEquals(2, coverage.getParticipantCount());
     assertTrue(coverage.isComplete());
 
-    UUID[] stepIds = new UUID[] { TransientStepIdentifier.deterministicPhysicalStep("control-block-replay", 1L),
+    UUID[] stepIds = new UUID[] {TransientStepIdentifier.deterministicPhysicalStep("control-block-replay", 1L),
         TransientStepIdentifier.deterministicPhysicalStep("control-block-replay", 2L),
-        TransientStepIdentifier.deterministicPhysicalStep("control-block-replay", 3L) };
-    double[] pressures = new double[] { 20.0, 30.0, 15.0 };
+        TransientStepIdentifier.deterministicPhysicalStep("control-block-replay", 3L)};
+    double[] pressures = new double[] {20.0, 30.0, 15.0};
     double[] trialOutputs = new double[pressures.length];
 
     TransientStepTransaction transaction = model.beginTransientStepTransaction();

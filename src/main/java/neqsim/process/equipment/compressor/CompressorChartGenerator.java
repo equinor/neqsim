@@ -21,7 +21,7 @@ package neqsim.process.equipment.compressor;
  * CompressorChart chart = generator.generateCompressorChart("normal", 5);
  *
  * // Multi-speed with specific speeds
- * double[] speeds = { 7000, 8000, 9000, 10000 };
+ * double[] speeds = {7000, 8000, 9000, 10000};
  * CompressorChart chart = generator.generateCompressorChart("normal", speeds);
  *
  * // Using a predefined curve template
@@ -189,7 +189,7 @@ public class CompressorChartGenerator {
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
   public CompressorChartInterface generateCompressorChart(String generationOption) {
-    double[] speeds = { compressor.getSpeed() };
+    double[] speeds = {compressor.getSpeed()};
     return generateCompressorChart(generationOption, speeds);
   }
 
@@ -366,7 +366,7 @@ public class CompressorChartGenerator {
    */
   public CompressorChartInterface generateCompressorChart(String generationOption, double[] speeds) {
     if (speeds == null || speeds.length == 0) {
-      speeds = new double[] { compressor.getSpeed() };
+      speeds = new double[] {compressor.getSpeed()};
     }
     return generateChartCore(generationOption, speeds, compressor.getSpeed(),
         compressor.getInletStream().getFlowRate("m3/hr"), compressor.getPolytropicFluidHead(),
@@ -444,7 +444,7 @@ public class CompressorChartGenerator {
     boolean isNormalCurves = generationOption.toLowerCase().contains("normal");
 
     // Initialize chart conditions
-    double[] chartConditions = { compressor.getInletStream().getFluid().getMolarMass("kg/mol") };
+    double[] chartConditions = {compressor.getInletStream().getFluid().getMolarMass("kg/mol")};
 
     // Get gas properties for corrections
     double molarMass = compressor.getInletStream().getFluid().getMolarMass("kg/mol") * 1000.0; // kg/kmol
@@ -674,8 +674,8 @@ public class CompressorChartGenerator {
     double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
 
     SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
-    surgeCurve.setCurve(new double[3], new double[] { minSurgeFlow, refSurgeFlow, maxSurgeFlow },
-        new double[] { headSurgeMin, headSurgeRef, headSurgeMax });
+    surgeCurve.setCurve(new double[3], new double[] {minSurgeFlow, refSurgeFlow, maxSurgeFlow},
+        new double[] {headSurgeMin, headSurgeRef, headSurgeMax});
     return surgeCurve;
   }
 }

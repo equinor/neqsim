@@ -241,8 +241,8 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "gasLoadFactorMPerS", "retentionTimeS", "highHighResponseTimeS",
-          "availableTripResponseTimeS" };
+      return new String[] {"gasLoadFactorMPerS", "retentionTimeS", "highHighResponseTimeS",
+          "availableTripResponseTimeS"};
     }
   }
 
@@ -279,8 +279,8 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "driverMarginFraction", "minimumSurgeMarginFraction", "recycleDifferentialPressureBar",
-          "settleOutPressureBara", "mapExtrapolationFraction", "maxMapExtrapolationFraction", "startupPowerKw" };
+      return new String[] {"driverMarginFraction", "minimumSurgeMarginFraction", "recycleDifferentialPressureBar",
+          "settleOutPressureBara", "mapExtrapolationFraction", "maxMapExtrapolationFraction", "startupPowerKw"};
     }
   }
 
@@ -312,8 +312,7 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "minimumContinuousFlowM3s", "turndownFlowM3s", "minimumNpshMarginM",
-          "driverMarginFraction" };
+      return new String[] {"minimumContinuousFlowM3s", "turndownFlowM3s", "minimumNpshMarginM", "driverMarginFraction"};
     }
   }
 
@@ -347,9 +346,9 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "areaMarginFraction", "utilitySpecificDutyKJPerKg", "processPressureDropBar",
+      return new String[] {"areaMarginFraction", "utilitySpecificDutyKJPerKg", "processPressureDropBar",
           "maximumPressureDropBar", "availableUtilityFlowKgPerS", "highPressureSideBara", "lowPressureSideDesignBara",
-          "maximumDutyKw", "minimumDutyKw" };
+          "maximumDutyKw", "minimumDutyKw"};
     }
   }
 
@@ -381,8 +380,8 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "targetFloodingFraction", "minimumVaporLoadM3s", "minimumTurndownFraction",
-          "maximumCondenserDutyKw", "maximumReboilerDutyKw" };
+      return new String[] {"targetFloodingFraction", "minimumVaporLoadM3s", "minimumTurndownFraction",
+          "maximumCondenserDutyKw", "maximumReboilerDutyKw"};
     }
   }
 
@@ -417,8 +416,8 @@ public final class EquipmentDesignCalculations {
 
     @Override
     String[] productionRequiredInputs() {
-      return new String[] { "emergencyInflowM3s", "usableVolumeFraction", "normalVentRateM3s",
-          "installedVentCapacityM3s", "blanketingRateM3s" };
+      return new String[] {"emergencyInflowM3s", "usableVolumeFraction", "normalVentRateM3s",
+          "installedVentCapacityM3s", "blanketingRateM3s"};
     }
   }
 

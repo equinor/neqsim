@@ -18,8 +18,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = { "s", "sec", "second", "min", "minute", "h", "hr", "hour", "d",
-      "day" };
+  private static final String[] ALLOWED_UNITS = {"s", "sec", "second", "min", "minute", "h", "hr", "hour", "d", "day"};
 
   /**
    * Constructor for TimeUnit.

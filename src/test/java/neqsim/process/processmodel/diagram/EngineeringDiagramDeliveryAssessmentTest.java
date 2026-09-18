@@ -85,7 +85,7 @@ class EngineeringDiagramDeliveryAssessmentTest {
   void detectsArtifactTamperingWithoutChangingManifestEvidence() throws IOException {
     Path delivery = deliverSystem("tampered");
     Path pdf = delivery.resolve("drawing-set.pdf");
-    Files.write(pdf, new byte[] { 1 }, StandardOpenOption.APPEND);
+    Files.write(pdf, new byte[] {1}, StandardOpenOption.APPEND);
 
     EngineeringDiagramDeliveryAssessment.Report report = EngineeringDiagramDeliveryAssessment.assess(delivery);
 

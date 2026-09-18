@@ -90,9 +90,9 @@ public class WaxFractionSim extends BasePVTsimulation {
         tempSystem.setPressure(pressure[i]);
         thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = { temperature[i] };
+        double[] sample1 = {temperature[i]};
         double waxContent = experimentalData[0][i];
-        double[] standardDeviation1 = { 1.5 };
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
@@ -159,13 +159,13 @@ public class WaxFractionSim extends BasePVTsimulation {
     tempSystem.init(1);
     NeqSimDataBase.setCreateTemporaryTables(false);
     WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
-    double[] temps = { 293.15, 283.15, 273.15, 264.15, 263, 262, 261 };
-    double[] pres = { 5, 5, 5.0, 5.0, 5.0, 5.0, 5.0 };
+    double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
+    double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
 
     sepSim.runCalc();
     sepSim.getThermoSystem().display();
-    double[][] expData = { { 4, 7, 9, 10, 11, 12, 13 } };
+    double[][] expData = {{4, 7, 9, 10, 11, 12, 13}};
     sepSim.setExperimentalData(expData);
     // String[] params = {"Mplus", "waxParam1", "waxParam2"};
     // sepSim.getOptimizer().setTuningParameters("")

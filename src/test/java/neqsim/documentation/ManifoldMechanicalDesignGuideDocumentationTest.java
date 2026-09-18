@@ -85,7 +85,7 @@ public class ManifoldMechanicalDesignGuideDocumentationTest extends neqsim.NeqSi
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("ManifoldMechanicalDesignScreeningExample", true, loader);

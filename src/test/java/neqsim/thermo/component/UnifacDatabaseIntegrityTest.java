@@ -109,7 +109,7 @@ public class UnifacDatabaseIntegrityTest {
   /**
    * DDBST published original UNIFAC subgroups, encoded as "secondary;name;maingroup;volumeR;surfaceQ".
    */
-  private static final String[] DDBST_GROUPS = { "1;CH3;1;0.9011;0.8480", "2;CH2;1;0.6744;0.5400",
+  private static final String[] DDBST_GROUPS = {"1;CH3;1;0.9011;0.8480", "2;CH2;1;0.6744;0.5400",
       "3;CH;1;0.4469;0.2280", "4;C;1;0.2195;0.0000", "5;CH2=CH;2;1.3454;1.1760", "6;CH=CH;2;1.1167;0.8670",
       "7;CH2=C;2;1.1173;0.9880", "8;CH=C;2;0.8886;0.6760", "9;ACH;3;0.5313;0.4000", "10;AC;3;0.3652;0.1200",
       "11;ACCH3;4;1.2663;0.9680", "12;ACCH2;4;1.0396;0.6600", "13;ACCH;4;0.8121;0.3480", "14;OH;5;1.0000;1.2000",
@@ -126,18 +126,18 @@ public class UnifacDatabaseIntegrityTest {
       "53;ACCL;25;1.1562;0.8440", "54;CH3NO2;26;2.0086;1.8680", "55;CH2NO2;26;1.7818;1.5600",
       "56;CHNO2;26;1.5544;1.2480", "57;ACNO2;27;1.4199;1.1040", "58;CS2;28;2.0570;1.6500", "59;CH3SH;29;1.8770;1.6760",
       "60;CH2SH;29;1.6510;1.3680", "61;FURFURAL;30;3.1680;2.4840", "62;DOH;31;2.4088;2.2480", "63;I;32;1.2640;0.9920",
-      "64;BR;33;0.9492;0.8320", "70;C=C;2;0.6605;0.4850" };
+      "64;BR;33;0.9492;0.8320", "70;C=C;2;0.6605;0.4850"};
 
   /**
    * Molar mass implied by a subgroup, encoded as "secondary;grams per mole". Only subgroups with an unambiguous
    * composition are listed; a component using anything else is not mass-checked.
    */
-  private static final String[] SUBGROUP_MASSES = { "1;15.0345", "2;14.0266", "3;13.0186", "4;12.0110", "5;27.0453",
+  private static final String[] SUBGROUP_MASSES = {"1;15.0345", "2;14.0266", "3;13.0186", "4;12.0110", "5;27.0453",
       "6;26.0373", "7;26.0373", "8;25.0294", "70;24.0220", "9;13.0186", "10;12.0110", "11;27.0453", "12;26.0373",
       "13;25.0294", "14;17.0073", "15;32.0419", "16;18.0153", "24;31.0339", "25;30.0260", "26;29.0180", "62;62.0678",
       "120;17.0305", "121;44.0095", "122;16.0425", "123;31.9988", "124;39.9480", "125;28.0134", "126;34.0809",
       "127;2.0159", "128;28.0101", "134;30.0690", "136;14.0266", "137;13.0186", "138;12.0110", "139;62.0678",
-      "140;150.1730" };
+      "140;150.1730"};
 
   /**
    * Fails when the UNIFAC tables contain an inconsistency that is not already recorded in the baseline.
@@ -394,7 +394,7 @@ public class UnifacDatabaseIntegrityTest {
     Map<String, String[]> reference = new LinkedHashMap<String, String[]>();
     for (String entry : DDBST_GROUPS) {
       String[] parts = entry.split(";");
-      reference.put(parts[0], new String[] { parts[1], parts[2], parts[3], parts[4] });
+      reference.put(parts[0], new String[] {parts[1], parts[2], parts[3], parts[4]});
     }
     return reference;
   }

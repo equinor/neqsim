@@ -10,20 +10,20 @@ import org.junit.jupiter.api.Test;
 
 /** Tests for the Burgoyne-Nielsen (2026) Soreide-Whitson parameter set. */
 class SoreideWhitson2026ParameterSetTest {
-  private static final String[] GASES = { "CO2", "H2S", "methane", "nitrogen", "hydrogen", "ethane", "propane",
-      "n-butane" };
+  private static final String[] GASES = {"CO2", "H2S", "methane", "nitrogen", "hydrogen", "ethane", "propane",
+      "n-butane"};
 
   /** Reference values generated with the authors' drop-in implementation. */
   @Test
   void reproducesAuthorsDropInReferenceValues() {
-    double[][] conditions = { { 280.0, 0.0 }, { 320.0, 2.0 }, { 400.0, 4.0 } };
+    double[][] conditions = {{280.0, 0.0}, {320.0, 2.0}, {400.0, 4.0}};
     double[][] expected = {
-        { -0.15430515199999989, -0.040636141140641707, -0.35607665803427202, -0.70525508000000003, -1.1653958207557671,
-            -0.23864970725296367, -0.24791483046230281, -0.26490810114410868 },
-        { -0.066977075883884005, 0.0047695414544906556, -0.18628176263909707, -0.48908940185930494,
-            -0.79098165279971333, -0.09766949672946576, -0.12892229757704116, -0.16434934114272814 },
-        { 0.049975792300732402, 0.084943486799094026, 0.096410431980090763, -0.070208107931660546, -0.21768059796366851,
-            0.11532368474101742, 0.067371881402650893, 0.012057774238313251 } };
+        {-0.15430515199999989, -0.040636141140641707, -0.35607665803427202, -0.70525508000000003, -1.1653958207557671,
+            -0.23864970725296367, -0.24791483046230281, -0.26490810114410868},
+        {-0.066977075883884005, 0.0047695414544906556, -0.18628176263909707, -0.48908940185930494, -0.79098165279971333,
+            -0.09766949672946576, -0.12892229757704116, -0.16434934114272814},
+        {0.049975792300732402, 0.084943486799094026, 0.096410431980090763, -0.070208107931660546, -0.21768059796366851,
+            0.11532368474101742, 0.067371881402650893, 0.012057774238313251}};
 
     for (int conditionIndex = 0; conditionIndex < conditions.length; conditionIndex++) {
       for (int gasIndex = 0; gasIndex < GASES.length; gasIndex++) {
@@ -66,7 +66,7 @@ class SoreideWhitson2026ParameterSetTest {
   /** Verify published non-aqueous constants and bounded pair routing. */
   @Test
   void appliesNonAqueousConstantsOnlyToSupportedWaterGasPairs() {
-    double[] expected = { 0.1896, 0.1610, 0.4850, 0.4778, 0.4680, 0.4920, 0.5525, 0.5091 };
+    double[] expected = {0.1896, 0.1610, 0.4850, 0.4778, 0.4680, 0.4920, 0.5525, 0.5091};
     for (int gasIndex = 0; gasIndex < GASES.length; gasIndex++) {
       assertTrue(SoreideWhitson2026ParameterSet.supportsWaterGasPair(GASES[gasIndex], "water"));
       assertEquals(expected[gasIndex], SoreideWhitson2026ParameterSet.nonAqueousKij(GASES[gasIndex], "water"), 0.0,

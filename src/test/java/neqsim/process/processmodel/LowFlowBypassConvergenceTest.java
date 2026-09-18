@@ -189,7 +189,7 @@ public class LowFlowBypassConvergenceTest {
     Manifold manifold = new Manifold("test manifold");
     manifold.addStream(feedA);
     manifold.addStream(feedB);
-    manifold.setSplitFactors(new double[] { 0.6, 0.4 });
+    manifold.setSplitFactors(new double[] {0.6, 0.4});
     manifold.run();
 
     assertEquals(0.0, manifold.getMassBalance("kg/hr"), 1.0e-6,

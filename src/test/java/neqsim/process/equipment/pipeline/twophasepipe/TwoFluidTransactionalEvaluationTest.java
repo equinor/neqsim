@@ -21,7 +21,7 @@ class TwoFluidTransactionalEvaluationTest {
   @Test
   void capturesTheCurrentLedgerAndRestoresPreviouslyPublishedDiagnostics() {
     TwoFluidConservationEquations equations = equations();
-    TwoFluidSection[] accepted = { section(0.0, 3.0), section(3.0, 7.0), section(10.0, 11.0) };
+    TwoFluidSection[] accepted = {section(0.0, 3.0), section(3.0, 7.0), section(10.0, 11.0)};
     equations.calcRHS(cloneSections(accepted), 7.0);
     MassBalanceRate savedBalance = equations.getLastMassBalanceRate();
     double[][] savedFaces = equations.getLastPhaseMassFaceFluxes();
@@ -65,7 +65,7 @@ class TwoFluidTransactionalEvaluationTest {
     TwoFluidConservationEquations equations = equations();
     equations.setIncludeMassTransfer(true);
     equations.setClosedBoundaries(true, true);
-    TwoFluidSection[] trial = { section(0.0, 3.0), section(3.0, 7.0) };
+    TwoFluidSection[] trial = {section(0.0, 3.0), section(3.0, 7.0)};
     trial[0].setMassTransferRate(0.002);
     trial[1].setMassTransferRate(-0.001);
 
@@ -91,15 +91,15 @@ class TwoFluidTransactionalEvaluationTest {
     TwoFluidSection reversed = section(0.0, 3.0);
     reversed.setOilVelocity(-0.25);
     reversed.updateConservativeVariables();
-    equations.calcRHS(new TwoFluidSection[] { reversed.clone() }, 3.0);
+    equations.calcRHS(new TwoFluidSection[] {reversed.clone()}, 3.0);
     assertTrue(equations.isOutletBackflowClamped());
 
-    TransactionalEvaluation forward = equations.evaluateTransactional(new TwoFluidSection[] { section(0.0, 3.0) }, 3.0);
+    TransactionalEvaluation forward = equations.evaluateTransactional(new TwoFluidSection[] {section(0.0, 3.0)}, 3.0);
     assertFalse(forward.isOutletBackflowClamped());
     assertTrue(equations.isOutletBackflowClamped(), "Previously published sticky diagnostic must be restored");
 
     equations.clearOutletBackflowClamped();
-    TransactionalEvaluation clamped = equations.evaluateTransactional(new TwoFluidSection[] { reversed.clone() }, 3.0);
+    TransactionalEvaluation clamped = equations.evaluateTransactional(new TwoFluidSection[] {reversed.clone()}, 3.0);
     assertTrue(clamped.isOutletBackflowClamped());
     assertFalse(equations.isOutletBackflowClamped(), "A trial must not publish its own sticky diagnostic");
   }
@@ -110,21 +110,21 @@ class TwoFluidTransactionalEvaluationTest {
     equations.setIncludeEnergyEquation(false);
     equations.setIncludeMassTransfer(false);
     equations.setMomentumForceDiagnosticsEnabled(true);
-    equations.calcRHS(new TwoFluidSection[] { section(0.0, 3.0) }, 3.0);
+    equations.calcRHS(new TwoFluidSection[] {section(0.0, 3.0)}, 3.0);
     MassBalanceRate savedBalance = equations.getLastMassBalanceRate();
     double[][] savedFaces = equations.getLastPhaseMassFaceFluxes();
     double[][] savedForces = equations.getLastMomentumSourceForcesPerLength();
     equations.fail = true;
 
     assertSame(equations.failure, assertThrows(IllegalStateException.class,
-        () -> equations.evaluateTransactional(new TwoFluidSection[] { section(0.0, 7.0), section(7.0, 11.0) }, 9.0)));
+        () -> equations.evaluateTransactional(new TwoFluidSection[] {section(0.0, 7.0), section(7.0, 11.0)}, 9.0)));
 
     assertSame(savedBalance, equations.getLastMassBalanceRate());
     assertMatrixEquals(savedFaces, equations.getLastPhaseMassFaceFluxes());
     assertMatrixEquals(savedForces, equations.getLastMomentumSourceForcesPerLength());
     assertFalse(equations.isOutletBackflowClamped());
     equations.fail = false;
-    equations.evaluateTransactional(new TwoFluidSection[] { section(0.0, 3.0) }, 3.0);
+    equations.evaluateTransactional(new TwoFluidSection[] {section(0.0, 3.0)}, 3.0);
     assertSame(savedBalance, equations.getLastMassBalanceRate());
   }
 
@@ -132,8 +132,7 @@ class TwoFluidTransactionalEvaluationTest {
   void serializesExactLedgerWithoutAliasingLaterOperatorEvaluations() throws Exception {
     TwoFluidConservationEquations equations = equations();
     equations.setMomentumForceDiagnosticsEnabled(false);
-    TransactionalEvaluation original = equations.evaluateTransactional(new TwoFluidSection[] { section(0.0, 3.0) },
-        3.0);
+    TransactionalEvaluation original = equations.evaluateTransactional(new TwoFluidSection[] {section(0.0, 3.0)}, 3.0);
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(original);
@@ -142,7 +141,7 @@ class TwoFluidTransactionalEvaluationTest {
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       restored = (TransactionalEvaluation) input.readObject();
     }
-    equations.calcRHS(new TwoFluidSection[] { section(0.0, 1.0), section(1.0, 2.0) }, 1.5);
+    equations.calcRHS(new TwoFluidSection[] {section(0.0, 1.0), section(1.0, 2.0)}, 1.5);
     assertMatrixEquals(original.getRates(), restored.getRates());
     assertMatrixEquals(original.getPhaseMassFaceFluxes(), restored.getPhaseMassFaceFluxes());
     assertArrayEquals(original.getMassBalanceRate().getOutletMassFlowKgPerSecond(),

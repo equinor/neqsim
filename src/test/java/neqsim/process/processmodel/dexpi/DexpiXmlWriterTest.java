@@ -929,7 +929,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
 
-    String[] safetyTags = { "PSHH-101", "PAHH-102", "LSHH-103", "TSHH-104", "FSL-105" };
+    String[] safetyTags = {"PSHH-101", "PAHH-102", "LSHH-103", "TSHH-104", "FSL-105"};
     for (String tag : safetyTags) {
       process.add(new PressureTransmitter(tag, feed));
     }
@@ -967,7 +967,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
     process.add(hipps);
-    String[] sensorTags = { "PSHH-101A", "PSHH-101B", "PSHH-101C" };
+    String[] sensorTags = {"PSHH-101A", "PSHH-101B", "PSHH-101C"};
     for (String tag : sensorTags) {
       PressureTransmitter transmitter = new PressureTransmitter(tag, feed);
       hipps.addPressureTransmitter(transmitter);

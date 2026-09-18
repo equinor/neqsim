@@ -10,12 +10,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashTraceAqueousRefinementTest {
-  private static final String[] COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water" };
-  private static final double[] WATER_FEED_FRACTIONS = { 1.0e-4, 1.0e-3, 9.0e-3 };
+  private static final String[] COMPONENTS = {"nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water"};
+  private static final double[] WATER_FEED_FRACTIONS = {1.0e-4, 1.0e-3, 9.0e-3};
 
   @Test
   void traceAqueousEndpointsRemainBalancedAndMatchMultiphaseFlash() {
-    for (boolean usePr : new boolean[] { false, true }) {
+    for (boolean usePr : new boolean[] {false, true}) {
       for (double waterFeedFraction : WATER_FEED_FRACTIONS) {
         SystemInterface ordinary = createAndFlash(usePr, waterFeedFraction, false);
         SystemInterface multiphase = createAndFlash(usePr, waterFeedFraction, true);
@@ -66,7 +66,7 @@ class TPflashTraceAqueousRefinementTest {
 
   private SystemInterface createAndFlash(boolean usePr, double waterFeedFraction, boolean multiphaseCheck) {
     SystemInterface system = usePr ? new SystemPrEos(230.0, 200.0) : new SystemSrkEos(230.0, 200.0);
-    double[] feed = { 0.02, 0.03, 0.859 - waterFeedFraction, 0.06, 0.03, 0.001, waterFeedFraction };
+    double[] feed = {0.02, 0.03, 0.859 - waterFeedFraction, 0.06, 0.03, 0.001, waterFeedFraction};
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], feed[componentIndex]);
     }
@@ -79,7 +79,7 @@ class TPflashTraceAqueousRefinementTest {
 
   private SystemInterface createAndFlashAtPhaseSelectionBoundary(boolean multiphaseCheck) {
     SystemInterface system = new SystemSrkEos(260.0, 200.0);
-    double[] feed = { 0.02, 0.03, 0.85, 0.06, 0.03, 0.009, 0.001 };
+    double[] feed = {0.02, 0.03, 0.85, 0.06, 0.03, 0.009, 0.001};
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], feed[componentIndex]);
     }
@@ -93,8 +93,8 @@ class TPflashTraceAqueousRefinementTest {
   private SystemInterface createAndFlashMissedAqueousCase(boolean usePr, double temperature, double pressure,
       double waterFeedFraction, double nC10FeedFraction, boolean multiphaseCheck, boolean poorGuess) {
     SystemInterface system = usePr ? new SystemPrEos(temperature, pressure) : new SystemSrkEos(temperature, pressure);
-    double[] feed = { 0.02, 0.03, 0.86 - waterFeedFraction - nC10FeedFraction, 0.06, 0.03, nC10FeedFraction,
-        waterFeedFraction };
+    double[] feed = {0.02, 0.03, 0.86 - waterFeedFraction - nC10FeedFraction, 0.06, 0.03, nC10FeedFraction,
+        waterFeedFraction};
     for (int componentIndex = 0; componentIndex < COMPONENTS.length; componentIndex++) {
       system.addComponent(COMPONENTS[componentIndex], feed[componentIndex]);
     }

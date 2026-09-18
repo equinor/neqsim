@@ -530,7 +530,7 @@ class TVFlashTest {
     double baseVolume = system.getVolume("m3");
 
     // Test with various volume targets
-    double[] volumeMultipliers = { 0.5, 0.7, 0.9, 1.0, 1.1, 1.3, 1.5, 2.0 };
+    double[] volumeMultipliers = {0.5, 0.7, 0.9, 1.0, 1.1, 1.3, 1.5, 2.0};
 
     logger.info("Volume Multiplier | Target Volume | Final P | Volume Error | Converged");
     logger.info("------------------|---------------|---------|--------------|----------");

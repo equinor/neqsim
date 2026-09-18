@@ -30,7 +30,7 @@ public abstract class Component implements ComponentInterface {
   /** Conversion factor from mmHg to bar. */
   private static final double MMHG_TO_BAR = 1.0 / 750.061683;
 
-  double[] surfTensInfluenceParam = { 0.28367, -0.05164, -0.81594, 1.06810, -1.1147 };
+  double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
   /** Index number of Component in database. */
   protected int index;
   /** Index number of Component in Phase object component array. */

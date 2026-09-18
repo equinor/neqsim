@@ -25,14 +25,13 @@ class TranslatedPRFlashLifecycleQualificationTest {
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private static final FluidCase[] CASES = {
-      new FluidCase("large-volatility", 260.0, 200.0, new String[] { "methane", "n-heptane" },
-          new double[] { 0.90, 0.10 }),
+      new FluidCase("large-volatility", 260.0, 200.0, new String[] {"methane", "n-heptane"}, new double[] {0.90, 0.10}),
       new FluidCase("rich-gas", 273.15, 100.0,
-          new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "n-butane", "n-hexane" },
-          new double[] { 0.01, 0.02, 0.72, 0.08, 0.06, 0.05, 0.06 }),
-      new FluidCase("aromatic", 298.15, 10.0, new String[] { "methane", "cumene" }, new double[] { 0.90, 0.10 }),
-      new FluidCase("light-control", 298.15, 30.0, new String[] { "methane", "ethane", "n-butane" },
-          new double[] { 0.70, 0.20, 0.10 }) };
+          new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "n-butane", "n-hexane"},
+          new double[] {0.01, 0.02, 0.72, 0.08, 0.06, 0.05, 0.06}),
+      new FluidCase("aromatic", 298.15, 10.0, new String[] {"methane", "cumene"}, new double[] {0.90, 0.10}),
+      new FluidCase("light-control", 298.15, 30.0, new String[] {"methane", "ethane", "n-butane"},
+          new double[] {0.70, 0.20, 0.10})};
 
   /** Ordinary, multiphase, and deliberately poor beta estimates must agree at nominal states. */
   @Test

@@ -311,7 +311,7 @@ public class ReactiveMultiphasePHflashTest {
    */
   @Test
   public void testPressureRange() {
-    double[] pressures = { 1.0, 10.0, 50.0, 200.0 };
+    double[] pressures = {1.0, 10.0, 50.0, 200.0};
 
     for (double P : pressures) {
       SystemInterface system = new SystemSrkEos(500.0, P);

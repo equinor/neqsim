@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Forward/inverse consistency for downhill, flat, and uphill liquid pipelines. */
 class PipeInletPressureRegressionTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(doubles = { -5.0, 0.0, 5.0 })
+  @ValueSource(doubles = {-5.0, 0.0, 5.0})
   void inverseRecoversForwardPressureAndRejectsUnconvergedTrials(double angle) {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 30.0);
     fluid.addComponent("water", 1.0);

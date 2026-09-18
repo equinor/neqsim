@@ -534,7 +534,7 @@ public class KineticReaction implements Serializable {
    * @param adsorptionOrder adsorption concentration order
    */
   public void addAdsorptionTerm(String componentName, double kiFactor, double adsorptionOrder) {
-    adsorptionTerms.put(componentName, new double[] { kiFactor, adsorptionOrder });
+    adsorptionTerms.put(componentName, new double[] {kiFactor, adsorptionOrder});
   }
 
   /**

@@ -72,7 +72,7 @@ public class GasTurbineDriver extends DriverCurveBase {
   private double speedTurndown = 0.7;
 
   /** Part-load efficiency curve coefficients. */
-  private double[] efficiencyCoeffs = { 0.1, 0.6, 0.3 }; // a + b*x + c*x^2
+  private double[] efficiencyCoeffs = {0.1, 0.6, 0.3}; // a + b*x + c*x^2
 
   /**
    * Default constructor.
@@ -336,6 +336,6 @@ public class GasTurbineDriver extends DriverCurveBase {
    * @param c quadratic term
    */
   public void setEfficiencyCurve(double a, double b, double c) {
-    this.efficiencyCoeffs = new double[] { a, b, c };
+    this.efficiencyCoeffs = new double[] {a, b, c};
   }
 }

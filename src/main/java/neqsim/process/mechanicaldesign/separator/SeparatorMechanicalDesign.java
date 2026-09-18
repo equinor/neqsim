@@ -296,7 +296,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Name", "Value", "Unit" };
+    String[] names = {"Name", "Value", "Unit"};
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";

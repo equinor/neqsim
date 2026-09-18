@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 class TwoFluidVariableAreaPressureRegressionTest {
   @Test
   void stationaryPhaseContactsBalanceWithoutInterfacialStabilization() {
-    TwoFluidSection[] cells = { cell(0.5, 1.0, 0.1, 1.0), cell(2.0, 2.0, 0.2, 0.4), cell(4.5, 3.0, 0.15, 0.0) };
+    TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(2.0, 2.0, 0.2, 0.4), cell(4.5, 3.0, 0.15, 0.0)};
     cells[1].setWaterCut(0.2);
     cells[2].setWaterCut(1.0);
     for (TwoFluidSection section : cells) {
@@ -28,9 +28,9 @@ class TwoFluidVariableAreaPressureRegressionTest {
 
   @Test
   void constantPressureAtRestIsBalancedAcrossChangingAreaInEveryPhase() {
-    for (double gasHoldup : new double[] { 1.0, 0.4, 0.0 }) {
-      TwoFluidSection[] cells = { cell(0.5, 1.0, 0.1, gasHoldup), cell(2.0, 2.0, 0.2, gasHoldup),
-          cell(4.5, 3.0, 0.15, gasHoldup) };
+    for (double gasHoldup : new double[] {1.0, 0.4, 0.0}) {
+      TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, gasHoldup), cell(2.0, 2.0, 0.2, gasHoldup),
+          cell(4.5, 3.0, 0.15, gasHoldup)};
       TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
       equations.setEnableInterfacialPressure(true);
 

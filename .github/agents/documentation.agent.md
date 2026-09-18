@@ -153,16 +153,21 @@ Follow the structure appropriate to the document type:
 ### Step 4: Verify and Index
 
 1. **Write and run** the JUnit verification test (see above)
-2. **Verify all links** — use `file_search` to confirm every linked file exists
-3. **Update `docs/REFERENCE_MANUAL_INDEX.md`** — add the new entry in the correct section
-4. **Update the section's `index.md`** — add a link to the new page
-5. **Check front matter** — title, description, no duplicate H1
+2. **Format the Java** — after editing any `.java` file (including
+   `DocExamplesCompilationTest.java`), run `./mvnw spotless:apply` (Windows:
+   `mvnw.cmd spotless:apply`) and `git add` the reformatted files. CI runs
+   `spotless:check` and fails on any unformatted file.
+3. **Verify all links** — use `file_search` to confirm every linked file exists
+4. **Update `docs/REFERENCE_MANUAL_INDEX.md`** — add the new entry in the correct section
+5. **Update the section's `index.md`** — add a link to the new page
+6. **Check front matter** — title, description, no duplicate H1
 
 ### Step 5: Review Checklist
 
 - [ ] Jekyll front matter with `title` and `description` (both quoted if containing colons)
 - [ ] No H1 heading duplicating the title after front matter
 - [ ] All code examples verified by a passing JUnit test
+- [ ] Java files formatted with `./mvnw spotless:apply` (CI runs `spotless:check`)
 - [ ] All internal links point to existing files
 - [ ] Math equations use `$...$` (inline) and `$$...$$` (display), never `\[...\]`
 - [ ] Tables have blank lines before and after

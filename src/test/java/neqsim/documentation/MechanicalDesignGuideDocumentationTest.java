@@ -148,7 +148,7 @@ class MechanicalDesignGuideDocumentationTest {
           .call();
       assertTrue(Boolean.TRUE.equals(compiled), className + " failed to compile: " + diagnostics);
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { classesDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {classesDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       Class<?> example = Class.forName(className, true, loader);
       example.getMethod("main", String[].class).invoke(null, (Object) arguments);

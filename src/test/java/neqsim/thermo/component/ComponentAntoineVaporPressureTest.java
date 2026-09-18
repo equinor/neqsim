@@ -24,8 +24,8 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "i-pentane, 0.91800973328146", "propanePVTsim, 9.5325713901722", "nbutanePVTsim, 2.43660679085882",
-      "Piperazine, 0.000503106903946668" })
+  @CsvSource({"i-pentane, 0.91800973328146", "propanePVTsim, 9.5325713901722", "nbutanePVTsim, 2.43660679085882",
+      "Piperazine, 0.000503106903946668"})
   void dipprDatabaseRowsReturnPressureInBar(String name, double expected) {
     Component component = component(name);
     assertEquals(expected, component.getAntoineVaporPressure(298.15), expected * 1.0e-10);
@@ -33,7 +33,7 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 290.0, 298.15, 301.0 })
+  @ValueSource(doubles = {290.0, 298.15, 301.0})
   void isopentaneAgreesWithIndependentNistCorrelation(double temperature) {
     // NIST WebBook, CAS 78-78-4, Willingham et al. (1945), valid 289.44-301.74 K.
     // https://webbook.nist.gov/cgi/cbook.cgi?ID=C78784&Mask=4
@@ -42,9 +42,9 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "i-pentane, 280.0", "i-pentane, 298.15", "i-pentane, 320.0", "propanePVTsim, 280.0",
+  @CsvSource({"i-pentane, 280.0", "i-pentane, 298.15", "i-pentane, 320.0", "propanePVTsim, 280.0",
       "propanePVTsim, 298.15", "propanePVTsim, 320.0", "nbutanePVTsim, 280.0", "nbutanePVTsim, 298.15",
-      "nbutanePVTsim, 320.0", "Piperazine, 400.0" })
+      "nbutanePVTsim, 320.0", "Piperazine, 400.0"})
   void dipprDerivativeMatchesFiniteDifference(String name, double temperature) {
     Component component = component(name);
     double step = 1.0e-3;
@@ -55,9 +55,9 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "i-pentane, 280.0", "i-pentane, 298.15", "i-pentane, 320.0", "propanePVTsim, 280.0",
+  @CsvSource({"i-pentane, 280.0", "i-pentane, 298.15", "i-pentane, 320.0", "propanePVTsim, 280.0",
       "propanePVTsim, 298.15", "propanePVTsim, 320.0", "nbutanePVTsim, 280.0", "nbutanePVTsim, 298.15",
-      "nbutanePVTsim, 320.0" })
+      "nbutanePVTsim, 320.0"})
   void dipprPressureTemperatureRoundTrip(String name, double temperature) {
     Component component = component(name);
     double pressure = component.getAntoineVaporPressure(temperature);
@@ -65,7 +65,7 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "log", "exp", "legacy-dippr" })
+  @ValueSource(strings = {"log", "exp", "legacy-dippr"})
   void dipprExponentTakesPrecedenceOverExponentialLabels(String label) {
     Component component = component("i-pentane");
     component.antoineLiqVapPresType = label;
@@ -77,7 +77,7 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "log", "exp" })
+  @ValueSource(strings = {"log", "exp"})
   void zeroExponentRetainsLegacyExponentialCorrelation(String label) {
     Component component = component("i-pentane");
     component.antoineLiqVapPresType = label;
@@ -90,7 +90,7 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "pow10", "pow10KPa" })
+  @ValueSource(strings = {"pow10", "pow10KPa"})
   void explicitBaseTenLabelsRetainPrecedence(String label) {
     Component component = component("i-pentane");
     component.antoineLiqVapPresType = label;

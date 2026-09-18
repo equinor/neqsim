@@ -92,7 +92,7 @@ public class JavaGettingStartedGuideDocumentationTest extends neqsim.NeqSimTest 
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     compile(compiler, javaSource, outputDirectory);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { outputDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);

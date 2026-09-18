@@ -43,7 +43,7 @@ public class DoeBigHillVacuumFractionationResultTest {
       assertRelativeRepeat(firstProducts[i].getMassFlowKgPerHour(), secondProducts[i].getMassFlowKgPerHour());
       assertRelativeRepeat(firstProducts[i].getMeanNormalBoilingPointKelvin(),
           secondProducts[i].getMeanNormalBoilingPointKelvin());
-      for (double quantile : new double[] { 0.1, 0.5, 0.9 }) {
+      for (double quantile : new double[] {0.1, 0.5, 0.9}) {
         assertRelativeRepeat(firstProducts[i].getNormalBoilingPointQuantileKelvin(quantile),
             secondProducts[i].getNormalBoilingPointQuantileKelvin(quantile));
       }

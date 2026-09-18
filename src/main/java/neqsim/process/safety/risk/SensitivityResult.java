@@ -77,7 +77,7 @@ public class SensitivityResult {
     // Also compute tornado data (min, base, max)
     double minRisk = Arrays.stream(risks).min().orElse(0);
     double maxRisk = Arrays.stream(risks).max().orElse(0);
-    tornadoData.put(parameterName, new double[] { minRisk, baseRiskIndex, maxRisk });
+    tornadoData.put(parameterName, new double[] {minRisk, baseRiskIndex, maxRisk});
   }
 
   // Public getters

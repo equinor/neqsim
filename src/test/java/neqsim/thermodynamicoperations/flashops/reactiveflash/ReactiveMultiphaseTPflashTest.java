@@ -82,7 +82,7 @@ public class ReactiveMultiphaseTPflashTest {
     system.init(1);
 
     FormulaMatrix fm = new FormulaMatrix(system);
-    double[] z = { 0.7, 0.3 };
+    double[] z = {0.7, 0.3};
     double[] b = fm.computeElementVector(z);
 
     assertNotNull(b, "Element vector should not be null");

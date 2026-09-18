@@ -68,7 +68,7 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     // Create splitter for gas outlet - splits to control valve and safety valve
     Splitter gasSplitter = new Splitter("Gas Splitter", separator.getGasOutStream(), 2);
     // Initial split: 99.9% to control valve, 0.1% to safety valve
-    gasSplitter.setSplitFactors(new double[] { 0.999, 0.001 });
+    gasSplitter.setSplitFactors(new double[] {0.999, 0.001});
     gasSplitter.setCalculateSteadyState(false);
 
     // Create pressure control valve (PCV) for normal operation
@@ -272,8 +272,8 @@ class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
     psv.setCalculateSteadyState(false);
 
     // Test PSV opening at different pressures
-    double[] testPressures = { 45.0, 49.0, 50.0, 52.5, 55.0, 57.0 };
-    double[] expectedOpenings = { 0.0, 0.0, 0.0, 50.0, 100.0, 100.0 };
+    double[] testPressures = {45.0, 49.0, 50.0, 52.5, 55.0, 57.0};
+    double[] expectedOpenings = {0.0, 0.0, 0.0, 50.0, 100.0, 100.0};
 
     for (int i = 0; i < testPressures.length; i++) {
       gasStream.setPressure(testPressures[i], "bara");

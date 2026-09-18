@@ -66,16 +66,16 @@ public class AntiSurgeCalculatorTest {
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
-        6480.26, 6007.91, 5607.45 };
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
-        149.54, 150 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81, 7799.81, 7111.75,
+        6480.26, 6007.91, 5607.45};
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14, 148.05, 148.83,
+        149.54, 150};
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = process1.addUnit("anti surge splitter", "splitter");
-    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
+    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
     splitter1.run();
 
     // Dedicated class with a NEUTRAL name (no "anti surge calculator" prefix).
@@ -168,15 +168,15 @@ public class AntiSurgeCalculatorTest {
     compressor.setOutletPressure(200.0, "bara");
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
     // DX3-style surge curve with a LOW head range (41-93) vs the actual high head at 6 -> 200 bara.
-    double[] curveFlow = { 2061.8, 2356.74, 2848.3, 3398.8, 3634.83 };
-    double[] curveHead = { 41.4, 51.52, 63.6, 84.2, 92.6 };
+    double[] curveFlow = {2061.8, 2356.74, 2848.3, 3398.8, 3634.83};
+    double[] curveHead = {41.4, 51.52, 63.6, 84.2, 92.6};
     compressor.getCompressorChart().getSurgeCurve().setCurve(null, curveFlow, curveHead);
     compressor.run();
     process.add(compressor);
 
     Splitter splitter = process.addUnit("anti surge splitter", "splitter");
     splitter.setInletStream(compressor.getOutletStream());
-    splitter.setFlowRates(new double[] { -1, 1.0 }, "m3/hr");
+    splitter.setFlowRates(new double[] {-1, 1.0}, "m3/hr");
     splitter.run();
 
     Calculator calc = nameBased ? new Calculator("anti surge calculator off-curve")

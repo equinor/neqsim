@@ -27,9 +27,9 @@ public class TestPCSAFT1_1 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     double pressure = 5.0;
-    String[] componentName = { "methane", "ethane", "propane", "i-butane", "n-butane", "benzene" };
-    double[] compositions = { 93.121, 3.04830, 0.9936, 1.0323, 1.5099, 0.2948 };
-    double[] uncertcompositions = { 1.1405, 0.1056, 0.0466, 0.0358, 0.0523, 0.0138 };
+    String[] componentName = {"methane", "ethane", "propane", "i-butane", "n-butane", "benzene"};
+    double[] compositions = {93.121, 3.04830, 0.9936, 1.0323, 1.5099, 0.2948};
+    double[] uncertcompositions = {1.1405, 0.1056, 0.0466, 0.0358, 0.0523, 0.0138};
     double[] runcompositions = new double[componentName.length];
     SystemInterface testSystem = new SystemSrkEos(273.14, pressure);
     double pres = 0.0;

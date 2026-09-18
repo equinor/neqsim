@@ -23,8 +23,8 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
   }
 
   private static DistillationColumn createColumn(DistillationColumn.SolverType solver, int stages, int feedTray) {
-    String[] names = { "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane" };
-    double[] fractions = { 0.22, 0.34, 0.20, 0.08, 0.08, 0.03, 0.03, 0.02 };
+    String[] names = {"methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane"};
+    double[] fractions = {0.22, 0.34, 0.20, 0.08, 0.08, 0.03, 0.03, 0.02};
     SystemSrkEos fluid = new SystemSrkEos(283.15, 25.0);
     for (int i = 0; i < names.length; i++) {
       fluid.addComponent(names[i], fractions[i]);
@@ -68,7 +68,7 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
     StreamInterface absentLiquid = source.getLiquidOutStream();
     assertEquals(0.0, absentLiquid.getFlowRate("kg/hr"), 1.0e-12);
     double expectedEnthalpy = enthalpy(feed);
-    for (SimpleTray terminal : new SimpleTray[] { new Reboiler("reboiler"), new Condenser("condenser") }) {
+    for (SimpleTray terminal : new SimpleTray[] {new Reboiler("reboiler"), new Condenser("condenser")}) {
       terminal.addStream(absentLiquid.clone());
       assertEquals(0.0, terminal.calcMixStreamEnthalpy0(), 0.0, "An absent phase carries no energy");
       terminal.addStream(feed.clone());

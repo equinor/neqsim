@@ -69,11 +69,11 @@ public class DistillationAcceleratorDiagnosticTest {
    */
   @Test
   public void dumpAcceleratorPreFallbackState() {
-    DistillationColumn.SolverType[] accelerators = { DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
+    DistillationColumn.SolverType[] accelerators = {DistillationColumn.SolverType.DIRECT_SUBSTITUTION,
         DistillationColumn.SolverType.DAMPED_SUBSTITUTION, DistillationColumn.SolverType.INSIDE_OUT,
         DistillationColumn.SolverType.MATRIX_INSIDE_OUT, DistillationColumn.SolverType.WEGSTEIN,
         DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.NEWTON,
-        DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM };
+        DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.NAPHTALI_SANDHOLM};
 
     logger.info("=== Accelerator pre-fallback diagnostic (5-tray deethanizer) ===");
     for (DistillationColumn.SolverType type : accelerators) {

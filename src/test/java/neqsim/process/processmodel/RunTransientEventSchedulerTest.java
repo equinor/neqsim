@@ -112,7 +112,7 @@ public class RunTransientEventSchedulerTest {
     ProcessSystem p = buildMinimalProcess();
     EventScheduler s = new EventScheduler();
     p.setEventScheduler(s);
-    final boolean[] fired = new boolean[] { false };
+    final boolean[] fired = new boolean[] {false};
     s.scheduleEvent(0.5, "esd", new Runnable() {
       @Override
       public void run() {
@@ -324,7 +324,7 @@ public class RunTransientEventSchedulerTest {
   /** Non-finite clocks fail atomically before a shared event or either area can advance. */
   @Test
   public void testProcessModelRejectsNonFiniteAreaClocksBeforeMutation() {
-    double[] nonFiniteTimes = new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY };
+    double[] nonFiniteTimes = new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY};
     for (double nonFiniteTime : nonFiniteTimes) {
       ProcessSystem finiteArea = new ProcessSystem("finite area");
       ProcessSystem nonFiniteArea = new ProcessSystem("non-finite area");

@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class TwoFluidPipeTransactionalTest {
   @Test
   void incompleteIntervalDiscardsHydrodynamicsComponentsHistoriesAndAllClocks() throws Exception {
-    for (boolean components : new boolean[] { false, true }) {
+    for (boolean components : new boolean[] {false, true}) {
       TwoFluidPipe pipe = createPipe(components);
       assertFalse(pipe.isTransactionalTransientEnabled());
       pipe.setTransactionalTransientEnabled(true);
@@ -59,7 +59,7 @@ class TwoFluidPipeTransactionalTest {
 
   @Test
   void successfulTransactionMatchesLegacyNumericsAndPreservesConnections() throws Exception {
-    for (double dt : new double[] { 1.0e-4, 2.0e-4 }) {
+    for (double dt : new double[] {1.0e-4, 2.0e-4}) {
       TwoFluidPipe pipe = createPipe(true);
       TwoFluidPipe legacy = SerializationUtils.clone(pipe);
       fieldHandle("adaptiveDtFactor").set(pipe, 0.37);

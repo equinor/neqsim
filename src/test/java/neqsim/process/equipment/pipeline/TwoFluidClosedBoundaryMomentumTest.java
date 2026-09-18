@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /** A closed external face cannot instantaneously remove an adjacent finite-volume cell's momentum. */
 class TwoFluidClosedBoundaryMomentumTest {
   @ParameterizedTest
-  @EnumSource(value = TimeIntegrator.Method.class, names = { "EULER", "RK4" })
+  @EnumSource(value = TimeIntegrator.Method.class, names = {"EULER", "RK4"})
   void coupledClosedFacesRetainCellInertiaAndBlockBoundaryMass(TimeIntegrator.Method method) {
     SystemInterface fluid = new SystemSrkEos(288.15, 70.0);
     fluid.addComponent("methane", 0.95);
@@ -39,7 +39,7 @@ class TwoFluidClosedBoundaryMomentumTest {
     pipe.runTransient(1.0e-8, UUID.randomUUID());
 
     double[] finalVelocity = pipe.getGasVelocityProfile();
-    for (int cell : new int[] { 0, finalVelocity.length - 1 }) {
+    for (int cell : new int[] {0, finalVelocity.length - 1}) {
       assertTrue(initialVelocity[cell] > 0.0);
       assertEquals(initialVelocity[cell], finalVelocity[cell], initialVelocity[cell] * 1.0e-4,
           "A finite pressure impulse over 1e-8 s must not erase a whole boundary cell's momentum");

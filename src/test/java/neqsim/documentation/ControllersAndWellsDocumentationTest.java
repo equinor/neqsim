@@ -74,7 +74,7 @@ public class ControllersAndWellsDocumentationTest extends neqsim.NeqSimTest {
     assertEquals(expectedExamples, classNames.size(), document + ": Java-example coverage changed");
     compile(compiler, sourceFiles, document);
 
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       for (String className : classNames) {

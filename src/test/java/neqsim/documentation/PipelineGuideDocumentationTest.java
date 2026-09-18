@@ -81,7 +81,7 @@ class PipelineGuideDocumentationTest extends neqsim.NeqSimTest {
     assertTrue(flow.getConvergenceReport().isConverged(), flow.getConvergenceReport().getMessage());
     assertTrue(flow.getConvergenceReport().isNonlinearMetricEquationResidual());
     for (int i = 0; i < flow.getTotalNumberOfNodes(); i++) {
-      assertArrayEquals(new double[] { 0.95, 0.05 }, flow.getNode(i).getBulkSystem().getMolarComposition(), 1.0e-10);
+      assertArrayEquals(new double[] {0.95, 0.05}, flow.getNode(i).getBulkSystem().getMolarComposition(), 1.0e-10);
     }
     int outlet = flow.getTotalNumberOfNodes() - 1;
     double outletPressure = flow.getNode(outlet).getBulkSystem().getPressure();
@@ -160,7 +160,7 @@ class PipelineGuideDocumentationTest extends neqsim.NeqSimTest {
   void evaporationPreparationUsesCurrentStreamPackageAndConservesFeed() throws Exception {
     Stream inlet = (Stream) runExample("docs/fluidmechanics/MassTransferAPI.md", "evaporation-preparation", "inlet");
     assertEquals(100.0, inlet.getFlowRate("kg/hr"), 1.0e-7);
-    assertArrayEquals(new double[] { 0.95, 0.05 }, inlet.getFluid().getMolarComposition(), 1.0e-10);
+    assertArrayEquals(new double[] {0.95, 0.05}, inlet.getFluid().getMolarComposition(), 1.0e-10);
     assertEquals(2, inlet.getFluid().getNumberOfPhases());
   }
 
@@ -235,7 +235,7 @@ class PipelineGuideDocumentationTest extends neqsim.NeqSimTest {
           null, units).call();
       assertTrue(compiled, document + " [" + example + "] compilation failed: " + diagnostics.getDiagnostics());
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { temporaryDirectory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
         getClass().getClassLoader())) {
       try {
         return loader.loadClass(className).getMethod("run").invoke(null);

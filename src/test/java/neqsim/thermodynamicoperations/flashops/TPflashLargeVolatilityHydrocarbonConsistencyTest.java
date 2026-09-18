@@ -15,9 +15,9 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double STATE_TOLERANCE = 1.0e-10;
-  private static final Case[] REGRESSION_CASES = { new Case(Eos.SRK, 180.0, 50.0, 0.05),
+  private static final Case[] REGRESSION_CASES = {new Case(Eos.SRK, 180.0, 50.0, 0.05),
       new Case(Eos.SRK, 180.0, 100.0, 0.10), new Case(Eos.SRK, 220.0, 200.0, 0.10),
-      new Case(Eos.PR, 260.0, 200.0, 0.10) };
+      new Case(Eos.PR, 260.0, 200.0, 0.10)};
 
   @Test
   void largeVolatilityEndpointsCloseAndAgreeAcrossAlgorithms() {
@@ -33,7 +33,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   @Test
   void poorInitializationRepeatsAndChangedPressureRemainDeterministic() {
     for (Case regression : REGRESSION_CASES) {
-      for (boolean multiphase : new boolean[] { false, true }) {
+      for (boolean multiphase : new boolean[] {false, true}) {
         SystemInterface reference = flash(createSystem(regression, multiphase), false);
         SystemInterface poorGuess = flash(createSystem(regression, multiphase), true);
         assertEquivalent(reference, poorGuess, regression.label() + " poor initialization");
@@ -59,7 +59,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
   void nearbyCompositionsRemainContinuousAcrossAlgorithms() {
     for (Case regression : REGRESSION_CASES) {
       SystemInterface lower = null;
-      for (double offset : new double[] { -1.0e-4, 0.0, 1.0e-4 }) {
+      for (double offset : new double[] {-1.0e-4, 0.0, 1.0e-4}) {
         Case nearby = regression.withHeavyFraction(regression.heavyFraction + offset);
         SystemInterface ordinary = flash(createSystem(nearby, false), false);
         SystemInterface multiphase = flash(createSystem(nearby, true), false);
@@ -80,7 +80,7 @@ class TPflashLargeVolatilityHydrocarbonConsistencyTest extends neqsim.NeqSimTest
     Case methaneEthane = new Case(Eos.SRK, 220.0, 200.0, 0.10, "ethane");
     Case traceHeavy = new Case(Eos.SRK, 300.0, 100.0, 1.0e-3);
     Case lowPressure = new Case(Eos.PR, 260.0, 20.0, 0.10);
-    for (Case control : new Case[] { methaneEthane, traceHeavy, lowPressure }) {
+    for (Case control : new Case[] {methaneEthane, traceHeavy, lowPressure}) {
       SystemInterface ordinary = flash(createSystem(control, false), false);
       SystemInterface multiphase = flash(createSystem(control, true), false);
       assertEquivalent(ordinary, multiphase, control.label());

@@ -65,8 +65,8 @@ class EnergyPortCoverageTest {
 
   @Test
   void testElectricalEquipmentPorts() {
-    ProcessEquipmentBaseClass[] generators = { new SolarPanel("solar"), new WindTurbine("wind turbine"),
-        new WindFarm("wind farm"), new FuelCell("fuel cell"), new CombinedCycleSystem("combined cycle") };
+    ProcessEquipmentBaseClass[] generators = {new SolarPanel("solar"), new WindTurbine("wind turbine"),
+        new WindFarm("wind farm"), new FuelCell("fuel cell"), new CombinedCycleSystem("combined cycle")};
     for (ProcessEquipmentBaseClass generator : generators) {
       assertPort(generator, "electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
           EnergyPortMode.CALCULATED);

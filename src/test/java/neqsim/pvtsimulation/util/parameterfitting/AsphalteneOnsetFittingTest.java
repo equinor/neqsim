@@ -68,7 +68,7 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     assertNotNull(function);
 
     // Set initial guess
-    double[] guess = { 3500.0, 0.005 };
+    double[] guess = {3500.0, 0.005};
     function.setInitialGuess(guess);
 
     assertEquals(3500.0, function.getFittingParams(0), 0.01);

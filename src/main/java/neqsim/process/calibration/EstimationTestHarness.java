@@ -431,7 +431,7 @@ public class EstimationTestHarness implements Serializable {
 
       // Record history
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] { result.getRMSE() });
+      rmseHistory.add(new double[] {result.getRMSE()});
 
       if (progressCallback != null) {
         progressCallback.accept(step);
@@ -506,7 +506,7 @@ public class EstimationTestHarness implements Serializable {
       EnKFParameterEstimator.EnKFResult result = estimator.update(meas);
 
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] { result.getRMSE() });
+      rmseHistory.add(new double[] {result.getRMSE()});
     }
 
     return new TestReport("Drift Tracking Test", numSteps, estimator.getEstimates(), currentTrueValues,

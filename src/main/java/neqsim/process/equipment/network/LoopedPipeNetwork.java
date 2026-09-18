@@ -3181,7 +3181,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         pipe.setRemainingWallLife((wallThicknessMm - minThicknessMm) / erosionMmYr);
       }
 
-      pipeSandResults.put(pipe.getName(), new double[] { sandConc, erosionMmYr, depositionKgmYr, velocity });
+      pipeSandResults.put(pipe.getName(), new double[] {sandConc, erosionMmYr, depositionKgmYr, velocity});
 
       // Propagate sand to downstream node
       String downNode = pipe.getFlowRate() >= 0 ? pipe.getToNode() : pipe.getFromNode();
@@ -3347,7 +3347,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double remainingLife = corrosionMmYr > 0.001 ? (wallMm - minWallMm) / corrosionMmYr : 999.0;
       pipe.setRemainingWallLife(remainingLife);
 
-      pipeCorrosionResults.put(pipe.getName(), new double[] { corrosionMmYr, pCO2, pH2S, remainingLife });
+      pipeCorrosionResults.put(pipe.getName(), new double[] {corrosionMmYr, pCO2, pH2S, remainingLife});
 
       // Check violations
       if (remainingLife < minAllowableWallLife) {
@@ -3461,7 +3461,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       // CO2 equivalent (GWP=28 for CH4 per IPCC AR5 100-yr)
       double co2eqKghr = co2Kghr + ch4SlipKghr * 28.0;
 
-      emissionsResults.put(pipe.getName(), new double[] { co2Kghr, ch4SlipKghr, co2eqKghr, powerKW, fuelGasKghr });
+      emissionsResults.put(pipe.getName(), new double[] {co2Kghr, ch4SlipKghr, co2eqKghr, powerKW, fuelGasKghr});
 
       totalCO2Emissions += co2eqKghr;
     }
@@ -4634,7 +4634,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipe.chokeCapacityKgS = 0.0;
       pipe.setVelocity(0.0);
       pipe.setFlowRegime("Closed");
-      return new double[] { 0.0, 0.0, 0.0 };
+      return new double[] {0.0, 0.0, 0.0};
     }
     double fromStep = Math.max(1.0, Math.abs(pFrom) * 1e-5);
     double toStep = Math.max(1.0, Math.abs(pTo) * 1e-5);
@@ -4644,7 +4644,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         - gasChokeCapacity(pipe, fallback, pFrom, pTo - toStep, false)) / (2.0 * toStep);
     double capacity = gasChokeCapacity(pipe, fallback, pFrom, pTo, true);
     pipe.chokeCapacityKgS = capacity;
-    return new double[] { capacity, dFrom, dTo };
+    return new double[] {capacity, dFrom, dTo};
   }
 
   /**
@@ -6510,7 +6510,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double lhv = iso.getValue("InferiorCalorificValue"); // kJ/Sm3
         double relDens = iso.getValue("RelativeDensity");
 
-        nodeGasQuality.put(nodeName, new double[] { wobbeIndex, hhv, lhv, relDens });
+        nodeGasQuality.put(nodeName, new double[] {wobbeIndex, hhv, lhv, relDens});
       } catch (Exception ex) {
         logger.warn("Gas quality calculation failed for node {}: {}", nodeName, ex.getMessage());
       }
@@ -6614,7 +6614,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double rvp = standard.getValue("RVP"); // bara (default VPCR4 method)
         double vpcr4 = standard.getValue("TVP"); // TVP from the ASTM standard = VPCR4 base
 
-        nodeOilQuality.put(nodeName, new double[] { tvp, rvp, vpcr4 });
+        nodeOilQuality.put(nodeName, new double[] {tvp, rvp, vpcr4});
       } catch (Exception ex) {
         logger.warn("Oil quality calculation failed for node {}: {}", nodeName, ex.getMessage());
       }
@@ -6778,8 +6778,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     result.put("bhp", bhpArray);
     result.put("iprRate", iprRate);
     result.put("vlpRate", vlpRate);
-    result.put("operatingBHP", new double[] { bhpArray[crossIdx] });
-    result.put("operatingRate", new double[] { iprRate[crossIdx] });
+    result.put("operatingBHP", new double[] {bhpArray[crossIdx]});
+    result.put("operatingRate", new double[] {iprRate[crossIdx]});
 
     return result;
   }
@@ -6882,7 +6882,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param maxPressureBar maximum acceptable pressure in bara
    */
   public void setNodePressureLimits(String nodeName, double minPressureBar, double maxPressureBar) {
-    nodePressureLimits.put(nodeName, new double[] { minPressureBar * 1e5, maxPressureBar * 1e5 });
+    nodePressureLimits.put(nodeName, new double[] {minPressureBar * 1e5, maxPressureBar * 1e5});
   }
 
   /**
@@ -6898,7 +6898,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param maxFlowKgHr maximum acceptable flow rate in kg/hr
    */
   public void setElementFlowLimits(String elementName, double minFlowKgHr, double maxFlowKgHr) {
-    elementFlowLimits.put(elementName, new double[] { minFlowKgHr / 3600.0, maxFlowKgHr / 3600.0 });
+    elementFlowLimits.put(elementName, new double[] {minFlowKgHr / 3600.0, maxFlowKgHr / 3600.0});
   }
 
   /**
@@ -7602,7 +7602,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         double rev = price != null ? rate * price : (wellOilPrices.isEmpty() ? rate : 0.0);
         double opening = pipe.getChokeOpening();
         // [0]=rate_kg_hr, [1]=revenue_usd_hr, [2]=choke_opening_pct
-        wellAllocationResults.put(pipe.getName(), new double[] { rate, rev, opening });
+        wellAllocationResults.put(pipe.getName(), new double[] {rate, rev, opening});
       }
     }
   }
@@ -9877,7 +9877,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         }
       }
     }
-    return new double[] { separatorUtilization, compressorPower };
+    return new double[] {separatorUtilization, compressorPower};
   }
 
   /**

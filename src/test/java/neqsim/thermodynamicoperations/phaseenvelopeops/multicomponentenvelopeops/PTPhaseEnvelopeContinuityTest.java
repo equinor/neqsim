@@ -66,10 +66,10 @@ class PTPhaseEnvelopeContinuityTest extends neqsim.NeqSimTest {
   private static final double PSEUDO_TOTAL_PCT = 0.02;
 
   /** Pseudo-component molar masses in kg/mol; addTBPfraction multiplies these by 1000. */
-  private static final double[] PSEUDO_MOLAR_MASS = { 0.1002, 0.1142, 0.1283, 0.1423, 0.1563, 0.1703 };
+  private static final double[] PSEUDO_MOLAR_MASS = {0.1002, 0.1142, 0.1283, 0.1423, 0.1563, 0.1703};
 
   /** Pseudo-component liquid densities in g/cm3, paired with {@link #PSEUDO_MOLAR_MASS}. */
-  private static final double[] PSEUDO_DENSITY = { 0.684, 0.703, 0.718, 0.730, 0.740, 0.749 };
+  private static final double[] PSEUDO_DENSITY = {0.684, 0.703, 0.718, 0.730, 0.740, 0.749};
 
   /** One component of the test composition. */
   private static final class Component {

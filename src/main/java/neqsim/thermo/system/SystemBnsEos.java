@@ -87,7 +87,7 @@ public class SystemBnsEos extends SystemEos {
       slope = 0.170931432 * 0.0283168466 / 453.59237;
     }
     double ppc = pcFn(x, slope, tpc);
-    return new double[] { tpc, ppc };
+    return new double[] {tpc, ppc};
   }
 
   private static double hydrocarbonSg(double sg, double[] zf, double[] mws) {
@@ -144,13 +144,13 @@ public class SystemBnsEos extends SystemEos {
     modelName = "BNS-PR";
     attractiveTermNumber = 1;
 
-    tcs = new double[] { degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0 };
-    pcs = new double[] { psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53), 1.0 };
-    mws = new double[] { 44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0 };
-    acfs = new double[] { 0.12253, 0.04909, 0.037, -0.217, -0.03899 };
-    omegaA = new double[] { 0.427671, 0.436725, 0.457236, 0.457236, 0.457236 };
-    omegaB = new double[] { 0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961 };
-    vshiftField = new double[] { -0.27607, -0.22901, -0.21066, -0.36270, -0.19076 };
+    tcs = new double[] {degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0};
+    pcs = new double[] {psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53), 1.0};
+    mws = new double[] {44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0};
+    acfs = new double[] {0.12253, 0.04909, 0.037, -0.217, -0.03899};
+    omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
+    omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
+    vshiftField = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
     vshift = new double[NUM_BNS_COMPONENTS];
     for (int i = 0; i < vshift.length; i++) {
       vshift[i] = calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
@@ -264,7 +264,7 @@ public class SystemBnsEos extends SystemEos {
    */
   private void updateHydrocarbonProperties() {
     double[] zf = zfractions;
-    double sgHc = hydrocarbonSg(relativeDensity, zf, new double[] { 44.01, 34.082, 28.014, 2.016, 0.0 });
+    double sgHc = hydrocarbonSg(relativeDensity, zf, new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
     double[] tcpc = pseudoCritical(sgHc, associatedGas);
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
@@ -277,17 +277,17 @@ public class SystemBnsEos extends SystemEos {
    */
   private void updateHeatCapacityCoefficients() {
     // Base heat capacity coefficients for CO2, H2S, N2, H2, HC
-    double[][] cp = { { 2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11 },
-        { 4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11 },
-        { 3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12 },
-        { 1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11 },
-        { 5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12 } };
+    double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
+        {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
+        {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
+        {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
+        {5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12}};
 
     // Apply scaling for hydrocarbon component based on molecular weight
     double hcMw = mws[4] * 1000.0;
     double x = hcMw - MW_CH4;
-    double[] a0 = { 7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2 };
-    double[] a1 = { -8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551 };
+    double[] a0 = {7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2};
+    double[] a1 = {-8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551};
     for (int k = 0; k < NUM_BNS_COMPONENTS; k++) {
       double scale = a0[k] * x * x + a1[k] * x + 1.0;
       cp[4][k] *= scale;

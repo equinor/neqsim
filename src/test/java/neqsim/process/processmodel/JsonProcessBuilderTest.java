@@ -673,7 +673,7 @@ class JsonProcessBuilderTest {
     assertEquals(1000.0, pipe.getLength(), 1.0e-12);
     assertEquals(0.3, pipe.getDiameter(), 1.0e-12);
     assertEquals(4, pipe.getNumberOfSections());
-    assertArrayEquals(new double[] { 4.0, 4.0, 8.0, 8.0 }, pipe.getHeatTransferProfile(), 1.0e-12);
+    assertArrayEquals(new double[] {4.0, 4.0, 8.0, 8.0}, pipe.getHeatTransferProfile(), 1.0e-12);
   }
 
   @Test

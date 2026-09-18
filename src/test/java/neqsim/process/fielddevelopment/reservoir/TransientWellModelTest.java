@@ -138,7 +138,7 @@ public class TransientWellModelTest {
   void testPressureProfile() {
     model.addRateChange(0.0, 100.0);
 
-    double[] timePoints = { 1.0, 5.0, 10.0, 24.0, 48.0, 72.0 };
+    double[] timePoints = {1.0, 5.0, 10.0, 24.0, 48.0, 72.0};
     List<TransientWellModel.PressurePoint> profile = model.generatePressureProfile(timePoints);
 
     assertEquals(timePoints.length, profile.size(), "Should have correct number of points");
@@ -211,7 +211,7 @@ public class TransientWellModelTest {
     TransientWellModel highSkin = new TransientWellModel();
 
     // Configure identical wells except skin
-    for (TransientWellModel m : new TransientWellModel[] { lowSkin, highSkin }) {
+    for (TransientWellModel m : new TransientWellModel[] {lowSkin, highSkin}) {
       m.setReservoirPressure(300.0, "bara");
       m.setPermeability(100.0, "mD");
       m.setFormationThickness(20.0, "m");
@@ -240,7 +240,7 @@ public class TransientWellModelTest {
     TransientWellModel highPerm = new TransientWellModel();
 
     // Configure wells
-    for (TransientWellModel m : new TransientWellModel[] { lowPerm, highPerm }) {
+    for (TransientWellModel m : new TransientWellModel[] {lowPerm, highPerm}) {
       m.setReservoirPressure(300.0, "bara");
       m.setFormationThickness(20.0, "m");
       m.setPorosity(0.20);

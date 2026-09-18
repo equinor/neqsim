@@ -529,15 +529,15 @@ public class FlowRegimeDetector implements Serializable {
     // Candidate flow regimes based on pipe orientation
     FlowRegime[] candidates;
     if (isNearHorizontal) {
-      candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
-          FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE };
+      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
+          FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE};
     } else if (isUpward) {
-      candidates = new FlowRegime[] { FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN, FlowRegime.ANNULAR,
-          FlowRegime.DISPERSED_BUBBLE };
+      candidates = new FlowRegime[] {FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN, FlowRegime.ANNULAR,
+          FlowRegime.DISPERSED_BUBBLE};
     } else {
       // Downward flow
-      candidates = new FlowRegime[] { FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
-          FlowRegime.ANNULAR };
+      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY, FlowRegime.SLUG,
+          FlowRegime.ANNULAR};
     }
 
     FlowRegime bestRegime = candidates[0];

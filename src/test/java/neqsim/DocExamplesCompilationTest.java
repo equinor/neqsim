@@ -227,10 +227,10 @@ public class DocExamplesCompilationTest {
     transientNetwork.addPipe("asgardBranch", "asgard", "junction", 2000.0, 0.4, 12, asgardGas);
     transientNetwork.addPipe("kristinBranch", "kristin", "junction", 2000.0, 0.4, 12, kristinGas);
     transientNetwork.addPipe("export", "junction", "karsto", 4000.0, 0.4, 12, mixedGas);
-    transientNetwork.setSourceSchedule("asgard", new double[] { 0.0 }, new SystemInterface[] { asgardGas },
-        new double[] { 20.0 });
-    transientNetwork.setSourceSchedule("kristin", new double[] { 0.0, 600.0, 1800.0 },
-        new SystemInterface[] { kristinGas, kristinHighCo2, kristinGas }, new double[] { 20.0, 18.0, 20.0 });
+    transientNetwork.setSourceSchedule("asgard", new double[] {0.0}, new SystemInterface[] {asgardGas},
+        new double[] {20.0});
+    transientNetwork.setSourceSchedule("kristin", new double[] {0.0, 600.0, 1800.0},
+        new SystemInterface[] {kristinGas, kristinHighCo2, kristinGas}, new double[] {20.0, 18.0, 20.0});
 
     transientNetwork.run(5400.0, 60.0);
     TransientCompositionalPipeNetworkHistory species = transientNetwork.getSpeciesHistory();
@@ -305,7 +305,7 @@ public class DocExamplesCompilationTest {
     }, 15000.0);
     evaluator.addEquipmentCapacityConstraints();
 
-    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 12000.0 });
+    ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {12000.0});
     ProcessModelSimulationEvaluator.BottleneckStatus bottleneck = result.getActiveBottleneck();
     List<ProcessModelSimulationEvaluator.BottleneckStatus> ranked = result.getRankedCapacityConstraints();
 
@@ -823,7 +823,7 @@ public class DocExamplesCompilationTest {
     WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
     screener.setFormationWater(400, 200, 50, 2, 150, 10, 50000, 90, 200, 3.0, 6.2);
     screener.setInjectionWater(400, 0, 5, 0, 140, 2700, 35000, 15, 200, 0.3, 8.1);
-    screener.setMixingRatios(new double[] { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 });
+    screener.setMixingRatios(new double[] {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100});
     screener.calculate();
     assertNotNull(screener.getWorstCaseScale());
     assertTrue(Double.isFinite(screener.getWorstCaseRatio()));
@@ -1522,7 +1522,7 @@ public class DocExamplesCompilationTest {
     zone1.shellCp = 4180.0;
     zone1.shellConductivity = 0.60;
 
-    ThermalDesignCalculator.ZoneDefinition[] zones = new ThermalDesignCalculator.ZoneDefinition[] { zone1 };
+    ThermalDesignCalculator.ZoneDefinition[] zones = new ThermalDesignCalculator.ZoneDefinition[] {zone1};
 
     ThermalDesignCalculator.ZoneResult[] results = calc.calculateZones(zones);
     assertNotNull(results, "Zone results should not be null");
@@ -2229,7 +2229,7 @@ public class DocExamplesCompilationTest {
     recon.addVariable(new ReconciliationVariable("flow_in1", 5000.0, 100.0).setUnit("kg/hr"));
     recon.addVariable(new ReconciliationVariable("flow_in2", 5100.0, 100.0).setUnit("kg/hr"));
     recon.addVariable(new ReconciliationVariable("flow_out", 10200.0, 150.0).setUnit("kg/hr"));
-    recon.addConstraint(new double[] { 1.0, 1.0, -1.0 });
+    recon.addConstraint(new double[] {1.0, 1.0, -1.0});
 
     ReconciliationResult result = recon.reconcile();
 

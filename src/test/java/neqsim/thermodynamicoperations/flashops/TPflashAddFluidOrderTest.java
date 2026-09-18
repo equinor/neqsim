@@ -21,7 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 class TPflashAddFluidOrderTest {
-  private static final String[] COMPONENTS = { "methane", "ethane", "n-heptane", "C10_PC" };
+  private static final String[] COMPONENTS = {"methane", "ethane", "n-heptane", "C10_PC"};
   private static final double REFERENCE_TEMPERATURE_K = 280.0;
   private static final double REFERENCE_PRESSURE_BARA = 30.0;
   private static final double NORMALIZATION_TOLERANCE = 1.0e-12;
@@ -52,8 +52,8 @@ class TPflashAddFluidOrderTest {
    */
   @Test
   void ordinaryAndMultiphaseFlashesAreOrderIndependent() {
-    for (boolean multiphaseCheck : new boolean[] { false, true }) {
-      for (double pressureBara : new double[] { 28.0, REFERENCE_PRESSURE_BARA, 32.0 }) {
+    for (boolean multiphaseCheck : new boolean[] {false, true}) {
+      for (double pressureBara : new double[] {28.0, REFERENCE_PRESSURE_BARA, 32.0}) {
         SystemInterface gasThenOil = flash(combine(true, multiphaseCheck), pressureBara);
         SystemInterface oilThenGas = flash(combine(false, multiphaseCheck), pressureBara);
 
@@ -146,7 +146,7 @@ class TPflashAddFluidOrderTest {
     assertQualifiedState(expected, label + " expected");
     assertQualifiedState(actual, label + " actual");
 
-    for (PhaseType type : new PhaseType[] { PhaseType.GAS, PhaseType.OIL }) {
+    for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
       int expectedPhase = findPhase(expected, type);
       int actualPhase = findPhase(actual, type);
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), EQUIVALENCE_TOLERANCE,

@@ -547,10 +547,10 @@ final class DexpiLayoutEngine {
   static double[][] routeConnection(double fromX, double fromY, double toX, double toY) {
     boolean sameY = Math.abs(fromY - toY) < 0.5;
     if (sameY) {
-      return new double[][] { { fromX, fromY }, { toX, toY } };
+      return new double[][] {{fromX, fromY}, {toX, toY}};
     }
     double riserX = computeBranchRiserX(fromX, toX);
-    return new double[][] { { fromX, fromY }, { riserX, fromY }, { riserX, toY }, { toX, toY } };
+    return new double[][] {{fromX, fromY}, {riserX, fromY}, {riserX, toY}, {toX, toY}};
   }
 
   /**
@@ -688,15 +688,15 @@ final class DexpiLayoutEngine {
 
     // Build rows of data to display
     List<String[]> rows = new ArrayList<>();
-    rows.add(new String[] { "Ident", tagName });
+    rows.add(new String[] {"Ident", tagName});
     if (!Double.isNaN(pressure)) {
-      rows.add(new String[] { "Oper. Press.", formatValue(pressure) + " bara" });
+      rows.add(new String[] {"Oper. Press.", formatValue(pressure) + " bara"});
     }
     if (!Double.isNaN(temperature)) {
-      rows.add(new String[] { "Oper. Temp.", formatValue(temperature) + " \u00B0C" });
+      rows.add(new String[] {"Oper. Temp.", formatValue(temperature) + " \u00B0C"});
     }
     if (!Double.isNaN(flowRate)) {
-      rows.add(new String[] { "Flow Rate", formatValue(flowRate) + " MSm3/d" });
+      rows.add(new String[] {"Flow Rate", formatValue(flowRate) + " MSm3/d"});
     }
     if (extraRows != null) {
       rows.addAll(extraRows);
@@ -890,7 +890,7 @@ final class DexpiLayoutEngine {
     double totalWidth = (totalInstruments - 1) * INSTRUMENT_X_SPACING;
     double startX = baseX - totalWidth / 2.0;
     double x = startX + instrumentIndex * INSTRUMENT_X_SPACING;
-    return new double[] { x, baseY };
+    return new double[] {x, baseY};
   }
 
   /**
@@ -922,7 +922,7 @@ final class DexpiLayoutEngine {
       }
     }
     double startX = groupCenterX - totalWidth / 2.0;
-    return new double[] { startX + instrumentIndex * INSTRUMENT_X_SPACING, tapY + 30.0 };
+    return new double[] {startX + instrumentIndex * INSTRUMENT_X_SPACING, tapY + 30.0};
   }
 
   /**
@@ -1295,7 +1295,7 @@ final class DexpiLayoutEngine {
     // Add right-side padding for nozzles, arrows, and border margin
     double width = Math.max(MIN_SHEET_WIDTH, maxX + BORDER_MARGIN + 40.0);
     double height = Math.max(MIN_SHEET_HEIGHT, maxY + BORDER_MARGIN + 40.0);
-    return new double[] { width, height };
+    return new double[] {width, height};
   }
 
   /**
@@ -1315,7 +1315,7 @@ final class DexpiLayoutEngine {
   static int[] computePageGrid(double totalWidth, double totalHeight, double maxPageWidth, double maxPageHeight) {
     int cols = Math.max(1, (int) Math.ceil(totalWidth / maxPageWidth));
     int rows = Math.max(1, (int) Math.ceil(totalHeight / maxPageHeight));
-    return new int[] { cols, rows };
+    return new int[] {cols, rows};
   }
 
   /**
@@ -1902,7 +1902,7 @@ final class DexpiLayoutEngine {
     double tableTop = TABLE_TOP_Y;
     int numStreams = Math.min(streamData.size(), 12); // Limit to 12 streams for readability
 
-    String[] rowLabels = { "Stream", "Temperature (\u00B0C)", "Pressure (bara)", "Flow (kg/hr)", "Phase" };
+    String[] rowLabels = {"Stream", "Temperature (\u00B0C)", "Pressure (bara)", "Flow (kg/hr)", "Phase"};
     int numRows = rowLabels.length;
 
     double tableRight = tableLeft + TABLE_LABEL_WIDTH + numStreams * TABLE_COL_WIDTH;
@@ -1921,7 +1921,7 @@ final class DexpiLayoutEngine {
       StreamTableEntry entry = streamData.get(c);
       double colLeft = tableLeft + TABLE_LABEL_WIDTH + c * TABLE_COL_WIDTH;
       double colRight = colLeft + TABLE_COL_WIDTH;
-      String[] values = { entry.name, entry.temperatureC, entry.pressureBara, entry.flowKgHr, entry.phase };
+      String[] values = {entry.name, entry.temperatureC, entry.pressureBara, entry.flowKgHr, entry.phase};
 
       for (int r = 0; r < numRows; r++) {
         double rowTop = tableTop - r * TABLE_ROW_HEIGHT;
@@ -2297,7 +2297,7 @@ final class DexpiLayoutEngine {
       return;
     }
     // Place zigzag marks at 33% and 66% along the line
-    for (double frac : new double[] { 0.33, 0.66 }) {
+    for (double frac : new double[] {0.33, 0.66}) {
       double mx = fromX + (toX - fromX) * frac;
       double my = fromY + (toY - fromY) * frac;
       // Zigzag (3 small chevrons)
@@ -2628,7 +2628,7 @@ final class DexpiLayoutEngine {
       return;
     }
     // Place tick marks at 25% and 75% along the line
-    for (double frac : new double[] { 0.25, 0.75 }) {
+    for (double frac : new double[] {0.25, 0.75}) {
       double mx = fromX + frac * (toX - fromX);
       double my = fromY + frac * (toY - fromY);
 
@@ -3338,12 +3338,11 @@ final class DexpiLayoutEngine {
       double segmentLength = Math.abs(deltaX) + Math.abs(deltaY);
       if (remaining <= segmentLength || index + 2 == route.length) {
         double fraction = segmentLength <= 0.0 ? 0.0 : remaining / segmentLength;
-        return new double[] { route[index][0] + fraction * deltaX, route[index][1] + fraction * deltaY, deltaX,
-            deltaY };
+        return new double[] {route[index][0] + fraction * deltaX, route[index][1] + fraction * deltaY, deltaX, deltaY};
       }
       remaining -= segmentLength;
     }
-    return new double[] { fromX, fromY, toX - fromX, toY - fromY };
+    return new double[] {fromX, fromY, toX - fromX, toY - fromY};
   }
 
   // ==== Revision history table (NORSOK Z-003) ====

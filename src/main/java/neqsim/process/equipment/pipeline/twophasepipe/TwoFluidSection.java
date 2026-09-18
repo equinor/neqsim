@@ -450,8 +450,8 @@ public class TwoFluidSection extends PipeSection {
    * @return Conservative state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public double[] getStateVector() {
-    return new double[] { gasMassPerLength, oilMassPerLength, waterMassPerLength, gasMomentumPerLength,
-        oilMomentumPerLength, waterMomentumPerLength, energyPerLength };
+    return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength, gasMomentumPerLength,
+        oilMomentumPerLength, waterMomentumPerLength, energyPerLength};
   }
 
   /**
@@ -482,7 +482,7 @@ public class TwoFluidSection extends PipeSection {
     if (!(area > 0.0) || !Double.isFinite(area) || !(getPressure() > 0.0) || !Double.isFinite(getPressure())) {
       throw new IllegalArgumentException("Endpoint area and pressure must be positive and finite");
     }
-    double[] densities = { getGasDensity(), getOilDensity(), getWaterDensity() };
+    double[] densities = {getGasDensity(), getOilDensity(), getWaterDensity()};
     double[] holdups = new double[3];
     double[] velocities = new double[3];
     double occupiedFraction = 0.0;
@@ -692,7 +692,7 @@ public class TwoFluidSection extends PipeSection {
     double Fg = -getGasHoldup() * getGasDensity() * g * A * sinTheta;
     double Fl = -getLiquidHoldup() * getLiquidDensity() * g * A * sinTheta;
 
-    return new double[] { Fg, Fl };
+    return new double[] {Fg, Fl};
   }
 
   // ============ Getters and Setters ============

@@ -59,12 +59,12 @@ public class TransientForceCalculatorTest {
     TransientForceCalculator calc = new TransientForceCalculator(DIAMETER, 0.0, 1000.0);
     calc.setSegmentLength(10.0);
 
-    double[] time = { 0.0, 0.1, 0.2, 0.3, 0.4 };
+    double[] time = {0.0, 0.1, 0.2, 0.3, 0.4};
     // Equal end pressures so only the inertial (dv/dt) term acts; velocity ramps then stops.
-    double[] p1 = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-    double[] p2 = { 0.0, 0.0, 0.0, 0.0, 0.0 };
-    double[] v1 = { 2.0, 2.0, 1.0, 0.0, 0.0 };
-    double[] v2 = { 2.0, 2.0, 1.0, 0.0, 0.0 };
+    double[] p1 = {0.0, 0.0, 0.0, 0.0, 0.0};
+    double[] p2 = {0.0, 0.0, 0.0, 0.0, 0.0};
+    double[] v1 = {2.0, 2.0, 1.0, 0.0, 0.0};
+    double[] v2 = {2.0, 2.0, 1.0, 0.0, 0.0};
 
     calc.computeForceHistory(time, p1, p2, v1, v2);
     double peak = calc.getPeakUnbalancedForce("N");

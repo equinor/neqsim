@@ -126,7 +126,7 @@ class MathAndExpanderDocumentationTest {
           manager.getJavaFileObjects(javaFile.toFile())).call();
       assertTrue(compiled, id + " failed to compile:\n" + diagnostics);
     }
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { directory.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {directory.toUri().toURL()},
         getClass().getClassLoader())) {
       try {
         loader.loadClass(className).getMethod("verify").invoke(null);

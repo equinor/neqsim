@@ -64,7 +64,7 @@ overpressure exposure, so run the safety pass inside the same study:
    downstream section - confirm which). Use roughly a 1 percent tolerance before
    calling a set point above design a non-conformance: the two numbers normally
    come from different documents.
-2. **Relief adequacy** against the governing case via 
+2. **Relief adequacy** against the governing case via
 eqsim-relief-flare-network
    (API 520 Part I). A PSV sized at a few percent of normal flow is normal for a
    thermal or blocked-outlet case - it means blowby protection rests on the
@@ -219,8 +219,9 @@ ALWAYS read the actual class source to verify method signatures before using the
 When the simulation code will be included in documentation or examples:
 1. Write a JUnit test that exercises every API call shown (append to `DocExamplesCompilationTest.java`)
 2. Run the test to confirm it passes
-3. See `neqsim-api-patterns` skill for common pitfalls (plus fraction names, mixing rule order, etc.)
-4. See `neqsim-input-validation` skill to pre-check equipment inputs (pressure ratios, temperatures, flow rates)
+3. After editing any `.java` file, run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) and `git add` the reformatted files — CI runs `spotless:check` and fails on any unformatted file
+4. See `neqsim-api-patterns` skill for common pitfalls (plus fraction names, mixing rule order, etc.)
+5. See `neqsim-input-validation` skill to pre-check equipment inputs (pressure ratios, temperatures, flow rates)
 5. See `neqsim-troubleshooting` skill when process simulation fails to converge or gives unexpected results
 6. See `neqsim-regression-baselines` skill when modifying equipment calculations — capture baselines first
 7. **Equipment feasibility:** After running compressors or heat exchangers, use the Design Feasibility Report classes to validate that equipment can actually be built. See `neqsim-api-patterns` skill for the feasibility report patterns:

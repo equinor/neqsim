@@ -123,7 +123,7 @@ class TwoFluidPipeDynamicStepContractTest {
     TimeIntegrator integrator = new TimeIntegrator();
     integrator.setCflNumber(0.005);
     assertEquals(0.005, integrator.getCflNumber(), 0.0);
-    for (double invalid : new double[] { 0.0, -0.1, 1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {0.0, -0.1, 1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> pipe.setCflNumber(invalid));
       assertThrows(IllegalArgumentException.class, () -> integrator.setCflNumber(invalid));
     }
@@ -199,7 +199,7 @@ class TwoFluidPipeDynamicStepContractTest {
 
   @Test
   void adaptiveTrialsCannotBorrowInventoryFromAnotherPhaseToRepairNegativeMass() throws Exception {
-    for (boolean stiffDrag : new boolean[] { false, true }) {
+    for (boolean stiffDrag : new boolean[] {false, true}) {
       for (int phase = 0; phase < 3; phase++) {
         TwoFluidPipe pipe = createPipe();
         pipe.closeInlet();
@@ -207,7 +207,7 @@ class TwoFluidPipeDynamicStepContractTest {
         pipe.setEnableAdaptiveTimestepping(true);
         pipe.setEnableStiffBubbleDrag(stiffDrag);
         final int negativePhase = phase;
-        final int[] attempts = { 0 };
+        final int[] attempts = {0};
         TimeIntegrator integrator = new TimeIntegrator(TimeIntegrator.Method.EULER) {
           @Override
           public double[][] step(double[][] state, RHSFunction rhs, double dt) {
@@ -238,9 +238,9 @@ class TwoFluidPipeDynamicStepContractTest {
 
   @Test
   void closedUniformThreePhaseMixtureMustPreserveAllValidPhaseDensities() throws Exception {
-    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] { TimeIntegrator.Method.RK2,
-        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION }) {
-      for (double gasDensity : new double[] { 20.0, 0.02 }) {
+    for (TimeIntegrator.Method method : new TimeIntegrator.Method[] {TimeIntegrator.Method.RK2,
+        TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION}) {
+      for (double gasDensity : new double[] {20.0, 0.02}) {
         TwoFluidPipe pipe = createPipe();
         pipe.setTimeIntegrationMethod(method);
         pipe.setEnableCoupledPressureMomentum(true);

@@ -296,8 +296,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(resultValidation.get("evidenceBoundary").getAsString().contains("does not execute"));
     assertTrue(resultValidation.get("evidenceBoundary").getAsString().contains("facility-wide conservation"));
 
-    String[] automationTools = new String[] { "listSimulationUnits", "listUnitVariables", "getSimulationVariable",
-        "diagnoseAutomation", "getAutomationLearningReport" };
+    String[] automationTools = new String[] {"listSimulationUnits", "listUnitVariables", "getSimulationVariable",
+        "diagnoseAutomation", "getAutomationLearningReport"};
     for (String toolName : automationTools) {
       JsonObject automation = coverageRecords.getAsJsonObject(toolName);
       assertEquals("CONTRACT_TESTED", automation.get("coverageStatus").getAsString(), toolName);

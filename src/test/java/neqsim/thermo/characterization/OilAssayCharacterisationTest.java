@@ -310,9 +310,9 @@ public class OilAssayCharacterisationTest {
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    double[] cumulativeVolumePercent = { 0.0, 20.0, 55.0, 80.0, 100.0 };
-    double[] boilingPointCelsius = { 90.0, 180.0, 270.0, 380.0, 520.0 };
-    double[] specificGravity = { 0.70, 0.76, 0.84, 0.93 };
+    double[] cumulativeVolumePercent = {0.0, 20.0, 55.0, 80.0, 100.0};
+    double[] boilingPointCelsius = {90.0, 180.0, 270.0, 380.0, 520.0};
+    double[] specificGravity = {0.70, 0.76, 0.84, 0.93};
     characterisation.addTBPCutBoundariesCelsius("TBP", cumulativeVolumePercent, boilingPointCelsius, specificGravity);
 
     assertEquals(4, characterisation.getCuts().size());
@@ -337,9 +337,8 @@ public class OilAssayCharacterisationTest {
     OilAssayCharacterisation characterisation = system.getOilAssayCharacterisation();
     characterisation.clearCuts();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> characterisation.addTBPCutBoundariesCelsius("TBP", new double[] { 0.0, 60.0, 50.0, 100.0 },
-            new double[] { 90.0, 200.0, 300.0, 500.0 }, new double[] { 0.7, 0.8, 0.9 }));
+    assertThrows(IllegalArgumentException.class, () -> characterisation.addTBPCutBoundariesCelsius("TBP",
+        new double[] {0.0, 60.0, 50.0, 100.0}, new double[] {90.0, 200.0, 300.0, 500.0}, new double[] {0.7, 0.8, 0.9}));
     assertTrue(characterisation.getCuts().isEmpty());
   }
 

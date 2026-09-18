@@ -28,11 +28,11 @@ public class PumpDocumentationTest {
     feed.run();
 
     Pump pump = new Pump("P-100", feed);
-    double[] speed = new double[] { 1000.0 };
-    double[][] flow = new double[][] { { 50.0, 75.0, 100.0, 125.0, 150.0 } };
-    double[][] head = new double[][] { { 120.0, 115.0, 105.0, 90.0, 70.0 } };
-    double[][] efficiency = new double[][] { { 65.0, 75.0, 82.0, 78.0, 68.0 } };
-    double[][] npshRequired = new double[][] { { 2.0, 2.4, 3.0, 4.0, 5.5 } };
+    double[] speed = new double[] {1000.0};
+    double[][] flow = new double[][] {{50.0, 75.0, 100.0, 125.0, 150.0}};
+    double[][] head = new double[][] {{120.0, 115.0, 105.0, 90.0, 70.0}};
+    double[][] efficiency = new double[][] {{65.0, 75.0, 82.0, 78.0, 68.0}};
+    double[][] npshRequired = new double[][] {{2.0, 2.4, 3.0, 4.0, 5.5}};
 
     pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");

@@ -46,7 +46,7 @@ public final class EngineeringDiagramLayout implements Serializable {
       rowByRank.put(Integer.valueOf(layer), Integer.valueOf(row + 1));
       double x = 30.0 + 55.0 * layer;
       double y = 35.0 + 32.0 * row;
-      coordinates.put(node.getId(), new double[] { x, y });
+      coordinates.put(node.getId(), new double[] {x, y});
       Map<String, Object> placement = new LinkedHashMap<String, Object>();
       placement.put("nodeId", node.getId());
       placement.put("externalKey", node.getExternalKey());

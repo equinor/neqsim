@@ -42,7 +42,7 @@ Your default output is code and tests. Avoid stopping at design notes unless the
 - Keep all Java Java 8 compatible.
 - Use Log4j2 for Java logging; never add `System.out.println` or `System.err.println`.
 - Add complete JavaDoc for new classes and methods, including private helpers.
-- Run `mvnw.cmd spotless:apply` after any Java edit.
+- Run `./mvnw spotless:apply` (Windows: `mvnw.cmd spotless:apply`) after any Java edit, then `git add` the reformatted files. CI runs `spotless:check` and fails on any unformatted file; use the `./mvnw`/`mvnw.cmd` wrapper, never bare `mvn`.
 
 ## Test Bar
 
@@ -61,7 +61,15 @@ Prefer assertions on:
 
 ## Validation Commands
 
-Use Windows PowerShell command forms:
+Unix/macOS:
+
+```bash
+./mvnw spotless:apply
+./mvnw test -Dtest=TargetDynamicTest
+./mvnw spotless:check
+```
+
+Windows PowerShell:
 
 ```powershell
 mvnw.cmd spotless:apply

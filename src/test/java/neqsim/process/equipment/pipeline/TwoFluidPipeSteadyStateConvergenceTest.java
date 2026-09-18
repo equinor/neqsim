@@ -159,7 +159,7 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
   void testZeroNetElevationUndulationDoesNotCreatePressureDrop() {
     double flat = solveWithUndulation(0.0);
 
-    for (double amplitude : new double[] { 1.0, 5.0 }) {
+    for (double amplitude : new double[] {1.0, 5.0}) {
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * Math.abs(undulating - flat) / flat;
       assertTrue(deviationPercent < 1.0,
@@ -168,7 +168,7 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
     }
 
     double previous = flat;
-    for (double amplitude : new double[] { 10.0, 20.0, 35.0, 50.0 }) {
+    for (double amplitude : new double[] {10.0, 20.0, 35.0, 50.0}) {
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * (undulating - flat) / flat;
       assertTrue(deviationPercent > -1.0, "Undulation of " + amplitude
@@ -186,7 +186,7 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
   @Test
   void testTerrainResponseIsContinuousInAmplitude() {
     double previous = solveWithUndulation(0.0);
-    for (double amplitude : new double[] { 2.0, 4.0, 6.0, 8.0, 10.0 }) {
+    for (double amplitude : new double[] {2.0, 4.0, 6.0, 8.0, 10.0}) {
       double current = solveWithUndulation(amplitude);
       double stepPercent = 100.0 * Math.abs(current - previous) / previous;
       assertTrue(stepPercent < 5.0, "Pressure drop stepped by " + stepPercent

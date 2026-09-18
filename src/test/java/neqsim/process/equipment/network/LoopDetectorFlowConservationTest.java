@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 class LoopDetectorFlowConservationTest extends NeqSimTest {
   @Test
   void everyCycleCorrectionHasZeroIncidenceAtEveryNode() {
-    String[][] edges = { { "A", "B", "AB" }, { "B", "C", "BC" }, { "C", "A", "CA" }, { "C", "D", "CD" },
-        { "D", "B", "DB" }, { "B", "A", "parallel" } };
+    String[][] edges = {{"A", "B", "AB"}, {"B", "C", "BC"}, {"C", "A", "CA"}, {"C", "D", "CD"}, {"D", "B", "DB"},
+        {"B", "A", "parallel"}};
     for (int reversed = 0; reversed < 2; reversed++) {
       LoopDetector detector = new LoopDetector();
       Map<String, String[]> physical = new HashMap<String, String[]>();
@@ -23,7 +23,7 @@ class LoopDetectorFlowConservationTest extends NeqSimTest {
         String from = edge[reversed];
         String to = edge[1 - reversed];
         detector.addEdge(from, to, edge[2]);
-        physical.put(edge[2], new String[] { from, to });
+        physical.put(edge[2], new String[] {from, to});
       }
       List<NetworkLoop> loops = detector.findLoops();
       assertEquals(3, loops.size());
@@ -62,7 +62,7 @@ class LoopDetectorFlowConservationTest extends NeqSimTest {
     assertEquals(0.0, hardy.getPipeFlowRate("AB") + hardy.getPipeFlowRate("DB") - hardy.getPipeFlowRate("BC"), 1e-6);
     assertEquals(80.0, hardy.getPipeFlowRate("BC") - hardy.getPipeFlowRate("CA") - hardy.getPipeFlowRate("CD"), 1e-6);
     assertEquals(120.0, hardy.getPipeFlowRate("CD") - hardy.getPipeFlowRate("DB"), 1e-6);
-    for (String pipe : new String[] { "AB", "BC", "CA", "CD", "DB" }) {
+    for (String pipe : new String[] {"AB", "BC", "CA", "CD", "DB"}) {
       assertEquals(newton.getPipeFlowRate(pipe), hardy.getPipeFlowRate(pipe), 0.1, pipe);
     }
   }

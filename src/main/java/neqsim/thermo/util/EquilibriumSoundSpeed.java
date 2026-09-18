@@ -318,7 +318,7 @@ public final class EquilibriumSoundSpeed {
         }
         double pressure = source.getPressure();
         State centre = solve(pressure);
-        states = new State[] { centre };
+        states = new State[] {centre};
         Estimate previous = null;
         step = pressure * relativeStep * 1.0e5;
         for (int refinement = 0; refinement <= MAX_REFINEMENTS; refinement++, step *= 0.5) {
@@ -358,14 +358,14 @@ public final class EquilibriumSoundSpeed {
       boolean sameHigh = centre.samePhases(high);
       boundary |= !sameLow || !sameHigh;
       if (sameLow && sameHigh) {
-        return new Estimate(Stencil.CENTRAL, new State[] { centre, low, high },
+        return new Estimate(Stencil.CENTRAL, new State[] {centre, low, high},
             (high.density - low.density) / (2.0 * step));
       }
       if (sameHigh) {
         State far = solve((pressure + 2.0 * step) / 1.0e5);
         boundary |= !centre.samePhases(far);
         return centre.samePhases(far)
-            ? new Estimate(Stencil.FORWARD, new State[] { centre, high, far },
+            ? new Estimate(Stencil.FORWARD, new State[] {centre, high, far},
                 (-3.0 * centre.density + 4.0 * high.density - far.density) / (2.0 * step))
             : null;
       }
@@ -373,7 +373,7 @@ public final class EquilibriumSoundSpeed {
         State far = solve((pressure - 2.0 * step) / 1.0e5);
         boundary |= !centre.samePhases(far);
         return centre.samePhases(far)
-            ? new Estimate(Stencil.BACKWARD, new State[] { centre, low, far },
+            ? new Estimate(Stencil.BACKWARD, new State[] {centre, low, far},
                 (3.0 * centre.density - 4.0 * low.density + far.density) / (2.0 * step))
             : null;
       }

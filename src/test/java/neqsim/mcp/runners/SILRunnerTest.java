@@ -83,11 +83,11 @@ class SILRunnerTest {
 
   @Test
   void rejectsInvalidTopLevelNumbersArchitectureAndText() {
-    for (String input : new String[] { "{\"pfdAvg\":0}", "{\"pfdAvg\":-0.1}", "{\"pfdAvg\":1.01}", "{\"pfdAvg\":NaN}",
+    for (String input : new String[] {"{\"pfdAvg\":0}", "{\"pfdAvg\":-0.1}", "{\"pfdAvg\":1.01}", "{\"pfdAvg\":NaN}",
         "{\"pfdAvg\":\"low\"}", "{\"pfdAvg\":0.01,\"claimedSIL\":0}", "{\"pfdAvg\":0.01,\"claimedSIL\":2.5}",
         "{\"pfdAvg\":0.01,\"claimedSIL\":5}", "{\"pfdAvg\":0.01,\"architecture\":\"2oo2\"}",
         "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":0}", "{\"pfdAvg\":0.01,\"proofTestInterval_hours\":87601}",
-        "{\"pfdAvg\":0.01,\"name\":\" \"}" }) {
+        "{\"pfdAvg\":0.01,\"name\":\" \"}"}) {
       assertErrorCode(input, "INVALID_INPUT");
     }
   }
@@ -95,13 +95,13 @@ class SILRunnerTest {
   @Test
   void rejectsInvalidComponentShapesTypesSourcesAndValues() {
     assertErrorCode("{\"components\":[]}", "INVALID_INPUT");
-    for (String components : new String[] { "[\"component\"]", "[{\"type\":\"sensor\",\"pfd\":0.01}]",
+    for (String components : new String[] {"[\"component\"]", "[{\"type\":\"sensor\",\"pfd\":0.01}]",
         "[{\"name\":\"PT\",\"type\":\"other\",\"pfd\":0.01}]", "[{\"name\":\"PT\",\"type\":\"sensor\"}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":0.01,\"lambdaDU_per_hr\":1e-7}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":0}]", "[{\"name\":\"PT\",\"type\":\"sensor\",\"pfd\":1.01}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"lambdaDU_per_hr\":0}]",
         "[{\"name\":\"PT\",\"type\":\"sensor\",\"lambdaDU_per_hr\":1.01}]",
-        "[{\"name\":\"PT\",\"type\":\"sensor\",\"architecture\":\"2oo2\",\"lambdaDU_per_hr\":1e-7}]" }) {
+        "[{\"name\":\"PT\",\"type\":\"sensor\",\"architecture\":\"2oo2\",\"lambdaDU_per_hr\":1e-7}]"}) {
       assertErrorCode("{\"components\":" + components + "}", "INVALID_COMPONENT");
     }
   }

@@ -25,7 +25,7 @@ class TwoFluidUnsplitPublicationTest {
 
   @Test
   void publishesAcceptedFaceTransfersAcrossNearbyTimeStepsAndSurvivesSerialization() {
-    for (double duration : new double[] { 1.0 / 512.0, 1.0 / 256.0 }) {
+    for (double duration : new double[] {1.0 / 512.0, 1.0 / 256.0}) {
       TwoFluidSection[] accepted = sections(false, 1.0);
       TwoFluidSection[] original = copy(accepted);
       PreparedInterval interval = interval(accepted, duration, false);
@@ -92,7 +92,7 @@ class TwoFluidUnsplitPublicationTest {
         () -> TwoFluidUnsplitPublication.prepare(interval, accepted, START + duration, duration, 1.0e-8));
     assertThrows(IllegalArgumentException.class,
         () -> TwoFluidUnsplitPublication.prepare(interval, accepted, START, duration / 2.0, 1.0e-8));
-    for (double invalid : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double invalid : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class,
           () -> TwoFluidUnsplitPublication.prepare(interval, accepted, START, duration, invalid));
     }
@@ -250,7 +250,7 @@ class TwoFluidUnsplitPublicationTest {
 
   private static void assertComponentFlows(SystemInterface template, TwoFluidUnsplitPublication publication,
       SystemInterface outlet) {
-    String[] phases = { "gas", "oil", "aqueous" };
+    String[] phases = {"gas", "oil", "aqueous"};
     double totalMassFlow = 0.0;
     for (double phaseFlow : publication.getOutletMassFlowKgPerSecond()) {
       totalMassFlow += phaseFlow;
@@ -279,13 +279,13 @@ class TwoFluidUnsplitPublicationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-10);
     TwoFluidUnsplitIntegrator integrator = new TwoFluidUnsplitIntegrator(equations,
-        (cell, state, pressure, time) -> new double[] { 40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0 }, solver);
+        (cell, state, pressure, time) -> new double[] {40.0 + 1.0e-6 * (pressure - 5.0e6), 700.0, 1000.0}, solver);
     return integrator.prepareInterval(accepted, 10.0, duration, START, 5.0e6, !closed, 1.0e-8, duration / 2.0);
   }
 
   private static TwoFluidSection[] sections(boolean gasOnly, double velocityScale) {
-    TwoFluidSection[] cells = { new TwoFluidSection(2.5, 5.0, 0.1, 0.0), new TwoFluidSection(10.0, 10.0, 0.1, 0.0),
-        new TwoFluidSection(22.5, 15.0, 0.1, 0.0) };
+    TwoFluidSection[] cells = {new TwoFluidSection(2.5, 5.0, 0.1, 0.0), new TwoFluidSection(10.0, 10.0, 0.1, 0.0),
+        new TwoFluidSection(22.5, 15.0, 0.1, 0.0)};
     for (TwoFluidSection cell : cells) {
       cell.setPressure(5.0e6);
       cell.setTemperature(300.0);

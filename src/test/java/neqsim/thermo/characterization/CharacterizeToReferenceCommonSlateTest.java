@@ -72,11 +72,11 @@ class CharacterizeToReferenceCommonSlateTest {
     SystemInterface b = PseudoComponentCombiner.characterizeToReference(source(0.10, 0.12, 0.15, 0.200), reference,
         options);
 
-    String[] lumps = { "C7_PC", "C8_PC", "C9_PC" };
-    double[] refTc = { 530.0, 550.0, 570.0 };
-    double[] refPc = { 29.0, 27.0, 25.0 };
-    double[] refOmega = { 0.31, 0.33, 0.35 };
-    double[] refMw = { 0.090, 0.110, 0.150 };
+    String[] lumps = {"C7_PC", "C8_PC", "C9_PC"};
+    double[] refTc = {530.0, 550.0, 570.0};
+    double[] refPc = {29.0, 27.0, 25.0};
+    double[] refOmega = {0.31, 0.33, 0.35};
+    double[] refMw = {0.090, 0.110, 0.150};
 
     boolean someMoleFractionDiffers = false;
     for (int i = 0; i < lumps.length; i++) {

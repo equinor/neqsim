@@ -661,7 +661,7 @@ public class VenturiFlowMeter extends DifferentialPressureFlowMeter {
     SystemInterface fluid = stream.getThermoSystem();
     double mass = 0.0;
     double volume = 0.0;
-    String[] liquidPhases = new String[] { "oil", "aqueous" };
+    String[] liquidPhases = new String[] {"oil", "aqueous"};
     for (int i = 0; i < liquidPhases.length; i++) {
       try {
         if (!fluid.hasPhaseType(liquidPhases[i])) {
@@ -782,10 +782,10 @@ public class VenturiFlowMeter extends DifferentialPressureFlowMeter {
    * @return fingerprint array, compared with {@link Arrays#equals(double[], double[])}
    */
   private double[] buildWetGasSignature() {
-    return new double[] { getDifferentialPressurePa(), getUpstreamPressurePa(), getBetaRatio(), getGasDensity(),
+    return new double[] {getDifferentialPressurePa(), getUpstreamPressurePa(), getBetaRatio(), getGasDensity(),
         getIsentropicExponent(), dischargeCoefficient, liquidMassFlowRate, resolveLiquidToGasMassRatio(),
         getLiquidDensity(), pressureLoss, gravitationalAcceleration, surfaceTensionFactor, wetGasCorrelation.ordinal(),
-        useWetGasDischargeCoefficient ? 1.0 : 0.0 };
+        useWetGasDischargeCoefficient ? 1.0 : 0.0};
   }
 
   /**

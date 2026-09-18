@@ -46,7 +46,7 @@ class ProductionOptimizerAdvancedTest {
     process.add(feed);
     process.add(compressor);
 
-    return new Object[] { process, feed };
+    return new Object[] {process, feed};
   }
 
   /**
