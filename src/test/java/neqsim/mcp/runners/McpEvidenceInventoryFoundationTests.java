@@ -1007,12 +1007,9 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("NOT_APPLICABLE_BOUNDED_PRESSURE_RELIEF_SIZING_SCREENING_SOFTWARE_CONTRACT",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(6, coverage.get("contractEvidenceCount").getAsInt());
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ReliefRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ReliefValveSizing.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("RELIEF_SIZING_CONTRACT.md"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ReliefRunnerTest.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ReliefValveSizing.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("RELIEF_SIZING_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim ReliefValveSizing"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("relief-scenario completeness"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runRelief"));

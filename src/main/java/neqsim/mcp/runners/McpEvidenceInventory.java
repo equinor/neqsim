@@ -589,8 +589,7 @@ public final class McpEvidenceInventory {
       evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/ReliefRunner.java",
           "src/main/java/neqsim/process/util/fire/ReliefValveSizing.java",
           "src/test/java/neqsim/mcp/runners/ReliefRunnerTest.java",
-          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/RELIEF_SIZING_CONTRACT.md"};
       evidenceBoundary = "Bounded 16,384-byte UTF-8 request admission, stable fail-closed malformed, non-finite, non-positive and out-of-range input handling, gas, liquid, two-phase and fire-heat-input routing through canonical NeqSim ReliefValveSizing calculations, backpressure validation, finite positive and conservative selected-area evidence, explicit screening-only and standards-conformance metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish relief-scenario completeness, applicable standard edition, relieving-rate or property validity, allowable accumulation, coefficient applicability, inlet/outlet piping acceptability, disposal-system capacity, reaction loads, installation suitability, certification, plant authorization, or replace qualified pressure-relief/process-safety review and accountable approval";
       break;
