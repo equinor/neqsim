@@ -155,12 +155,6 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     return invalue * getConversionFactor(inunit);
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String toUnit) {
-    return getSIvalue() / getConversionFactor(toUnit);
-  }
-
   /**
    * Converts an explicit rate using this instance's fluid properties without changing its stored value.
    *
