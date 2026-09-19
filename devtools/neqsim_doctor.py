@@ -315,7 +315,8 @@ def check_neqsim_jar():
     )]
 
     if main_jars:
-        jar = main_jars[0]
+        # Old versions linger in target/ after a version bump; judge the newest build.
+        jar = max(main_jars, key=os.path.getmtime)
         mod_time = datetime.fromtimestamp(os.path.getmtime(jar))
         age_hours = (datetime.now() - mod_time).total_seconds() / 3600
         age_str = "{:.1f} hours ago".format(
