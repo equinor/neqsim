@@ -85,12 +85,26 @@ repos were normalised:
   `${PLUGIN_ROOT}` → `${workspaceFolder}/.github/mcp`). **The server now starts from the release
   jar, not Docker:** `command: java`, `args: [${PLUGIN_ROOT}/servers/NeqsimMcpLauncher.java]`.
   The launcher (`.github/mcp/servers/NeqsimMcpLauncher.java`, Java source-launch, JDK 21+)
-  downloads `neqsim-mcp-server-<version>-runner.jar` + `.sha256` from the GitHub release pinned
-  in `servers/neqsim-mcp-server.properties` (written by the builder from pom `<revision>`,
-  override `--mcp-version`) into `${PLUGIN_DATA}`, verifies it, and runs it with stdio inherited,
-  UTF-8 forced and HTTP transport disabled. Env: `NEQSIM_MCP_JAR`, `NEQSIM_MCP_VERSION`,
-  `NEQSIM_MCP_JAVA_OPTS`. Verified: first start downloads 84 MB, later starts `initialize` in ~2 s,
-  71 tools listed.
+  downloads `neqsim-mcp-server-<version>-runner.jar` + `.sha256` from the GitHub release named
+  in `servers/neqsim-mcp-server.properties` (written by the builder; default `version=latest`,
+  pin with `--mcp-version X.Y.Z` or `pom`) into `${PLUGIN_DATA}`, verifies it, and runs it with
+  stdio inherited, UTF-8 forced and HTTP transport disabled. **`latest` tracking:** the launcher
+  resolves the tag behind `releases/latest` (HEAD, at most once per 24 h, stamp
+  `latest-release.txt`), fetches a newer jar when needed, prunes superseded jars and falls back
+  to the cached version offline. `--prefetch` resolves + downloads without starting the server;
+  the plugin's `SessionStart` hook runs it detached so the first-session download overlaps the
+  user's first prompt and new releases are fetched a day ahead (a `.lock` beside the jar makes a
+  concurrent server start wait instead of downloading twice). Env: `NEQSIM_MCP_JAR`,
+  `NEQSIM_MCP_VERSION` (`X.Y.Z` or `latest`), `NEQSIM_MCP_LATEST_TTL_HOURS`,
+  `NEQSIM_MCP_JAVA_OPTS`. Verified: first start downloads ~89 MB, later starts `initialize` in
+  ~2 s, 71 tools listed. The marketplace repo ships `scripts/install.{ps1,sh}` that registers the
+  marketplace, enables `extensions.autoUpdate` and installs all three plugins via the bundled
+  Copilot CLI in one step. **Offline bundle:** a `neqsim-mcp-server-*-runner.jar` (+ `.sha256`)
+  placed beside the launcher in `servers/` seeds the jar cache (`seedFromBundle`), and the hook
+  installs from `${PLUGIN_ROOT}/wheels` with `pip --no-index` before falling back to PyPI; the
+  marketplace repo's `scripts/make_offline_bundle.py` + `offline_bundle.yml` build and publish
+  such a zip on every plugin change / NeqSim release (`release_with_jars.yml` dispatches
+  `neqsim-release` when `NEQSIM_PLUGIN_DISPATCH_TOKEN` is set).
 * **`devtools/build_agent_plugin.py`** emits `neqsim`, `neqsim-community` and
   `neqsim-enterprise` plugins plus a `marketplace.json`, with a content-hash version gate
   (`--bump patch|minor|major`) and a `SessionStart` hook that `pip install -e` the skills repo.

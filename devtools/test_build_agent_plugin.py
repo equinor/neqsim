@@ -157,6 +157,46 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue(any("wrong-dir" in e for e in result["errors"]))
         self.assertFalse((self.out / "demo").exists())
 
+    def test_mcp_plugin_tracks_latest_and_prefetches(self):
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+                              True, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
+        known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
+        result = bap.build_plugin(spec, self.out, known, _args(mcp_version=bap.MCP_LATEST))
+        self.assertEqual(result["errors"], [])
+        plugin = self.out / "core"
+        self.assertTrue((plugin / "mcp.json").exists())
+        self.assertTrue((plugin / "servers" / "NeqsimMcpLauncher.java").exists())
+        props = (plugin / "servers" / "neqsim-mcp-server.properties").read_text(encoding="utf-8")
+        self.assertIn("version=latest\n", props)
+        # a tracked build must not carry a fixed jar name the launcher would trust
+        self.assertNotIn("jar=", props)
+        self.assertNotIn("download=", props)
+        hook_py = (plugin / "scripts" / "install_skill_packages.py").read_text(encoding="utf-8")
+        compile(hook_py, "install_skill_packages.py", "exec")
+        self.assertIn("PREFETCH_MCP = True", hook_py)
+        self.assertIn('"--prefetch"', hook_py)
+        self.assertIn("latest-release.txt", hook_py)
+        # offline bundle: wheelhouse first, package index as fallback
+        self.assertIn('"--no-index", "--find-links"', hook_py)
+        self.assertIn('root / "wheels"', hook_py)
+
+    def test_mcp_plugin_pinned_version(self):
+        errors = []
+        staging = self.out / "pinned"
+        staging.mkdir(parents=True)
+        bap.write_mcp(staging, "3.21.0", errors)
+        self.assertEqual(errors, [])
+        props = (staging / "servers" / "neqsim-mcp-server.properties").read_text(encoding="utf-8")
+        self.assertIn("version=3.21.0\n", props)
+        self.assertIn("jar=neqsim-mcp-server-3.21.0-runner.jar\n", props)
+        self.assertIn("download=https://github.com/equinor/neqsim/releases/download/v3.21.0/\n", props)
+
+    def test_hook_without_mcp_has_prefetch_disabled(self):
+        self._build()
+        hook_py = (self.out / "demo" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("PREFETCH_MCP = False", hook_py)
+
 
 class BumpTest(unittest.TestCase):
     def test_bump(self):
