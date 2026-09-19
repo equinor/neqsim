@@ -41,9 +41,9 @@ public class JavaGettingStartedGuideDocumentationTest extends neqsim.NeqSimTest 
     String compressorSource = read(
         repositoryRoot.resolve("src/main/java/neqsim/process/equipment/compressor/Compressor.java"));
 
-    assertTrue(pom.contains("<revision>3.20.0</revision>"));
-    assertTrue(guide.contains("com.equinor.neqsim:neqsim:3.20.0"));
-    assertTrue(guide.contains("neqsim-3.20.0-Java8.jar"));
+    assertTrue(pom.contains("<revision>3.21.0</revision>"));
+    assertTrue(guide.contains("com.equinor.neqsim:neqsim:3.21.0"));
+    assertTrue(guide.contains("neqsim-3.21.0-Java8.jar"));
     assertTrue(guide.contains("Java 17 or newer"));
     assertTrue(guide.contains("Source must remain Java 8 compatible"));
     assertTrue(heaterSource.contains("public void setOutletTemperature(double temperature, String unit)"));
