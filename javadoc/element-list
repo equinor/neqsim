@@ -122,8 +122,10 @@ neqsim.process.chemistry
 neqsim.process.chemistry.acid
 neqsim.process.chemistry.asphaltene
 neqsim.process.chemistry.corrosion
+neqsim.process.chemistry.electrochlorination
 neqsim.process.chemistry.equipment
 neqsim.process.chemistry.hydrate
+neqsim.process.chemistry.injection
 neqsim.process.chemistry.rca
 neqsim.process.chemistry.scale
 neqsim.process.chemistry.scavenger
@@ -355,6 +357,7 @@ neqsim.process.safety.envelope
 neqsim.process.safety.escalation
 neqsim.process.safety.esd
 neqsim.process.safety.fire
+neqsim.process.safety.firewater
 neqsim.process.safety.hazid
 neqsim.process.safety.inherent
 neqsim.process.safety.inventory
@@ -454,6 +457,7 @@ neqsim.thermo.util.jni
 neqsim.thermo.util.leachman
 neqsim.thermo.util.readwrite
 neqsim.thermo.util.referenceequations
+neqsim.thermo.util.solid
 neqsim.thermo.util.spanwagner
 neqsim.thermo.util.steam
 neqsim.thermo.util.sulfur
