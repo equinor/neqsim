@@ -1538,6 +1538,10 @@ public abstract class Component implements ComponentInterface {
       double denom = AntoineC + temp - 273.15;
       double pressure = Math.pow(10.0, AntoineA - AntoineB / denom);
       return pressure * AntoineB * Math.log(10.0) / (denom * denom);
+    } else if (antoineLiqVapPresType.equals("pow10KPa")) {
+      // Reuse the legacy pressure scale so the derivative is in bar/K.
+      double denom = temp + AntoineC;
+      return getAntoineVaporPressure(temp) * AntoineB * Math.log(10.0) / (denom * denom);
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // (B*exp(A - B/(C + x)))/(C + x)^2
       double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp))) / Math.pow((AntoineC + temp), 2.0);
