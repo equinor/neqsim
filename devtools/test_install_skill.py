@@ -492,6 +492,57 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 self.assertFalse(
                     (export_root / "skills" / "neqsim-demo").exists())
 
+    def test_cmd_remove_all_removes_only_neqsim_installed_skills(self):
+        """--all removes every manifest entry (and its exports) but no foreign folders."""
+        import argparse
+        import io
+        import json
+        import tempfile
+        from contextlib import redirect_stdout
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            vscode_dir = tmp_path / "copilot-skills"
+            manifest = {}
+            for name, source in (("neqsim-core-skill", "core"),
+                                 ("community-skill", "community"),
+                                 ("enterprise-skill", "private")):
+                (install_dir / name).mkdir(parents=True)
+                (install_dir / name / "SKILL.md").write_text("s", encoding="utf-8")
+                (vscode_dir / name).mkdir(parents=True)
+                (vscode_dir / name / "SKILL.md").write_text("s", encoding="utf-8")
+                manifest[name] = {
+                    "path": str(install_dir / name / "SKILL.md"),
+                    "source": source,
+                    "vscode_path": str(vscode_dir / name),
+                    "exports": {"vscode": str(vscode_dir / name)},
+                }
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps(manifest), encoding="utf-8")
+            foreign = vscode_dir / "third-party-skill"
+            foreign.mkdir()
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    redirect_stdout(io.StringIO()):
+                install_skill.cmd_remove([], argparse.Namespace(
+                    name=None, all=True, source="community", yes=True, dry_run=False))
+                remaining = json.loads(manifest_file.read_text(encoding="utf-8"))
+                self.assertEqual(
+                    ["enterprise-skill", "neqsim-core-skill"], sorted(remaining))
+                self.assertFalse((vscode_dir / "community-skill").exists())
+
+                install_skill.cmd_remove([], argparse.Namespace(
+                    name=None, all=True, source="all", yes=True, dry_run=False))
+
+            self.assertEqual({}, json.loads(manifest_file.read_text(encoding="utf-8")))
+            for name in ("neqsim-core-skill", "community-skill", "enterprise-skill"):
+                self.assertFalse((install_dir / name).exists())
+                self.assertFalse((vscode_dir / name).exists())
+            self.assertTrue(foreign.exists())
+
     def test_cmd_export_installed_skill_to_generic(self):
         """An installed skill can be exported later without reinstalling."""
         import argparse

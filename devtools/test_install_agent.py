@@ -1233,7 +1233,153 @@ class AgentVsCodeExportTest(unittest.TestCase):
                 install_agent.cmd_remove(catalog, remove_args)
                 self.assertFalse(exported.exists())
 
-    def test_cmd_export_installed_agent_to_generic(self):
+    def _seed_manifest(self, install_dir, vscode_dir, entries):
+        """Write installed folders, VS Code exports and a manifest for entries."""
+        manifest = {}
+        for name, source in entries:
+            (install_dir / name).mkdir(parents=True, exist_ok=True)
+            (install_dir / name / "AGENT.md").write_text("body", encoding="utf-8")
+            exported = vscode_dir / "{n}.agent.md".format(n=name)
+            exported.parent.mkdir(parents=True, exist_ok=True)
+            exported.write_text("body", encoding="utf-8")
+            manifest[name] = {
+                "path": str(install_dir / name),
+                "source": source,
+                "vscode_path": str(exported),
+                "exports": {"vscode": str(exported)},
+            }
+        (install_dir / "installed.json").write_text(
+            json.dumps(manifest), encoding="utf-8")
+        return manifest
+
+    def test_cmd_remove_all_only_touches_manifest_entries(self):
+        """--all removes every NeqSim-installed agent but leaves foreign files alone."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            vscode_dir = tmp_path / "copilot-agents"
+            self._seed_manifest(install_dir, vscode_dir, [
+                ("community-a", "community"), ("enterprise-b", "private"),
+            ])
+            foreign = vscode_dir / "my-own.agent.md"
+            foreign.write_text("not ours", encoding="utf-8")
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE",
+                                      install_dir / "installed.json"), \
+                    redirect_stdout(io.StringIO()):
+                install_agent.cmd_remove([], argparse.Namespace(
+                    name=None, all=True, source="all", yes=True,
+                    dry_run=False, with_skills=False))
+
+            self.assertFalse((install_dir / "community-a").exists())
+            self.assertFalse((install_dir / "enterprise-b").exists())
+            self.assertFalse((vscode_dir / "community-a.agent.md").exists())
+            self.assertFalse((vscode_dir / "enterprise-b.agent.md").exists())
+            self.assertTrue(foreign.exists())
+            self.assertEqual({}, json_load(install_dir / "installed.json"))
+
+    def test_cmd_remove_all_source_filter_and_dry_run(self):
+        """--source narrows the bulk removal; --dry-run deletes nothing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            vscode_dir = tmp_path / "copilot-agents"
+            self._seed_manifest(install_dir, vscode_dir, [
+                ("community-a", "community"), ("enterprise-b", "private"),
+            ])
+            patches = [
+                mock.patch.object(install_agent, "INSTALL_DIR", install_dir),
+                mock.patch.object(install_agent, "MANIFEST_FILE",
+                                  install_dir / "installed.json"),
+            ]
+            for p in patches:
+                p.start()
+            try:
+                out = io.StringIO()
+                with redirect_stdout(out):
+                    install_agent.cmd_remove([], argparse.Namespace(
+                        name=None, all=True, source="private", yes=False,
+                        dry_run=True, with_skills=False))
+                self.assertIn("Would remove", out.getvalue())
+                self.assertIn("enterprise-b", out.getvalue())
+                self.assertNotIn("- community-a", out.getvalue())
+                self.assertTrue((install_dir / "enterprise-b").exists())
+
+                with redirect_stdout(io.StringIO()):
+                    install_agent.cmd_remove([], argparse.Namespace(
+                        name=None, all=True, source="private", yes=True,
+                        dry_run=False, with_skills=False))
+                self.assertFalse((install_dir / "enterprise-b").exists())
+                self.assertTrue((install_dir / "community-a").exists())
+                self.assertEqual(
+                    ["community-a"],
+                    sorted(json_load(install_dir / "installed.json")))
+            finally:
+                for p in patches:
+                    p.stop()
+
+    def test_cmd_remove_all_with_skills_gives_blank_slate(self):
+        """--all --with-skills removes installed skills through the skill installer too."""
+        import install_skill
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            agent_dir = tmp_path / "installed-agents"
+            skill_dir = tmp_path / "installed-skills"
+            vscode_agents = tmp_path / "copilot-agents"
+            vscode_skills = tmp_path / "copilot-skills"
+            self._seed_manifest(agent_dir, vscode_agents, [("community-a", "community")])
+            (skill_dir / "neqsim-demo").mkdir(parents=True)
+            (skill_dir / "neqsim-demo" / "SKILL.md").write_text("s", encoding="utf-8")
+            (vscode_skills / "neqsim-demo").mkdir(parents=True)
+            (vscode_skills / "neqsim-demo" / "SKILL.md").write_text("s", encoding="utf-8")
+            (skill_dir / "installed.json").write_text(json.dumps({
+                "neqsim-demo": {
+                    "path": str(skill_dir / "neqsim-demo" / "SKILL.md"),
+                    "source": "core",
+                    "vscode_path": str(vscode_skills / "neqsim-demo"),
+                    "exports": {"vscode": str(vscode_skills / "neqsim-demo")},
+                }}), encoding="utf-8")
+            foreign_skill = vscode_skills / "someone-elses-skill"
+            foreign_skill.mkdir()
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", agent_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE",
+                                      agent_dir / "installed.json"), \
+                    mock.patch.object(install_skill, "INSTALL_DIR", skill_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE",
+                                      skill_dir / "installed.json"), \
+                    redirect_stdout(io.StringIO()):
+                install_agent.cmd_remove([], argparse.Namespace(
+                    name=None, all=True, source="all", yes=True,
+                    dry_run=False, with_skills=True))
+
+            self.assertFalse((agent_dir / "community-a").exists())
+            self.assertFalse((skill_dir / "neqsim-demo").exists())
+            self.assertFalse((vscode_skills / "neqsim-demo").exists())
+            self.assertTrue(foreign_skill.exists())
+            self.assertEqual({}, json_load(agent_dir / "installed.json"))
+            self.assertEqual({}, json_load(skill_dir / "installed.json"))
+
+    def test_cmd_remove_all_refuses_without_yes_when_not_interactive(self):
+        """A bulk removal without --yes in a non-tty session exits without deleting."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            self._seed_manifest(install_dir, tmp_path / "copilot-agents",
+                                [("community-a", "community")])
+            fake_stdin = io.StringIO()
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE",
+                                      install_dir / "installed.json"), \
+                    mock.patch.object(sys, "stdin", fake_stdin), \
+                    redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    install_agent.cmd_remove([], argparse.Namespace(
+                        name=None, all=True, source="all", yes=False,
+                        dry_run=False, with_skills=False))
+            self.assertTrue((install_dir / "community-a").exists())
         """An installed agent can be exported later without reinstalling."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

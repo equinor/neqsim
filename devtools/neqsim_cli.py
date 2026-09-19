@@ -71,11 +71,11 @@ COMMANDS = {
     },
     "skill": {
         "module": "install_skill",
-        "desc": "Manage skills (list/search/install/remove/private-init/add-repo)",
+        "desc": "Manage skills (list/search/install/remove [--all]/private-init/add-repo)",
     },
     "agent": {
         "module": "install_agent",
-        "desc": "Manage agents (list/search/install/remove/validate/private-init/add-repo)",
+        "desc": "Manage agents (list/search/install/remove [--all --with-skills]/validate/...)",
     },
     "paperlab": {
         "module": "paperlab_install",
