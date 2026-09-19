@@ -35,10 +35,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import agent_frontmatter as af  # noqa: E402
+import bm25  # noqa: E402
 
 # An agent record is (name, haystack, path, required_skills, repo, handle).
 # ``handle`` is the id used to *invoke* the agent (e.g. "capability.scout" or
@@ -49,102 +53,46 @@ AgentRecord = Tuple[str, str, str, List[str], str, str]
 
 
 def _strip_yaml_value(s: str) -> str:
-    s = s.strip()
-    if s.startswith('"') and s.endswith('"'):
-        s = s[1:-1]
-    elif s.startswith("'") and s.endswith("'"):
-        s = s[1:-1]
-    return s
+    return af.strip_yaml_scalar(s)
 
 
 def _parse_front_matter(text: str) -> Optional[Dict[str, object]]:
-    """Return a shallow dict of the leading YAML front-matter block, or None.
+    """Return ``name``/``description``/``required_skills`` from the front-matter, or None.
 
-    Only the keys needed for search are parsed (``name``, ``description``, and a
-    simple ``required_skills`` / ``loaded_skills`` list). This avoids a PyYAML
-    dependency and tolerates the small front-matter dialects used across repos.
+    Thin wrapper over :mod:`agent_frontmatter` kept for backwards-compatible
+    imports; frontmatter ``required_skills`` (also ``loaded_skills``/``skills``)
+    is returned under ``required_skills``.
     """
-    if not text.startswith("---"):
+    front, _ = af.split_frontmatter(text)
+    if front is None:
         return None
-    end = text.find("\n---", 3)
-    if end < 0:
-        return None
-    front = text[3:end]
+    fm = af.parse_frontmatter(text)
     out: Dict[str, object] = {}
+    if isinstance(fm.get("name"), str):
+        out["name"] = fm["name"]
+    if isinstance(fm.get("description"), str):
+        out["description"] = fm["description"]
     skills: List[str] = []
-    in_skills = False
-    for line in front.splitlines():
-        raw = line.rstrip()
-        stripped = raw.strip()
-        if in_skills:
-            if stripped.startswith("- "):
-                skills.append(_strip_yaml_value(stripped[2:]))
-                continue
-            # A non-list, non-indented line ends the list block.
-            if raw and not raw.startswith((" ", "\t", "-")):
-                in_skills = False
-            else:
-                continue
-        if stripped.startswith("name:"):
-            out["name"] = _strip_yaml_value(stripped[5:])
-        elif stripped.startswith("description:"):
-            out["description"] = _strip_yaml_value(stripped[12:])
-        elif re.match(r"^(required_skills|loaded_skills|skills)\s*:", stripped):
-            value = stripped.split(":", 1)[1].strip()
-            if value and value != "[]":
-                # Inline list form: skills: [a, b] or skills: a, b
-                value = value.strip("[]")
-                skills.extend(
-                    _strip_yaml_value(v) for v in value.split(",") if v.strip()
-                )
-            else:
-                in_skills = True
+    for key in af.SKILL_LIST_KEYS:
+        value = fm.get(key)
+        if isinstance(value, list):
+            skills.extend(value)
+        elif isinstance(value, str) and value:
+            skills.extend(v.strip() for v in value.strip("[]").split(",") if v.strip())
     if skills:
         out["required_skills"] = skills
     return out
 
 
 def _extract_loaded_skills_body(text: str) -> List[str]:
-    """Parse a 'Loaded skills: a, b, c' line or a skills heading + bullet list.
-
-    Handles the three conventions agents use in the body: an inline
-    ``Loaded skills:`` line, a ``## Skills to Load`` heading, and a
-    ``## Loaded skills`` heading, each optionally followed by a bullet list.
-    """
-    skills: List[str] = []
-    m = re.search(r"(?im)^\s*Loaded skills:\s*(.+)$", text)
-    if m:
-        skills.extend(s.strip() for s in m.group(1).split(",") if s.strip())
-    # Bullet list under a '## Skills to Load' or '## Loaded skills' heading
-    block = re.search(
-        r"(?is)##\s*(?:Skills to Load|Loaded skills)\b(.*?)(?:\n##\s|\Z)", text
-    )
-    if block:
-        for line in block.group(1).splitlines():
-            bm = re.match(r"\s*[-*]\s*`?([a-z0-9][a-z0-9_-]+)`?", line)
-            if bm:
-                skills.append(bm.group(1))
-    # Dedupe preserving order
-    seen = set()
-    out = []
-    for s in skills:
-        key = s.lower()
-        if key not in seen:
-            seen.add(key)
-            out.append(s)
-    return out
+    """Parse the legacy body declarations (``Loaded skills:`` line or bullet block)."""
+    _, body = af.split_frontmatter(text)
+    return af.extract_body_skills(body)
 
 
 def _handle_for_path(md: Path) -> str:
-    """Return the id used to invoke the agent (its @handle / agent id).
-
-    neqsim uses flat ``<handle>.agent.md`` files, so the handle is the stem
-    minus the ``.agent`` suffix. Community/enterprise agents live in
-    ``agents/<handle>/AGENT.md``, so the handle is the parent directory name.
-    """
-    if md.name.lower() == "agent.md":
-        return md.parent.name
-    return md.stem[:-6] if md.stem.lower().endswith(".agent") else md.stem
+    """Return the kebab-case id used to invoke the agent (its @handle)."""
+    return af.agent_id_for_path(md)
 
 
 def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecord]:
@@ -168,8 +116,12 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
         skills = list(fm.get("required_skills") or [])  # type: ignore[arg-type]
         if not skills:
             skills = _extract_loaded_skills_body(text)
-        # Include the handle in the haystack so a query using the @handle matches.
-        haystack = f"{name} {handle} {md.parent.name} {desc}"
+        # Handle so an @handle query matches; required skills because a skill id such
+        # as neqsim-water-hammer is the sharpest routing signal an agent declares. The
+        # folder name is skipped when it merely repeats the handle (agents/<id>/AGENT.md),
+        # otherwise community ids were counted three times and outranked core agents.
+        folder = md.parent.name if md.parent.name != handle else ""
+        haystack = f"{name} {handle} {folder} {desc} {' '.join(skills)}"
         out.append((name, haystack, str(md), skills, repo, handle))
     return out
 
@@ -209,54 +161,13 @@ def _load_agents(repo_root: Path, extra: Optional[List[Path]] = None) -> List[Ag
     return out
 
 
-def _tokenize(s: str) -> List[str]:
-    s = s.lower()
-    return re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", s)
-
-
-def _try_sklearn_search(
+def _bm25_search(
     query: str, agents: List[AgentRecord], top: int
 ) -> List[Tuple[float, AgentRecord]]:
-    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
-    from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
-
-    corpus = [a[1] for a in agents]
-    word_vec = TfidfVectorizer(
-        analyzer="word", ngram_range=(1, 2), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    char_vec = TfidfVectorizer(
-        analyzer="char_wb", ngram_range=(3, 5), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    Xw = word_vec.fit_transform(corpus + [query])
-    Xc = char_vec.fit_transform(corpus + [query])
-    sim_w = cosine_similarity(Xw[-1], Xw[:-1]).ravel()
-    sim_c = cosine_similarity(Xc[-1], Xc[:-1]).ravel()
-    sim = 0.6 * sim_w + 0.4 * sim_c
-    order = sim.argsort()[::-1][:top]
-    return [(float(sim[i]), agents[i]) for i in order]
-
-
-def _fallback_search(
-    query: str, agents: List[AgentRecord], top: int
-) -> List[Tuple[float, AgentRecord]]:
-    q_tokens = set(_tokenize(query))
-    if not q_tokens:
-        return []
-    scored: List[Tuple[float, AgentRecord]] = []
-    for rec in agents:
-        h_tokens = set(_tokenize(rec[1]))
-        if not h_tokens:
-            continue
-        intersection = len(q_tokens & h_tokens)
-        if intersection == 0:
-            scored.append((0.0, rec))
-            continue
-        union = len(q_tokens | h_tokens)
-        jaccard = intersection / union
-        boost = intersection / max(1, len(q_tokens))
-        scored.append((0.5 * jaccard + 0.5 * boost, rec))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return scored[:top]
+    """Rank agents with dependency-free BM25 so dev and CI score identically."""
+    scores = bm25.BM25([a[1] for a in agents]).scores(query)
+    order = sorted(range(len(agents)), key=lambda i: scores[i], reverse=True)
+    return [(scores[i], agents[i]) for i in order[:top]]
 
 
 def search(
@@ -265,10 +176,7 @@ def search(
     agents = _load_agents(repo_root, extra)
     if not agents:
         return []
-    try:
-        return _try_sklearn_search(query, agents, top)
-    except ImportError:
-        return _fallback_search(query, agents, top)
+    return _bm25_search(query, agents, top)
 
 
 def _results_to_payload(query: str, results: List[Tuple[float, AgentRecord]]) -> dict:

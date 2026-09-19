@@ -156,7 +156,7 @@ NeqSim has an **AI-assisted workflow** for solving engineering tasks:
 #### Fast Path: Use AI Agent
 ```
 # In VS Code Copilot Chat:
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 The agent creates a task folder, researches the topic, builds a simulation, validates results, and generates a Word report.
@@ -246,7 +246,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 #### Jupyter Notebooks
 
 1. **Create notebook**:
-   - Use AI agent: `@notebook.example 3-stage compression with intercooling`
+   - Use AI agent: `@notebook-example 3-stage compression with intercooling`
    - Or manually create in `examples/notebooks/`
 
 2. **Follow structure**:
@@ -300,7 +300,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 3. **Add comments**: Explain each step
 4. **Test compilation**: `javac YourExample.java`
 
-**See**: [notebook.example.agent.md](../../.github/agents/notebook.example.agent.md) for guidelines.
+**See**: [notebook-example.agent.md](../../.github/agents/notebook-example.agent.md) for guidelines.
 
 ### E. Contribute a Skill
 

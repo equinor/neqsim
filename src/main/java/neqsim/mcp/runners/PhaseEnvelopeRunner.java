@@ -74,7 +74,7 @@ public class PhaseEnvelopeRunner {
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
 
     try {
       // Create fluid at a reference condition

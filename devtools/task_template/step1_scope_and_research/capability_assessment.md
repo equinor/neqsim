@@ -3,7 +3,7 @@
 > **Mandatory artifact for Standard and Comprehensive tasks.**
 > Quick tasks may skip this and write a one-paragraph summary in `notes.md` instead.
 >
-> Produced by `@capability.scout` (or by the solver agent invoking the scout
+> Produced by `@capability-scout` (or by the solver agent invoking the scout
 > step) BEFORE writing any notebook code. The point is to discover gaps while
 > they are still cheap to fix.
 
@@ -47,7 +47,7 @@ or mark it as a gap.
 | 4 |  | `neqsim.process.util.fielddevelopment.DCFCalculator` | ✅ Covered |
 
 **Search method used:** `grep_search` on `src/main/java/neqsim/...`,
-`@capability.scout` agent, `neqsim-capability-map` skill.
+`@capability-scout` agent, `neqsim-capability-map` skill.
 
 ## 4. Skills to Load
 
@@ -82,7 +82,7 @@ Decide how the selected agents/skills are composed. Pick ONE:
 
 - **Single agent** — one specialist covers the whole task.
 - **Composition pattern** — a known 2–3 agent sequence from `router.agent.md`
-  (e.g. `@process.model` → `@mechanical.design`). List the stages.
+  (e.g. `@process-model` → `@mechanical-design`). List the stages.
 - **Declarative workflow** — for ≥3 disciplines or repeatable programs, use MCP
   `composeWorkflow` / `composeMultiServerWorkflow`, or an `engineering-harness`
   study. Note the workflow name/id.

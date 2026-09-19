@@ -23,6 +23,9 @@ from datetime import datetime
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+# Toolkit mode: installed via pip / the agent plugin, no source checkout beside us.
+TOOLKIT_MODE = not os.path.isfile(os.path.join(PROJECT_ROOT, "pom.xml"))
+MCP_MIN_JAVA = 21
 
 # ── Result tracking ──────────────────────────────────────
 _results = []
@@ -201,6 +204,22 @@ def check_java():
             fix_hint=None if major >= 8
             else "NeqSim requires JDK 8 or newer. " + _portable_jdk_hint()
         )
+        # The installed plugin needs Java 21 for its MCP server. In a source
+        # workspace, older supported JDKs may still run CLI-only checks, so report
+        # the MCP limitation without failing unrelated workspace health checks.
+        mcp_name = "Java version >= {n} (MCP server)".format(n=MCP_MIN_JAVA)
+        mcp_message = "Detected Java {major}".format(major=major)
+        mcp_hint = (
+            "The NeqSim MCP server needs a JDK {n}+ (winget install "
+            "EclipseAdoptium.Temurin.{n}.JDK). "
+        ).format(n=MCP_MIN_JAVA) + _portable_jdk_hint()
+        if major >= MCP_MIN_JAVA:
+            _check(mcp_name, True, mcp_message)
+        elif TOOLKIT_MODE:
+            _check(mcp_name, False, mcp_message, fix_hint=mcp_hint)
+        else:
+            _warn(mcp_name, mcp_message, fix_hint=mcp_hint)
+    return major
 
 
 def check_maven():
@@ -271,6 +290,71 @@ def check_neqsim_jar():
             "JAR built", False, "No neqsim-*.jar in target/",
             fix_hint="Run: mvnw.cmd package -DskipTests"
         )
+
+
+def check_packaged_jar():
+    """Toolkit mode: the NeqSim engine is the JAR inside the pip `neqsim` package."""
+    print("\n--- NeqSim engine (packaged JAR) ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import neqsim_dev_setup
+        jars = neqsim_dev_setup._find_packaged_jars()
+    except Exception as error:  # noqa: BLE001
+        _check("neqsim_dev_setup", False, str(error),
+               fix_hint="Reinstall: pip install --force-reinstall neqsim-dev-setup")
+        return
+    if not jars:
+        _check("Packaged NeqSim JAR", False, "no JAR from `pip install neqsim` and NEQSIM_JAR unset",
+               fix_hint="{py} -m pip install neqsim   (or set NEQSIM_JAR)".format(py=sys.executable))
+        return
+    jar = jars[-1]
+    _check("Packaged NeqSim JAR", True, os.path.basename(jar))
+    try:
+        flash_script = "".join([
+            "from neqsim_dev_setup import neqsim_init, neqsim_classes;",
+            "ns=neqsim_classes(neqsim_init(project_root='/nonexistent', verbose=False));",
+            "f=ns.SystemSrkEos(298.15,50.0);f.addComponent('methane',1.0);f.setMixingRule('classic');",
+            "ns.ThermodynamicOperations(f).TPflash();f.initProperties();",
+            "print('FLASH_OK', round(float(f.getDensity('kg/m3')),2), len(ns.MISSING_CLASSES))",
+        ])
+        result = subprocess.run(
+            [sys.executable, "-c", flash_script],
+            capture_output=True, text=True, timeout=120)
+        line = next((l for l in result.stdout.splitlines() if l.startswith("FLASH_OK")), None)
+        if line:
+            _, rho, missing = line.split()
+            _check("JVM starts and flashes", True,
+                   "methane at 25 C / 50 bara: {r} kg/m3".format(r=rho))
+            if int(missing):
+                _warn("Classes newer than the JAR",
+                      "{n} classes on master are not in this release".format(n=missing),
+                      fix_hint="Upgrade: pip install -U neqsim (or clone equinor/neqsim for latest)")
+        else:
+            _check("JVM starts and flashes", False,
+                   (result.stderr or result.stdout).strip().splitlines()[-1:] or "no output",
+                   fix_hint="Check java on PATH / JAVA_HOME and that jpype1 is installed")
+    except Exception as error:  # noqa: BLE001
+        _check("JVM starts and flashes", False, str(error))
+
+
+def check_mcp_launcher(java_major):
+    """Toolkit mode: the plugin's MCP server launcher and its cached jar."""
+    print("\n--- NeqSim MCP server ---")
+    cache = os.path.join(os.path.expanduser("~"), ".neqsim", "mcp-server")
+    jars = glob.glob(os.path.join(cache, "neqsim-mcp-server-*-runner.jar"))
+    data = os.environ.get("PLUGIN_DATA")
+    if data:
+        jars += glob.glob(os.path.join(data, "neqsim-mcp-server-*-runner.jar"))
+    if jars:
+        _check("Server jar cached", True, os.path.basename(sorted(jars)[-1]))
+    else:
+        _warn("Server jar cached", "not downloaded yet (fetched on first chat session that "
+              "uses the plugin; ~85 MB from github.com/equinor/neqsim/releases)")
+    if java_major is not None and java_major < MCP_MIN_JAVA:
+        _check("Server can start", False,
+               "Java {m} < {n}".format(m=java_major, n=MCP_MIN_JAVA),
+               fix_hint="Install a JDK {n}+ and put it first on PATH".format(n=MCP_MIN_JAVA))
 
 
 def check_python_neqsim():
@@ -678,23 +762,36 @@ def main(argv=None):
     _results.clear()
     print("=" * 60)
     print("  NeqSim Doctor - Environment Diagnostic")
+    print("  Mode: {m}".format(
+        m="toolkit (pip / agent plugin, no source checkout)" if TOOLKIT_MODE
+        else "workspace (source checkout at {r})".format(r=PROJECT_ROOT)))
     print("=" * 60)
 
-    check_java()
-    check_maven()
-    if "--skip-jar" in argv:
-        _warn("JAR built", "Not checked (--skip-jar); build the JAR before simulations")
+    java_major = check_java()
+    if TOOLKIT_MODE:
+        # Build tooling is irrelevant here; what matters is that the packaged
+        # engine, the MCP launcher, the CLI and the task/document folders work.
+        check_packaged_jar()
+        check_mcp_launcher(java_major)
+        check_cli_on_path()
+        check_task_root()
+        check_report_template()
+        check_document_root()
     else:
-        check_neqsim_jar()
-    check_python_neqsim()
-    check_cli_on_path()
-    check_agent_files()
-    check_cross_tool_files()
-    check_devtools()
-    check_task_root()
-    check_report_template()
-    check_document_root()
-    check_git()
+        check_maven()
+        if "--skip-jar" in argv:
+            _warn("JAR built", "Not checked (--skip-jar); build the JAR before simulations")
+        else:
+            check_neqsim_jar()
+        check_python_neqsim()
+        check_cli_on_path()
+        check_agent_files()
+        check_cross_tool_files()
+        check_devtools()
+        check_task_root()
+        check_report_template()
+        check_document_root()
+        check_git()
 
     # Summary
     passed = sum(1 for r in _results if r["passed"])

@@ -2315,14 +2315,29 @@ def check_report_consistency(results):
             if link_key in key_results:
                 expected_val = key_results[link_key]
                 if isinstance(expected_val, float):
-                    # Check if the observation mentions a consistent number
+                    # Check if the observation mentions a consistent number.
+                    # Small magnitudes are usually written in scientific notation in
+                    # prose, so accept those renderings too; and do not accept the
+                    # degenerate "0.0" that %.1f produces for them, which would match
+                    # almost any text.
                     val_strs = [
                         "{:.4g}".format(expected_val),
                         "{:.3g}".format(expected_val),
                         "{:.2g}".format(expected_val),
-                        "{:.1f}".format(expected_val),
                         str(int(expected_val)) if expected_val == int(expected_val) else "",
                     ]
+                    if abs(expected_val) >= 0.1:
+                        val_strs.append("{:.1f}".format(expected_val))
+                    for prec in (1, 2, 3):
+                        sci = "{:.{p}e}".format(expected_val, p=prec)
+                        mant, _, exp = sci.partition("e")
+                        exp_i = int(exp)
+                        val_strs.extend([
+                            sci,
+                            "{}e{:+03d}".format(mant, exp_i),
+                            "{}e{}".format(mant, exp_i),
+                            "{}E{:+03d}".format(mant, exp_i),
+                        ])
                     val_strs = [v for v in val_strs if v]
                     if obs and not any(v in obs for v in val_strs):
                         issues.append({

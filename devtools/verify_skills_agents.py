@@ -29,13 +29,25 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import agent_frontmatter as af  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 CODEX_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
 AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 INDEX_PATH = SKILLS_DIR / "skill-index.json"
+CANONICAL_MCP = REPO_ROOT / ".github" / "mcp" / "mcp.json"
+VSCODE_MCP = REPO_ROOT / ".vscode" / "mcp.json"
 
 FRONT_MATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+# Agent Skills / Agent Plugins name rule; plugin loaders silently skip violators.
+KEBAB_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+# Agent plugin ids: lowercase, digits, hyphens; dots are rejected by marketplaces.
+AGENT_ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+# Agent Skills spec cap on SKILL.md description; the excess is silently truncated by clients.
+MAX_DESCRIPTION = 1024
 BARE_PYTHON_LAUNCH_RE = re.compile(
     r"(?<![A-Za-z0-9_./\\-])(?:(python(?:\.exe)?|py)\s+"
     r"(?:-m\s+|-[A-Za-z]|[^\s`]+\.py\b|devtools[\\/]|<)|"
@@ -105,8 +117,13 @@ def check_skills() -> Tuple[List[str], List[str]]:
         if "name" not in fm:
             errors.append(f"{skill_dir.name}: SKILL.md front-matter missing 'name'")
         elif fm["name"] != skill_dir.name:
-            warnings.append(
-                f"{skill_dir.name}: front-matter name '{fm['name']}' differs from folder name"
+            errors.append(
+                f"{skill_dir.name}: front-matter name '{fm['name']}' must equal the folder "
+                "name (agent-plugin loaders skip mismatched skills)"
+            )
+        elif not KEBAB_NAME_RE.match(fm["name"]):
+            errors.append(
+                f"{skill_dir.name}: name must be kebab-case [a-z0-9-] for Agent Plugins"
             )
         if "description" not in fm:
             errors.append(f"{skill_dir.name}: SKILL.md front-matter missing 'description'")
@@ -114,12 +131,19 @@ def check_skills() -> Tuple[List[str], List[str]]:
             warnings.append(
                 f"{skill_dir.name}: description is very short (<40 chars), retrieval will suffer"
             )
+        elif len(fm["description"]) > MAX_DESCRIPTION:
+            errors.append(
+                f"{skill_dir.name}: description is {len(fm['description'])} chars; the Agent "
+                f"Skills cap is {MAX_DESCRIPTION} and clients truncate, silently dropping the "
+                "trigger words used for routing"
+            )
     return errors, warnings
 
 
 def check_agents() -> Tuple[List[str], List[str]]:
     errors: List[str] = []
     warnings: List[str] = []
+    known_skills = {p.name for p in SKILLS_DIR.iterdir() if p.is_dir()}
     for agent_md in sorted(AGENTS_DIR.glob("*.agent.md")):
         text = agent_md.read_text(encoding="utf-8")
         fm = parse_front_matter(text)
@@ -128,10 +152,38 @@ def check_agents() -> Tuple[List[str], List[str]]:
             continue
         if "name" not in fm:
             errors.append(f"{agent_md.name}: front-matter missing 'name'")
+        agent_id = agent_md.name[: -len(".agent.md")]
+        if not AGENT_ID_RE.match(agent_id):
+            errors.append(
+                f"{agent_md.name}: filename id '{agent_id}' must be kebab-case [a-z0-9-] "
+                "(plugin/marketplace agent ids reject dots)"
+            )
         if "description" not in fm:
             errors.append(f"{agent_md.name}: front-matter missing 'description'")
         elif len(fm["description"]) < 40:
             warnings.append(f"{agent_md.name}: description is very short")
+        full_fm = af.parse_frontmatter(text)
+        declared = full_fm.get("required_skills")
+        if not isinstance(declared, list):
+            errors.append(
+                f"{agent_md.name}: front-matter missing 'required_skills' list "
+                "(run devtools/sync_agent_required_skills.py --apply; use [] for none)"
+            )
+        else:
+            expected = af.extract_required_skills(text)
+            if list(declared) != expected:
+                errors.append(
+                    f"{agent_md.name}: required_skills is stale vs body declarations "
+                    "(run devtools/sync_agent_required_skills.py --apply)"
+                )
+            for skill in declared:
+                if not KEBAB_NAME_RE.match(skill):
+                    errors.append(f"{agent_md.name}: required skill '{skill}' is not kebab-case")
+                elif skill not in known_skills:
+                    warnings.append(
+                        f"{agent_md.name}: required skill '{skill}' not found under "
+                        ".github/skills (external skills must be in a sibling *-skills repo)"
+                    )
         for runtime_error in check_python_runtime_instructions(agent_md):
             errors.append(f"{agent_md.name}: {runtime_error}")
     return errors, warnings
@@ -273,6 +325,55 @@ def check_codex_skill_discovery() -> Tuple[List[str], List[str]]:
     return errors, warnings
 
 
+def check_mcp_definition() -> Tuple[List[str], List[str]]:
+    """The plugin ``mcp.json`` is canonical; ``.vscode/mcp.json`` must mirror it."""
+    errors: List[str] = []
+    warnings: List[str] = []
+    if not CANONICAL_MCP.exists():
+        errors.append(".github/mcp/mcp.json (canonical MCP definition) is missing")
+        return errors, warnings
+    try:
+        canonical = json.loads(CANONICAL_MCP.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        errors.append(f".github/mcp/mcp.json is invalid JSON: {e}")
+        return errors, warnings
+    servers = canonical.get("mcpServers")
+    if not isinstance(servers, dict) or not servers:
+        errors.append(".github/mcp/mcp.json must define a non-empty 'mcpServers' object")
+        return errors, warnings
+    for name, server in servers.items():
+        if server.get("type") == "stdio" and not server.get("command"):
+            errors.append(f"mcp.json server '{name}': stdio requires 'command'")
+        if server.get("type") in ("streamable-http", "sse") and not server.get("url"):
+            errors.append(f"mcp.json server '{name}': http transport requires 'url'")
+    if VSCODE_MCP.exists():
+        try:
+            vscode = json.loads(VSCODE_MCP.read_text(encoding="utf-8")).get("servers", {})
+        except json.JSONDecodeError as e:
+            errors.append(f".vscode/mcp.json is invalid JSON: {e}")
+            return errors, warnings
+        for name, server in servers.items():
+            mirror = vscode.get(name)
+            if mirror is None:
+                errors.append(f".vscode/mcp.json is missing server '{name}' from .github/mcp/mcp.json")
+                continue
+            if server.get("command") != mirror.get("command") or server.get("url") != mirror.get("url"):
+                errors.append(
+                    f".vscode/mcp.json server '{name}' command/url differs from the "
+                    "canonical .github/mcp/mcp.json"
+                )
+            # The workspace has no ${PLUGIN_ROOT}: it addresses .github/mcp directly and
+            # may append --root/--data; the canonical args must be its prefix.
+            canonical_args = [a.replace("${PLUGIN_ROOT}", "${workspaceFolder}/.github/mcp")
+                              for a in server.get("args", [])]
+            if mirror.get("args", [])[:len(canonical_args)] != canonical_args:
+                errors.append(
+                    f".vscode/mcp.json server '{name}' args must start with the canonical args "
+                    "with ${PLUGIN_ROOT} -> ${workspaceFolder}/.github/mcp"
+                )
+    return errors, warnings
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -290,10 +391,11 @@ def main() -> int:
     agent_errors, agent_warnings = check_agents()
     index_errors, index_warnings = check_skill_index()
     codex_errors, codex_warnings = check_codex_skill_discovery()
+    mcp_errors, mcp_warnings = check_mcp_definition()
 
-    all_errors = skill_errors + agent_errors + index_errors + codex_errors
+    all_errors = skill_errors + agent_errors + index_errors + codex_errors + mcp_errors
     all_warnings = (
-        skill_warnings + agent_warnings + index_warnings + codex_warnings
+        skill_warnings + agent_warnings + index_warnings + codex_warnings + mcp_warnings
     )
 
     if all_errors:

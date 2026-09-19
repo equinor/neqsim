@@ -74,7 +74,7 @@ skills:
     description: "Fluid checks. USE WHEN: validating compositions."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
-    path: "skills/pvt/fluid-quality-check/SKILL.md"
+    path: "skills/pvt/neqsim-fluid-quality-check/SKILL.md"
     tags: [pvt, validation]
 """
         repository = {
@@ -92,7 +92,7 @@ skills:
         self.assertEqual(1, len(skills))
         self.assertEqual("neqsim-fluid-quality-check", skills[0]["name"])
         self.assertEqual("equinor/neqsim-community-skills", skills[0]["repo"])
-        self.assertEqual("skills/pvt/fluid-quality-check/SKILL.md", skills[0]["path"])
+        self.assertEqual("skills/pvt/neqsim-fluid-quality-check/SKILL.md", skills[0]["path"])
         self.assertEqual("main", skills[0]["branch"])
         self.assertIn("pvt", skills[0]["tags"])
         self.assertIn("community", skills[0]["tags"])

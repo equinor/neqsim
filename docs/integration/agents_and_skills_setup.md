@@ -157,7 +157,7 @@ your task in plain language. Globally exported community examples include
 For agentic task-solving (task folders, notebooks, reports) see
 [AGENTS.md](../../AGENTS.md) and
 [docs/development/TASK_SOLVING_GUIDE.md](../development/TASK_SOLVING_GUIDE.md).
-Workspace-local core agents such as `@solve.task` are available when this NeqSim
+Workspace-local core agents such as `@solve-task` are available when this NeqSim
 workspace is open; they are distinct from globally exported community agents.
 
 ### 5.1 Keep every repo and your task folder in one VS Code workspace

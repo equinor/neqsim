@@ -526,7 +526,7 @@ figures, and reports.
 Open VS Code Copilot Chat and type:
 
 ```
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 That's it. The agent creates the folder, researches the topic, builds and runs
@@ -574,7 +574,7 @@ You have an engineering question — "What's the hydrate temperature for this
 gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 
 1. Open VS Code Copilot Chat
-2. Type: `@solve.task hydrate temperature for wet gas at 100 bara`
+2. Type: `@solve-task hydrate temperature for wet gas at 100 bara`
 3. The agent creates a folder, runs the simulation, and gives you results
 4. Find reports in `task_solve/.../step3_report/`
 
@@ -583,7 +583,7 @@ gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 You're solving a task AND improving the NeqSim codebase. When the API is
 missing something, you add it mid-task — new methods, equipment, or models.
 
-1. Type: `@solve.task add JT coefficient method` (or run `neqsim new-task` for manual control)
+1. Type: `@solve-task add JT coefficient method` (or run `neqsim new-task` for manual control)
 2. Work through all 3 steps — the agent flags API gaps as it goes
 3. Add the missing Java code, rebuild, and the notebook picks it up immediately
 4. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
@@ -593,7 +593,7 @@ missing something, you add it mid-task — new methods, equipment, or models.
 You're producing a deliverable — a report, technology screening, or design
 study. The 3 steps map directly to a professional workflow.
 
-1. Type: `@solve.task field development concept selection for deepwater gas`
+1. Type: `@solve-task field development concept selection for deepwater gas`
 2. Review and refine the scope and research notes the agent produces
 3. Iterate on analysis — the agent refines until results validate
 4. Run report generation to produce Word + HTML deliverables
@@ -625,9 +625,9 @@ coding agent that can read files and run commands can drive the workflow.
 - `git` + `gh pr create` — contributing back via PR
 
 **What's VS Code Copilot-specific** (optional convenience):
-- `@solve.task` agent — automates the full workflow (the agent reads
-  `.github/agents/solve.task.agent.md` for its instructions)
-- Specialist agents (`@thermo.fluid`, `@solve.process`, etc.)
+- `@solve-task` agent — automates the full workflow (the agent reads
+  `.github/agents/solve-task.agent.md` for its instructions)
+- Specialist agents (`@thermo-fluid`, `@solve-process`, etc.)
 
 ---
 
@@ -656,7 +656,7 @@ agent scales its depth based on what you ask for:
 | **Standard** | "TEG dehydration for 50 MMSCFD" | Full task_spec, complete notebook, Word + HTML reports |
 | **Comprehensive** | "field development concept selection per NORSOK" | Detailed task_spec with all standards, multiple notebooks per discipline, full HTML report with navigation |
 
-**The same `@solve.task` command handles all of these.** The agent reads your
+**The same `@solve-task` command handles all of these.** The agent reads your
 request and decides how deep to go. Specify standards ("per DNV-OS-F101") and
 deliverables ("with sensitivity analysis and cost estimate") to guide depth.
 
@@ -665,13 +665,13 @@ deliverables ("with sensitivity analysis and cost estimate") to guide depth.
 You control the scope through your request — the more you specify, the deeper
 the analysis. Compare:
 
-- **Simple:** `@solve.task hydrate temperature for wet gas at 100 bara`
+- **Simple:** `@solve-task hydrate temperature for wet gas at 100 bara`
   → Quick calculation, one-page result
 
-- **Medium:** `@solve.task hydrate temperature for wet gas at 100 bara, per NORSOK P-001, with inhibitor dosing curve`
+- **Medium:** `@solve-task hydrate temperature for wet gas at 100 bara, per NORSOK P-001, with inhibitor dosing curve`
   → Standard analysis with standards compliance and sensitivity plot
 
-- **Full study:** `@solve.task field development flow assurance assessment per NORSOK P-001 and DNV-RP-F109, covering hydrate, wax, corrosion, and slugging for 50 km subsea tieback, deliver phase envelopes, inhibitor curves, pipeline profiles, and design basis document`
+- **Full study:** `@solve-task field development flow assurance assessment per NORSOK P-001 and DNV-RP-F109, covering hydrate, wax, corrosion, and slugging for 50 km subsea tieback, deliver phase envelopes, inhibitor curves, pipeline profiles, and design basis document`
   → Multi-notebook comprehensive study with full deliverable set
 
 ---
@@ -793,14 +793,14 @@ The deliverables are a **Word report** (`.docx`) and optionally an **HTML report
 
 | Agent | Best For | Example |
 |-------|----------|---------|
-| `@solve.task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
-| `@thermo.fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
-| `@solve.process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
-| `@pvt.simulation` | PVT lab experiments | "CME test at 100C for this oil" |
-| `@gas.quality` | Gas standards (ISO, GPA) | "Wobbe index per ISO 6976" |
-| `@mechanical.design` | Wall thickness, sizing | "20-inch pipe per DNV-OS-F101" |
-| `@flow.assurance` | Hydrates, wax, corrosion | "Hydrate curve for wet gas at 100 bara" |
-| `@safety.depressuring` | Blowdown, PSV, fire | "Fire-case blowdown for HP separator" |
+| `@solve-task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
+| `@thermo-fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
+| `@solve-process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
+| `@pvt-simulation` | PVT lab experiments | "CME test at 100C for this oil" |
+| `@gas-quality` | Gas standards (ISO, GPA) | "Wobbe index per ISO 6976" |
+| `@mechanical-design` | Wall thickness, sizing | "20-inch pipe per DNV-OS-F101" |
+| `@flow-assurance` | Hydrates, wax, corrosion | "Hydrate curve for wet gas at 100 bara" |
+| `@safety-depressuring` | Blowdown, PSV, fire | "Fire-case blowdown for HP separator" |
 
 ---
 
@@ -837,7 +837,7 @@ git push -u origin task/your-task-name
 gh pr create --title "Add [description]" --body "From task: [task title]"
 ```
 
-> **Tip:** The `@solve.task` agent can do this for you — just ask
+> **Tip:** The `@solve-task` agent can do this for you — just ask
 > "create a PR with the reusable outputs from this task".
 
 ---
@@ -873,7 +873,7 @@ The task type **G (Workflow)** is intended for these multi-discipline studies.
 ### Example: Field Development Concept Selection
 
 ```
-@solve.task field development concept selection for 200 MMSCFD deepwater gas,
+@solve-task field development concept selection for 200 MMSCFD deepwater gas,
   per NORSOK P-001, Z-013, L-001, and DNV-OS-F101.
   Evaluate subsea tieback vs. FPSO vs. fixed platform.
   Deliver: reservoir fluid characterization, process train sizing,
@@ -982,13 +982,13 @@ Create a Jupyter notebook in step2_analysis/ that:
 
 | Task Type | Agent | Example prompt |
 |-----------|-------|----------------|
-| Fluid properties | `@thermo.fluid` | "Create a CPA fluid for gas with 5% MEG" |
-| Process simulation | `@solve.process` | "3-stage compression from 5 to 150 bara" |
-| PVT study | `@pvt.simulation` | "CME test for reservoir fluid at 100C" |
-| Gas quality | `@gas.quality` | "Wobbe index per ISO 6976 for this gas" |
-| Mechanical design | `@mechanical.design` | "Wall thickness for 20-inch pipe per DNV" |
-| Flow assurance | `@flow.assurance` | "Hydrate formation curve for wet gas" |
-| Safety | `@safety.depressuring` | "Fire-case blowdown for HP separator" |
+| Fluid properties | `@thermo-fluid` | "Create a CPA fluid for gas with 5% MEG" |
+| Process simulation | `@solve-process` | "3-stage compression from 5 to 150 bara" |
+| PVT study | `@pvt-simulation` | "CME test for reservoir fluid at 100C" |
+| Gas quality | `@gas-quality` | "Wobbe index per ISO 6976 for this gas" |
+| Mechanical design | `@mechanical-design` | "Wall thickness for 20-inch pipe per DNV" |
+| Flow assurance | `@flow-assurance` | "Hydrate formation curve for wet gas" |
+| Safety | `@safety-depressuring` | "Fire-case blowdown for HP separator" |
 
 ---
 
@@ -1173,7 +1173,7 @@ gh pr create --title "Add [description]" \\
   --body "From task-solving workflow: [TITLE]"
 ```
 
-> **Tip:** Ask the `@solve.task` agent to do this:
+> **Tip:** Ask the `@solve-task` agent to do this:
 > "create a PR with the test and notebook from this task"
 """
 
@@ -1440,7 +1440,7 @@ Pick a starting composition or define your own. All values in mol%.
 | H2S | 0.5 |
 
 > **Note:** Adapt these to your specific project data. For oil systems with
-> C7+ fractions, use the `@thermo.fluid` agent or define TBP/plus fractions.
+> C7+ fractions, use the `@thermo-fluid` agent or define TBP/plus fractions.
 """
 
 STUDY_CONFIG = "\n".join([
@@ -1660,6 +1660,14 @@ def _candidates():
             yield os.path.join(root, RELATIVE)
     if GENERATOR_HINT:
         yield GENERATOR_HINT
+    # pip-installed toolkit (agent-plugin installs without a source checkout)
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("task_template")
+        for loc in (spec.submodule_search_locations or []) if spec else []:
+            yield os.path.join(loc, "step3_report", "generate_report.py")
+    except (ImportError, ValueError):
+        pass
     here = os.path.abspath(__file__)
     for _ in range(8):
         parent = os.path.dirname(here)
@@ -2184,7 +2192,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     print("  Recommended - Let Copilot do everything:")
     print("    Open VS Code Copilot Chat and type:")
     print("")
-    print("    @solve.task {}".format(title))
+    print("    @solve-task {}".format(title))
     print("")
     print("  Alternative - Follow prompts manually:")
     print("    Open {}/README.md".format(task_dir))

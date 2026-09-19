@@ -16,9 +16,9 @@ You make standards references defensible without overstating compliance.
 
 ## Loaded Skills
 
-- `paperlab_standards_clause_traceability`
-- `neqsim_standard_requirement_extraction`
-- `paperlab_scientific_traceability_audit`
+- `paperlab-standards-clause-traceability`
+- `neqsim-standard-requirement-extraction`
+- `paperlab-scientific-traceability-audit`
 
 ## Required Context
 

@@ -9,12 +9,23 @@ on:
       - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
+      - ".github/instructions/**"
+      - ".github/mcp/**"
       - "devtools/verify_skills_agents.py"
       - "devtools/generate_agent_skill_map.py"
+      - "devtools/agent_frontmatter.py"
+      - "devtools/sync_agent_required_skills.py"
+      - "devtools/build_agent_plugin.py"
+      - "devtools/test_agent_frontmatter.py"
+      - "devtools/test_build_agent_plugin.py"
       - "devtools/verify_skill_mirror.py"
       - "devtools/verify_mcp_tool_references.py"
       - "devtools/agent_search.py"
       - "devtools/skill_search.py"
+      - "devtools/bm25.py"
+      - "devtools/agent_eval.py"
+      - "devtools/agent_eval_cases.json"
+      - "devtools/test_agent_eval.py"
       - "devtools/test_agent_search.py"
       - "devtools/test_skill_search.py"
       - "src/main/java/neqsim/mcp/runners/IndustrialProfile.java"
@@ -40,6 +51,14 @@ jobs:
       - name: Verify front-matter and skill-index references
         run: python devtools/verify_skills_agents.py
 
+      - name: Verify agent required_skills frontmatter is in sync
+        run: python devtools/sync_agent_required_skills.py --check
+
+      - name: Verify the core agent plugin builds (Agent Plugins 1.0 layout)
+        run: |
+          python devtools/build_agent_plugin.py --only neqsim --out /tmp/neqsim-copilot-plugin
+          python devtools/validate_agent_plugin.py /tmp/neqsim-copilot-plugin
+
       - name: Verify referenced MCP tool names exist
         run: python devtools/verify_mcp_tool_references.py
 
@@ -49,7 +68,10 @@ jobs:
       - name: Test agent/skill discovery tools
         run: |
           python -m pip install --quiet pytest
-          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_verify_skill_api_refs.py -q
+          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_verify_skill_api_refs.py devtools/test_agent_frontmatter.py devtools/test_build_agent_plugin.py -q
+
+      - name: Agent evaluation (routing golden cases + results.json contracts)
+        run: python -m pytest devtools/test_agent_eval.py -q
 
       - name: Regenerate agent → skill map
         run: python devtools/generate_agent_skill_map.py

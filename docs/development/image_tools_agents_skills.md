@@ -33,12 +33,12 @@ PDF or image document
 
 | Agent | Best Use |
 |-------|----------|
-| [`technical.reader.agent.md`](../../.github/agents/technical.reader.agent.md) | Primary agent for reading technical documents and engineering images. Extracts structured data from P&IDs, drawings, datasheets, maps, and phase envelopes. |
-| [`extract.process.agent.md`](../../.github/agents/extract.process.agent.md) | Converts extracted PFD, P&ID, and process data into NeqSim JSON or route models. |
-| [`literature.scout.agent.md`](../../.github/agents/literature.scout.agent.md) | Retrieves papers, standards, STID documents, vendor documents, and image-heavy references for task workflows. |
-| [`solve.task.agent.md`](../../.github/agents/solve.task.agent.md) | Runs the full task-solving workflow and consumes extracted image and document data in engineering studies. |
+| [`technical-reader.agent.md`](../../.github/agents/technical-reader.agent.md) | Primary agent for reading technical documents and engineering images. Extracts structured data from P&IDs, drawings, datasheets, maps, and phase envelopes. |
+| [`extract-process.agent.md`](../../.github/agents/extract-process.agent.md) | Converts extracted PFD, P&ID, and process data into NeqSim JSON or route models. |
+| [`literature-scout.agent.md`](../../.github/agents/literature-scout.agent.md) | Retrieves papers, standards, STID documents, vendor documents, and image-heavy references for task workflows. |
+| [`solve-task.agent.md`](../../.github/agents/solve-task.agent.md) | Runs the full task-solving workflow and consumes extracted image and document data in engineering studies. |
 | [`review.agent.md`](../../.github/agents/review.agent.md) | Reviews task deliverables, including figure-to-discussion-to-result traceability. |
-| [`notebook.example.agent.md`](../../.github/agents/notebook.example.agent.md) | Creates notebooks with executed cells, plots, saved figures, and results metadata. |
+| [`notebook-example.agent.md`](../../.github/agents/notebook-example.agent.md) | Creates notebooks with executed cells, plots, saved figures, and results metadata. |
 | [`documentation.agent.md`](../../.github/agents/documentation.agent.md) | Turns results, figures, and workflows into documentation. |
 
 ## Relevant Skills

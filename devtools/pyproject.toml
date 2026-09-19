@@ -4,10 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-dev-setup"
-version = "0.1.0"
-description = "JVM bootstrap helpers for NeqSim Jupyter development notebooks"
+version = "0.2.0"
+description = "NeqSim task-solving toolkit: JVM bootstrap, task folders, runner, validators, report generator"
 requires-python = ">=3.8"
-dependencies = ["jpype1", "pyyaml>=5.1"]
+# `neqsim` supplies the packaged JAR that neqsim_dev_setup falls back to when
+# no source checkout is present (agent-plugin installs).
+dependencies = ["jpype1", "pyyaml>=5.1", "neqsim>=3.18", "python-docx>=1.1", "matplotlib>=3.7"]
 
 [project.optional-dependencies]
 pdf = ["pymupdf>=1.22.0"]
@@ -22,4 +24,27 @@ ocr = [
 neqsim = "neqsim_cli:main"
 
 [tool.setuptools]
-py-modules = ["neqsim_dev_setup", "neqsim_cli", "install_skill", "install_agent"]
+# Flat modules keep the repo layout (devtools/*.py) identical to the installed
+# layout (site-packages/*.py), so SCRIPT_DIR-relative lookups such as
+# new_task -> task_template/ work in both.
+py-modules = [
+    "neqsim_dev_setup", "neqsim_cli", "install_skill", "install_agent",
+    "new_task", "task_roots", "task_corpus", "generate_work_record",
+    "validate_task_results", "consistency_checker", "generate_sources_md",
+    "pdf_to_figures", "skill_search", "agent_search", "agent_frontmatter", "bm25",
+    "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
+    "neqsim_try", "neqsim_contribute",
+]
+packages = [
+    "neqsim_runner",
+    "task_template",
+    "task_template.step1_scope_and_research",
+    "task_template.step2_analysis",
+    "task_template.step3_report",
+]
+
+[tool.setuptools.package-data]
+task_template = ["*", "*/*", "*/*/*", "*/*/*/*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__/*", "*.pyc"]

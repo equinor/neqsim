@@ -17,9 +17,9 @@ You coordinate the final release gate for a PaperLab book.
 
 ## Loaded Skills
 
-- `paperlab_book_release_orchestration`
-- `paperlab_book_typesetting_release`
-- `paperlab_chapter_health_dashboard`
+- `paperlab-book-release-orchestration`
+- `paperlab-book-typesetting-release`
+- `paperlab-chapter-health-dashboard`
 
 ## Required Context
 

@@ -246,7 +246,7 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
     cap = task_folder / "step1_scope_and_research" / "capability_assessment.md"
     if not cap.exists():
         warnings.append(
-            f"{task_folder.name}: capability_assessment.md is missing — run @capability.scout (mandatory for Standard/Comprehensive)"
+            f"{task_folder.name}: capability_assessment.md is missing — run @capability-scout (mandatory for Standard/Comprehensive)"
         )
         return warnings
     try:

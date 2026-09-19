@@ -101,7 +101,7 @@ public class PVTRunner {
     String model = input.has("model") ? input.get("model").getAsString().toUpperCase() : "SRK";
 
     // --- Parse mixing rule ---
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
 
     // --- Parse temperature ---
     double temperatureK = 373.15;

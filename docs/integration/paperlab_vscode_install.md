@@ -72,7 +72,7 @@ For example:
 
 ```text
 C:\Users\<user>\.copilot\agents\paperlab.agent.md
-C:\Users\<user>\.copilot\skills\paperlab_publication_opportunity_mining\SKILL.md
+C:\Users\<user>\.copilot\skills\paperlab-publication-opportunity-mining\SKILL.md
 ```
 
 ## Install for VS Code Chat

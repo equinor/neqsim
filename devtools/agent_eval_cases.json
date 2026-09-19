@@ -1,0 +1,140 @@
+{
+  "$comment": "Golden cases for devtools/agent_eval.py. routing: a user prompt must surface the expected agent handle / skill names within top-k via the same retrievers agents use. contracts: a results.json shape must pass, or fail on the named rule. Deterministic; no LLM.",
+  "routing": [
+    {
+      "id": "hydrate-export-line",
+      "prompt": "hydrate formation temperature for a wet gas export pipeline at 100 bara, MEG injection needed?",
+      "expect_agent_top3": ["flow-assurance", "hydrate-screening-agent", "flow-assurance-engineer-agent", "production-chemistry"],
+      "expect_skills_top5": ["neqsim-flow-assurance"]
+    },
+    {
+      "id": "three-stage-compression",
+      "prompt": "3-stage gas compression with intercooling from 5 to 150 bara for 50 MMSCFD, compressor power and discharge temperature",
+      "expect_agent_top3": ["process-model", "solve-process", "solve-task"],
+      "expect_skills_top5": ["neqsim-process-modeling", "neqsim-compressor-power-screening"]
+    },
+    {
+      "id": "cme-pvt",
+      "prompt": "constant mass expansion CME test at 100 C and saturation pressure for a reservoir fluid with C7+ characterization",
+      "expect_agent_top3": ["pvt-simulation"],
+      "expect_skills_top5": ["neqsim-eos-regression"]
+    },
+    {
+      "id": "psv-fire-case",
+      "prompt": "size a PSV for fire case on an HP separator per API 521 and check flare radiation",
+      "expect_agent_top3": ["safety-depressuring", "process-safety-agent"],
+      "expect_skills_top5": ["neqsim-relief-flare-network", "neqsim-process-safety"]
+    },
+    {
+      "id": "teg-dehydration",
+      "prompt": "TEG dehydration unit for 50 MMSCFD wet gas, water dew point spec -10 C, still vent BTEX emissions",
+      "expect_agent_top3": ["teg-dehydration-agent", "gas-treatment-agent", "process-model"],
+      "expect_skills_top5": ["neqsim-teg-dehydration-modeling"]
+    },
+    {
+      "id": "co2-pipeline-impurities",
+      "prompt": "CO2 pipeline dense phase transport with 2% N2 impurity, phase envelope and DNV-RP-F104 check",
+      "expect_agent_top3": ["ccs-hydrogen"],
+      "expect_skills_top5": ["neqsim-ccs-hydrogen"]
+    },
+    {
+      "id": "compressor-trip-rca",
+      "prompt": "compressor tripping on high vibration, trend increasing over two weeks, find root cause from historian data",
+      "expect_agent_top3": ["root-cause"],
+      "expect_skills_top5": ["neqsim-root-cause-analysis"]
+    },
+    {
+      "id": "tieback-npv",
+      "prompt": "subsea tieback vs standalone FPSO for 100 MMboe gas condensate, NPV and IRR on Norwegian tax regime",
+      "expect_agent_top3": ["field-development", "concept-selection-agent", "field-development-economics-agent"],
+      "expect_skills_top5": ["neqsim-field-development", "neqsim-field-economics", "neqsim-subsea-and-wells"]
+    },
+    {
+      "id": "water-hammer-esd",
+      "prompt": "ESD valve closes in 2 seconds on a liquid-filled line, water hammer surge pressure vs design pressure",
+      "expect_agent_top3": ["flow-assurance", "safety-depressuring", "piping-integrity-agent"],
+      "expect_skills_top5": ["neqsim-water-hammer"]
+    },
+    {
+      "id": "phase-envelope-plot",
+      "prompt": "plot the PT phase envelope, cricondenbar and cricondentherm for a rich gas",
+      "expect_agent_top3": ["thermo-fluid"],
+      "expect_skills_top5": ["neqsim-phase-envelope"]
+    },
+    {
+      "id": "unisim-convert",
+      "prompt": "convert this UniSim .usc gas plant case to a NeqSim model and compare results",
+      "expect_agent_top3": ["unisim-reader"],
+      "expect_skills_top5": ["neqsim-unisim-reader"]
+    },
+    {
+      "id": "pid-to-model",
+      "prompt": "read this P&ID PDF, extract equipment tags and piping, and build a NeqSim process from it",
+      "expect_agent_top3": ["technical-reader", "extract-process"],
+      "expect_skills_top5": ["neqsim-technical-document-reading", "neqsim-process-extraction", "neqsim-pid-process-operations"]
+    },
+    {
+      "id": "setup-task-root",
+      "prompt": "how do I set the folder where new tasks are created and the document root for my standards, and check that my NeqSim setup works",
+      "expect_agent_top3": ["solve-task"],
+      "expect_skills_top5": ["neqsim-setup"]
+    }
+  ],
+  "contracts": [
+    {
+      "id": "minimal-quick-task-passes",
+      "expect": "pass",
+      "results": {
+        "key_results": {"outlet_temperature_C": -18.5, "pressure_drop_bar": 3.2},
+        "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": true},
+        "approach": "SRK EOS with classic mixing rule; TPflash then initProperties before reading transport properties.",
+        "conclusions": "JT cooling brings the gas below the hydrate curve; inhibition is required."
+      }
+    },
+    {
+      "id": "missing-conclusions-fails",
+      "expect": "fail",
+      "fail_on": "conclusions",
+      "results": {
+        "key_results": {"outlet_temperature_C": -18.5},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS."
+      }
+    },
+    {
+      "id": "key-results-must-be-object",
+      "expect": "fail",
+      "fail_on": "key_results",
+      "results": {
+        "key_results": [1, 2, 3],
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS.",
+        "conclusions": "Done."
+      }
+    },
+    {
+      "id": "benchmark-block-shape",
+      "expect": "fail",
+      "fail_on": "benchmark_validation",
+      "results": {
+        "key_results": {"density_kg_m3": 42.1},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "SRK EOS.",
+        "conclusions": "Density matches NIST within 1%.",
+        "benchmark_validation": "NIST agrees"
+      }
+    },
+    {
+      "id": "uncertainty-percentile-order",
+      "expect": "fail",
+      "fail_on": "uncertainty",
+      "results": {
+        "key_results": {"npv_mnok": 3352.0},
+        "validation": {"acceptance_criteria_met": true},
+        "approach": "Monte Carlo over NeqSim process model.",
+        "conclusions": "Positive expected value.",
+        "uncertainty": {"method": "Monte Carlo", "n_simulations": 200, "p10": 7086.0, "p50": 3352.0, "p90": -22.0}
+      }
+    }
+  ]
+}

@@ -73,22 +73,22 @@ See individual script headers for usage details.
 
 ### Current State
 - **Issue**: 13 agents in `.github/agents/` with inconsistent naming
-  - `process.model.agent.md` vs `processmodel.agent.md` (duplicates?)
+  - `process-model.agent.md` vs `processmodel.agent.md` (duplicates?)
   - `AGENTS.md` and `.github/copilot-instructions.md` duplicate ~60% content
 
 ### Recommendations
 
 #### A. Consolidate Duplicate Agents
 Check if these are duplicates and merge:
-- `process.model.agent.md` ↔️ `processmodel.agent.md`
+- `process-model.agent.md` ↔️ `processmodel.agent.md`
 
 **Action**:
 ```bash
 # Compare content
-diff .github/agents/process.model.agent.md .github/agents/processmodel.agent.md
+diff .github/agents/process-model.agent.md .github/agents/processmodel.agent.md
 
 # If identical or mergeable, keep one canonical name
-git mv .github/agents/processmodel.agent.md .github/agents/process.model.agent.md
+git mv .github/agents/processmodel.agent.md .github/agents/process-model.agent.md
 ```
 
 #### B. Agent Naming Convention
@@ -96,9 +96,9 @@ Establish consistent naming: `<domain>.<action>.agent.md`
 
 **Recommended renames**:
 ```
-✓ Good: solve.task.agent.md, thermo.fluid.agent.md
-✓ Good: flow.assurance.agent.md, gas.quality.agent.md
-✓ Rename: processmodel.agent.md → process.model.agent.md
+✓ Good: solve-task.agent.md, thermo-fluid.agent.md
+✓ Good: flow-assurance.agent.md, gas-quality.agent.md
+✓ Rename: processmodel.agent.md → process-model.agent.md
 ```
 
 #### C. Reduce Documentation Duplication
@@ -137,23 +137,23 @@ This directory contains specialized GitHub Copilot Chat agents for NeqSim develo
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **solve.task** | `@solve.task <description>` | End-to-end task solving with report generation |
-| **thermo.fluid** | `@thermo.fluid <description>` | Create thermodynamic fluid systems |
-| **process.model** | `@process.model <description>` | Build process simulations |
-| **pvt.simulation** | `@pvt.simulation <description>` | Run PVT lab tests (CME, CVD, DL) |
-| **flow.assurance** | `@flow.assurance <description>` | Hydrate, wax, asphaltene, corrosion |
-| **gas.quality** | `@gas.quality <description>` | ISO 6976, sales specs, gas quality |
-| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design |
-| **safety.depressuring** | `@safety.depressuring <description>` | Blowdown, PSV sizing, fire case |
-| **neqsim.test** | `@neqsim.test <description>` | Create JUnit 5 unit tests |
-| **notebook.example** | `@notebook.example <description>` | Create Jupyter notebook examples |
+| **solve.task** | `@solve-task <description>` | End-to-end task solving with report generation |
+| **thermo.fluid** | `@thermo-fluid <description>` | Create thermodynamic fluid systems |
+| **process.model** | `@process-model <description>` | Build process simulations |
+| **pvt.simulation** | `@pvt-simulation <description>` | Run PVT lab tests (CME, CVD, DL) |
+| **flow.assurance** | `@flow-assurance <description>` | Hydrate, wax, asphaltene, corrosion |
+| **gas.quality** | `@gas-quality <description>` | ISO 6976, sales specs, gas quality |
+| **mechanical.design** | `@mechanical-design <description>` | ASME/API/DNV mechanical design |
+| **safety.depressuring** | `@safety-depressuring <description>` | Blowdown, PSV sizing, fire case |
+| **neqsim.test** | `@neqsim-test <description>` | Create JUnit 5 unit tests |
+| **notebook.example** | `@notebook-example <description>` | Create Jupyter notebook examples |
 | **documentation** | `@documentation <description>` | Write/update markdown docs |
 
 ## Usage
 
 In VS Code Copilot Chat:
 ```
-@solve.task 3-stage compression with intercooling from 5 to 150 bara
+@solve-task 3-stage compression with intercooling from 5 to 150 bara
 ```
 
 See the [AGENTS.md](../../AGENTS.md) file in the repo root for detailed documentation.
@@ -636,7 +636,7 @@ task_solve/              # Your local work area (gitignored)
 
 ### D. Add Examples
 1. Create Jupyter notebook or Java example
-2. Follow [notebook agent](../../.github/agents/notebook.example.agent.md) pattern
+2. Follow [notebook agent](../../.github/agents/notebook-example.agent.md) pattern
 3. Add to [examples/](../../examples/) in appropriate category
 4. Update `examples/README.md`
 

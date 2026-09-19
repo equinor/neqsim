@@ -52,7 +52,7 @@ skills:
     version: "0.1.0"
     description: Trigger-rich description.
     repo: equinor/neqsim-community-skills
-    path: skills/pvt/fluid-quality-check/SKILL.md
+    path: skills/pvt/neqsim-fluid-quality-check/SKILL.md
     tags: [pvt, validation]
 ```
 

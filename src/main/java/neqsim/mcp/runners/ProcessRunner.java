@@ -217,6 +217,14 @@ public class ProcessRunner {
   private static String runProcessSystem(String normalizedJson, long startTime, boolean preValidationPassed,
       JsonArray validationIssues) {
     SimulationResult result = ProcessSystem.fromJsonAndRun(normalizedJson);
+    String unresolved = firstUnresolvedInletWarning(result);
+    if (unresolved != null) {
+      // The builder runs the disconnected flowsheet and only warns; for the tool that is a failed run.
+      return errorJson("UNRESOLVED_INLET", "Process ran with disconnected equipment: " + unresolved,
+          "Every 'inlet'/'inlets' entry must name a unit in the 'process' array (feeds are units of type "
+              + "'Stream') or a 'unitName.port' alias such as gasOut, liquidOut, out, splitStream_0. "
+              + "Call validateInput first; it lists the unresolved references and the defined unit names.");
+    }
     String simJson = result.toJson();
 
     String model = extractModel(normalizedJson);
@@ -1676,6 +1684,24 @@ public class ProcessRunner {
         }
       }
     }
+  }
+
+  /**
+   * Finds the first builder warning that reports an inlet reference which could not be wired.
+   *
+   * @param result simulation result whose warnings are inspected
+   * @return the unresolved-inlet warning text, or null when every inlet was wired
+   */
+  private static String firstUnresolvedInletWarning(SimulationResult result) {
+    if (result == null || result.getWarnings() == null) {
+      return null;
+    }
+    for (String warning : result.getWarnings()) {
+      if (warning != null && warning.startsWith("Unresolved inlet")) {
+        return warning;
+      }
+    }
+    return null;
   }
 
   /**
