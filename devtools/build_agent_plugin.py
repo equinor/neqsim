@@ -82,6 +82,8 @@ TOOLKIT_REQUIREMENT = os.environ.get("NEQSIM_TOOLKIT_REQUIREMENT") or TOOLKIT_RE
 # Placeholder in a pip target that the hook replaces with the plugin root at run time.
 PLUGIN_ROOT_TOKEN = "${PLUGIN_ROOT}"
 VENDORED_TOOLKIT_REQUIREMENT = PLUGIN_ROOT_TOKEN + "/" + TOOLKIT_SUBDIR
+# `--mcp-version` value that makes the launcher follow the newest NeqSim release.
+MCP_LATEST = "latest"
 SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
 SKIP_SUFFIXES = {".pyc"}
 
@@ -211,6 +213,12 @@ The install runs in a detached background process so the first chat prompt is
 not delayed; progress is written to ~/.neqsim/plugin-install/<plugin>/install.log
 and a version stamp marks success. Exits 0 on every path so the hook cannot block
 a chat session; stdout carries only the JSON that VS Code parses.
+
+When the plugin ships the NeqSim MCP server launcher, the hook also prefetches
+the server jar in the background (``java servers/NeqsimMcpLauncher.java
+--prefetch``): on the first session this overlaps the ~90 MB download with the
+user's first prompt, and afterwards it fetches a newer release once a day so the
+next server start is instant. Skipped when java is missing or the cache is fresh.
 """
 import json
 import os
@@ -222,7 +230,9 @@ from pathlib import Path
 PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
+PREFETCH_MCP = {prefetch_mcp!r}
 LOCK_MAX_AGE_S = 45 * 60
+MCP_REFRESH_S = 24 * 3600
 
 root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 plugin_name = json.loads((root / "plugin.json").read_text(encoding="utf-8")).get("name", root.name)
@@ -231,6 +241,69 @@ state = Path.home() / ".neqsim" / "plugin-install" / plugin_name
 stamp = state / "installed_version"
 lock = state / "install.lock"
 log = state / "install.log"
+mcp_data = Path(os.environ.get("PLUGIN_DATA") or Path.home() / ".neqsim" / "mcp-server")
+mcp_log = state / "mcp-prefetch.log"
+
+
+def detached(cmd, out=None):
+    """Start ``cmd`` fully detached from the hook process (no window, survives exit)."""
+    kwargs = dict(stdin=subprocess.DEVNULL, stdout=out or subprocess.DEVNULL,
+                  stderr=out or subprocess.DEVNULL, close_fds=True)
+    if os.name == "nt":
+        # detached + new process group + no window; try to leave the caller's job object too
+        flags = 0x00000008 | 0x00000200 | 0x08000000
+        try:
+            subprocess.Popen(cmd, creationflags=flags | 0x01000000, **kwargs)
+            return
+        except OSError:
+            pass
+        kwargs["creationflags"] = flags
+    else:
+        kwargs["start_new_session"] = True
+    subprocess.Popen(cmd, **kwargs)
+
+
+def mcp_needs_prefetch():
+    """True when no server jar is cached or the daily release check is due."""
+    if not PREFETCH_MCP or not (root / "servers" / "NeqsimMcpLauncher.java").exists():
+        return False
+    if os.environ.get("NEQSIM_MCP_JAR"):
+        return False
+    if not any(mcp_data.glob("neqsim-mcp-server-*-runner.jar")):
+        return True
+    marker = mcp_data / "latest-release.txt"
+    if not marker.exists():
+        return False  # pinned version, jar present: nothing to refresh
+    try:
+        checked_ms = int(marker.read_text(encoding="utf-8").split()[1])
+    except (IndexError, ValueError, OSError):
+        return True
+    return time.time() * 1000 - checked_ms > MCP_REFRESH_S * 1000
+
+
+def prefetch_mcp():
+    """Kick off the launcher's --prefetch in the background; never raises."""
+    java = None
+    home = os.environ.get("JAVA_HOME")
+    if home:
+        cand = Path(home) / "bin" / ("java.exe" if os.name == "nt" else "java")
+        if cand.exists():
+            java = str(cand)
+    if java is None:
+        from shutil import which
+        java = which("java")
+    if java is None:
+        return False
+    try:
+        state.mkdir(parents=True, exist_ok=True)
+        out = open(str(mcp_log), "a", encoding="utf-8")
+        out.write("== {{}} prefetch\\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
+        out.flush()
+        detached([java, str(root / "servers" / "NeqsimMcpLauncher.java"), "--root", str(root),
+                  "--data", str(mcp_data), "--prefetch"], out)
+        return True
+    except OSError:
+        return False
 
 
 def pick_python():
@@ -248,6 +321,35 @@ def stamp_text(python):
     """Version + interpreter, so a changed NEQSIM_PYTHON triggers a fresh install."""
     return version + "\\n" + str(Path(python).resolve())
 
+def pip_install(python, req, out):
+    """pip install one requirement, preferring a bundled ${{PLUGIN_ROOT}}/wheels folder.
+
+    The offline bundle ships a wheelhouse (toolkit wheel + dependencies); try it
+    first with --no-index so an unzipped folder installs without PyPI, then fall
+    back to the normal index. A local-directory requirement is installed by its
+    distribution name from the wheelhouse, so nothing has to be built offline.
+    """
+    wheels = root / "wheels"
+    if wheels.is_dir() and any(wheels.glob("*.whl")):
+        target = req
+        pyproject = Path(req) / "pyproject.toml"
+        if pyproject.is_file():
+            import re
+            m = re.search(r'^name\\s*=\\s*["\\']([^"\\']+)', pyproject.read_text(encoding="utf-8"),
+                          re.M)
+            if m:
+                target = m.group(1)
+        rc = subprocess.run([python, "-m", "pip", "install", "--no-index", "--find-links",
+                             str(wheels), target], stdout=out, stderr=out, check=False).returncode
+        if rc == 0:
+            return True
+        out.write("== wheelhouse install failed (rc={{}}); retrying against the package index\\n"
+                  .format(rc))
+        out.flush()
+    return subprocess.run([python, "-m", "pip", "install", req],
+                          stdout=out, stderr=out, check=False).returncode == 0
+
+
 def run_install(python):
     """Foreground worker (called with --run in the detached process)."""
     state.mkdir(parents=True, exist_ok=True)
@@ -259,8 +361,7 @@ def run_install(python):
             ok &= subprocess.run([python, "-m", "pip", "install", "-e", str(root), "--no-deps"],
                                  stdout=out, stderr=out, check=False).returncode == 0
         for req in targets():
-            ok &= subprocess.run([python, "-m", "pip", "install", req],
-                                 stdout=out, stderr=out, check=False).returncode == 0
+            ok &= pip_install(python, req, out)
         out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), "OK" if ok else "FAILED"))
     if ok:
         stamp.write_text(stamp_text(python), encoding="utf-8")
@@ -274,27 +375,14 @@ def run_install(python):
 def spawn_worker(python):
     state.mkdir(parents=True, exist_ok=True)
     lock.write_text(str(os.getpid()), encoding="utf-8")
-    kwargs = dict(stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                  close_fds=True)
-    if os.name == "nt":
-        # detached + new process group + no window; try to leave the caller's job object too
-        flags = 0x00000008 | 0x00000200 | 0x08000000
-        try:
-            subprocess.Popen([python, str(Path(__file__).resolve()), "--run"],
-                             creationflags=flags | 0x01000000, **kwargs)
-            return
-        except OSError:
-            pass
-        kwargs["creationflags"] = flags
-    else:
-        kwargs["start_new_session"] = True
-    subprocess.Popen([python, str(Path(__file__).resolve()), "--run"], **kwargs)
+    detached([python, str(Path(__file__).resolve()), "--run"])
 
 
 def main():
     python = pick_python()
     if "--run" in sys.argv:
         return run_install(python) if python else 1
+    mcp_started = mcp_needs_prefetch() and prefetch_mcp()
     if python is None:
         marker = state / "no_python_notified"
         if marker.exists():
@@ -310,9 +398,12 @@ def main():
     if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_MAX_AGE_S:
         return 0
     spawn_worker(python)
+    mcp_note = (" The NeqSim MCP server jar (~90 MB) is downloading alongside; its tools appear "
+                "as soon as the server reports running." if mcp_started else "")
     print(json.dumps({{"systemMessage": "NeqSim plugin '{{}}' v{{}}: installing its Python packages into "
                       "{{}} in the background (first session only, a few minutes). Log: {{}}. Run "
-                      "/neqsim-setup afterwards to verify.".format(plugin_name, version, python, log)}}))
+                      "/neqsim-setup afterwards to verify.{{}}".format(plugin_name, version, python, log,
+                                                                      mcp_note)}}))
     return 0
 
 
@@ -344,7 +435,7 @@ exit 0
 
 
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
-                requirements: Optional[List[str]] = None) -> None:
+                requirements: Optional[List[str]] = None, prefetch_mcp: bool = False) -> None:
     """SessionStart hook that installs the plugin's Python packages.
 
     The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
@@ -352,9 +443,10 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
     chooses the pip target the same way. ``python`` optionally pins a
     site-specific interpreter as a fallback candidate. ``${PLUGIN_ROOT}`` is
     expanded by the client. Idempotent via a version stamp in ``${PLUGIN_DATA}``.
+    With ``prefetch_mcp`` the hook also warms/refreshes the MCP server jar cache.
     """
     requirements = list(requirements or [])
-    if not pip_roots and not requirements:
+    if not pip_roots and not requirements and not prefetch_mcp:
         return
     hooks_dir = dest_root / "com.github.copilot" / "hooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
@@ -362,7 +454,7 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "install_skill_packages.py").write_text(
         HOOK_PY.format(pinned=python or "", editable_self=bool(pip_roots),
-                       requirements=requirements),
+                       requirements=requirements, prefetch_mcp=bool(prefetch_mcp)),
         encoding="utf-8")
     (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
     (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
@@ -450,10 +542,12 @@ def neqsim_release_version() -> str:
 
 
 def write_mcp(staging: Path, mcp_version: str, errors: List[str]) -> None:
-    """Copy the canonical mcp.json plus the launcher, pinning the server release.
+    """Copy the canonical mcp.json plus the launcher, pinning (or tracking) the server release.
 
-    The launcher downloads ``neqsim-mcp-server-<version>-runner.jar`` from the
-    matching GitHub release on first start, so the plugin only needs ``java``.
+    ``mcp_version`` is a release such as ``3.21.0`` or ``latest``. With a fixed
+    version the launcher downloads ``neqsim-mcp-server-<version>-runner.jar`` from
+    that GitHub release on first start; with ``latest`` it resolves the newest
+    release itself (see the launcher), so the plugin only needs ``java``.
     """
     if not CANONICAL_MCP.exists():
         errors.append("canonical MCP definition missing: {}".format(CANONICAL_MCP))
@@ -464,11 +558,17 @@ def write_mcp(staging: Path, mcp_version: str, errors: List[str]) -> None:
         shutil.copytree(str(MCP_SERVERS_DIR), str(servers_out), ignore=_ignore)
     else:
         servers_out.mkdir()
+    if mcp_version == MCP_LATEST:
+        body = ("# The launcher resolves the newest equinor/neqsim release (checked daily,\n"
+                "# cached offline). Pin with NEQSIM_MCP_VERSION=X.Y.Z or a rebuild --mcp-version.\n"
+                "version=latest\n")
+    else:
+        body = ("version={v}\n"
+                "jar=neqsim-mcp-server-{v}-runner.jar\n"
+                "download=https://github.com/equinor/neqsim/releases/download/v{v}/\n"
+                .format(v=mcp_version))
     (servers_out / "neqsim-mcp-server.properties").write_text(
-        "# Written by build_agent_plugin.py; read by NeqsimMcpLauncher.java.\n"
-        "version={v}\n"
-        "jar=neqsim-mcp-server-{v}-runner.jar\n"
-        "download=https://github.com/equinor/neqsim/releases/download/v{v}/\n".format(v=mcp_version),
+        "# Written by build_agent_plugin.py; read by NeqsimMcpLauncher.java.\n" + body,
         encoding="utf-8")
 
 
@@ -548,7 +648,8 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
                            if t == VENDORED_TOOLKIT_REQUIREMENT else t for t in pip_targets]
         else:
             write_toolkit(staging)
-    write_hooks(staging, spec.pip_install_roots, args.python, pip_targets)
+    write_hooks(staging, spec.pip_install_roots, args.python, pip_targets,
+                prefetch_mcp=spec.include_mcp)
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
@@ -631,15 +732,16 @@ def main(argv=None) -> int:
                              "fallback after NEQSIM_PYTHON (default: none; env NEQSIM_PLUGIN_PYTHON)")
     parser.add_argument("--check", action="store_true",
                         help="build to staging only; exit 1 on errors or unbumped changes")
-    parser.add_argument("--mcp-version", default=None,
-                        help="NeqSim release whose MCP server jar the plugin downloads "
-                             "(default: root pom <revision> without -SNAPSHOT)")
+    parser.add_argument("--mcp-version", default=MCP_LATEST,
+                        help="NeqSim release whose MCP server jar the plugin downloads: a version "
+                             "such as 3.21.0 to pin, or 'latest' (default) to track the newest "
+                             "GitHub release; 'pom' takes the root pom <revision>")
     parser.add_argument("--toolkit-ref", default=None,
                         help="install the task toolkit (devtools/) from this git ref of equinor/neqsim "
                              "instead of the copy vendored into the plugin (default: vendored, "
                              "no git needed on the user's machine)")
     args = parser.parse_args(argv)
-    if args.mcp_version is None:
+    if args.mcp_version == "pom":
         args.mcp_version = neqsim_release_version()
 
     specs = [s for s in default_specs() if not args.only or s.name in args.only]

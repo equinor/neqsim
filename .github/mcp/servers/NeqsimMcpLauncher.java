@@ -36,6 +36,24 @@ import java.util.Properties;
  * {@code $NEQSIM_MCP_JAVA_OPTS} adds JVM options (e.g. -Xmx4g). Downloads honour the operating
  * system proxy settings ({@code java.net.useSystemProxies}).
  *
+ * <p>Version {@code latest} (the plugin default) tracks the newest NeqSim release: the launcher
+ * resolves the tag behind {@code releases/latest} at most once per {@link #LATEST_TTL_HOURS}
+ * hours, records it in {@code latest-release.txt} in the data directory, downloads the matching
+ * jar when it is not cached yet and deletes superseded jars. Offline it keeps using the last
+ * resolved version, or the newest cached jar, so a lost network never blocks a chat session.
+ * {@code $NEQSIM_MCP_LATEST_TTL_HOURS} changes the check interval ({@code 0} = every start).
+ *
+ * <p>Offline distribution: a {@code neqsim-mcp-server-<version>-runner.jar} (with its
+ * {@code .sha256}) placed beside this launcher in {@code servers/} seeds the jar cache on first
+ * start, so an unzipped plugin folder works with no network at all. Online, {@code latest}
+ * tracking then continues from that seed.
+ *
+ * <p>{@code --prefetch} resolves and downloads the jar and exits without starting the server.
+ * The plugin's SessionStart hook runs it detached so the ~90 MB download happens while the
+ * user reads the first chat prompt and a newer release is fetched a day ahead of use. A lock
+ * file beside the jar lets a concurrent server start wait for that download instead of
+ * repeating it.
+ *
  * <p>Source checkout: the properties file is written by the plugin builder and is absent when
  * the launcher runs from {@code .github/mcp} of an {@code equinor/neqsim} clone (the workspace
  * {@code .vscode/mcp.json}). There the launcher uses a locally built
@@ -48,12 +66,20 @@ import java.util.Properties;
 public class NeqsimMcpLauncher {
   private static final int MIN_JAVA = 21;
   private static final String RELEASES = "https://github.com/equinor/neqsim/releases/download/v";
+  private static final String LATEST_URL = "https://github.com/equinor/neqsim/releases/latest";
+  private static final String LATEST = "latest";
+  private static final String LATEST_STAMP = "latest-release.txt";
+  private static final long LATEST_TTL_HOURS = 24;
+  private static final long DOWNLOAD_LOCK_MAX_AGE_MS = 15 * 60_000L;
+  private static final long DOWNLOAD_WAIT_MAX_MS = 15 * 60_000L;
+  private static final java.util.regex.Pattern JAR_VERSION =
+      java.util.regex.Pattern.compile("^neqsim-mcp-server-(.+)-runner\\.jar$");
 
   /**
    * Entry point.
    *
-   * @param args {@code --root DIR}, {@code --data DIR}, {@code --version X.Y.Z}; anything
-   *        after {@code --} is passed to the server jar
+   * @param args {@code --root DIR}, {@code --data DIR}, {@code --version X.Y.Z|latest},
+   *        {@code --prefetch}; anything after {@code --} is passed to the server jar
    * @throws Exception on unrecoverable I/O or process errors
    */
   public static void main(String[] args) throws Exception {
@@ -63,13 +89,16 @@ public class NeqsimMcpLauncher {
           + System.getProperty("java.home") + "). Install a JDK 21+ or point JAVA_HOME at one.");
     }
     Map<String, String> opt = new HashMap<>();
+    boolean prefetch = false;
     int passthroughFrom = args.length;
     for (int i = 0; i < args.length; i++) {
       if ("--".equals(args[i])) {
         passthroughFrom = i + 1;
         break;
       }
-      if (args[i].startsWith("--") && i + 1 < args.length) {
+      if ("--prefetch".equals(args[i])) {
+        prefetch = true;
+      } else if (args[i].startsWith("--") && i + 1 < args.length) {
         opt.put(args[i].substring(2), args[++i]);
       }
     }
@@ -101,8 +130,21 @@ public class NeqsimMcpLauncher {
     if (version == null && (local == null || local.isEmpty())) {
       fail("server version unknown: " + propsFile + " is missing or lacks 'version'");
     }
-    String jarName = props.getProperty("jar", "neqsim-mcp-server-" + version + "-runner.jar");
-    String base = props.getProperty("download", RELEASES + version + "/");
+    Path data = dir(opt.get("data"), System.getenv("PLUGIN_DATA"),
+        Paths.get(System.getProperty("user.home"), ".neqsim", "mcp-server").toString());
+    if (local == null || local.isEmpty()) {
+      seedFromBundle(root.resolve("servers"), data);
+    }
+    boolean track = LATEST.equalsIgnoreCase(version);
+    if (track && (local == null || local.isEmpty())) {
+      Files.createDirectories(data);
+      version = resolveLatest(data);
+    }
+    // The pinned jar/download names in the properties file describe a fixed version only.
+    String jarName = track ? "neqsim-mcp-server-" + version + "-runner.jar"
+        : props.getProperty("jar", "neqsim-mcp-server-" + version + "-runner.jar");
+    String base = track ? RELEASES + version + "/"
+        : props.getProperty("download", RELEASES + version + "/");
 
     Path jar;
     if (local != null && !local.isEmpty()) {
@@ -111,14 +153,21 @@ public class NeqsimMcpLauncher {
         fail("NEQSIM_MCP_JAR does not exist: " + jar);
       }
     } else {
-      Path data = dir(opt.get("data"), System.getenv("PLUGIN_DATA"),
-          Paths.get(System.getProperty("user.home"), ".neqsim", "mcp-server").toString());
       Files.createDirectories(data);
       jar = data.resolve(jarName);
       if (!Files.isRegularFile(jar)) {
         download(base, jarName, jar);
+        if (track) {
+          pruneOtherJars(data, jar);
+        }
       }
     }
+    if (prefetch) {
+      System.err.println("[neqsim-mcp] prefetch done: " + jar);
+      return;
+    }
+    System.err.println("[neqsim-mcp] starting " + jar.getFileName()
+        + (track ? " (tracking latest release)" : ""));
 
     String javaExe = ProcessHandle.current().info().command()
         .orElse(Paths.get(System.getProperty("java.home"), "bin", "java").toString());
@@ -144,27 +193,87 @@ public class NeqsimMcpLauncher {
   /**
    * Downloads the jar and its sha256 side-car, verifies the digest, and moves the jar into place.
    *
+   * <p>When another launcher (the hook's {@code --prefetch} or a second client) already holds
+   * the download lock, this call waits for the jar to appear instead of downloading again.
+   *
    * @param base release download URL prefix ending in {@code /}
    * @param jarName file name of the runner jar
    * @param target final jar path
    * @throws Exception on download or verification failure
    */
   private static void download(String base, String jarName, Path target) throws Exception {
-    if (System.getProperty("java.net.useSystemProxies") == null) {
-      System.setProperty("java.net.useSystemProxies", "true");
+    Path lock = target.resolveSibling(jarName + ".lock");
+    boolean owned = acquireLock(lock);
+    if (!owned) {
+      System.err.println("[neqsim-mcp] another launcher is downloading " + jarName
+          + "; waiting for it");
+      long deadline = System.currentTimeMillis() + DOWNLOAD_WAIT_MAX_MS;
+      while (!owned && System.currentTimeMillis() < deadline) {
+        Thread.sleep(1000);
+        if (Files.isRegularFile(target)) {
+          return;
+        }
+        owned = acquireLock(lock); // succeeds once the other side finished or died
+      }
+      if (Files.isRegularFile(target)) {
+        if (owned) {
+          Files.deleteIfExists(lock);
+        }
+        return;
+      }
+      if (!owned) {
+        fail("timed out waiting for another launcher to download " + jarName);
+      }
     }
-    // Corporate TLS inspection re-signs github.com with a CA that lives in the Windows
-    // store, not in the JDK's cacerts; trust the OS store so the download passes.
-    if (System.getProperty("os.name", "").toLowerCase().contains("win")
-        && System.getProperty("javax.net.ssl.trustStoreType") == null) {
-      System.setProperty("javax.net.ssl.trustStore", "NONE");
-      System.setProperty("javax.net.ssl.trustStoreType", "Windows-ROOT");
+    try {
+      fetchAndVerify(base, jarName, target);
+    } finally {
+      Files.deleteIfExists(lock);
     }
+  }
+
+  /**
+   * Creates the lock file atomically; a lock older than
+   * {@link #DOWNLOAD_LOCK_MAX_AGE_MS} is treated as abandoned and taken over.
+   *
+   * @param lock lock file path
+   * @return true when this process now owns the lock
+   * @throws Exception on I/O failure other than the lock already existing
+   */
+  private static boolean acquireLock(Path lock) throws Exception {
+    try {
+      Files.createFile(lock);
+      return true;
+    } catch (java.nio.file.FileAlreadyExistsException e) {
+      try {
+        long age = System.currentTimeMillis() - Files.getLastModifiedTime(lock).toMillis();
+        if (age > DOWNLOAD_LOCK_MAX_AGE_MS) {
+          Files.deleteIfExists(lock);
+          Files.createFile(lock);
+          return true;
+        }
+      } catch (java.io.IOException ignored) {
+        return false;
+      }
+      return false;
+    }
+  }
+
+  /**
+   * Performs the verified download into a process-unique temp file and moves it into place.
+   *
+   * @param base release download URL prefix ending in {@code /}
+   * @param jarName file name of the runner jar
+   * @param target final jar path
+   * @throws Exception on download or verification failure
+   */
+  private static void fetchAndVerify(String base, String jarName, Path target) throws Exception {
+    configureNetwork();
     HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
         .connectTimeout(Duration.ofSeconds(30)).build();
     String expected = fetchText(http, base + jarName + ".sha256").trim().split("\\s+")[0]
         .toLowerCase();
-    Path tmp = target.resolveSibling(jarName + ".part");
+    Path tmp = target.resolveSibling(jarName + ".part-" + ProcessHandle.current().pid());
     System.err.println("[neqsim-mcp] downloading " + base + jarName + " -> " + target);
     HttpRequest req = HttpRequest.newBuilder(URI.create(base + jarName)).GET().build();
     HttpResponse<InputStream> resp = http.send(req, HttpResponse.BodyHandlers.ofInputStream());
@@ -184,6 +293,182 @@ public class NeqsimMcpLauncher {
     }
     Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
     System.err.println("[neqsim-mcp] verified sha256 " + actual);
+  }
+
+  /**
+   * Proxy and trust-store settings shared by every HTTP call.
+   */
+  private static void configureNetwork() {
+    if (System.getProperty("java.net.useSystemProxies") == null) {
+      System.setProperty("java.net.useSystemProxies", "true");
+    }
+    // Corporate TLS inspection re-signs github.com with a CA that lives in the Windows
+    // store, not in the JDK's cacerts; trust the OS store so the download passes.
+    if (System.getProperty("os.name", "").toLowerCase().contains("win")
+        && System.getProperty("javax.net.ssl.trustStoreType") == null) {
+      System.setProperty("javax.net.ssl.trustStore", "NONE");
+      System.setProperty("javax.net.ssl.trustStoreType", "Windows-ROOT");
+    }
+  }
+
+  /**
+   * Version of the newest published NeqSim release.
+   *
+   * <p>Reads {@code latest-release.txt} ({@code <version> <epochMillis>}) from the data
+   * directory and reuses it while younger than the TTL. Otherwise asks GitHub where
+   * {@code releases/latest} redirects to and records the answer. When the request fails the
+   * stale stamp is reused, then the newest cached jar; only with neither does the launcher
+   * fail, because there is nothing it could start.
+   *
+   * @param data plugin data directory holding the stamp and the jar cache
+   * @return a concrete version such as {@code 3.21.0}
+   * @throws Exception on unrecoverable I/O failure
+   */
+  private static String resolveLatest(Path data) throws Exception {
+    Path stamp = data.resolve(LATEST_STAMP);
+    String cached = null;
+    long checkedAt = 0;
+    if (Files.isRegularFile(stamp)) {
+      String[] parts = Files.readString(stamp, StandardCharsets.UTF_8).trim().split("\\s+");
+      if (parts.length >= 1 && !parts[0].isEmpty()) {
+        cached = parts[0];
+      }
+      if (parts.length >= 2) {
+        try {
+          checkedAt = Long.parseLong(parts[1]);
+        } catch (NumberFormatException ignored) {
+          checkedAt = 0;
+        }
+      }
+    }
+    long ttlHours = LATEST_TTL_HOURS;
+    String ttlEnv = System.getenv("NEQSIM_MCP_LATEST_TTL_HOURS");
+    if (ttlEnv != null && !ttlEnv.trim().isEmpty()) {
+      try {
+        ttlHours = Long.parseLong(ttlEnv.trim());
+      } catch (NumberFormatException ignored) {
+        ttlHours = LATEST_TTL_HOURS;
+      }
+    }
+    long now = System.currentTimeMillis();
+    if (cached != null && now - checkedAt < ttlHours * 3600_000L) {
+      return cached;
+    }
+    try {
+      String found = fetchLatestTag();
+      Files.writeString(stamp, found + " " + now + "\n", StandardCharsets.UTF_8);
+      if (!found.equals(cached)) {
+        System.err.println("[neqsim-mcp] latest NeqSim release is v" + found);
+      }
+      return found;
+    } catch (Exception e) {
+      String why = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+      String fallback = cached != null ? cached : newestCachedVersion(data);
+      if (fallback == null) {
+        fail("cannot determine the latest NeqSim release (" + why
+            + ") and no jar is cached in " + data
+            + ". Connect once, or set NEQSIM_MCP_VERSION=X.Y.Z / NEQSIM_MCP_JAR.");
+      }
+      System.err.println("[neqsim-mcp] release check failed (" + why
+          + "); using v" + fallback);
+      // Refresh the stamp so a long outage does not retry on every start.
+      Files.writeString(stamp, fallback + " " + now + "\n", StandardCharsets.UTF_8);
+      return fallback;
+    }
+  }
+
+  /**
+   * Tag of the newest release, taken from the redirect GitHub issues for
+   * {@code releases/latest}.
+   *
+   * @return version without the leading {@code v}
+   * @throws Exception when GitHub cannot be reached or does not redirect to a tag
+   */
+  private static String fetchLatestTag() throws Exception {
+    configureNetwork();
+    HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
+        .connectTimeout(Duration.ofSeconds(10)).build();
+    HttpRequest req = HttpRequest.newBuilder(URI.create(LATEST_URL))
+        .timeout(Duration.ofSeconds(15)).method("HEAD", HttpRequest.BodyPublishers.noBody())
+        .build();
+    HttpResponse<Void> resp = http.send(req, HttpResponse.BodyHandlers.discarding());
+    String location = resp.headers().firstValue("location").orElse("");
+    java.util.regex.Matcher m = java.util.regex.Pattern.compile("/releases/tag/v?([^/?#]+)")
+        .matcher(location);
+    if (resp.statusCode() / 100 != 3 || !m.find()) {
+      throw new java.io.IOException("HTTP " + resp.statusCode() + " from " + LATEST_URL
+          + (location.isEmpty() ? "" : " -> " + location));
+    }
+    return m.group(1);
+  }
+
+  /**
+   * Highest version among the runner jars already in the cache.
+   *
+   * @param data jar cache directory
+   * @return version string, or null when the cache is empty
+   * @throws Exception on I/O failure while listing the directory
+   */
+  private static String newestCachedVersion(Path data) throws Exception {
+    if (!Files.isDirectory(data)) {
+      return null;
+    }
+    try (java.util.stream.Stream<Path> files = Files.list(data)) {
+      return files.map(p -> JAR_VERSION.matcher(p.getFileName().toString()))
+          .filter(java.util.regex.Matcher::matches).map(m -> m.group(1))
+          .max(NeqsimMcpLauncher::compareVersions).orElse(null);
+    }
+  }
+
+  /**
+   * Numeric-aware comparison of dotted versions ({@code 3.21.0 &gt; 3.9.1}).
+   *
+   * @param a first version
+   * @param b second version
+   * @return negative, zero or positive as for {@link Comparable}
+   */
+  private static int compareVersions(String a, String b) {
+    String[] pa = a.split("[.-]");
+    String[] pb = b.split("[.-]");
+    for (int i = 0; i < Math.max(pa.length, pb.length); i++) {
+      String x = i < pa.length ? pa[i] : "0";
+      String y = i < pb.length ? pb[i] : "0";
+      int c;
+      if (x.matches("\\d+") && y.matches("\\d+")) {
+        c = Long.compare(Long.parseLong(x), Long.parseLong(y));
+      } else {
+        c = x.compareTo(y);
+      }
+      if (c != 0) {
+        return c;
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Deletes every other runner jar in the cache once a newer one is verified, so tracking
+   * {@code latest} does not accumulate ~90 MB per release.
+   *
+   * @param data jar cache directory
+   * @param keep the jar that was just installed
+   * @throws Exception on I/O failure while listing the directory
+   */
+  private static void pruneOtherJars(Path data, Path keep) throws Exception {
+    try (java.util.stream.Stream<Path> files = Files.list(data)) {
+      List<Path> old = files
+          .filter(p -> JAR_VERSION.matcher(p.getFileName().toString()).matches()
+              && !p.getFileName().equals(keep.getFileName()))
+          .toList();
+      for (Path p : old) {
+        try {
+          Files.deleteIfExists(p);
+          System.err.println("[neqsim-mcp] removed superseded " + p.getFileName());
+        } catch (java.io.IOException e) {
+          System.err.println("[neqsim-mcp] could not remove " + p + ": " + e.getMessage());
+        }
+      }
+    }
   }
 
   /**
@@ -227,11 +512,21 @@ public class NeqsimMcpLauncher {
    * @throws Exception on I/O failure while listing the target folder
    */
   private static Path localRunnerJar(Path checkout) throws Exception {
-    Path target = checkout.resolve("neqsim-mcp-server").resolve("target");
-    if (!Files.isDirectory(target)) {
+    return newestRunnerJar(checkout.resolve("neqsim-mcp-server").resolve("target"));
+  }
+
+  /**
+   * Most recently modified {@code *-runner.jar} in a folder.
+   *
+   * @param dir folder to scan (may not exist)
+   * @return the jar path, or null when there is none
+   * @throws Exception on I/O failure while listing the folder
+   */
+  private static Path newestRunnerJar(Path dir) throws Exception {
+    if (!Files.isDirectory(dir)) {
       return null;
     }
-    try (java.util.stream.Stream<Path> files = Files.list(target)) {
+    try (java.util.stream.Stream<Path> files = Files.list(dir)) {
       return files.filter(p -> p.getFileName().toString().endsWith("-runner.jar"))
           .max((a, b) -> {
             try {
@@ -241,6 +536,74 @@ public class NeqsimMcpLauncher {
             }
           }).orElse(null);
     }
+  }
+
+  /**
+   * Copies a jar shipped beside the launcher into the cache when the cache holds nothing as
+   * new. The side-car {@code .sha256} is verified when present. The latest-release stamp is
+   * written with an expired timestamp so an online start still checks for something newer
+   * while an offline start falls back to the seeded version.
+   *
+   * @param servers the plugin's {@code servers} folder
+   * @param data jar cache directory
+   * @throws Exception on I/O failure or checksum mismatch
+   */
+  private static void seedFromBundle(Path servers, Path data) throws Exception {
+    Path bundled = newestRunnerJar(servers);
+    if (bundled == null) {
+      return;
+    }
+    java.util.regex.Matcher m = JAR_VERSION.matcher(bundled.getFileName().toString());
+    if (!m.matches()) {
+      return;
+    }
+    String version = m.group(1);
+    Path target = data.resolve(bundled.getFileName());
+    if (Files.isRegularFile(target)) {
+      return;
+    }
+    String cached = newestCachedVersion(data);
+    if (cached != null && compareVersions(cached, version) >= 0) {
+      return;
+    }
+    Path sideCar = bundled.resolveSibling(bundled.getFileName() + ".sha256");
+    if (Files.isRegularFile(sideCar)) {
+      String expected = Files.readString(sideCar, StandardCharsets.UTF_8).trim().split("\\s+")[0]
+          .toLowerCase();
+      String actual = sha256Of(bundled);
+      if (!actual.equals(expected)) {
+        fail("sha256 mismatch for bundled " + bundled.getFileName() + ": expected " + expected
+            + ", got " + actual);
+      }
+    }
+    Files.createDirectories(data);
+    Path tmp = target.resolveSibling(target.getFileName() + ".part-"
+        + ProcessHandle.current().pid());
+    Files.copy(bundled, tmp, StandardCopyOption.REPLACE_EXISTING);
+    Files.move(tmp, target, StandardCopyOption.REPLACE_EXISTING);
+    Path stamp = data.resolve(LATEST_STAMP);
+    if (!Files.exists(stamp)) {
+      Files.writeString(stamp, version + " 0\n", StandardCharsets.UTF_8);
+    }
+    System.err.println("[neqsim-mcp] seeded cache from bundled " + bundled.getFileName());
+  }
+
+  /**
+   * SHA-256 of a file.
+   *
+   * @param file file to digest
+   * @return lower-case hex digest
+   * @throws Exception on I/O failure
+   */
+  private static String sha256Of(Path file) throws Exception {
+    MessageDigest sha = MessageDigest.getInstance("SHA-256");
+    try (InputStream in = new DigestInputStream(Files.newInputStream(file), sha)) {
+      byte[] buf = new byte[1 << 16];
+      while (in.read(buf) != -1) {
+        // digest updated by the stream
+      }
+    }
+    return hex(sha.digest());
   }
 
   /**

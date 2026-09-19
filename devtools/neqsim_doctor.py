@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+import time
 from datetime import datetime
 
 
@@ -393,6 +394,17 @@ def check_mcp_launcher(java_major):
     else:
         _warn("Server jar cached", "not downloaded yet (fetched on first chat session that "
               "uses the plugin; ~85 MB from github.com/equinor/neqsim/releases)")
+    marker = os.path.join(data or cache, "latest-release.txt")
+    if os.path.isfile(marker):
+        try:
+            with open(marker, encoding="utf-8") as handle:
+                parts = handle.read().split()
+            age_h = (time.time() * 1000 - int(parts[1])) / 3.6e6
+            _check("Tracking latest release", True,
+                   "v{v}, checked {h:.0f} h ago (re-checked daily)".format(v=parts[0], h=age_h))
+        except (IndexError, ValueError, OSError):
+            _warn("Tracking latest release", "latest-release.txt unreadable; the launcher "
+                  "re-resolves on next start")
     if java_major is not None and java_major < MCP_MIN_JAVA:
         _check("Server can start", False,
                "Java {m} < {n}".format(m=java_major, n=MCP_MIN_JAVA),
