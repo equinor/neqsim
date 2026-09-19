@@ -36,6 +36,12 @@ import java.util.Properties;
  * {@code $NEQSIM_MCP_JAVA_OPTS} adds JVM options (e.g. -Xmx4g). Downloads honour the operating
  * system proxy settings ({@code java.net.useSystemProxies}).
  *
+ * <p>Source checkout: the properties file is written by the plugin builder and is absent when
+ * the launcher runs from {@code .github/mcp} of an {@code equinor/neqsim} clone (the workspace
+ * {@code .vscode/mcp.json}). There the launcher uses a locally built
+ * {@code neqsim-mcp-server/target/*-runner.jar} when one exists, and otherwise takes the
+ * version from the root {@code pom.xml} {@code <revision>} (without {@code -SNAPSHOT}).
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -79,16 +85,26 @@ public class NeqsimMcpLauncher {
         props.load(in);
       }
     }
+    Path checkout = root.getParent() == null ? null : root.getParent().getParent();
+    String local = System.getenv("NEQSIM_MCP_JAR");
     String version = first(System.getenv("NEQSIM_MCP_VERSION"), opt.get("version"),
         props.getProperty("version"));
-    if (version == null) {
+    if (version == null && !Files.exists(propsFile) && checkout != null
+        && Files.isRegularFile(checkout.resolve("pom.xml"))) {
+      Path built = localRunnerJar(checkout);
+      if ((local == null || local.isEmpty()) && built != null) {
+        local = built.toString();
+        System.err.println("[neqsim-mcp] source checkout: using locally built " + built);
+      }
+      version = pomRevision(checkout.resolve("pom.xml"));
+    }
+    if (version == null && (local == null || local.isEmpty())) {
       fail("server version unknown: " + propsFile + " is missing or lacks 'version'");
     }
     String jarName = props.getProperty("jar", "neqsim-mcp-server-" + version + "-runner.jar");
     String base = props.getProperty("download", RELEASES + version + "/");
 
     Path jar;
-    String local = System.getenv("NEQSIM_MCP_JAR");
     if (local != null && !local.isEmpty()) {
       jar = Paths.get(local);
       if (!Files.isRegularFile(jar)) {
@@ -201,6 +217,44 @@ public class NeqsimMcpLauncher {
     }
     Path servers = Paths.get(source).toAbsolutePath().getParent();
     return servers == null || servers.getParent() == null ? null : servers.getParent().toString();
+  }
+
+  /**
+   * Newest {@code neqsim-mcp-server/target/*-runner.jar} of a source checkout.
+   *
+   * @param checkout repository root containing {@code pom.xml}
+   * @return the jar path, or null when the module has not been built
+   * @throws Exception on I/O failure while listing the target folder
+   */
+  private static Path localRunnerJar(Path checkout) throws Exception {
+    Path target = checkout.resolve("neqsim-mcp-server").resolve("target");
+    if (!Files.isDirectory(target)) {
+      return null;
+    }
+    try (java.util.stream.Stream<Path> files = Files.list(target)) {
+      return files.filter(p -> p.getFileName().toString().endsWith("-runner.jar"))
+          .max((a, b) -> {
+            try {
+              return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b));
+            } catch (java.io.IOException e) {
+              return 0;
+            }
+          }).orElse(null);
+    }
+  }
+
+  /**
+   * Release version from a Maven pom's {@code <revision>} property.
+   *
+   * @param pom path to {@code pom.xml}
+   * @return the revision without a {@code -SNAPSHOT} suffix, or null when absent
+   * @throws Exception when the pom cannot be read
+   */
+  private static String pomRevision(Path pom) throws Exception {
+    java.util.regex.Matcher m = java.util.regex.Pattern
+        .compile("<revision>\\s*([^<\\s]+)\\s*</revision>")
+        .matcher(Files.readString(pom, StandardCharsets.UTF_8));
+    return m.find() ? m.group(1).replace("-SNAPSHOT", "") : null;
   }
 
   /**
