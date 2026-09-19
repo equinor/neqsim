@@ -8,7 +8,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 /** Analytical dispatch examples; prescribed coefficients test units/precedence, not fitted accuracy. */
 class ComponentCorrelationSpecTest {
   @ParameterizedTest
-  @ValueSource(strings = { "pow10", "pow10KPa", "exp", "log", "legacy-dippr", "loglog" })
+  @ValueSource(strings = {"pow10", "pow10KPa", "exp", "log", "legacy-dippr", "loglog"})
   void eachCorrelationFormPublishesItsAnalyticalPressure(String form) {
     Component component = new ComponentSrk("i-pentane", 1.0, 1.0, 0);
     component.antoineLiqVapPresType = form;

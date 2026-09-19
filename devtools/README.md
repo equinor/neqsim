@@ -117,6 +117,14 @@ neqsim doctor                # full check, including the built JAR
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
+#    Start over from a blank slate (only what NeqSim installed is removed —
+#    core, community and enterprise agents/skills plus their ~/.copilot exports;
+#    anything else in ~/.copilot is left alone). Preview first with --dry-run:
+neqsim agent remove --all --with-skills --dry-run
+neqsim agent remove --all --with-skills --yes
+#    Or per catalog / per kind:
+neqsim agent remove --all --source private --yes    # enterprise agents only
+neqsim skill remove --all --source community --yes  # community skills only
 
 # 5. Choose where solved tasks are saved (optional; defaults to <repo>\task_solve)
 neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder

@@ -16,7 +16,7 @@ class SaturationTemperatureTuningTest extends neqsim.NeqSimTest {
 
   @Test
   void nearBoundarySearchAvoidsGlobalScan() {
-    for (double factor : new double[] { 0.5, 1.0, 1.5 }) {
+    for (double factor : new double[] {0.5, 1.0, 1.5}) {
       SystemInterface referenceFluid = createFluid(factor);
       SaturationTemperature reference = new SaturationTemperature(referenceFluid);
       CountingOperations referenceOperations = new CountingOperations(referenceFluid);
@@ -89,12 +89,12 @@ class SaturationTemperatureTuningTest extends neqsim.NeqSimTest {
   }
 
   private static SystemInterface createFluid(double heavyFactor) {
-    String[] names = { "CO2", "nitrogen", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+    String[] names = {"CO2", "nitrogen", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
         "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "n-heptane", "c-hexane", "benzene", "n-octane", "c-C7", "toluene",
-        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
-    double[] amounts = { 0.00645, 0.00966, 0.949, 0.0258, 0.00352, 0.00152, 0.000881, 0.00079, 0.000395, 0.000401,
+        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12"};
+    double[] amounts = {0.00645, 0.00966, 0.949, 0.0258, 0.00352, 0.00152, 0.000881, 0.00079, 0.000395, 0.000401,
         0.000122, 0.000198, 0.000133, 0.000798, 1.65e-5, 3.39e-5, 0.000487, 3.62e-5, 2.57e-5, 5.81e-5, 1.7e-5, 1.16e-5,
-        0.0, 0.0 };
+        0.0, 0.0};
     SystemInterface fluid = new SystemUMRPRUMCEos(280.0, 52.1);
     for (int index = 0; index < names.length; index++) {
       fluid.addComponent(names[index], amounts[index] * (index >= 9 ? heavyFactor : 1.0));

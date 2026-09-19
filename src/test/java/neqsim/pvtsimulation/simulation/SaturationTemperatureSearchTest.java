@@ -76,8 +76,8 @@ class SaturationTemperatureSearchTest extends neqsim.NeqSimTest {
   @Test
   void invalidBoundsAreRejectedWithoutMutatingTheFluid() {
     SaturationTemperature simulation = simulationAt(290.0, temperature -> temperature < 291.0);
-    double[][] invalidBounds = { { Double.NaN, 320.0 }, { 260.0, Double.POSITIVE_INFINITY }, { 29.0, 320.0 },
-        { 260.0, 1201.0 }, { 300.0, 300.0 }, { 320.0, 260.0 } };
+    double[][] invalidBounds = {{Double.NaN, 320.0}, {260.0, Double.POSITIVE_INFINITY}, {29.0, 320.0}, {260.0, 1201.0},
+        {300.0, 300.0}, {320.0, 260.0}};
     for (double[] bounds : invalidBounds) {
       assertThrows(IllegalArgumentException.class, () -> simulation.setTemperatureSearchBounds(bounds[0], bounds[1]));
     }

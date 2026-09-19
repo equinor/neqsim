@@ -41,7 +41,7 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
 
 def _args(**overrides):
     base = dict(set_version=None, bump=None, check=False, python="", mcp_version="9.9.9",
-                toolkit_ref="master")
+                toolkit_ref=None)
     base.update(overrides)
     return SimpleNamespace(**base)
 
@@ -91,9 +91,42 @@ class BuildPluginTest(unittest.TestCase):
         self.assertIn("PINNED_PYTHON = ''", hook_py)
         self.assertNotIn(sys.executable, hook_py)
         self.assertIn('os.environ.get("NEQSIM_PYTHON")', hook_py)
+        # the emitted hook is valid Python and installs in a detached worker
+        compile(hook_py, "install_skill_packages.py", "exec")
+        self.assertIn('"--run"', hook_py)
+        self.assertIn("plugin-install", hook_py)
         self.assertTrue((plugin / "pyproject.toml").exists())
         self.assertEqual(result["skills"], 2)
         self.assertEqual(result["agents"], 2)
+
+    def test_vendored_toolkit(self):
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+                              False, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
+        known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
+        result = bap.build_plugin(spec, self.out, known, _args())
+        self.assertEqual(result["errors"], [])
+        toolkit = self.out / "core" / bap.TOOLKIT_SUBDIR
+        self.assertTrue((toolkit / "pyproject.toml").exists())
+        self.assertTrue((toolkit / "neqsim_cli.py").exists())
+        self.assertTrue((toolkit / "neqsim_runner" / "__init__.py").exists())
+        self.assertTrue((toolkit / "task_template" / "step3_report" / "generate_report.py").exists())
+        self.assertFalse((toolkit / "test_new_task.py").exists())
+        self.assertFalse((toolkit / "unisim_reader.py").exists())
+        hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("'${PLUGIN_ROOT}/toolkit'", hook_py)
+        self.assertNotIn("git+https", hook_py)
+
+    def test_toolkit_ref_switches_to_git_requirement(self):
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+                              False, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
+        known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
+        result = bap.build_plugin(spec, self.out, known, _args(toolkit_ref="v9.9.9"))
+        self.assertEqual(result["errors"], [])
+        self.assertFalse((self.out / "core" / bap.TOOLKIT_SUBDIR).exists())
+        hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("neqsim.git@v9.9.9#subdirectory=devtools", hook_py)
 
     def test_unresolved_required_skill_is_a_warning(self):
         result = self._build()

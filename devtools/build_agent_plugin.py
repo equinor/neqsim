@@ -13,11 +13,12 @@ Layout emitted per plugin (https://agent-plugins.org):
       mcp.json                    # portable; copied from .github/mcp/mcp.json
       servers/NeqsimMcpLauncher.java   # `java` source-launch: fetch release jar, run it
       servers/neqsim-mcp-server.properties  # pinned server version (from pom <revision>)
+      toolkit/                    # core only: devtools/ packaged as neqsim-dev-setup (vendored)
       com.github.copilot/
         agents/<id>.agent.md      # rendered with install_agent.render_vscode_agent
         rules/*.instructions.md   # copied from .github/instructions
         hooks/hooks.json          # SessionStart (sh / PowerShell launchers below)
-      scripts/install_skill_packages.{sh,ps1,py}  # pip install -e the bundled skills
+      scripts/install_skill_packages.{sh,ps1,py}  # pip install the bundled packages (background)
       automations/                # reserved (empty)
       BUILD_MANIFEST.json         # content hash + inputs, drives the version gate
 
@@ -60,18 +61,27 @@ CANONICAL_MCP = REPO_ROOT / ".github" / "mcp" / "mcp.json"
 MCP_SERVERS_DIR = REPO_ROOT / ".github" / "mcp" / "servers"
 ROOT_POM = REPO_ROOT / "pom.xml"
 CORE_INSTRUCTIONS = REPO_ROOT / ".github" / "instructions"
+DEVTOOLS = REPO_ROOT / "devtools"
+# Sub-folder of the core plugin that carries the vendored toolkit (devtools/ packaged as
+# `neqsim-dev-setup`). The hook pip-installs it from disk, so a new user needs neither
+# git nor a clone of the NeqSim repository.
+TOOLKIT_SUBDIR = "toolkit"
 # Optional interpreter pinned into the hook for site-specific builds (--python).
 # Unset by default so the package is portable and the content hash does not
 # depend on the build machine; the hook then resolves NEQSIM_PYTHON at run time.
 DEFAULT_PYTHON = os.environ.get("NEQSIM_PLUGIN_PYTHON") or ""
 # The task-solving toolkit (neqsim CLI, neqsim_dev_setup, runner, validators, report
 # generator) is devtools/ packaged as `neqsim-dev-setup`; it pulls the `neqsim` wheel
-# so plugin users get a packaged JAR without a source checkout. `{ref}` is the git ref
-# to install from (--toolkit-ref; a release tag once the tag contains this packaging).
+# so plugin users get a packaged JAR without a source checkout. By default the toolkit
+# is vendored into the plugin (TOOLKIT_SUBDIR) and installed from disk. `--toolkit-ref`
+# switches to a git requirement on the given ref instead (needs git on the user's PATH).
 # Override the whole spec with NEQSIM_TOOLKIT_REQUIREMENT once published to PyPI.
 TOOLKIT_REQUIREMENT_TEMPLATE = (
     "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git@{ref}#subdirectory=devtools")
 TOOLKIT_REQUIREMENT = os.environ.get("NEQSIM_TOOLKIT_REQUIREMENT") or TOOLKIT_REQUIREMENT_TEMPLATE
+# Placeholder in a pip target that the hook replaces with the plugin root at run time.
+PLUGIN_ROOT_TOKEN = "${PLUGIN_ROOT}"
+VENDORED_TOOLKIT_REQUIREMENT = PLUGIN_ROOT_TOKEN + "/" + TOOLKIT_SUBDIR
 SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
 SKIP_SUFFIXES = {".pyc"}
 
@@ -107,7 +117,7 @@ def default_specs() -> List[PluginSpec]:
             "runner, validators, report generator) installed on first session.",
             [REPO_ROOT / ".github" / "skills"], [REPO_ROOT / ".github" / "agents"],
             [CORE_INSTRUCTIONS], True, [],
-            pip_targets=[TOOLKIT_REQUIREMENT],
+            pip_targets=[VENDORED_TOOLKIT_REQUIREMENT],
         ),
         PluginSpec(
             "neqsim-community",
@@ -192,43 +202,121 @@ def write_agent(agent_id: str, source: Path, dest_root: Path, known_skills: set,
 HOOK_PY = '''"""SessionStart hook: install this plugin's Python packages.
 
 Targets: the bundled skills (editable, when this plugin ships a pyproject) and
-any pinned requirement specs such as the NeqSim task-solving toolkit. Target
-interpreter, in order: NEQSIM_PYTHON, a pinned build-time interpreter (if any),
-the interpreter running this script. Never selects or creates an environment.
-Exits 0 on every path so the hook cannot block a chat session; pip output goes
-to stderr because VS Code parses hook stdout as JSON.
+any pinned requirement specs such as the NeqSim task-solving toolkit (vendored
+under ${{PLUGIN_ROOT}}/toolkit, so no git clone is needed). Target interpreter, in
+order: NEQSIM_PYTHON, a pinned build-time interpreter (if any), the interpreter
+running this script. Never selects or creates an environment.
+
+The install runs in a detached background process so the first chat prompt is
+not delayed; progress is written to ~/.neqsim/plugin-install/<plugin>/install.log
+and a version stamp marks success. Exits 0 on every path so the hook cannot block
+a chat session; stdout carries only the JSON that VS Code parses.
 """
+import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
+LOCK_MAX_AGE_S = 45 * 60
 
 root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
-candidates = [os.environ.get("NEQSIM_PYTHON"), PINNED_PYTHON, sys.executable]
-python = next((p for p in candidates if p and Path(p).exists()), None)
-if python is None:
-    sys.exit(0)
-stamp = Path(os.environ.get("PLUGIN_DATA") or root) / ".skills_installed_version"
-version = (root / "plugin.json").read_text(encoding="utf-8")
-if stamp.exists() and stamp.read_text(encoding="utf-8") == version:
-    sys.exit(0)
-ok = True
-if EDITABLE_SELF:
-    ok &= subprocess.run(
-        [python, "-m", "pip", "install", "-e", str(root), "--no-deps", "-q"],
-        stdout=sys.stderr, stderr=sys.stderr, check=False).returncode == 0
-for req in REQUIREMENTS:
-    ok &= subprocess.run(
-        [python, "-m", "pip", "install", req, "-q"],
-        stdout=sys.stderr, stderr=sys.stderr, check=False).returncode == 0
-if ok:
-    stamp.parent.mkdir(parents=True, exist_ok=True)
-    stamp.write_text(version, encoding="utf-8")
-sys.exit(0)
+plugin_name = json.loads((root / "plugin.json").read_text(encoding="utf-8")).get("name", root.name)
+version = json.loads((root / "plugin.json").read_text(encoding="utf-8")).get("version", "")
+state = Path.home() / ".neqsim" / "plugin-install" / plugin_name
+stamp = state / "installed_version"
+lock = state / "install.lock"
+log = state / "install.log"
+
+
+def pick_python():
+    for cand in (os.environ.get("NEQSIM_PYTHON"), PINNED_PYTHON, sys.executable):
+        if cand and Path(cand).exists():
+            return cand
+    return None
+
+
+def targets():
+    for req in REQUIREMENTS:
+        yield req.replace("${{PLUGIN_ROOT}}", str(root))
+
+def stamp_text(python):
+    """Version + interpreter, so a changed NEQSIM_PYTHON triggers a fresh install."""
+    return version + "\\n" + str(Path(python).resolve())
+
+def run_install(python):
+    """Foreground worker (called with --run in the detached process)."""
+    state.mkdir(parents=True, exist_ok=True)
+    with open(str(log), "a", encoding="utf-8") as out:
+        out.write("== {{}} {{}} -> {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), plugin_name, python))
+        out.flush()
+        ok = True
+        if EDITABLE_SELF:
+            ok &= subprocess.run([python, "-m", "pip", "install", "-e", str(root), "--no-deps"],
+                                 stdout=out, stderr=out, check=False).returncode == 0
+        for req in targets():
+            ok &= subprocess.run([python, "-m", "pip", "install", req],
+                                 stdout=out, stderr=out, check=False).returncode == 0
+        out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), "OK" if ok else "FAILED"))
+    if ok:
+        stamp.write_text(stamp_text(python), encoding="utf-8")
+    try:
+        lock.unlink()
+    except OSError:
+        pass
+    return 0 if ok else 1
+
+
+def spawn_worker(python):
+    state.mkdir(parents=True, exist_ok=True)
+    lock.write_text(str(os.getpid()), encoding="utf-8")
+    kwargs = dict(stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                  close_fds=True)
+    if os.name == "nt":
+        # detached + new process group + no window; try to leave the caller's job object too
+        flags = 0x00000008 | 0x00000200 | 0x08000000
+        try:
+            subprocess.Popen([python, str(Path(__file__).resolve()), "--run"],
+                             creationflags=flags | 0x01000000, **kwargs)
+            return
+        except OSError:
+            pass
+        kwargs["creationflags"] = flags
+    else:
+        kwargs["start_new_session"] = True
+    subprocess.Popen([python, str(Path(__file__).resolve()), "--run"], **kwargs)
+
+
+def main():
+    python = pick_python()
+    if "--run" in sys.argv:
+        return run_install(python) if python else 1
+    if python is None:
+        marker = state / "no_python_notified"
+        if marker.exists():
+            return 0
+        state.mkdir(parents=True, exist_ok=True)
+        marker.write_text(version, encoding="utf-8")
+        print(json.dumps({{"systemMessage": "NeqSim plugin '{{}}': no Python interpreter found "
+                          "(set NEQSIM_PYTHON or put python on PATH); MCP tools still work, the task "
+                          "toolkit is not installed.".format(plugin_name)}}))
+        return 0
+    if stamp.exists() and stamp.read_text(encoding="utf-8") == stamp_text(python):
+        return 0
+    if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_MAX_AGE_S:
+        return 0
+    spawn_worker(python)
+    print(json.dumps({{"systemMessage": "NeqSim plugin '{{}}' v{{}}: installing its Python packages into "
+                      "{{}} in the background (first session only, a few minutes). Log: {{}}. Run "
+                      "/neqsim-setup afterwards to verify.".format(plugin_name, version, python, log)}}))
+    return 0
+
+
+sys.exit(main())
 '''
 
 # POSIX launcher: first interpreter that exists wins; silent no-op otherwise.
@@ -286,7 +374,7 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
                     "command": "sh \"${PLUGIN_ROOT}/scripts/install_skill_packages.sh\"",
                     "windows": "powershell -NoProfile -ExecutionPolicy Bypass -File "
                                "\"${PLUGIN_ROOT}/scripts/install_skill_packages.ps1\"",
-                    "timeout": 300,
+                    "timeout": 60,
                 }
             ]
         }
@@ -299,6 +387,54 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
             src = pip_root / name
             if src.exists():
                 shutil.copy2(str(src), str(dest_root / name))
+
+
+def _toml_string_list(text: str, key: str) -> List[str]:
+    """Values of a top-level ``key = [ ... ]`` array of strings in a TOML document."""
+    match = re.search(r"^\s*" + re.escape(key) + r"\s*=\s*\[(.*?)\]", text, re.S | re.M)
+    if not match:
+        return []
+    return re.findall(r"\"([^\"]+)\"", match.group(1))
+
+
+def toolkit_files(devtools: Path = DEVTOOLS) -> List[Path]:
+    """Files that make up the ``neqsim-dev-setup`` distribution, per its pyproject.
+
+    Only the declared ``py-modules`` and ``packages`` travel (plus ``pyproject.toml``);
+    the many one-off maintenance scripts and tests in devtools/ stay behind.
+    """
+    pyproject = devtools / "pyproject.toml"
+    text = pyproject.read_text(encoding="utf-8")
+    files = [pyproject]
+    for module in _toml_string_list(text, "py-modules"):
+        path = devtools / (module + ".py")
+        if not path.exists():
+            raise SystemExit("toolkit module listed in pyproject is missing: {}".format(path))
+        files.append(path)
+    for package in _toml_string_list(text, "packages"):
+        pkg_dir = devtools.joinpath(*package.split("."))
+        if not pkg_dir.is_dir():
+            raise SystemExit("toolkit package listed in pyproject is missing: {}".format(pkg_dir))
+        for path in sorted(pkg_dir.rglob("*")):
+            if path.is_file() and not any(part in SKIP_DIRS for part in path.parts) \
+                    and path.suffix not in SKIP_SUFFIXES:
+                files.append(path)
+    return files
+
+
+def write_toolkit(dest_root: Path, devtools: Path = DEVTOOLS) -> int:
+    """Vendor the toolkit distribution into ``<plugin>/toolkit`` for a local pip install.
+
+    Returns the number of files copied.
+    """
+    out = dest_root / TOOLKIT_SUBDIR
+    count = 0
+    for src in toolkit_files(devtools):
+        dest = out / src.relative_to(devtools)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(str(src), str(dest))
+        count += 1
+    return count
 
 
 # ----------------------------------------------------------------------------
@@ -405,8 +541,14 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
     if spec.include_mcp:
         write_mcp(staging, args.mcp_version, errors)
 
-    write_hooks(staging, spec.pip_install_roots, args.python,
-                [t.format(ref=args.toolkit_ref) for t in spec.pip_targets])
+    pip_targets = list(spec.pip_targets)
+    if VENDORED_TOOLKIT_REQUIREMENT in pip_targets:
+        if args.toolkit_ref:
+            pip_targets = [TOOLKIT_REQUIREMENT.format(ref=args.toolkit_ref)
+                           if t == VENDORED_TOOLKIT_REQUIREMENT else t for t in pip_targets]
+        else:
+            write_toolkit(staging)
+    write_hooks(staging, spec.pip_install_roots, args.python, pip_targets)
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
@@ -492,10 +634,10 @@ def main(argv=None) -> int:
     parser.add_argument("--mcp-version", default=None,
                         help="NeqSim release whose MCP server jar the plugin downloads "
                              "(default: root pom <revision> without -SNAPSHOT)")
-    parser.add_argument("--toolkit-ref", default="master",
-                        help="git ref of equinor/neqsim the core plugin's SessionStart hook installs "
-                             "the task toolkit (devtools/) from; pin a release tag that contains the "
-                             "neqsim-dev-setup 0.2 packaging")
+    parser.add_argument("--toolkit-ref", default=None,
+                        help="install the task toolkit (devtools/) from this git ref of equinor/neqsim "
+                             "instead of the copy vendored into the plugin (default: vendored, "
+                             "no git needed on the user's machine)")
     args = parser.parse_args(argv)
     if args.mcp_version is None:
         args.mcp_version = neqsim_release_version()

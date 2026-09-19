@@ -70,9 +70,9 @@ class ModelSpecHarnessTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "empty", "version", "header", "duplicate", "trailing-column", "unknown-fixture",
+  @ValueSource(strings = {"empty", "version", "header", "duplicate", "trailing-column", "unknown-fixture",
       "unknown-property", "nan-reference", "nan-tolerance", "negative-tolerance", "unit", "domain", "source",
-      "provenance", "amount", "absent-reference", "unknown-reason", "outcome", "phase", "operation", "mixing-rule" })
+      "provenance", "amount", "absent-reference", "unknown-reason", "outcome", "phase", "operation", "mixing-rule"})
   void malformedCatalogFailsClosed(String fault) throws IOException {
     String original = catalog();
     String[] lines = original.split("\n");
@@ -157,7 +157,7 @@ class ModelSpecHarnessTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, -1.0, 1e38, 1e96, 0.306 })
+  @ValueSource(doubles = {0.0, -1.0, 1e38, 1e96, 0.306})
   void incorrectFiniteNumbersFail(double actual) throws IOException {
     ModelSpec acetone280 = ModelSpec.load().get(0);
     assertThrows(AssertionError.class, () -> ModelSpecTest.check(acetone280, actual));
@@ -166,7 +166,7 @@ class ModelSpecHarnessTest {
   @Test
   void nonfiniteAndWrongAbsenceCannotPass() throws IOException {
     ModelSpec value = ModelSpec.load().get(0);
-    for (double bad : new double[] { Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+    for (double bad : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
       assertThrows(AssertionError.class, () -> ModelSpecTest.check(value, bad));
     }
     for (ModelSpec spec : ModelSpec.load()) {
