@@ -23,7 +23,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
     super(value, unit);
   }
 
-  private boolean isAllowedUnit(String unit) {
+  protected boolean isAllowedUnit(String unit) {
     for (String allowedUnit : ALLOWED_UNITS) {
       if (allowedUnit.equals(unit)) {
         return true;
@@ -76,27 +76,6 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   }
 
   /**
-   * Convert the current energy to the specified unit.
-   *
-   * <p>
-   * Converts the stored value from its original unit to the target unit. Supported units: J, kJ, MJ, Wh, kWh, MWh, BTU,
-   * kcal. Examples:
-   * <ul>
-   * <li>EnergyUnit(1000, "kJ").getValue("J") = 1000000</li>
-   * <li>EnergyUnit(3.6, "MJ").getValue("kWh") = 1.0</li>
-   * <li>EnergyUnit(1055, "BTU").getValue("kJ") ≈ 1114</li>
-   * </ul>
-   *
-   * @param toUnit target unit name (one of the supported units)
-   * @return converted value in the target unit
-   * @throws RuntimeException if the target unit is not supported
-   */
-  @Override
-  public double getValue(String toUnit) {
-    return getSIvalue() / getConversionFactor(toUnit);
-  }
-
-  /**
    * Convert an energy value between supported units.
    *
    * <p>
@@ -118,9 +97,24 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
     return new EnergyUnit(value, unit).getValue(toUnit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Convert the current energy to the specified unit.
+   *
+   * <p>
+   * Converts the stored value from its original unit to the target unit. Supported units: J, kJ, MJ, Wh, kWh, MWh, BTU,
+   * kcal. Examples:
+   * <ul>
+   * <li>EnergyUnit(1000, "kJ").getValue("J") = 1000000</li>
+   * <li>EnergyUnit(3.6, "MJ").getValue("kWh") = 1.0</li>
+   * <li>EnergyUnit(1055, "BTU").getValue("kJ") ≈ 1114</li>
+   * </ul>
+   *
+   * @param toUnit target unit name (one of the supported units)
+   * @return converted value in the target unit
+   * @throws RuntimeException if the target unit is not supported
+   */
   @Override
   public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
+    return new EnergyUnit(value, fromUnit).getValue(toUnit);
   }
 }

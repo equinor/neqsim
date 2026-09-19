@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -17,6 +19,21 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class FilterTest {
+
+  /** Verifies pressure drops use only the unit scale, including gauge-unit aliases. */
+  @ParameterizedTest
+  @CsvSource({"bar, 1.0", "bara, 1.0", "barg, 1.0", "Pa, 0.00001", "kPa, 0.01", "MPa, 10.0", "psi, 0.0689475729317831",
+      "psia, 0.0689475729317831", "psig, 0.0689475729317831", "atm, 1.01325"})
+  void testDifferentialPressureUnitScales(String unit, double barPerUnit) {
+    Filter filter = new Filter("pressure scale");
+    filter.setDeltaP(2.0, unit);
+    assertEquals(2.0 * barPerUnit, filter.getDeltaP(), 1.0e-12);
+    assertEquals(filter.getDeltaP(), filter.getCleanDeltaP(), 1.0e-12);
+    filter.setDeltaP(0.0, unit);
+    assertEquals(0.0, filter.getDeltaP(), 0.0);
+    filter.setDeltaP(-2.0, unit);
+    assertEquals(0.0, filter.getDeltaP(), 0.0);
+  }
 
   /**
    * Creates a methane stream for filter tests.

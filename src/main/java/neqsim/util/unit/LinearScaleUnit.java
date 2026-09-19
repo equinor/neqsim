@@ -49,6 +49,12 @@ public interface LinearScaleUnit extends Unit {
    */
   double getConversionFactor(String unit);
 
+  /** {@inheritDoc} */
+  @Override
+  public default double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
+  }
+
   /**
    * <p>
    * Convert a value from one unit to another using linear scale factors.

@@ -61,27 +61,6 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
   }
 
   /**
-   * Convert the current power to the specified unit.
-   *
-   * <p>
-   * Converts the stored value from its original unit to the target unit. Supported units: W, kW, MW, hp, BTU/hr.
-   * Examples:
-   * <ul>
-   * <li>PowerUnit(1000, "kW").getValue("W") = 1000000</li>
-   * <li>PowerUnit(1, "MW").getValue("kW") = 1000</li>
-   * <li>PowerUnit(745.7, "hp").getValue("W") ≈ 556000</li>
-   * </ul>
-   *
-   * @param toUnit target unit name (one of the supported units)
-   * @return converted value in the target unit
-   * @throws RuntimeException if the target unit is not supported
-   */
-  @Override
-  public double getValue(String toUnit) {
-    return getSIvalue() / getConversionFactor(toUnit);
-  }
-
-  /**
    * Convert a power value between supported units.
    *
    * <p>
@@ -101,11 +80,5 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
    */
   public static double convert(double value, String unit, String toUnit) {
     return new PowerUnit(value, unit).getValue(toUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
   }
 }
