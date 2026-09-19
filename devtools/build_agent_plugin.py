@@ -19,6 +19,7 @@ Layout emitted per plugin (https://agent-plugins.org):
         rules/*.instructions.md   # copied from .github/instructions
         hooks/hooks.json          # SessionStart (sh / PowerShell launchers below)
       scripts/install_skill_packages.{sh,ps1,py}  # pip install the bundled packages (background)
+      requirements-live.txt       # skills plugins: the skills' live-path deps (API clients, SSO)
       automations/                # reserved (empty)
       BUILD_MANIFEST.json         # content hash + inputs, drives the version gate
 
@@ -45,6 +46,7 @@ import os
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -84,8 +86,19 @@ PLUGIN_ROOT_TOKEN = "${PLUGIN_ROOT}"
 VENDORED_TOOLKIT_REQUIREMENT = PLUGIN_ROOT_TOKEN + "/" + TOOLKIT_SUBDIR
 # `--mcp-version` value that makes the launcher follow the newest NeqSim release.
 MCP_LATEST = "latest"
+# Skills plugins: every bundled skill declares its runtime API clients / SSO libraries
+# as optional extras (``[project.optional-dependencies] live = [...]``) so the package
+# stays importable offline. A plugin-only user never runs ``pip install .[live]``, so
+# the builder aggregates those extras into one requirements file that the SessionStart
+# hook installs (best effort, wheelhouse first). ``dependencies`` is always included.
+LIVE_REQUIREMENTS_FILE = "requirements-live.txt"
+LIVE_EXTRAS = ("live", "network")
 SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
 SKIP_SUFFIXES = {".pyc"}
+# Local state a live API session drops next to a skill (MSAL/DPAPI token cache,
+# dotenv secrets). The skills repos gitignore them, but the builder copies skill
+# folders verbatim from the checkout, so they must be filtered here too.
+SKIP_FILES = {"token_cache.bin", ".env"}
 
 
 class PluginSpec:
@@ -170,7 +183,7 @@ def iter_agents(roots: Iterable[Path]) -> Iterable[Tuple[str, Path]]:
 # ----------------------------------------------------------------------------
 
 def _ignore(_dir: str, names: List[str]) -> List[str]:
-    return [n for n in names if n in SKIP_DIRS or n.endswith(".egg-info")
+    return [n for n in names if n in SKIP_DIRS or n in SKIP_FILES or n.endswith(".egg-info")
             or Path(n).suffix in SKIP_SUFFIXES]
 
 
@@ -230,6 +243,7 @@ from pathlib import Path
 PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
+LIVE_REQUIREMENTS = {live_requirements!r}
 PREFETCH_MCP = {prefetch_mcp!r}
 LOCK_MAX_AGE_S = 45 * 60
 MCP_REFRESH_S = 24 * 3600
@@ -350,6 +364,87 @@ def pip_install(python, req, out):
                           stdout=out, stderr=out, check=False).returncode == 0
 
 
+def install_live_requirements(python, out):
+    """Install the bundled skills' live-path dependencies (API clients, SSO libraries).
+
+    The skills themselves are installed editable with --no-deps because each one
+    declares its runtime clients as optional extras; this file is the builder's
+    aggregate of those extras. Best effort: one pip call for the whole file
+    (wheelhouse first when bundled), then line by line so a single unavailable
+    package does not block the rest. Failures are logged, never fatal - the skill
+    packages stay importable, only their live path needs the missing package.
+    Returns the requirement lines that could not be installed.
+    """
+    if not LIVE_REQUIREMENTS:
+        return []
+    req_file = root / LIVE_REQUIREMENTS
+    if not req_file.is_file():
+        return []
+    reqs = [l.strip() for l in req_file.read_text(encoding="utf-8").splitlines()]
+    reqs = [l for l in reqs if l and not l.startswith("#")]
+    if not reqs:
+        return []
+    out.write("== {{}} live dependencies ({{}} requirements) from {{}}\\n".format(
+        time.strftime("%Y-%m-%d %H:%M:%S"), len(reqs), req_file))
+    out.flush()
+    base = [python, "-m", "pip", "install", "--disable-pip-version-check"]
+    wheels = root / "wheels"
+    if wheels.is_dir() and any(wheels.glob("*.whl")):
+        if subprocess.run(base + ["--no-index", "--find-links", str(wheels), "-r", str(req_file)],
+                          stdout=out, stderr=out, check=False).returncode == 0:
+            out.write("== live dependencies: all {{}} installed from the bundled wheelhouse\\n".format(len(reqs)))
+            return []
+        out.write("== wheelhouse install of live dependencies failed; retrying against the package index\\n")
+        out.flush()
+    if subprocess.run(base + ["-r", str(req_file)], stdout=out, stderr=out, check=False).returncode == 0:
+        out.write("== live dependencies: all {{}} installed\\n".format(len(reqs)))
+        return []
+    out.write("== bulk install failed; installing live dependencies one by one\\n")
+    out.flush()
+    failed = []
+    for req in reqs:
+        if subprocess.run(base + [req], stdout=out, stderr=out, check=False).returncode != 0:
+            failed.append(req)
+    out.write("== live dependencies: {{}} installed, {{}} failed{{}}\\n".format(
+        len(reqs) - len(failed), len(failed), ": " + ", ".join(failed) if failed else ""))
+    return failed
+
+
+def skill_packages():
+    """Top-level import names of the bundled skills (``skills/**/src/<pkg>/__init__.py``)."""
+    names = set()
+    for pattern in ("skills/*/src/*/__init__.py", "skills/*/*/src/*/__init__.py"):
+        for init in root.glob(pattern):
+            names.add(init.parent.name)
+    return sorted(names)
+
+
+def import_check(python, out):
+    """Import every bundled skill package once and log the ones that fail.
+
+    This is the line /neqsim-setup reads to tell a healthy plugin install from one
+    whose live dependencies are missing: ``IMPORT_OK=<n> IMPORT_FAILED=<m>`` followed
+    by one ``FAILED <package> (<error>)`` line per broken import.
+    """
+    pkgs = skill_packages()
+    if not pkgs:
+        return
+    code = ("import importlib, sys\\n"
+            "bad = []\\n"
+            "for name in sys.argv[1:]:\\n"
+            "    try:\\n"
+            "        importlib.import_module(name)\\n"
+            "    except Exception as exc:\\n"
+            "        bad.append('%s (%s: %s)' % (name, type(exc).__name__, exc))\\n"
+            "print('IMPORT_OK=%d IMPORT_FAILED=%d' % (len(sys.argv) - 1 - len(bad), len(bad)))\\n"
+            "for line in bad:\\n"
+            "    print('  FAILED ' + line)\\n")
+    out.write("== {{}} import check of {{}} skill packages\\n".format(
+        time.strftime("%Y-%m-%d %H:%M:%S"), len(pkgs)))
+    out.flush()
+    subprocess.run([python, "-c", code] + pkgs, stdout=out, stderr=out, check=False)
+
+
 def run_install(python):
     """Foreground worker (called with --run in the detached process)."""
     state.mkdir(parents=True, exist_ok=True)
@@ -362,7 +457,14 @@ def run_install(python):
                                  stdout=out, stderr=out, check=False).returncode == 0
         for req in targets():
             ok &= pip_install(python, req, out)
-        out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), "OK" if ok else "FAILED"))
+        failed_live = install_live_requirements(python, out) if ok else []
+        if EDITABLE_SELF and ok:
+            import_check(python, out)
+        status = "OK" if ok else "FAILED"
+        if ok and failed_live:
+            status = "OK (skill packages installed; {{}} live dependencies missing, see above)".format(
+                len(failed_live))
+        out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), status))
     if ok:
         stamp.write_text(stamp_text(python), encoding="utf-8")
     try:
@@ -434,27 +536,74 @@ exit 0
 '''
 
 
+# Hook commands. The Agent Plugins spec says the client expands ``${PLUGIN_ROOT}`` and
+# sets it in the hook's environment; VS Code (1.138, microsoft/vscode#336882) does
+# neither for Agent Plugins-format packages, and PowerShell reads ``${PLUGIN_ROOT}``
+# as an (empty) PowerShell variable anyway, so a plain
+# ``powershell -File "${PLUGIN_ROOT}/scripts/x.ps1"`` fails with "The argument
+# '/scripts/x.ps1' ... does not exist" and the plugin's packages are never
+# installed. Both commands therefore resolve the root themselves, in order:
+# the expanded placeholder (spec-conformant client), the PLUGIN_ROOT /
+# CLAUDE_PLUGIN_ROOT / COPILOT_PLUGIN_ROOT environment variables (Copilot CLI,
+# install scripts), and finally the plugin's own folder under the known VS Code
+# plugin install roots (``~/.vscode/agent-plugins/<host>/<owner>/<marketplace>/<name>``
+# or the older ``agentPlugins`` user-data folder), matched on the plugin name.
+_HOOK_WINDOWS_TEMPLATE = (
+    "powershell -NoProfile -ExecutionPolicy Bypass -Command \""
+    "$r = '${{PLUGIN_ROOT}}'; "
+    "if (-not $r -or $r.Contains('{{PLUGIN_ROOT}}')) {{ $r = $env:PLUGIN_ROOT }}; "
+    "if (-not $r) {{ $r = $env:CLAUDE_PLUGIN_ROOT }}; "
+    "if (-not $r) {{ $r = $env:COPILOT_PLUGIN_ROOT }}; "
+    "if (-not $r) {{ $r = Get-ChildItem -Path $env:USERPROFILE\\.vscode\\agent-plugins, "
+    "$env:APPDATA\\Code\\agentPlugins -Recurse -Depth 4 -Filter plugin.json "
+    "-ErrorAction SilentlyContinue | Where-Object {{ $_.Directory.Name -eq '{name}' }} | "
+    "Sort-Object LastWriteTime -Descending | Select-Object -First 1 | "
+    "ForEach-Object {{ $_.DirectoryName }} }}; "
+    "if ($r) {{ $env:PLUGIN_ROOT = $r; & (Join-Path $r 'scripts/install_skill_packages.ps1') }}\"")
+
+_HOOK_POSIX_TEMPLATE = (
+    "sh -c 'r=\"${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT:-$COPILOT_PLUGIN_ROOT}}}}\"; "
+    "[ -n \"$r\" ] || r=$(ls -d \"$HOME\"/.vscode/agent-plugins/*/*/*/{name} "
+    "\"$HOME\"/.config/Code/agentPlugins/*/*/*/{name} "
+    "\"$HOME/Library/Application Support/Code/agentPlugins\"/*/*/*/{name} 2>/dev/null | head -n 1); "
+    "[ -n \"$r\" ] && PLUGIN_ROOT=\"$r\" sh \"$r/scripts/install_skill_packages.sh\"; exit 0'")
+
+
+def hook_commands(plugin_name: str) -> Tuple[str, str]:
+    """``(posix_command, windows_command)`` for the SessionStart hook of ``plugin_name``."""
+    return (_HOOK_POSIX_TEMPLATE.format(name=plugin_name),
+            _HOOK_WINDOWS_TEMPLATE.format(name=plugin_name))
+
+
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
-                requirements: Optional[List[str]] = None, prefetch_mcp: bool = False) -> None:
+                requirements: Optional[List[str]] = None, prefetch_mcp: bool = False,
+                live_requirements: str = "", plugin_name: str = "") -> None:
     """SessionStart hook that installs the plugin's Python packages.
 
     The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
     interpreter at run time (``NEQSIM_PYTHON``, then PATH) and the Python script
     chooses the pip target the same way. ``python`` optionally pins a
-    site-specific interpreter as a fallback candidate. ``${PLUGIN_ROOT}`` is
-    expanded by the client. Idempotent via a version stamp in ``${PLUGIN_DATA}``.
-    With ``prefetch_mcp`` the hook also warms/refreshes the MCP server jar cache.
+    site-specific interpreter as a fallback candidate. The hook commands locate
+    the plugin root themselves (see ``hook_commands``) because the client cannot
+    be relied on to expand ``${PLUGIN_ROOT}``. Idempotent via a version stamp in
+    ``~/.neqsim/plugin-install/<plugin>``. With ``prefetch_mcp`` the hook also
+    warms/refreshes the MCP server jar cache. ``live_requirements`` names the
+    plugin-relative requirements file of the skills' live-path dependencies that
+    the hook installs after the editable install (empty: none).
     """
     requirements = list(requirements or [])
     if not pip_roots and not requirements and not prefetch_mcp:
         return
+    plugin_name = plugin_name or dest_root.name.replace(".staging-", "")
+    posix_command, windows_command = hook_commands(plugin_name)
     hooks_dir = dest_root / "com.github.copilot" / "hooks"
     hooks_dir.mkdir(parents=True, exist_ok=True)
     scripts = dest_root / "scripts"
     scripts.mkdir(parents=True, exist_ok=True)
     (scripts / "install_skill_packages.py").write_text(
         HOOK_PY.format(pinned=python or "", editable_self=bool(pip_roots),
-                       requirements=requirements, prefetch_mcp=bool(prefetch_mcp)),
+                       requirements=requirements, prefetch_mcp=bool(prefetch_mcp),
+                       live_requirements=live_requirements or ""),
         encoding="utf-8")
     (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
     (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
@@ -463,9 +612,8 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
             "SessionStart": [
                 {
                     "type": "command",
-                    "command": "sh \"${PLUGIN_ROOT}/scripts/install_skill_packages.sh\"",
-                    "windows": "powershell -NoProfile -ExecutionPolicy Bypass -File "
-                               "\"${PLUGIN_ROOT}/scripts/install_skill_packages.ps1\"",
+                    "command": posix_command,
+                    "windows": windows_command,
                     "timeout": 60,
                 }
             ]
@@ -487,6 +635,116 @@ def _toml_string_list(text: str, key: str) -> List[str]:
     if not match:
         return []
     return re.findall(r"\"([^\"]+)\"", match.group(1))
+
+
+def _toml_section(text: str, header: str) -> str:
+    """Body of one ``[header]`` table (up to the next table header), or ``""``."""
+    match = re.search(r"^\[" + re.escape(header) + r"\]\s*$(.*?)(?=^\[|\Z)", text, re.S | re.M)
+    return match.group(1) if match else ""
+
+
+def skill_live_requirements(pyproject: Path) -> List[str]:
+    """Runtime requirement specs of one skill: ``[project] dependencies`` plus the
+    ``LIVE_EXTRAS`` optional-dependency groups. Uses ``tomllib`` when available and a
+    regex fallback otherwise, so the builder itself has no third-party dependency.
+    """
+    text = pyproject.read_text(encoding="utf-8")
+    try:
+        import tomllib  # Python 3.11+
+        data = tomllib.loads(text)
+        project = data.get("project", {})
+        specs = list(project.get("dependencies", []))
+        extras = project.get("optional-dependencies", {})
+        for group in LIVE_EXTRAS:
+            specs.extend(extras.get(group, []))
+        return specs
+    except ImportError:
+        specs = _toml_string_list(_toml_section(text, "project"), "dependencies")
+        extras_text = _toml_section(text, "project.optional-dependencies")
+        for group in LIVE_EXTRAS:
+            specs.extend(_toml_string_list(extras_text, group))
+        return specs
+
+
+_DIRECT_URL_RE = re.compile(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)\s*@\s*(\S+)")
+_REQ_NAME_RE = re.compile(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
+
+
+def _norm_name(name: str) -> str:
+    """PEP 503 normalised distribution name (``Enterprise_STID-Evidence`` -> ``enterprise-stid-evidence``)."""
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _project_name(pyproject: Path) -> str:
+    text = pyproject.read_text(encoding="utf-8")
+    match = re.search(r"^\s*name\s*=\s*[\"']([^\"']+)[\"']", _toml_section(text, "project"), re.M)
+    return match.group(1) if match else ""
+
+
+def collect_live_requirements(skill_dirs: Iterable[Path]) -> Tuple[List[str], List[str]]:
+    """Aggregate the skills' live-path requirement specs into one deduplicated list.
+
+    Direct-URL specs (``name @ git+https://...``) are reduced to the bare project
+    name so the file installs without git and can be mirrored into a wheelhouse
+    with ``pip download``; the original spec is kept as a comment. Requirements
+    on sibling skills (``enterprise-stid-evidence`` ...) are dropped - the editable
+    install of the plugin root already provides them and the index does not. When
+    a package appears both bare and with a version specifier, only the specified
+    forms are kept. Returns ``(requirement_lines, comment_lines)`` sorted for a
+    stable content hash.
+    """
+    skill_dirs = list(skill_dirs)
+    bundled = {_norm_name(_project_name(d / "pyproject.toml"))
+               for d in skill_dirs if (d / "pyproject.toml").is_file()}
+    by_name: Dict[str, Dict[str, str]] = {}
+    notes: List[str] = []
+    for skill_dir in skill_dirs:
+        pyproject = skill_dir / "pyproject.toml"
+        if not pyproject.is_file():
+            continue
+        for spec in skill_live_requirements(pyproject):
+            spec = spec.strip()
+            if not spec:
+                continue
+            direct = _DIRECT_URL_RE.match(spec)
+            if direct:
+                notes.append("# {}: declared as '{}' - installed by name from the index"
+                             .format(skill_dir.name, spec))
+                spec = direct.group(1)
+            name_match = _REQ_NAME_RE.match(spec)
+            if not name_match:
+                continue
+            name = _norm_name(name_match.group(1))
+            if name in bundled:
+                continue
+            by_name.setdefault(name, {})[spec.replace(" ", "").lower()] = spec
+    lines: List[str] = []
+    for name, variants in by_name.items():
+        specified = {k: v for k, v in variants.items() if not re.fullmatch(r"[a-z0-9._-]+", k)}
+        lines.extend((specified or variants).values())
+    return sorted(lines, key=str.lower), sorted(set(notes))
+
+
+def write_live_requirements(dest_root: Path, skill_dirs: Iterable[Path]) -> int:
+    """Write ``<plugin>/requirements-live.txt``; returns the number of requirement lines.
+
+    The file is what turns a plugin-only install into a working one for skills
+    that call governed APIs (STID, SAP/Maintenance, PDM, PEPR, historians ...): the
+    SessionStart hook installs it after the editable skills install, and the
+    offline bundle mirrors it into ``<plugin>/wheels``.
+    """
+    lines, notes = collect_live_requirements(skill_dirs)
+    header = [
+        "# Live-path dependencies of the bundled skills, aggregated by build_agent_plugin.py",
+        "# from each skill's pyproject.toml ([project] dependencies + optional extras "
+        + "/".join(LIVE_EXTRAS) + ").",
+        "# Installed best-effort by scripts/install_skill_packages.py after the skills",
+        "# themselves; the skills import without these, their live API calls do not.",
+        "# Install by hand: <python> -m pip install -r requirements-live.txt",
+    ]
+    body = header + notes + [""] + lines + [""]
+    (dest_root / LIVE_REQUIREMENTS_FILE).write_text("\n".join(body), encoding="utf-8")
+    return len(lines)
 
 
 def toolkit_files(devtools: Path = DEVTOOLS) -> List[Path]:
@@ -621,8 +879,10 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
     skills_out = staging / "skills"
     skills_out.mkdir()
     skill_count = 0
+    skill_sources: List[Path] = []
     for name, source in iter_skills(spec.skills_roots):
         copy_skill(name, source, skills_out, errors)
+        skill_sources.append(source)
         skill_count += 1
 
     agents_out = staging / "com.github.copilot" / "agents"
@@ -648,8 +908,14 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
                            if t == VENDORED_TOOLKIT_REQUIREMENT else t for t in pip_targets]
         else:
             write_toolkit(staging)
+    live_requirements = ""
+    live_count = 0
+    if spec.pip_install_roots:
+        live_count = write_live_requirements(staging, skill_sources)
+        live_requirements = LIVE_REQUIREMENTS_FILE
     write_hooks(staging, spec.pip_install_roots, args.python, pip_targets,
-                prefetch_mcp=spec.include_mcp)
+                prefetch_mcp=spec.include_mcp, live_requirements=live_requirements,
+                plugin_name=spec.name)
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
@@ -679,18 +945,28 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
         "content_sha256": digest,
         "skills": skill_count,
         "agents": agent_count,
+        "live_requirements": live_count,
         "sources": [str(p) for p in spec.skills_roots + spec.agents_roots],
     }, indent=2) + "\n", encoding="utf-8")
 
     result = {"name": spec.name, "version": version, "skills": skill_count,
-              "agents": agent_count, "changed": changed, "errors": errors,
-              "warnings": warnings, "sha256": digest}
+              "agents": agent_count, "live_requirements": live_count, "changed": changed,
+              "errors": errors, "warnings": warnings, "sha256": digest}
     if errors or args.check:
         shutil.rmtree(str(staging))
         return result
     if plugin_dir.exists():
         shutil.rmtree(str(plugin_dir))
-    staging.rename(plugin_dir)
+    # Windows: an indexer/AV handle on the just-removed tree makes the rename fail
+    # with WinError 5 for a moment; retry briefly instead of failing the build.
+    for attempt in range(10):
+        try:
+            staging.rename(plugin_dir)
+            break
+        except PermissionError:
+            if attempt == 9:
+                raise
+            time.sleep(0.2)
     return result
 
 
@@ -757,8 +1033,8 @@ def main(argv=None) -> int:
     failed = False
     for r in results:
         status = "ERROR" if r["errors"] else ("changed" if r["changed"] else "unchanged")
-        print("{:<20} v{:<8} skills={:<4} agents={:<4} {}".format(
-            r["name"], r["version"], r["skills"], r["agents"], status))
+        print("{:<20} v{:<8} skills={:<4} agents={:<4} live-deps={:<3} {}".format(
+            r["name"], r["version"], r["skills"], r["agents"], r["live_requirements"], status))
         for w in r["warnings"]:
             print("  WARN  {}".format(w))
         for e in r["errors"]:
