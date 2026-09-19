@@ -30,6 +30,20 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
            "---\nname: neqsim-beta\ndescription: B. USE WHEN: y\n---\nbody\n")
     _write(skills / "cat" / "neqsim-beta" / "src" / "beta" / "__init__.py", "")
     _write(skills / "cat" / "neqsim-beta" / "src" / "beta" / "__pycache__" / "x.pyc", "")
+    # credential caches a live API run leaves behind must never be packaged
+    _write(skills / "cat" / "neqsim-beta" / "token_cache.bin", "DPAPI")
+    _write(skills / "cat" / "neqsim-beta" / "src" / "beta" / "token_cache.bin", "DPAPI")
+    # live-path extras the way the skills repos declare them (offline-safe import,
+    # API clients only in optional groups); one direct-URL spec, one duplicate
+    _write(skills / "neqsim-alpha" / "pyproject.toml",
+           "[project]\nname = 'alpha'\nversion = '0'\ndependencies = [\"stidapi\", \"requests>=2.28\"]\n"
+           "[project.optional-dependencies]\ndev = [\"pytest>=8.0\"]\n")
+    _write(skills / "cat" / "neqsim-beta" / "pyproject.toml",
+           "[project]\nname = 'beta'\nversion = '0'\ndependencies = [\"alpha\", \"msal\"]\n"
+           "[project.optional-dependencies]\ndev = [\"pytest>=8.0\"]\n"
+           "live = [\n  \"requests>=2.28\",\n  \"msal>=1.24\",\n"
+           "  \"pypdm @ git+https://github.com/equinor/PyPDM.git\",\n]\n"
+           "network = [\"pepr-client>=1.0.2\"]\n")
     _write(agents / "demo-agent" / "AGENT.md",
            "---\nname: demo-agent\ndescription: Demo agent.\nrequired_skills:\n- neqsim-alpha\n"
            "- neqsim-missing\n---\nbody\n")
@@ -72,6 +86,7 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue((plugin / "skills" / "neqsim-alpha" / "SKILL.md").exists())
         self.assertTrue((plugin / "skills" / "neqsim-beta" / "src" / "beta" / "__init__.py").exists())
         self.assertFalse((plugin / "skills" / "neqsim-beta" / "src" / "beta" / "__pycache__").exists())
+        self.assertEqual(list(plugin.rglob("token_cache.bin")), [])
         # agents rendered as kebab-case ids with frontmatter name == id
         agents_dir = plugin / "com.github.copilot" / "agents"
         self.assertTrue((agents_dir / "demo-agent.agent.md").exists())
@@ -80,8 +95,18 @@ class BuildPluginTest(unittest.TestCase):
         # hook + packaging files for the editable install
         hooks = json.loads((plugin / "com.github.copilot" / "hooks" / "hooks.json").read_text())
         entry = hooks["hooks"]["SessionStart"][0]
-        self.assertIn("${PLUGIN_ROOT}/scripts/install_skill_packages.sh", entry["command"])
-        self.assertIn("${PLUGIN_ROOT}/scripts/install_skill_packages.ps1", entry["windows"])
+        self.assertIn("scripts/install_skill_packages.sh", entry["command"])
+        self.assertIn("agent-plugins/*/*/*/demo", entry["command"])
+        # Windows: PowerShell does not expand ${PLUGIN_ROOT} (it is an empty PowerShell
+        # variable there), so the root must be resolved inside the command - placeholder,
+        # then the PLUGIN_ROOT environment variable, then the plugin's own install folder
+        # - never via -File "${PLUGIN_ROOT}/..."
+        self.assertNotIn('-File "${PLUGIN_ROOT}', entry["windows"])
+        self.assertIn("'${PLUGIN_ROOT}'", entry["windows"])
+        self.assertIn("$env:PLUGIN_ROOT", entry["windows"])
+        self.assertIn("-eq 'demo'", entry["windows"])
+        self.assertIn("scripts/install_skill_packages.ps1", entry["windows"])
+        self.assertNotIn("{{", entry["windows"])
         scripts = plugin / "scripts"
         for name in ("install_skill_packages.sh", "install_skill_packages.ps1",
                      "install_skill_packages.py"):
@@ -98,6 +123,40 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue((plugin / "pyproject.toml").exists())
         self.assertEqual(result["skills"], 2)
         self.assertEqual(result["agents"], 2)
+
+    def test_live_requirements_aggregated_and_installed_by_hook(self):
+        result = self._build()
+        self.assertEqual(result["errors"], [])
+        plugin = self.out / "demo"
+        req_file = plugin / bap.LIVE_REQUIREMENTS_FILE
+        self.assertTrue(req_file.exists())
+        lines = [l for l in req_file.read_text(encoding="utf-8").splitlines()
+                 if l and not l.startswith("#")]
+        # dependencies + live + network, dev excluded, direct URL -> name, the sibling
+        # skill 'alpha' dropped (the editable root install provides it), bare 'msal'
+        # superseded by its specified form
+        self.assertEqual(lines, ["msal>=1.24", "pepr-client>=1.0.2", "pypdm", "requests>=2.28",
+                                 "stidapi"])
+        self.assertNotIn("pytest", req_file.read_text(encoding="utf-8"))
+        self.assertIn("git+https://github.com/equinor/PyPDM.git", req_file.read_text(encoding="utf-8"))
+        self.assertEqual(result["live_requirements"], 5)
+        hook_py = (plugin / "scripts" / "install_skill_packages.py").read_text(encoding="utf-8")
+        self.assertIn("LIVE_REQUIREMENTS = 'requirements-live.txt'", hook_py)
+        self.assertIn("IMPORT_OK=", hook_py)
+        compile(hook_py, "install_skill_packages.py", "exec")
+        manifest = json.loads((plugin / "BUILD_MANIFEST.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["live_requirements"], 5)
+
+    def test_core_plugin_has_no_live_requirements(self):
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+                              False, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
+        known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
+        result = bap.build_plugin(spec, self.out, known, _args())
+        self.assertEqual(result["errors"], [])
+        self.assertFalse((self.out / "core" / bap.LIVE_REQUIREMENTS_FILE).exists())
+        hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("LIVE_REQUIREMENTS = ''", hook_py)
 
     def test_vendored_toolkit(self):
         spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],

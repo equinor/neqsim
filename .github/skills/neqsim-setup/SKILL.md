@@ -1,7 +1,7 @@
 ---
 name: neqsim-setup
 description: "Configure and verify the NeqSim task-solving environment: where new task folders are created (task root), which folder of standards/datasheets/drawings agents read (document root), which Word template reports use, and whether Java, the packaged NeqSim JAR, the MCP server and the neqsim CLI are healthy. USE WHEN: a user invokes /neqsim-setup, asks to set or show the task folder, document folder, work path or report template, asks 'is my NeqSim setup working', runs first-time setup after installing the NeqSim agent plugin, or when @solve-task cannot resolve a task root. Works identically in a source checkout and in a plugin-only install; settings live in ~/.neqsim/task_defaults.json and apply to both."
-last_verified: "2026-09-18"
+last_verified: "2026-09-19"
 ---
 
 # NeqSim setup (`/neqsim-setup`)
@@ -28,6 +28,24 @@ on Windows (`~/.config/Code/agentPlugins/...` on Linux,
 `~/Library/Application Support/Code/agentPlugins/...` on macOS), or without a
 plugin:
 `<python-executable> -m pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`.
+
+The `neqsim-community` and `neqsim-enterprise` plugins install their skill
+packages through the same hook, into the same interpreter:
+`~/.neqsim/plugin-install/<plugin>/install.log`. A healthy log ends with
+`live dependencies: all N installed`, `IMPORT_OK=<n> IMPORT_FAILED=0` and
+`== ... OK`. Each `FAILED <package> (<error>)` line names a skill package that
+does not import and why — most often a missing live dependency
+(`ModuleNotFoundError: stidapi`, `eq_api_connector`, `msal_bearer`, `pepr_client`,
+`tagreader`), which means the STID / SAP-Maintenance / PDM / PEPR / historian
+agents cannot reach their systems. Fix by hand with
+`<python-executable> -m pip install -e "<plugin folder>/neqsim-enterprise" --no-deps`
+followed by
+`<python-executable> -m pip install -r "<plugin folder>/neqsim-enterprise/requirements-live.txt"`
+(add `--no-index --find-links "<plugin folder>/neqsim-enterprise/wheels"` for an
+offline bundle). A missing log means the hook never ran for that plugin: start a
+new chat (plugin versions before 1.1.1 / 1.0.1 failed with *The argument
+'/scripts/install_skill_packages.ps1' ... does not exist* because VS Code does
+not expand `${PLUGIN_ROOT}`; update the plugin).
 
 ## 1. Ask for the three paths (skip any the user already has)
 
