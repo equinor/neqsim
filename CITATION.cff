@@ -11,7 +11,6 @@ authors:
   - family-names: Solbraa
     given-names: Even
     affiliation: "Equinor / NTNU"
-    orcid: "https://orcid.org/0000-0002-0203-3863"
   - name: "NeqSim contributors"
 repository-code: "https://github.com/equinor/neqsim"
 url: "https://equinor.github.io/neqsim/"
