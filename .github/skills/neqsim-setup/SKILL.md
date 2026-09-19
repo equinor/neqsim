@@ -17,9 +17,17 @@ Run `neqsim --show-task-root`. If the shell says `neqsim` is not recognized,
 use `<python-executable> -m neqsim_cli --show-task-root` where
 `<python-executable>` is `NEQSIM_PYTHON` if set, else the first `python3` /
 `py -3` / `python` on PATH. Use that same form for every command below. If
-neither works the toolkit is not installed yet: run
-`<python-executable> -m pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`
-(the plugin's SessionStart hook does this automatically on the next session).
+neither works the toolkit is not installed yet. In a plugin install the
+SessionStart hook installs it in the background on the first prompt of a
+session; check `~/.neqsim/plugin-install/neqsim/install.log` (last line
+`== ... OK` or `== ... FAILED` with the pip error above it). If the log is
+missing or failed, install by hand from the plugin's vendored copy:
+`<python-executable> -m pip install "<plugin folder>/toolkit"` where the
+plugin folder is `%APPDATA%\Code\agentPlugins\github.com\equinor\neqsim-copilot-plugin\neqsim`
+on Windows (`~/.config/Code/agentPlugins/...` on Linux,
+`~/Library/Application Support/Code/agentPlugins/...` on macOS), or without a
+plugin:
+`<python-executable> -m pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`.
 
 ## 1. Ask for the three paths (skip any the user already has)
 

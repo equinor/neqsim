@@ -29,10 +29,12 @@ import java.util.Properties;
  * process's stdin/stdout so the MCP JSON-RPC stream passes straight through. All launcher
  * output goes to stderr.
  *
- * <p>Resolution order: {@code --root} else {@code $PLUGIN_ROOT}; {@code --data} else
- * {@code $PLUGIN_DATA} else {@code ~/.neqsim/mcp-server}; {@code $NEQSIM_MCP_JAR} points at
- * a local jar and skips the download (development builds); {@code $NEQSIM_MCP_VERSION}
- * overrides the pinned version; {@code $NEQSIM_MCP_JAVA_OPTS} adds JVM options (e.g. -Xmx4g).
+ * <p>Resolution order: {@code --root} else {@code $PLUGIN_ROOT} else the folder above this
+ * source file ({@code jdk.launcher.sourcefile}); {@code --data} else {@code $PLUGIN_DATA} else
+ * {@code ~/.neqsim/mcp-server}; {@code $NEQSIM_MCP_JAR} points at a local jar and skips the
+ * download (development builds); {@code $NEQSIM_MCP_VERSION} overrides the pinned version;
+ * {@code $NEQSIM_MCP_JAVA_OPTS} adds JVM options (e.g. -Xmx4g). Downloads honour the operating
+ * system proxy settings ({@code java.net.useSystemProxies}).
  *
  * @author NeqSim
  * @version 1.0
@@ -66,7 +68,7 @@ public class NeqsimMcpLauncher {
       }
     }
 
-    Path root = dir(opt.get("root"), System.getenv("PLUGIN_ROOT"), null);
+    Path root = dir(opt.get("root"), System.getenv("PLUGIN_ROOT"), sourceRoot());
     if (root == null) {
       fail("plugin root unknown: pass --root DIR or set PLUGIN_ROOT");
     }
@@ -132,6 +134,16 @@ public class NeqsimMcpLauncher {
    * @throws Exception on download or verification failure
    */
   private static void download(String base, String jarName, Path target) throws Exception {
+    if (System.getProperty("java.net.useSystemProxies") == null) {
+      System.setProperty("java.net.useSystemProxies", "true");
+    }
+    // Corporate TLS inspection re-signs github.com with a CA that lives in the Windows
+    // store, not in the JDK's cacerts; trust the OS store so the download passes.
+    if (System.getProperty("os.name", "").toLowerCase().contains("win")
+        && System.getProperty("javax.net.ssl.trustStoreType") == null) {
+      System.setProperty("javax.net.ssl.trustStore", "NONE");
+      System.setProperty("javax.net.ssl.trustStoreType", "Windows-ROOT");
+    }
     HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS)
         .connectTimeout(Duration.ofSeconds(30)).build();
     String expected = fetchText(http, base + jarName + ".sha256").trim().split("\\s+")[0]
@@ -173,6 +185,22 @@ public class NeqsimMcpLauncher {
       fail("download failed: HTTP " + resp.statusCode() + " for " + url);
     }
     return resp.body();
+  }
+
+  /**
+   * Plugin root derived from this launcher's own location in source-launch mode
+   * ({@code <root>/servers/NeqsimMcpLauncher.java}), for clients that do not export
+   * {@code PLUGIN_ROOT} to the server process.
+   *
+   * @return the parent of the {@code servers} folder, or null when not source-launched
+   */
+  private static String sourceRoot() {
+    String source = System.getProperty("jdk.launcher.sourcefile");
+    if (source == null || source.isEmpty()) {
+      return null;
+    }
+    Path servers = Paths.get(source).toAbsolutePath().getParent();
+    return servers == null || servers.getParent() == null ? null : servers.getParent().toString();
   }
 
   /**

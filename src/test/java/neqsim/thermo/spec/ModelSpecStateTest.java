@@ -49,16 +49,16 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void binaryGroupModelsAreOrderIndependentAndReinitializable(boolean psrk) {
     SystemInterface ordered = groupSystem(psrk, false);
     SystemInterface reversed = groupSystem(psrk, true);
-    for (double temperature : new double[] { 290.0, 310.0, 290.0 }) {
+    for (double temperature : new double[] {290.0, 310.0, 290.0}) {
       ordered.setTemperature(temperature);
       reversed.setTemperature(temperature);
       ordered.init(0);
       reversed.init(0);
-      for (String component : new String[] { "methanol", "water" }) {
+      for (String component : new String[] {"methanol", "water"}) {
         double first = gamma(ordered, component);
         double second = gamma(reversed, component);
         ModelSpecFixtures.positive(first, component);

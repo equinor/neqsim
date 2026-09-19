@@ -15,6 +15,21 @@ import agent_frontmatter as af  # noqa: E402
 
 KEBAB = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 PLUGIN_NAME = re.compile(r"[a-z0-9.-]+")
+# VS Code clones the marketplace under %APPDATA%\Code\agentPlugins\github.com\<org>\<repo>\
+# (~90 chars with a short user name, ~110 with a long one). Windows MAX_PATH is 260 and
+# LongPathsEnabled needs admin, so paths relative to the marketplace root must stay short.
+MAX_RELATIVE_PATH = 150
+
+
+def check_path_lengths(root: Path, problems: list) -> None:
+    """Fail on files that would exceed Windows MAX_PATH once installed by VS Code."""
+    for path in root.rglob("*"):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        rel = path.relative_to(root).as_posix()
+        if len(rel) > MAX_RELATIVE_PATH:
+            problems.append("path too long for Windows MAX_PATH ({} > {}): {}".format(
+                len(rel), MAX_RELATIVE_PATH, rel))
 
 
 def main(root: Path) -> int:
@@ -61,6 +76,7 @@ def main(root: Path) -> int:
                         if not (plugin_dir / rel).exists():
                             problems.append("{}: mcp server '{}' arg references missing file {}"
                                             .format(entry["name"], srv_name, rel))
+    check_path_lengths(root, problems)
     for p in problems:
         print("ERROR " + p)
     print("{}: {} plugin(s), {} problem(s)".format(root, len(marketplace["plugins"]), len(problems)))

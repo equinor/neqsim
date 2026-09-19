@@ -219,7 +219,48 @@ def check_java():
             _check(mcp_name, False, mcp_message, fix_hint=mcp_hint)
         else:
             _warn(mcp_name, mcp_message, fix_hint=mcp_hint)
+        if major < MCP_MIN_JAVA and java_on_path:
+            _check_shadowed_jdk(major, java_home_valid, java_home)
     return major
+
+
+def _check_shadowed_jdk(path_major, java_home_valid, java_home):
+    """Report a newer JDK at JAVA_HOME hidden behind an older ``java`` on PATH.
+
+    The plugin's MCP server is started as plain ``java``, so PATH order decides.
+    On Windows the machine PATH precedes the user PATH, so a user-installed JDK
+    cannot overtake an Oracle ``javapath`` or Software Center Java 8 without
+    the older entry being removed.
+
+    @param path_major major version of the ``java`` found first on PATH
+    @param java_home_valid whether JAVA_HOME points at a JDK
+    @param java_home the JAVA_HOME value
+    """
+    if not java_home_valid:
+        return
+    java_bin = os.path.join(java_home, "bin", "java.exe" if sys.platform.startswith("win") else "java")
+    try:
+        result = subprocess.run([java_bin, "-version"], capture_output=True, text=True, timeout=10)
+    except Exception:  # noqa: BLE001 - JAVA_HOME already reported above
+        return
+    home_major = _parse_java_major(result.stderr or result.stdout or "")
+    if home_major is None or home_major <= path_major:
+        return
+    path_java = shutil.which("java")
+    hint = (
+        "The MCP server runs `java` from PATH and finds the Java {p} at {pj}. "
+        "The JDK {h} at JAVA_HOME is shadowed."
+    ).format(p=path_major, pj=path_java, h=home_major)
+    if sys.platform.startswith("win"):
+        hint += (
+            " On Windows the machine PATH comes before the user PATH, so adding your "
+            "JDK to the user PATH is not enough: remove the old Java from the machine "
+            "PATH (Software Center / IT), or start VS Code from a terminal where "
+            "$env:PATH = \"{h}\\bin;$env:PATH\" so the session inherits the right java."
+        ).format(h=java_home)
+    _check("java on PATH is the newest JDK", False,
+           "PATH -> Java {p}, JAVA_HOME -> Java {h}".format(p=path_major, h=home_major),
+           fix_hint=hint)
 
 
 def check_maven():
