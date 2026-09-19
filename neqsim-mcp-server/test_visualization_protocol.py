@@ -298,7 +298,7 @@ def test_inventory_records_atomic_promotion(client):
         "generateVisualization", {}
     )
     require(
-        inventory.get("inventoryVersion") == "1.41",
+        inventory.get("inventoryVersion") == "1.42",
         "inventory version drifted",
         inventory,
     )
