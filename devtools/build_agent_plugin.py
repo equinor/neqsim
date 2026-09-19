@@ -244,6 +244,9 @@ def targets():
     for req in REQUIREMENTS:
         yield req.replace("${{PLUGIN_ROOT}}", str(root))
 
+def stamp_text(python):
+    """Version + interpreter, so a changed NEQSIM_PYTHON triggers a fresh install."""
+    return version + "\\n" + str(Path(python).resolve())
 
 def run_install(python):
     """Foreground worker (called with --run in the detached process)."""
@@ -260,7 +263,7 @@ def run_install(python):
                                  stdout=out, stderr=out, check=False).returncode == 0
         out.write("== {{}} {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"), "OK" if ok else "FAILED"))
     if ok:
-        stamp.write_text(version, encoding="utf-8")
+        stamp.write_text(stamp_text(python), encoding="utf-8")
     try:
         lock.unlink()
     except OSError:
@@ -302,7 +305,7 @@ def main():
                           "(set NEQSIM_PYTHON or put python on PATH); MCP tools still work, the task "
                           "toolkit is not installed.".format(plugin_name)}}))
         return 0
-    if stamp.exists() and stamp.read_text(encoding="utf-8") == version:
+    if stamp.exists() and stamp.read_text(encoding="utf-8") == stamp_text(python):
         return 0
     if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_MAX_AGE_S:
         return 0
