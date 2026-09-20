@@ -43,7 +43,7 @@ public final class ReleaseFlowResult implements Serializable {
 
     /**
      * Creates a diagnostic.
-     * 
+     *
      * @param code stable machine-readable code
      * @param message engineering detail
      */
@@ -103,7 +103,7 @@ public final class ReleaseFlowResult implements Serializable {
 
   /**
    * Creates a checked successful result for a model implementation.
-   * 
+   *
    * @param model model identity
    * @param rate release rate in kg/s
    * @param choked true for an interior critical maximum
@@ -121,7 +121,7 @@ public final class ReleaseFlowResult implements Serializable {
 
   /**
    * Creates an unusable result with no numeric release payload.
-   * 
+   *
    * @param model model identity
    * @param unsupported true when the regime is outside model scope
    * @param code diagnostic code
@@ -157,7 +157,7 @@ public final class ReleaseFlowResult implements Serializable {
 
   /**
    * Returns the release rate; failed calculations cannot masquerade as zero flow.
-   * 
+   *
    * @return mass flow in kg/s
    * @throws IllegalStateException if the result is unusable
    */
