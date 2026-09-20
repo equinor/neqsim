@@ -749,6 +749,41 @@ Even Solbraa (esolbraa@gmail.com), Marlene Louise Lund
 
 NeqSim development was initiated at [NTNU](https://www.ntnu.edu/employees/even.solbraa). A number of master and PhD students have contributed to its development, and we greatly acknowledge their contributions.
 
+## How to Cite
+
+If NeqSim contributes to a publication, report, or product, please cite it. The authoritative, machine-readable citation metadata is maintained in [`CITATION.cff`](CITATION.cff); GitHub renders this automatically as a **"Cite this repository"** button on this page, which also lets you export the citation in APA, BibTeX, or other formats.
+
+**APA-style citation** (software):
+
+> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.21.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
+
+**BibTeX:**
+
+```bibtex
+@software{neqsim2026,
+  author       = {Solbraa, Even and {NeqSim Contributors}},
+  title        = {NeqSim: A library for thermodynamic and process simulation},
+  year         = {2026},
+  version      = {3.21.0},
+  publisher    = {Equinor},
+  url          = {https://github.com/equinor/neqsim},
+  license      = {Apache-2.0}
+}
+```
+
+When citing the thermodynamic models underlying NeqSim rather than the software itself, cite the originating academic work:
+
+```bibtex
+@phdthesis{solbraa2002,
+  author = {Solbraa, Even},
+  title  = {Equilibrium and non-equilibrium thermodynamics of natural gas systems},
+  school = {Norwegian University of Science and Technology},
+  year   = {2002}
+}
+```
+
+Always cite the specific NeqSim **version** used (see the `version` field in `CITATION.cff`, or the release tag on [GitHub Releases](https://github.com/equinor/neqsim/releases)) so results remain reproducible as the library evolves.
+
 ## License
 
 [Apache-2.0](LICENSE)
