@@ -650,7 +650,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
-   * setAssociationScheme.
+   * Build the self-association matrix. In the 1A and 2A schemes, equivalent sites on different molecules can associate;
+   * donor/acceptor charge filtering would incorrectly suppress every bond. Cross-solvation between different components
+   * retains the existing donor/acceptor selection in setCrossAssociationScheme.
    *
    * @param compnumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -662,9 +664,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("2B")) {
       return getInteractionMatrix(charge2B, charge2B);
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("1A")) {
-      return getInteractionMatrix(charge1A, charge1A);
+      return new int[][] {{1}};
     } else if (phase.getComponent(compnumb).getAssociationScheme().equals("2A")) {
-      return getInteractionMatrix(charge2A, charge2A);
+      return new int[][] {{1, 1}, {1, 1}};
     } else {
       return new int[0][0];
     }
@@ -679,6 +681,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * @return an array of int objects
    */
   public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {
+    if (compnumb == compnumb2) {
+      return setAssociationScheme(compnumb, phase);
+    }
     int[] comp1Scheme = new int[0];
     int[] comp2Scheme = new int[0];
     if (phase.getComponent(compnumb).getOrginalNumberOfAssociationSites()
