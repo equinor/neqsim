@@ -129,12 +129,24 @@ Where:
 
 The Born term accounts for the solvation energy of ions in the dielectric medium:
 
-$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
+$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{4\pi\varepsilon_0 RT} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
 
 Where:
 - $z_i$ = ionic charge
 - $\sigma_i$ = ionic diameter
 - $\varepsilon_r$ = relative permittivity (dielectric constant) of the solvent mixture
+
+Here $n_i$ is in mol and $\sigma_i$ is the diameter in metres used by the
+Furst-based implementation. The equivalent radius convention uses
+$8\pi\varepsilon_0 RT$ and $r_i=\sigma_i/2$. Do not combine a diameter with the
+radius prefactor, or use $N_A/k_B$ in place of $N_A/R$ for this molar expression.
+
+The mole derivative includes both the ionic contribution and the derivative of
+solvent permittivity. The latter must scale inversely with phase amount so that
+the chemical potential stays intensive. See
+[Born derivatives and phase-size invariance](ElectrolyteBornDerivatives.md) for
+the chain rule, the legacy Mod2004 correction, the related EOS audit, and the
+literature-based development recommendations.
 
 ## Short-Range Interaction Parameters (Wij)
 
