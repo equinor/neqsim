@@ -1,7 +1,7 @@
 ---
 name: neqsim-setup
 description: "Configure and verify the NeqSim task-solving environment: where new task folders are created (task root), which folder of standards/datasheets/drawings agents read (document root), which Word template reports use, and whether Java, the packaged NeqSim JAR, the MCP server and the neqsim CLI are healthy. USE WHEN: a user invokes /neqsim-setup, asks to set or show the task folder, document folder, work path or report template, asks 'is my NeqSim setup working', runs first-time setup after installing the NeqSim agent plugin, or when @solve-task cannot resolve a task root. Works identically in a source checkout and in a plugin-only install; settings live in ~/.neqsim/task_defaults.json and apply to both."
-last_verified: "2026-09-19"
+last_verified: "2026-09-20"
 ---
 
 # NeqSim setup (`/neqsim-setup`)
@@ -28,6 +28,10 @@ on Windows (`~/.config/Code/agentPlugins/...` on Linux,
 `~/Library/Application Support/Code/agentPlugins/...` on macOS), or without a
 plugin:
 `<python-executable> -m pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`.
+Installing the toolkit also pip-installs the `neqsim` PyPI package (the packaged
+JAR + jpype bridge), and the hook's own `install.log` runs `IMPORT_OK=1
+IMPORT_FAILED=0` against it afterwards, so a plugin-only install always ends up
+with the full NeqSim Python API importable — not just the CLI.
 
 The `neqsim-community` and `neqsim-enterprise` plugins install their skill
 packages through the same hook, into the same interpreter:
@@ -64,6 +68,14 @@ Then ask, one question each, with the current value as the default:
 | Task root | "Where should new task folders be created? (a OneDrive/shared folder is common; `cwd` means the terminal's folder)" | `neqsim --set-task-root "PATH"` |
 | Document root | "Which folder holds your standards, TRs, datasheets and drawings? Agents search it and all subfolders before declaring a document unavailable. Leave empty to skip." | `neqsim --set-document-root "PATH"` |
 | Report template | "Which `.docx`/`.dotx` template should Word reports use? Leave empty for built-in styling." | `neqsim --set-report-template "PATH"` |
+
+After setting the task root or the document root (skip for `cwd`, which has no
+single folder to reveal), ask: "Open this folder in File Explorer now?" and, if
+yes, re-run the same `--set-task-root` / `--set-document-root` command with
+`--explorer` appended (add `--vscode` too if the user also wants it added to the
+VS Code workspace — both flags combine freely, e.g.
+`neqsim --set-document-root "PATH" --vscode --explorer`). Without `--explorer`
+the command still prints how to open the folder by hand.
 
 Quote paths with spaces. Do not guess or persist a path the user did not give;
 `--reset-task-root` / `--reset-document-root` / `--reset-report-template`

@@ -1,12 +1,30 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-08-22"
+last_verified: "2026-09-20"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+## MCP server vs. Python/Java API — which to use
+
+Both call the same NeqSim engine; the difference is packaging, not physics.
+
+| Use the **MCP server** (`mcp_neqsim_*` tools) when... | Use the **Python/Java API** (`import neqsim`, or Java in a checkout) when... |
+|---|---|
+| No dev environment is available (chat-only client, no terminal/Python/JVM) | Building a task notebook, multi-unit flowsheet, or anything with loops, custom logic, plotting, or state you inspect between steps |
+| The need is one bounded calculation a curated tool already covers (`runFlash`, `runProcess`, `getPhaseEnvelope`, `sizeEquipment`, `calculateStandard`, ...) | The calculation is not covered by a curated tool and `runCapability` routes it `inspect-only` (no safe generic invocation exists) |
+| You want the built-in provenance/quality-gate envelope (EOS, convergence, benchmark trust, standards) with no extra code | The run is long or iterative (Monte Carlo, sweeps, optimizer loops) — `runCapability`'s cooperative timeout is for short calls; a script has none |
+| A different agent/tool needs the result over a stable JSON contract (`composeWorkflow`, `composeMultiServerWorkflow`, cross-client interoperability) | You are inside the `/solve-task` workflow — task folders, validators, report generation, and the NeqSim Runner are Python-only, not exposed over MCP |
+| Doing bounded discovery of a capability before writing code (`runCapability` search, `inspectApi`) | You need direct object access (intermediate phase properties, custom equipment subclassing, mechanical design classes) beyond what any tool exposes |
+
+In a session with both available (e.g. this workspace), default to a curated MCP
+tool for a single quick calculation or lookup; switch to writing code as soon as
+the task needs more than one call, custom logic, or a deliverable (notebook,
+report, task folder). See `neqsim-task-workflow` skill §0.6 for the matrix by
+*environment* (workspace checkout / pip toolkit / chat-only) rather than by task.
 
 ## MCP Runtime Capability Routing
 

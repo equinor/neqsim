@@ -145,6 +145,9 @@ dated task folder in. It is stored in `~/.neqsim/task_defaults.json`, so it is s
 by every NeqSim clone and keeps studies outside the repository. Precedence:
 `--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved default > `<repo>/task_solve`.
 `neqsim --reset-task-root` removes the setting without moving existing tasks.
+Add `--vscode` to any `--set-task-root` / `--set-document-root` command to also
+add the folder to the VS Code workspace, or `--explorer` to open it in the file
+explorer right away (both combine freely).
 
 The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
 footers every generated Word report inherits — set it once and all later tasks

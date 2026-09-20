@@ -107,7 +107,8 @@ class PluginSpec:
     def __init__(self, name: str, description: str, skills_roots: List[Path],
                  agents_roots: List[Path], rules_roots: List[Path],
                  include_mcp: bool, pip_install_roots: List[Path],
-                 pip_targets: Optional[List[str]] = None) -> None:
+                 pip_targets: Optional[List[str]] = None,
+                 verify_imports: Optional[List[str]] = None) -> None:
         self.name = name
         self.description = description
         self.skills_roots = skills_roots
@@ -117,6 +118,10 @@ class PluginSpec:
         self.pip_install_roots = pip_install_roots
         # Extra pip requirement specs the SessionStart hook installs (non-editable).
         self.pip_targets = pip_targets or []
+        # Package names the hook import-checks after a successful install, so a plugin
+        # with no bundled skill packages (the core plugin) still gets confirmation that
+        # its Python API is usable, not just that pip exited 0.
+        self.verify_imports = verify_imports or []
 
 
 def default_specs() -> List[PluginSpec]:
@@ -132,7 +137,12 @@ def default_specs() -> List[PluginSpec]:
             "runner, validators, report generator) installed on first session.",
             [REPO_ROOT / ".github" / "skills"], [REPO_ROOT / ".github" / "agents"],
             [CORE_INSTRUCTIONS], True, [],
-            pip_targets=[VENDORED_TOOLKIT_REQUIREMENT],
+            # The vendored toolkit already declares `neqsim` (PyPI) as a dependency, but
+            # it is listed again explicitly so the full NeqSim Python API is guaranteed
+            # to be pip-installed - and import-checked below - even if that dependency
+            # is ever dropped from devtools/pyproject.toml.
+            pip_targets=[VENDORED_TOOLKIT_REQUIREMENT, "neqsim"],
+            verify_imports=["neqsim"],
         ),
         PluginSpec(
             "neqsim-community",
@@ -244,6 +254,7 @@ PINNED_PYTHON = {pinned!r}
 EDITABLE_SELF = {editable_self!r}
 REQUIREMENTS = {requirements!r}
 LIVE_REQUIREMENTS = {live_requirements!r}
+VERIFY_IMPORTS = {verify_imports!r}
 PREFETCH_MCP = {prefetch_mcp!r}
 LOCK_MAX_AGE_S = 45 * 60
 MCP_REFRESH_S = 24 * 3600
@@ -420,13 +431,18 @@ def skill_packages():
 
 
 def import_check(python, out):
-    """Import every bundled skill package once and log the ones that fail.
+    """Import every bundled skill package, plus any name in VERIFY_IMPORTS, once and
+    log the ones that fail.
+
+    VERIFY_IMPORTS covers a plugin (the core one) that ships no skill packages but
+    still pip-installs a real Python API, such as ``neqsim``, so the same after-
+    install confirmation applies to it.
 
     This is the line /neqsim-setup reads to tell a healthy plugin install from one
     whose live dependencies are missing: ``IMPORT_OK=<n> IMPORT_FAILED=<m>`` followed
     by one ``FAILED <package> (<error>)`` line per broken import.
     """
-    pkgs = skill_packages()
+    pkgs = sorted(set(skill_packages()) | set(VERIFY_IMPORTS))
     if not pkgs:
         return
     code = ("import importlib, sys\\n"
@@ -458,7 +474,7 @@ def run_install(python):
         for req in targets():
             ok &= pip_install(python, req, out)
         failed_live = install_live_requirements(python, out) if ok else []
-        if EDITABLE_SELF and ok:
+        if ok:
             import_check(python, out)
         status = "OK" if ok else "FAILED"
         if ok and failed_live:
@@ -577,7 +593,8 @@ def hook_commands(plugin_name: str) -> Tuple[str, str]:
 
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
                 requirements: Optional[List[str]] = None, prefetch_mcp: bool = False,
-                live_requirements: str = "", plugin_name: str = "") -> None:
+                live_requirements: str = "", plugin_name: str = "",
+                verify_imports: Optional[List[str]] = None) -> None:
     """SessionStart hook that installs the plugin's Python packages.
 
     The hook is portable: OS-specific launchers (``sh`` / PowerShell) find an
@@ -589,7 +606,9 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
     ``~/.neqsim/plugin-install/<plugin>``. With ``prefetch_mcp`` the hook also
     warms/refreshes the MCP server jar cache. ``live_requirements`` names the
     plugin-relative requirements file of the skills' live-path dependencies that
-    the hook installs after the editable install (empty: none).
+    the hook installs after the editable install (empty: none). ``verify_imports``
+    names packages (e.g. ``neqsim``) the hook import-checks after a successful
+    install, in addition to the plugin's own bundled skill packages.
     """
     requirements = list(requirements or [])
     if not pip_roots and not requirements and not prefetch_mcp:
@@ -603,7 +622,8 @@ def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
     (scripts / "install_skill_packages.py").write_text(
         HOOK_PY.format(pinned=python or "", editable_self=bool(pip_roots),
                        requirements=requirements, prefetch_mcp=bool(prefetch_mcp),
-                       live_requirements=live_requirements or ""),
+                       live_requirements=live_requirements or "",
+                       verify_imports=list(verify_imports or [])),
         encoding="utf-8")
     (scripts / "install_skill_packages.sh").write_text(HOOK_SH, encoding="utf-8", newline="\n")
     (scripts / "install_skill_packages.ps1").write_text(HOOK_PS1, encoding="utf-8")
@@ -915,7 +935,7 @@ def build_plugin(spec: PluginSpec, out_root: Path, known_skills: set, args) -> D
         live_requirements = LIVE_REQUIREMENTS_FILE
     write_hooks(staging, spec.pip_install_roots, args.python, pip_targets,
                 prefetch_mcp=spec.include_mcp, live_requirements=live_requirements,
-                plugin_name=spec.name)
+                plugin_name=spec.name, verify_imports=spec.verify_imports)
     (staging / "automations").mkdir(exist_ok=True)
 
     digest = content_hash(staging)
