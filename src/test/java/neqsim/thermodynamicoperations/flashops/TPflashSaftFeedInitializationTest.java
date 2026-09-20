@@ -68,7 +68,7 @@ class TPflashSaftFeedInitializationTest {
   void changedReturnedAndRepeatedStatesRemainEquivalent() {
     SystemSAFTVRMie reference = feed(200.0);
     runFlash(reference, false);
-    SystemSAFTVRMie reused = reference.clone();
+    SystemSAFTVRMie reused = (SystemSAFTVRMie) reference.clone();
 
     reused.setTemperature(250.0, "K");
     runFlash(reused, false);
@@ -80,7 +80,7 @@ class TPflashSaftFeedInitializationTest {
     runFlash(reused, false);
     assertEquivalentState(reference, reused, 1.0e-8, "returned state");
 
-    SystemSAFTVRMie previous = reused.clone();
+    SystemSAFTVRMie previous = (SystemSAFTVRMie) reused.clone();
     runFlash(reused, false);
     assertEquivalentState(previous, reused, 1.0e-10, "deterministic repeat");
   }
