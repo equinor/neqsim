@@ -155,6 +155,12 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
     return invalue * getConversionFactor(inunit);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
+  }
+
   /**
    * Convert a rate value using the generic static signature.
    *

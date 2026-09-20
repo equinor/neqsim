@@ -26,10 +26,4 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
     this.invalue = value;
     this.inunit = unit;
   }
-
-  @Override
-  public double getSIvalue() {
-    throw new UnsupportedOperationException("Unimplemented method 'getSIvalue'");
-  }
-
 }
