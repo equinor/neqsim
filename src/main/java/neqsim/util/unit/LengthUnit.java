@@ -18,8 +18,6 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  private static final String[] ALLOWED_UNITS = {"m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet"};
-
   /**
    * Constructor for LengthUnit.
    *
@@ -28,6 +26,12 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    */
   public LengthUnit(double value, String unit) {
     super(value, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return new String[] {"m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet"};
   }
 
   /** {@inheritDoc} */
@@ -70,27 +74,6 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   }
 
   /**
-   * Convert the current length to the specified unit.
-   *
-   * <p>
-   * Converts the stored value from its original unit to the target unit. Supported units: m, meter, metre, cm, mm, km,
-   * in, inch, ft, feet. Examples:
-   * <ul>
-   * <li>LengthUnit(100, "cm").getValue("m") = 1.0</li>
-   * <li>LengthUnit(5, "ft").getValue("m") = 1.524</li>
-   * <li>LengthUnit(1, "km").getValue("ft") = 3280.84</li>
-   * </ul>
-   *
-   * @param toUnit target unit name (one of the supported units)
-   * @return converted value in the target unit
-   * @throws RuntimeException if the target unit is not supported
-   */
-  @Override
-  public double getValue(String toUnit) {
-    return getSIvalue() / getConversionFactor(toUnit);
-  }
-
-  /**
    * Convert a length value between supported units.
    *
    * <p>
@@ -109,11 +92,5 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
    */
   public static double convert(double value, String unit, String toUnit) {
     return new LengthUnit(value, unit).getValue(toUnit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return LinearScaleUnit.super.getValue(value, fromUnit, toUnit);
   }
 }
