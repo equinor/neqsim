@@ -48,23 +48,4 @@ public interface LinearScaleUnit extends Unit {
    * @throws RuntimeException if the unit name is not supported by this implementation
    */
   double getConversionFactor(String unit);
-
-  /**
-   * <p>
-   * Convert a value from one unit to another using linear scale factors.
-   * </p>
-   *
-   * <p>
-   * Default implementation: value * getConversionFactor(fromUnit) / getConversionFactor(toUnit)
-   * </p>
-   *
-   * @param value value to convert
-   * @param fromUnit source unit
-   * @param toUnit target unit
-   * @return converted value
-   */
-  @Override
-  default double getValue(double value, String fromUnit, String toUnit) {
-    return value * getConversionFactor(fromUnit) / getConversionFactor(toUnit);
-  }
 }

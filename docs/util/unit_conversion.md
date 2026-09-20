@@ -42,11 +42,11 @@ NeqSim provides comprehensive unit handling capabilities:
 | `NeqSimUnitSet` | Complete unit set definition |
 
 `LengthUnit`, `EnergyUnit`, `PowerUnit`, and `TimeUnit` implement `LinearScaleUnit`.
-Their three-argument `getValue(value, fromUnit, toUnit)` converts the supplied value
-without changing the stored value or unit, including when called through `Unit` or
-`LinearScaleUnit`. Implementations extending `BaseUnit` explicitly delegate this
-overload to the interface default because Java gives inherited class methods
-precedence over interface defaults. Unsupported source or target units are rejected.
+Construct a unit with the source value and unit, then use `getValue(targetUnit)`
+to read the converted value. The removed three-argument overload is no longer
+part of `Unit`. Temperature constructors convert K, C, F and R to Kelvin,
+including the Celsius/Fahrenheit offsets; `getSIvalue()` returns that stored
+Kelvin value. Unsupported source and target units are rejected.
 
 ---
 
