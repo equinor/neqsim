@@ -563,7 +563,7 @@ ops.TPflash();
 | `SystemPitzer` | Pitzer aqueous GE + SRK gas/oil | Concentrated brines and reactive VLLE |
 | `SystemDesmukhMather` | Desmukh-Mather aqueous GE + SRK gas/oil | Reactive amine VLLE; parameter-limited scale screening |
 | `SystemKentEisenberg` | Kent-Eisenberg aqueous GE + SRK gas/oil | Reactive CO2/H2S amine VLLE screening |
-| `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
+| `SystemDuanSun` | Historical CO2-only wrapper; conversion rejected | Not a usable gas-in-brine system. `setModel("Duan-Sun")` fails explicitly; direct `PhaseDuanSun` correlation evaluation remains available. |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
 
 Mixed-ion `SystemPitzer` states fail before activity or osmotic-coefficient evaluation when a required binary,
