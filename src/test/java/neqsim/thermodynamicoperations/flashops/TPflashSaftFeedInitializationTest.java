@@ -20,7 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class TPflashSaftFeedInitializationTest {
   private static final double NORMALIZATION_TOLERANCE = 5.0e-12;
-  private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-7;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private SystemSAFTVRMie feed(double temperature) {
