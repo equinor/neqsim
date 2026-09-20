@@ -100,7 +100,7 @@ class ProductionOptimizerSelectedPointTest extends NeqSimTest {
       }
     };
     process.add(feed);
-    OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0).maxIterations(1);
+    OptimizationConfig config = new OptimizationConfig(1000.0, 1000.0).maxIterations(1);
     assertThrows(IllegalStateException.class,
         () -> new ProductionOptimizer().optimize(process, feed, config, null, null));
   }
@@ -129,5 +129,31 @@ class ProductionOptimizerSelectedPointTest extends NeqSimTest {
     assertEquals(1500.0, result.getOptimalRate(), 1.0e-12);
     assertEquals(result.getOptimalRate(), feed.getFlowRate("kg/hr"), 1.0e-12);
     assertTrue(result.getIterationHistory().size() > 3, "Replay attempts must remain visible in the evidence");
+  }
+
+  @Test
+  void binarySearchRetainsLowerBoundWhenEveryInteriorPointFailsReplay() {
+    Stream feed = createFeed();
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    java.util.Map<Long, Integer> evaluations = new java.util.HashMap<Long, Integer>();
+    OptimizationConstraint limit = OptimizationConstraint.lessThan("repeatable boundary", ps -> {
+      double rate = feed.getFlowRate("kg/hr");
+      long key = Math.round(rate);
+      int count = evaluations.getOrDefault(key, 0) + 1;
+      evaluations.put(key, count);
+      return rate > 1000.000001 && count > 1 ? 3000.0 : rate;
+    }, 2000.0, ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
+        "Only the bracket's lower endpoint is repeatably feasible");
+    OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0).rateUnit("kg/hr").maxIterations(3)
+        .tolerance(1.0);
+
+    OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null,
+        Collections.singletonList(limit));
+
+    assertTrue(result.isFeasible(), result.getInfeasibilityDiagnosis());
+    assertEquals(1000.0, result.getOptimalRate(), 1.0e-8);
+    assertEquals(result.getOptimalRate(), feed.getFlowRate("kg/hr"), 1.0e-8);
+    assertTrue(evaluations.get(1000L) > 1, "Lower-bound fallback must be replayed");
   }
 }
