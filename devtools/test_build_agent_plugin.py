@@ -35,6 +35,9 @@ def _mini_repo(root: Path) -> bap.PluginSpec:
     # credential caches a live API run leaves behind must never be packaged
     _write(skills / "cat" / "neqsim-beta" / "token_cache.bin", "DPAPI")
     _write(skills / "cat" / "neqsim-beta" / "src" / "beta" / "token_cache.bin", "DPAPI")
+    # setuptools output from `pip install <skill>` duplicates the package; never shipped
+    _write(skills / "cat" / "neqsim-beta" / "build" / "lib" / "beta" / "__init__.py", "")
+    _write(skills / "cat" / "neqsim-beta" / "dist" / "beta-0.tar.gz", "")
     # live-path extras the way the skills repos declare them (offline-safe import,
     # API clients only in optional groups); one direct-URL spec, one duplicate
     _write(skills / "neqsim-alpha" / "pyproject.toml",
@@ -89,6 +92,8 @@ class BuildPluginTest(unittest.TestCase):
         self.assertTrue((plugin / "skills" / "neqsim-beta" / "src" / "beta" / "__init__.py").exists())
         self.assertFalse((plugin / "skills" / "neqsim-beta" / "src" / "beta" / "__pycache__").exists())
         self.assertEqual(list(plugin.rglob("token_cache.bin")), [])
+        self.assertFalse((plugin / "skills" / "neqsim-beta" / "build").exists())
+        self.assertFalse((plugin / "skills" / "neqsim-beta" / "dist").exists())
         # agents rendered as kebab-case ids with frontmatter name == id
         agents_dir = plugin / "com.github.copilot" / "agents"
         self.assertTrue((agents_dir / "demo-agent.agent.md").exists())
