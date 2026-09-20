@@ -236,6 +236,11 @@ The bottleneck analysis feature is a powerful tool for optimizing production. By
 2.  **Identify Constraints**: Provide utilization limits per equipment name or type plus custom hard/soft constraints via `OptimizationConstraint`. Safety margins and capacity-uncertainty factors can be applied globally so bottleneck checks keep headroom.
 3.  **Iterative Solver (selectable)**:
     *   `BINARY_FEASIBILITY` (default) targets monotonic systems and searches on feasibility margins.
+        Verify a feasible lower bound before searching the upper capacity boundary. Compressor
+        surge or minimum-speed limits can make low-flow points infeasible as well as high-flow
+        points; bisecting that entire range can discard a feasible interval. Probe the operating
+        range first (equal lower/upper bounds perform a single-point evaluation), then bracket
+        the upper boundary using a verified feasible point and the next higher infeasible point.
     *   `GOLDEN_SECTION_SCORE` samples non-monotonic responses using weighted objectives and constraint penalties to guide the search.
     *   `NELDER_MEAD_SCORE` applies a simplex-based heuristic to handle noisy or coupled objectives without assuming monotonicity.
     *   `PARTICLE_SWARM_SCORE` explores the design space with a configurable swarm size/inertia/weights, useful when the objective landscape has multiple peaks.

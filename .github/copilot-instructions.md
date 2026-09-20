@@ -16,6 +16,19 @@
 
 ---
 
+## WARNING: CRITICAL: Docker Required for Linux-Only Tools on Windows
+
+Some skills wrap external engines with **no native Windows build** — they are
+Linux software: **FluidMagic** (fluid characterization engine,
+`enterprise-fluidmagic-characterization`), **OpenFOAM** (CFD,
+`neqsim-cfd-coupling`), **OPM Flow** (reservoir simulation,
+`neqsim-near-well-and-injectivity`), and any other skill/agent that shells out
+to a Linux-only binary. On a Windows machine, **Docker Desktop (or WSL2) must
+be installed** before one of these is actually run — the request/case/hand-off
+can still be built and written without it, but nothing executes locally until a
+Linux runtime is available. Report a missing Docker/WSL2 environment as a
+blocker rather than silently skipping the calculation.
+
 ## WARNING: CRITICAL: Java 8 Compatibility (READ FIRST)
 
 **All code MUST compile with Java 8.** The CI build will FAIL if you use Java 9+ features.

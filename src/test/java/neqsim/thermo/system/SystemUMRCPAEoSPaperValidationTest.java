@@ -47,6 +47,10 @@ class SystemUMRCPAEoSPaperValidationTest extends neqsim.NeqSimTest {
     } catch (Exception ex) {
       throw new RuntimeException("bubble point failed for " + componentName, ex);
     }
+    fluid.init(1);
+    assertTrue(fluid.getPhase(0).getZ() > fluid.getPhase(1).getZ(), "distinct vapor and liquid roots");
+    assertEquals(fluid.getPhase(0).getComponent(0).getFugacityCoefficient(),
+        fluid.getPhase(1).getComponent(0).getFugacityCoefficient(), 1.0e-6, "saturation fugacity equality");
     return fluid.getPressure();
   }
 

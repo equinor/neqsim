@@ -22,7 +22,14 @@ public class SystemPCSAFTTest {
     ops.TPflash();
     testSystem.initProperties();
     double cp = testSystem.getCp();
-    assertEquals(172.3659584364608, cp, 0.1);
+    // Cp is a fixed-phase-composition derivative, not a derivative of an equilibrium reflash.
+    SystemInterface plus = testSystem.clone();
+    SystemInterface minus = testSystem.clone();
+    plus.setTemperature(testSystem.getTemperature() + 0.01);
+    minus.setTemperature(testSystem.getTemperature() - 0.01);
+    plus.init(2);
+    minus.init(2);
+    assertEquals((plus.getEnthalpy() - minus.getEnthalpy()) / 0.02, cp, 0.01);
   }
 
   @Test

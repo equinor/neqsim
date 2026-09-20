@@ -166,8 +166,7 @@ public class SoreideWhitsonSystemTest {
     SystemSoreideWhitson mixedSystem = (SystemSoreideWhitson) mixer.getOutletStream().getFluid();
     double mixedSalinity = ((PhaseSoreideWhitson) mixedSystem.getPhase(1)).getSalinityConcentration();
 
-    org.junit.jupiter.api.Assertions.assertTrue(mixedSalinity > 0.96 && mixedSalinity < 0.97,
-        "Mixed salinity should be around 0.96 , but was: " + mixedSalinity);
+    assertEquals(0.95925575, mixedSalinity, 1e-6, "Mixed concentration with salinity-dependent water alpha");
 
     Separator separator = new Separator("Stream Separator");
     separator.addStream(mixer.getOutletStream());
@@ -243,10 +242,12 @@ public class SoreideWhitsonSystemTest {
 
   @Test
   public void testChabab2019Table2CO2Solubility() {
-    double[][] points = {{1.13, 323.02, 53.450, 0.01030, 0.010872}, {1.13, 322.97, 75.550, 0.01290, 0.013990},
-        {1.13, 323.03, 100.350, 0.01510, 0.016205}, {1.13, 323.04, 145.080, 0.01700, 0.018000},
-        {3.01, 342.82, 30.391, 0.00441, 0.003586}, {3.01, 342.81, 72.559, 0.00880, 0.007407},
-        {3.01, 342.82, 100.910, 0.01057, 0.009160}};
+    // Columns: salt flow (1 kg/s water basis), T, P, Table 2 measurement,
+    // and NeqSim LEGACY regression with the salinity-dependent water alpha active.
+    double[][] points = {{1.13, 323.02, 53.450, 0.01030, 0.010427149}, {1.13, 322.97, 75.550, 0.01290, 0.013400356},
+        {1.13, 323.03, 100.350, 0.01510, 0.015507269}, {1.13, 323.04, 145.080, 0.01700, 0.017211938},
+        {3.01, 342.82, 30.391, 0.00441, 0.003179698}, {3.01, 342.81, 72.559, 0.00880, 0.006532422},
+        {3.01, 342.82, 100.910, 0.01057, 0.008060441}};
     double legacyHighSalinityAbsoluteDeviation = 0.0;
     double chababHighSalinityAbsoluteDeviation = 0.0;
 
@@ -256,7 +257,7 @@ public class SoreideWhitsonSystemTest {
       double chababValue = calculateAqueousCO2MoleFraction(point[0], point[1], point[2],
           SoreideWhitsonParameterization.CHABAB_2019);
 
-      assertEquals(point[4], legacyValue, 2.0e-5, "Legacy default must remain backward compatible");
+      assertEquals(point[4], legacyValue, 2.0e-5, "Legacy correlation with salinity propagated to the water alpha");
       assertEquals(point[3], chababValue, point[3] * 0.12,
           "Chabab parameterization should reproduce the Table 2 CO2 solubility point");
 

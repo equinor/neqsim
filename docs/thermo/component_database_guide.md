@@ -626,6 +626,48 @@ forcing every UMR-PRU component to be duplicated into the classic table.
 
 ---
 
+## Vapor-pressure data audit (issue #3822)
+
+The public vapor-pressure API returns `NaN` when a correlation is unavailable,
+inapplicable or produces a nonfinite/nonpositive pressure. Its inverse must close
+the requested pressure before returning a temperature. It does not expose overflow
+as a usable pressure or report a failed inverse iteration as success.
+
+The H2O2 row combined an incompatible coefficient set with DIPPR dispatch and
+produced infinity. Its liquid-vapor correlation is now explicitly unavailable.
+Unverified copied tuples for PG, SF6, R12, R134a, COS, 3-methyl-1-butene and eight
+branched/cyclic hydrocarbons are also unavailable, as are the all-zero sulfuric
+acid, nitric acid and NO2 tuples. The standard `COMP.csv` records the corrections. The existing extended-database
+loader applies the same reviewed standard correlations when `COMP_EXT.csv` is
+selected, preserving unrelated extended data. This does not remove the components or their EOS parameters.
+Species aliases and deliberate seawater/water or MEG variants are not automatically
+rejected merely because their coefficients coincide.
+
+Ammonia and H2S use sourced base-ten Antoine fits, with pressure in bar:
+
+| Component | Source temperature range (K) | A | B | C for T in K |
+|---|---:|---:|---:|---:|
+| Ammonia | 239.6–371.5 | 4.86886 | 1113.928 | -10.409 |
+| H2S | 212.8–349.5 | 4.52887 | 958.587 | -0.539 |
+
+Sources: NIST Chemistry WebBook, Stull (1947),
+[ammonia](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=4) and
+[hydrogen sulfide](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7783064&Mask=4).
+The database `pow10` convention uses Celsius in the denominator, so its stored
+C adds 273.15 to the tabulated Kelvin C. The table has no per-fit range columns;
+callers must respect these fit ranges. The API's generic positive-T/Tc check is
+not a certification of validity throughout that larger interval.
+`AntoineHazopRegressionTest` verifies these fits, their derivatives and inverses,
+as well as rejection of the original H2O2 overflow from custom/legacy tables.
+
+Ionic critical fields are pseudo-component model parameters, not measured
+liquid-vapor critical points of isolated ions. CSV `TC` uses degrees Celsius,
+whereas the Java getter uses kelvin. Replacing these model inputs with `NaN`
+would invalidate electrolyte calculations; liquid-vapor applicability is instead
+rejected explicitly for ions by the property API.
+
+---
+
 ## Data Integrity Gates
 
 Two JUnit tests guard these tables. Both compare the current findings against a
@@ -642,7 +684,9 @@ DDBST published values, duplicate component names, subgroups with no parameter
 row, components with no groups, molar mass implied by the assigned groups
 against COMP.csv, and the aromatic and ring conventions above.
 
-Regenerate a baseline after an intentional data change:
+The baseline is a ratchet, not a requirement to preserve defects. A fixed finding
+must be removed in the same change. Do not add newly introduced defects to make
+a test pass. The screening commands below can help inspect a proposed data change:
 
 ```bash
 python devtools/screen_unifac_tables.py --tsv > src/test/resources/data/unifac_known_issues.tsv

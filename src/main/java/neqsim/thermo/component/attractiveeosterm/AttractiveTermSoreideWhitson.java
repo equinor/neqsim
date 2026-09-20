@@ -46,7 +46,7 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   /**
    * Sets the salinity value to be used in calculations.
    *
-   * @param salinity the salinity value to set
+   * @param salinity the aqueous salinity in mol/kg used by the alpha function
    */
   public void setSalinityFromPhase(double salinity) {
     this.salinityFromPhase = salinity;
@@ -55,9 +55,9 @@ public class AttractiveTermSoreideWhitson extends AttractiveTermPr1978 {
   /**
    * Gets the salinity value set for calculations.
    *
-   * @return the salinity value, or 0.0 if not set
+   * @return the aqueous salinity in mol/kg, or 0.0 if not set
    */
-  private double getSalinityFromPhase() {
+  public double getSalinityFromPhase() {
     return salinityFromPhase;
   }
 

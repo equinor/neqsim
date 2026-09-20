@@ -451,9 +451,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    *
    * <p>
    * The extended resource is maintained independently. Existing extended rows retain their properties except for
-   * explicitly unavailable liquid-vapor pressure data and the corrected acetone correlation, which are taken from the
-   * standard table. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including
-   * optional identity metadata.
+   * explicitly unavailable liquid-vapor pressure data and the corrected acetone, ammonia and H2S correlations, taken
+   * from the standard table. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings,
+   * including optional identity metadata.
    * </p>
    */
   private static void includeMissingStandardComponents() {
@@ -498,7 +498,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       String vaporColumns = "AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE";
       try (
           ResultSet corrections = database.getResultSet("SELECT NAME," + vaporColumns + " FROM " + source
-              + " WHERE AntoineVapPresLiqType='none' OR NAME='acetone'");
+              + " WHERE AntoineVapPresLiqType='none' OR NAME IN ('acetone','ammonia','H2S')");
           java.sql.PreparedStatement update = database.getConnection().prepareStatement(
               "UPDATE COMP SET AntoineVapPresLiqType=?,ANTOINEA=?,ANTOINEB=?,ANTOINEC=?,ANTOINED=?,ANTOINEE=? WHERE NAME=?")) {
         while (corrections.next()) {

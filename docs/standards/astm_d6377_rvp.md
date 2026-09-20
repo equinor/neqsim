@@ -113,6 +113,10 @@ public final class AstmD6377Example {
 }
 ```
 
+When adding water or another component to an already configured fluid, reapply
+`setMixingRule(...)` after the addition so the binary interaction matrices include
+the new component, then call `init(0)`.
+
 For a fluid without water, `VPCR4` and `VPCR4_NO_WATER` should agree within numerical
 tolerance. For a water-bearing fluid, the difference is a model sensitivity; it is not permission
 to discard measured water or emulsion effects.

@@ -2,6 +2,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePitzer;
+import neqsim.thermo.phase.PitzerAttenuation;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PitzerElectrostaticMixing;
 
@@ -217,7 +218,7 @@ public class ComponentGePitzer extends ComponentGE {
     double Aphi = debyeHuckelAphi(temperature) / 3.0;
     double b = 1.2;
     // Pitzer DH function: F = -Aphi * [sqrtI/(1+b*sqrtI) + (2/b)*ln(1+b*sqrtI)]
-    double fDH = -Aphi * (sqrtI / (1.0 + b * sqrtI) + (2.0 / b) * Math.log(1.0 + b * sqrtI));
+    double fDH = -Aphi * (sqrtI / (1.0 + b * sqrtI) + (2.0 / b) * Math.log1p(b * sqrtI));
 
     // Z = sum of m_i * |z_i| over all ions (needed for C term)
     double Zsum = 0.0;
@@ -252,28 +253,20 @@ public class ComponentGePitzer extends ComponentGE {
       boolean isTwoTwo = Math.abs(charge) >= 1.5 && Math.abs(chargej) >= 1.5;
 
       double x1 = alpha1 * sqrtI;
-      double g1 = 0.0;
-      double gp1 = 0.0;
-      if (x1 > 1e-12) {
-        g1 = 2.0 * (1.0 - (1.0 + x1) * Math.exp(-x1)) / (x1 * x1);
-        gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
-      }
+      double g1 = PitzerAttenuation.value(x1);
+      double gp1 = PitzerAttenuation.scaledDerivative(x1);
       double Bval = beta0 + beta1 * g1;
       // B'(I) = dB/dI for the F-term (Pitzer 1991 Eq. 8-2-8)
-      double Bprime = (I > 1e-12) ? beta1 * gp1 / I : 0.0;
+      double Bprime = (I > 0.0) ? beta1 * gp1 / I : 0.0;
 
       if (isTwoTwo || pitz.isNonTwoTwoBeta2Active()) {
         double beta2val = pitz.getBeta2ij(componentNumber, j, temperature);
         if (Math.abs(beta2val) > 1e-20) {
           double x2 = pitz.getPitzerAlpha2(componentNumber, j) * sqrtI;
-          double g2 = 0.0;
-          double gp2 = 0.0;
-          if (x2 > 1e-12) {
-            g2 = 2.0 * (1.0 - (1.0 + x2) * Math.exp(-x2)) / (x2 * x2);
-            gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
-          }
+          double g2 = PitzerAttenuation.value(x2);
+          double gp2 = PitzerAttenuation.scaledDerivative(x2);
           Bval += beta2val * g2;
-          if (I > 1e-12) {
+          if (I > 0.0) {
             Bprime += beta2val * gp2 / I;
           }
         }
@@ -392,14 +385,14 @@ public class ComponentGePitzer extends ComponentGE {
     double alpha1 = Math.abs(firstCharge) >= 1.5 && Math.abs(secondCharge) >= 1.5 ? 1.4 : 2.0;
     double x1 = alpha1 * squareRootIonicStrength;
     double derivative = 0.0;
-    if (x1 > 1.0e-12 && ionicStrength > 1.0e-12) {
-      double gp1 = -2.0 * (1.0 - (1.0 + x1 + x1 * x1 / 2.0) * Math.exp(-x1)) / (x1 * x1);
+    if (ionicStrength > 0.0) {
+      double gp1 = PitzerAttenuation.scaledDerivative(x1);
       derivative = phase.getBeta1ij(first, second, temperature) * gp1 / ionicStrength;
     }
     double beta2Value = phase.getBeta2ij(first, second, temperature);
     double x2 = phase.getPitzerAlpha2(first, second) * squareRootIonicStrength;
-    if (Math.abs(beta2Value) > 1.0e-20 && x2 > 1.0e-12 && ionicStrength > 1.0e-12) {
-      double gp2 = -2.0 * (1.0 - (1.0 + x2 + x2 * x2 / 2.0) * Math.exp(-x2)) / (x2 * x2);
+    if (Math.abs(beta2Value) > 1.0e-20 && ionicStrength > 0.0) {
+      double gp2 = PitzerAttenuation.scaledDerivative(x2);
       derivative += beta2Value * gp2 / ionicStrength;
     }
     return derivative;

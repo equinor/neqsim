@@ -3,9 +3,10 @@
 ## Scope
 
 `runRelief` is a bounded engineering-screening interface over NeqSim's existing
-`ReliefValveSizing` calculations. This qualification increment does not change
-the canonical equations or the MCP inventory classification. The tool remains a
-`CONFIRMED_GAP` until a separate atomic promotion updates the inventory.
+`ReliefValveSizing` calculations. Merged PR #3787 established the bounded qualification without changing
+the canonical equations. Inventory 1.42 atomically promotes the tool to
+`CONTRACT_TESTED`; this records software-contract evidence and does not add an
+engineering-accuracy, standards-conformance, or certification claim.
 
 Maximum request size is 16,384 UTF-8 bytes. Unknown cases, malformed JSON,
 missing required inputs, non-finite values, non-positive physical quantities,
@@ -33,6 +34,13 @@ requests, negative flow, invalid gas fraction, invalid backpressure, and unknown
 cases. The packaged comprehensive MCP protocol harness invokes the real
 `runRelief` tool, verifies the standard response envelope and boundary, checks a
 finite conservative gas result, and confirms invalid input fails closed.
+
+## Promotion accounting
+
+The machine-readable record, Java promotion assertions, comprehensive packaged
+protocol accounting, and current-state documentation move together from
+`20/41/10` to `20/42/9`. No promotion candidate remains queued, and
+`scientificValidationComplete=false`.
 
 ## Advisory boundary
 

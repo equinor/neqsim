@@ -2578,10 +2578,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMixingRule(String typename, String GEmodel);
 
   /**
-   * setModel.
+   * Creates a system using the requested model and copies this fluid's components and amounts.
    *
    * @param model a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @return the completely converted system
+   * @throws IllegalArgumentException if the model is unsupported or any conversion step fails; the cause is preserved
    */
   public SystemInterface setModel(String model);
 
