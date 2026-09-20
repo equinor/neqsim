@@ -701,3 +701,11 @@ instead create an interior feasible interval. Sample the operating envelope
 before choosing a binary-search bracket, or report the highest freshly verified
 feasible point on an explicit flow grid. The three-compressor cooling example
 uses a 0.5 percent grid and rejects invalid or over-capacity results.
+
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.
