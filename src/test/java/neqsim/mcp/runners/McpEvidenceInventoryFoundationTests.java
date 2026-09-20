@@ -1098,6 +1098,7 @@ class McpEvidenceInventoryFoundationTests {
     assertFalse(matrix.get("roadmapCompletionClaim").getAsBoolean());
     assertFalse(inventory.get("complete").getAsBoolean());
   }
+
   @Test
   void testProcessLoopPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
@@ -1114,10 +1115,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationLoopRunnerTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_process_loop_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("ProcessAutomation.evaluate"));
-    assertTrue(coverage.get("evidenceBoundary").getAsString().contains("does not establish global or local optimization"));
+    assertTrue(
+        coverage.get("evidenceBoundary").getAsString().contains("does not establish global or local optimization"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runProcessLoop"));
     assertEquals(43, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(8, limitations.get("confirmedGapToolCount").getAsInt());
-  }
-
-}
+  }}
