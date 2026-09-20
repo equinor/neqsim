@@ -23,7 +23,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
     super(value, unit);
   }
 
-  protected boolean isAllowedUnit(String unit) {
+  private boolean isAllowedUnit(String unit) {
     for (String allowedUnit : ALLOWED_UNITS) {
       if (allowedUnit.equals(unit)) {
         return true;
