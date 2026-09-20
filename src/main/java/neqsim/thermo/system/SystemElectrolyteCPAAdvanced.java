@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced;
-import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  * Thermodynamic system using the e-CPA-Advanced electrolyte equation of state.
@@ -67,7 +66,6 @@ public class SystemElectrolyteCPAAdvanced extends SystemFurstElectrolyteEos {
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
     this.useVolumeCorrection(true);
   }
 

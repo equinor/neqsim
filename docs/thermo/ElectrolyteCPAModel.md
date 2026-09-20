@@ -41,6 +41,35 @@ system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composi
 | **Volume Correction** | Enabled by default |
 | **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
 
+### Ionic covolume selection and compatibility
+
+CPA ionic components read covolume coefficients `[0]` and `[1]` directly from
+`FurstElectrolyteConstants.furstParamsCPA`, including construction and
+`initFurstParam()` reinitialization. This also applies to the Statoil and Advanced
+subclasses. ScRK components retain their separate `furstParams` defaults.
+Constructing an electrolyte CPA system no longer reassigns those shared ScRK
+defaults. Interleaving systems, adding ions later, cloning and serialization must
+therefore preserve each model's covolume identity.
+
+With the default tables, Na+ covolume is approximately `2.58461732544` for ScRK
+and `3.87214760778` for CPA in NeqSim internal units. Earlier versions could give
+the CPA value to ScRK solely because a CPA system had been constructed first.
+Removing that construction-order dependence can change affected ScRK results; it
+is not a new parameter fit or an estimate of fluid-property error.
+
+For deliberate customization, use `setFurstParamCPA(index, value)` for the CPA
+table and `setFurstParam(index, value)` for the ScRK table, then reinitialize the
+affected components/phases. These remain process-wide mutable customization APIs,
+not per-system or thread-safe parameter stores. The legacy
+`setFurstParams("electrolyteCPA")` explicitly aliases the ScRK table to CPA and
+should not be used to select a system model. Code that relied on a CPA constructor
+making `setFurstParam` target CPA must migrate to `setFurstParamCPA`.
+
+This correction does not change calculated or fitted short-range `Wij` values.
+The separate question of CPA-derived calculated interactions in ScRK is tracked in
+[#3850](https://github.com/equinor/neqsim/issues/3850); resolving model calibration
+requires evidence beyond construction-order tests.
+
 ### Class Hierarchy
 
 ```
