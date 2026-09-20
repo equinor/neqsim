@@ -279,6 +279,46 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testCompressorPolytropicEfficiencyPropertyEnablesPolytropicCalc() {
+    // Setting only 'polytropicEfficiency' must switch the compressor into polytropic
+    // calculation mode, matching Compressor.Builder#polytropicEfficiency. Without this,
+    // the compressor silently keeps its default 100% isentropic efficiency and the
+    // requested value has no effect on the run.
+    String json = "{\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":65.0,"
+        + "\"mixingRule\":\"classic\",\"components\":{\"methane\":1.0}},\"autoRun\":false," + "\"process\":["
+        + "{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":[10000.0,\"kg/hr\"]}},"
+        + "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"feed\","
+        + "\"properties\":{\"outletPressure\":[100.0,\"bara\"],\"polytropicEfficiency\":0.78}}]}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+
+    assertTrue(result.isSuccess(), result.getErrors().toString());
+    Compressor compressor = (Compressor) result.getProcessSystem().getUnit("comp");
+    assertTrue(compressor.usePolytropicCalc(),
+        "Setting polytropicEfficiency from JSON should enable usePolytropicCalc");
+    assertEquals(0.78, compressor.getPolytropicEfficiency(), 1.0e-12);
+  }
+
+  @Test
+  void testCompressorUsePolytropicCalcFalseOverridesPolytropicEfficiencyDefault() {
+    // An explicit 'usePolytropicCalc' in the same properties object must win over the
+    // implicit default that setting 'polytropicEfficiency' alone would otherwise apply.
+    String json = "{\"fluid\":{\"model\":\"SRK\",\"temperature\":298.15,\"pressure\":65.0,"
+        + "\"mixingRule\":\"classic\",\"components\":{\"methane\":1.0}},\"autoRun\":false," + "\"process\":["
+        + "{\"type\":\"Stream\",\"name\":\"feed\"," + "\"properties\":{\"flowRate\":[10000.0,\"kg/hr\"]}},"
+        + "{\"type\":\"Compressor\",\"name\":\"comp\",\"inlet\":\"feed\","
+        + "\"properties\":{\"outletPressure\":[100.0,\"bara\"],\"polytropicEfficiency\":0.78,"
+        + "\"usePolytropicCalc\":false}}]}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+
+    assertTrue(result.isSuccess(), result.getErrors().toString());
+    Compressor compressor = (Compressor) result.getProcessSystem().getUnit("comp");
+    assertFalse(compressor.usePolytropicCalc(),
+        "Explicit usePolytropicCalc:false must override the polytropicEfficiency default");
+  }
+
+  @Test
   void testCompressorDriverPowerCurveFromJson() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
         + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 1.0}" + "}," + "\"process\": ["
