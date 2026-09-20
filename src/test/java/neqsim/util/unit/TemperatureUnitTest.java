@@ -81,8 +81,24 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
   @Test
   public void testUnsupportedUnit() {
     TemperatureUnit unit = new TemperatureUnit(0.0, "K");
-    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "X", "K"));
-    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "K", "X"));
     assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
+    assertThrows(IllegalArgumentException.class, () -> unit.getValue("X"));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
+  }
+
+  @Test
+  void constructorPreservesKelvinValueForEverySupportedInputUnit() {
+    String[] units = {"K", "C", "F", "R"};
+    double[] boilingWater = {373.15, 100.0, 212.0, 671.67};
+    for (int i = 0; i < units.length; i++) {
+      TemperatureUnit temperature = new TemperatureUnit(boilingWater[i], units[i]);
+      assertEquals(373.15, temperature.getSIvalue(), 1.0e-10, units[i]);
+      assertEquals(100.0, temperature.getValue("C"), 1.0e-10, units[i]);
+      assertEquals(373.15, temperature.getSIvalue(), 1.0e-10, "Readback must not mutate the stored Kelvin value");
+    }
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(10.0, null));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(10.0, " "));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(10.0, "X"));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(10.0, "K").getValue("X"));
   }
 }

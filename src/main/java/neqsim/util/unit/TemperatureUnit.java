@@ -14,10 +14,29 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    * Constructor for TemperatureUnit.
    *
    * @param value a double
-   * @param name a {@link java.lang.String} object
+   * @param name temperature unit: K, C, F or R
+   * @throws IllegalArgumentException if the input unit is unsupported, null or blank
    */
   public TemperatureUnit(double value, String name) {
     super(value, name);
+    Unit.validateUnitInput(name, "name");
+    // Preserve the input temperature in Kelvin after removal of the three-argument API.
+    switch (name) {
+    case "K":
+      SIvalue = value;
+      break;
+    case "C":
+      SIvalue = value + 273.15;
+      break;
+    case "F":
+      SIvalue = (value - 32.0) * 5.0 / 9.0 + 273.15;
+      break;
+    case "R":
+      SIvalue = value * 5.0 / 9.0;
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported unit: " + name);
+    }
   }
 
   /** {@inheritDoc} */
