@@ -159,19 +159,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
     setMmin1SAFT(calcmmin1SAFT());
     setmdSAFT(calcmdSAFT());
     setAHSSAFT((4.0 * getNSAFT() - 3.0 * Math.pow(getNSAFT(), 2.0)) / Math.pow(1.0 - getNSAFT(), 2.0));
-    daHSSAFTdN = ((4.0 - 6.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 2.0)
-        - (4.0 * getNSAFT() - 3 * Math.pow(getNSAFT(), 2.0)) * 2.0 * (1.0 - getNSAFT()) * (-1.0))
-        / Math.pow(1.0 - getNSAFT(), 4.0);
-    daHSSAFTdNdN = (-6.0 * Math.pow(1.0 - getNSAFT(), 2.0) + 2.0 * (1.0 - getNSAFT()) * (4.0 - 6 * getNSAFT()))
-        / Math.pow(1.0 - getNSAFT(), 4.0)
-        + ((8.0 - 12.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 3.0)
-            + (8.0 - 6.0 * Math.pow(getNSAFT(), 2.0)) * 3.0 * Math.pow(1.0 - getNSAFT(), 2.0))
-            / Math.pow(1.0 - getNSAFT(), 6.0);
-    dgHSSAFTdN = (-0.5 * Math.pow(1.0 - getNSAFT(), 3.0)
-        - (1.0 - getNSAFT() / 2.0) * 3.0 * Math.pow(1.0 - nSAFT, 2.0) * (-1.0)) / Math.pow(1.0 - getNSAFT(), 6.0);
-    dgHSSAFTdNdN = -3.0 / 2.0 * Math.pow(1.0 - getNSAFT(), 2.0) / Math.pow(1.0 - getNSAFT(), 6.0)
-        + (-3.0 / 2.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-            + 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (3.0 - 3.0 / 2.0 * getNSAFT())) / Math.pow(1.0 - getNSAFT(), 8.0);
+    // Exact derivatives of a_HS=(4*eta-3*eta^2)/(1-eta)^2 and g_HS=(1-eta/2)/(1-eta)^3.
+    double eta = getNSAFT();
+    double om = 1.0 - eta;
+    daHSSAFTdN = (4.0 - 2.0 * eta) / Math.pow(om, 3.0);
+    daHSSAFTdNdN = (10.0 - 4.0 * eta) / Math.pow(om, 4.0);
+    dgHSSAFTdN = (2.5 - eta) / Math.pow(om, 4.0);
+    dgHSSAFTdNdN = (9.0 - 3.0 * eta) / Math.pow(om, 5.0);
 
     setF1dispVolTerm(ThermodynamicConstantsInterface.avagadroNumber * getNumberOfMolesInPhase() / getVolumeSAFT());
     F1dispSumTerm = calcF1dispSumTerm();
@@ -240,25 +234,50 @@ public class PhasePCSAFT extends PhaseSrkEos {
   }
 
   /**
+   * Differentiate C1 = 1 / (1 + m*f(eta) + (1-m)*g(eta)) at fixed composition.
+   *
+   * @param order derivative order (1, 2 or 3)
+   * @return derivative with respect to packing fraction
+   */
+  protected double compressibilityCorrectionDerivative(int order) {
+    double e = getNSAFT();
+    double om = 1.0 - e;
+    double q = om * (2.0 - e);
+    double qp = 2.0 * e - 3.0;
+    double u = 8.0 * e - 2.0 * e * e;
+    double up = 8.0 - 4.0 * e;
+    double n = 20.0 * e - 27.0 * e * e + 12.0 * Math.pow(e, 3) - 2.0 * Math.pow(e, 4);
+    double np = 20.0 - 54.0 * e + 36.0 * e * e - 8.0 * Math.pow(e, 3);
+    double npp = -54.0 + 72.0 * e - 24.0 * e * e;
+    double fp = up / Math.pow(om, 4) + 4.0 * u / Math.pow(om, 5);
+    double gp = np / (q * q) - 2.0 * n * qp / Math.pow(q, 3);
+    double hp = getmSAFT() * fp + (1.0 - getmSAFT()) * gp;
+    double c = calcF2dispZHC();
+    if (order == 1) {
+      return -c * c * hp;
+    }
+    double fpp = -4.0 / Math.pow(om, 4) + 8.0 * up / Math.pow(om, 5) + 20.0 * u / Math.pow(om, 6);
+    double gpp = npp / (q * q) - 4.0 * np * qp / Math.pow(q, 3) - 4.0 * n / Math.pow(q, 3)
+        + 6.0 * n * qp * qp / Math.pow(q, 4);
+    double hpp = getmSAFT() * fpp + (1.0 - getmSAFT()) * gpp;
+    if (order == 2) {
+      return 2.0 * c * c * c * hp * hp - c * c * hpp;
+    }
+    double fppp = -48.0 / Math.pow(om, 5) + 60.0 * up / Math.pow(om, 6) + 120.0 * u / Math.pow(om, 7);
+    double gppp = (72.0 - 48.0 * e) / (q * q) - 6.0 * npp * qp / Math.pow(q, 3) - 12.0 * np / Math.pow(q, 3)
+        + 18.0 * np * qp * qp / Math.pow(q, 4) + 36.0 * n * qp / Math.pow(q, 4)
+        - 24.0 * n * qp * qp * qp / Math.pow(q, 5);
+    double hppp = getmSAFT() * fppp + (1.0 - getmSAFT()) * gppp;
+    return -6.0 * Math.pow(c, 4) * hp * hp * hp + 6.0 * c * c * c * hp * hpp - c * c * hppp;
+  }
+
+  /**
    * calcF2dispZHCdN.
    *
    * @return a double
    */
   public double calcF2dispZHCdN() {
-    double temp0 = -Math.pow(F2dispZHC, 2.0);
-    double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
-    double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0) + 12.0 * Math.pow(getNSAFT(), 3.0)
-        - 2.0 * Math.pow(getNSAFT(), 4.0);
-    // ikke rett implementert
-    return temp0 * (getmSAFT()
-        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-        / Math.pow(1.0 - getNSAFT(), 8.0)
-        + (1.0 - getmSAFT())
-            * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
-                - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-                - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
-            / Math.pow(temp1, 2.0));
+    return compressibilityCorrectionDerivative(1);
   }
 
   /**
@@ -267,43 +286,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double calcF2dispZHCdNdN() {
-    double temp0 = 2.0 * Math.pow(F2dispZHC, 3.0);
-    double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
-    double temp11 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 3.0);
-    double temp2 = 20.0 * getNSAFT() - 27.0 * Math.pow(getNSAFT(), 2.0) + 12.0 * Math.pow(getNSAFT(), 3.0)
-        - 2.0 * Math.pow(getNSAFT(), 4.0);
-
-    double temp1der = 2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT());
-    double temp11der = 3.0 * Math.pow(2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0), 2.0)
-        * (-3.0 + 2.0 * getNSAFT());
-    // ikke rett implementert
-    double temp3 = (getmSAFT()
-        * ((8.0 - 4.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0)))
-        / Math.pow(1.0 - getNSAFT(), 8.0)
-        + (1.0 - getmSAFT())
-            * ((20.0 - (2.0 * 27.0) * getNSAFT() + (12.0 * 3.0) * Math.pow(getNSAFT(), 2.0)
-                - 8.0 * Math.pow(getNSAFT(), 3.0)) * temp1
-                - (2.0 * (2.0 - 3.0 * getNSAFT() + Math.pow(getNSAFT(), 2.0)) * (-3.0 + 2.0 * getNSAFT())) * temp2)
-            / Math.pow(temp1, 2.0));
-
-    double temp4 = -Math.pow(F2dispZHC, 2.0);
-    double dZdndn = getmSAFT()
-        * ((-4.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-            - 4.0 * Math.pow(1.0 - getNSAFT(), 3.0) * (-1.0) * (8.0 - 4.0 * getNSAFT()))
-            / Math.pow(1.0 - getNSAFT(), 8.0)
-            + ((32.0 - 16.0 * getNSAFT()) * Math.pow(1.0 - getNSAFT(), 5.0) - 5.0 * Math.pow(1.0 - getNSAFT(), 4.0)
-                * (-1.0) * (32.0 * getNSAFT() - 8.0 * Math.pow(getNSAFT(), 2.0))) / Math.pow(1.0 - getNSAFT(), 10.0))
-        + (1.0 - getmSAFT()) * (((-54.0 + 72.0 * getNSAFT() - 24.0 * Math.pow(getNSAFT(), 2.0)) * temp1 - temp1der
-            * (20.0 - 54.0 * getNSAFT() + 36.0 * Math.pow(getNSAFT(), 2.0) - 8.0 * Math.pow(getNSAFT(), 3.0)))
-            / Math.pow(temp1, 2.0)
-            - ((-40.0 * Math.pow(getNSAFT(), 4.0) + 240.0 * Math.pow(getNSAFT(), 3.0)
-                - 3.0 * 180.0 * Math.pow(getNSAFT(), 2.0) + 242.0 * 2.0 * getNSAFT() - 120.0) * temp11
-                - temp11der * (-8.0 * Math.pow(getNSAFT(), 5.0) + 60.0 * Math.pow(getNSAFT(), 4.0)
-                    - 180.0 * Math.pow(getNSAFT(), 3.0) + 242.0 * Math.pow(getNSAFT(), 2.0) - 120.0 * getNSAFT()))
-                / Math.pow(temp11, 2.0));
-
-    return temp0 * Math.pow(temp3, 2.0) + temp4 * dZdndn;
+    return compressibilityCorrectionDerivative(2);
   }
 
   /**
@@ -384,18 +367,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double calcdF2dispSumTermdT() {
-    double temp1 = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < numberOfComponents; j++) {
-        temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(j).getNumberOfMolesInPhase()
-            * getComponent(i).getmSAFTi() * getComponent(j).getmSAFTi()
-            * Math.sqrt(getComponent(i).getEpsikSAFT() / temperature * getComponent(j).getEpsikSAFT() / temperature)
-            * (1.0 - mixRule.getBinaryInteractionParameter(i, j))
-            * Math.pow(0.5 * (getComponent(i).getSigmaSAFTi() + getComponent(j).getSigmaSAFTi()), 3.0)
-            * (-1.0 / temperature);
-      }
-    }
-    return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
+    return -2.0 * calcF2dispSumTerm() / temperature;
   }
 
   /**
@@ -417,17 +389,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double calcdF2dispZHCdT() {
-    double term1 = getmSAFT()
-        * ((8 - 4 * getNSAFT()) * dNSAFTdT * Math.pow(1 - getNSAFT(), 4)
-            + 4 * Math.pow(1 - getNSAFT(), 3) * dNSAFTdT * (8 * getNSAFT() - 2 * Math.pow(getNSAFT(), 2)))
-        / Math.pow(1 - getNSAFT(), 8);
-    double term2 = (1.0 - getmSAFT()) * ((20 - 54 * getNSAFT() + 36 * Math.pow(getNSAFT(), 2)) * dNSAFTdT)
-        / Math.pow((1 - getNSAFT()) * (2 - getNSAFT()), 2);
-    double term3 = (1.0 - getmSAFT())
-        * (20 * getNSAFT() - 27 * Math.pow(getNSAFT(), 2) + 12 * Math.pow(getNSAFT(), 3) - 2 * Math.pow(getNSAFT(), 4))
-        * (-2 * dNSAFTdT * (2 - getNSAFT()) - 2 * dNSAFTdT * (1 - getNSAFT()))
-        / Math.pow((1 - getNSAFT()) * (2 - getNSAFT()), 3);
-    return -Math.pow(F2dispZHC, 2.0) * (term1 + term2 + term3);
+    return calcF2dispZHCdN() * dNSAFTdT;
   }
 
   /**
@@ -436,24 +398,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double calcdF2dispZHCdTdV() {
-    double n = getNSAFT();
-    double dNT = dNSAFTdT;
-    double dnV = getDnSAFTdV();
-    double dNTdV = dNSAFTdTdV;
-    double m = getmSAFT();
-    double g1 = (8 + 20 * n - 4 * n * n) / Math.pow(1 - n, 5);
-    double g1p = (60 + 72 * n - 12 * n * n) / Math.pow(1 - n, 6);
-    double g2 = (20 - 54 * n + 36 * n * n) / Math.pow((1 - n) * (2 - n), 2);
-    double g2p = 2.0 * (-36 * Math.pow(n, 3) + 81 * n * n - 49 * n + 6) / (Math.pow(1 - n, 4) * Math.pow(2 - n, 4));
-    double g3 = (20 * n - 27 * n * n + 12 * Math.pow(n, 3) - 2 * Math.pow(n, 4)) * (-6 + 4 * n)
-        / Math.pow((1 - n) * (2 - n), 3);
-    double g3p = 2.0 * (4 * Math.pow(n, 6) - 36 * Math.pow(n, 5) + 140 * Math.pow(n, 4) - 244 * Math.pow(n, 3)
-        + 123 * n * n + 124 * n - 120) / (Math.pow(1 - n, 4) * Math.pow(2 - n, 4));
-    double F = m * g1 + (1 - m) * (g2 + g3);
-    double Fp = m * g1p + (1 - m) * (g2p + g3p);
-    double pref1 = -2.0 * F2dispZHC * F2dispZHCdN * F * dNT - Math.pow(F2dispZHC, 2.0) * Fp * dNT;
-    double pref2 = -Math.pow(F2dispZHC, 2.0) * F;
-    return pref1 * dnV + pref2 * dNTdV;
+    return calcF2dispZHCdNdN() * dNSAFTdT * getDnSAFTdV() + calcF2dispZHCdN() * dNSAFTdTdV;
   }
 
   /**
@@ -462,22 +407,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double calcdF2dispZHCdTdT() {
-    double n = getNSAFT();
-    double dNT = dNSAFTdT;
-    double m = getmSAFT();
-    double g1 = (8 + 20 * n - 4 * n * n) / Math.pow(1 - n, 5);
-    double g1p = (60 + 72 * n - 12 * n * n) / Math.pow(1 - n, 6);
-    double g2 = (20 - 54 * n + 36 * n * n) / Math.pow((1 - n) * (2 - n), 2);
-    double g2p = 2.0 * (-36 * Math.pow(n, 3) + 81 * n * n - 49 * n + 6) / (Math.pow(1 - n, 4) * Math.pow(2 - n, 4));
-    double g3 = (20 * n - 27 * n * n + 12 * Math.pow(n, 3) - 2 * Math.pow(n, 4)) * (-6 + 4 * n)
-        / Math.pow((1 - n) * (2 - n), 3);
-    double g3p = 2.0 * (4 * Math.pow(n, 6) - 36 * Math.pow(n, 5) + 140 * Math.pow(n, 4) - 244 * Math.pow(n, 3)
-        + 123 * n * n + 124 * n - 120) / (Math.pow(1 - n, 4) * Math.pow(2 - n, 4));
-    double F = m * g1 + (1 - m) * (g2 + g3);
-    double Fp = m * g1p + (1 - m) * (g2p + g3p);
-    double term1 = -2.0 * F2dispZHC * dF2dispZHCdT * F * dNT;
-    double term2 = -Math.pow(F2dispZHC, 2.0) * (Fp * Math.pow(dNT, 2.0) + F * dNSAFTdTdT);
-    return term1 + term2;
+    return calcF2dispZHCdNdN() * dNSAFTdT * dNSAFTdT + calcF2dispZHCdN() * dNSAFTdTdT;
   }
 
   /**
@@ -769,9 +699,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
   public double getdDSAFTdT() {
     double temp = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi() / getNumberOfMolesInPhase() * 3.0
-          * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 2.0) * (-1.08 / Math.pow(temperature, 2.0))
-          * Math.pow(getComponent(i).getSigmaSAFTi(), 3.0)
+      temp += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi() / getNumberOfMolesInPhase()
+          * (-1.08 / Math.pow(temperature, 2.0)) * Math.pow(getComponent(i).getSigmaSAFTi(), 3.0)
           * Math.pow(1.0 - 0.12 * Math.exp(-3.0 * getComponent(i).getEpsikSAFT() / temperature), 2.0)
           * getComponent(i).getEpsikSAFT() * Math.exp(-3.0 * getComponent(i).getEpsikSAFT() / temperature);
     }
@@ -795,7 +724,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
       double pref = xi * mi * (-1.08) * eps * Math.pow(sigma, 3.0);
       double term = (-2.0 / Math.pow(temperature, 3.0)) * Math.pow(D, 2.0) * expTerm
           + (-0.72 * eps / Math.pow(temperature, 4.0)) * D * expTerm * expTerm
-          + (3.0 * eps / Math.pow(temperature, 4.0)) * Math.pow(D, 2.0) * expTerm * expTerm;
+          + (3.0 * eps / Math.pow(temperature, 4.0)) * Math.pow(D, 2.0) * expTerm;
       temp += pref * term;
     }
     return temp;
@@ -892,11 +821,11 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double dF_HC_SAFTdVdV() {
-    return getNumberOfMolesInPhase()
-        * (getmSAFT() * daHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV() + getmSAFT() * daHSSAFTdN * dnSAFTdVdV
-            + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * getDnSAFTdV()
-            - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
-            - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
+    return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV()
+        + getmSAFT() * daHSSAFTdN * dnSAFTdVdV
+        + getMmin1SAFT() * Math.pow(getGhsSAFT(), -2.0) * Math.pow(getDgHSSAFTdN(), 2.0) * getDnSAFTdV() * getDnSAFTdV()
+        - getMmin1SAFT() * Math.pow(getGhsSAFT(), -1.0) * dgHSSAFTdNdN * dnSAFTdV * dnSAFTdV
+        - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV);
     // (ThermodynamicConstantsInterface.R*temperature);
   }
 
@@ -906,7 +835,19 @@ public class PhasePCSAFT extends PhaseSrkEos {
    * @return a double
    */
   public double dF_HC_SAFTdVdVdV() {
-    return 0.0;
+    double eta = getNSAFT();
+    double om = 1.0 - eta;
+    double g = getGhsSAFT();
+    double gp = getDgHSSAFTdN();
+    double gpp = (9.0 - 3.0 * eta) / Math.pow(om, 5.0);
+    double gppp = (42.0 - 12.0 * eta) / Math.pow(om, 6.0);
+    double first = getmSAFT() * daHSSAFTdN - getMmin1SAFT() * gp / g;
+    double second = getmSAFT() * daHSSAFTdNdN - getMmin1SAFT() * (gpp / g - gp * gp / (g * g));
+    double third = getmSAFT() * (36.0 - 12.0 * eta) / Math.pow(om, 5.0)
+        - getMmin1SAFT() * (gppp / g - 3.0 * gp * gpp / (g * g) + 2.0 * Math.pow(gp / g, 3.0));
+    double etaVVV = -6.0 * eta / Math.pow(getVolumeSAFT(), 3.0);
+    return getNumberOfMolesInPhase()
+        * (third * Math.pow(getDnSAFTdV(), 3.0) + 3.0 * second * getDnSAFTdV() * dnSAFTdVdV + first * etaVVV);
   }
 
   /**
@@ -1088,10 +1029,10 @@ public class PhasePCSAFT extends PhaseSrkEos {
    */
   public double dF_DISP2_SAFTdTdT() {
     double pref = -ThermodynamicConstantsInterface.pi * getmSAFT();
-    double term = dF2dispSumTermdTdT * getF2dispI2() * getF2dispZHC() + dF2dispSumTermdT * dF2dispI2dT * getF2dispZHC()
-        + dF2dispSumTermdT * getF2dispI2() * dF2dispZHCdT + dF2dispI2dTdT * getF2dispSumTerm() * getF2dispZHC()
-        + dF2dispI2dT * getF2dispSumTerm() * dF2dispZHCdT + dF2dispZHCdTdT * getF2dispSumTerm() * getF2dispI2()
-        + dF2dispZHCdT * getF2dispSumTerm() * dF2dispI2dT;
+    double term = dF2dispSumTermdTdT * getF2dispI2() * getF2dispZHC()
+        + getF2dispSumTerm() * dF2dispI2dTdT * getF2dispZHC() + getF2dispSumTerm() * getF2dispI2() * dF2dispZHCdTdT
+        + 2.0 * dF2dispSumTermdT * dF2dispI2dT * getF2dispZHC() + 2.0 * dF2dispSumTermdT * getF2dispI2() * dF2dispZHCdT
+        + 2.0 * getF2dispSumTerm() * dF2dispI2dT * dF2dispZHCdT;
     return getNumberOfMolesInPhase() * pref * getF1dispVolTerm() * term;
   }
 

@@ -144,3 +144,27 @@ default. No public `double` signature is changed by this first increment.
 
 See [component data contracts](../thermo/component_database_guide.md) and
 [thermodynamic models](../thermo/thermodynamic_models.md) for production API behavior.
+
+
+## PC-SAFT differential and root contracts
+
+The JUnit contracts `SaftDerivativeConsistencyTest` and `PcsaftVolumeDomainTest`
+complement the portable fixtures. At fixed composition and volume they compare
+first and second temperature derivatives, the mixed derivative, volume curvature,
+and the third hard-chain volume derivative with independent perturbations of
+Helmholtz energy. They exercise both PC-SAFT implementations with pure fluids and
+mixtures. `PhasePCSAFTRahmatTest` also checks a cold, dense methane/hexane root.
+
+The packing fraction must satisfy `0 < eta < 1`; a returned molar volume must close
+the specified pressure. Gas and liquid root selection is deterministic across
+fresh and reused systems. Invalid input, a missing bracket, and a nonfinite or
+unconverged pressure residual produce an exception. The finite bracketing mesh
+is not a proof that every near-critical root can be resolved.
+
+Fixing the diameter and product-rule derivatives changes caloric properties.
+The methane/hexane regression at 250 K and 10 bara changes from about 172.366 to
+219.083 J/K. `SystemPCSAFTTest` checks this against `dH/dT` at constant pressure
+and fixed phase compositions. Reflashing at the perturbed temperatures would
+include phase redistribution and would not test the same heat capacity.
+The stored primitive regression values now refer to the physical pressure root;
+these are numerical consistency checks, not experimental validation of parameters.
