@@ -187,6 +187,26 @@ class BuildPluginTest(unittest.TestCase):
             encoding="utf-8")
         self.assertIn("neqsim.git@v9.9.9#subdirectory=devtools", hook_py)
 
+    def test_core_plugin_installs_and_verifies_neqsim_pypi_package(self):
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+                              False, [],
+                              pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT, "neqsim"],
+                              verify_imports=["neqsim"])
+        known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
+        result = bap.build_plugin(spec, self.out, known, _args())
+        self.assertEqual(result["errors"], [])
+        hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("'${PLUGIN_ROOT}/toolkit'", hook_py)
+        self.assertIn("'neqsim'", hook_py)
+        self.assertIn("VERIFY_IMPORTS = ['neqsim']", hook_py)
+        compile(hook_py, "install_skill_packages.py", "exec")
+
+    def test_default_specs_core_plugin_verifies_neqsim(self):
+        core = next(s for s in bap.default_specs() if s.name == "neqsim")
+        self.assertIn("neqsim", core.pip_targets)
+        self.assertEqual(core.verify_imports, ["neqsim"])
+
     def test_unresolved_required_skill_is_a_warning(self):
         result = self._build()
         self.assertTrue(any("neqsim-missing" in w for w in result["warnings"]))
