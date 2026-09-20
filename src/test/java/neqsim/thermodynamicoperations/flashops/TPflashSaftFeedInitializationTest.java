@@ -13,9 +13,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Qualification of fresh-feed initialization and the SAFT-VR Mie TP-flash lifecycle.
  *
  * <p>
- * The synthetic methane/n-butane feed checks direct and public dispatch, strict equilibrium closure,
- * poor initialization, state reuse, return continuity, and deterministic repeat. It is numerical
- * qualification of the Java calculation, not independent parameter validation.
+ * The synthetic methane/n-butane feed checks direct and public dispatch, strict equilibrium closure, poor
+ * initialization, state reuse, return continuity, and deterministic repeat. It is numerical qualification of the Java
+ * calculation, not independent parameter validation.
  * </p>
  */
 class TPflashSaftFeedInitializationTest {
@@ -60,8 +60,7 @@ class TPflashSaftFeedInitializationTest {
       system.setBeta(0, 1.0e-12);
       system.setBeta(1, 1.0 - 1.0e-12);
       runFlash(system, direct);
-      assertEquivalentState(reference, system, 1.0e-8,
-          (direct ? "direct" : "public") + " poor initialization");
+      assertEquivalentState(reference, system, 1.0e-8, (direct ? "direct" : "public") + " poor initialization");
     }
   }
 
@@ -103,69 +102,54 @@ class TPflashSaftFeedInitializationTest {
     double betaTotal = 0.0;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
       double beta = system.getBeta(phase);
-      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0,
-          label + " beta " + phase + ": " + beta);
+      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0, label + " beta " + phase + ": " + beta);
       betaTotal += beta;
 
       double compositionTotal = 0.0;
-      for (int component = 0;
-          component < system.getPhase(phase).getNumberOfComponents();
-          component++) {
+      for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
         assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
             label + " composition " + phase + "/" + component + ": " + composition);
         compositionTotal += composition;
       }
-      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE,
-          label + " composition normalization " + phase);
-      assertTrue(Double.isFinite(system.getPhase(phase).getZ())
-          && system.getPhase(phase).getZ() > 0.0, label + " compressibility " + phase);
+      assertEquals(1.0, compositionTotal, NORMALIZATION_TOLERANCE, label + " composition normalization " + phase);
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
+          label + " compressibility " + phase);
     }
     assertEquals(1.0, betaTotal, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
     double materialResidual = maximumComponentMaterialBalanceResidual(system);
-    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE,
-        label + " material-balance residual " + materialResidual);
+    assertTrue(materialResidual < MATERIAL_BALANCE_TOLERANCE, label + " material-balance residual " + materialResidual);
 
     double fugacityResidual = maximumComparableLogFugacityResidual(system);
-    assertTrue(fugacityResidual < FUGACITY_TOLERANCE,
-        label + " fugacity residual " + fugacityResidual);
+    assertTrue(fugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + fugacityResidual);
 
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
     assertTrue(Double.isFinite(system.getEnthalpy()), label + " enthalpy");
   }
 
-  private void assertEquivalentState(
-      SystemSAFTVRMie expected, SystemSAFTVRMie actual, double tolerance, String label) {
+  private void assertEquivalentState(SystemSAFTVRMie expected, SystemSAFTVRMie actual, double tolerance, String label) {
     assertQualifiedState(expected, label + " expected");
     assertQualifiedState(actual, label + " actual");
 
     for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
       int expectedPhase = findPhase(expected, type);
       int actualPhase = findPhase(actual, type);
-      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance,
-          label + " beta " + type);
-      assertEquals(expected.getPhase(expectedPhase).getZ(),
-          actual.getPhase(actualPhase).getZ(), tolerance,
+      assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta " + type);
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance,
           label + " compressibility " + type);
-      for (int component = 0;
-          component < expected.getPhase(expectedPhase).getNumberOfComponents();
-          component++) {
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
             actual.getPhase(actualPhase).getComponent(component).getx(), tolerance,
             label + " composition " + type + "/" + component);
       }
     }
-    assertExtensiveEquals(
-        expected.getGibbsEnergy(), actual.getGibbsEnergy(), tolerance, label + " Gibbs energy");
-    assertExtensiveEquals(
-        expected.getEnthalpy(), actual.getEnthalpy(), tolerance, label + " enthalpy");
+    assertExtensiveEquals(expected.getGibbsEnergy(), actual.getGibbsEnergy(), tolerance, label + " Gibbs energy");
+    assertExtensiveEquals(expected.getEnthalpy(), actual.getEnthalpy(), tolerance, label + " enthalpy");
   }
 
-  private void assertExtensiveEquals(
-      double expected, double actual, double relativeTolerance, String label) {
-    assertEquals(expected, actual,
-        Math.max(1.0e-8, relativeTolerance * Math.abs(expected)), label);
+  private void assertExtensiveEquals(double expected, double actual, double relativeTolerance, String label) {
+    assertEquals(expected, actual, Math.max(1.0e-8, relativeTolerance * Math.abs(expected)), label);
   }
 
   private int findPhase(SystemSAFTVRMie system, PhaseType type) {
@@ -179,13 +163,10 @@ class TPflashSaftFeedInitializationTest {
 
   private double maximumComponentMaterialBalanceResidual(SystemSAFTVRMie system) {
     double maximumResidual = 0.0;
-    for (int component = 0;
-        component < system.getPhase(0).getNumberOfComponents();
-        component++) {
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       double recovered = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recovered +=
-            system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
       maximumResidual = Math.max(maximumResidual,
           Math.abs(system.getPhase(0).getComponent(component).getz() - recovered));
@@ -198,22 +179,16 @@ class TPflashSaftFeedInitializationTest {
     int oilPhase = findPhase(system, PhaseType.OIL);
     double maximumResidual = 0.0;
     int comparisons = 0;
-    for (int component = 0;
-        component < system.getPhase(0).getNumberOfComponents();
-        component++) {
+    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
       double gasComposition = system.getPhase(gasPhase).getComponent(component).getx();
       double oilComposition = system.getPhase(oilPhase).getComponent(component).getx();
-      double gasCoefficient =
-          system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
-      double oilCoefficient =
-          system.getPhase(oilPhase).getComponent(component).getFugacityCoefficient();
-      if (gasComposition > 1.0e-20 && oilComposition > 1.0e-20
-          && Double.isFinite(gasCoefficient) && gasCoefficient > 0.0
-          && Double.isFinite(oilCoefficient) && oilCoefficient > 0.0) {
+      double gasCoefficient = system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
+      double oilCoefficient = system.getPhase(oilPhase).getComponent(component).getFugacityCoefficient();
+      if (gasComposition > 1.0e-20 && oilComposition > 1.0e-20 && Double.isFinite(gasCoefficient)
+          && gasCoefficient > 0.0 && Double.isFinite(oilCoefficient) && oilCoefficient > 0.0) {
         double gasLogFugacity = Math.log(gasComposition * gasCoefficient);
         double oilLogFugacity = Math.log(oilComposition * oilCoefficient);
-        maximumResidual =
-            Math.max(maximumResidual, Math.abs(gasLogFugacity - oilLogFugacity));
+        maximumResidual = Math.max(maximumResidual, Math.abs(gasLogFugacity - oilLogFugacity));
         comparisons++;
       }
     }
