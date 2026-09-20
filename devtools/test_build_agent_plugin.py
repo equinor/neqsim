@@ -4,7 +4,9 @@ Uses a synthetic mini-repo so the tests do not depend on sibling checkouts.
 """
 from __future__ import annotations
 
+import base64
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -97,16 +99,21 @@ class BuildPluginTest(unittest.TestCase):
         entry = hooks["hooks"]["SessionStart"][0]
         self.assertIn("scripts/install_skill_packages.sh", entry["command"])
         self.assertIn("agent-plugins/*/*/*/demo", entry["command"])
-        # Windows: PowerShell does not expand ${PLUGIN_ROOT} (it is an empty PowerShell
-        # variable there), so the root must be resolved inside the command - placeholder,
-        # then the PLUGIN_ROOT environment variable, then the plugin's own install folder
-        # - never via -File "${PLUGIN_ROOT}/..."
+        # Windows: whatever resolves the hooks.json ``windows`` string before running
+        # it strips any literal ``$identifier`` token (not just ``${PLUGIN_ROOT}``),
+        # mangling an inline ``-Command "..."`` script. The command must therefore
+        # carry no literal ``$`` at all - the real script travels as a base64
+        # (UTF-16LE) ``-EncodedCommand`` payload, decoded here for assertions.
         self.assertNotIn('-File "${PLUGIN_ROOT}', entry["windows"])
-        self.assertIn("'${PLUGIN_ROOT}'", entry["windows"])
-        self.assertIn("$env:PLUGIN_ROOT", entry["windows"])
-        self.assertIn("-eq 'demo'", entry["windows"])
-        self.assertIn("scripts/install_skill_packages.ps1", entry["windows"])
-        self.assertNotIn("{{", entry["windows"])
+        self.assertNotIn("$", entry["windows"])
+        match = re.search(r"-EncodedCommand (\S+)", entry["windows"])
+        self.assertIsNotNone(match, entry["windows"])
+        decoded = base64.b64decode(match.group(1)).decode("utf-16-le")
+        self.assertIn("$env:PLUGIN_ROOT", decoded)
+        self.assertIn("$env:CLAUDE_PLUGIN_ROOT", decoded)
+        self.assertIn("-eq 'demo'", decoded)
+        self.assertIn("scripts/install_skill_packages.ps1", decoded)
+        self.assertNotIn("{{", decoded)
         scripts = plugin / "scripts"
         for name in ("install_skill_packages.sh", "install_skill_packages.ps1",
                      "install_skill_packages.py"):
