@@ -690,3 +690,11 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 2.  Re-run the optimization loop.
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
+
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.
