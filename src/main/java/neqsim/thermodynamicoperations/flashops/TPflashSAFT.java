@@ -56,6 +56,9 @@ public class TPflashSAFT extends TPflash {
     double T = system.getTemperature();
     double P = system.getPressure();
 
+    // Initialize both the feed mole fractions and Wilson K-values before reading them.
+    system.init(0);
+
     // Get feed composition
     double[] z = new double[nc];
     for (int i = 0; i < nc; i++) {
@@ -64,7 +67,6 @@ public class TPflashSAFT extends TPflash {
 
     // Initialize K-values from Wilson equation
     double[] K = new double[nc];
-    system.init(0);
     for (int i = 0; i < nc; i++) {
       K[i] = system.getPhase(0).getComponent(i).getK();
       if (K[i] <= 0 || Double.isNaN(K[i])) {
