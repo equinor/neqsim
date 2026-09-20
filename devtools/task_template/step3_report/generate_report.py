@@ -2066,12 +2066,8 @@ def auto_executive_summary(results, task_spec):
         parts.append(first_sentence + ".")
     if results and results.get("key_results"):
         findings = []
-        for key, value in list(results["key_results"].items())[:5]:
-            label, unit = _parse_key_name(key)
-            if isinstance(value, float):
-                value_text = "{:.4g}".format(value)
-            else:
-                value_text = str(value)
+        for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
+            value_text = _fmt_cell(value)
             findings.append("{} = {}{}".format(
                 label, value_text, " " + unit if unit else ""))
         if findings:
@@ -3325,11 +3321,153 @@ def _parse_key_name(key):
         ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
         ("_rpm", "rpm"), ("_Hz", "Hz"),
     ]
+    # Checked before the suffix table below: single-letter suffixes such as
+    # "_s"/"_m"/"_kg" would otherwise swallow the denominator of a
+    # "..._num_per_den" key (e.g. "velocity_m_per_s" ending in "_s").
+    per_match = re.match(r"^(.*)_([A-Za-z0-9]+)_per_([A-Za-z0-9]+)$", key)
+    if per_match:
+        name_part, num_token, den_token = per_match.groups()
+        unit = "{}/{}".format(_prettify_unit_token(num_token), _prettify_unit_token(den_token))
+        return _label_from_key(name_part), unit
     for suffix, unit in unit_suffixes:
         if key.endswith(suffix):
             name_part = key[:len(key) - len(suffix)]
             return _label_from_key(name_part), unit
     return _label_from_key(key), ""
+
+
+_UNIT_TOKEN_MAP = {
+    "kg": "kg", "g": "g", "lb": "lb",
+    "m3": "m\u00b3", "m2": "m\u00b2", "m": "m", "mm": "mm", "cm": "cm", "km": "km",
+    "sm3": "Sm\u00b3", "ksm3": "kSm\u00b3", "msm3": "MSm\u00b3", "nm3": "Nm\u00b3",
+    "s": "s", "sec": "s", "min": "min", "h": "h", "hr": "h", "d": "d", "day": "day",
+    "bar": "bar", "bara": "bara", "barg": "barg", "psi": "psi", "psia": "psia",
+    "kw": "kW", "mw": "MW", "w": "W", "kj": "kJ", "mj": "MJ", "j": "J",
+    "kmol": "kmol", "mol": "mol", "rpm": "rpm", "hz": "Hz",
+    "degc": "\u00b0C", "degf": "\u00b0F", "c": "\u00b0C",
+}
+
+
+
+def _prettify_unit_token(token):
+    """Normalize a single unit token parsed out of a ``..._per_...`` key suffix."""
+    lookup = _UNIT_TOKEN_MAP.get(token.lower())
+    if lookup:
+        return lookup
+    numeric = re.match(r"^(\d+)([A-Za-z]+)$", token)
+    if numeric:
+        number, unit = numeric.groups()
+        return "{} {}".format(number, _UNIT_TOKEN_MAP.get(unit.lower(), unit))
+    return token
+
+
+def _prettify_declared_unit(unit_str):
+    """Superscript/normalize an explicitly declared unit string (e.g. "kSm3/h")."""
+    if not unit_str:
+        return unit_str
+    parts = str(unit_str).split("/")
+    pretty = [_prettify_unit_token(part) if re.match(r"^[A-Za-z0-9]+$", part) else part
+              for part in parts]
+    return "/".join(pretty)
+
+
+def _leaf_label_and_unit(key_for_leaf, declared_unit=None):
+    """Resolve the display label/unit for one leaf, preferring a declared unit."""
+    if key_for_leaf is None:
+        return "Value", _prettify_declared_unit(declared_unit) or ""
+    parsed_label, parsed_unit = _parse_key_name(key_for_leaf)
+    unit = _prettify_declared_unit(declared_unit) if declared_unit else parsed_unit
+    return parsed_label, unit
+
+
+_LIST_SUMMARY_THRESHOLD = 8
+
+
+def _summarize_dict_list(items):
+    """Summarize a long list of similarly-shaped dicts (e.g. a transient time
+    history) as one compact line instead of exploding every sample into its
+    own row.
+    """
+    keys = []
+    for item in items:
+        if isinstance(item, dict):
+            for sub_key in item:
+                if sub_key not in keys:
+                    keys.append(sub_key)
+    parts = ["{} samples".format(len(items))]
+    for sub_key in keys:
+        values = [item[sub_key] for item in items
+                  if isinstance(item, dict) and isinstance(item.get(sub_key), (int, float))
+                  and not isinstance(item.get(sub_key), bool)]
+        if values:
+            parts.append("{}: {} \u2192 {}".format(
+                _label_from_key(sub_key), _fmt_number(min(values)), _fmt_number(max(values))))
+    return "; ".join(parts)
+
+
+def _flatten_key_results(key_results):
+    """Flatten a (possibly nested) key_results dict into printable leaf rows.
+
+    Task notebooks sometimes group parameters into nested dicts, e.g.
+    ``{"operating_point": {"pressure_barg": {"value": 29.1, "unit": "barg",
+    "description": "..."}}}`` instead of the flat ``key -> scalar`` schema.
+    Printing ``str(value)`` on those dicts puts raw Python repr straight into
+    the report. This walks the structure and yields one ``(label, value,
+    unit, note)`` row per leaf, honoring an explicit ``value``/``unit`` pair
+    and prefixing nested leaves with their parent group name(s).
+    """
+    rows = []
+
+    def walk(value, key_for_leaf, path_labels, depth):
+        if isinstance(value, dict):
+            if "value" in value and not isinstance(value["value"], (dict, list)):
+                label_part, unit = _leaf_label_and_unit(key_for_leaf, value.get("unit"))
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                note = value.get("description") or value.get("source") or value.get("basis")
+                rows.append((label, value["value"], unit, note))
+                return
+            if depth >= 5:
+                label = " \u2013 ".join(path_labels) or "Value"
+                rows.append((label, str(value), "", None))
+                return
+            group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
+            for sub_key, sub_val in value.items():
+                walk(sub_val, sub_key, group_labels, depth + 1)
+            return
+        if isinstance(value, (list, tuple)):
+            if all(not isinstance(item, (dict, list, tuple)) for item in value):
+                label_part, unit = _leaf_label_and_unit(key_for_leaf)
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                if len(value) > _LIST_SUMMARY_THRESHOLD:
+                    shown = ", ".join(_fmt_cell(item) for item in value[:3])
+                    text = "{}, \u2026 ({} values total)".format(shown, len(value))
+                else:
+                    text = ", ".join(_fmt_cell(item) for item in value)
+                rows.append((label, text, unit, None))
+            elif len(value) > _LIST_SUMMARY_THRESHOLD and all(
+                    isinstance(item, dict) for item in value):
+                # A long list of same-shaped dicts is a time series/sweep, not a
+                # set of distinct results; one summary row beats one row per sample.
+                label_part = _label_from_key(key_for_leaf) if key_for_leaf else "Value"
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                rows.append((label, _summarize_dict_list(value), "",
+                             "Full series retained in results.json"))
+            else:
+                group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
+                for index, item in enumerate(value, 1):
+                    walk(item, str(index), group_labels, depth + 1)
+            return
+        label_part, unit = _leaf_label_and_unit(key_for_leaf)
+        if isinstance(value, str):
+            # A guessed unit suffix (e.g. "..._pct") does not apply once the
+            # value is free text that may already state its own units.
+            unit = ""
+        label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+        rows.append((label, value, unit, None))
+
+    for top_key, top_val in (key_results or {}).items():
+        walk(top_val, top_key, [], 1)
+    return rows
 
 
 def format_results_table(results):
@@ -3338,16 +3476,12 @@ def format_results_table(results):
     if not key_results:
         return "[No key_results in results.json]"
     lines = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        if unit:
-            lines.append("{}: {} {}".format(label, val_str, unit))
-        else:
-            lines.append("{}: {}".format(label, val_str))
+    for label, value, unit, note in _flatten_key_results(key_results):
+        val_str = _fmt_cell(value)
+        line = "{}: {} {}".format(label, val_str, unit) if unit else "{}: {}".format(label, val_str)
+        if note:
+            line += " ({})".format(note)
+        lines.append(line)
     return "\n".join(lines)
 
 
@@ -3399,16 +3533,21 @@ def format_results_html(results):
     key_results = results.get("key_results", {})
     if not key_results:
         return ""
+    flat_rows = _flatten_key_results(key_results)
+    has_notes = any(note for _label, _value, _unit, note in flat_rows)
     rows = ""
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td></tr>\n'.format(
-            label, _fmt_cell(value), unit)
+    for label, value, unit, note in flat_rows:
+        rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
+            _html_escape(label), _fmt_cell(value), _html_escape(unit))
+        if has_notes:
+            rows += '<td>{}</td>'.format(_html_escape(note) if note else "")
+        rows += '</tr>\n'
+    extra_header = '<th>Source</th>' if has_notes else ""
     return (
         _html_table_caption("Key results")
         + '<table class="results-table"><thead>'
-        '<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>'
-        '</thead><tbody>\n{}</tbody></table>'.format(rows)
+        '<tr><th>Parameter</th><th>Value</th><th>Unit</th>{}</tr>'
+        '</thead><tbody>\n{}</tbody></table>'.format(extra_header, rows)
     )
 
 
@@ -4021,13 +4160,19 @@ def add_results_word_table(doc, results):
     key_results = results.get("key_results", {})
     if not key_results:
         return
-    headers = ["Parameter", "Value", "Unit"]
-    data_rows = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        data_rows.append([label, _fmt_cell(value), unit])
+    flat_rows = _flatten_key_results(key_results)
+    has_notes = any(note for _label, _value, _unit, note in flat_rows)
+    if has_notes:
+        headers = ["Parameter", "Value", "Unit", "Source"]
+        data_rows = [[label, _fmt_cell(value), unit, note or ""]
+                     for label, value, unit, note in flat_rows]
+        col_widths = [Inches(2.3), Inches(1.3), Inches(1.1), Inches(2.3)]
+    else:
+        headers = ["Parameter", "Value", "Unit"]
+        data_rows = [[label, _fmt_cell(value), unit] for label, value, unit, _note in flat_rows]
+        col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
     add_word_table(doc, headers, data_rows,
-                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)],
+                   col_widths=col_widths,
                    caption="Key results")
 
 
