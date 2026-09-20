@@ -9,4 +9,6 @@
 # Lines starting with '#' and blank lines are ignored.
 
 neqsim-benchmark-reference-data   equinor/neqsim-community-skills
+neqsim-cfd-coupling              equinor/neqsim-community-skills
+neqsim-near-well-and-injectivity  equinor/neqsim-community-skills
 neqsim-uncertainty-quantification equinor/neqsim-community-skills

@@ -40,6 +40,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -93,7 +94,9 @@ MCP_LATEST = "latest"
 # hook installs (best effort, wheelhouse first). ``dependencies`` is always included.
 LIVE_REQUIREMENTS_FILE = "requirements-live.txt"
 LIVE_EXTRAS = ("live", "network")
-SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git"}
+# ``build`` / ``dist`` are setuptools output left behind by ``pip install <skill>``;
+# they duplicate the package under build/lib and must never ship in the plugin.
+SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", ".git", "build", "dist"}
 SKIP_SUFFIXES = {".pyc"}
 # Local state a live API session drops next to a skill (MSAL/DPAPI token cache,
 # dotenv secrets). The skills repos gitignore them, but the builder copies skill
@@ -554,20 +557,26 @@ exit 0
 
 # Hook commands. The Agent Plugins spec says the client expands ``${PLUGIN_ROOT}`` and
 # sets it in the hook's environment; VS Code (1.138, microsoft/vscode#336882) does
-# neither for Agent Plugins-format packages, and PowerShell reads ``${PLUGIN_ROOT}``
-# as an (empty) PowerShell variable anyway, so a plain
-# ``powershell -File "${PLUGIN_ROOT}/scripts/x.ps1"`` fails with "The argument
-# '/scripts/x.ps1' ... does not exist" and the plugin's packages are never
-# installed. Both commands therefore resolve the root themselves, in order:
-# the expanded placeholder (spec-conformant client), the PLUGIN_ROOT /
-# CLAUDE_PLUGIN_ROOT / COPILOT_PLUGIN_ROOT environment variables (Copilot CLI,
-# install scripts), and finally the plugin's own folder under the known VS Code
-# plugin install roots (``~/.vscode/agent-plugins/<host>/<owner>/<marketplace>/<name>``
-# or the older ``agentPlugins`` user-data folder), matched on the plugin name.
-_HOOK_WINDOWS_TEMPLATE = (
-    "powershell -NoProfile -ExecutionPolicy Bypass -Command \""
-    "$r = '${{PLUGIN_ROOT}}'; "
-    "if (-not $r -or $r.Contains('{{PLUGIN_ROOT}}')) {{ $r = $env:PLUGIN_ROOT }}; "
+# neither for Agent Plugins-format packages. Worse, whatever resolves the hook's
+# ``windows`` string before invoking it treats *any* ``$identifier`` / ``${identifier}``
+# token as a template placeholder and blindly replaces it with an empty string -
+# not just ``${PLUGIN_ROOT}``, but plain PowerShell variables like ``$r``, ``$_`` and
+# ``$env:PLUGIN_ROOT`` too. An inline ``-Command "$r = ...; if ($r) { ... }"`` string
+# therefore comes out mangled (``$r`` -> ``` `` ```, ``$_.DirectoryName`` ->
+# ``.DirectoryName``, ...) and PowerShell fails with "Missing expression after unary
+# operator '-not'". The fix is to never expose a literal ``$`` in the ``windows``
+# string: the real script (below) is base64-encoded (UTF-16LE, as ``-EncodedCommand``
+# requires) so the command line handed to VS Code contains only base64 alphabet
+# characters and cannot be touched by that substitution pass. The script itself
+# resolves the plugin root in order: the ``PLUGIN_ROOT`` / ``CLAUDE_PLUGIN_ROOT`` /
+# ``COPILOT_PLUGIN_ROOT`` environment variables (spec-conformant clients, Copilot
+# CLI, install scripts), then the plugin's own folder under the known VS Code plugin
+# install roots (``~/.vscode/agent-plugins/<host>/<owner>/<marketplace>/<name>`` or
+# the older ``agentPlugins`` user-data folder), matched on the plugin name.
+# The POSIX ``sh`` command is not known to suffer the same mangling (it is not
+# read on Windows) and keeps its plain inline form.
+_HOOK_WINDOWS_SCRIPT_TEMPLATE = (
+    "$r = $env:PLUGIN_ROOT; "
     "if (-not $r) {{ $r = $env:CLAUDE_PLUGIN_ROOT }}; "
     "if (-not $r) {{ $r = $env:COPILOT_PLUGIN_ROOT }}; "
     "if (-not $r) {{ $r = Get-ChildItem -Path $env:USERPROFILE\\.vscode\\agent-plugins, "
@@ -575,7 +584,7 @@ _HOOK_WINDOWS_TEMPLATE = (
     "-ErrorAction SilentlyContinue | Where-Object {{ $_.Directory.Name -eq '{name}' }} | "
     "Sort-Object LastWriteTime -Descending | Select-Object -First 1 | "
     "ForEach-Object {{ $_.DirectoryName }} }}; "
-    "if ($r) {{ $env:PLUGIN_ROOT = $r; & (Join-Path $r 'scripts/install_skill_packages.ps1') }}\"")
+    "if ($r) {{ $env:PLUGIN_ROOT = $r; & (Join-Path $r 'scripts/install_skill_packages.ps1') }}")
 
 _HOOK_POSIX_TEMPLATE = (
     "sh -c 'r=\"${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT:-$COPILOT_PLUGIN_ROOT}}}}\"; "
@@ -585,10 +594,22 @@ _HOOK_POSIX_TEMPLATE = (
     "[ -n \"$r\" ] && PLUGIN_ROOT=\"$r\" sh \"$r/scripts/install_skill_packages.sh\"; exit 0'")
 
 
+def _encode_ps1_command(script: str) -> str:
+    """Base64 (UTF-16LE) ``script`` for ``powershell -EncodedCommand``.
+
+    Encoding hides every literal ``$`` from whatever resolves the hooks.json
+    ``windows`` string before invoking it, so PowerShell variables in ``script``
+    survive intact. See the comment above ``_HOOK_WINDOWS_SCRIPT_TEMPLATE``.
+    """
+    return base64.b64encode(script.encode("utf-16-le")).decode("ascii")
+
+
 def hook_commands(plugin_name: str) -> Tuple[str, str]:
     """``(posix_command, windows_command)`` for the SessionStart hook of ``plugin_name``."""
-    return (_HOOK_POSIX_TEMPLATE.format(name=plugin_name),
-            _HOOK_WINDOWS_TEMPLATE.format(name=plugin_name))
+    posix_command = _HOOK_POSIX_TEMPLATE.format(name=plugin_name)
+    encoded = _encode_ps1_command(_HOOK_WINDOWS_SCRIPT_TEMPLATE.format(name=plugin_name))
+    windows_command = "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand " + encoded
+    return posix_command, windows_command
 
 
 def write_hooks(dest_root: Path, pip_roots: List[Path], python: str,
