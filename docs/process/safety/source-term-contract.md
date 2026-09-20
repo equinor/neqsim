@@ -79,8 +79,9 @@ thermodynamic input only, not a complete spatial boundary condition.
 
 UTC generation time and simulation time are separate: simulation stepping need not match wall
 clock pacing. Sequence and calculation UUIDs expose gaps and allow downstream deduplication.
-The next process-integration layer supplies the model/source identifiers and current-state
-checks; this class does not run processes, open network connections or control equipment.
+The [live process-integration layer](live-source-term-sessions) supplies model/source identifiers,
+steady-state and transient stepping, and current-state checks. The frame class itself does not
+run processes, open network connections or control equipment.
 
 ## Compatibility and scope
 
