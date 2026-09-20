@@ -1,0 +1,56 @@
+name: Safety source-term contract
+
+on:
+  pull_request:
+    paths:
+      - "src/main/java/neqsim/process/safety/release/**"
+      - "src/main/java/neqsim/process/processmodel/**"
+      - "src/main/java/neqsim/process/equipment/stream/**"
+      - "src/main/java/neqsim/process/equipment/separator/**"
+      - "src/main/resources/neqsim/process/safety/release/**"
+      - "src/test/java/neqsim/process/safety/release/**"
+      - "docs/process/safety/**"
+      - "devtools/validate_source_term_contract.py"
+      - ".github/workflows/safety-source-term-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: safety-source-terms-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-terms:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check formatting and process/source regressions
+        run: |
+          ./mvnw -B -ntp spotless:check
+          ./mvnw -B -ntp -Dtest=ReleaseFlowModelTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest test
+      - name: Validate emitted frames and schema rejection cases
+        run: |
+          python -m pip install jsonschema==4.26.0
+          python devtools/validate_source_term_contract.py
+      - name: Check documentation discovery
+        run: python devtools/check_documentation_search.py
+      - name: Retain test reports and emitted contract fixtures
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: safety-source-term-validation
+          path: |
+            target/surefire-reports/
+            target/source-term-contract-fixtures/
+          retention-days: 14
