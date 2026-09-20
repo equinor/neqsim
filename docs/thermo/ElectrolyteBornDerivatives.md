@@ -3,8 +3,6 @@ title: Electrolyte Born derivatives and phase-size invariance
 description: Born-term chain rules, the Mod2004 scaling correction, related EOS coverage, and literature-based validation requirements.
 ---
 
-# Electrolyte Born derivatives and phase-size invariance
-
 ## Correction for issue #3862
 
 `ComponentModifiedFurstElectrolyteEosMod2004.dFBorndN` previously added
