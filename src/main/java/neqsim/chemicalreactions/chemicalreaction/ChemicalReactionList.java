@@ -102,6 +102,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
           ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT, reference,
               validationStatus);
+          // Preserve database kinetic behavior until each rate's units and provenance are qualified.
+          reaction.useLegacyKineticRateLaw();
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
