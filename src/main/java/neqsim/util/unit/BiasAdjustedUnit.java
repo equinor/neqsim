@@ -51,25 +51,4 @@ public interface BiasAdjustedUnit extends Unit {
    * @throws RuntimeException if the unit name is not supported
    */
   double fromSIvalue(double siValue, String unit);
-
-  /**
-   * <p>
-   * Convert a value from one unit to another using two-step SI intermediate.
-   * </p>
-   *
-   * <p>
-   * Default implementation: fromSIvalue(toSIvalue(value, fromUnit), toUnit)
-   * </p>
-   *
-   * @param value value to convert
-   * @param fromUnit source unit name
-   * @param toUnit target unit name
-   * @deprecated Use the static convert method on the concrete unit class instead (e.g., TemperatureUnit.convert,
-   * @return converted value
-   */
-  @Deprecated
-  @Override
-  default double getValue(double value, String fromUnit, String toUnit) {
-    return fromSIvalue(toSIvalue(value, fromUnit), toUnit);
-  }
 }

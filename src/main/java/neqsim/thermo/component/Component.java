@@ -901,7 +901,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setTC(double val, String unit) {
     TemperatureUnit inValue = new TemperatureUnit(val, unit);
-    criticalTemperature = inValue.getValue(val, unit, "K");
+    criticalTemperature = inValue.getValue("K");
   }
 
   /** {@inheritDoc} */
@@ -914,7 +914,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setPC(double val, String unit) {
     PressureUnit inValue = new PressureUnit(val, unit);
-    criticalPressure = inValue.getValue(val, unit, "bara");
+    criticalPressure = inValue.getValue("bara");
   }
 
   /** {@inheritDoc} */

@@ -54,35 +54,4 @@ public interface Unit {
    * @return Value converted to the specified unit.
    */
   double getValue(String toUnit);
-
-  /**
-   * <p>
-   * Convert value from a specified unit to a specified unit. This default method uses reflection to invoke the concrete
-   * unit class's static convert method.
-   * </p>
-   *
-   * @param value a double
-   * @param unit a {@link java.lang.String} object
-   * @param toUnit a {@link java.lang.String} object
-   * @return a double
-   */
-  default double getValue(double value, String unit, String toUnit) {
-    try {
-      java.lang.reflect.Method convertMethod = this.getClass().getMethod("convert", double.class, String.class,
-          String.class);
-      return (double) convertMethod.invoke(null, value, unit, toUnit);
-    } catch (java.lang.reflect.InvocationTargetException e) {
-      // Unwrap the underlying exception from invoke()
-      Throwable cause = e.getCause();
-      if (cause instanceof IllegalArgumentException) {
-        throw (IllegalArgumentException) cause;
-      } else if (cause instanceof RuntimeException) {
-        throw (RuntimeException) cause;
-      } else {
-        throw new RuntimeException("Failed to invoke convert method on " + this.getClass().getName(), cause);
-      }
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to invoke convert method on " + this.getClass().getName(), e);
-    }
-  }
 }

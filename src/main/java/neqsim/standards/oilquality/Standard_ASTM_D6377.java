@@ -452,7 +452,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
     neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
-    referenceTemperature = tempConversion.getValue(refTemp, refTempUnit, "C");
+    referenceTemperature = tempConversion.getValue("C");
   }
 
   /**

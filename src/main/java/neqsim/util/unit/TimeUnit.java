@@ -87,26 +87,4 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   public static double convert(double value, String unit, String toUnit) {
     return new TimeUnit(value, unit).getValue(toUnit);
   }
-
-  /**
-   * Convert the current time to the specified unit.
-   *
-   * <p>
-   * Converts the stored value from its original unit to the target unit. Supported units: s, sec, second, min, minute,
-   * h, hr, hour, d, day. Examples:
-   * </p>
-   * <ul>
-   * <li>TimeUnit(60, "min").getValue("s") = 3600</li>
-   * <li>TimeUnit(24, "h").getValue("d") = 1.0</li>
-   * <li>TimeUnit(1, "d").getValue("s") = 86400</li>
-   * </ul>
-   *
-   * @param toUnit target unit name (one of the supported units)
-   * @return converted value in the target unit
-   * @throws RuntimeException if the target unit is not supported
-   */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return new TimeUnit(value, fromUnit).getValue(toUnit);
-  }
 }

@@ -156,19 +156,6 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /**
-   * Converts an explicit rate using this instance's fluid properties without changing its stored value.
-   *
-   * @param value rate to convert
-   * @param fromUnit source unit
-   * @param toUnit target unit
-   * @return converted rate
-   */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    return value * getConversionFactor(fromUnit) / getConversionFactor(toUnit);
-  }
-
-  /**
    * Convert a rate value using the generic static signature.
    *
    * <p>

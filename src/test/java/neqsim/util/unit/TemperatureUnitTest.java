@@ -1,7 +1,6 @@
 package neqsim.util.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -75,17 +74,5 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     TemperatureUnit rankine = new TemperatureUnit(671.67, "R");
     assertEquals(373.15, rankine.getValue("K"), 1e-2);
     assertEquals(100.0, rankine.getValue("C"), 1e-2);
-  }
-
-  /**
-   * Verify that requesting conversions with unsupported units throws an exception.
-   */
-  @Test
-  public void testUnsupportedUnit() {
-    TemperatureUnit unit = new TemperatureUnit(0.0, "K");
-    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "X", "K"));
-    assertThrows(IllegalArgumentException.class, () -> unit.getValue(0.0, "K", "X"));
-    // Currently no testing of invalid type in constructor
-    // assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
   }
 }

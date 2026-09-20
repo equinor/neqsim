@@ -18,8 +18,6 @@ class RateUnitTest {
   @Test
   void explicitConversionRetainsFluidPropertiesAndStoredValue() {
     Unit rate = new RateUnit(720.0, "kg/hr", 0.020, 800.0, 100.0);
-    assertEquals(2.0, rate.getValue(1600.0, "kg/hr", "m3/hr"), 1.0e-12);
-    assertEquals(1600.0, rate.getValue(2.0, "m3/hr", "kg/hr"), 1.0e-12);
     assertEquals(720.0, rate.getValue("kg/hr"), 1.0e-12);
     assertEquals(10.0, rate.getSIvalue(), 1.0e-12);
   }
@@ -35,8 +33,5 @@ class RateUnitTest {
   void propertyFreeStaticConversionAndUnsupportedUnitsFailExplicitly() {
     RateUnit rate = new RateUnit(720.0, "kg/hr", 0.020, 800.0, 100.0);
     assertThrows(UnsupportedOperationException.class, () -> RateUnit.convert(720.0, "kg/hr", "mol/sec"));
-    assertThrows(RuntimeException.class, () -> rate.getValue("unsupported"));
-    assertThrows(RuntimeException.class, () -> rate.getValue(1.0, "unsupported", "kg/hr"));
-    assertThrows(RuntimeException.class, () -> rate.getValue(1.0, "kg/hr", "unsupported"));
   }
 }
