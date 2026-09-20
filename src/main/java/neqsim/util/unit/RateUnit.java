@@ -17,7 +17,7 @@ import neqsim.util.exception.InvalidInputException;
  * @author esol
  * @version $Id: $Id
  */
-public class RateUnit extends neqsim.util.unit.BaseUnit {
+public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 

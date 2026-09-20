@@ -32,9 +32,4 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
     throw new UnsupportedOperationException("Unimplemented method 'getSIvalue'");
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(String toUnit) {
-    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
-  }
 }

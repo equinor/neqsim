@@ -47,6 +47,10 @@ any two supported units without needing an instance, plus the instance methods
 `getConversionFactor(unit)` (the factor from that unit to SI) and `getValue(toUnit)`
 (convert the stored value). Unsupported source or target units are rejected.
 
+`RateUnit` also implements `LinearScaleUnit`, with conversion factors determined by
+its stored fluid properties. `getValue(toUnit)` works through a `Unit` reference
+without changing the stored value. `BaseUnit` leaves this method to the concrete
+conversion strategy so it does not shadow the interface default.
 `RateUnit.getSIvalue()` returns mol/s using the stored rate and fluid properties.
 The six-argument static
 `RateUnit.convert(value, fromUnit, toUnit, molarmass, stddens, boilp)` requires
