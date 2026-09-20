@@ -5,6 +5,14 @@ description: "Theory and numerical methods for non-equilibrium interphase mass a
 
 ## Overview
 
+The corrected film factors change finite-rate dissolution distances. In the
+synthetic methane-bubble/oil regression, the 1% remaining injected-gas mass
+criterion is reached after approximately 3.82 m; a 0.10 m segment retains about
+94.2% of the tracked gas mass. The completion test therefore uses a 5 m domain
+and checks axial-step refinement, component conservation and energy closure.
+These are numerical regression results, not experimental validation of the
+mass-transfer correlations.
+
 This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.
 
 **Related Documentation:**
