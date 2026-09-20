@@ -709,4 +709,3 @@ instead create an interior feasible interval. Sample the operating envelope
 before choosing a binary-search bracket, or report the highest freshly verified
 feasible point on an explicit flow grid. The three-compressor cooling example
 uses a 0.5 percent grid and rejects invalid or over-capacity results.
-
