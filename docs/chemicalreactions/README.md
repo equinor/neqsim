@@ -145,6 +145,52 @@ The legacy `neqsim.chemicalreactions.kinetics.Kinetics` class is coupled to an i
 `ChemicalReactionOperations` instance. It is not a general-purpose Arrhenius builder with
 independent setters for a pre-exponential factor and activation energy.
 
+### Reaction-specific temperature laws and migration
+
+`ChemicalReaction.getRateFactor(phase)` evaluates the temperature law reported by
+`getKineticRateLaw()`. Directly constructed reaction objects use
+`REFERENCE_ARRHENIUS`:
+
+$$k(T)=k_{\mathrm{ref}}\exp\left[-\frac{E_a}{R}\left(\frac{1}{T}-\frac{1}{T_{\mathrm{ref}}}\right)\right].$$
+
+The constructor rate factor is the rate at the reference temperature, **not** a
+pre-exponential factor. Activation energy is in **J/mol** and temperatures are in
+**K**. Rate-factor units remain those required by the caller's rate law: for
+example, s⁻¹ for a first-order law or m³/(mol·s) for a second-order law using
+mol/m³ concentrations. This temperature evaluation does not convert activities,
+molality, molarity or reaction order. The legacy `Kinetics` caller continues to
+construct its concentration-like factors as `x_i * density / componentMolarMass`;
+this patch does not revise or qualify that concentration convention.
+
+Earlier versions ignored all three supplied kinetic parameters and evaluated
+`2.576e9 * exp(-6024.0 / T) / 1000.0` for every reaction. Ignoring parameters of a
+custom reaction is an API defect. That observation alone does not establish that
+the historical temperature correlation is wrong for every original application.
+
+Database reactions loaded by `ChemicalReactionFactory` and `ChemicalReactionList`
+explicitly retain `LEGACY_TEMPERATURE_CORRELATION`. Their `R`, `ACTENERGY` and
+`TREF` columns have not been qualified here as reaction-specific rate constants
+and J/mol activation energies; no conversion is guessed from the magnitude of a
+stored number. This preserves existing database-driven kinetic results. The
+historical correlation is a compatibility option, **not a validated universal
+kinetic model**. Its source and validity range require separate qualification.
+
+To migrate a reaction, call
+`setReferenceKinetics(referenceRate, activationEnergyJPerMol, referenceTemperatureK)`
+with a complete, independently supported parameter set. To reproduce the old
+temperature law for a custom object, call `useLegacyKineticRateLaw()` explicitly.
+`setRateFactor` and `setActivationEnergy` update stored values but do not switch a
+legacy reaction to a different law. The no-argument `getRateFactor()` returns the
+stored reference factor, which is unused in legacy mode. Invalid reference-law
+parameters are rejected at evaluation or when using `setReferenceKinetics`.
+Older serialized objects without a law selector retain legacy behavior.
+
+Tests establish the reference-temperature identity, zero-activation-energy limit,
+Arrhenius slope, parameter propagation through `Kinetics`, serialization and
+database compatibility. They do not establish experimental kinetic accuracy or
+restore the thesis's fitted rate constants. Review the change in behavior for
+direct constructor callers before adopting it in an existing application.
+
 For rate-limited process models, choose a dedicated implementation whose reaction definition,
 units, parameter provenance, validity range, integration method, and conservation behavior are
 documented and tested. Current examples include:

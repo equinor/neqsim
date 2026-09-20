@@ -22,6 +22,16 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Temperature law used to evaluate this reaction's kinetic rate factor. */
+  public enum KineticRateLaw {
+    /** Reference-temperature Arrhenius law using the supplied rate, activation energy in J/mol and temperature in K. */
+    REFERENCE_ARRHENIUS,
+    /** Historical expression retained for numerical compatibility, not a qualified law for arbitrary reactions. */
+    LEGACY_TEMPERATURE_CORRELATION
+  }
+
+  private KineticRateLaw kineticRateLaw = KineticRateLaw.REFERENCE_ARRHENIUS;
+
   String[] names;
   String[] reactantNames;
   String[] productNames;
@@ -47,9 +57,9 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    * @param names an array of {@link java.lang.String} objects
    * @param stocCoefs an array of type double
    * @param K an array of type double
-   * @param r a double
-   * @param activationEnergy a double
-   * @param refT a double
+   * @param r rate factor at refT, in the units required by the caller's concentration law
+   * @param activationEnergy activation energy in J/mol for the reference Arrhenius law
+   * @param refT reference temperature in kelvin
    */
   public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
       double activationEnergy, double refT) {
@@ -63,8 +73,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    * @param names component names
    * @param stocCoefs stoichiometric coefficients
    * @param K equilibrium-constant correlation coefficients
-   * @param r rate factor
-   * @param activationEnergy activation energy
+   * @param r rate factor at refT, in the units required by the caller's concentration law
+   * @param activationEnergy activation energy in J/mol for the reference Arrhenius law
    * @param refT reference temperature in kelvin
    * @param reference literature or data reference stored with the parameters
    */
@@ -80,8 +90,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    * @param names component names
    * @param stocCoefs stoichiometric coefficients
    * @param K equilibrium-constant correlation coefficients
-   * @param r rate factor
-   * @param activationEnergy activation energy
+   * @param r rate factor at refT, in the units required by the caller's concentration law
+   * @param activationEnergy activation energy in J/mol for the reference Arrhenius law
    * @param refT reference temperature in kelvin
    * @param reference literature or data reference stored with the parameters
    * @param validationStatus model-specific validation status of the stored correlation
@@ -182,7 +192,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * reaction constant at reference temperature.
+   * Stored rate factor at the reference temperature. The legacy temperature correlation does not use this value.
    *
    * @return a double
    */
@@ -191,15 +201,70 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * Getter for the field <code>rateFactor</code>.
+   * Evaluates the selected temperature law. The reference Arrhenius law returns the supplied factor at refT and
+   * preserves its units. This method does not convert concentration/activity bases or infer reaction order.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return a double
+   * @return rate factor at the phase temperature
+   * @throws IllegalArgumentException for invalid temperature or reference-law parameters
    */
   public double getRateFactor(PhaseInterface phase) {
-    // return rateFactor * Math.exp(-activationEnergy/R*(1.0/phase.getTemperature()
-    // - 1.0/refT));
-    return 2.576e9 * Math.exp(-6024.0 / phase.getTemperature()) / 1000.0;
+    double temperature = phase.getTemperature();
+    if (!Double.isFinite(temperature) || temperature <= 0.0) {
+      throw new IllegalArgumentException("Kinetic temperature must be finite and positive in kelvin.");
+    }
+    if (getKineticRateLaw() == KineticRateLaw.LEGACY_TEMPERATURE_CORRELATION) {
+      return 2.576e9 * Math.exp(-6024.0 / temperature) / 1000.0;
+    }
+    validateReferenceKinetics(rateFactor, activationEnergy, refT);
+    if (rateFactor == 0.0) {
+      return 0.0;
+    }
+    return rateFactor * Math.exp(-activationEnergy / R * (1.0 / temperature - 1.0 / refT));
+  }
+
+  /**
+   * Returns the selected kinetic temperature law. Objects serialized before this selector was introduced retain the
+   * legacy correlation when their selector field is absent.
+   *
+   * @return the kinetic temperature law
+   */
+  public KineticRateLaw getKineticRateLaw() {
+    return kineticRateLaw == null ? KineticRateLaw.LEGACY_TEMPERATURE_CORRELATION : kineticRateLaw;
+  }
+
+  /**
+   * Selects the historical temperature correlation for compatibility. Its parameter provenance and validity range are
+   * not established for arbitrary reactions. Stored reference-rate parameters are not evaluated in this mode.
+   */
+  public void useLegacyKineticRateLaw() {
+    kineticRateLaw = KineticRateLaw.LEGACY_TEMPERATURE_CORRELATION;
+  }
+
+  /**
+   * Sets a complete, explicitly unit-qualified reference Arrhenius law. Use this to migrate database reactions rather
+   * than interpreting unqualified legacy ACTENERGY fields as J/mol.
+   *
+   * @param referenceRate rate at referenceTemperatureK, in the caller's concentration-law units
+   * @param activationEnergyJPerMol activation energy in J/mol
+   * @param referenceTemperatureK reference temperature in K
+   * @throws IllegalArgumentException if the parameters are not finite, the rate is negative, or temperature is not
+   * positive
+   */
+  public void setReferenceKinetics(double referenceRate, double activationEnergyJPerMol, double referenceTemperatureK) {
+    validateReferenceKinetics(referenceRate, activationEnergyJPerMol, referenceTemperatureK);
+    rateFactor = referenceRate;
+    activationEnergy = activationEnergyJPerMol;
+    refT = referenceTemperatureK;
+    kineticRateLaw = KineticRateLaw.REFERENCE_ARRHENIUS;
+  }
+
+  private static void validateReferenceKinetics(double referenceRate, double energy, double temperature) {
+    if (!Double.isFinite(referenceRate) || referenceRate < 0.0 || !Double.isFinite(energy)
+        || !Double.isFinite(temperature) || temperature <= 0.0) {
+      throw new IllegalArgumentException(
+          "Reference kinetics require a finite nonnegative rate, finite energy in J/mol and positive temperature in K.");
+    }
   }
 
   /**
@@ -541,7 +606,7 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * Setter for property rateFactor.
+   * Sets the stored reference rate factor without changing the selected kinetic law.
    *
    * @param rateFactor New value of property rateFactor.
    */
@@ -550,7 +615,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * Getter for property activationEnergy.
+   * Gets the stored activation energy: J/mol for reference Arrhenius kinetics. Legacy database values are retained
+   * without reinterpreting their units and are not used by the legacy temperature correlation.
    *
    * @return Value of property activationEnergy.
    */
@@ -559,7 +625,8 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
-   * Setter for property activationEnergy.
+   * Sets activation energy in J/mol for reference Arrhenius kinetics without changing the selected law. For a legacy
+   * database reaction, use setReferenceKinetics to qualify all parameters and select the reference law explicitly.
    *
    * @param activationEnergy New value of property activationEnergy.
    */
