@@ -41,6 +41,35 @@ system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composi
 | **Volume Correction** | Enabled by default |
 | **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
 
+### Ionic covolume selection and compatibility
+
+CPA ionic components read covolume coefficients `[0]` and `[1]` directly from
+`FurstElectrolyteConstants.furstParamsCPA`, including construction and
+`initFurstParam()` reinitialization. This also applies to the Statoil and Advanced
+subclasses. ScRK components retain their separate `furstParams` defaults.
+Constructing an electrolyte CPA system no longer reassigns those shared ScRK
+defaults. Interleaving systems, adding ions later, cloning and serialization must
+therefore preserve each model's covolume identity.
+
+With the default tables, Na+ covolume is approximately `2.58461732544` for ScRK
+and `3.87214760778` for CPA in NeqSim internal units. Earlier versions could give
+the CPA value to ScRK solely because a CPA system had been constructed first.
+Removing that construction-order dependence can change affected ScRK results; it
+is not a new parameter fit or an estimate of fluid-property error.
+
+For deliberate customization, use `setFurstParamCPA(index, value)` for the CPA
+table and `setFurstParam(index, value)` for the ScRK table, then reinitialize the
+affected components/phases. These remain process-wide mutable customization APIs,
+not per-system or thread-safe parameter stores. The legacy
+`setFurstParams("electrolyteCPA")` explicitly aliases the ScRK table to CPA and
+should not be used to select a system model. Code that relied on a CPA constructor
+making `setFurstParam` target CPA must migrate to `setFurstParamCPA`.
+
+This correction does not change calculated or fitted short-range `Wij` values.
+The separate question of CPA-derived calculated interactions in ScRK is tracked in
+[#3850](https://github.com/equinor/neqsim/issues/3850); resolving model calibration
+requires evidence beyond construction-order tests.
+
 ### Class Hierarchy
 
 ```
@@ -304,10 +333,28 @@ double phi = system.getPhase(aq).getOsmoticCoefficientOfWater();
 The model supports mixed solvent systems including:
 
 - Water + MEG (monoethylene glycol)
+- Water + TEG (triethylene glycol; initial parameter estimates)
 - Water + Methanol
 - Water + MDEA (methyldiethanolamine)
 
 Separate Wij parameters are available for each solvent system.
+
+For calculated cation-glycol pairs, `TEG` and the mixing-rule alias
+`triethylene glycol` use `furstParamsCPA_TEG`; `MEG` and `ethylene glycol`
+use `furstParamsCPA_MEG`. Each set uses indices `[2]`/`[3]` for the
+monovalent slope/intercept and `[6]`/`[7]` for divalent cations. The TEG
+parameters are initial estimates based on water parameters and have **not
+been fitted to experimental TEG-water-electrolyte data**.
+
+The correction in [issue #3846](https://github.com/equinor/neqsim/issues/3846)
+removes an earlier MEG fallback that shadowed the TEG-specific branch. With
+the default parameters and the Na+ Stokes diameter of 5.68, the calculated
+Na+-TEG reference parameter is now `0.000160864`, instead of the MEG value
+`0.0003394`. TEG-containing calculations using the shared Furst short-range
+mixing rule can therefore change. Explicitly fitted pair parameters retain
+precedence, and the existing temperature-dependent coefficients are unchanged.
+This corrects parameter selection; it does not validate the TEG estimates
+against experimental data.
 
 ## Gas-Ion Interaction Parameters (Salting-Out Effect)
 

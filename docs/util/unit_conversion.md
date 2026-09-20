@@ -63,6 +63,12 @@ The six-argument static
 the fluid properties explicitly; the three-argument static overload throws
 `UnsupportedOperationException` because it has no fluid context.
 
+Construct a unit with the source value and unit, then use `getValue(targetUnit)`
+to read the converted value. The removed three-argument overload is no longer
+part of `Unit`. Temperature constructors convert K, C, F and R to Kelvin,
+including the Celsius/Fahrenheit offsets; `getSIvalue()` returns that stored
+Kelvin value. Unsupported source and target units are rejected.
+
 ---
 
 ## Supported Units

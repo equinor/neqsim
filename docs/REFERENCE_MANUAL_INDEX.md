@@ -919,6 +919,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | ISO 6976                  | [docs/standards/iso6976_calorific_values.md](standards/iso6976_calorific_values.md) | ISO 6976 calorific values                          |
 | ISO 6578                  | [docs/standards/iso6578_lng_density.md](standards/iso6578_lng_density.md)           | ISO 6578 LNG density                               |
 | ISO 15403                 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality.md)         | ISO 15403 CNG quality                              |
+| EN 16726 / EN 16723       | [docs/standards/en16723_en16726_gas_quality.md](standards/en16723_en16726_gas_quality.md) | Natural-gas and biomethane composition screening   |
 | Dew Point                 | [docs/standards/dew_point_standards.md](standards/dew_point_standards.md)           | Dew point standards                                |
 | ASTM D6377                | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp.md)                     | ASTM D6377 RVP                                     |
 | **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards.md)       | **ASTM D86, D445, D4052, D4294, D6377, TVP, D4737, D611, D1322, EN 116, D3230, D2500, D97, BS&W** |

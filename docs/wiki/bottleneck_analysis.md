@@ -683,6 +683,14 @@ Sand production and erosion limits require a qualified, separately supplied mode
 evidence. Register those as additional hard constraints before interpreting this example as a
 well operating envelope; this example does not invent a sand-production correlation.
 
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.
+
 ### Debottlenecking Studies
 
 Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:

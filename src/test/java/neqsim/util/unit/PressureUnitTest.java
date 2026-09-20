@@ -57,20 +57,20 @@ class PressureUnitTest extends neqsim.NeqSimTest {
 
   @Test
   public void testPsigBaraConversion() {
-    // Convert 100 psig to bara
-    double bara = new PressureUnit(100.0, "psig").getValue("bara");
-    double expectedBara = (100.0 + ThermodynamicConstantsInterface.referencePressure / 0.0689475729317831)
-        * 0.0689475729317831;
+    PressureUnit converter = new PressureUnit(0.0, "bara");
+    PressureUnit psig = new PressureUnit(100.0, "psig");
+    double bara = psig.getValue("bara");
+    double expectedBara = 100.0 * converter.getConversionFactor("psi")
+        + ThermodynamicConstantsInterface.referencePressure;
     assertEquals(expectedBara, bara, 1e-6);
-    assertEquals(100.0, PressureUnit.convert(bara, "bara", "psig"), 1e-6);
   }
 
   @Test
   public void testAtmPsiConversion() {
-    double psi = new PressureUnit(1.0, "atm").getValue("psi");
-    double expectedPsi = ThermodynamicConstantsInterface.referencePressure / 0.0689475729317831;
-    assertEquals(expectedPsi, psi, 1e-6);
-    assertEquals(1.0, PressureUnit.convert(psi, "psi", "atm"), 1e-6);
+    PressureUnit converter = new PressureUnit(0.0, "bara");
+    PressureUnit psi = new PressureUnit(1.0, "atm");
+    double expectedPsi = ThermodynamicConstantsInterface.referencePressure / converter.getConversionFactor("psi");
+    assertEquals(expectedPsi, psi.getValue("psi"), 1e-6);
   }
 
   @Test

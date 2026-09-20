@@ -89,12 +89,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
     return toSIvalue(invalue, inunit);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Convert the stored value to the specified unit.
-   */
+  /** {@inheritDoc} */
   @Override
   public double getValue(String toUnit) {
     return fromSIvalue(getSIvalue(), toUnit);

@@ -563,6 +563,22 @@ public class HeatMassTransferExample {
 
 ---
 
+### 8.6 Reactive enhancement selection
+
+`ReactiveKrishnaStandartFilmModel` supports algebraic enhancement, selected by
+`setEnhancementType(1)` and used by default. It estimates CO2 enhancement in the
+liquid phase using the configured reaction kinetics; other components and the gas
+phase receive unit enhancement.
+
+Numerical reactive enhancement is **not implemented**. Previously, any type other
+than `1` selected an unfinished class whose zero-initialized enhancement vector
+silently suppressed mass transfer. Such selections now throw
+`UnsupportedOperationException` immediately and retain the previously selected
+model. Direct construction of `EnhancementFactorNumeric` also throws. Existing
+callers requesting type `0`, `2`, or another value must explicitly choose the
+algebraic model if its assumptions suit their application. This correction does
+not supply or validate a numerical reaction-diffusion solver.
+
 ## 9. Validation and Benchmarks
 
 ### 9.1 Literature Validation
