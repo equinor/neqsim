@@ -18,8 +18,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    */
   public TemperatureUnit(double value, String name) {
     super(value, name);
-    // store the temperature in Kelvin for reuse
-    this.SIvalue = getValue(value, name, "K");
   }
 
   /** {@inheritDoc} */
