@@ -690,3 +690,14 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 2.  Re-run the optimization loop.
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
+
+
+
+### Non-monotonic compressor operating envelopes
+
+Binary feasibility search assumes a feasible lower-flow region followed by an
+infeasible upper-flow region. Compressor surge and minimum-speed constraints can
+instead create an interior feasible interval. Sample the operating envelope
+before choosing a binary-search bracket, or report the highest freshly verified
+feasible point on an explicit flow grid. The three-compressor cooling example
+uses a 0.5 percent grid and rejects invalid or over-capacity results.

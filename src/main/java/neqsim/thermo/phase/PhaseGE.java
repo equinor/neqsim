@@ -198,10 +198,11 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
     PhaseInterface dilphase = this.clone();
     dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
     dilphase.getComponent(k).setx(1e-10);
+    dilphase.normalize();
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1, dilphase.getType(), 1.0);
-    ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, 2, dilphase.getTemperature(), dilphase.getPressure(),
-        dilphase.getType());
-    return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
+    ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, dilphase.getNumberOfComponents(),
+        dilphase.getTemperature(), dilphase.getPressure(), dilphase.getType());
+    return ((ComponentGEInterface) dilphase.getComponent(k)).getGamma();
   }
 
   /** {@inheritDoc} */

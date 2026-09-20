@@ -2622,16 +2622,8 @@ public class CoolingDutyProductionAnalysisTest {
     Stream baselineInletStream = (Stream) baselineProcess.getUnit("Inlet Stream");
     double originalFlow = baselineInletStream.getFlowRate("kg/hr");
 
-    ProductionOptimizer baselineOptimizer = new ProductionOptimizer();
-    OptimizationConfig baselineConfig = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15)
-        .rateUnit("kg/hr").tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-        .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
-
-    OptimizationObjective baselineThroughputObjective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
-
-    OptimizationResult baselineResult = baselineOptimizer.optimize(baselineProcess, baselineInletStream, baselineConfig,
-        Collections.singletonList(baselineThroughputObjective), Collections.emptyList());
+    OptimizationResult baselineResult = findVerifiedCoolingThroughput(baselineProcess, baselineInletStream,
+        originalFlow);
 
     double baselineFlow = baselineResult.getOptimalRate();
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
@@ -2646,16 +2638,7 @@ public class CoolingDutyProductionAnalysisTest {
       ProcessSystem process = buildProcessWithIdenticalCompressors(coolingDeltaT);
       Stream inletStream = (Stream) process.getUnit("Inlet Stream");
 
-      ProductionOptimizer optimizer = new ProductionOptimizer();
-      OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-          .tolerance(originalFlow * 0.0005).maxIterations(30).defaultUtilizationLimit(1.0)
-          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
-
-      OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
-
-      OptimizationResult result = optimizer.optimize(process, inletStream, config,
-          Collections.singletonList(throughputObjective), Collections.emptyList());
+      OptimizationResult result = findVerifiedCoolingThroughput(process, inletStream, originalFlow);
 
       // Calculate cooling duty from cooler
       Heater cooler = (Heater) process.getUnit("Gas Cooler");
@@ -2743,6 +2726,35 @@ public class CoolingDutyProductionAnalysisTest {
     // Assertions (JUnit 5 order: condition first, then message)
     assertTrue(results.get(results.size() - 1)[1] > baselineMSm3Day, "Production should increase with cooling");
     assertTrue(maxIncreaseMSm3 > 0, "Should achieve positive production increase");
+  }
+
+  /**
+   * Samples the compressor operating envelope from highest to lowest throughput. Surge and minimum-speed limits make
+   * feasibility non-monotonic, so binary search over the full range can discard a feasible higher-flow interval. Every
+   * returned point is solved and verified by the optimizer, including its final replay.
+   *
+   * @param process configured cooling scenario
+   * @param inletStream flow-rate decision stream
+   * @param originalFlow baseline rate in kg/hr
+   * @return highest verified feasible throughput on the 0.5 percent flow grid
+   */
+  private OptimizationResult findVerifiedCoolingThroughput(ProcessSystem process, Stream inletStream,
+      double originalFlow) {
+    ProductionOptimizer optimizer = new ProductionOptimizer();
+    OptimizationObjective throughput = new OptimizationObjective("throughput",
+        candidate -> ((Stream) candidate.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+    for (int step = 50; step >= 0; step--) {
+      double candidateRate = originalFlow * (0.9 + 0.005 * step);
+      OptimizationConfig config = new OptimizationConfig(candidateRate, candidateRate).rateUnit("kg/hr")
+          .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+      OptimizationResult result = optimizer.optimize(process, inletStream, config,
+          Collections.singletonList(throughput), Collections.emptyList());
+      if (result.isFeasible()) {
+        assertTrue(result.getBottleneckUtilization() <= 1.0, "Cooling scenario must respect compressor limits");
+        return result;
+      }
+    }
+    throw new AssertionError("Cooling scenario has no verified feasible flow in the configured range");
   }
 
   /**

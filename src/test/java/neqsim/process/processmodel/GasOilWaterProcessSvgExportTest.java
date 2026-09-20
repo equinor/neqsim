@@ -1,5 +1,8 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -94,14 +97,19 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     Cooler hpGasCooler = new Cooler("HP Gas Cooler", hpSeparator.getGasOutStream());
     hpGasCooler.setOutTemperature(40.0, "C");
 
-    Compressor stage1Compressor = new Compressor("1st Stage Compressor", hpGasCooler.getOutStream());
+    // Cooling a saturated separator gas condenses water and hydrocarbons. Remove those liquids before compression.
+    ThreePhaseSeparator stage1Scrubber = new ThreePhaseSeparator("1st Stage Suction Scrubber",
+        hpGasCooler.getOutStream());
+    Compressor stage1Compressor = new Compressor("1st Stage Compressor", stage1Scrubber.getGasOutStream());
     stage1Compressor.setOutletPressure(80.0, "bara");
     stage1Compressor.setIsentropicEfficiency(0.75);
 
     Cooler stage1Aftercooler = new Cooler("1st Stage Aftercooler", stage1Compressor.getOutStream());
     stage1Aftercooler.setOutTemperature(40.0, "C");
 
-    Compressor stage2Compressor = new Compressor("2nd Stage Compressor", stage1Aftercooler.getOutStream());
+    ThreePhaseSeparator stage2Scrubber = new ThreePhaseSeparator("2nd Stage Suction Scrubber",
+        stage1Aftercooler.getOutStream());
+    Compressor stage2Compressor = new Compressor("2nd Stage Compressor", stage2Scrubber.getGasOutStream());
     stage2Compressor.setOutletPressure(120.0, "bara");
     stage2Compressor.setIsentropicEfficiency(0.75);
 
@@ -165,8 +173,10 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     // HP separation
     process.add(hpSeparator);
     process.add(hpGasCooler);
+    process.add(stage1Scrubber);
     process.add(stage1Compressor);
     process.add(stage1Aftercooler);
+    process.add(stage2Scrubber);
     process.add(stage2Compressor);
     process.add(stage2Aftercooler);
     process.add(exportGas);
@@ -192,6 +202,12 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
 
     // Run the process to calculate all streams
     process.run();
+    assertEquals(1, stage1Scrubber.getGasOutStream().getThermoSystem().getNumberOfPhases());
+    assertEquals(1, stage2Scrubber.getGasOutStream().getThermoSystem().getNumberOfPhases());
+    assertEquals(80.0, stage1Compressor.getOutletStream().getPressure("bara"), 1e-6);
+    assertEquals(120.0, stage2Compressor.getOutletStream().getPressure("bara"), 1e-6);
+    assertTrue(Double.isFinite(stage1Compressor.getPower()) && stage1Compressor.getPower() > 0.0);
+    assertTrue(Double.isFinite(stage2Compressor.getPower()) && stage2Compressor.getPower() > 0.0);
 
     // ===== EXPORT TO DOT AND SVG =====
     // Define output paths
@@ -219,6 +235,8 @@ public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
     }
 
     // Verify DOT file was created
-    assert Files.exists(dotFile) : "DOT file was not created";
+    assertTrue(Files.exists(dotFile), "DOT file was not created");
+    assertTrue(dotContent.contains("1st Stage Suction Scrubber"));
+    assertTrue(dotContent.contains("2nd Stage Suction Scrubber"));
   }
 }
