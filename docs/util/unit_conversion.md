@@ -47,6 +47,12 @@ any two supported units without needing an instance, plus the instance methods
 `getConversionFactor(unit)` (the factor from that unit to SI) and `getValue(toUnit)`
 (convert the stored value). Unsupported source or target units are rejected.
 
+Construction with a unit outside the class's allowed-unit list throws
+`IllegalArgumentException`, retaining the detailed `InvalidInputException` as its
+cause. Temperature conversions also reject unsupported source and target units
+with `IllegalArgumentException`, including the condenser and reboiler temperature
+setters that use `TemperatureUnit`.
+
 `RateUnit` also implements `LinearScaleUnit`, with conversion factors determined by
 its stored fluid properties. `getValue(toUnit)` works through a `Unit` reference
 without changing the stored value. `BaseUnit` leaves this method to the concrete

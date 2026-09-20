@@ -88,7 +88,9 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
 
   @Test
   public void testUnsupportedUnitThrows() {
-    assertThrows(RuntimeException.class, () -> new TemperatureUnit(0.0, "X").getSIvalue());
-    assertThrows(RuntimeException.class, () -> new TemperatureUnit(0.0, "K").getValue("X"));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "X"));
+    assertThrows(IllegalArgumentException.class, () -> new TemperatureUnit(0.0, "K").getValue("X"));
+    assertThrows(IllegalArgumentException.class, () -> TemperatureUnit.convert(0.0, "X", "K"));
+    assertThrows(IllegalArgumentException.class, () -> TemperatureUnit.convert(0.0, "K", "X"));
   }
 }

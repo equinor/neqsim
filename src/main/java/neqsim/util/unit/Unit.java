@@ -42,6 +42,7 @@ public interface Unit {
    * Validate that a unit name is one of the units supported by the calling implementation.
    *
    * @param unit the unit name to validate
+   * @throws IllegalArgumentException if the unit is not supported
    */
   public default void validateAllowedUnit(String unit) {
     String[] allowedUnits = getAllowedUnits();
@@ -53,7 +54,8 @@ public interface Unit {
         return;
       }
     }
-    throw new RuntimeException(new InvalidInputException(this, "validateAllowedUnit", unit, "unit not supported"));
+    throw new IllegalArgumentException(
+        new InvalidInputException(this, "validateAllowedUnit", unit, "unit not supported"));
   }
 
   /**

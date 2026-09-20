@@ -690,3 +690,12 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 2.  Re-run the optimization loop.
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
+
+### Binary-search feasibility brackets
+
+Binary feasibility searches evaluate and retain the lower bracket endpoint before
+testing interior rates. If a higher-rate candidate fails its final replay, the
+optimizer can fall back to that endpoint only after solving and verifying it again.
+This does not remove the monotonic-feasibility assumption: compressor surge and
+minimum-speed limits can make low-flow points infeasible, so bracket a feasible
+operating interval before searching its upper capacity boundary.
