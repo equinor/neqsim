@@ -7,6 +7,7 @@
 package neqsim.process.equipment.reservoir;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
@@ -172,6 +173,46 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     gasInStream.getFluid().setTotalFlowRate(1.0e-1, "kg/sec");
     newWell.setStream(gasInStream);
     return newWell.getStream();
+  }
+
+  /**
+   * Returns gas and water injection streams in that order. Exposing these connections makes process graph scheduling
+   * wait for upstream injection streams before running the reservoir.
+   *
+   * @return a new list containing the reservoir's injection streams
+   */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    for (Well well : gasInjector) {
+      streams.add(well.getStream());
+    }
+    for (Well well : waterInjector) {
+      streams.add(well.getStream());
+    }
+    return streams;
+  }
+
+  /**
+   * Returns gas, oil and water production streams in that order. These streams are flashed by {@link #run(UUID)};
+   * reporting their ownership prevents a separately registered producer stream from being flashed concurrently with the
+   * reservoir by a parallel process scheduler.
+   *
+   * @return a new list containing the reservoir's production streams
+   */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    for (Well well : gasProducer) {
+      streams.add(well.getStream());
+    }
+    for (Well well : oilProducer) {
+      streams.add(well.getStream());
+    }
+    for (Well well : waterProducer) {
+      streams.add(well.getStream());
+    }
+    return streams;
   }
 
   /**
