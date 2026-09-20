@@ -304,10 +304,28 @@ double phi = system.getPhase(aq).getOsmoticCoefficientOfWater();
 The model supports mixed solvent systems including:
 
 - Water + MEG (monoethylene glycol)
+- Water + TEG (triethylene glycol; initial parameter estimates)
 - Water + Methanol
 - Water + MDEA (methyldiethanolamine)
 
 Separate Wij parameters are available for each solvent system.
+
+For calculated cation-glycol pairs, `TEG` and the mixing-rule alias
+`triethylene glycol` use `furstParamsCPA_TEG`; `MEG` and `ethylene glycol`
+use `furstParamsCPA_MEG`. Each set uses indices `[2]`/`[3]` for the
+monovalent slope/intercept and `[6]`/`[7]` for divalent cations. The TEG
+parameters are initial estimates based on water parameters and have **not
+been fitted to experimental TEG-water-electrolyte data**.
+
+The correction in [issue #3846](https://github.com/equinor/neqsim/issues/3846)
+removes an earlier MEG fallback that shadowed the TEG-specific branch. With
+the default parameters and the Na+ Stokes diameter of 5.68, the calculated
+Na+-TEG reference parameter is now `0.000160864`, instead of the MEG value
+`0.0003394`. TEG-containing calculations using the shared Furst short-range
+mixing rule can therefore change. Explicitly fitted pair parameters retain
+precedence, and the existing temperature-dependent coefficients are unchanged.
+This corrects parameter selection; it does not validate the TEG estimates
+against experimental data.
 
 ## Gas-Ion Interaction Parameters (Salting-Out Effect)
 

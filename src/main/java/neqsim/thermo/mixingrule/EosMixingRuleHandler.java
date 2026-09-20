@@ -3297,14 +3297,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                       * stokesDiam + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMeOH(3);
                 }
               } else if (solventName.equals("TEG") || solventName.equals("triethylene glycol")) {
-                // TEG: use MEG parameters as approximation (similar
-                // glycol structure)
+                // TEG: use its own initial estimates, not the MEG parameter set.
                 if (isDivalent) {
-                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(6) * stokesDiam
-                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(7);
+                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(6) * stokesDiam
+                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(7);
                 } else {
-                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(2) * stokesDiam
-                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(3);
+                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(2) * stokesDiam
+                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(3);
                 }
               } else if (solventName.equals("ethanol")) {
                 // Ethanol: use ethanol-specific parameters
@@ -3323,15 +3322,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 } else {
                   wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEA(2) * stokesDiam
                       + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEA(3);
-                }
-              } else if (solventName.equals("TEG")) {
-                // TEG (triethylene glycol): use TEG-specific parameters
-                if (isDivalent) {
-                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(6) * stokesDiam
-                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(7);
-                } else {
-                  wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(2) * stokesDiam
-                      + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(3);
                 }
               } else if (compArray[j].getIonicCharge() == 0) {
                 // Unknown neutral solvent: use predictive model based
