@@ -224,6 +224,11 @@ in a single equation of state:
    alcohols, alkanolamines), added to the reduced Helmholtz energy in
    `PhaseUMRCPA.getF()`.
 
+CPA-fitted physical parameters are used only when both the energy parameter and
+co-volume are finite and positive. Components with association-site metadata but no
+fitted physical parameters, such as CO₂, retain their Peng–Robinson physical
+parameters and the selected Mathias–Copeman alpha instead of receiving zero values.
+
 The pressure is the sum of a physical and an association contribution:
 
 $$P = P_{\text{PR}}(\text{UMR mixing, MC alpha}) + P_{\text{association}}(\text{CPA})$$
@@ -563,7 +568,7 @@ ops.TPflash();
 | `SystemPitzer` | Pitzer aqueous GE + SRK gas/oil | Concentrated brines and reactive VLLE |
 | `SystemDesmukhMather` | Desmukh-Mather aqueous GE + SRK gas/oil | Reactive amine VLLE; parameter-limited scale screening |
 | `SystemKentEisenberg` | Kent-Eisenberg aqueous GE + SRK gas/oil | Reactive CO2/H2S amine VLLE screening |
-| `SystemDuanSun` | Duan-Sun, currently CO2-only | CO2 correlation; not hybrid gas-oil-aqueous |
+| `SystemDuanSun` | Historical CO2-only wrapper; conversion rejected | Not a usable gas-in-brine system. `setModel("Duan-Sun")` fails explicitly; direct `PhaseDuanSun` correlation evaluation remains available. |
 | `SystemFurstElectrolyteEos` | Fürst electrolyte EoS | General electrolytes |
 
 Mixed-ion `SystemPitzer` states fail before activity or osmotic-coefficient evaluation when a required binary,

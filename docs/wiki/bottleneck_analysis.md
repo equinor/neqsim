@@ -691,11 +691,13 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
 
-### Binary-search feasibility brackets
 
-Binary feasibility searches evaluate and retain the lower bracket endpoint before
-testing interior rates. If a higher-rate candidate fails its final replay, the
-optimizer can fall back to that endpoint only after solving and verifying it again.
-This does not remove the monotonic-feasibility assumption: compressor surge and
-minimum-speed limits can make low-flow points infeasible, so bracket a feasible
-operating interval before searching its upper capacity boundary.
+
+### Non-monotonic compressor operating envelopes
+
+Binary feasibility search assumes a feasible lower-flow region followed by an
+infeasible upper-flow region. Compressor surge and minimum-speed constraints can
+instead create an interior feasible interval. Sample the operating envelope
+before choosing a binary-search bracket, or report the highest freshly verified
+feasible point on an explicit flow grid. The three-compressor cooling example
+uses a 0.5 percent grid and rejects invalid or over-capacity results.

@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.41");
+    inventory.addProperty("inventoryVersion", "1.42");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runOperationalStudy, compareProcesses. Inventory 1.41 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses. Inventory 1.42 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 41 are CONTRACT_TESTED and 10 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 42 are CONTRACT_TESTED and 9 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -583,6 +583,15 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_barrier_register_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/BARRIER_REGISTER_SCREENING_CONTRACT.md"};
       evidenceBoundary = "Bounded UTF-8 request, collection, object, text and nesting admission, fail-closed malformed and non-finite input handling, deterministic caller order and summary accounting, canonical NeqSim barrier model construction, traceable direct or performance-standard evidence, impaired, unqualified and untraceable barrier exclusion from quantitative handoffs, explicit screening and standards-conformance metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not identify hazards, validate document extraction, scenario completeness, PFD, effectiveness, availability, independence, common-cause failure, proof testing or lifecycle evidence, select or verify SIL, decide tolerability or risk acceptance, demonstrate NORSOK S-001, IEC 61511, ISO 31000 or regulatory compliance, authorize plant action, certify design, or replace qualified process-safety review and accountable approval";
+      break;
+    case "runRelief":
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_PRESSURE_RELIEF_SIZING_SCREENING_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/ReliefRunner.java",
+          "src/main/java/neqsim/process/util/fire/ReliefValveSizing.java",
+          "src/test/java/neqsim/mcp/runners/ReliefRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/RELIEF_SIZING_CONTRACT.md"};
+      evidenceBoundary = "Bounded 16,384-byte UTF-8 request admission, stable fail-closed malformed, non-finite, non-positive and out-of-range input handling, gas, liquid, two-phase and fire-heat-input routing through canonical NeqSim ReliefValveSizing calculations, backpressure validation, finite positive and conservative selected-area evidence, explicit screening-only and standards-conformance metadata, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish relief-scenario completeness, applicable standard edition, relieving-rate or property validity, allowable accumulation, coefficient applicability, inlet/outlet piping acceptability, disposal-system capacity, reaction loads, installation suitability, certification, plant authorization, or replace qualified pressure-relief/process-safety review and accountable approval";
       break;
     case "runOperationalStudy":
       benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT";

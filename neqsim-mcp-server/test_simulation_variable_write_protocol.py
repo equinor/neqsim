@@ -286,10 +286,10 @@ def test_phase0_inventory_is_promoted_atomically(client):
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("setSimulationVariable", {})
-    require(inventory.get("inventoryVersion") == "1.41", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.42", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 41
-        and limitations.get("confirmedGapToolCount") == 10,
+        limitations.get("contractTestedToolCount") == 42
+        and limitations.get("confirmedGapToolCount") == 9,
         "promotion inventory accounting drifted",
         limitations,
     )

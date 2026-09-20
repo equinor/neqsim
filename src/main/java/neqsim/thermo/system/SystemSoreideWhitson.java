@@ -1,6 +1,12 @@
 package neqsim.thermo.system;
 
+import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson;
 import neqsim.thermo.mixingrule.SoreideWhitsonParameterization;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 
 /**
@@ -159,10 +165,10 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
    * Select the Soreide-Whitson binary-interaction parameterization.
    *
    * <p>
-   * The default is {@link SoreideWhitsonParameterization#LEGACY}, which preserves historical NeqSim results. Select
-   * {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified CO2 correlation published by Chabab
-   * et al. (2019), or {@link SoreideWhitsonParameterization#BURGOYNE_NIELSEN_2026} for the 2026 drop-in water-gas
-   * parameter set.
+   * The default is {@link SoreideWhitsonParameterization#LEGACY}, which selects the original binary-interaction
+   * correlation. Select {@link SoreideWhitsonParameterization#CHABAB_2019} explicitly for the modified CO2 correlation
+   * published by Chabab et al. (2019), or {@link SoreideWhitsonParameterization#BURGOYNE_NIELSEN_2026} for the 2026
+   * drop-in water-gas parameter set.
    *
    * @param parameterization parameterization to use
    * @throws IllegalArgumentException if {@code parameterization} is null
@@ -237,55 +243,43 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
   }
 
   /**
-   * calcSalinity.
+   * Update the aqueous concentration and propagate it to the water attractive terms in every phase.
    *
-   * @return a boolean
+   * <p>
+   * The working concentration uses the total aqueous-phase mass as the existing water-mass approximation. Zero salt or
+   * absence of an aqueous phase clears previously stored concentrations, including in cached phases.
+   *
+   * @return true when another flash is required because a concentration changed by more than 1e-6 mol/kg
    */
   public boolean calcSalinity() {
-    boolean updatedSalinity = false;
-    double systemSalinity = this.getSalinity();
-    double salinityConcentration = 0.0;
-    double errorSalinityConcentration = 0.0;
-    for (int i = 0; i < this.getNumberOfPhases(); i++) {
-      if (systemSalinity > 0.0) {
-        // Check for aqueous phase
-        neqsim.thermo.phase.PhaseInterface aqueousPhase;
-        try {
-          aqueousPhase = this.getPhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
-        } catch (Exception e) {
-          aqueousPhase = null;
-        }
-        if (aqueousPhase != null) {
-          double massKgWater = aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
-          if (massKgWater > 0.0) {
-            salinityConcentration = systemSalinity / massKgWater;
-            errorSalinityConcentration = Math
-                .abs(((PhaseSoreideWhitson) aqueousPhase).getSalinityConcentration() - salinityConcentration);
-            if (errorSalinityConcentration > 1e-6) {
-              ((PhaseSoreideWhitson) aqueousPhase).setSalinityConcentration(salinityConcentration);
-              // Set salinityConcentration for each component's attractive
-              // term if SoreideWhitso
+    PhaseInterface aqueousPhase = hasPhaseType(PhaseType.AQUEOUS) ? getPhase(PhaseType.AQUEOUS) : null;
+    double concentration = 0.0;
+    if (salinity > 0.0 && aqueousPhase != null) {
+      double aqueousMassKg = aqueousPhase.getNumberOfMolesInPhase() * aqueousPhase.getMolarMass();
+      if (aqueousMassKg > 0.0) {
+        concentration = salinity / aqueousMassKg;
+      }
+    }
 
-              updatedSalinity = true;
-            }
-          }
-          // Assign the calculated salinityConcentration to every SoreideWhitson
-          // attractive term in
-          // all phases
-          for (int phaseN = 0; phaseN < this.getNumberOfPhases(); phaseN++) {
-            neqsim.thermo.phase.PhaseInterface phase = this.getPhase(phaseN);
-            for (int compN = 0; compN < phase.getNumberOfComponents(); compN++) {
-              neqsim.thermo.component.ComponentInterface comp = phase.getComponent(compN);
-              if (comp != null && comp.getClass().getName().equals("neqsim.thermo.component.ComponentEosInterface")) {
-                neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface attractiveTerm = comp
-                    .getAttractiveTerm();
-                if (attractiveTerm != null && attractiveTerm.getClass().getName()
-                    .equals("neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson")) {
-                  ((neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson) attractiveTerm)
-                      .setSalinityFromPhase(salinityConcentration);
-                }
-              }
-            }
+    boolean updatedSalinity = false;
+    for (PhaseInterface phase : phaseArray) {
+      if (!(phase instanceof PhaseSoreideWhitson)) {
+        continue;
+      }
+      PhaseSoreideWhitson swPhase = (PhaseSoreideWhitson) phase;
+      // Saline aqueous BIPs apply only to the aqueous phase. The water alpha uses
+      // the same aqueous salinity in every phase, including cached phase objects.
+      double phaseConcentration = phase == aqueousPhase ? concentration : 0.0;
+      updatedSalinity |= Math.abs(swPhase.getSalinityConcentration() - phaseConcentration) > 1e-6;
+      swPhase.setSalinityConcentration(phaseConcentration);
+      for (int componentNumber = 0; componentNumber < phase.getNumberOfComponents(); componentNumber++) {
+        ComponentInterface component = phase.getComponent(componentNumber);
+        if (component instanceof ComponentEosInterface) {
+          AttractiveTermInterface term = component.getAttractiveTerm();
+          if (term instanceof AttractiveTermSoreideWhitson) {
+            AttractiveTermSoreideWhitson swTerm = (AttractiveTermSoreideWhitson) term;
+            updatedSalinity |= Math.abs(swTerm.getSalinityFromPhase() - concentration) > 1e-6;
+            swTerm.setSalinityFromPhase(concentration);
           }
         }
       }

@@ -768,6 +768,19 @@ Note the sign conventions used in NeqSim for thermodynamic derivatives:
 
 Calculate the bubble point (onset of vaporization) at a given temperature or pressure.
 
+Saturation calculations throw `IsNaNException` when no valid finite, positive solution is
+obtained or the solver reports a supercritical outcome. A warm starting state can make
+the bubble-temperature iteration collapse to equal vapor and liquid compositions. For a
+nonreactive mixture with valid critical properties, the solver then tries one bounded
+restart from a Wilson bubble-temperature estimate. Wilson values only initialize the
+iteration; the selected EOS still determines the final equilibrium. A failed restart
+remains an error, so callers such as total condensers cannot silently use the trivial root.
+The non-derivative bubble-pressure solver similarly retries a trivial mixture root from
+half the Wilson pressure estimate. For nonreactive, water-free mixtures, the
+non-derivative dew-temperature solver can retry from the Wilson temperature estimate
+and two nearby lower temperatures (95% and 90% of the estimate). These bounded retries
+do not suppress exceptions or accept failed equilibrium calculations.
+
 **Temperature flash (find T at given P):**
 ```java
 void bubblePointTemperatureFlash()

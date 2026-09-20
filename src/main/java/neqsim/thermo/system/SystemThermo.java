@@ -5394,9 +5394,10 @@ public abstract class SystemThermo implements SystemInterface {
       } else if (model.equals("SRK-TwuCoon-Param-EOS")) {
         tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
       } else if (model.equals("Duan-Sun")) {
-        tempModel = new SystemDuanSun(getPhase(0).getTemperature(), getPhase(0).getPressure());
+        throw new UnsupportedOperationException("Duan-Sun system conversion is not supported: SystemDuanSun cannot "
+            + "preserve an aqueous brine composition. Use PhaseDuanSun only for explicit correlation evaluation.");
       } else {
-        logger.error("model : " + model + " not defined.....");
+        throw new IllegalArgumentException("Thermodynamic model is not defined: " + model);
       }
       // tempModel.getCharacterization().setTBPModel("RiaziDaubert");
       tempModel.useVolumeCorrection(true);
@@ -5438,7 +5439,8 @@ public abstract class SystemThermo implements SystemInterface {
         tempModel.setMultiPhaseCheck(true);
       }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      throw new IllegalArgumentException(
+          "Could not convert fluid to thermodynamic model '" + model + "': " + ex.getMessage(), ex);
     }
     return tempModel;
   }

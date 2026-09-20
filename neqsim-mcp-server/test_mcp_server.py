@@ -1588,14 +1588,14 @@ def test_capabilities():
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
         "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
-        "runOperationalStudy", "compareProcesses",
+        "runRelief", "runOperationalStudy", "compareProcesses",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-one bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.41"
-          and limitations.get("contractTestedToolCount") == 41
-          and limitations.get("confirmedGapToolCount") == 10
+    check("forty-two bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.42"
+          and limitations.get("contractTestedToolCount") == 42
+          and limitations.get("confirmedGapToolCount") == 9
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1623,6 +1623,16 @@ def test_capabilities():
           and "does not identify hazards"
           in barrier_register.get("evidenceBoundary", ""),
           str(barrier_register))
+    relief = coverage_records.get("runRelief", {})
+    check("pressure-relief sizing has bounded canonical evidence",
+          relief.get("coverageStatus") == "CONTRACT_TESTED"
+          and relief.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_PRESSURE_RELIEF_SIZING_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_mcp_server.py"
+          in relief.get("contractEvidenceSources", [])
+          and "canonical NeqSim ReliefValveSizing" in relief.get("evidenceBoundary", "")
+          and "relief-scenario completeness" in relief.get("evidenceBoundary", ""),
+          str(relief))
     operational_study = coverage_records.get("runOperationalStudy", {})
     check("operational-study orchestration has bounded canonical evidence",
           operational_study.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1856,7 +1866,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 10
+          and limitations.get("confirmedGapToolCount") == 9
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2214,7 +2224,7 @@ def test_validate_results():
 
 
 def test_relief_screening_contract():
-    """Exercise bounded pressure-relief screening without changing inventory status."""
+    """Exercise the bounded pressure-relief screening contract."""
     print("\n=== Relief Sizing Screening Contract ===")
     r = call_tool("runRelief", {
         "case": "gas",

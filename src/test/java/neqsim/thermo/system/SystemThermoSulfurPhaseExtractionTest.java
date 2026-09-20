@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
@@ -38,17 +38,23 @@ class SystemThermoSulfurPhaseExtractionTest extends neqsim.NeqSimTest {
       {0.13363999999999998, 0.7695}, {0.16469999999999999, 0.799}, {0.21594, 0.8387}, {0.27333999999999997, 0.8754},
       {0.33492, 0.90731}, {0.41279000000000005, 0.94575}};
 
-  /** Named extraction must not reintroduce the parent's solid sulfur through an inactive gas slot. */
-  @Test
-  void namedGasExtractionConservesInventoryWhenStorageZeroIsInactive() {
+  /**
+   * Named extraction must conserve inventory for natural and explicitly remapped phase storage.
+   *
+   * @param inactiveStorageZero whether to explicitly leave storage zero outside the phase map
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void namedGasExtractionConservesInventoryAcrossStorageLayouts(boolean inactiveStorageZero) {
     SystemInterface source = solidFluid(EXPORT_RATES, 303.15, 180.0);
     assertTrue(source.hasPhaseType("gas"));
     assertTrue(source.hasPhaseType("solid"));
-    boolean usesStorageZero = false;
-    for (int phase = 0; phase < source.getMaxNumberOfPhases(); phase++) {
-      usesStorageZero |= source.getPhaseIndex(phase) == 0;
+    if (inactiveStorageZero) {
+      leaveStorageZeroInactive((SystemThermo) source);
+      for (int phase = 0; phase < source.getMaxNumberOfPhases(); phase++) {
+        assertTrue(source.getPhaseIndex(phase) != 0, "Regression must exercise inactive storage zero");
+      }
     }
-    assertFalse(usesStorageZero, "Regression requires the solid-flash map to skip storage zero");
     PhaseInterface sourceGas = source.getPhase("gas");
     double[] expected = phaseInventory(sourceGas);
     SystemInterface parentSnapshot = source.clone();
@@ -63,6 +69,36 @@ class SystemThermoSulfurPhaseExtractionTest extends neqsim.NeqSimTest {
     assertTrue(extracted.getComponent("S8").doSolidCheck());
     assertFalse(extracted.getComponent("methane").doSolidCheck());
     assertEquals(sourceGas.getType(), extracted.getPhase(0).getType());
+  }
+
+  /**
+   * Preserve the equilibrated phases while placing storage zero outside the logical phase map. EOS improvements can
+   * legitimately change the storage layout selected by the flash, so the extraction regression constructs this layout
+   * explicitly instead of depending on a particular convergence path.
+   *
+   * @param source equilibrated parent fluid
+   */
+  private void leaveStorageZeroInactive(SystemThermo source) {
+    boolean[] mapped = new boolean[source.phaseArray.length];
+    for (int phase = 0; phase < source.getMaxNumberOfPhases(); phase++) {
+      mapped[source.getPhaseIndex(phase)] = true;
+    }
+    if (!mapped[0]) {
+      return;
+    }
+    int spare = 1;
+    while (spare < mapped.length && mapped[spare]) {
+      spare++;
+    }
+    assertTrue(spare < mapped.length, "Fixture needs an unused storage slot");
+    source.phaseArray[spare] = source.phaseArray[0].clone();
+    source.phaseType[spare] = source.phaseType[0];
+    source.beta[spare] = source.beta[0];
+    for (int phase = 0; phase < source.getMaxNumberOfPhases(); phase++) {
+      if (source.getPhaseIndex(phase) == 0) {
+        source.setPhaseIndex(phase, spare);
+      }
+    }
   }
 
   /**

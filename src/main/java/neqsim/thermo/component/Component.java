@@ -1498,6 +1498,12 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressure(double temp) {
+    double value = evaluateAntoineVaporPressure(temp);
+    return Double.isFinite(value) && value > 0.0 ? value : Double.NaN;
+  }
+
+  /** Evaluate the correlation before enforcing its finite, positive output contract. */
+  private double evaluateAntoineVaporPressure(double temp) {
     if (!isLiquidVaporPressureApplicable(temp)) {
       return Double.NaN;
     }
@@ -1527,6 +1533,15 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressuredT(double temp) {
+    if (!Double.isFinite(getAntoineVaporPressure(temp))) {
+      return Double.NaN;
+    }
+    double value = evaluateAntoineVaporPressuredT(temp);
+    return Double.isFinite(value) ? value : Double.NaN;
+  }
+
+  /** Evaluate the derivative using the same pressure scale as the correlation. */
+  private double evaluateAntoineVaporPressuredT(double temp) {
     if (!isLiquidVaporPressureApplicable(temp)) {
       return Double.NaN;
     }
@@ -1547,7 +1562,12 @@ public abstract class Component implements ComponentInterface {
       double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp))) / Math.pow((AntoineC + temp), 2.0);
       return ans;
     } else {
-      return 0.0;
+      double x = 1.0 - temp / criticalTemperature;
+      double numerator = AntoineA * x + AntoineB * Math.pow(x, 1.5) + AntoineC * Math.pow(x, 3)
+          + AntoineD * Math.pow(x, 6);
+      double derivative = AntoineA + 1.5 * AntoineB * Math.sqrt(x) + 3.0 * AntoineC * x * x
+          + 6.0 * AntoineD * Math.pow(x, 5);
+      return -getAntoineVaporPressure(temp) * (derivative / temp + criticalTemperature * numerator / (temp * temp));
     }
   }
 
@@ -1565,6 +1585,10 @@ public abstract class Component implements ComponentInterface {
       iter++;
       nyPres = getAntoineVaporPressure(nyTemp);
       double dPdT = getAntoineVaporPressuredT(nyTemp);
+      if (!Double.isFinite(nyPres) || !Double.isFinite(dPdT)) {
+        nyTemp = Double.NaN;
+        break;
+      }
       if (dPdT != 0.0) {
         nyTemp -= (nyPres - pres) / dPdT;
       } else {
@@ -1590,7 +1614,8 @@ public abstract class Component implements ComponentInterface {
         }
       }
     }
-    return nyTemp;
+    double finalPressure = getAntoineVaporPressure(nyTemp);
+    return Double.isFinite(finalPressure) && Math.abs((finalPressure - pres) / pres) <= 1.0e-5 ? nyTemp : Double.NaN;
   }
 
   /** {@inheritDoc} */

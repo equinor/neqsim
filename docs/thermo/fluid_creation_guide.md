@@ -425,7 +425,14 @@ new ThermodynamicOperations(fluid).TPflash();
 `enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
 with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
 coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
-this topology because its current public API accepts only CO2.
+this topology because its current public API accepts only CO2. Accordingly, `setModel("Duan-Sun")`
+rejects conversion explicitly: it cannot preserve a brine's water and ion inventory. The historical
+`SystemDuanSun` constructor remains available for compatibility, but is not a usable gas-in-brine
+system. `PhaseDuanSun` remains available for direct correlation evaluation with explicitly supplied
+state and salinity; this does not establish a complete or validated multiphase brine model.
+
+`setModel` throws `IllegalArgumentException` with the original cause when conversion fails,
+including unknown model names. It never returns a partially copied fluid as a successful conversion.
 
 For imported Pitzer datasets, check both interaction coverage and scientific qualification. Coverage answers whether
 the active binary, same-sign, ternary, and neutral topology is explicit; qualification answers which systems and

@@ -680,6 +680,19 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return weighted average ln(g)
    */
   private double calcLnGChainEffective(double etaVal, double alpha) {
+    return calcLnGChainEffective(etaVal, alpha, temperature, null);
+  }
+
+  /**
+   * Evaluates the contact value at an independent temperature without mutating phase or component caches.
+   *
+   * @param etaVal packing fraction
+   * @param alpha Mie blending fraction
+   * @param trialTemperature temperature in K
+   * @param diameters trial segment diameters, or null for the current state
+   * @return effective logarithmic contact value
+   */
+  private double calcLnGChainEffective(double etaVal, double alpha, double trialTemperature, double[] diameters) {
     double lnGWeighted = 0.0;
     double totalWeight = 0.0;
 
@@ -691,9 +704,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
         continue;
       }
       double sigmaI = ci.getSigmaSAFTi();
-      double dI = ci.getdSAFTi();
+      double dI = diameters == null ? ci.getdSAFTi() : diameters[i];
       double x0I = (dI > 0) ? sigmaI / dI : 1.0;
-      double epsOvKTI = ci.getEpsikSAFT() / temperature;
+      double epsOvKTI = ci.getEpsikSAFT() / trialTemperature;
       double lrI = ci.getLambdaRSAFTVRMie();
       double laI = ci.getLambdaASAFTVRMie();
       double cMieI = ComponentSAFTVRMie.calcMiePrefactor(lrI, laI);
@@ -2180,31 +2193,66 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_HC_SAFTdT() {
-    return getNumberOfMolesInPhase() * (mSAFT * daHSSAFTdN * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdT);
+    double step = Math.max(0.01, temperature * 2e-4);
+    return (hardChainAt(temperature - 2 * step, volumeSAFT) - 8 * hardChainAt(temperature - step, volumeSAFT)
+        + 8 * hardChainAt(temperature + step, volumeSAFT) - hardChainAt(temperature + 2 * step, volumeSAFT))
+        / (12 * step);
   }
 
   /**
-   * d2F_HC/dT2.
+   * Second temperature derivative of the complete hard-chain energy at fixed volume and composition. Includes the
+   * Barker-Henderson diameter curvature and explicit contact-value temperature dependence.
    *
-   * @return derivative
+   * @return derivative in K^-2
    */
   public double dF_HC_SAFTdTdT() {
-    double n = getNumberOfMolesInPhase();
-    return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dNSAFTdT + mSAFT * daHSSAFTdN * dNSAFTdTdT
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dNSAFTdT
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdT);
+    double step = Math.max(0.05, temperature * 1e-3);
+    return (hardChainAt(temperature + step, volumeSAFT) - 2 * hardChainAt(temperature, volumeSAFT)
+        + hardChainAt(temperature - step, volumeSAFT)) / (step * step);
   }
 
   /**
-   * d2F_HC/dTdV.
+   * Mixed temperature/volume derivative of the complete hard-chain energy at fixed composition.
    *
-   * @return derivative
+   * @return derivative with respect to K and total volume in m^3
    */
   public double dF_HC_SAFTdTdV() {
-    double n = getNumberOfMolesInPhase();
-    return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dnSAFTdV + mSAFT * daHSSAFTdN * dNSAFTdTdV
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdV);
+    double stepT = Math.max(0.05, temperature * 1e-3);
+    double stepV = volumeSAFT * 5e-4;
+    return (hardChainAt(temperature + stepT, volumeSAFT + stepV) - hardChainAt(temperature + stepT, volumeSAFT - stepV)
+        - hardChainAt(temperature - stepT, volumeSAFT + stepV) + hardChainAt(temperature - stepT, volumeSAFT - stepV))
+        / (4 * stepT * stepV);
+  }
+
+  /**
+   * Computes hard-chain energy for a thermal finite-difference stencil. Each diameter and the explicit epsilon/(kT)
+   * contact term use the same trial temperature; the receiver is unchanged.
+   *
+   * @param trialTemperature temperature in K
+   * @param trialVolume total volume in m^3
+   * @return dimensionless hard-chain Helmholtz energy
+   */
+  private double hardChainAt(double trialTemperature, double trialVolume) {
+    double[] diameters = new double[numberOfComponents];
+    double moment = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie component = (ComponentSAFTVRMie) getComponent(i);
+      diameters[i] = ComponentSAFTVRMie.calcEffectiveDiameter(component.getSigmaSAFTi(), component.getEpsikSAFT(),
+          trialTemperature, component.getLambdaRSAFTVRMie(), component.getLambdaASAFTVRMie());
+      moment += component.getNumberOfMolesInPhase() * component.getmSAFTi() * Math.pow(diameters[i], 3.0);
+    }
+    double eta = Math.PI / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * moment / trialVolume;
+    double om = 1.0 - eta;
+    double hardSphere = (4.0 * eta - 3.0 * eta * eta) / (om * om);
+    double logContact = Math.log((1.0 - eta / 2.0) / Math.pow(om, 3.0));
+    if (mmin1SAFT > 1e-10 && eta > 1e-10 && eta < 0.55) {
+      double candidate = calcLnGChainEffective(eta, gMieCorrectionEnabled ? gMieBlendFraction : 0.0, trialTemperature,
+          diameters);
+      if (Double.isFinite(candidate)) {
+        logContact = candidate;
+      }
+    }
+    return getNumberOfMolesInPhase() * (mSAFT * hardSphere - mmin1SAFT * logContact);
   }
 
   // ===== Dispersion contribution (Lafitte 2013) =====
@@ -2682,12 +2730,27 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Second temperature derivative of dSAFT (zero approx).
+   * Second temperature derivative of the segment-diameter moment, evaluated from the BH quadrature.
    *
    * @return d2(dSAFT)/dT2
    */
   public double getd2DSAFTdTdT() {
-    return 0.0;
+    double step = Math.max(0.01, temperature * 1e-3);
+    double result = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie component = (ComponentSAFTVRMie) getComponent(i);
+      double sigma = component.getSigmaSAFTi();
+      double epsilon = component.getEpsikSAFT();
+      double repulsive = component.getLambdaRSAFTVRMie();
+      double attractive = component.getLambdaASAFTVRMie();
+      double plus = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature + step, repulsive, attractive);
+      double center = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature, repulsive, attractive);
+      double minus = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature - step, repulsive,
+          attractive);
+      result += component.getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * component.getmSAFTi()
+          * (Math.pow(plus, 3.0) - 2 * Math.pow(center, 3.0) + Math.pow(minus, 3.0)) / (step * step);
+    }
+    return result;
   }
 
   // ===== Legacy / compatibility getters needed by ComponentSAFTVRMie =====

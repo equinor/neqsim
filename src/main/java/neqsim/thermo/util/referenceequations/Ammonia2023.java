@@ -165,11 +165,40 @@ public class Ammonia2023 {
     return RHO_CRIT * reducedDensity;
   }
 
-  private double pressureFromDensity(double rho, double T) {
+  /**
+   * Evaluate pressure at a specified density without solving a pressure-specified state.
+   *
+   * @param rho molar density in mol/m3
+   * @param T temperature in K
+   * @return pressure in Pa
+   */
+  public double pressureFromDensity(double rho, double T) {
     double delta = rho / RHO_CRIT;
     double tau = T_CRIT / T;
     ResidualDerivs res = residual(delta, tau);
     return rho * R * T * (1.0 + delta * res.dalpha_dDelta);
+  }
+
+  /**
+   * Evaluate the isothermal density derivative of pressure.
+   *
+   * @param rho molar density in mol/m3
+   * @param temperature temperature in K
+   * @return dP/drho in Pa m3/mol
+   */
+  public double pressureDerivativeDensity(double rho, double temperature) {
+    double delta = rho / RHO_CRIT;
+    ResidualDerivs res = residual(delta, T_CRIT / temperature);
+    return R * temperature * (1.0 + 2.0 * delta * res.dalpha_dDelta + delta * delta * res.d2alpha_dDelta2);
+  }
+
+  /**
+   * Return molar density for the current phase, using the reference EOS root.
+   *
+   * @return molar density in mol/m3
+   */
+  public double getMolarDensity() {
+    return solveDensity(phase.getTemperature(), phase.getPressure() * 1e5);
   }
 
   /**
