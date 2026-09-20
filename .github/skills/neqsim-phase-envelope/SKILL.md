@@ -14,8 +14,8 @@ identity from physics, and preserve the caller's thermodynamic system.
 
 ## Route the Task
 
-- Use `@thermo.fluid` for envelope generation, plotting, properties, and solver defects.
-- Chain to `neqsim-eos-regression` or `@pvt.simulation` when matching lab data or tuning EOS parameters.
+- Use `@thermo-fluid` for envelope generation, plotting, properties, and solver defects.
+- Chain to `neqsim-eos-regression` or `@pvt-simulation` when matching lab data or tuning EOS parameters.
 - Chain to `neqsim-flow-assurance` for operating-path, hydrate, wax, or pipeline assessments.
 - Chain to `neqsim-ccs-hydrogen` for CO2/H2 impurity envelopes.
 - Chain to `neqsim-troubleshooting` when continuation does not converge or output is incomplete.

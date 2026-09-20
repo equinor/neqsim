@@ -1,25 +1,25 @@
 ---
 title: Getting Started with NeqSim in Java
-description: Install NeqSim 3.20.0, run source-verified Java thermodynamics and process examples, and understand model and validation boundaries.
+description: Install NeqSim 3.21.0, run source-verified Java thermodynamics and process examples, and understand model and validation boundaries.
 ---
 
-This guide provides a maintained starting path for NeqSim 3.20.0. It covers the
+This guide provides a maintained starting path for NeqSim 3.21.0. It covers the
 published Java distributions, one thermodynamic calculation, one process simulation,
 model selection, and repository development.
 
 ## Choose the correct Java distribution
 
-NeqSim 3.20.0 was released on 8 September 2026. Select the runtime before copying an
+NeqSim 3.21.0 was released on 19 September 2026. Select the runtime before copying an
 example.
 
 | Use case | Distribution | Required runtime |
 | --- | --- | --- |
-| New Maven or Gradle application | `com.equinor.neqsim:neqsim:3.20.0` | Java 17 or newer |
-| Existing Java 8 application | `neqsim-3.20.0-Java8.jar` release asset | Java 8 or newer |
+| New Maven or Gradle application | `com.equinor.neqsim:neqsim:3.21.0` | Java 17 or newer |
+| Existing Java 8 application | `neqsim-3.21.0-Java8.jar` release asset | Java 8 or newer |
 | Build or contribute to NeqSim | Repository source and Maven wrapper | Source must remain Java 8 compatible; CI covers Java 8 and 21 |
 | Run the MCP server | MCP runner or container | Follow the [MCP server README](https://github.com/equinor/neqsim/tree/master/neqsim-mcp-server#readme) |
 
-The normal `neqsim-3.20.0.jar` release asset and Maven Central artifact require Java
+The normal `neqsim-3.21.0.jar` release asset and Maven Central artifact require Java
 17 or newer. The separately published Java 8 asset exists for compatibility. Do not
 silently substitute one artifact for the other.
 
@@ -35,14 +35,14 @@ Add the current Maven Central artifact to your application's `pom.xml`:
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.20.0</version>
+  <version>3.21.0</version>
 </dependency>
 ```
 
 Maven resolves NeqSim and its transitive dependencies. Java 8 users should instead
 download the explicit
-[`neqsim-3.20.0-Java8.jar`](https://github.com/equinor/neqsim/releases/download/v3.20.0/neqsim-3.20.0-Java8.jar)
-asset from the [v3.20.0 release](https://github.com/equinor/neqsim/releases/tag/v3.20.0).
+[`neqsim-3.21.0-Java8.jar`](https://github.com/equinor/neqsim/releases/download/v3.21.0/neqsim-3.21.0-Java8.jar)
+asset from the [v3.21.0 release](https://github.com/equinor/neqsim/releases/tag/v3.21.0).
 The large release jar is the supported standalone distribution; a thin project jar
 without its dependencies is not a complete classpath.
 

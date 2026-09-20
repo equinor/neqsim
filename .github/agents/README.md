@@ -7,7 +7,7 @@ This directory contains specialized GitHub Copilot Chat agents for NeqSim develo
 In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 ```
-@solve.task 3-stage compression with intercooling from 5 to 150 bara
+@solve-task 3-stage compression with intercooling from 5 to 150 bara
 ```
 
 ---
@@ -18,18 +18,18 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 | Agent | Command | Purpose |
 |-------|---------|----------|
-| **neqsim.help** | `@neqsim.help <description>` | **Routes requests** to the right specialist agent. Use when unsure which agent to pick. |
+| **neqsim-help** | `@neqsim.help <description>` | **Routes requests** to the right specialist agent. Use when unsure which agent to pick. |
 | **paperlab** | `@paperlab <description>` | **Single PaperLab gateway** for papers, books, journal packages, figures, benchmarks, reproducibility, and reviewer responses. |
-| **capability.scout** | `@capability.scout <description>` | **Assesses capabilities** needed for a task, checks NeqSim coverage, identifies gaps, plans implementations, recommends skills. |
-| **literature.scout** | `@literature.scout <topic>` | **Pulls papers, standards, and internal docs** into `step1_scope_and_research/references/`, writes a manifest, summarises into `notes.md`. |
+| **capability-scout** | `@capability-scout <description>` | **Assesses capabilities** needed for a task, checks NeqSim coverage, identifies gaps, plans implementations, recommends skills. |
+| **literature-scout** | `@literature-scout <topic>` | **Pulls papers, standards, and internal docs** into `step1_scope_and_research/references/`, writes a manifest, summarises into `notes.md`. |
 | **review** | `@review <task folder>` | **Pre-PR quality gate** — runs schema validator, consistency checker, capability/figure-traceability/repo-memory audits. Read-only. |
 
 **Examples:**
 ```
 @neqsim.help I need to size a pipeline and check for hydrates
 @paperlab Create a journal paper from the TPflash benchmark results
-@capability.scout Can NeqSim handle acid gas injection with H2S corrosion and well design?
-@literature.scout wax inhibitor injection for subsea tieback
+@capability-scout Can NeqSim handle acid gas injection with H2S corrosion and well design?
+@literature-scout wax inhibitor injection for subsea tieback
 @review task_solve/2026-04-26_co2_pipeline_sizing/
 ```
 
@@ -39,14 +39,14 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **solve.task** | `@solve.task <description>` | **End-to-end task solving** with report generation (3-step workflow) |
-| **solve.process** | `@solve.process <description>` | **Quick process simulation** → working notebook (skips formal reporting) |
+| **solve-task** | `@solve-task <description>` | **End-to-end task solving** with report generation (3-step workflow) |
+| **solve-process** | `@solve-process <description>` | **Quick process simulation** → working notebook (skips formal reporting) |
 
 **Examples:**
 ```
-@solve.task JT cooling for rich gas at 100 bara
-@solve.task field development NPV per NORSOK Z-013
-@solve.process TEG dehydration for 50 MMSCFD wet gas
+@solve-task JT cooling for rich gas at 100 bara
+@solve-task field development NPV per NORSOK Z-013
+@solve-process TEG dehydration for 50 MMSCFD wet gas
 ```
 
 ### PaperLab Writing & Publishing
@@ -77,15 +77,15 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **field.development** | `@field.development <description>` | Full field development studies — concept screening, tieback analysis, production forecasting, NPV/IRR economics, subsea design, well planning, risk assessment |
+| **field-development** | `@field-development <description>` | Full field development studies — concept screening, tieback analysis, production forecasting, NPV/IRR economics, subsea design, well planning, risk assessment |
 
 **Examples:**
 ```
-@field.development Evaluate subsea tieback vs FPSO for 100 MMboe gas condensate at 350m water depth
-@field.development Production forecast and NPV for 4-well subsea development on Norwegian NCS
-@field.development Screen tieback options for satellite gas field 25 km from host platform
-@field.development Concept selection for deepwater oil development in 800m water depth
-@field.development Late-life IOR screening for mature oil field with 60% water cut
+@field-development Evaluate subsea tieback vs FPSO for 100 MMboe gas condensate at 350m water depth
+@field-development Production forecast and NPV for 4-well subsea development on Norwegian NCS
+@field-development Screen tieback options for satellite gas field 25 km from host platform
+@field-development Concept selection for deepwater oil development in 800m water depth
+@field-development Late-life IOR screening for mature oil field with 60% water cut
 ```
 
 ---
@@ -94,13 +94,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **thermo.fluid** | `@thermo.fluid <description>` | Create thermodynamic fluid systems (EOS, components, flash, properties) |
+| **thermo-fluid** | `@thermo-fluid <description>` | Create thermodynamic fluid systems (EOS, components, flash, properties) |
 
 **Examples:**
 ```
-@thermo.fluid Create a CO2-rich fluid at 200 bara and 25°C
-@thermo.fluid Phase envelope for natural gas with 15% CO2
-@thermo.fluid Density and viscosity of MEG-water at -10°C
+@thermo-fluid Create a CO2-rich fluid at 200 bara and 25°C
+@thermo-fluid Phase envelope for natural gas with 15% CO2
+@thermo-fluid Density and viscosity of MEG-water at -10°C
 ```
 
 ---
@@ -109,13 +109,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **process.model** | `@process.model <description>` | Build process simulations (separators, compressors, heat exchangers, flowsheets) |
+| **process-model** | `@process-model <description>` | Build process simulations (separators, compressors, heat exchangers, flowsheets) |
 
 **Examples:**
 ```
-@process.model 3-stage compression train with intercooling
-@process.model HP/LP separator train with export compressor
-@process.model Complete GOSP (gas-oil separation plant)
+@process-model 3-stage compression train with intercooling
+@process-model HP/LP separator train with export compressor
+@process-model Complete GOSP (gas-oil separation plant)
 ```
 
 ---
@@ -124,13 +124,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **pvt.simulation** | `@pvt.simulation <description>` | Run PVT lab tests (CME, CVD, DL, separator tests, swelling) |
+| **pvt-simulation** | `@pvt-simulation <description>` | Run PVT lab tests (CME, CVD, DL, separator tests, swelling) |
 
 **Examples:**
 ```
-@pvt.simulation CME test at 100°C from 400 to 50 bara
-@pvt.simulation CVD for black oil with C7+ characterization
-@pvt.simulation Separator test at 3 stage: 50/15/2 bara
+@pvt-simulation CME test at 100°C from 400 to 50 bara
+@pvt-simulation CVD for black oil with C7+ characterization
+@pvt-simulation Separator test at 3 stage: 50/15/2 bara
 ```
 
 ---
@@ -139,14 +139,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **flow.assurance** | `@flow.assurance <description>` | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, and bounded F110/F114 input routing |
+| **flow-assurance** | `@flow-assurance <description>` | Hydrate, wax, asphaltene, corrosion, pipeline pressure drop, and bounded F110/F114 input routing |
 
 **Examples:**
 ```
-@flow.assurance Hydrate formation temperature for wet gas at 100 bara
-@flow.assurance Wax appearance temperature for crude oil
-@flow.assurance Pipeline pressure drop for 50 km subsea line
-@flow.assurance CO2 corrosion rate per NORSOK M-506
+@flow-assurance Hydrate formation temperature for wet gas at 100 bara
+@flow-assurance Wax appearance temperature for crude oil
+@flow-assurance Pipeline pressure drop for 50 km subsea line
+@flow-assurance CO2 corrosion rate per NORSOK M-506
 ```
 
 ---
@@ -155,13 +155,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **gas.quality** | `@gas.quality <description>` | ISO 6976 calorific values, gas quality specs, sales contracts |
+| **gas-quality** | `@gas-quality <description>` | ISO 6976 calorific values, gas quality specs, sales contracts |
 
 **Examples:**
 ```
-@gas.quality Calculate Wobbe index per ISO 6976
-@gas.quality Check if gas meets EN 16726 H-gas spec
-@gas.quality Hydrocarbon dew point at 30 bara per ISO 23874
+@gas-quality Calculate Wobbe index per ISO 6976
+@gas-quality Check if gas meets EN 16726 H-gas spec
+@gas-quality Hydrocarbon dew point at 30 bara per ISO 23874
 ```
 
 ---
@@ -170,14 +170,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **mechanical.design** | `@mechanical.design <description>` | ASME/API/DNV mechanical design including F110 global-buckling and F114 pipe-soil screening plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
+| **mechanical-design** | `@mechanical-design <description>` | ASME/API/DNV mechanical design including F110 global-buckling and F114 pipe-soil screening plus reconciled equipment, process, topsides, SURF, subsea, and well CAPEX estimates |
 
 **Examples:**
 ```
-@mechanical.design 20-inch export pipeline per DNV-OS-F101
-@mechanical.design HP separator vessel per ASME VIII Div.1
-@mechanical.design Subsea well casing design with NORSOK D-010
-@mechanical.design Estimate total CAPEX for this process from well to market
+@mechanical-design 20-inch export pipeline per DNV-OS-F101
+@mechanical-design HP separator vessel per ASME VIII Div.1
+@mechanical-design Subsea well casing design with NORSOK D-010
+@mechanical-design Estimate total CAPEX for this process from well to market
 ```
 
 ---
@@ -186,14 +186,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **utility.design** | `@utility.design <description>` | Screening-level utility sizing (boiler, deaerator, refrigeration, nitrogen, steam network) + agentic compression optimization |
+| **utility-design** | `@utility-design <description>` | Screening-level utility sizing (boiler, deaerator, refrigeration, nitrogen, steam network) + agentic compression optimization |
 
 **Examples:**
 ```
-@utility.design Size a fired boiler for an 8 MW reboiler duty
-@utility.design Propane chiller for 3 MW gas chilling at -35 C
-@utility.design Membrane N2 generator for 500 Nm3/h at 99.5%
-@utility.design Optimize interstage pressure of a two-stage instrument-air compressor
+@utility-design Size a fired boiler for an 8 MW reboiler duty
+@utility-design Propane chiller for 3 MW gas chilling at -35 C
+@utility-design Membrane N2 generator for 500 Nm3/h at 99.5%
+@utility-design Optimize interstage pressure of a two-stage instrument-air compressor
 ```
 
 ---
@@ -202,13 +202,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **safety.depressuring** | `@safety.depressuring <description>` | Blowdown, relief valve sizing, fire case, source terms |
+| **safety-depressuring** | `@safety-depressuring <description>` | Blowdown, relief valve sizing, fire case, source terms |
 
 **Examples:**
 ```
-@safety.depressuring Fire-case blowdown for HP separator at 85 bara
-@safety.depressuring Size PSV for blocked outlet on gas cooler
-@safety.depressuring Generate source term for 2-inch gas leak at 120 bara
+@safety-depressuring Fire-case blowdown for HP separator at 85 bara
+@safety-depressuring Size PSV for blocked outlet on gas cooler
+@safety-depressuring Generate source term for 2-inch gas leak at 120 bara
 ```
 
 ---
@@ -217,14 +217,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|--------|
-| **plant.data** | `@plant.data <description>` | Connect NeqSim models to plant historian data (PI/IP.21) via tagreader |
+| **plant-data** | `@plant-data <description>` | Connect NeqSim models to plant historian data (PI/IP.21) via tagreader |
 
 **Examples:**
 ```
-@plant.data Connect compressor model to PI historian tags
-@plant.data Compare separator simulation to plant data
-@plant.data Build a digital twin loop for a gas compression train
-@plant.data Read Troll A compressor data from Aspen IP.21
+@plant-data Connect compressor model to PI historian tags
+@plant-data Compare separator simulation to plant data
+@plant-data Build a digital twin loop for a gas compression train
+@plant-data Read Troll A compressor data from Aspen IP.21
 ```
 
 ---
@@ -233,13 +233,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **neqsim.test** | `@neqsim.test <description>` | Create JUnit 5 unit tests for NeqSim code |
-| **notebook.example** | `@notebook.example <description>` | Create Jupyter notebook examples |
+| **neqsim-test** | `@neqsim-test <description>` | Create JUnit 5 unit tests for NeqSim code |
+| **notebook-example** | `@notebook-example <description>` | Create Jupyter notebook examples |
 
 **Examples:**
 ```
-@neqsim.test Write tests for the new compressor anti-surge logic
-@notebook.example TEG dehydration with results visualization
+@neqsim-test Write tests for the new compressor anti-surge logic
+@notebook-example TEG dehydration with results visualization
 ```
 
 ---
@@ -248,14 +248,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **ccs.hydrogen** | `@ccs.hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — composition-specific phase behavior, DNV-RP-F104 envelope screening, injection well analysis, H2 blending |
+| **ccs-hydrogen** | `@ccs-hydrogen <description>` | CO2 capture/transport/storage and hydrogen systems — composition-specific phase behavior, DNV-RP-F104 envelope screening, injection well analysis, H2 blending |
 
 **Examples:**
 ```
-@ccs.hydrogen CO2 pipeline design for 5 Mt/yr with 2% N2 impurity
-@ccs.hydrogen Injection well safety analysis for CO2 with H2 impurity
-@ccs.hydrogen Hydrogen blending impact on gas network Wobbe index
-@ccs.hydrogen Full CCS chain from capture to injection
+@ccs-hydrogen CO2 pipeline design for 5 Mt/yr with 2% N2 impurity
+@ccs-hydrogen Injection well safety analysis for CO2 with H2 impurity
+@ccs-hydrogen Hydrogen blending impact on gas network Wobbe index
+@ccs-hydrogen Full CCS chain from capture to injection
 ```
 
 ---
@@ -264,14 +264,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **reaction.engineering** | `@reaction.engineering <description>` | Chemical reactor design — equilibrium (Gibbs), kinetic PFR/CSTR, catalyst beds, conversion analysis, reactor sizing |
+| **reaction-engineering** | `@reaction-engineering <description>` | Chemical reactor design — equilibrium (Gibbs), kinetic PFR/CSTR, catalyst beds, conversion analysis, reactor sizing |
 
 **Examples:**
 ```
-@reaction.engineering Steam methane reforming at 850°C and 30 bar
-@reaction.engineering Ammonia synthesis reactor with Fe catalyst
-@reaction.engineering Claus reactor for sulfur recovery
-@reaction.engineering Water-gas shift reactor downstream of gasifier
+@reaction-engineering Steam methane reforming at 850°C and 30 bar
+@reaction-engineering Ammonia synthesis reactor with Fe catalyst
+@reaction-engineering Claus reactor for sulfur recovery
+@reaction-engineering Water-gas shift reactor downstream of gasifier
 ```
 
 ---
@@ -280,14 +280,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **emissions.environmental** | `@emissions.environmental <description>` | GHG emissions, flaring/venting, carbon intensity, regulatory reporting (EU ETS, Norwegian CO2 tax), ESG metrics |
+| **emissions-environmental** | `@emissions-environmental <description>` | GHG emissions, flaring/venting, carbon intensity, regulatory reporting (EU ETS, Norwegian CO2 tax), ESG metrics |
 
 **Examples:**
 ```
-@emissions.environmental CO2 emissions from gas turbine compressor driver
-@emissions.environmental Flare gas inventory for HP/LP separation
-@emissions.environmental Carbon intensity of LNG production
-@emissions.environmental Methane slip from gas engine power generation
+@emissions-environmental CO2 emissions from gas turbine compressor driver
+@emissions-environmental Flare gas inventory for HP/LP separation
+@emissions-environmental Carbon intensity of LNG production
+@emissions-environmental Methane slip from gas engine power generation
 ```
 
 ---
@@ -296,14 +296,14 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **control.system** | `@control.system <description>` | PID controller design and tuning, control loop architecture, measurement device selection, alarm/trip configuration, control narratives |
+| **control-system** | `@control-system <description>` | PID controller design and tuning, control loop architecture, measurement device selection, alarm/trip configuration, control narratives |
 
 **Examples:**
 ```
-@control.system Design level control for HP separator with 2m diameter
-@control.system Tune pressure controller for gas export compressor
-@control.system Cascade temperature control for heat exchanger
-@control.system Generate control narrative for 3-stage separation
+@control-system Design level control for HP separator with 2m diameter
+@control-system Tune pressure controller for gas export compressor
+@control-system Cascade temperature control for heat exchanger
+@control-system Generate control narrative for 3-stage separation
 ```
 
 ---
@@ -312,13 +312,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **engineering.deliverables** | `@engineering.deliverables <description>` | PFDs, thermal utility summaries, instrument schedules, fire/noise assessments, spare parts inventories |
+| **engineering-deliverables** | `@engineering-deliverables <description>` | PFDs, thermal utility summaries, instrument schedules, fire/noise assessments, spare parts inventories |
 
 **Examples:**
 ```
-@engineering.deliverables Generate Class A deliverables for HP/LP separation train
-@engineering.deliverables Produce Class B deliverables for subsea tieback concept
-@engineering.deliverables Full FEED deliverable package for gas compression facility
+@engineering-deliverables Generate Class A deliverables for HP/LP separation train
+@engineering-deliverables Produce Class B deliverables for subsea tieback concept
+@engineering-deliverables Full FEED deliverable package for gas compression facility
 ```
 
 ---
@@ -327,13 +327,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **extract.process** | `@extract.process <description>` | Extract process info from text, PFDs, or data sheets and convert to NeqSim JSON / ProcessModule |
+| **extract-process** | `@extract-process <description>` | Extract process info from text, PFDs, or data sheets and convert to NeqSim JSON / ProcessModule |
 
 **Examples:**
 ```
-@extract.process "Feed gas at 80 bara, 40°C → cooler to 15°C → separator → compress to 120 bara"
-@extract.process Build a NeqSim model from this heat and mass balance table
-@extract.process Convert this PFD description into a running simulation
+@extract-process "Feed gas at 80 bara, 40°C → cooler to 15°C → separator → compress to 120 bara"
+@extract-process Build a NeqSim model from this heat and mass balance table
+@extract-process Convert this PFD description into a running simulation
 ```
 
 ---
@@ -342,13 +342,13 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **unisim.reader** | `@unisim.reader <description>` | Read UniSim Design / Aspen HYSYS .usc files via COM and convert to NeqSim models |
+| **unisim-reader** | `@unisim-reader <description>` | Read UniSim Design / Aspen HYSYS .usc files via COM and convert to NeqSim models |
 
 **Examples:**
 ```
-@unisim.reader Read C:\Models\GasPlant.usc and build a NeqSim model
-@unisim.reader Convert all UniSim cases in C:\Cases\ to NeqSim
-@unisim.reader Compare UniSim and NeqSim results for a platform model
+@unisim-reader Read C:\Models\GasPlant.usc and build a NeqSim model
+@unisim-reader Convert all UniSim cases in C:\Cases\ to NeqSim
+@unisim-reader Compare UniSim and NeqSim results for a platform model
 ```
 
 ---
@@ -357,15 +357,15 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **technical.reader** | `@technical.reader <description>` | Extract structured engineering data from PDFs, Word docs, Excel files (data sheets, design basis, TRs, stream tables, inspection reports) |
+| **technical-reader** | `@technical-reader <description>` | Extract structured engineering data from PDFs, Word docs, Excel files (data sheets, design basis, TRs, stream tables, inspection reports) |
 
 **Examples:**
 ```
-@technical.reader Read this design basis PDF and extract feed gas composition
-@technical.reader Parse the equipment data sheet for separator V-100
-@technical.reader Extract stream table from the heat & mass balance Excel
-@technical.reader Pull requirements from this technical requirement document
-@technical.reader Extract wall thickness data from the inspection report
+@technical-reader Read this design basis PDF and extract feed gas composition
+@technical-reader Parse the equipment data sheet for separator V-100
+@technical-reader Extract stream table from the heat & mass balance Excel
+@technical-reader Pull requirements from this technical requirement document
+@technical-reader Extract wall thickness data from the inspection report
 ```
 
 ---
@@ -466,30 +466,30 @@ new classes, deprecated methods, and migration guidance.
 ## Best Practices
 
 ### 1. Be Specific
-❌ `@solve.task compressor`
-✅ `@solve.task 3-stage gas compression from 5 to 150 bara with intercooling to 40°C`
+❌ `@solve-task compressor`
+✅ `@solve-task 3-stage gas compression from 5 to 150 bara with intercooling to 40°C`
 
 ### 2. Mention Standards When Applicable
-❌ `@mechanical.design pipeline`
-✅ `@mechanical.design 20-inch pipeline at 150 bara per DNV-OS-F101`
+❌ `@mechanical-design pipeline`
+✅ `@mechanical-design 20-inch pipeline at 150 bara per DNV-OS-F101`
 
 ### 3. Provide Context
-❌ `@flow.assurance hydrate`
-✅ `@flow.assurance hydrate formation temperature for wet gas (5% water) at 100 bara`
+❌ `@flow-assurance hydrate`
+✅ `@flow-assurance hydrate formation temperature for wet gas (5% water) at 100 bara`
 
 ### 4. Combine Agents for Complex Tasks
 ```
 # Step 1: Create fluid
-@thermo.fluid Reservoir gas with 85% CH4, 10% C2, 5% C3 at 250 bara
+@thermo-fluid Reservoir gas with 85% CH4, 10% C2, 5% C3 at 250 bara
 
 # Step 2: Build process
-@process.model 3-stage separation train using the fluid above
+@process-model 3-stage separation train using the fluid above
 
 # Step 3: Flow assurance check
-@flow.assurance Check for hydrate risk in the separator train
+@flow-assurance Check for hydrate risk in the separator train
 
 # Step 4: Generate full report
-@solve.task Complete the above work as a formal study with report
+@solve-task Complete the above work as a formal study with report
 ```
 
 ---
@@ -511,7 +511,7 @@ See [agent-customization](https://code.visualstudio.com/docs/copilot/copilot-cus
 
 ### Agent Not Responding
 - Check VS Code Copilot is enabled (bottom right status bar)
-- Verify agent name spelling: `@solve.task` not `@task.solve`
+- Verify agent name spelling: `@solve-task` not `@task.solve`
 - Try shorter request first, then elaborate
 
 ### Wrong Output

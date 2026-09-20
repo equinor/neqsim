@@ -117,6 +117,14 @@ neqsim doctor                # full check, including the built JAR
 # 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
+#    Start over from a blank slate (only what NeqSim installed is removed —
+#    core, community and enterprise agents/skills plus their ~/.copilot exports;
+#    anything else in ~/.copilot is left alone). Preview first with --dry-run:
+neqsim agent remove --all --with-skills --dry-run
+neqsim agent remove --all --with-skills --yes
+#    Or per catalog / per kind:
+neqsim agent remove --all --source private --yes    # enterprise agents only
+neqsim skill remove --all --source community --yes  # community skills only
 
 # 5. Choose where solved tasks are saved (optional; defaults to <repo>\task_solve)
 neqsim --set-task-root "D:\Engineering Tasks"   # or: cwd, to follow the terminal folder
@@ -137,6 +145,9 @@ dated task folder in. It is stored in `~/.neqsim/task_defaults.json`, so it is s
 by every NeqSim clone and keeps studies outside the repository. Precedence:
 `--task-root PATH` > `NEQSIM_TASK_ROOT` > the saved default > `<repo>/task_solve`.
 `neqsim --reset-task-root` removes the setting without moving existing tasks.
+Add `--vscode` to any `--set-task-root` / `--set-document-root` command to also
+add the folder to the VS Code workspace, or `--explorer` to open it in the file
+explorer right away (both combine freely).
 
 The report template is a `.docx`/`.dotx` file whose styles, fonts, headers, and
 footers every generated Word report inherits — set it once and all later tasks
@@ -464,11 +475,11 @@ for a full explanation of the architecture and internals.
 The `new_task.py` script creates structured task folders for the
 [AI-Supported Task Solving](../docs/development/TASK_SOLVING_GUIDE.md) workflow.
 
-**Recommended:** Use the `@solve.task` Copilot agent instead — it runs the
+**Recommended:** Use the `@solve-task` Copilot agent instead — it runs the
 script automatically and handles all 4 steps:
 
 ```
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 **Manual alternative:**

@@ -12,6 +12,7 @@ import argparse
 import sys
 from pathlib import Path
 
+import agent_frontmatter as af
 import install_agent
 import install_skill
 
@@ -48,21 +49,16 @@ def _frontmatter_name(path, fallback):
 
 
 def _extract_loaded_skills(path):
-    """Extract comma-separated Loaded skills from an agent markdown file.
+    """Return the skills an agent markdown file declares (frontmatter or body).
 
     @param path the agent markdown file to inspect
     @return a list of skill names declared by the agent
     """
     try:
-        lines = Path(path).read_text(encoding="utf-8").splitlines()
+        text = Path(path).read_text(encoding="utf-8")
     except OSError:
         return []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.lower().startswith("loaded skills:"):
-            value = stripped.split(":", 1)[1]
-            return [item.strip() for item in value.split(",") if item.strip()]
-    return []
+    return af.extract_required_skills(text)
 
 
 def _has_frontmatter(text):

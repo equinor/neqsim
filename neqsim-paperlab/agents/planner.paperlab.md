@@ -152,10 +152,10 @@ Before finalizing, verify:
 ## Topic-Specific Planning
 
 ### Flash algorithm papers
-Use `design_flash_benchmark` skill for fluid families and PT grids.
+Use `design-flash-benchmark` skill for fluid families and PT grids.
 
 ### Chemical equilibrium / Gibbs reactor papers
-Use `design_reactor_benchmark` skill for:
+Use `design-reactor-benchmark` skill for:
 - Reaction system definitions (Claus, combustion, CO2 capture, etc.)
 - Species databases (JANAF/NASA thermochemical data as reference)
 - Temperature sweep and composition sweep designs

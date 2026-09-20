@@ -319,7 +319,7 @@ The following developer notebooks import NeqSim Java classes from the workspace 
 
 ## AI Agent & Skills
 
-Use `@field.development` in VS Code Copilot Chat for AI-assisted field development workflows.
+Use `@field-development` in VS Code Copilot Chat for AI-assisted field development workflows.
 This agent automatically loads the following skills:
 
 | Skill | Scope |

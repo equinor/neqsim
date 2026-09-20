@@ -65,7 +65,7 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.20.0</version>
+  <version>3.21.0</version>
 </dependency>
 ```
 
@@ -89,7 +89,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 ### AI agent - describe your problem in plain English
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
 The agent scopes the task, builds a NeqSim simulation, validates results, and generates a Word + HTML report with no coding required.
@@ -251,7 +251,7 @@ Every response includes provenance metadata (EOS model, convergence, assumptions
 ### AI task-solving workflow
 
 ```
-@solve.task TEG dehydration sizing for 50 MMSCFD wet gas
+@solve-task TEG dehydration sizing for 50 MMSCFD wet gas
 ```
 
 The agent creates a task folder, runs NeqSim simulations, validates results, and generates a Word + HTML report with no coding required. See the [tutorial](docs/tutorials/solve-engineering-task.md) or [workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
@@ -261,7 +261,7 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 Agentic NeqSim is built from two layers you can mix and extend:
 
 - **Skills = the knowledge layer.** Structured markdown that encodes domain expertise (API patterns, decision rules, reference data). Agents *read* skills to know how to do something correctly.
-- **Agents = the workflow layer.** A role + objective + the skills it loads. Agents *drive* NeqSim to complete a job (e.g. `@solve.task`, `@field.development`).
+- **Agents = the workflow layer.** A role + objective + the skills it loads. Agents *drive* NeqSim to complete a job (e.g. `@solve-task`, `@field-development`).
 
 Content comes from four tiers — **core** (shipped in this repo under `.github/skills` and `.github/agents`, auto-loaded), **community** (public, installable), **enterprise** (company-private/internal), and **local private** (just you):
 
@@ -345,7 +345,7 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](htt
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.20.0</version>
+  <version>3.21.0</version>
 </dependency>
 ```
 
@@ -537,7 +537,7 @@ graph TB
 | Quick property lookup via LLM | [MCP Server](neqsim-mcp-server/) + any LLM client | Java 21+ (or Docker) |
 | Python scripting / Jupyter notebooks | `pip install neqsim` | Python 3.9+, JVM |
 | Embed in a Java application | Maven dependency | Java 17+ (default) or Java 8+ (use the `-Java8` artifact) |
-| Full engineering study with reports | `@solve.task` agent in VS Code | VS Code + GitHub Copilot |
+| Full engineering study with reports | `@solve-task` agent in VS Code | VS Code + GitHub Copilot |
 | .NET / MATLAB integration | [Language bindings](#other-language-bindings) | See linked repos |
 
 #### Java version matrix
@@ -748,6 +748,41 @@ All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 Even Solbraa (esolbraa@gmail.com), Marlene Louise Lund
 
 NeqSim development was initiated at [NTNU](https://www.ntnu.edu/employees/even.solbraa). A number of master and PhD students have contributed to its development, and we greatly acknowledge their contributions.
+
+## How to Cite
+
+If NeqSim contributes to a publication, report, or product, please cite it. The authoritative, machine-readable citation metadata is maintained in [`CITATION.cff`](CITATION.cff); GitHub renders this automatically as a **"Cite this repository"** button on this page, which also lets you export the citation in APA, BibTeX, or other formats.
+
+**APA-style citation** (software):
+
+> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.21.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
+
+**BibTeX:**
+
+```bibtex
+@software{neqsim2026,
+  author       = {Solbraa, Even and {NeqSim Contributors}},
+  title        = {NeqSim: A library for thermodynamic and process simulation},
+  year         = {2026},
+  version      = {3.21.0},
+  publisher    = {Equinor},
+  url          = {https://github.com/equinor/neqsim},
+  license      = {Apache-2.0}
+}
+```
+
+When citing the thermodynamic models underlying NeqSim rather than the software itself, cite the originating academic work:
+
+```bibtex
+@phdthesis{solbraa2002,
+  author = {Solbraa, Even},
+  title  = {Equilibrium and non-equilibrium thermodynamics of natural gas systems},
+  school = {Norwegian University of Science and Technology},
+  year   = {2002}
+}
+```
+
+Always cite the specific NeqSim **version** used (see the `version` field in `CITATION.cff`, or the release tag on [GitHub Releases](https://github.com/equinor/neqsim/releases)) so results remain reproducible as the library evolves.
 
 ## License
 

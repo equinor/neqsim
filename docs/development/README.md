@@ -66,6 +66,7 @@ These guides explain how to add new functionality to NeqSim:
 | [Extending Process Equipment](extending_process_equipment) | Add custom separators, reactors, and other unit operations |
 | [Extending Physical Properties](extending_physical_properties) | Add custom viscosity, conductivity, and diffusivity models |
 | [Extending Thermodynamic Models](extending_thermodynamic_models) | Add custom equations of state and activity models |
+| [Numerical Model Specifications](model_spec_harness) | Sourced numerical cases, explicit absence contracts and fast CI coverage |
 | [Python Extension Patterns](python_extension_patterns) | Use NeqSim from Python, create wrappers, implement interfaces |
 
 ### Extension Quick Reference

@@ -148,6 +148,15 @@ DIPPR derivative in bar/K. This keeps the derivative consistent with the pressur
 used by `getAntoineVaporTemperature(P)` and activity-coefficient models.
 Available rows with zero exponent retain their existing correlation selection.
 
+The `pow10KPa` form also has an analytical derivative in bar/K:
+$dP_{\mathrm{sat}}/dT = P_{\mathrm{sat}}\ln(10)B/(T+C)^2$.
+It uses the existing pressure $P_{\mathrm{sat}} = 10^{A-B/(T+C)}/10^5$ in bar
+with T in K, including when a nonzero E is present. The legacy `pow10KPa`
+label does not change this scale to a kPa-to-bar conversion.
+`ComponentPow10KPaVaporPressureTest` verifies analytical values, finite-difference
+slopes, pressure/temperature round trips, and unavailable-data behavior with
+prescribed test coefficients; those coefficients are not physical fits.
+
 For example, the stored coefficients at 298.15 K give 0.91801 bar for `i-pentane`,
 9.53257 bar for `propanePVTsim`, and 2.43661 bar for `nbutanePVTsim`.
 `ComponentAntoineVaporPressureTest` checks these values, pressure/temperature round

@@ -110,7 +110,7 @@ public class StandardsRunner {
       for (Map.Entry<String, JsonElement> entry : comps.entrySet()) {
         fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
-      String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+      String mixingRule = FluidDefaults.resolveMixingRule(input, model);
       fluid.setMixingRule(mixingRule);
     } catch (Exception e) {
       return errorJson("FLUID_ERROR", "Failed to create fluid: " + e.getMessage(),

@@ -28,7 +28,7 @@ with journal-appropriate styling.
 
 Before generating any figure, read these skills:
 
-1. **`neqsim-paperlab/skills/generate_publication_figures/SKILL.md`** —
+1. **`neqsim-paperlab/skills/generate-publication-figures/SKILL.md`** —
    Core patterns, rcParams, color palette, figure sizing, both data plots
    and conceptual diagrams.
 

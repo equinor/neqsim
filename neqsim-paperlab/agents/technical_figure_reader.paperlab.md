@@ -20,7 +20,7 @@ You turn figures into reviewed evidence records.
 
 Load first:
 
-- `neqsim-paperlab/skills/technical_figure_understanding/SKILL.md`
+- `neqsim-paperlab/skills/technical-figure-understanding/SKILL.md`
 - `neqsim-paperlab/skills/figure-discussion/SKILL.md`
 
 ## Workflow

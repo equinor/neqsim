@@ -85,10 +85,10 @@ neqsim --show-report-template
 If you have VS Code with GitHub Copilot Chat, this is the fastest path:
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
-The `@solve.task` agent handles the entire workflow:
+The `@solve-task` agent handles the entire workflow:
 1. Creates the task folder
 2. Fills in the task specification (standards, methods, acceptance criteria)
 3. Researches the topic
@@ -129,7 +129,7 @@ neqsim new-task "compressor seal condensation study" --type G --scale comprehens
 The folder is created under the task root — the saved default from
 `neqsim --set-task-root`, or `<repo>/task_solve` if none is set. `neqsim --show-task-root`
 prints the folder in use, and `--task-root "PATH"` overrides it for a single task.
-The `@solve.task` agent resolves the same setting, so both paths land in one place.
+The `@solve-task` agent resolves the same setting, so both paths land in one place.
 The Word report the task later generates follows `neqsim --set-report-template`
 the same way.
 

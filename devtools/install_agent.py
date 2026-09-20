@@ -9,6 +9,9 @@ Usage:
     neqsim agent install --all
     neqsim agent installed
     neqsim agent remove <name>
+    neqsim agent remove --all [--source community|private|core] [--yes]
+    neqsim agent remove --all --with-skills --yes   # blank slate: every
+                                   #   NeqSim-installed agent AND skill
     neqsim agent info <name>
     neqsim agent validate <name-or-path>
     neqsim agent schema
@@ -38,6 +41,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import agent_frontmatter as af
 import install_skill
 
 try:
@@ -472,47 +476,21 @@ def _format_list(value):
 
 def _agent_id_from_path(path):
     """Return a stable install id for an agent path."""
-    path_obj = Path(path)
-    name = path_obj.name
-    if name == "AGENT.md":
-        return path_obj.parent.name.replace(".", "-")
-    if name.endswith(".agent.md"):
-        return name[:-len(".agent.md")].replace(".", "-")
-    return path_obj.stem.replace(".", "-")
-
-
-_LOADED_SKILLS_INLINE_RE = re.compile(
-    r"(?im)^\s*(?:[-*]\s*)?(?:\*\*)?Loaded skills(?:\*\*)?\s*[:\-]\s*(.+)$")
-_LOADED_SKILLS_BLOCK_HEADER_RE = re.compile(
-    r"^\s{0,3}#{1,6}\s+(?:\*\*)?Loaded skills(?:\*\*)?\s*$",
-    re.IGNORECASE)
-_MARKDOWN_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s+\S")
+    return af.agent_id_for_path(path)
 
 
 def _extract_loaded_skill_block_entries(content):
     """Return skill entries listed under markdown Loaded skills headings."""
-    entries = []
-    lines = content.splitlines()
-    for line_number, line in enumerate(lines):
-        if not _LOADED_SKILLS_BLOCK_HEADER_RE.match(line):
-            continue
-        for next_line in lines[line_number + 1:]:
-            if _MARKDOWN_HEADING_RE.match(next_line):
-                break
-            stripped = next_line.strip()
-            if not stripped and entries:
-                break
-            if stripped.startswith(("-", "*")):
-                entries.extend(_normalize_list(stripped[1:].strip()))
-    return entries
+    _, body = af.split_frontmatter(content)
+    inline = set()
+    for match in af.INLINE_LOADED_RE.finditer(body):
+        inline.update(af._tokens(match.group(1)))
+    return [s for s in af.extract_body_skills(body) if s not in inline]
 
 
 def _clean_required_skill_name(skill):
     """Normalize a required skill name from inline or markdown-list text."""
-    cleaned = skill.strip().strip("`").lstrip("@").rstrip(".")
-    if not cleaned:
-        return ""
-    return re.split(r"\s+", cleaned, maxsplit=1)[0].strip("`").rstrip(".")
+    return af._clean_skill(skill)
 
 
 def _extract_required_skills(content, metadata=None):
@@ -521,9 +499,7 @@ def _extract_required_skills(content, metadata=None):
     if metadata:
         required.extend(_normalize_list(metadata.get("required_skills")))
         required.extend(_normalize_list(metadata.get("skills")))
-    for match in _LOADED_SKILLS_INLINE_RE.finditer(content):
-        required.extend(_normalize_list(match.group(1)))
-    required.extend(_extract_loaded_skill_block_entries(content))
+    required.extend(af.extract_required_skills(content))
 
     deduped = []
     for skill in required:
@@ -992,6 +968,21 @@ def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
     return Path.home() / ".copilot" / "agents"
 
 
+def render_vscode_agent(name, main_file):
+    """Return the ``<name>.agent.md`` content for a VS Code / plugin export.
+
+    Pure function shared by the installer and ``build_agent_plugin.py``: reads
+    the agent's main definition and rewrites the frontmatter ``name`` to the
+    export id so agents from different catalogs cannot collide.
+
+    @param name the export id (also the destination filename stem)
+    @param main_file the agent's main markdown definition
+    @return the rendered markdown text
+    """
+    content = Path(main_file).read_text(encoding="utf-8")
+    return _with_vscode_agent_name(content, name)
+
+
 def export_agent_to_vscode(name, main_file, vscode_dir):
     """Copy an installed agent's main definition into a VS Code agents dir.
 
@@ -1008,8 +999,7 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     vscode_dir = Path(vscode_dir)
     vscode_dir.mkdir(parents=True, exist_ok=True)
     dest = vscode_dir / "{name}.agent.md".format(name=name)
-    content = Path(main_file).read_text(encoding="utf-8")
-    dest.write_text(_with_vscode_agent_name(content, name), encoding="utf-8")
+    dest.write_text(render_vscode_agent(name, main_file), encoding="utf-8")
     return dest
 
 
@@ -2148,46 +2138,93 @@ def cmd_export(agents, args):
         sys.exit(1)
 
 
-def cmd_remove(agents, args):
-    """Remove an installed agent."""
-    name = args.name
+def remove_installed_agents(names, dry_run=False):
+    """Remove installed agents by name, including their recorded exports.
+
+    @param names agent names present in the installed manifest
+    @param dry_run when true, report without deleting
+    @return list of names that were (or would be) removed
+    """
     manifest = load_manifest()
+    generic_roots = set()
+    removed = []
+    for name in names:
+        if name not in manifest:
+            continue
+        root = install_skill._remove_manifest_entry(
+            "agents", name, manifest, INSTALL_DIR, dry_run)
+        if root:
+            generic_roots.add(root)
+        removed.append(name)
+    if dry_run:
+        return removed
+    for root in generic_roots:
+        _write_generic_manifest("agents", root, manifest)
+    save_manifest(manifest)
+    return removed
+
+
+def cmd_remove(agents, args):
+    """Remove an installed agent, or every installed agent with --all.
+
+    ``--all`` removes only what the NeqSim installer put in place (core,
+    community and private/enterprise agents recorded in the installed manifest)
+    together with their VS Code and generic exports. ``--with-skills`` also
+    removes every NeqSim-installed skill, leaving a blank slate for the NeqSim
+    Copilot plugin; files not recorded in the manifests are never touched.
+    """
+    manifest = load_manifest()
+    remove_all = getattr(args, "all", False)
+    name = getattr(args, "name", None)
+    dry_run = getattr(args, "dry_run", False)
+    verb = "Would remove" if dry_run else "Removed"
+
+    if remove_all:
+        source = getattr(args, "source", "all") or "all"
+        names = install_skill._select_manifest_names(manifest, source)
+        with_skills = getattr(args, "with_skills", False)
+        skill_names = []
+        if with_skills:
+            skill_names = install_skill._select_manifest_names(
+                install_skill.load_manifest(), source)
+        if not names and not skill_names:
+            print("\n  No installed agents{s} to remove (source: {src}).\n".format(
+                s=" or skills" if with_skills else "", src=source))
+            return
+        label = "" if source == "all" else " ({src})".format(src=source)
+        print("\n  Installed agents to remove{label}: {n}".format(
+            label=label, n=len(names)))
+        for n in names:
+            print("    - {n}".format(n=n))
+        if with_skills:
+            print("  Installed skills to remove{label}: {n}".format(
+                label=label, n=len(skill_names)))
+            for n in skill_names:
+                print("    - {n}".format(n=n))
+        kind = "agents and skills" if with_skills else "agents"
+        if not install_skill._confirm_removal(kind, names + skill_names, args):
+            sys.exit(1)
+        removed = remove_installed_agents(names, dry_run=dry_run)
+        print("\n  [OK] {verb} {n} agent(s).".format(verb=verb, n=len(removed)))
+        if with_skills:
+            removed_skills = install_skill.remove_installed_skills(
+                skill_names, dry_run=dry_run)
+            print("  [OK] {verb} {n} skill(s).".format(
+                verb=verb, n=len(removed_skills)))
+        if not dry_run:
+            print("       Reload VS Code (Developer: Reload Window) to drop them "
+                  "from the agent picker.")
+        print()
+        return
+
+    if not name:
+        print("\n  Give an agent name to remove, or --all.\n")
+        sys.exit(1)
     if name not in manifest:
         print("\n  Agent '{name}' is not installed.\n".format(name=name))
         sys.exit(1)
-
-    agent_dir = INSTALL_DIR / name
-    if agent_dir.exists():
-        shutil.rmtree(str(agent_dir))
-
-    vscode_path = manifest.get(name, {}).get("vscode_path", "")
-    if vscode_path:
-        vp = Path(vscode_path)
-        if vp.exists():
-            if vp.is_dir():
-                shutil.rmtree(str(vp), ignore_errors=True)
-            else:
-                vp.unlink()
-            print("  [OK] Removed VS Code copy: {path}".format(path=vp))
-
-    generic_export_root = None
-    for target, export_path in manifest.get(name, {}).get("exports", {}).items():
-        ep = Path(export_path)
-        if ep.exists():
-            if ep.is_dir():
-                shutil.rmtree(str(ep), ignore_errors=True)
-            else:
-                ep.unlink()
-            print("  [OK] Removed {target} export: {path}".format(
-                target=target, path=ep))
-        if target == "generic":
-            generic_export_root = ep.parent.parent
-
-    del manifest[name]
-    if generic_export_root:
-        _write_generic_manifest("agents", generic_export_root, manifest)
-    save_manifest(manifest)
-    print("\n  [OK] Removed agent '{name}'.\n".format(name=name))
+    remove_installed_agents([name], dry_run=dry_run)
+    print("\n  [OK] {verb} agent '{name}'.\n".format(verb=verb, name=name))
 
 
 def cmd_validate(agents, args):
@@ -2568,6 +2605,8 @@ def main():
         "  neqsim agent install --all --source private --target vscode",
         "  neqsim agent install --all --target vscode --force --no-pip  # skip skill package installs",
         "  neqsim agent installed",
+        "  neqsim agent remove --all --with-skills --dry-run  # preview a full uninstall",
+        "  neqsim agent remove --all --with-skills --yes      # uninstall every NeqSim agent + skill",
         "  neqsim agent info neqsim-example-agent",
         "  neqsim agent validate neqsim-example-agent",
         "  neqsim agent schema",
@@ -2667,8 +2706,23 @@ def main():
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
-    p_remove = sub.add_parser("remove", help="Remove an installed agent")
-    p_remove.add_argument("name", help="Agent name to remove")
+    p_remove = sub.add_parser(
+        "remove", help="Remove an installed agent (or every NeqSim-installed agent with --all)")
+    p_remove.add_argument("name", nargs="?", default=None, help="Agent name to remove")
+    p_remove.add_argument(
+        "--all", action="store_true",
+        help="Remove every agent the NeqSim installer put in place, including its "
+             "VS Code (~/.copilot/agents) and generic exports; other files are untouched")
+    p_remove.add_argument(
+        "--with-skills", action="store_true",
+        help="With --all: also remove every NeqSim-installed skill (blank slate)")
+    p_remove.add_argument(
+        "--source", choices=install_skill.REMOVE_SOURCES, default="all",
+        help="With --all: only core, community or private/enterprise items")
+    p_remove.add_argument("-y", "--yes", action="store_true",
+                          help="Do not ask for confirmation with --all")
+    p_remove.add_argument("--dry-run", action="store_true",
+                          help="Show what would be removed without deleting anything")
 
     p_validate = sub.add_parser(
         "validate", help="Validate an installed agent or local path")
@@ -2719,12 +2773,13 @@ def main():
     if args.command == "add-repo":
         cmd_add_repo([], args)
         return
-    if args.command in ("validate", "run", "schema", "doctor"):
+    if args.command in ("validate", "run", "schema", "doctor", "remove"):
         commands_without_catalog = {
             "validate": cmd_validate,
             "run": cmd_run,
             "schema": cmd_schema,
             "doctor": cmd_doctor,
+            "remove": cmd_remove,
         }
         commands_without_catalog[args.command]([], args)
         return

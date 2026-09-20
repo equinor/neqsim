@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "neqsim": {
+      "type": "stdio",
+      "command": "java",
+      "args": ["${PLUGIN_ROOT}/servers/NeqsimMcpLauncher.java"]
+    }
+  }
+}

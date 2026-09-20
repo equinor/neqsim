@@ -12,14 +12,15 @@ Usage:
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
-                            missing; --vscode also adds it to the workspace)
+                            missing; --vscode adds it to the workspace, --explorer
+                            opens it now)
     neqsim --show-task-root  Print the folder new tasks are created in
     neqsim --reset-task-root Remove the saved task-root setting
     neqsim --set-report-template P   Build Word reports from template P
     neqsim --show-report-template    Print the configured report template
     neqsim --reset-report-template   Remove the saved report template
     neqsim --set-document-root P     Read source documents from P and its subfolders
-                                     (created if missing; --vscode adds it too)
+                                     (created if missing; --vscode / --explorer as above)
     neqsim --show-document-root      Print the configured document root
     neqsim --reset-document-root     Remove the saved document root
     neqsim documents [PATTERN]       List documents under the document root
@@ -71,11 +72,11 @@ COMMANDS = {
     },
     "skill": {
         "module": "install_skill",
-        "desc": "Manage skills (list/search/install/remove/private-init/add-repo)",
+        "desc": "Manage skills (list/search/install/remove [--all]/private-init/add-repo)",
     },
     "agent": {
         "module": "install_agent",
-        "desc": "Manage agents (list/search/install/remove/validate/private-init/add-repo)",
+        "desc": "Manage agents (list/search/install/remove [--all --with-skills]/validate/...)",
     },
     "paperlab": {
         "module": "paperlab_install",
@@ -117,7 +118,8 @@ def _print_usage():
     print("  --show-task-root   Print the folder new tasks are created in")
     print("  --reset-task-root  Remove the saved setting (existing tasks are unchanged)")
     print("                     A missing folder is created; add --vscode to also add")
-    print("                     it to the VS Code workspace.")
+    print("                     it to the VS Code workspace, or --explorer to open it")
+    print("                     in the file explorer now.")
     print()
     print("Report template:")
     print("  --set-report-template P  Build Word reports from the .docx/.dotx template P")
@@ -175,6 +177,7 @@ def _setting_value(argv):
 
 
 VSCODE_FLAGS = ("--vscode", "--add-to-workspace")
+EXPLORER_FLAGS = ("--explorer", "--open-explorer", "--reveal")
 
 
 def _take_option(argv, flags):
@@ -184,20 +187,47 @@ def _take_option(argv, flags):
     return len(remaining) != len(argv), remaining
 
 
-def _register_with_vscode(path, requested):
-    """Add a configured folder to the VS Code workspace only when asked to."""
+def _take_flags(argv, *flag_sets):
+    """Pull several option flags out of the arguments in one pass.
+
+    Returns one bool per flag set (in order), plus the remaining arguments.
+    """
+    remaining = argv
+    found = []
+    for flags in flag_sets:
+        hit, remaining = _take_option(remaining, flags)
+        found.append(hit)
+    return tuple(found) + (remaining,)
+
+
+def _offer_post_set_actions(path, add_to_vscode, open_explorer):
+    """Add a configured folder to VS Code and/or open it in the file manager.
+
+    Both are opt-in (``--vscode`` / ``--explorer``): a setting command never
+    launches an application the user did not ask for.
+    """
     import new_task
 
-    if not requested:
+    if not add_to_vscode:
         print("Add it to your editor with File > Add Folder to Workspace "
               "(or re-run with --vscode).")
-        return
-    added, reason = new_task.add_folder_to_vscode_workspace(path)
-    if added:
-        print("Added to the VS Code workspace.")
     else:
-        print("Not added to the VS Code workspace: {}".format(reason))
-        print("Add it manually with File > Add Folder to Workspace.")
+        added, reason = new_task.add_folder_to_vscode_workspace(path)
+        if added:
+            print("Added to the VS Code workspace.")
+        else:
+            print("Not added to the VS Code workspace: {}".format(reason))
+            print("Add it manually with File > Add Folder to Workspace.")
+
+    if not open_explorer:
+        print("Open it yourself, or re-run with --explorer to open it in the file "
+              "explorer now.")
+    else:
+        opened, reason = new_task.open_folder_in_file_manager(path)
+        if opened:
+            print("Opened in the file explorer.")
+        else:
+            print("Could not open the file explorer: {}".format(reason))
 
 
 GENERATOR_PATH = os.path.join(DEVTOOLS_DIR, "task_template", "step3_report",
@@ -322,7 +352,7 @@ def _handle_document_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], DOCUMENT_ROOT_FLAGS)
-    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    add_to_vscode, open_explorer, rest = _take_flags(argv[1:], VSCODE_FLAGS, EXPLORER_FLAGS)
     value = _setting_value(rest)
     if flag == "document-root":
         flag = "--set-document-root" if value else "--show-document-root"
@@ -339,7 +369,7 @@ def _handle_document_root(argv):
         print("Document root: {}".format(stored))
         print("Agents read source documents from this folder and all its subfolders.")
         print("Put standards, technical requirements, datasheets, and drawings here.")
-        _register_with_vscode(stored, add_to_vscode)
+        _offer_post_set_actions(stored, add_to_vscode, open_explorer)
     elif flag == "--reset-document-root":
         try:
             new_task.clear_default_document_root()
@@ -429,7 +459,7 @@ def _handle_task_root(argv):
     import new_task
 
     flag = _setting_flag(argv[0], TASK_ROOT_FLAGS)
-    add_to_vscode, rest = _take_option(argv[1:], VSCODE_FLAGS)
+    add_to_vscode, open_explorer, rest = _take_flags(argv[1:], VSCODE_FLAGS, EXPLORER_FLAGS)
     value = _setting_value(rest)
     if flag == "task-root":
         flag = "--set-task-root" if value else "--show-task-root"
@@ -449,7 +479,7 @@ def _handle_task_root(argv):
         else:
             print("Task root: {}".format(stored))
             print("New tasks are created here. Existing tasks are unchanged.")
-            _register_with_vscode(stored, add_to_vscode)
+            _offer_post_set_actions(stored, add_to_vscode, open_explorer)
     elif flag == "--reset-task-root":
         new_task.clear_default_task_root()
         print("Saved task root removed. Existing tasks are unchanged.")

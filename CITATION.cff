@@ -11,8 +11,7 @@ authors:
   - family-names: Solbraa
     given-names: Even
     affiliation: "Equinor / NTNU"
-    orcid: "https://orcid.org/0000-0002-0203-3863"
-  - name: "NeqSim contributors"
+  - name: "NeqSim Contributors"
 repository-code: "https://github.com/equinor/neqsim"
 url: "https://equinor.github.io/neqsim/"
 license: Apache-2.0
@@ -23,5 +22,5 @@ keywords:
   - PVT
   - oil-and-gas
   - CCS
-version: "3.20.0"
-date-released: "2026-09-08"
+version: "3.21.0"
+date-released: "2026-09-19"

@@ -45,6 +45,44 @@ label such as `C20`, not `C20+`, before calling `characterisePlusFraction()`.
 dedicated slim-tube or multi-contact workflow; do not infer it from the swelling-factor
 curve alone.
 
+## Repeated saturation-temperature tuning
+
+`SaturationTemperature` defaults to a descending 30–1200 K search on a 10 K grid.
+This selects the uppermost resolved two-phase-to-single-phase crossing, including
+retrograde and disconnected phase regions, independently of the initial temperature.
+The result is refined to a bracket width of 1e-5 K. Regions narrower than the coarse
+grid can be missed; this is not a complete phase-envelope calculation.
+
+For repeated dew-point fitting, explicitly supply bounds that contain the desired
+upper boundary throughout the pressure and composition range being fitted:
+
+```java
+SaturationTemperature simulation = new SaturationTemperature(fluid);
+simulation.setTemperatureSearchBounds(260.0, 320.0); // K; establish these for your fluid
+simulation.run();
+double saturationTemperatureK = simulation.getSaturationTemperature();
+```
+
+This scans the same 10 K grid inside the supplied interval, including both endpoints,
+and refines its uppermost crossing with full multiphase TP flashes. It re-evaluates the
+current fluid on every call, so composition and pressure changes do not reuse stale
+phase classifications. The bounds remain fixed between calls. The 24-component
+UMR-PRU regression for issue #3795 covers heavy-component factors from 0.5 to 1.5
+at 52.1 bara and limits each bounded call to 30 flashes.
+
+If the upper endpoint is multiphase or the interval has no resolved crossing, the
+calculation falls back to the global search. If that search finds no boundary, the
+legacy result is 1200 K; it must not be interpreted as a converged saturation point.
+The caller's multiphase-check setting is restored even when a flash throws.
+
+**Bounds are a caller-supplied physical constraint, not an automatic global guarantee.**
+A local crossing and a single-phase upper endpoint cannot rule out a separate
+two-phase region above the bounds. Establish a suitable interval using global scans
+or phase-envelope calculations across the tuning range. Use
+`clearTemperatureSearchBounds()` to return to the global search when the interval
+is no longer justified. Existing callers retain the global behavior; they must opt in
+to bounded searching to obtain the reduced flash count.
+
 ## Executable constant-mass-expansion example
 
 This complete Java example uses SI molar masses for every characterized fraction. The

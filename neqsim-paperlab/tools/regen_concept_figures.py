@@ -318,7 +318,7 @@ def fig_ch04_layers():
     fig, ax = plt.subplots(figsize=(6.0, 4.0))
     diagram_axes(ax, (0, 10), (0, 6.5))
     layers = [
-        ("Agent",  "@solve.task, @flow.assurance, @ccs.hydrogen ...",  BLUE_FILL,   BLUE),
+        ("Agent",  "@solve-task, @flow-assurance, @ccs-hydrogen ...",  BLUE_FILL,   BLUE),
         ("Skill",  "neqsim-api-patterns, neqsim-troubleshooting ...",  GREEN_FILL,  GREEN),
         ("Tool",   "run_in_terminal, read_file, edit_notebook_file ...", PURPLE_FILL, PURPLE),
         ("Engine", "NeqSim Java core (EOS, equipment, solvers)",        ORANGE_FILL, ORANGE),
@@ -377,9 +377,9 @@ def fig_ch05_router():
     box(ax, 0.5, 2.2, 1.7, 1.1, "User\nrequest", fill=GRAY_FILL, edge=GRAY)
     box(ax, 3.5, 2.2, 2.2, 1.1, "@router\n(classifier)", fill=BLUE_FILL, edge=BLUE,
         weight="bold")
-    box(ax, 7.0, 4.0, 2.6, 1.0, "@flow.assurance",
+    box(ax, 7.0, 4.0, 2.6, 1.0, "@flow-assurance",
         fill=GREEN_FILL, edge=GREEN, fontsize=8.5, weight="bold")
-    box(ax, 7.0, 0.6, 2.6, 1.0, "@field.development",
+    box(ax, 7.0, 0.6, 2.6, 1.0, "@field-development",
         fill=ORANGE_FILL, edge=ORANGE, fontsize=8.5, weight="bold")
     arrow(ax, (2.2, 2.75), (3.5, 2.75), color=GRAY, lw=1.0)
     arrow(ax, (5.7, 3.0), (7.0, 4.4),
@@ -397,12 +397,12 @@ def fig_ch05_collab_graph():
     diagram_axes(ax, (0, 10), (0, 7.0))
     nodes = {
         "router":          (5.0, 6.2, BLUE_FILL,   BLUE,   "@router"),
-        "field":           (2.0, 4.7, ORANGE_FILL, ORANGE, "@field.development"),
+        "field":           (2.0, 4.7, ORANGE_FILL, ORANGE, "@field-development"),
         "subsea":          (5.0, 4.7, BLUE_FILL,   BLUE,   "@subsea.wells"),
-        "flow":            (8.0, 4.7, GREEN_FILL,  GREEN,  "@flow.assurance"),
+        "flow":            (8.0, 4.7, GREEN_FILL,  GREEN,  "@flow-assurance"),
         "process":         (3.5, 2.8, PURPLE_FILL, PURPLE, "@process.simulation"),
-        "deliverables":    (6.5, 2.8, "#fde0eb",   PINK,   "@engineering.deliverables"),
-        "report":          (5.0, 1.0, GRAY_FILL,   GRAY,   "@solve.task report"),
+        "deliverables":    (6.5, 2.8, "#fde0eb",   PINK,   "@engineering-deliverables"),
+        "report":          (5.0, 1.0, GRAY_FILL,   GRAY,   "@solve-task report"),
     }
     for k, (x, y, fill, edge, label) in nodes.items():
         box(ax, x - 1.1, y - 0.32, 2.2, 0.65, label, fill=fill, edge=edge,
@@ -732,7 +732,7 @@ def fig_ch13_dashboard():
     ax.text(10.35, 4.05, "Agent log", ha="center",
             fontsize=8.5, color="#333", weight="bold")
     log = [
-        "@solve.task started",
+        "@solve-task started",
         "loaded 5 skills",
         "ran 200 MC samples",
         "P10/P50/P90 = -22 / 3352 / 7086",
