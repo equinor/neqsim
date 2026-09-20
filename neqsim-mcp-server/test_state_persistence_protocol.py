@@ -178,8 +178,8 @@ def test_current_phase0_boundary(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("manageState", {})
     require(
-        limitations.get("contractTestedToolCount") == 41
-        and limitations.get("confirmedGapToolCount") == 10
+        limitations.get("contractTestedToolCount") == 42
+        and limitations.get("confirmedGapToolCount") == 9
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_NON_NUMERICAL_LOCAL_STATE_PERSISTENCE_LIFECYCLE"

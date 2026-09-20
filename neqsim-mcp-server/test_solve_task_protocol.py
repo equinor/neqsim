@@ -216,8 +216,8 @@ def test_inventory_promoted(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("solveTask", {})
     require(inventory.get("inventoryVersion") == "1.42"
-            and limitations.get("contractTestedToolCount") == 41
-            and limitations.get("confirmedGapToolCount") == 10
+            and limitations.get("contractTestedToolCount") == 42
+            and limitations.get("confirmedGapToolCount") == 9
             and limitations.get("contractPromotionCandidateCount") == 0,
             "task-solver promotion accounting drifted", inventory)
     require(record.get("coverageStatus") == "CONTRACT_TESTED",

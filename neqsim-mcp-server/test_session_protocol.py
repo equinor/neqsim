@@ -163,8 +163,8 @@ def test_current_phase0_boundary(client):
     require(inventory.get("inventoryVersion") == "1.42", "unexpected inventory version", inventory)
     limitations = inventory.get("knownLimitations", {})
     require(
-        limitations.get("contractTestedToolCount") == 41
-        and limitations.get("confirmedGapToolCount") == 10,
+        limitations.get("contractTestedToolCount") == 42
+        and limitations.get("confirmedGapToolCount") == 9,
         "promoted trust accounting drifted",
         limitations,
     )

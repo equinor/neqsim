@@ -303,8 +303,8 @@ def test_inventory_records_atomic_promotion(client):
         inventory,
     )
     require(
-        limitations.get("contractTestedToolCount") == 41
-        and limitations.get("confirmedGapToolCount") == 10,
+        limitations.get("contractTestedToolCount") == 42
+        and limitations.get("confirmedGapToolCount") == 9,
         "promotion accounting drifted",
         limitations,
     )
