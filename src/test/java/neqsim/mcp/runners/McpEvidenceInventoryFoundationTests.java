@@ -1120,4 +1120,5 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runProcessLoop"));
     assertEquals(43, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(8, limitations.get("confirmedGapToolCount").getAsInt());
-  }}
+  }
+}

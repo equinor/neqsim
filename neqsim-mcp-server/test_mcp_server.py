@@ -774,14 +774,15 @@ def test_bubble_point_pressure():
 
 
 def test_dew_point_pressure():
-    """Dew point pressure for rich gas at 0C."""
-    print("\n=== Dew Point Pressure (0C) ===")
+    """Dew point pressure at a temperature with a verified gas/oil saturation solution."""
+    print("\n=== Dew Point Pressure (-30C) ===")
 
     r = run_flash(
         {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
-        0.0, 50.0, flash_type="dewPointP"
+        -30.0, 50.0, flash_type="dewPointP"
     )
-    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("status=success", r.get("status") == "success", json.dumps(r.get("errors", [])))
+    check("flashType=dewPointP", r.get("flash", {}).get("flashType") == "dewPointP")
 
 
 def test_bubble_point_temperature():

@@ -240,6 +240,10 @@ applicability, or no-limitations claim. The transport response-size guard retain
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
 must be omitted.
 
+If omission metadata would exceed the remaining byte budget, the guard drops
+optional `summary` prose from omission records. The omitted field names, byte
+counts, retrieval guidance and complete discovery inventories remain available.
+
 ---
 
 ## `runOperationalStudy` — P&ID and Plant-Data Operational Studies
