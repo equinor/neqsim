@@ -65,6 +65,8 @@ class AstmD6377DocumentationTest extends NeqSimTest {
   void documentedWaterFreeComparisonRespondsToWater() {
     SystemInterface wetOil = createOil();
     wetOil.addComponent("water", 0.00545);
+    // Rebuild binary interaction matrices after changing the component list.
+    wetOil.setMixingRule(2);
     wetOil.init(0);
 
     Standard_ASTM_D6377 vaporPressure = new Standard_ASTM_D6377(wetOil.clone());

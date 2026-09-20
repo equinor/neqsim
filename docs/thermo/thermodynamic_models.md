@@ -224,6 +224,11 @@ in a single equation of state:
    alcohols, alkanolamines), added to the reduced Helmholtz energy in
    `PhaseUMRCPA.getF()`.
 
+CPA-fitted physical parameters are used only when both the energy parameter and
+co-volume are finite and positive. Components with association-site metadata but no
+fitted physical parameters, such as CO₂, retain their Peng–Robinson physical
+parameters and the selected Mathias–Copeman alpha instead of receiving zero values.
+
 The pressure is the sum of a physical and an association contribution:
 
 $$P = P_{\text{PR}}(\text{UMR mixing, MC alpha}) + P_{\text{association}}(\text{CPA})$$
