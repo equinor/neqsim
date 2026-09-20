@@ -166,6 +166,40 @@ def add_folder_to_vscode_workspace(path):
     return True, ""
 
 
+def open_folder_in_file_manager(path):
+    """Open ``path`` in the OS file manager (Explorer / Finder / the default handler).
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder to reveal. Must already exist.
+
+    Returns
+    -------
+    tuple of (bool, str)
+        Whether a file manager was launched, and a reason when it was not.
+    """
+    if os.environ.get("NEQSIM_NO_EXPLORER", "").strip():
+        return False, "disabled by NEQSIM_NO_EXPLORER"
+    if not os.path.isdir(path):
+        return False, "not a folder: {}".format(path)
+    try:
+        if sys.platform.startswith("win"):
+            os.startfile(path)  # noqa: opens the folder the user just configured
+            return True, ""
+        executable = "open" if sys.platform == "darwin" else shutil.which("xdg-open")
+        if not executable:
+            return False, "no file manager launcher found (xdg-open not on PATH)"
+        completed = subprocess.run([executable, path],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as error:
+        return False, "Could not open a file manager: {}".format(error)
+    if completed.returncode != 0:
+        detail = (completed.stdout or b"").decode("utf-8", "replace").strip()
+        return False, detail or "{} exited with {}".format(executable, completed.returncode)
+    return True, ""
+
+
 def resolve_task_root(task_root=None):
     """Resolve explicit, environment, saved-user, then repository task root."""
     selected = task_root or os.environ.get("NEQSIM_TASK_ROOT")

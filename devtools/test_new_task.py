@@ -17,8 +17,9 @@ def defaults(tmp_path, monkeypatch):
     monkeypatch.delenv("NEQSIM_TASK_ROOT", raising=False)
     monkeypatch.delenv("NEQSIM_REPORT_TEMPLATE", raising=False)
     monkeypatch.delenv("NEQSIM_DOCUMENT_ROOT", raising=False)
-    # Never launch the editor from a test run.
+    # Never launch the editor or a file manager window from a test run.
     monkeypatch.setenv("NEQSIM_NO_VSCODE", "1")
+    monkeypatch.setenv("NEQSIM_NO_EXPLORER", "1")
     return config
 
 
@@ -301,6 +302,99 @@ def test_set_root_adds_folder_to_vscode_only_when_asked(defaults, tmp_path, monk
     with pytest.raises(SystemExit):
         neqsim_cli.main()
     assert added == []
+
+
+def test_set_root_opens_file_explorer_only_when_asked(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    opened = []
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == []
+    assert "--explorer" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks), "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == [str(tasks)]
+    assert "Opened in the file explorer." in capsys.readouterr().out
+
+
+def test_set_document_root_opens_file_explorer_only_when_asked(defaults, tmp_path, monkeypatch,
+                                                                capsys):
+    import neqsim_cli
+
+    opened = []
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    documents = tmp_path / "standards"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root", str(documents)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == []
+    assert "--explorer" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv",
+                        ["neqsim", "--set-document-root", str(documents), "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == [str(documents)]
+    assert "Opened in the file explorer." in capsys.readouterr().out
+
+
+def test_set_root_accepts_both_vscode_and_explorer_flags_together(defaults, tmp_path, monkeypatch):
+    import neqsim_cli
+
+    added = []
+    opened = []
+    monkeypatch.setattr(new_task, "add_folder_to_vscode_workspace",
+                        lambda path: (added.append(path), (True, ""))[1])
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv",
+                        ["neqsim", "--set-task-root", str(tasks), "--vscode", "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == [str(tasks)]
+    assert opened == [str(tasks)]
+
+
+def test_open_folder_in_file_manager_disabled_by_env(defaults, tmp_path, monkeypatch):
+    monkeypatch.setenv("NEQSIM_NO_EXPLORER", "1")
+    folder = tmp_path / "docs"
+    folder.mkdir()
+    opened, reason = new_task.open_folder_in_file_manager(str(folder))
+    assert opened is False
+    assert "NEQSIM_NO_EXPLORER" in reason
+
+
+def test_open_folder_in_file_manager_rejects_missing_folder(defaults, tmp_path, monkeypatch):
+    monkeypatch.delenv("NEQSIM_NO_EXPLORER", raising=False)
+    missing = tmp_path / "does-not-exist"
+    opened, reason = new_task.open_folder_in_file_manager(str(missing))
+    assert opened is False
+    assert "not a folder" in reason
+
+
+def test_open_folder_in_file_manager_launches_platform_handler(defaults, tmp_path, monkeypatch):
+    monkeypatch.delenv("NEQSIM_NO_EXPLORER", raising=False)
+    folder = tmp_path / "docs"
+    folder.mkdir()
+    calls = []
+    monkeypatch.setattr(os, "startfile", lambda path: calls.append(path), raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    opened, reason = new_task.open_folder_in_file_manager(str(folder))
+    assert opened is True
+    assert reason == ""
+    assert calls == [str(folder)]
 
 
 def test_setting_accepts_bare_flag_and_unquoted_path(defaults, tmp_path, monkeypatch):
