@@ -16,6 +16,7 @@ analysis, a certified laboratory method, or the governing contract.
 | LNG density from composition | `Standard_ISO6578` | [ISO 6578](iso6578_lng_density) |
 | Water or hydrocarbon dew point | `Draft_ISO18453` or `BestPracticeHydrocarbonDewPoint` | [Dew-point methods](dew_point_standards) |
 | CNG methane number and motor octane number | `Standard_ISO15403` | [ISO 15403](iso15403_cng_quality) |
+| European H-gas and biomethane composition screening | `Standard_EN16726` and `Standard_EN16723` | [EN 16726 / EN 16723](en16723_en16726_gas_quality) |
 | Simulated crude-oil vapour pressure | `Standard_ASTM_D6377` | [ASTM D6377](astm_d6377_rvp) |
 | Other simulated oil-quality properties | Classes in `neqsim.standards.oilquality` | [Oil-quality methods](oil_quality_standards) |
 | Delivery-point specification checks | `BaseContract` and `ContractSpecification` | [Sales contracts](sales_contracts) |
