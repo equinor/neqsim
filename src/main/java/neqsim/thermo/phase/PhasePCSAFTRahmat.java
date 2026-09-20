@@ -828,10 +828,14 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
       throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Invalid segment volume");
     }
     double tolerance = 1e-9 * Math.max(1.0, pressure);
-    boolean sameState = temperature == cachedTemperature && pressure == cachedPressure && pt == cachedRootType
-        && cachedComponentMoles != null && cachedComponentMoles.length == numberOfComponents;
-    for (int i = 0; sameState && i < numberOfComponents; i++) {
-      sameState = cachedComponentMoles[i] == getComponent(i).getNumberOfMolesInPhase();
+    final double[] cachedMoles = cachedComponentMoles;
+    boolean sameState = false;
+    if (cachedMoles != null && cachedMoles.length == numberOfComponents && temperature == cachedTemperature
+        && pressure == cachedPressure && pt == cachedRootType) {
+      sameState = true;
+      for (int i = 0; sameState && i < numberOfComponents; i++) {
+        sameState = cachedMoles[i] == getComponent(i).getNumberOfMolesInPhase();
+      }
     }
     if (sameState && cachedMolarVolume > segmentVolume) {
       setMolarVolume(cachedMolarVolume);
