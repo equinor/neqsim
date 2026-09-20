@@ -51,7 +51,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
   }
 
   /** {@inheritDoc} */
-  @Override
   public double getValue(double value, String fromUnit, String toUnit) {
     if (fromUnit.equals(toUnit)) {
       return value;
