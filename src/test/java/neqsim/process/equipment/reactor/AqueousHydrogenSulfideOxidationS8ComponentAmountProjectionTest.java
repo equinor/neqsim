@@ -77,14 +77,12 @@ public class AqueousHydrogenSulfideOxidationS8ComponentAmountProjectionTest exte
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result replacementTransition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
         .create(prior, replacement);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8ComponentAmountProjection.project(prior, candidate,
-            replacementTransition));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8ComponentAmountProjection
+        .project(prior, candidate, replacementTransition));
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationS8ComponentAmountProjection.project(prior, candidate, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8ComponentAmountProjection.project(null, candidate,
-            replacementTransition));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8ComponentAmountProjection
+        .project(null, candidate, replacementTransition));
   }
 
   @Test

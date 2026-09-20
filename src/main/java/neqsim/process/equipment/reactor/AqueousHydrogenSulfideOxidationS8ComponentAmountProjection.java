@@ -63,9 +63,9 @@ public final class AqueousHydrogenSulfideOxidationS8ComponentAmountProjection {
     }
 
     return new Result(transition.getLedgerIdentifier(), transition.getProductIdentityBasisIdentifier(),
-        transition.getPriorCheckpointHex(), transition.getCandidateCheckpointHex(),
-        transition.getTransitionDigestHex(), transition.isUnchanged(), transition.isStrictAppend(), massKg, amountMol,
-        amountKmol, reconstructedMassKg, closureResidualKg);
+        transition.getPriorCheckpointHex(), transition.getCandidateCheckpointHex(), transition.getTransitionDigestHex(),
+        transition.isUnchanged(), transition.isStrictAppend(), massKg, amountMol, amountKmol, reconstructedMassKg,
+        closureResidualKg);
   }
 
   /**
