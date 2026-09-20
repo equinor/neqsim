@@ -26,8 +26,8 @@ The reconciliation is intentionally conservative:
 Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
 
 - 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
-- Forty-two bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `diagnoseAutomation`, and `getAutomationLearningReport`.
-- 9 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+- Forty-three bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `diagnoseAutomation`, and `getAutomationLearningReport`.
+- 8 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
 
 The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested software-contract evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those surfaces. For `getSimulationVariable`, the qualified boundary is addressed read routing, requested-unit handling, standard envelope/provenance/validation/quality-gate preservation, fail-closed inputs, and packaged transport; the numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by that classification. For `manageModel`, the qualified boundary is the reusable registry lifecycle, canonical routing, revision/delete invalidation, fail-closed inputs, and packaged transport; restart persistence, distributed coherence, numerical fidelity, convergence, mass/energy closure, facility fidelity, and plant authority remain outside that classification. For `manageSession`, the qualified boundary is canonical-process lifecycle, owner isolation, close/invalidation, fail-closed behavior and packaged transport; restart durability, distributed coherence, numerical fidelity, convergence, conservation, facility fidelity and plant authority remain outside that classification.
 
@@ -208,3 +208,22 @@ plant authorization, qualified pressure-relief/process-safety review, and
 accountable approval remain outside the evidence boundary. No promotion
 candidate remains queued and `scientificValidationComplete=false`.
 
+
+
+Inventory version `1.43` atomically promotes `runProcessLoop` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+20/42/9 to 20/43/8. Existing direct Java qualification and the focused packaged
+STDIO protocol establish deterministic ordered trial accounting, canonical
+`ProcessSystem` construction, sequential `ProcessAutomation.evaluate`
+delegation, readback routing, isolated rejected-setpoint evidence, fail-closed
+blank and malformed inputs, normal access enforcement, and standard response
+evidence. No process, thermodynamic, optimization, or control algorithm is
+reimplemented.
+
+This bounded software contract does not establish global or local optimization,
+feasible-space completeness, numerical or thermodynamic accuracy, convergence
+for arbitrary inputs, conservation, uncertainty, controller stability,
+equipment or facility fidelity, safe operating limits, persistence, parallel
+execution, plant or control authority, certification, or accountable
+engineering approval. No promotion candidate remains queued and
+`scientificValidationComplete=false`.

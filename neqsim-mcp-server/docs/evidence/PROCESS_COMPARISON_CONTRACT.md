@@ -32,8 +32,7 @@ verifies the atomic inventory record. `SchemaCatalog`, `ExampleCatalog`, and
 `NeqSimTools` expose synchronized discovery contracts.
 
 Inventory `1.39 / 20 explicit + 39 contract-tested + 12 confirmed gaps`
-recorded `compareProcesses=CONTRACT_TESTED`. Current inventory `1.42 / 20
-explicit + 42 contract-tested + 9 confirmed gaps` retains that classification.
+recorded `compareProcesses=CONTRACT_TESTED`. Current inventory `1.43 / 20 explicit + 43 contract-tested + 8\nconfirmed gaps` retains that classification.
 No promotion candidate remains.
 
 ## Exclusions

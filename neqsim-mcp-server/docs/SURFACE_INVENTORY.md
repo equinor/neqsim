@@ -147,8 +147,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 9 records remain
-`CONFIRMED_GAP`, forty-two are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 8 records remain
+`CONFIRMED_GAP`, forty-three are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -735,3 +735,23 @@ pressure-relief/process-safety and independent-maintainer review remain
 mandatory. No promotion candidate is queued and
 `scientificValidationComplete=false`.
 
+
+
+### Promoted bounded canonical process-loop orchestration contract
+
+Inventory version 1.43 atomically promotes `runProcessLoop` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/42/9` to `20/43/8`. The existing runner builds the caller-supplied
+canonical `ProcessSystem` once and delegates ordered trials to
+`ProcessAutomation.evaluate`; it does not introduce an MCP-side process or
+optimization model. Direct Java and packaged-STDIO qualification cover ordered
+trial indices and counts, feasible-result accounting, readback routing,
+per-trial rejected-setpoint evidence, fail-closed blank and malformed inputs,
+normal access enforcement, and standard response evidence.
+
+This classification does not establish global or local optimization,
+feasible-space completeness, numerical or thermodynamic accuracy, convergence
+for arbitrary inputs, conservation, uncertainty, controller stability,
+equipment or facility fidelity, safe operating limits, persistence, parallel
+execution, plant or control authority, certification, or accountable
+engineering approval. See `docs/evidence/PROCESS_LOOP_CONTRACT.md`.

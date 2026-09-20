@@ -36,10 +36,10 @@ require(
     f"int PROTOCOL_SCENARIO_COUNT = {protocol_scenario_count};",
     SOURCE_PATH,
 )
-require(source, 'inventory.addProperty("inventoryVersion", "1.42")', SOURCE_PATH)
+require(source, 'inventory.addProperty("inventoryVersion", "1.43")', SOURCE_PATH)
 require(
     source,
-    "All 71 tools have coverage records; 42 are CONTRACT_TESTED and 9 remain "
+    "All 71 tools have coverage records; 43 are CONTRACT_TESTED and 8 remain "
     "CONFIRMED_GAP.",
     SOURCE_PATH,
 )
@@ -48,14 +48,15 @@ require(source, 'case "compareProcesses":', SOURCE_PATH)
 require(source, 'case "runBarrierRegister":', SOURCE_PATH)
 require(source, 'case "runRelief":', SOURCE_PATH)
 require(source, 'case "runOperationalStudy":', SOURCE_PATH)
+require(source, 'case "runProcessLoop":', SOURCE_PATH)
 
 surface = SURFACE_PATH.read_text(encoding="utf-8")
 require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
 require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
-    "scientifically validated: 9 records remain\n"
-    "`CONFIRMED_GAP`, forty-two are `CONTRACT_TESTED`",
+    "scientifically validated: 8 records remain\n"
+    "`CONFIRMED_GAP`, forty-three are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
 
@@ -64,38 +65,38 @@ contract_line = next(
     (
         line
         for line in foundation.splitlines()
-        if line.startswith("- Forty-two bounded software contracts")
+        if line.startswith("- Forty-three bounded software contracts")
     ),
     None,
 )
 if contract_line is None:
-    raise AssertionError(f"{FOUNDATION_PATH}: missing current 42-contract summary")
+    raise AssertionError(f"{FOUNDATION_PATH}: missing current 43-contract summary")
 contract_tools = re.findall(r"`([A-Za-z][A-Za-z0-9]+)`", contract_line)
-if len(contract_tools) != 42 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "runRelief" not in contract_tools or "runOperationalStudy" not in contract_tools or "compareProcesses" not in contract_tools:
+if len(contract_tools) != 43 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "runRelief" not in contract_tools or "runOperationalStudy" not in contract_tools or "compareProcesses" not in contract_tools or "runProcessLoop" not in contract_tools:
     raise AssertionError(
-        f"{FOUNDATION_PATH}: expected 42 named contracts including runSIL, runBarrierRegister, runRelief, runOperationalStudy, and compareProcesses, "
+        f"{FOUNDATION_PATH}: expected 43 named contracts including runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, and runProcessLoop, "
         f"found {len(contract_tools)}"
     )
-require(foundation, "- 9 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
+require(foundation, "- 8 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
 
 api_reference = API_PATH.read_text(encoding="utf-8")
 require(
     api_reference,
     "all 71 tools\nhave coverage records, but only 20 have tool-specific trust pages; "
-    "42 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
-    "9 remain `CONFIRMED_GAP`",
+    "43 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
+    "8 remain `CONFIRMED_GAP`",
     API_PATH,
 )
 
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.42 / 20 explicit + 42 contract-tested + 9\n"
+    "Current inventory `1.43 / 20 explicit + 43 contract-tested + 8\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )
 
 print(
-    "Phase 0 documentation accounting is consistent: 1.42 / 20 + 42 + 9; "
+    "Phase 0 documentation accounting is consistent: 1.43 / 20 + 43 + 8; "
     f"{protocol_scenario_count} primary protocol scenarios"
 )

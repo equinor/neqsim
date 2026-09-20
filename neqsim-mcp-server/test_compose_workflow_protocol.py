@@ -286,9 +286,9 @@ def test_inventory_promotes_contract(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("composeWorkflow", {})
     require(
-        inventory.get("inventoryVersion") == "1.42"
-        and limitations.get("contractTestedToolCount") == 42
-        and limitations.get("confirmedGapToolCount") == 9,
+        inventory.get("inventoryVersion") == "1.43"
+        and limitations.get("contractTestedToolCount") == 43
+        and limitations.get("confirmedGapToolCount") == 8,
         "composed-workflow promotion did not update inventory accounting",
         inventory,
     )
