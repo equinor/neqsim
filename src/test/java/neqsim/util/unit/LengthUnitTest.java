@@ -24,4 +24,23 @@ class LengthUnitTest extends neqsim.NeqSimTest {
     LengthUnit length = new LengthUnit(1.0, "m");
     assertThrows(RuntimeException.class, () -> length.getValue("yard"));
   }
+
+  @Test
+  void testUnitAliasesAndConvert() {
+    assertEquals(1.0, new LengthUnit(1.0, "meter").getSIvalue(), 1e-12);
+    assertEquals(1.0, new LengthUnit(1.0, "metre").getSIvalue(), 1e-12);
+    assertEquals(1000.0, new LengthUnit(1.0, "km").getSIvalue(), 1e-12);
+    assertEquals(0.0254, new LengthUnit(1.0, "inch").getSIvalue(), 1e-12);
+    assertEquals(0.3048, new LengthUnit(1.0, "feet").getSIvalue(), 1e-12);
+    assertEquals(1.0e-3, new LengthUnit(1.0, "mm").getSIvalue(), 1e-15);
+
+    assertEquals(100.0, LengthUnit.convert(1.0, "m", "cm"), 1e-12);
+    assertEquals(0.001, LengthUnit.convert(1.0, "m", "km"), 1e-12);
+    assertEquals(39.37007874, new LengthUnit(1.0, "m").getValue("in"), 1e-6);
+  }
+
+  @Test
+  void testUnsupportedInputUnit() {
+    assertThrows(RuntimeException.class, () -> new LengthUnit(1.0, "yard").getSIvalue());
+  }
 }

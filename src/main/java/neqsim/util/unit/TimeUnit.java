@@ -32,6 +32,12 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getSIUnit() {
     return "s";
   }

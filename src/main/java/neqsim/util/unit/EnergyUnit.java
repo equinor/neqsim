@@ -11,8 +11,6 @@ import neqsim.util.exception.InvalidInputException;
 public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   private static final long serialVersionUID = 1000L;
 
-  private static final String[] ALLOWED_UNITS = {"J", "kJ", "MJ", "Wh", "kWh", "MWh", "BTU", "kcal"};
-
   /**
    * Constructor for EnergyUnit.
    *
@@ -23,13 +21,10 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
     super(value, unit);
   }
 
-  private boolean isAllowedUnit(String unit) {
-    for (String allowedUnit : ALLOWED_UNITS) {
-      if (allowedUnit.equals(unit)) {
-        return true;
-      }
-    }
-    return false;
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return new String[] {"J", "kJ", "MJ", "Wh", "kWh", "MWh", "BTU", "kcal"};
   }
 
   /** {@inheritDoc} */

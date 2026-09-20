@@ -25,6 +25,12 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getConversionFactor(String unit) {
     switch (unit) {
     case "W":

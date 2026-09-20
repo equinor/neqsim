@@ -1,6 +1,7 @@
 package neqsim.util.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
@@ -76,5 +77,20 @@ class PressureUnitTest extends neqsim.NeqSimTest {
   public void testSIValue() {
     assertEquals(101325.0, new PressureUnit(0.0, "barg").getSIvalue(), 1e-6);
     assertEquals(1100000.0, new PressureUnit(11.0, "bara").getSIvalue(), 1e-6);
+  }
+
+  @Test
+  public void testMpaAndBarConversions() {
+    assertEquals(1.0e6, new PressureUnit(1.0, "MPa").getSIvalue(), 1e-3);
+    assertEquals(1.0e5, new PressureUnit(1.0, "bar").getSIvalue(), 1e-6);
+    assertEquals(1.0, new PressureUnit(10.0, "bara").getValue("MPa"), 1e-9);
+    assertEquals(10.0, new PressureUnit(1.0, "MPa").getValue("bara"), 1e-9);
+    assertEquals(1.0, PressureUnit.convert(1.0, "bar", "bara"), 1e-9);
+  }
+
+  @Test
+  public void testUnsupportedUnitThrows() {
+    assertThrows(RuntimeException.class, () -> new PressureUnit(1.0, "torr").getSIvalue());
+    assertThrows(RuntimeException.class, () -> new PressureUnit(1.0, "bara").getValue("torr"));
   }
 }

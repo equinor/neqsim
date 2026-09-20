@@ -1,6 +1,7 @@
 package neqsim.util.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -74,5 +75,20 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
     TemperatureUnit rankine = new TemperatureUnit(671.67, "R");
     assertEquals(373.15, rankine.getValue("K"), 1e-2);
     assertEquals(100.0, rankine.getValue("C"), 1e-2);
+  }
+
+  @Test
+  public void testStaticConvertAndSIvalue() {
+    assertEquals(273.15, new TemperatureUnit(0.0, "C").getSIvalue(), 1e-9);
+    assertEquals(255.3722222222, new TemperatureUnit(0.0, "F").getSIvalue(), 1e-6);
+    assertEquals(255.3722222222, new TemperatureUnit(459.67, "R").getSIvalue(), 1e-6);
+    assertEquals(310.9277777778, TemperatureUnit.convert(100.0, "F", "K"), 1e-6);
+    assertEquals(32.0, TemperatureUnit.convert(0.0, "C", "F"), 1e-9);
+  }
+
+  @Test
+  public void testUnsupportedUnitThrows() {
+    assertThrows(RuntimeException.class, () -> new TemperatureUnit(0.0, "X").getSIvalue());
+    assertThrows(RuntimeException.class, () -> new TemperatureUnit(0.0, "K").getValue("X"));
   }
 }

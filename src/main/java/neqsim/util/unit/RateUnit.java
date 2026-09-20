@@ -50,6 +50,12 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
     this.boilp = boilp;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
+
   /**
    * getConversionFactor.
    *

@@ -16,6 +16,8 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
   private static final String[] ALLOWED_UNITS = {"bara", "bar", "barg", "psi", "psia", "psig", "Pa", "kPa", "MPa",
       "atm"};
 
+  private static final double PSI_TO_BAR = 0.0689475729317831;
+
   /**
    * Constructor for PressureUnit.
    *
@@ -26,7 +28,11 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
     super(value, unit);
   }
 
-  private static final double PSI_TO_BAR = 0.0689475729317831;
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
 
   /**
    * Convert a pressure value to SI unit (Pascals).

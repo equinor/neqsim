@@ -23,6 +23,7 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
    */
   public BaseUnit(double value, String unit) {
     Unit.validateUnitInput(unit, "unit");
+    validateAllowedUnit(unit);
     this.invalue = value;
     this.inunit = unit;
   }

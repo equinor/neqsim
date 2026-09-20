@@ -25,6 +25,12 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getSIUnit() {
     return "K";
   }
