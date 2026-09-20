@@ -10,7 +10,28 @@ Copy-paste reference for common NeqSim operations. All Java code must be Java 8 
 
 ## MCP server vs. Python/Java API — which to use
 
-Both call the same NeqSim engine; the difference is packaging, not physics.
+**Default policy: MCP first.** For any single calculation, always check whether
+a NeqSim MCP tool (`mcp_neqsim_*`) already covers it before writing Python or
+Java. Only drop to code when MCP genuinely cannot do the job. Concretely:
+
+1. **Curated tool exists** (`runFlash`, `runProcess`, `runPVT`, `getPhaseEnvelope`,
+   `sizeEquipment`, `calculateStandard`, `runFlowAssurance`, `runBatch`, ...) →
+   use it directly. Confirm field names with `getSchema`/`validateInput` first.
+2. **No curated tool, but it might still be reachable** → use `runCapability`
+   (`search` → `inspectApi` → invoke) before writing any code.
+3. **`runCapability` reports `inspect-only`, or the task needs loops/plotting/
+   state/notebooks/reports** → fall back to the Python API (`import neqsim`)
+   or Java in a checkout. This is the *only* reason to write code for a
+   calculation MCP already exposes.
+4. **NeqSim itself lacks the capability** (not a packaging gap, an engine gap)
+   → implement it in Java with tests (`spotless:apply`) rather than working
+   around it with ad-hoc Python; see `neqsim-troubleshooting` and the
+   continuous-improvement rule in `AGENTS.md`.
+
+Both the MCP tools and the Python/Java API call the same NeqSim engine — the
+difference is packaging, not physics — but MCP additionally gives a stable
+JSON contract, schema validation, and provenance/quality-gate info (EOS,
+convergence, benchmark trust, standards) for free.
 
 | Use the **MCP server** (`mcp_neqsim_*` tools) when... | Use the **Python/Java API** (`import neqsim`, or Java in a checkout) when... |
 |---|---|
