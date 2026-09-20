@@ -22,7 +22,8 @@ From the repository root:
 The Java 8 dependency profile can be selected with `-f pomJava8.xml`.
 These tests also belong to the ordinary fast suite. The dedicated CI job runs Java 8
 and Java 21, fails if tests are not discovered, and retains Surefire and
-`target/model-spec/results.tsv` evidence. Production component-data and test-resource
+`target/model-spec/results.tsv` and `coverage.tsv` evidence. The job summary reports
+partial coverage, unsupported contracts and temporary debt separately. Production component-data and test-resource
 changes select the build/test workflow, including changes containing only CSV or TSV data.
 `ModelSpecHarnessTest` protects those workflow entries and the focused test selection.
 Branch-protection configuration remains an administrator policy; adding a CI job does
@@ -69,12 +70,12 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The initial catalog has 31 cases across six system drivers (SRK, PR, Wilson, classic
+The catalog has 37 cases across six system drivers (SRK, PR, Wilson, classic
 UNIFAC, PSRK and UMR-PRU), a component saturation adapter and an unsupported phase
 adapter. This is **not coverage of every NeqSim model or every property**. Campaign
-milestone B owns the complete concrete-model inventory, per-property coverage debt,
-and the future inventory-to-catalog gate. The present required-ID check covers only
-this explicitly curated initial catalog.
+milestone B owns sourced family qualification and remaining per-property coverage debt.
+The inventory gate below now reconciles every concrete System and Phase type against
+an explicit classification; discovery does not qualify their numerical behavior.
 
 | Cases | Evidence and tolerance rationale |
 | --- | --- |
@@ -102,9 +103,58 @@ derivatives or inverse operations are qualified; preserve the more detailed
 under #3792. In particular, a pressure-only fixture must not imply availability of an
 unimplemented derivative.
 
-The pow10KPa derivative currently returns zero despite a nonzero analytical slope;
-this was reproduced and isolated in [issue #3798](https://github.com/equinor/neqsim/issues/3798).
-That numerical repair is deliberately separate from the test-infrastructure increment.
+The pow10KPa derivative defect in [issue #3798](https://github.com/equinor/neqsim/issues/3798)
+was repaired by [PR #3803](https://github.com/equinor/neqsim/pull/3803). Six catalog cases
+now qualify its derivative and inverse at 260, 300 and 350 K using the existing
+prescribed-coefficient fixture in `ComponentPow10KPaVaporPressureTest`. The analytic
+reference is P = 2 * 10^(1 - 300/T) bar and dP/dT = P * ln(10) * 300/T^2 bar/K.
+Inverse cases supply independently calculated pressure, not the production forward
+answer. Nonzero E tests explicit-label precedence. These are implementation contracts,
+not physical fits for i-pentane. Other correlation derivatives remain separate debt.
+
+## Inventory-to-catalog gate
+
+`inventory.tsv` classifies 131 concrete types at the initial snapshot: 68 implementations
+of `SystemInterface`, 62 implementations of `PhaseInterface`, and the explicitly selected
+`ComponentSrk` saturation-correlation entry point. All concrete subclasses in the two
+system/phase packages are discovered from compiled project classes, including nested
+classes. Abstract bases, interfaces, enums and helpers not implementing those interfaces
+are excluded. Discovery uses `Class.forName(..., false, ...)`: it never runs a constructor,
+static initializer or arbitrary calculation. Model driving remains the explicit switch
+in `ModelSpecFixtures`; aliases/subclasses do not inherit catalog qualification.
+
+The gate runs in the named CI job and the ordinary suite. The catalog runner itself
+also checks reconciliation, so selecting only `ModelSpecTest` cannot bypass the inventory.
+Run from the repository with compiled production classes; jar-only execution deliberately
+fails instead of reporting an empty inventory.
+
+| Classification | Meaning |
+| --- | --- |
+| `PARTIAL` (7 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
+| `DEBT` (123 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+
+Every fixture is bound exactly once to its concrete type. Property sets must agree with
+the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
+bindings fail. `coverage.tsv` contains every type, classification, property set, case IDs,
+scope, debt issue and review condition. `coverage.md` is a compact CI summary; it is not
+a percentage of validated physics. Existing focused tests outside this catalog still
+matter, but do not automatically establish a curated capability contract.
+
+`initial-debt.txt` is the explicit debt snapshot from master
+`c7cde46a78f18922534c18ec1241d61abac0a08c`. Do not expand or regenerate it to make CI pass.
+New concrete types must receive a real typed fixture and sourced cases; adding a new
+`DEBT` row is rejected. Qualifying an existing debt type changes its inventory row and
+adds the complete family evidence. Keep the initial snapshot fixed so qualification
+can be tracked without allowing new types to consume old debt slots. Changing a currently
+covered type to debt also fails because it was not in the initial debt snapshot.
+
+The standalone correlation scope is intentionally explicit: inherited saturation pressure,
+the prescribed pow10KPa derivative and inverse, and their declared absence contracts.
+It is not an inventory of all component, physical-property or transport APIs. Phase types
+are inventoried independently of System drivers: indirect use of a phase does not qualify
+its standalone entry points. Family batches must define applicable properties, physical
+domains, sourced anchors and nearby-state/invariant checks before reducing this debt.
 
 ## Reference provenance
 
@@ -137,8 +187,8 @@ constant. They also prove legitimate signed/zero properties and declared absence
 Production-path mutation evidence is recorded in the campaign PR/ledger separately;
 helper self-tests alone are not proof that a production regression is detected.
 
-Follow-up milestones cover complete model inventory and sourced mixture properties,
-then additive typed availability and enum dispatch. Java 8 enum switches are not
+Follow-up milestones reduce inventory debt with sourced mixture properties,
+then add typed availability and enum dispatch. Java 8 enum switches are not
 compiler-exhaustive: each new fixture/form needs a coverage test and a fail-closed
 default. No public `double` signature is changed by this first increment.
 

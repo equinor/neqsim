@@ -26,7 +26,9 @@ class ModelSpecHarnessTest {
       "wilson-0-5-0", "wilson-0-5-1", "wilson-0-8-0", "wilson-0-8-1", "wilson-negative-log", "unifac-pure-290",
       "unifac-pure-310", "unifac-group-r", "psrk-pure-290", "psrk-pure-310", "psrk-group-r", "umr-pure-290",
       "umr-pure-310", "umr-group-r", "srk-dilute-z", "srk-reference-hid", "pr-dilute-z", "pr-reference-hid",
-      "missing-hydrogen", "missing-nc20", "ion-sodium", "supercritical-methane", "unsupported-uniquac"));
+      "missing-hydrogen", "missing-nc20", "ion-sodium", "supercritical-methane", "unsupported-uniquac",
+      "pow10kpa-derivative-260", "pow10kpa-derivative-300", "pow10kpa-derivative-350", "pow10kpa-inverse-260",
+      "pow10kpa-inverse-300", "pow10kpa-inverse-350"));
 
   static void requireCoverage(List<ModelSpec> cases) {
     Set<String> actual = new HashSet<String>();
@@ -67,6 +69,18 @@ class ModelSpecHarnessTest {
     List<ModelSpec> cases = new ArrayList<ModelSpec>(ModelSpec.load());
     cases.remove(0);
     assertThrows(AssertionError.class, () -> requireCoverage(cases));
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {4, 7, 13, 14, 15})
+  void invalidNumbersRetainCatalogLineAndCause(int column) throws IOException {
+    String[] lines = catalog().split("\n");
+    String[] cells = lines[2].split("\t", -1);
+    cells[column] = "not-a-number";
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> ModelSpec.parse(lines[0] + "\n" + lines[1] + "\n" + String.join("\t", cells) + "\n"));
+    assertTrue(error.getMessage().startsWith("catalog line 3:"));
+    assertTrue(error.getCause() instanceof NumberFormatException);
   }
 
   @ParameterizedTest
@@ -190,6 +204,8 @@ class ModelSpecHarnessTest {
     assertTrue(filter.contains("- 'src/test/resources/**'"));
     String job = workflow.substring(workflow.indexOf("  model_spec:"), workflow.indexOf("  agent_benchmark:"));
     assertTrue(job.contains("needs: changes"));
+    assertTrue(job.contains("needs.changes.outputs.run_tests == 'true'"));
+    assertTrue(job.contains("target/model-spec/coverage.md"));
     assertTrue(job.contains("-Dtest=ModelSpec*Test,ComponentCorrelationSpecTest"));
     assertTrue(job.contains("-DfailIfNoTests=true"));
     assertTrue(job.contains("-Dsurefire.failIfNoSpecifiedTests=true"));
