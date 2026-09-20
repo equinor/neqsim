@@ -6,6 +6,8 @@
 
 package neqsim.util.unit;
 
+import neqsim.util.exception.InvalidInputException;
+
 /**
  * Unit interface.
  *
@@ -27,6 +29,33 @@ public interface Unit {
     if (unit.trim().isEmpty()) {
       throw new IllegalArgumentException("Unit parameter '" + parameterName + "' cannot be blank");
     }
+  }
+
+  /**
+   * Units accepted by this implementation, or {@code null} to accept any unit.
+   *
+   * @return array of allowed unit names, or {@code null} for no restriction
+   */
+  public String[] getAllowedUnits();
+
+  /**
+   * Validate that a unit name is one of the units supported by the calling implementation.
+   *
+   * @param unit the unit name to validate
+   * @throws IllegalArgumentException if the unit is not supported
+   */
+  public default void validateAllowedUnit(String unit) {
+    String[] allowedUnits = getAllowedUnits();
+    if (allowedUnits == null) {
+      return;
+    }
+    for (String allowed : allowedUnits) {
+      if (allowed.equals(unit)) {
+        return;
+      }
+    }
+    throw new IllegalArgumentException(
+        new InvalidInputException(this, "validateAllowedUnit", unit, "unit not supported"));
   }
 
   /**

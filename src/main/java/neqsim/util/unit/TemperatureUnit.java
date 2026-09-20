@@ -24,6 +24,12 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return new String[] {"K", "C", "F", "R"};
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getSIUnit() {
     return "K";
   }

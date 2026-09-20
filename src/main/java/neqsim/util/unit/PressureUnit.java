@@ -13,6 +13,9 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  private static final String[] ALLOWED_UNITS = {"bara", "bar", "barg", "psi", "psia", "psig", "Pa", "kPa", "MPa",
+      "atm"};
+
   /**
    * Constructor for PressureUnit.
    *
@@ -21,6 +24,12 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
    */
   public PressureUnit(double value, String unit) {
     super(value, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
   }
 
   /**
