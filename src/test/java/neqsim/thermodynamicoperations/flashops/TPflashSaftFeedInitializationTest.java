@@ -21,7 +21,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPflashSaftFeedInitializationTest {
   private static final double NORMALIZATION_TOLERANCE = 5.0e-12;
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-7;
-  private static final double FUGACITY_TOLERANCE = 1.0e-8;
+  // TPflashSAFT stops at a relative K-value change of 1e-6. Windows Java 21 gives
+  // log-fugacity residuals up to 3.66e-7 for these fixtures; require solver-level closure.
+  private static final double FUGACITY_TOLERANCE = 1.0e-6;
 
   private SystemSAFTVRMie feed(double temperature) {
     SystemSAFTVRMie system = new SystemSAFTVRMie(temperature, 30.0);
