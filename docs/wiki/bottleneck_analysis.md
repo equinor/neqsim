@@ -683,6 +683,14 @@ Sand production and erosion limits require a qualified, separately supplied mode
 evidence. Register those as additional hard constraints before interpreting this example as a
 well operating envelope; this example does not invent a sand-production correlation.
 
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.
+
 ### Debottlenecking Studies
 
 Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:
@@ -691,10 +699,14 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
 
-### Verified lower endpoint in binary feasibility searches
 
-The binary search evaluates and records its lower endpoint before testing interior
-points. If an interior point becomes infeasible during the final uncached solve,
-this endpoint remains available for a fresh feasibility check. Recovery retains
-the configured utilization and hard-constraint limits; it does not relax them.
-The returned result and live process always describe the same verified point.
+
+### Non-monotonic compressor operating envelopes
+
+Binary feasibility search assumes a feasible lower-flow region followed by an
+infeasible upper-flow region. Compressor surge and minimum-speed constraints can
+instead create an interior feasible interval. Sample the operating envelope
+before choosing a binary-search bracket, or report the highest freshly verified
+feasible point on an explicit flow grid. The three-compressor cooling example
+uses a 0.5 percent grid and rejects invalid or over-capacity results.
+
