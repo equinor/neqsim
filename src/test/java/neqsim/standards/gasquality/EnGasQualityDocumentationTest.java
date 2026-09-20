@@ -28,14 +28,14 @@ import neqsim.thermo.system.SystemInterface;
 /** Compiles and executes the maintained EN 16726 / EN 16723 documentation example. */
 public class EnGasQualityDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/standards/en16723_en16726_gas_quality.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern MARKDOWN_LINK = Pattern.compile("\\[[^\\]]+\\]\\(([^)]+)\\)");
   private static final Pattern DUPLICATE_H1 = Pattern.compile("(?m)^# ");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void guideMatchesCurrentApisAndImplementationBoundaries() throws Exception {
@@ -59,8 +59,7 @@ public class EnGasQualityDocumentationTest extends NeqSimTest {
     assertNotNull(Standard_EN16726.class.getMethod("getWobbeIndexMax"));
     assertNotNull(Standard_EN16723.class.getConstructor(SystemInterface.class, int.class));
     assertNotNull(Standard_EN16723.class.getMethod("setPart", int.class));
-    assertEquals(Standard_EN16726.class,
-        Standard_EN16723.class.getMethod("getEN16726").getReturnType());
+    assertEquals(Standard_EN16726.class, Standard_EN16723.class.getMethod("getEN16726").getReturnType());
 
     String standardsIndex = read(repositoryRoot.resolve("docs/standards/README.md"));
     String referenceIndex = read(repositoryRoot.resolve("docs/REFERENCE_MANUAL_INDEX.md"));
@@ -113,19 +112,17 @@ public class EnGasQualityDocumentationTest extends NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler.getTask(null, manager, diagnostics, options, null,
-          manager.getJavaFileObjects(javaSource.toFile())).call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
