@@ -159,10 +159,10 @@ def test_contract_classification_is_promoted_atomically(client):
     data = payload(result)
     inventory = data.get("phase0EvidenceInventory")
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 evidence inventory", result)
-    require(inventory.get("inventoryVersion") == "1.41", "unexpected evidence inventory version", result)
+    require(inventory.get("inventoryVersion") == "1.42", "unexpected evidence inventory version", result)
     limitations = inventory.get("knownLimitations", {})
-    require(limitations.get("contractTestedToolCount") == 41, "contract-tested count drifted", result)
-    require(limitations.get("confirmedGapToolCount") == 10, "confirmed-gap count drifted", result)
+    require(limitations.get("contractTestedToolCount") == 42, "contract-tested count drifted", result)
+    require(limitations.get("confirmedGapToolCount") == 9, "confirmed-gap count drifted", result)
     records = limitations.get("coverageRecords", {})
     inspect_record = records.get("inspectApi", {})
     require(
