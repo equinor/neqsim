@@ -18,8 +18,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
    */
   public TemperatureUnit(double value, String name) {
     super(value, name);
-    // store the temperature in Kelvin for reuse
-    this.SIvalue = getValue(value, name, "K");
   }
 
   /** {@inheritDoc} */
@@ -48,46 +46,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
     default:
       throw new IllegalArgumentException("Unknown unit: " + name);
     }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    if (fromUnit.equals(toUnit)) {
-      return value;
-    }
-
-    // Convert input to Kelvin first. Unknown units should not default to Kelvin.
-    double tempInKelvin;
-    switch (fromUnit) {
-    case "K":
-      tempInKelvin = value;
-      break;
-    case "C":
-      tempInKelvin = value + 273.15;
-      break;
-    case "F":
-      tempInKelvin = (value - 32) * 5.0 / 9.0 + 273.15;
-      break;
-    case "R":
-      tempInKelvin = value * 5.0 / 9.0;
-      break;
-    default:
-      throw new IllegalArgumentException("Unsupported fromUnit: " + fromUnit);
-    }
-
-    // Convert from Kelvin to target unit
-    if (toUnit.equals("K")) {
-      return tempInKelvin;
-    } else if (toUnit.equals("C")) {
-      return tempInKelvin - 273.15;
-    } else if (toUnit.equals("F")) {
-      return (tempInKelvin - 273.15) * 9.0 / 5.0 + 32;
-    } else if (toUnit.equals("R")) {
-      return tempInKelvin * 9.0 / 5.0;
-    }
-
-    throw new IllegalArgumentException("Unsupported unit: " + toUnit);
   }
 
   /**

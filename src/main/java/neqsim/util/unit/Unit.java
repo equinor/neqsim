@@ -54,14 +54,4 @@ public interface Unit {
    * @return Value converted to the specified unit.
    */
   double getValue(String toUnit);
-
-  /**
-   * Convert process value between specified units.
-   *
-   * @param fromUnit Unit to convert from.
-   * @param toUnit Unit to convert to.
-   * @param value Value to convert.
-   * @return Value converted to the specified unit.
-   */
-  double getValue(double value, String fromUnit, String toUnit);
 }

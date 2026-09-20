@@ -122,13 +122,6 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(double val, String fromunit, String tounit) {
-    double absBar = toAbsoluteBar(val, fromunit);
-    return fromAbsoluteBar(absBar, tounit);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getValue(String tounit) {
     double absBar = toAbsoluteBar(invalue, inunit);
     return fromAbsoluteBar(absBar, tounit);
