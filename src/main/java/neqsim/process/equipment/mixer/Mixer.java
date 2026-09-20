@@ -713,9 +713,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       } else {
         isActive(false);
       }
-    } else
-
-    {
+    } else {
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
         // testOps.TPflash();
         mixedStream.getThermoSystem().init(2);
