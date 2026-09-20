@@ -8,6 +8,19 @@
 Read `CONTEXT.md` for a 60-second overview of the codebase (repo map, build
 commands, code patterns).
 
+## Critical Constraint: Docker Required for Linux-Only Tools on Windows
+
+Some skills wrap external engines that have **no native Windows build** and are
+Linux software: **FluidMagic** (fluid characterization engine,
+`enterprise-fluidmagic-characterization`), **OpenFOAM** (CFD,
+`neqsim-cfd-coupling`), **OPM Flow** (reservoir simulation,
+`neqsim-near-well-and-injectivity`), and any other skill/agent that shells out
+to a Linux-only binary. On a Windows machine, install **Docker Desktop** (or
+WSL2) before attempting to run one of these — the request/case/hand-off can
+still be built and written without it, but nothing executes locally until a
+Linux runtime is available. Report the missing Docker/WSL2 environment as a
+blocker instead of silently skipping the calculation.
+
 ## Critical Constraint: Java 8
 
 **All code MUST compile with Java 8.** Never use:
