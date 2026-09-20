@@ -44,6 +44,23 @@ hooks being installed:
 - NEVER bypass the gate with `git commit --no-verify`.
 - Run `spotless:apply`, then `git add` the reformatted files, then commit.
 
+## MCP-First Calculation Policy (when an MCP server is available)
+
+For any single NeqSim calculation (flash, PVT, process, standards, sizing, flow
+assurance, ...), check first whether a curated `mcp_neqsim_*` tool covers it
+(`runFlash`, `runProcess`, `runPVT`, `getPhaseEnvelope`, `sizeEquipment`,
+`calculateStandard`, `runFlowAssurance`, `runBatch`, ...) and use it directly —
+confirm field names with `getSchema`/`validateInput` first. If no curated tool
+matches, try the generic `runCapability` route (`search` -> `inspectApi` ->
+invoke) before writing code. Only fall back to the Python API (`import
+neqsim`) or Java in a checkout when MCP genuinely cannot do the job
+(`runCapability` reports `inspect-only`, or the task needs loops, plotting,
+state, notebooks, or reports), or when the task lives inside `/solve-task`
+(task folders, validators, report generation are Python-only). If NeqSim
+itself lacks the capability, implement it in Java with tests rather than
+working around the gap in Python. See the `neqsim-api-patterns` skill §
+"MCP server vs. Python/Java API" for the full decision matrix.
+
 ## Continuous Improvement of Agents & Skills (always-on default)
 
 Improving the agents and skills you use — and their **cooperation** — is part of

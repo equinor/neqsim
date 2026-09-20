@@ -169,6 +169,12 @@ Some requests need multiple agents in sequence. Detect these patterns:
 5. **Unknown domain** — if the request doesn't match any agent, say so and suggest
    the closest match or recommend `@solve-task` as the catch-all
 
+> **Tool selection inside any delegated agent:** for a single bounded
+> calculation (flash, PVT, process run, sizing, standards check), prefer a
+> curated `mcp_neqsim_*` MCP tool over writing Python/Java. Fall back to code
+> only when no MCP tool covers it or the task needs loops/notebooks/state. See
+> `neqsim-api-patterns` skill § "MCP server vs. Python/Java API".
+
 > **This table is a fast path, not the whole picture.** It lists only the core
 > neqsim-repo agents. Dozens more specialist agents live in the community and
 > enterprise agent repos. When the table has no obvious match, or before
