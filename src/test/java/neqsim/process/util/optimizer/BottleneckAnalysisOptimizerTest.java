@@ -964,15 +964,33 @@ public class BottleneckAnalysisOptimizerTest {
     // ========================================================================
     logger.info("\n--- STAGE 2: MAXIMIZE FLOW (Binary Search) ---");
 
-    // Now with balanced splits, use BINARY_FEASIBILITY to find max flow
-    OptimizationConfig stage2Config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
+    // Compressor surge/minimum-speed limits make feasibility non-monotonic over the full range:
+    // both low and high rates can be infeasible. Locate a feasible point before bisecting the
+    // upper capacity boundary; otherwise a rejected midpoint can discard the feasible interval.
+    OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
+        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+    double feasibleLowerRate = Double.NaN;
+    double upperRate = originalFlow * 1.15;
+    for (int step = 50; step >= 0; step--) {
+      double candidateRate = originalFlow * (0.9 + 0.005 * step);
+      OptimizationConfig probeConfig = new OptimizationConfig(candidateRate, candidateRate).rateUnit("kg/hr")
+          .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+      OptimizationResult probe = optimizer.optimize(processSystem, inletStream, probeConfig,
+          Collections.singletonList(throughputObjective), Collections.emptyList());
+      if (probe.isFeasible()) {
+        feasibleLowerRate = candidateRate;
+        break;
+      }
+      upperRate = candidateRate;
+    }
+    Assertions.assertTrue(Double.isFinite(feasibleLowerRate),
+        "The balanced compressor trains must have a verified feasible rate in the search range");
+
+    OptimizationConfig stage2Config = new OptimizationConfig(feasibleLowerRate, upperRate).rateUnit("kg/hr")
         .tolerance(originalFlow * 0.001).maxIterations(20).defaultUtilizationLimit(1.0) // Strict
         // 100%
         // limit
         .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
-
-    OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-        proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
 
     OptimizationResult stage2Result = optimizer.optimize(processSystem, inletStream, stage2Config,
         Collections.singletonList(throughputObjective), Collections.emptyList());
@@ -1009,7 +1027,7 @@ public class BottleneckAnalysisOptimizerTest {
     // Assertions
     Assertions.assertTrue(stage2Result.isFeasible(),
         "Two-stage result should be feasible: " + stage2Result.getInfeasibilityDiagnosis());
-    Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.02, "Bottleneck should be at or below 100%");
+    Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.0, "Bottleneck should be at or below 100%");
     // Note: After split factor optimization, the original flow may no longer be
     // achievable
     // if the new split allocation causes a different compressor to become the
