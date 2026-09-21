@@ -7,8 +7,8 @@ import java.util.Objects;
  * Immutable operating receipt composed from qualified hydrotreating utility and emissions balances.
  *
  * <p>
- * This class aggregates existing material, energy, emissions, and caller-priced scenario receipts.
- * It introduces no process model, physical correlation, price, or emissions factor.
+ * This class aggregates existing material, energy, emissions, and caller-priced scenario receipts. It introduces no
+ * process model, physical correlation, price, or emissions factor.
  *
  * @author esolbr1
  * @version 1.0
@@ -31,28 +31,18 @@ public final class RefineryHydrotreatingOperatingReceipt implements Serializable
   private final double totalScenarioCostPerTonneFeed;
   private final double totalScenarioCostClosureResidualPerHour;
 
-  private RefineryHydrotreatingOperatingReceipt(
-      RefineryHydrotreatingHydrogenEmissionsBalance emissionsBalance,
-      double feedMassFlowKgPerHour,
-      double freshHydrogenMassFlowKgPerHour,
-      double freshHydrogenEnergyMWhPerTonneFeed,
-      double hydrogenSupplyEmissionsKgCo2EquivalentPerHour,
-      double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
-      double hydrogenPurchaseCostPerHour,
-      double carbonCostPerHour,
-      double totalScenarioCostPerHour,
-      double hydrogenPurchaseCostPerTonneFeed,
-      double carbonCostPerTonneFeed,
-      double totalScenarioCostPerTonneFeed,
+  private RefineryHydrotreatingOperatingReceipt(RefineryHydrotreatingHydrogenEmissionsBalance emissionsBalance,
+      double feedMassFlowKgPerHour, double freshHydrogenMassFlowKgPerHour, double freshHydrogenEnergyMWhPerTonneFeed,
+      double hydrogenSupplyEmissionsKgCo2EquivalentPerHour, double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
+      double hydrogenPurchaseCostPerHour, double carbonCostPerHour, double totalScenarioCostPerHour,
+      double hydrogenPurchaseCostPerTonneFeed, double carbonCostPerTonneFeed, double totalScenarioCostPerTonneFeed,
       double totalScenarioCostClosureResidualPerHour) {
     this.emissionsBalance = emissionsBalance;
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
     this.freshHydrogenMassFlowKgPerHour = freshHydrogenMassFlowKgPerHour;
     this.freshHydrogenEnergyMWhPerTonneFeed = freshHydrogenEnergyMWhPerTonneFeed;
-    this.hydrogenSupplyEmissionsKgCo2EquivalentPerHour =
-        hydrogenSupplyEmissionsKgCo2EquivalentPerHour;
-    this.hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed =
-        hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed;
+    this.hydrogenSupplyEmissionsKgCo2EquivalentPerHour = hydrogenSupplyEmissionsKgCo2EquivalentPerHour;
+    this.hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed = hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed;
     this.hydrogenPurchaseCostPerHour = hydrogenPurchaseCostPerHour;
     this.carbonCostPerHour = carbonCostPerHour;
     this.totalScenarioCostPerHour = totalScenarioCostPerHour;
@@ -73,16 +63,11 @@ public final class RefineryHydrotreatingOperatingReceipt implements Serializable
     Objects.requireNonNull(emissionsBalance, "emissionsBalance");
 
     RefineryHydrotreatingHydrogenUtilityBalance utility = emissionsBalance.getUtilityBalance();
-    double feedMassFlow =
-        utility.getThroughputBalance().getFeedMassFlowKgPerHour();
+    double feedMassFlow = utility.getThroughputBalance().getFeedMassFlowKgPerHour();
     double freshHydrogenMassFlow = utility.getFreshHydrogenMassFlowKgPerHour();
-    double energyIntensity =
-        utility.getFreshHydrogenChemicalPowerMegaWatt() * KILOGRAMS_PER_TONNE
-            / feedMassFlow;
-    double emissionsPerHour =
-        emissionsBalance.getHydrogenSupplyEmissionsKgCo2EquivalentPerHour();
-    double emissionsPerTonneFeed =
-        emissionsBalance.getHydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed();
+    double energyIntensity = utility.getFreshHydrogenChemicalPowerMegaWatt() * KILOGRAMS_PER_TONNE / feedMassFlow;
+    double emissionsPerHour = emissionsBalance.getHydrogenSupplyEmissionsKgCo2EquivalentPerHour();
+    double emissionsPerTonneFeed = emissionsBalance.getHydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed();
     double hydrogenCostPerHour = utility.getFreshHydrogenCostPerHour();
     double carbonCostPerHour = emissionsBalance.getCarbonCostPerHour();
     double totalCostPerHour = hydrogenCostPerHour + carbonCostPerHour;
@@ -91,35 +76,15 @@ public final class RefineryHydrotreatingOperatingReceipt implements Serializable
     double totalCostPerTonneFeed = hydrogenCostPerTonneFeed + carbonCostPerTonneFeed;
     double costResidual = totalCostPerHour - hydrogenCostPerHour - carbonCostPerHour;
 
-    if (!allFiniteNonNegative(
-        feedMassFlow,
-        freshHydrogenMassFlow,
-        energyIntensity,
-        emissionsPerHour,
-        emissionsPerTonneFeed,
-        hydrogenCostPerHour,
-        carbonCostPerHour,
-        totalCostPerHour,
-        hydrogenCostPerTonneFeed,
-        carbonCostPerTonneFeed,
-        totalCostPerTonneFeed)) {
+    if (!allFiniteNonNegative(feedMassFlow, freshHydrogenMassFlow, energyIntensity, emissionsPerHour,
+        emissionsPerTonneFeed, hydrogenCostPerHour, carbonCostPerHour, totalCostPerHour, hydrogenCostPerTonneFeed,
+        carbonCostPerTonneFeed, totalCostPerTonneFeed)) {
       throw new IllegalArgumentException("upstream receipts do not define finite non-negative operating results");
     }
 
-    return new RefineryHydrotreatingOperatingReceipt(
-        emissionsBalance,
-        feedMassFlow,
-        freshHydrogenMassFlow,
-        energyIntensity,
-        emissionsPerHour,
-        emissionsPerTonneFeed,
-        hydrogenCostPerHour,
-        carbonCostPerHour,
-        totalCostPerHour,
-        hydrogenCostPerTonneFeed,
-        carbonCostPerTonneFeed,
-        totalCostPerTonneFeed,
-        costResidual);
+    return new RefineryHydrotreatingOperatingReceipt(emissionsBalance, feedMassFlow, freshHydrogenMassFlow,
+        energyIntensity, emissionsPerHour, emissionsPerTonneFeed, hydrogenCostPerHour, carbonCostPerHour,
+        totalCostPerHour, hydrogenCostPerTonneFeed, carbonCostPerTonneFeed, totalCostPerTonneFeed, costResidual);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
