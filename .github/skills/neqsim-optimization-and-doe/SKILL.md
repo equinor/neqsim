@@ -66,7 +66,9 @@ Need to OPTIMIZE something on a flowsheet?
 │   → CompressorOptimizationHelper
 │
 ├── Lift curves / VFP tables for reservoir simulation?
-│   → FlowRateOptimizer + LiftCurveGenerator + EclipseVFPExporter
+│   → PipeBeggsAndBrills + surface-rate recombination + EclipseVFPExporter — recipe in
+│     `neqsim-production-optimization` § "Lift curves / VFPPROD". LiftCurveGenerator /
+│     FlowRateOptimizer sweep in kg/hr and are diagnostic only; the exporter needs Sm3/d.
 │
 └── Auto-size equipment + apply constraints + optimize, fluent API?
     → DesignOptimizer.forProcess(p).autoSizeEquipment(1.2)
@@ -90,8 +92,8 @@ Need to OPTIMIZE something on a flowsheet?
 | Bottleneck / debottleneck | `BottleneckAnalysisOptimizer`, `DebottleneckAnalyzer` | Constraint utilization ranking | Mature |
 | Off-design operation | `DegradedOperationOptimizer` | Constraint relaxation | Mature |
 | What-if / impact | `ProductionImpactAnalyzer` | Comparative simulation | Mature |
-| Lift curves / VFP | `FlowRateOptimizer`, `LiftCurveGenerator`, `EclipseVFPExporter` | Grid sweep + Eclipse export | Mature |
-| Multi-scenario VFP | `MultiScenarioVFPGenerator` | Batched lift curve generation | Mature |
+| Lift curves / VFP (deck-ready) | `PipeBeggsAndBrills` + `EclipseVFPExporter` | Surface-rate recombination loop, secant on inlet P — see `neqsim-production-optimization` | Mature |
+| Process capacity screening (kg/hr, not VFP) | `FlowRateOptimizer`, `LiftCurveGenerator`, `MultiScenarioVFPGenerator` | Grid sweep; diagnostic output, wipes E300 BIC via `setMixingRule` | Diagnostic |
 | Pressure boundary opt | `PressureBoundaryOptimizer` | Gradient + constraint-aware | Mature |
 | Compressor-specific | `CompressorOptimizationHelper` | Polytropic / isentropic sweep | Mature |
 | Auto-size + optimize | `DesignOptimizer` | Fluent builder, applies CapacityConstraints | Mature |
