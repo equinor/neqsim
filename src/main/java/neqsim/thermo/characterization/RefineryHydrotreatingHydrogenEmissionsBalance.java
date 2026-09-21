@@ -7,9 +7,8 @@ import java.util.Objects;
  * Immutable indirect-emissions receipt derived from a qualified hydrogen utility balance.
  *
  * <p>
- * The receipt applies caller-owned hydrogen-supply emission-factor and carbon-price scenarios to
- * external fresh hydrogen. It does not select a production pathway, define a lifecycle boundary,
- * or predict direct process emissions.
+ * The receipt applies caller-owned hydrogen-supply emission-factor and carbon-price scenarios to external fresh
+ * hydrogen. It does not select a production pathway, define a lifecycle boundary, or predict direct process emissions.
  *
  * @author esolbr1
  * @version 1.0
@@ -26,22 +25,15 @@ public final class RefineryHydrotreatingHydrogenEmissionsBalance implements Seri
   private final double carbonCostPerHour;
   private final double carbonCostPerTonneFeed;
 
-  private RefineryHydrotreatingHydrogenEmissionsBalance(
-      RefineryHydrotreatingHydrogenUtilityBalance utilityBalance,
-      double hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen,
-      double carbonPricePerTonneCo2Equivalent,
-      double hydrogenSupplyEmissionsKgCo2EquivalentPerHour,
-      double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
-      double carbonCostPerHour,
-      double carbonCostPerTonneFeed) {
+  private RefineryHydrotreatingHydrogenEmissionsBalance(RefineryHydrotreatingHydrogenUtilityBalance utilityBalance,
+      double hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen, double carbonPricePerTonneCo2Equivalent,
+      double hydrogenSupplyEmissionsKgCo2EquivalentPerHour, double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
+      double carbonCostPerHour, double carbonCostPerTonneFeed) {
     this.utilityBalance = utilityBalance;
-    this.hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen =
-        hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen;
+    this.hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen = hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen;
     this.carbonPricePerTonneCo2Equivalent = carbonPricePerTonneCo2Equivalent;
-    this.hydrogenSupplyEmissionsKgCo2EquivalentPerHour =
-        hydrogenSupplyEmissionsKgCo2EquivalentPerHour;
-    this.hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed =
-        hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed;
+    this.hydrogenSupplyEmissionsKgCo2EquivalentPerHour = hydrogenSupplyEmissionsKgCo2EquivalentPerHour;
+    this.hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed = hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed;
     this.carbonCostPerHour = carbonCostPerHour;
     this.carbonCostPerTonneFeed = carbonCostPerTonneFeed;
   }
@@ -50,48 +42,34 @@ public final class RefineryHydrotreatingHydrogenEmissionsBalance implements Seri
    * Calculate indirect hydrogen-supply emissions and caller-priced carbon cost.
    *
    * @param utilityBalance qualified external hydrogen utility receipt
-   * @param hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen explicit scenario emission
-   *        factor in kg CO2e per kg fresh H2
-   * @param carbonPricePerTonneCo2Equivalent explicit scenario price in caller-owned currency units
-   *        per tonne CO2e
+   * @param hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen explicit scenario emission factor in kg CO2e per kg
+   * fresh H2
+   * @param carbonPricePerTonneCo2Equivalent explicit scenario price in caller-owned currency units per tonne CO2e
    * @return immutable indirect-emissions receipt
    */
   public static RefineryHydrotreatingHydrogenEmissionsBalance calculate(
       RefineryHydrotreatingHydrogenUtilityBalance utilityBalance,
-      double hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen,
-      double carbonPricePerTonneCo2Equivalent) {
+      double hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen, double carbonPricePerTonneCo2Equivalent) {
     Objects.requireNonNull(utilityBalance, "utilityBalance");
     if (!Double.isFinite(hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen)
         || hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen < 0.0) {
       throw new IllegalArgumentException(
           "hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen must be finite and non-negative");
     }
-    if (!Double.isFinite(carbonPricePerTonneCo2Equivalent)
-        || carbonPricePerTonneCo2Equivalent < 0.0) {
-      throw new IllegalArgumentException(
-          "carbonPricePerTonneCo2Equivalent must be finite and non-negative");
+    if (!Double.isFinite(carbonPricePerTonneCo2Equivalent) || carbonPricePerTonneCo2Equivalent < 0.0) {
+      throw new IllegalArgumentException("carbonPricePerTonneCo2Equivalent must be finite and non-negative");
     }
 
-    double emissionsPerHour =
-        utilityBalance.getFreshHydrogenMassFlowKgPerHour()
-            * hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen;
-    double feedMassFlowKgPerHour =
-        utilityBalance.getThroughputBalance().getFeedMassFlowKgPerHour();
-    double emissionsPerTonneFeed =
-        emissionsPerHour * KILOGRAMS_PER_TONNE / feedMassFlowKgPerHour;
-    double carbonCostPerHour =
-        emissionsPerHour / KILOGRAMS_PER_TONNE * carbonPricePerTonneCo2Equivalent;
-    double carbonCostPerTonneFeed =
-        carbonCostPerHour * KILOGRAMS_PER_TONNE / feedMassFlowKgPerHour;
+    double emissionsPerHour = utilityBalance.getFreshHydrogenMassFlowKgPerHour()
+        * hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen;
+    double feedMassFlowKgPerHour = utilityBalance.getThroughputBalance().getFeedMassFlowKgPerHour();
+    double emissionsPerTonneFeed = emissionsPerHour * KILOGRAMS_PER_TONNE / feedMassFlowKgPerHour;
+    double carbonCostPerHour = emissionsPerHour / KILOGRAMS_PER_TONNE * carbonPricePerTonneCo2Equivalent;
+    double carbonCostPerTonneFeed = carbonCostPerHour * KILOGRAMS_PER_TONNE / feedMassFlowKgPerHour;
 
-    return new RefineryHydrotreatingHydrogenEmissionsBalance(
-        utilityBalance,
-        hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen,
-        carbonPricePerTonneCo2Equivalent,
-        emissionsPerHour,
-        emissionsPerTonneFeed,
-        carbonCostPerHour,
-        carbonCostPerTonneFeed);
+    return new RefineryHydrotreatingHydrogenEmissionsBalance(utilityBalance,
+        hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen, carbonPricePerTonneCo2Equivalent, emissionsPerHour,
+        emissionsPerTonneFeed, carbonCostPerHour, carbonCostPerTonneFeed);
   }
 
   /** @return upstream immutable hydrogen utility receipt */
