@@ -82,7 +82,11 @@ public final class ChemicalReactionFactory {
       nameArray[i] = names.get(i);
       stocCoefArray[i] = Double.parseDouble(stocCoef.get(i));
     }
-    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy, refT, reference);
+    ChemicalReaction reaction = new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
+        refT, reference);
+    // Legacy database kinetic fields have not been qualified as reference rates and J/mol activation energies.
+    reaction.useLegacyKineticRateLaw();
+    return reaction;
   }
 
   /**

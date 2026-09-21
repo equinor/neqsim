@@ -58,6 +58,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
 - hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
 - hydrotreating recycle/purge receipts with explicit component recovery and purge assumptions;
+- unit-explicit hydrotreating throughput receipts in kg/h and kmol/h;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
@@ -167,6 +168,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
 - [Hydrotreating hydrogen supply and outlet gas balance](refinery_hydrotreating_hydrogen_supply_balance)
 - [Hydrotreating hydrogen recycle and purge balance](refinery_hydrotreating_hydrogen_recycle_balance)
+- [Hydrotreating throughput-rate balance](refinery_hydrotreating_throughput_balance)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)

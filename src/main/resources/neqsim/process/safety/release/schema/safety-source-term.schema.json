@@ -1,0 +1,547 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:safety-source-term:v1",
+  "title": "NeqSim safety source-term frame v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "scenarioId",
+    "sourceId",
+    "calculationId",
+    "sequence",
+    "generatedAt",
+    "simulationTime",
+    "provenance",
+    "status",
+    "diagnostics",
+    "fingerprint"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "neqsim_safety_source_term.v1"
+    },
+    "schemaUri": {
+      "const": "urn:neqsim:schema:safety-source-term:v1"
+    },
+    "scenarioId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "calculationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "simulationTime": {
+      "$ref": "#/$defs/time"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "enum": [
+        "VALID",
+        "VALID_WITH_WARNINGS",
+        "INVALID",
+        "UNSUPPORTED",
+        "STALE",
+        "DISABLED"
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    },
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "fluidModel",
+        "evidenceLevel"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fluidModel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceLevel": {
+          "const": "UNQUALIFIED"
+        }
+      }
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "referenceFrame",
+        "position",
+        "direction"
+      ],
+      "properties": {
+        "referenceFrame": {
+          "type": "string",
+          "minLength": 1
+        },
+        "position": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/length"
+          }
+        },
+        "direction": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "VALID",
+              "VALID_WITH_WARNINGS"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "source",
+          "model"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "source"
+          ]
+        },
+        "properties": {
+          "diagnostics": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "pressure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "const": "Pa"
+        }
+      }
+    },
+    "temperature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "const": "K"
+        }
+      }
+    },
+    "density": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "const": "kg/m3"
+        }
+      }
+    },
+    "velocity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "m/s"
+        }
+      }
+    },
+    "massFlux": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "kg/(m2 s)"
+        }
+      }
+    },
+    "enthalpy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "const": "J/kg"
+        }
+      }
+    },
+    "entropy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "const": "J/(kg K)"
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "s"
+        }
+      }
+    },
+    "length": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "const": "m"
+        }
+      }
+    },
+    "area": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "const": "m2"
+        }
+      }
+    },
+    "factor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "unit": {
+          "const": "1"
+        }
+      }
+    },
+    "rate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "kg/s"
+        }
+      }
+    },
+    "momentum": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "const": "N"
+        }
+      }
+    },
+    "fractions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1.00000001
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pressure",
+        "temperature",
+        "density",
+        "specificEnthalpy",
+        "specificEntropy",
+        "velocity",
+        "massFlux",
+        "componentMoleFractions",
+        "componentMassFractions",
+        "phaseMassFractions"
+      ],
+      "properties": {
+        "pressure": {
+          "$ref": "#/$defs/pressure"
+        },
+        "temperature": {
+          "$ref": "#/$defs/temperature"
+        },
+        "density": {
+          "$ref": "#/$defs/density"
+        },
+        "specificEnthalpy": {
+          "$ref": "#/$defs/enthalpy"
+        },
+        "specificEntropy": {
+          "$ref": "#/$defs/entropy"
+        },
+        "velocity": {
+          "$ref": "#/$defs/velocity"
+        },
+        "massFlux": {
+          "$ref": "#/$defs/massFlux"
+        },
+        "componentMoleFractions": {
+          "$ref": "#/$defs/fractions"
+        },
+        "componentMassFractions": {
+          "$ref": "#/$defs/fractions"
+        },
+        "phaseMassFractions": {
+          "$ref": "#/$defs/fractions"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "diameter",
+        "physicalArea",
+        "effectiveArea",
+        "dischargeCoefficient",
+        "backPressure",
+        "massFlowRate",
+        "choked",
+        "advectiveMomentumRate",
+        "stations"
+      ],
+      "properties": {
+        "diameter": {
+          "$ref": "#/$defs/length",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "physicalArea": {
+          "$ref": "#/$defs/area"
+        },
+        "effectiveArea": {
+          "$ref": "#/$defs/area"
+        },
+        "dischargeCoefficient": {
+          "$ref": "#/$defs/factor"
+        },
+        "backPressure": {
+          "$ref": "#/$defs/pressure"
+        },
+        "massFlowRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "choked": {
+          "type": "boolean"
+        },
+        "advectiveMomentumRate": {
+          "$ref": "#/$defs/momentum"
+        },
+        "throatEquilibriumSoundSpeed": {
+          "$ref": "#/$defs/velocity",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "stations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "UPSTREAM_STAGNATION",
+            "THROAT_CRITICAL",
+            "ORIFICE_EXIT"
+          ],
+          "properties": {
+            "UPSTREAM_STAGNATION": {
+              "$ref": "#/$defs/state"
+            },
+            "THROAT_CRITICAL": {
+              "$ref": "#/$defs/state"
+            },
+            "ORIFICE_EXIT": {
+              "$ref": "#/$defs/state"
+            },
+            "AMBIENT_EXPANDED": {
+              "$ref": "#/$defs/state"
+            }
+          }
+        }
+      }
+    }
+  }
+}

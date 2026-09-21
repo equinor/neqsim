@@ -3459,6 +3459,16 @@ public class ProductionOptimizer {
     int iteration = 0;
     String unit = variable.getUnit() != null ? variable.getUnit() : config.rateUnit;
 
+    // Keep the lower bracket endpoint as verified search evidence. Near a capacity boundary, interior points may
+    // become infeasible on replay; the supplied feasible endpoint must remain available for conservative recovery.
+    Evaluation lowerEvaluation = evaluateCandidate(process, variables, config, objectives, constraints,
+        new double[] {low}, cache);
+    boolean lowerFeasible = isFeasible(lowerEvaluation);
+    recordIteration(iterationHistory, low, unit, lowerEvaluation, lowerFeasible);
+    if (lowerFeasible) {
+      bestResult = toResult(low, unit, iteration, lowerEvaluation, iterationHistory);
+    }
+
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
       double candidateValue = 0.5 * (low + high);
       Evaluation evaluation = evaluateCandidate(process, variables, config, objectives, constraints,

@@ -8,6 +8,7 @@ import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.ComponentPow10KPaVaporPressureTest;
 import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -27,10 +28,43 @@ final class ModelSpecFixtures {
   private ModelSpecFixtures() {
   }
 
+  /** Explicit type binding for inventory reconciliation; never construct a discovered class. */
+  static Class<?> type(ModelSpec.Fixture fixture) {
+    switch (fixture) {
+    case SATURATION:
+    case ANTOINE_ANALYTIC:
+      return ComponentSrk.class;
+    case WILSON_ANALYTIC:
+      return SystemGEWilson.class;
+    case UNIFAC:
+      return SystemUNIFAC.class;
+    case PSRK:
+      return SystemUNIFACpsrk.class;
+    case UMR:
+      return SystemUMRPRUEos.class;
+    case SRK:
+      return SystemSrkEos.class;
+    case PR:
+      return SystemPrEos.class;
+    case UNIQUAC:
+      return PhaseGEUniquac.class;
+    default:
+      throw new IllegalArgumentException("unmapped fixture " + fixture);
+    }
+  }
+
   static void validate(ModelSpec s) {
-    String unit = s.property == ModelSpec.Property.PSAT ? "bar" : s.property == ModelSpec.Property.HID ? "J/mol" : "1";
+    String unit = s.property == ModelSpec.Property.PSAT ? "bar"
+        : s.property == ModelSpec.Property.DPSAT_DT ? "bar/K"
+            : s.property == ModelSpec.Property.T_SAT ? "K" : s.property == ModelSpec.Property.HID ? "J/mol" : "1";
     ModelSpec.require(unit.equals(s.unit), "wrong unit for " + s.property);
     switch (s.fixture) {
+    case ANTOINE_ANALYTIC:
+      ModelSpec.require((s.property == ModelSpec.Property.DPSAT_DT || s.property == ModelSpec.Property.T_SAT)
+          && s.components.size() == 1 && s.components.containsKey("i-pentane") && "pure".equals(s.phase)
+          && "none".equals(s.mixingRule) && "prescribed-pow10KPa".equals(s.operation)
+          && s.outcome == ModelSpec.Outcome.VALUE, "invalid analytical Antoine fixture");
+      break;
     case SATURATION:
       ModelSpec.require(s.property == ModelSpec.Property.PSAT && s.components.size() == 1 && "pure".equals(s.phase)
           && "none".equals(s.mixingRule) && "correlation".equals(s.operation), "invalid saturation fixture");
@@ -81,12 +115,20 @@ final class ModelSpecFixtures {
   }
 
   static double evaluate(ModelSpec s) {
+    if (s.fixture == ModelSpec.Fixture.ANTOINE_ANALYTIC) {
+      ComponentInterface c = ComponentPow10KPaVaporPressureTest.correlation(0.0, 2.0);
+      assertEquals(type(s.fixture), c.getClass(), s.toString());
+      assertTrue(c.hasAntoineVaporPressureCorrelation(), s.toString());
+      return s.property == ModelSpec.Property.DPSAT_DT ? c.getAntoineVaporPressuredT(s.temperature)
+          : c.getAntoineVaporTemperature(s.pressure);
+    }
     if (s.fixture == ModelSpec.Fixture.UNIQUAC) {
       new PhaseGEUniquac();
       throw new AssertionError("unsupported UNIQUAC unexpectedly constructed");
     }
     if (s.fixture == ModelSpec.Fixture.SATURATION) {
       ComponentInterface c = new ComponentSrk(s.components.keySet().iterator().next(), 1.0, 1.0, 0);
+      assertEquals(type(s.fixture), c.getClass(), s.toString());
       if (s.outcome == ModelSpec.Outcome.UNAVAILABLE) {
         if ("supercritical".equals(s.reason)) {
           assertTrue(c.hasAntoineVaporPressureCorrelation(), s.toString());
@@ -109,6 +151,7 @@ final class ModelSpecFixtures {
       return value;
     }
     SystemInterface system = create(s);
+    assertEquals(type(s.fixture), system.getClass(), s.toString());
     system.init(0);
     if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR) {
       system.init(1);

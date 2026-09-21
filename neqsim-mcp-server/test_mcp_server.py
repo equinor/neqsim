@@ -774,14 +774,15 @@ def test_bubble_point_pressure():
 
 
 def test_dew_point_pressure():
-    """Dew point pressure for rich gas at 0C."""
-    print("\n=== Dew Point Pressure (0C) ===")
+    """Dew point pressure at a temperature with a verified gas/oil saturation solution."""
+    print("\n=== Dew Point Pressure (-30C) ===")
 
     r = run_flash(
         {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
-        0.0, 50.0, flash_type="dewPointP"
+        -30.0, 50.0, flash_type="dewPointP"
     )
-    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("status=success", r.get("status") == "success", json.dumps(r.get("errors", [])))
+    check("flashType=dewPointP", r.get("flash", {}).get("flashType") == "dewPointP")
 
 
 def test_bubble_point_temperature():
@@ -1588,14 +1589,14 @@ def test_capabilities():
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
         "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
-        "runRelief", "runOperationalStudy", "compareProcesses",
+        "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-two bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.42"
-          and limitations.get("contractTestedToolCount") == 42
-          and limitations.get("confirmedGapToolCount") == 9
+    check("forty-three bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.43"
+          and limitations.get("contractTestedToolCount") == 43
+          and limitations.get("confirmedGapToolCount") == 8
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1643,6 +1644,17 @@ def test_capabilities():
           and "canonical JsonProcessBuilder" in operational_study.get("evidenceBoundary", "")
           and "no-plant-write" in operational_study.get("evidenceBoundary", ""),
           str(operational_study))
+    process_loop = coverage_records.get("runProcessLoop", {})
+    check("process-loop orchestration has bounded canonical evidence",
+          process_loop.get("coverageStatus") == "CONTRACT_TESTED"
+          and process_loop.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_LOOP_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_process_loop_protocol.py"
+          in process_loop.get("contractEvidenceSources", [])
+          and "ProcessAutomation.evaluate" in process_loop.get("evidenceBoundary", "")
+          and "does not establish global or local optimization"
+          in process_loop.get("evidenceBoundary", ""),
+          str(process_loop))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1866,7 +1878,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 9
+          and limitations.get("confirmedGapToolCount") == 8
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,

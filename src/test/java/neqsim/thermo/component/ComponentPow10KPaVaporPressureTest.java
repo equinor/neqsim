@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /** Regression tests for the legacy pow10KPa pressure scale and its temperature derivative. */
-class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
+public class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
   /**
    * Build a prescribed analytical correlation, not a physical fit for the database component.
    *
@@ -17,7 +17,7 @@ class ComponentPow10KPaVaporPressureTest extends neqsim.NeqSimTest {
    * @param exponent unused DIPPR exponent that must not override the explicit base-ten label
    * @return component with pressure 2 bar at T + offset = 300 K
    */
-  private Component correlation(double offset, double exponent) {
+  public static Component correlation(double offset, double exponent) {
     Component component = new ComponentSrk("i-pentane", 1.0, 1.0, 0);
     component.antoineLiqVapPresType = "pow10KPa";
     component.AntoineA = Math.log10(2.0) + 6.0;

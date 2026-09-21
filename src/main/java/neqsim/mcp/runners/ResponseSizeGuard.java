@@ -121,6 +121,15 @@ public final class ResponseSizeGuard {
       return false;
     }
 
+    // Once every removable payload has gone, verbose omission summaries can themselves exceed the remaining
+    // budget. Keep the field names, sizes and retrieval guidance, but drop optional prose before sacrificing
+    // protected discovery inventories or returning an oversized response.
+    for (JsonElement entry : omitted) {
+      if (updateReturnedBytes(response, truncation) <= MAX_BYTES) {
+        break;
+      }
+      entry.getAsJsonObject().remove("summary");
+    }
     updateReturnedBytes(response, truncation);
     return true;
   }

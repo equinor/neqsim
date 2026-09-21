@@ -19,9 +19,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 class ModelSpecTest extends neqsim.NeqSimTest {
   private static final List<String> REPORT = new ArrayList<String>();
 
-  static Stream<ModelSpec> cases() throws IOException {
+  static Stream<ModelSpec> cases() throws Exception {
     List<ModelSpec> cases = ModelSpec.load();
     ModelSpecHarnessTest.requireCoverage(cases);
+    ModelSpecInventory.validate(ModelSpecInventory.load(), ModelSpecInventory.discover(), cases);
     return cases.stream();
   }
 

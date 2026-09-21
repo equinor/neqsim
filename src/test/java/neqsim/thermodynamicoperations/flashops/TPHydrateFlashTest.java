@@ -437,16 +437,14 @@ public class TPHydrateFlashTest {
     }
     assertEquals(1.0, sumZ, 1e-6, "Overall mole fractions (z) should sum to 1");
 
-    // Check that each phase's mole fractions sum to approximately 1
-    // (hydrate phase may have slight deviations due to cavity model)
+    // A hydrate lattice is a material phase: its mole fractions must sum to one.
     for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
       double sumX = 0.0;
       for (int i = 0; i < fluid.getPhase(p).getNumberOfComponents(); i++) {
         sumX += fluid.getPhase(p).getComponent(i).getx();
       }
-      // Allow 10% tolerance for hydrate phase due to cavity occupancy model
-      assertEquals(1.0, sumX, 0.15,
-          "Phase " + p + " (" + fluid.getPhase(p).getType() + ") mole fractions should be ~1");
+      assertEquals(1.0, sumX, 1e-8,
+          "Phase " + p + " (" + fluid.getPhase(p).getType() + ") mole fractions should sum to one");
     }
 
     // Check that phase fractions (beta) sum to 1

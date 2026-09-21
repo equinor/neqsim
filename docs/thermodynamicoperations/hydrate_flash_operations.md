@@ -53,11 +53,41 @@ Performs a temperature-pressure flash calculation including hydrate phase equili
 **Method:** `ThermodynamicOperations.hydrateTPflash()`
 
 **Algorithm:**
-1. Perform standard TPflash (gas/liquid/aqueous equilibrium)
-2. Calculate hydrate water fugacity using vdWP model
-3. Compare with fluid water fugacity
-4. If hydrate is stable (lower fugacity), calculate hydrate fraction
-5. Update system with hydrate phase
+1. Flash a private copy of the original feed and test hydrate stability using the host-water fugacity.
+2. For each trial hydrate-water amount, withdraw water and guests and reflash the residual fluid.
+3. Couple guest uptake to both small and large cavity occupancies, weighted by cavities per water molecule.
+   Use distribution-ratio iteration with a damped Newton fallback in logarithmic fluid amounts for guest-limited feeds.
+4. Bracket and solve water-fugacity equality with safeguarded interpolation and bisection.
+5. Assemble the solved fluid and hydrate inventories on the original feed basis, validate every component balance,
+   and only then replace the caller's phase state.
+
+The fraction is **not** a fixed water-limited conversion. Dissolved/vapour water remains when required by equilibrium,
+including below 1 mol% feed water. A missing bracket, iteration limit, non-finite fugacity, or failed balance throws
+`IllegalStateException`; the supplied fluid retains its pre-call state. Reactive systems are explicitly rejected by
+this amount solver because reactions require element and charge balances. Incipient hydrate operations have their
+own documented reactive/electrolyte support.
+
+For structure $s$, the amount equations on a one-mole feed basis are
+
+$$r_i^s=\sum_{c=0}^{1}\nu_c^s\theta_{ic}^s,\qquad n_i^H=h r_i^s,\qquad n_w^H=h.$$
+
+Here $h$ is hydrate water, $r_i^s$ is guest moles per mole of hydrate water, and $\theta_{ic}^s$ is cavity occupancy.
+The weights are $(2/46,6/46)$ for sI and $(16/136,8/136)$ for sII. Empty cages are retained through occupancies below
+unity; the water mole fraction is $x_w^H=1/(1+\sum_i r_i^s)$, not a hard-coded fully occupied lattice value.
+The residual fluid has $n_i^F=z_i-n_i^H$ and determines all guest fugacities. The outer equation is
+
+$$R(h)=\ln(f_w^H/f_w^F)=0.$$
+
+`ComponentHydrate.fugcoef(hydrate) * pressure` is the **host-water fugacity** used in this equation. The component
+model returns the host fugacity divided by pressure; multiplying it by the hydrate's material-balance water mole
+fraction would introduce a spurious activity factor. Use `TPHydrateFlash.getLastResidual()` for the equilibrium check.
+
+**Diagnostics:** `isConverged()`, `getLastResidual()`, `getMaximumBalanceResidual()` (mol/mol feed), and
+`getFluidFlashCount()`. `setMaximumIterations(int)` sets the bracketing/root iteration budget. Acceptance requires
+an absolute log-fugacity residual below $10^{-8}$ and component and normalization residuals below $10^{-8}$.
+Material components present above $10^{-12}$ in two residual fluid phases must also match fugacities within $10^{-6}$
+in logarithmic ratio.
+Failure diagnostics do not represent an accepted hydrate-free result.
 
 **Example:**
 ```java
@@ -89,7 +119,7 @@ fluid.prettyPrint();
 
 ### Gas-Hydrate TPflash
 
-Specialized flash targeting gas-hydrate equilibrium without aqueous phase. This is useful for systems with trace water where all water can be consumed by hydrate formation.
+Compatibility entry point for trace-water gas-hydrate equilibrium. It uses the same conservative solve as `hydrateTPflash()`; the residual-fluid flash determines whether an aqueous phase is stable.
 
 **Method:** `ThermodynamicOperations.gasHydrateTPflash()`
 
@@ -120,11 +150,9 @@ System.out.println("Has aqueous phase: " + hasAqueous);  // false
 ```
 
 **Algorithm:**
-1. Perform standard TPflash
-2. Enable gas-hydrate-only mode
-3. Calculate hydrate equilibrium from gas phase fugacity
-4. Remove aqueous phase if all water consumed by hydrate
-5. Redistribute phase fractions
+1. Enable the gas-hydrate compatibility option.
+2. Solve the same coupled water/guest inventories and fugacity equality as the general hydrate TP flash.
+3. Retain any stable aqueous phase and the equilibrium water content of gas and oil. No phase is removed by a feed-water threshold.
 
 ### Hydrate Formation Temperature
 
@@ -427,7 +455,7 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
 
 ### Gas-Hydrate Only (No Aqueous)
 
-For systems with very low water content where hydrate consumes all water.
+For systems where the remaining equilibrium water is dissolved in gas or oil and no separate aqueous phase is stable.
 
 ```java
 // 500 ppm water at extreme conditions
@@ -589,14 +617,12 @@ fluid.setHydrateCheck(true);
 
 ### 3. Verify Mass Conservation
 
-After hydrate flash, verify beta sum equals 1.0:
-```java
-double betaSum = 0.0;
-for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-    betaSum += fluid.getBeta(i);
-}
-assert Math.abs(betaSum - 1.0) < 1e-6 : "Mass conservation violated";
-```
+The sum of phase fractions is necessary but does not prove component conservation. Check each component against its
+**original feed amount**, as well as phase normalization. `TPHydrateFlashBalanceTest` verifies both
+$\sum_p\beta_p x_{i,p}=z_i$ and absolute component moles, including the issue #3871 mixture at 278.15, 283.15 and
+288.15 K and 100 bara. It also checks host-water fugacity equality, cavity stoichiometry, feed scaling, component
+insertion order, repeated calls and heating/cooling across hydrate disappearance.
+
 
 ### 4. Check Phase Types
 
@@ -633,9 +659,9 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
 
 ### Convergence Issues
 
-1. Provide good initial temperature guess
-2. Reduce step size for near-critical conditions
-3. Check component fugacity calculations
+For hydrate amounts at fixed T/P, inspect the exception and the operation's convergence diagnostics. Do not treat a
+failed flash as zero hydrate or accept a material-bound fraction. Check the fluid EOS, mixing rule, guest parameters
+and the validity of the fluid phase split. Hydrate formation-temperature calculations are separate operations.
 
 ### Unexpected Phase Fractions
 
@@ -648,6 +674,38 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
 This is expected behavior. Use `gasHydrateTPflash()` for systems with trace water to achieve gas-hydrate equilibrium directly.
 
 ---
+
+## Thermodynamic scope and validation
+
+The implementation uses NeqSim's existing hydrate parameterizations and the fluid model chosen by the caller. It
+selects one stable sI or sII structure at the current guest fugacities and solves its non-stoichiometric composition.
+Numerical conservation and convergence do not establish experimental accuracy for every fluid. This change does not
+fit Langmuir parameters, introduce structure H, calculate growth/deposition rates, or implement coexistence of two
+hydrate structures. Reactive amount flashes and a global all-solid Gibbs minimizer remain outside this solver's scope.
+Residual-fluid solid checks can be enabled through the existing overload; they are not a new validation of ice/wax
+competition. Property estimates on `PhaseHydrate` (such as density and caloric properties) have separate limitations.
+
+The regression on the reported SRK/mixing-rule-2 feed (79 methane, 10.10 ethane, 2.050 propane and 10 water mol,
+100 bara) gives the following numerical evidence. These are solver regression results, not experimental measurements.
+
+| Temperature (K) | Hydrate fraction (mol/mol feed) | Structure | Absolute log-fugacity residual | Maximum component error (mol/mol feed) |
+|---|---|---|---|---|
+| 288.15 | 0.1149236748 | sII | $1.59\times10^{-11}$ | $7.30\times10^{-13}$ |
+| 283.15 | 0.1151642441 | sII | $1.19\times10^{-11}$ | $4.06\times10^{-13}$ |
+| 278.15 | 0.1153651039 | sII | $1.14\times10^{-11}$ | $2.40\times10^{-13}$ |
+
+`TPHydrateFlashBalanceTest` writes the current results and fluid-flash counts to
+`target/hydrate-3871-validation.csv`. A phase fraction close to a material bound can be physically legitimate;
+the acceptance criteria are equilibrium and conservation, not distance from a bound.
+
+The numerical design follows the equilibrium requirements emphasized by
+[Cole and Goodwin (1990), *Flash calculations for gas hydrates: a rigorous approach*](https://www.sciencedirect.com/science/article/pii/0009250990870019)
+and [Izadpanah et al. (2006), *Multi-Component-Multiphase Flash Calculations for Systems Containing Gas Hydrates by Direct Minimization of Gibbs Free Energy*](https://www.sid.ir/EN/VEWSSID/J_pdf/84320060305.pdf):
+component balances, phase normalization, guest partitioning and hydrate stability must be satisfied together.
+The present algorithm is a nested residual-fluid/host-water solve, not an implementation of those papers' global
+minimizers. [Mahabadian et al. (2016), *Development of a multiphase flash in presence of hydrates*](https://www.sciencedirect.com/science/article/abs/pii/S0378381216300097)
+provides a relevant CPA-based experimental-validation reference. No numerical data from that publication were used
+to tune or claim experimental validation of this fix.
 
 ## Related Documentation
 
