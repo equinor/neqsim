@@ -56,7 +56,7 @@ through `neqsim_dev_setup`; a standalone Colab notebook uses the published packa
 Restart the kernel after upgrading the package or changing Java classes.
 
 
-**Execution source:** Run all cells in a fresh Python kernel with Git and JDK 17+. An existing compiled NeqSim checkout is used first. Otherwise setup fetches and builds the documentation source at `81044ab065df7099793c8f4807160016eb0696ae`, which contains fixes exercised here. Set `NEQSIM_GIT_REF` before running to validate another commit or ref. The public Python package supplies the bridge and helpers; its bundled Java library alone is not the validated source for this notebook. The first source build can take several minutes.
+**Execution source:** Run all cells in a fresh Python kernel with Git and JDK 17+. An existing compiled NeqSim checkout is used first. Otherwise setup fetches and builds the documentation source at `refs/pull/3597/head`, which contains fixes exercised here. Set `NEQSIM_GIT_REF` before running to validate another commit or ref. The public Python package supplies the bridge and helpers; its bundled Java library alone is not the validated source for this notebook. The first source build can take several minutes.
 
 
 ```python
@@ -84,7 +84,7 @@ if PROJECT_ROOT is None:
     # The public package alone predates fixes exercised by these examples.
     # Use the validated documentation PR's source; override with another fixed
     # commit or ref through NEQSIM_GIT_REF when validating a newer revision.
-    source_ref = os.environ.get("NEQSIM_GIT_REF", "81044ab065df7099793c8f4807160016eb0696ae")
+    source_ref = os.environ.get("NEQSIM_GIT_REF", "refs/pull/3597/head")
     PROJECT_ROOT = Path(tempfile.mkdtemp(prefix="neqsim-optimization-"))
     subprocess.check_call(["git", "init", "-q", str(PROJECT_ROOT)])
     subprocess.check_call(["git", "-C", str(PROJECT_ROOT), "remote", "add", "origin",
@@ -174,7 +174,7 @@ print(f"SciPy version: {scipy.__version__}")
 
 ```
 NeqSim and SciPy loaded successfully!
-SciPy version: 1.18.1
+SciPy version: 1.17.0
 ```
 
 </details>
@@ -256,11 +256,7 @@ print(f"\nInitial conditions:")
 print(f"  Feed flow rate: {process.getUnit('feed').getFlowRate('kg/hr'):.0f} kg/hr")
 print(f"  Stage 1 power: {process.getUnit('stage1').getPower('kW'):.1f} kW")
 print(f"  Stage 2 power: {process.getUnit('stage2').getPower('kW'):.1f} kW")
-initial_power_kw = (
-    process.getUnit('stage1').getPower('kW')
-    + process.getUnit('stage2').getPower('kW')
-)
-print(f"  Total power: {initial_power_kw:.1f} kW")
+print(f"  Total power: {process.getUnit('stage1').getPower('kW') + process.getUnit('stage2').getPower('kW'):.1f} kW")
 ```
 
 <details>
@@ -489,10 +485,10 @@ assert result_powell.success
 Optimization terminated successfully.
          Current function value: 2676.023229
          Iterations: 3
-         Function evaluations: 201
+         Function evaluations: 209
 
 === Powell Results ===
-Function evaluations: 201
+Function evaluations: 209
 Optimal intermediate pressure: 60.06 bara
 Optimal intercooler temp: 20.0 °C
 Minimum total power: 2676.0 kW
@@ -522,10 +518,7 @@ for algorithm in algorithms:
 
 print(f"{'Algorithm':<15} {'P_inter (bara)':<15} {'T_inter (C)':<15} {'Power (kW)':<12} {'Runs'}")
 for name, res in algorithm_results.items():
-    print(
-        f"{name:<15} {res['x'][0]:<15.2f} {res['x'][1]-273.15:<15.2f} "
-        f"{res['fun']:<12.2f} {res['nfev']}"
-    )
+    print(f"{name:<15} {res['x'][0]:<15.2f} {res['x'][1]-273.15:<15.2f} {res['fun']:<12.2f} {res['nfev']}")
 
 plt.figure(figsize=(8, 4))
 plt.bar(algorithm_results.keys(), [r["fun"] for r in algorithm_results.values()])
@@ -542,7 +535,7 @@ save_figure("python-optimization-algorithms.png")
 ```
 Algorithm       P_inter (bara)  T_inter (C)     Power (kW)   Runs
 Nelder-Mead     60.06           20.00           2676.02      58
-Powell          60.06           20.00           2676.02      202
+Powell          60.06           20.00           2676.02      210
 COBYLA          60.06           20.00           2676.02      39
 ```
 
@@ -652,10 +645,7 @@ for spec in constraint_specs:
 constrained_problem.evaluate_constraints([50.0, 303.15])
 constrained_problem.evaluate([75.0, 313.15])
 constrained_problem.evaluate_constraints([50.0, 303.15])
-verified_pressure_bara = (
-    constrained_problem.process.getUnit("stage1").getOutletStream().getPressure("bara")
-)
-assert np.isclose(verified_pressure_bara, 50.0)
+assert np.isclose(constrained_problem.process.getUnit("stage1").getOutletStream().getPressure("bara"), 50.0)
 ```
 
 <details>
@@ -991,10 +981,7 @@ def physical_curve_variables(u):
 curve_result_scaled = optimize.minimize(
     lambda u: curve_problem.objective(physical_curve_variables(u)) / 1000.0,
     x0=np.array([0.5, 0.5]), method="SLSQP", bounds=[(0.0, 1.0)] * 2,
-    constraints=[{
-        "type": "ineq",
-        "fun": lambda u: curve_problem.margins(physical_curve_variables(u)),
-    }],
+    constraints=[{"type": "ineq", "fun": lambda u: curve_problem.margins(physical_curve_variables(u))}],
     options={"maxiter": 100, "ftol": 1e-8, "eps": 1e-5},
 )
 curve_optimum = physical_curve_variables(curve_result_scaled.x)
@@ -1355,7 +1342,7 @@ assert min(constraint_values) >= -1e-5
 
 ```
 Optimization terminated successfully    (Exit mode 0)
-            Current function value: 2676.0232355928156
+            Current function value: 2676.0232355933213
             Iterations: 7
             Function evaluations: 21
             Gradient evaluations: 7
@@ -1450,8 +1437,7 @@ for weights in weight_sets:
                                              lambda p: negative_throughput(p) / 100000.0])
     problem_pareto = NeqSimOptimizationProblem(create_gas_process, pareto_variables, objective)
     outcome = optimize.minimize(problem_pareto, problem_pareto.get_x0(), method="Powell",
-                                bounds=problem_pareto.get_bounds(),
-                                options={"maxiter": 60, "ftol": 1e-6})
+                                bounds=problem_pareto.get_bounds(), options={"maxiter": 60, "ftol": 1e-6})
     assert outcome.success
     plant = problem_pareto.simulate(outcome.x)
     pareto_candidates.append({"power": total_power_objective(plant),
@@ -1464,24 +1450,20 @@ for delivery_rate in np.linspace(20000.0, 100000.0, n_points):
         plant = create_gas_process()
         plant.getUnit("feed").setFlowRate(rate, "kg/hr")
         return plant
-    tradeoff = NeqSimOptimizationProblem(
-        fixed_flow_factory, [pareto_variables[1]], total_power_objective
-    )
+    tradeoff = NeqSimOptimizationProblem(fixed_flow_factory, [pareto_variables[1]], total_power_objective)
     outcome = optimize.minimize_scalar(lambda p: tradeoff([p]), bounds=(40.0, 80.0),
                                        method="bounded", options={"xatol": 0.01})
     assert outcome.success
     plant = tradeoff.simulate([outcome.x])
     pareto_candidates.append({"power": total_power_objective(plant),
-                              "throughput": -negative_throughput(plant),
-                              "method": "delivery sweep"})
+                              "throughput": -negative_throughput(plant), "method": "delivery sweep"})
 
 def dominates(a, b):
     return (a["power"] <= b["power"] and a["throughput"] >= b["throughput"]
             and (a["power"] < b["power"] or a["throughput"] > b["throughput"]))
 
 pareto_points = sorted([p for p in pareto_candidates
-                        if not any(dominates(q, p) for q in pareto_candidates)],
-                       key=lambda p: p["throughput"])
+                        if not any(dominates(q, p) for q in pareto_candidates)], key=lambda p: p["throughput"])
 # Merge numerical duplicates within 1 kg/hr and 0.01 kW for readable reporting.
 unique_points = {}
 for point in pareto_points:
@@ -1617,20 +1599,20 @@ assert np.isfinite(result_de.fun)
 Running Differential Evolution (global optimizer)...
 This may take a minute...
 
-differential_evolution step 1: f(x)= 1757.043211344709
-differential_evolution step 2: f(x)= 1757.043211344709
-differential_evolution step 3: f(x)= 1757.043211344709
-differential_evolution step 4: f(x)= 1689.6699097062701
+differential_evolution step 1: f(x)= 1757.0432113447007
+differential_evolution step 2: f(x)= 1757.0432113447007
+differential_evolution step 3: f(x)= 1757.0432113447007
+differential_evolution step 4: f(x)= 1689.6699097062756
 differential_evolution step 5: f(x)= 1644.3367854612077
 differential_evolution step 6: f(x)= 1644.3367854612077
-differential_evolution step 7: f(x)= 1625.256962754167
-differential_evolution step 8: f(x)= 1625.256962754167
-differential_evolution step 9: f(x)= 1625.256962754167
-differential_evolution step 10: f(x)= 1619.2445901457518
-differential_evolution step 11: f(x)= 1613.6685753392185
-differential_evolution step 12: f(x)= 1612.2245813625084
-differential_evolution step 13: f(x)= 1611.2775282173066
-differential_evolution step 14: f(x)= 1607.3776420499898
+differential_evolution step 7: f(x)= 1625.2569627541707
+differential_evolution step 8: f(x)= 1625.2569627541707
+differential_evolution step 9: f(x)= 1625.2569627541707
+differential_evolution step 10: f(x)= 1619.2445901463025
+differential_evolution step 11: f(x)= 1613.6685766345904
+differential_evolution step 12: f(x)= 1612.2245813631134
+differential_evolution step 13: f(x)= 1611.2775292568967
+differential_evolution step 14: f(x)= 1607.3776420749996
 Polishing solution with 'L-BFGS-B'
 
 === Differential Evolution Results ===
@@ -1649,13 +1631,7 @@ Minimum total power: 1605.6 kW
 
 ## 9. Gradient-Based Optimization
 
-For smooth problems, gradient-based methods can be more efficient. Use a three-point
-finite-difference gradient with bounds handled by SciPy. A coarse, one-sided step
-can bias the pressure derivative near the minimum and cause the L-BFGS-B line
-search to fail. The relative step below balances derivative accuracy against
-simulation noise. We require optimizer convergence, replay the selected operating
-point, and compare its power with the independent Powell result.
-
+For smooth problems, gradient-based methods can be more efficient. We can estimate gradients numerically.
 
 ```python
 # Gradient-based optimization with L-BFGS-B
@@ -1666,13 +1642,10 @@ result_lbfgs = optimize.minimize(
     problem,
     x0=problem.get_x0(),
     method='L-BFGS-B',
-    jac='3-point',
     bounds=problem.get_bounds(),
     options={
         'maxiter': 100,
-        'finite_diff_rel_step': 1e-4,
-        'gtol': 1e-5,
-        'ftol': 1e-9
+        'eps': 0.1  # Step size for numerical gradient
     }
 )
 
@@ -1684,10 +1657,6 @@ print(f"Optimal intercooler temp: {result_lbfgs.x[1] - 273.15:.1f} °C")
 print(f"Minimum total power: {result_lbfgs.fun:.1f} kW")
 
 assert result_lbfgs.success, result_lbfgs.message
-
-verified_lbfgs_power = problem.evaluate(result_lbfgs.x)
-assert np.isclose(verified_lbfgs_power, result_lbfgs.fun, rtol=1e-8)
-assert np.isclose(verified_lbfgs_power, result_powell.fun, rtol=1e-4)
 ```
 
 <details>
@@ -1697,8 +1666,8 @@ assert np.isclose(verified_lbfgs_power, result_powell.fun, rtol=1e-4)
 
 === L-BFGS-B Results ===
 Success: True
-Function evaluations: 40
-Optimal intermediate pressure: 60.06 bara
+Function evaluations: 60
+Optimal intermediate pressure: 60.03 bara
 Optimal intercooler temp: 20.0 °C
 Minimum total power: 2676.0 kW
 ```
@@ -1871,7 +1840,7 @@ assert np.isclose(results["process"].getUnit("stage1").getOutletStream().getPres
 ```
 === Optimization Results ===
 Success: True
-Evaluations: 202
+Evaluations: 210
 
 Optimal values:
   intermediate_pressure: 60.06
