@@ -151,6 +151,8 @@ not independent engineering qualification.
 The selected homogeneous-equilibrium model retains its documented applicability and limitations,
 including unsupported solid-risk cases and invalid unresolved mixture flashes. No automatic
 fallback to a different model is performed. This implementation supplies an auditable foundation;
-relaxation/non-equilibrium discharge models, two-way inventory coupling, experimental qualification
-and uncertainty ensembles require separately reviewed extensions. The proposed NRC remains a
-merge gate. A Colab demonstration will follow once these Java APIs are reviewed and stable.
+relaxation/non-equilibrium discharge models, two-way inventory coupling and experimental
+qualification require separately reviewed extensions. [Uncertainty ensembles](source-term-uncertainty)
+evaluate complete joint inputs after the corresponding process states have been solved.
+The architecture and foundational APIs have merged; that does not establish qualification.
+The [completion status](source-term-platform-status) tracks remaining work, including the Colab demonstration.
