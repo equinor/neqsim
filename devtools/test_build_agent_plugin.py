@@ -330,7 +330,9 @@ class HookJavaResolutionTest(unittest.TestCase):
     def _fake_jdk(self, folder: str, java_version: str) -> Path:
         home = self.root / "jdks" / folder
         (home / "bin").mkdir(parents=True)
-        (home / "bin" / ("java.exe" if os.name == "nt" else "java")).write_bytes(b"")
+        java = home / "bin" / ("java.exe" if os.name == "nt" else "java")
+        java.write_bytes(b"")
+        java.chmod(0o755)  # shutil.which() skips non-executable files on POSIX
         (home / "release").write_text('JAVA_VERSION="{}"\n'.format(java_version), encoding="utf-8")
         return home
 
