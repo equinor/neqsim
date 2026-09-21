@@ -317,9 +317,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Perform a TP flash targeting gas-hydrate equilibrium without aqueous phase.
    *
    * <p>
-   * This method calculates equilibrium between gas and hydrate phases, attempting to eliminate the aqueous phase when
-   * water content is low enough. This is useful for modeling scenarios where trace water in gas is entirely consumed by
-   * hydrate formation.
+   * This method uses the conservative hydrate TP flash for trace-water systems. The residual-fluid equilibrium
+   * determines whether an aqueous phase remains. Equilibrium water in gas and oil is retained; no phase is removed
+   * merely because the feed water content is small.
    * </p>
    *
    * <p>
