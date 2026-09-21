@@ -14,6 +14,8 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGEUniquac;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePrEos;
+import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
@@ -46,6 +48,10 @@ final class ModelSpecFixtures {
       return SystemSrkEos.class;
     case PR:
       return SystemPrEos.class;
+    case SRK_PHASE:
+      return PhaseSrkEos.class;
+    case PR_PHASE:
+      return PhasePrEos.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -79,10 +85,19 @@ final class ModelSpecFixtures {
       break;
     case SRK:
     case PR:
-      ModelSpec.require((s.property == ModelSpec.Property.Z || s.property == ModelSpec.Property.HID)
-          && "gas".equals(s.phase) && "classic".equals(s.mixingRule) && "init1".equals(s.operation),
-          "invalid cubic fixture");
+      ModelSpec.require((s.property == ModelSpec.Property.Z || s.property == ModelSpec.Property.PHI
+          || s.property == ModelSpec.Property.HID) && "gas".equals(s.phase) && "classic".equals(s.mixingRule)
+          && "init1".equals(s.operation), "invalid cubic fixture");
       ModelSpec.require(s.outcome == ModelSpec.Outcome.VALUE, "cubic value expected");
+      break;
+    case SRK_PHASE:
+    case PR_PHASE:
+      ModelSpec
+          .require(
+              (s.property == ModelSpec.Property.Z || s.property == ModelSpec.Property.PHI) && s.components.size() == 1
+                  && s.components.containsKey("methane") && "gas".equals(s.phase) && "classic".equals(s.mixingRule)
+                  && "init1".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE,
+              "invalid cubic phase fixture");
       break;
     case WILSON_ANALYTIC:
       ModelSpec.require(
@@ -151,13 +166,26 @@ final class ModelSpecFixtures {
       return value;
     }
     SystemInterface system = create(s);
-    assertEquals(type(s.fixture), system.getClass(), s.toString());
+    if (s.fixture != ModelSpec.Fixture.SRK_PHASE && s.fixture != ModelSpec.Fixture.PR_PHASE) {
+      assertEquals(type(s.fixture), system.getClass(), s.toString());
+    }
     system.init(0);
-    if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR) {
+    if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
+        || s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
       system.init(1);
-      positive(system.getPhase(0).getComponent(s.componentIndex).getFugacityCoefficient(), s.toString());
-      return s.property == ModelSpec.Property.Z ? system.getPhase(0).getZ()
-          : system.getPhase(0).getComponent(s.componentIndex).getHID(s.temperature);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double phi = phase.getComponent(s.componentIndex).getFugacityCoefficient();
+      positive(phi, s.toString());
+      if (s.property == ModelSpec.Property.Z) {
+        return phase.getZ();
+      }
+      if (s.property == ModelSpec.Property.PHI) {
+        return phi;
+      }
+      return phase.getComponent(s.componentIndex).getHID(s.temperature);
     }
     PhaseInterface liquid = system.getPhase(1);
     if (s.fixture == ModelSpec.Fixture.UMR) {
@@ -237,9 +265,11 @@ final class ModelSpecFixtures {
       system = new SystemUMRPRUEos(s.temperature, s.pressure);
       break;
     case SRK:
+    case SRK_PHASE:
       system = new SystemSrkEos(s.temperature, s.pressure);
       break;
     case PR:
+    case PR_PHASE:
       system = new SystemPrEos(s.temperature, s.pressure);
       break;
     default:

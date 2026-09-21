@@ -93,7 +93,7 @@ class ModelSpecInventoryTest {
   void malformedInventoryFailsClosed(String fault) throws IOException {
     String version = "# neqsim-model-inventory-v1";
     String header = ModelSpecInventory.HEADER;
-    String[] row = {"neqsim.thermo.system.SystemSrkEos", "SYSTEM", "PARTIAL", "SRK", "Z;HID", "catalog-only",
+    String[] row = {"neqsim.thermo.system.SystemSrkEos", "SYSTEM", "PARTIAL", "SRK", "Z;PHI;HID", "catalog-only",
         "https://github.com/equinor/neqsim/issues/3792", "Review before expanding domains"};
     switch (fault) {
     case "version":

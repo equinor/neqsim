@@ -21,6 +21,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /** Verifies that malformed catalogs and defective values cannot make the harness pass silently. */
 class ModelSpecHarnessTest {
+  private static final double METHANE_TC_K = 190.56;
+  private static final double METHANE_PC_BAR = 45.99;
+  private static final double METHANE_OMEGA = 0.0115;
   private static final Set<String> REQUIRED = new HashSet<String>(Arrays.asList("acetone-280", "acetone-298-15",
       "acetone-320", "i-pentane-290", "i-pentane-298-15", "i-pentane-301", "wilson-0-2-0", "wilson-0-2-1",
       "wilson-0-5-0", "wilson-0-5-1", "wilson-0-8-0", "wilson-0-8-1", "wilson-negative-log", "unifac-pure-290",
@@ -28,7 +31,14 @@ class ModelSpecHarnessTest {
       "umr-pure-310", "umr-group-r", "srk-dilute-z", "srk-reference-hid", "pr-dilute-z", "pr-reference-hid",
       "missing-hydrogen", "missing-nc20", "ion-sodium", "supercritical-methane", "unsupported-uniquac",
       "pow10kpa-derivative-260", "pow10kpa-derivative-300", "pow10kpa-derivative-350", "pow10kpa-inverse-260",
-      "pow10kpa-inverse-300", "pow10kpa-inverse-350"));
+      "pow10kpa-inverse-300", "pow10kpa-inverse-350", "srk-methane-z-280-10", "srk-methane-phi-280-10",
+      "srk-methane-z-300-30", "srk-methane-phi-300-30", "srk-methane-z-320-50", "srk-methane-phi-320-50",
+      "pr-methane-z-280-10", "pr-methane-phi-280-10", "pr-methane-z-300-30", "pr-methane-phi-300-30",
+      "pr-methane-z-320-50", "pr-methane-phi-320-50", "phase-srk-methane-z-280-10", "phase-srk-methane-phi-280-10",
+      "phase-srk-methane-z-300-30", "phase-srk-methane-phi-300-30", "phase-srk-methane-z-320-50",
+      "phase-srk-methane-phi-320-50", "phase-pr-methane-z-280-10", "phase-pr-methane-phi-280-10",
+      "phase-pr-methane-z-300-30", "phase-pr-methane-phi-300-30", "phase-pr-methane-z-320-50",
+      "phase-pr-methane-phi-320-50"));
 
   static void requireCoverage(List<ModelSpec> cases) {
     Set<String> actual = new HashSet<String>();
@@ -175,6 +185,70 @@ class ModelSpecHarnessTest {
   void incorrectFiniteNumbersFail(double actual) throws IOException {
     ModelSpec acetone280 = ModelSpec.load().get(0);
     assertThrows(AssertionError.class, () -> ModelSpecTest.check(acetone280, actual));
+  }
+
+  @Test
+  void cubicReferencesSatisfyPublishedPureFluidEquations() throws IOException {
+    List<ModelSpec> cases = ModelSpec.load();
+    for (ModelSpec spec : cases) {
+      if (!isCubic(spec.fixture) || !spec.source.startsWith("https://doi.org/")) {
+        continue;
+      }
+      double tr = spec.temperature / METHANE_TC_K;
+      double pr = spec.pressure / METHANE_PC_BAR;
+      boolean pengRobinson = spec.fixture == ModelSpec.Fixture.PR || spec.fixture == ModelSpec.Fixture.PR_PHASE;
+      double m = pengRobinson ? 0.37464 + 1.54226 * METHANE_OMEGA - 0.26992 * METHANE_OMEGA * METHANE_OMEGA
+          : 0.48 + 1.574 * METHANE_OMEGA - 0.176 * METHANE_OMEGA * METHANE_OMEGA;
+      double alpha = Math.pow(1.0 + m * (1.0 - Math.sqrt(tr)), 2.0);
+      double omegaA = pengRobinson ? 0.45724333333 : 1.0 / (9.0 * (Math.cbrt(2.0) - 1.0));
+      double omegaB = pengRobinson ? 0.077803333 : (Math.cbrt(2.0) - 1.0) / 3.0;
+      double a = omegaA * alpha * pr / (tr * tr);
+      double b = omegaB * pr / tr;
+      double z = cubicZ(cases, spec);
+      double residual = pengRobinson
+          ? z * z * z - (1.0 - b) * z * z + (a - 3.0 * b * b - 2.0 * b) * z - (a * b - b * b - b * b * b)
+          : z * z * z - z * z + (a - b - b * b) * z - a * b;
+      assertEquals(0.0, residual, 2e-15, spec.toString());
+      if (spec.property == ModelSpec.Property.PHI) {
+        double lnPhi = pengRobinson
+            ? z - 1.0 - Math.log(z - b)
+                - a / (2.0 * Math.sqrt(2.0) * b)
+                    * Math.log((z + (1.0 + Math.sqrt(2.0)) * b) / (z + (1.0 - Math.sqrt(2.0)) * b))
+            : z - 1.0 - Math.log(z - b) - a / b * Math.log(1.0 + b / z);
+        assertEquals(spec.expected, Math.exp(lnPhi), 1e-14, spec.toString());
+      }
+    }
+  }
+
+  @Test
+  void cubicFugacityRejectsZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    ModelSpec reference = null;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if ("srk-methane-phi-300-30".equals(spec.id)) {
+        reference = spec;
+      }
+    }
+    assertTrue(reference != null);
+    final ModelSpec checked = reference;
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 0.95}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
+    }
+    ModelSpecTest.check(checked, checked.expected);
+  }
+
+  private static boolean isCubic(ModelSpec.Fixture fixture) {
+    return fixture == ModelSpec.Fixture.SRK || fixture == ModelSpec.Fixture.PR || fixture == ModelSpec.Fixture.SRK_PHASE
+        || fixture == ModelSpec.Fixture.PR_PHASE;
+  }
+
+  private static double cubicZ(List<ModelSpec> cases, ModelSpec reference) {
+    for (ModelSpec candidate : cases) {
+      if (candidate.fixture == reference.fixture && candidate.property == ModelSpec.Property.Z
+          && candidate.temperature == reference.temperature && candidate.pressure == reference.pressure) {
+        return candidate.expected;
+      }
+    }
+    throw new AssertionError("missing cubic Z companion for " + reference);
   }
 
   @Test
