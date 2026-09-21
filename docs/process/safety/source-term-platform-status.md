@@ -33,6 +33,10 @@ The current implementation includes:
   schema-validated frames from both process containers. Gas-only applicability is explicit.
 - Analytical gas limits, dense-fluid conservation and flashing, multicomponent, lifecycle
   and contract regressions in focused CI.
+- Guarded same-EOS continuation for the previously unresolved propane/butane entropy root,
+  with nine nearby mixture cases, a separate saturation-path comparison, inventory scaling,
+  back-pressure sensitivity and retained schema/benchmark evidence. Model version `1.1.0`
+  preserves the acoustic warning and `UNQUALIFIED` evidence boundary.
 
 Legacy `LeakModel` behavior is preserved. The new interface now has homogeneous-equilibrium,
 analytical ideal-gas and explicit legacy-screening implementations. Model selection remains
@@ -46,7 +50,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Conservative CO2 temperature and enabled-solid checks exist. | Mixture-specific solid-risk assessment and assessed solid-capable physics where supported. |
-| Multicomponent flashing robustness | Documented 80/20 propane/butane case fails closed. | Resolved entropy root, phase/inventory closure and independent benchmarks. |
+| Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |
 | Colab demonstration | Foundation APIs merged. | Executed notebook, retained outputs, visual inspection, catalog and validation ledger. |
 
 Do not close #3860 merely because initial PRs merged or focused CI passes.
