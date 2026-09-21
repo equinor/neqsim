@@ -45,7 +45,8 @@ class S8ComponentAdditionPlanDocumentationTest(unittest.TestCase):
         text = SOURCE.read_text(encoding="utf-8")
         for token in (
             "public static Result create(",
-            "AqueousHydrogenSulfideOxidationS8ComponentAmountProjection.project",
+            "AqueousHydrogenSulfideOxidationS8ComponentAmountProjection",
+            ".project(prior, candidate, transition)",
             "Positive transferred S8 amount is not representable",
             "8.0 * Math.max(Math.ulp",
             "getTargetStateIdentifier()",
