@@ -62,6 +62,8 @@ TASK_TYPE_NAMES = {
 SKIP_SCRIPT_NAMES = {"__init__.py", "conftest.py"}
 # Scaffold-shipped starters are templates, not work that was done.
 SKIP_SCRIPT_DIRS = {"starters", "__pycache__", ".ipynb_checkpoints"}
+# A script-backed study may drive an external simulator from a shell script.
+SCRIPT_SUFFIXES = (".py", ".ipynb", ".ps1", ".sh")
 DATA_SUFFIXES = (".json", ".csv", ".xlsx", ".xls", ".parquet", ".db", ".sqlite",
                  ".txt", ".yaml", ".yml")
 
@@ -230,6 +232,18 @@ def _load_json(path: Path):
         return None
 
 
+def _run_command(rel: str) -> str:
+    """Return how one analysis artifact is actually re-run."""
+    lowered = rel.lower()
+    if lowered.endswith(".ipynb"):
+        return "# notebook: {} (NeqSim Runner or Jupyter)".format(rel)
+    if lowered.endswith(".ps1"):
+        return "pwsh -File {}".format(rel)
+    if lowered.endswith(".sh"):
+        return "bash {}".format(rel)
+    return "python {}".format(rel)
+
+
 def _script_purpose(path: Path) -> str:
     """First docstring line, else first comment line, else empty."""
     try:
@@ -373,7 +387,7 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
         if not scan_dir.is_dir():
             continue
         for path in sorted(scan_dir.rglob("*")):
-            if not path.is_file() or path.suffix.lower() not in (".py", ".ipynb"):
+            if not path.is_file() or path.suffix.lower() not in SCRIPT_SUFFIXES:
                 continue
             if path.name in SKIP_SCRIPT_NAMES:
                 continue
@@ -778,17 +792,11 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
         for name in declared_order:
             target = name if name.startswith("step2_analysis") \
                 else "step2_analysis/{}".format(name)
-            if target.endswith(".ipynb"):
-                out.append("# notebook: {} (NeqSim Runner or Jupyter)".format(target))
-            else:
-                out.append("python {}".format(target))
+            out.append(_run_command(target))
     else:
         ordered = [row for row in script_rows if row["modified"] != "MISSING"]
         for row in sorted(ordered, key=lambda item: item["rel"]):
-            if row["kind"] == "script":
-                out.append("python {}".format(row["rel"]))
-            else:
-                out.append("# notebook: {} (NeqSim Runner or Jupyter)".format(row["rel"]))
+            out.append(_run_command(row["rel"]))
     out.append("python <neqsim>/devtools/consistency_checker.py .")
     out.append("neqsim report .")
     out.append("```")

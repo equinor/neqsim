@@ -381,19 +381,105 @@ def check_packaged_jar():
         _check("JVM starts and flashes", False, str(error))
 
 
+def _vscode_user_mcp_files():
+    """VS Code user ``mcp.json`` paths that exist on this machine."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA", os.path.join(os.path.expanduser("~"), "AppData", "Roaming"))
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    elif sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    return [os.path.join(d, "mcp.json") for d in dirs if os.path.isfile(os.path.join(d, "mcp.json"))]
+
+
+def _registered_mcp_entry():
+    """``(mcp_json_path, command, launcher)`` of the plugin's ``neqsim`` server, or None.
+
+    The plugin installer / session hook register the launcher by absolute path in the
+    VS Code user mcp.json (VS Code does not expand ``${PLUGIN_ROOT}``); that entry -
+    not the plugin's own mcp.json - decides which ``java`` starts the server.
+    """
+    import json
+    for path in _vscode_user_mcp_files():
+        try:
+            with open(path, encoding="utf-8") as handle:
+                cfg = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        servers = cfg.get("servers") if isinstance(cfg, dict) else None
+        entry = servers.get("neqsim") if isinstance(servers, dict) else None
+        if not isinstance(entry, dict):
+            continue
+        args = [str(a) for a in entry.get("args", [])]
+        launcher = next((a for a in args if a.endswith("NeqsimMcpLauncher.java")), None)
+        if launcher:
+            return path, str(entry.get("command", "java")), launcher
+    return None
+
+
 def check_mcp_launcher(java_major):
-    """Toolkit mode: the plugin's MCP server launcher and its cached jar."""
+    """Toolkit mode: the plugin's MCP server launcher and its cached jar.
+
+    Checks the ``java`` the *registered* server entry will run, because a Java 8
+    first on PATH cannot source-launch ``NeqsimMcpLauncher.java`` and fails before
+    the launcher's own version message - the server then never starts and leaves
+    no jar cache behind, which is the tell-tale this check reports.
+    """
     print("\n--- NeqSim MCP server ---")
     cache = os.path.join(os.path.expanduser("~"), ".neqsim", "mcp-server")
     jars = glob.glob(os.path.join(cache, "neqsim-mcp-server-*-runner.jar"))
     data = os.environ.get("PLUGIN_DATA")
     if data:
         jars += glob.glob(os.path.join(data, "neqsim-mcp-server-*-runner.jar"))
+    entry = _registered_mcp_entry()
+    launcher_java = None
+    launcher_major = None
+    if entry:
+        mcp_path, command, launcher = entry
+        launcher_java = command if (os.sep in command or "/" in command) else shutil.which(command)
+        if launcher_java and os.path.isfile(launcher_java):
+            try:
+                result = subprocess.run([launcher_java, "-version"], capture_output=True, text=True,
+                                        timeout=15)
+                launcher_major = _parse_java_major(result.stderr or result.stdout or "")
+            except Exception:  # noqa: BLE001 - reported as unknown below
+                launcher_major = None
+        pinned = "pinned" if launcher_java == command else "bare `{c}` -> PATH".format(c=command)
+        if launcher_major is None:
+            _check("Registered server java", False,
+                   "{c} ({p}) cannot be run".format(c=command, p=pinned),
+                   fix_hint="Fix the 'neqsim' server command in {m} (re-run the plugin install script, "
+                            "or set NEQSIM_MCP_JAVA and start a new chat so the session hook re-pins it)"
+                            .format(m=mcp_path))
+        else:
+            _check("Registered server java", launcher_major >= MCP_MIN_JAVA,
+                   "Java {v} via {p} ({j})".format(v=launcher_major, p=pinned, j=launcher_java),
+                   fix_hint=None if launcher_major >= MCP_MIN_JAVA else
+                   "Java {v} cannot source-launch the .java launcher (fails with 'Could not find or "
+                   "load main class'). Install a JDK {n}+ and re-run the plugin install script, or set "
+                   "the server's command in {m} to <jdk{n}>/bin/java; then start a new chat."
+                   .format(v=launcher_major, n=MCP_MIN_JAVA, m=mcp_path))
+        _check("Launcher file", os.path.isfile(launcher), launcher,
+               fix_hint="The plugin folder moved or was uninstalled; re-run the plugin install script")
+    else:
+        _warn("Registered server entry",
+              "no 'neqsim' server pointing at NeqsimMcpLauncher.java in the VS Code user mcp.json",
+              fix_hint="Expected when the plugin's own mcp.json is used (Copilot CLI); in VS Code run "
+                       "the plugin install script, which registers the launcher by absolute path")
     if jars:
         _check("Server jar cached", True, os.path.basename(sorted(jars)[-1]))
     else:
-        _warn("Server jar cached", "not downloaded yet (fetched on first chat session that "
-              "uses the plugin; ~85 MB from github.com/equinor/neqsim/releases)")
+        java_hint = launcher_java or shutil.which("java") or "<jdk21+>/bin/java"
+        launcher_hint = entry[2] if entry else "<plugin>/servers/NeqsimMcpLauncher.java"
+        _warn("Server jar cached",
+              "nothing in {c} - the launcher has never completed a start (first start downloads "
+              "~90 MB from github.com/equinor/neqsim/releases)".format(c=cache),
+              fix_hint="If this persists after a chat session the launcher is failing silently; run "
+                       "it yourself to see the real error (exit 0 = OK):\n         \"{j}\" \"{l}\" "
+                       "--prefetch".format(j=java_hint, l=launcher_hint))
     marker = os.path.join(data or cache, "latest-release.txt")
     if os.path.isfile(marker):
         try:
@@ -405,10 +491,13 @@ def check_mcp_launcher(java_major):
         except (IndexError, ValueError, OSError):
             _warn("Tracking latest release", "latest-release.txt unreadable; the launcher "
                   "re-resolves on next start")
-    if java_major is not None and java_major < MCP_MIN_JAVA:
+    effective = launcher_major if launcher_major is not None else java_major
+    if effective is not None and effective < MCP_MIN_JAVA:
         _check("Server can start", False,
-               "Java {m} < {n}".format(m=java_major, n=MCP_MIN_JAVA),
-               fix_hint="Install a JDK {n}+ and put it first on PATH".format(n=MCP_MIN_JAVA))
+               "Java {m} < {n}".format(m=effective, n=MCP_MIN_JAVA),
+               fix_hint="Install a JDK {n}+ (winget install EclipseAdoptium.Temurin.{n}.JDK / AccessIT) "
+                        "and re-run the plugin install script; MCP tools bind at chat-session start, so "
+                        "open a new chat or Developer: Reload Window afterwards".format(n=MCP_MIN_JAVA))
 
 
 def check_python_neqsim():

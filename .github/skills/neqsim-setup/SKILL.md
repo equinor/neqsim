@@ -97,6 +97,7 @@ Report only the `[!!]` and `[??]` lines with their fix hints. Typical fixes:
 | Symptom | Fix |
 |---|---|
 | Java < 21 | install a JDK 21+ first on PATH (`winget install EclipseAdoptium.Temurin.21.JDK`); NeqSim itself runs on 8+ but the MCP server needs 21 |
+| *Registered server java* FAIL, or no `neqsim_*` tools and `~/.neqsim/mcp-server/` missing | the `neqsim` entry in the VS Code user `mcp.json` runs a Java below 21 (typically Java 8 first on PATH shadowing a newer JDK): the launcher is source-launched and dies with *Could not find or load main class* before it can complain. Re-run the plugin install script (it pins the newest JDK 21+ into the entry) or set `NEQSIM_MCP_JAVA` and start a new chat (the session hook re-pins). Prove the fix without VS Code: `"<jdk21+>/bin/java" "<plugin>/servers/NeqsimMcpLauncher.java" --prefetch` (exit 0 = OK). MCP tools bind at chat-session start: after any fix open a **new chat** or Reload Window |
 | no packaged JAR | `<python-executable> -m pip install neqsim` or set `NEQSIM_JAR` |
 | `neqsim` on PATH comes from another interpreter | use `<python-executable> -m neqsim_cli` explicitly |
 | task root not writable | choose another folder with `--set-task-root` |

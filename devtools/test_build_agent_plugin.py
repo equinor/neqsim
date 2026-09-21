@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import sys
 import tempfile
@@ -287,6 +288,179 @@ class BuildPluginTest(unittest.TestCase):
         hook_py = (self.out / "demo" / "scripts" / "install_skill_packages.py").read_text(
             encoding="utf-8")
         self.assertIn("PREFETCH_MCP = False", hook_py)
+
+
+class HookJavaResolutionTest(unittest.TestCase):
+    """The hook must find a JDK 21+ even when an old ``java`` is first on PATH.
+
+    Regression for two Equinor installs where JDK 8 (Oracle javapath / Software
+    Center) shadowed a Temurin 21+/25: ``java NeqsimMcpLauncher.java`` failed before
+    the launcher's own version check, so the MCP server never started and no
+    ``neqsim_*`` tools appeared - with nothing in chat to say why.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.jdk8 = self._fake_jdk("jdk1.8.0_392", '1.8.0_392')
+        self.jdk21 = self._fake_jdk("jdk-21.0.4+7-hotspot", "21.0.4")
+        self.jdk25 = self._fake_jdk("jdk-25.0.4.7-hotspot", "25.0.4")
+        # Render the hook and load its functions without running main().
+        src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
+                                 prefetch_mcp=True, live_requirements="", verify_imports=[])
+        (self.root / "plugin.json").write_text('{"name": "neqsim", "version": "0"}', encoding="utf-8")
+        (self.root / "servers").mkdir()
+        (self.root / "servers" / "NeqsimMcpLauncher.java").write_text("// stub", encoding="utf-8")
+        self.launcher = str(self.root / "servers" / "NeqsimMcpLauncher.java")
+        self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
+        self._env = dict(os.environ)
+        os.environ["PLUGIN_ROOT"] = str(self.root)
+        os.environ.pop("JAVA_HOME", None)
+        os.environ.pop("NEQSIM_MCP_JAVA", None)
+        exec(src.replace("sys.exit(main())", ""), self.ns)  # noqa: S102 - generated code under test
+        self.ns["state"] = self.root / "state"
+        self.ns["mcp_log"] = self.root / "state" / "mcp-prefetch.log"
+        self.ns["java_install_roots"] = lambda: [self.root / "jdks"]
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self._env)
+        self.tmp.cleanup()
+
+    def _fake_jdk(self, folder: str, java_version: str) -> Path:
+        home = self.root / "jdks" / folder
+        (home / "bin").mkdir(parents=True)
+        java = home / "bin" / ("java.exe" if os.name == "nt" else "java")
+        java.write_bytes(b"")
+        java.chmod(0o755)  # shutil.which() skips non-executable files on POSIX
+        (home / "release").write_text('JAVA_VERSION="{}"\n'.format(java_version), encoding="utf-8")
+        return home
+
+    def _java(self, home: Path) -> Path:
+        return home / "bin" / ("java.exe" if os.name == "nt" else "java")
+
+    def _path_first(self, home: Path) -> None:
+        os.environ["PATH"] = str(home / "bin") + os.pathsep + self._env.get("PATH", "")
+
+    def test_java_major_from_release_file(self):
+        self.assertEqual(self.ns["java_major"](self._java(self.jdk8)), 8)
+        self.assertEqual(self.ns["java_major"](self._java(self.jdk21)), 21)
+        self.assertEqual(self.ns["java_major"](self._java(self.jdk25)), 25)
+
+    def test_java8_on_path_falls_back_to_newest_installed_jdk(self):
+        self._path_first(self.jdk8)
+        java, major, path_java, path_major = self.ns["find_mcp_java"]()
+        self.assertEqual(path_major, 8)
+        self.assertEqual(Path(path_java).parent.parent.resolve(), self.jdk8.resolve())
+        self.assertEqual(major, 25)
+        self.assertEqual(Path(java), self._java(self.jdk25))
+
+    def test_explicit_choice_wins_over_newer_installed(self):
+        self._path_first(self.jdk8)
+        os.environ["JAVA_HOME"] = str(self.jdk21)
+        java, major, _, _ = self.ns["find_mcp_java"]()
+        self.assertEqual((Path(java), major), (self._java(self.jdk21), 21))
+        os.environ["NEQSIM_MCP_JAVA"] = str(self.jdk25)
+        java, major, _, _ = self.ns["find_mcp_java"]()
+        self.assertEqual((Path(java), major), (self._java(self.jdk25), 25))
+
+    def test_no_usable_jdk_gives_chat_warning(self):
+        self._path_first(self.jdk8)
+        self.ns["java_install_roots"] = lambda: []
+        started, note = self.ns["prefetch_mcp"]()
+        self.assertFalse(started)
+        self.assertIn("needs a JDK 21+", note)
+        self.assertIn("Java 8", note)
+        self.assertIn("neqsim_* tools will not appear", note)
+
+    def test_pins_own_mcp_entry_only_when_bare_java_is_unusable(self):
+        mcp = self.root / "User" / "mcp.json"
+        mcp.parent.mkdir()
+        cfg = {"servers": {"neqsim": {"type": "stdio", "command": "java", "args": [self.launcher]},
+                           "other": {"type": "stdio", "command": "java", "args": ["x.py"]}},
+               "inputs": []}
+        mcp.write_text(json.dumps(cfg), encoding="utf-8")
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        java25 = str(self._java(self.jdk25))
+        ensure = self.ns["ensure_mcp_entry"]
+        # PATH java is fine: a bare "java" entry is left untouched
+        self.assertEqual(ensure(java25, 21), ([], []))
+        # PATH java is Java 8: our entry is pinned, the foreign one is not
+        self.assertEqual(ensure(java25, 8), ([], [str(mcp)]))
+        patched = json.loads(mcp.read_text(encoding="utf-8"))
+        self.assertEqual(patched["servers"]["neqsim"]["command"], java25)
+        self.assertEqual(patched["servers"]["other"]["command"], "java")
+        self.assertTrue(mcp.with_suffix(".json.bak").is_file())
+        self.assertEqual(ensure(java25, 8), ([], []))  # idempotent
+        # a pinned JDK that was upgraded/removed (folder renamed) is re-pinned
+        patched["servers"]["neqsim"]["command"] = str(self.root / "gone" / "bin" / "java.exe")
+        mcp.write_text(json.dumps(patched), encoding="utf-8")
+        self.assertEqual(ensure(java25, 8), ([], [str(mcp)]))
+        # a launcher path from a moved/reinstalled plugin is re-pointed at this plugin
+        patched["servers"]["neqsim"]["args"] = [str(self.root / "old-plugin" / "servers" / "NeqsimMcpLauncher.java")]
+        mcp.write_text(json.dumps(patched), encoding="utf-8")
+        self.assertEqual(ensure(java25, 25), ([], [str(mcp)]))
+        self.assertEqual(json.loads(mcp.read_text(encoding="utf-8"))["servers"]["neqsim"]["args"], [self.launcher])
+        # a foreign 'neqsim' server (not the plugin launcher) is never modified
+        mcp.write_text(json.dumps({"servers": {"neqsim": {"command": "java", "args": ["mine.jar"]}}}),
+                       encoding="utf-8")
+        self.assertEqual(ensure(java25, 8), ([], []))
+
+    def test_registers_missing_entry_with_absolute_launcher(self):
+        """VS Code does not expand ${PLUGIN_ROOT} (microsoft/vscode#336882): the plugin's own
+        mcp.json entry dies with 'Could not find or load main class ${PLUGIN_ROOT}.servers...',
+        so the hook must register a working absolute-path entry itself."""
+        user = self.root / "User"
+        user.mkdir()
+        mcp = user / "mcp.json"
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        self.ns["mcp_needs_prefetch"] = lambda: False
+        java25 = str(self._java(self.jdk25))
+        # no mcp.json at all, PATH java fine -> portable bare java + absolute launcher
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        cfg = json.loads(mcp.read_text(encoding="utf-8"))
+        self.assertEqual(cfg["servers"]["neqsim"], {"type": "stdio", "command": "java", "args": [self.launcher]})
+        self.assertEqual(cfg["inputs"], [])
+        # existing file with other servers, PATH java is Java 8 -> created with the pinned JDK
+        mcp.write_text(json.dumps({"servers": {"maintenance-api": {"type": "http", "url": "https://x"}}}),
+                       encoding="utf-8")
+        self._path_first(self.jdk8)
+        started, note = self.ns["prefetch_mcp"]()
+        cfg = json.loads(mcp.read_text(encoding="utf-8"))
+        self.assertEqual(cfg["servers"]["neqsim"]["command"], java25)
+        self.assertEqual(cfg["servers"]["neqsim"]["args"], [self.launcher])
+        self.assertIn("maintenance-api", cfg["servers"])
+        self.assertIn("registered in", note)
+        self.assertIn("${PLUGIN_ROOT}", note)
+        self.assertIn("JDK 25", note)
+        self.assertIn("Start a new chat", note)
+        # JSONC (comments) is left alone rather than destroyed
+        mcp.write_text('{\n  // my servers\n  "servers": {}\n}\n', encoding="utf-8")
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
+
+    def test_prefetch_with_java8_on_path_reports_the_pin(self):
+        self._path_first(self.jdk8)
+        mcp = self.root / "User" / "mcp.json"
+        mcp.parent.mkdir()
+        mcp.write_text(json.dumps({"servers": {"neqsim": {"command": "java", "args": [self.launcher]}}}),
+                       encoding="utf-8")
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        self.ns["mcp_needs_prefetch"] = lambda: False
+        started, note = self.ns["prefetch_mcp"]()
+        self.assertFalse(started)
+        self.assertIn("was pinned to the JDK 25", note)
+        self.assertIn("Start a new chat", note)
+        self.assertEqual(json.loads(mcp.read_text(encoding="utf-8"))["servers"]["neqsim"]["command"],
+                         str(self._java(self.jdk25)))
+        log = (self.root / "state" / "mcp-prefetch.log").read_text(encoding="utf-8")
+        self.assertIn("java:", log)
+
+    def test_java_note_shown_once_per_finding(self):
+        self.assertTrue(self.ns["java_note_is_new"]("A"))
+        self.assertFalse(self.ns["java_note_is_new"]("A"))
+        self.assertTrue(self.ns["java_note_is_new"]("B"))
+        self.assertFalse(self.ns["java_note_is_new"](None))
+        self.assertTrue(self.ns["java_note_is_new"]("B"))  # relapse after a healthy session
 
 
 class BumpTest(unittest.TestCase):

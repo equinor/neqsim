@@ -1,12 +1,14 @@
 ---
 title: Model-explicit release source terms
-description: Strict homogeneous-equilibrium source terms with thermodynamic stations, mass-based phase fractions, diagnostic failures and process-compatible inputs.
+description: Explicit homogeneous-equilibrium, ideal-gas and legacy-screening release models with immutable thermodynamic stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
 
 Use the [neutral source-term contract](source-term-contract) to export these results as
 versioned JSON, newline-delimited frames or a reduced CSV time series.
+Use [uncertainty ensembles](source-term-uncertainty) to propagate joint input cases without
+discarding failures. The [implementation status](source-term-platform-status) records remaining work.
 
 `ReleaseFlowModel` calculates an instantaneous short-opening source term from a NeqSim
 fluid. It is independent of downstream safety software and process orchestration. Requests
@@ -34,7 +36,51 @@ For direct use, construct `ReleaseFlowRequest(fluid, diameterM, dischargeCoeffic
 backPressurePa)` and call the model's `calculate` method. Malformed request geometry throws
 at construction; thermodynamic/model failures produce diagnostic results.
 
-## Equations and station semantics
+## Explicit model selection
+
+Model selection is never inferred from phase count. Choose one implementation and retain its
+identity, version and diagnostics with every frame:
+
+| Model | Intended use | Required behavior |
+|---|---|---|
+| `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
+| `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
+| `LegacyScreeningReleaseModel` | Reproduce the historical `LeakModel.calculateMassFlowRate` rate during migration. | Always returns `VALID_WITH_WARNINGS` when usable and carries `SCREENING_ONLY`, unresolved-station and legacy-fallback diagnostics. |
+
+For example:
+
+```java
+ReleaseFlowModel idealGas = new IdealGasReleaseModel();
+ReleaseFlowModel legacyCompatibility = new LegacyScreeningReleaseModel();
+ReleaseFlowResult analytical = idealGas.calculate(
+    new ReleaseFlowRequest(gas, 0.01, 0.62, 101325.0));
+```
+
+The legacy adapter delegates the numeric rate to the historical scalar method, including its
+documented density, molar-mass and heat-capacity-ratio fallback policy. It does not relabel that
+behavior as strict physics. Because the legacy equation never solves throat or exit thermodynamics,
+its opening snapshots alias the initialized upstream pressure and temperature. Consumers can detect
+this limitation from `UNRESOLVED_STATIONS`; they must not interpret those snapshots as a nozzle
+solution.
+
+## Ideal-gas equations
+
+The ideal-gas adapter uses the initialized mixture molar mass $M$ [kg/mol] and heat-capacity ratio
+$\gamma$ [1] without replacement values. With $R=8.31446261815324$ J/(mol K), the critical pressure
+ratio, isentropic station temperature, density and velocity are:
+
+$$r_c=\left(\frac{2}{\gamma+1}\right)^{\gamma/(\gamma-1)},\quad \frac{T}{T_0}=\left(\frac{p}{p_0}\right)^{(\gamma-1)/\gamma}.$$
+
+$$\rho=\frac{pM}{RT},\quad c_p=\frac{\gamma R}{(\gamma-1)M},\quad u=\sqrt{2c_p(T_0-T)},\quad \dot m=C_dA\rho u.$$
+
+The accepted throat pressure is $p_0r_c$ when $p_b/p_0\le r_c$ and $p_b$ otherwise. For a choked
+state, the analytical velocity equals $\sqrt{\gamma RT/M}$. Station enthalpy uses the upstream
+NeqSim reference minus $u^2/2$ and station entropy retains the upstream reference. This preserves
+relative energy/entropy consistency without presenting an arbitrary absolute ideal-gas reference
+as new property data. The adapter supports one gas phase only and excludes reaction, forced phases,
+solid/hydrate checks, real-gas departure, phase change, friction, heat transfer and depletion.
+
+## Homogeneous-equilibrium equations and station semantics
 
 The upstream TP flash establishes stagnation enthalpy $h_0$ [J/kg] and entropy $s_0$
 [J/(kg K)]. Pure-fluid pressure samples use PS flashes to retain the saturation-quality
@@ -105,9 +151,11 @@ term for that mixture. Full mixture-flashing coverage needs further thermodynami
 ## Compatibility and extension
 
 Existing scalar `LeakModel` methods and its lumped blowdown calculation keep their existing
-screening behavior. The new `calculateReleaseFlow` method is opt-in; selecting a new model
-does not change the legacy blowdown equations. This prevents a model switch from silently
-relabeling old results. Use process dynamics for time-dependent state evolution.
+screening behavior. `LegacyScreeningReleaseModel` is an opt-in compatibility adapter that proves
+rate equality while exposing screening limitations in machine-readable diagnostics. The
+`calculateReleaseFlow` method still requires explicit model selection and does not change legacy
+blowdown equations. This prevents a model switch from silently relabeling old results. Use process
+dynamics for time-dependent state evolution.
 
 Additional models implement the serializable `ReleaseFlowModel` interface and return checked
 `ReleaseFlowResult.success` or `.failure` objects with stable identity/version and diagnostic

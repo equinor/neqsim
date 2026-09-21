@@ -83,10 +83,16 @@ The [live process-integration layer](live-source-term-sessions) supplies model/s
 steady-state and transient stepping, and current-state checks. The frame class itself does not
 run processes, open network connections or control equipment.
 
+[Uncertainty ensembles](source-term-uncertainty) also use v1 frames. Their provenance declares
+`sequenceMeaning=ENSEMBLE_CASE_INDEX`, with ensemble/case identifiers and probability weights.
+These are alternative input cases at one simulation time, not consecutive live states.
+Keep their JSON provenance when exporting reduced CSV; never integrate case order as time.
+
 ## Compatibility and scope
 
 This additive schema does not reinterpret earlier source-term or CFD formats. Store the schema
 version and model version with every saved study. Readers must reject unknown major versions.
 Future changes follow the repository API lifecycle policy. No default uncertainty distributions,
 isolation assumptions, coordinates, weather, ignition probabilities, or consequence models are
-invented by this contract. It is the second draft implementation layer of NRC-3860.
+invented by this contract. This is the exchange layer of NRC-3860; see the
+[implementation status](source-term-platform-status) for delivered and remaining capabilities.

@@ -4,9 +4,13 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
-/** Immutable EOS station snapshot. Density is total mass divided by thermodynamic EOS volume. */
+/**
+ * Immutable model-explicit station snapshot. EOS-backed factories use total mass divided by thermodynamic volume;
+ * analytical models must declare their alternative property basis.
+ */
 public final class ReleaseState implements Serializable {
   private static final long serialVersionUID = 1L;
   private final double pressurePa;
@@ -51,6 +55,35 @@ public final class ReleaseState implements Serializable {
     phaseMassFractions = fractions(phase);
   }
 
+  private ReleaseState(SystemInterface compositionReference, double pressurePa, double temperatureK, double densityKgM3,
+      double enthalpyJkg, double entropyJkgK, double velocityMs) {
+    this.pressurePa = ReleaseFlowRequest.positive(pressurePa, "pressurePa");
+    this.temperatureK = ReleaseFlowRequest.positive(temperatureK, "temperatureK");
+    this.densityKgM3 = ReleaseFlowRequest.positive(densityKgM3, "ideal-gas density");
+    if (!Double.isFinite(enthalpyJkg) || !Double.isFinite(entropyJkgK) || !Double.isFinite(velocityMs)
+        || velocityMs < 0.0) {
+      throw new IllegalStateException("Nonfinite caloric property or invalid station velocity");
+    }
+    this.enthalpyJkg = enthalpyJkg;
+    this.entropyJkgK = entropyJkgK;
+    this.velocityMs = velocityMs;
+    Map<String, Double> mole = new TreeMap<String, Double>();
+    Map<String, Double> weight = new TreeMap<String, Double>();
+    double moles = ReleaseFlowRequest.positive(compositionReference.getTotalNumberOfMoles(), "total moles");
+    double mass = ReleaseFlowRequest.positive(compositionReference.getMass("kg"), "mass");
+    for (int i = 0; i < compositionReference.getNumberOfComponents(); i++) {
+      String name = compositionReference.getComponent(i).getComponentName();
+      double amount = compositionReference.getComponent(i).getNumberOfmoles();
+      mole.put(name, amount / moles);
+      weight.put(name, amount * compositionReference.getComponent(i).getMolarMass() / mass);
+    }
+    componentMoleFractions = fractions(mole);
+    componentMassFractions = fractions(weight);
+    Map<String, Double> phase = new TreeMap<String, Double>();
+    phase.put(PhaseType.GAS.name(), 1.0);
+    phaseMassFractions = fractions(phase);
+  }
+
   /**
    * Snapshots an initialized fluid without flashing or modifying it.
    *
@@ -65,6 +98,21 @@ public final class ReleaseState implements Serializable {
       throw new IllegalArgumentException("Fluid required");
     }
     return new ReleaseState(fluid, velocityMs);
+  }
+
+  /**
+   * Creates an analytical ideal-gas station while retaining the supplied overall composition.
+   *
+   * <p>
+   * Package-private by design: release models, rather than callers, own the property basis of a station.
+   */
+  static ReleaseState idealGas(SystemInterface compositionReference, double pressurePa, double temperatureK,
+      double densityKgM3, double enthalpyJkg, double entropyJkgK, double velocityMs) {
+    if (compositionReference == null) {
+      throw new IllegalArgumentException("Composition reference required");
+    }
+    return new ReleaseState(compositionReference, pressurePa, temperatureK, densityKgM3, enthalpyJkg, entropyJkgK,
+        velocityMs);
   }
 
   private static Map<String, Double> fractions(Map<String, Double> values) {

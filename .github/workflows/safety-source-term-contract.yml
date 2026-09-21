@@ -38,7 +38,7 @@ jobs:
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check
-          ./mvnw -B -ntp -Dtest=ReleaseFlowModelTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest test
+          ./mvnw -B -ntp -Dtest=ReleaseFlowModelTest,ReleaseFlowAdapterTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
       - name: Validate emitted frames and schema rejection cases
         run: |
           python -m pip install jsonschema==4.26.0
@@ -53,4 +53,5 @@ jobs:
           path: |
             target/surefire-reports/
             target/source-term-contract-fixtures/
+            target/source-term-benchmarks/
           retention-days: 14
