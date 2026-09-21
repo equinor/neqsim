@@ -175,22 +175,6 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   }
 
   /**
-   * Convert a rate value using the generic static signature.
-   *
-   * <p>
-   * Rate conversion depends on fluid properties, so this overload is intentionally unsupported.
-   *
-   * @param value value to convert
-   * @param unit source unit
-   * @param toUnit target unit
-   * @return never returns normally
-   */
-  public static double convert(double value, String unit, String toUnit) {
-    throw new UnsupportedOperationException(
-        "Rate conversion requires fluid properties. " + "Use convert(value, unit, toUnit, molarmass, stddens, boilp).");
-  }
-
-  /**
    * Convert a rate value between units using fluid properties.
    *
    * @param value value to convert
