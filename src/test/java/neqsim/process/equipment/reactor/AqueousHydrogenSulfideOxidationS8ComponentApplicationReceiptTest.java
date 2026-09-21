@@ -16,8 +16,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests non-mutating verification of externally applied S8 component additions. */
-public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
-    extends NeqSimTest {
+public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest extends NeqSimTest {
   private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 25.0e-6;
   private static final double WATER_INVENTORY_KG = 1200.0;
   private static final double PRIOR_S8_AMOUNT_MOL = 2.0;
@@ -45,8 +44,7 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
     assertEquals(PRIOR_S8_AMOUNT_MOL, receipt.getPriorS8AmountMol(), 0.0);
     assertEquals(plan.getTransferredS8AmountMol(), receipt.getObservedS8IncrementMol(),
         8.0 * Math.ulp(plan.getCandidateS8AmountMol()));
-    assertTrue(Math.abs(receipt.getPlanApplicationResidualMol())
-        <= 8.0 * Math.ulp(plan.getCandidateS8AmountMol()));
+    assertTrue(Math.abs(receipt.getPlanApplicationResidualMol()) <= 8.0 * Math.ulp(plan.getCandidateS8AmountMol()));
     assertEquals(0.0, receipt.getMaximumNonS8InventoryResidualMol(), 0.0);
     assertEquals(priorTotalBefore, prior.getTotalNumberOfMoles(), 0.0);
     assertEquals(candidateTotalBefore, candidate.getTotalNumberOfMoles(), 0.0);
@@ -84,8 +82,8 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
     AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan = strictAppendPlan();
     SystemInterface prior = system(10.0, 3.0, PRIOR_S8_AMOUNT_MOL, false);
     SystemInterface candidate = system(10.0, 3.0, plan.getCandidateS8AmountMol(), false);
-    SystemInterface doubleApplied = system(10.0, 3.0,
-        PRIOR_S8_AMOUNT_MOL + 2.0 * plan.getTransferredS8AmountMol(), false);
+    SystemInterface doubleApplied = system(10.0, 3.0, PRIOR_S8_AMOUNT_MOL + 2.0 * plan.getTransferredS8AmountMol(),
+        false);
     SystemInterface contaminated = system(10.5, 3.0, plan.getCandidateS8AmountMol(), false);
     SystemInterface removedComponent = system(10.0, 0.0, plan.getCandidateS8AmountMol(), false);
 
@@ -99,9 +97,9 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
         .verify(plan, TARGET_IDENTIFIER, APPLICATION_KEY, prior, contaminated));
     assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt
         .verify(plan, TARGET_IDENTIFIER, APPLICATION_KEY, prior, removedComponent));
-    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt
-        .verify(plan, TARGET_IDENTIFIER, APPLICATION_KEY,
-            system(10.0, 3.0, PRIOR_S8_AMOUNT_MOL - 0.5, false), candidate));
+    assertThrows(IllegalArgumentException.class,
+        () -> AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.verify(plan, TARGET_IDENTIFIER,
+            APPLICATION_KEY, system(10.0, 3.0, PRIOR_S8_AMOUNT_MOL - 0.5, false), candidate));
   }
 
   @Test
@@ -141,8 +139,8 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
         Double.doubleToLongBits(restored.getTotalAmountClosureResidualMol()));
   }
 
-  private static SystemInterface system(double methaneAmountMol, double carbonDioxideAmountMol,
-      double s8AmountMol, boolean reverseOrder) {
+  private static SystemInterface system(double methaneAmountMol, double carbonDioxideAmountMol, double s8AmountMol,
+      boolean reverseOrder) {
     SystemInterface system = new SystemSrkEos(298.15, 80.0);
     if (reverseOrder) {
       system.addComponent("CO2", carbonDioxideAmountMol);
@@ -166,17 +164,16 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
         batch(6.0, 0.50, "batch-1", "segment-1"));
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result transition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
         .create(prior, candidate);
-    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, candidate,
-        transition, TARGET_IDENTIFIER, APPLICATION_KEY, PRIOR_S8_AMOUNT_MOL);
+    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, candidate, transition,
+        TARGET_IDENTIFIER, APPLICATION_KEY, PRIOR_S8_AMOUNT_MOL);
   }
 
   private static AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result unchangedPlan() {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(batch(4.0, 0.25,
-        "batch-0", "segment-0"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result transition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
         .create(prior, prior);
-    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, prior, transition,
-        TARGET_IDENTIFIER, APPLICATION_KEY, PRIOR_S8_AMOUNT_MOL);
+    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, prior, transition, TARGET_IDENTIFIER,
+        APPLICATION_KEY, PRIOR_S8_AMOUNT_MOL);
   }
 
   private static AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger(
@@ -189,16 +186,13 @@ public class AqueousHydrogenSulfideOxidationS8ComponentApplicationReceiptTest
     AqueousHydrogenSulfideOxidationTrajectory.Segment segment = new AqueousHydrogenSulfideOxidationTrajectory.Segment(
         durationHours, 298.15, 8.0, 0.723, 250.0e-6);
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult = AqueousHydrogenSulfideOxidationTrajectory
-        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(segment))
-        .getSegmentResults().get(0);
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(segment)).getSegmentResults().get(0);
     AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation = AqueousHydrogenSulfideOxidationElementalSulfurAllocation
-        .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult,
-            WATER_INVENTORY_KG), allocationFraction, ALLOCATION_BASIS);
+        .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
+            allocationFraction, ALLOCATION_BASIS);
     AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer
-        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL,
-            PRODUCT_BASIS, idempotencyKey);
-    return AqueousHydrogenSulfideOxidationS8TransferBatch.create(
-        Collections.singletonList(transfer), batchIdentifier);
+        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
+    return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer), batchIdentifier);
   }
 
   private static AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result serializeRoundTrip(
