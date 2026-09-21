@@ -32,6 +32,12 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getSIUnit() {
     return "m";
   }
@@ -67,27 +73,6 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   @Override
   public double getSIvalue() {
     return invalue * getConversionFactor(inunit);
-  }
-
-  /**
-   * Convert the current length to the specified unit.
-   *
-   * <p>
-   * Converts the stored value from its original unit to the target unit. Supported units: m, meter, metre, cm, mm, km,
-   * in, inch, ft, feet. Examples:
-   * <ul>
-   * <li>LengthUnit(100, "cm").getValue("m") = 1.0</li>
-   * <li>LengthUnit(5, "ft").getValue("m") = 1.524</li>
-   * <li>LengthUnit(1, "km").getValue("ft") = 3280.84</li>
-   * </ul>
-   *
-   * @param toUnit target unit name (one of the supported units)
-   * @return converted value in the target unit
-   * @throws RuntimeException if the target unit is not supported
-   */
-  @Override
-  public double getValue(String toUnit) {
-    return getSIvalue() / getConversionFactor(toUnit);
   }
 
   /**

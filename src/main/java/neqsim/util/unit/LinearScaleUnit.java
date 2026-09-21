@@ -48,4 +48,10 @@ public interface LinearScaleUnit extends Unit {
    * @throws RuntimeException if the unit name is not supported by this implementation
    */
   double getConversionFactor(String unit);
+
+  /** {@inheritDoc} */
+  @Override
+  public default double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
+  }
 }

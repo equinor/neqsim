@@ -41,6 +41,12 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
 
   /** {@inheritDoc} */
   @Override
+  public String[] getAllowedUnits() {
+    return new String[] {"K", "C", "F", "R"};
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String getSIUnit() {
     return "K";
   }
@@ -67,11 +73,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * Convert a given temperature value from Kelvin to a specified unit.
-   */
+  /** {@inheritDoc} */
   @Override
   public double getValue(String toUnit) {
     // convert the original value to Kelvin and reuse for subsequent conversions
