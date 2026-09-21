@@ -57,7 +57,7 @@ require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
     "scientifically validated: 8 records remain\n"
-    "`CONFIRMED_GAP`, forty-three are `CONTRACT_TESTED`",
+    "`CONFIRMED_GAP`, forty-four are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
 
@@ -66,7 +66,7 @@ contract_line = next(
     (
         line
         for line in foundation.splitlines()
-        if line.startswith("- Forty-three bounded software contracts")
+        if line.startswith("- Forty-four bounded software contracts")
     ),
     None,
 )
