@@ -1590,13 +1590,14 @@ def test_capabilities():
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
         "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
         "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
+        "designUtilities",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-three bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.43"
-          and limitations.get("contractTestedToolCount") == 43
-          and limitations.get("confirmedGapToolCount") == 8
+    check("forty-four bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.44"
+          and limitations.get("contractTestedToolCount") == 44
+          and limitations.get("confirmedGapToolCount") == 7
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1655,6 +1656,16 @@ def test_capabilities():
           and "does not establish global or local optimization"
           in process_loop.get("evidenceBoundary", ""),
           str(process_loop))
+    utility_design = coverage_records.get("designUtilities", {})
+    check("utility design has canonical screening evidence",
+          utility_design.get("coverageStatus") == "CONTRACT_TESTED"
+          and utility_design.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_UTILITY_DESIGN_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_utility_design_protocol.py"
+          in utility_design.get("contractEvidenceSources", [])
+          and "canonical NeqSim Boiler" in utility_design.get("evidenceBoundary", "")
+          and "design-basis completeness" in utility_design.get("evidenceBoundary", ""),
+          str(utility_design))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1878,7 +1889,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 8
+          and limitations.get("confirmedGapToolCount") == 7
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2139,6 +2150,15 @@ def test_design_utilities():
         "duties": json.dumps([{"name": "Reboiler", "dutyKW": 5000.0}]),
     })
     check("boiler status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "deaerator",
+        "name": "Feedwater Deaerator",
+        "feedwaterFlowKgh": 12000.0,
+        "feedwaterInletTempC": 85.0,
+        "operatingPressureBara": 1.2,
+    })
+    check("deaerator status=success", r.get("status") == "success", r.get("message", ""))
 
     r = call_tool("designUtilities", {
         "utilityType": "refrigeration",
