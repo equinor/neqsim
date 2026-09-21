@@ -51,7 +51,6 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     double psia = unit.getValue("psia");
     double expectedPsia = (5.0 + ThermodynamicConstantsInterface.referencePressure) / unit.getConversionFactor("psi");
     assertEquals(expectedPsia, psia, 1e-6);
-    PressureUnit converter = new PressureUnit(0.0, "bara");
     assertEquals(5.0, new PressureUnit(psia, "psia").getValue("barg"), 1e-6);
   }
 
