@@ -13,9 +13,8 @@ class RefineryHydrotreatingHydrogenUtilityBalanceTest {
   void qualifiesPublicBigHillUtilityReceipt() {
     RefineryHydrotreatingThroughputBalance throughput = publicThroughput(1000.0);
 
-    RefineryHydrotreatingHydrogenUtilityBalance utility =
-        RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-            throughput, LHV_MJ_PER_KG, COST_PER_KG);
+    RefineryHydrotreatingHydrogenUtilityBalance utility = RefineryHydrotreatingHydrogenUtilityBalance
+        .calculate(throughput, LHV_MJ_PER_KG, COST_PER_KG);
 
     assertSame(throughput, utility.getThroughputBalance());
     assertEquals(LHV_MJ_PER_KG, utility.getHydrogenLowerHeatingValueMegaJoulePerKg());
@@ -34,47 +33,30 @@ class RefineryHydrotreatingHydrogenUtilityBalanceTest {
 
   @Test
   void scalesRatesAndPreservesNormalizedCost() {
-    RefineryHydrotreatingHydrogenUtilityBalance base =
-        RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-            publicThroughput(1000.0), LHV_MJ_PER_KG, COST_PER_KG);
-    RefineryHydrotreatingHydrogenUtilityBalance doubled =
-        RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-            publicThroughput(2000.0), LHV_MJ_PER_KG, COST_PER_KG);
+    RefineryHydrotreatingHydrogenUtilityBalance base = RefineryHydrotreatingHydrogenUtilityBalance
+        .calculate(publicThroughput(1000.0), LHV_MJ_PER_KG, COST_PER_KG);
+    RefineryHydrotreatingHydrogenUtilityBalance doubled = RefineryHydrotreatingHydrogenUtilityBalance
+        .calculate(publicThroughput(2000.0), LHV_MJ_PER_KG, COST_PER_KG);
 
-    assertEquals(
-        2.0 * base.getFreshHydrogenMassFlowKgPerHour(),
-        doubled.getFreshHydrogenMassFlowKgPerHour(),
+    assertEquals(2.0 * base.getFreshHydrogenMassFlowKgPerHour(), doubled.getFreshHydrogenMassFlowKgPerHour(), 1.0e-12);
+    assertEquals(2.0 * base.getFreshHydrogenChemicalPowerMegaWatt(), doubled.getFreshHydrogenChemicalPowerMegaWatt(),
         1.0e-12);
-    assertEquals(
-        2.0 * base.getFreshHydrogenChemicalPowerMegaWatt(),
-        doubled.getFreshHydrogenChemicalPowerMegaWatt(),
-        1.0e-12);
-    assertEquals(
-        2.0 * base.getFreshHydrogenCostPerHour(),
-        doubled.getFreshHydrogenCostPerHour(),
-        1.0e-12);
-    assertEquals(
-        base.getFreshHydrogenCostPerTonneFeed(),
-        doubled.getFreshHydrogenCostPerTonneFeed(),
-        1.0e-12);
+    assertEquals(2.0 * base.getFreshHydrogenCostPerHour(), doubled.getFreshHydrogenCostPerHour(), 1.0e-12);
+    assertEquals(base.getFreshHydrogenCostPerTonneFeed(), doubled.getFreshHydrogenCostPerTonneFeed(), 1.0e-12);
   }
 
   @Test
   void keepsZeroRemovalUtilityAtZero() {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0, 0.0, 2.0);
-    RefineryHydrotreatingHydrogenSupplyBalance supply =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(
-            sulfur, 1.5, 0.90, 0.0280134);
-    RefineryHydrotreatingHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingHydrogenRecycleBalance.calculate(
-            supply, 0.90, 0.10, 0.50, 0.05);
-    RefineryHydrotreatingThroughputBalance throughput =
-        RefineryHydrotreatingThroughputBalance.calculate(recycle, 1000.0);
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0, 0.0, 2.0);
+    RefineryHydrotreatingHydrogenSupplyBalance supply = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur,
+        1.5, 0.90, 0.0280134);
+    RefineryHydrotreatingHydrogenRecycleBalance recycle = RefineryHydrotreatingHydrogenRecycleBalance.calculate(supply,
+        0.90, 0.10, 0.50, 0.05);
+    RefineryHydrotreatingThroughputBalance throughput = RefineryHydrotreatingThroughputBalance.calculate(recycle,
+        1000.0);
 
-    RefineryHydrotreatingHydrogenUtilityBalance utility =
-        RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-            throughput, LHV_MJ_PER_KG, COST_PER_KG);
+    RefineryHydrotreatingHydrogenUtilityBalance utility = RefineryHydrotreatingHydrogenUtilityBalance
+        .calculate(throughput, LHV_MJ_PER_KG, COST_PER_KG);
 
     assertEquals(0.0, utility.getFreshHydrogenMassFlowKgPerHour(), 0.0);
     assertEquals(0.0, utility.getConsumedHydrogenChemicalPowerMegaWatt(), 0.0);
@@ -87,41 +69,25 @@ class RefineryHydrotreatingHydrogenUtilityBalanceTest {
   void rejectsInvalidInputs() {
     RefineryHydrotreatingThroughputBalance throughput = publicThroughput(1000.0);
 
-    assertThrows(
-        NullPointerException.class,
-        () ->
-            RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-                null, LHV_MJ_PER_KG, COST_PER_KG));
-    assertThrows(
-        IllegalArgumentException.class,
+    assertThrows(NullPointerException.class,
+        () -> RefineryHydrotreatingHydrogenUtilityBalance.calculate(null, LHV_MJ_PER_KG, COST_PER_KG));
+    assertThrows(IllegalArgumentException.class,
         () -> RefineryHydrotreatingHydrogenUtilityBalance.calculate(throughput, 0.0, COST_PER_KG));
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-                throughput, Double.NaN, COST_PER_KG));
-    assertThrows(
-        IllegalArgumentException.class,
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryHydrotreatingHydrogenUtilityBalance.calculate(throughput, Double.NaN, COST_PER_KG));
+    assertThrows(IllegalArgumentException.class,
         () -> RefineryHydrotreatingHydrogenUtilityBalance.calculate(throughput, LHV_MJ_PER_KG, -1.0));
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            RefineryHydrotreatingHydrogenUtilityBalance.calculate(
-                throughput, LHV_MJ_PER_KG, Double.POSITIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingHydrogenUtilityBalance.calculate(throughput,
+        LHV_MJ_PER_KG, Double.POSITIVE_INFINITY));
   }
 
-  private static RefineryHydrotreatingThroughputBalance publicThroughput(
-      double feedMassFlowKgPerHour) {
-    RefineryHydrotreatingSulfurBalance sulfur =
-        RefineryHydrotreatingSulfurBalance.calculate(
-            1000.0, 0.0040867518, 15.0e-6, 2.0);
-    RefineryHydrotreatingHydrogenSupplyBalance supply =
-        RefineryHydrotreatingHydrogenSupplyBalance.calculate(
-            sulfur, 1.5, 0.90, 0.0280134);
-    RefineryHydrotreatingHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingHydrogenRecycleBalance.calculate(
-            supply, 0.90, 0.10, 0.50, 0.05);
-    return RefineryHydrotreatingThroughputBalance.calculate(
-        recycle, feedMassFlowKgPerHour);
+  private static RefineryHydrotreatingThroughputBalance publicThroughput(double feedMassFlowKgPerHour) {
+    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0040867518,
+        15.0e-6, 2.0);
+    RefineryHydrotreatingHydrogenSupplyBalance supply = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur,
+        1.5, 0.90, 0.0280134);
+    RefineryHydrotreatingHydrogenRecycleBalance recycle = RefineryHydrotreatingHydrogenRecycleBalance.calculate(supply,
+        0.90, 0.10, 0.50, 0.05);
+    return RefineryHydrotreatingThroughputBalance.calculate(recycle, feedMassFlowKgPerHour);
   }
 }
