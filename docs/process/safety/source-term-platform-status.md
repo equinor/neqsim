@@ -28,6 +28,9 @@ The current implementation includes:
   unconditional statistics for incomplete ensembles, with schema-compatible case frames.
 - Explicit ideal-gas and legacy-screening adapters. The ideal-gas path has no silent property
   defaults; the compatibility path reports `SCREENING_ONLY` and unresolved station semantics.
+- [Coupled gas inventory depletion](coupled-release-inventory) through native process dynamics,
+  with component/energy/volume closure, atomic unit updates, timestep-refinement evidence and
+  schema-validated frames from both process containers. Gas-only applicability is explicit.
 - Analytical gas limits, dense-fluid conservation and flashing, multicomponent, lifecycle
   and contract regressions in focused CI.
 
@@ -39,7 +42,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Two-way transient inventory coupling | Live sources sample hypothetical openings without removing mass or energy. | Depleting inventory coupled to release physics, component/energy closure and timestep convergence. |
+| Broader transient inventory regimes | Rigid adiabatic gas inventory is coupled and balance/refinement tested. Ordinary live sources remain hypothetical. | Multiphase/phase-selective withdrawal, pressure-equilibration event handling and qualification beyond the gas-only boundary. |
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Conservative CO2 temperature and enabled-solid checks exist. | Mixture-specific solid-risk assessment and assessed solid-capable physics where supported. |

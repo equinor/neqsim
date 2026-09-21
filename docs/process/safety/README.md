@@ -21,6 +21,7 @@ acceptance criteria, and accountable review.
 | Produce structured transient evidence | `EmergencyShutdownTestRunner`, `DynamicSafetyScenarioRunner`, and `ClosedLoopSafetyFunction` | Define monitored tags, criteria, calculation identity, and result retention explicitly |
 | Screen relief load and area | `ReliefValveSizing` and the scenario definitions on `SafetyValve` | Static sizing is separate from the valve's dynamic opening and reseating behavior |
 | Hand off consequence inputs | Release, dispersion, open-drain, flare, and CFD source-term utilities | Layout, weather, leak frequency, escalation, and QRA conclusions remain external qualification tasks |
+| Couple a trapped gas release to depletion | [ReleaseInventory](coupled-release-inventory) and `SourceTermSession.addInventorySource` | Rigid, adiabatic, single gas-phase inventory; explicit component/energy closure and timestep refinement |
 
 ## Units and state ownership
 

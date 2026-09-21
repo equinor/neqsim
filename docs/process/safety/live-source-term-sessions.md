@@ -121,19 +121,26 @@ status of valid does not guarantee a recently received frame is still current on
 
 ## Physical meaning and isolation
 
-Each source is an **instantaneous hypothetical opening** evaluated from the sampled fluid.
+Each source registered with `addSource` is an **instantaneous hypothetical opening** evaluated from the sampled fluid.
 The source does not remove mass or energy from the connected process. Its provenance explicitly
 records `HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK`. To calculate a depleting release, model the
 physical discharge and inventory balance in the process; sample the resulting trajectory and
 check component/energy conservation and timestep sensitivity. Do not apply this source rate as
 an additional loss when the process already includes that discharge.
 
+For opt-in two-way gas depletion, use [ReleaseInventory and `addInventorySource`](coupled-release-inventory).
+The inventory removes component mass and stagnation enthalpy during native process stepping;
+the session exports the updated instantaneous source and cumulative balance provenance.
+That path reports `COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`. It is bounded to a rigid adiabatic
+single gas-phase inventory and has no automatic phase/model fallback.
+
 A sampled mass rate is not a timestep average or an integrated release mass. Retain the initial
 frame, integrate only over valid intervals using a documented quadrature, and refine timesteps
 around openings, closures and phase transitions. Do not interpolate across failed, stale or
 disabled intervals as if their missing values were zero.
 
-`setEnabled(sourceId, false)` disables the hypothetical opening only. An upstream shutdown or
+`setEnabled(sourceId, false)` disables source export only, including for a coupled inventory.
+Use `ReleaseInventory.setReleaseEnabled(false)` to stop its physical withdrawal. An upstream shutdown or
 isolation valve closing does not empty trapped inventory or necessarily stop an existing leak.
 Represent those actions in the process model and use its event scheduling/control facilities.
 Specify source position/orientation through `SourceTermFrame.withLocation` when spatial boundary
@@ -151,7 +158,7 @@ not independent engineering qualification.
 The selected homogeneous-equilibrium model retains its documented applicability and limitations,
 including unsupported solid-risk cases and invalid unresolved mixture flashes. No automatic
 fallback to a different model is performed. This implementation supplies an auditable foundation;
-relaxation/non-equilibrium discharge models, two-way inventory coupling and experimental
+relaxation/non-equilibrium discharge models, multiphase inventory coupling and experimental
 qualification require separately reviewed extensions. [Uncertainty ensembles](source-term-uncertainty)
 evaluate complete joint inputs after the corresponding process states have been solved.
 The architecture and foundational APIs have merged; that does not establish qualification.
