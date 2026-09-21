@@ -60,6 +60,22 @@ public class LeakModel implements Serializable {
   private final double backPressure; // Pa
   private final String scenarioName;
 
+  /**
+   * Calculates an explicit release model using this opening's geometry and back pressure. This opt-in path does not
+   * change the legacy scalar or blowdown calculations.
+   *
+   * @param system current upstream stagnation state
+   * @param model selected instantaneous release model
+   * @return model-explicit stations and diagnostics; inspect status before use
+   * @throws IllegalArgumentException if model or request geometry is invalid
+   */
+  public ReleaseFlowResult calculateReleaseFlow(SystemInterface system, ReleaseFlowModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException("Release model is required");
+    }
+    return model.calculate(new ReleaseFlowRequest(system, holeDiameter, dischargeCoefficient, backPressure));
+  }
+
   private LeakModel(Builder builder) {
     this.fluid = builder.fluid.clone();
     this.holeDiameter = builder.holeDiameter;
