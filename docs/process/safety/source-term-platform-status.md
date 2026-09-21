@@ -26,18 +26,19 @@ The current implementation includes:
   `ProcessModel`, including real separator dynamics in tests.
 - [Weighted uncertainty ensembles](source-term-uncertainty), retaining failures and refusing
   unconditional statistics for incomplete ensembles, with schema-compatible case frames.
+- Explicit ideal-gas and legacy-screening adapters. The ideal-gas path has no silent property
+  defaults; the compatibility path reports `SCREENING_ONLY` and unresolved station semantics.
 - Analytical gas limits, dense-fluid conservation and flashing, multicomponent, lifecycle
   and contract regressions in focused CI.
 
-Legacy `LeakModel` behavior is preserved. There is currently **one** implementation of the new
-`ReleaseFlowModel` interface. Proposed ideal-gas and legacy screening adapters are not implemented;
-the ideal-gas calculation is a benchmark reference only.
+Legacy `LeakModel` behavior is preserved. The new interface now has homogeneous-equilibrium,
+analytical ideal-gas and explicit legacy-screening implementations. Model selection remains
+caller-owned; no phase-count rule silently changes the requested physics.
 
 ## Remaining work before the whole issue can close
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Ideal-gas and legacy-screening adapters | New interface supports homogeneous equilibrium; legacy scalar API remains separate. | Declared stations, model selection, reported screening fallbacks and compatibility tests. |
 | Two-way transient inventory coupling | Live sources sample hypothetical openings without removing mass or energy. | Depleting inventory coupled to release physics, component/energy closure and timestep convergence. |
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
