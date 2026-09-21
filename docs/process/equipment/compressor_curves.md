@@ -835,6 +835,22 @@ chart.setOperatingMW(20.0)
 
 Multi-speed (variable speed) compressors have performance curves at multiple rotational speeds. NeqSim interpolates between these curves to determine performance at any operating speed.
 
+For `CompressorChartAlternativeMapLookupExtrapolate` (the `"interpolate and extrapolate"`
+chart type), head is evaluated on the two surrounding speed curves at the requested
+actual flow and then linearly interpolated in speed. The interpolated head is not
+scaled by speed again: the supplied curves already represent the speed dependence.
+This preserves continuity through every reference speed, which is required for
+repeatable speed solves and compressor-capacity optimization. This corrects older
+behavior that introduced downward jumps just above reference speeds and could make
+a previously feasible optimizer point exceed the speed limit when replayed.
+
+Exact reference-curve values, efficiency interpolation, flow extrapolation, and the
+existing single-curve linear speed scaling outside the speed range are unchanged.
+Operating points between speed curves can therefore produce different head, speed,
+power, and utilization than older versions; re-evaluate optimized setpoints after
+upgrading. Extrapolation remains a model estimate and does not extend the allowable
+equipment operating envelope.
+
 ### Setting Up Multi-Speed Curves
 
 ```java

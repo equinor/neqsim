@@ -1028,6 +1028,14 @@ public class BottleneckAnalysisOptimizerTest {
     Assertions.assertTrue(stage2Result.isFeasible(),
         "Two-stage result should be feasible: " + stage2Result.getInfeasibilityDiagnosis());
     Assertions.assertTrue(stage2Result.getBottleneckUtilization() <= 1.0, "Bottleneck should be at or below 100%");
+    // Capacity evidence must remain feasible after replay, including the chart speed limit rather than only power.
+    for (int replay = 0; replay < 3; replay++) {
+      processSystem.run();
+      for (Compressor compressor : Arrays.asList(ups1Comp, ups2Comp, ups3Comp)) {
+        Assertions.assertTrue(compressor.getMaxUtilization() <= 1.0,
+            compressor.getName() + " must remain within every capacity limit on replay " + replay);
+      }
+    }
     // Note: After split factor optimization, the original flow may no longer be
     // achievable
     // if the new split allocation causes a different compressor to become the

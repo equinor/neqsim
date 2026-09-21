@@ -49,8 +49,7 @@ class DynamicCompressorNotebookRegressionTest {
 
   /**
    * The reverse-acting discharge-pressure controller must move compressor speed in the physically correct direction: a
-   * higher pressure set point commands a higher speed, a lower set point commands a lower speed, and a reachable set
-   * point is tracked.
+   * high pressure demand saturates at the upper speed limit and low demand saturates at the lower limit.
    *
    * <p>
    * Exact tracking of an arbitrary discharge-pressure set point is <em>not</em> asserted, because the two dynamic
@@ -60,33 +59,28 @@ class DynamicCompressorNotebookRegressionTest {
    * controller trajectory (this is the same limit-cycle / path-dependence pathology handled by
    * {@link #compressorSpeedUpRaisesMapHeadAtSameFlow()}). The deterministic, platform-robust invariant that a
    * regression test can rely on is the controller's manipulated-variable response: the compressor speed moves toward
-   * its high limit when more discharge pressure is demanded and toward its low limit when less is demanded, and a set
-   * point inside the achievable range is reached.
+   * its high limit when more discharge pressure is demanded and toward its low limit when less is demanded. Reachable
+   * set-point tracking is checked separately with a fixed inlet, without these inventory dynamics.
    * </p>
    */
   @Test
-  void pressureControllerReachesDischargePressureSetpoint() {
-    // A discharge-pressure set point below the current operating pressure: the reverse-acting controller reduces
-    // compressor speed toward its low limit until the measured pressure settles at the (reachable) set point.
-    // The achievable discharge pressure of this compact model spans roughly 9.8 bara at the minimum speed to about
-    // 12 bara at the maximum speed, so the set point must lie inside that band to exercise the speed response.
+  void pressureControllerDrivesSpeedTowardDemandedPressure() {
+    // This low demand is below the discharge pressure reached within the observation window. It must drive speed
+    // to the lower actuator bound; it is not evidence of a reachable equilibrium pressure.
     DynamicCompressorProcess low = createNotebookStyleProcess(true);
-    double reachableSetpoint = 10.2;
-    addDischargePressureController(low, reachableSetpoint);
-    runTransientSteps(low.process, 160);
-    double controlledPressure = low.dischargeSeparator.getGasOutStream().getPressure("bara");
+    double lowSetpoint = 10.2;
+    addDischargePressureController(low, lowSetpoint);
+    runTransientSteps(low.process, 400);
     double lowDemandSpeed = low.compressor.getSpeed();
-
-    assertTrue(Math.abs(controlledPressure - reachableSetpoint) < 1.0,
-        "controller should track a reachable discharge-pressure set point: setpoint=" + reachableSetpoint
-            + " bara, final=" + controlledPressure + " bara, speed=" + lowDemandSpeed);
+    assertTrue(lowDemandSpeed <= 8600.0 + 1.0,
+        "low discharge-pressure demand should saturate at the minimum speed: " + lowDemandSpeed);
 
     // A set point above the compressor's achievable discharge pressure: the controller must drive the speed up toward
     // its maximum output limit in the attempt.
     DynamicCompressorProcess high = createNotebookStyleProcess(true);
     double aggressiveSetpoint = 22.0;
     addDischargePressureController(high, aggressiveSetpoint);
-    runTransientSteps(high.process, 160);
+    runTransientSteps(high.process, 400);
     double highDemandSpeed = high.compressor.getSpeed();
 
     assertTrue(highDemandSpeed > lowDemandSpeed + 500.0,
@@ -95,6 +89,50 @@ class DynamicCompressorNotebookRegressionTest {
     assertTrue(highDemandSpeed >= 12200.0 - 1.0,
         "an unreachable discharge-pressure set point should saturate the compressor at its maximum output limit: speed="
             + highDemandSpeed);
+  }
+
+  /** Checks pressure tracking at a map-qualified target without the dynamic separator inventories. */
+  @Test
+  void pressureControllerTracksReachableSetpointWithFixedInlet() {
+    SystemInterface gas = new SystemSrkEos(298.15, 10.0);
+    gas.addComponent("methane", 0.9);
+    gas.addComponent("ethane", 0.1);
+    gas.setMixingRule("classic");
+    Stream feed = new Stream("fixed inlet", gas);
+    feed.setFlowRate(12000.0, "kg/hr");
+    feed.run();
+    Compressor compressor = new Compressor("pressure-controlled compressor", feed);
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicEfficiency(0.78);
+    compressor.setOutletPressure(18.0, "bara");
+    compressor.setSpeed(9800.0);
+    compressor.run();
+    compressor.generateCompressorChart("normal curves", new double[] {8000.0, 9000.0, 9800.0, 11000.0, 12200.0});
+    compressor.setMaximumSpeed(12200.0);
+    compressor.setMinimumSpeed(8600.0);
+    compressor.setSpeed(11000.0);
+    compressor.run();
+    double targetPressure = compressor.getOutletStream().getPressure("bara");
+    compressor.setSpeed(9800.0);
+    compressor.run();
+    double initialPressure = compressor.getOutletStream().getPressure("bara");
+    assertTrue(targetPressure > initialPressure + 0.1, "Target must require a measurable speed response");
+
+    PressureTransmitter transmitter = new PressureTransmitter("PT fixed inlet", compressor.getOutletStream());
+    ControllerDeviceBaseClass controller = new ControllerDeviceBaseClass("PC fixed inlet");
+    controller.setTransmitter(transmitter);
+    controller.setControllerSetPoint(targetPressure, "bara");
+    controller.setReverseActing(true);
+    controller.setOutputLimits(8600.0, 12200.0);
+    controller.setControllerParameters(300.0, 25.0, 0.0);
+    compressor.addController("PC fixed inlet", controller);
+    for (int step = 0; step < 400; step++) {
+      compressor.runController(TIME_STEP_SECONDS, UUID.randomUUID());
+      compressor.run();
+    }
+    double controlledPressure = compressor.getOutletStream().getPressure("bara");
+    assertTrue(Math.abs(controlledPressure - targetPressure) < 0.01,
+        "Reachable fixed-inlet target must be tracked: target=" + targetPressure + ", actual=" + controlledPressure);
   }
 
   /**

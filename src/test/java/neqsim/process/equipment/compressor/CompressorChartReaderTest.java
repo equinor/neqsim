@@ -59,6 +59,12 @@ public class CompressorChartReaderTest {
 
     compressor.run();
 
-    Assertions.assertEquals(5303.497378, compressor.getSpeed(), 0.1);
+    // Linear interpolation of the CSV speed curves, without a second speed correction to head.
+    Assertions.assertEquals(5160.045840, compressor.getSpeed(), 0.1);
+    double solvedSpeed = compressor.getSpeed();
+    compressor.setSpeed(6000.0);
+    compressor.run();
+    Assertions.assertEquals(solvedSpeed, compressor.getSpeed(), 0.1,
+        "Solving from another initial speed must recover the same operating point");
   }
 }
