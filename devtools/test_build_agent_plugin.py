@@ -309,6 +309,9 @@ class HookJavaResolutionTest(unittest.TestCase):
         src = bap.HOOK_PY.format(pinned="", editable_self=False, requirements=[],
                                  prefetch_mcp=True, live_requirements="", verify_imports=[])
         (self.root / "plugin.json").write_text('{"name": "neqsim", "version": "0"}', encoding="utf-8")
+        (self.root / "servers").mkdir()
+        (self.root / "servers" / "NeqsimMcpLauncher.java").write_text("// stub", encoding="utf-8")
+        self.launcher = str(self.root / "servers" / "NeqsimMcpLauncher.java")
         self.ns = {"__file__": str(self.root / "scripts" / "install_skill_packages.py")}
         self._env = dict(os.environ)
         os.environ["PLUGIN_ROOT"] = str(self.root)
@@ -371,37 +374,74 @@ class HookJavaResolutionTest(unittest.TestCase):
     def test_pins_own_mcp_entry_only_when_bare_java_is_unusable(self):
         mcp = self.root / "User" / "mcp.json"
         mcp.parent.mkdir()
-        launcher = "C:/plugins/neqsim/servers/NeqsimMcpLauncher.java"
-        cfg = {"servers": {"neqsim": {"type": "stdio", "command": "java", "args": [launcher]},
+        cfg = {"servers": {"neqsim": {"type": "stdio", "command": "java", "args": [self.launcher]},
                            "other": {"type": "stdio", "command": "java", "args": ["x.py"]}},
                "inputs": []}
         mcp.write_text(json.dumps(cfg), encoding="utf-8")
         self.ns["vscode_user_mcp_files"] = lambda: [mcp]
         java25 = str(self._java(self.jdk25))
+        ensure = self.ns["ensure_mcp_entry"]
         # PATH java is fine: a bare "java" entry is left untouched
-        self.assertEqual(self.ns["pin_mcp_java"](java25, 21), [])
+        self.assertEqual(ensure(java25, 21), ([], []))
         # PATH java is Java 8: our entry is pinned, the foreign one is not
-        self.assertEqual(self.ns["pin_mcp_java"](java25, 8), [str(mcp)])
+        self.assertEqual(ensure(java25, 8), ([], [str(mcp)]))
         patched = json.loads(mcp.read_text(encoding="utf-8"))
         self.assertEqual(patched["servers"]["neqsim"]["command"], java25)
         self.assertEqual(patched["servers"]["other"]["command"], "java")
         self.assertTrue(mcp.with_suffix(".json.bak").is_file())
-        self.assertEqual(self.ns["pin_mcp_java"](java25, 8), [])  # idempotent
+        self.assertEqual(ensure(java25, 8), ([], []))  # idempotent
         # a pinned JDK that was upgraded/removed (folder renamed) is re-pinned
         patched["servers"]["neqsim"]["command"] = str(self.root / "gone" / "bin" / "java.exe")
         mcp.write_text(json.dumps(patched), encoding="utf-8")
-        self.assertEqual(self.ns["pin_mcp_java"](java25, 8), [str(mcp)])
+        self.assertEqual(ensure(java25, 8), ([], [str(mcp)]))
+        # a launcher path from a moved/reinstalled plugin is re-pointed at this plugin
+        patched["servers"]["neqsim"]["args"] = [str(self.root / "old-plugin" / "servers" / "NeqsimMcpLauncher.java")]
+        mcp.write_text(json.dumps(patched), encoding="utf-8")
+        self.assertEqual(ensure(java25, 25), ([], [str(mcp)]))
+        self.assertEqual(json.loads(mcp.read_text(encoding="utf-8"))["servers"]["neqsim"]["args"], [self.launcher])
         # a foreign 'neqsim' server (not the plugin launcher) is never modified
         mcp.write_text(json.dumps({"servers": {"neqsim": {"command": "java", "args": ["mine.jar"]}}}),
                        encoding="utf-8")
-        self.assertEqual(self.ns["pin_mcp_java"](java25, 8), [])
+        self.assertEqual(ensure(java25, 8), ([], []))
+
+    def test_registers_missing_entry_with_absolute_launcher(self):
+        """VS Code does not expand ${PLUGIN_ROOT} (microsoft/vscode#336882): the plugin's own
+        mcp.json entry dies with 'Could not find or load main class ${PLUGIN_ROOT}.servers...',
+        so the hook must register a working absolute-path entry itself."""
+        user = self.root / "User"
+        user.mkdir()
+        mcp = user / "mcp.json"
+        self.ns["vscode_user_mcp_files"] = lambda: [mcp]
+        self.ns["mcp_needs_prefetch"] = lambda: False
+        java25 = str(self._java(self.jdk25))
+        # no mcp.json at all, PATH java fine -> portable bare java + absolute launcher
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([str(mcp)], []))
+        cfg = json.loads(mcp.read_text(encoding="utf-8"))
+        self.assertEqual(cfg["servers"]["neqsim"], {"type": "stdio", "command": "java", "args": [self.launcher]})
+        self.assertEqual(cfg["inputs"], [])
+        # existing file with other servers, PATH java is Java 8 -> created with the pinned JDK
+        mcp.write_text(json.dumps({"servers": {"maintenance-api": {"type": "http", "url": "https://x"}}}),
+                       encoding="utf-8")
+        self._path_first(self.jdk8)
+        started, note = self.ns["prefetch_mcp"]()
+        cfg = json.loads(mcp.read_text(encoding="utf-8"))
+        self.assertEqual(cfg["servers"]["neqsim"]["command"], java25)
+        self.assertEqual(cfg["servers"]["neqsim"]["args"], [self.launcher])
+        self.assertIn("maintenance-api", cfg["servers"])
+        self.assertIn("registered in", note)
+        self.assertIn("${PLUGIN_ROOT}", note)
+        self.assertIn("JDK 25", note)
+        self.assertIn("Start a new chat", note)
+        # JSONC (comments) is left alone rather than destroyed
+        mcp.write_text('{\n  // my servers\n  "servers": {}\n}\n', encoding="utf-8")
+        self.assertEqual(self.ns["ensure_mcp_entry"](java25, 25), ([], []))
 
     def test_prefetch_with_java8_on_path_reports_the_pin(self):
         self._path_first(self.jdk8)
         mcp = self.root / "User" / "mcp.json"
         mcp.parent.mkdir()
-        mcp.write_text(json.dumps({"servers": {"neqsim": {"command": "java", "args": [
-            "C:/p/servers/NeqsimMcpLauncher.java"]}}}), encoding="utf-8")
+        mcp.write_text(json.dumps({"servers": {"neqsim": {"command": "java", "args": [self.launcher]}}}),
+                       encoding="utf-8")
         self.ns["vscode_user_mcp_files"] = lambda: [mcp]
         self.ns["mcp_needs_prefetch"] = lambda: False
         started, note = self.ns["prefetch_mcp"]()

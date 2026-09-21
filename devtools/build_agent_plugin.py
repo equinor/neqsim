@@ -458,53 +458,80 @@ def vscode_user_mcp_files():
     return [d / "mcp.json" for d in dirs if d.is_dir()]
 
 
-def pin_mcp_java(java, path_major):
-    """Point the plugin's own ``neqsim`` entry in the VS Code user mcp.json at ``java``.
+def ensure_mcp_entry(java, path_major):
+    """Register / repair the plugin's ``neqsim`` server in the VS Code user mcp.json.
 
-    Only touches an entry whose args name NeqsimMcpLauncher.java (written by the
-    plugin installer, or by an earlier run of this hook), and only when its current
-    command cannot run the launcher: a bare ``java`` while PATH resolves to a JDK
-    below MCP_MIN_JAVA (or none), or an absolute path that no longer exists / is too
-    old (a JDK upgrade renamed its folder). A working entry is left alone, a foreign
-    ``neqsim`` server is never modified. Returns the files that were rewritten.
+    VS Code (1.138, microsoft/vscode#336882) does not expand ``${{PLUGIN_ROOT}}`` in an
+    Agent Plugins mcp.json, so the plugin's own server entry fails with "Could not
+    find or load main class ${{PLUGIN_ROOT}}.servers..." and the only working entry is
+    one with the launcher's absolute path. The installer writes it; this hook now
+    does the same on every session so a marketplace install works without it.
+
+    Per user mcp.json (folder must exist; JSONC with comments is skipped):
+    - no ``neqsim`` server: add ``{{type: stdio, command, args: [<abs launcher>]}}``;
+    - ours (args name NeqsimMcpLauncher.java): re-point the launcher when the recorded
+      one no longer exists (plugin moved / reinstalled), and re-pin ``command`` when it
+      cannot run the launcher - a bare ``java`` while PATH resolves below MCP_MIN_JAVA,
+      or an absolute path that vanished / is too old (JDK upgrade renamed its folder);
+    - a foreign ``neqsim`` server is never modified.
+    ``command`` stays the portable bare ``java`` while PATH java is usable.
+    Returns ``(created, patched)`` lists of file paths.
     """
-    patched = []
+    launcher = str(root / "servers" / "NeqsimMcpLauncher.java")
+    path_ok = path_major is not None and path_major >= MCP_MIN_JAVA
+    created, patched = [], []
     for path in vscode_user_mcp_files():
-        if not path.is_file():
+        cfg = {{}}
+        if path.is_file():
+            try:
+                cfg = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue  # JSONC with comments: leave it to the user / installer
+            if not isinstance(cfg, dict):
+                continue
+        servers = cfg.get("servers") if isinstance(cfg.get("servers"), dict) else {{}}
+        entry = servers.get("neqsim")
+        changed = False
+        if entry is None:
+            servers["neqsim"] = {{"type": "stdio", "command": "java" if path_ok else java, "args": [launcher]}}
+            created.append(str(path))
+            changed = True
+        elif isinstance(entry, dict) and "NeqsimMcpLauncher.java" in " ".join(str(a) for a in entry.get("args", [])):
+            args = [str(a) for a in entry.get("args", [])]
+            recorded = next(a for a in args if a.endswith("NeqsimMcpLauncher.java"))
+            if recorded != launcher and not Path(recorded).is_file():
+                entry["args"] = [launcher if a == recorded else a for a in args]
+                changed = True
+            cmd = str(entry.get("command", "java"))
+            bare = Path(cmd).name.lower() in ("java", "java.exe") and os.sep not in cmd and "/" not in cmd
+            usable = path_ok if bare else (Path(cmd).is_file() and (java_major(cmd) or 0) >= MCP_MIN_JAVA)
+            if not usable and Path(cmd) != Path(java):
+                entry["command"] = java
+                changed = True
+            if changed:
+                patched.append(str(path))
+        if not changed:
             continue
+        cfg["servers"] = servers
+        cfg.setdefault("inputs", [])
         try:
-            cfg = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue  # JSONC with comments: leave it to the user / installer
-        servers = cfg.get("servers") if isinstance(cfg, dict) else None
-        entry = servers.get("neqsim") if isinstance(servers, dict) else None
-        if not isinstance(entry, dict):
-            continue
-        if "NeqsimMcpLauncher.java" not in " ".join(str(a) for a in entry.get("args", [])):
-            continue
-        cmd = str(entry.get("command", "java"))
-        bare = Path(cmd).name.lower() in ("java", "java.exe") and os.sep not in cmd and "/" not in cmd
-        if bare:
-            usable = path_major is not None and path_major >= MCP_MIN_JAVA
-        else:
-            usable = Path(cmd).is_file() and (java_major(cmd) or 0) >= MCP_MIN_JAVA
-        if usable or Path(cmd) == Path(java):
-            continue
-        entry["command"] = java
-        try:
-            path.with_suffix(".json.bak").write_bytes(path.read_bytes())
+            if path.is_file():
+                path.with_suffix(".json.bak").write_bytes(path.read_bytes())
             path.write_text(json.dumps(cfg, indent=2) + "\\n", encoding="utf-8")
-            patched.append(str(path))
         except OSError:
-            continue
-    return patched
+            if str(path) in created:
+                created.remove(str(path))
+            if str(path) in patched:
+                patched.remove(str(path))
+    return created, patched
 
 
 def prefetch_mcp():
     """Kick off the launcher's --prefetch in the background; never raises.
 
-    Returns ``(started, note)``: ``note`` is a chat-visible warning about the Java
-    setup (None when everything is fine), independent of whether a prefetch ran.
+    Returns ``(started, note)``: ``note`` is a chat-visible message about the MCP
+    server setup (None when nothing needs the user's attention), independent of
+    whether a prefetch ran.
     """
     java, major, path_java, path_major = find_mcp_java()
     note = None
@@ -515,15 +542,22 @@ def prefetch_mcp():
                 "not appear until one is installed (Windows: `winget install EclipseAdoptium.Temurin.{{}}.JDK` "
                 "or AccessIT; portable: unzip a Temurin JDK and set NEQSIM_MCP_JAVA to its folder), then "
                 "start a new chat.").format(MCP_MIN_JAVA, found, MCP_MIN_JAVA)
-    elif path_major is None or path_major < MCP_MIN_JAVA:
-        patched = pin_mcp_java(java, path_major)
+    else:
+        created, patched = ensure_mcp_entry(java, path_major)
         shadow = ("java on PATH is Java {{}} ({{}})".format(path_major, path_java) if path_java
                   else "no java on PATH")
-        if patched:
+        if created:
+            note = ("NeqSim MCP server registered in {{}} (absolute launcher path; VS Code does not expand "
+                    "${{{{PLUGIN_ROOT}}}} for plugins, so the plugin's own 'neqsim' entry stays in error - ignore it)"
+                    ).format(", ".join(created))
+            if not (path_major is not None and path_major >= MCP_MIN_JAVA):
+                note += ", using the JDK {{}} at {{}} because {{}}".format(major, java, shadow)
+            note += ". Start a new chat (or Developer: Reload Window) for the neqsim_* tools to appear."
+        elif patched:
             note = ("NeqSim MCP server: {{}}, so the 'neqsim' server in {{}} was pinned to the JDK {{}} at "
                     "{{}}. Start a new chat (or Developer: Reload Window) for the neqsim_* tools to appear."
                     ).format(shadow, ", ".join(patched), major, java)
-        else:
+        elif path_major is None or path_major < MCP_MIN_JAVA:
             note = ("NeqSim MCP server: {{}}; a JDK {{}} exists at {{}}. If the neqsim_* tools are missing, "
                     "set the 'neqsim' server's command in the VS Code user mcp.json to that java (or run the "
                     "plugin install script / set JAVA_HOME) and start a new chat.").format(shadow, major, java)
