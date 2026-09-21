@@ -61,6 +61,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - unit-explicit hydrotreating throughput receipts in kg/h and kmol/h;
 - explicit hydrotreating hydrogen energy and caller-priced utility receipts;
 - scenario-based hydrotreating hydrogen-supply emissions and carbon-cost receipts;
+- integrated hydrotreating material, energy, emissions, and scenario-cost receipts;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
@@ -173,6 +174,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Hydrotreating throughput-rate balance](refinery_hydrotreating_throughput_balance)
 - [Hydrotreating hydrogen utility balance](refinery_hydrotreating_hydrogen_utility_balance)
 - [Hydrotreating hydrogen-supply emissions balance](refinery_hydrotreating_hydrogen_emissions_balance)
+- [Integrated hydrotreating operating receipt](refinery_hydrotreating_operating_receipt)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)
