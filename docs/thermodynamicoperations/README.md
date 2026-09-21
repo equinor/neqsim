@@ -131,6 +131,11 @@ The same facade provides the following public operations:
 | Multiliquid equilibrium | Enable `setMultiPhaseCheck(true)`, then call `TPflash()` |
 | Wax or other configured solid | Call `setSolidPhaseCheck(name)`, then `TPflash()` |
 
+Solid selection preserves the fluid multiphase-check setting. Request additional
+liquid phases explicitly with `setMultiPhaseCheck(true)`. The empirical solid model
+excludes methane and is not a methane-freezing model; see the
+[solid phase flash limitations](../thermo/flash_calculations_guide#solid-phase-flash).
+
 Solid checking is a fluid configuration used by `TPflash()`; there is no public
 `TPsolidflash()` method on `ThermodynamicOperations`. Hydrate calculations also
 require a fluid model and components suitable for hydrate equilibrium. See the
