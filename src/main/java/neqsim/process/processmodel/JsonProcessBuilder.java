@@ -1981,6 +1981,15 @@ public class JsonProcessBuilder {
     if (equipment instanceof Compressor && properties.has("driver") && properties.get("driver").isJsonObject()) {
       applyCompressorDriver((Compressor) equipment, properties.getAsJsonObject("driver"));
     }
+    if (equipment instanceof Compressor && properties.has("polytropicEfficiency")
+        && !properties.has("usePolytropicCalc")) {
+      // Mirrors Compressor.Builder#polytropicEfficiency: specifying a polytropic
+      // efficiency implies polytropic calculation mode. Without this, the
+      // compressor silently keeps using its default 100% isentropic efficiency
+      // and the requested value has no effect on the run (see issue: JSON
+      // 'polytropicEfficiency' ignored unless 'usePolytropicCalc' is also set).
+      ((Compressor) equipment).setUsePolytropicCalc(true);
+    }
     for (Map.Entry<String, JsonElement> entry : properties.entrySet()) {
       String propName = entry.getKey();
       if (handledProps.contains(propName)) {
