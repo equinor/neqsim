@@ -2921,15 +2921,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Disabling is safe and idempotent even when no solid phase has been allocated. It preserves the phase count,
    * composition and component inventories without reallocating phases or recalculating equilibrium.
    * </p>
+   * <p>
+   * Enabling allocates solid storage but does not change {@link #doMultiPhaseCheck()}. Enable fluid multiphase checking
+   * separately when additional liquid phases are required.
+   * </p>
    *
    * @param test true to enable solid checking, false to disable it
    */
   public void setSolidPhaseCheck(boolean test);
 
   /**
-   * setSolidPhaseCheck.
+   * Enable solid checking for a selected component without changing {@link #doMultiPhaseCheck()}.
    *
-   * @param solidComponent a {@link java.lang.String} object
+   * @param solidComponent name of the component to check for solid precipitation
    */
   public void setSolidPhaseCheck(String solidComponent);
 
