@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "src/main/java/neqsim/process/safety/release/**"
+      - "src/main/java/neqsim/process/dynamics/**"
       - "src/main/java/neqsim/process/processmodel/**"
       - "src/main/java/neqsim/process/equipment/stream/**"
       - "src/main/java/neqsim/process/equipment/separator/**"
       - "src/main/resources/neqsim/process/safety/release/**"
       - "src/test/java/neqsim/process/safety/release/**"
+      - "src/test/java/neqsim/process/dynamics/DynamicCapabilityBuiltInInventoryTest.java"
       - "docs/process/safety/**"
       - "devtools/validate_source_term_contract.py"
       - ".github/workflows/safety-source-term-contract.yml"
@@ -38,7 +40,7 @@ jobs:
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check
-          ./mvnw -B -ntp -Dtest=ReleaseFlowModelTest,ReleaseFlowAdapterTest,ReleaseInventoryTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
+          ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowAdapterTest,ReleaseInventoryTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
       - name: Validate emitted frames and schema rejection cases
         run: |
           python -m pip install jsonschema==4.26.0

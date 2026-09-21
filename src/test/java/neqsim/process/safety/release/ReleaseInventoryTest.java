@@ -14,6 +14,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.dynamics.DynamicActivationResolver;
+import neqsim.process.dynamics.DynamicActivationStatus;
+import neqsim.process.dynamics.DynamicCapability;
+import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -48,6 +52,30 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
     assertEquals(b.getInitialEnergyJ(), b.getInternalEnergyJ() + b.getReleasedEnergyJ(),
         Math.max(1.0, Math.abs(b.getInitialEnergyJ())) * 1e-7);
     assertEquals(b.getVolumeM3(), inventory.getFluid().getVolume("m3"), b.getVolumeM3() * 1e-7);
+  }
+
+  @Test
+  void lumpedCapabilityDescribesStateOwnershipWithoutQualifyingRuntime() {
+    ReleaseInventory vessel = inventory(2.0, 0.1);
+    ProcessSystem process = new ProcessSystem();
+    process.add(vessel);
+    ProcessModel model = new ProcessModel();
+    model.add("gas-area", process);
+
+    for (boolean enabled : new boolean[] {true, false}) {
+      vessel.setReleaseEnabled(enabled);
+      assertEquals(DynamicCapability.DYNAMIC_LUMPED, vessel.getDynamicCapability());
+      assertEquals(DynamicActivationStatus.UNVERIFIED, DynamicActivationResolver.resolve(vessel));
+      for (DynamicCapabilityReport report : new DynamicCapabilityReport[] {DynamicCapabilityReport.from(process),
+          DynamicCapabilityReport.from(model)}) {
+        assertTrue(report.isFullyAudited());
+        assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue());
+        assertEquals(1, report.getUnverifiedActivationElements().size());
+      }
+    }
+    vessel.setCalculateSteadyState(true);
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, vessel.getDynamicCapability());
+    assertEquals(DynamicActivationStatus.UNVERIFIED, DynamicActivationResolver.resolve(vessel));
   }
 
   @Test

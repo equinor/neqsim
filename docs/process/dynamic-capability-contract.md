@@ -268,7 +268,7 @@ boundary has an audited state-ownership category:
   `AdiabaticPipe`;
 - lumped: separators, tanks and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
   throttling/control/safety valves, `EnergyConverter` families, `BatteryStorage`, `Filter`,
-  `CommittedEnergyGenerator`, and `Electrolyzer`;
+  `CommittedEnergyGenerator`, `Electrolyzer`, and `ReleaseInventory`;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, `WaterHammerPipe`, the generic
   `Pipeline` family (including `MultiphasePipe` and `PipeBeggsAndBrills`), `DistillationColumn`, `AdsorptionBed`,
   `MercuryRemovalBed`, `PipeFlowNetwork`, and `WellFlowlineNetwork`;
@@ -302,6 +302,12 @@ component inventories and accepted-step diagnostics, and its ProcessSystem snaps
 boundedness, synchronized thermodynamic composition, clocks and calculation identifiers. The classification describes
 **distributed state ownership**, not blanket validity of every pipeline mode. Legacy staged compositional transport,
 zero/reversed flow, phase appearance and multiphase operation remain outside that evidence until separately qualified.
+
+`ReleaseInventory` owns well-mixed gas component masses and internal energy, so its capability is
+`DYNAMIC_LUMPED`. Closing the release opening retains that stored state and does not change the capability category.
+The classification applies to both process containers and does not elevate runtime activation or qualification:
+activation remains `UNVERIFIED`, and source-frame evidence remains `UNQUALIFIED`. See the
+[coupled gas inventory guide](safety/coupled-release-inventory) for the rigid, adiabatic, single-gas-phase boundary.
 
 `EnergyConverter` owns the previous useful-output state when a finite ramp rate is configured. Its transient ramp is
 therefore classified as `DYNAMIC_LUMPED`. Repeated nonlinear/refinement evaluations with the same non-null physical-step

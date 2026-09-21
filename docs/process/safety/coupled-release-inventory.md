@@ -15,6 +15,11 @@ The constructor clones the supplied EOS system and scales its amount to the spec
 volume at its initial temperature and pressure. The supplied mole count defines composition,
 not vessel size or kg/s. Returned fluids and accounting snapshots are independent copies.
 
+The dynamic-capability audit classifies the unit as `DYNAMIC_LUMPED` because it owns
+component masses and internal energy. This state-ownership category persists when the
+opening is closed or steady-state mode is requested. It does not certify runtime readiness:
+activation remains `UNVERIFIED` and source-frame evidence remains `UNQUALIFIED`.
+
 ## Balance equations and numerical method
 
 For mass $m$ in kg, component mass fraction $w_i$, internal energy $U$ in J, fixed volume
@@ -128,6 +133,10 @@ release model, component/energy/volume closure, cooling and decreasing release r
 immutability, cloning, zero flow, isolation/reopening, invalid steps, pressure-boundary
 rollback, injected mid-step failure, and both process containers. Actual frames, including
 disabled and failed cases, are validated against the bundled JSON Schema.
+
+The capability regression checks both process containers and preserves the distinction
+between audited state ownership and unverified runtime activation. The focused safety workflow
+also runs `DynamicCapabilityBuiltInInventoryTest` to catch missing built-in registrations.
 
 For an independent temporal reference, the constant-gamma ideal-gas choked, rigid adiabatic
 solution follows by combining the balance equations with $U=mc_vT$ and the choked discharge
