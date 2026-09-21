@@ -34,7 +34,11 @@ class ProcessRecipesDocumentationTest(unittest.TestCase):
         self.assertRegex(self.guide, r"\A---\n(?:.|\n)*?\n---\n")
         prose = re.sub(r"```.*?```", "", self.guide, flags=re.DOTALL)
         self.assertNotRegex(prose, r"(?m)^# ")
-        self.assertEqual(self.guide.count("```"), 2 * self.guide.count("```python"))
+        code_blocks = re.findall(r"```([A-Za-z0-9_-]*)\\n.*?```", self.guide, re.DOTALL)
+        self.assertEqual(self.guide.count("```"), 2 * len(code_blocks))
+        self.assertEqual(code_blocks.count("python"), 19)
+        self.assertEqual(code_blocks.count("java"), 1)
+        self.assertTrue(set(code_blocks).issubset({"python", "java"}))
 
         for href in re.findall(r"\[[^]]+\]\(([^)]+)\)", self.guide):
             target = href.split("#", maxsplit=1)[0]

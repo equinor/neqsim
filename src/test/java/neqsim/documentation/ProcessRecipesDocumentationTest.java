@@ -54,8 +54,8 @@ public class ProcessRecipesDocumentationTest extends NeqSimTest {
     assertTrue(normalizedGuide.contains("Python sections are ordered session fragments"));
     assertTrue(normalizedGuide.contains("They are not independent programs"));
     assertTrue(normalizedGuide.contains("not vendor selection, mechanical design"));
-    assertTrue(normalizedGuide.contains(
-        "validate the thermodynamic model, binary interaction parameters, compressor chart"));
+    assertTrue(
+        normalizedGuide.contains("validate the thermodynamic model, binary interaction parameters, compressor chart"));
     assertFalse(guide.contains("setOutTemperature("));
     assertFalse(UNITLESS_PRESSURE.matcher(guide).find());
 
