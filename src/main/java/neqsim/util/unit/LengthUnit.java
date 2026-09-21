@@ -18,6 +18,8 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  private static final String[] ALLOWED_UNITS = {"m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet"};
+
   /**
    * Constructor for LengthUnit.
    *
@@ -31,7 +33,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return new String[] {"m", "meter", "metre", "cm", "mm", "km", "in", "inch", "ft", "feet"};
+    return ALLOWED_UNITS;
   }
 
   /** {@inheritDoc} */
