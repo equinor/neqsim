@@ -7,6 +7,8 @@ description: Strict homogeneous-equilibrium source terms with thermodynamic stat
 
 Use the [neutral source-term contract](source-term-contract) to export these results as
 versioned JSON, newline-delimited frames or a reduced CSV time series.
+Use [uncertainty ensembles](source-term-uncertainty) to propagate joint input cases without
+discarding failures. The [implementation status](source-term-platform-status) records remaining work.
 
 `ReleaseFlowModel` calculates an instantaneous short-opening source term from a NeqSim
 fluid. It is independent of downstream safety software and process orchestration. Requests
