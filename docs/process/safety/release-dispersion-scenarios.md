@@ -3,6 +3,9 @@ title: Automatic Release and Gas Dispersion Scenarios
 description: Generate leak source terms, gas dispersion screening endpoints, and CFD source-term handoff cases directly from NeqSim ProcessSystem stream results. Covers ReleaseDispersionScenarioGenerator, CfdSourceTermCase, TrappedInventoryCalculator, weather envelopes, consequence branches, flammable LFL distances, and toxic endpoints.
 ---
 
+For an opt-in, model-explicit calculation with immutable thermodynamic stations and strict
+failure diagnostics, see [Model-explicit release source terms](release-flow-models).
+
 NeqSim can now turn a running `ProcessSystem` into first-pass release and gas dispersion
 screening cases, and then package those cases as formal CFD source-term handoffs. The
 workflow is intended for early safety studies, HAZOP follow-up, dynamic simulation

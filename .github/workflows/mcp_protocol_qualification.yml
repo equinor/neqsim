@@ -142,6 +142,9 @@ jobs:
       - name: Run focused real-MCP adjustable-parameter qualification
         run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
 
+      - name: Run focused real-MCP process-loop qualification
+        run: cd neqsim-mcp-server && python test_process_loop_protocol.py
+
       - name: Run focused real-MCP simulation-variable mutation qualification
         run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
 

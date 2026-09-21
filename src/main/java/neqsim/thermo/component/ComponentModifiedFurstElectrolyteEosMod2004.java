@@ -691,7 +691,13 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
   // Born term equations and derivatives
   /**
-   * dFBorndN.
+   * Born contribution to the mole derivative at the legacy model's fixed solvent permittivity.
+   *
+   * <p>
+   * This model sets the solvent-permittivity composition derivatives to zero. Consequently the dielectric chain-rule
+   * term is zero, consistent with {@link #dFBorndNdT} and {@link #dFBorndNdN}. Adding the extensive phase derivative
+   * {@code FBornD()} without a permittivity derivative would make chemical potentials depend on phase size.
+   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -700,8 +706,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
    * @return a double
    */
   public double dFBorndN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return ((PhaseModifiedFurstElectrolyteEosMod2004) phase).FBornX() * getXBorni()
-        + ((PhaseModifiedFurstElectrolyteEosMod2004) phase).FBornD();
+    return ((PhaseModifiedFurstElectrolyteEosMod2004) phase).FBornX() * getXBorni();
   }
 
   /**

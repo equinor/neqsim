@@ -154,6 +154,16 @@ jobs:
             target/surefire-reports/
           if-no-files-found: error
 
+      - name: Publish model coverage summary
+        if: always()
+        run: |
+          if [ -f target/model-spec/coverage.md ]; then
+            cat target/model-spec/coverage.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Model inventory report missing; inspect the failed spec gate.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
   agent_benchmark:
     name: Assert agentic benchmark accuracy
     runs-on: ubuntu-latest

@@ -108,6 +108,8 @@ class ResponseSizeGuardTest {
   @DisplayName("Capability trimming preserves implementation and Phase 0 evidence contracts")
   void testCapabilitiesPreserveInventoriesWhenTrimmed() {
     JsonObject response = JsonParser.parseString(CapabilitiesRunner.getCapabilities()).getAsJsonObject();
+    JsonObject originalImplementation = response.getAsJsonObject("implementationInventory").deepCopy();
+    JsonObject originalEvidence = response.getAsJsonObject("phase0EvidenceInventory").deepCopy();
     int originalBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
     assertTrue(originalBytes > ResponseSizeGuard.getMaxBytes(),
         "Capability fixture must exercise the response-size guard, was " + originalBytes);
@@ -125,6 +127,10 @@ class ResponseSizeGuardTest {
         "The non-retrievable implementation inventory must survive trimming");
     assertTrue(response.getAsJsonObject("data").has("implementationInventory"),
         "The canonical data view must retain the same implementation inventory");
+    assertEquals(originalImplementation, response.getAsJsonObject("implementationInventory"));
+    assertEquals(originalImplementation, response.getAsJsonObject("data").getAsJsonObject("implementationInventory"));
+    assertEquals(originalEvidence, response.getAsJsonObject("phase0EvidenceInventory"));
+    assertEquals(originalEvidence, response.getAsJsonObject("data").getAsJsonObject("phase0EvidenceInventory"));
     JsonObject implementationInventory = response.getAsJsonObject("implementationInventory");
     assertTrue(implementationInventory.get("complete").getAsBoolean());
     assertEquals(71, implementationInventory.get("toolBindingCount").getAsInt());

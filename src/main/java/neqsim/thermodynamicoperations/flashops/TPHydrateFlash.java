@@ -1,13 +1,9 @@
-/*
- * TPHydrateFlash.java
- *
- * Created for hydrate fraction calculation at given T and P
- */
-
 package neqsim.thermodynamicoperations.flashops;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import Jama.Matrix;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -15,608 +11,551 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * TPHydrateFlash performs a TP flash that includes hydrate phase equilibrium calculation.
+ * Conservative TP flash for a non-reactive fluid and one stable hydrate structure.
  *
  * <p>
- * This class extends TPflash to calculate the fraction of hydrate at given temperature and pressure conditions. It uses
- * the CPA EOS approach (Statoil/Equinor model) for hydrate fugacity calculation with proper cavity occupancy.
+ * Each trial withdraws structural water and guests from the feed and reflashes the remaining fluid. Guest amounts are
+ * coupled to both cavity occupancies, including empty cavities. A bracketed water-extent solve matches the hydrate
+ * host-water fugacity to the fluid-water fugacity. Trial states are private; failure leaves the supplied system
+ * unchanged.
  * </p>
  *
  * <p>
- * The hydrate model supports both Structure I and Structure II hydrates, automatically selecting the most stable
- * structure based on fugacity minimization.
+ * The hydrate component model returns host-water fugacity divided by pressure. It must not be multiplied by the
+ * hydrate's material-balance water mole fraction when evaluating equilibrium.
  * </p>
- *
- * @author NeqSim development team
- * @version 1.0
  */
 public class TPHydrateFlash extends TPflash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPHydrateFlash.class);
-
-  /** Maximum iterations for hydrate fraction calculation. */
+  /** Maximum iterations in each bounded solve. */
   private static final int MAX_HYDRATE_ITERATIONS = 100;
-
-  /** Convergence tolerance for hydrate fugacity matching. */
+  /** Log water-fugacity convergence tolerance. */
   private static final double HYDRATE_TOLERANCE = 1e-8;
-
-  /** Minimum hydrate fraction to consider hydrate formation. */
-  private static final double MIN_HYDRATE_FRACTION = 1e-12;
-
-  /** Flag to indicate if hydrate has formed. */
-  private boolean hydrateFormed = false;
-
-  /** The calculated hydrate fraction. */
-  private double hydrateFraction = 0.0;
-
-  /** The stable hydrate structure (1 or 2). */
+  /** Composition and feed-fraction material-balance tolerance. */
+  private static final double BALANCE_TOLERANCE = 1e-8;
+  /** Relative tolerance for the guest inventory fixed point. */
+  private static final double GUEST_TOLERANCE = 1e-10;
+  /** Whether the last successful calculation formed hydrate. */
+  private boolean hydrateFormed;
+  /** Hydrate mole fraction on the original feed basis. */
+  private double hydrateFraction;
+  /** Selected structure, numbered 1 or 2. */
   private int stableHydrateStructure = 1;
+  /** Compatibility flag; phase disappearance is always determined by equilibrium. */
+  private boolean gasHydrateOnlyMode;
+  /** Whether a balanced equilibrium result was accepted. */
+  private boolean converged;
+  /** Last accepted log host-water/fluid-water fugacity ratio. */
+  private double lastResidual = Double.NaN;
+  /** Configurable iteration budget for the outer water solve. */
+  private int maximumIterations = MAX_HYDRATE_ITERATIONS;
+  /** Number of residual-fluid flashes performed in the last run. */
+  private int fluidFlashCount;
+  /** Maximum component balance error in the accepted state. */
+  private double maximumBalanceResidual = Double.NaN;
 
   /**
-   * Flag to enable gas-hydrate only mode. When true, the algorithm will try to achieve gas-hydrate equilibrium without
-   * an aqueous phase if all water can be consumed by hydrate.
-   */
-  private boolean gasHydrateOnlyMode = false;
-
-  /**
-   * Constructor for TPHydrateFlash.
+   * Create a hydrate amount flash.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system fluid whose state is updated after successful convergence
    */
   public TPHydrateFlash(SystemInterface system) {
     super(system);
   }
 
   /**
-   * Constructor for TPHydrateFlash.
+   * Create a hydrate amount flash with optional solid checks in the residual fluid.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to do solid phase check and calculations
+   * @param system fluid whose state is updated after successful convergence
+   * @param checkForSolids whether the residual-fluid flash also checks solid phases
    */
   public TPHydrateFlash(SystemInterface system, boolean checkForSolids) {
     super(system, checkForSolids);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws UnsupportedOperationException for Pitzer or reactive systems
+   * @throws IllegalStateException if equilibrium or the component balance cannot be verified
+   */
   @Override
   public void run() {
+    converged = false;
+    hydrateFormed = false;
+    hydrateFraction = 0.0;
+    lastResidual = Double.NaN;
+    stableHydrateStructure = 1;
+    fluidFlashCount = 0;
+    maximumBalanceResidual = Double.NaN;
+    if (!Double.isFinite(system.getTotalNumberOfMoles()) || system.getTotalNumberOfMoles() <= 0.0
+        || !Double.isFinite(system.getTemperature()) || system.getTemperature() <= 0.0
+        || !Double.isFinite(system.getPressure()) || system.getPressure() <= 0.0) {
+      throw new IllegalArgumentException("TPHydrateFlash requires positive finite inventory, temperature and pressure");
+    }
     if (system instanceof neqsim.thermo.system.SystemPitzer) {
       throw new UnsupportedOperationException(
           "Pitzer supports incipient hydrate equilibrium only; use hydrateFormationTemperature or hydrateFormationPressure");
     }
-    // First ensure hydrate check is enabled
+    if (system.isChemicalSystem()) {
+      throw new UnsupportedOperationException("TPHydrateFlash requires a non-reactive component inventory");
+    }
+    SystemInterface feed = system.clone();
+    feed.setHydrateCheck(true);
+    new TPflash(feed, solidCheck).run();
+    fluidFlashCount++;
+    double[] z = new double[feed.getNumberOfComponents()];
+    for (int i = 0; i < z.length; i++) {
+      z[i] = system.getComponent(i).getNumberOfmoles() / system.getTotalNumberOfMoles();
+    }
+    verifyBalance(feed, z);
+    if (!feed.getPhase(0).hasComponent("water")) {
+      publish(feed);
+      converged = true;
+      return;
+    }
+    int water = feed.getComponent("water").getComponentNumber();
+    boolean hasGuest = false;
+    for (int i = 0; i < z.length; i++) {
+      hasGuest |= i != water && z[i] > 0.0 && feed.getComponent(i).isHydrateFormer();
+    }
+    if (z[water] <= 0.0 || !hasGuest) {
+      publish(feed);
+      converged = true;
+      return;
+    }
+    Trial initial = evaluate(feed, z, water, 0.0, null);
+    if (initial.residual >= -HYDRATE_TOLERANCE) {
+      lastResidual = initial.residual;
+      publish(feed);
+      converged = true;
+      return;
+    }
+
+    double lower = 0.0;
+    Trial low = initial;
+    double extentEstimate = z[water];
+    for (int i = 0; i < z.length; i++) {
+      if (initial.guestRatios[i] > 0.0) {
+        extentEstimate = Math.min(extentEstimate, z[i] / initial.guestRatios[i]);
+      }
+    }
+    double upper = 0.5 * extentEstimate;
+    Trial high = evaluate(feed, z, water, upper, initial);
+    for (int bracket = 0; high.residual < 0.0 && bracket < maximumIterations; bracket++) {
+      lower = upper;
+      low = high;
+      upper = Math.min(2.0 * upper, 0.5 * (upper + z[water]));
+      if (upper >= z[water]) {
+        break;
+      }
+      high = evaluate(feed, z, water, upper, low);
+    }
+    if (high.residual < 0.0) {
+      throw new IllegalStateException(
+          "TPHydrateFlash could not bracket water-fugacity equality before water depletion");
+    }
+    Trial solution = Math.abs(high.residual) < HYDRATE_TOLERANCE ? high : null;
+    for (int iteration = 0; solution == null && iteration < maximumIterations; iteration++) {
+      double width = upper - lower;
+      double extent = lower - low.residual * width / (high.residual - low.residual);
+      // Safeguard interpolation by bisection near the endpoints, and at least every fourth step.
+      if (!Double.isFinite(extent) || extent < lower + 0.05 * width || extent > upper - 0.05 * width
+          || iteration % 4 == 3) {
+        extent = 0.5 * (lower + upper);
+      }
+      Trial seed = extent - lower < upper - extent ? low : high;
+      Trial trial = evaluate(feed, z, water, extent, seed);
+      if (Math.abs(trial.residual) < HYDRATE_TOLERANCE) {
+        solution = trial;
+        break;
+      }
+      if (trial.residual < 0.0) {
+        lower = extent;
+        low = trial;
+      } else {
+        upper = extent;
+        high = trial;
+      }
+    }
+    if (solution == null) {
+      throw new IllegalStateException("TPHydrateFlash did not converge to water-fugacity equality");
+    }
+    verifyFluidEquilibrium(solution.fluid);
+    SystemInterface result = assemble(feed, solution, z);
+    verifyBalance(result, z);
+    publish(result);
+    hydrateFraction = solution.hydrateMoles;
+    hydrateFormed = hydrateFraction > 0.0;
+    stableHydrateStructure = solution.hydrate.getStableHydrateStructure();
+    lastResidual = solution.residual;
+    converged = true;
+  }
+
+  /**
+   * Equilibrate guest inventories at a fixed amount of structural water.
+   *
+   * @param feed fluid-only feed state
+   * @param z original feed composition
+   * @param water water component index
+   * @param extent hydrate water per mole of feed
+   * @param seed nearby accepted guest solution, or null
+   * @return a trial satisfying the guest component balances
+   */
+  private Trial evaluate(SystemInterface feed, double[] z, int water, double extent, Trial seed) {
+    double[] remaining = z.clone();
+    remaining[water] -= extent;
+    List<Integer> guests = new ArrayList<Integer>();
+    for (int i = 0; i < z.length; i++) {
+      if (i != water && z[i] > 0.0 && feed.getComponent(i).isHydrateFormer()) {
+        guests.add(i);
+        if (seed != null && seed.guestRatios[i] > 0.0) {
+          remaining[i] = z[i] / (1.0 + extent * seed.guestRatios[i] / seed.fluid.getComponent(i).getNumberOfmoles());
+        }
+      }
+    }
+    Trial trial = evaluateComposition(feed, z, water, extent, remaining);
+    for (int iteration = 0; iteration < MAX_HYDRATE_ITERATIONS; iteration++) {
+      if (trial.guestError < GUEST_TOLERANCE) {
+        return trial;
+      }
+      // Use inexpensive distribution-ratio substitution first. A damped Newton fallback in log fluid amounts
+      // handles guest-limited feeds where substitution becomes nearly stationary at phase disappearance.
+      if (iteration >= 4) {
+        int size = guests.size();
+        double[][] jacobian = new double[size][size];
+        double[][] rhs = new double[size][1];
+        for (int row = 0; row < size; row++) {
+          rhs[row][0] = -trial.guestResiduals[guests.get(row)];
+        }
+        for (int column = 0; column < size; column++) {
+          int index = guests.get(column);
+          double step = remaining[index] * Math.exp(1e-4) < z[index] ? 1e-4 : -1e-4;
+          double[] perturbed = remaining.clone();
+          perturbed[index] *= Math.exp(step);
+          Trial probe = evaluateComposition(feed, z, water, extent, perturbed);
+          for (int row = 0; row < size; row++) {
+            int component = guests.get(row);
+            jacobian[row][column] = (probe.guestResiduals[component] - trial.guestResiduals[component]) / step;
+          }
+        }
+        try {
+          Matrix direction = new Matrix(jacobian).solve(new Matrix(rhs));
+          boolean accepted = false;
+          for (double damping = 1.0; damping >= 1.0 / 128.0; damping *= 0.5) {
+            double[] candidate = remaining.clone();
+            for (int row = 0; row < size; row++) {
+              int index = guests.get(row);
+              double change = Math.max(-3.0, Math.min(3.0, direction.get(row, 0)));
+              candidate[index] = Math.min(z[index], remaining[index] * Math.exp(damping * change));
+            }
+            Trial next = evaluateComposition(feed, z, water, extent, candidate);
+            if (next.guestError < trial.guestError * (1.0 - 1e-4 * damping)) {
+              trial = next;
+              remaining = candidate;
+              accepted = true;
+              break;
+            }
+          }
+          if (accepted) {
+            continue;
+          }
+        } catch (RuntimeException ex) {
+          // A singular local Jacobian is not convergence. Retain the bounded substitution fallback.
+        }
+      }
+      for (int index : guests) {
+        double demand = extent * trial.guestRatios[index];
+        remaining[index] = z[index] / (1.0 + demand / remaining[index]);
+      }
+      trial = evaluateComposition(feed, z, water, extent, remaining);
+    }
+    throw new IllegalStateException("TPHydrateFlash guest inventories did not converge; residual=" + trial.guestError
+        + ", extent=" + extent + ", remaining=" + Arrays.toString(remaining));
+  }
+
+  /**
+   * Reflash an explicit residual inventory and calculate hydrate composition and equilibrium residuals.
+   *
+   * @param feed fluid-only feed template
+   * @param z original feed composition
+   * @param water water component index
+   * @param extent structural water per mole of feed
+   * @param remaining residual-fluid component amounts per mole of feed
+   * @return evaluated state, which still requires guest-balance convergence
+   */
+  private Trial evaluateComposition(SystemInterface feed, double[] z, int water, double extent, double[] remaining) {
+    SystemInterface fluid = feed.clone();
+    fluid.setMolarFlowRates(remaining);
+    new TPflash(fluid, solidCheck).run();
+    fluidFlashCount++;
+    PhaseHydrate hydrate = (PhaseHydrate) fluid.getPhases()[4];
+    int waterPhase = 0;
+    int referencePhase = 0;
+    for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+      if (fluid.getPhase(p).getType() == PhaseType.GAS) {
+        referencePhase = p;
+      }
+      if (fluid.getPhase(p).getComponent(water).getx() > fluid.getPhase(waterPhase).getComponent(water).getx()) {
+        waterPhase = p;
+      }
+    }
+    for (int i = 0; i < z.length; i++) {
+      for (int j = 0; j < z.length; j++) {
+        double fugacity = z[j] > 0.0 ? fluid.getPhase(referencePhase).getFugacity(j) : 0.0;
+        if (j != water && !hydrate.getComponent(j).isHydrateFormer()) {
+          fugacity = 0.0;
+        }
+        ((ComponentHydrate) hydrate.getComponent(i)).setRefFug(j, fugacity);
+      }
+    }
+    ComponentHydrate host = (ComponentHydrate) hydrate.getComponent(water);
+    double hydrateFugacity = host.fugcoef(hydrate) * fluid.getPressure();
+    int structure = host.getHydrateStructure();
+    double fluidFugacity = fluid.getPhase(waterPhase).getFugacity(water);
+    if (!Double.isFinite(hydrateFugacity) || hydrateFugacity <= 0.0 || !Double.isFinite(fluidFugacity)
+        || fluidFugacity <= 0.0 || structure < 0 || structure > 1) {
+      throw new IllegalStateException("TPHydrateFlash received invalid water fugacity or hydrate structure");
+    }
+    double[] ratios = new double[z.length];
+    double[] amounts = new double[z.length];
+    double[] errors = new double[z.length];
+    amounts[water] = extent;
+    double error = 0.0;
+    double totalHydrate = extent;
+    for (int i = 0; i < z.length; i++) {
+      if (i != water && z[i] > 0.0 && hydrate.getComponent(i).isHydrateFormer()) {
+        ComponentHydrate guest = (ComponentHydrate) hydrate.getComponent(i);
+        for (int cavity = 0; cavity < 2; cavity++) {
+          double occupancy = guest.calcYKI(structure, cavity, hydrate);
+          if (!Double.isFinite(occupancy) || occupancy < 0.0 || occupancy > 1.0) {
+            throw new IllegalStateException("TPHydrateFlash received an invalid cavity occupancy");
+          }
+          ratios[i] += host.getCavprwat(structure, cavity) * occupancy;
+        }
+        amounts[i] = extent * ratios[i];
+        errors[i] = Math.log((remaining[i] + amounts[i]) / z[i]);
+        error = Math.max(error, Math.abs(errors[i]));
+        totalHydrate += amounts[i];
+      }
+    }
+    // Initialize from component amounts, including exact zeros. Component.setx(0) leaves the
+    // previous x unchanged, which otherwise carries feed hydrocarbons/inhibitors into the hydrate lattice.
+    for (int i = 0; i < z.length; i++) {
+      hydrate.getComponent(i).setNumberOfmoles(totalHydrate > 0.0 ? amounts[i] : (i == water ? 1.0 : 0.0));
+      ((ComponentHydrate) hydrate.getComponent(i)).setHydrateStructure(structure);
+    }
+    hydrate.init(totalHydrate > 0.0 ? totalHydrate : 1.0, z.length, 0, PhaseType.HYDRATE, 1.0);
+    return new Trial(fluid, hydrate, totalHydrate, Math.log(hydrateFugacity / fluidFugacity), ratios, errors, error);
+  }
+
+  /**
+   * Assemble all phases on the original feed basis, retaining their solved compositions.
+   *
+   * @param feed original feed state
+   * @param trial converged residual fluid and hydrate
+   * @param z original feed composition
+   * @return the complete equilibrium state
+   */
+  private SystemInterface assemble(SystemInterface feed, Trial trial, double[] z) {
+    SystemInterface result = feed.clone();
+    int fluidPhases = trial.fluid.getNumberOfPhases();
+    result.setNumberOfPhases(fluidPhases + 1);
+    for (int p = 0; p < fluidPhases; p++) {
+      int slot = trial.fluid.getPhaseIndex(p);
+      result.setPhase(trial.fluid.getPhase(p).clone(), slot);
+      result.setPhaseIndex(p, slot);
+      result.setPhaseType(p, trial.fluid.getPhase(p).getType());
+      result.setBeta(p, trial.fluid.getBeta(p) * trial.fluid.getTotalNumberOfMoles());
+    }
+    result.setPhase(trial.hydrate.clone(), 4);
+    result.setPhaseIndex(fluidPhases, 4);
+    result.setPhaseType(fluidPhases, PhaseType.HYDRATE);
+    result.setBeta(fluidPhases, trial.hydrateMoles);
+    for (PhaseInterface phase : result.getPhases()) {
+      if (phase != null) {
+        for (int i = 0; i < z.length; i++) {
+          phase.getComponent(i).setz(z[i]);
+          phase.getComponent(i).setNumberOfmoles(z[i] * result.getTotalNumberOfMoles());
+        }
+      }
+    }
+    result.init(1);
+    result.orderByDensity();
+    result.init(1);
+    // Component fugacity evaluation independently selects water's structure; keep the guest metadata consistent.
+    int structure = ((ComponentHydrate) result.getPhases()[4].getComponent("water")).getHydrateStructure();
+    for (int i = 0; i < z.length; i++) {
+      ((ComponentHydrate) result.getPhases()[4].getComponent(i)).setHydrateStructure(structure);
+    }
+    return result;
+  }
+
+  /**
+   * Check normalized phases and every component inventory before publishing a state.
+   *
+   * @param result candidate result
+   * @param z original feed composition
+   */
+  private void verifyBalance(SystemInterface result, double[] z) {
+    double[] balance = new double[z.length];
+    double sumBeta = 0.0;
+    for (int p = 0; p < result.getNumberOfPhases(); p++) {
+      double beta = result.getBeta(p);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        throw new IllegalStateException("TPHydrateFlash returned an invalid phase fraction");
+      }
+      sumBeta += beta;
+      double sumX = 0.0;
+      for (int i = 0; i < z.length; i++) {
+        double x = result.getPhase(p).getComponent(i).getx();
+        if (!Double.isFinite(x) || x < 0.0 || x > 1.0) {
+          throw new IllegalStateException("TPHydrateFlash returned an invalid phase composition");
+        }
+        sumX += x;
+        balance[i] += beta * x;
+      }
+      if (Math.abs(sumX - 1.0) > BALANCE_TOLERANCE) {
+        throw new IllegalStateException("TPHydrateFlash returned an unnormalized phase composition: phase=" + p
+            + ", type=" + result.getPhase(p).getType() + ", sum=" + sumX);
+      }
+    }
+    if (Math.abs(sumBeta - 1.0) > BALANCE_TOLERANCE) {
+      throw new IllegalStateException("TPHydrateFlash phase fractions do not sum to one");
+    }
+    double maxError = 0.0;
+    for (int i = 0; i < z.length; i++) {
+      maxError = Math.max(maxError, Math.abs(balance[i] - z[i]));
+      if (Math.abs(balance[i] - z[i]) > BALANCE_TOLERANCE) {
+        throw new IllegalStateException(
+            "TPHydrateFlash failed component balance for " + result.getComponent(i).getName());
+      }
+    }
+    maximumBalanceResidual = maxError;
+  }
+
+  /**
+   * Require matching fugacities for material components present in two fluid phases.
+   *
+   * @param fluid converged residual fluid
+   */
+  private void verifyFluidEquilibrium(SystemInterface fluid) {
+    for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
+      PhaseInterface first = fluid.getPhase(p);
+      if (first.getType() != PhaseType.GAS && first.getType() != PhaseType.OIL && first.getType() != PhaseType.AQUEOUS
+          && first.getType() != PhaseType.LIQUID) {
+        continue;
+      }
+      for (int q = 0; q < p; q++) {
+        PhaseInterface second = fluid.getPhase(q);
+        if (second.getType() != PhaseType.GAS && second.getType() != PhaseType.OIL
+            && second.getType() != PhaseType.AQUEOUS && second.getType() != PhaseType.LIQUID) {
+          continue;
+        }
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          if (first.getComponent(i).getx() > 1e-12 && second.getComponent(i).getx() > 1e-12) {
+            double residual = Math.log(first.getFugacity(i) / second.getFugacity(i));
+            if (!Double.isFinite(residual) || Math.abs(residual) > 1e-6) {
+              throw new IllegalStateException("TPHydrateFlash residual fluid is not at equilibrium for "
+                  + first.getComponent(i).getName() + "; log-fugacity residual=" + residual);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Copy an accepted state into the caller's system without changing its total feed amount.
+   *
+   * @param result validated state
+   */
+  private void publish(SystemInterface result) {
     if (!system.getHydrateCheck()) {
       system.setHydrateCheck(true);
     }
-
-    // Do the regular TP flash first (gas/liquid/aqueous equilibrium)
-    super.run();
-
-    // Now perform hydrate equilibrium calculation
-    calculateHydrateEquilibrium();
+    for (int p = 0; p < result.getPhases().length; p++) {
+      if (result.getPhases()[p] != null) {
+        system.getPhases()[p] = result.getPhases()[p].clone();
+      }
+    }
+    system.setNumberOfPhases(result.getNumberOfPhases());
+    for (int p = 0; p < result.getNumberOfPhases(); p++) {
+      system.setPhaseIndex(p, result.getPhaseIndex(p));
+      system.setPhaseType(p, result.getPhase(p).getType());
+      system.setBeta(p, result.getBeta(p));
+    }
   }
 
-  /**
-   * Calculate hydrate phase equilibrium after the regular TP flash.
-   *
-   * <p>
-   * This method checks if hydrate would form at the current T,P conditions and calculates the hydrate fraction if
-   * formation occurs. When gasHydrateOnlyMode is enabled and water content is low enough, it will calculate gas-hydrate
-   * equilibrium without an aqueous phase.
-   * </p>
-   */
-  private void calculateHydrateEquilibrium() {
-    // Check if water is present in the system
-    int waterIndex = system.getPhase(0).getComponent("water") != null
-        ? system.getPhase(0).getComponent("water").getComponentNumber()
-        : -1;
+  /** Private residual-fluid state evaluated on a one-mole feed basis. */
+  private static final class Trial {
+    private final SystemInterface fluid;
+    private final PhaseHydrate hydrate;
+    private final double hydrateMoles;
+    private final double residual;
+    private final double[] guestRatios;
+    private final double[] guestResiduals;
+    private final double guestError;
 
-    if (waterIndex < 0) {
-      logger.debug("No water component found - hydrate cannot form");
-      hydrateFormed = false;
-      hydrateFraction = 0.0;
-      return;
-    }
-
-    // Check if any hydrate formers are present
-    boolean hasHydrateFormers = false;
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).isHydrateFormer()) {
-        hasHydrateFormers = true;
-        break;
-      }
-    }
-
-    if (!hasHydrateFormers) {
-      logger.debug("No hydrate formers found - hydrate cannot form");
-      hydrateFormed = false;
-      hydrateFraction = 0.0;
-      return;
-    }
-
-    // Initialize the hydrate phase (phase index 4 when setHydrateCheck is true)
-    PhaseInterface hydratePhase = system.getPhase(4);
-    if (!(hydratePhase instanceof PhaseHydrate)) {
-      logger.warn("Hydrate phase not properly initialized");
-      return;
-    }
-
-    // Set up reference fugacities for hydrate calculation
-    setHydrateFugacities();
-
-    // Calculate hydrate fugacity and compare with fluid phases
-    double hydrateWaterFugacity = calculateHydrateWaterFugacity();
-
-    // Find the phase with water (aqueous or gas phase)
-    int waterPhaseIndex = findWaterPhase();
-
-    // Check if we should attempt gas-hydrate-only equilibrium
-    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
-    boolean attemptGasHydrateOnly = shouldAttemptGasHydrateOnly(waterZFraction);
-
-    if (waterPhaseIndex < 0 && !attemptGasHydrateOnly) {
-      logger.debug("No water-bearing phase found");
-      hydrateFormed = false;
-      hydrateFraction = 0.0;
-      return;
-    }
-
-    // If no aqueous phase but we have gas phase with water, use gas phase
-    if (waterPhaseIndex < 0 && attemptGasHydrateOnly) {
-      waterPhaseIndex = findGasPhaseWithWater();
-      if (waterPhaseIndex < 0) {
-        logger.debug("No water-bearing phase found for gas-hydrate equilibrium");
-        hydrateFormed = false;
-        hydrateFraction = 0.0;
-        return;
-      }
-    }
-
-    double fluidWaterFugacity = system.getPhase(waterPhaseIndex).getFugacity("water");
-
-    // Check if hydrate would form (hydrate fugacity < fluid fugacity)
-    double fugacityRatio = hydrateWaterFugacity / fluidWaterFugacity;
-
-    if (fugacityRatio < 1.0) {
-      // Hydrate is stable - calculate the hydrate fraction
-      hydrateFormed = true;
-      calculateHydrateFraction(waterPhaseIndex, waterIndex);
-
-      // For gas-hydrate only mode with low water, try to remove aqueous phase
-      if (attemptGasHydrateOnly) {
-        attemptRemoveAqueousPhase(waterIndex);
-      }
-    } else {
-      hydrateFormed = false;
-      hydrateFraction = 0.0;
-      logger.debug("Hydrate not stable at current conditions. Fugacity ratio: {}", fugacityRatio);
+    private Trial(SystemInterface fluid, PhaseHydrate hydrate, double hydrateMoles, double residual,
+        double[] guestRatios, double[] guestResiduals, double guestError) {
+      this.fluid = fluid;
+      this.hydrate = hydrate;
+      this.hydrateMoles = hydrateMoles;
+      this.residual = residual;
+      this.guestRatios = guestRatios;
+      this.guestResiduals = guestResiduals;
+      this.guestError = guestError;
     }
   }
 
   /**
-   * Set up the reference fugacities for all components in the hydrate phase.
+   * Set the iteration limit for bracketing and solving the water extent.
+   *
+   * @param limit strictly positive iteration limit
    */
-  private void setHydrateFugacities() {
-    PhaseInterface hydratePhase = system.getPhase(4);
-
-    // Use gas phase or highest pressure phase as reference
-    int refPhaseIndex = 0;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.GAS) {
-        refPhaseIndex = i;
-        break;
-      }
+  public void setMaximumIterations(int limit) {
+    if (limit < 1) {
+      throw new IllegalArgumentException("Hydrate iteration limit must be positive");
     }
-
-    // Set reference fugacities for each component
-    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-      for (int j = 0; j < hydratePhase.getNumberOfComponents(); j++) {
-        if (hydratePhase.getComponent(j).isHydrateFormer() || hydratePhase.getComponent(j).getName().equals("water")) {
-          double refFugacity = system.getPhase(refPhaseIndex).getFugacity(j);
-          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, refFugacity);
-        } else {
-          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, 0);
-        }
-      }
-    }
-
-    // Set water mole fraction to 1 in hydrate phase (structural water)
-    hydratePhase.getComponent("water").setx(1.0);
-
-    // Initialize the hydrate phase with updated fugacities
-    hydratePhase.init(hydratePhase.getNumberOfMolesInPhase(), hydratePhase.getNumberOfComponents(), 1,
-        PhaseType.HYDRATE, 1.0);
+    maximumIterations = limit;
   }
 
   /**
-   * Calculate the hydrate water fugacity using the CPA model.
+   * Get the number of fluid flashes, including the initial stability state.
    *
-   * @return the water fugacity in the hydrate phase
+   * @return fluid flash count from the last run
    */
-  private double calculateHydrateWaterFugacity() {
-    PhaseInterface hydratePhase = system.getPhase(4);
-
-    // Calculate fugacity coefficient for water in hydrate
-    hydratePhase.getComponent("water").fugcoef(hydratePhase);
-
-    return hydratePhase.getFugacity("water");
+  public int getFluidFlashCount() {
+    return fluidFlashCount;
   }
 
   /**
-   * Find the phase index that contains the most water.
+   * Get the largest accepted component error in moles per mole of original feed.
    *
-   * @return the phase index with the highest water content, or -1 if no water phase found
+   * @return maximum absolute component-balance residual, or NaN before verification
    */
-  private int findWaterPhase() {
-    int waterPhaseIndex = -1;
-    double maxWaterFraction = 0.0;
-
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).hasComponent("water")) {
-        double waterFraction = system.getPhase(i).getComponent("water").getx();
-        if (waterFraction > maxWaterFraction) {
-          maxWaterFraction = waterFraction;
-          waterPhaseIndex = i;
-        }
-      }
-    }
-
-    return waterPhaseIndex;
+  public double getMaximumBalanceResidual() {
+    return converged ? maximumBalanceResidual : Double.NaN;
   }
 
   /**
-   * Find the gas phase index that contains water.
+   * Report whether the last run accepted a balanced equilibrium state.
    *
-   * @return the gas phase index with water, or -1 if not found
+   * @return true after a successful run, including a stable hydrate-free state
    */
-  private int findGasPhaseWithWater() {
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.GAS && system.getPhase(i).hasComponent("water")) {
-        return i;
-      }
-    }
-    return -1;
+  public boolean isConverged() {
+    return converged;
   }
 
   /**
-   * Check if gas-hydrate-only equilibrium should be attempted.
+   * Get the accepted logarithm of host-water fugacity divided by fluid-water fugacity.
    *
-   * <p>
-   * This returns true when water content is low enough that all water can potentially be consumed by hydrate formation,
-   * allowing for gas-hydrate equilibrium without an aqueous phase.
-   * </p>
-   *
-   * @param waterZFraction the total water mole fraction in the system
-   * @return true if gas-hydrate-only mode should be attempted
+   * @return residual near zero for hydrate, nonnegative for a stable hydrate-free state, or NaN when not applicable
    */
-  private boolean shouldAttemptGasHydrateOnly(double waterZFraction) {
-    // If gas-hydrate only mode is explicitly enabled, use it
-    if (gasHydrateOnlyMode) {
-      return true;
-    }
-
-    // For very low water content (< 1%), automatically attempt gas-hydrate only
-    // This is the regime where water can be entirely consumed by hydrate
-    return waterZFraction < 0.01;
-  }
-
-  /**
-   * Attempt to remove the aqueous phase when all water is consumed by hydrate.
-   *
-   * <p>
-   * When water content is very low and hydrate has formed, this method checks if the aqueous phase fraction is
-   * negligible (smaller than the hydrate fraction) and removes it to achieve true gas-hydrate equilibrium.
-   * </p>
-   *
-   * @param waterIndex the component index of water
-   */
-  private void attemptRemoveAqueousPhase(int waterIndex) {
-    // Find aqueous phase index
-    int aqueousPhaseIndex = -1;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-        aqueousPhaseIndex = i;
-        break;
-      }
-    }
-
-    if (aqueousPhaseIndex < 0) {
-      // No aqueous phase - already gas-hydrate only
-      return;
-    }
-
-    double aqueousBeta = system.getBeta(aqueousPhaseIndex);
-    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
-
-    // Calculate the maximum water that can be in hydrate
-    double waterFractionInHydrate = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
-    double waterInHydrate = hydrateFraction * waterFractionInHydrate;
-
-    // Check if hydrate can consume all water (with some tolerance)
-    // If water in hydrate >= total water, remove aqueous phase
-    double waterBalance = waterInHydrate - waterZFraction;
-
-    if (waterBalance >= -1e-8 || aqueousBeta < 1e-10) {
-      // All water is in hydrate - remove aqueous phase
-      removeAqueousPhase(aqueousPhaseIndex);
-      logger.debug("Removed aqueous phase - gas-hydrate equilibrium achieved");
-    } else if (aqueousBeta < waterZFraction * 0.01) {
-      // Aqueous phase is tiny compared to total water - remove it
-      // Redistribute water to hydrate
-      removeAqueousPhase(aqueousPhaseIndex);
-      logger.debug("Removed trace aqueous phase - gas-hydrate equilibrium achieved");
-    }
-  }
-
-  /**
-   * Remove the aqueous phase from the system and redistribute its content to hydrate.
-   *
-   * @param aqueousPhaseIndex the index of the aqueous phase to remove
-   */
-  private void removeAqueousPhase(int aqueousPhaseIndex) {
-    double aqueousBeta = system.getBeta(aqueousPhaseIndex);
-
-    // Store phase information
-    int currentNumPhases = system.getNumberOfPhases();
-    double[] newBetas = new double[currentNumPhases - 1];
-    int[] newPhaseIndices = new int[currentNumPhases - 1];
-
-    // Copy phases except aqueous
-    int newPhaseCount = 0;
-    int hydratePhaseNewIndex = -1;
-    for (int i = 0; i < currentNumPhases; i++) {
-      if (i != aqueousPhaseIndex) {
-        newBetas[newPhaseCount] = system.getBeta(i);
-        newPhaseIndices[newPhaseCount] = system.getPhaseIndex(i);
-        if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
-          hydratePhaseNewIndex = newPhaseCount;
-        }
-        newPhaseCount++;
-      }
-    }
-
-    // Add aqueous beta to hydrate
-    if (hydratePhaseNewIndex >= 0) {
-      newBetas[hydratePhaseNewIndex] += aqueousBeta;
-      hydrateFraction = newBetas[hydratePhaseNewIndex];
-    }
-
-    // Normalize betas to sum to 1.0
-    double sum = 0.0;
-    for (int i = 0; i < newPhaseCount; i++) {
-      sum += newBetas[i];
-    }
-    for (int i = 0; i < newPhaseCount; i++) {
-      newBetas[i] /= sum;
-    }
-
-    // Update system with new phase configuration
-    system.setNumberOfPhases(newPhaseCount);
-    for (int i = 0; i < newPhaseCount; i++) {
-      system.setPhaseIndex(i, newPhaseIndices[i]);
-      system.setBeta(i, newBetas[i]);
-    }
-
-    // Reinitialize the system
-    system.init(1);
-    system.orderByDensity();
-    system.init(1);
-
-    // Update hydrate fraction
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
-        hydrateFraction = system.getBeta(i);
-        break;
-      }
-    }
-  }
-
-  /**
-   * Calculate the hydrate fraction using iterative fugacity matching.
-   *
-   * @param waterPhaseIndex the index of the water-bearing phase
-   * @param waterIndex the component index of water
-   */
-  private void calculateHydrateFraction(int waterPhaseIndex, int waterIndex) {
-    // Get total water mole fraction in the system
-    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
-
-    // Calculate maximum hydrate fraction based on available water
-    // Hydrate is ~85% water by mole, so max hydrate = water / 0.85
-    double waterFractionInHydrate = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
-    double maxHydrateFraction = waterZFraction / waterFractionInHydrate;
-
-    // Cap at 99% to leave some gas phase
-    if (maxHydrateFraction > 0.99) {
-      maxHydrateFraction = 0.99;
-    }
-
-    // Initial guess for hydrate fraction based on fugacity difference
-    double hydrateWaterFug = system.getPhase(4).getFugacity("water");
-    double fluidWaterFug = system.getPhase(waterPhaseIndex).getFugacity("water");
-
-    // Use secant method to find hydrate fraction
-    double beta1 = 0.01; // Initial guess
-    double beta2 = Math.min(0.5, maxHydrateFraction);
-
-    double f1 = calculateHydrateObjective(beta1, waterPhaseIndex, waterIndex);
-    double f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
-
-    for (int iter = 0; iter < MAX_HYDRATE_ITERATIONS; iter++) {
-      if (Math.abs(f2 - f1) < 1e-20) {
-        break;
-      }
-
-      double betaNew = beta2 - f2 * (beta2 - beta1) / (f2 - f1);
-
-      // Bound the solution
-      if (betaNew < MIN_HYDRATE_FRACTION) {
-        betaNew = MIN_HYDRATE_FRACTION;
-      }
-      if (betaNew > maxHydrateFraction) {
-        betaNew = maxHydrateFraction;
-      }
-
-      beta1 = beta2;
-      f1 = f2;
-      beta2 = betaNew;
-      f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
-
-      if (Math.abs(f2) < HYDRATE_TOLERANCE) {
-        break;
-      }
-    }
-
-    // For very low water content, use the maximum possible hydrate fraction
-    // This ensures all water goes to hydrate when water content is limiting
-    if (waterZFraction < 0.01) {
-      // Low water - use max hydrate that consumes all water
-      hydrateFraction = maxHydrateFraction;
-    } else {
-      // Normal case - use calculated fraction
-      hydrateFraction = beta2;
-    }
-
-    // Update the system with hydrate phase
-    if (hydrateFraction > MIN_HYDRATE_FRACTION) {
-      updateSystemWithHydrate(waterPhaseIndex, waterIndex);
-    }
-  }
-
-  /**
-   * Calculate the objective function for hydrate fraction iteration.
-   *
-   * <p>
-   * The objective is to match the water fugacity between fluid and hydrate phases.
-   * </p>
-   *
-   * @param beta the current hydrate fraction guess
-   * @param waterPhaseIndex the index of the water phase
-   * @param waterIndex the component index of water
-   * @return the fugacity difference (should be zero at equilibrium)
-   */
-  private double calculateHydrateObjective(double beta, int waterPhaseIndex, int waterIndex) {
-    // Update reference fugacities based on current beta
-    setHydrateFugacities();
-
-    // Recalculate hydrate fugacity
-    double hydrateWaterFug = calculateHydrateWaterFugacity();
-    double fluidWaterFug = system.getPhase(waterPhaseIndex).getFugacity("water");
-
-    // Objective: ln(f_hydrate/f_fluid) = 0 at equilibrium
-    return Math.log(hydrateWaterFug / fluidWaterFug);
-  }
-
-  /**
-   * Update the system to include the hydrate phase with calculated fraction.
-   *
-   * @param waterPhaseIndex the index of the water-bearing phase
-   * @param waterIndex the component index of water
-   */
-  private void updateSystemWithHydrate(int waterPhaseIndex, int waterIndex) {
-    // Get water content in the system
-    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
-
-    // Check if initial state has aqueous phase
-    boolean hasInitialAqueous = false;
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
-        hasInitialAqueous = true;
-        break;
-      }
-    }
-
-    // Store current phase information
-    int currentNumPhases = system.getNumberOfPhases();
-    double[] originalBetas = new double[currentNumPhases];
-    double sumOriginalBetas = 0.0;
-    for (int i = 0; i < currentNumPhases; i++) {
-      originalBetas[i] = system.getBeta(i);
-      sumOriginalBetas += originalBetas[i];
-    }
-
-    // Add hydrate phase to the active phases
-    system.setNumberOfPhases(currentNumPhases + 1);
-    system.setPhaseIndex(currentNumPhases, 4);
-
-    // Scale down existing betas to make room for hydrate fraction
-    // Total should remain 1.0: sum(scaledBetas) + hydrateFraction = 1.0
-    double scaleFactor = (1.0 - hydrateFraction) / sumOriginalBetas;
-    for (int i = 0; i < currentNumPhases; i++) {
-      system.setBeta(i, originalBetas[i] * scaleFactor);
-    }
-
-    // Set the hydrate phase fraction
-    system.setBeta(currentNumPhases, hydrateFraction);
-
-    // Set hydrate composition based on cavity occupancy
-    updateHydrateComposition();
-
-    // Initialize the system with updated phase fractions
-    system.init(1);
-
-    // Order phases by density (hydrate will be at bottom as heaviest)
-    system.orderByDensity();
-    system.init(1);
-  }
-
-  /**
-   * Update the hydrate phase composition based on cavity occupancy calculations.
-   */
-  private void updateHydrateComposition() {
-    PhaseInterface hydratePhase = system.getPhase(4);
-
-    // Calculate mole fractions based on cavity occupancy
-    // Water is the host, hydrate formers occupy cavities
-    double[] moleFractions = new double[hydratePhase.getNumberOfComponents()];
-
-    // Water makes up about 85-87% of hydrate (depending on structure)
-    // Structure I: 46 water molecules per unit cell, 8 guest sites
-    // Structure II: 136 water molecules per unit cell, 24 guest sites
-    double waterFraction = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
-
-    int waterCompNum = hydratePhase.getComponent("water").getComponentNumber();
-    moleFractions[waterCompNum] = waterFraction;
-
-    // Distribute remaining fraction among hydrate formers based on cavity occupancy
-    double guestFraction = 1.0 - waterFraction;
-    double totalOccupancy = 0.0;
-
-    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-      if (hydratePhase.getComponent(i).isHydrateFormer()) {
-        // Get cavity occupancy (YKI) for this component
-        double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
-            hydratePhase);
-        totalOccupancy += yki;
-      }
-    }
-
-    if (totalOccupancy > 0) {
-      for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-        if (hydratePhase.getComponent(i).isHydrateFormer()) {
-          double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
-              hydratePhase);
-          moleFractions[i] = guestFraction * (yki / totalOccupancy);
-        }
-      }
-    }
-
-    // Normalize to ensure sum = 1.0
-    double sum = 0.0;
-    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-      sum += moleFractions[i];
-    }
-
-    // Set normalized mole fractions
-    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-      if (sum > 0) {
-        hydratePhase.getComponent(i).setx(moleFractions[i] / sum);
-      } else {
-        hydratePhase.getComponent(i).setx(0.0);
-      }
-    }
+  public double getLastResidual() {
+    return lastResidual;
   }
 
   /**
@@ -655,7 +594,7 @@ public class TPHydrateFlash extends TPflash {
    * @return the cavity occupancy fraction
    */
   public double getCavityOccupancy(String componentName, int structure, int cavityType) {
-    PhaseInterface hydratePhase = system.getPhase(4);
+    PhaseInterface hydratePhase = system.getPhases()[4];
     if (hydratePhase.hasComponent(componentName)) {
       ComponentHydrate comp = (ComponentHydrate) hydratePhase.getComponent(componentName);
       return comp.calcYKI(structure - 1, cavityType, hydratePhase);
@@ -667,8 +606,8 @@ public class TPHydrateFlash extends TPflash {
    * Check if gas-hydrate only mode is enabled.
    *
    * <p>
-   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous phase when water content
-   * is low enough.
+   * The flag is retained for API compatibility. Both modes let the residual-fluid equilibrium determine whether an
+   * aqueous phase is present; neither mode discards water or forces a phase to disappear.
    * </p>
    *
    * @return true if gas-hydrate only mode is enabled
@@ -681,8 +620,8 @@ public class TPHydrateFlash extends TPflash {
    * Enable or disable gas-hydrate only mode.
    *
    * <p>
-   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous phase when water content
-   * is low enough for all water to be consumed by hydrate formation.
+   * This compatibility option does not force phase removal. Water remaining in the fluid is determined by fugacity
+   * equality and the component balance, including in trace-water systems.
    * </p>
    *
    * @param gasHydrateOnlyMode true to enable gas-hydrate only mode
@@ -710,6 +649,9 @@ public class TPHydrateFlash extends TPflash {
     if (Double.compare(hydrateFraction, other.hydrateFraction) != 0) {
       return false;
     }
+    if (maximumIterations != other.maximumIterations) {
+      return false;
+    }
     if (gasHydrateOnlyMode != other.gasHydrateOnlyMode) {
       return false;
     }
@@ -724,6 +666,7 @@ public class TPHydrateFlash extends TPflash {
     result = prime * result + (hydrateFormed ? 1231 : 1237);
     result = prime * result + Double.hashCode(hydrateFraction);
     result = prime * result + (gasHydrateOnlyMode ? 1231 : 1237);
+    result = prime * result + maximumIterations;
     return result;
   }
 }
