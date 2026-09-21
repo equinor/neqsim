@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-optimization
-description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
-last_verified: "2026-08-15"
+description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, running multi-scenario production comparisons, or generating Eclipse/OPM Flow VFPPROD lift-curve tables for a flowline, riser or tubing from a NeqSim pipe model."
+last_verified: "2026-09-21"
 ---
 
 # NeqSim Production Optimization Skill
@@ -303,6 +303,82 @@ double annualCO2 = net.getAnnualCO2EmissionsTonnes();
 
 See [production_well_networks.md](docs/process/equipment/production_well_networks.md)
 for full API documentation of all features.
+
+### Lift curves / VFPPROD tables for Eclipse and OPM Flow
+
+A reservoir simulator wants `VFPPROD`: a 5-D table `BHP[flow][THP][WFR][GFR][ALQ]`
+in **standard surface volumes** (Sm3/d, METRIC) with explicit axis definitions.
+NeqSim gives you the hydraulics (`PipeBeggsAndBrills`) and the validated keyword
+writer (`EclipseVFPExporter`); the piece in between is a surface-rate
+recombination loop that you write yourself (verified 2026-09-21, 216 points in
+~100 s at 20 pipe increments):
+
+```python
+# 1. Wellstream at standard conditions -> separator gas/condensate basis.
+#    read(file, True) adds a zero-mole water slot with kij 0.5 and VLLE on.
+#    NEVER call setMixingRule() after read(): it wipes the E300 BIC block.
+base = EclipseFluidReadWrite.read(e300_path, True)
+std = base.clone(); std.setTemperature(288.15); std.setPressure(1.01325)
+ThermodynamicOperations(std).TPflash(); std.initProperties()
+names = [str(std.getComponent(i).getComponentName()) for i in range(std.getNumberOfComponents())]
+def basis(kind):                       # composition + mol per standard m3
+    ph = std.getPhase(kind)
+    x = [float(ph.getComponent(i).getx()) for i in range(len(names))]
+    return x, float(ph.getDensity("kg/m3")) / float(ph.getMolarMass())
+y_gas, gas_mol_sm3 = basis("gas"); x_oil, oil_mol_sm3 = basis("oil")
+
+# 2. Recombine one table point (gas basis: GAS / WGR / OGR).
+def recombine(q_gas_sm3_d, ogr, wgr):
+    n_gas, n_oil = q_gas_sm3_d * gas_mol_sm3, q_gas_sm3_d * ogr * oil_mol_sm3
+    moles = [n_gas * y_gas[i] + n_oil * x_oil[i] for i in range(len(names))]
+    moles[names.index("water")] += q_gas_sm3_d * wgr * 999.0 / 0.018015
+    fluid = base.clone()
+    fluid.setMolarComposition(jpype.JArray(jpype.JDouble)([m / sum(moles) for m in moles]))
+    fluid.setTotalFlowRate(sum(moles) / 86400.0, "mol/sec")
+    return fluid
+
+# 3. Arrival pressure for a trial inlet pressure; None = march failed (P_in too low).
+def p_out(fluid, p_in):
+    feed = Stream("inlet", fluid.clone()); feed.setTemperature(40.0, "C"); feed.setPressure(p_in, "bara")
+    pipe = PipeBeggsAndBrills("line", feed)
+    pipe.setLength(25000.0); pipe.setElevation(350.0); pipe.setDiameter(0.254)
+    pipe.setPipeWallRoughness(4.5e-5); pipe.setNumberOfIncrements(20)
+    pipe.setConstantSurfaceTemperature(4.0, "C"); pipe.setHeatTransferCoefficient(2.0)  # W/m2K, SPECIFIED_U
+    try:
+        feed.run(); pipe.run()
+        p = float(pipe.getOutletStream().getPressure("bara"))
+        return p if p > 0 else None
+    except Exception:
+        return None
+
+# 4. Secant on the residual p_out(P_in) - THP for every (rate, THP, WGR, OGR); dP is a
+#    weak function of P_in so 3-6 pipe runs per point suffice. Fill BHP[f][t][w][g][0].
+
+# 5. Validated keyword. Axis order [flow][THP][WFR][GFR][ALQ]; every value finite and > 0.
+exp = EclipseVFPExporter(1)
+exp.setDatumDepth(350.0); exp.setUnitSystem("METRIC"); exp.setInputUnits("Sm3/day", "bara")
+exp.setFlowRateType("GAS"); exp.setWaterCutType("WGR"); exp.setGORType("OGR"); exp.setALQType("")
+exp.setFlowRates(JD(gas_rates)); exp.setTHPs(JD(thps)); exp.setWaterCuts(JD(wgrs)); exp.setGORs(JD(ogrs))
+exp.setBHPTable(jpype.JArray(jpype.JDouble, 5)(bhp))
+Path("vfp_flowline.inc").write_text(str(exp.getVFPPRODString()))
+```
+
+Basis by fluid type: gas condensate → `'GAS' 'WGR' 'OGR'` (OGR ≈ 1/GOR, e.g.
+GOR 2990 → 3.3e-4); oil → `'OIL' 'WCT' 'GOR'`. Supported definitions in the
+exporter: FLO ∈ {OIL, LIQ, GAS}, WFR ∈ {WCT, WOR, WGR}, GFR ∈ {GOR, GLR, OGR},
+ALQ ∈ {'' (singleton 0), GRAT}; METRIC or FIELD output.
+
+| Trap | Effect | Fix |
+|------|--------|-----|
+| `LiftCurveGenerator` / `FlowRateOptimizer` / `ProcessSystem.generateLiftCurve` | Rates in kg/hr or actual volume — `EclipseVFPExporter` rejects them ("mass/actual volume is not VFP flow") | Recombine per point at standard conditions and run in Sm3/d as above |
+| `RecombinationFlashGenerator` / `MultiScenarioVFPGenerator` on an E300 fluid | Calls `setMixingRule("classic")` on the recombined fluid → wipes the file's BIC block; output is diagnostic, not a deck keyword | Use the loop above on `read(file, True)`; feed the result to `EclipseVFPExporter` |
+| Point does not reach the target THP inside the inlet-pressure cap | Exporter throws on NaN / non-positive BHP — no nearest-neighbour fill | Write the cap value and say so in a `--` comment, or trim the rate axis |
+| Flowline table used as a well table | The "BHP" column is the flowline **inlet** pressure, not a bottomhole pressure | Use as a network branch (`NETWORK` + `BRANPROP 'A' 'B' <table> /`); for a well table set `datum_depth` to the well datum and replace the geometry by the tubing |
+| Lift-curve minimum in P_in(Q) (riser liquid loading) | Rates below the minimum are hydraulically unstable; a THP-controlled well there oscillates or dies | Expected physics — keep the low-rate points so the simulator sees the turning point, note it in the report |
+| `pipe.getFlowRegime()` next to `getSegmentLiquidHoldup(0)` | Compares outlet and inlet states | Use `getSegmentFlowRegime(i)` with the matching segment index |
+
+The arrival temperature is not part of `VFPPROD`; keep it in a side JSON
+(`arrival_temperature_C` per point) for the flow-assurance hand-off.
 
 ---
 
