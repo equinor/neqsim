@@ -1,7 +1,7 @@
 ---
 name: neqsim-stid-retriever
 description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs, material certificates, fire/PFP documents, piping specs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, water-hammer route/event evidence, trapped-liquid fire rupture evidence, or as-built documentation for process equipment."
-last_verified: "2026-07-04"
+last_verified: "2026-09-21"
 ---
 
 # Document Retrieval Skill for Engineering Tasks
@@ -122,7 +122,10 @@ by equipment tag. See the config template below for setup instructions.
 ### STID Download Helper (Recommended)
 
 Use `devtools/stid_download.py` to download STID documents directly into a
-task folder. This ensures all documents end up in the right place:
+task folder. This ensures all documents end up in the right place. Requires
+`pip install "stidapi>=1.4.4"` — that version added a proper `File.download_file()`
+resolver (direct `url` if the API returned one, else `{inst_code}/file/{id}`),
+so the helper no longer has to guess between multiple hand-built URL patterns:
 
 ```bash
 # Download documents by tag — saves to task's references/ folder
