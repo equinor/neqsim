@@ -245,9 +245,19 @@ the server jar in the background (``java servers/NeqsimMcpLauncher.java
 --prefetch``): on the first session this overlaps the ~90 MB download with the
 user's first prompt, and afterwards it fetches a newer release once a day so the
 next server start is instant. Skipped when java is missing or the cache is fresh.
+
+The launcher runs in Java source-launch mode and therefore needs a JDK 21+. A
+Java 8 first on PATH (Oracle javapath, an old Software Center install) makes
+``java NeqsimMcpLauncher.java`` fail before the launcher's own version check can
+run, so the MCP server silently never starts and no ``neqsim_*`` tools appear.
+The hook therefore resolves a JDK 21+ itself (NEQSIM_MCP_JAVA, JAVA_HOME, PATH,
+then the usual JDK install folders), warns in chat when none exists, and pins
+the absolute java path into the ``neqsim`` server entry of the VS Code user
+mcp.json whenever that entry would otherwise run an unusable ``java``.
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -261,6 +271,8 @@ VERIFY_IMPORTS = {verify_imports!r}
 PREFETCH_MCP = {prefetch_mcp!r}
 LOCK_MAX_AGE_S = 45 * 60
 MCP_REFRESH_S = 24 * 3600
+MCP_MIN_JAVA = 21
+JAVA_EXE = "java.exe" if os.name == "nt" else "java"
 
 root = Path(os.environ.get("PLUGIN_ROOT") or Path(__file__).resolve().parents[1])
 plugin_name = json.loads((root / "plugin.json").read_text(encoding="utf-8")).get("name", root.name)
@@ -309,29 +321,232 @@ def mcp_needs_prefetch():
     return time.time() * 1000 - checked_ms > MCP_REFRESH_S * 1000
 
 
+def java_major(java):
+    """Major version of the JDK that owns ``java`` (8, 21, ...), or None.
+
+    Reads ``<jdk>/release`` beside ``bin/`` first (no process start), then falls
+    back to ``java -version``. Handles legacy ``1.8.0_392`` and modern ``21.0.2``.
+    """
+    def parse(text):
+        m = re.search(r'([0-9]+(?:\\.[0-9]+)*)', text)
+        if not m:
+            return None
+        parts = m.group(1).split(".")
+        return int(parts[1]) if parts[0] == "1" and len(parts) > 1 else int(parts[0])
+    try:
+        release = Path(java).resolve().parent.parent / "release"
+        if release.is_file():
+            m = re.search(r'^JAVA_VERSION="?([^"\\r\\n]+)', release.read_text(encoding="utf-8", errors="ignore"), re.M)
+            if m:
+                return parse(m.group(1))
+    except OSError:
+        pass
+    try:
+        r = subprocess.run([str(java), "-version"], capture_output=True, text=True, timeout=20)
+        m = re.search(r'version "([^"]+)"', (r.stderr or "") + (r.stdout or ""))
+        if m:
+            return parse(m.group(1))
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return None
+
+
+def java_install_roots():
+    """Folders whose children are JDK homes on this OS (best effort, no admin)."""
+    home = Path.home()
+    if os.name == "nt":
+        bases = [os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"),
+                 os.environ.get("ProgramW6432"),
+                 str(Path(os.environ.get("LOCALAPPDATA", str(home / "AppData" / "Local"))) / "Programs")]
+        vendors = ["Eclipse Adoptium", "Eclipse Foundation", "Java", "Microsoft", "Zulu",
+                   "Amazon Corretto", "BellSoft", "OpenJDK", "RedHat", "Semeru", "SapMachine"]
+        roots = [Path(b) / v for b in bases if b for v in vendors]
+        roots += [home / ".jdks", home / "scoop" / "apps", home / "graalvm", home, Path("C:/tools")]
+    elif sys.platform == "darwin":
+        roots = [Path("/Library/Java/JavaVirtualMachines"), home / "Library" / "Java" / "JavaVirtualMachines",
+                 Path("/opt/homebrew/opt"), Path("/usr/local/opt"), home / ".sdkman" / "candidates" / "java",
+                 home / ".jdks", home / "graalvm", home]
+    else:
+        roots = [Path("/usr/lib/jvm"), Path("/usr/java"), Path("/opt"), Path("/opt/java"),
+                 home / ".sdkman" / "candidates" / "java", home / ".jdks", home / "graalvm", home]
+    return roots
+
+
+def explicit_java_candidates():
+    """Java executables the user chose: NEQSIM_MCP_JAVA, JAVA_HOME, then PATH."""
+    explicit = os.environ.get("NEQSIM_MCP_JAVA")
+    if explicit:
+        p = Path(explicit)
+        yield p / "bin" / JAVA_EXE if p.is_dir() else p
+    jhome = os.environ.get("JAVA_HOME")
+    if jhome:
+        yield Path(jhome) / "bin" / JAVA_EXE
+    from shutil import which
+    on_path = which("java")
+    if on_path:
+        yield Path(on_path)
+
+
+def installed_java_candidates():
+    """Java executables under the usual JDK install folders (newest folder name first)."""
+    for root in java_install_roots():
+        try:
+            children = sorted(root.iterdir(), reverse=True) if root.is_dir() else []
+        except OSError:
+            continue
+        for child in children:
+            name = child.name.lower()
+            if root == Path.home() and not any(k in name for k in ("jdk", "temurin", "graalvm", "zulu", "corretto")):
+                continue
+            for cand in (child / "bin" / JAVA_EXE, child / "Contents" / "Home" / "bin" / JAVA_EXE,
+                         child / "current" / "bin" / JAVA_EXE,
+                         child / "libexec" / "openjdk.jdk" / "Contents" / "Home" / "bin" / JAVA_EXE):
+                if cand.is_file():
+                    yield cand
+                    break
+
+
+def find_mcp_java():
+    """Best JDK for the MCP launcher.
+
+    Returns ``(java, major, path_java, path_major)``: the first explicit candidate
+    (NEQSIM_MCP_JAVA, JAVA_HOME, PATH) with major >= MCP_MIN_JAVA, else the highest
+    version among installed JDKs; plus what a bare ``java`` on PATH resolves to
+    (None when there is none). ``java`` is None when no usable JDK exists.
+    """
+    from shutil import which
+    path_java = which("java")
+    path_major = java_major(path_java) if path_java else None
+    seen = set()
+
+    def usable(cand):
+        try:
+            key = str(cand.resolve())
+        except OSError:
+            key = str(cand)
+        if key in seen or not cand.is_file():
+            return None
+        seen.add(key)
+        major = java_major(cand)
+        return major if major is not None and major >= MCP_MIN_JAVA else None
+
+    for cand in explicit_java_candidates():
+        major = usable(cand)
+        if major:
+            return str(cand), major, path_java, path_major
+    best = None
+    for cand in installed_java_candidates():
+        major = usable(cand)
+        if major and (best is None or major > best[1]):
+            best = (str(cand), major)
+    if best is None:
+        return None, None, path_java, path_major
+    return best[0], best[1], path_java, path_major
+
+
+def vscode_user_mcp_files():
+    """VS Code user ``mcp.json`` locations whose parent folder exists."""
+    if os.name == "nt":
+        base = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
+        dirs = [base / "Code" / "User", base / "Code - Insiders" / "User"]
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+        dirs = [base / "Code" / "User", base / "Code - Insiders" / "User"]
+    else:
+        base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
+        dirs = [base / "Code" / "User", base / "Code - Insiders" / "User"]
+    return [d / "mcp.json" for d in dirs if d.is_dir()]
+
+
+def pin_mcp_java(java, path_major):
+    """Point the plugin's own ``neqsim`` entry in the VS Code user mcp.json at ``java``.
+
+    Only touches an entry whose args name NeqsimMcpLauncher.java (written by the
+    plugin installer, or by an earlier run of this hook), and only when its current
+    command cannot run the launcher: a bare ``java`` while PATH resolves to a JDK
+    below MCP_MIN_JAVA (or none), or an absolute path that no longer exists / is too
+    old (a JDK upgrade renamed its folder). A working entry is left alone, a foreign
+    ``neqsim`` server is never modified. Returns the files that were rewritten.
+    """
+    patched = []
+    for path in vscode_user_mcp_files():
+        if not path.is_file():
+            continue
+        try:
+            cfg = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue  # JSONC with comments: leave it to the user / installer
+        servers = cfg.get("servers") if isinstance(cfg, dict) else None
+        entry = servers.get("neqsim") if isinstance(servers, dict) else None
+        if not isinstance(entry, dict):
+            continue
+        if "NeqsimMcpLauncher.java" not in " ".join(str(a) for a in entry.get("args", [])):
+            continue
+        cmd = str(entry.get("command", "java"))
+        bare = Path(cmd).name.lower() in ("java", "java.exe") and os.sep not in cmd and "/" not in cmd
+        if bare:
+            usable = path_major is not None and path_major >= MCP_MIN_JAVA
+        else:
+            usable = Path(cmd).is_file() and (java_major(cmd) or 0) >= MCP_MIN_JAVA
+        if usable or Path(cmd) == Path(java):
+            continue
+        entry["command"] = java
+        try:
+            path.with_suffix(".json.bak").write_bytes(path.read_bytes())
+            path.write_text(json.dumps(cfg, indent=2) + "\\n", encoding="utf-8")
+            patched.append(str(path))
+        except OSError:
+            continue
+    return patched
+
+
 def prefetch_mcp():
-    """Kick off the launcher's --prefetch in the background; never raises."""
-    java = None
-    home = os.environ.get("JAVA_HOME")
-    if home:
-        cand = Path(home) / "bin" / ("java.exe" if os.name == "nt" else "java")
-        if cand.exists():
-            java = str(cand)
+    """Kick off the launcher's --prefetch in the background; never raises.
+
+    Returns ``(started, note)``: ``note`` is a chat-visible warning about the Java
+    setup (None when everything is fine), independent of whether a prefetch ran.
+    """
+    java, major, path_java, path_major = find_mcp_java()
+    note = None
     if java is None:
-        from shutil import which
-        java = which("java")
-    if java is None:
-        return False
+        found = ("java on PATH is Java {{}} at {{}}".format(path_major, path_java) if path_java
+                 else "no java on PATH or JAVA_HOME")
+        note = ("NeqSim MCP server cannot start: it needs a JDK {{}}+ and {{}}. The neqsim_* tools will "
+                "not appear until one is installed (Windows: `winget install EclipseAdoptium.Temurin.{{}}.JDK` "
+                "or AccessIT; portable: unzip a Temurin JDK and set NEQSIM_MCP_JAVA to its folder), then "
+                "start a new chat.").format(MCP_MIN_JAVA, found, MCP_MIN_JAVA)
+    elif path_major is None or path_major < MCP_MIN_JAVA:
+        patched = pin_mcp_java(java, path_major)
+        shadow = ("java on PATH is Java {{}} ({{}})".format(path_major, path_java) if path_java
+                  else "no java on PATH")
+        if patched:
+            note = ("NeqSim MCP server: {{}}, so the 'neqsim' server in {{}} was pinned to the JDK {{}} at "
+                    "{{}}. Start a new chat (or Developer: Reload Window) for the neqsim_* tools to appear."
+                    ).format(shadow, ", ".join(patched), major, java)
+        else:
+            note = ("NeqSim MCP server: {{}}; a JDK {{}} exists at {{}}. If the neqsim_* tools are missing, "
+                    "set the 'neqsim' server's command in the VS Code user mcp.json to that java (or run the "
+                    "plugin install script / set JAVA_HOME) and start a new chat.").format(shadow, major, java)
     try:
         state.mkdir(parents=True, exist_ok=True)
+        with open(str(mcp_log), "a", encoding="utf-8") as out:
+            out.write("== {{}} java: {{}}\\n".format(time.strftime("%Y-%m-%d %H:%M:%S"),
+                                                     "{{}} (Java {{}})".format(java, major) if java else "NONE >= {{}}".format(MCP_MIN_JAVA)))
+            if note:
+                out.write("== {{}}\\n".format(note))
+    except OSError:
+        pass
+    if java is None or not mcp_needs_prefetch():
+        return False, note
+    try:
         out = open(str(mcp_log), "a", encoding="utf-8")
         out.write("== {{}} prefetch\\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
         out.flush()
         detached([java, str(root / "servers" / "NeqsimMcpLauncher.java"), "--root", str(root),
                   "--data", str(mcp_data), "--prefetch"], out)
-        return True
+        return True, note
     except OSError:
-        return False
+        return False, note
 
 
 def pick_python():
@@ -499,32 +714,61 @@ def spawn_worker(python):
     detached([python, str(Path(__file__).resolve()), "--run"])
 
 
+def java_note_is_new(note):
+    """True when ``note`` differs from the last Java warning shown for this plugin version.
+
+    Keeps the chat message to one occurrence per distinct finding, and clears the
+    marker as soon as the setup is healthy so a relapse (JDK removed, PATH changed)
+    is reported again.
+    """
+    marker = state / "java_notified"
+    if note is None:
+        try:
+            marker.unlink()
+        except OSError:
+            pass
+        return False
+    text = version + "\\n" + note
+    try:
+        if marker.is_file() and marker.read_text(encoding="utf-8") == text:
+            return False
+        state.mkdir(parents=True, exist_ok=True)
+        marker.write_text(text, encoding="utf-8")
+    except OSError:
+        pass
+    return True
+
+
 def main():
     python = pick_python()
     if "--run" in sys.argv:
         return run_install(python) if python else 1
-    mcp_started = mcp_needs_prefetch() and prefetch_mcp()
+    mcp_started, java_note = False, None
+    if PREFETCH_MCP and (root / "servers" / "NeqsimMcpLauncher.java").exists() and not os.environ.get("NEQSIM_MCP_JAR"):
+        mcp_started, java_note = prefetch_mcp()
+    if not java_note_is_new(java_note):
+        java_note = None
+    messages = []
+    if java_note:
+        messages.append(java_note)
     if python is None:
         marker = state / "no_python_notified"
-        if marker.exists():
-            return 0
-        state.mkdir(parents=True, exist_ok=True)
-        marker.write_text(version, encoding="utf-8")
-        print(json.dumps({{"systemMessage": "NeqSim plugin '{{}}': no Python interpreter found "
-                          "(set NEQSIM_PYTHON or put python on PATH); MCP tools still work, the task "
-                          "toolkit is not installed.".format(plugin_name)}}))
-        return 0
-    if stamp.exists() and stamp.read_text(encoding="utf-8") == stamp_text(python):
-        return 0
-    if lock.exists() and time.time() - lock.stat().st_mtime < LOCK_MAX_AGE_S:
-        return 0
-    spawn_worker(python)
-    mcp_note = (" The NeqSim MCP server jar (~90 MB) is downloading alongside; its tools appear "
-                "as soon as the server reports running." if mcp_started else "")
-    print(json.dumps({{"systemMessage": "NeqSim plugin '{{}}' v{{}}: installing its Python packages into "
-                      "{{}} in the background (first session only, a few minutes). Log: {{}}. Run "
-                      "/neqsim-setup afterwards to verify.{{}}".format(plugin_name, version, python, log,
-                                                                      mcp_note)}}))
+        if not marker.exists():
+            state.mkdir(parents=True, exist_ok=True)
+            marker.write_text(version, encoding="utf-8")
+            messages.append("NeqSim plugin '{{}}': no Python interpreter found (set NEQSIM_PYTHON or put "
+                            "python on PATH); MCP tools still work, the task toolkit is not installed."
+                            .format(plugin_name))
+    elif not (stamp.exists() and stamp.read_text(encoding="utf-8") == stamp_text(python)) \\
+            and not (lock.exists() and time.time() - lock.stat().st_mtime < LOCK_MAX_AGE_S):
+        spawn_worker(python)
+        mcp_note = (" The NeqSim MCP server jar (~90 MB) is downloading alongside; its tools appear "
+                    "as soon as the server reports running." if mcp_started else "")
+        messages.append("NeqSim plugin '{{}}' v{{}}: installing its Python packages into {{}} in the "
+                        "background (first session only, a few minutes). Log: {{}}. Run /neqsim-setup "
+                        "afterwards to verify.{{}}".format(plugin_name, version, python, log, mcp_note))
+    if messages:
+        print(json.dumps({{"systemMessage": " ".join(messages)}}))
     return 0
 
 
