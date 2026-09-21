@@ -49,7 +49,8 @@ jobs:
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
             devtools/test_neqsim_doctor.py \
-            devtools/test_unisim_outputs.py
+            devtools/test_unisim_outputs.py \
+            devtools/test_stid_download.py
 
       - name: Run mechanical design mesh contract tests
         run: python -m unittest discover -s devtools -p test_mechanical_design_json_to_mesh.py -v
