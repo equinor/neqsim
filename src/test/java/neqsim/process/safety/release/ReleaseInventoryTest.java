@@ -240,10 +240,12 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
       private static final long serialVersionUID = 1L;
       private int calls;
 
+      @Override
       public String getModelId() {
         return "ideal-gas-isentropic-orifice";
       }
 
+      @Override
       public ReleaseFlowResult calculate(ReleaseFlowRequest request) {
         if (++calls >= 4) {
           return ReleaseFlowResult.failure(this, false, "INJECTED_FAILURE", "mid-step regression");
@@ -307,10 +309,12 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
     ReleaseFlowModel mismatched = new ReleaseFlowModel() {
       private static final long serialVersionUID = 1L;
 
+      @Override
       public String getModelId() {
         return "ideal-gas-isentropic-orifice";
       }
 
+      @Override
       public ReleaseFlowResult calculate(ReleaseFlowRequest request) {
         SystemInterface wrong = request.getFluid();
         wrong.setTemperature(wrong.getTemperature() + 20.0);
