@@ -56,6 +56,7 @@ import neqsim.process.equipment.valve.SafetyValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ModuleInterface;
+import neqsim.process.safety.release.ReleaseInventory;
 
 /**
  * Transitional resolver for the dynamic capability of existing NeqSim process elements.
@@ -155,7 +156,7 @@ public final class DynamicCapabilityResolver {
         HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class, ThrottlingValve.class,
         BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class,
         EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class,
-        Electrolyzer.class)) {
+        Electrolyzer.class, ReleaseInventory.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 

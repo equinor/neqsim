@@ -20,7 +20,8 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * Synchronous source-term sampling of a caller-owned process. Runs preserve process orchestration; release calculations
- * use cloned fluid snapshots and never remove process inventory.
+ * use cloned fluid snapshots. Ordinary sources are hypothetical; explicitly registered {@link ReleaseInventory} units
+ * remove their own inventory through native process transient execution.
  *
  * <p>
  * The caller must serialize all access to the underlying process, including external updates. Session synchronization
@@ -154,7 +155,50 @@ public final class SourceTermSession {
   }
 
   /**
-   * Enables or disables a hypothetical opening. This does not change physical isolation or inventory.
+   * Registers the physical opening owned by a ReleaseInventory in a single process.
+   *
+   * @param sourceId stable unique source identity
+   * @param unitName name of the ReleaseInventory unit
+   * @throws IllegalArgumentException for an unknown inventory or an area-based model
+   */
+  public synchronized void addInventorySource(String sourceId, String unitName) {
+    if (process == null) {
+      throw new IllegalArgumentException("A ProcessModel requires an explicit area name");
+    }
+    addInventorySource(sourceId, SINGLE_AREA, unitName);
+  }
+
+  /**
+   * Registers an inventory's own release geometry and model without creating a second withdrawal. Frames report
+   * instantaneous end-of-step rates; cumulative balances belong to the inventory. Use
+   * ReleaseInventory.setReleaseEnabled to isolate the physical opening.
+   *
+   * @param sourceId stable unique source identity
+   * @param areaName process area, or SINGLE_AREA for a single process
+   * @param unitName name of the ReleaseInventory unit
+   * @throws IllegalArgumentException for unknown or duplicate ownership
+   */
+  public synchronized void addInventorySource(String sourceId, String areaName, String unitName) {
+    idle();
+    ProcessSystem area = areas().get(areaName);
+    ProcessEquipmentInterface unit = area == null ? null : area.getUnit(unitName);
+    if (!(unit instanceof ReleaseInventory)) {
+      throw new IllegalArgumentException("A ReleaseInventory unit is required");
+    }
+    for (Source existing : sources.values()) {
+      if (existing.inventorySource && existing.unit == unit) {
+        throw new IllegalArgumentException("Physical inventory opening already registered");
+      }
+    }
+    ReleaseInventory inventory = (ReleaseInventory) unit;
+    ReleaseFlowRequest request = inventory.getReleaseRequest();
+    addSource(sourceId, areaName, unitName, -1, request.getDiameterM(), request.getDischargeCoefficient(),
+        request.getBackPressurePa(), inventory.getReleaseModel());
+    sources.get(sourceId).inventorySource = true;
+  }
+
+  /**
+   * Enables or disables source-frame export. This does not change physical isolation or inventory.
    *
    * @param sourceId registered source identity
    * @param enabled true to calculate source terms
@@ -355,6 +399,16 @@ public final class SourceTermSession {
         if (source.unit instanceof StreamInterface && source.unit.needRecalculation()) {
           throw new IllegalStateException("Stream inputs changed or have no current calculable state");
         }
+        if (source.inventorySource
+            && Math.abs(source.unit.getTime() - coherentTime) > 1e-9 * Math.max(1.0, Math.abs(coherentTime))) {
+          throw new IllegalStateException("Inventory and process clocks differ");
+        }
+        if (source.inventorySource && !((ReleaseInventory) source.unit).isReleaseEnabled()) {
+          snapshot.status = SourceTermFrame.Status.DISABLED;
+          snapshot.code = "INVENTORY_OPENING_CLOSED";
+          snapshot.message = "Physical inventory opening isolated by caller";
+          continue;
+        }
         SystemInterface fluid;
         if (source.outletIndex < 0) {
           fluid = source.unit.getFluid();
@@ -494,7 +548,21 @@ public final class SourceTermSession {
     provenance.put("equipment", source.unitName);
     provenance.put("samplingPoint", source.outletIndex < 0 ? "EQUIPMENT_FLUID" : "OUTLET_" + source.outletIndex);
     provenance.put("mode", mode);
-    provenance.put("releaseBasis", "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
+    provenance.put("releaseBasis", source.inventorySource ? "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY"
+        : "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
+    if (source.inventorySource) {
+      ReleaseInventory.Balance balance = ((ReleaseInventory) source.unit).getBalance();
+      provenance.put("inventoryTimeS", Double.toString(balance.getTimeS()));
+      provenance.put("inventoryVolumeM3", Double.toString(balance.getVolumeM3()));
+      provenance.put("cumulativeReleasedMassKg", Double.toString(balance.getReleasedMassKg()));
+      provenance.put("cumulativeReleasedEnthalpyJ", Double.toString(balance.getReleasedEnergyJ()));
+      provenance.put("inventoryIntegrator", "EXPLICIT_EULER_VOLUME_INTERNAL_ENERGY_V1");
+      provenance.put("inventoryMaxSubstepS", Double.toString(((ReleaseInventory) source.unit).getMaxSubstepS()));
+      provenance.put("inventoryLastSubsteps", Integer.toString(balance.getSubsteps()));
+      provenance.put("inventoryVolumeEnergySolves",
+          Integer.toString(((ReleaseInventory) source.unit).getLastVolumeEnergySolves()));
+      provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
+    }
     UUID areaId = source.area.getCalculationIdentifier();
     UUID unitId = source.unit.getCalculationIdentifier();
     if (areaId != null) {
@@ -588,6 +656,7 @@ public final class SourceTermSession {
     private final ProcessSystem area;
     private final ProcessEquipmentInterface unit;
     private boolean enabled = true;
+    private boolean inventorySource;
 
     private Source(String id, String areaName, String unitName, int outletIndex, double diameter, double coefficient,
         double backPressure, ReleaseFlowModel releaseModel, ProcessSystem area, ProcessEquipmentInterface unit) {
