@@ -53,7 +53,7 @@ Each row declares:
 
 Comparison is `abs(actual - expected) <= absTol + relTol * abs(expected)`.
 Zero and negative values are valid for signed properties such as ideal enthalpy or
-ln(gamma); gamma, Z, group R and applicable saturation pressure must be positive.
+ln(gamma); gamma, fugacity coefficient, Z, group R and applicable saturation pressure must be positive.
 NaN and infinity always fail a `VALUE` case.
 
 An unavailable saturation case asserts its declared cause (missing correlation, ion,
@@ -70,9 +70,9 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 37 cases across six system drivers (SRK, PR, Wilson, classic
-UNIFAC, PSRK and UMR-PRU), a component saturation adapter and an unsupported phase
-adapter. This is **not coverage of every NeqSim model or every property**. Campaign
+The catalog has 61 cases across six system drivers (SRK, PR, Wilson, classic
+UNIFAC, PSRK and UMR-PRU), direct SRK/PR phase adapters, a component saturation
+adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
 an explicit classification; discovery does not qualify their numerical behavior.
@@ -83,17 +83,26 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | i-Pentane at 290, 298.15 and 301 K | NIST WebBook Willingham et al. (1945), 289.44–301.74 K; independent correlation versus NeqSim DIPPR data, 1% comparison tolerance |
 | Binary Wilson | Prescribed Lambda12=2, Lambda21=0.5, with mole fractions 0.2/0.8, 0.5/0.5 and 0.8/0.2; closed-form numerical fixtures, not experimental mixture validation |
 | UNIFAC, PSRK, UMR-PRU | Pure methanol gamma=1 reference identity and subgroup-15 R=1.4311 data regression; populated group contents and stored coefficients are read |
-| SRK and PR | Low-pressure methane Z approaching unity at 300 K and 0.0001 bar (absolute tolerance 1e-5); zero ideal enthalpy at the 273.15 K reference |
+| SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
-The low-pressure EOS and pure-component GE cases are intentionally limited controls,
-not validation of mixture accuracy or high-pressure behavior. Gamma=1 alone cannot
+The cubic cases use the original published SRK/PR equations with the declared methane
+Tc, Pc and acentric factor. They validate analytical implementation and state publication,
+not experimental model accuracy, mixture behavior, liquid roots or near-critical behavior.
+The low-pressure EOS and pure-component GE cases are intentionally limited controls.
+Gamma=1 alone cannot
 detect an always-one stub; nonideal Wilson values, group-content checks and the existing
 binary UNIFAC regressions provide distinct checks. `ModelSpecStateTest` additionally
 tests changed Wilson composition and binary UNIFAC/PSRK component-order and repeated
 initialization behavior. UMR-PRU is driven through the actual HV mixing rule and its GE
 phase; standalone UNIQUAC is not incorrectly classified as working because a UNIFAC
 subclass works.
+
+`ModelSpecStateTest` also reuses each cubic System while moving 280 K/10 bar ->
+320 K/50 bar -> 300 K/30 bar -> the initial state, checks both Z and the stored
+fugacity coefficient after every initialization, and verifies `H = U + PV` and
+`G = H - TS` on one consistent extensive/molar basis. These identities accompany
+independent numerical anchors; they are not accepted as accuracy evidence by themselves.
 
 `ComponentCorrelationSpecTest` gives analytical pressure examples for pow10,
 pow10KPa, exp, log, legacy DIPPR and Wagner dispatch. These synthetic coefficients
@@ -130,9 +139,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (7 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (9 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (123 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (121 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -152,8 +161,9 @@ covered type to debt also fails because it was not in the initial debt snapshot.
 The standalone correlation scope is intentionally explicit: inherited saturation pressure,
 the prescribed pow10KPa derivative and inverse, and their declared absence contracts.
 It is not an inventory of all component, physical-property or transport APIs. Phase types
-are inventoried independently of System drivers: indirect use of a phase does not qualify
-its standalone entry points. Family batches must define applicable properties, physical
+are inventoried independently of System drivers: the exact `PhaseSrkEos` and `PhasePrEos`
+classes now have explicit Z/phi cases, while indirect use still does not qualify any other
+phase entry point. Family batches must define applicable properties, physical
 domains, sourced anchors and nearby-state/invariant checks before reducing this debt.
 
 ## Reference provenance
@@ -167,6 +177,15 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   The second coefficient follows the corresponding swapped component indices.
 - Methanol group R is the existing repository regression/data contract in
   `UnifacGroupSynchronizationTest`, not an independently measured property.
+- [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
+  [Peng and Robinson's 1976 equation](https://doi.org/10.1021/i160057a011) define
+  the pure-fluid cubic and fugacity-coefficient references. The stored anchors use
+  methane Tc=190.56 K, Pc=45.99 bar and acentric factor 0.0115. An independent
+  calculation selected the largest real gas root and evaluated the published pure-fluid
+  fugacity expression at the three declared states. A dependency-free harness control
+  independently substitutes every stored Z into the published cubic and recomputes every
+  phi reference before production evaluation. Agreement tolerance is 1e-12 in Z or phi
+  because this is formula/dispatch evidence, not a physical-accuracy tolerance.
 
 NIST sources were inspected on 2026-09-18. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or

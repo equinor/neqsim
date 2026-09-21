@@ -9,14 +9,25 @@ import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePrEos;
+import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
+  private static final double[][] SRK_STATES = {{280.0, 10.0, 0.9785422334202201, 0.9786921663056776},
+      {320.0, 50.0, 0.9433373091166810, 0.9413806064762114}, {300.0, 30.0, 0.9523798940724555, 0.9523599084051405},
+      {280.0, 10.0, 0.9785422334202201, 0.9786921663056776}};
+  private static final double[][] PR_STATES = {{280.0, 10.0, 0.9731154698320194, 0.9733220882952629},
+      {320.0, 50.0, 0.9228085822220202, 0.9208014010997394}, {300.0, 30.0, 0.9382462505658514, 0.9383996714610695},
+      {280.0, 10.0, 0.9731154698320194, 0.9733220882952629}};
+
   @Test
   void wilsonRefreshesStoredValueAfterCompositionChanges() {
     SystemGEWilson system = new SystemGEWilson(298.15, 1.0);
@@ -67,12 +78,65 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void cubicModelsRefreshPublishedStateAtNearbyConditions(boolean pengRobinson) {
+    SystemInterface system = cubicSystem(pengRobinson, 280.0, 10.0, 1.0);
+    double[][] states = pengRobinson ? PR_STATES : SRK_STATES;
+    Class<?> phaseType = pengRobinson ? PhasePrEos.class : PhaseSrkEos.class;
+    for (double[] state : states) {
+      system.setTemperature(state[0]);
+      system.setPressure(state[1]);
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      assertEquals(phaseType, phase.getClass());
+      double fugacityCoefficient = phase.getComponent(0).getFugacityCoefficient();
+      assertEquals(state[3], fugacityCoefficient, 1e-12);
+      assertEquals(state[2], phase.getZ(), 1e-12);
+      assertEquals(fugacityCoefficient, phase.getComponent(0).getFugacityCoefficient(), 0.0,
+          "reading Z must not stale or replace stored phi");
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void cubicCaloricIdentitiesUseOneConsistentExtensiveBasis(boolean pengRobinson) {
+    SystemInterface system = cubicSystem(pengRobinson, 300.0, 30.0, 2.0);
+    system.init(3);
+    PhaseInterface phase = system.getPhase(0);
+    double moles = phase.getNumberOfMolesInPhase();
+    double enthalpy = phase.getEnthalpy();
+    double internalEnergy = phase.getInternalEnergy();
+    double entropy = phase.getEntropy();
+    double gibbsEnergy = phase.getGibbsEnergy();
+    double pressureVolume = phase.getPressure() * phase.getMolarVolume() * moles;
+    assertTrue(Double.isFinite(enthalpy) && Double.isFinite(internalEnergy) && Double.isFinite(entropy)
+        && Double.isFinite(gibbsEnergy) && Double.isFinite(pressureVolume));
+    assertEquals(enthalpy, internalEnergy + pressureVolume, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, enthalpy - phase.getTemperature() * entropy,
+        Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+    assertEquals(enthalpy / moles, phase.getEnthalpy("J/mol"), 1e-12);
+    assertEquals(internalEnergy / moles, phase.getInternalEnergy("J/mol"), 1e-12);
+    assertEquals(entropy / moles, phase.getEntropy("J/molK"), 1e-12);
+    system.init(3);
+    assertEquals(enthalpy, phase.getEnthalpy(), Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, phase.getGibbsEnergy(), Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+  }
+
   private static SystemInterface groupSystem(boolean psrk, boolean reverse) {
     SystemInterface system = psrk ? new SystemUNIFACpsrk(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
     system.addComponent(reverse ? "water" : "methanol", reverse ? 0.7 : 0.3);
     system.addComponent(reverse ? "methanol" : "water", reverse ? 0.3 : 0.7);
     system.setMixingRule("classic");
     system.init(0);
+    return system;
+  }
+
+  private static SystemInterface cubicSystem(boolean pengRobinson, double temperature, double pressure, double moles) {
+    SystemInterface system = pengRobinson ? new SystemPrEos(temperature, pressure)
+        : new SystemSrkEos(temperature, pressure);
+    system.addComponent("methane", moles);
+    system.setMixingRule("classic");
     return system;
   }
 

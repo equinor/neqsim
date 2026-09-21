@@ -22,12 +22,12 @@ final class ModelSpec {
 
   /** Curated drivers, not arbitrary class names or reflective method calls. */
   enum Fixture {
-    SATURATION, ANTOINE_ANALYTIC, WILSON_ANALYTIC, UNIFAC, PSRK, UMR, SRK, PR, UNIQUAC
+    SATURATION, ANTOINE_ANALYTIC, WILSON_ANALYTIC, UNIFAC, PSRK, UMR, SRK, PR, SRK_PHASE, PR_PHASE, UNIQUAC
   }
 
   /** Properties with distinct dimensional and sign contracts. */
   enum Property {
-    PSAT, DPSAT_DT, T_SAT, GAMMA, LN_GAMMA, GROUP_R, Z, HID
+    PSAT, DPSAT_DT, T_SAT, GAMMA, LN_GAMMA, GROUP_R, Z, PHI, HID
   }
 
   /** An unsupported implementation is not an unavailable correlation or a numerical success. */
