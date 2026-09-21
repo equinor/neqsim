@@ -265,7 +265,7 @@ public class FlashRunner {
         break;
       case "hydrateTP":
         fluid.setHydrateCheck(true);
-        ops.hydrateTPflash();
+        ops.hydrateFormationTemperature();
         break;
       default:
         return errorJson("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
@@ -700,7 +700,7 @@ public class FlashRunner {
         break;
       case "hydrateTP":
         fluid.setHydrateCheck(true);
-        ops.hydrateTPflash();
+        ops.hydrateFormationTemperature();
         break;
       default:
         return typedError("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
