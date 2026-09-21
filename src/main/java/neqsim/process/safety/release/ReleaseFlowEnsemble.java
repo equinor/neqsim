@@ -82,7 +82,7 @@ public final class ReleaseFlowEnsemble implements Serializable {
 
     /** @return immutable caller-supplied sampling metadata */
     public Map<String, String> getProvenance() {
-      return provenance;
+      return Collections.unmodifiableMap(new TreeMap<String, String>(provenance));
     }
   }
 
@@ -180,7 +180,7 @@ public final class ReleaseFlowEnsemble implements Serializable {
 
   /** @return immutable per-case results, including all failures */
   public List<ReleaseFlowResult> getResults() {
-    return results;
+    return Collections.unmodifiableList(new ArrayList<ReleaseFlowResult>(results));
   }
 
   /** @return immutable normalized probabilities in case order; independent of calculation status */
