@@ -298,13 +298,13 @@ def test_inventory_records_atomic_promotion(client):
         "generateVisualization", {}
     )
     require(
-        inventory.get("inventoryVersion") == "1.42",
+        inventory.get("inventoryVersion") == "1.43",
         "inventory version drifted",
         inventory,
     )
     require(
-        limitations.get("contractTestedToolCount") == 42
-        and limitations.get("confirmedGapToolCount") == 9,
+        limitations.get("contractTestedToolCount") == 43
+        and limitations.get("confirmedGapToolCount") == 8,
         "promotion accounting drifted",
         limitations,
     )

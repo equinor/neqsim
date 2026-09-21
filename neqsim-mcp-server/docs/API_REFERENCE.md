@@ -233,12 +233,16 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 42 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 9 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 43 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 8 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
 must be omitted.
+
+If omission metadata would exceed the remaining byte budget, the guard drops
+optional `summary` prose from omission records. The omitted field names, byte
+counts, retrieval guidance and complete discovery inventories remain available.
 
 ---
 

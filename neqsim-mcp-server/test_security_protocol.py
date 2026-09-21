@@ -263,10 +263,10 @@ def test_phase0_inventory_promotes_security_contract(client):
     limitations = inventory.get("knownLimitations", {})
     records = limitations.get("coverageRecords", {})
     record = records.get("manageSecurity", {})
-    require(inventory.get("inventoryVersion") == "1.42", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.43", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 42
-        and limitations.get("confirmedGapToolCount") == 9,
+        limitations.get("contractTestedToolCount") == 43
+        and limitations.get("confirmedGapToolCount") == 8,
         "security promotion accounting drifted",
         limitations,
     )

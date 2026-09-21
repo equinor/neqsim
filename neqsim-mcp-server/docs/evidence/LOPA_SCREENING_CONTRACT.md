@@ -92,6 +92,6 @@ atomically promotes `runLOPA` to `CONTRACT_TESTED`. Machine-readable coverage,
 Java assertions, the focused packaged protocol, synchronized protocol
 expectations, authoritative comprehensive accounting, and documentation move
 together without production, schema, canonical-model, policy, or numerical
-changes. Current inventory `1.42 / 20 explicit + 42 contract-tested + 10
+changes. Current inventory `1.43 / 20 explicit + 43 contract-tested + 8
 confirmed gaps` retains that classification. No promotion candidate remains
 queued.
