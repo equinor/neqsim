@@ -36,7 +36,7 @@ public interface Unit {
    *
    * @return array of allowed unit names, or {@code null} for no restriction
    */
-  public String[] getAllowedUnits() throws UnsupportedOperationException;
+  public String[] getAllowedUnits();
 
   /**
    * Validate that a unit name is one of the units supported by the calling implementation.

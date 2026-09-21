@@ -59,14 +59,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
     }
   }
 
-  /**
-   * Convert a temperature value from SI unit (Kelvin) to specified unit.
-   *
-   * @param siValue temperature value in Kelvin
-   * @param unit target unit (K, C, F, R)
-   * @return value in specified unit
-   * @throws IllegalArgumentException if unit is not supported
-   */
+  /** {@inheritDoc} */
   @Override
   public double fromSIvalue(double siValue, String unit) {
     switch (unit) {
