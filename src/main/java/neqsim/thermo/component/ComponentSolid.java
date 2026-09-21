@@ -49,7 +49,8 @@ public class ComponentSolid extends ComponentSrk {
    * {@inheritDoc}
    *
    * <p>
-   * Uses Claperyons equation to calculate the solid fugacity
+   * Calculates and stores the empirical solid fugacity coefficient. Methane retains the legacy exclusion coefficient of
+   * {@code 1e30}; this model does not provide methane freezing equilibrium.
    * </p>
    */
   @Override
@@ -62,7 +63,10 @@ public class ComponentSolid extends ComponentSrk {
       // return 1.0e20;
     }
     if (componentName.equals("methane")) {
-      return 1e30;
+      // Preserve the legacy exclusion of methane from this empirical solid model.
+      // Flash initialization reads the stored coefficient, not the return value.
+      fugacityCoefficient = 1e30;
+      return fugacityCoefficient;
     }
 
     return fugcoef2(phase1);

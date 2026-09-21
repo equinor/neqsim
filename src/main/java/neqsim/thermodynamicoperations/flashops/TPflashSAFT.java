@@ -126,8 +126,11 @@ public class TPflashSAFT extends TPflash {
         maxDeltaK = Math.max(maxDeltaK, dK);
         K[i] = Knew;
       }
-
       if (maxDeltaK < K_TOL) {
+        // Synchronize the final phase fraction with the accepted K-values. The beta used
+        // above belongs to the preceding K iterate and otherwise leaves an O(delta K)
+        // material-balance residual in the returned state.
+        beta = solveRachfordRice(z, K, beta);
         converged = true;
         break;
       }

@@ -297,6 +297,11 @@ fluid.setPhaseType(1, "oil");
 fluid.setSolidPhaseCheck(true);
 ```
 
+Enabling a solid check, either for all components or with `setSolidPhaseCheck(name)`,
+preserves `doMultiPhaseCheck()`. Call `setMultiPhaseCheck(true)` separately if the
+fluid calculation needs additional liquid phases; solid allocation no longer
+implicitly enables that search.
+
 `setSolidPhaseCheck(false)` safely disables solid checking even on a fresh fluid.
 Repeated calls clear the component flags in every allocated phase while preserving
 the phase count and composition. Existing phases remain allocated; the setter

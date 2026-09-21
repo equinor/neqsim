@@ -884,11 +884,16 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * addSolidPhase.
+   * Allocate pure-solid phase storage without changing the fluid multiphase-check setting.
    */
   public void addSolidPhase() {
-    if (!multiPhaseCheck) {
-      setMultiPhaseCheck(true);
+    // Keep the fluid storage slot available before the solid slot, independently of
+    // whether the caller has requested a search for additional liquid phases.
+    if (phaseArray[2] == null && phaseArray[1] != null) {
+      phaseArray[2] = phaseArray[1].clone();
+      phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
+      phaseArray[2].resetPhysicalProperties();
+      phaseArray[2].initPhysicalProperties();
     }
     phaseArray[3] = new PhasePureComponentSolid();
     phaseArray[3].setTemperature(phaseArray[0].getTemperature());

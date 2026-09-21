@@ -132,6 +132,12 @@ fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
 
+Both `setSolidPhaseCheck(true)` and `setSolidPhaseCheck(name)` preserve the caller's
+`doMultiPhaseCheck()` setting. Enable `setMultiPhaseCheck(true)` separately when
+additional liquid phases are required. Solid storage allocation does not select a
+different fluid equilibrium mode. Code that previously relied on the solid setter
+implicitly enabling the fluid multiphase search must now enable it explicitly.
+
 Call `fluid.setSolidPhaseCheck(false)` to disable solid checking for all components,
 including those in cached phases. This is safe before any solid phase has been
 allocated and can be called repeatedly. Disabling preserves the existing phase
@@ -902,6 +908,19 @@ solver supports one pure solid alongside the fluid phases and rejects multiple
 precipitating candidates with `UnsupportedOperationException` before adding a solid
 phase. See the [sulfur precipitation guide](../chemicalreactions/sulfur_deposition_analysis.md#2-tpsolidflash--sulfur-solubility-and-precipitation)
 for a selected-S8 example and component-balance checks.
+
+The empirical `ComponentSolid` model excludes methane using a large fugacity
+coefficient (`1e30`). The returned coefficient and stored coefficient are identical,
+so selecting methane cannot introduce an artificial zero-fugacity solid or destroy
+the fluid split. This exclusion is a model limitation, not a methane melting-curve
+prediction; do not use this model to assess cryogenic methane freezing.
+
+As a regression example, SRK with mixing rule 2 for 0.30 mol methane and 0.70 mol
+n-heptane at 333.15 K and 60 bara gives a gas fraction of approximately 0.09223165
+and an oil fraction of 0.90776835. Selecting methane for the solid check retains
+that gas/oil equilibrium with either fluid multiphase setting and conserves both
+component inventories. `SolidCheckFluidEquilibriumTest` exercises this case,
+nearby temperatures, repeated flashes and the separate `TPSolidflash()` route.
 
 **Example - Wax precipitation:**
 ```java
