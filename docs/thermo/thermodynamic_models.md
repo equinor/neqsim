@@ -454,6 +454,14 @@ fluid.addComponent("ethanol", 0.4);
 fluid.addComponent("water", 0.6);
 ```
 
+After an NRTL activity-coefficient evaluation, `ComponentGEInterface.getGamma()` and
+`getLnGamma()` return the coefficient and its natural logarithm for the same evaluated state.
+Both values refresh on every evaluation, including after temperature, composition, or interaction
+parameter changes. The getters read stored results; changing an input requires reevaluation.
+This repairs stale logarithmic state without changing the NRTL equation, excess Gibbs energy,
+or fugacity calculation. Regression coverage uses prescribed binary parameters to check the
+analytical equation; it does not establish experimental accuracy for a fitted mixture.
+
 ### 6.4 Other GE Models
 
 | Class | Description |

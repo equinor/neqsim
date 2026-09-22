@@ -4,7 +4,11 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * ComponentGeNRTL class.
+ * NRTL activity-coefficient component.
+ *
+ * <p>
+ * Each activity-coefficient evaluation stores both gamma and its natural logarithm for the evaluated state.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -148,7 +152,7 @@ public class ComponentGeNRTL extends ComponentGE {
       // F2T = F2T - 2*2*A/Math.pow(C,2) + 2*2*E*D/Math.pow(C,3); // A til A2;
     }
 
-    double lngamma = A / B + F;
+    lngamma = A / B + F;
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
 
     /*
