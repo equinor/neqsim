@@ -118,7 +118,10 @@ class BuildPluginTest(unittest.TestCase):
         self.assertIn("$env:PLUGIN_ROOT", decoded)
         self.assertIn("$env:CLAUDE_PLUGIN_ROOT", decoded)
         self.assertIn("-eq 'demo'", decoded)
-        self.assertIn("scripts/install_skill_packages.ps1", decoded)
+        # The worker must be the .py: a Group Policy execution policy blocks an
+        # unsigned .ps1 even under -ExecutionPolicy Bypass.
+        self.assertIn("scripts/install_skill_packages.py", decoded)
+        self.assertNotIn("install_skill_packages.ps1", decoded)
         self.assertNotIn("{{", decoded)
         scripts = plugin / "scripts"
         for name in ("install_skill_packages.sh", "install_skill_packages.ps1",
