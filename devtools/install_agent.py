@@ -53,7 +53,8 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CATALOG_FILE = REPO_ROOT / "community-agents.yaml"
 PRIVATE_CATALOG_FILE = Path.home() / ".neqsim" / "private-agents.yaml"
-INSTALL_DIR = Path.home() / ".neqsim" / "agents"
+# Same override agent_search.py reads, so install location and search never diverge.
+INSTALL_DIR = Path(os.environ.get("NEQSIM_AGENTS_HOME") or (Path.home() / ".neqsim" / "agents"))
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
 CORE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 INSTALLED_SKILLS_DIR = Path.home() / ".neqsim" / "skills"

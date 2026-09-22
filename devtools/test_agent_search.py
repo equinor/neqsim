@@ -27,6 +27,19 @@ def _write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
+def _isolated_fallback_roots(root: Path, installed: Path = None, plugins: Path = None):
+    """Point the installed-agents and plugin roots at temp dirs.
+
+    Both default to real locations under ``Path.home()``, so without this a test
+    silently indexes the developer's own catalog - which is how the synthetic
+    ``asset-economics-agent`` fixture collided with the genuine installed one.
+    """
+    return mock.patch.dict(os.environ, {
+        "NEQSIM_AGENTS_HOME": str(installed or root / "no_installed_agents_here"),
+        "NEQSIM_AGENT_PLUGINS_HOME": str(plugins or root / "no_plugins_here"),
+    })
+
+
 class HandleDerivationTest(unittest.TestCase):
     def test_neqsim_flat_agent_handle_strips_agent_suffix(self):
         p = Path("/x/.github/agents/capability-scout.agent.md")
@@ -92,9 +105,7 @@ class CrossRepoDedupTest(unittest.TestCase):
             # empty temp dir so this test stays hermetic even on a machine that has
             # a real agent installed under that same name (e.g. asset-economics-agent
             # is a genuine community agent many dev machines have installed).
-            with mock.patch.dict(
-                os.environ, {"NEQSIM_AGENTS_HOME": str(root / "no_installed_agents_here")}
-            ):
+            with _isolated_fallback_roots(root):
                 recs = agent_search._load_agents(
                     root / "nonexistent_repo",  # no neqsim .github/agents here
                     extra=[root / "community", root / "enterprise"],
@@ -119,7 +130,7 @@ class InstalledAgentsRootTest(unittest.TestCase):
                 "required_skills:\n- neqsim-olga-multiphase-simulator\n---\n"
             )
             _write(installed_root / "olga-simulation-agent" / "AGENT.md", body)
-            with mock.patch.dict(os.environ, {"NEQSIM_AGENTS_HOME": str(installed_root)}):
+            with _isolated_fallback_roots(root, installed=installed_root):
                 self.assertEqual(agent_search._installed_agents_root(), installed_root)
                 recs = agent_search._load_agents(root / "nonexistent_repo")
             names = [r[0] for r in recs]
@@ -131,6 +142,91 @@ class InstalledAgentsRootTest(unittest.TestCase):
             self.assertEqual(
                 agent_search._installed_agents_root(), Path.home() / ".neqsim" / "agents"
             )
+
+    def test_installed_copy_of_a_cloned_agent_is_not_listed_twice(self):
+        # A maintainer has the sibling clone *and* runs `neqsim agent install --all`;
+        # without the fallback rule the same agent burns two of the --top N slots.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            body = (
+                "---\nname: olga-simulation-agent\n"
+                'description: "Runs the OLGA transient multiphase flow simulator."\n---\n'
+            )
+            _write(root / "community" / "agents" / "olga-simulation-agent" / "AGENT.md", body)
+            installed_root = root / "installed_agents"
+            _write(installed_root / "olga-simulation-agent" / "AGENT.md", body)
+            with _isolated_fallback_roots(root, installed=installed_root):
+                recs = agent_search._load_agents(
+                    root / "nonexistent_repo", extra=[root / "community"])
+            hits = [r for r in recs if r[0] == "olga-simulation-agent"]
+            self.assertEqual([r[4] for r in hits], ["community"])
+
+
+class PluginAgentRootTest(unittest.TestCase):
+    """A marketplace plugin install is the only agent source on many machines:
+    ~/.neqsim/agents stays empty and the agents ship inside the plugin package."""
+
+    @staticmethod
+    def _plugin_agent(plugins_root, plugin, name, description):
+        _write(plugins_root / "github.com" / "equinor" / "neqsim-copilot-plugin" / plugin /
+               "com.github.copilot" / "agents" / (name + ".agent.md"),
+               "---\nname: {n}\ndescription: \"{d}\"\n---\n".format(n=name, d=description))
+
+    def test_plugin_only_agent_is_indexed_and_labelled_per_plugin(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugins = root / "agent-plugins"
+            self._plugin_agent(plugins, "neqsim-community", "olga-simulation-agent",
+                               "Runs the OLGA transient multiphase flow simulator.")
+            with _isolated_fallback_roots(root, plugins=plugins):
+                recs = agent_search._load_agents(root / "nonexistent_repo")
+            hits = [r for r in recs if r[0] == "olga-simulation-agent"]
+            self.assertEqual([r[4] for r in hits], ["plugin:neqsim-community"])
+
+    def test_community_and_enterprise_plugin_copies_both_survive(self):
+        # Same handle in two plugins is the deliberate community/enterprise pair.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugins = root / "agent-plugins"
+            for plugin in ("neqsim-community", "neqsim-enterprise"):
+                self._plugin_agent(plugins, plugin, "asset-economics-agent", "NPV screening.")
+            with _isolated_fallback_roots(root, plugins=plugins):
+                recs = agent_search._load_agents(root / "nonexistent_repo")
+            repos = sorted(r[4] for r in recs if r[0] == "asset-economics-agent")
+            self.assertEqual(repos, ["plugin:neqsim-community", "plugin:neqsim-enterprise"])
+
+    def test_plugin_copy_of_a_cloned_agent_is_not_listed_twice(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugins = root / "agent-plugins"
+            self._plugin_agent(plugins, "neqsim-community", "olga-simulation-agent", "OLGA.")
+            _write(root / "community" / "agents" / "olga-simulation-agent" / "AGENT.md",
+                   "---\nname: olga-simulation-agent\ndescription: \"OLGA.\"\n---\n")
+            with _isolated_fallback_roots(root, plugins=plugins):
+                recs = agent_search._load_agents(
+                    root / "nonexistent_repo", extra=[root / "community"])
+            hits = [r for r in recs if r[0] == "olga-simulation-agent"]
+            self.assertEqual([r[4] for r in hits], ["community"])
+
+    def test_user_data_cache_copy_of_a_plugin_is_not_a_second_root(self):
+        # VS Code also caches each plugin under %APPDATA%/Code/agentPlugins in a
+        # version-hash folder; keyed on the folder name that copy looked like a
+        # separate plugin and listed every one of its agents again.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plugins = root / "agent-plugins"
+            self._plugin_agent(plugins, "neqsim-community", "olga-simulation-agent", "OLGA.")
+            _write(plugins / "github.com" / "equinor" / "neqsim-copilot-plugin" /
+                   "neqsim-community" / "plugin.json", '{"name": "neqsim-community"}\n')
+            cache = plugins / "file-neqsim-community" / "1a0c50d1a81"
+            _write(cache / "plugin.json", '{"name": "neqsim-community"}\n')
+            _write(cache / "com.github.copilot" / "agents" / "olga-simulation-agent.agent.md",
+                   "---\nname: olga-simulation-agent\ndescription: \"OLGA.\"\n---\n")
+            with _isolated_fallback_roots(root, plugins=plugins):
+                labels = [label for _, label, _, _ in agent_search._plugin_agent_roots()]
+                recs = agent_search._load_agents(root / "nonexistent_repo")
+            self.assertEqual(labels, ["plugin:neqsim-community"])
+            self.assertEqual(len([r for r in recs if r[0] == "olga-simulation-agent"]), 1)
 
 
 class PayloadTest(unittest.TestCase):
