@@ -185,6 +185,12 @@ Some requests need multiple agents in sequence. Detect these patterns:
 > <python-executable> devtools/agent_search.py "<user request>" --top 8
 > ```
 >
+> It covers every way agents reach a machine — this checkout, sibling
+> `neqsim-*-agents` clones, `~/.neqsim/agents` (`neqsim agent install`) and
+> installed plugin packages — so an agent is ranked whether it was cloned,
+> CLI-installed or installed from the marketplace. `--agents-root <dir>` adds a
+> non-standard location.
+>
 > For a task that spans ≥3 disciplines or is a repeatable program, prefer a
 > **declarative workflow** (MCP `composeWorkflow` / `composeMultiServerWorkflow`,
 > or an `engineering-harness` study) over a hand-chained sequence, so the

@@ -6,8 +6,16 @@ TF-IDF + cosine similarity index over the YAML front-matter ``description``
 fields of every agent definition it can find across the multi-repo workspace:
 
   * neqsim repo             : ``.github/agents/*.agent.md``
-  * neqsim-community-agents : ``agents/<name>/AGENT.md``
-  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md``
+  * neqsim-community-agents : ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * ~/.neqsim/agents        : ``<name>/AGENT.md`` (agents installed via
+    ``neqsim agent install``/``--all``)
+  * installed plugins       : ``<plugin>/com.github.copilot/agents/*.agent.md`` under
+    ``~/.vscode/agent-plugins`` or ``~/.copilot/installed-plugins`` (marketplace
+    install - the only source on a machine with no clones and no CLI install)
+
+The last two are indexed as fallbacks: they hold copies of agents a checkout may
+also provide, so an agent already found in a repo is not listed twice.
 
 Why TF-IDF and not sentence embeddings? Agent descriptions are short and
 keyword-dense, so character + word n-gram TF-IDF gives most of the recall of a
@@ -35,6 +43,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -126,22 +135,102 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
     return out
 
 
-def _discover_roots(repo_root: Path, extra: Optional[List[Path]]) -> List[Tuple[Path, str, str]]:
-    """Return (dir, repo_label, glob) tuples for every agent source to index."""
-    roots: List[Tuple[Path, str, str]] = []
+def _installed_agents_root() -> Path:
+    """Return the directory ``neqsim agent install`` places agents into.
+
+    Honors ``NEQSIM_AGENTS_HOME`` so tests (and any caller that needs isolation
+    from the real machine's installed catalog) can redirect this without
+    depending on ``Path.home()``. ``install_agent.py`` reads the same variable
+    for its ``INSTALL_DIR``, so the install location and this search cannot
+    diverge.
+    """
+    override = os.environ.get("NEQSIM_AGENTS_HOME")
+    if override:
+        return Path(override)
+    return Path.home() / ".neqsim" / "agents"
+
+
+def _plugin_name(plugin_dir: Path) -> str:
+    """Name from ``plugin.json``, else the folder name (version-hash cache copies)."""
+    try:
+        name = json.loads((plugin_dir / "plugin.json").read_text(encoding="utf-8")).get("name")
+    except (OSError, ValueError, AttributeError):
+        name = None
+    return str(name) if name else plugin_dir.name
+
+
+def _plugin_agent_roots() -> List[Tuple[Path, str, str, bool]]:
+    """Agent folders of installed Agent Plugins packages - flat ``*.agent.md``.
+
+    A marketplace install is the third way to obtain agents, and on such a machine
+    ``~/.neqsim/agents`` stays empty: the agents live in the plugin package as
+    ``<plugin>/com.github.copilot/agents/*.agent.md``. Labelled with the plugin's own
+    ``plugin.json`` name (``plugin:neqsim-community``) so a community agent is still
+    told apart from its enterprise counterpart, and so the user-data cache copies -
+    which sit under a version-hash folder such as ``…/neqsim-community/1a0c50d1a81/``
+    - do not show up under a meaningless label. One root per plugin name, first
+    location wins. Depth-bounded globs, not ``**``, because the plugin tree also
+    holds hundreds of skill folders. ``NEQSIM_AGENT_PLUGINS_HOME`` replaces the
+    search bases, for tests and for a non-default plugin location.
+    """
+    override = os.environ.get("NEQSIM_AGENT_PLUGINS_HOME")
+    if override:
+        bases = [Path(override)]
+    else:
+        bases = [Path.home() / ".vscode" / "agent-plugins",         # VS Code marketplace
+                 Path.home() / ".copilot" / "installed-plugins"]    # Copilot CLI
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            bases.append(Path(appdata) / "Code" / "agentPlugins")   # user-data cache copies
+    roots: List[Tuple[Path, str, str, bool]] = []
+    seen = set()
+    for base in bases:
+        if not base.is_dir():
+            continue
+        for depth in range(1, 5):
+            pattern = "/".join(["*"] * depth) + "/com.github.copilot/agents"
+            for agents_dir in sorted(base.glob(pattern)):
+                if not agents_dir.is_dir():
+                    continue
+                name = _plugin_name(agents_dir.parents[1])
+                if name in seen:
+                    continue
+                seen.add(name)
+                roots.append((agents_dir, "plugin:" + name, "*.agent.md", True))
+    return roots
+
+
+def _discover_roots(repo_root: Path,
+                    extra: Optional[List[Path]]) -> List[Tuple[Path, str, str, bool]]:
+    """Return (dir, repo_label, glob, is_fallback) tuples for every agent source.
+
+    A *fallback* root holds installed copies of agents that a checkout also
+    provides; see ``_load_agents`` for why they are indexed last.
+    """
+    roots: List[Tuple[Path, str, str, bool]] = []
     # 1) neqsim repo — flat *.agent.md files
-    roots.append((repo_root / ".github" / "agents", "neqsim", "*.agent.md"))
+    roots.append((repo_root / ".github" / "agents", "neqsim", "*.agent.md", False))
     # 2) sibling *-agents repos — agents/<name>/AGENT.md
     workspace_root = repo_root.parent
     for sibling in ("neqsim-community-agents", "neqsim-enterprise-agents"):
         cand = workspace_root / sibling / "agents"
-        roots.append((cand, sibling, "*/AGENT.md"))
+        roots.append((cand, sibling, "*/AGENT.md", False))
     # 3) explicit extra roots (auto-detect layout: flat vs nested)
     for path in extra or []:
         if (path / "agents").is_dir():
-            roots.append((path / "agents", path.name, "*/AGENT.md"))
+            roots.append((path / "agents", path.name, "*/AGENT.md", False))
         else:
-            roots.append((path, path.name, "*.agent.md"))
+            roots.append((path, path.name, "*.agent.md", False))
+    # 4) the user's locally *installed* agent catalog — ~/.neqsim/agents/<name>/AGENT.md.
+    # This is where `neqsim agent install <name>` / `--all` actually places agents
+    # (see install_agent.py INSTALL_DIR), independent of whether the community/
+    # enterprise *-agents repos above happen to be cloned as siblings. Without this
+    # root, any agent installed only via the CLI catalog (the normal, documented way
+    # to obtain community/private agents) is invisible to this search even though it
+    # is fully installed and already invocable — see CHANGELOG_AGENT_NOTES.md.
+    roots.append((_installed_agents_root(), "installed", "*/AGENT.md", True))
+    # 5) agents shipped inside installed Agent Plugins packages
+    roots.extend(_plugin_agent_roots())
     return roots
 
 
@@ -149,14 +238,26 @@ def _load_agents(repo_root: Path, extra: Optional[List[Path]] = None) -> List[Ag
     # Dedup by (repo, name) so cross-repo variants that intentionally share a
     # name (e.g. a community screening agent and its enterprise policy-gated
     # counterpart) are BOTH indexed — dropping either hides functionality.
+    # Fallback roots (~/.neqsim/agents, plugin packages) hold *copies* of agents a
+    # checkout may also provide, under a different label, so that key alone would
+    # list the same agent twice and burn two of the --top N slots. They are indexed
+    # last and skipped per handle when a checkout already supplied it; among
+    # themselves the (repo, name) rule still applies, so the community and
+    # enterprise copies of one name both survive on a plugin-only machine.
     seen_keys = set()
+    from_checkout = set()
     out: List[AgentRecord] = []
-    for agents_dir, repo, pattern in _discover_roots(repo_root, extra):
+    for agents_dir, repo, pattern, is_fallback in _discover_roots(repo_root, extra):
         for rec in _load_from_dir(agents_dir, repo, pattern):
+            handle = rec[5].lower()
+            if is_fallback and handle in from_checkout:
+                continue
             key = (rec[4], rec[0].lower())
             if key in seen_keys:
                 continue
             seen_keys.add(key)
+            if not is_fallback:
+                from_checkout.add(handle)
             out.append(rec)
     return out
 
