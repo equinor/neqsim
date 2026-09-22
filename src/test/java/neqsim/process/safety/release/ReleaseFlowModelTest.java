@@ -92,7 +92,7 @@ class ReleaseFlowModelTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void mixtureGasAndUnresolvedFlashingBoundaryAreDistinguished() {
+  void mixtureGasAndFlashingBoundaryConserveEntropy() {
     SystemInterface gas = methane(5.0);
     gas.addComponent("ethane", 0.1);
     gas.setMixingRule("classic");
@@ -104,9 +104,10 @@ class ReleaseFlowModelTest extends neqsim.NeqSimTest {
     liquid.addComponent("propane", 0.8);
     liquid.addComponent("n-butane", 0.2);
     liquid.setMixingRule("classic");
-    ReleaseFlowResult unresolved = calculate(liquid, 3e5);
-    assertEquals(ReleaseFlowResult.Status.INVALID, unresolved.getStatus());
-    assertThrows(IllegalStateException.class, unresolved::getMassFlowRateKgS);
+    ReleaseFlowResult flashing = calculate(liquid, 3e5);
+    usable(flashing);
+    assertEquals("1.1.0", flashing.getModelVersion());
+    assertTrue(flashing.getStations().get(Station.AMBIENT_EXPANDED).getGasMassFraction() > 0.0);
   }
 
   @Test

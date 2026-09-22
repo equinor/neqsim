@@ -85,8 +85,10 @@ solid/hydrate checks, real-gas departure, phase change, friction, heat transfer 
 The upstream TP flash establishes stagnation enthalpy $h_0$ [J/kg] and entropy $s_0$
 [J/(kg K)]. Pure-fluid pressure samples use PS flashes to retain the saturation-quality
 degree of freedom. Mixtures use cold TP flashes in a bracketed temperature root at fixed
-specific entropy and inventory (target residual `1e-7 J/(kg K)`), following the equilibrium
-acoustic API's approach. The selected numerical route is recorded in `ENTROPY_SOLVER`:
+specific entropy and inventory (target residual `1e-7 J/(kg K)`). Numerical model version
+`1.1.0` adds guarded continuation at an incipient vapour/liquid phase when the cold-TP entropy
+bracket stalls or its candidate fails fugacity closure. The selected numerical route is
+recorded in `ENTROPY_SOLVER`:
 
 $$u(p)=\sqrt{2(h_0-h(p,s_0))},\quad G(p)=\rho(p,s_0)u(p),\quad \dot m=C_d A\max_{p_b\le p\le p_0}G(p).$$
 
@@ -143,10 +145,46 @@ gas mixture, input
 immutability, serialization, invalid/unsupported inputs, and area/coefficient scaling.
 No method is certified for a facility or safety decision by these tests.
 
-A known regression case (80 mol% propane, 20 mol% n-butane, 300 K, 20 bara to 3 bara)
-encounters a numerically unresolved entropy root near 8.23 bara. It intentionally returns
-`INVALID`. The regression protects this fail-closed behavior; it is not a validated source
-term for that mixture. Full mixture-flashing coverage needs further thermodynamic validation.
+### Incipient-phase numerical continuation
+
+Cold TP phase selection can discard a trace vapour phase or assign its liquid cubic root near
+phase appearance. This creates an entropy discontinuity even when an equilibrium entropy root
+exists. Version `1.1.0` retains a vapour/liquid seed observed inside the same temperature bracket
+and can refine its phase fractions with the existing `TPmultiflash.solveBeta` equations. Each
+candidate uses the same EOS, pressure, components and inventory. It does not switch physical
+models, use default properties, force phase types or weaken the final closure limits.
+
+The refinement is bounded by 100 temperature bisections and 20 phase-split updates per
+candidate. Both phase fractions must lie strictly between `1e-10` and `1-1e-10`; the active
+set must still contain gas and liquid. Accepted candidates must pass composition, component
+inventory, fugacity and finite-property checks. Their extensive Gibbs energy cannot exceed
+the cold result by more than numerical noise (`1e-9 J/mol` times total moles plus 16 floating-point
+units in the reference Gibbs energy). A rejected candidate leaves the cold reference intact;
+an unresolved entropy, inventory or equilibrium residual still returns `INVALID` without a rate.
+
+`INCIPIENT_PHASE_CONTINUATION` records resolved entropy roots, accepted/rejected candidate
+counts and the last rejection reason. This diagnostic is distinct from acoustic warnings.
+The original pressure-search bounds and closure tolerances are unchanged. The source-frame
+schema remains v1, while model provenance identifies numerical version `1.1.0`.
+
+The former failing regression (80 mol% propane, 20 mol% n-butane, SRK/classic, 300 K,
+20 bara to 3 bara, 10 mm opening and discharge coefficient 0.62) now gives approximately
+**1.617324 kg/s**, a critical pressure of **8.231285 bara**, and an ambient gas mass fraction
+of **0.205319**. `ReleaseFlowFlashingTest` checks nine composition/temperature neighbours,
+inventory scaling, back-pressure sensitivity, station conservation and a schema fixture.
+It retains the matrix in `target/source-term-benchmarks/mixture-flashing.csv`.
+
+A separate saturation-path calculation solves bubble pressure while matching saturated-liquid
+entropy to upstream entropy. It shares SRK property data but does not reuse the HEM temperature
+root or pressure maximizer. For the regression case, rate agreement is within `1e-5` relative
+and critical pressure within 2 Pa; generated reference values are retained in
+`mixture-saturation-reference.csv`. This is an independent numerical-algorithm check, not
+independent experimental validation.
+
+The maximum is at phase appearance and is nonsmooth. The equilibrium acoustic diagnostic
+still reports `THROAT_MACH_MISMATCH` (Mach approximately 0.1215), so this example remains
+`VALID_WITH_WARNINGS`; frames remain `UNQUALIFIED`. Full mixture-flashing qualification
+requires independent release measurements and domain review.
 
 ## Compatibility and extension
 
