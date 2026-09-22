@@ -851,6 +851,11 @@ power, and utilization than older versions; re-evaluate optimized setpoints afte
 upgrading. Extrapolation remains a model estimate and does not extend the allowable
 equipment operating envelope.
 
+`CompressorChartKhader2015` inherits this interpolation in its dimensionless
+Mach-number coordinates. Its head between reference curves changes for the same
+reason. The sound-speed corrections to flow, speed, and head remain unchanged;
+re-evaluate operating points using the actual gas composition.
+
 ### Setting Up Multi-Speed Curves
 
 ```java
