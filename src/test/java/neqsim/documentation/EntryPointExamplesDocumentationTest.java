@@ -31,8 +31,7 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
       .compile("(?ms)^### Java - add to your project.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS = Pattern
       .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
-  private static final Pattern UNITLESS_PRESSURE =
-      Pattern.compile("setOutletPressure\\(\\s*80\\.0\\s*\\)");
+  private static final Pattern UNITLESS_PRESSURE = Pattern.compile("setOutletPressure\\(\\s*80\\.0\\s*\\)");
 
   @TempDir
   Path temporaryDirectory;
@@ -47,9 +46,7 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
     assertTrue(readme.contains("java -ea ReadmeQuickstart"));
     assertTrue(pythonGuide.contains("compressor.setOutletPressure(80.0, \"bara\")"));
     assertFalse(UNITLESS_PRESSURE.matcher(pythonGuide).find());
-    assertTrue(
-        pythonGuide.contains(
-            "Selecting a density unit does not enable Peneloux volume correction"));
+    assertTrue(pythonGuide.contains("Selecting a density unit does not enable Peneloux volume correction"));
     assertTrue(pythonGuide.contains("correction is a separate model choice"));
     assertFalse(pythonGuide.contains("with unit for Peneloux correction"));
     assertFalse(pythonGuide.contains("includes Peneloux correction"));
@@ -90,16 +87,12 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
