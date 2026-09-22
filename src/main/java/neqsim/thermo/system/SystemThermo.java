@@ -5667,11 +5667,11 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void setWaxModelType(String modelName) {
-    this.waxModelTypeName = modelName;
-    // If wax phase already exists, update it
+    String selected = PhaseWax.validateWaxComponentModel(modelName);
     if (phaseArray[5] instanceof PhaseWax) {
-      ((PhaseWax) phaseArray[5]).setWaxComponentModel(modelName);
+      ((PhaseWax) phaseArray[5]).setWaxComponentModel(selected);
     }
+    this.waxModelTypeName = selected;
   }
 
   /** {@inheritDoc} */

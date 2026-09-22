@@ -57,7 +57,7 @@ with vapour-liquid and other solid equilibria.
 The solid-liquid equilibrium for each wax-forming component $i$ is:
 
 $$
-\ln\left(\frac{x_i^S \gamma_i^S}{x_i^L \gamma_i^L}\right) = -\frac{\Delta H_{f,i}}{R T}\left(1 - \frac{T}{T_{f,i}}\right) + \frac{\Delta C_{p,i}^{SL}}{R}\left(\frac{T_{f,i}}{T} - 1 - \ln\frac{T_{f,i}}{T}\right) - \frac{\Delta V_i^{SL}(P - P_{ref})}{R T}
+\ln\left(\frac{x_i^S \gamma_i^S}{x_i^L \gamma_i^L}\right) = \frac{\Delta H_{f,i}}{R T}\left(1 - \frac{T}{T_{f,i}}\right) - \frac{\Delta C_{p,i}^{SL}}{R}\left(\frac{T_{f,i}}{T} - 1 - \ln\frac{T_{f,i}}{T}\right) + \frac{\Delta V_i^{SL}(P - P_{ref})}{R T}
 $$
 
 where:
@@ -158,7 +158,7 @@ $$
 
 **Class:** `ComponentCoutinhoWax` | **Key:** `"Coutinho"`
 
-The most thermodynamically rigorous model, based on Coutinho (1998, 2001).
+A local-composition solid-solution model based on Coutinho (1998, 2001).
 Uses the UNIQUAC local-composition framework for solid-phase activity coefficients,
 with predictive interaction parameters derived from sublimation enthalpies.
 
@@ -171,13 +171,15 @@ corrections via UNIQUAC $r$ and $q$ parameters from Bondi group contributions),
 and the residual part uses interaction parameters $\lambda_{ij}$ estimated from:
 
 $$
-\lambda_{ij} = -\frac{2}{Z}\sqrt{(\Delta H_{sub,i} - RT)(\Delta H_{sub,j} - RT)}
+\lambda_{ii} = -\frac{2}{Z}(\Delta H_{sub,i} - RT)
 $$
 
-with $Z = 10$ (coordination number) and $\Delta H_{sub}$ the sublimation enthalpy.
+For self interactions, use $Z = 10$ (coordination number) and $\Delta H_{sub}$ as the sublimation enthalpy.
+For unlike molecules, the pair energy is the self energy of the shorter chain:
+$\lambda_{ij}=\lambda_{ji}=\lambda_{short,short}$.
 
-**Strengths:** Most predictive; validated against pure n-alkane mixtures and crude oils;
-accounts for solid solution non-ideality through first-principles approach.
+**Strengths:** Accounts for molecular size and solid-solution non-ideality.
+The implemented correlations require validation against data for the fluid of interest.
 
 **Limitations:** More sensitive to characterization quality; requires correct carbon number
 assignment for TBP fractions.
@@ -188,7 +190,13 @@ assignment for TBP fractions.
 
 ### Selecting a Wax Model (Recommended)
 
-Use `setWaxModelType()` on the fluid system **before** calling `addSolidComplexPhase("wax")`:
+Use `setWaxModelType()` on the fluid system **before** calling `addSolidComplexPhase("wax")`.
+Names are case-insensitive; unknown or null names raise `IllegalArgumentException`.
+Changing an already populated wax phase to a different model raises
+`IllegalStateException` and preserves the existing configuration. Selecting its current
+model again is allowed. The same rules apply to `PhaseWax.setWaxComponentModel()`.
+To compare models, construct one fresh fluid for each selection:
+
 
 ```java
 import neqsim.thermo.system.SystemSrkEos;
@@ -203,6 +211,32 @@ fluid.addSolidComplexPhase("wax");
 fluid.setMultiphaseWaxCheck(true);
 fluid.setMultiPhaseCheck(true);
 ```
+
+### Numerical behavior and limits
+
+The alternative models use Morgan-Kobayashi (1994) vaporization enthalpies with
+the PERT2 coefficients. These correlations are evaluated only for wax-forming
+components and require `0 < T < Tc`; methane and other excluded fluid components
+do not enter solid activity sums. Solid compositions are normalized over wax formers.
+Invalid correlation states or nonfinite/zero fugacity coefficients raise an exception
+instead of being passed into the phase-fraction calculation. Such an exception is
+not a prediction of zero wax.
+
+All four models use the same liquid-reference, fusion, heat-capacity and pressure
+corrections. The pressure contribution is `(Vs - Vl) * (P - 1 bara) / (R*T)`,
+with volumes in m³/mol and the pressure difference converted to Pa; the current
+solid-volume approximation is `Vs = 0.9*Vl`. Won's solid cohesive energy includes
+both vaporization and fusion enthalpy. UNIQUAC uses relative interaction energies
+so that its pure-component activity coefficient is one, and its infinite-dilution
+coefficient is evaluated without dividing by a zero mole fraction.
+
+The regression coverage for [issue #3914](https://github.com/equinor/neqsim/issues/3914)
+checks actual component classes, finite coefficients, pure-solid limits, pressure
+units and component inventories for the characterized methane/TBP/plus-fraction
+mixture at 261 and 275 K and 5 bara. It also cross-checks a Morgan-Kobayashi
+value against an independent implementation. These are numerical and thermodynamic
+consistency checks, not experimental qualification of each model's WAT or wax amount.
+Use measured WAT and wax-fraction data to qualify or tune predictions for a specific oil.
 
 ### Python (Jupyter)
 
@@ -466,7 +500,7 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 | Speed | Fast | Fast | Medium | Medium |
 | Parameters to tune | 3-5 | 3-5 | 3-5 | 3-5 |
 | Solid non-ideality | None | Solubility param | Wilson GE | UNIQUAC GE |
-| $\Delta C_p$ correction | Yes | No | Yes | Yes |
+| $\Delta C_p$ correction | Yes | Yes | Yes | Yes |
 | Best for | Screening, quick studies | Multi-component waxes | Moderate accuracy | High accuracy, validation |
 | Literature validation | Pedersen 1991 | Won 1986, 1989 | - | Coutinho 1998, 2001 |
 
@@ -474,8 +508,8 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 
 1. **Screening and quick studies:** Use Pedersen (default). Fast, robust, easy to tune.
 2. **Engineering design (single oil):** Use Pedersen or Won with parameter tuning to experimental data.
-3. **Predictive work (no experimental data):** Use Coutinho — most thermodynamically rigorous.
-4. **Multi-crude blending or new field:** Use Coutinho — best extrapolation outside fitted range.
+3. **Predictive work:** Compare model sensitivity and obtain experimental validation before relying on absolute wax amounts.
+4. **Multi-crude blending or new field:** Validate the characterization and solid-solution model for the new compositions.
 
 ---
 
@@ -486,6 +520,10 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 - Won, K.W., "Thermodynamic Calculation of Cloud Point Temperatures and Wax Phase Compositions of Refined Hydrocarbon Mixtures," *Fluid Phase Equilibria*, 53, 377-396, 1989.
 - Coutinho, J.A.P., "Predictive UNIQUAC: A New Model for the Description of Multiphase Solid-Liquid Equilibria in Complex Hydrocarbon Mixtures," *Ind. Eng. Chem. Res.*, 37, 4870-4875, 1998.
 - Coutinho, J.A.P. and Daridon, J.-L., "Low-Pressure Modeling of Wax Formation in Crude Oils," *Energy & Fuels*, 15, 1454-1460, 2001.
+- Coutinho, J.A.P. et al., *Fluid Phase Equilibria* 233 (2005), 28-33, Eq. 13: shortest-chain pair-interaction energy. [DOI](https://doi.org/10.1016/j.fluid.2005.04.007).
+- Morgan, D.L. and Kobayashi, R., "Extension of Pitzer CSP Models for Vapor Pressures and Heats of Vaporization to Long-Chain Hydrocarbons," *Fluid Phase Equilibria*, 94, 51-87, 1994. [DOI](https://doi.org/10.1016/0378-3812(94)87051-9).
+- Wang, W. et al., "Thermodynamics Prediction of Wax Precipitation in Black Oil Using Regular Solution Model and Plus Fraction Characterization," *Advances in Mechanical Engineering*, 2013, Eq. 11. [DOI](https://doi.org/10.1155/2013/829591).
+- [Chemicals MK implementation](https://chemicals.readthedocs.io/_modules/chemicals/phase_change.html#MK): independent coefficient and numerical cross-check; the full original coefficient table was not used directly.
 - Huang, Q., Huang, J., Zhao, Y., and Zhang, J., "Wax Deposition: Experimental Characterizations, Theoretical Modeling, and Field Practices," CRC Press, 2016.
 
 ---
