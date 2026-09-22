@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope as of 2026-09-21; this does not confer qualification or replace domain review.
+Implementation scope as of 2026-09-22; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -28,15 +28,20 @@ The current implementation includes:
   unconditional statistics for incomplete ensembles, with schema-compatible case frames.
 - Explicit ideal-gas and legacy-screening adapters. The ideal-gas path has no silent property
   defaults; the compatibility path reports `SCREENING_ONLY` and unresolved station semantics.
-- [Coupled gas inventory depletion](coupled-release-inventory) through native process dynamics,
-  with component/energy/volume closure, atomic unit updates, timestep-refinement evidence and
-  schema-validated frames from both process containers. Gas-only applicability is explicit.
+- [Coupled inventory depletion](coupled-release-inventory) through native process dynamics,
+  with component/energy/volume closure, atomic unit updates, receiving-pressure event location,
+  timestep-refinement evidence and schema-validated frames from both process containers. The
+  compatibility API remains single-gas; an explicit phase-selected API supports equilibrium
+  gas, oil, generic-liquid and aqueous withdrawal without inferring entrainment or phase fallback.
 - Analytical gas limits, dense-fluid conservation and flashing, multicomponent, lifecycle
   and contract regressions in focused CI.
 - Guarded same-EOS continuation for the previously unresolved propane/butane entropy root,
   with nine nearby mixture cases, a separate saturation-path comparison, inventory scaling,
   back-pressure sensitivity and retained schema/benchmark evidence. Model version `1.1.0`
   preserves the acoustic warning and `UNQUALIFIED` evidence boundary.
+- The executed NeqSim-Colab safety source-term demonstration is merged through
+  [EvenSol/NeqSim-Colab #176](https://github.com/EvenSol/NeqSim-Colab/pull/176), with retained
+  outputs, rendered-equation/figure inspection, catalog entry and repository validation.
 
 Legacy `LeakModel` behavior is preserved. The new interface now has homogeneous-equilibrium,
 analytical ideal-gas and explicit legacy-screening implementations. Model selection remains
@@ -46,12 +51,12 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid adiabatic gas inventory is coupled and balance/refinement tested. Receiving-pressure events are conservatively located for this gas-only model. Ordinary live sources remain hypothetical. | Multiphase/phase-selective withdrawal and qualification beyond the gas-only boundary. |
+| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal and is balance/refinement tested. Receiving-pressure events are conservatively located. | Assessed phase-level/geometry, entrainment/slip, finite-rate interfacial transfer and phase-exhaustion transitions beyond the current well-mixed equilibrium boundary. |
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Conservative CO2 temperature and enabled-solid checks exist. | Mixture-specific solid-risk assessment and assessed solid-capable physics where supported. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |
-| Colab demonstration | Foundation APIs merged. | Executed notebook, retained outputs, visual inspection, catalog and validation ledger. |
+| Colab demonstration | Executed, output-retaining demonstration merged in NeqSim-Colab #176 with rendering, catalog and validation-ledger checks. | No remaining implementation item; broader physical qualification remains governed by the rows above. |
 
 Do not close #3860 merely because initial PRs merged or focused CI passes.
 The [NRC](../../rfcs/3860-source-term-platform) retains design intent; current guidance is in

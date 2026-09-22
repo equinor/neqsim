@@ -20,10 +20,12 @@ import neqsim.process.dynamics.DynamicCapability;
 import neqsim.process.dynamics.DynamicCapabilityReport;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Conservation, convergence, lifecycle and executable integration examples for trapped gas releases. */
+/** Conservation, convergence, lifecycle and executable integration examples for trapped inventory releases. */
 class ReleaseInventoryTest extends neqsim.NeqSimTest {
   private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-09-21T00:00:00Z"), ZoneOffset.UTC);
 
@@ -37,6 +39,19 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
   private static ReleaseInventory inventory(double pressureBar, double step) {
     return new ReleaseInventory("inventory", gas(pressureBar), 1.0, 0.01, 0.7, 10000.0, new IdealGasReleaseModel(),
         step);
+  }
+
+  private static SystemInterface twoPhaseHydrocarbon() {
+    SystemInterface fluid = new SystemSrkEos(250.0, 10.0);
+    fluid.addComponent("methane", 0.5);
+    fluid.addComponent("n-butane", 0.5);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL) || fluid.hasPhaseType(PhaseType.LIQUID));
+    return fluid;
   }
 
   private static void balanced(ReleaseInventory inventory) {
@@ -103,6 +118,91 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
     copy.setTemperature(500.0);
     assertTrue(vessel.getFluid().getTemperature() < 300.0);
     balanced(vessel);
+  }
+
+  @Test
+  void gasWithdrawalFromTwoPhaseInventoryIsSelectiveConservativeAndConvergent() throws Exception {
+    double[] finalPressurePa = new double[3];
+    StringBuilder csv = new StringBuilder(
+        "maxSubstep_s,time_s,pressure_Pa,releasedMass_kg,releasedMethane_kg,releasedNButane_kg,energyResidual_J\n");
+    for (int refinement = 0; refinement < 3; refinement++) {
+      double maxStep = 0.04 / Math.pow(2.0, refinement);
+      SystemInterface initial = twoPhaseHydrocarbon();
+      ReleaseInventory vessel = new ReleaseInventory("two-phase", initial, 0.02, 0.001, 0.62, 101325.0,
+          new HomogeneousEquilibriumReleaseModel(), maxStep, PhaseType.GAS);
+      SystemInterface withdrawal = vessel.getReleaseRequest().getFluid();
+      double methaneMassFraction = withdrawal.getComponent("methane").getNumberOfmoles()
+          * withdrawal.getComponent("methane").getMolarMass() / withdrawal.getMass("kg");
+      assertTrue(methaneMassFraction > vessel.getBalance().getInitialComponentMassKg().get("methane")
+          / vessel.getFluid().getMass("kg"));
+      vessel.runTransient(0.2, UUID.randomUUID());
+      ReleaseInventory.Balance balance = vessel.getBalance();
+      assertTrue(balance.getReleasedMassKg() > 0.0);
+      assertEquals(methaneMassFraction,
+          balance.getReleasedComponentMassKg().get("methane") / balance.getReleasedMassKg(), 2e-3);
+      assertEquals(PhaseType.GAS, vessel.getWithdrawalPhaseType());
+      assertTrue(vessel.isPhaseSelective());
+      assertTrue(vessel.getFluid().getNumberOfPhases() >= 1);
+      finalPressurePa[refinement] = vessel.getFluid().getPressure() * 1e5;
+      balanced(vessel);
+      csv.append(maxStep).append(",0.2,").append(finalPressurePa[refinement]).append(',')
+          .append(balance.getReleasedMassKg()).append(',').append(balance.getReleasedComponentMassKg().get("methane"))
+          .append(',').append(balance.getReleasedComponentMassKg().get("n-butane")).append(',')
+          .append(balance.getInternalEnergyJ() + balance.getReleasedEnergyJ() - balance.getInitialEnergyJ())
+          .append('\n');
+    }
+    double coarse = Math.abs(finalPressurePa[0] - finalPressurePa[1]);
+    double fine = Math.abs(finalPressurePa[1] - finalPressurePa[2]);
+    assertTrue(coarse > 0.0 && fine < coarse * 0.75, "Expected refinement of phase-selective inventory pressure");
+    write("source-term-benchmarks", "inventory-phase-selected-convergence.csv", csv.toString());
+  }
+
+  @Test
+  void liquidWithdrawalUsesExplicitPhaseAndRejectsAbsentPhase() {
+    SystemInterface liquid = new SystemSrkEos(300.0, 20.0);
+    liquid.addComponent("propane", 0.8);
+    liquid.addComponent("n-butane", 0.2);
+    liquid.setMixingRule("classic");
+    new ThermodynamicOperations(liquid).TPflash();
+    liquid.init(3);
+    PhaseType liquidType = liquid.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+    ReleaseInventory vessel = new ReleaseInventory("liquid", liquid, 0.02, 0.001, 0.62, 3e5,
+        new HomogeneousEquilibriumReleaseModel(), 0.01, liquidType);
+    vessel.runTransient(0.05, UUID.randomUUID());
+    assertTrue(vessel.getBalance().getReleasedMassKg() > 0.0);
+    assertEquals(liquidType, vessel.getWithdrawalPhaseType());
+    balanced(vessel);
+
+    assertThrows(IllegalArgumentException.class, () -> new ReleaseInventory("missing", liquid, 0.02, 0.001, 0.62, 3e5,
+        new HomogeneousEquilibriumReleaseModel(), 0.01, PhaseType.GAS));
+  }
+
+  @Test
+  void phaseSelectedFramesRemainSchemaValidForBothProcessContainers() {
+    for (boolean useModel : new boolean[] {false, true}) {
+      ReleaseInventory vessel = new ReleaseInventory("two-phase", twoPhaseHydrocarbon(), 0.02, 0.001, 0.62, 101325.0,
+          new HomogeneousEquilibriumReleaseModel(), 0.02, PhaseType.GAS);
+      ProcessSystem process = new ProcessSystem();
+      process.add(vessel);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("multiphase-area", process);
+        session = new SourceTermSession("phase-selected", model, CLOCK);
+        session.addInventorySource("opening", "multiphase-area", "two-phase");
+      } else {
+        session = new SourceTermSession("phase-selected", process, CLOCK);
+        session.addInventorySource("opening", "two-phase");
+      }
+      assertEquals(SourceTermFrame.Status.VALID, session.runSteadyState().get(0).getStatus());
+      SourceTermFrame frame = session.step(0.02).get(0);
+      assertEquals(SourceTermFrame.Status.VALID, frame.getStatus(), frame.toJson());
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY", provenance.get("releaseBasis").getAsString());
+      assertEquals("GAS", provenance.get("inventoryWithdrawalPhase").getAsString());
+      balanced(vessel);
+    }
   }
 
   @Test
