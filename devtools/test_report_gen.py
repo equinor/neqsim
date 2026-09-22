@@ -247,7 +247,7 @@ def main():
             'tornado table': 'Sensitivity Ranking',
             # Risk
             'Risk section': 'Risk Assessment',
-            'Consistency review section': 'Report Consistency Review',
+            'Consistency review appendix': 'Appendix A. Report Quality Checks',
             'Benchmark contradiction disclosed': 'benchmark tests FAILED',
             'risk-high class': 'risk-high',
             'risk-low class': 'risk-low',
