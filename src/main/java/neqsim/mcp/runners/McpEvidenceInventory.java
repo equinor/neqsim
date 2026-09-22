@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.44");
+    inventory.addProperty("inventoryVersion", "1.45");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities. Inventory 1.44 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, runChemistry. Inventory 1.45 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 44 are CONTRACT_TESTED and 7 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 45 are CONTRACT_TESTED and 6 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -630,6 +630,16 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_utility_design_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md"};
       evidenceBoundary = "Deterministic dispatch to the canonical NeqSim Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, and SteamNetwork screening models, five utility-type result envelopes, fail-closed blank, malformed and unsupported-type inputs, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish design-basis completeness, property or correlation accuracy, equipment sizing adequacy, utility availability or reliability, network optimization, emissions or cost forecast accuracy, mechanical design, safe operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "runChemistry":
+      benchmarkApplicability = "NOT_APPLICABLE_CANONICAL_CHEMISTRY_DISPATCH_AND_TRANSPORT_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/ChemistryRunner.java",
+          "src/test/java/neqsim/mcp/runners/ChemistryRunnerTest.java",
+          "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_chemistry_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/CHEMISTRY_SCREENING_CONTRACT.md"};
+      evidenceBoundary = "Canonical ChemistryRunner dispatch for electrolyteScale, multiMineralScale, mechanisticCorrosion, langmuirInhibitor, packedBedScavenger, electrolyteScaleEquilibrium, electrolyteMultiScaleEquilibrium, and pitzerQualification, structured success and failure envelopes, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish composition or design-basis suitability, thermodynamic, electrolyte, scale, corrosion, adsorption, reaction, transport, or kinetic accuracy, parameter or dataset applicability, convergence for arbitrary inputs, uncertainty, safe operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";
