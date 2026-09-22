@@ -106,7 +106,7 @@ class ReleaseFlowModelTest extends neqsim.NeqSimTest {
     liquid.setMixingRule("classic");
     ReleaseFlowResult flashing = calculate(liquid, 3e5);
     usable(flashing);
-    assertEquals("1.1.0", flashing.getModelVersion());
+    assertEquals("1.2.0", flashing.getModelVersion());
     assertTrue(flashing.getStations().get(Station.AMBIENT_EXPANDED).getGasMassFraction() > 0.0);
   }
 

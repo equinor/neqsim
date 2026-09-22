@@ -7,6 +7,8 @@
  * <li>{@link neqsim.process.safety.release.LeakModel} - Mass flow, jet velocity, and momentum calculations</li>
  * <li>{@link neqsim.process.safety.release.SourceTermResult} - Time-series release data with export capabilities</li>
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
+ * applicability assessment</li>
  * </ul>
  *
  * <p>
@@ -20,7 +22,9 @@
  *
  * <p>
  * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
- * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods.
+ * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
+ * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
+ * calculate solid-bearing release flow.
  *
  * <p>
  * Example usage:
