@@ -361,7 +361,8 @@ def java_install_roots():
         vendors = ["Eclipse Adoptium", "Eclipse Foundation", "Java", "Microsoft", "Zulu",
                    "Amazon Corretto", "BellSoft", "OpenJDK", "RedHat", "Semeru", "SapMachine"]
         roots = [Path(b) / v for b in bases if b for v in vendors]
-        roots += [home / ".jdks", home / "scoop" / "apps", home / "graalvm", home, Path("C:/tools")]
+        roots += [home / ".jdks", home / "scoop" / "apps", home / "graalvm", home,
+                  Path("C:/tools"), Path("C:/appl")]
     elif sys.platform == "darwin":
         roots = [Path("/Library/Java/JavaVirtualMachines"), home / "Library" / "Java" / "JavaVirtualMachines",
                  Path("/opt/homebrew/opt"), Path("/usr/local/opt"), home / ".sdkman" / "candidates" / "java",
@@ -387,6 +388,27 @@ def explicit_java_candidates():
         yield Path(on_path)
 
 
+def vscode_java_candidates():
+    """JREs bundled with the VS Code Java extension.
+
+    On a managed machine this is often the only JDK 21+ present, and it is never
+    on PATH.
+    """
+    home = Path.home()
+    for editor in (".vscode", ".vscode-insiders", ".vscode-server"):
+        ext = home / editor / "extensions"
+        if not ext.is_dir():
+            continue
+        try:
+            for pack in sorted(ext.glob("redhat.java-*"), reverse=True):
+                for jre in sorted((pack / "jre").glob("*"), reverse=True):
+                    cand = jre / "bin" / JAVA_EXE
+                    if cand.is_file():
+                        yield cand
+        except OSError:
+            continue
+
+
 def installed_java_candidates():
     """Java executables under the usual JDK install folders (newest folder name first)."""
     for root in java_install_roots():
@@ -404,6 +426,8 @@ def installed_java_candidates():
                 if cand.is_file():
                     yield cand
                     break
+    for cand in vscode_java_candidates():
+        yield cand
 
 
 def find_mcp_java():

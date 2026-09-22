@@ -17,6 +17,7 @@ import jpype
 from pathlib import Path
 import subprocess
 import os
+import sys
 import types
 
 
@@ -274,6 +275,8 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     if verbose:
         print(f"NeqSim project root: {root}")
 
+    _ensure_jvm_available(verbose)
+
     # If JVM is already running, handle based on recompile flag
     if jpype.isJVMStarted():
         if recompile:
@@ -358,6 +361,35 @@ def _jvm_args():
     return args
 
 
+def _ensure_jvm_available(verbose=True):
+    """Make an installed JVM discoverable before JPype starts it.
+
+    Corporate machines frequently have Java installed but neither on PATH nor
+    exported as ``JAVA_HOME``; JPype then raises ``JVMNotFoundException``. This
+    searches the usual install locations and sets ``JAVA_HOME`` for the current
+    process only.
+
+    @param verbose whether to print the Java home that was resolved
+    @return the Java home now in effect, or None when none was found
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        from java_locator import ensure_java_home
+    except ImportError:
+        return os.environ.get("JAVA_HOME") or None
+    java_home = ensure_java_home(verbose=False)
+    if java_home is None:
+        raise RuntimeError(
+            "No Java runtime found. NeqSim needs a JDK (21+ recommended).\n"
+            "  - If Java is installed, run: python devtools/java_locator.py\n"
+            "  - Otherwise unpack a Temurin JDK into your user profile (no admin "
+            "required) and set JAVA_HOME to it.")
+    if verbose and not os.environ.get("_NEQSIM_JAVA_HOME_REPORTED"):
+        print("Java home: {h}".format(h=java_home))
+        os.environ["_NEQSIM_JAVA_HOME_REPORTED"] = "1"
+    return java_home
+
+
 def _init_from_jars(jars, extra_classpath, verbose, convert_strings):
     """Start the JVM on packaged NeqSim JAR(s); same ``ns`` contract as a checkout."""
     classpath = [str(j) for j in jars] + list(extra_classpath or [])
@@ -370,6 +402,7 @@ def _init_from_jars(jars, extra_classpath, verbose, convert_strings):
         if verbose:
             print("JVM already running — reusing existing JVM")
     else:
+        _ensure_jvm_available(verbose)
         jpype.startJVM(*_jvm_args(), classpath=classpath, convertStrings=convert_strings)
         if verbose:
             print(f"\nJVM started: {jpype.getDefaultJVMPath()}")

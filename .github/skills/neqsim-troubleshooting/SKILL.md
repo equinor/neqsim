@@ -417,6 +417,50 @@ power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
 | `IllegalAccessError` / `NoSuchMethodError` between two NeqSim classes in the **same** package | Two `neqsim-*.jar` versions on one classpath | See "Stale or Duplicate Runtime JAR" below |
 | `Java package 'neqsim.x.y' has no attribute 'Z'` for a class that exists in `src/` | Installed JAR is older than the repo source | See "Stale or Duplicate Runtime JAR" below |
 
+## No JVM Found (JPype Cannot Start Java)
+
+**Symptom:** `JVMNotFoundException`, "No JVM shared library file (jvm.dll) found",
+or `import neqsim` failing before any calculation runs.
+
+This is a *discovery* failure, not a missing installation. On managed corporate
+machines Java is routinely installed with no `java` on PATH and no `JAVA_HOME`,
+and it lands in places a naive scan of `C:\Program Files\Java` misses: the user
+profile, `LOCALAPPDATA\Programs`, the Windows registry, a JetBrains `jbr`, or
+the JRE shipped inside the VS Code Java extension
+(`~/.vscode/extensions/redhat.java-*/jre/*`).
+
+Recovery, in order:
+
+1. **Was this even a code task?** A single flash/property/sizing question needs
+   no local JVM at all — use the curated `mcp_neqsim_*` tool (see
+   `neqsim-api-patterns` § "MCP server vs. Python/Java API").
+2. **Find the installed Java** instead of hunting by hand:
+   ```powershell
+   python devtools/java_locator.py     # source checkout: usable Javas, best first
+   neqsim doctor                       # plugin / pip install: names the found Java
+   ```
+3. **Make it usable for this process** — no admin, no persisted env change:
+   ```python
+   import neqsim_dev_setup, sys, pathlib
+   sys.path.insert(0, str(pathlib.Path(neqsim_dev_setup.__file__).parent))
+   from java_locator import ensure_java_home
+   ensure_java_home()                  # sets JAVA_HOME + PATH in-process
+   import neqsim
+   ```
+   The `sys.path` line is needed because an editable devtools install resolves
+   modules through a map frozen at install time. `neqsim_dev_setup.neqsim_init(...)`
+   already does all of this, so notebooks and NeqSim Runner jobs are covered.
+4. **Persist it** for Maven and future terminals (user scope, no admin):
+   ```powershell
+   [Environment]::SetEnvironmentVariable('JAVA_HOME','<home from step 2>','User')
+   ```
+5. **Only if the locator finds nothing**, install Java — a portable Temurin JDK
+   unpacked into the user profile needs no admin rights. `neqsim doctor` prints
+   this remedy with the exact commands.
+
+A JRE is enough to *run* NeqSim through JPype; `mvnw` compilation needs a full
+JDK (`bin/javac`). The locator ranks JDKs above JREs for this reason.
+
 ## Stale or Duplicate Runtime JAR
 
 The Python package adds its `lib/*` folder to the classpath as a flat glob, so a

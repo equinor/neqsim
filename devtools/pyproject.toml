@@ -33,7 +33,7 @@ py-modules = [
     "validate_task_results", "consistency_checker", "generate_sources_md",
     "pdf_to_figures", "skill_search", "agent_search", "agent_frontmatter", "bm25",
     "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
-    "neqsim_try", "neqsim_contribute",
+    "neqsim_try", "neqsim_contribute", "java_locator",
 ]
 packages = [
     "neqsim_runner",

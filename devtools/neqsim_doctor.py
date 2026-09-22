@@ -97,6 +97,47 @@ def _portable_jdk_hint():
     )
 
 
+def _discovered_java_hint():
+    """Return a hint naming an installed Java that is simply not on PATH.
+
+    Java is frequently installed on managed corporate machines without being
+    exported, so point at what is already there before asking for a download.
+
+    @return a remediation string for a discovered Java home, or None
+    """
+    sys.path.insert(0, SCRIPT_DIR)
+    try:
+        from java_locator import find_java_installs
+    except ImportError:
+        return None
+    installs = find_java_installs()
+    if not installs:
+        return None
+    best = installs[0]
+    if sys.platform.startswith("win"):
+        persist = (
+            "         Make it permanent (user scope, no admin, new terminal to apply):\n"
+            "            [Environment]::SetEnvironmentVariable('JAVA_HOME','{h}','User')"
+        ).format(h=best.home)
+    else:
+        persist = (
+            "         Make it permanent by adding to your shell rc file:\n"
+            "            export JAVA_HOME={h}"
+        ).format(h=best.home)
+    return (
+        "Java {v} is already installed here (found via {s}):\n"
+        "            {h}\n{persist}"
+    ).format(v=best.major or "?", s=best.source, h=best.home, persist=persist)
+
+
+def _java_missing_hint():
+    """Return the best available remedy when Java looks unavailable.
+
+    @return a discovered-install hint when one exists, else the portable-JDK hint
+    """
+    return _discovered_java_hint() or _portable_jdk_hint()
+
+
 def _parse_java_major(version_output):
     """Parse the Java major version from `java -version` output.
 
@@ -159,7 +200,7 @@ def check_java():
             _check(
                 "Java installed", False,
                 "java on PATH but failed to run: {e}".format(e=e),
-                fix_hint=_portable_jdk_hint()
+                fix_hint=_java_missing_hint()
             )
     elif java_home_valid:
         _check(
@@ -176,7 +217,7 @@ def check_java():
         _check(
             "Java installed", False,
             "No java on PATH and JAVA_HOME is not set/valid",
-            fix_hint=_portable_jdk_hint()
+            fix_hint=_java_missing_hint()
         )
 
     # JAVA_HOME status (mvnw prefers it; a stale value silently breaks builds).
@@ -187,7 +228,7 @@ def check_java():
             "Valid: {p}".format(p=java_home) if java_home_valid
             else "Set but invalid (no bin/java): {p}".format(p=java_home),
             fix_hint=None if java_home_valid
-            else "Point JAVA_HOME at a real JDK home. " + _portable_jdk_hint()
+            else "Point JAVA_HOME at a real JDK home. " + _java_missing_hint()
         )
     elif java_on_path:
         _warn(
