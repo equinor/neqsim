@@ -2656,8 +2656,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck);
 
   /**
-   * Sets the wax thermodynamic model to use. Must be called before {@link #addSolidComplexPhase(String)} to take
-   * effect.
+   * Sets the wax thermodynamic model to use. Select the model before {@link #addSolidComplexPhase(String)}. Changing a
+   * populated wax phase to another model throws {@link IllegalStateException}; selecting its current model is allowed.
+   * Unknown model names throw {@link IllegalArgumentException}.
    *
    * <p>
    * Available models:
