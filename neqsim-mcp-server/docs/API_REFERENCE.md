@@ -242,7 +242,13 @@ must be omitted.
 
 If omission metadata would exceed the remaining byte budget, the guard drops
 optional `summary` prose from omission records. The omitted field names, byte
-counts, retrieval guidance and complete discovery inventories remain available.
+counts, retrieval guidance and complete discovery inventories remain available
+when this is sufficient. If necessary, the guard also drops optional per-field
+`approximateBytes` estimates, reason and configuration prose, and shortens
+retrieval guidance. It retains every omitted field name, exact original/returned
+byte counts, the configured limit, and the complete protected inventories in both
+response views. Clients must treat omission summaries and per-field sizes as
+optional metadata.
 
 ---
 

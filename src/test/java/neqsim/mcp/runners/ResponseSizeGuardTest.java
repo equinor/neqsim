@@ -150,6 +150,43 @@ class ResponseSizeGuardTest {
         "Discovery truncation must point to focused capability retrieval");
   }
 
+  @Test
+  @DisplayName("Omission metadata fits a tight budget without dropping protected evidence")
+  void testOmissionMetadataCompactsWithoutLosingFieldNames() {
+    JsonObject response = new JsonObject();
+    response.addProperty("status", "success");
+    char[] evidence = new char[ResponseSizeGuard.getMaxBytes() - 900];
+    java.util.Arrays.fill(evidence, 'x');
+    JsonObject validation = new JsonObject();
+    validation.addProperty("evidence", new String(evidence));
+    response.add("validation", validation.deepCopy());
+    char[] detail = new char[2000];
+    java.util.Arrays.fill(detail, 'y');
+    for (int i = 0; i < 12; i++) {
+      response.addProperty("detail" + i, new String(detail));
+    }
+    int originalBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
+
+    assertTrue(ResponseSizeGuard.enforce(response, "runProcess"));
+
+    int returnedBytes = GSON.toJson(response).getBytes(StandardCharsets.UTF_8).length;
+    assertTrue(returnedBytes <= ResponseSizeGuard.getMaxBytes(), "Metadata must fit: " + returnedBytes);
+    assertEquals(validation, response.getAsJsonObject("validation"));
+    assertEquals("success", response.get("status").getAsString());
+    JsonObject truncation = response.getAsJsonObject("truncation");
+    assertEquals(originalBytes, truncation.get("originalBytes").getAsInt());
+    assertEquals(returnedBytes, truncation.get("returnedBytes").getAsInt());
+    assertEquals(12, truncation.getAsJsonArray("omitted").size());
+    java.util.Set<String> omittedFields = new java.util.HashSet<String>();
+    for (com.google.gson.JsonElement entry : truncation.getAsJsonArray("omitted")) {
+      omittedFields.add(entry.getAsJsonObject().get("field").getAsString());
+    }
+    for (int i = 0; i < 12; i++) {
+      assertTrue(omittedFields.contains("detail" + i));
+    }
+    assertTrue(truncation.get("howToRetrieve").getAsString().contains("manageModel"));
+  }
+
   /**
    * The trimmed response must still be parseable JSON — a truncated payload is worse than useless if the client cannot
    * read it.

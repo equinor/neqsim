@@ -1122,12 +1122,12 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(44, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(7, limitations.get("confirmedGapToolCount").getAsInt());
   }
+
   @Test
   void testUtilityDesignPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject coverage =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("designUtilities");
+    JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("designUtilities");
 
     assertEquals("1.44", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -1135,12 +1135,10 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("NOT_APPLICABLE_CANONICAL_UTILITY_DESIGN_SCREENING_SOFTWARE_CONTRACT",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(6, coverage.get("contractEvidenceCount").getAsInt());
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("UtilityDesignRunner.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("UtilityComponentsTest.java"));
     assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("UtilityDesignRunner.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("UtilityComponentsTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_utility_design_protocol.py"));
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_utility_design_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim Boiler"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("design-basis completeness"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("designUtilities"));

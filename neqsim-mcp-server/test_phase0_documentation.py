@@ -56,7 +56,7 @@ require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURF
 require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
-    "scientifically validated: 8 records remain\n"
+    "scientifically validated: 7 records remain\n"
     "`CONFIRMED_GAP`, forty-four are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
