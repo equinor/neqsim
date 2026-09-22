@@ -67,9 +67,9 @@ double residualKg = gas.getOverallMassBalanceResidualKg();
 
 On this 1000 kg basis, the receipt consumes 563.873760327 mol H2 and supplies
 845.810640491 mol H2 in 939.789600545 mol makeup gas. It reports
-4.337722954 kg makeup gas and 580.377698262 mol or 8.848274975 kg outlet gas.
-Outlet mole fractions are 0.4857817263 H2, 0.2187995665 H2S, 0.1334914651 NH3,
-and 0.1619272421 aggregate non-H2. Overall mass closure is numerical zero.
+4.337722954 kg makeup gas and 580.377251140 mol or 8.848274975 kg outlet gas.
+Outlet mole fractions are 0.4857821005 H2, 0.2187989647 H2S, 0.1334915679 NH3,
+and 0.1619273668 aggregate non-H2. Overall mass closure is numerical zero.
 
 ## Provenance and engineering boundary
 
