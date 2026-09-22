@@ -1376,7 +1376,11 @@ public class Compressor extends TwoPortEquipment
             speedUpdate = Math.signum(speedUpdate) * maxSpeedUpdate;
           }
 
-          currentSpeed += relaxationFactor * speedUpdate;
+          // Head, efficiency and power below describe currentSpeed. Do not move an already accepted root: doing so
+          // reports a different speed and lets repeated runs drift across an equipment capacity boundary.
+          if (Math.abs(currentPressure - targetPressure) > tolerance) {
+            currentSpeed += relaxationFactor * speedUpdate;
+          }
           if (currentSpeed < 0) {
             if (minSpeed > 1) {
               currentSpeed = minSpeed;
