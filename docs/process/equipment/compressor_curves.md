@@ -1094,6 +1094,13 @@ Distance to Stone Wall = (Single Stone Wall Flow Point / Operating Flow) - 1
 
 ## Speed Calculation from Operating Point
 
+When `Compressor.setSolveSpeed(true)` solves an outlet-pressure target, the
+accepted speed is retained once the pressure residual is within 0.001 bar.
+The reported speed, chart head, efficiency and power therefore describe the same
+iterate. Re-running an unchanged inlet and target does not take an additional
+Newton step after convergence, which could otherwise move a capacity-limited
+operating point across its limit. Configured speed limits still apply.
+
 When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
 
 ### The `getSpeed()` and `getSpeedValue()` Methods
