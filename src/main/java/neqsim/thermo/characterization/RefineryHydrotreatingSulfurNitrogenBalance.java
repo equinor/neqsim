@@ -7,9 +7,9 @@ import java.util.Objects;
  * Immutable coupled sulfur, nitrogen, hydrogen, hydrogen-sulfide, and ammonia balance receipt.
  *
  * <p>
- * The receipt solves sulfur and nitrogen targets on one calculated liquid-product mass. It is
- * limited to stoichiometric bookkeeping and does not predict reaction pathways, kinetics, catalyst
- * performance, operating conditions, heat duty, hydrocarbon yield, or compliance.
+ * The receipt solves sulfur and nitrogen targets on one calculated liquid-product mass. It is limited to stoichiometric
+ * bookkeeping and does not predict reaction pathways, kinetics, catalyst performance, operating conditions, heat duty,
+ * hydrocarbon yield, or compliance.
  *
  * @author esolbr1
  * @version 1.0
@@ -44,17 +44,14 @@ public final class RefineryHydrotreatingSulfurNitrogenBalance implements Seriali
   private final double nitrogenBalanceResidualKg;
 
   private RefineryHydrotreatingSulfurNitrogenBalance(double feedMassKg, double feedSulfurMassFraction,
-      double feedNitrogenMassFraction, double targetProductSulfurMassFraction,
-      double targetProductNitrogenMassFraction, double hydrogenMolesPerSulfurMole,
-      double hydrogenMolesPerNitrogenMole, double initialSulfurMassKg, double initialNitrogenMassKg,
-      double sulfurRemovedMassKg, double nitrogenRemovedMassKg, double remainingSulfurMassKg,
-      double remainingNitrogenMassKg, double sulfurHydrogenConsumedMassKg,
-      double nitrogenHydrogenConsumedMassKg, double totalHydrogenConsumedMassKg,
-      double hydrogenSulfideProducedMassKg, double ammoniaProducedMassKg,
-      double hydrogenRetainedInLiquidMassKg, double productMassKg,
+      double feedNitrogenMassFraction, double targetProductSulfurMassFraction, double targetProductNitrogenMassFraction,
+      double hydrogenMolesPerSulfurMole, double hydrogenMolesPerNitrogenMole, double initialSulfurMassKg,
+      double initialNitrogenMassKg, double sulfurRemovedMassKg, double nitrogenRemovedMassKg,
+      double remainingSulfurMassKg, double remainingNitrogenMassKg, double sulfurHydrogenConsumedMassKg,
+      double nitrogenHydrogenConsumedMassKg, double totalHydrogenConsumedMassKg, double hydrogenSulfideProducedMassKg,
+      double ammoniaProducedMassKg, double hydrogenRetainedInLiquidMassKg, double productMassKg,
       double achievedProductSulfurMassFraction, double achievedProductNitrogenMassFraction,
-      double totalMassBalanceResidualKg, double sulfurBalanceResidualKg,
-      double nitrogenBalanceResidualKg) {
+      double totalMassBalanceResidualKg, double sulfurBalanceResidualKg, double nitrogenBalanceResidualKg) {
     this.feedMassKg = feedMassKg;
     this.feedSulfurMassFraction = feedSulfurMassFraction;
     this.feedNitrogenMassFraction = feedNitrogenMassFraction;
@@ -91,13 +88,11 @@ public final class RefineryHydrotreatingSulfurNitrogenBalance implements Seriali
    * @param targetProductSulfurMassFraction requested sulfur mass fraction on product mass
    * @param targetProductNitrogenMassFraction requested nitrogen mass fraction on product mass
    * @param hydrogenMolesPerSulfurMole moles of H2 consumed per mole of sulfur removed; at least one
-   * @param hydrogenMolesPerNitrogenMole moles of H2 consumed per mole of nitrogen removed; at least
-   *        1.5
+   * @param hydrogenMolesPerNitrogenMole moles of H2 consumed per mole of nitrogen removed; at least 1.5
    * @return immutable coupled balance receipt
    */
-  public static RefineryHydrotreatingSulfurNitrogenBalance calculate(double feedMassKg,
-      double feedSulfurMassFraction, double feedNitrogenMassFraction,
-      double targetProductSulfurMassFraction, double targetProductNitrogenMassFraction,
+  public static RefineryHydrotreatingSulfurNitrogenBalance calculate(double feedMassKg, double feedSulfurMassFraction,
+      double feedNitrogenMassFraction, double targetProductSulfurMassFraction, double targetProductNitrogenMassFraction,
       double hydrogenMolesPerSulfurMole, double hydrogenMolesPerNitrogenMole) {
     requireFinitePositive("feedMassKg", feedMassKg);
     requireFraction("feedSulfurMassFraction", feedSulfurMassFraction);
@@ -123,20 +118,19 @@ public final class RefineryHydrotreatingSulfurNitrogenBalance implements Seriali
       throw new IllegalArgumentException("hydrogenMolesPerNitrogenMole must be finite and at least 1.5");
     }
 
-    double sulfurMassChangePerRemovedMass =
-        (hydrogenMolesPerSulfurMole * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
-            - RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL)
-            / RefineryHydrotreatingSulfurBalance.SULFUR_MOLAR_MASS_KG_PER_MOL;
-    double nitrogenMassChangePerRemovedMass =
-        (hydrogenMolesPerNitrogenMole * RefineryHydrotreatingNitrogenBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
-            - RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL)
-            / RefineryHydrotreatingNitrogenBalance.NITROGEN_MOLAR_MASS_KG_PER_MOL;
+    double sulfurMassChangePerRemovedMass = (hydrogenMolesPerSulfurMole
+        * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        - RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL)
+        / RefineryHydrotreatingSulfurBalance.SULFUR_MOLAR_MASS_KG_PER_MOL;
+    double nitrogenMassChangePerRemovedMass = (hydrogenMolesPerNitrogenMole
+        * RefineryHydrotreatingNitrogenBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        - RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL)
+        / RefineryHydrotreatingNitrogenBalance.NITROGEN_MOLAR_MASS_KG_PER_MOL;
     double denominator = 1.0 + sulfurMassChangePerRemovedMass * targetProductSulfurMassFraction
         + nitrogenMassChangePerRemovedMass * targetProductNitrogenMassFraction;
     double numerator = feedMassKg * (1.0 + sulfurMassChangePerRemovedMass * feedSulfurMassFraction
         + nitrogenMassChangePerRemovedMass * feedNitrogenMassFraction);
-    if (!Double.isFinite(denominator) || denominator <= 0.0 || !Double.isFinite(numerator)
-        || numerator <= 0.0) {
+    if (!Double.isFinite(denominator) || denominator <= 0.0 || !Double.isFinite(numerator) || numerator <= 0.0) {
       throw new IllegalArgumentException("inputs do not define a positive coupled material balance");
     }
 
@@ -145,54 +139,46 @@ public final class RefineryHydrotreatingSulfurNitrogenBalance implements Seriali
     double initialNitrogenMassKg = feedMassKg * feedNitrogenMassFraction;
     double sulfurRemovedMassKg = initialSulfurMassKg - targetProductSulfurMassFraction * productMassKg;
     double nitrogenRemovedMassKg = initialNitrogenMassKg - targetProductNitrogenMassFraction * productMassKg;
-    double sulfurMolesRemoved =
-        sulfurRemovedMassKg / RefineryHydrotreatingSulfurBalance.SULFUR_MOLAR_MASS_KG_PER_MOL;
-    double nitrogenMolesRemoved =
-        nitrogenRemovedMassKg / RefineryHydrotreatingNitrogenBalance.NITROGEN_MOLAR_MASS_KG_PER_MOL;
+    double sulfurMolesRemoved = sulfurRemovedMassKg / RefineryHydrotreatingSulfurBalance.SULFUR_MOLAR_MASS_KG_PER_MOL;
+    double nitrogenMolesRemoved = nitrogenRemovedMassKg
+        / RefineryHydrotreatingNitrogenBalance.NITROGEN_MOLAR_MASS_KG_PER_MOL;
     double sulfurHydrogenConsumedMassKg = sulfurMolesRemoved * hydrogenMolesPerSulfurMole
         * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
     double nitrogenHydrogenConsumedMassKg = nitrogenMolesRemoved * hydrogenMolesPerNitrogenMole
         * RefineryHydrotreatingNitrogenBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
-    double totalHydrogenConsumedMassKg =
-        sulfurHydrogenConsumedMassKg + nitrogenHydrogenConsumedMassKg;
+    double totalHydrogenConsumedMassKg = sulfurHydrogenConsumedMassKg + nitrogenHydrogenConsumedMassKg;
     double hydrogenSulfideProducedMassKg = sulfurMolesRemoved
         * RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
-    double ammoniaProducedMassKg =
-        nitrogenMolesRemoved * RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
-    double hydrogenRetainedInLiquidMassKg =
-        sulfurMolesRemoved * (hydrogenMolesPerSulfurMole - 1.0)
-            * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
-            + nitrogenMolesRemoved * (hydrogenMolesPerNitrogenMole - 1.5)
-                * RefineryHydrotreatingNitrogenBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+    double ammoniaProducedMassKg = nitrogenMolesRemoved
+        * RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
+    double hydrogenRetainedInLiquidMassKg = sulfurMolesRemoved * (hydrogenMolesPerSulfurMole - 1.0)
+        * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        + nitrogenMolesRemoved * (hydrogenMolesPerNitrogenMole - 1.5)
+            * RefineryHydrotreatingNitrogenBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
     double remainingSulfurMassKg = initialSulfurMassKg - sulfurRemovedMassKg;
     double remainingNitrogenMassKg = initialNitrogenMassKg - nitrogenRemovedMassKg;
     double achievedProductSulfurMassFraction = remainingSulfurMassKg / productMassKg;
     double achievedProductNitrogenMassFraction = remainingNitrogenMassKg / productMassKg;
     double totalMassBalanceResidualKg = feedMassKg + totalHydrogenConsumedMassKg - productMassKg
         - hydrogenSulfideProducedMassKg - ammoniaProducedMassKg;
-    double sulfurBalanceResidualKg =
-        initialSulfurMassKg - remainingSulfurMassKg - sulfurRemovedMassKg;
-    double nitrogenBalanceResidualKg =
-        initialNitrogenMassKg - remainingNitrogenMassKg - nitrogenRemovedMassKg;
+    double sulfurBalanceResidualKg = initialSulfurMassKg - remainingSulfurMassKg - sulfurRemovedMassKg;
+    double nitrogenBalanceResidualKg = initialNitrogenMassKg - remainingNitrogenMassKg - nitrogenRemovedMassKg;
 
     double toleranceKg = 1.0e-12 * Math.max(1.0, feedMassKg + totalHydrogenConsumedMassKg);
     if (!Double.isFinite(productMassKg) || productMassKg <= 0.0 || sulfurRemovedMassKg < -toleranceKg
-        || sulfurRemovedMassKg > initialSulfurMassKg + toleranceKg
-        || nitrogenRemovedMassKg < -toleranceKg
+        || sulfurRemovedMassKg > initialSulfurMassKg + toleranceKg || nitrogenRemovedMassKg < -toleranceKg
         || nitrogenRemovedMassKg > initialNitrogenMassKg + toleranceKg
-        || Math.abs(totalMassBalanceResidualKg) > toleranceKg
-        || Math.abs(sulfurBalanceResidualKg) > toleranceKg
+        || Math.abs(totalMassBalanceResidualKg) > toleranceKg || Math.abs(sulfurBalanceResidualKg) > toleranceKg
         || Math.abs(nitrogenBalanceResidualKg) > toleranceKg) {
       throw new IllegalArgumentException("inputs do not define a closed coupled material balance");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenBalance(feedMassKg, feedSulfurMassFraction,
-        feedNitrogenMassFraction, targetProductSulfurMassFraction, targetProductNitrogenMassFraction,
-        hydrogenMolesPerSulfurMole, hydrogenMolesPerNitrogenMole, initialSulfurMassKg,
-        initialNitrogenMassKg, sulfurRemovedMassKg, nitrogenRemovedMassKg, remainingSulfurMassKg,
-        remainingNitrogenMassKg, sulfurHydrogenConsumedMassKg, nitrogenHydrogenConsumedMassKg,
-        totalHydrogenConsumedMassKg, hydrogenSulfideProducedMassKg, ammoniaProducedMassKg,
-        hydrogenRetainedInLiquidMassKg, productMassKg, achievedProductSulfurMassFraction,
+    return new RefineryHydrotreatingSulfurNitrogenBalance(feedMassKg, feedSulfurMassFraction, feedNitrogenMassFraction,
+        targetProductSulfurMassFraction, targetProductNitrogenMassFraction, hydrogenMolesPerSulfurMole,
+        hydrogenMolesPerNitrogenMole, initialSulfurMassKg, initialNitrogenMassKg, sulfurRemovedMassKg,
+        nitrogenRemovedMassKg, remainingSulfurMassKg, remainingNitrogenMassKg, sulfurHydrogenConsumedMassKg,
+        nitrogenHydrogenConsumedMassKg, totalHydrogenConsumedMassKg, hydrogenSulfideProducedMassKg,
+        ammoniaProducedMassKg, hydrogenRetainedInLiquidMassKg, productMassKg, achievedProductSulfurMassFraction,
         achievedProductNitrogenMassFraction, totalMassBalanceResidualKg, sulfurBalanceResidualKg,
         nitrogenBalanceResidualKg);
   }
@@ -209,13 +195,11 @@ public final class RefineryHydrotreatingSulfurNitrogenBalance implements Seriali
    * @return immutable coupled balance receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenBalance calculateForAssay(double feedMassKg,
-      OilAssayCharacterisation assay, double targetProductSulfurMassFraction,
-      double targetProductNitrogenMassFraction, double hydrogenMolesPerSulfurMole,
-      double hydrogenMolesPerNitrogenMole) {
+      OilAssayCharacterisation assay, double targetProductSulfurMassFraction, double targetProductNitrogenMassFraction,
+      double hydrogenMolesPerSulfurMole, double hydrogenMolesPerNitrogenMole) {
     Objects.requireNonNull(assay, "assay");
-    return calculate(feedMassKg, assay.getBulkSulfurMassFraction(),
-        assay.getBulkNitrogenMassFraction(), targetProductSulfurMassFraction,
-        targetProductNitrogenMassFraction, hydrogenMolesPerSulfurMole,
+    return calculate(feedMassKg, assay.getBulkSulfurMassFraction(), assay.getBulkNitrogenMassFraction(),
+        targetProductSulfurMassFraction, targetProductNitrogenMassFraction, hydrogenMolesPerSulfurMole,
         hydrogenMolesPerNitrogenMole);
   }
 
