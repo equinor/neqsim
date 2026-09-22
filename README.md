@@ -69,21 +69,39 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 </dependency>
 ```
 
+The program below is complete Java 8-compatible source. Run it with assertions enabled
+(`java -ea ReadmeQuickstart`) so invalid results fail visibly.
+
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-SystemSrkEos fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
+public final class ReadmeQuickstart {
+  private static final Logger LOGGER = LogManager.getLogger(ReadmeQuickstart.class);
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-fluid.initProperties();
+  private ReadmeQuickstart() {}
 
-System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double densityKgPerCubicMetre = fluid.getDensity("kg/m3");
+    assert fluid.getNumberOfPhases() >= 1 : "Expected at least one phase";
+    assert Double.isFinite(densityKgPerCubicMetre) : "Density must be finite";
+    assert densityKgPerCubicMetre > 0.0 : "Density must be positive";
+
+    LOGGER.info("Density: {} kg/m3", densityKgPerCubicMetre);
+  }
+}
 ```
 
 ### AI agent - describe your problem in plain English
