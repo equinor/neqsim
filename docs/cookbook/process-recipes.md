@@ -3,12 +3,91 @@ title: Process Recipes
 description: Quick recipes for process simulation in NeqSim - separators, compressors, heat exchangers, flowsheets, and more.
 ---
 
-Copy-paste solutions for common process simulation tasks. Run the first recipe to create the
-shared `feed` stream and `process` model used by the focused snippets that follow. Recipes that
-need additional streams state those prerequisites explicitly.
+Use the complete Java reference process below when you need an independently executable screen.
+The Python sections are ordered session fragments: run the first recipe to create the shared `feed`
+stream and `process` model, then run later fragments in the same session. They are not independent
+programs; fragments that need additional streams state those prerequisites explicitly.
+
+## Executable Reference Process
+
+This Java 8 example separates a rich gas, compresses the gas outlet, and cools the discharge. It
+checks separator mass closure, the pressure and temperature specifications, compressor power, and
+cooler duty. The example is a process-screening route, not vendor selection, mechanical design,
+relief design, an operability proof, or final facility design. Inspect the phase and equipment state
+and validate the thermodynamic model, binary interaction parameters, compressor chart, and thermal
+and mechanical limits for the intended service.
+
+```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class ProcessCookbookScreen {
+  private static final Logger logger = LogManager.getLogger(ProcessCookbookScreen.class);
+
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(303.15, 50.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.10);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.addComponent("n-pentane", 0.05);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    Separator separator = new Separator("HP separator", feed);
+
+    Compressor compressor = new Compressor("Gas compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(80.0, "bara");
+    compressor.setIsentropicEfficiency(0.75);
+
+    Cooler cooler = new Cooler("Aftercooler", compressor.getOutletStream());
+    cooler.setOutletTemperature(40.0, "C");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(separator);
+    process.add(compressor);
+    process.add(cooler);
+    process.run();
+
+    double feedMass = feed.getFlowRate("kg/hr");
+    double gasMass = separator.getGasOutStream().getFlowRate("kg/hr");
+    double liquidMass = separator.getLiquidOutStream().getFlowRate("kg/hr");
+    double massBalanceError = Math.abs(feedMass - gasMass - liquidMass) / feedMass;
+    double powerKW = compressor.getPower("kW");
+    double dischargePressure = compressor.getOutletStream().getPressure("bara");
+    double cooledTemperature = cooler.getOutletStream().getTemperature("C");
+    double coolerDutyW = cooler.getDuty();
+
+    assert feedMass > 0.0;
+    assert gasMass > 0.0;
+    assert liquidMass >= 0.0;
+    assert massBalanceError < 1.0e-6;
+    assert Double.isFinite(powerKW) && powerKW > 0.0;
+    assert Math.abs(dischargePressure - 80.0) < 1.0e-6;
+    assert Math.abs(cooledTemperature - 40.0) < 1.0e-6;
+    assert Double.isFinite(coolerDutyW) && Math.abs(coolerDutyW) > 1.0e-6;
+
+    logger.info(
+        "feed={} kg/hr, gas={} kg/hr, liquid={} kg/hr, power={} kW, cooler duty={} W",
+        feedMass, gasMass, liquidMass, powerKW, coolerDutyW);
+  }
+}
+```
+
+Run with assertions enabled (`-ea`). The repository documentation contract extracts this exact
+fence, compiles it with the Java 8 language target, and executes it.
 
 ## Table of Contents
 
+- [Executable Reference Process](#executable-reference-process)
 - [Streams](#streams)
 - [Separators](#separators)
 - [Compressors and Expanders](#compressors-and-expanders)
