@@ -61,6 +61,49 @@ Before using results in an issued safety deliverable, confirm at least the follo
 5. Optionally expand each stream into release taxonomy cases, batch weather cases,
    ignition/consequence branches, trapped-inventory provenance, and CFD source-term cases.
 
+## Conservative gas blowdown and compatibility
+
+`LeakModel.calculateSourceTerm(duration, timeStep)` now scales the EOS fluid to the physical
+vessel volume and integrates a rigid, adiabatic, well-mixed **single gas phase**. Each Euler
+substep removes bulk-composition mass and upstream stagnation enthalpy, then solves the
+remaining volume/internal-energy state. Pressure, temperature, component inventory and
+energy therefore describe the same state. The orifice discharge coefficient and existing
+screening choked/subsonic rate equations are unchanged.
+
+The reporting interval also limits integration steps; each substep removes at most 1% of
+remaining mass. Refine the interval for numerical convergence. Samples are instantaneous
+values at zero, each requested interval, and exactly `duration`. A nonintegral final interval
+is shortened. The final sample removes no additional mass. `getTotalMassReleased()` is the
+integral of the actual substeps, so interpolating coarse exported samples can give a different
+mass integral. CFD consumers needing a conservative boundary should refine their interval
+and check its integrated mass against this total.
+
+`getInitialInventory()` and `getFinalInventory()` return defensive EOS fluid copies scaled
+to the vessel volume; `getReleasedEnergyJ()` returns the integrated outgoing stagnation
+enthalpy. Verify initial mass = final mass + released mass, and initial internal energy =
+final internal energy + released energy. The legacy `getTimeToEmpty()` remains a screening
+estimate based on total released mass and peak rate; it is not an event time or proof that
+an inventory empties against positive backpressure.
+
+Receiving-pressure events are located by reducing mass and enthalpy withdrawal together.
+All remaining requested samples retain the equilibrium inventory and report zero flow.
+Initial liquid/multiphase states and condensation during a trajectory raise an explicit
+`BLOWDOWN_PHASE_BOUNDARY` error. Reactions, forced phases, solids and hydrates are unsupported.
+Flash/property failures raise errors rather than substituting density, heat-capacity ratio,
+or molecular weight. The generator propagates these errors; it does not silently export a
+partial or out-of-range scenario. Shorten the study only when that shorter physical interval
+answers the engineering question; use a suitable multiphase dynamic model otherwise.
+
+This corrects issue [#3905](https://github.com/equinor/neqsim/issues/3905): older versions
+repeatedly applied the cumulative mass ratio to already depleted pressure, removed mass
+beyond the requested duration, and left the EOS inventory unchanged. Existing Java method
+signatures and export schemas are preserved, but historical numerical results must be
+regenerated. The correction does not qualify the screening orifice law for safety design.
+`LeakModelBlowdownTest` checks an independent constant-heat-capacity ideal-nitrogen adiabatic
+benchmark, step refinement, energy/component closure, receiving-pressure events, phase
+rejection, zero duration and shortened intervals. Generator tests exercise the same corrected
+trajectory and exported CFD/JSON time grid.
+
 ## Java Example
 
 The example below is mirrored by `ReleaseDispersionScenarioGeneratorTest` so the documented

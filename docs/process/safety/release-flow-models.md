@@ -188,12 +188,14 @@ requires independent release measurements and domain review.
 
 ## Compatibility and extension
 
-Existing scalar `LeakModel` methods and its lumped blowdown calculation keep their existing
-screening behavior. `LegacyScreeningReleaseModel` is an opt-in compatibility adapter that proves
+Existing scalar `LeakModel` methods keep their screening rate equations. Its lumped gas
+blowdown integration now conserves physical inventory and energy; see the
+[gas blowdown compatibility note](release-dispersion-scenarios#conservative-gas-blowdown-and-compatibility)
+for the correction of #3905, gas-only applicability, and changed numerical results. `LegacyScreeningReleaseModel` is an opt-in compatibility adapter that proves
 rate equality while exposing screening limitations in machine-readable diagnostics. The
 `calculateReleaseFlow` method still requires explicit model selection and does not change legacy
-blowdown equations. This prevents a model switch from silently relabeling old results. Use process
-dynamics for time-dependent state evolution.
+selected blowdown orifice law. Use `ReleaseInventory` and process dynamics for model-explicit
+time-dependent state evolution.
 
 Additional models implement the serializable `ReleaseFlowModel` interface and return checked
 `ReleaseFlowResult.success` or `.failure` objects with stable identity/version and diagnostic

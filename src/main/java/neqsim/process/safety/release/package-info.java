@@ -19,6 +19,10 @@
  * </ul>
  *
  * <p>
+ * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
+ * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods.
+ *
+ * <p>
  * Example usage:
  *
  * <pre>
@@ -33,8 +37,8 @@
  *     .scenarioName("HP Separator Leak").build();
  *
  * SourceTermResult result = leak.calculateSourceTerm(300.0, 1.0); // 5 minutes
- * System.out.println("Peak flow: " + result.getPeakMassFlowRate() + " kg/s");
- * System.out.println("Total released: " + result.getTotalMassReleased() + " kg");
+ * double peakFlowKgS = result.getPeakMassFlowRate();
+ * double totalReleasedKg = result.getTotalMassReleased();
  * </pre>
  *
  * @see neqsim.process.safety.risk Probabilistic risk analysis
