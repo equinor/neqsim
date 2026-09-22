@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 43 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 8 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 44 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 7 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -242,7 +242,13 @@ must be omitted.
 
 If omission metadata would exceed the remaining byte budget, the guard drops
 optional `summary` prose from omission records. The omitted field names, byte
-counts, retrieval guidance and complete discovery inventories remain available.
+counts, retrieval guidance and complete discovery inventories remain available
+when this is sufficient. If necessary, the guard also drops optional per-field
+`approximateBytes` estimates, reason and configuration prose, and shortens
+retrieval guidance. It retains every omitted field name, exact original/returned
+byte counts, the configured limit, and the complete protected inventories in both
+response views. Clients must treat omission summaries and per-field sizes as
+optional metadata.
 
 ---
 
@@ -633,3 +639,23 @@ shape, and packaged transport only. Callers remain responsible for compatible
 case definitions, units and comparison bases, convergence, numerical and
 thermodynamic validity, conservation, uncertainty, engineering interpretation,
 and accountable approval.
+
+
+---
+
+## `designUtilities` — Utility-system screening
+
+`designUtilities` accepts one JSON design basis and dispatches `utilityType` to
+the existing NeqSim `Boiler`, `Deaerator`, `RefrigerationCycle`,
+`NitrogenSystem`, or `SteamNetwork` implementation. The result is returned
+through the standard MCP envelope with provenance and validation evidence.
+
+The `CONTRACT_TESTED` classification covers deterministic five-type routing,
+native-model delegation, packaged transport, access enforcement, result
+envelopes, and fail-closed blank, malformed, and unsupported utility types. It
+does not validate the caller's design basis, correlations, property data,
+equipment sizing, reliability, availability, network optimization, emissions
+or cost forecasts, detailed mechanical design, safe operating limits,
+standards conformance, certification, plant action, or accountable engineering
+approval. See
+[`UTILITY_DESIGN_SCREENING_CONTRACT.md`](evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md).

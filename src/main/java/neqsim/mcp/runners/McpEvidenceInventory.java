@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.43");
+    inventory.addProperty("inventoryVersion", "1.44");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop. Inventory 1.43 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities. Inventory 1.44 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 43 are CONTRACT_TESTED and 8 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 44 are CONTRACT_TESTED and 7 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -621,6 +621,15 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_process_loop_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/PROCESS_LOOP_CONTRACT.md"};
       evidenceBoundary = "Canonical ProcessSystem construction and sequential ProcessAutomation.evaluate delegation, deterministic trial ordering and accounting, per-trial rejected-setpoint isolation, readback routing, fail-closed blank or malformed inputs, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish global or local optimization, feasible-space completeness, numerical or thermodynamic accuracy, convergence for arbitrary inputs, conservation, uncertainty, controller stability, equipment or facility fidelity, safe operating limits, persistence, parallel execution, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "designUtilities":
+      benchmarkApplicability = "NOT_APPLICABLE_CANONICAL_UTILITY_DESIGN_SCREENING_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/UtilityDesignRunner.java",
+          "src/test/java/neqsim/process/util/utilitydesign/UtilityComponentsTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_utility_design_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md"};
+      evidenceBoundary = "Deterministic dispatch to the canonical NeqSim Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, and SteamNetwork screening models, five utility-type result envelopes, fail-closed blank, malformed and unsupported-type inputs, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish design-basis completeness, property or correlation accuracy, equipment sizing adequacy, utility availability or reliability, network optimization, emissions or cost forecast accuracy, mechanical design, safe operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
       break;
     case "diagnoseAutomation":
       benchmarkApplicability = "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_DIAGNOSTIC_ADVISORY";

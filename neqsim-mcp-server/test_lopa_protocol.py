@@ -326,9 +326,9 @@ def test_inventory_is_promoted(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runLOPA", {})
     require(
-        inventory.get("inventoryVersion") == "1.43"
-        and limitations.get("contractTestedToolCount") == 43
-        and limitations.get("confirmedGapToolCount") == 8
+        inventory.get("inventoryVersion") == "1.44"
+        and limitations.get("contractTestedToolCount") == 44
+        and limitations.get("confirmedGapToolCount") == 7
         and limitations.get("contractPromotionCandidateCount") == 0,
         "LOPA promotion did not update inventory accounting",
         inventory,

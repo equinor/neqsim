@@ -130,6 +130,18 @@ public final class ResponseSizeGuard {
       }
       entry.getAsJsonObject().remove("summary");
     }
+    if (truncation != null && updateReturnedBytes(response, truncation) > MAX_BYTES) {
+      // Preserve every omitted field name and the protected contracts. Per-field size estimates and explanatory
+      // prose are optional; they must not make an otherwise deliverable response exceed the transport budget.
+      for (JsonElement entry : omitted) {
+        entry.getAsJsonObject().remove("approximateBytes");
+      }
+      truncation.remove("configuration");
+      truncation.remove("reason");
+      truncation.addProperty("howToRetrieve",
+          "getCapabilities".equals(toolName) ? "Use getSchema, getExample, getBenchmarkTrust or MCP catalog resources."
+              : "Use manageModel, listSimulationUnits, listUnitVariables and getSimulationVariable.");
+    }
     updateReturnedBytes(response, truncation);
     return true;
   }

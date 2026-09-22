@@ -5,6 +5,12 @@ baseline. The focused protocol regression in `test_mcp_server.py` obtains every 
 running server's standards-conforming list operations; it does not infer publication from a
 manually maintained Java method list.
 
+All focused `test_*_protocol.py` harnesses freeze the same current inventory
+as the primary harness: version `1.44`, 44 contract-tested tools and 7 confirmed
+gaps. `test_phase0_documentation.py` checks these executable expectations before
+packaging, so a promotion cannot leave a later protocol step on an older baseline.
+Per-tool evidence counts and historical promotion records remain independent.
+
 | Surface | Count | Protocol evidence | Authoritative implementation |
 | --- | ---: | --- | --- |
 | Tools | 71 | `tools/list` | `NeqSimTools` MCP annotations |
@@ -21,8 +27,8 @@ manually maintained Java method list.
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 42 bounded contract-tested software contracts + 9 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.42; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 44 bounded contract-tested software contracts + 7 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.44; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -147,8 +153,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 8 records remain
-`CONFIRMED_GAP`, forty-three are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 7 records remain
+`CONFIRMED_GAP`, forty-four are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -195,9 +201,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.42 with 20/42/9 coverage accounting while retaining
+now reconciles inventory 1.44 with 20/44/7 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its forty-two bounded software contracts and requires 9 confirmed gaps. The read-only
+among its forty-four bounded software contracts and requires 7 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -755,3 +761,22 @@ for arbitrary inputs, conservation, uncertainty, controller stability,
 equipment or facility fidelity, safe operating limits, persistence, parallel
 execution, plant or control authority, certification, or accountable
 engineering approval. See `docs/evidence/PROCESS_LOOP_CONTRACT.md`.
+
+
+### Promoted canonical utility-design screening contract
+
+Inventory version 1.44 atomically promotes `designUtilities` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/43/8` to `20/44/7`. The existing runner dispatches the caller's design
+basis to the native NeqSim `Boiler`, `Deaerator`, `RefrigerationCycle`,
+`NitrogenSystem`, or `SteamNetwork`; it does not introduce a second utility
+model. Direct utility-component tests plus focused and comprehensive packaged
+STDIO qualification cover all five routes, standard response evidence, and
+fail-closed blank, malformed, and unsupported utility types.
+
+This classification does not establish design-basis completeness, property or
+correlation accuracy, equipment sizing adequacy, utility availability or
+reliability, network optimization, emissions or cost forecast accuracy,
+mechanical design, safe operating limits, standards or regulatory compliance,
+plant or control authority, certification, or accountable engineering
+approval. See `docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md`.
