@@ -8,12 +8,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
+import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUNIFAC;
@@ -57,6 +60,52 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     assertEquals(second, methanol.getGamma(), 1e-12);
     assertEquals(Math.log(second), methanol.getLnGamma(), 1e-12);
     assertNotEquals(first, second);
+  }
+
+  @Test
+  void nrtlRefreshesStoredValuesAcrossCompositionAndTemperatureChanges() {
+    SystemNRTL system = new SystemNRTL(298.15, 1.0);
+    system.addComponent("methanol", 0.2);
+    system.addComponent("water", 0.8);
+    system.setMixingRule("classic");
+    system.init(0);
+    PhaseGENRTL phase = (PhaseGENRTL) system.getPhase(1);
+    phase.setAlpha(new double[][] {{0.0, 0.3}, {0.3, 0.0}});
+    phase.setDij(new double[][] {{0.0, 200.0}, {-100.0, 0.0}});
+
+    double[][] states = {{298.15, 0.2}, {323.15, 0.8}, {298.15, 0.5}, {298.15, 0.2}};
+    double firstGamma = Double.NaN;
+    for (double[] state : states) {
+      phase.setTemperature(state[0]);
+      phase.getComponent(0).setx(state[1]);
+      phase.getComponent(1).setx(1.0 - state[1]);
+      double[] expected = nrtl(state[1], state[0]);
+      double excess = phase.getExcessGibbsEnergy(phase, 2, state[0], 1.0, PhaseType.LIQUID)
+          / phase.getNumberOfMolesInPhase();
+      assertEquals(expected[0], ((ComponentGEInterface) phase.getComponent(0)).getGamma(), 1e-12);
+      assertEquals(expected[1], ((ComponentGEInterface) phase.getComponent(1)).getGamma(), 1e-12);
+      assertEquals(expected[2], excess, 1e-9);
+      if (Double.isNaN(firstGamma)) {
+        firstGamma = expected[0];
+      }
+    }
+    assertEquals(firstGamma, ((ComponentGEInterface) phase.getComponent(0)).getGamma(), 1e-12,
+        "returning to the initial state must restore the initial activity coefficient");
+  }
+
+  @Test
+  void nrtlParameterMatricesFollowDeclaredComponentOrder() {
+    PhaseGENRTL ordered = nrtlPhase(false);
+    PhaseGENRTL reversed = nrtlPhase(true);
+    double orderedExcess = ordered.getExcessGibbsEnergy(ordered, 2, 298.15, 1.0, PhaseType.LIQUID);
+    double reversedExcess = reversed.getExcessGibbsEnergy(reversed, 2, 298.15, 1.0, PhaseType.LIQUID);
+    assertEquals(orderedExcess, reversedExcess, 1e-10);
+    for (String component : new String[] {"methanol", "water"}) {
+      double first = ((ComponentGEInterface) ordered.getComponent(component)).getGamma();
+      double second = ((ComponentGEInterface) reversed.getComponent(component)).getGamma();
+      ModelSpecFixtures.positive(first, component);
+      assertEquals(first, second, 1e-12, component);
+    }
   }
 
   @ParameterizedTest
@@ -140,10 +189,56 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return system;
   }
 
+  private static PhaseGENRTL nrtlPhase(boolean reverse) {
+    SystemNRTL system = new SystemNRTL(298.15, 1.0);
+    system.addComponent(reverse ? "water" : "methanol", reverse ? 0.8 : 0.2);
+    system.addComponent(reverse ? "methanol" : "water", reverse ? 0.2 : 0.8);
+    system.setMixingRule("classic");
+    system.init(0);
+    PhaseGENRTL phase = (PhaseGENRTL) system.getPhase(1);
+    phase.setAlpha(new double[][] {{0.0, 0.3}, {0.3, 0.0}});
+    phase.setDij(reverse ? new double[][] {{0.0, -100.0}, {200.0, 0.0}} : new double[][] {{0.0, 200.0}, {-100.0, 0.0}});
+    return phase;
+  }
+
   private static double gamma(SystemInterface system, String name) {
     PhaseInterface phase = system.getPhase(1);
     ComponentGEUnifac component = (ComponentGEUnifac) phase.getComponent(name);
     assertTrue(component.getUnifacGroups().length > 0);
     return component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
+  }
+
+  private static double[] nrtl(double methanolFraction, double temperature) {
+    double[] x = {methanolFraction, 1.0 - methanolFraction};
+    double[][] alpha = {{0.0, 0.3}, {0.3, 0.0}};
+    double[][] interaction = {{0.0, 200.0}, {-100.0, 0.0}};
+    double[] gamma = new double[2];
+    for (int i = 0; i < 2; i++) {
+      double numerator = 0.0;
+      double denominator = 0.0;
+      for (int j = 0; j < 2; j++) {
+        double tau = interaction[j][i] / temperature;
+        double g = Math.exp(-alpha[j][i] * tau);
+        numerator += x[j] * tau * g;
+        denominator += x[j] * g;
+      }
+      double second = 0.0;
+      for (int j = 0; j < 2; j++) {
+        double tau = interaction[i][j] / temperature;
+        double g = Math.exp(-alpha[i][j] * tau);
+        double column = 0.0;
+        double weightedColumn = 0.0;
+        for (int k = 0; k < 2; k++) {
+          double tauKj = interaction[k][j] / temperature;
+          double gKj = Math.exp(-alpha[k][j] * tauKj);
+          column += x[k] * gKj;
+          weightedColumn += x[k] * tauKj * gKj;
+        }
+        second += x[j] * g / column * (tau - weightedColumn / column);
+      }
+      gamma[i] = Math.exp(numerator / denominator + second);
+    }
+    double excess = 8.3144621 * temperature * (x[0] * Math.log(gamma[0]) + x[1] * Math.log(gamma[1]));
+    return new double[] {gamma[0], gamma[1], excess};
   }
 }

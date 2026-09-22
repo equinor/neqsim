@@ -7,18 +7,22 @@ import java.util.Map;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
+import neqsim.thermo.component.ComponentGeNRTL;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.component.ComponentPow10KPaVaporPressureTest;
 import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseGEUniquac;
+import neqsim.thermo.phase.PhaseGEWilson;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
@@ -38,6 +42,12 @@ final class ModelSpecFixtures {
       return ComponentSrk.class;
     case WILSON_ANALYTIC:
       return SystemGEWilson.class;
+    case WILSON_PHASE:
+      return PhaseGEWilson.class;
+    case NRTL_ANALYTIC:
+      return SystemNRTL.class;
+    case NRTL_PHASE:
+      return PhaseGENRTL.class;
     case UNIFAC:
       return SystemUNIFAC.class;
     case PSRK:
@@ -62,7 +72,8 @@ final class ModelSpecFixtures {
   static void validate(ModelSpec s) {
     String unit = s.property == ModelSpec.Property.PSAT ? "bar"
         : s.property == ModelSpec.Property.DPSAT_DT ? "bar/K"
-            : s.property == ModelSpec.Property.T_SAT ? "K" : s.property == ModelSpec.Property.HID ? "J/mol" : "1";
+            : s.property == ModelSpec.Property.T_SAT ? "K"
+                : s.property == ModelSpec.Property.HID || s.property == ModelSpec.Property.GEX ? "J/mol" : "1";
     ModelSpec.require(unit.equals(s.unit), "wrong unit for " + s.property);
     switch (s.fixture) {
     case ANTOINE_ANALYTIC:
@@ -100,33 +111,44 @@ final class ModelSpecFixtures {
               "invalid cubic phase fixture");
       break;
     case WILSON_ANALYTIC:
+    case WILSON_PHASE:
       ModelSpec.require(
           s.components.size() == 2 && s.components.containsKey("methanol") && s.components.containsKey("water")
               && s.components.keySet().iterator().next().equals("methanol"),
           "Wilson fixture requires ordered methanol/water with Lambda12=2 and Lambda21=0.5");
       ModelSpec.require(s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.LN_GAMMA,
           "Wilson property not implemented by fixture");
-      validateGe(s, "classic");
+      validateGe(s, "classic", "init-ge");
+      break;
+    case NRTL_ANALYTIC:
+    case NRTL_PHASE:
+      ModelSpec.require(
+          s.components.size() == 2 && s.components.containsKey("methanol") && s.components.containsKey("water")
+              && s.components.keySet().iterator().next().equals("methanol"),
+          "NRTL fixture requires ordered methanol/water with prescribed alpha and tau parameters");
+      ModelSpec.require(s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.LN_GAMMA
+          || s.property == ModelSpec.Property.GEX, "NRTL property not implemented by fixture");
+      validateGe(s, "classic", "prescribed-nrtl");
       break;
     case UNIFAC:
     case PSRK:
     case UMR:
       ModelSpec.require(s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.GROUP_R,
           "group property not implemented by fixture");
-      validateGe(s, s.fixture == ModelSpec.Fixture.UMR ? "HV/UNIFAC_UMRPRU" : "classic");
+      validateGe(s, s.fixture == ModelSpec.Fixture.UMR ? "HV/UNIFAC_UMRPRU" : "classic", "init-ge");
       break;
     default:
       throw new IllegalArgumentException("unmapped fixture " + s.fixture);
     }
     if (s.outcome == ModelSpec.Outcome.VALUE && s.property != ModelSpec.Property.LN_GAMMA
-        && s.property != ModelSpec.Property.HID) {
+        && s.property != ModelSpec.Property.HID && s.property != ModelSpec.Property.GEX) {
       ModelSpec.require(s.expected > 0.0, "positive-only property reference must be positive");
     }
   }
 
-  private static void validateGe(ModelSpec s, String mixingRule) {
+  private static void validateGe(ModelSpec s, String mixingRule, String operation) {
     ModelSpec.require(s.outcome == ModelSpec.Outcome.VALUE && "liquid".equals(s.phase)
-        && mixingRule.equals(s.mixingRule) && "init-ge".equals(s.operation), "invalid GE fixture");
+        && mixingRule.equals(s.mixingRule) && operation.equals(s.operation), "invalid GE fixture");
   }
 
   static double evaluate(ModelSpec s) {
@@ -166,7 +188,7 @@ final class ModelSpecFixtures {
       return value;
     }
     SystemInterface system = create(s);
-    if (s.fixture != ModelSpec.Fixture.SRK_PHASE && s.fixture != ModelSpec.Fixture.PR_PHASE) {
+    if (!isPhaseFixture(s.fixture)) {
       assertEquals(type(s.fixture), system.getClass(), s.toString());
     }
     system.init(0);
@@ -193,7 +215,7 @@ final class ModelSpecFixtures {
       positive(liquid.getComponent(s.componentIndex).getFugacityCoefficient(), s.toString());
       liquid = ((EosMixingRulesInterface) ((PhaseEosInterface) liquid).getMixingRule()).getGEPhase();
     }
-    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC) {
+    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC || s.fixture == ModelSpec.Fixture.WILSON_PHASE) {
       for (int i = 0; i < 2; i++) {
         ComponentInterface original = liquid.getComponent(i);
         liquid.getcomponentArray()[i] = new ComponentGEWilson(original.getName(), original.getz(), original.getz(), i) {
@@ -207,6 +229,14 @@ final class ModelSpecFixtures {
         liquid.getComponent(i).setx(original.getz());
       }
     }
+    if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
+      PhaseGENRTL nrtl = (PhaseGENRTL) liquid;
+      nrtl.setAlpha(new double[][] {{0.0, 0.3}, {0.3, 0.0}});
+      nrtl.setDij(new double[][] {{0.0, 200.0}, {-100.0, 0.0}});
+    }
+    if (isPhaseFixture(s.fixture)) {
+      assertEquals(type(s.fixture), liquid.getClass(), s.toString());
+    }
     double result = readGe(s, liquid);
     // Read again from the same state; do not merely check that init did not throw.
     assertEquals(result, readGe(s, liquid), 1e-11, s.toString());
@@ -215,6 +245,21 @@ final class ModelSpecFixtures {
 
   private static double readGe(ModelSpec s, PhaseInterface liquid) {
     ComponentGEInterface c = (ComponentGEInterface) liquid.getComponent(s.componentIndex);
+    if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
+      double total = ((PhaseGENRTL) liquid).getExcessGibbsEnergy(liquid, liquid.getNumberOfComponents(), s.temperature,
+          s.pressure, PhaseType.LIQUID);
+      assertTrue(Double.isFinite(total), s.toString());
+      for (int i = 0; i < liquid.getNumberOfComponents(); i++) {
+        ComponentGEInterface stored = (ComponentGEInterface) liquid.getComponent(i);
+        positive(stored.getGamma(), s.toString());
+        double phi = liquid.getComponent(i).fugcoef(liquid);
+        positive(phi, s.toString());
+        assertEquals(phi, liquid.getComponent(i).getFugacityCoefficient(), 0.0, s.toString());
+      }
+      if (s.property == ModelSpec.Property.GEX) {
+        return total / liquid.getNumberOfMolesInPhase();
+      }
+    }
     if (c instanceof ComponentGEUnifac) {
       ComponentGEUnifac group = (ComponentGEUnifac) c;
       assertTrue(group.getNumberOfUNIFACgroups() > 0, s.toString());
@@ -236,12 +281,17 @@ final class ModelSpecFixtures {
     double gamma = c instanceof ComponentGEWilson
         ? ((ComponentGEWilson) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
             PhaseType.LIQUID)
-        : ((ComponentGEUnifac) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
-            PhaseType.LIQUID);
+        : c instanceof ComponentGEUnifac
+            ? ((ComponentGEUnifac) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
+                PhaseType.LIQUID)
+            : ((ComponentGeNRTL) c).getGamma();
     positive(gamma, s.toString());
     assertEquals(gamma, c.getGamma(), 1e-12, s + " returned/stored gamma");
-    assertEquals(Math.log(gamma), c.getLnGamma(), 1e-12, s + " stored ln-gamma");
-    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC) {
+    if (s.fixture != ModelSpec.Fixture.NRTL_ANALYTIC && s.fixture != ModelSpec.Fixture.NRTL_PHASE) {
+      assertEquals(Math.log(gamma), c.getLnGamma(), 1e-12, s + " stored ln-gamma");
+    }
+    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC || s.fixture == ModelSpec.Fixture.WILSON_PHASE
+        || s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
       double phi = liquid.getComponent(s.componentIndex).fugcoef(liquid);
       positive(phi, s.toString());
       assertEquals(phi, liquid.getComponent(s.componentIndex).getFugacityCoefficient(), 0.0, s.toString());
@@ -253,7 +303,12 @@ final class ModelSpecFixtures {
     SystemInterface system;
     switch (s.fixture) {
     case WILSON_ANALYTIC:
+    case WILSON_PHASE:
       system = new SystemGEWilson(s.temperature, s.pressure);
+      break;
+    case NRTL_ANALYTIC:
+    case NRTL_PHASE:
+      system = new SystemNRTL(s.temperature, s.pressure);
       break;
     case UNIFAC:
       system = new SystemUNIFAC(s.temperature, s.pressure);
@@ -284,6 +339,11 @@ final class ModelSpecFixtures {
       system.setMixingRule("classic");
     }
     return system;
+  }
+
+  private static boolean isPhaseFixture(ModelSpec.Fixture fixture) {
+    return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
+        || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE;
   }
 
   static void positive(double value, String context) {

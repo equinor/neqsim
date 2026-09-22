@@ -24,21 +24,36 @@ class ModelSpecHarnessTest {
   private static final double METHANE_TC_K = 190.56;
   private static final double METHANE_PC_BAR = 45.99;
   private static final double METHANE_OMEGA = 0.0115;
-  private static final Set<String> REQUIRED = new HashSet<String>(Arrays.asList("acetone-280", "acetone-298-15",
-      "acetone-320", "i-pentane-290", "i-pentane-298-15", "i-pentane-301", "wilson-0-2-0", "wilson-0-2-1",
-      "wilson-0-5-0", "wilson-0-5-1", "wilson-0-8-0", "wilson-0-8-1", "wilson-negative-log", "unifac-pure-290",
-      "unifac-pure-310", "unifac-group-r", "psrk-pure-290", "psrk-pure-310", "psrk-group-r", "umr-pure-290",
-      "umr-pure-310", "umr-group-r", "srk-dilute-z", "srk-reference-hid", "pr-dilute-z", "pr-reference-hid",
-      "missing-hydrogen", "missing-nc20", "ion-sodium", "supercritical-methane", "unsupported-uniquac",
-      "pow10kpa-derivative-260", "pow10kpa-derivative-300", "pow10kpa-derivative-350", "pow10kpa-inverse-260",
-      "pow10kpa-inverse-300", "pow10kpa-inverse-350", "srk-methane-z-280-10", "srk-methane-phi-280-10",
-      "srk-methane-z-300-30", "srk-methane-phi-300-30", "srk-methane-z-320-50", "srk-methane-phi-320-50",
-      "pr-methane-z-280-10", "pr-methane-phi-280-10", "pr-methane-z-300-30", "pr-methane-phi-300-30",
-      "pr-methane-z-320-50", "pr-methane-phi-320-50", "phase-srk-methane-z-280-10", "phase-srk-methane-phi-280-10",
-      "phase-srk-methane-z-300-30", "phase-srk-methane-phi-300-30", "phase-srk-methane-z-320-50",
-      "phase-srk-methane-phi-320-50", "phase-pr-methane-z-280-10", "phase-pr-methane-phi-280-10",
-      "phase-pr-methane-z-300-30", "phase-pr-methane-phi-300-30", "phase-pr-methane-z-320-50",
-      "phase-pr-methane-phi-320-50"));
+  private static final Set<String> REQUIRED = required(new HashSet<String>(Arrays.asList("acetone-280",
+      "acetone-298-15", "acetone-320", "i-pentane-290", "i-pentane-298-15", "i-pentane-301", "wilson-0-2-0",
+      "wilson-0-2-1", "wilson-0-5-0", "wilson-0-5-1", "wilson-0-8-0", "wilson-0-8-1", "wilson-negative-log",
+      "unifac-pure-290", "unifac-pure-310", "unifac-group-r", "psrk-pure-290", "psrk-pure-310", "psrk-group-r",
+      "umr-pure-290", "umr-pure-310", "umr-group-r", "srk-dilute-z", "srk-reference-hid", "pr-dilute-z",
+      "pr-reference-hid", "missing-hydrogen", "missing-nc20", "ion-sodium", "supercritical-methane",
+      "unsupported-uniquac", "pow10kpa-derivative-260", "pow10kpa-derivative-300", "pow10kpa-derivative-350",
+      "pow10kpa-inverse-260", "pow10kpa-inverse-300", "pow10kpa-inverse-350", "srk-methane-z-280-10",
+      "srk-methane-phi-280-10", "srk-methane-z-300-30", "srk-methane-phi-300-30", "srk-methane-z-320-50",
+      "srk-methane-phi-320-50", "pr-methane-z-280-10", "pr-methane-phi-280-10", "pr-methane-z-300-30",
+      "pr-methane-phi-300-30", "pr-methane-z-320-50", "pr-methane-phi-320-50", "phase-srk-methane-z-280-10",
+      "phase-srk-methane-phi-280-10", "phase-srk-methane-z-300-30", "phase-srk-methane-phi-300-30",
+      "phase-srk-methane-z-320-50", "phase-srk-methane-phi-320-50", "phase-pr-methane-z-280-10",
+      "phase-pr-methane-phi-280-10", "phase-pr-methane-z-300-30", "phase-pr-methane-phi-300-30",
+      "phase-pr-methane-z-320-50", "phase-pr-methane-phi-320-50")));
+
+  private static Set<String> required(Set<String> ids) {
+    ids.addAll(Arrays.asList("phase-wilson-0-2-0", "phase-wilson-0-2-1", "phase-wilson-0-5-0", "phase-wilson-0-5-1",
+        "phase-wilson-0-8-0", "phase-wilson-0-8-1", "phase-wilson-negative-log"));
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String temperature : new String[] {"298", "323"}) {
+        for (String composition : new String[] {"02", "05", "08"}) {
+          ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-0");
+          ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-1");
+          ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gex");
+        }
+      }
+    }
+    return ids;
+  }
 
   static void requireCoverage(List<ModelSpec> cases) {
     Set<String> actual = new HashSet<String>();
@@ -236,9 +251,80 @@ class ModelSpecHarnessTest {
     ModelSpecTest.check(checked, checked.expected);
   }
 
+  @Test
+  void nrtlReferencesSatisfyPublishedLocalCompositionEquation() throws IOException {
+    int checked = 0;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if (!isNrtl(spec.fixture)) {
+        continue;
+      }
+      double[] reference = nrtl(spec.components.get("methanol"), spec.temperature);
+      double expected = spec.property == ModelSpec.Property.GEX ? reference[2]
+          : spec.property == ModelSpec.Property.LN_GAMMA ? Math.log(reference[spec.componentIndex])
+              : reference[spec.componentIndex];
+      assertEquals(expected, spec.expected, spec.property == ModelSpec.Property.GEX ? 1e-10 : 1e-14, spec.toString());
+      checked++;
+    }
+    assertEquals(36, checked, "every prescribed NRTL catalog anchor must be independently reconstructed");
+  }
+
+  @Test
+  void nrtlActivityRejectsZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    ModelSpec reference = null;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if ("nrtl-system-t298-x05-gamma-0".equals(spec.id)) {
+        reference = spec;
+      }
+    }
+    assertTrue(reference != null);
+    final ModelSpec checked = reference;
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
+    }
+    ModelSpecTest.check(checked, checked.expected);
+  }
+
   private static boolean isCubic(ModelSpec.Fixture fixture) {
     return fixture == ModelSpec.Fixture.SRK || fixture == ModelSpec.Fixture.PR || fixture == ModelSpec.Fixture.SRK_PHASE
         || fixture == ModelSpec.Fixture.PR_PHASE;
+  }
+
+  private static boolean isNrtl(ModelSpec.Fixture fixture) {
+    return fixture == ModelSpec.Fixture.NRTL_ANALYTIC || fixture == ModelSpec.Fixture.NRTL_PHASE;
+  }
+
+  private static double[] nrtl(double methanolFraction, double temperature) {
+    double[] x = {methanolFraction, 1.0 - methanolFraction};
+    double[][] alpha = {{0.0, 0.3}, {0.3, 0.0}};
+    double[][] interaction = {{0.0, 200.0}, {-100.0, 0.0}};
+    double[] gamma = new double[2];
+    for (int i = 0; i < 2; i++) {
+      double numerator = 0.0;
+      double denominator = 0.0;
+      for (int j = 0; j < 2; j++) {
+        double tau = interaction[j][i] / temperature;
+        double g = Math.exp(-alpha[j][i] * tau);
+        numerator += x[j] * tau * g;
+        denominator += x[j] * g;
+      }
+      double second = 0.0;
+      for (int j = 0; j < 2; j++) {
+        double tau = interaction[i][j] / temperature;
+        double g = Math.exp(-alpha[i][j] * tau);
+        double column = 0.0;
+        double weightedColumn = 0.0;
+        for (int k = 0; k < 2; k++) {
+          double tauKj = interaction[k][j] / temperature;
+          double gKj = Math.exp(-alpha[k][j] * tauKj);
+          column += x[k] * gKj;
+          weightedColumn += x[k] * tauKj * gKj;
+        }
+        second += x[j] * g / column * (tau - weightedColumn / column);
+      }
+      gamma[i] = Math.exp(numerator / denominator + second);
+    }
+    double excess = 8.3144621 * temperature * (x[0] * Math.log(gamma[0]) + x[1] * Math.log(gamma[1]));
+    return new double[] {gamma[0], gamma[1], excess};
   }
 
   private static double cubicZ(List<ModelSpec> cases, ModelSpec reference) {

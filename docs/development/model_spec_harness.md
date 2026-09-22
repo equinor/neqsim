@@ -70,8 +70,8 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 61 cases across six system drivers (SRK, PR, Wilson, classic
-UNIFAC, PSRK and UMR-PRU), direct SRK/PR phase adapters, a component saturation
+The catalog has 104 cases across seven system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK and UMR-PRU), direct SRK/PR/Wilson/NRTL phase adapters, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -82,6 +82,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Acetone at 280, 298.15 and 320 K | NIST WebBook Antoine correlation, Ambrose et al. (1974), 259.16–507.60 K; same fitted correlation, 1e-9 relative implementation tolerance |
 | i-Pentane at 290, 298.15 and 301 K | NIST WebBook Willingham et al. (1945), 289.44–301.74 K; independent correlation versus NeqSim DIPPR data, 1% comparison tolerance |
 | Binary Wilson | Prescribed Lambda12=2, Lambda21=0.5, with mole fractions 0.2/0.8, 0.5/0.5 and 0.8/0.2; closed-form numerical fixtures, not experimental mixture validation |
+| Binary NRTL | Published local-composition equation with prescribed alpha12=alpha21=0.3, D12=200 K and D21=-100 K; gamma and molar excess Gibbs energy at three compositions and 298.15/323.15 K for SystemNRTL and exact PhaseGENRTL entry points |
 | UNIFAC, PSRK, UMR-PRU | Pure methanol gamma=1 reference identity and subgroup-15 R=1.4311 data regression; populated group contents and stored coefficients are read |
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
@@ -103,6 +104,16 @@ subclass works.
 fugacity coefficient after every initialization, and verifies `H = U + PV` and
 `G = H - TS` on one consistent extensive/molar basis. These identities accompany
 independent numerical anchors; they are not accepted as accuracy evidence by themselves.
+
+The NRTL fixtures independently reconstruct both activity coefficients from the
+Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
+The production phase publishes gamma and fugacity, and repeated evaluation traverses
+composition and temperature before returning to the initial state. Stored NRTL
+ln(gamma) remains explicitly unqualified: [issue #3899](https://github.com/equinor/neqsim/issues/3899)
+records that it stays at a stale zero after a nonideal gamma calculation. These
+prescribed parameters test analytical implementation and state refresh; they are not
+fitted methanol/water data and do not qualify NeqSim's database parameters. Wilson's
+existing closed-form cases now also exercise the exact `PhaseGEWilson` entry point.
 
 `ComponentCorrelationSpecTest` gives analytical pressure examples for pow10,
 pow10KPa, exp, log, legacy DIPPR and Wagner dispatch. These synthetic coefficients
@@ -139,9 +150,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (9 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (12 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (121 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (118 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -186,6 +197,11 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   independently substitutes every stored Z into the published cubic and recomputes every
   phi reference before production evaluation. Agreement tolerance is 1e-12 in Z or phi
   because this is formula/dispatch evidence, not a physical-accuracy tolerance.
+- [Renon and Prausnitz (1968)](https://doi.org/10.1002/aic.690140124) is the
+  source for the NRTL local-composition form. Catalog anchors use authored prescribed
+  parameters and an independent dependency-free evaluation of both activity coefficients
+  and molar excess Gibbs energy. The 1e-12 gamma and 1e-9 J/mol excess-energy
+  tolerances are analytical implementation tolerances, not experimental accuracy claims.
 
 NIST sources were inspected on 2026-09-18. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
@@ -206,7 +222,10 @@ constant. They also prove legitimate signed/zero properties and declared absence
 Production-path mutation evidence is recorded in the campaign PR/ledger separately;
 helper self-tests alone are not proof that a production regression is detected.
 
-Follow-up milestones reduce inventory debt with sourced mixture properties,
+Follow-up milestones reduce inventory debt with sourced mixture properties. The next
+group-contribution phase batch requires a separate parameter-table provenance and
+validation matrix; modified-HV/WS variants, fitted NRTL mixtures and VLE accuracy are
+not implied by the prescribed binary equation checks. Subsequent work will
 then add typed availability and enum dispatch. Java 8 enum switches are not
 compiler-exhaustive: each new fixture/form needs a coverage test and a fail-closed
 default. No public `double` signature is changed by this first increment.
