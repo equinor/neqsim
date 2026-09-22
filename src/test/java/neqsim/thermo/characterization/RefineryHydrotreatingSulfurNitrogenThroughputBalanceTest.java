@@ -11,8 +11,8 @@ class RefineryHydrotreatingSulfurNitrogenThroughputBalanceTest {
   void qualifiesPublicBigHillHourlyRates() {
     RefineryHydrotreatingSulfurNitrogenBalance material = publicBigHillBalance();
 
-    RefineryHydrotreatingSulfurNitrogenThroughputBalance rates =
-        RefineryHydrotreatingSulfurNitrogenThroughputBalance.calculate(material, 1000.0);
+    RefineryHydrotreatingSulfurNitrogenThroughputBalance rates = RefineryHydrotreatingSulfurNitrogenThroughputBalance
+        .calculate(material, 1000.0);
 
     assertSame(material, rates.getMaterialBalance());
     assertEquals(1.0, rates.getBasisScalePerHour(), 0.0);
@@ -33,10 +33,10 @@ class RefineryHydrotreatingSulfurNitrogenThroughputBalanceTest {
   @Test
   void scalesEveryRateLinearly() {
     RefineryHydrotreatingSulfurNitrogenBalance material = publicBigHillBalance();
-    RefineryHydrotreatingSulfurNitrogenThroughputBalance base =
-        RefineryHydrotreatingSulfurNitrogenThroughputBalance.calculate(material, 1000.0);
-    RefineryHydrotreatingSulfurNitrogenThroughputBalance doubled =
-        RefineryHydrotreatingSulfurNitrogenThroughputBalance.calculate(material, 2000.0);
+    RefineryHydrotreatingSulfurNitrogenThroughputBalance base = RefineryHydrotreatingSulfurNitrogenThroughputBalance
+        .calculate(material, 1000.0);
+    RefineryHydrotreatingSulfurNitrogenThroughputBalance doubled = RefineryHydrotreatingSulfurNitrogenThroughputBalance
+        .calculate(material, 2000.0);
 
     assertEquals(2.0, doubled.getBasisScalePerHour(), 0.0);
     assertEquals(2.0 * base.getProductMassFlowKgPerHour(), doubled.getProductMassFlowKgPerHour(), 1.0e-12);
@@ -56,8 +56,8 @@ class RefineryHydrotreatingSulfurNitrogenThroughputBalanceTest {
     RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0,
         0.004, 0.001, 0.004, 0.001, 1.0, 1.5);
 
-    RefineryHydrotreatingSulfurNitrogenThroughputBalance rates =
-        RefineryHydrotreatingSulfurNitrogenThroughputBalance.calculate(material, 725.0);
+    RefineryHydrotreatingSulfurNitrogenThroughputBalance rates = RefineryHydrotreatingSulfurNitrogenThroughputBalance
+        .calculate(material, 725.0);
 
     assertEquals(725.0, rates.getProductMassFlowKgPerHour(), 1.0e-12);
     assertEquals(0.0, rates.getSulfurRemovedMassFlowKgPerHour(), 0.0);
@@ -80,7 +80,7 @@ class RefineryHydrotreatingSulfurNitrogenThroughputBalanceTest {
   }
 
   private static RefineryHydrotreatingSulfurNitrogenBalance publicBigHillBalance() {
-    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129, 15.0e-6,
-        10.0e-6, 2.0, 4.0);
+    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6,
+        2.0, 4.0);
   }
 }
