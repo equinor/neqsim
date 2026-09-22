@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import glob
 import json
 import os
 import re
@@ -378,9 +379,16 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
     for entry in (config.get("analysis") or {}).get("scripts") or []:
         if isinstance(entry, dict) and entry.get("file"):
             declared[str(entry["file"]).strip()] = entry
-    for entry in (config.get("notebooks") or {}).get("plan") or []:
+    notebook_cfg = config.get("notebooks") or {}
+    # A script-backed study sets notebooks.required: false; the template notebook
+    # plan then only supplies purposes for notebooks that exist, and is not
+    # reported as missing work.
+    optional_plan = set()
+    for entry in notebook_cfg.get("plan") or []:
         if isinstance(entry, dict) and entry.get("file"):
             declared[str(entry["file"]).strip()] = entry
+            if notebook_cfg.get("required") is False:
+                optional_plan.add(str(entry["file"]).strip())
 
     found = []
     for scan_dir in scan_dirs:
@@ -409,7 +417,7 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
         purpose = entry.get("purpose") or (
             _notebook_purpose(path) if is_notebook else _script_purpose(path))
         produces = entry.get("produces", "")
-        if produces and not (task_dir / str(produces)).exists():
+        if produces and not glob.glob(str(task_dir / str(produces))):
             produces = "{} (missing)".format(produces)
         status = ""
         if is_notebook:
@@ -425,7 +433,7 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
         })
 
     for name, entry in declared.items():
-        if name in seen or Path(name).name in seen:
+        if name in seen or Path(name).name in seen or name in optional_plan:
             continue
         rows.append({
             "rel": name,
@@ -639,8 +647,14 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
     for entry in analysis.get("scripts") or []:
         if isinstance(entry, dict) and entry.get("file"):
             steps.append((entry["file"], entry.get("purpose", "")))
+    notebooks_required = (config.get("notebooks") or {}).get("required") is not False
     for entry in (config.get("notebooks") or {}).get("plan") or []:
         if isinstance(entry, dict) and entry.get("file"):
+            # A script-backed study keeps the template plan only for notebooks
+            # that actually exist; unrequired, absent notebooks are not steps.
+            if not notebooks_required and not any(
+                    task_dir.rglob(Path(str(entry["file"])).name)):
+                continue
             steps.append((entry["file"], entry.get("purpose", "")))
     if steps:
         out.append("Planned sequence (from `study_config.yaml`):")
