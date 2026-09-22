@@ -67,6 +67,7 @@ import sys
 import glob
 import json
 import base64
+import hashlib
 import io
 import shutil
 import sqlite3
@@ -76,10 +77,11 @@ from datetime import date
 try:
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
     from docx.enum.table import WD_TABLE_ALIGNMENT
     from docx.enum.section import WD_ORIENT
     from docx.enum.style import WD_STYLE_TYPE
+    from docx.text.paragraph import Paragraph
     from docx.oxml.ns import nsdecls, qn
     from docx.oxml import parse_xml
 except ImportError:
@@ -91,6 +93,7 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.transforms import Bbox
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
@@ -110,6 +113,9 @@ BODY_SPACE_AFTER_PT = 6.0
 # picture width instead magnifies a short equation to the width of the page.
 EQ_FONT_PT = 13.0
 EQ_RENDER_DPI = 300
+# Inline maths ($...$ inside a sentence) is rendered at body size so it sits
+# on the line like a normal word instead of towering over the surrounding text.
+INLINE_EQ_FONT_PT = BODY_PT
 
 # ── Page measure ─────────────────────────────────────────
 # A corporate .dotx is frequently LANDSCAPE because it is built for forms and
@@ -191,6 +197,21 @@ REPORT_STRINGS = {
         "Table of Contents": "Innholdsfortegnelse",
         "List of Figures": "Figurliste",
         "List of Tables": "Tabelliste",
+        "Key Equations": "Sentrale ligninger",
+        "Appendix A. Report Quality Checks": "Vedlegg A. Kvalitetskontroll av rapporten",
+        "Consistency review": "Konsistenskontroll",
+        "Study configuration": "Studiekonfigurasjon",
+        "automatic equation typesetting unavailable":
+            "automatisk ligningssetting ikke tilgjengelig",
+        "Test": "Test",
+        "Reference": "Referanse",
+        "Reference value": "Referanseverdi",
+        "NeqSim value": "NeqSim-verdi",
+        "Unit": "Enhet",
+        "Deviation [%]": "Avvik [%]",
+        "Tolerance [%]": "Toleranse [%]",
+        "Status": "Status",
+        "Notes": "Merknader",
         "Contents": "Innhold",
         "Revision History": "Revisjonshistorikk",
         "Document Number": "Dokumentnummer",
@@ -842,12 +863,18 @@ def _suppress_paragraph_numbering(paragraph):
             nsdecls("w"))))
 
 
+_MANUAL_SUBSECTION_STATE = {}
+_LEADING_CHAPTER_NUMBER = re.compile(r"^\s*(\d+)[.)]?\s+")
+
+
 def _add_heading(doc, text, level=1, numbered=True):
     """Add a heading that does not fight the template's own numbering.
 
     When the template numbers headings, our manual "N. " prefix is dropped so
     Word supplies the single authoritative number; headings that must stay
     unnumbered (contents, front matter) have numbering suppressed instead.
+    Without template numbering, level-2 headings get a manual "N.k" so the
+    built-in layout matches a numbered corporate template.
     """
     text = str(text)
     if _heading_numbering_active(doc, level):
@@ -857,6 +884,14 @@ def _add_heading(doc, text, level=1, numbered=True):
         if not numbered:
             _suppress_paragraph_numbering(heading)
     else:
+        state = _MANUAL_SUBSECTION_STATE.setdefault(id(doc), {"chapter": None, "sub": 0})
+        if level == 1:
+            match = _LEADING_CHAPTER_NUMBER.match(text) if numbered else None
+            state["chapter"], state["sub"] = (match.group(1) if match else None), 0
+        elif level == 2 and numbered and state["chapter"] \
+                and not _MANUAL_HEADING_NUMBER.match(text):
+            state["sub"] += 1
+            text = "{}.{} {}".format(state["chapter"], state["sub"], text)
         heading = doc.add_heading(text, level=level)
     # A heading stranded at the foot of a page is the most visible layout fault
     # in an otherwise clean report.
@@ -1949,12 +1984,23 @@ _SENTENCE_ABBREVIATIONS = (
 BODY_PARAGRAPH_MAX_CHARS = 650
 
 
+# A trailing run of 1-4 "Capital-letter + period" groups (e.g. "J.M.", "R.")
+# is almost always initials in a person's name, not a sentence boundary.
+_INITIALS_RE = re.compile(r'(?:^|\s)(?:[A-Z]\.){1,4}$')
+
+
 def _split_sentences(text):
-    """Split prose into sentences, keeping common abbreviations intact."""
+    """Split prose into sentences, keeping abbreviations and initials intact.
+
+    Without the initials check, "benchmarked against the J.M. Campbell
+    correlation" splits into two paragraphs at "J.M.", stranding "Campbell
+    correlation." as an orphan one-line paragraph.
+    """
     pieces = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9\u00c6\u00d8\u00c5"\'(\[])', text)
     merged = []
     for piece in pieces:
-        if merged and merged[-1].lower().endswith(_SENTENCE_ABBREVIATIONS):
+        if merged and (merged[-1].lower().endswith(_SENTENCE_ABBREVIATIONS)
+                       or _INITIALS_RE.search(merged[-1])):
             merged[-1] = merged[-1] + " " + piece
         else:
             merged.append(piece)
@@ -2938,11 +2984,9 @@ def _md_table_to_html(lines):
 
 
 def _md_inline(text):
-    """Convert inline markdown (bold) to HTML."""
-    import re as _re
-    # **bold**
-    text = _re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    return text
+    """Convert inline markdown (bold, `code`) to HTML."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    return _INLINE_CODE_RE.sub(r"<code>\1</code>", text)
 
 
 def _md_list_to_html(lines):
@@ -2974,7 +3018,8 @@ def scope_content_to_html(content):
         # Sub-heading (e.g., "Applicable Standards:")
         if (line.strip().endswith(":") and not line.strip().startswith("-")
                 and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            html_parts.append("<h3>{}</h3>".format(_md_inline(line.strip())))
+            html_parts.append("<h3>{}</h3>".format(
+                _md_inline(line.strip().rstrip(":").strip())))
             i += 1
             continue
 
@@ -3028,7 +3073,8 @@ def render_scope_to_word(doc, content):
         # Sub-heading (e.g., "Applicable Standards:")
         if (line.strip().endswith(":") and not line.strip().startswith("-")
                 and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            _add_heading(doc, line.strip(), level=2)
+            # "Applicable Standards:" is a label in the spec, not heading text.
+            _add_heading(doc, line.strip().rstrip(":").strip(), level=2)
             i += 1
             continue
 
@@ -3070,14 +3116,61 @@ def _md_table_to_word(doc, table_lines):
     add_word_table(doc, header_cells, data_rows)
 
 
+# Matches **bold** spans and $...$ inline maths (but not $$...$$ display
+# maths, which is a separate results.json-driven code path) in one pass, so
+# the two kinds of markup can be interleaved in a single sentence.
+_INLINE_TOKEN_RE = re.compile(
+    r"(\*\*.+?\*\*|`[^`\n]+`|\$(?!\$)[^$\n]+?\$(?!\$))")
+_INLINE_MATH_CACHE = {}
+
+
+def _inline_math_image_path(latex_str, font_pt):
+    """Render (and cache) a small inline-maths PNG; returns the path or None."""
+    key = (latex_str, font_pt)
+    if key in _INLINE_MATH_CACHE:
+        return _INLINE_MATH_CACHE[key]
+    eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
+    if not os.path.exists(eq_img_dir):
+        os.makedirs(eq_img_dir)
+    digest = hashlib.md5(latex_str.encode("utf-8")).hexdigest()[:12]
+    path = os.path.join(eq_img_dir, "inline_{}.png".format(digest))
+    ok = render_equation_to_image(latex_str, path, font_pt=font_pt, inline=True)
+    _INLINE_MATH_CACHE[key] = path if ok else None
+    return _INLINE_MATH_CACHE[key]
+
+
+def _add_inline_math_run(paragraph, latex_str, font_pt=None):
+    """Insert a small inline-maths image sized to sit on the text line."""
+    font_pt = font_pt or INLINE_EQ_FONT_PT
+    image_path = _inline_math_image_path(_sanitize_equation_latex(latex_str), font_pt)
+    if not image_path:
+        run = paragraph.add_run(_latex_fallback_text(latex_str))
+        run.italic = True
+        return
+    run = paragraph.add_run()
+    # Natural size at EQ_RENDER_DPI reproduces exactly the fixed ascent/descent
+    # window the image was cropped to, so consecutive inline equations share
+    # one baseline instead of each floating at their own ink-tight height.
+    size = _png_pixel_size(image_path)
+    if size and size[1] > 0:
+        run.add_picture(image_path, height=Inches(size[1] / float(EQ_RENDER_DPI)))
+    else:
+        run.add_picture(image_path, height=Pt(font_pt))
+
+
 def _add_bold_runs(paragraph, text):
-    """Add text with **bold** sections as separate runs."""
-    import re as _re
-    parts = _re.split(r"(\*\*.+?\*\*)", text)
-    for part in parts:
+    """Add text with **bold** spans and $...$ inline maths as separate runs."""
+    for part in _INLINE_TOKEN_RE.split(text):
+        if not part:
+            continue
         if part.startswith("**") and part.endswith("**"):
             run = paragraph.add_run(part[2:-2])
             run.bold = True
+        elif part.startswith("`") and part.endswith("`") and len(part) > 2:
+            run = paragraph.add_run(part[1:-1])
+            run.font.name = "Consolas"
+        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
+            _add_inline_math_run(paragraph, part[1:-1])
         else:
             paragraph.add_run(part)
 
@@ -3102,32 +3195,129 @@ def get_figure_caption(fig_path, results, fig_index):
     return "{} {}: {}".format(_t("Figure"), fig_index, auto)
 
 
+# A degree sign written through a codepage-437 console round-trips as the
+# U+2591 light-shade block ("°C" becomes "░C"); nothing in engineering
+# notation legitimately uses that glyph, so repairing it is always safe.
+_MOJIBAKE_DEGREE = "\u2591"
+# matplotlib's mathtext only knows the long form of these comparison
+# operators, not the common LaTeX aliases authors actually type.
+_MATHTEXT_ALIASES = [
+    (re.compile(r"\\le\b"), r"\\leq"),
+    (re.compile(r"\\ge\b"), r"\\geq"),
+    (re.compile(r"\\ne\b"), r"\\neq"),
+]
+
+
+def _sanitize_equation_latex(latex_str):
+    """Repair known encoding corruption and LaTeX/mathtext symbol mismatches."""
+    text = str(latex_str or "").replace(_MOJIBAKE_DEGREE, "\u00b0")
+    for pattern, replacement in _MATHTEXT_ALIASES:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+# Best-effort LaTeX-to-plain-text approximation for the rare equation mathtext
+# cannot parse at all (e.g. a \begin{cases} piecewise definition -- mathtext
+# has no support for LaTeX environments). Order matters: fractions and text
+# runs are unwrapped before the catch-all \command stripper at the end.
+_LATEX_FALLBACK_SUBS = [
+    (re.compile(r"\\begin\{[a-zA-Z*]+\}"), ""),
+    (re.compile(r"\\end\{[a-zA-Z*]+\}"), ""),
+    (re.compile(r"\\\\"), "; "),
+    (re.compile(r"\\d?frac\{([^{}]*)\}\{([^{}]*)\}"), r"(\1)/(\2)"),
+    (re.compile(r"\\text\{([^{}]*)\}"), r"\1"),
+    (re.compile(r"\\mathrm\{([^{}]*)\}"), r"\1"),
+    (re.compile(r"\\left|\\right"), ""),
+    (re.compile(r"\\quad|\\qquad|\\,|\\;|\\!"), " "),
+    (re.compile(r"\\cdot"), "\u00b7"), (re.compile(r"\\times"), "\u00d7"),
+    (re.compile(r"\\leq"), "\u2264"), (re.compile(r"\\geq"), "\u2265"),
+    (re.compile(r"\\neq"), "\u2260"),
+    (re.compile(r"\\rightarrow|\\to"), "\u2192"),
+    (re.compile(r"\\pi"), "\u03c0"), (re.compile(r"\\Delta"), "\u0394"),
+    (re.compile(r"\\alpha"), "\u03b1"), (re.compile(r"\\beta"), "\u03b2"),
+    (re.compile(r"\\gamma"), "\u03b3"), (re.compile(r"\\eta"), "\u03b7"),
+    (re.compile(r"\\rho"), "\u03c1"), (re.compile(r"\\mu"), "\u03bc"),
+    (re.compile(r"\\theta"), "\u03b8"), (re.compile(r"\\omega"), "\u03c9"),
+    (re.compile(r"\\phi"), "\u03c6"),
+    (re.compile(r"&"), " \u2192 "),
+    (re.compile(r"\\[a-zA-Z]+"), ""),
+    (re.compile(r"[{}]"), ""),
+    (re.compile(r"\s+"), " "),
+]
+
+
+def _latex_fallback_text(latex_str):
+    """Readable approximation for an equation matplotlib cannot render.
+
+    Used only when rendering fails; a stripped-down plain-text approximation
+    reads as an engineer's shorthand, whereas the raw backslash-and-brace
+    LaTeX source reads as a bug in a formal report.
+    """
+    text = _sanitize_equation_latex(latex_str)
+    for pattern, replacement in _LATEX_FALLBACK_SUBS:
+        text = pattern.sub(replacement, text)
+    return text.strip()
+
+
 def get_equations(results):
     """Get equations from results.json. Returns list of {label, latex}."""
     if not results:
         return []
-    return results.get("equations", [])
+    cleaned = []
+    for eq in results.get("equations", []):
+        if isinstance(eq, dict) and eq.get("latex"):
+            eq = dict(eq, latex=_sanitize_equation_latex(eq["latex"]))
+        cleaned.append(eq)
+    return cleaned
 
 
-def render_equation_to_image(latex_str, output_path):
-    """Render a LaTeX equation to a PNG sized for EQ_FONT_PT in the document.
+# An inline equation's own ink extent varies with how many sub/superscripts
+# or fractions it carries, so a per-equation tight vertical crop would leave
+# every inline expression sitting at a different height on the line (Word
+# aligns an inline picture's BOTTOM edge with the text baseline). Cropping to
+# a fixed ascent/descent window instead -- in font-size units, generous enough
+# for a simple fraction or subscript -- keeps that bottom edge, and so the
+# apparent baseline, the same distance from every equation's own baseline.
+INLINE_EQ_ASCENT_EM = 1.30
+INLINE_EQ_DESCENT_EM = 0.50
 
-    Rendered at EQ_FONT_PT and EQ_RENDER_DPI so that placing the image at its
-    natural size (pixels / EQ_RENDER_DPI inches) reproduces exactly that point
-    size. Returns True if the image was created, False otherwise.
+
+def render_equation_to_image(latex_str, output_path, font_pt=None, inline=False):
+    """Render a LaTeX equation to a PNG sized for font_pt in the document.
+
+    Rendered at font_pt (default EQ_FONT_PT) and EQ_RENDER_DPI so that placing
+    the image at its natural size (pixels / EQ_RENDER_DPI inches) reproduces
+    exactly that point size. A display equation (inline=False) is cropped
+    tight to its own ink on every side, which is correct for a free-standing,
+    centered equation. ``inline=True`` instead crops to a fixed ascent/descent
+    window so consecutive inline equations line up on the same baseline; see
+    INLINE_EQ_ASCENT_EM/INLINE_EQ_DESCENT_EM. Returns True if the image was
+    created, False otherwise.
     """
     if not HAS_MATPLOTLIB:
         return False
+    size_pt = font_pt or EQ_FONT_PT
+    text = "${}$".format(_sanitize_equation_latex(latex_str))
     try:
-        fig = plt.figure(figsize=(8, 1.2))
-        fig.text(
-            0.5, 0.5,
-            "${}$".format(latex_str),
-            fontsize=EQ_FONT_PT, ha="center", va="center",
-            math_fontfamily="cm",
-        )
-        fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
-                    pad_inches=0.04, facecolor="white", edgecolor="none")
+        if inline:
+            ascent_in = INLINE_EQ_ASCENT_EM * size_pt / 72.0
+            descent_in = INLINE_EQ_DESCENT_EM * size_pt / 72.0
+            fig = plt.figure(figsize=(10.0, ascent_in + descent_in))
+            fig.text(0.5, descent_in / (ascent_in + descent_in), text,
+                      fontsize=size_pt, ha="center", va="baseline",
+                      math_fontfamily="cm")
+            renderer = fig.canvas.get_renderer()
+            tight = fig.get_tightbbox(renderer)
+            fixed = Bbox.from_extents(tight.x0, 0.0, tight.x1,
+                                       ascent_in + descent_in)
+            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches=fixed,
+                        pad_inches=0.02, facecolor="white", edgecolor="none")
+        else:
+            fig = plt.figure(figsize=(8, 1.2))
+            fig.text(0.5, 0.5, text, fontsize=size_pt, ha="center", va="center",
+                      math_fontfamily="cm")
+            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
+                        pad_inches=0.04, facecolor="white", edgecolor="none")
         plt.close(fig)
         return True
     except Exception as e:
@@ -3156,6 +3346,75 @@ def _add_equation_picture(doc, image_path, max_width_in):
     else:
         width_in = min(3.0, max_width_in)
     doc.add_picture(image_path, width=Inches(width_in))
+
+
+def _raise_run(run, half_points):
+    """Raise a run above the baseline by the given number of half-points."""
+    if half_points > 0:
+        run._r.get_or_add_rPr().append(parse_xml(
+            '<w:position {} w:val="{}"/>'.format(nsdecls("w"), int(half_points))))
+
+
+def _add_display_equation(doc, image_path, label, max_width_in):
+    """Set a display equation centred, with its number right-aligned: (n).
+
+    The label goes on a short lead-in line above; the number is a Word SEQ
+    field raised to the equation's vertical centre, as in a typeset paper.
+    """
+    measure = _text_width_in(doc)
+    if label:
+        lead = doc.add_paragraph()
+        run = lead.add_run(_strip_caption_prefix(label))
+        run.italic = True
+        run.font.size = Pt(CAPTION_PT)
+        run.font.color.rgb = RGBColor(90, 90, 90)
+        lead.paragraph_format.space_before = Pt(6)
+        lead.paragraph_format.space_after = Pt(0)
+        lead.paragraph_format.keep_with_next = True
+    size = _png_pixel_size(image_path)
+    natural_in = size[0] / float(EQ_RENDER_DPI) if size and size[0] else 3.0
+    # Leave room either side so the number never collides with the maths.
+    width_in = min(natural_in, max_width_in, measure - 1.4)
+    height_pt = (width_in * size[1] / float(size[0]) * 72.0
+                 if size and size[0] else EQ_FONT_PT * 1.5)
+    paragraph = doc.add_paragraph()
+    fmt = paragraph.paragraph_format
+    fmt.space_before = Pt(2)
+    fmt.space_after = Pt(8)
+    fmt.keep_together = True
+    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
+    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
+    paragraph.add_run("\t")
+    paragraph.add_run().add_picture(image_path, width=Inches(width_in))
+    first_number_run = len(paragraph.runs)
+    paragraph.add_run("\t(")
+    _add_seq_field(paragraph, _t("Equation"))
+    paragraph.add_run(")")
+    # Word re-formats an updated field result from its field-code run, so every
+    # run of the number (codes included) must carry the raise, not just the text.
+    for run in paragraph.runs[first_number_run:]:
+        _raise_run(run, height_pt - 0.7 * BODY_PT)
+    return paragraph
+
+
+def _add_equation_fallback_paragraph(doc, label, latex):
+    """Show an unrenderable display equation as marked, readable text.
+
+    Presenting it as ordinary body prose would read as a typo; the italic,
+    muted styling and the trailing note make clear it is a known gap rather
+    than broken output.
+    """
+    paragraph = doc.add_paragraph()
+    prefix = "{}: ".format(label) if label else ""
+    run = paragraph.add_run(prefix + _latex_fallback_text(latex))
+    run.italic = True
+    run.font.color.rgb = RGBColor(90, 90, 90)
+    note = paragraph.add_run("  ({})".format(
+        _t("automatic equation typesetting unavailable")))
+    note.italic = True
+    note.font.size = Pt(CAPTION_PT)
+    note.font.color.rgb = RGBColor(140, 140, 140)
+    return paragraph
 
 
 def _add_figure_picture(doc, image_path):
@@ -3318,6 +3577,7 @@ def _parse_key_name(key):
         ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
         ("_m3_hr", "m³/hr"), ("_m3_s", "m³/s"),
         ("_Sm3_day", "Sm³/day"), ("_Sm3_hr", "Sm³/hr"),
+        ("_kg_m3", "kg/m³"), ("_kg_Sm3", "kg/Sm³"), ("_g_cm3", "g/cm³"),
         ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
         ("_rpm", "rpm"), ("_Hz", "Hz"),
     ]
@@ -3329,7 +3589,11 @@ def _parse_key_name(key):
         name_part, num_token, den_token = per_match.groups()
         unit = "{}/{}".format(_prettify_unit_token(num_token), _prettify_unit_token(den_token))
         return _label_from_key(name_part), unit
-    for suffix, unit in unit_suffixes:
+    # Sorted longest-suffix-first so a compound suffix (e.g. "_kg_m3") always
+    # wins over a shorter suffix it contains (e.g. "_m3"), regardless of the
+    # order the table above lists them in. Without this a density key like
+    # "..._kg_m3" resolves to unit "m³" with a stray "Kg" left in the label.
+    for suffix, unit in sorted(unit_suffixes, key=lambda pair: -len(pair[0])):
         if key.endswith(suffix):
             name_part = key[:len(key) - len(suffix)]
             return _label_from_key(name_part), unit
@@ -3852,32 +4116,22 @@ def format_benchmark_html(results):
         return ""
     source = bv.get("source", "")
     h = '<p>Reference source: {}</p>\n'.format(_html_escape(str(source))) if source else ""
+    headers, rows, status_idx = _benchmark_table(results)
     h += '<table class="benchmark-table"><thead><tr>'
-    h += '<th>Test</th><th>Description</th><th>Status</th><th>Details</th>'
+    h += "".join("<th>{}</th>".format(_html_escape(str(x))) for x in headers)
     h += '</tr></thead><tbody>\n'
-    for val in _benchmark_tests(results):
-        label = val["parameter"]
-        desc = val.get("description") or val.get("reference") or label
-        status = val.get("status")
-        if status is None:
-            p = val.get("pass")
-            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
-        css = ' class="pass"' if status == "PASS" else (' class="fail"' if status == "FAIL" else "")
-        # Gather numeric details
-        details = []
-        for dk, dv in val.items():
-            if dk in ("parameter", "description", "status", "reference", "pass", "points"):
-                continue
-            dl = dk.replace("_", " ").title()
-            if isinstance(dv, float):
-                details.append("{}: {:.4g}".format(dl, dv))
-            else:
-                details.append("{}: {}".format(dl, dv))
+    for row in rows:
         h += '<tr>'
-        h += '<td><strong>{}</strong></td>'.format(label)
-        h += '<td>{}</td>'.format(desc)
-        h += '<td{}><strong>{}</strong></td>'.format(css, status)
-        h += '<td>{}</td>'.format("; ".join(details) if details else "")
+        for index, cell in enumerate(row):
+            text = _html_escape(str(cell))
+            if index == status_idx:
+                css = (' class="pass"' if cell == "PASS"
+                       else (' class="fail"' if cell == "FAIL" else ""))
+                h += '<td{}><strong>{}</strong></td>'.format(css, text)
+            elif index == 0:
+                h += '<td><strong>{}</strong></td>'.format(text)
+            else:
+                h += '<td>{}</td>'.format(text)
         h += '</tr>\n'
     h += '</tbody></table>\n'
     return h
@@ -3885,10 +4139,9 @@ def format_benchmark_html(results):
 
 def _fmt_num(value):
     """Format a numeric value for display in tables."""
-    if isinstance(value, float):
-        if abs(value) >= 1000 or (abs(value) < 0.01 and value != 0):
-            return "{:.4g}".format(value)
-        return "{:.4g}".format(value)
+    # Same formatter as every other table, so 162000.0 reads "162 000", not "1.62e+05".
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return _fmt_cell(value)
     return str(value)
 
 
@@ -4027,6 +4280,85 @@ def add_uncertainty_word_tables(doc, results):
         add_word_table(doc, headers, data_rows)
 
 
+# (label, accepted keys): results.json files in use write either
+# reference_value/neqsim_value or the shorter numeric reference/neqsim.
+_BENCHMARK_VALUE_COLUMNS = (
+    ("Reference value", ("reference_value", "expected", "reference")),
+    ("NeqSim value", ("neqsim_value", "neqsim", "calculated")),
+    ("Unit", ("unit",)),
+    ("Deviation [%]", ("deviation_pct", "deviation_percent")),
+    ("Tolerance [%]", ("tolerance_pct", "tolerance_percent")),
+)
+_BENCHMARK_TEXT_KEYS = {"parameter", "name", "description", "source",
+                        "status", "pass", "points"}
+
+
+def _benchmark_value_key(test, keys, label):
+    """First key of ``keys`` present in the test; a text "reference" is a citation."""
+    for key in keys:
+        if key not in test:
+            continue
+        if key == "reference" and isinstance(test[key], str):
+            continue
+        return key
+    return None
+
+
+def _benchmark_reference_text(test):
+    """The citation for a test, when one is given as text."""
+    reference = test.get("reference")
+    if isinstance(reference, str) and reference.strip():
+        return reference
+    if test.get("name") and test.get("description"):
+        return test["description"]
+    return test.get("source") or ""
+
+
+def _benchmark_table(results):
+    """Return (headers, rows, status column index) for the benchmark table.
+
+    Each numeric field gets its own column; flattening them into one
+    "Name: ...; Reference Value: ..." string made the table unreadable.
+    """
+    tests = _benchmark_tests(results)
+    value_cols = [(label, keys) for label, keys in _BENCHMARK_VALUE_COLUMNS
+                  if any(_benchmark_value_key(t, keys, label) for t in tests)]
+    has_reference = any(_benchmark_reference_text(t) for t in tests)
+    used_by_test = []
+    for test in tests:
+        used = set(_BENCHMARK_TEXT_KEYS)
+        for label, keys in value_cols:
+            key = _benchmark_value_key(test, keys, label)
+            if key:
+                used.add(key)
+        if isinstance(test.get("reference"), str):
+            used.add("reference")
+        used_by_test.append(used)
+    has_notes = any(key not in used for test, used in zip(tests, used_by_test)
+                    for key in test)
+    headers = ([_t("Test")] + ([_t("Reference")] if has_reference else [])
+               + [_t(label) for label, _ in value_cols]
+               + [_t("Status")] + ([_t("Notes")] if has_notes else []))
+    rows = []
+    for test, used in zip(tests, used_by_test):
+        status = test.get("status")
+        if status is None:
+            passed = test.get("pass")
+            status = "PASS" if passed is True else ("FAIL" if passed is False else "N/A")
+        row = [test.get("name") or test.get("description") or test["parameter"]]
+        if has_reference:
+            row.append(_benchmark_reference_text(test))
+        for label, keys in value_cols:
+            key = _benchmark_value_key(test, keys, label)
+            row.append(_fmt_cell(test[key]) if key else "")
+        row.append(str(status).upper())
+        if has_notes:
+            row.append("; ".join("{}: {}".format(_label_from_key(key), _fmt_cell(value))
+                                 for key, value in test.items() if key not in used))
+        rows.append(row)
+    return headers, rows, 1 + int(has_reference) + len(value_cols)
+
+
 def add_benchmark_word_table(doc, results):
     """Add benchmark validation as a styled Word table."""
     bv = results.get("benchmark_validation", {})
@@ -4034,29 +4366,12 @@ def add_benchmark_word_table(doc, results):
         return
     if bv.get("source"):
         doc.add_paragraph("Reference source: {}".format(bv["source"]))
-    headers = ["Test", "Description", "Status", "Details"]
-    data_rows = []
-    for val in _benchmark_tests(results):
-        label = val["parameter"]
-        desc = val.get("description") or val.get("reference") or label
-        status = val.get("status")
-        if status is None:
-            p = val.get("pass")
-            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
-        details = []
-        for dk, dv in val.items():
-            if dk in ("parameter", "description", "status", "reference", "pass", "points"):
-                continue
-            dl = dk.replace("_", " ").title()
-            if isinstance(dv, float):
-                details.append("{}: {:.4g}".format(dl, dv))
-            else:
-                details.append("{}: {}".format(dl, dv))
-        data_rows.append([label, desc, status, "; ".join(details)])
+    headers, data_rows, status_idx = _benchmark_table(results)
+    if not data_rows:
+        return
     table = add_word_table(doc, headers, data_rows)
-    # Color-code status column (column 2, 0-indexed)
     for row in table.rows[1:]:
-        cell = row.cells[2]
+        cell = row.cells[status_idx]
         text = cell.text.strip()
         for paragraph in cell.paragraphs:
             for run in paragraph.runs:
@@ -4119,7 +4434,7 @@ def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
                 for run in paragraph.runs:
                     run.font.size = Pt(body_pt)
 
-    _scale_table_to_measure(doc, table, col_widths)
+    _scale_table_to_measure(doc, table, col_widths, body_pt)
     _repeat_header_row(table)
     _keep_rows_intact(table)
     _align_numeric_cells(table)
@@ -4128,7 +4443,70 @@ def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
     return table
 
 
-def _scale_table_to_measure(doc, table, col_widths=None):
+# Approximate advance widths in em for a sans corporate face (Arial/Calibri
+# class). A flat average under-sizes "Medium" (two wide m's) and over-sizes
+# "Consequence", so column minimums were wrong in both directions.
+_GLYPH_EM_WIDE = set("MWmw@%")
+_GLYPH_EM_NARROW = set("iljtfrI.,:;'!|()[]-/ ")
+_TABLE_BOLD_FACTOR = 1.07
+_TABLE_CELL_PAD_IN = 0.17
+# A single token longer than this (a URL, a long formula) may break; letting
+# it claim its full width would starve every other column.
+_TABLE_MAX_TOKEN_IN = 1.6
+
+
+def _text_width_estimate_in(text, font_pt):
+    """Estimated printed width of text in inches at font_pt (bold)."""
+    em = 0.0
+    for char in text:
+        if char in _GLYPH_EM_WIDE:
+            em += 0.86
+        elif char in _GLYPH_EM_NARROW:
+            em += 0.30
+        elif char.isupper():
+            em += 0.68
+        else:
+            em += 0.56
+    return em * font_pt * _TABLE_BOLD_FACTOR / 72.0
+# Only real spaces are break points; "180 000" uses a no-break separator.
+_TABLE_BREAK_RE = re.compile(r"[ \t\n]+")
+
+
+def _content_column_widths(table, measure, font_pt=TABLE_PT):
+    """Column widths from content, so no column has to break a word.
+
+    Equal-width columns split "Consequence" into "Consequenc/e" while a
+    two-character ID column sits half empty. Every column first gets room for
+    its longest word; the rest of the measure goes to the columns whose text
+    would otherwise wrap the most.
+    """
+    minimums, natural = [], []
+    for index in range(len(table.columns)):
+        min_in, natural_in = 0.0, 0.0
+        for row in table.rows:
+            if index >= len(row.cells):
+                continue
+            text = row.cells[index].text.strip()
+            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
+            if not words:
+                continue
+            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
+            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
+            natural_in = max(natural_in, _text_width_estimate_in(text[:70], font_pt))
+        minimums.append(min_in + _TABLE_CELL_PAD_IN)
+        natural.append(max(min_in, natural_in) + _TABLE_CELL_PAD_IN)
+    if sum(natural) <= measure:
+        return natural
+    spare = measure - sum(minimums)
+    if spare <= 0:
+        return minimums
+    stretch = [want - low for want, low in zip(natural, minimums)]
+    total_stretch = sum(stretch) or 1.0
+    return [low + spare * extra / total_stretch
+            for low, extra in zip(minimums, stretch)]
+
+
+def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT):
     """Lay the table out across the full measure, keeping column proportions.
 
     Column widths written in absolute inches were sized for a portrait page; on
@@ -4144,7 +4522,7 @@ def _scale_table_to_measure(doc, table, col_widths=None):
                   for width in col_widths[:count]]
         shares += [sum(shares) / len(shares)] * (count - len(shares))
     else:
-        shares = [1.0] * count
+        shares = _content_column_widths(table, measure, font_pt)
     total = sum(shares) or float(count)
     table.autofit = False
     for index, share in enumerate(shares):
@@ -4475,7 +4853,11 @@ def _renumber_sections(sections):
     Sections are appended conditionally, so any counter bug shows up in the
     issued report as a skipped or repeated chapter number.
     """
-    for index, section in enumerate(sections, 1):
+    index = 0
+    for section in sections:
+        if section.get("appendix"):
+            continue
+        index += 1
         heading = str(section.get("heading", "")).strip()
         section["heading"] = "{}. {}".format(
             index, _MANUAL_HEADING_NUMBER.sub("", heading).strip())
@@ -4525,6 +4907,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
             "heading": "{}. {}".format(next_section_num,
                                        _t("Safety Study Readiness")),
             "content": safety_readiness,
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -4633,26 +5016,18 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     })
     next_section_num += 1
 
-    if consistency_issues:
-        review_items = ["- {}: {}".format(issue["severity"], issue["message"])
-                        for issue in consistency_issues if issue["severity"] != "INFO"]
-        if review_items:
-            sections.append({
-                "heading": "{}. {}".format(next_section_num,
-                                           _t("Report Consistency Review")),
-                "content": "\n".join(review_items),
-                "has_markdown": True,
-            })
-            next_section_num += 1
-
+    # Generator self-checks belong to the reviewer, not the engineering
+    # argument: they go to an appendix instead of interrupting the chapters.
+    quality_lines = []
+    review_items = ["- {}: {}".format(issue["severity"], issue["message"])
+                    for issue in (consistency_issues or [])
+                    if issue["severity"] != "INFO"]
+    if review_items:
+        quality_lines.append("**{}**".format(_t("Consistency review")))
+        quality_lines.extend(review_items)
     if study_config_warnings:
-        warning_lines = ["- {}".format(warning) for warning in study_config_warnings]
-        sections.append({
-            "heading": "{}. {}".format(next_section_num,
-                                       _t("Study Configuration Warnings")),
-            "content": "\n".join(warning_lines),
-        })
-        next_section_num += 1
+        quality_lines.append("**{}**".format(_t("Study configuration")))
+        quality_lines.extend("- {}".format(w) for w in study_config_warnings)
 
     if results and results.get("benchmark_validation"):
         sections.append({
@@ -4695,6 +5070,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
                 next_section_num, _t("Evidence Gaps and Design-Grade Blockers")),
             "content": format_list_items_text(
                 results.get("evidence_gaps") or results.get("assumptions_gaps")),
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -4702,6 +5078,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         sections.append({
             "heading": "{}. {}".format(next_section_num, _t("Recommendations")),
             "content": format_list_items_text(results.get("recommendations")),
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -4743,6 +5120,14 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "content": refs_content,
         "has_references": True,
     })
+
+    if quality_lines:
+        sections.append({
+            "heading": _t("Appendix A. Report Quality Checks"),
+            "content": "\n".join(quality_lines),
+            "has_markdown": True,
+            "appendix": True,
+        })
 
     return _renumber_sections(sections)
 
@@ -4865,8 +5250,8 @@ def _add_cover_page(doc):
         rev_table.rows[i].cells[1].text = str(entry.get("date", ""))
         rev_table.rows[i].cells[2].text = str(entry.get("description", ""))
         rev_table.rows[i].cells[3].text = str(entry.get("author", ""))
-
-    doc.add_page_break()
+    # The contents heading carries page-break-before; a break paragraph after
+    # this table would be an extra empty line that can spill a blank page.
 
 
 def _suppress_paragraph_numbering(paragraph):
@@ -4879,14 +5264,61 @@ def _suppress_paragraph_numbering(paragraph):
     ))
 
 
+FRONT_MATTER_STYLE = "NeqSim Front Matter Heading"
+
+
+def _front_matter_heading(doc, text):
+    """A heading that looks like Heading 1 but stays out of the TOC.
+
+    As a real Heading 1 the contents page listed itself ("Table of Contents
+    ... 2") and the lists of figures and tables. Outline level 9 is body text,
+    so neither the \\o nor the \\u TOC switch collects it, and numId 0 keeps a
+    template's heading numbering off it.
+    """
+    try:
+        style = doc.styles[FRONT_MATTER_STYLE]
+    except KeyError:
+        style = doc.styles.add_style(FRONT_MATTER_STYLE, WD_STYLE_TYPE.PARAGRAPH)
+        try:
+            style.base_style = doc.styles["Heading 1"]
+        except KeyError:
+            style.font.size = Pt(HEADING1_PT)
+            style.font.bold = True
+        p_pr = style.element.get_or_add_pPr()
+        for tag in ("w:numPr", "w:outlineLvl"):
+            for existing in p_pr.findall(qn(tag)):
+                p_pr.remove(existing)
+        p_pr.append(parse_xml(
+            '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
+                nsdecls("w"))))
+        p_pr.append(parse_xml('<w:outlineLvl {} w:val="9"/>'.format(nsdecls("w"))))
+        style.paragraph_format.keep_with_next = True
+        style.paragraph_format.page_break_before = False
+    return doc.add_paragraph(text, style=style)
+
+
+def _end_page(doc):
+    """Start the next content on a new page without leaving a blank page.
+
+    doc.add_page_break() puts the break in a paragraph of its own; when the
+    page is already full that paragraph spills onto the next page and breaks
+    again. Appending the break to the last paragraph cannot spill.
+    """
+    body = [child for child in doc.element.body if child.tag != qn("w:sectPr")]
+    if body and body[-1].tag == qn("w:p"):
+        Paragraph(body[-1], doc._body).add_run().add_break(WD_BREAK.PAGE)
+    else:
+        doc.add_page_break()
+
+
 def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
-    # Add TOC heading
-    _add_heading(doc, _t("Table of Contents"), level=1, numbered=False)
+    heading = _front_matter_heading(doc, _t("Table of Contents"))
+    heading.paragraph_format.page_break_before = True
     _add_toc_field(doc, 'TOC \\o "1-2" \\h \\z \\u')
     # Tell Word to update all fields (incl. this TOC) when the document is opened
     _set_update_fields_on_open(doc)
-    doc.add_page_break()
+    _end_page(doc)
 
 
 def _add_figure_and_table_lists(doc, results):
@@ -4897,15 +5329,17 @@ def _add_figure_and_table_lists(doc, results):
     """
     added = False
     if get_figures():
-        _add_heading(doc, _t("List of Figures"), level=1, numbered=False)
+        _front_matter_heading(doc, _t("List of Figures"))
         _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Figure")))
         added = True
     if results and (results.get("tables") or results.get("key_results")):
-        _add_heading(doc, _t("List of Tables"), level=1, numbered=False)
+        heading = _front_matter_heading(doc, _t("List of Tables"))
+        if added:
+            heading.paragraph_format.space_before = Pt(18)
         _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Table")))
         added = True
     if added:
-        doc.add_page_break()
+        _end_page(doc)
 
 
 def _add_toc_field(doc, instruction):
@@ -5036,7 +5470,10 @@ def build_word_report(sections, results=None):
 
     # Add all sections
     for section in sections:
-        _add_heading(doc, section["heading"], level=1)
+        heading = _add_heading(doc, section["heading"], level=1,
+                               numbered=not section.get("appendix"))
+        if section.get("appendix"):
+            heading.paragraph_format.page_break_before = True
 
         # Results section: use Word table instead of plain text
         if section.get("has_figures") and results and results.get("key_results"):
@@ -5074,9 +5511,9 @@ def build_word_report(sections, results=None):
             # Analytical Depth: ranking, rule-outs, robustness, crossover
             add_depth_word_section(doc, results)
         else:
-            # Regular text content
+            # Regular text content (bold spans and $...$ inline maths render)
             for para_text in _body_paragraphs(section["content"]):
-                doc.add_paragraph(para_text)
+                _add_bold_runs(doc.add_paragraph(), para_text)
 
         # Embed figures after Results section
         if section.get("has_figures"):
@@ -5096,28 +5533,21 @@ def build_word_report(sections, results=None):
         if section.get("has_equations"):
             equations = get_equations(results)
             if equations:
-                _add_heading(doc, "Key Equations", level=2)
+                _add_heading(doc, _t("Key Equations"), level=2)
                 eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
                 if not os.path.exists(eq_img_dir):
                     os.makedirs(eq_img_dir)
                 for eq_idx, eq in enumerate(equations, 1):
-                    label = eq.get("label", "Equation {}".format(eq_idx))
+                    label = eq.get("label", "")
                     latex = eq.get("latex", "")
                     if not latex:
                         continue
-                    # Try to render equation as image
                     eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
                     if render_equation_to_image(latex, eq_img_path):
-                        doc.add_paragraph("")
-                        _add_equation_picture(doc, eq_img_path, _text_width_in(doc))
-                        last_para = doc.paragraphs[-1]
-                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        last_para.paragraph_format.keep_with_next = True
-                        _add_caption(doc, _t("Equation"), label)
+                        _add_display_equation(doc, eq_img_path, label,
+                                              _text_width_in(doc))
                     else:
-                        # Fallback: text representation
-                        doc.add_paragraph("{}: {}".format(label, latex))
-                    doc.add_paragraph("")
+                        _add_equation_fallback_paragraph(doc, label, latex)
 
     # Save
     _add_page_number_footer(doc)
@@ -5203,7 +5633,7 @@ def build_html_report(sections, results=None):
     equation_html = ""
     equations = get_equations(results)
     if equations:
-        equation_html += '<h3>Key Equations</h3>\n'
+        equation_html += '<h3>{}</h3>\n'.format(_t("Key Equations"))
         # Pre-render equation images for offline fallback
         eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
         if not os.path.exists(eq_img_dir):
@@ -5962,20 +6392,9 @@ def build_paper_docx(sections, results=None):
                     eq_img_path = os.path.join(
                         eq_img_dir, "eq_{}.png".format(eq_counter[0]))
                     if render_equation_to_image(latex, eq_img_path):
-                        doc.add_paragraph("")
-                        _add_equation_picture(doc, eq_img_path, 5.0)
-                        last_para = doc.paragraphs[-1]
-                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        cap = doc.add_paragraph(
-                            "({}){}".format(
-                                eq_counter[0],
-                                "  " + label if label else ""))
-                        cap.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                        for run in cap.runs:
-                            run.font.size = Pt(10)
-                            run.font.name = "Times New Roman"
+                        _add_display_equation(doc, eq_img_path, label, 5.0)
                     else:
-                        doc.add_paragraph("{}: {}".format(label, latex))
+                        _add_equation_fallback_paragraph(doc, label, latex)
 
         # Embed figures after Results section
         if section.get("has_figures"):

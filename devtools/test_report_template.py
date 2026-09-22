@@ -116,18 +116,22 @@ def test_benchmarks_and_consistency_survive_canonical_generation(tmp_path, schem
     report = docx.Document(str(_report_docx(task)))
     benchmark_tables = [table for table in report.tables
                         if [cell.text for cell in table.rows[0].cells]
-                        == ["Test", "Description", "Status", "Details"]]
+                        == ["Test", "Reference value", "NeqSim value", "Unit",
+                            "Deviation [%]", "Status"]]
     assert len(benchmark_tables) == 1
     row = [cell.text for cell in benchmark_tables[0].rows[1].cells]
     assert row[0].lower() == "pressure drop"
-    assert row[2] == "FAIL"
-    assert "3.2" in row[3]
-    # The reference value and its unit must remain available in either schema.
-    assert "2.8" in " ".join(row)
-    assert "bar" in row[3]
+    # A numeric "reference" is the reference value, not a citation.
+    assert row[1] == "2.8"
+    assert row[2] == "3.2"
+    assert row[3] == "bar"
+    assert row[5] == "FAIL"
     body = "\n".join(paragraph.text for paragraph in report.paragraphs)
     assert "Independent fixture" in body
-    assert "Report Consistency Review" in body
+    # Generator self-checks move to an unnumbered appendix after the chapters.
+    assert "Appendix A. Report Quality Checks" in body
+    assert "Report Consistency Review" not in body
+    assert body.index("Appendix A.") > body.index("References")
     assert "benchmark tests FAILED" in body
     html = (task / "step3_report" / "Benchmark_parity.html").read_text(encoding="utf-8")
     assert "Independent fixture" in html
@@ -160,6 +164,64 @@ def test_report_inherits_template_styling(tmp_path):
     body = "\n".join(p.text for p in report.paragraphs)
     assert "Template boilerplate" not in body
     assert "Table of Contents" in body
+
+
+W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+@pytest.mark.parametrize("use_template", [False, True])
+def test_front_matter_equations_and_tables_are_typeset(tmp_path, use_template):
+    """Layout rules from the 2026-09-22 review, for built-in and custom templates."""
+    task = _make_task(tmp_path)
+    results_path = task / "results.json"
+    results = json.loads(results_path.read_text(encoding="utf-8"))
+    results["equations"] = [{"label": "Shaft power", "latex": r"W = \frac{\dot{m} H_p}{\eta_p}"}]
+    results["approach"] = "Head uses `setUsePolytropicCalc(true)` with $\\eta_p = 0.78$."
+    results["risk_evaluation"] = {"risks": [{
+        "id": "R1", "category": "Technical", "description": "Cooling medium too warm",
+        "likelihood": "Likely", "consequence": "Moderate", "risk_level": "Medium",
+        "mitigation": "Add margin"}]}
+    results_path.write_text(json.dumps(results), encoding="utf-8")
+    args = ["--template", str(_make_template(tmp_path / "t.docx"))] if use_template \
+        else ["--no-template"]
+    _run(task, *args)
+    report = docx.Document(str(_report_docx(task)))
+
+    # Contents headings look like Heading 1 but never list themselves in the TOC.
+    toc_heading = next(p for p in report.paragraphs if p.text == "Table of Contents")
+    assert toc_heading.style.name == "NeqSim Front Matter Heading"
+    outline = toc_heading.style.element.pPr.find(W_NS + "outlineLvl")
+    assert outline is not None and outline.get(W_NS + "val") == "9"
+    # No paragraph exists only to carry a page break (that is what spills a blank page).
+    for paragraph in report.paragraphs:
+        breaks = paragraph._p.findall(".//" + W_NS + "br")
+        if any(b.get(W_NS + "type") == "page" for b in breaks):
+            assert paragraph.text.strip() or paragraph._p.findall(".//" + W_NS + "instrText"), \
+                "page break sits in an otherwise empty paragraph"
+
+    # A display equation is one paragraph: centred picture, right-aligned SEQ number.
+    equation = next(p for p in report.paragraphs
+                    if any("SEQ Equation" in (t.text or "")
+                           for t in p._p.findall(".//" + W_NS + "instrText")))
+    assert equation._p.findall(".//" + W_NS + "drawing")
+    stops = [stop.alignment for stop in equation.paragraph_format.tab_stops]
+    assert len(stops) == 2
+    assert equation.text.strip().endswith(")")
+
+    # Inline code is monospace, not literal backticks.
+    body = "\n".join(p.text for p in report.paragraphs)
+    assert "`" not in body
+    assert any(run.font.name == "Consolas" and "setUsePolytropicCalc" in run.text
+               for p in report.paragraphs for run in p.runs)
+
+    # Scope sub-headings carry no trailing colon.
+    assert not any(p.style.name.startswith("Heading") and p.text.endswith(":")
+                   for p in report.paragraphs)
+
+    # Table columns fit their longest word instead of being split evenly.
+    risk = next(t for t in report.tables if t.rows[0].cells[0].text == "ID")
+    widths = [cell.width.inches for cell in risk.rows[0].cells]
+    assert widths[0] < min(widths[1:]), widths
 
 
 def test_keep_template_content_retains_boilerplate(tmp_path):
