@@ -853,6 +853,18 @@ exit 0
 # the older ``agentPlugins`` user-data folder), matched on the plugin name.
 # The POSIX ``sh`` command is not known to suffer the same mangling (it is not
 # read on Windows) and keeps its plain inline form.
+#
+# The encoded script must also never *call a .ps1 file*. A managed Windows PC
+# (Equinor default) sets the PowerShell execution policy through Group Policy,
+# whose MachinePolicy / UserPolicy scope overrides the ``-ExecutionPolicy Bypass``
+# on our own command line, so ``& <plugin>\\scripts\\install_skill_packages.ps1``
+# dies with "...is not digitally signed. You cannot run this script on the current
+# system." - one error block per installed plugin, no Python packages, no MCP
+# registration, and the user is left with an unusable install. An
+# ``-EncodedCommand`` payload is a *command*, not a script file, and is exempt; so
+# is a ``.py`` file. The script therefore finds an interpreter itself and runs
+# ``scripts/install_skill_packages.py`` (which does the pip install *and* repairs
+# the VS Code user mcp.json) directly.
 _HOOK_WINDOWS_SCRIPT_TEMPLATE = (
     "$r = $env:PLUGIN_ROOT; "
     "if (-not $r) {{ $r = $env:CLAUDE_PLUGIN_ROOT }}; "
@@ -862,7 +874,15 @@ _HOOK_WINDOWS_SCRIPT_TEMPLATE = (
     "-ErrorAction SilentlyContinue | Where-Object {{ $_.Directory.Name -eq '{name}' }} | "
     "Sort-Object LastWriteTime -Descending | Select-Object -First 1 | "
     "ForEach-Object {{ $_.DirectoryName }} }}; "
-    "if ($r) {{ $env:PLUGIN_ROOT = $r; & (Join-Path $r 'scripts/install_skill_packages.ps1') }}")
+    "if (-not $r) {{ exit 0 }}; "
+    "$env:PLUGIN_ROOT = $r; "
+    "$s = Join-Path $r 'scripts/install_skill_packages.py'; "
+    "if ($env:NEQSIM_PYTHON -and (Test-Path $env:NEQSIM_PYTHON)) {{ & $env:NEQSIM_PYTHON $s }} "
+    "elseif (Get-Command py -ErrorAction SilentlyContinue) {{ & py -3 $s }} "
+    "elseif (Get-Command python -ErrorAction SilentlyContinue) {{ & python $s }} "
+    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python interpreter "
+    "found on PATH (install Python 3.10+, or set NEQSIM_PYTHON to a python.exe). The MCP "
+    "server and the skills still load; the task toolkit is not installed.\"}}' }}")
 
 _HOOK_POSIX_TEMPLATE = (
     "sh -c 'r=\"${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT:-$COPILOT_PLUGIN_ROOT}}}}\"; "
@@ -886,7 +906,11 @@ def hook_commands(plugin_name: str) -> Tuple[str, str]:
     """``(posix_command, windows_command)`` for the SessionStart hook of ``plugin_name``."""
     posix_command = _HOOK_POSIX_TEMPLATE.format(name=plugin_name)
     encoded = _encode_ps1_command(_HOOK_WINDOWS_SCRIPT_TEMPLATE.format(name=plugin_name))
-    windows_command = "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand " + encoded
+    # -OutputFormat Text: without it a PowerShell child of a PowerShell host serialises
+    # its output as CLIXML, so any hook error reaches the user as an unreadable
+    # ``#< CLIXML <Objs ...>`` blob instead of the message.
+    windows_command = ("powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass "
+                       "-OutputFormat Text -EncodedCommand " + encoded)
     return posix_command, windows_command
 
 

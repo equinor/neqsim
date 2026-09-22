@@ -23,9 +23,13 @@ session; check `~/.neqsim/plugin-install/neqsim/install.log` (last line
 `== ... OK` or `== ... FAILED` with the pip error above it). If the log is
 missing or failed, install by hand from the plugin's vendored copy:
 `<python-executable> -m pip install "<plugin folder>/toolkit"` where the
-plugin folder is `%APPDATA%\Code\agentPlugins\github.com\equinor\neqsim-copilot-plugin\neqsim`
-on Windows (`~/.config/Code/agentPlugins/...` on Linux,
-`~/Library/Application Support/Code/agentPlugins/...` on macOS), or without a
+plugin folder is
+`%USERPROFILE%\.vscode\agent-plugins\github.com\equinor\neqsim-copilot-plugin\neqsim`
+on Windows (`~/.vscode/agent-plugins/...` on Linux and macOS). A marketplace
+install lands there, **not** under `agentPlugins` in the VS Code user-data
+folder — that one only holds synced customization plugins, so do not conclude
+from its absence that the plugin is not installed. A Copilot CLI install lands
+in `~/.copilot/installed-plugins/neqsim-copilot-plugin/<plugin>`. Without a
 plugin:
 `<python-executable> -m pip install "neqsim-dev-setup @ git+https://github.com/equinor/neqsim.git#subdirectory=devtools"`.
 Installing the toolkit also pip-installs the `neqsim` PyPI package (the packaged
@@ -47,9 +51,19 @@ followed by
 `<python-executable> -m pip install -r "<plugin folder>/neqsim-enterprise/requirements-live.txt"`
 (add `--no-index --find-links "<plugin folder>/neqsim-enterprise/wheels"` for an
 offline bundle). A missing log means the hook never ran for that plugin: start a
-new chat (plugin versions before 1.1.1 / 1.0.1 failed with *The argument
-'/scripts/install_skill_packages.ps1' ... does not exist* because VS Code does
-not expand `${PLUGIN_ROOT}`; update the plugin).
+new chat, then check the plugin version against these known hook failures —
+all fixed by updating the plugin:
+
+| Hook error in chat | Cause | Fixed in |
+|---|---|---|
+| *The argument '/scripts/install_skill_packages.ps1' ... does not exist* | VS Code does not expand `${PLUGIN_ROOT}` | 1.1.1 / 1.0.1 |
+| PowerShell parse errors with variables replaced by nothing (`+  = ''; if (-not  ...`) | the hook's `windows` string had its `$` tokens stripped | a later 1.1.x / 1.0.x |
+| *install_skill_packages.ps1 ... is not digitally signed. You cannot run this script on the current system* (often arriving as a `#< CLIXML` blob), once per installed plugin | a Group Policy execution policy on a managed PC overrides `-ExecutionPolicy Bypass`, so the hook's unsigned `.ps1` cannot run; nothing is pip-installed and the MCP entry is never repaired | neqsim 1.1.7 / community 1.0.5 / enterprise 1.0.8 |
+
+On an older plugin, do the hook's work by hand (`pip` and a `.py` are not
+covered by the execution policy):
+`<python-executable> "<plugin folder>\scripts\install_skill_packages.py"` with
+`PLUGIN_ROOT` set to that folder, for each installed plugin.
 
 ## 1. Ask for the three paths (skip any the user already has)
 
@@ -97,6 +111,7 @@ Report only the `[!!]` and `[??]` lines with their fix hints. Typical fixes:
 | Symptom | Fix |
 |---|---|
 | Java < 21 | install a JDK 21+ first on PATH (`winget install EclipseAdoptium.Temurin.21.JDK`); NeqSim itself runs on 8+ but the MCP server needs 21 |
+| MCP output shows *Could not find or load main class `${PLUGIN_ROOT}`.servers.NeqsimMcpLauncher.java*, exit code 1 | expected: VS Code does not expand `${PLUGIN_ROOT}` in an Agent Plugins `mcp.json` (microsoft/vscode#336882), so the plugin's own `neqsim` server entry always errors. Do **not** blame Java and do not edit the plugin's `mcp.json`. The working entry is an absolute one in the **VS Code user** `mcp.json` (`%APPDATA%\Code\User\mcp.json`), which the SessionStart hook writes; if it is missing the hook never ran — see §0. Manual equivalent: `"servers": { "neqsim": { "type": "stdio", "command": "java", "args": ["<plugin folder>/servers/NeqsimMcpLauncher.java"] } }`, then open a new chat |
 | *Registered server java* FAIL, or no `neqsim_*` tools and `~/.neqsim/mcp-server/` missing | the `neqsim` entry in the VS Code user `mcp.json` runs a Java below 21 (typically Java 8 first on PATH shadowing a newer JDK): the launcher is source-launched and dies with *Could not find or load main class* before it can complain. Re-run the plugin install script (it pins the newest JDK 21+ into the entry) or set `NEQSIM_MCP_JAVA` and start a new chat (the session hook re-pins). Prove the fix without VS Code: `"<jdk21+>/bin/java" "<plugin>/servers/NeqsimMcpLauncher.java" --prefetch` (exit 0 = OK). MCP tools bind at chat-session start: after any fix open a **new chat** or Reload Window |
 | no packaged JAR | `<python-executable> -m pip install neqsim` or set `NEQSIM_JAR` |
 | `neqsim` on PATH comes from another interpreter | use `<python-executable> -m neqsim_cli` explicitly |
