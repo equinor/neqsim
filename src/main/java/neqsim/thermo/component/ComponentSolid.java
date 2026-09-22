@@ -81,8 +81,13 @@ public class ComponentSolid extends ComponentSrk {
    * </p>
    *
    * @param enabled true to use the sublimation-pressure reference
+   * @throws IllegalArgumentException if enabled on a specialized solid component with its own model
    */
   public void setUseSolidVaporPressure(boolean enabled) {
+    if (enabled && getClass() != ComponentSolid.class) {
+      throw new IllegalArgumentException(
+          "Sublimation reference selection requires ComponentSolid; specialized solid components use their own model");
+    }
     useSolidVaporPressure = enabled;
   }
 

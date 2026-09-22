@@ -107,6 +107,17 @@ class ComponentSolidFugacityTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void specializedWaxModelsRejectIncompatibleSolidReferenceSelection() {
+    for (ComponentSolid component : new ComponentSolid[] {new ComponentWax("methane", 1.0, 1.0, 0),
+        new ComponentWonWax("methane", 1.0, 1.0, 0), new ComponentWaxWilson("methane", 1.0, 1.0, 0),
+        new ComponentCoutinhoWax("methane", 1.0, 1.0, 0)}) {
+      assertThrows(IllegalArgumentException.class, () -> component.setUseSolidVaporPressure(true));
+      assertTrue(!component.isUseSolidVaporPressure());
+      component.setUseSolidVaporPressure(false);
+    }
+  }
+
+  @Test
   void absentDensityUsesDocumentedFallbackButInvalidDensityFails() {
     ComponentSolid component = (ComponentSolid) solid().getComponent(0);
     component.solidDensityCoefs = new double[5];

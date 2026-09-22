@@ -3,13 +3,13 @@ title: "Empirical Solid Fugacity References"
 description: "Select a liquid or sublimation-pressure reference for ComponentSolid, with explicit density units, domain checks, and solid-selection behavior."
 ---
 
-# Empirical solid fugacity references
-
 `ComponentSolid.fugcoef(PhaseInterface)` uses the existing liquid-reference
 fusion model by default. An enabled component can explicitly select the
 sublimation-pressure route with `setUseSolidVaporPressure(true)`.
 The choice is per component; it does not enable solid checking by itself.
 Methane retains its empirical-phase exclusion in the phase entry point.
+The option is supported only by `ComponentSolid` itself. Specialized solid
+components, including all wax models, reject enabling this incompatible reference.
 
 ```java
 SystemSrkEos fluid = new SystemSrkEos(190.0, 2.0);
