@@ -1370,20 +1370,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setParachorParameter(double parachorParameter);
 
   /**
-   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should only be used in the
-   * valid temperature range (specified in component database).
+   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/m3 Should only be used in the valid
+   * temperature range (specified in component database).
    *
    * @param temperature a double
-   * @return pure component solid density in kg/liter
+   * @return pure component solid density in kg/m3
    */
   public double getPureComponentSolidDensity(double temperature);
 
   /**
-   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should only be used in the
+   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/m3 Should only be used in the
    * valid temperature range (specified in component database). This method seems to give bad results at the moment
    *
    * @param temperature a double
-   * @return pure component liquid density in kg/liter
+   * @return pure component liquid density in kg/m3
    */
   public double getPureComponentLiquidDensity(double temperature);
 
