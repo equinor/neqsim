@@ -1,5 +1,6 @@
 package neqsim.process.equipment.compressor;
 
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -91,7 +92,7 @@ public class CompressorChartKhader2015Test {
     Assertions.assertEquals(2431.46694, stream_1.getFlowRate("m3/hr"), 0.01);
     Assertions.assertEquals(80.326453,
         comp1.getCompressorChart().getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
-    Assertions.assertEquals(41.56192413,
+    Assertions.assertEquals(expectedSimilarityHead(compChart, stream_1, compspeed, speed, flow, head),
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
 
     Assertions.assertEquals(0.00256412315, compChart
@@ -127,13 +128,14 @@ public class CompressorChartKhader2015Test {
     Assertions.assertEquals(2244.86217, stream_1.getFlowRate("m3/hr"), 0.01);
     Assertions.assertEquals(79.1115252,
         comp1.getCompressorChart().getPolytropicEfficiency(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
-    Assertions.assertEquals(45.197307809,
+    Assertions.assertEquals(expectedSimilarityHead(compChart, stream_1, compspeed, speed, flow, head),
         comp1.getCompressorChart().getPolytropicHead(stream_1.getFlowRate("m3/hr"), compspeed), 0.01);
 
     ((CompressorChartKhader2015) comp1.getCompressorChart()).setImpellerOuterDiameter(0.9);
     comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
     comp1.run();
-    Assertions.assertEquals(75.11224727, comp1.getOutletStream().getPressure("bara"), 0.01);
+    // The independently checked similarity head above determines the corrected discharge pressure.
+    Assertions.assertEquals(76.45000327, comp1.getOutletStream().getPressure("bara"), 0.01);
     comp1.getSurgeFlowRate();
 
     CompressorChartKhader2015 testChart = new CompressorChartKhader2015(stream_1.getFluid(), 0.9);
@@ -145,6 +147,27 @@ public class CompressorChartKhader2015Test {
     double cs = testChart.getReferenceFluid().getPhase(0).getSoundSpeed();
     double D = testChart.getImpellerOuterDiameter();
     // Assertions.assertEquals(sw.flow.length, sc.flow.length);
+  }
+
+  /**
+   * Evaluates the supplied dimensional map in reference-fluid coordinates. Speed and flow scale with sound speed; head
+   * scales with its square. Interpolation between two input speed lines must not add another speed factor.
+   */
+  private double expectedSimilarityHead(CompressorChartKhader2015 chart, Stream stream, double operatingSpeed,
+      double[] speeds, double[][] flows, double[][] heads) {
+    double soundSpeedRatio = stream.getFluid().getSoundSpeed() / chart.getReferenceFluid().getPhase(0).getSoundSpeed();
+    double referenceSpeed = operatingSpeed / soundSpeedRatio;
+    double referenceFlow = stream.getFlowRate("m3/hr") / soundSpeedRatio;
+    for (int i = 1; i < speeds.length; i++) {
+      if (speeds[i] <= referenceSpeed && referenceSpeed <= speeds[i - 1]) {
+        SplineInterpolator spline = new SplineInterpolator();
+        double lowerHead = spline.interpolate(flows[i], heads[i]).value(referenceFlow);
+        double upperHead = spline.interpolate(flows[i - 1], heads[i - 1]).value(referenceFlow);
+        double fraction = (referenceSpeed - speeds[i]) / (speeds[i - 1] - speeds[i]);
+        return (lowerHead + fraction * (upperHead - lowerHead)) * soundSpeedRatio * soundSpeedRatio;
+      }
+    }
+    throw new AssertionError("Fixture must lie between two supplied reference speed curves");
   }
 
   @Test

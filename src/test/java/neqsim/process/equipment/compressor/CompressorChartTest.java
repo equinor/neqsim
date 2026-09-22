@@ -1,6 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
@@ -286,7 +287,14 @@ public class CompressorChartTest {
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("duty " + comp1.getPower("MW"));
     org.apache.logging.log4j.LogManager.getLogger(CompressorChartTest.class).debug("surge " + comp1.isSurge());
     Assertions.assertTrue(comp1.isSurge() == false);
-    Assertions.assertEquals(155.9487458, comp1.getOutletPressure(), 0.1);
+    // Independently interpolate the two supplied speed curves at the actual inlet flow.
+    double actualFlow = stream_1.getFlowRate("m3/hr");
+    SplineInterpolator spline = new SplineInterpolator();
+    double lowerHead = spline.interpolate(flow[3], head[3]).value(actualFlow);
+    double upperHead = spline.interpolate(flow[4], head[4]).value(actualFlow);
+    double expectedHead = lowerHead + (8765.0 - 8500.0) / (9000.0 - 8500.0) * (upperHead - lowerHead);
+    Assertions.assertEquals(expectedHead, comp1.getPolytropicFluidHead(), 1.0e-8);
+    Assertions.assertEquals(158.816498, comp1.getOutletPressure(), 0.1);
   }
 
   @Test
