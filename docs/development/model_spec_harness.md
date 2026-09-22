@@ -52,8 +52,9 @@ Each row declares:
 | Source, provenance, reason | Reference locator, evidence type and reuse provenance; exact absence reason |
 
 Comparison is `abs(actual - expected) <= absTol + relTol * abs(expected)`.
-Zero and negative values are valid for signed properties such as ideal enthalpy or
-ln(gamma); gamma, fugacity coefficient, Z, group R and applicable saturation pressure must be positive.
+Zero and negative values are valid for signed properties such as ideal enthalpy,
+ln(gamma) and group-interaction coefficients; gamma, fugacity coefficient, Z, group R/Q and
+applicable saturation pressure must be positive.
 NaN and infinity always fail a `VALUE` case.
 
 An unavailable saturation case asserts its declared cause (missing correlation, ion,
@@ -70,8 +71,8 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 128 cases across seven system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK and UMR-PRU), direct SRK/PR/Wilson/NRTL phase adapters, a component saturation
+The catalog has 146 cases across seven system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK and UMR-PRU), direct SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU phase adapters, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -83,7 +84,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | i-Pentane at 290, 298.15 and 301 K | NIST WebBook Willingham et al. (1945), 289.44–301.74 K; independent correlation versus NeqSim DIPPR data, 1% comparison tolerance |
 | Binary Wilson | Prescribed Lambda12=2, Lambda21=0.5, with mole fractions 0.2/0.8, 0.5/0.5 and 0.8/0.2; closed-form numerical fixtures, not experimental mixture validation |
 | Binary NRTL | Published local-composition equation with prescribed alpha12=alpha21=0.3, D12=200 K and D21=-100 K; gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K for SystemNRTL and exact PhaseGENRTL entry points |
-| UNIFAC, PSRK, UMR-PRU | Pure methanol gamma=1 reference identity and subgroup-15 R=1.4311 data regression; populated group contents and stored coefficients are read |
+| UNIFAC, PSRK, UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no experimental mixture accuracy is claimed |
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
@@ -94,7 +95,7 @@ The low-pressure EOS and pure-component GE cases are intentionally limited contr
 Gamma=1 alone cannot
 detect an always-one stub; nonideal Wilson values, group-content checks and the existing
 binary UNIFAC regressions provide distinct checks. `ModelSpecStateTest` additionally
-tests changed Wilson composition and binary UNIFAC/PSRK component-order and repeated
+tests changed Wilson composition and binary UNIFAC/PSRK/UMR-PRU component-order and repeated
 initialization behavior. UMR-PRU is driven through the actual HV mixing rule and its GE
 phase; standalone UNIQUAC is not incorrectly classified as working because a UNIFAC
 subclass works.
