@@ -65,10 +65,8 @@ not per-system or thread-safe parameter stores. The legacy
 should not be used to select a system model. Code that relied on a CPA constructor
 making `setFurstParam` target CPA must migrate to `setFurstParamCPA`.
 
-This correction does not change calculated or fitted short-range `Wij` values.
-The separate question of CPA-derived calculated interactions in ScRK is tracked in
-[#3850](https://github.com/equinor/neqsim/issues/3850); resolving model calibration
-requires evidence beyond construction-order tests.
+The covolume correction is independent of the reference-interaction correction
+described below. Neither changes fitted database pairs.
 
 ### Class Hierarchy
 
@@ -185,7 +183,45 @@ The short-range Wij parameters capture specific ion-solvent and ion-ion interact
 
 ### Parameter Correlations
 
-The Wij values are calculated using linear correlations with ionic diameter:
+The reference coefficient `wij[0]` for calculated cation-water and ordinary
+cation-anion pairs follows the phase's EOS family. `SystemFurstElectrolyteEos`
+and `SystemFurstElectrolyteEosMod2004` use the existing ScRK `furstParams` table;
+the three electrolyte CPA variants use `furstParamsCPA`. Selection follows the
+phase type, including CPA subclasses, and is independent of construction order.
+Database pairs marked fitted (`CalcWij != 0`) retain their reference and
+temperature coefficients. The named-solvent tables, the Piperazine approximation,
+the MDEA+ ion-ion override, and gas-ion/organic-inhibitor overrides are unchanged.
+
+For ScRK, the existing six-coefficient table gives the same correlation for
+monovalent and divalent cations, with diameters in angstroms:
+
+```
+Wij(cation-water, 298.15 K) = 6.99219e-5 * stokesDiameter + 4.3984e-6
+Wij(cation-anion, 298.15 K) = -6.06e-8 * (d_cat + d_an)^4 - 2.1795e-5
+```
+
+These are the current ScRK table values, not a new fit. The separate ScRK/CPA
+model identity follows the correlations discussed by Solbraa (2002), equations
+8.14-8.15 and table 8-12; the mutable repository tables remain the exact numerical
+source. The CPA-specific valence fits are described below and are unchanged.
+
+**Numerical compatibility:** correcting the unconditional CPA dispatch introduced
+in #1787 changes calculated ScRK pairs. With the default Na+ Stokes diameter
+of 5.68 angstroms, `wij[0](Na+, water)` changes from `1.6297556353584585e-4`
+to `4.01554792e-4`. ScRK phase equilibria and properties that depend on these
+pairs can therefore change. This is a model-selection regression correction
+(#3850), not evidence that the original or corrected calibration meets a given
+experimental accuracy target. CPA reference interactions retain their values.
+
+The current shared `furstParamsCPA_TDep` temperature correction is deliberately
+retained for both families; the correction does **not** restore a complete
+historical ScRK calibration. Regressions check the reference coefficients,
+symmetric/reversed pairs, both valences, repeated initialization, CPA interleaving,
+fitted precedence, and the retained temperature formula at 298.15 and 323.15 K.
+Qualification of the combined ScRK correlation against experimental data,
+including temperature dependence, remains part of [#3144](https://github.com/equinor/neqsim/issues/3144).
+
+The CPA Wij values are calculated using the following ionic-diameter correlations:
 
 #### Monovalent (1+) Cations
 
