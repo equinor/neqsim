@@ -29,9 +29,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * mole count is not treated as a vessel size or flow rate. Only a single gas phase is supported. Condensation,
  * reacting/forced phases, solids, hydrates, heat input, inflow, selective phase withdrawal, pipe decompression and
  * non-equilibrium transfer are outside scope. A step crossing the receiving pressure is located by bounded bisection
- * and conservatively lands on the no-flow boundary while the process clock advances through the caller's full
- * timestep. Numerical closure does not confer
- * engineering qualification.
+ * and conservatively lands on the no-flow boundary while the process clock advances through the caller's full timestep.
+ * Numerical closure does not confer engineering qualification.
  * </p>
  */
 public final class ReleaseInventory extends ProcessEquipmentBaseClass {
@@ -174,8 +173,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       InventoryStep step = advance(candidate, rate, h);
       volumeEnergySolves += step.volumeEnergySolves;
       double pressurePa = step.next.getPressure() * 1e5;
-      double pressureTolerance =
-          Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
+      double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
       boolean reachesPressureBoundary = pressurePa <= backPressurePa + pressureTolerance;
       if (pressurePa < backPressurePa) {
         PressureEvent located = locateReceivingPressureEvent(candidate, rate, h);
@@ -236,22 +234,18 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     Map<String, Double> beforeComponents = componentMasses(candidate);
     SystemInterface next = candidate.clone();
     next.setTotalNumberOfMoles(candidate.getTotalNumberOfMoles() * (1.0 - removedMass / beforeMass));
-    int solves =
-        solveVolumeEnergy(next, targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
+    int solves = solveVolumeEnergy(next, targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
     requireGas(next, true);
     close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
-    close(next.getInternalEnergy("J"), targetEnergy,
-        Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)), "ENERGY_CLOSURE_FAILED");
-    return new InventoryStep(next, beforeComponents, beforeMass, removedMass, outflowEnergy, durationS,
-        solves);
+    close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
+        "ENERGY_CLOSURE_FAILED");
+    return new InventoryStep(next, beforeComponents, beforeMass, removedMass, outflowEnergy, durationS, solves);
   }
 
-  private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate,
-      double upperDurationS) {
+  private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate, double upperDurationS) {
     double lower = 0.0;
     double upper = upperDurationS;
-    double pressureTolerance =
-        Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
+    double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
     int additionalSolves = 0;
     for (int iteration = 0; iteration < MAX_PRESSURE_EVENT_ITERATIONS; iteration++) {
       double duration = 0.5 * (lower + upper);
@@ -458,9 +452,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     private final double durationS;
     private final int volumeEnergySolves;
 
-    private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg,
-        double beforeMassKg, double removedMassKg, double outflowEnergyJ, double durationS,
-        int volumeEnergySolves) {
+    private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg, double beforeMassKg,
+        double removedMassKg, double outflowEnergyJ, double durationS, int volumeEnergySolves) {
       this.next = next;
       this.beforeComponentMassKg = beforeComponentMassKg;
       this.beforeMassKg = beforeMassKg;
