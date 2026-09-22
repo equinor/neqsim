@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import unittest
 
 
@@ -46,11 +47,16 @@ class S8ComponentApplicationPreviewDocumentationTest(unittest.TestCase):
             "source.clone()",
             "candidateTarget.addComponent(",
             "candidateTarget.init(0)",
-            "AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.verify(",
             "public SystemInterface getCandidateTarget()",
             "implements Serializable",
         ):
             self.assertIn(token, text)
+        self.assertRegex(
+            text,
+            re.compile(
+                r"AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt\s*\.verify\("
+            ),
+        )
         self.assertNotIn("ThermodynamicOperations", text)
 
     def test_java_tests_cover_acceptance_and_fail_closed_cases(self):
