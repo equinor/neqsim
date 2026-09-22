@@ -28,13 +28,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * The supplied fluid is cloned and scaled to the specified volume at its initial temperature and pressure. Its original
  * mole count is not treated as a vessel size or flow rate. Only a single gas phase is supported. Condensation,
  * reacting/forced phases, solids, hydrates, heat input, inflow, selective phase withdrawal, pipe decompression and
- * non-equilibrium transfer are outside scope. A step crossing the receiving pressure is rejected; reduce the timestep.
+ * non-equilibrium transfer are outside scope. A step crossing the receiving pressure is located by bounded bisection
+ * and conservatively lands on the no-flow boundary while the process clock advances through the caller's full timestep.
  * Numerical closure does not confer engineering qualification.
  * </p>
  */
 public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
   private static final double CLOSURE_TOLERANCE = 1e-7;
+  private static final double PRESSURE_EVENT_RELATIVE_TOLERANCE = 1e-9;
+  private static final int MAX_PRESSURE_EVENT_ITERATIONS = 64;
   private static final int MAX_SUBSTEPS = 10000;
   private final double volumeM3;
   private final double diameterM;
@@ -53,6 +56,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private int lastVolumeEnergySolves;
   private UUID lastTransientId;
   private double lastTransientDurationS;
+  private boolean lastPressureEquilibrationEvent;
+  private double lastReleaseDurationS;
 
   /**
    * Creates an independently owned inventory, initially at time zero.
@@ -146,6 +151,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     double elapsed = 0.0;
     int steps = 0;
     int volumeEnergySolves = 0;
+    boolean pressureEquilibrationEvent = false;
+    double releaseDurationS = 0.0;
     while (releaseEnabled && elapsed < dt) {
       if (Thread.currentThread().isInterrupted()) {
         throw new IllegalStateException("INVENTORY_STEP_INTERRUPTED");
@@ -163,32 +170,35 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       if (!(h > 0.0) || elapsed + h <= elapsed) {
         throw new IllegalStateException("INVENTORY_TIMESTEP_UNREPRESENTABLE");
       }
-      double removed = rate * h;
-      double outflowEnergy = removed * candidate.getEnthalpy("J/kg");
-      double beforeEnergy = finite(candidate.getInternalEnergy("J"), "internal energy");
-      double targetEnergy = finite(beforeEnergy - outflowEnergy, "target energy");
-      Map<String, Double> before = componentMasses(candidate);
-      SystemInterface next = candidate.clone();
-      next.setTotalNumberOfMoles(candidate.getTotalNumberOfMoles() * (1.0 - removed / mass));
-      volumeEnergySolves += solveVolumeEnergy(next, targetEnergy,
-          Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
-      requireGas(next, true);
-      close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
-      close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
-          "ENERGY_CLOSURE_FAILED");
-      if (next.getPressure() * 1e5 < backPressurePa) {
-        throw new IllegalStateException("RECEIVING_PRESSURE_CROSSED: reduce timestep");
+      InventoryStep step = advance(candidate, rate, h);
+      volumeEnergySolves += step.volumeEnergySolves;
+      double pressurePa = step.next.getPressure() * 1e5;
+      double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
+      boolean reachesPressureBoundary = pressurePa <= backPressurePa + pressureTolerance;
+      if (pressurePa < backPressurePa) {
+        PressureEvent located = locateReceivingPressureEvent(candidate, rate, h);
+        step = located.step;
+        volumeEnergySolves += located.additionalVolumeEnergySolves;
+        pressurePa = step.next.getPressure() * 1e5;
+        reachesPressureBoundary = true;
       }
-      Map<String, Double> after = componentMasses(next);
-      for (String component : before.keySet()) {
-        double loss = removed * before.get(component) / mass;
-        close(after.get(component) + loss, before.get(component), before.get(component), "COMPONENT_CLOSURE_FAILED");
+      Map<String, Double> after = componentMasses(step.next);
+      for (String component : step.beforeComponentMassKg.keySet()) {
+        double loss = step.removedMassKg * step.beforeComponentMassKg.get(component) / step.beforeMassKg;
+        close(after.get(component) + loss, step.beforeComponentMassKg.get(component),
+            step.beforeComponentMassKg.get(component), "COMPONENT_CLOSURE_FAILED");
         componentLoss.put(component, componentLoss.get(component) + loss);
       }
-      massLoss = finite(massLoss + removed, "cumulative released mass");
-      energyLoss = finite(energyLoss + outflowEnergy, "cumulative released enthalpy");
-      elapsed += h;
-      candidate = next;
+      massLoss = finite(massLoss + step.removedMassKg, "cumulative released mass");
+      energyLoss = finite(energyLoss + step.outflowEnergyJ, "cumulative released enthalpy");
+      elapsed += step.durationS;
+      releaseDurationS = elapsed;
+      candidate = step.next;
+      if (reachesPressureBoundary) {
+        close(pressurePa, backPressurePa, backPressurePa, "RECEIVING_PRESSURE_EVENT_FAILED");
+        pressureEquilibrationEvent = true;
+        break;
+      }
     }
     // Check accumulated residuals too, so individually acceptable flash errors cannot drift silently.
     Map<String, Double> remaining = componentMasses(candidate);
@@ -209,8 +219,53 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     lastVolumeEnergySolves = volumeEnergySolves;
     lastTransientId = id;
     lastTransientDurationS = dt;
+    lastPressureEquilibrationEvent = pressureEquilibrationEvent;
+    lastReleaseDurationS = releaseDurationS;
     setTime(targetTime);
     setCalculationIdentifier(id);
+  }
+
+  private InventoryStep advance(SystemInterface candidate, double rate, double durationS) {
+    double beforeMass = candidate.getMass("kg");
+    double removedMass = rate * durationS;
+    double outflowEnergy = removedMass * candidate.getEnthalpy("J/kg");
+    double beforeEnergy = finite(candidate.getInternalEnergy("J"), "internal energy");
+    double targetEnergy = finite(beforeEnergy - outflowEnergy, "target energy");
+    Map<String, Double> beforeComponents = componentMasses(candidate);
+    SystemInterface next = candidate.clone();
+    next.setTotalNumberOfMoles(candidate.getTotalNumberOfMoles() * (1.0 - removedMass / beforeMass));
+    int solves = solveVolumeEnergy(next, targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
+    requireGas(next, true);
+    close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
+    close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
+        "ENERGY_CLOSURE_FAILED");
+    return new InventoryStep(next, beforeComponents, beforeMass, removedMass, outflowEnergy, durationS, solves);
+  }
+
+  private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate, double upperDurationS) {
+    double lower = 0.0;
+    double upper = upperDurationS;
+    double pressureTolerance = Math.max(1e-3, backPressurePa * PRESSURE_EVENT_RELATIVE_TOLERANCE);
+    int additionalSolves = 0;
+    for (int iteration = 0; iteration < MAX_PRESSURE_EVENT_ITERATIONS; iteration++) {
+      double duration = 0.5 * (lower + upper);
+      if (!(duration > lower) || !(duration < upper)) {
+        break;
+      }
+      InventoryStep trial = advance(candidate, rate, duration);
+      additionalSolves += trial.volumeEnergySolves;
+      double pressurePa = trial.next.getPressure() * 1e5;
+      if (pressurePa >= backPressurePa) {
+        lower = duration;
+        if (pressurePa - backPressurePa <= pressureTolerance) {
+          return new PressureEvent(trial, additionalSolves);
+        }
+      } else {
+        upper = duration;
+      }
+    }
+    throw new IllegalStateException(
+        "RECEIVING_PRESSURE_EVENT_FAILED: bounded event solve did not reach pressure tolerance");
   }
 
   private ReleaseFlowResult calculate(SystemInterface fluid) {
@@ -356,6 +411,16 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     return lastVolumeEnergySolves;
   }
 
+  /** @return true when the last successful call located the receiving-pressure no-flow event */
+  public synchronized boolean hadPressureEquilibrationEvent() {
+    return lastPressureEquilibrationEvent;
+  }
+
+  /** @return seconds of physical release within the last successful caller timestep */
+  public synchronized double getLastReleaseDurationS() {
+    return lastReleaseDurationS;
+  }
+
   /** @return whether the physical opening removes inventory during transient execution */
   public synchronized boolean isReleaseEnabled() {
     return releaseEnabled;
@@ -376,6 +441,37 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   public synchronized Balance getBalance() {
     return new Balance(getTime(), volumeM3, initialEnergyJ, inventory.getInternalEnergy("J"), releasedEnergyJ,
         releasedMassKg, initialComponentMassKg, componentMasses(inventory), releasedComponentMassKg, lastSubsteps);
+  }
+
+  private static final class InventoryStep {
+    private final SystemInterface next;
+    private final Map<String, Double> beforeComponentMassKg;
+    private final double beforeMassKg;
+    private final double removedMassKg;
+    private final double outflowEnergyJ;
+    private final double durationS;
+    private final int volumeEnergySolves;
+
+    private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg, double beforeMassKg,
+        double removedMassKg, double outflowEnergyJ, double durationS, int volumeEnergySolves) {
+      this.next = next;
+      this.beforeComponentMassKg = beforeComponentMassKg;
+      this.beforeMassKg = beforeMassKg;
+      this.removedMassKg = removedMassKg;
+      this.outflowEnergyJ = outflowEnergyJ;
+      this.durationS = durationS;
+      this.volumeEnergySolves = volumeEnergySolves;
+    }
+  }
+
+  private static final class PressureEvent {
+    private final InventoryStep step;
+    private final int additionalVolumeEnergySolves;
+
+    private PressureEvent(InventoryStep step, int additionalVolumeEnergySolves) {
+      this.step = step;
+      this.additionalVolumeEnergySolves = additionalVolumeEnergySolves;
+    }
   }
 
   /** Immutable cumulative inventory accounting. Energy uses the selected EOS reference state. */
