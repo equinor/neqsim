@@ -83,6 +83,16 @@ class CompressorChartSpeedInterpolationTest extends NeqSimTest {
       compressor.run();
       assertEquals(7000.0, compressor.getSpeed(), 0.1, "Speed must not depend on the initial guess");
       assertEquals(80.0, compressor.getPolytropicFluidHead(), 0.001);
+      double solvedSpeed = compressor.getSpeed();
+      double solvedHead = compressor.getPolytropicFluidHead();
+      double solvedPower = compressor.getPower();
+      for (int replay = 0; replay < 3; replay++) {
+        compressor.run();
+        assertEquals(solvedSpeed, compressor.getSpeed(), 1.0e-10,
+            "An accepted speed must remain unchanged when the same operating point is replayed");
+        assertEquals(solvedHead, compressor.getPolytropicFluidHead(), 1.0e-10);
+        assertEquals(solvedPower, compressor.getPower(), 1.0e-6);
+      }
     }
   }
 
