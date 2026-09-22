@@ -28,7 +28,7 @@ public class EntryPointExamplesDocumentationTest extends NeqSimTest {
   private static final String README = "README.md";
   private static final String PYTHON_GUIDE = "docs/quickstart/python-quickstart.md";
   private static final Pattern README_JAVA = Pattern
-      .compile("(?ms)^### Java - add to your project.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      .compile("(?ms)^### Java - add to your project.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS = Pattern
       .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern UNITLESS_PRESSURE =
