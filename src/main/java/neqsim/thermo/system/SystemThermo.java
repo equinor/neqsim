@@ -5860,13 +5860,11 @@ public abstract class SystemThermo implements SystemInterface {
     this.solidPhaseCheck = true;
     init(0);
 
-    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
-      try {
-        if (getPhase(phaseNum) != null && getPhase(phaseNum).hasComponent(solidComponent)) {
-          getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+    // The configured solid can be inactive after a fluid-only flash. Its selection must
+    // agree with the fluid components now that ComponentSolid honors the check flag.
+    for (PhaseInterface phase : phaseArray) {
+      if (phase != null && phase.hasComponent(solidComponent)) {
+        phase.getComponent(solidComponent).setSolidCheck(true);
       }
     }
     setNumberOfPhases(oldphase);

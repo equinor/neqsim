@@ -915,6 +915,7 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 - [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
 - [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
 - [Experimental Solid Helmholtz Models](solid_helmholtz_models.md) - Pure solid-state and para-hydrogen freezing-point workflows
+- [Empirical Solid Fugacity References](empirical_solid_fugacity.md) - Liquid and opt-in sublimation references, density units, and solid-selection behavior
 - [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
 - [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
 - [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
