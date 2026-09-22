@@ -36,7 +36,7 @@ require(
     f"int PROTOCOL_SCENARIO_COUNT = {protocol_scenario_count};",
     SOURCE_PATH,
 )
-require(source, 'inventory.addProperty("inventoryVersion", "1.44")', SOURCE_PATH)
+require(source, 'inventory.addProperty("inventoryVersion", "1.45")', SOURCE_PATH)
 require(
     source,
     "All 71 tools have coverage records; 44 are CONTRACT_TESTED and 7 remain "
@@ -55,9 +55,9 @@ require(source, 'case "designUtilities":', SOURCE_PATH)
 # harness. Otherwise CI stops at the first stale promotion and never qualifies
 # the remaining tools.
 expected_inventory = {
-    "inventoryVersion": "1.44",
-    "contractTestedToolCount": 44,
-    "confirmedGapToolCount": 7,
+    "inventoryVersion": "1.45",
+    "contractTestedToolCount": 45,
+    "confirmedGapToolCount": 6,
 }
 for focused_path in sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
     focused_tree = ast.parse(focused_path.read_text(encoding="utf-8"))
@@ -125,12 +125,12 @@ require(
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.44 / 20 explicit + 44 contract-tested + 7\n"
+    "Current inventory `1.45 / 20 explicit + 44 contract-tested + 7\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )
 
 print(
-    "Phase 0 documentation accounting is consistent: 1.44 / 20 + 44 + 7; "
+    "Phase 0 documentation accounting is consistent: 1.45 / 20 + 44 + 7; "
     f"{protocol_scenario_count} primary protocol scenarios"
 )
