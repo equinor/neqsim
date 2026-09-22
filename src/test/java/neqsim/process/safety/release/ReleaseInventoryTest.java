@@ -301,14 +301,23 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void invalidStepAndPressureCrossingCannotPartiallyDeplete() {
+  void pressureCrossingLocatesConservativeNoFlowEvent() {
     ReleaseInventory vessel = new ReleaseInventory("inventory", gas(1.01), 0.001, 0.01, 0.7, 100000.0,
         new IdealGasReleaseModel(), 1.0);
     assertThrows(IllegalArgumentException.class, () -> vessel.runTransient(Double.NaN, UUID.randomUUID()));
-    assertTrue(assertThrows(IllegalStateException.class, () -> vessel.runTransient(1.0, UUID.randomUUID())).getMessage()
-        .contains("RECEIVING_PRESSURE_CROSSED"));
-    assertEquals(0.0, vessel.getBalance().getReleasedMassKg(), 0.0);
-    assertEquals(0.0, vessel.getTime(), 0.0);
+    UUID id = UUID.randomUUID();
+    vessel.runTransient(1.0, id);
+    assertTrue(vessel.hadPressureEquilibrationEvent());
+    assertTrue(vessel.getLastReleaseDurationS() > 0.0);
+    assertTrue(vessel.getLastReleaseDurationS() < 1.0);
+    assertEquals(100000.0, vessel.getFluid().getPressure() * 1e5, 0.011);
+    assertTrue(vessel.getBalance().getReleasedMassKg() > 0.0);
+    assertEquals(1.0, vessel.getTime(), 0.0);
+    balanced(vessel);
+
+    double released = vessel.getBalance().getReleasedMassKg();
+    vessel.runTransient(1.0, id);
+    assertEquals(released, vessel.getBalance().getReleasedMassKg(), 0.0);
   }
 
   @Test

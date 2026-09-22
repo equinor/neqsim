@@ -46,7 +46,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid adiabatic gas inventory is coupled and balance/refinement tested. Ordinary live sources remain hypothetical. | Multiphase/phase-selective withdrawal, pressure-equilibration event handling and qualification beyond the gas-only boundary. |
+| Broader transient inventory regimes | Rigid adiabatic gas inventory is coupled and balance/refinement tested. Receiving-pressure events are conservatively located for this gas-only model. Ordinary live sources remain hypothetical. | Multiphase/phase-selective withdrawal and qualification beyond the gas-only boundary. |
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Conservative CO2 temperature and enabled-solid checks exist. | Mixture-specific solid-risk assessment and assessed solid-capable physics where supported. |

@@ -561,6 +561,10 @@ public final class SourceTermSession {
       provenance.put("inventoryLastSubsteps", Integer.toString(balance.getSubsteps()));
       provenance.put("inventoryVolumeEnergySolves",
           Integer.toString(((ReleaseInventory) source.unit).getLastVolumeEnergySolves()));
+      provenance.put("inventoryPressureEquilibrationEvent",
+          Boolean.toString(((ReleaseInventory) source.unit).hadPressureEquilibrationEvent()));
+      provenance.put("inventoryReleaseDurationS",
+          Double.toString(((ReleaseInventory) source.unit).getLastReleaseDurationS()));
       provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
     }
     UUID areaId = source.area.getCalculationIdentifier();

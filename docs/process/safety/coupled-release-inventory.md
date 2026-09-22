@@ -170,3 +170,4 @@ non-equilibrium transfer, mixture-specific solid risk, experimental qualificatio
 executed Colab demonstration remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
 or independent safety/domain review is implied.
+\n### Receiving-pressure event provenance\n\n`inventoryPressureEquilibrationEvent` records whether the last successful transient call landed on the no-flow boundary. `inventoryReleaseDurationS` is the physical discharge duration within that caller timestep. Event trials use the same EOS, component removal and enthalpy balance as ordinary substeps; failed event location commits no state.\n
