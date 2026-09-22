@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-09-22 — Router's agent_search.py could not find a CLI-installed agent (OLGA case study)
+**Type:** G (Workflow)
+**Keywords:** agent_search.py, router.agent.md, neqsim help, agent discovery, installed agents, ~/.neqsim/agents, sibling repo clone, olga-simulation-agent, NEQSIM_AGENTS_HOME, hermetic test
+**Solution:** `devtools/agent_search.py` (`_installed_agents_root`, new default root in `_discover_roots`), `devtools/test_agent_search.py` (`InstalledAgentsRootTest`, hermetic fix for `CrossRepoDedupTest` via `NEQSIM_AGENTS_HOME` override)
+**Notes:** While running an OLGA oil-water pressure-drop case through the newly-installed `olga-simulation-agent` (community, installed via `neqsim agent install olga-simulation-agent --vscode`, no local sibling clone of `neqsim-community-agents`), asked `@neqsim help "create and run an OLGA case"` to test router discovery. The router's own documented discovery command (`devtools/agent_search.py "<query>" --top 8`) returned a false-positive top hit (`@safety-depressuring`, keyword collision on "case") and never surfaced `olga-simulation-agent` at all, even though it was fully installed and already successfully invoked earlier in the same session. Root cause: `_discover_roots` only indexed community/enterprise agents from sibling git clones literally named `neqsim-community-agents`/`neqsim-enterprise-agents` next to the repo checkout — it had no awareness of `~/.neqsim/agents`, the directory `neqsim agent install` (the normal, documented way most users obtain community/private agents) actually populates. The `--agents-root` escape hatch existed but required knowing the exact nesting level to pass (`~/.neqsim`, not `~/.neqsim/agents`) and wasn't referenced anywhere in `router.agent.md`. Fix: added `~/.neqsim/agents` as a permanent default discovery root (mirroring `install_agent.py`'s `INSTALL_DIR` constant exactly), with an `NEQSIM_AGENTS_HOME` env-var override so tests stay hermetic. This also exposed and fixed a latent test-isolation bug: `CrossRepoDedupTest`'s synthetic `asset-economics-agent` fixture silently collided with the *real* `asset-economics-agent` already installed on the dev machine once the new default root was added — now redirected via the override. Verified end-to-end: `agent_search.py "create and run an OLGA case"` now ranks `olga-simulation-agent` #1 with no flags needed. All 12 tests pass (10 existing + 2 new regression tests). Lesson: a documented "recommended discovery tool" that only covers one of two supported installation paths (sibling clone vs. CLI catalog install) will silently mislead exactly the users who followed the documented install workflow instead of the undocumented one.
+
 ### 2026-09-18 — Are the MCP tools optimal for general problem solving? Probe, verdict and contract fixes
 **Type:** E (Feature) / G (Workflow)
 **Keywords:** MCP, tools/list, tool contract, getSchema, validateInput, SchemaCatalog, SchemaChecker, schema coverage lint, unresolved inlet, misplaced properties, hydrateRiskMap NaN, RiskLevel.UNKNOWN, CPA mixing rule default, CLASSIC_TX_CPA, silent success, agent ergonomics
@@ -880,3 +886,27 @@ point once the dose has been stepped; detect the change point and report both, a
 dosing rate against the tank level slope because these tags are prone to multi-day frozen segments.
 Report hygiene: the report generator embeds every PNG in `figures/`, so working crops must be moved
 to a subfolder — leaving them in place produced a 100 MB Word file instead of 2.9 MB.
+
+### 2026-09-21 — 3-stage compression with intercooling from 5 to 150 bara
+**Type:** B (Process)
+**Keywords:** Compressor, Cooler, intercooler, multi-stage compression, equal pressure ratio,
+SRK EOS, ProcessSystem, screening, lean pipeline gas, devtools task template
+**Solution:** `task_solve/2026-09-21_3_stage_compression_with_intercooling_from_5_to_150_bara/step2_analysis/run_compression_train.py`
+**Notes:** Screening-level (AACE 4-5) calc: 3x `Compressor` in series with equal per-stage
+pressure ratio `(P_out/P_in)^(1/3)`, each followed by a `Cooler` intercooler back to suction
+temperature (no aftercooler on the final stage). At 5 -> 150 bara the equal split gives PR = 3.107
+per stage, comfortably inside the typical centrifugal range (2.5-4) — worth checking before
+assuming an equal split is fine, since a 2-stage split for the same ratio (PR ~ 5.5) would not be.
+Flow rate wasn't specified, so used a 1000 kmol/hr basis and reported power per kmol/hr alongside
+the absolute number so the answer rescales linearly for a real design flow.
+Devtools fix (same session, Continuous Improvement Rule): `devtools/task_template/README.md` held
+maintainer-facing "Canonical Task Template Files" documentation instead of the per-task README —
+because `setup_workspace()` overlays every file under `devtools/task_template/` verbatim into
+`task_solve/TASK_TEMPLATE/` and then into every new task folder, **every task ever created by
+`neqsim new-task` got this meta-doc as its `README.md`** instead of the real step-by-step
+instructions (the `TASK_README` constant in `new_task.py`). Fixed by writing the correct per-task
+README content into `devtools/task_template/README.md` and relocating the maintainer-facing
+overlay-mechanism doc to `devtools/TASK_TEMPLATE_OVERLAY.md` (outside the walked directory, so it
+can no longer leak into task folders). Lesson: nothing meant for humans browsing a source folder
+should be placed inside a directory that a tool copies wholesale — check what walks/overlays a
+directory before adding a README to it.

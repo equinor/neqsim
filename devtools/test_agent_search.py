@@ -15,6 +15,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -87,12 +88,49 @@ class CrossRepoDedupTest(unittest.TestCase):
             # Two sibling repos, same agent name.
             _write(root / "community" / "agents" / "asset-economics-agent" / "AGENT.md", body)
             _write(root / "enterprise" / "agents" / "asset-economics-agent" / "AGENT.md", body)
-            recs = agent_search._load_agents(
-                root / "nonexistent_repo",  # no neqsim .github/agents here
-                extra=[root / "community", root / "enterprise"],
-            )
+            # Redirect the default "installed" root (normally ~/.neqsim/agents) to an
+            # empty temp dir so this test stays hermetic even on a machine that has
+            # a real agent installed under that same name (e.g. asset-economics-agent
+            # is a genuine community agent many dev machines have installed).
+            with mock.patch.dict(
+                os.environ, {"NEQSIM_AGENTS_HOME": str(root / "no_installed_agents_here")}
+            ):
+                recs = agent_search._load_agents(
+                    root / "nonexistent_repo",  # no neqsim .github/agents here
+                    extra=[root / "community", root / "enterprise"],
+                )
             repos = sorted(r[4] for r in recs if r[0] == "asset-economics-agent")
             self.assertEqual(repos, ["community", "enterprise"])
+
+
+class InstalledAgentsRootTest(unittest.TestCase):
+    """Locks in the fix for agents installed only via `neqsim agent install`
+    (~/.neqsim/agents), which previously required the *-agents repos to be
+    cloned as siblings and were otherwise invisible to this search — see
+    CHANGELOG_AGENT_NOTES.md."""
+
+    def test_installed_only_agent_is_indexed_by_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            installed_root = root / "installed_agents"
+            body = (
+                "---\nname: olga-simulation-agent\n"
+                'description: "Runs the OLGA transient multiphase flow simulator."\n'
+                "required_skills:\n- neqsim-olga-multiphase-simulator\n---\n"
+            )
+            _write(installed_root / "olga-simulation-agent" / "AGENT.md", body)
+            with mock.patch.dict(os.environ, {"NEQSIM_AGENTS_HOME": str(installed_root)}):
+                self.assertEqual(agent_search._installed_agents_root(), installed_root)
+                recs = agent_search._load_agents(root / "nonexistent_repo")
+            names = [r[0] for r in recs]
+            self.assertIn("olga-simulation-agent", names)
+
+    def test_default_installed_root_without_override(self):
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("NEQSIM_AGENTS_HOME", None)
+            self.assertEqual(
+                agent_search._installed_agents_root(), Path.home() / ".neqsim" / "agents"
+            )
 
 
 class PayloadTest(unittest.TestCase):

@@ -6,8 +6,12 @@ TF-IDF + cosine similarity index over the YAML front-matter ``description``
 fields of every agent definition it can find across the multi-repo workspace:
 
   * neqsim repo             : ``.github/agents/*.agent.md``
-  * neqsim-community-agents : ``agents/<name>/AGENT.md``
-  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md``
+  * neqsim-community-agents : ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * ~/.neqsim/agents        : ``<name>/AGENT.md`` (agents installed via
+    ``neqsim agent install``/``--all`` — this is the normal way most users obtain
+    community/private agents, and does not require the *-agents repos above to be
+    cloned locally)
 
 Why TF-IDF and not sentence embeddings? Agent descriptions are short and
 keyword-dense, so character + word n-gram TF-IDF gives most of the recall of a
@@ -35,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -126,6 +131,22 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
     return out
 
 
+def _installed_agents_root() -> Path:
+    """Return the directory ``neqsim agent install`` places agents into.
+
+    Honors ``NEQSIM_AGENTS_HOME`` so tests (and any caller that needs isolation
+    from the real machine's installed catalog) can redirect this without
+    depending on ``Path.home()``. Mirrors ``install_agent.py``'s
+    ``INSTALL_DIR = Path.home() / ".neqsim" / "agents"``.
+
+    @return absolute path to the installed-agents directory (may not exist).
+    """
+    override = os.environ.get("NEQSIM_AGENTS_HOME")
+    if override:
+        return Path(override)
+    return Path.home() / ".neqsim" / "agents"
+
+
 def _discover_roots(repo_root: Path, extra: Optional[List[Path]]) -> List[Tuple[Path, str, str]]:
     """Return (dir, repo_label, glob) tuples for every agent source to index."""
     roots: List[Tuple[Path, str, str]] = []
@@ -136,7 +157,15 @@ def _discover_roots(repo_root: Path, extra: Optional[List[Path]]) -> List[Tuple[
     for sibling in ("neqsim-community-agents", "neqsim-enterprise-agents"):
         cand = workspace_root / sibling / "agents"
         roots.append((cand, sibling, "*/AGENT.md"))
-    # 3) explicit extra roots (auto-detect layout: flat vs nested)
+    # 3) the user's locally *installed* agent catalog — ~/.neqsim/agents/<name>/AGENT.md.
+    # This is where `neqsim agent install <name>` / `--all` actually places agents
+    # (see install_agent.py INSTALL_DIR), independent of whether the community/
+    # enterprise *-agents repos above happen to be cloned as siblings. Without this
+    # root, any agent installed only via the CLI catalog (the normal, documented way
+    # to obtain community/private agents) is invisible to this search even though it
+    # is fully installed and already invocable — see CHANGELOG_AGENT_NOTES.md.
+    roots.append((_installed_agents_root(), "installed", "*/AGENT.md"))
+    # 4) explicit extra roots (auto-detect layout: flat vs nested)
     for path in extra or []:
         if (path / "agents").is_dir():
             roots.append((path / "agents", path.name, "*/AGENT.md"))
