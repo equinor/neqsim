@@ -14,7 +14,7 @@ neqsim.thermo.phase.PhaseElectrolyteCPAAdvanced	PHASE	DEBT	-	-	not-qualified	htt
 neqsim.thermo.phase.PhaseElectrolyteCPAMM	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseElectrolyteCPAOld	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseElectrolyteCPAstatoil	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseGENRTL	PHASE	PARTIAL	NRTL_PHASE	GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming stored ln-gamma, fitted mixtures, database parameters or additional properties
+neqsim.thermo.phase.PhaseGENRTL	PHASE	PARTIAL	NRTL_PHASE	GAMMA;LN_GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming fitted mixtures, database parameters or additional properties
 neqsim.thermo.phase.PhaseGENRTLmodifiedHV	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGENRTLmodifiedWS	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGERG2004Eos	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
@@ -84,7 +84,7 @@ neqsim.thermo.system.SystemGEWilson	SYSTEM	PARTIAL	WILSON_ANALYTIC	GAMMA;LN_GAMM
 neqsim.thermo.system.SystemIdealGas	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemKentEisenberg	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemLeachmanEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.system.SystemNRTL	SYSTEM	PARTIAL	NRTL_ANALYTIC	GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming stored ln-gamma, fitted mixtures, database parameters or additional properties
+neqsim.thermo.system.SystemNRTL	SYSTEM	PARTIAL	NRTL_ANALYTIC	GAMMA;LN_GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming fitted mixtures, database parameters or additional properties
 neqsim.thermo.system.SystemPCSAFT	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemPCSAFTa	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemPitzer	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification

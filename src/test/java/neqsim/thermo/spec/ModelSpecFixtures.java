@@ -287,9 +287,7 @@ final class ModelSpecFixtures {
             : ((ComponentGeNRTL) c).getGamma();
     positive(gamma, s.toString());
     assertEquals(gamma, c.getGamma(), 1e-12, s + " returned/stored gamma");
-    if (s.fixture != ModelSpec.Fixture.NRTL_ANALYTIC && s.fixture != ModelSpec.Fixture.NRTL_PHASE) {
-      assertEquals(Math.log(gamma), c.getLnGamma(), 1e-12, s + " stored ln-gamma");
-    }
+    assertEquals(Math.log(gamma), c.getLnGamma(), 1e-12, s + " stored ln-gamma");
     if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC || s.fixture == ModelSpec.Fixture.WILSON_PHASE
         || s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
       double phi = liquid.getComponent(s.componentIndex).fugcoef(liquid);

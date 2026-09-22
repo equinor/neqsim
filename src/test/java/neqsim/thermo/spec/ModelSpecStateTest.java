@@ -84,6 +84,8 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
           / phase.getNumberOfMolesInPhase();
       assertEquals(expected[0], ((ComponentGEInterface) phase.getComponent(0)).getGamma(), 1e-12);
       assertEquals(expected[1], ((ComponentGEInterface) phase.getComponent(1)).getGamma(), 1e-12);
+      assertEquals(Math.log(expected[0]), ((ComponentGEInterface) phase.getComponent(0)).getLnGamma(), 1e-12);
+      assertEquals(Math.log(expected[1]), ((ComponentGEInterface) phase.getComponent(1)).getLnGamma(), 1e-12);
       assertEquals(expected[2], excess, 1e-9);
       if (Double.isNaN(firstGamma)) {
         firstGamma = expected[0];
@@ -91,6 +93,8 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
     assertEquals(firstGamma, ((ComponentGEInterface) phase.getComponent(0)).getGamma(), 1e-12,
         "returning to the initial state must restore the initial activity coefficient");
+    assertEquals(Math.log(firstGamma), ((ComponentGEInterface) phase.getComponent(0)).getLnGamma(), 1e-12,
+        "returning to the initial state must restore the initial logarithmic activity coefficient");
   }
 
   @Test
@@ -105,6 +109,11 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
       double second = ((ComponentGEInterface) reversed.getComponent(component)).getGamma();
       ModelSpecFixtures.positive(first, component);
       assertEquals(first, second, 1e-12, component);
+      assertEquals(((ComponentGEInterface) ordered.getComponent(component)).getLnGamma(),
+          ((ComponentGEInterface) reversed.getComponent(component)).getLnGamma(), 1e-12,
+          component + " logarithmic activity coefficient");
+      assertEquals(Math.log(first), ((ComponentGEInterface) ordered.getComponent(component)).getLnGamma(), 1e-12,
+          component);
     }
   }
 

@@ -48,6 +48,8 @@ class ModelSpecHarnessTest {
         for (String composition : new String[] {"02", "05", "08"}) {
           ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-0");
           ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-1");
+          ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-ln-gamma-0");
+          ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-ln-gamma-1");
           ids.add("nrtl-" + fixture + "-t" + temperature + "-x" + composition + "-gex");
         }
       }
@@ -265,7 +267,7 @@ class ModelSpecHarnessTest {
       assertEquals(expected, spec.expected, spec.property == ModelSpec.Property.GEX ? 1e-10 : 1e-14, spec.toString());
       checked++;
     }
-    assertEquals(36, checked, "every prescribed NRTL catalog anchor must be independently reconstructed");
+    assertEquals(60, checked, "every prescribed NRTL catalog anchor must be independently reconstructed");
   }
 
   @Test
@@ -279,6 +281,22 @@ class ModelSpecHarnessTest {
     assertTrue(reference != null);
     final ModelSpec checked = reference;
     for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
+    }
+    ModelSpecTest.check(checked, checked.expected);
+  }
+
+  @Test
+  void nrtlLogActivityRejectsStaleZeroNonfiniteAndPlausiblePlaceholder() throws IOException {
+    ModelSpec reference = null;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if ("nrtl-system-t298-x05-ln-gamma-0".equals(spec.id)) {
+        reference = spec;
+      }
+    }
+    assertTrue(reference != null);
+    final ModelSpec checked = reference;
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 0.05}) {
       assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
     }
     ModelSpecTest.check(checked, checked.expected);
