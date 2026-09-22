@@ -8,7 +8,9 @@ description: Connect steady-state and transient ProcessSystem and ProcessModel c
 `SourceTermSession` connects a caller-owned NeqSim process to the
 [release-flow models](release-flow-models) and [neutral exchange contract](source-term-contract).
 It supports a single `ProcessSystem` and an area-based `ProcessModel` without an external safety
-software runtime. New APIs are additive; existing release, blowdown and process APIs retain their behavior.
+software runtime. New APIs are additive. The independent legacy gas blowdown integration was
+corrected for inventory/energy conservation in #3905; see the
+[compatibility note](release-dispersion-scenarios#conservative-gas-blowdown-and-compatibility).
 
 ## Single process and live capture
 
