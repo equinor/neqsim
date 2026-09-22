@@ -4,21 +4,17 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable makeup-gas and outlet-gas receipt for a coupled sulfur/nitrogen
- * hydrotreating screen.
+ * Immutable makeup-gas and outlet-gas receipt for a coupled sulfur/nitrogen hydrotreating screen.
  *
  * <p>
- * The receipt composes a qualified {@link RefineryHydrotreatingSulfurNitrogenBalance}
- * with explicit hydrogen-purity, supply-factor, and non-hydrogen molar-mass
- * assumptions. It performs material bookkeeping only and does not predict reaction
- * kinetics, phase equilibrium, separation, recycle, catalyst performance, or operating
- * conditions.
+ * The receipt composes a qualified {@link RefineryHydrotreatingSulfurNitrogenBalance} with explicit hydrogen-purity,
+ * supply-factor, and non-hydrogen molar-mass assumptions. It performs material bookkeeping only and does not predict
+ * reaction kinetics, phase equilibrium, separation, recycle, catalyst performance, or operating conditions.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final RefineryHydrotreatingSulfurNitrogenBalance materialBalance;
@@ -42,15 +38,12 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
   private final double overallMassBalanceResidualKg;
 
   private RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance(
-      RefineryHydrotreatingSulfurNitrogenBalance materialBalance,
-      double hydrogenSupplyFactor, double makeupHydrogenMoleFraction,
-      double nonHydrogenMolarMassKgPerMol, double hydrogenConsumedMoles,
-      double hydrogenSuppliedMoles, double unreactedHydrogenMoles,
-      double nonHydrogenMoles, double makeupGasMoles, double makeupGasMassKg,
-      double hydrogenSulfideMoles, double ammoniaMoles, double outletGasMoles,
-      double outletGasMassKg, double outletHydrogenMoleFraction,
-      double outletHydrogenSulfideMoleFraction, double outletAmmoniaMoleFraction,
-      double outletNonHydrogenMoleFraction, double overallMassBalanceResidualKg) {
+      RefineryHydrotreatingSulfurNitrogenBalance materialBalance, double hydrogenSupplyFactor,
+      double makeupHydrogenMoleFraction, double nonHydrogenMolarMassKgPerMol, double hydrogenConsumedMoles,
+      double hydrogenSuppliedMoles, double unreactedHydrogenMoles, double nonHydrogenMoles, double makeupGasMoles,
+      double makeupGasMassKg, double hydrogenSulfideMoles, double ammoniaMoles, double outletGasMoles,
+      double outletGasMassKg, double outletHydrogenMoleFraction, double outletHydrogenSulfideMoleFraction,
+      double outletAmmoniaMoleFraction, double outletNonHydrogenMoleFraction, double overallMassBalanceResidualKg) {
     this.materialBalance = materialBalance;
     this.hydrogenSupplyFactor = hydrogenSupplyFactor;
     this.makeupHydrogenMoleFraction = makeupHydrogenMoleFraction;
@@ -76,68 +69,43 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
    * Calculate the coupled makeup-gas and outlet-gas material balance.
    *
    * @param materialBalance qualified coupled sulfur/nitrogen receipt
-   * @param hydrogenSupplyFactor moles of hydrogen supplied per mole consumed;
-   *        at least one
-   * @param makeupHydrogenMoleFraction hydrogen mole fraction in makeup gas, in
-   *        (0, 1]
-   * @param nonHydrogenMolarMassKgPerMol average molar mass of the non-hydrogen
-   *        makeup fraction
+   * @param hydrogenSupplyFactor moles of hydrogen supplied per mole consumed; at least one
+   * @param makeupHydrogenMoleFraction hydrogen mole fraction in makeup gas, in (0, 1]
+   * @param nonHydrogenMolarMassKgPerMol average molar mass of the non-hydrogen makeup fraction
    * @return immutable coupled gas-supply receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance calculate(
-      RefineryHydrotreatingSulfurNitrogenBalance materialBalance,
-      double hydrogenSupplyFactor, double makeupHydrogenMoleFraction,
-      double nonHydrogenMolarMassKgPerMol) {
+      RefineryHydrotreatingSulfurNitrogenBalance materialBalance, double hydrogenSupplyFactor,
+      double makeupHydrogenMoleFraction, double nonHydrogenMolarMassKgPerMol) {
     Objects.requireNonNull(materialBalance, "materialBalance");
     if (!Double.isFinite(hydrogenSupplyFactor) || hydrogenSupplyFactor < 1.0) {
-      throw new IllegalArgumentException(
-          "hydrogenSupplyFactor must be finite and at least one");
+      throw new IllegalArgumentException("hydrogenSupplyFactor must be finite and at least one");
     }
-    if (!Double.isFinite(makeupHydrogenMoleFraction)
-        || makeupHydrogenMoleFraction <= 0.0
+    if (!Double.isFinite(makeupHydrogenMoleFraction) || makeupHydrogenMoleFraction <= 0.0
         || makeupHydrogenMoleFraction > 1.0) {
-      throw new IllegalArgumentException(
-          "makeupHydrogenMoleFraction must be finite and in (0, 1]");
+      throw new IllegalArgumentException("makeupHydrogenMoleFraction must be finite and in (0, 1]");
     }
-    if (!Double.isFinite(nonHydrogenMolarMassKgPerMol)
-        || nonHydrogenMolarMassKgPerMol <= 0.0) {
-      throw new IllegalArgumentException(
-          "nonHydrogenMolarMassKgPerMol must be finite and positive");
+    if (!Double.isFinite(nonHydrogenMolarMassKgPerMol) || nonHydrogenMolarMassKgPerMol <= 0.0) {
+      throw new IllegalArgumentException("nonHydrogenMolarMassKgPerMol must be finite and positive");
     }
 
-    double hydrogenConsumedMoles =
-        materialBalance.getTotalHydrogenConsumedMassKg()
-            / RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
-    double hydrogenSuppliedMoles =
-        hydrogenConsumedMoles * hydrogenSupplyFactor;
-    double makeupGasMoles =
-        hydrogenSuppliedMoles / makeupHydrogenMoleFraction;
+    double hydrogenConsumedMoles = materialBalance.getTotalHydrogenConsumedMassKg()
+        / RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+    double hydrogenSuppliedMoles = hydrogenConsumedMoles * hydrogenSupplyFactor;
+    double makeupGasMoles = hydrogenSuppliedMoles / makeupHydrogenMoleFraction;
     double nonHydrogenMoles = makeupGasMoles - hydrogenSuppliedMoles;
-    double unreactedHydrogenMoles =
-        hydrogenSuppliedMoles - hydrogenConsumedMoles;
-    double hydrogenSulfideMoles =
-        materialBalance.getHydrogenSulfideProducedMassKg()
-            / RefineryHydrotreatingSulfurBalance
-                .HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
-    double ammoniaMoles =
-        materialBalance.getAmmoniaProducedMassKg()
-            / RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
+    double unreactedHydrogenMoles = hydrogenSuppliedMoles - hydrogenConsumedMoles;
+    double hydrogenSulfideMoles = materialBalance.getHydrogenSulfideProducedMassKg()
+        / RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
+    double ammoniaMoles = materialBalance.getAmmoniaProducedMassKg()
+        / RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
 
-    double makeupGasMassKg =
-        hydrogenSuppliedMoles
-                * RefineryHydrotreatingSulfurBalance
-                    .HYDROGEN_MOLAR_MASS_KG_PER_MOL
-            + nonHydrogenMoles * nonHydrogenMolarMassKgPerMol;
-    double outletGasMoles =
-        unreactedHydrogenMoles + hydrogenSulfideMoles + ammoniaMoles
-            + nonHydrogenMoles;
-    double outletGasMassKg =
-        unreactedHydrogenMoles
-                * RefineryHydrotreatingSulfurBalance
-                    .HYDROGEN_MOLAR_MASS_KG_PER_MOL
-            + materialBalance.getHydrogenSulfideProducedMassKg()
-            + materialBalance.getAmmoniaProducedMassKg()
-            + nonHydrogenMoles * nonHydrogenMolarMassKgPerMol;
+    double makeupGasMassKg = hydrogenSuppliedMoles * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        + nonHydrogenMoles * nonHydrogenMolarMassKgPerMol;
+    double outletGasMoles = unreactedHydrogenMoles + hydrogenSulfideMoles + ammoniaMoles + nonHydrogenMoles;
+    double outletGasMassKg = unreactedHydrogenMoles * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL
+        + materialBalance.getHydrogenSulfideProducedMassKg() + materialBalance.getAmmoniaProducedMassKg()
+        + nonHydrogenMoles * nonHydrogenMolarMassKgPerMol;
 
     double outletHydrogenMoleFraction = 0.0;
     double outletHydrogenSulfideMoleFraction = 0.0;
@@ -145,37 +113,25 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
     double outletNonHydrogenMoleFraction = 0.0;
     if (outletGasMoles > 0.0) {
       outletHydrogenMoleFraction = unreactedHydrogenMoles / outletGasMoles;
-      outletHydrogenSulfideMoleFraction =
-          hydrogenSulfideMoles / outletGasMoles;
+      outletHydrogenSulfideMoleFraction = hydrogenSulfideMoles / outletGasMoles;
       outletAmmoniaMoleFraction = ammoniaMoles / outletGasMoles;
       outletNonHydrogenMoleFraction = nonHydrogenMoles / outletGasMoles;
     }
 
-    double overallMassBalanceResidualKg =
-        materialBalance.getFeedMassKg() + makeupGasMassKg
-            - materialBalance.getProductMassKg() - outletGasMassKg;
-    double toleranceKg =
-        1.0e-12
-            * Math.max(1.0,
-                materialBalance.getFeedMassKg() + makeupGasMassKg);
-    if (!allFiniteNonNegative(hydrogenConsumedMoles, hydrogenSuppliedMoles,
-        unreactedHydrogenMoles, nonHydrogenMoles, makeupGasMoles,
-        makeupGasMassKg, hydrogenSulfideMoles, ammoniaMoles, outletGasMoles,
-        outletGasMassKg)
-        || hydrogenSuppliedMoles < hydrogenConsumedMoles
-        || Math.abs(overallMassBalanceResidualKg) > toleranceKg) {
-      throw new IllegalArgumentException(
-          "inputs do not define a closed coupled gas-supply balance");
+    double overallMassBalanceResidualKg = materialBalance.getFeedMassKg() + makeupGasMassKg
+        - materialBalance.getProductMassKg() - outletGasMassKg;
+    double toleranceKg = 1.0e-12 * Math.max(1.0, materialBalance.getFeedMassKg() + makeupGasMassKg);
+    if (!allFiniteNonNegative(hydrogenConsumedMoles, hydrogenSuppliedMoles, unreactedHydrogenMoles, nonHydrogenMoles,
+        makeupGasMoles, makeupGasMassKg, hydrogenSulfideMoles, ammoniaMoles, outletGasMoles, outletGasMassKg)
+        || hydrogenSuppliedMoles < hydrogenConsumedMoles || Math.abs(overallMassBalanceResidualKg) > toleranceKg) {
+      throw new IllegalArgumentException("inputs do not define a closed coupled gas-supply balance");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance(
-        materialBalance, hydrogenSupplyFactor, makeupHydrogenMoleFraction,
-        nonHydrogenMolarMassKgPerMol, hydrogenConsumedMoles,
-        hydrogenSuppliedMoles, unreactedHydrogenMoles, nonHydrogenMoles,
-        makeupGasMoles, makeupGasMassKg, hydrogenSulfideMoles, ammoniaMoles,
-        outletGasMoles, outletGasMassKg, outletHydrogenMoleFraction,
-        outletHydrogenSulfideMoleFraction, outletAmmoniaMoleFraction,
-        outletNonHydrogenMoleFraction, overallMassBalanceResidualKg);
+    return new RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance(materialBalance, hydrogenSupplyFactor,
+        makeupHydrogenMoleFraction, nonHydrogenMolarMassKgPerMol, hydrogenConsumedMoles, hydrogenSuppliedMoles,
+        unreactedHydrogenMoles, nonHydrogenMoles, makeupGasMoles, makeupGasMassKg, hydrogenSulfideMoles, ammoniaMoles,
+        outletGasMoles, outletGasMassKg, outletHydrogenMoleFraction, outletHydrogenSulfideMoleFraction,
+        outletAmmoniaMoleFraction, outletNonHydrogenMoleFraction, overallMassBalanceResidualKg);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
