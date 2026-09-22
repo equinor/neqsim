@@ -21,12 +21,12 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalanceTest {
     assertEquals(845.8106404908286, gas.getHydrogenSuppliedMoles(), 1.0e-9);
     assertEquals(939.7896005453651, gas.getMakeupGasMoles(), 1.0e-9);
     assertEquals(4.337722953544405, gas.getMakeupGasMassKg(), 1.0e-12);
-    assertEquals(580.3776982619736, gas.getOutletGasMoles(), 1.0e-9);
+    assertEquals(580.3772511399216, gas.getOutletGasMoles(), 1.0e-9);
     assertEquals(8.848274974893107, gas.getOutletGasMassKg(), 1.0e-12);
-    assertEquals(0.4857817262929141, gas.getOutletHydrogenMoleFraction(), 1.0e-12);
-    assertEquals(0.2187995665275781, gas.getOutletHydrogenSulfideMoleFraction(), 1.0e-12);
-    assertEquals(0.13349146508186968, gas.getOutletAmmoniaMoleFraction(), 1.0e-12);
-    assertEquals(0.16192724209763804, gas.getOutletNonHydrogenMoleFraction(), 1.0e-12);
+    assertEquals(0.4857821005386687, gas.getOutletHydrogenMoleFraction(), 1.0e-12);
+    assertEquals(0.21879896469154783, gas.getOutletHydrogenSulfideMoleFraction(), 1.0e-12);
+    assertEquals(0.13349156792356046, gas.getOutletAmmoniaMoleFraction(), 1.0e-12);
+    assertEquals(0.1619273668462229, gas.getOutletNonHydrogenMoleFraction(), 1.0e-12);
     assertEquals(1.0, gas.getOutletHydrogenMoleFraction() + gas.getOutletHydrogenSulfideMoleFraction()
         + gas.getOutletAmmoniaMoleFraction() + gas.getOutletNonHydrogenMoleFraction(), 1.0e-12);
     assertEquals(0.0, gas.getOverallMassBalanceResidualKg(), 1.0e-12);
