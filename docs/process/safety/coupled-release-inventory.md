@@ -1,15 +1,21 @@
 ---
-title: Coupled gas release and inventory depletion
-description: Rigid adiabatic gas inventory coupled to explicit release physics, native process dynamics, component and energy balances, and supplier-neutral source frames.
+title: Coupled release and inventory depletion
+description: Rigid adiabatic equilibrium inventory coupled to phase-selected release physics, native process dynamics, component and energy balances, and supplier-neutral source frames.
 ---
 
-# Coupled gas release and inventory depletion
+# Coupled release and inventory depletion
 
-`ReleaseInventory` is an opt-in process unit for one rigid, adiabatic, well-mixed gas
+`ReleaseInventory` is an opt-in process unit for one rigid, adiabatic, well-mixed equilibrium
 inventory and one short opening. Unlike a hypothetical source sample, its native
 `runTransient` removes mass and energy. The changed temperature, pressure and composition
 then determine the next release calculation. It works within both `ProcessSystem` and
 `ProcessModel`; neither container nor the existing separator/blowdown APIs are changed.
+
+The original constructor remains a single-gas compatibility API. An overload ending in an
+explicit `PhaseType` selects `GAS`, `OIL`, `LIQUID` or `AQUEOUS` withdrawal. The selected
+equilibrium phase supplies the upstream state and withdrawn composition; the entire remaining
+inventory is then reflashed. This is a boundary condition, not a level/geometry model: no
+entrainment, slip, interfacial transfer rate or automatic fallback phase is inferred.
 
 The constructor clones the supplied EOS system and scales its amount to the specified
 volume at its initial temperature and pressure. The supplied mole count defines composition,
@@ -22,22 +28,22 @@ activation remains `UNVERIFIED` and source-frame evidence remains `UNQUALIFIED`.
 
 ## Balance equations and numerical method
 
-For mass $m$ in kg, component mass fraction $w_i$, internal energy $U$ in J, fixed volume
-$V$ in m3, and release rate $\dot m$ in kg/s:
+For component inventory $m_i$ in kg, selected-phase component mass fraction $w_{i,s}$,
+internal energy $U$ in J, fixed volume $V$ in m3, and release rate $\dot m$ in kg/s:
 
-$$\frac{dm_i}{dt}=-w_i\dot m,\qquad \frac{dU}{dt}=-h_0\dot m,\qquad V=\mathrm{constant}$$
+$$\frac{dm_i}{dt}=-w_{i,s}\dot m,\qquad \frac{dU}{dt}=-h_{0,s}\dot m,\qquad V=\mathrm{constant}$$
 
-$h_0$ is the EOS upstream stagnation enthalpy in J/kg. The discharge removes enthalpy,
+$h_{0,s}$ is the selected phase's EOS upstream stagnation enthalpy in J/kg. The discharge removes enthalpy,
 including flow work; subtracting only specific internal energy would predict the wrong
 cooling. Enthalpy and internal energy can be negative under the selected EOS reference.
 Their signed balance is retained. No heat input, boundary work, inflow, kinetic inventory
 energy or potential-energy change is included.
 
-Each explicit Euler substep removes bulk-composition mass and integrated $h_0\dot m$,
+Each explicit Euler substep removes selected-phase composition and integrated $h_{0,s}\dot m$,
 then calls NeqSim's volume/internal-energy flash with explicit `m3` and `J` units.
 It verifies component, volume and energy closure to relative $10^{-7}$, including cumulative
 closure against the original inventory. The substep is limited by `maxSubstepS`, remaining
-duration, and 1% of current inventory mass. This bound prevents overdraw; it is **not** an
+duration, and 1% of current selected-phase mass. This bound prevents overdraw; it is **not** an
 accuracy estimate. Refine `maxSubstepS` and the external output timestep for each study.
 A call needing more than 10,000 substeps fails without committing this unit's state.
 
@@ -49,7 +55,7 @@ property fallback. Failure to meet it produces `INVENTORY_VU_REFINEMENT_FAILED`.
 number of VU solves is available through `getLastVolumeEnergySolves()` and frame provenance.
 
 The release model is explicitly selected. Its upstream pressure, temperature and enthalpy
-must match the inventory and its upstream/exit composition must match bulk withdrawal.
+must match the selected phase and its upstream/exit composition must match that phase's withdrawal.
 Exit static enthalpy plus specific kinetic energy must equal upstream stagnation enthalpy.
 Legacy `SCREENING_ONLY` or unresolved-station results are rejected. No alternate release
 model, property default or flash recovery is substituted.
@@ -80,6 +86,19 @@ vessel.setReleaseEnabled(false); // physically close this opening
 List<SourceTermFrame> isolated = session.step(0.5);
 ```
 
+For an equilibrium gas-over-liquid inventory, select the gas boundary explicitly:
+
+```java
+ReleaseInventory phaseSelected = new ReleaseInventory("two-phase", flashedFluid,
+    1.0, 0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    PhaseType.GAS);
+```
+
+Use the actual equilibrated phase type when selecting a hydrocarbon liquid (`OIL` or
+`LIQUID`). Construction rejects an absent or unsupported phase. If re-equilibration removes
+the selected phase during a transient call, the call fails atomically with
+`INVENTORY_SELECTED_PHASE_ABSENT`; callers must split the regime or select another assessed model.
+
 For an area-based model, add `process` under `"gas-area"`, construct the session from that
 `ProcessModel`, and use `session.addInventorySource("opening", "gas-area", "inventory")`.
 Keep dynamic mode enabled; this unit is constructed with `setCalculateSteadyState(false)`.
@@ -99,7 +118,10 @@ apply the frame rate as an additional withdrawal from this unit.
 second physical-source registration for the same unit. Existing `addSource` remains a
 hypothetical sample and does not enable inventory coupling. Schema v1 is unchanged.
 
-Coupled frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`, the integrator
+Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
+Explicit phase-selected frames carry
+`releaseBasis=COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY` and
+`inventoryWithdrawalPhase`. Both carry the integrator
 identity, inventory volume/time, cumulative released mass/enthalpy, and
 `rateTimeBasis=INSTANTANEOUS_AT_FRAME_TIME` in provenance. Evidence stays `UNQUALIFIED`.
 Process, equipment, calculation UUID and session sequence semantics are retained.
@@ -114,8 +136,10 @@ Opening/closure changes occur at step boundaries; split steps at known event tim
 | Condition | Behavior |
 |---|---|
 | Receiving pressure at or above initial inventory pressure | Valid zero flow; no reverse flow modeled. |
-| Substep would reduce pressure below receiving pressure | `RECEIVING_PRESSURE_CROSSED`; entire unit call rejected; reduce timestep. |
-| Condensation or any non-gas phase | `INVENTORY_REGIME_UNSUPPORTED`; no selective-phase or entrainment assumption invented. |
+| Substep would reduce pressure below receiving pressure | Bounded event location lands on receiving pressure; provenance records the physical release duration. |
+| Selected phase is absent initially | Construction rejects the configuration. |
+| Selected phase disappears after re-equilibration | `INVENTORY_SELECTED_PHASE_ABSENT`; the unit call commits no state. |
+| Reactions, forced phases, solids or hydrates | `INVENTORY_REGIME_UNSUPPORTED`; no fallback physics is invented. |
 | Invalid model, mismatched upstream state/composition, or screening result | Fail closed without committing inventory. |
 | Volume, component or energy closure failure | Fail closed, with the corresponding closure diagnostic. |
 | Native process step failure | Session emits `INVALID` without numeric source payload and becomes faulted. |
@@ -128,12 +152,19 @@ models must be deterministic and must not mutate themselves or the process durin
 
 ## Validation and applicability
 
-`ReleaseInventoryTest` checks multicomponent gas depletion using the homogeneous-equilibrium
-release model, component/energy/volume closure, cooling and decreasing release rate, input
+`ReleaseInventoryTest` checks multicomponent gas depletion and phase-selected gas-over-liquid
+and liquid withdrawal using the homogeneous-equilibrium release model, component/energy/volume closure, cooling and decreasing release rate, input
 immutability, cloning, zero flow, isolation/reopening, invalid steps, pressure-boundary
 rollback, injected mid-step failure, and both process containers. Actual frames, including
 disabled and failed cases, are validated against the bundled JSON Schema.
 
+Phase-selected source frames are schema-validated from both process containers. A three-level
+substep refinement checks convergent pressure for gas withdrawal from a methane/n-butane
+two-phase inventory, while released component mass verifies selection of the gas composition.
+For 0.04, 0.02 and 0.01 s maximum substeps over 0.2 s, the final pressures are
+998944.206, 998944.262 and 998944.290 Pa; the fine/coarse pressure-difference ratio is 0.500.
+CI retains the component withdrawals and energy residuals in
+`target/source-term-benchmarks/inventory-phase-selected-convergence.csv`.
 The capability regression checks both process containers and preserves the distinction
 between audited state ownership and unverified runtime activation. The focused safety workflow
 also runs `DynamicCapabilityBuiltInInventoryTest` to catch missing built-in registrations.
@@ -164,10 +195,10 @@ The local 0.05 s results at 10 s are:
 The fine/coarse pressure-difference ratio is approximately 0.499 in both cases. These results
 separate numerical refinement from the small real-EOS/constant-gamma reference difference.
 
-This increment covers a **single gas-phase inventory**. Multiphase storage/phase-selective
-withdrawal, pressure-equilibration event location, wall/fire heat transfer, pipe decompression,
-non-equilibrium transfer, mixture-specific solid risk, experimental qualification and the
-executed Colab demonstration remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
+This increment covers equilibrium, phase-selected withdrawal from a well-mixed rigid inventory.
+Phase level/geometry, entrainment and slip, finite-rate interfacial transfer, wall/fire heat transfer,
+pipe decompression, non-equilibrium transfer, mixture-specific solid risk and experimental qualification
+remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
 or independent safety/domain review is implied.
 \n### Receiving-pressure event provenance\n\n`inventoryPressureEquilibrationEvent` records whether the last successful transient call landed on the no-flow boundary. `inventoryReleaseDurationS` is the physical discharge duration within that caller timestep. Event trials use the same EOS, component removal and enthalpy balance as ordinary substeps; failed event location commits no state.\n

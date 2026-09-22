@@ -128,11 +128,13 @@ physical discharge and inventory balance in the process; sample the resulting tr
 check component/energy conservation and timestep sensitivity. Do not apply this source rate as
 an additional loss when the process already includes that discharge.
 
-For opt-in two-way gas depletion, use [ReleaseInventory and `addInventorySource`](coupled-release-inventory).
+For opt-in two-way depletion, use [ReleaseInventory and `addInventorySource`](coupled-release-inventory).
 The inventory removes component mass and stagnation enthalpy during native process stepping;
 the session exports the updated instantaneous source and cumulative balance provenance.
-That path reports `COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`. It is bounded to a rigid adiabatic
-single gas-phase inventory and has no automatic phase/model fallback.
+The compatibility path reports `COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`. The explicit
+phase-selected overload reports `COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY` plus
+`inventoryWithdrawalPhase`. Both are bounded to a rigid adiabatic equilibrium inventory and
+have no automatic entrainment, phase or release-model fallback.
 
 A sampled mass rate is not a timestep average or an integrated release mass. Retain the initial
 frame, integrate only over valid intervals using a documented quadrature, and refine timesteps

@@ -14,23 +14,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Rigid, adiabatic, well-mixed gas inventory with an explicitly selected short-opening release model.
+ * Rigid, adiabatic, well-mixed inventory with an explicitly selected withdrawal phase and short-opening release model.
  *
  * <p>
- * Native transient calls remove bulk-composition mass and upstream stagnation enthalpy, then solve the remaining EOS
- * volume/internal-energy state. Explicit Euler substeps are bounded by the configured maximum duration and one percent
- * of current mass. Every substep must close component, energy and volume balances. A failed call leaves this unit's
- * inventory, cumulative discharge, clock and calculation identity unchanged; the surrounding process need not be
- * transactional.
+ * Native transient calls remove selected-phase composition and upstream stagnation enthalpy, then solve the remaining
+ * EOS volume/internal-energy state. Explicit Euler substeps are bounded by the configured maximum duration and one
+ * percent of current selected-phase mass. Every substep must close component, energy and volume balances. A failed call
+ * leaves this unit's inventory, cumulative discharge, clock and calculation identity unchanged; the surrounding process
+ * need not be transactional.
  * </p>
  *
  * <p>
  * The supplied fluid is cloned and scaled to the specified volume at its initial temperature and pressure. Its original
- * mole count is not treated as a vessel size or flow rate. Only a single gas phase is supported. Condensation,
- * reacting/forced phases, solids, hydrates, heat input, inflow, selective phase withdrawal, pipe decompression and
- * non-equilibrium transfer are outside scope. A step crossing the receiving pressure is located by bounded bisection
- * and conservatively lands on the no-flow boundary while the process clock advances through the caller's full timestep.
- * Numerical closure does not confer engineering qualification.
+ * mole count is not treated as a vessel size or flow rate. The compatibility constructor retains the historical
+ * single-gas restriction; the phase-selective constructor accepts equilibrium gas, oil, generic-liquid or aqueous
+ * withdrawal from a fluid inventory containing only those phases. Reacting/forced phases, solids, hydrates, heat input,
+ * inflow, entrainment, pipe decompression and non-equilibrium transfer are outside scope. A step crossing the receiving
+ * pressure is located by bounded bisection and conservatively lands on the no-flow boundary while the process clock
+ * advances through the caller's full timestep. Numerical closure does not confer engineering qualification.
  * </p>
  */
 public final class ReleaseInventory extends ProcessEquipmentBaseClass {
@@ -45,6 +46,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private final double backPressurePa;
   private final double maxSubstepS;
   private final ReleaseFlowModel releaseModel;
+  private final PhaseType withdrawalPhaseType;
+  private final boolean phaseSelective;
   private final Map<String, Double> initialComponentMassKg;
   private final double initialEnergyJ;
   private SystemInterface inventory;
@@ -75,25 +78,70 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
    */
   public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        PhaseType.GAS, false);
+  }
+
+  /**
+   * Creates an independently owned equilibrium inventory with explicit phase withdrawal.
+   *
+   * <p>
+   * The selected phase supplies the release-model upstream state, component withdrawal fractions and stagnation
+   * enthalpy. The remaining total inventory is re-equilibrated at fixed volume and internal energy after every substep.
+   * No entrainment, slip, interfacial transfer rate or fallback phase is inferred.
+   * </p>
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial equilibrium composition, EOS, temperature in K and absolute pressure
+   * @param volumeM3 fixed vessel volume in m3
+   * @param diameterM physical opening diameter in m
+   * @param dischargeCoefficient discharge coefficient in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param releaseModel caller-selected release model; screening results are rejected
+   * @param maxSubstepS largest Euler substep in seconds, to be refined for convergence
+   * @param withdrawalPhaseType explicitly selected GAS, OIL, LIQUID or AQUEOUS inventory phase
+   * @throws IllegalArgumentException for invalid configuration or unsupported initial state
+   * @throws IllegalStateException if initialization or its closure checks fail
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
+      PhaseType withdrawalPhaseType) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        withdrawalPhaseType, true);
+  }
+
+  private ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
+      PhaseType withdrawalPhaseType, boolean phaseSelective) {
     super(name);
     this.volumeM3 = ReleaseFlowRequest.positive(volumeM3, "volumeM3");
     this.maxSubstepS = ReleaseFlowRequest.positive(maxSubstepS, "maxSubstepS");
     this.releaseModel = Objects.requireNonNull(releaseModel, "releaseModel");
+    this.withdrawalPhaseType = requireWithdrawalPhase(withdrawalPhaseType);
+    this.phaseSelective = phaseSelective;
     ReleaseFlowRequest configuration = new ReleaseFlowRequest(initialFluid, diameterM, dischargeCoefficient,
         backPressurePa);
     this.diameterM = configuration.getDiameterM();
     this.dischargeCoefficient = configuration.getDischargeCoefficient();
     this.backPressurePa = configuration.getBackPressurePa();
     inventory = configuration.getFluid();
-    requireGas(inventory, false);
+    requireInventory(inventory, false);
     new ThermodynamicOperations(inventory).TPflash();
     inventory.init(3);
-    requireGas(inventory, true);
+    requireInventory(inventory, true);
+    requireSelectedPhase(inventory, true);
+    if (!phaseSelective) {
+      requireSingleGas(inventory);
+    }
     double initialVolume = ReleaseFlowRequest.positive(inventory.getVolume("m3"), "initial volume");
     inventory.setTotalNumberOfMoles(inventory.getTotalNumberOfMoles() * volumeM3 / initialVolume);
     new ThermodynamicOperations(inventory).TPflash();
     inventory.init(3);
-    requireGas(inventory, true);
+    requireInventory(inventory, true);
+    requireSelectedPhase(inventory, true);
+    if (!phaseSelective) {
+      requireSingleGas(inventory);
+    }
     close(inventory.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
     initialComponentMassKg = componentMasses(inventory);
     initialEnergyJ = finite(inventory.getInternalEnergy("J"), "initial internal energy");
@@ -165,8 +213,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       if (rate == 0.0) {
         break;
       }
-      double mass = candidate.getMass("kg");
-      double h = Math.min(Math.min(maxSubstepS, dt - elapsed), 0.01 * mass / rate);
+      double selectedPhaseMass = selectedPhase(candidate).getMass("kg");
+      double h = Math.min(Math.min(maxSubstepS, dt - elapsed), 0.01 * selectedPhaseMass / rate);
       if (!(h > 0.0) || elapsed + h <= elapsed) {
         throw new IllegalStateException("INVENTORY_TIMESTEP_UNREPRESENTABLE");
       }
@@ -184,7 +232,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       }
       Map<String, Double> after = componentMasses(step.next);
       for (String component : step.beforeComponentMassKg.keySet()) {
-        double loss = step.removedMassKg * step.beforeComponentMassKg.get(component) / step.beforeMassKg;
+        double loss = step.removedComponentMassKg.get(component);
         close(after.get(component) + loss, step.beforeComponentMassKg.get(component),
             step.beforeComponentMassKg.get(component), "COMPONENT_CLOSURE_FAILED");
         componentLoss.put(component, componentLoss.get(component) + loss);
@@ -228,18 +276,41 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private InventoryStep advance(SystemInterface candidate, double rate, double durationS) {
     double beforeMass = candidate.getMass("kg");
     double removedMass = rate * durationS;
-    double outflowEnergy = removedMass * candidate.getEnthalpy("J/kg");
+    SystemInterface withdrawal = selectedPhase(candidate);
+    double withdrawalMass = withdrawal.getMass("kg");
+    if (!(removedMass > 0.0) || removedMass >= withdrawalMass) {
+      throw new IllegalStateException("INVENTORY_SELECTED_PHASE_OVERDRAW");
+    }
+    double outflowEnergy = removedMass * withdrawal.getEnthalpy("J/kg");
     double beforeEnergy = finite(candidate.getInternalEnergy("J"), "internal energy");
     double targetEnergy = finite(beforeEnergy - outflowEnergy, "target energy");
     Map<String, Double> beforeComponents = componentMasses(candidate);
+    Map<String, Double> withdrawalComponents = componentMasses(withdrawal);
+    Map<String, Double> removedComponents = new TreeMap<String, Double>();
+    double[] remainingMoleFractions = new double[candidate.getNumberOfComponents()];
+    double remainingMoles = 0.0;
+    for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+      String name = candidate.getComponent(component).getComponentName();
+      double componentLoss = removedMass * withdrawalComponents.get(name) / withdrawalMass;
+      double remainingMass = beforeComponents.get(name) - componentLoss;
+      if (!Double.isFinite(remainingMass) || remainingMass < 0.0) {
+        throw new IllegalStateException("INVENTORY_COMPONENT_OVERDRAW: " + name);
+      }
+      removedComponents.put(name, componentLoss);
+      remainingMoleFractions[component] = remainingMass / candidate.getComponent(component).getMolarMass();
+      remainingMoles += remainingMoleFractions[component];
+    }
+    ReleaseFlowRequest.positive(remainingMoles, "remaining inventory moles");
     SystemInterface next = candidate.clone();
-    next.setTotalNumberOfMoles(candidate.getTotalNumberOfMoles() * (1.0 - removedMass / beforeMass));
+    next.setTotalNumberOfMoles(remainingMoles);
+    next.setMolarComposition(remainingMoleFractions);
     int solves = solveVolumeEnergy(next, targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)));
-    requireGas(next, true);
+    requireInventory(next, true);
     close(next.getVolume("m3"), volumeM3, volumeM3, "VOLUME_CLOSURE_FAILED");
     close(next.getInternalEnergy("J"), targetEnergy, Math.max(Math.abs(beforeEnergy), Math.abs(outflowEnergy)),
         "ENERGY_CLOSURE_FAILED");
-    return new InventoryStep(next, beforeComponents, beforeMass, removedMass, outflowEnergy, durationS, solves);
+    close(next.getMass("kg") + removedMass, beforeMass, beforeMass, "MASS_CLOSURE_FAILED");
+    return new InventoryStep(next, beforeComponents, removedComponents, removedMass, outflowEnergy, durationS, solves);
   }
 
   private PressureEvent locateReceivingPressureEvent(SystemInterface candidate, double rate, double upperDurationS) {
@@ -269,6 +340,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   }
 
   private ReleaseFlowResult calculate(SystemInterface fluid) {
+    SystemInterface withdrawal = selectedPhase(fluid);
     ReleaseFlowResult result = releaseModel.calculate(request(fluid));
     if (result == null || !result.isUsable() || !releaseModel.getModelId().equals(result.getModelId())
         || !releaseModel.getModelVersion().equals(result.getModelVersion())) {
@@ -280,29 +352,30 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       }
     }
     ReleaseState upstream = result.getStations().get(Station.UPSTREAM_STAGNATION);
-    close(upstream.getPressurePa(), fluid.getPressure() * 1e5, upstream.getPressurePa(), "RELEASE_STATE_MISMATCH");
-    close(upstream.getTemperatureK(), fluid.getTemperature(), fluid.getTemperature(), "RELEASE_STATE_MISMATCH");
-    close(upstream.getEnthalpyJkg(), fluid.getEnthalpy("J/kg"), Math.abs(fluid.getEnthalpy("J/kg")),
+    close(upstream.getPressurePa(), withdrawal.getPressure() * 1e5, upstream.getPressurePa(), "RELEASE_STATE_MISMATCH");
+    close(upstream.getTemperatureK(), withdrawal.getTemperature(), withdrawal.getTemperature(),
+        "RELEASE_STATE_MISMATCH");
+    close(upstream.getEnthalpyJkg(), withdrawal.getEnthalpy("J/kg"), Math.abs(withdrawal.getEnthalpy("J/kg")),
         "RELEASE_ENERGY_MISMATCH");
     ReleaseState exit = result.getStations().get(Station.ORIFICE_EXIT);
     close(exit.getEnthalpyJkg() + 0.5 * exit.getVelocityMs() * exit.getVelocityMs(), upstream.getEnthalpyJkg(),
         Math.max(Math.abs(upstream.getEnthalpyJkg()), exit.getVelocityMs() * exit.getVelocityMs()),
         "RELEASE_ENERGY_MISMATCH");
-    Map<String, Double> mass = componentMasses(fluid);
+    Map<String, Double> mass = componentMasses(withdrawal);
     for (Station station : new Station[] {Station.UPSTREAM_STAGNATION, Station.ORIFICE_EXIT}) {
       Map<String, Double> fractions = result.getStations().get(station).getComponentMassFractions();
       if (!fractions.keySet().equals(mass.keySet())) {
         throw new IllegalStateException("RELEASE_COMPOSITION_MISMATCH");
       }
       for (String name : mass.keySet()) {
-        close(fractions.get(name), mass.get(name) / fluid.getMass("kg"), 1.0, "RELEASE_COMPOSITION_MISMATCH");
+        close(fractions.get(name), mass.get(name) / withdrawal.getMass("kg"), 1.0, "RELEASE_COMPOSITION_MISMATCH");
       }
     }
     return result;
   }
 
   private ReleaseFlowRequest request(SystemInterface fluid) {
-    return new ReleaseFlowRequest(fluid, diameterM, dischargeCoefficient, backPressurePa);
+    return new ReleaseFlowRequest(selectedPhase(fluid), diameterM, dischargeCoefficient, backPressurePa);
   }
 
   private int solveVolumeEnergy(SystemInterface fluid, double targetEnergy, double energyScale) {
@@ -311,7 +384,7 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     for (int solve = 1; solve <= 32; solve++) {
       new ThermodynamicOperations(fluid).VUflash(volumeM3, targetEnergy, "m3", "J");
       fluid.init(3);
-      requireGas(fluid, true);
+      requireInventory(fluid, true);
       double volumeError = Math.abs(fluid.getVolume("m3") - volumeM3) / volumeM3;
       double energyError = Math.abs(fluid.getInternalEnergy("J") - targetEnergy) / Math.max(1e-10, energyScale);
       if (volumeError <= 1e-11 && energyError <= 1e-11) {
@@ -321,11 +394,17 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     throw new IllegalStateException("INVENTORY_VU_REFINEMENT_FAILED: strict volume/energy residuals not reached");
   }
 
-  private static void requireGas(SystemInterface fluid, boolean equilibrated) {
+  private static PhaseType requireWithdrawalPhase(PhaseType type) {
+    if (type != PhaseType.GAS && type != PhaseType.OIL && type != PhaseType.LIQUID && type != PhaseType.AQUEOUS) {
+      throw new IllegalArgumentException("INVENTORY_WITHDRAWAL_PHASE_UNSUPPORTED: " + type);
+    }
+    return type;
+  }
+
+  private void requireInventory(SystemInterface fluid, boolean equilibrated) {
     if (fluid.isChemicalSystem() || fluid.isForcePhaseTypes() || fluid.doSolidPhaseCheck() || fluid.getHydrateCheck()
-        || (equilibrated && (fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != PhaseType.GAS))) {
-      throw new IllegalArgumentException(
-          "INVENTORY_REGIME_UNSUPPORTED: unforced, nonreacting single gas phase required");
+        || fluid.getTotalNumberOfMoles() <= 0.0) {
+      throw new IllegalArgumentException("INVENTORY_REGIME_UNSUPPORTED: unforced, nonreacting fluid phases required");
     }
     ReleaseFlowRequest.positive(fluid.getTotalNumberOfMoles(), "inventory moles");
     ReleaseFlowRequest.positive(fluid.getTemperature(), "inventory temperature");
@@ -333,7 +412,45 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     if (equilibrated) {
       ReleaseFlowRequest.positive(fluid.getMass("kg"), "inventory mass");
       ReleaseState.fromFluid(fluid, 0.0);
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        PhaseType type = fluid.getPhase(phase).getType();
+        requireWithdrawalPhase(type);
+      }
     }
+  }
+
+  private void requireSelectedPhase(SystemInterface fluid, boolean configuration) {
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      if (fluid.getPhase(phase).getType() == withdrawalPhaseType) {
+        return;
+      }
+    }
+    String message = "INVENTORY_SELECTED_PHASE_ABSENT: " + withdrawalPhaseType;
+    if (configuration) {
+      throw new IllegalArgumentException(message);
+    }
+    throw new IllegalStateException(message);
+  }
+
+  private static void requireSingleGas(SystemInterface fluid) {
+    if (fluid.getNumberOfPhases() != 1 || fluid.getPhase(0).getType() != PhaseType.GAS) {
+      throw new IllegalArgumentException(
+          "INVENTORY_REGIME_UNSUPPORTED: compatibility constructor requires a single gas phase");
+    }
+  }
+
+  private SystemInterface selectedPhase(SystemInterface fluid) {
+    requireInventory(fluid, true);
+    requireSelectedPhase(fluid, false);
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      if (fluid.getPhase(phase).getType() == withdrawalPhaseType) {
+        SystemInterface selected = fluid.phaseToSystem(phase);
+        selected.init(3);
+        ReleaseFlowRequest.positive(selected.getMass("kg"), "selected phase mass");
+        return selected;
+      }
+    }
+    throw new IllegalStateException("INVENTORY_SELECTED_PHASE_ABSENT: " + withdrawalPhaseType);
   }
 
   private static Map<String, Double> componentMasses(SystemInterface fluid) {
@@ -401,6 +518,16 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     return releaseModel;
   }
 
+  /** @return explicitly selected inventory withdrawal phase */
+  public PhaseType getWithdrawalPhaseType() {
+    return withdrawalPhaseType;
+  }
+
+  /** @return true when constructed with the explicit phase-selective API */
+  public boolean isPhaseSelective() {
+    return phaseSelective;
+  }
+
   /** @return configured maximum integration substep in seconds */
   public double getMaxSubstepS() {
     return maxSubstepS;
@@ -446,17 +573,18 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private static final class InventoryStep {
     private final SystemInterface next;
     private final Map<String, Double> beforeComponentMassKg;
-    private final double beforeMassKg;
+    private final Map<String, Double> removedComponentMassKg;
     private final double removedMassKg;
     private final double outflowEnergyJ;
     private final double durationS;
     private final int volumeEnergySolves;
 
-    private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg, double beforeMassKg,
-        double removedMassKg, double outflowEnergyJ, double durationS, int volumeEnergySolves) {
+    private InventoryStep(SystemInterface next, Map<String, Double> beforeComponentMassKg,
+        Map<String, Double> removedComponentMassKg, double removedMassKg, double outflowEnergyJ, double durationS,
+        int volumeEnergySolves) {
       this.next = next;
       this.beforeComponentMassKg = beforeComponentMassKg;
-      this.beforeMassKg = beforeMassKg;
+      this.removedComponentMassKg = removedComponentMassKg;
       this.removedMassKg = removedMassKg;
       this.outflowEnergyJ = outflowEnergyJ;
       this.durationS = durationS;

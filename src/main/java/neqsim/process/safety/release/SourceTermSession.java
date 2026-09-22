@@ -548,8 +548,11 @@ public final class SourceTermSession {
     provenance.put("equipment", source.unitName);
     provenance.put("samplingPoint", source.outletIndex < 0 ? "EQUIPMENT_FLUID" : "OUTLET_" + source.outletIndex);
     provenance.put("mode", mode);
-    provenance.put("releaseBasis", source.inventorySource ? "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY"
-        : "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
+    provenance.put("releaseBasis",
+        source.inventorySource
+            ? (((ReleaseInventory) source.unit).isPhaseSelective() ? "COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY"
+                : "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY")
+            : "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
     if (source.inventorySource) {
       ReleaseInventory.Balance balance = ((ReleaseInventory) source.unit).getBalance();
       provenance.put("inventoryTimeS", Double.toString(balance.getTimeS()));
@@ -565,6 +568,7 @@ public final class SourceTermSession {
           Boolean.toString(((ReleaseInventory) source.unit).hadPressureEquilibrationEvent()));
       provenance.put("inventoryReleaseDurationS",
           Double.toString(((ReleaseInventory) source.unit).getLastReleaseDurationS()));
+      provenance.put("inventoryWithdrawalPhase", ((ReleaseInventory) source.unit).getWithdrawalPhaseType().name());
       provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
     }
     UUID areaId = source.area.getCalculationIdentifier();
