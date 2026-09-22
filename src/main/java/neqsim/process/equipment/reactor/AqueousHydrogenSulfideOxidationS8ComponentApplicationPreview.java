@@ -1,1 +1,120 @@
-cGFja2FnZSBuZXFzaW0ucHJvY2Vzcy5lcXVpcG1lbnQucmVhY3RvcjsKCmltcG9ydCBqYXZhLmlvLlNlcmlhbGl6YWJsZTsKaW1wb3J0IG5lcXNpbS50aGVybW8uc3lzdGVtLlN5c3RlbUludGVyZmFjZTsKCi8qKgogKiBBcHBsaWVzIGEgdmVyaWZpZWQgUzggY29tcG9uZW50LWFkZGl0aW9uIHBsYW4gdG8gYW4gaW5kZXBlbmRlbnQgdGhlcm1vZHluYW1pYy1zeXN0ZW0gY2xvbmUuCiAqCiAqIDxwPgogKiBUaGUgY2FsbGVyLW93bmVkIHByaW9yIHRhcmdldCBpcyBuZXZlciBtdXRhdGVkLiBUaGUgY2FuZGlkYXRlIGlzIGluaXRpYWxpemVkIGZvciBjb21wb25lbnQKICogYm9va2tlZXBpbmcgYW5kIHZlcmlmaWVkIHRocm91Z2gKICoge0BsaW5rIEFxdWVvdXNIeWRyb2dlblN1bGZpZGVPeGlkYXRpb25TOENvbXBvbmVudEFwcGxpY2F0aW9uUmVjZWlwdH07IG5vIHRoZXJtb2R5bmFtaWMgZmxhc2ggaXMKICogcnVuLiBFdmVyeSBjYW5kaWRhdGUgcmV0dXJuZWQgdG8gYSBjYWxsZXIgaXMgYW5vdGhlciBkZWZlbnNpdmUgY2xvbmUuCiAqIDwvcD4KICoKICogQGF1dGhvciBlc29sCiAqIEB2ZXJzaW9uICRJZDogJAogKi8KcHVibGljIGZpbmFsIGNsYXNzIEFxdWVvdXNIeWRyb2dlblN1bGZpZGVPeGlkYXRpb25TOENvbXBvbmVudEFwcGxpY2F0aW9uUHJldmlldyB7CiAgcHJpdmF0ZSBBcXVlb3VzSHlkcm9nZW5TdWxmaWRlT3hpZGF0aW9uUzhDb21wb25lbnRBcHBsaWNhdGlvblByZXZpZXcoKSB7fQoKICAvKioKICAgKiBQcmV2aWV3IG9uZSB0YXJnZXQtc2NvcGVkIFM4IGNvbXBvbmVudC1hZGRpdGlvbiBwbGFuIG9uIGFuIGluZGVwZW5kZW50IGNsb25lLgogICAqCiAgICogQHBhcmFtIHBsYW4gdmVyaWZpZWQgdGFyZ2V0LXNjb3BlZCBjb21wb25lbnQtYWRkaXRpb24gcGxhbgogICAqIEBwYXJhbSBvYnNlcnZlZFRhcmdldFN0YXRlSWRlbnRpZmllciBpZGVudGlmaWVyIG9ic2VydmVkIGZvciB0aGUgY2FsbGVyLW93bmVkIHByaW9yIHRhcmdldAogICAqIEBwYXJhbSBvYnNlcnZlZEFwcGxpY2F0aW9uSWRlbXBvdGVuY3lLZXkgaWRlbXBvdGVuY3kga2V5IG9ic2VydmVkIGZvciB0aGlzIHByZXZpZXcKICAgKiBAcGFyYW0gcHJpb3JUYXJnZXQgY2FsbGVyLW93bmVkIHRhcmdldCBiZWZvcmUgdGhlIHByb3Bvc2VkIGFkZGl0aW9uCiAgICogQHJldHVybiBkZWZlbnNpdmUgY2FuZGlkYXRlIHNuYXBzaG90IGFuZCBpbW11dGFibGUgYXBwbGljYXRpb24gZXZpZGVuY2UKICAgKiBAdGhyb3dzIElsbGVnYWxBcmd1bWVudEV4Y2VwdGlvbiBpZiBpbnB1dHMsIGNsb25lIGluZGVwZW5kZW5jZSwgY29tcG9uZW50IGFwcGxpY2F0aW9uLCBvcgogICAqICAgICBpbnZlbnRvcnkgdmVyaWZpY2F0aW9uIGZhaWwKICAgKi8KICBwdWJsaWMgc3RhdGljIFJlc3VsdCBhcHBseVRvQ2xvbmUoCiAgICAgIEFxdWVvdXNIeWRyb2dlblN1bGZpZGVPeGlkYXRpb25TOENvbXBvbmVudEFkZGl0aW9uUGxhbi5SZXN1bHQgcGxhbiwKICAgICAgU3RyaW5nIG9ic2VydmVkVGFyZ2V0U3RhdGVJZGVudGlmaWVyLAogICAgICBTdHJpbmcgb2JzZXJ2ZWRBcHBsaWNhdGlvbklkZW1wb3RlbmN5S2V5LAogICAgICBTeXN0ZW1JbnRlcmZhY2UgcHJpb3JUYXJnZXQpIHsKICAgIHJlcXVpcmVNYXRjaGluZ1BsYW5JZGVudGl0eSgKICAgICAgICBwbGFuLCBvYnNlcnZlZFRhcmdldFN0YXRlSWRlbnRpZmllciwgb2JzZXJ2ZWRBcHBsaWNhdGlvbklkZW1wb3RlbmN5S2V5KTsKICAgIGlmIChwcmlvclRhcmdldCA9PSBudWxsKSB7CiAgICAgIHRocm93IG5ldyBJbGxlZ2FsQXJndW1lbnRFeGNlcHRpb24oIlByaW9yIHRhcmdldCBzeXN0ZW0gY2Fubm90IGJlIG51bGwiKTsKICAgIH0KCiAgICBTeXN0ZW1JbnRlcmZhY2UgY2FuZGlkYXRlVGFyZ2V0ID0gaW5kZXBlbmRlbnRDbG9uZShwcmlvclRhcmdldCwgIlByaW9yIHRhcmdldCIpOwogICAgaWYgKHBsYW4ucmVxdWlyZXNNdXRhdGlvbigpKSB7CiAgICAgIGNhbmRpZGF0ZVRhcmdldC5hZGRDb21wb25lbnQocGxhbi5nZXRDb21wb25lbnROYW1lKCksIHBsYW4uZ2V0VHJhbnNmZXJyZWRTOEFtb3VudE1vbCgpKTsKICAgICAgY2FuZGlkYXRlVGFyZ2V0LmluaXQoMCk7CiAgICB9CgogICAgQXF1ZW91c0h5ZHJvZ2VuU3VsZmlkZU94aWRhdGlvblM4Q29tcG9uZW50QXBwbGljYXRpb25SZWNlaXB0LlJlc3VsdCByZWNlaXB0ID0KICAgICAgICBBcXVlb3VzSHlkcm9nZW5TdWxmaWRlT3hpZGF0aW9uUzhDb21wb25lbnRBcHBsaWNhdGlvblJlY2VpcHQudmVyaWZ5KAogICAgICAgICAgICBwbGFuLAogICAgICAgICAgICBvYnNlcnZlZFRhcmdldFN0YXRlSWRlbnRpZmllciwKICAgICAgICAgICAgb2JzZXJ2ZWRBcHBsaWNhdGlvbklkZW1wb3RlbmN5S2V5LAogICAgICAgICAgICBwcmlvclRhcmdldCwKICAgICAgICAgICAgY2FuZGlkYXRlVGFyZ2V0KTsKICAgIHJldHVybiBuZXcgUmVzdWx0KHJlY2VpcHQsIGNhbmRpZGF0ZVRhcmdldCk7CiAgfQoKICBwcml2YXRlIHN0YXRpYyB2b2lkIHJlcXVpcmVNYXRjaGluZ1BsYW5JZGVudGl0eSgKICAgICAgQXF1ZW91c0h5ZHJvZ2VuU3VsZmlkZU94aWRhdGlvblM4Q29tcG9uZW50QWRkaXRpb25QbGFuLlJlc3VsdCBwbGFuLAogICAgICBTdHJpbmcgb2JzZXJ2ZWRUYXJnZXRTdGF0ZUlkZW50aWZpZXIsCiAgICAgIFN0cmluZyBvYnNlcnZlZEFwcGxpY2F0aW9uSWRlbXBvdGVuY3lLZXkpIHsKICAgIGlmIChwbGFuID09IG51bGwpIHsKICAgICAgdGhyb3cgbmV3IElsbGVnYWxBcmd1bWVudEV4Y2VwdGlvbigiUzggY29tcG9uZW50LWFkZGl0aW9uIHBsYW4gY2Fubm90IGJlIG51bGwiKTsKICAgIH0KICAgIGlmIChvYnNlcnZlZFRhcmdldFN0YXRlSWRlbnRpZmllciA9PSBudWxsCiAgICAgICAgfHwgIXBsYW4uZ2V0VGFyZ2V0U3RhdGVJZGVudGlmaWVyKCkuZXF1YWxzKG9ic2VydmVkVGFyZ2V0U3RhdGVJZGVudGlmaWVyKSkgewogICAgICB0aHJvdyBuZXcgSWxsZWdhbEFyZ3VtZW50RXhjZXB0aW9uKAogICAgICAgICAgIlRhcmdldC1zdGF0ZSBpZGVudGlmaWVyIGRvZXMgbm90IG1hdGNoIHRoZSBjb21wb25lbnQtYWRkaXRpb24gcGxhbiIpOwogICAgfQogICAgaWYgKG9ic2VydmVkQXBwbGljYXRpb25JZGVtcG90ZW5jeUtleSA9PSBudWxsCiAgICAgICAgfHwgIXBsYW4uZ2V0QXBwbGljYXRpb25JZGVtcG90ZW5jeUtleSgpLmVxdWFscyhvYnNlcnZlZEFwcGxpY2F0aW9uSWRlbXBvdGVuY3lLZXkpKSB7CiAgICAgIHRocm93IG5ldyBJbGxlZ2FsQXJndW1lbnRFeGNlcHRpb24oCiAgICAgICAgICAiQXBwbGljYXRpb24gaWRlbXBvdGVuY3kga2V5IGRvZXMgbm90IG1hdGNoIHRoZSBjb21wb25lbnQtYWRkaXRpb24gcGxhbiIpOwogICAgfQogIH0KCiAgcHJpdmF0ZSBzdGF0aWMgU3lzdGVtSW50ZXJmYWNlIGluZGVwZW5kZW50Q2xvbmUoU3lzdGVtSW50ZXJmYWNlIHNvdXJjZSwgU3RyaW5nIG5hbWUpIHsKICAgIFN5c3RlbUludGVyZmFjZSBjb3B5ID0gc291cmNlLmNsb25lKCk7CiAgICBpZiAoY29weSA9PSBudWxsKSB7CiAgICAgIHRocm93IG5ldyBJbGxlZ2FsQXJndW1lbnRFeGNlcHRpb24obmFtZSArICIgY2xvbmUgY2Fubm90IGJlIG51bGwiKTsKICAgIH0KICAgIGlmIChjb3B5ID09IHNvdXJjZSkgewogICAgICB0aHJvdyBuZXcgSWxsZWdhbEFyZ3VtZW50RXhjZXB0aW9uKG5hbWUgKyAiIGNsb25lIG11c3QgYmUgYW4gaW5kZXBlbmRlbnQgb2JqZWN0Iik7CiAgICB9CiAgICByZXR1cm4gY29weTsKICB9CgogIC8qKiBTZXJpYWxpemFibGUgcHJldmlldyBjb250YWluaW5nIGltbXV0YWJsZSBldmlkZW5jZSBhbmQgYSBkZWZlbnNpdmVseSBjbG9uZWQgY2FuZGlkYXRlLiAqLwogIHB1YmxpYyBzdGF0aWMgZmluYWwgY2xhc3MgUmVzdWx0IGltcGxlbWVudHMgU2VyaWFsaXphYmxlIHsKICAgIHByaXZhdGUgc3RhdGljIGZpbmFsIGxvbmcgc2VyaWFsVmVyc2lvblVJRCA9IDEwMDBMOwoKICAgIHByaXZhdGUgZmluYWwgQXF1ZW91c0h5ZHJvZ2VuU3VsZmlkZU94aWRhdGlvblM4Q29tcG9uZW50QXBwbGljYXRpb25SZWNlaXB0LlJlc3VsdCByZWNlaXB0OwogICAgcHJpdmF0ZSBmaW5hbCBTeXN0ZW1JbnRlcmZhY2UgY2FuZGlkYXRlU25hcHNob3Q7CgogICAgcHJpdmF0ZSBSZXN1bHQoCiAgICAgICAgQXF1ZW91c0h5ZHJvZ2VuU3VsZmlkZU94aWRhdGlvblM4Q29tcG9uZW50QXBwbGljYXRpb25SZWNlaXB0LlJlc3VsdCByZWNlaXB0LAogICAgICAgIFN5c3RlbUludGVyZmFjZSBjYW5kaWRhdGVUYXJnZXQpIHsKICAgICAgdGhpcy5yZWNlaXB0ID0gcmVjZWlwdDsKICAgICAgdGhpcy5jYW5kaWRhdGVTbmFwc2hvdCA9IGluZGVwZW5kZW50Q2xvbmUoY2FuZGlkYXRlVGFyZ2V0LCAiQ2FuZGlkYXRlIHRhcmdldCIpOwogICAgfQoKICAgIC8qKiBAcmV0dXJuIGltbXV0YWJsZSBldmlkZW5jZSB0aGF0IHRoZSBjYW5kaWRhdGUgaW52ZW50b3J5IG1hdGNoZXMgdGhlIHBsYW4uICovCiAgICBwdWJsaWMgQXF1ZW91c0h5ZHJvZ2VuU3VsZmlkZU94aWRhdGlvblM4Q29tcG9uZW50QXBwbGljYXRpb25SZWNlaXB0LlJlc3VsdAogICAgICAgIGdldEFwcGxpY2F0aW9uUmVjZWlwdCgpIHsKICAgICAgcmV0dXJuIHJlY2VpcHQ7CiAgICB9CgogICAgLyoqCiAgICAgKiBSZXR1cm4gYW4gaW5kZXBlbmRlbnQgY29weSBvZiB0aGUgcHJldmlld2VkIGNhbmRpZGF0ZS4KICAgICAqCiAgICAgKiBAcmV0dXJuIGRlZmVuc2l2ZSB0aGVybW9keW5hbWljLXN5c3RlbSBjbG9uZSBjb250YWluaW5nIHRoZSBwbGFubmVkIFM4IGFkZGl0aW9uCiAgICAgKiBAdGhyb3dzIElsbGVnYWxBcmd1bWVudEV4Y2VwdGlvbiBpZiB0aGUgc3RvcmVkIGNhbmRpZGF0ZSBjYW5ub3QgcHJvZHVjZSBhbiBpbmRlcGVuZGVudCBjbG9uZQogICAgICovCiAgICBwdWJsaWMgU3lzdGVtSW50ZXJmYWNlIGdldENhbmRpZGF0ZVRhcmdldCgpIHsKICAgICAgcmV0dXJuIGluZGVwZW5kZW50Q2xvbmUoY2FuZGlkYXRlU25hcHNob3QsICJTdG9yZWQgY2FuZGlkYXRlIHRhcmdldCIpOwogICAgfQogIH0KfQo=
+package neqsim.process.equipment.reactor;
+
+import java.io.Serializable;
+import neqsim.thermo.system.SystemInterface;
+
+/**
+ * Applies a verified S8 component-addition plan to an independent thermodynamic-system clone.
+ *
+ * <p>
+ * The caller-owned prior target is never mutated. The candidate is initialized for component
+ * bookkeeping and verified through
+ * {@link AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt}; no thermodynamic flash is
+ * run. Every candidate returned to a caller is another defensive clone.
+ * </p>
+ *
+ * @author esol
+ * @version $Id: $
+ */
+public final class AqueousHydrogenSulfideOxidationS8ComponentApplicationPreview {
+  private AqueousHydrogenSulfideOxidationS8ComponentApplicationPreview() {}
+
+  /**
+   * Preview one target-scoped S8 component-addition plan on an independent clone.
+   *
+   * @param plan verified target-scoped component-addition plan
+   * @param observedTargetStateIdentifier identifier observed for the caller-owned prior target
+   * @param observedApplicationIdempotencyKey idempotency key observed for this preview
+   * @param priorTarget caller-owned target before the proposed addition
+   * @return defensive candidate snapshot and immutable application evidence
+   * @throws IllegalArgumentException if inputs, clone independence, component application, or
+   *     inventory verification fail
+   */
+  public static Result applyToClone(
+      AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan,
+      String observedTargetStateIdentifier,
+      String observedApplicationIdempotencyKey,
+      SystemInterface priorTarget) {
+    requireMatchingPlanIdentity(
+        plan, observedTargetStateIdentifier, observedApplicationIdempotencyKey);
+    if (priorTarget == null) {
+      throw new IllegalArgumentException("Prior target system cannot be null");
+    }
+
+    SystemInterface candidateTarget = independentClone(priorTarget, "Prior target");
+    if (plan.requiresMutation()) {
+      candidateTarget.addComponent(plan.getComponentName(), plan.getTransferredS8AmountMol());
+      candidateTarget.init(0);
+    }
+
+    AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result receipt =
+        AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.verify(
+            plan,
+            observedTargetStateIdentifier,
+            observedApplicationIdempotencyKey,
+            priorTarget,
+            candidateTarget);
+    return new Result(receipt, candidateTarget);
+  }
+
+  private static void requireMatchingPlanIdentity(
+      AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan,
+      String observedTargetStateIdentifier,
+      String observedApplicationIdempotencyKey) {
+    if (plan == null) {
+      throw new IllegalArgumentException("S8 component-addition plan cannot be null");
+    }
+    if (observedTargetStateIdentifier == null
+        || !plan.getTargetStateIdentifier().equals(observedTargetStateIdentifier)) {
+      throw new IllegalArgumentException(
+          "Target-state identifier does not match the component-addition plan");
+    }
+    if (observedApplicationIdempotencyKey == null
+        || !plan.getApplicationIdempotencyKey().equals(observedApplicationIdempotencyKey)) {
+      throw new IllegalArgumentException(
+          "Application idempotency key does not match the component-addition plan");
+    }
+  }
+
+  private static SystemInterface independentClone(SystemInterface source, String name) {
+    SystemInterface copy = source.clone();
+    if (copy == null) {
+      throw new IllegalArgumentException(name + " clone cannot be null");
+    }
+    if (copy == source) {
+      throw new IllegalArgumentException(name + " clone must be an independent object");
+    }
+    return copy;
+  }
+
+  /** Serializable preview containing immutable evidence and a defensively cloned candidate. */
+  public static final class Result implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result receipt;
+    private final SystemInterface candidateSnapshot;
+
+    private Result(
+        AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result receipt,
+        SystemInterface candidateTarget) {
+      this.receipt = receipt;
+      this.candidateSnapshot = independentClone(candidateTarget, "Candidate target");
+    }
+
+    /** @return immutable evidence that the candidate inventory matches the plan. */
+    public AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result
+        getApplicationReceipt() {
+      return receipt;
+    }
+
+    /**
+     * Return an independent copy of the previewed candidate.
+     *
+     * @return defensive thermodynamic-system clone containing the planned S8 addition
+     * @throws IllegalArgumentException if the stored candidate cannot produce an independent clone
+     */
+    public SystemInterface getCandidateTarget() {
+      return independentClone(candidateSnapshot, "Stored candidate target");
+    }
+  }
+}
