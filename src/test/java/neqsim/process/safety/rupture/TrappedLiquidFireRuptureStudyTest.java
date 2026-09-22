@@ -1,13 +1,13 @@
 package neqsim.process.safety.rupture;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.safety.barrier.SafetySystemDemand;
 import neqsim.process.safety.inventory.TrappedInventoryCalculator;
 import neqsim.process.safety.inventory.TrappedInventoryCalculator.InventoryResult;
 import neqsim.process.safety.release.ReleaseOrientation;
-import neqsim.process.safety.release.SourceTermResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -84,10 +84,10 @@ class TrappedLiquidFireRuptureStudyTest {
   }
 
   /**
-   * Verifies barrier and source-term handoff objects can be produced from a rupture result.
+   * Verifies barrier demand remains available while unsupported liquid blowdown fails explicitly.
    */
   @Test
-  void resultCreatesBarrierDemandAndSourceTerm() {
+  void resultCreatesBarrierDemandAndRejectsLiquidBlowdown() {
     SystemInterface fluid = createLiquidHydrocarbon();
     InventoryResult inventory = createLiquidInventory(fluid);
     TrappedLiquidFireRuptureResult result = TrappedLiquidFireRuptureStudy.builder().segmentId("TL-003").fluid(fluid)
@@ -96,11 +96,16 @@ class TrappedLiquidFireRuptureStudyTest {
         .vaporPocketDetectionEnabled(false).build().run();
 
     SafetySystemDemand demand = result.toPassiveFireProtectionDemand("PFP-TL-003", 1800.0);
-    SourceTermResult sourceTerm = result.createRuptureSourceTerm(fluid, ReleaseOrientation.HORIZONTAL, 20.0, 5.0);
-
     assertTrue(demand.getCapacityValue() > 0.0);
-    assertNotNull(sourceTerm);
-    assertTrue(sourceTerm.getPeakMassFlowRate() > 0.0);
+    double temperature = fluid.getTemperature();
+    double pressure = fluid.getPressure();
+    double moles = fluid.getTotalNumberOfMoles();
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> result.createRuptureSourceTerm(fluid, ReleaseOrientation.HORIZONTAL, 20.0, 5.0));
+    assertTrue(failure.getMessage().startsWith("BLOWDOWN_PHASE_BOUNDARY:"));
+    assertEquals(temperature, fluid.getTemperature(), 0.0);
+    assertEquals(pressure, fluid.getPressure(), 0.0);
+    assertEquals(moles, fluid.getTotalNumberOfMoles(), 0.0);
   }
 
   /**
