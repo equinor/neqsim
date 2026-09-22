@@ -31,8 +31,10 @@ class RateUnitTest {
   }
 
   @Test
-  void propertyFreeStaticConversionAndUnsupportedUnitsFailExplicitly() {
-    assertThrows(UnsupportedOperationException.class, () -> RateUnit.convert(720.0, "kg/hr", "mol/sec"));
+  void staticConversionRejectsUnsupportedUnits() {
+    assertThrows(IllegalArgumentException.class,
+        () -> RateUnit.convert(720.0, "unknown", "mol/sec", 0.020, 800.0, 100.0));
+    assertThrows(RuntimeException.class, () -> RateUnit.convert(720.0, "kg/hr", "unknown", 0.020, 800.0, 100.0));
   }
 
   @Test

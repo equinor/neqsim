@@ -60,8 +60,13 @@ conversion strategy so it does not shadow the interface default.
 `RateUnit.getSIvalue()` returns mol/s using the stored rate and fluid properties.
 The six-argument static
 `RateUnit.convert(value, fromUnit, toUnit, molarmass, stddens, boilp)` requires
-the fluid properties explicitly; the three-argument static overload throws
-`UnsupportedOperationException` because it has no fluid context.
+the fluid properties explicitly. There is no three-argument static overload:
+flow-rate conversion requires fluid context.
+
+`PressureUnit` uses the `BiasAdjustedUnit` strategy because gauge conversions
+include an atmospheric offset. Use `getValue(toUnit)` or
+`PressureUnit.convert(value, fromUnit, toUnit)`; the former
+`getConversionFactor(unit)` method is not part of this pressure API.
 
 Construct a unit with the source value and unit, then use `getValue(targetUnit)`
 to read the converted value. The removed three-argument overload is no longer
