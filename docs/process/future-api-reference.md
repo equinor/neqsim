@@ -297,6 +297,14 @@ registry.register("flash-model", surrogateModel, metadata);
 
 ### Prediction
 
+`predictWithFallback` rejects malformed inputs before either callback, validates
+finite nonempty results from both paths, and enforces the model's optional
+input/output dimensions. A failed surrogate or valid out-of-range request uses
+physics only when fallback is enabled. See the [ML validation and fallback
+contract](ml/README.md#input-schema-output-validation-and-fallback) for schema,
+counter and error semantics. Direct calls to `predict` bypass these registry
+checks. Numeric/range checks alone do not prove thermodynamic validity.
+
 ```java
 // Direct prediction
 double[] result = registry.get("flash-model").orElseThrow().predict(input);

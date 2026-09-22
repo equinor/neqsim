@@ -16,16 +16,23 @@ import org.junit.jupiter.api.Test;
  */
 public class SurrogateModelRegistryTest {
   private SurrogateModelRegistry registry;
+  private boolean previousFallback;
+  private String previousPersistenceDirectory;
 
   @BeforeEach
   void setUp() {
     registry = SurrogateModelRegistry.getInstance();
+    previousFallback = registry.isEnableFallback();
+    previousPersistenceDirectory = registry.getPersistenceDirectory();
+    registry.setEnableFallback(true);
     registry.clear();
   }
 
   @AfterEach
   void tearDown() {
     registry.clear();
+    registry.setEnableFallback(previousFallback);
+    registry.setPersistenceDirectory(previousPersistenceDirectory);
   }
 
   @Test
@@ -163,7 +170,7 @@ public class SurrogateModelRegistryTest {
   void testMetadataNoInputBounds() {
     SurrogateModelRegistry.SurrogateMetadata metadata = new SurrogateModelRegistry.SurrogateMetadata();
 
-    // Without bounds, any input should be considered valid
+    // Without bounds, nonempty finite input remains valid
     assertTrue(metadata.isInputValid(new double[] {1000.0, -1000.0}));
   }
 
