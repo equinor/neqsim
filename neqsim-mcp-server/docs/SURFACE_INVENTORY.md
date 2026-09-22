@@ -5,6 +5,12 @@ baseline. The focused protocol regression in `test_mcp_server.py` obtains every 
 running server's standards-conforming list operations; it does not infer publication from a
 manually maintained Java method list.
 
+All focused `test_*_protocol.py` harnesses freeze the same current inventory
+as the primary harness: version `1.44`, 44 contract-tested tools and 7 confirmed
+gaps. `test_phase0_documentation.py` checks these executable expectations before
+packaging, so a promotion cannot leave a later protocol step on an older baseline.
+Per-tool evidence counts and historical promotion records remain independent.
+
 | Surface | Count | Protocol evidence | Authoritative implementation |
 | --- | ---: | --- | --- |
 | Tools | 71 | `tools/list` | `NeqSimTools` MCP annotations |

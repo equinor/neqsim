@@ -51,6 +51,39 @@ require(source, 'case "runOperationalStudy":', SOURCE_PATH)
 require(source, 'case "runProcessLoop":', SOURCE_PATH)
 require(source, 'case "designUtilities":', SOURCE_PATH)
 
+# Every focused protocol harness must freeze the same inventory as the primary
+# harness. Otherwise CI stops at the first stale promotion and never qualifies
+# the remaining tools.
+expected_inventory = {
+    "inventoryVersion": "1.44",
+    "contractTestedToolCount": 44,
+    "confirmedGapToolCount": 7,
+}
+for focused_path in sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
+    focused_tree = ast.parse(focused_path.read_text(encoding="utf-8"))
+    for node in ast.walk(focused_tree):
+        if not isinstance(node, ast.Compare) or len(node.ops) != 1:
+            continue
+        call = node.left
+        if (
+            not isinstance(node.ops[0], ast.Eq)
+            or not isinstance(call, ast.Call)
+            or not isinstance(call.func, ast.Attribute)
+            or call.func.attr != "get"
+            or not call.args
+            or not isinstance(call.args[0], ast.Constant)
+        ):
+            continue
+        field = call.args[0].value
+        if field not in expected_inventory:
+            continue
+        actual = ast.literal_eval(node.comparators[0])
+        if actual != expected_inventory[field]:
+            raise AssertionError(
+                f"{focused_path}:{node.lineno}: stale {field} expectation "
+                f"{actual!r}; expected {expected_inventory[field]!r}"
+            )
+
 surface = SURFACE_PATH.read_text(encoding="utf-8")
 require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
 require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)

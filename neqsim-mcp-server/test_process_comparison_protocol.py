@@ -278,9 +278,9 @@ def test_inventory_promotion(client):
     record = limitations.get("coverageRecords", {}).get("compareProcesses", {})
     sources = record.get("contractEvidenceSources", [])
     require(
-        inventory.get("inventoryVersion") == "1.43"
-        and limitations.get("contractTestedToolCount") == 43
-        and limitations.get("confirmedGapToolCount") == 8
+        inventory.get("inventoryVersion") == "1.44"
+        and limitations.get("contractTestedToolCount") == 44
+        and limitations.get("confirmedGapToolCount") == 7
         and limitations.get("contractPromotionCandidateCount") == 0,
         "inventory accounting drifted",
         inventory,

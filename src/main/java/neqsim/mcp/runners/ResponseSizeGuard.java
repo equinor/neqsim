@@ -130,7 +130,7 @@ public final class ResponseSizeGuard {
       }
       entry.getAsJsonObject().remove("summary");
     }
-    if (updateReturnedBytes(response, truncation) > MAX_BYTES) {
+    if (truncation != null && updateReturnedBytes(response, truncation) > MAX_BYTES) {
       // Preserve every omitted field name and the protected contracts. Per-field size estimates and explanatory
       // prose are optional; they must not make an otherwise deliverable response exceed the transport budget.
       for (JsonElement entry : omitted) {
