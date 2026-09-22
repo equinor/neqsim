@@ -70,6 +70,53 @@ public class InterfacialFriction implements Serializable {
     this.geometryCalc = new GeometryCalculator();
   }
 
+  /** Reference gas density of the Andritsos-Hanratty transition velocity (air at 1 atm), kg/m3. */
+  public static final double ANDRITSOS_HANRATTY_REFERENCE_GAS_DENSITY = 1.3;
+
+  /** Andritsos-Hanratty wave-transition superficial gas velocity at the reference density, m/s. */
+  public static final double ANDRITSOS_HANRATTY_TRANSITION_VELOCITY = 5.0;
+
+  /**
+   * Andritsos-Hanratty (1987) wave enhancement of the stratified interfacial friction factor.
+   *
+   * <p>
+   * {@code f_i/f_G = 1 + 15 sqrt(h_L/D) (U_SG/U_SG,t - 1)} above the wave transition {@code U_SG,t = 5 sqrt(1.3/rho_G)}
+   * m/s, and one below it. The transition scales with the gas density, not with the liquid-to-gas density ratio.
+   * </p>
+   *
+   * @param superficialGasVelocity superficial gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidLevelFraction equilibrium liquid level divided by the pipe diameter, 0-1
+   * @return enhancement factor, at least one
+   */
+  public static double andritsosHanrattyEnhancement(double superficialGasVelocity, double gasDensity,
+      double liquidLevelFraction) {
+    if (!(gasDensity > 0.0) || !(liquidLevelFraction > 0.0) || !Double.isFinite(superficialGasVelocity)) {
+      return 1.0;
+    }
+    double transition = ANDRITSOS_HANRATTY_TRANSITION_VELOCITY
+        * Math.sqrt(ANDRITSOS_HANRATTY_REFERENCE_GAS_DENSITY / gasDensity);
+    double ratio = Math.abs(superficialGasVelocity) / transition;
+    if (ratio <= 1.0) {
+      return 1.0;
+    }
+    return Math.min(ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT,
+        1.0 + 15.0 * Math.sqrt(Math.min(1.0, liquidLevelFraction)) * (ratio - 1.0));
+  }
+
+  /**
+   * Upper bound on the wave enhancement.
+   *
+   * <p>
+   * The correlation was fitted to near-atmospheric air-water data. At the gas densities of a production or export line
+   * (20-100 kg/m3) the transition velocity falls below 1 m/s and the unbounded form reaches twenty-fold or more. On a
+   * 0.5 m, 100 bara wet-gas line that cut the stratified hold-up from 0.024 to 0.018 and removed the uphill liquid
+   * accumulation of undulating terrain, so the pressure drop fell as the terrain grew. The bound of five is an
+   * engineering limit for this extrapolation, not part of the published correlation.
+   * </p>
+   */
+  public static final double ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT = 5.0;
+
   /**
    * Calculate interfacial friction for the current flow conditions.
    *
@@ -230,19 +277,8 @@ public class InterfacialFriction implements Serializable {
       f_smooth = 0.079 / Math.pow(Re_G, 0.25);
     }
 
-    // Andritsos-Hanratty enhancement factor
-    // f_i = f_smooth * (1 + 15 * sqrt(h_L/D) * (v_G/v_G,t - 1)) for v_G > v_G,t
-    // where v_G,t is transition velocity to wavy flow
-
-    // Transition gas velocity (simplified)
-    double vG_t = 5.0 * Math.sqrt(rhoL / rhoG); // Approximate transition velocity
-
-    double enhancementFactor = 1.0;
-    if (Math.abs(vG) > vG_t && geom.liquidLevel > 1e-10) {
-      double sqrtHD = Math.sqrt(geom.liquidLevel / D);
-      enhancementFactor = 1.0 + 15.0 * sqrtHD * (Math.abs(vG) / vG_t - 1.0);
-      enhancementFactor = Math.min(enhancementFactor, 20.0); // Cap enhancement
-    }
+    // Andritsos-Hanratty enhancement factor on the superficial gas velocity
+    double enhancementFactor = andritsosHanrattyEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
 
     result.frictionFactor = f_smooth * enhancementFactor;
 

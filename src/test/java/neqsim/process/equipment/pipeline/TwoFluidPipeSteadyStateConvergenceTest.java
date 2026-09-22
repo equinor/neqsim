@@ -151,8 +151,8 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
    * sections hold more liquid and shear more wall. The single absolute bound that used to stand here was satisfied by a
    * model that instead LOWERED the pressure drop by 4.5 per cent, which is the signature of a homogeneous friction
    * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it. Measured on this
-   * fixture the response is now monotone and of the right sign: -0.08, -0.20, +2.06, +2.96, +4.88 and +7.12 per cent at
-   * 1, 5, 10, 20, 35 and 50 m amplitude.
+   * fixture with the bounded Andritsos-Hanratty stratified interfacial friction the response is -0.3, 0.0, +0.9, +2.5
+   * and +4.4 per cent at 5, 10, 20, 35 and 50 m amplitude.
    * </p>
    */
   @Test
