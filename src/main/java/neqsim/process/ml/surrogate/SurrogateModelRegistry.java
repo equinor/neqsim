@@ -3,6 +3,7 @@ package neqsim.process.ml.surrogate;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -96,6 +97,10 @@ public class SurrogateModelRegistry implements Serializable {
    * @param metadata model metadata (training info, validity, etc.)
    */
   public void register(String modelId, SurrogateModel model, SurrogateMetadata metadata) {
+    if (modelId == null || modelId.trim().isEmpty() || model == null || metadata == null) {
+      throw new IllegalArgumentException("Model ID, model and metadata must be provided");
+    }
+    validateSchema(model, metadata);
     SurrogateModelEntry entry = new SurrogateModelEntry(model, metadata);
     models.put(modelId, entry);
   }
@@ -135,41 +140,114 @@ public class SurrogateModelRegistry implements Serializable {
    * Predicts using a surrogate model with automatic fallback.
    *
    * <p>
-   * If the surrogate model fails or is outside its validity range, the physics model will be used as a fallback.
+   * Malformed inputs (null, empty, nonfinite or inconsistent with the declared input dimension) are rejected before
+   * either model runs. Valid inputs outside the surrogate's training bounds, missing models, prediction exceptions and
+   * invalid predictions use physics when fallback is enabled. Disabling fallback rejects these cases rather than
+   * extrapolating. Both paths must return a nonempty finite vector with the declared output dimension, when known.
+   * Range and numeric checks do not establish thermodynamic validity or conservation.
    * </p>
    *
    * @param modelId the surrogate model identifier
-   * @param input input vector
-   * @param physicsFallback fallback physics calculation
-   * @return prediction result
+   * @param input nonempty finite input vector in the model's documented feature order and units
+   * @param physicsFallback fallback physics calculation, required only when fallback is needed
+   * @return validated prediction result
+   * @throws IllegalArgumentException if the input or model schema is malformed
+   * @throws IllegalStateException if fallback is needed but disabled/unavailable, or the fallback fails validation
    */
   public double[] predictWithFallback(String modelId, double[] input, Function<double[], double[]> physicsFallback) {
+    if (modelId == null || modelId.trim().isEmpty()) {
+      throw new IllegalArgumentException("Model ID must be provided");
+    }
+    validateInput(input, -1);
     SurrogateModelEntry entry = models.get(modelId);
 
     if (entry == null) {
-      // No surrogate registered - use physics
-      return physicsFallback.apply(input);
+      return predictPhysics(modelId, input, physicsFallback, -1, null);
     }
 
-    // Check if input is within surrogate validity range
-    if (!entry.metadata.isInputValid(input)) {
+    validateSchema(entry.model, entry.metadata);
+    boolean withinBounds = entry.metadata.validateRequestInput(input, entry.model.getInputDimension());
+    int outputDimension = entry.model.getOutputDimension();
+
+    if (!withinBounds) {
       entry.metadata.recordExtrapolation();
-      if (enableFallback) {
-        return physicsFallback.apply(input);
-      }
+      return predictPhysics(modelId, input, physicsFallback, outputDimension, null);
     }
 
     try {
-      double[] prediction = entry.model.predict(input);
+      // A failed surrogate must not corrupt the request passed to physics or the caller's array.
+      double[] prediction = entry.model.predict(input.clone());
+      validateOutput(prediction, outputDimension);
       entry.metadata.recordPrediction();
       return prediction;
     } catch (Exception e) {
       entry.metadata.recordFailure();
-      if (enableFallback) {
-        return physicsFallback.apply(input);
-      }
-      throw new RuntimeException("Surrogate model failed and fallback is disabled", e);
+      return predictPhysics(modelId, input, physicsFallback, outputDimension, e);
     }
+  }
+
+  private double[] predictPhysics(String modelId, double[] input, Function<double[], double[]> physicsFallback,
+      int outputDimension, Exception surrogateFailure) {
+    if (!enableFallback) {
+      throw new IllegalStateException("Surrogate unavailable or invalid for " + modelId + " and fallback is disabled",
+          surrogateFailure);
+    }
+    if (physicsFallback == null) {
+      throw new IllegalStateException("Physics fallback is required for " + modelId, surrogateFailure);
+    }
+    try {
+      double[] prediction = physicsFallback.apply(input.clone());
+      validateOutput(prediction, outputDimension);
+      return prediction;
+    } catch (Exception e) {
+      IllegalStateException failure = new IllegalStateException("Physics fallback failed for " + modelId, e);
+      if (surrogateFailure != null) {
+        failure.addSuppressed(surrogateFailure);
+      }
+      throw failure;
+    }
+  }
+
+  private static void validateSchema(SurrogateModel model, SurrogateMetadata metadata) {
+    int inputDimension = model.getInputDimension();
+    int outputDimension = model.getOutputDimension();
+    if (inputDimension < -1 || inputDimension == 0 || outputDimension < -1 || outputDimension == 0) {
+      throw new IllegalArgumentException("Model dimensions must be positive or -1 (unknown)");
+    }
+    int boundsDimension = metadata.getInputDimension();
+    if (inputDimension > 0 && boundsDimension > 0 && inputDimension != boundsDimension) {
+      throw new IllegalArgumentException("Model input dimension does not match input bounds");
+    }
+  }
+
+  private static void validateInput(double[] input, int expectedDimension) {
+    if (!isFiniteVector(input)) {
+      throw new IllegalArgumentException("Input must be a nonempty vector of finite values");
+    }
+    if (expectedDimension > 0 && input.length != expectedDimension) {
+      throw new IllegalArgumentException("Input dimension " + input.length + " does not match " + expectedDimension);
+    }
+  }
+
+  private static void validateOutput(double[] output, int expectedDimension) {
+    if (!isFiniteVector(output)) {
+      throw new IllegalStateException("Prediction must be a nonempty vector of finite values");
+    }
+    if (expectedDimension > 0 && output.length != expectedDimension) {
+      throw new IllegalStateException("Output dimension " + output.length + " does not match " + expectedDimension);
+    }
+  }
+
+  private static boolean isFiniteVector(double[] values) {
+    if (values == null || values.length == 0) {
+      return false;
+    }
+    for (double value : values) {
+      if (!Double.isFinite(value)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -201,7 +279,7 @@ public class SurrogateModelRegistry implements Serializable {
   public void loadModel(String modelId, String filePath) throws IOException, ClassNotFoundException {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath))) {
       SurrogateModelEntry entry = (SurrogateModelEntry) in.readObject();
-      models.put(modelId, entry);
+      register(modelId, entry.model, entry.metadata);
     }
   }
 
@@ -267,7 +345,7 @@ public class SurrogateModelRegistry implements Serializable {
     /**
      * Gets the expected input dimension.
      *
-     * @return number of input features
+     * @return positive number of input features, or -1 if unknown; must agree with metadata bounds when provided
      */
     default int getInputDimension() {
       return -1; // Unknown
@@ -276,7 +354,7 @@ public class SurrogateModelRegistry implements Serializable {
     /**
      * Gets the expected output dimension.
      *
-     * @return number of output values
+     * @return positive number of output values, or -1 if unknown; applies to both surrogate and physics results
      */
     default int getOutputDimension() {
       return -1; // Unknown
@@ -305,28 +383,78 @@ public class SurrogateModelRegistry implements Serializable {
     }
 
     /**
-     * Sets the valid input range for the model.
+     * Sets finite inclusive training bounds and the input dimension. Bounds are copied and validated before being
+     * installed. Unbounded metadata is represented by never setting bounds; infinite per-feature bounds are
+     * unsupported.
      *
      * @param min minimum values for each input
      * @param max maximum values for each input
+     * @throws IllegalArgumentException if arrays are null, empty, unequal in size, nonfinite or unordered
      */
-    public void setInputBounds(double[] min, double[] max) {
-      this.inputMin = min.clone();
-      this.inputMax = max.clone();
+    public synchronized void setInputBounds(double[] min, double[] max) {
+      double[] minCopy = min == null ? null : min.clone();
+      double[] maxCopy = max == null ? null : max.clone();
+      validateBounds(minCopy, maxCopy);
+      this.inputMin = minCopy;
+      this.inputMax = maxCopy;
+    }
+
+    private static void validateBounds(double[] min, double[] max) {
+      if (!isFiniteVector(min) || !isFiniteVector(max) || min.length != max.length) {
+        throw new IllegalArgumentException("Bounds must be nonempty finite vectors of equal size");
+      }
+      for (int i = 0; i < min.length; i++) {
+        if (min[i] > max[i]) {
+          throw new IllegalArgumentException("Minimum bound exceeds maximum at input " + i);
+        }
+      }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+      in.defaultReadObject();
+      if (inputMin != null || inputMax != null) {
+        try {
+          validateBounds(inputMin, inputMax);
+        } catch (IllegalArgumentException e) {
+          InvalidObjectException invalid = new InvalidObjectException("Invalid serialized surrogate bounds");
+          invalid.initCause(e);
+          throw invalid;
+        }
+      }
+    }
+
+    private synchronized int getInputDimension() {
+      return inputMin == null ? -1 : inputMin.length;
+    }
+
+    private synchronized boolean validateRequestInput(double[] input, int modelDimension) {
+      int boundsDimension = getInputDimension();
+      if (modelDimension > 0 && boundsDimension > 0 && modelDimension != boundsDimension) {
+        throw new IllegalArgumentException("Model input dimension does not match input bounds");
+      }
+      validateInput(input, modelDimension);
+      validateInput(input, boundsDimension);
+      return isInputValid(input);
     }
 
     /**
      * Checks if an input is within the model's validity range.
      *
      * @param input input vector
-     * @return true if within range
+     * @return true only for a nonempty finite vector matching the bounds dimension and inclusive range, when defined;
+     * this check alone does not establish physical validity
      */
-    public boolean isInputValid(double[] input) {
-      if (inputMin == null || inputMax == null) {
+    public synchronized boolean isInputValid(double[] input) {
+      if (!isFiniteVector(input)) {
+        return false;
+      }
+      if (inputMin == null) {
         return true; // No bounds defined
       }
-
-      for (int i = 0; i < Math.min(input.length, inputMin.length); i++) {
+      if (input.length != inputMin.length) {
+        return false;
+      }
+      for (int i = 0; i < input.length; i++) {
         if (input[i] < inputMin[i] || input[i] > inputMax[i]) {
           return false;
         }
@@ -334,41 +462,45 @@ public class SurrogateModelRegistry implements Serializable {
       return true;
     }
 
-    void recordPrediction() {
+    synchronized void recordPrediction() {
       predictionCount++;
       lastUsed = Instant.now();
     }
 
-    void recordFailure() {
+    synchronized void recordFailure() {
       failureCount++;
     }
 
-    void recordExtrapolation() {
+    synchronized void recordExtrapolation() {
       extrapolationCount++;
     }
 
     /**
-     * Gets the failure rate of this model.
+     * Gets failed surrogate attempts divided by all surrogate attempts. Physics fallbacks and malformed requests do not
+     * count as surrogate attempts.
      *
      * @return failure rate (0-1)
      */
-    public double getFailureRate() {
-      if (predictionCount == 0) {
+    public synchronized double getFailureRate() {
+      double attempts = (double) predictionCount + failureCount;
+      if (attempts == 0.0) {
         return 0.0;
       }
-      return (double) failureCount / predictionCount;
+      return failureCount / attempts;
     }
 
     /**
-     * Gets the extrapolation rate (predictions outside training range).
+     * Gets out-of-range requests divided by all well-formed requests to this registered model. Out-of-range requests
+     * never run the surrogate, even if fallback is disabled. Malformed requests do not affect this rate.
      *
      * @return extrapolation rate (0-1)
      */
-    public double getExtrapolationRate() {
-      if (predictionCount == 0) {
+    public synchronized double getExtrapolationRate() {
+      double requests = (double) predictionCount + failureCount + extrapolationCount;
+      if (requests == 0.0) {
         return 0.0;
       }
-      return (double) extrapolationCount / predictionCount;
+      return extrapolationCount / requests;
     }
 
     // Getters and setters
@@ -397,15 +529,25 @@ public class SurrogateModelRegistry implements Serializable {
       this.trainedAt = trainedAt;
     }
 
-    public Instant getLastUsed() {
+    public synchronized Instant getLastUsed() {
       return lastUsed;
     }
 
-    public int getPredictionCount() {
+    /**
+     * Gets the number of surrogate predictions accepted after output validation, excluding physics fallbacks.
+     *
+     * @return successful surrogate prediction count
+     */
+    public synchronized int getPredictionCount() {
       return predictionCount;
     }
 
-    public int getFailureCount() {
+    /**
+     * Gets the number of surrogate attempts that threw or returned invalid output, whether or not physics succeeded.
+     *
+     * @return failed surrogate attempt count
+     */
+    public synchronized int getFailureCount() {
       return failureCount;
     }
 
