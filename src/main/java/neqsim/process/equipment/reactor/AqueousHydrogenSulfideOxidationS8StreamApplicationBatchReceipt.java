@@ -14,9 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Every request captures independent before and after stream snapshots. Verification delegates to
- * {@link AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt}, preserves source order,
- * requires unique target and application identities, and closes both the aggregate S8 increment
- * and the aggregate total-mole increment.
+ * {@link AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt}, preserves source order, requires unique target
+ * and application identities, and closes both the aggregate S8 increment and the aggregate total-mole increment.
  * </p>
  *
  * @author esol
@@ -115,10 +114,9 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceip
       throw new IllegalArgumentException("Application-receipt batch total amount does not close on S8 increment");
     }
 
-    return new Result(receipts, strictAppendCount, unchangedCount, preservedNonS8ComponentCount,
-        plannedS8IncrementMol, observedS8IncrementMol, observedTotalIncrementMol, s8ClosureResidualMol,
-        s8ClosureToleranceMol, totalAmountClosureResidualMol, totalAmountClosureToleranceMol,
-        maximumNonS8InventoryResidualMol);
+    return new Result(receipts, strictAppendCount, unchangedCount, preservedNonS8ComponentCount, plannedS8IncrementMol,
+        observedS8IncrementMol, observedTotalIncrementMol, s8ClosureResidualMol, s8ClosureToleranceMol,
+        totalAmountClosureResidualMol, totalAmountClosureToleranceMol, maximumNonS8InventoryResidualMol);
   }
 
   private static double comparisonTolerance(double expected, double observed, double priorAmount,
@@ -132,8 +130,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceip
   }
 
   private static double summationTolerance(int count, double first, double second) {
-    return COMPARISON_ULPS * count
-        * Math.max(Math.ulp(Math.abs(first)), Math.ulp(Math.abs(second)));
+    return COMPARISON_ULPS * count * Math.max(Math.ulp(Math.abs(first)), Math.ulp(Math.abs(second)));
   }
 
   private static StreamInterface independentClone(StreamInterface source, String name) {
@@ -186,9 +183,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceip
       if (observedTargetStateIdentifier == null || observedApplicationIdempotencyKey == null) {
         throw new IllegalArgumentException("Observed target and application identities cannot be null");
       }
-      if (plan.requiresMutation()
-          && (priorStream == candidateStream || (priorStream != null && candidateStream != null
-              && priorStream.getFluid() == candidateStream.getFluid()))) {
+      if (plan.requiresMutation() && (priorStream == candidateStream || (priorStream != null && candidateStream != null
+          && priorStream.getFluid() == candidateStream.getFluid()))) {
         throw new IllegalArgumentException("Positive S8 application requires independent before and after streams");
       }
       this.plan = plan;
@@ -259,10 +255,10 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceip
     private final double maximumNonS8InventoryResidualMol;
 
     private Result(List<AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result> receipts,
-        int strictAppendCount, int unchangedCount, int preservedNonS8ComponentCount,
-        double plannedS8IncrementMol, double observedS8IncrementMol, double observedTotalIncrementMol,
-        double s8ClosureResidualMol, double s8ClosureToleranceMol, double totalAmountClosureResidualMol,
-        double totalAmountClosureToleranceMol, double maximumNonS8InventoryResidualMol) {
+        int strictAppendCount, int unchangedCount, int preservedNonS8ComponentCount, double plannedS8IncrementMol,
+        double observedS8IncrementMol, double observedTotalIncrementMol, double s8ClosureResidualMol,
+        double s8ClosureToleranceMol, double totalAmountClosureResidualMol, double totalAmountClosureToleranceMol,
+        double maximumNonS8InventoryResidualMol) {
       this.receipts = Collections.unmodifiableList(
           new ArrayList<AqueousHydrogenSulfideOxidationS8ComponentApplicationReceipt.Result>(receipts));
       this.strictAppendCount = strictAppendCount;

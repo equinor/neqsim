@@ -76,12 +76,10 @@ public class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceiptTest 
     RequestFixture duplicateKey = fixture("target-B", "application-A", 4.0, false);
     double firstCandidateTotal = first.candidateStream.getFluid().getTotalNumberOfMoles();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Arrays.asList(first.request, duplicateTarget.request)));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Arrays.asList(first.request, duplicateKey.request)));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Arrays.asList(first.request, duplicateTarget.request)));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Arrays.asList(first.request, duplicateKey.request)));
     assertEquals(firstCandidateTotal, first.candidateStream.getFluid().getTotalNumberOfMoles(), 0.0);
   }
 
@@ -105,15 +103,12 @@ public class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceiptTest 
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request wrongS8 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request
         .create(valid.request.getPlan(), "target-A", "application-A", valid.priorStream, wrongS8Candidate);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Arrays.asList(valid.request, wrong)));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Collections.singletonList(contaminated)));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Collections.singletonList(wrongS8)));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Arrays.asList(valid.request, wrong)));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Collections.singletonList(contaminated)));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Collections.singletonList(wrongS8)));
   }
 
   @Test
@@ -121,24 +116,22 @@ public class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceiptTest 
     RequestFixture valid = fixture("target-A", "application-A", 2.0, true);
     assertThrows(IllegalArgumentException.class,
         () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.verify(null));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Collections.<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request>emptyList()));
+    assertThrows(IllegalArgumentException.class, () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Arrays.asList(valid.request, null)));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.verify(
-            Collections.<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request>emptyList()));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(valid.request.getPlan(),
+            "target-A", "application-A", valid.priorStream, valid.priorStream));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Arrays.asList(valid.request, null)));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(
-            valid.request.getPlan(), "target-A", "application-A", valid.priorStream, valid.priorStream));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(
-            valid.request.getPlan(), "target-A", "application-A", null, valid.candidateStream));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(valid.request.getPlan(),
+            "target-A", "application-A", null, valid.candidateStream));
 
-    AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result unchangedPlan = plan("target-U",
-        "application-U", 2.0, false);
+    AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result unchangedPlan = plan("target-U", "application-U", 2.0,
+        false);
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(unchangedPlan,
-            "target-U", "application-U", new AliasingStream("alias", system(2.0)), stream("candidate", 2.0)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(unchangedPlan, "target-U",
+            "application-U", new AliasingStream("alias", system(2.0)), stream("candidate", 2.0)));
   }
 
   @Test
@@ -182,8 +175,8 @@ public class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceiptTest 
         : prior;
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result transition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
         .create(prior, candidate);
-    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, candidate, transition,
-        targetIdentifier, applicationKey, priorS8AmountMol);
+    return AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, candidate, transition, targetIdentifier,
+        applicationKey, priorS8AmountMol);
   }
 
   private static StreamInterface stream(String name, double s8AmountMol) {
