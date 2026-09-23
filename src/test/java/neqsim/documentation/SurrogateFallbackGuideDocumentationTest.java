@@ -1,6 +1,5 @@
 package neqsim.documentation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,9 +27,9 @@ import neqsim.NeqSimTest;
 public class SurrogateFallbackGuideDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/process/ml/README.md";
   private static final Pattern EXECUTABLE_JAVA = Pattern.compile(
-      "(?ms)^## Executable bounded-fallback example.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      "(?ms)^## Executable bounded-fallback example.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
