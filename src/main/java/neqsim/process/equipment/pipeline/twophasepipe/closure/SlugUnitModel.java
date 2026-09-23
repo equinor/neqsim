@@ -137,7 +137,7 @@ public final class SlugUnitModel implements Serializable {
 
     double low = MINIMUM_FILM_HOLDUP;
     double high = slugHoldup * (1.0 - 1.0e-9);
-    double residualLow = filmResidual(low, result, bubbleVelocity, vsG, rhoG, rhoL, muG, muL, diameter, roughness,
+    double residualLow = filmResidual(low, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
         inclination);
     if (!Double.isFinite(residualLow)) {
       return result;
@@ -149,7 +149,7 @@ public final class SlugUnitModel implements Serializable {
     double previous = low;
     for (int point = 1; point <= FILM_ROOT_SCAN_POINTS; point++) {
       double trial = point == FILM_ROOT_SCAN_POINTS ? high : previous * ratio;
-      double value = filmResidual(trial, result, bubbleVelocity, vsG, rhoG, rhoL, muG, muL, diameter, roughness,
+      double value = filmResidual(trial, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
           inclination);
       if (!Double.isFinite(value)) {
         return result;
@@ -168,7 +168,7 @@ public final class SlugUnitModel implements Serializable {
     }
     for (int iteration = 0; iteration < 100 && high - low > 1.0e-12; iteration++) {
       double middle = 0.5 * (low + high);
-      double value = filmResidual(middle, result, bubbleVelocity, vsG, rhoG, rhoL, muG, muL, diameter, roughness,
+      double value = filmResidual(middle, result, bubbleVelocity, rhoG, rhoL, muG, muL, diameter, roughness,
           inclination);
       if (!Double.isFinite(value)) {
         return result;
@@ -239,7 +239,6 @@ public final class SlugUnitModel implements Serializable {
    * @param filmHoldup trial film holdup
    * @param unit partially filled result holding slug-body state and translational velocity
    * @param bubbleVelocity dispersed-bubble velocity in the slug body, m/s
-   * @param vsG superficial gas velocity, m/s
    * @param rhoG gas density, kg/m3
    * @param rhoL liquid density, kg/m3
    * @param muG gas viscosity, Pa.s
@@ -249,8 +248,8 @@ public final class SlugUnitModel implements Serializable {
    * @param inclination inclination, radians
    * @return momentum residual, Pa/m
    */
-  private double filmResidual(double filmHoldup, Result unit, double bubbleVelocity, double vsG, double rhoG,
-      double rhoL, double muG, double muL, double diameter, double roughness, double inclination) {
+  private double filmResidual(double filmHoldup, Result unit, double bubbleVelocity, double rhoG, double rhoL,
+      double muG, double muL, double diameter, double roughness, double inclination) {
     double vt = unit.translationalVelocity;
     double vLF = vt - (vt - unit.slugLiquidVelocity) * unit.slugHoldup / filmHoldup;
     double vGF = vt - (vt - bubbleVelocity) * (1.0 - unit.slugHoldup) / (1.0 - filmHoldup);
