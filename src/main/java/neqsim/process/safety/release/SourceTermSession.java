@@ -115,7 +115,30 @@ public final class SourceTermSession {
     if (process == null) {
       throw new IllegalArgumentException("A ProcessModel requires an explicit area name");
     }
-    addSource(sourceId, SINGLE_AREA, unitName, -1, diameterM, dischargeCoefficient, backPressurePa, releaseModel);
+    addSourceConfiguration(sourceId, SINGLE_AREA, unitName, -1, diameterM, dischargeCoefficient, backPressurePa, 0.0,
+        0.0, releaseModel);
+  }
+
+  /**
+   * Registers a one-sided constant-area pipe release in a single process.
+   *
+   * @param sourceId stable unique source identity
+   * @param unitName equipment name in the process
+   * @param diameterM pipe internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa absolute receiving pressure in Pa
+   * @param flowPathLengthM pipe length from sampled inventory boundary to release plane in m
+   * @param darcyFrictionFactor specified Darcy friction factor
+   * @param releaseModel explicitly selected pipe release model
+   */
+  public synchronized void addLongPipeSource(String sourceId, String unitName, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel) {
+    if (process == null) {
+      throw new IllegalArgumentException("A ProcessModel requires an explicit area name");
+    }
+    addSourceConfiguration(sourceId, SINGLE_AREA, unitName, -1, diameterM, dischargeCoefficient, backPressurePa,
+        flowPathLengthM, darcyFrictionFactor, releaseModel);
   }
 
   /**
@@ -133,6 +156,34 @@ public final class SourceTermSession {
    */
   public synchronized void addSource(String sourceId, String areaName, String unitName, int outletIndex,
       double diameterM, double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel) {
+    addSourceConfiguration(sourceId, areaName, unitName, outletIndex, diameterM, dischargeCoefficient, backPressurePa,
+        0.0, 0.0, releaseModel);
+  }
+
+  /**
+   * Registers an area-qualified one-sided constant-area pipe release.
+   *
+   * @param sourceId stable unique source identity
+   * @param areaName area key, or SINGLE_AREA for a single process
+   * @param unitName equipment name within the area
+   * @param outletIndex -1 to sample the unit fluid; otherwise zero-based getOutletStreams index
+   * @param diameterM pipe internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa absolute receiving pressure in Pa
+   * @param flowPathLengthM pipe length from sampled inventory boundary to release plane in m
+   * @param darcyFrictionFactor specified Darcy friction factor
+   * @param releaseModel explicitly selected pipe release model
+   */
+  public synchronized void addLongPipeSource(String sourceId, String areaName, String unitName, int outletIndex,
+      double diameterM, double dischargeCoefficient, double backPressurePa, double flowPathLengthM,
+      double darcyFrictionFactor, ReleaseFlowModel releaseModel) {
+    addSourceConfiguration(sourceId, areaName, unitName, outletIndex, diameterM, dischargeCoefficient, backPressurePa,
+        flowPathLengthM, darcyFrictionFactor, releaseModel);
+  }
+
+  private void addSourceConfiguration(String sourceId, String areaName, String unitName, int outletIndex,
+      double diameterM, double dischargeCoefficient, double backPressurePa, double flowPathLengthM,
+      double darcyFrictionFactor, ReleaseFlowModel releaseModel) {
     idle();
     text(sourceId, "sourceId");
     text(areaName, "areaName");
@@ -140,9 +191,13 @@ public final class SourceTermSession {
     ReleaseFlowRequest.positive(diameterM, "diameter");
     ReleaseFlowRequest.positive(dischargeCoefficient, "dischargeCoefficient");
     ReleaseFlowRequest.positive(backPressurePa, "backPressure");
+    ReleaseFlowRequest.nonnegative(flowPathLengthM, "flowPathLengthM");
+    ReleaseFlowRequest.nonnegative(darcyFrictionFactor, "darcyFrictionFactor");
     double areaM2 = Math.PI * diameterM * diameterM / 4.0;
     ReleaseFlowRequest.positive(areaM2 * dischargeCoefficient, "effectiveArea");
-    if (dischargeCoefficient > 1.0 || outletIndex < -1 || releaseModel == null || sources.containsKey(sourceId)) {
+    boolean invalidPipe = (flowPathLengthM == 0.0) != (darcyFrictionFactor == 0.0) || darcyFrictionFactor > 1.0;
+    if (dischargeCoefficient > 1.0 || outletIndex < -1 || releaseModel == null || sources.containsKey(sourceId)
+        || invalidPipe) {
       throw new IllegalArgumentException("Invalid or duplicate source configuration");
     }
     ProcessSystem area = areas().get(areaName);
@@ -151,7 +206,7 @@ public final class SourceTermSession {
       throw new IllegalArgumentException("Unknown area, unit or outlet");
     }
     sources.put(sourceId, new Source(sourceId, areaName, unitName, outletIndex, diameterM, dischargeCoefficient,
-        backPressurePa, releaseModel, area, unit));
+        backPressurePa, flowPathLengthM, darcyFrictionFactor, releaseModel, area, unit));
   }
 
   /**
@@ -192,8 +247,9 @@ public final class SourceTermSession {
     }
     ReleaseInventory inventory = (ReleaseInventory) unit;
     ReleaseFlowRequest request = inventory.getReleaseRequest();
-    addSource(sourceId, areaName, unitName, -1, request.getDiameterM(), request.getDischargeCoefficient(),
-        request.getBackPressurePa(), inventory.getReleaseModel());
+    addSourceConfiguration(sourceId, areaName, unitName, -1, request.getDiameterM(), request.getDischargeCoefficient(),
+        request.getBackPressurePa(), request.getFlowPathLengthM(), request.getDarcyFrictionFactor(),
+        inventory.getReleaseModel());
     sources.get(sourceId).inventorySource = true;
   }
 
@@ -420,7 +476,8 @@ public final class SourceTermSession {
             snapshot.provenance.put("outletCalculationId", outlet.getCalculationIdentifier().toString());
           }
         }
-        snapshot.request = new ReleaseFlowRequest(fluid, source.diameter, source.coefficient, source.backPressure);
+        snapshot.request = new ReleaseFlowRequest(fluid, source.diameter, source.coefficient, source.backPressure,
+            source.flowPathLength, source.darcyFrictionFactor);
       } catch (RuntimeException ex) {
         snapshot.status = SourceTermFrame.Status.STALE;
         snapshot.code = "SOURCE_STATE_STALE";
@@ -660,6 +717,8 @@ public final class SourceTermSession {
     private final double diameter;
     private final double coefficient;
     private final double backPressure;
+    private final double flowPathLength;
+    private final double darcyFrictionFactor;
     private final ReleaseFlowModel releaseModel;
     private final ProcessSystem area;
     private final ProcessEquipmentInterface unit;
@@ -667,7 +726,8 @@ public final class SourceTermSession {
     private boolean inventorySource;
 
     private Source(String id, String areaName, String unitName, int outletIndex, double diameter, double coefficient,
-        double backPressure, ReleaseFlowModel releaseModel, ProcessSystem area, ProcessEquipmentInterface unit) {
+        double backPressure, double flowPathLength, double darcyFrictionFactor, ReleaseFlowModel releaseModel,
+        ProcessSystem area, ProcessEquipmentInterface unit) {
       this.id = id;
       this.areaName = areaName;
       this.unitName = unitName;
@@ -675,6 +735,8 @@ public final class SourceTermSession {
       this.diameter = diameter;
       this.coefficient = coefficient;
       this.backPressure = backPressure;
+      this.flowPathLength = flowPathLength;
+      this.darcyFrictionFactor = darcyFrictionFactor;
       this.releaseModel = releaseModel;
       this.area = area;
       this.unit = unit;

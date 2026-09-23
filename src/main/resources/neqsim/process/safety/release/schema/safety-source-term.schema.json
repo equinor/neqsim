@@ -469,6 +469,14 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
+      "dependentRequired": {
+        "flowPathLength": [
+          "darcyFrictionFactor"
+        ],
+        "darcyFrictionFactor": [
+          "flowPathLength"
+        ]
+      },
       "required": [
         "diameter",
         "physicalArea",
@@ -500,6 +508,22 @@
         },
         "backPressure": {
           "$ref": "#/$defs/pressure"
+        },
+        "flowPathLength": {
+          "$ref": "#/$defs/length",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "darcyFrictionFactor": {
+          "$ref": "#/$defs/factor",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
         },
         "massFlowRate": {
           "$ref": "#/$defs/rate"

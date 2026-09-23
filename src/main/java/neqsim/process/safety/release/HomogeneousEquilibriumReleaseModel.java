@@ -44,6 +44,7 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       if (request == null) {
         throw new IllegalArgumentException("Request required");
       }
+      request.requireShortOpening();
       SystemInterface upstream = request.getFluid();
       ReleaseFlowRequest.positive(upstream.getPressure(), "upstream pressure");
       ReleaseFlowRequest.positive(upstream.getTemperature(), "upstream temperature");

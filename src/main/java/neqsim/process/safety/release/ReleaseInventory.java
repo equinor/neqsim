@@ -44,6 +44,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   private final double diameterM;
   private final double dischargeCoefficient;
   private final double backPressurePa;
+  private final double flowPathLengthM;
+  private final double darcyFrictionFactor;
   private final double maxSubstepS;
   private final ReleaseFlowModel releaseModel;
   private final PhaseType withdrawalPhaseType;
@@ -79,7 +81,28 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        PhaseType.GAS, false);
+        PhaseType.GAS, false, 0.0, 0.0);
+  }
+
+  /**
+   * Creates an independently owned inventory connected to a one-sided constant-area pipe release.
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial single-gas composition, EOS, temperature and absolute pressure
+   * @param volumeM3 fixed vessel volume in m3
+   * @param diameterM pipe internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param flowPathLengthM pipe length from inventory boundary to release plane in m
+   * @param darcyFrictionFactor specified Darcy friction factor
+   * @param releaseModel caller-selected pipe release model
+   * @param maxSubstepS largest integration substep in seconds
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel, double maxSubstepS) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        PhaseType.GAS, false, flowPathLengthM, darcyFrictionFactor);
   }
 
   /**
@@ -107,12 +130,34 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
       PhaseType withdrawalPhaseType) {
     this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
-        withdrawalPhaseType, true);
+        withdrawalPhaseType, true, 0.0, 0.0);
+  }
+
+  /**
+   * Creates an equilibrium inventory with explicit phase withdrawal through a constant-area pipe.
+   *
+   * @param name unique process equipment name
+   * @param initialFluid initial equilibrium composition, EOS, temperature and absolute pressure
+   * @param volumeM3 fixed vessel volume in m3
+   * @param diameterM pipe internal diameter in m
+   * @param dischargeCoefficient effective full-bore area factor in (0,1]
+   * @param backPressurePa constant absolute receiving pressure in Pa
+   * @param flowPathLengthM pipe length from inventory boundary to release plane in m
+   * @param darcyFrictionFactor specified Darcy friction factor
+   * @param releaseModel caller-selected pipe release model
+   * @param maxSubstepS largest integration substep in seconds
+   * @param withdrawalPhaseType explicitly selected withdrawal phase
+   */
+  public ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
+      double dischargeCoefficient, double backPressurePa, double flowPathLengthM, double darcyFrictionFactor,
+      ReleaseFlowModel releaseModel, double maxSubstepS, PhaseType withdrawalPhaseType) {
+    this(name, initialFluid, volumeM3, diameterM, dischargeCoefficient, backPressurePa, releaseModel, maxSubstepS,
+        withdrawalPhaseType, true, flowPathLengthM, darcyFrictionFactor);
   }
 
   private ReleaseInventory(String name, SystemInterface initialFluid, double volumeM3, double diameterM,
       double dischargeCoefficient, double backPressurePa, ReleaseFlowModel releaseModel, double maxSubstepS,
-      PhaseType withdrawalPhaseType, boolean phaseSelective) {
+      PhaseType withdrawalPhaseType, boolean phaseSelective, double flowPathLengthM, double darcyFrictionFactor) {
     super(name);
     this.volumeM3 = ReleaseFlowRequest.positive(volumeM3, "volumeM3");
     this.maxSubstepS = ReleaseFlowRequest.positive(maxSubstepS, "maxSubstepS");
@@ -120,10 +165,12 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
     this.withdrawalPhaseType = requireWithdrawalPhase(withdrawalPhaseType);
     this.phaseSelective = phaseSelective;
     ReleaseFlowRequest configuration = new ReleaseFlowRequest(initialFluid, diameterM, dischargeCoefficient,
-        backPressurePa);
+        backPressurePa, flowPathLengthM, darcyFrictionFactor);
     this.diameterM = configuration.getDiameterM();
     this.dischargeCoefficient = configuration.getDischargeCoefficient();
     this.backPressurePa = configuration.getBackPressurePa();
+    this.flowPathLengthM = configuration.getFlowPathLengthM();
+    this.darcyFrictionFactor = configuration.getDarcyFrictionFactor();
     inventory = configuration.getFluid();
     requireInventory(inventory, false);
     new ThermodynamicOperations(inventory).TPflash();
@@ -375,7 +422,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   }
 
   private ReleaseFlowRequest request(SystemInterface fluid) {
-    return new ReleaseFlowRequest(selectedPhase(fluid), diameterM, dischargeCoefficient, backPressurePa);
+    return new ReleaseFlowRequest(selectedPhase(fluid), diameterM, dischargeCoefficient, backPressurePa,
+        flowPathLengthM, darcyFrictionFactor);
   }
 
   private int solveVolumeEnergy(SystemInterface fluid, double targetEnergy, double energyScale) {
