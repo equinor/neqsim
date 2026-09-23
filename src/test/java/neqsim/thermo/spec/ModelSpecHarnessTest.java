@@ -54,6 +54,17 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String temperature : new String[] {"298", "323"}) {
+        for (String composition : new String[] {"02", "05", "08"}) {
+          ids.add("unifac-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-0");
+          ids.add("unifac-" + fixture + "-t" + temperature + "-x" + composition + "-gamma-1");
+          ids.add("unifac-" + fixture + "-t" + temperature + "-x" + composition + "-ln-gamma-0");
+          ids.add("unifac-" + fixture + "-t" + temperature + "-x" + composition + "-ln-gamma-1");
+          ids.add("unifac-" + fixture + "-t" + temperature + "-x" + composition + "-gex");
+        }
+      }
+    }
     for (String fixture : new String[] {"unifac", "psrk", "umr"}) {
       ids.add("phase-" + fixture + "-pure-290");
       ids.add("phase-" + fixture + "-pure-310");
@@ -326,6 +337,68 @@ class ModelSpecHarnessTest {
     ModelSpecTest.check(checked, checked.expected);
   }
 
+  @Test
+  void originalUnifacReferencesSatisfyPublishedGroupContributionEquation() throws IOException {
+    int checked = 0;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if (!"published-original-unifac".equals(spec.operation)) {
+        continue;
+      }
+      double[] reference = originalUnifac(spec.components.get("methanol"), spec.temperature);
+      double expected = spec.property == ModelSpec.Property.GEX ? reference[4]
+          : spec.property == ModelSpec.Property.LN_GAMMA ? reference[2 + spec.componentIndex]
+              : reference[spec.componentIndex];
+      assertEquals(expected, spec.expected, spec.property == ModelSpec.Property.GEX ? 1e-9 : 1e-12, spec.toString());
+      checked++;
+    }
+    assertEquals(60, checked, "every published original UNIFAC anchor must be independently reconstructed");
+  }
+
+  @Test
+  void unifacActivityAndStoredLogRejectDefectValues() throws IOException {
+    ModelSpec gamma = null;
+    ModelSpec log = null;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if ("unifac-system-t298-x05-gamma-1".equals(spec.id)) {
+        gamma = spec;
+      }
+      if ("unifac-system-t298-x05-ln-gamma-0".equals(spec.id)) {
+        log = spec;
+      }
+    }
+    assertTrue(gamma != null && log != null);
+    final ModelSpec checkedGamma = gamma;
+    final ModelSpec checkedLog = log;
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checkedGamma, bad));
+    }
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 0.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checkedLog, bad));
+    }
+    ModelSpecTest.check(checkedGamma, checkedGamma.expected);
+    ModelSpecTest.check(checkedLog, checkedLog.expected);
+  }
+
+  @Test
+  void excessGibbsEnergyUsesSignedRatherThanPositiveOnlyContract() throws IOException {
+    String[] lines = catalog().split("\n");
+    String selected = null;
+    for (String line : lines) {
+      if (line.contains("\tGEX\t")) {
+        selected = line;
+        break;
+      }
+    }
+    assertTrue(selected != null);
+    String[] cells = selected.split("\t", -1);
+    cells[13] = "-5.0";
+    cells[14] = "0";
+    cells[15] = "0";
+    ModelSpec signed = ModelSpec
+        .parse(ModelSpec.VERSION + "\n" + ModelSpec.HEADER + "\n" + String.join("\t", cells) + "\n").get(0);
+    ModelSpecTest.check(signed, -5.0);
+  }
+
   private static boolean isCubic(ModelSpec.Fixture fixture) {
     return fixture == ModelSpec.Fixture.SRK || fixture == ModelSpec.Fixture.PR || fixture == ModelSpec.Fixture.SRK_PHASE
         || fixture == ModelSpec.Fixture.PR_PHASE;
@@ -333,6 +406,54 @@ class ModelSpecHarnessTest {
 
   private static boolean isNrtl(ModelSpec.Fixture fixture) {
     return fixture == ModelSpec.Fixture.NRTL_ANALYTIC || fixture == ModelSpec.Fixture.NRTL_PHASE;
+  }
+
+  static double[] originalUnifac(double methanolFraction, double temperature) {
+    double[] x = {methanolFraction, 1.0 - methanolFraction};
+    double[] r = {1.4311, 0.9200};
+    double[] q = {1.4320, 1.4000};
+    double[][] interaction = {{0.0, -180.95}, {289.6, 0.0}};
+    double sumR = x[0] * r[0] + x[1] * r[1];
+    double sumQ = x[0] * q[0] + x[1] * q[1];
+    double[] l = new double[2];
+    double sumL = 0.0;
+    for (int i = 0; i < 2; i++) {
+      l[i] = 5.0 * (r[i] - q[i]) - (r[i] - 1.0);
+      sumL += x[i] * l[i];
+    }
+    double[] theta = {x[0] * q[0] / sumQ, x[1] * q[1] / sumQ};
+    double[][] pureTheta = {{1.0, 0.0}, {0.0, 1.0}};
+    double[] gamma = new double[2];
+    double[] lnGamma = new double[2];
+    for (int i = 0; i < 2; i++) {
+      double volumeFraction = x[i] * r[i] / sumR;
+      double areaFraction = x[i] * q[i] / sumQ;
+      double combinatorial = Math.log(volumeFraction / x[i]) + 5.0 * q[i] * Math.log(areaFraction / volumeFraction)
+          + l[i] - volumeFraction / x[i] * sumL;
+      double residual = unifacGroupLogActivity(theta, i, temperature, q, interaction)
+          - unifacGroupLogActivity(pureTheta[i], i, temperature, q, interaction);
+      lnGamma[i] = combinatorial + residual;
+      gamma[i] = Math.exp(lnGamma[i]);
+    }
+    double excess = 8.314462618 * temperature * (x[0] * lnGamma[0] + x[1] * lnGamma[1]);
+    return new double[] {gamma[0], gamma[1], lnGamma[0], lnGamma[1], excess};
+  }
+
+  private static double unifacGroupLogActivity(double[] theta, int group, double temperature, double[] q,
+      double[][] interaction) {
+    double first = 0.0;
+    for (int m = 0; m < 2; m++) {
+      first += theta[m] * Math.exp(-interaction[m][group] / temperature);
+    }
+    double third = 0.0;
+    for (int m = 0; m < 2; m++) {
+      double denominator = 0.0;
+      for (int n = 0; n < 2; n++) {
+        denominator += theta[n] * Math.exp(-interaction[n][m] / temperature);
+      }
+      third += theta[m] * Math.exp(-interaction[group][m] / temperature) / denominator;
+    }
+    return q[group] * (1.0 - Math.log(first) - third);
   }
 
   private static double[] nrtl(double methanolFraction, double temperature) {

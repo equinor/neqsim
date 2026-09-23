@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
+import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -139,6 +140,26 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
   }
 
+  @Test
+  void classicUnifacRefreshesPublishedNonidealState() {
+    SystemInterface system = groupSystem("UNIFAC", false);
+    double[][] states = {{298.15, 0.2}, {323.15, 0.8}, {298.15, 0.5}, {298.15, 0.2}};
+    for (double[] state : states) {
+      system.setTemperature(state[0]);
+      system.setMolarComposition(new double[] {state[1], 1.0 - state[1]});
+      system.init(0);
+      PhaseGEUnifac phase = (PhaseGEUnifac) system.getPhase(1);
+      double[] expected = ModelSpecHarnessTest.originalUnifac(state[1], state[0]);
+      double excess = phase.getExcessGibbsEnergy(phase, 2, state[0], 1.0, PhaseType.LIQUID)
+          / phase.getNumberOfMolesInPhase();
+      assertEquals(expected[0], ((ComponentGEInterface) phase.getComponent("methanol")).getGamma(), 3.5e-4);
+      assertEquals(expected[1], ((ComponentGEInterface) phase.getComponent("water")).getGamma(), 3.5e-4);
+      assertEquals(expected[2], ((ComponentGEInterface) phase.getComponent("methanol")).getLnGamma(), 2.5e-4);
+      assertEquals(expected[3], ((ComponentGEInterface) phase.getComponent("water")).getLnGamma(), 2.5e-4);
+      assertEquals(expected[4], excess, 0.25);
+    }
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = {false, true})
   void cubicModelsRefreshPublishedStateAtNearbyConditions(boolean pengRobinson) {
@@ -226,7 +247,10 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
     ComponentGEUnifac component = (ComponentGEUnifac) phase.getComponent(name);
     assertTrue(component.getUnifacGroups().length > 0);
-    return component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
+    double result = component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
+    assertEquals(result, component.getGamma(), 1e-12);
+    assertEquals(Math.log(result), component.getLnGamma(), 1e-12);
+    return result;
   }
 
   private static double[] nrtl(double methanolFraction, double temperature) {
