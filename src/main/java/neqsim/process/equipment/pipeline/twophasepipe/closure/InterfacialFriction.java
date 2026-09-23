@@ -111,11 +111,14 @@ public class InterfacialFriction implements Serializable {
    * The correlation was fitted to near-atmospheric air-water data. At the gas densities of a production or export line
    * (20-100 kg/m3) the transition velocity falls below 1 m/s and the unbounded form reaches twenty-fold or more. On a
    * 0.5 m, 100 bara wet-gas line that cut the stratified hold-up from 0.024 to 0.018 and removed the uphill liquid
-   * accumulation of undulating terrain, so the pressure drop fell as the terrain grew. The bound of five is an
-   * engineering limit for this extrapolation, not part of the published correlation.
+   * accumulation of undulating terrain, so the pressure drop fell as the terrain grew. A bound of five kept that
+   * response but left the interface too smooth for gas to carry a thin film up a gentle upslope: the stratified
+   * momentum balance then only had the thick, near-bridging root and flagged slug flow where a thin stratified film is
+   * observed. The bound of twelve admits the thin-film root on those slopes while still limiting the high-pressure
+   * extrapolation. It is an engineering limit, not part of the published correlation.
    * </p>
    */
-  public static final double ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT = 5.0;
+  public static final double ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT = 12.0;
 
   /**
    * Calculate interfacial friction for the current flow conditions.

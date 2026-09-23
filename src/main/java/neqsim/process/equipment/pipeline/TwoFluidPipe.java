@@ -1,6 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugUnitModel;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AnchoredIsothermalDensityModel;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.CoupledPressureMomentumSolver.GasDensityModel;
@@ -155,6 +157,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Upper no-slip fraction for the trace-liquid asymptote of the stratified closure. */
   private static final double STRATIFIED_TRACE_LIQUID_TRANSITION = 1.0e-6;
 
+  /** Geometric scan points used to bracket the thinnest stratified-film root. */
+  private static final int STRATIFIED_ROOT_SCAN_POINTS = 60;
+
   /** Bendiksen (1984) horizontal Taylor bubble drift coefficient. */
   private static final double SLUG_DRIFT_HORIZONTAL_COEFFICIENT = 0.54;
 
@@ -189,6 +194,9 @@ public class TwoFluidPipe extends Pipeline {
    * Off by default until the long-horizon liquid-rich and severe-slugging acceptance cases pass.
    */
   private boolean coupledPressureMomentumEnabled = false;
+
+  /** True once the user has chosen the coupled pressure-momentum option explicitly. */
+  private boolean coupledPressureMomentumExplicit = false;
 
   /** Whether any coupled nonlinear correction failed since the latest steady initialization. */
   private boolean transientCoupledPressureMomentumFailureDetected = false;
@@ -294,6 +302,21 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Shared stateless mechanical evaluator. */
   private SlugForceBalance sharedSlugForceBalance = new SlugForceBalance();
+
+  /** Steady slug-unit closure for the slug share of holdup and friction; on by default. */
+  private boolean slugUnitClosureEnabled = true;
+
+  /** Film holdup at which an annular film bridges the bore (Barnea 1986 blockage limit). */
+  private static final double ANNULAR_FILM_BRIDGING_HOLDUP = 0.24;
+
+  /** Half width of the bridging band, matching the flow-regime detector's level transition band. */
+  private static final double SLUG_BRIDGING_BAND = 0.08;
+
+  /** Inclination above which the stratified-layer bridging test no longer applies, radians. */
+  private static final double SLUG_BRIDGING_MAX_INCLINATION = Math.toRadians(45.0);
+
+  /** Stateless slug-unit evaluator. */
+  private SlugUnitModel slugUnitModel = new SlugUnitModel();
 
   /** Time integrator. */
   private TimeIntegrator timeIntegrator;
@@ -3187,37 +3210,48 @@ public class TwoFluidPipe extends Pipeline {
       // Use flow-regime-specific literature correlations.
 
       Map<FlowRegime, Double> regimeWeights = sec.getRegimeWeights();
-      if (regimeWeights == null) {
-        alphaL = holdupForRegime(regime, vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
-      } else {
-        // On a transition the section is partly each regime; blending the closures removes the
-        // step change a hard switch would impose on hold-up.
-        alphaL = 0.0;
-        for (Map.Entry<FlowRegime, Double> entry : regimeWeights.entrySet()) {
-          alphaL += entry.getValue()
-              * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
+      Map<FlowRegime, Double> blend = regimeWeights != null ? regimeWeights : Collections.singletonMap(regime, 1.0);
+      // On a transition the section is partly each regime; blending the closures removes the
+      // step change a hard switch would impose on hold-up.
+      double unitShare = 0.0;
+      double unitPart = 0.0;
+      double otherPart = 0.0;
+      for (Map.Entry<FlowRegime, Double> entry : blend.entrySet()) {
+        double weight = entry.getValue();
+        if (weight == 0.0) {
+          continue;
         }
+        if (entry.getKey() == FlowRegime.SLUG && slugUnitClosureEnabled) {
+          SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness,
+              inclination);
+          if (unit.valid || unit.stratified) {
+            double stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+                inclination);
+            double bridging = unit.valid ? slugBridgingWeight(stratified, inclination) : 0.0;
+            unitShare += weight * bridging;
+            unitPart += weight * bridging * unit.unitHoldup;
+            otherPart += weight * (1.0 - bridging) * stratified;
+            continue;
+          }
+        }
+        otherPart += weight
+            * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
       }
-
-      // Apply terrain accumulation enhancement
-      alphaL = applyTerrainAccumulation(sec, prev, alphaL);
 
       // Apply minimum slip constraint. The bound is a statement that the slip ratio cannot fall
       // below a given value, inverted for the hold-up it implies, so it stays a slip statement at
       // every liquid loading. It deliberately does NOT include a correlation-based term: see
-      // calculateAdaptiveMinimumHoldup.
+      // calculateAdaptiveMinimumHoldup. A slug unit carries its own slip and is not floored.
+      double effectiveMin = 0.0;
       if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
-        double effectiveMin;
-        if (useAdaptiveMinimumOnly) {
-          effectiveMin = minimumSlipHoldup(vsG, vsL);
-        } else {
-          effectiveMin = minimumLiquidHoldup;
-        }
-        effectiveMin = Math.min(0.9, effectiveMin);
-
-        if (alphaL < effectiveMin) {
-          alphaL = effectiveMin;
-        }
+        effectiveMin = Math.min(0.9, useAdaptiveMinimumOnly ? minimumSlipHoldup(vsG, vsL) : minimumLiquidHoldup);
+      }
+      if (unitShare == 0.0) {
+        alphaL = applyTerrainAccumulation(sec, prev, otherPart);
+        alphaL = Math.max(alphaL, effectiveMin);
+      } else {
+        otherPart = Math.max(otherPart, (1.0 - unitShare) * effectiveMin);
+        alphaL = applyTerrainAccumulation(sec, prev, otherPart + unitPart);
       }
 
     } else if (olgaModelType == OLGAModelType.SIMPLIFIED) {
@@ -3396,6 +3430,11 @@ public class TwoFluidPipe extends Pipeline {
       if (enableAnnularFilmModel) {
         double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
             inclination);
+        // A film the gas cannot carry thickens until it bridges the bore (Barnea 1986); annular flow then does
+        // not exist and the section is intermittent.
+        if (annularResult[1] >= ANNULAR_FILM_BRIDGING_HOLDUP) {
+          return intermittentHoldup(vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination);
+        }
         return annularResult[0];
       }
 
@@ -3635,6 +3674,23 @@ public class TwoFluidPipe extends Pipeline {
 
     double low = lowerBound;
     double high = upperBound;
+    // Upward flow at low liquid loading can have three roots; only the thinnest film is structurally stable
+    // (Barnea and Taitel 1992), so bracket the first sign change scanning up from the thin end.
+    double ratio = Math.pow(upperBound / lowerBound, 1.0 / STRATIFIED_ROOT_SCAN_POINTS);
+    double previous = lowerBound;
+    for (int point = 1; point < STRATIFIED_ROOT_SCAN_POINTS; point++) {
+      double trial = previous * ratio;
+      double value = calculateStratifiedMomentumResidual(trial, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
+      if (Double.isFinite(value) && residualLow * value <= 0.0) {
+        high = trial;
+        break;
+      }
+      if (Double.isFinite(value)) {
+        low = trial;
+        residualLow = value;
+      }
+      previous = trial;
+    }
     for (int iter = 0; iter < 80; iter++) {
       double mid = 0.5 * (low + high);
       double residualMid = calculateStratifiedMomentumResidual(mid, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
@@ -4408,6 +4464,31 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
+    double slugWeight = slugUnitClosureEnabled ? slugWeight(sec) : 0.0;
+    double vsG = alphaG * vG;
+    double vsL = alphaL * vL;
+    if (slugWeight > 0.0 && vsG > 0.0 && vsL > 0.0) {
+      SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sec.getSurfaceTension(), diameter,
+          roughness, sec.getInclination());
+      double slugFriction = Double.NaN;
+      if (unit.valid || unit.stratified) {
+        double separated = separatedFrictionGradient(sec);
+        double bridging = 0.0;
+        if (unit.valid) {
+          double stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sec.getSurfaceTension(),
+              diameter, sec.getInclination());
+          bridging = slugBridgingWeight(stratified, sec.getInclination());
+        }
+        slugFriction = bridging > 0.0 && !Double.isFinite(separated) ? unit.frictionGradient
+            : bridging * unit.frictionGradient + (1.0 - bridging) * separated;
+      }
+      if (Double.isFinite(slugFriction)) {
+        // The slug share was charged the mixture friction above; replace it with the unit value.
+        double mixtureFriction = fTP * rhoMix * vMix * vMix / (2.0 * diameter);
+        dPdx_fric += slugWeight * (slugFriction - mixtureFriction);
+      }
+    }
+
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
 
@@ -4449,6 +4530,69 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
     return Math.max(0.0, Math.min(1.0, separated));
+  }
+
+  /**
+   * Holdup of an intermittent section: the slug unit where one exists, otherwise the legacy slug correlation.
+   *
+   * @param vsG superficial gas velocity, m/s
+   * @param vsL superficial liquid velocity, m/s
+   * @param rhoG gas density, kg/m3
+   * @param rhoL liquid density, kg/m3
+   * @param muG gas viscosity, Pa.s
+   * @param muL liquid viscosity, Pa.s
+   * @param sigma surface tension, N/m
+   * @param inclination inclination, radians
+   * @return liquid holdup
+   */
+  private double intermittentHoldup(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL,
+      double sigma, double inclination) {
+    if (slugUnitClosureEnabled) {
+      SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness,
+          inclination);
+      if (unit.valid) {
+        return unit.unitHoldup;
+      }
+    }
+    return calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+  }
+
+  /**
+   * Share of a slug-flagged section in which slugs can actually form.
+   *
+   * <p>
+   * Slugs grow from a stratified layer that bridges the bore. Below Barnea's (1987) blockage holdup the layer cannot
+   * bridge and the section stays stratified; the share ramps across the same band the flow-regime detector uses. The
+   * share therefore vanishes continuously with the liquid supply, where a slug unit alone would keep a finite
+   * recirculating inventory. On steep sections the layer geometry does not apply and the unit is used as solved.
+   * </p>
+   *
+   * @param stratifiedHoldup equilibrium stratified holdup at the same superficial velocities
+   * @param inclination inclination, radians
+   * @return slug share between zero and one
+   */
+  private static double slugBridgingWeight(double stratifiedHoldup, double inclination) {
+    if (Math.abs(inclination) > SLUG_BRIDGING_MAX_INCLINATION) {
+      return 1.0;
+    }
+    double lower = ANNULAR_FILM_BRIDGING_HOLDUP - SLUG_BRIDGING_BAND;
+    double weight = (stratifiedHoldup - lower) / (2.0 * SLUG_BRIDGING_BAND);
+    return Math.max(0.0, Math.min(1.0, weight));
+  }
+
+  /**
+   * Share of a section classified as slug flow.
+   *
+   * @param sec section being evaluated
+   * @return slug weight between zero and one
+   */
+  private static double slugWeight(TwoFluidSection sec) {
+    Map<FlowRegime, Double> weights = sec.getRegimeWeights();
+    if (weights == null) {
+      return sec.getFlowRegime() == FlowRegime.SLUG ? 1.0 : 0.0;
+    }
+    Double slug = weights.get(FlowRegime.SLUG);
+    return slug == null ? 0.0 : Math.max(0.0, Math.min(1.0, slug));
   }
 
   /**
@@ -5298,6 +5442,7 @@ public class TwoFluidPipe extends Pipeline {
     transientOutletBackflowClamped = candidate.transientOutletBackflowClamped;
     implicitInterfacialPressureCoupling = candidate.implicitInterfacialPressureCoupling;
     coupledPressureMomentumEnabled = candidate.coupledPressureMomentumEnabled;
+    coupledPressureMomentumExplicit = candidate.coupledPressureMomentumExplicit;
     transientCoupledPressureMomentumFailureDetected = candidate.transientCoupledPressureMomentumFailureDetected;
     transientCoupledPressureMomentumCorrectionLimited = candidate.transientCoupledPressureMomentumCorrectionLimited;
     transientPressureLimitCount = candidate.transientPressureLimitCount;
@@ -5328,6 +5473,8 @@ public class TwoFluidPipe extends Pipeline {
     unsplitReferenceSections = candidate.unsplitReferenceSections;
     sharedSlugForceBalanceEnabled = candidate.sharedSlugForceBalanceEnabled;
     sharedSlugForceBalance = candidate.sharedSlugForceBalance;
+    slugUnitClosureEnabled = candidate.slugUnitClosureEnabled;
+    slugUnitModel = candidate.slugUnitModel;
     timeIntegrator = candidate.timeIntegrator;
     flowRegimeDetector = candidate.flowRegimeDetector;
     accumulationTracker = candidate.accumulationTracker;
@@ -5463,6 +5610,7 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalArgumentException("Transient time step cannot advance the finite simulation clock");
     }
     isTransientMode = true;
+    selectCoupledPressureForLiquidFullLine();
     synchronizeUpstreamCompressibleVolumePressure();
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
@@ -9475,10 +9623,45 @@ public class TwoFluidPipe extends Pipeline {
    * @param enabled true to use the coupled correction
    */
   public void setEnableCoupledPressureMomentum(boolean enabled) {
+    coupledPressureMomentumExplicit = true;
+    applyCoupledPressureMomentum(enabled);
+  }
+
+  /**
+   * Set the coupled option without marking it as a user choice.
+   *
+   * @param enabled true to use the coupled correction
+   */
+  private void applyCoupledPressureMomentum(boolean enabled) {
     coupledPressureMomentumEnabled = enabled;
     if (timeIntegrator != null) {
       timeIntegrator.setCoupledPressureMomentumEnabled(enabled);
     }
+  }
+
+  /**
+   * Use the coupled pressure-momentum solve on a liquid-full line unless the user chose the option.
+   *
+   * <p>
+   * With the default post-step pressure reconstruction a liquid rate step rings with a period of hundreds of seconds,
+   * because pressure is marched from the outlet instead of advanced with the liquid acoustic response. On a line with
+   * no gas the coupled solve has no severe-slugging or void-wave qualification concern and settles the step within one
+   * acoustic transit. Two-phase lines keep the default until that option is qualified for them.
+   * </p>
+   */
+  private void selectCoupledPressureForLiquidFullLine() {
+    if (coupledPressureMomentumExplicit || coupledPressureMomentumEnabled || sharedSlugForceBalanceEnabled) {
+      return;
+    }
+    for (TwoFluidSection sec : sections) {
+      if (sec.getGasHoldup() > 0.0) {
+        return;
+      }
+    }
+    if (!equations.isEnableInterfacialPressure()) {
+      setEnableInterfacialPressure(true);
+    }
+    applyCoupledPressureMomentum(true);
   }
 
   /** @return true when the coupled pressure-momentum correction is selected */
@@ -9868,6 +10051,35 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSharedSlugForceBalanceEnabled() {
     return sharedSlugForceBalanceEnabled;
+  }
+
+  /**
+   * Select the steady slug-unit closure for the slug share of a section.
+   *
+   * <p>
+   * With the closure on, the slug share of holdup and friction comes from {@link SlugUnitModel}: mixture friction over
+   * the slug body only, per-phase friction over the film zone, and the acceleration of the film picked up at the slug
+   * front. Where the unit balance admits no slugs the share is treated as stratified. The minimum-slip floor does not
+   * apply to the slug-unit holdup, which carries its own slip. With it off, the legacy slug correlation and mixture
+   * friction over the whole section are used.
+   * </p>
+   *
+   * @param enabled true to use the slug-unit closure; default true
+   */
+  public void setSlugUnitClosureEnabled(boolean enabled) {
+    slugUnitClosureEnabled = enabled;
+    if (slugUnitModel == null) {
+      slugUnitModel = new SlugUnitModel();
+    }
+  }
+
+  /**
+   * Return whether the steady slug-unit closure is selected.
+   *
+   * @return true when enabled
+   */
+  public boolean isSlugUnitClosureEnabled() {
+    return slugUnitClosureEnabled;
   }
 
   /**
