@@ -128,17 +128,17 @@ public final class ReleaseModelEvidence implements Serializable {
 
   /** @return immutable stable applicability codes */
   public List<String> getApplicability() {
-    return applicability;
+    return Collections.unmodifiableList(new ArrayList<String>(applicability));
   }
 
   /** @return immutable stable limitation codes */
   public List<String> getLimitations() {
-    return limitations;
+    return Collections.unmodifiableList(new ArrayList<String>(limitations));
   }
 
   /** @return immutable evidence references */
   public List<Record> getRecords() {
-    return records;
+    return Collections.unmodifiableList(new ArrayList<Record>(records));
   }
 
   /** @return true when at least one retained record is independently produced */

@@ -2,6 +2,7 @@ package neqsim.process.safety.release;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
@@ -31,6 +32,9 @@ class ReleaseModelEvidenceTest extends neqsim.NeqSimTest {
       assertFalse(evidence.getLimitations().isEmpty());
       assertFalse(evidence.getRecords().isEmpty());
       assertFalse(evidence.hasIndependentEvidence());
+      assertNotSame(evidence.getApplicability(), evidence.getApplicability());
+      assertNotSame(evidence.getLimitations(), evidence.getLimitations());
+      assertNotSame(evidence.getRecords(), evidence.getRecords());
       assertTrue(evidence.getLimitations().contains("NO_EXPERIMENTAL_QUALIFICATION")
           || evidence.getLimitations().contains("NO_ENGINEERING_QUALIFICATION"));
       assertThrows(UnsupportedOperationException.class, () -> evidence.getApplicability().add("OTHER"));
