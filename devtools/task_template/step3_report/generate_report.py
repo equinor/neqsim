@@ -199,6 +199,12 @@ REPORT_STRINGS = {
         "List of Tables": "Tabelliste",
         "Key Equations": "Sentrale ligninger",
         "Appendix A. Report Quality Checks": "Vedlegg A. Kvalitetskontroll av rapporten",
+        "Appendix B. Report Quality Checks": "Vedlegg B. Kvalitetskontroll av rapporten",
+        "Appendix A. Reproducing the Results": "Vedlegg A. Reprodusere resultatene",
+        "Software and environment": "Programvare og miljø",
+        "Steps": "Trinn",
+        "Checks after a rerun": "Kontroller etter ny kjøring",
+        "Changing a case": "Endre et tilfelle",
         "Consistency review": "Konsistenskontroll",
         "Study configuration": "Studiekonfigurasjon",
         "automatic equation typesetting unavailable":
@@ -1079,11 +1085,24 @@ for _key, _global in (("revision_history", "REVISION_HISTORY"),
 # Auto-read functions
 # ══════════════════════════════════════════════════════════
 
+def _normalize_validation(data):
+    """Accept a list of check rows as `validation` by folding it into the dict shape used here."""
+    validation = data.get("validation")
+    if isinstance(validation, list):
+        data["validation_rows"] = validation
+        data["validation"] = {
+            str(row.get("check", index)): str(row.get("status", "")).upper() != "FAIL"
+            for index, row in enumerate(validation) if isinstance(row, dict)}
+    elif validation is not None and not isinstance(validation, dict):
+        data["validation"] = {}
+    return data
+
+
 def load_results():
     """Load results.json if it exists. Returns dict or None."""
     if os.path.exists(RESULTS_FILE):
         with open(RESULTS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            data = _normalize_validation(json.load(f))
         print("  Loaded results.json ({} keys)".format(len(data)))
         return data
     print("  No results.json found (using manual sections)")
@@ -1836,6 +1855,10 @@ def _assumption_rows(results):
     if isinstance(combined, dict):
         assumptions.extend(combined.get("assumptions", []) or [])
         gaps.extend(combined.get("data_gaps", []) or combined.get("gaps", []) or [])
+        if not any(k in combined for k in ("assumptions", "data_gaps", "gaps")):
+            # Free-form {topic: text} register, the shape most task folders write.
+            assumptions.extend({"assumption": "{}: {}".format(k.replace("_", " "), v)}
+                               for k, v in combined.items() if v)
     elif isinstance(combined, list):
         gaps.extend(combined)
     for key in ("assumptions", "assumption_register"):
@@ -1953,6 +1976,40 @@ def format_list_items_text(items):
     else:
         iterable = [items]
     return "\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
+
+
+def format_reproducibility_text(results):
+    """Format results.json ``reproducibility`` as markdown for the appendix.
+
+    Accepts a string, a list of steps, or a dict with ``environment``,
+    ``steps``, ``checks`` and ``what_if`` (each a string or list).
+    """
+    repro = (results or {}).get("reproducibility")
+    if not repro:
+        return ""
+    if isinstance(repro, str):
+        return repro
+    if isinstance(repro, list):
+        return "\n".join("{}. {}".format(i, s) for i, s in enumerate(repro, 1))
+    lines = []
+    if repro.get("summary"):
+        lines.extend([repro["summary"], ""])
+    for key, title, numbered in (("environment", "Software and environment", False),
+                                 ("steps", "Steps", True),
+                                 ("checks", "Checks after a rerun", False),
+                                 ("what_if", "Changing a case", False)):
+        items = repro.get(key)
+        if not items:
+            continue
+        lines.append("**{}**".format(_t(title)))
+        if isinstance(items, str):
+            lines.append(items)
+        else:
+            lines.extend("{} {}".format("{}.".format(i) if numbered else "-",
+                                        _format_list_item_text(item))
+                         for i, item in enumerate(items, 1))
+        lines.append("")
+    return "\n".join(lines).strip()
 
 
 def format_safety_readiness_text(results):
@@ -5242,9 +5299,19 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "has_references": True,
     })
 
+    reproducibility_text = format_reproducibility_text(results)
+    if reproducibility_text:
+        sections.append({
+            "heading": _t("Appendix A. Reproducing the Results"),
+            "content": reproducibility_text,
+            "has_markdown": True,
+            "appendix": True,
+        })
+
     if quality_lines:
         sections.append({
-            "heading": _t("Appendix A. Report Quality Checks"),
+            "heading": _t("Appendix B. Report Quality Checks" if reproducibility_text
+                          else "Appendix A. Report Quality Checks"),
             "content": "\n".join(quality_lines),
             "has_markdown": True,
             "appendix": True,
