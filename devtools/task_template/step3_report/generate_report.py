@@ -78,8 +78,8 @@ try:
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
-    from docx.enum.table import WD_TABLE_ALIGNMENT
-    from docx.enum.section import WD_ORIENT
+    from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+    from docx.enum.section import WD_ORIENT, WD_SECTION
     from docx.enum.style import WD_STYLE_TYPE
     from docx.text.paragraph import Paragraph
     from docx.oxml.ns import nsdecls, qn
@@ -4393,54 +4393,151 @@ def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
             measure so a template's page size cannot leave the table narrow.
         caption: optional caption text, numbered and placed above the table.
     """
+    ncols = len(headers)
+    texts = [[str(text) for text in headers]]
+    texts += [[_fmt_cell(val) for val in row_data[:ncols]]
+              + [""] * max(0, ncols - len(row_data)) for row_data in data_rows]
+    margin_in = _TABLE_WIDE_MARGIN_IN if ncols >= 7 else _TABLE_MARGIN_IN
+    body_pt, landscape = _plan_table_layout(doc, texts, margin_in, col_widths)
+    if landscape:
+        _set_body_orientation(doc, landscape=True)
     if caption:
         _add_caption(doc, _t("Table"), caption, keep_with_next=True)
-    table = doc.add_table(rows=1, cols=len(headers))
+    table = doc.add_table(rows=1, cols=ncols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     _set_table_style(table)
+    _set_cell_margins(table, margin_in)
 
-    # A wide table only stays legible if the type size comes down with it.
-    body_pt = TABLE_PT
-    if len(headers) >= 9:
-        body_pt = TABLE_PT - 2.0
-    elif len(headers) >= 7:
-        body_pt = TABLE_PT - 1.0
-
-    # Header row
     hdr = table.rows[0]
-    for i, text in enumerate(headers):
+    for i, text in enumerate(texts[0]):
         cell = hdr.cells[i]
-        cell.text = str(text)
-        # Style header: bold, white text on dark blue background
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                run.font.size = Pt(body_pt)
-                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-        shading = parse_xml(
-            '<w:shd {} w:fill="2F5496"/>'.format(nsdecls('w'))
-        )
-        cell._tc.get_or_add_tcPr().append(shading)
+        cell.text = text
+        _style_cell_text(cell, body_pt, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
+        cell._tc.get_or_add_tcPr().append(parse_xml(
+            '<w:shd {} w:val="clear" w:color="auto" w:fill="2F5496"/>'.format(
+                nsdecls('w'))))
+        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.BOTTOM
 
-    # Data rows
-    for row_data in data_rows:
+    for row_texts in texts[1:]:
         row = table.add_row()
-        for i, val in enumerate(row_data):
-            if i >= len(row.cells):
-                break
+        for i, text in enumerate(row_texts):
             cell = row.cells[i]
-            cell.text = _fmt_cell(val)
-            for paragraph in cell.paragraphs:
-                for run in paragraph.runs:
-                    run.font.size = Pt(body_pt)
+            cell.text = text
+            _style_cell_text(cell, body_pt)
 
-    _scale_table_to_measure(doc, table, col_widths, body_pt)
+    _scale_table_to_measure(doc, table, col_widths, body_pt, margin_in)
     _repeat_header_row(table)
     _keep_rows_intact(table)
     _align_numeric_cells(table)
 
-    doc.add_paragraph("")  # spacing after table
+    if landscape:
+        _set_body_orientation(doc, landscape=False)
+    else:
+        spacer = doc.add_paragraph("")
+        spacer.paragraph_format.space_after = Pt(4)
     return table
+
+
+# Word's default cell margin is 0.075 in each side; wide tables get less so the
+# digits, not the padding, claim the width.
+_TABLE_MARGIN_IN = 0.075
+_TABLE_WIDE_MARGIN_IN = 0.045
+# Smallest type a portrait table may shrink to before it is set landscape.
+_TABLE_PORTRAIT_MIN_PT = 8.0
+_TABLE_MIN_PT = 7.0
+# Body cells narrower than this are kept on one line ("Test 1", "open (NIP-01)").
+_TABLE_NOWRAP_IN = 0.85
+
+
+def _style_cell_text(cell, font_pt, bold=False, color=None):
+    """Set type size and compact spacing; Normal's 6 pt space-after doubles row height."""
+    for paragraph in cell.paragraphs:
+        fmt = paragraph.paragraph_format
+        fmt.space_before = Pt(1.5)
+        fmt.space_after = Pt(1.5)
+        fmt.line_spacing = 1.0
+        fmt.keep_with_next = False
+        for run in paragraph.runs:
+            run.font.size = Pt(font_pt)
+            if bold:
+                run.font.bold = True
+            if color is not None:
+                run.font.color.rgb = color
+
+
+def _set_cell_margins(table, margin_in):
+    """Set the table's default left/right cell margins."""
+    tbl_pr = table._tbl.tblPr
+    for existing in tbl_pr.findall(qn("w:tblCellMar")):
+        tbl_pr.remove(existing)
+    twips = int(round(margin_in * 1440))
+    tbl_pr.append(parse_xml(
+        '<w:tblCellMar {0}><w:top w:w="0" w:type="dxa"/>'
+        '<w:left w:w="{1}" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/>'
+        '<w:right w:w="{1}" w:type="dxa"/></w:tblCellMar>'.format(nsdecls("w"), twips)))
+
+
+def _landscape_measure_in(doc):
+    """Printable width of the current section if it were turned landscape."""
+    section = doc.sections[-1]
+    long_side = max(section.page_width, section.page_height)
+    return max(2.0, (long_side - section.left_margin - section.right_margin) / 914400.0)
+
+
+def _plan_table_layout(doc, texts, margin_in, col_widths=None):
+    """Pick the largest type size at which no word or number has to break.
+
+    Returns (font_pt, landscape). A table that does not fit the portrait measure
+    even at _TABLE_PORTRAIT_MIN_PT is set on its own landscape page instead of
+    splitting "9.961" over three lines.
+    """
+    ncols = len(texts[0]) if texts else 0
+    start_pt = TABLE_PT
+    if ncols >= 9:
+        start_pt = TABLE_PT - 1.5
+    elif ncols >= 7:
+        start_pt = TABLE_PT - 1.0
+    if col_widths or ncols <= 1:
+        return start_pt, False
+    pad = 2.0 * margin_in + 0.02
+    portrait = _text_width_in(doc)
+    section = doc.sections[-1]
+    already_landscape = section.page_width > section.page_height
+
+    def fits(font_pt, measure):
+        minimums, _natural = _column_extents(texts, font_pt, pad)
+        return sum(minimums) <= measure
+
+    font_pt = start_pt
+    while font_pt >= _TABLE_PORTRAIT_MIN_PT - 1e-9:
+        if fits(font_pt, portrait):
+            return font_pt, False
+        font_pt -= 0.5
+    if already_landscape or REPORT_ORIENTATION == "template":
+        font_pt = _TABLE_PORTRAIT_MIN_PT - 0.5
+        while font_pt > _TABLE_MIN_PT and not fits(font_pt, portrait):
+            font_pt -= 0.5
+        return max(font_pt, _TABLE_MIN_PT), False
+    landscape = _landscape_measure_in(doc)
+    font_pt = start_pt
+    while font_pt > _TABLE_MIN_PT and not fits(font_pt, landscape):
+        font_pt -= 0.5
+    return max(font_pt, _TABLE_MIN_PT), True
+
+
+def _set_body_orientation(doc, landscape):
+    """Start a new section on a fresh page in the requested orientation.
+
+    Headers and footers stay linked to the previous section, so page numbering
+    and branding continue unchanged.
+    """
+    section = doc.add_section(WD_SECTION.NEW_PAGE)
+    is_landscape = section.page_width > section.page_height
+    if is_landscape != landscape:
+        section.page_width, section.page_height = section.page_height, section.page_width
+    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
+    section.different_first_page_header_footer = False
+    return section
 
 
 # Approximate advance widths in em for a sans corporate face (Arial/Calibri
@@ -4472,7 +4569,35 @@ def _text_width_estimate_in(text, font_pt):
 _TABLE_BREAK_RE = re.compile(r"[ \t\n]+")
 
 
-def _content_column_widths(table, measure, font_pt=TABLE_PT):
+def _column_extents(texts, font_pt, pad_in=_TABLE_CELL_PAD_IN):
+    """Return (minimum, natural) widths per column for a text matrix.
+
+    Row 0 is the header, which may wrap between words; a short body cell is
+    kept on one line because "Test / 1" reads as two entries.
+    """
+    ncols = max(len(row) for row in texts) if texts else 0
+    minimums, natural = [], []
+    for index in range(ncols):
+        min_in, natural_in = 0.0, 0.0
+        for row_index, row in enumerate(texts):
+            if index >= len(row):
+                continue
+            text = row[index].strip()
+            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
+            if not words:
+                continue
+            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
+            whole = _text_width_estimate_in(text[:70], font_pt)
+            if row_index > 0 and whole <= _TABLE_NOWRAP_IN:
+                longest = whole
+            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
+            natural_in = max(natural_in, whole)
+        minimums.append(min_in + pad_in)
+        natural.append(max(min_in, natural_in) + pad_in)
+    return minimums, natural
+
+
+def _content_column_widths(table, measure, font_pt=TABLE_PT, pad_in=_TABLE_CELL_PAD_IN):
     """Column widths from content, so no column has to break a word.
 
     Equal-width columns split "Consequence" into "Consequenc/e" while a
@@ -4480,21 +4605,8 @@ def _content_column_widths(table, measure, font_pt=TABLE_PT):
     its longest word; the rest of the measure goes to the columns whose text
     would otherwise wrap the most.
     """
-    minimums, natural = [], []
-    for index in range(len(table.columns)):
-        min_in, natural_in = 0.0, 0.0
-        for row in table.rows:
-            if index >= len(row.cells):
-                continue
-            text = row.cells[index].text.strip()
-            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
-            if not words:
-                continue
-            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
-            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
-            natural_in = max(natural_in, _text_width_estimate_in(text[:70], font_pt))
-        minimums.append(min_in + _TABLE_CELL_PAD_IN)
-        natural.append(max(min_in, natural_in) + _TABLE_CELL_PAD_IN)
+    texts = [[cell.text for cell in row.cells] for row in table.rows]
+    minimums, natural = _column_extents(texts, font_pt, pad_in)
     if sum(natural) <= measure:
         return natural
     spare = measure - sum(minimums)
@@ -4506,7 +4618,8 @@ def _content_column_widths(table, measure, font_pt=TABLE_PT):
             for low, extra in zip(minimums, stretch)]
 
 
-def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT):
+def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT,
+                            margin_in=_TABLE_MARGIN_IN):
     """Lay the table out across the full measure, keeping column proportions.
 
     Column widths written in absolute inches were sized for a portrait page; on
@@ -4522,15 +4635,23 @@ def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT):
                   for width in col_widths[:count]]
         shares += [sum(shares) / len(shares)] * (count - len(shares))
     else:
-        shares = _content_column_widths(table, measure, font_pt)
+        shares = _content_column_widths(table, measure, font_pt, 2.0 * margin_in + 0.02)
     total = sum(shares) or float(count)
     table.autofit = False
+    twips_total = 0
     for index, share in enumerate(shares):
         width = Inches(measure * share / total)
+        twips_total += int(width.twips)
         table.columns[index].width = width
         for row in table.rows:
             if index < len(row.cells):
                 row.cells[index].width = width
+    # An "auto" table width lets Word and LibreOffice re-flow a fixed layout.
+    tbl_pr = table._tbl.tblPr
+    for existing in tbl_pr.findall(qn("w:tblW")):
+        tbl_pr.remove(existing)
+    tbl_pr.append(parse_xml('<w:tblW {} w:w="{}" w:type="dxa"/>'.format(
+        nsdecls("w"), twips_total)))
 
 
 def add_results_word_table(doc, results):
@@ -5551,8 +5672,18 @@ def build_word_report(sections, results=None):
 
     # Save
     _add_page_number_footer(doc)
-    doc.save(DOCX_FILE)
+    _save_docx(doc, DOCX_FILE)
     print("Word report saved: {}".format(DOCX_FILE))
+
+
+def _save_docx(doc, path):
+    """Save a Word document, exiting with a clear message when it is open in Word."""
+    try:
+        doc.save(path)
+    except PermissionError:
+        print("ERROR: cannot write {} - it is open in Word or locked by "
+              "OneDrive. Close it and run the report again.".format(path))
+        sys.exit(3)
 
 
 # ══════════════════════════════════════════════════════════
@@ -6418,7 +6549,7 @@ def build_paper_docx(sections, results=None):
         if section.get("has_discussion") and results:
             add_discussion_word(doc, results)
 
-    doc.save(PAPER_DOCX_FILE)
+    _save_docx(doc, PAPER_DOCX_FILE)
     print("Scientific paper (Word) saved: {}".format(PAPER_DOCX_FILE))
 
 
