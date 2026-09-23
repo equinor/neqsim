@@ -41,7 +41,7 @@ public class SurrogateFallbackGuideDocumentationTest extends NeqSimTest {
 
     assertTrue(guide.contains("temperature in K"));
     assertTrue(guide.contains("pressure in bara"));
-    assertTrue(guide.contains("Bounds are inclusive"));
+    assertTrue(Pattern.compile("Bounds\\s+are\\s+inclusive").matcher(guide).find());
     assertTrue(guide.contains("before either callback; counters are unchanged"));
     assertTrue(guide.contains("the registry does not extrapolate the surrogate"));
     assertTrue(guide.contains("software-contract validity only"));
