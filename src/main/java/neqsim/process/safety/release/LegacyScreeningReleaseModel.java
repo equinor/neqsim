@@ -34,6 +34,7 @@ public final class LegacyScreeningReleaseModel implements ReleaseFlowModel {
       if (request == null) {
         throw new IllegalArgumentException("Request required");
       }
+      request.requireShortOpening();
       SystemInterface input = request.getFluid();
       SystemInterface stationFluid = input.clone();
       List<Diagnostic> diagnostics = new ArrayList<Diagnostic>();

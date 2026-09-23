@@ -42,6 +42,10 @@ The current implementation includes:
 - Mixture-specific, fail-closed equilibrium-solid and hydrate applicability assessment at the
   resolved upstream, throat and ambient-expanded stations. Detected risk is `UNSUPPORTED`;
   an unresolved required assessment is `INVALID`. This does not add solid-bearing flow physics.
+- A separate ideal-gas Fanno model for quasi-steady, one-sided full-bore release through a
+  constant-area pipe with explicit length and specified Darcy friction. The same immutable
+  geometry reaches steady/live process frames and coupled inventory depletion; short-opening
+  models reject it rather than ignoring it.
 - The executed NeqSim-Colab safety source-term demonstration is merged through
   [EvenSol/NeqSim-Colab #176](https://github.com/EvenSol/NeqSim-Colab/pull/176), with retained
   outputs, rendered-equation/figure inspection, catalog entry and repository validation.
@@ -55,7 +59,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
 | Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal and is balance/refinement tested. Receiving-pressure events are conservatively located. | Assessed phase-level/geometry, entrainment/slip, finite-rate interfacial transfer and phase-exhaustion transitions beyond the current well-mixed equilibrium boundary. |
-| Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
+| Full-bore/long-pipe and non-equilibrium regimes | A bounded ideal-gas Fanno model covers quasi-steady one-sided constant-area pipe flow with specified Darcy friction and analytical validation. | Real-gas/transient decompression and separate non-equilibrium multiphase models, applicability controls and independent validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |

@@ -91,6 +91,10 @@ public final class SourceTermFrame implements Serializable {
       source.add("effectiveArea", quantity(request.getEffectiveAreaM2(), "m2"));
       source.add("dischargeCoefficient", quantity(request.getDischargeCoefficient(), "1"));
       source.add("backPressure", quantity(request.getBackPressurePa(), "Pa"));
+      if (request.hasFlowPath()) {
+        source.add("flowPathLength", quantity(request.getFlowPathLengthM(), "m"));
+        source.add("darcyFrictionFactor", quantity(request.getDarcyFrictionFactor(), "1"));
+      }
       source.add("massFlowRate", quantity(result.getMassFlowRateKgS(), "kg/s"));
       source.addProperty("choked", result.isChoked());
       ReleaseState exit = result.getStations().get(Station.ORIFICE_EXIT);

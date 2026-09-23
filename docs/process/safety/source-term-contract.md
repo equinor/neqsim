@@ -24,6 +24,11 @@ aqueous and solid-like distinctions; no gas fraction is inferred from phase inde
 Advective momentum is mass rate multiplied by orifice-exit velocity; it excludes pressure thrust.
 Enthalpy and entropy retain the selected thermodynamic model's reference convention.
 
+Finite-pipe results add the paired optional fields `flowPathLength` [m] and
+`darcyFrictionFactor` [1] to the source object. The schema requires both when either is present.
+Their absence denotes the original short-opening geometry; consumers must not infer a zero-length
+pipe calculation from a finite-pipe model identity.
+
 | Status | Numeric source payload |
 |---|---|
 | `VALID` / `VALID_WITH_WARNINGS` | Required. Inspect diagnostics and applicability. |

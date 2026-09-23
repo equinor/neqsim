@@ -36,6 +36,7 @@ public final class IdealGasReleaseModel implements ReleaseFlowModel {
       if (request == null) {
         throw new IllegalArgumentException("Request required");
       }
+      request.requireShortOpening();
       SystemInterface upstream = request.getFluid();
       ReleaseFlowRequest.positive(upstream.getPressure(), "upstream pressure");
       ReleaseFlowRequest.positive(upstream.getTemperature(), "upstream temperature");

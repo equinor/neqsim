@@ -116,7 +116,13 @@ apply the frame rate as an additional withdrawal from this unit.
 
 `addInventorySource` binds the inventory's own geometry and release model. It rejects a
 second physical-source registration for the same unit. Existing `addSource` remains a
-hypothetical sample and does not enable inventory coupling. Schema v1 is unchanged.
+hypothetical sample and does not enable inventory coupling.
+
+The finite-pipe `ReleaseInventory` constructor adds flow-path length and specified Darcy friction
+before the model argument. That geometry is retained as inventory pressure and composition evolve
+and is exported by `addInventorySource`. It enables quasi-steady coupling to the ideal-gas Fanno
+model; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
+paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry

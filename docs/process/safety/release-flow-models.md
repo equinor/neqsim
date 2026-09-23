@@ -1,6 +1,6 @@
 ---
 title: Model-explicit release source terms
-description: Explicit homogeneous-equilibrium, ideal-gas and legacy-screening release models with immutable thermodynamic stations and fail-closed diagnostics.
+description: Explicit short-opening and ideal-gas Fanno pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
@@ -45,6 +45,7 @@ identity, version and diagnostics with every frame:
 |---|---|---|
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
+| `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `LegacyScreeningReleaseModel` | Reproduce the historical `LeakModel.calculateMassFlowRate` rate during migration. | Always returns `VALID_WITH_WARNINGS` when usable and carries `SCREENING_ONLY`, unresolved-station and legacy-fallback diagnostics. |
 
 For example:
@@ -79,6 +80,50 @@ NeqSim reference minus $u^2/2$ and station entropy retains the upstream referenc
 relative energy/entropy consistency without presenting an arbitrary absolute ideal-gas reference
 as new property data. The adapter supports one gas phase only and excludes reaction, forced phases,
 solid/hydrate checks, real-gas departure, phase change, friction, heat transfer and depletion.
+
+## Ideal-gas Fanno pipe equations
+
+`IdealGasFannoPipeReleaseModel` uses a separate finite-pipe request:
+
+```java
+ReleaseFlowModel pipeModel = new IdealGasFannoPipeReleaseModel();
+ReleaseFlowRequest pipe = new ReleaseFlowRequest(
+    gas, 0.10, 1.0, 101325.0, 100.0, 0.02);
+ReleaseFlowResult pipeResult = pipeModel.calculate(pipe);
+```
+
+The final two values are pipe length [m] and specified Darcy friction factor [1]. Both
+must be positive together. Existing short-opening models reject this geometry instead of
+silently discarding it. `SourceTermSession.addLongPipeSource` carries the same geometry through
+steady and dynamic `ProcessSystem` and `ProcessModel` paths. The corresponding
+`ReleaseInventory` constructor preserves it while pressure, composition and energy evolve.
+
+For exit Mach number $M_e$, inlet Mach number $M_i$, pipe length $L$, internal diameter $D$
+and Darcy factor $f_D$, the model solves:
+
+$$\frac{f_DL}{D}=F(M_i)-F(M_e),$$
+
+$$F(M)=\frac{1-M^2}{\gamma M^2}+\frac{\gamma+1}{2\gamma}
+\ln\left(\frac{(\gamma+1)M^2}{2+(\gamma-1)M^2}\right).$$
+
+The stagnation-pressure relation is:
+
+$$\frac{p_0}{p_0^*}=\frac{1}{M}
+\left(\frac{2+(\gamma-1)M^2}{\gamma+1}\right)^{(\gamma+1)/(2(\gamma-1))}.$$
+
+The pipe is choked when the receiving pressure is at or below the calculated static exit
+pressure for $M_e=1$. Otherwise a bounded solve finds $0<M_e<1$ whose exit pressure equals the
+receiving pressure. Mass flux is $G=\rho Ma$ and the requested effective full-bore area remains
+$C_d\pi D^2/4$. Tests check Mach and energy closure, constant-area mass conservation,
+friction-length and backpressure trends, no-flow behavior, process-container frames and coupled
+inventory conservation.
+
+This is a steady, adiabatic, calorically perfect, constant-area, one-sided pipe model. The
+specified friction factor is not calculated from roughness or Reynolds number. The model does
+not represent the opposite side of a rupture, transient decompression waves, line packing,
+heat transfer, real-gas departure, multiphase flow, slip, delayed flashing, entrainment,
+finite-rate phase transfer or solid-bearing transport. It is software-validated against its
+analytical equations, not independently qualified for facility decisions.
 
 ## Homogeneous-equilibrium equations and station semantics
 
@@ -132,7 +177,8 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Forced phases, reactions, solid or hydrate checking enabled | `UNSUPPORTED`. |
 | Mixture-specific equilibrium solid or hydrate risk at a resolved station | `UNSUPPORTED`; a separately assessed solid-capable model is required. |
 | Required solid or hydrate assessment cannot resolve | `INVALID`; absence of risk is never inferred from a failed check. |
-| Full-bore pipe rupture, slip, delayed flashing, heat transfer or friction | Outside this model's physics. |
+| Full-bore gas pipe with specified constant Darcy friction | Select `IdealGasFannoPipeReleaseModel`; outside HEM physics. |
+| Transient decompression waves, real-gas pipe flow, slip, delayed flashing or heat transfer | Outside the delivered models. |
 | Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
 
 Version `1.2.0` assesses the upstream, accepted throat and ambient-expanded states on defensive

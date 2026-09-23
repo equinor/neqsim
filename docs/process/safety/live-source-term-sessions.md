@@ -124,6 +124,9 @@ status of valid does not guarantee a recently received frame is still current on
 ## Physical meaning and isolation
 
 Each source registered with `addSource` is an **instantaneous hypothetical opening** evaluated from the sampled fluid.
+Use `addLongPipeSource` for a hypothetical one-sided pipe segment; it retains explicit length
+and Darcy friction in every immutable request and exported frame. Select a finite-pipe model
+explicitly—short-opening models reject this geometry.
 The source does not remove mass or energy from the connected process. Its provenance explicitly
 records `HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK`. To calculate a depleting release, model the
 physical discharge and inventory balance in the process; sample the resulting trajectory and
