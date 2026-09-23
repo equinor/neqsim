@@ -2664,10 +2664,18 @@ def _validate_analysis_scripts(analysis):
                 script_file))
             continue
         produces = entry.get("produces")
-        if produces and not os.path.exists(_resolve_task_path(produces)):
+        if produces and not _declared_output_exists(produces):
             warnings.append("Analysis script {} declares an output that is missing: {}".format(
                 script_file, produces))
     return warnings
+
+
+def _declared_output_exists(produces):
+    """Return True when a declared script output exists; glob patterns need one match."""
+    resolved = _resolve_task_path(produces)
+    if any(ch in str(produces) for ch in "*?["):
+        return bool(glob.glob(resolved))
+    return os.path.exists(resolved)
 
 
 def _validate_data_sources(inputs, quality_gates, results):
