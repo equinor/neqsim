@@ -71,7 +71,7 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 146 cases across seven system drivers (SRK, PR, Wilson, NRTL,
+The catalog has 206 cases across seven system drivers (SRK, PR, Wilson, NRTL,
 classic UNIFAC, PSRK and UMR-PRU), direct SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU phase adapters, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
@@ -84,7 +84,8 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | i-Pentane at 290, 298.15 and 301 K | NIST WebBook Willingham et al. (1945), 289.44–301.74 K; independent correlation versus NeqSim DIPPR data, 1% comparison tolerance |
 | Binary Wilson | Prescribed Lambda12=2, Lambda21=0.5, with mole fractions 0.2/0.8, 0.5/0.5 and 0.8/0.2; closed-form numerical fixtures, not experimental mixture validation |
 | Binary NRTL | Published local-composition equation with prescribed alpha12=alpha21=0.3, D12=200 K and D21=-100 K; gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K for SystemNRTL and exact PhaseGENRTL entry points |
-| UNIFAC, PSRK, UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no experimental mixture accuracy is claimed |
+| Original UNIFAC | Published methanol/water gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K through `SystemUNIFAC` and exact `PhaseGEUnifac`; independent evaluation of the original equation uses DDBST R/Q and A parameters |
+| PSRK and UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no nonideal mixture accuracy is claimed |
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
@@ -92,11 +93,13 @@ The cubic cases use the original published SRK/PR equations with the declared me
 Tc, Pc and acentric factor. They validate analytical implementation and state publication,
 not experimental model accuracy, mixture behavior, liquid roots or near-critical behavior.
 The low-pressure EOS and pure-component GE cases are intentionally limited controls.
-Gamma=1 alone cannot
-detect an always-one stub; nonideal Wilson values, group-content checks and the existing
-binary UNIFAC regressions provide distinct checks. `ModelSpecStateTest` additionally
+Gamma=1 alone cannot detect an always-one stub. The original UNIFAC methanol/water cases
+now provide nonideal anchors, while group-content checks and binary PSRK/UMR-PRU regressions
+remain bounded table/state evidence. `ModelSpecStateTest` additionally
 tests changed Wilson composition and binary UNIFAC/PSRK/UMR-PRU component-order and repeated
-initialization behavior. UMR-PRU is driven through the actual HV mixing rule and its GE
+initialization behavior. It also reuses the classic UNIFAC phase across composition and
+temperature changes and verifies returned/stored gamma, ln(gamma), and excess Gibbs energy
+before returning to the initial state. UMR-PRU is driven through the actual HV mixing rule and its GE
 phase; standalone UNIQUAC is not incorrectly classified as working because a UNIFAC
 subclass works.
 
@@ -151,9 +154,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (12 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (15 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (118 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (115 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -204,6 +207,15 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   stored logarithmic activity coefficients and molar excess Gibbs energy. The 1e-12 gamma/ln(gamma)
   and 1e-9 J/mol excess-energy
   tolerances are analytical implementation tolerances, not experimental accuracy claims.
+- [Fredenslund, Jones and Prausnitz (1975)](https://doi.org/10.1002/aic.690210607)
+  defines the original UNIFAC equation. The methanol/water fixtures independently evaluate
+  its combinatorial and residual terms using the [published DDBST original-UNIFAC
+  table](https://www.ddbst.com/published-parameters-unifac.html): CH3OH subgroup 15
+  `(R,Q)=(1.4311,1.432)`, H2O subgroup 16 `(R,Q)=(0.92,1.4)`, `A67=-180.95 K`, and
+  `A76=289.6 K`. NeqSim's packaged classic table rounds `A67` to `-181 K`; the declared
+  `3.5e-4` gamma, `2.5e-4` ln(gamma), and `0.25 J/mol` excess-energy absolute tolerances
+  cover only that documented parameter rounding. These are analytical original-model
+  contracts, not experimental VLE validation or evidence for PSRK/UMR-PRU formulations.
 
 NIST sources were inspected on 2026-09-18. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
@@ -224,10 +236,11 @@ constant. They also prove legitimate signed/zero properties and declared absence
 Production-path mutation evidence is recorded in the campaign PR/ledger separately;
 helper self-tests alone are not proof that a production regression is detected.
 
-Follow-up milestones reduce inventory debt with sourced mixture properties. The next
-group-contribution phase batch requires a separate parameter-table provenance and
-validation matrix; modified-HV/WS variants, fitted NRTL mixtures and VLE accuracy are
-not implied by the prescribed binary equation checks. Subsequent work will
+Follow-up milestones reduce inventory debt with sourced mixture properties. PSRK, UMR-PRU,
+modified group-contribution variants and fitted/database activity models each require their
+own parameter-formalism provenance and validation matrix; the original-UNIFAC anchors do not
+qualify them. Fitted NRTL mixtures and experimental VLE accuracy are likewise not implied by
+the prescribed equation checks. Subsequent work will
 then add typed availability and enum dispatch. Java 8 enum switches are not
 compiler-exhaustive: each new fixture/form needs a coverage test and a fail-closed
 default. No public `double` signature is changed by this first increment.

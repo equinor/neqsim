@@ -19,7 +19,7 @@ neqsim.thermo.phase.PhaseGENRTLmodifiedHV	PHASE	DEBT	-	-	not-qualified	https://g
 neqsim.thermo.phase.PhaseGENRTLmodifiedWS	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGERG2004Eos	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGERG2008Eos	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseGEUnifac	PHASE	PARTIAL	UNIFAC_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, derivatives or additional properties
+neqsim.thermo.phase.PhaseGEUnifac	PHASE	PARTIAL	UNIFAC_PHASE	GAMMA;LN_GAMMA;GEX;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming experimental mixture accuracy, derivatives or additional properties
 neqsim.thermo.phase.PhaseGEUnifacPSRK	PHASE	PARTIAL	PSRK_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, B/C coefficients, derivatives or additional properties
 neqsim.thermo.phase.PhaseGEUnifacUMRPRU	PHASE	PARTIAL	UMR_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, B/C coefficients, derivatives or additional properties
 neqsim.thermo.phase.PhaseGEUniquac	PHASE	UNSUPPORTED	UNIQUAC	GAMMA	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
@@ -126,7 +126,7 @@ neqsim.thermo.system.SystemUMRCPAvolcor	SYSTEM	DEBT	-	-	not-qualified	https://gi
 neqsim.thermo.system.SystemUMRPRUEos	SYSTEM	PARTIAL	UMR	GAMMA;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
 neqsim.thermo.system.SystemUMRPRUMCEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemUMRPRUMCEosNew	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.system.SystemUNIFAC	SYSTEM	PARTIAL	UNIFAC	GAMMA;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
+neqsim.thermo.system.SystemUNIFAC	SYSTEM	PARTIAL	UNIFAC	GAMMA;LN_GAMMA;GEX;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming experimental mixture accuracy, derivatives or additional properties
 neqsim.thermo.system.SystemUNIFACpsrk	SYSTEM	PARTIAL	PSRK	GAMMA;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
 neqsim.thermo.system.SystemVanLaarActivitySRK	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemVegaEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification

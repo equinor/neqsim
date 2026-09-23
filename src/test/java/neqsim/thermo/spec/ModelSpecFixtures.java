@@ -148,15 +148,27 @@ final class ModelSpecFixtures {
     case UMR_PHASE:
       ModelSpec.require(
           s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.GROUP_R
-              || s.property == ModelSpec.Property.GROUP_Q || s.property == ModelSpec.Property.INTERACTION_A,
+              || s.property == ModelSpec.Property.GROUP_Q || s.property == ModelSpec.Property.INTERACTION_A
+              || s.property == ModelSpec.Property.LN_GAMMA || s.property == ModelSpec.Property.GEX,
           "group property not implemented by fixture");
       boolean umr = s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE;
-      validateGe(s, umr ? "HV/UNIFAC_UMRPRU" : "classic", "init-ge");
+      boolean classicNonideal = (s.fixture == ModelSpec.Fixture.UNIFAC || s.fixture == ModelSpec.Fixture.UNIFAC_PHASE)
+          && s.components.size() == 2 && s.property != ModelSpec.Property.INTERACTION_A;
+      if (s.property == ModelSpec.Property.LN_GAMMA || s.property == ModelSpec.Property.GEX) {
+        ModelSpec.require(classicNonideal, "nonideal log/gex qualification is limited to original UNIFAC");
+      }
+      validateGe(s, umr ? "HV/UNIFAC_UMRPRU" : "classic", classicNonideal ? "published-original-unifac" : "init-ge");
       if (s.property == ModelSpec.Property.INTERACTION_A) {
         ModelSpec.require(
             s.components.size() == 2 && s.components.containsKey("methanol") && s.components.containsKey("water")
                 && s.components.keySet().iterator().next().equals("methanol"),
             "interaction fixture requires ordered methanol/water");
+      } else if (classicNonideal) {
+        ModelSpec.require(
+            (s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.LN_GAMMA
+                || s.property == ModelSpec.Property.GEX) && s.components.containsKey("methanol")
+                && s.components.containsKey("water") && s.components.keySet().iterator().next().equals("methanol"),
+            "published original UNIFAC fixture requires ordered methanol/water");
       } else {
         ModelSpec.require(s.components.size() == 1 && s.components.containsKey("methanol"),
             "group fixture requires pure methanol unless testing an interaction");
@@ -312,6 +324,18 @@ final class ModelSpecFixtures {
         assertEquals(6, group.getUnifacGroup(0).getMainGroup(), s.toString());
         assertEquals(7, group.getUnifacGroup(1).getMainGroup(), s.toString());
         return phase.getAij(s.componentIndex, 1 - s.componentIndex);
+      }
+      if (s.property == ModelSpec.Property.GEX) {
+        PhaseGEUnifac phase = (PhaseGEUnifac) liquid;
+        double total = phase.getExcessGibbsEnergy(phase, liquid.getNumberOfComponents(), s.temperature, s.pressure,
+            PhaseType.LIQUID);
+        assertTrue(Double.isFinite(total), s.toString());
+        for (int i = 0; i < liquid.getNumberOfComponents(); i++) {
+          ComponentGEInterface stored = (ComponentGEInterface) liquid.getComponent(i);
+          positive(stored.getGamma(), s.toString());
+          assertEquals(Math.log(stored.getGamma()), stored.getLnGamma(), 1e-12, s.toString());
+        }
+        return total / liquid.getNumberOfMolesInPhase();
       }
     }
     double gamma = c instanceof ComponentGEWilson
