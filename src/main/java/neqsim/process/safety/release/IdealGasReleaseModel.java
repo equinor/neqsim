@@ -1,6 +1,7 @@
 package neqsim.process.safety.release;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,21 @@ public final class IdealGasReleaseModel implements ReleaseFlowModel {
   @Override
   public String getModelId() {
     return "ideal-gas-isentropic-orifice";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReleaseModelEvidence getEvidence() {
+    return new ReleaseModelEvidence("ideal-gas-isentropic-orifice:1.0.0",
+        Arrays.asList("SHORT_ORIFICE", "SINGLE_GAS_PHASE", "CALORICALLY_PERFECT_GAS"),
+        Arrays.asList("NO_REAL_GAS_DEPARTURE", "NO_PHASE_CHANGE", "NO_PIPE_FRICTION", "NO_EXPERIMENTAL_QUALIFICATION"),
+        Arrays.asList(
+            new ReleaseModelEvidence.Record("ideal-gas-choked-limit", ReleaseModelEvidence.Type.ANALYTICAL,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowBenchmarkTest.java",
+                "Closed-form choked and high-backpressure ideal-gas limits", false),
+            new ReleaseModelEvidence.Record("ideal-gas-state-closure", ReleaseModelEvidence.Type.CONSERVATION,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowAdapterTest.java",
+                "Station mass-flux and stagnation-energy invariants", false)));
   }
 
   /** {@inheritDoc} */

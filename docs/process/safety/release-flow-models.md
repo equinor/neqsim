@@ -48,6 +48,13 @@ identity, version and diagnostics with every frame:
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `LegacyScreeningReleaseModel` | Reproduce the historical `LeakModel.calculateMassFlowRate` rate during migration. | Always returns `VALID_WITH_WARNINGS` when usable and carries `SCREENING_ONLY`, unresolved-station and legacy-fallback diagnostics. |
 
+Every implementation also returns an immutable `ReleaseModelEvidence` manifest. Stable
+applicability and limitation codes state the modeled boundary, while evidence records distinguish
+analytical, conservation, numerical and experimental comparisons. A custom model that does not
+override `getEvidence()` fails closed to `NO_DECLARED_VALIDATION_EVIDENCE`. The current built-in
+records are repository-owned analytical and regression evidence, so all emitted frames remain
+`UNQUALIFIED` and report `independentEvidence: false`.
+
 For example:
 
 ```java
@@ -196,7 +203,9 @@ to the selected NeqSim thermodynamic system. Turning off solid checks on the cal
 disable the defensive assessment or establish absence of solids outside the checked stations.
 
 Evidence is software regression and analytical dilute-gas comparison, not independent
-experimental qualification. Tests cover the ideal-gas choked limit (rate and pressure),
+experimental qualification. The frame's `model.evidence` object retains the exact manifest ID,
+applicability codes, limitation codes and evidence references used by the selected model; it does
+not infer a higher evidence level from successful calculation status. Tests cover the ideal-gas choked limit (rate and pressure),
 unchoked/no-flow limits, energy/entropy closure, flashing pure propane, a methane/ethane
 gas mixture, input
 immutability, serialization, invalid/unsupported inputs, and area/coefficient scaling.

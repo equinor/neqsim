@@ -1,6 +1,8 @@
 package neqsim.process.safety.release;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,19 @@ public final class LegacyScreeningReleaseModel implements ReleaseFlowModel {
   @Override
   public String getModelId() {
     return "legacy-orifice-screening";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReleaseModelEvidence getEvidence() {
+    return new ReleaseModelEvidence("legacy-orifice-screening:1.0.0",
+        Collections.singletonList("LEGACY_SCREENING_COMPATIBILITY"),
+        Arrays.asList("SCREENING_ONLY", "UNRESOLVED_STATIONS", "PROPERTY_FALLBACKS_ALLOWED",
+            "NO_ENGINEERING_QUALIFICATION"),
+        Collections
+            .singletonList(new ReleaseModelEvidence.Record("legacy-rate-parity", ReleaseModelEvidence.Type.NUMERICAL,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowAdapterTest.java",
+                "Numerical parity with the historical LeakModel screening equation", false)));
   }
 
   /** {@inheritDoc} */
