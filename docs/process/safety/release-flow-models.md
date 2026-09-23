@@ -130,13 +130,24 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Nonreacting gas, liquid or equilibrium fluid mixture | Calculates the stated homogeneous-equilibrium model. |
 | Flashing hydrocarbon liquid | Supports equilibrium phase redistribution with zero slip. |
 | Forced phases, reactions, solid or hydrate checking enabled | `UNSUPPORTED`. |
-| CO2 present below 216.592 K anywhere along expansion | Conservatively `UNSUPPORTED`; a separately assessed solid-capable model is required. |
+| Mixture-specific equilibrium solid or hydrate risk at a resolved station | `UNSUPPORTED`; a separately assessed solid-capable model is required. |
+| Required solid or hydrate assessment cannot resolve | `INVALID`; absence of risk is never inferred from a failed check. |
 | Full-bore pipe rupture, slip, delayed flashing, heat transfer or friction | Outside this model's physics. |
 | Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
 
-The CO2 temperature guard is conservative: it is not a mixture solid-equilibrium boundary.
-Turning off solid checks does not establish absence of solids. The caller remains responsible
-for selecting a supported thermodynamic basis and checking phase-formation risks.
+Version `1.2.0` assesses the upstream, accepted throat and ambient-expanded states on defensive
+fluid copies. Components present above `1e-12` mole fraction are checked when the station is at
+or below their database triple-point temperature. The selected-component solid flash uses the
+same EOS and mixture; a stable solid mass fraction above `1e-12` returns `SOLID_RISK`. A
+water-containing mixture with a recognized hydrate former is compared with its calculated
+hydrate equilibrium temperature and returns `HYDRATE_RISK` at or below the boundary. Failed
+required checks return `SOLID_RISK_ASSESSMENT_FAILED` and no numeric release payload. Clear
+stations carry `SOLID_RISK_ASSESSED` diagnostics.
+
+These are applicability controls, not solid-bearing release physics or experimental
+qualification. Candidate screening is limited by the component data and hydrate model available
+to the selected NeqSim thermodynamic system. Turning off solid checks on the caller does not
+disable the defensive assessment or establish absence of solids outside the checked stations.
 
 Evidence is software regression and analytical dilute-gas comparison, not independent
 experimental qualification. Tests cover the ideal-gas choked limit (rate and pressure),
@@ -165,7 +176,7 @@ an unresolved entropy, inventory or equilibrium residual still returns `INVALID`
 `INCIPIENT_PHASE_CONTINUATION` records resolved entropy roots, accepted/rejected candidate
 counts and the last rejection reason. This diagnostic is distinct from acoustic warnings.
 The original pressure-search bounds and closure tolerances are unchanged. The source-frame
-schema remains v1, while model provenance identifies numerical version `1.1.0`.
+schema remains v1, while model provenance identifies numerical version `1.2.0`.
 
 The former failing regression (80 mol% propane, 20 mol% n-butane, SRK/classic, 300 K,
 20 bara to 3 bara, 10 mm opening and discharge coefficient 0.62) now gives approximately

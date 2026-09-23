@@ -37,8 +37,11 @@ The current implementation includes:
   and contract regressions in focused CI.
 - Guarded same-EOS continuation for the previously unresolved propane/butane entropy root,
   with nine nearby mixture cases, a separate saturation-path comparison, inventory scaling,
-  back-pressure sensitivity and retained schema/benchmark evidence. Model version `1.1.0`
+  back-pressure sensitivity and retained schema/benchmark evidence. Model version `1.2.0`
   preserves the acoustic warning and `UNQUALIFIED` evidence boundary.
+- Mixture-specific, fail-closed equilibrium-solid and hydrate applicability assessment at the
+  resolved upstream, throat and ambient-expanded stations. Detected risk is `UNSUPPORTED`;
+  an unresolved required assessment is `INVALID`. This does not add solid-bearing flow physics.
 - The executed NeqSim-Colab safety source-term demonstration is merged through
   [EvenSol/NeqSim-Colab #176](https://github.com/EvenSol/NeqSim-Colab/pull/176), with retained
   outputs, rendered-equation/figure inspection, catalog entry and repository validation.
@@ -54,7 +57,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal and is balance/refinement tested. Receiving-pressure events are conservatively located. | Assessed phase-level/geometry, entrainment/slip, finite-rate interfacial transfer and phase-exhaustion transitions beyond the current well-mixed equilibrium boundary. |
 | Full-bore/long-pipe and non-equilibrium regimes | Outside the short-opening model. | Separate physical models, applicability controls and validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
-| Solid-formation applicability | Conservative CO2 temperature and enabled-solid checks exist. | Mixture-specific solid-risk assessment and assessed solid-capable physics where supported. |
+| Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |
 | Colab demonstration | Executed, output-retaining demonstration merged in NeqSim-Colab #176 with rendering, catalog and validation-ledger checks. | No remaining implementation item; broader physical qualification remains governed by the rows above. |
 

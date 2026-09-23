@@ -126,7 +126,7 @@ class ReleaseFlowFlashingTest extends neqsim.NeqSimTest {
         reference, Collections.singletonMap("evidence", "numerical regression; not experimental qualification"));
     SourceTermFrame.verifyEnvelope(frame.toJson());
     assertTrue(frame.toJson().contains("UNQUALIFIED"));
-    assertTrue(frame.toJson().contains("1.1.0"));
+    assertTrue(frame.toJson().contains("1.2.0"));
     Path directory = Paths.get("target", "source-term-contract-fixtures");
     Files.createDirectories(directory);
     Files.write(directory.resolve("mixture-flashing.json"), frame.toJson().getBytes(StandardCharsets.UTF_8));

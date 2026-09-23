@@ -67,7 +67,14 @@ class TwoFluidPipeSteadyMassFluxTest extends neqsim.NeqSimTest {
     assertHydraulicResidualsPassed(report);
     assertMassFluxCloses(pipe);
     if (rateScale >= 1.0) {
-      assertTrue(pipe.getGasVelocityProfile()[19] > 100.0, "continuity requires gas velocity above the old cap");
+      // The outlet gas velocity must follow from continuity, not from a velocity cap (#3686).
+      int last = pipe.getGasVelocityProfile().length - 1;
+      double area = Math.PI * 0.23 * 0.23 / 4.0;
+      double gasDensity = pipe.getOutletStream().getFluid().getPhase("gas").getDensity("kg/m3");
+      double continuityVelocity = pipe.getGasMassFlowProfile()[last]
+          / (gasDensity * (1.0 - pipe.getLiquidHoldupProfile()[last]) * area);
+      assertEquals(continuityVelocity, pipe.getGasVelocityProfile()[last], 0.05 * continuityVelocity,
+          "outlet gas velocity must follow from continuity");
     }
     logger.info("rate scale={}, inlet={} kg/s, maximum relative mass-flux error={}, outlet gas velocity={} m/s",
         rateScale, pipe.getInletStream().getFlowRate("kg/sec"), report.getMassFluxResidual(),

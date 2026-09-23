@@ -19,9 +19,9 @@ neqsim.thermo.phase.PhaseGENRTLmodifiedHV	PHASE	DEBT	-	-	not-qualified	https://g
 neqsim.thermo.phase.PhaseGENRTLmodifiedWS	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGERG2004Eos	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGERG2008Eos	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseGEUnifac	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseGEUnifacPSRK	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
-neqsim.thermo.phase.PhaseGEUnifacUMRPRU	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.phase.PhaseGEUnifac	PHASE	PARTIAL	UNIFAC_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, derivatives or additional properties
+neqsim.thermo.phase.PhaseGEUnifacPSRK	PHASE	PARTIAL	PSRK_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, B/C coefficients, derivatives or additional properties
+neqsim.thermo.phase.PhaseGEUnifacUMRPRU	PHASE	PARTIAL	UMR_PHASE	GAMMA;GROUP_R;GROUP_Q;INTERACTION_A	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming nonideal mixture accuracy, B/C coefficients, derivatives or additional properties
 neqsim.thermo.phase.PhaseGEUniquac	PHASE	UNSUPPORTED	UNIQUAC	GAMMA	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
 neqsim.thermo.phase.PhaseGEUniquacmodifiedHV	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.phase.PhaseGEVanLaarAcid	PHASE	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification

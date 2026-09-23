@@ -14,6 +14,9 @@ import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
+import neqsim.thermo.phase.PhaseGEUnifac;
+import neqsim.thermo.phase.PhaseGEUnifacPSRK;
+import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseGEUniquac;
 import neqsim.thermo.phase.PhaseGEWilson;
 import neqsim.thermo.phase.PhaseInterface;
@@ -54,6 +57,12 @@ final class ModelSpecFixtures {
       return SystemUNIFACpsrk.class;
     case UMR:
       return SystemUMRPRUEos.class;
+    case UNIFAC_PHASE:
+      return PhaseGEUnifac.class;
+    case PSRK_PHASE:
+      return PhaseGEUnifacPSRK.class;
+    case UMR_PHASE:
+      return PhaseGEUnifacUMRPRU.class;
     case SRK:
       return SystemSrkEos.class;
     case PR:
@@ -73,7 +82,8 @@ final class ModelSpecFixtures {
     String unit = s.property == ModelSpec.Property.PSAT ? "bar"
         : s.property == ModelSpec.Property.DPSAT_DT ? "bar/K"
             : s.property == ModelSpec.Property.T_SAT ? "K"
-                : s.property == ModelSpec.Property.HID || s.property == ModelSpec.Property.GEX ? "J/mol" : "1";
+                : s.property == ModelSpec.Property.HID || s.property == ModelSpec.Property.GEX ? "J/mol"
+                    : s.property == ModelSpec.Property.INTERACTION_A ? "K" : "1";
     ModelSpec.require(unit.equals(s.unit), "wrong unit for " + s.property);
     switch (s.fixture) {
     case ANTOINE_ANALYTIC:
@@ -133,15 +143,31 @@ final class ModelSpecFixtures {
     case UNIFAC:
     case PSRK:
     case UMR:
-      ModelSpec.require(s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.GROUP_R,
+    case UNIFAC_PHASE:
+    case PSRK_PHASE:
+    case UMR_PHASE:
+      ModelSpec.require(
+          s.property == ModelSpec.Property.GAMMA || s.property == ModelSpec.Property.GROUP_R
+              || s.property == ModelSpec.Property.GROUP_Q || s.property == ModelSpec.Property.INTERACTION_A,
           "group property not implemented by fixture");
-      validateGe(s, s.fixture == ModelSpec.Fixture.UMR ? "HV/UNIFAC_UMRPRU" : "classic", "init-ge");
+      boolean umr = s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE;
+      validateGe(s, umr ? "HV/UNIFAC_UMRPRU" : "classic", "init-ge");
+      if (s.property == ModelSpec.Property.INTERACTION_A) {
+        ModelSpec.require(
+            s.components.size() == 2 && s.components.containsKey("methanol") && s.components.containsKey("water")
+                && s.components.keySet().iterator().next().equals("methanol"),
+            "interaction fixture requires ordered methanol/water");
+      } else {
+        ModelSpec.require(s.components.size() == 1 && s.components.containsKey("methanol"),
+            "group fixture requires pure methanol unless testing an interaction");
+      }
       break;
     default:
       throw new IllegalArgumentException("unmapped fixture " + s.fixture);
     }
     if (s.outcome == ModelSpec.Outcome.VALUE && s.property != ModelSpec.Property.LN_GAMMA
-        && s.property != ModelSpec.Property.HID && s.property != ModelSpec.Property.GEX) {
+        && s.property != ModelSpec.Property.HID && s.property != ModelSpec.Property.GEX
+        && s.property != ModelSpec.Property.INTERACTION_A) {
       ModelSpec.require(s.expected > 0.0, "positive-only property reference must be positive");
     }
   }
@@ -210,7 +236,7 @@ final class ModelSpecFixtures {
       return phase.getComponent(s.componentIndex).getHID(s.temperature);
     }
     PhaseInterface liquid = system.getPhase(1);
-    if (s.fixture == ModelSpec.Fixture.UMR) {
+    if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.init(1);
       positive(liquid.getComponent(s.componentIndex).getFugacityCoefficient(), s.toString());
       liquid = ((EosMixingRulesInterface) ((PhaseEosInterface) liquid).getMixingRule()).getGEPhase();
@@ -277,6 +303,16 @@ final class ModelSpecFixtures {
       if (s.property == ModelSpec.Property.GROUP_R) {
         return group.getR();
       }
+      if (s.property == ModelSpec.Property.GROUP_Q) {
+        return group.getQ();
+      }
+      if (s.property == ModelSpec.Property.INTERACTION_A) {
+        PhaseGEUnifac phase = (PhaseGEUnifac) liquid;
+        assertEquals(2, group.getNumberOfUNIFACgroups(), s.toString());
+        assertEquals(6, group.getUnifacGroup(0).getMainGroup(), s.toString());
+        assertEquals(7, group.getUnifacGroup(1).getMainGroup(), s.toString());
+        return phase.getAij(s.componentIndex, 1 - s.componentIndex);
+      }
     }
     double gamma = c instanceof ComponentGEWilson
         ? ((ComponentGEWilson) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
@@ -309,12 +345,15 @@ final class ModelSpecFixtures {
       system = new SystemNRTL(s.temperature, s.pressure);
       break;
     case UNIFAC:
+    case UNIFAC_PHASE:
       system = new SystemUNIFAC(s.temperature, s.pressure);
       break;
     case PSRK:
+    case PSRK_PHASE:
       system = new SystemUNIFACpsrk(s.temperature, s.pressure);
       break;
     case UMR:
+    case UMR_PHASE:
       system = new SystemUMRPRUEos(s.temperature, s.pressure);
       break;
     case SRK:
@@ -331,7 +370,7 @@ final class ModelSpecFixtures {
     for (Map.Entry<String, Double> entry : s.components.entrySet()) {
       system.addComponent(entry.getKey(), entry.getValue());
     }
-    if (s.fixture == ModelSpec.Fixture.UMR) {
+    if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else {
       system.setMixingRule("classic");
@@ -341,7 +380,9 @@ final class ModelSpecFixtures {
 
   private static boolean isPhaseFixture(ModelSpec.Fixture fixture) {
     return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
-        || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE;
+        || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
+        || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
+        || fixture == ModelSpec.Fixture.UMR_PHASE;
   }
 
   static void positive(double value, String context) {
