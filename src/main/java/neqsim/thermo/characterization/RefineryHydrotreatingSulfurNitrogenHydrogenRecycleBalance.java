@@ -63,21 +63,19 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
   private RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance(
       RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supplyBalance, double hydrogenRecoveryFraction,
       double hydrogenSulfideRecoveryFraction, double ammoniaRecoveryFraction, double nonHydrogenRecoveryFraction,
-      double purgeFraction, double effectiveHydrogenRecycleFraction,
-      double effectiveHydrogenSulfideRecycleFraction, double effectiveAmmoniaRecycleFraction,
-      double effectiveNonHydrogenRecycleFraction, double freshHydrogenMoles, double freshNonHydrogenMoles,
-      double freshMakeupGasMoles, double freshMakeupGasMassKg, double reactorOutletHydrogenMoles,
-      double reactorOutletHydrogenSulfideMoles, double reactorOutletAmmoniaMoles,
+      double purgeFraction, double effectiveHydrogenRecycleFraction, double effectiveHydrogenSulfideRecycleFraction,
+      double effectiveAmmoniaRecycleFraction, double effectiveNonHydrogenRecycleFraction, double freshHydrogenMoles,
+      double freshNonHydrogenMoles, double freshMakeupGasMoles, double freshMakeupGasMassKg,
+      double reactorOutletHydrogenMoles, double reactorOutletHydrogenSulfideMoles, double reactorOutletAmmoniaMoles,
       double reactorOutletNonHydrogenMoles, double reactorOutletGasMoles, double reactorOutletGasMassKg,
       double recycleHydrogenMoles, double recycleHydrogenSulfideMoles, double recycleAmmoniaMoles,
       double recycleNonHydrogenMoles, double recycleGasMoles, double recycleGasMassKg, double exportHydrogenMoles,
       double exportHydrogenSulfideMoles, double exportAmmoniaMoles, double exportNonHydrogenMoles,
       double exportGasMoles, double exportGasMassKg, double exportHydrogenMoleFraction,
-      double exportHydrogenSulfideMoleFraction, double exportAmmoniaMoleFraction,
-      double exportNonHydrogenMoleFraction, double freshHydrogenReductionFraction,
-      double hydrogenBalanceResidualMoles, double hydrogenSulfideBalanceResidualMoles,
-      double ammoniaBalanceResidualMoles, double nonHydrogenBalanceResidualMoles,
-      double overallMassBalanceResidualKg) {
+      double exportHydrogenSulfideMoleFraction, double exportAmmoniaMoleFraction, double exportNonHydrogenMoleFraction,
+      double freshHydrogenReductionFraction, double hydrogenBalanceResidualMoles,
+      double hydrogenSulfideBalanceResidualMoles, double ammoniaBalanceResidualMoles,
+      double nonHydrogenBalanceResidualMoles, double overallMassBalanceResidualKg) {
     this.supplyBalance = supplyBalance;
     this.hydrogenRecoveryFraction = hydrogenRecoveryFraction;
     this.hydrogenSulfideRecoveryFraction = hydrogenSulfideRecoveryFraction;
@@ -158,8 +156,8 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
 
     double generatedHydrogenSulfideMoles = supplyBalance.getHydrogenSulfideMoles();
     double generatedAmmoniaMoles = supplyBalance.getAmmoniaMoles();
-    double reactorOutletHydrogenSulfideMoles = steadyStateOutlet("hydrogen sulfide",
-        generatedHydrogenSulfideMoles, effectiveHydrogenSulfideRecycleFraction);
+    double reactorOutletHydrogenSulfideMoles = steadyStateOutlet("hydrogen sulfide", generatedHydrogenSulfideMoles,
+        effectiveHydrogenSulfideRecycleFraction);
     double reactorOutletAmmoniaMoles = steadyStateOutlet("ammonia", generatedAmmoniaMoles,
         effectiveAmmoniaRecycleFraction);
     double reactorOutletNonHydrogenMoles = steadyStateOutlet("non-hydrogen makeup", freshNonHydrogenMoles,
@@ -184,11 +182,9 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
     double hydrogenSulfideMolarMass = RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
     double ammoniaMolarMass = RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
     double nonHydrogenMolarMass = supplyBalance.getNonHydrogenMolarMassKgPerMol();
-    double freshMakeupGasMassKg = freshHydrogenMoles * hydrogenMolarMass
-        + freshNonHydrogenMoles * nonHydrogenMolarMass;
+    double freshMakeupGasMassKg = freshHydrogenMoles * hydrogenMolarMass + freshNonHydrogenMoles * nonHydrogenMolarMass;
     double reactorOutletGasMassKg = reactorOutletHydrogenMoles * hydrogenMolarMass
-        + reactorOutletHydrogenSulfideMoles * hydrogenSulfideMolarMass
-        + reactorOutletAmmoniaMoles * ammoniaMolarMass
+        + reactorOutletHydrogenSulfideMoles * hydrogenSulfideMolarMass + reactorOutletAmmoniaMoles * ammoniaMolarMass
         + reactorOutletNonHydrogenMoles * nonHydrogenMolarMass;
     double recycleGasMassKg = recycleHydrogenMoles * hydrogenMolarMass
         + recycleHydrogenSulfideMoles * hydrogenSulfideMolarMass + recycleAmmoniaMoles * ammoniaMolarMass
@@ -216,8 +212,7 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
         - supplyBalance.getHydrogenSuppliedMoles();
     double hydrogenSulfideBalanceResidualMoles = generatedHydrogenSulfideMoles + recycleHydrogenSulfideMoles
         - reactorOutletHydrogenSulfideMoles;
-    double ammoniaBalanceResidualMoles = generatedAmmoniaMoles + recycleAmmoniaMoles
-        - reactorOutletAmmoniaMoles;
+    double ammoniaBalanceResidualMoles = generatedAmmoniaMoles + recycleAmmoniaMoles - reactorOutletAmmoniaMoles;
     double nonHydrogenBalanceResidualMoles = freshNonHydrogenMoles + recycleNonHydrogenMoles
         - reactorOutletNonHydrogenMoles;
     RefineryHydrotreatingSulfurNitrogenBalance materialBalance = supplyBalance.getMaterialBalance();
@@ -226,13 +221,12 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
 
     double moleTolerance = 1.0e-12 * Math.max(1.0, supplyBalance.getHydrogenSuppliedMoles());
     double massToleranceKg = 1.0e-12 * Math.max(1.0, materialBalance.getFeedMassKg() + freshMakeupGasMassKg);
-    if (!allFiniteNonNegative(freshHydrogenMoles, freshNonHydrogenMoles, freshMakeupGasMoles,
-        freshMakeupGasMassKg, reactorOutletHydrogenMoles, reactorOutletHydrogenSulfideMoles,
-        reactorOutletAmmoniaMoles, reactorOutletNonHydrogenMoles, reactorOutletGasMoles, reactorOutletGasMassKg,
-        recycleHydrogenMoles, recycleHydrogenSulfideMoles, recycleAmmoniaMoles, recycleNonHydrogenMoles,
-        recycleGasMoles, recycleGasMassKg, exportHydrogenMoles, exportHydrogenSulfideMoles, exportAmmoniaMoles,
-        exportNonHydrogenMoles, exportGasMoles, exportGasMassKg)
-        || Math.abs(hydrogenBalanceResidualMoles) > moleTolerance
+    if (!allFiniteNonNegative(freshHydrogenMoles, freshNonHydrogenMoles, freshMakeupGasMoles, freshMakeupGasMassKg,
+        reactorOutletHydrogenMoles, reactorOutletHydrogenSulfideMoles, reactorOutletAmmoniaMoles,
+        reactorOutletNonHydrogenMoles, reactorOutletGasMoles, reactorOutletGasMassKg, recycleHydrogenMoles,
+        recycleHydrogenSulfideMoles, recycleAmmoniaMoles, recycleNonHydrogenMoles, recycleGasMoles, recycleGasMassKg,
+        exportHydrogenMoles, exportHydrogenSulfideMoles, exportAmmoniaMoles, exportNonHydrogenMoles, exportGasMoles,
+        exportGasMassKg) || Math.abs(hydrogenBalanceResidualMoles) > moleTolerance
         || Math.abs(hydrogenSulfideBalanceResidualMoles) > moleTolerance
         || Math.abs(ammoniaBalanceResidualMoles) > moleTolerance
         || Math.abs(nonHydrogenBalanceResidualMoles) > moleTolerance
@@ -244,14 +238,14 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance imp
         hydrogenSulfideRecoveryFraction, ammoniaRecoveryFraction, nonHydrogenRecoveryFraction, purgeFraction,
         effectiveHydrogenRecycleFraction, effectiveHydrogenSulfideRecycleFraction, effectiveAmmoniaRecycleFraction,
         effectiveNonHydrogenRecycleFraction, freshHydrogenMoles, freshNonHydrogenMoles, freshMakeupGasMoles,
-        freshMakeupGasMassKg, reactorOutletHydrogenMoles, reactorOutletHydrogenSulfideMoles,
-        reactorOutletAmmoniaMoles, reactorOutletNonHydrogenMoles, reactorOutletGasMoles, reactorOutletGasMassKg,
-        recycleHydrogenMoles, recycleHydrogenSulfideMoles, recycleAmmoniaMoles, recycleNonHydrogenMoles,
-        recycleGasMoles, recycleGasMassKg, exportHydrogenMoles, exportHydrogenSulfideMoles, exportAmmoniaMoles,
-        exportNonHydrogenMoles, exportGasMoles, exportGasMassKg, exportHydrogenMoleFraction,
-        exportHydrogenSulfideMoleFraction, exportAmmoniaMoleFraction, exportNonHydrogenMoleFraction,
-        freshHydrogenReductionFraction, hydrogenBalanceResidualMoles, hydrogenSulfideBalanceResidualMoles,
-        ammoniaBalanceResidualMoles, nonHydrogenBalanceResidualMoles, overallMassBalanceResidualKg);
+        freshMakeupGasMassKg, reactorOutletHydrogenMoles, reactorOutletHydrogenSulfideMoles, reactorOutletAmmoniaMoles,
+        reactorOutletNonHydrogenMoles, reactorOutletGasMoles, reactorOutletGasMassKg, recycleHydrogenMoles,
+        recycleHydrogenSulfideMoles, recycleAmmoniaMoles, recycleNonHydrogenMoles, recycleGasMoles, recycleGasMassKg,
+        exportHydrogenMoles, exportHydrogenSulfideMoles, exportAmmoniaMoles, exportNonHydrogenMoles, exportGasMoles,
+        exportGasMassKg, exportHydrogenMoleFraction, exportHydrogenSulfideMoleFraction, exportAmmoniaMoleFraction,
+        exportNonHydrogenMoleFraction, freshHydrogenReductionFraction, hydrogenBalanceResidualMoles,
+        hydrogenSulfideBalanceResidualMoles, ammoniaBalanceResidualMoles, nonHydrogenBalanceResidualMoles,
+        overallMassBalanceResidualKg);
   }
 
   private static double steadyStateOutlet(String name, double sourceMoles, double effectiveRecycleFraction) {

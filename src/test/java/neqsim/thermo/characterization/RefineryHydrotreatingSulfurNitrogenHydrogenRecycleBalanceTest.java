@@ -14,8 +14,8 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
   void publicBigHillScreenClosesFreshRecycleAndExportGas() {
     RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = publicSupply(1000.0);
 
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, 0.20, 0.50, 0.05);
 
     assertSame(supply, recycle.getSupplyBalance());
     assertEquals(0.855, recycle.getEffectiveHydrogenRecycleFraction(), 0.0);
@@ -47,8 +47,8 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
   @Test
   void fullPurgeReproducesOnceThroughReceipt() {
     RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = publicSupply(1000.0);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 1.0, 1.0, 1.0, 1.0, 1.0);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 1.0, 1.0, 1.0, 1.0, 1.0);
 
     assertEquals(0.0, recycle.getRecycleGasMoles(), 0.0);
     assertEquals(supply.getMakeupGasMoles(), recycle.getFreshMakeupGasMoles(), 1.0e-12);
@@ -62,12 +62,11 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
   void noRemovalProducesZeroGasReceipt() {
     RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0,
         0.004, 0.001, 0.004, 0.001, 1.0, 1.5);
-    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply =
-        RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(material, 1.5, 0.90,
-            NITROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
+        .calculate(material, 1.5, 0.90, NITROGEN_MOLAR_MASS_KG_PER_MOL);
 
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 1.0, 1.0, 1.0, 1.0, 0.0);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 1.0, 1.0, 1.0, 1.0, 0.0);
 
     assertEquals(0.0, recycle.getFreshMakeupGasMoles(), 0.0);
     assertEquals(0.0, recycle.getReactorOutletGasMoles(), 0.0);
@@ -78,12 +77,10 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
 
   @Test
   void receiptsScaleWithFeedMass() {
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance one =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(publicSupply(1000.0), 0.90, 0.10, 0.20,
-            0.50, 0.05);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance two =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(publicSupply(2000.0), 0.90, 0.10, 0.20,
-            0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance one = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(publicSupply(1000.0), 0.90, 0.10, 0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance two = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(publicSupply(2000.0), 0.90, 0.10, 0.20, 0.50, 0.05);
 
     assertEquals(2.0 * one.getFreshMakeupGasMassKg(), two.getFreshMakeupGasMassKg(), 1.0e-12);
     assertEquals(2.0 * one.getRecycleGasMassKg(), two.getRecycleGasMassKg(), 1.0e-12);
@@ -96,14 +93,11 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
     RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = publicSupply(1000.0);
 
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 1.0, 0.20, 0.50,
-            0.0));
+        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 1.0, 0.20, 0.50, 0.0));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 1.0, 0.50,
-            0.0));
+        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 1.0, 0.50, 0.0));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 0.20, 1.0,
-            0.0));
+        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 0.20, 1.0, 0.0));
   }
 
   @Test
@@ -111,25 +105,20 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalanceTest {
     RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = publicSupply(1000.0);
 
     assertThrows(NullPointerException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(null, 0.90, 0.10, 0.20, 0.50,
-            0.05));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, -0.01, 0.10, 0.20, 0.50,
-            0.05));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 1.01, 0.20, 0.50,
-            0.05));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, Double.NaN,
-            0.50, 0.05));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10, 0.20, 0.50,
-            1.01));
+        () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(null, 0.90, 0.10, 0.20, 0.50, 0.05));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, -0.01, 0.10, 0.20, 0.50, 0.05));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 1.01, 0.20, 0.50, 0.05));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, Double.NaN, 0.50, 0.05));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, 0.20, 0.50, 1.01));
   }
 
   private static RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance publicSupply(double feedMassKg) {
-    RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance.calculate(
-        feedMassKg, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6, 2.0, 4.0);
+    RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance
+        .calculate(feedMassKg, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6, 2.0, 4.0);
     return RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(material, 1.5, 0.90,
         NITROGEN_MOLAR_MASS_KG_PER_MOL);
   }
