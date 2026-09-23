@@ -8,6 +8,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 REFERENCE_INDEX = DOCS / "REFERENCE_MANUAL_INDEX.md"
 LANDING_PAGE = DOCS / "index.md"
+LAYOUT = DOCS / "_layouts" / "default.html"
+ENHANCEMENTS = DOCS / "assets" / "js" / "enhancements.js"
+GENERATED_ROUTES = {"/javadoc/index.html"}
 FOUNDATIONAL_PACKAGE_TARGETS = {
     "chemicalreactions/README.html": DOCS / "chemicalreactions" / "README.md",
     "statistics/README.html": DOCS / "statistics" / "README.md",
@@ -121,6 +124,121 @@ def test_main_landing_routes_to_foundational_package_guides() -> None:
         assert destination in targets, f"{LANDING_PAGE}: missing {destination}"
         assert package_landing in _target_candidates(LANDING_PAGE, destination)
         assert package_landing.is_file()
+
+
+
+def _layout_routes(text: str) -> tuple[str, ...]:
+    return tuple(
+        re.findall(r'href="{{ \'([^\']+)\' \\| relative_url }}"', text)
+    )
+
+
+def _route_candidates(route: str) -> tuple[Path, ...]:
+    destination = DOCS / route.lstrip("/")
+    candidates = [destination]
+    if route.endswith("/"):
+        candidates.extend(
+            (
+                destination / "index.md",
+                destination / "README.md",
+                destination.with_suffix(".md"),
+            )
+        )
+    elif destination.suffix == ".html":
+        candidates.append(destination.with_suffix(".md"))
+    elif not destination.suffix:
+        candidates.extend(
+            (
+                destination.with_suffix(".md"),
+                destination / "index.md",
+                destination / "README.md",
+            )
+        )
+    return tuple(candidates)
+
+
+def test_global_navigation_is_task_oriented_and_complete() -> None:
+    layout = LAYOUT.read_text(encoding="utf-8")
+    routes = _layout_routes(layout)
+    expected_groups = {
+        "nav-start-button": "nav-start-menu",
+        "nav-modeling-button": "nav-modeling-menu",
+        "nav-workflows-button": "nav-workflows-menu",
+        "nav-reference-button": "nav-reference-menu",
+    }
+    expected_routes = {
+        "/wiki/getting_started",
+        "/java-getting-started",
+        "/docker-getting-started",
+        "/tutorials/",
+        "/cookbook/",
+        "/troubleshooting/",
+        "/thermo/",
+        "/thermodynamicoperations/",
+        "/physical_properties/",
+        "/process/",
+        "/simulation/dynamic_simulation_guide",
+        "/pvtsimulation/",
+        "/pvtsimulation/flowassurance/",
+        "/engineering/",
+        "/standards/",
+        "/examples/",
+        "/integration/",
+        "/fielddevelopment/",
+        "/process/optimization/",
+        "/safety/",
+        "/risk/",
+        "/emissions/",
+        "/REFERENCE_MANUAL_INDEX",
+        "/manual/neqsim_reference_manual.html",
+        "/javadoc/index.html",
+        "/modules.html",
+        "/search/",
+    }
+
+    assert '<nav class="site-nav" aria-label="Primary">' in layout
+    assert ">\n            Documentation\n" not in layout
+    assert ">\n            Guides\n" not in layout
+    for button_id, menu_id in expected_groups.items():
+        button = re.search(
+            rf'<button[^>]*id="{button_id}"[^>]*>',
+            layout,
+        )
+        assert button is not None, button_id
+        button_markup = button.group(0)
+        assert 'type="button"' in button_markup
+        assert 'aria-expanded="false"' in button_markup
+        assert f'aria-controls="{menu_id}"' in button_markup
+        assert (
+            f'id="{menu_id}" class="nav-dropdown-content" '
+            f'aria-labelledby="{button_id}"'
+        ) in layout
+
+    assert expected_routes.issubset(set(routes))
+    internal_routes = tuple(route for route in routes if route != "/")
+    assert len(internal_routes) == len(set(internal_routes))
+    for route in internal_routes:
+        if route in GENERATED_ROUTES:
+            continue
+        assert any(candidate.exists() for candidate in _route_candidates(route)), route
+
+
+def test_global_navigation_script_synchronizes_accessible_state() -> None:
+    script = ENHANCEMENTS.read_text(encoding="utf-8")
+    required_behavior = (
+        "btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false')",
+        "closeOthers(dropdown)",
+        "closeAndFocus(dropdown)",
+        "buttonFor(dropdown).focus()",
+        "event.key === 'ArrowDown'",
+        "event.key === 'ArrowUp'",
+        "event.key === 'Escape'",
+        "links.indexOf(document.activeElement)",
+        "document.querySelector('.nav-dropdown.is-open')",
+    )
+    for marker in required_behavior:
+        assert marker in script, marker
+
 
 
 def test_sis_navigation_describes_screening_and_review_boundary() -> None:
