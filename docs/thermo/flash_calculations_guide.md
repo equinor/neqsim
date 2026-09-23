@@ -248,7 +248,19 @@ for i in range(fluid.getNumberOfPhases()):
 **How it works internally:**
 1. `TPflash` first solves the standard two-phase problem
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
-3. `TPmultiflash` performs additional stability analysis against all existing phases and adds/removes phases until Gibbs energy is minimized
+3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
+
+For neutral, water-rich feeds with multiphase checking enabled, the final gas/oil
+split is also compared with a seeded aqueous equilibrium when the overall water
+fraction is at least 5%. The aqueous result must conserve the feed and satisfy
+phase equilibrium; it must also have lower Gibbs energy than a valid incumbent.
+This keeps the TP evaluations used by PS flashes on a consistent phase branch
+near liquid-liquid-vapor boundaries. The bounded trial does not prove global
+stability against every possible phase set.
+
+When restarting a process from a saved fluid, run a TP flash before taking
+its inlet entropy if the saved phase split may have been computed with an older
+version; the pump's isentropic outlet depends on that inlet entropy.
 
 **When to use:** Any system containing water + hydrocarbons, glycol systems, methanol injection, or other mixtures where two liquid phases can coexist.
 
