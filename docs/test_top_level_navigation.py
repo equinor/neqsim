@@ -129,7 +129,7 @@ def test_main_landing_routes_to_foundational_package_guides() -> None:
 
 def _layout_routes(text: str) -> tuple[str, ...]:
     return tuple(
-        re.findall(r'href="{{ \'([^\']+)\' \\| relative_url }}"', text)
+        re.findall(r'href="{{ \'([^\']+)\' \| relative_url }}"', text)
     )
 
 
