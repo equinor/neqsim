@@ -349,6 +349,51 @@ def test_large_counts_are_not_printed_in_scientific_notation(tmp_path):
     assert "3.705e+05" not in text
 
 
+def test_wide_table_gets_a_landscape_page_and_unbroken_numbers(tmp_path):
+    """A 14-column comparison must not split "9.961" over three lines."""
+    task = _make_task(tmp_path)
+    results = json.loads((task / "results.json").read_text(encoding="utf-8"))
+    headers = ["case"] + ["NeqSim dP after {}".format(i) for i in range(11)] \
+        + ["OLGA regime", "NeqSim regime"]
+    rows = [["2P_GO_RISER"] + [9.961] * 11 + ["SLUG:45,STRATIFIED:1", "SINGLE_PHASE_GAS:80"]
+            for _ in range(4)]
+    results["tables"] = [{"title": "Steady state", "headers": headers, "rows": rows}]
+    results["risk_evaluation"] = {"risks": [{
+        "id": "R1", "category": "Technical", "description": "x", "likelihood": "Likely",
+        "consequence": "Moderate", "risk_level": "Medium", "mitigation": "y"}]}
+    (task / "results.json").write_text(json.dumps(results), encoding="utf-8")
+    _run(task, "--no-template")
+
+    doc = docx.Document(str(_report_docx(task)))
+    from docx.oxml.ns import qn
+    orientation = []
+    body = doc.element.body
+    section_index = 0
+    for child in body.iterchildren():
+        if child.tag == qn("w:tbl"):
+            orientation.append((child, section_index))
+        elif child.tag == qn("w:p") and child.find(qn("w:pPr")) is not None \
+                and child.find(qn("w:pPr")).find(qn("w:sectPr")) is not None:
+            section_index += 1
+
+    def section_of(table):
+        return doc.sections[next(i for el, i in orientation if el is table._tbl)]
+
+    wide = next(t for t in doc.tables if len(t.columns) == 14)
+    section = section_of(wide)
+    assert section.page_width > section.page_height
+    # The report returns to portrait after the wide table.
+    assert doc.sections[-1].page_width < doc.sections[-1].page_height
+    number_width = wide.rows[1].cells[1].width.inches
+    assert number_width >= 0.35, number_width
+    # Short tables stay on the portrait body.
+    risk = next(t for t in doc.tables if t.rows[0].cells[0].text == "ID")
+    risk_section = section_of(risk)
+    assert risk_section.page_width < risk_section.page_height
+    # Cells are compact: no inherited 6 pt space-after in table cells.
+    assert wide.rows[1].cells[1].paragraphs[0].paragraph_format.space_after.pt <= 2
+
+
 def test_analytical_depth_moves_are_reported(tmp_path):
     task = _make_task(tmp_path)
     results = json.loads((task / "results.json").read_text(encoding="utf-8"))
