@@ -365,6 +365,38 @@ public class Recycle extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Checks that a mixed-stream temperature is physically possible for adiabatic mixing of the inlets.
+   *
+   * <p>
+   * Adiabatic mixing (with the expansion of inlets at higher pressure) cannot leave the outlet far outside the range of
+   * the inlet temperatures. A result more than 100 K outside that range, non-finite or non-positive, marks a failed
+   * flash rather than a physical state.
+   * </p>
+   *
+   * @param temperature mixed-stream temperature in kelvin
+   * @return true if the temperature is plausible for the current inlets
+   */
+  boolean isPhysicalMixTemperature(double temperature) {
+    if (Double.isNaN(temperature) || Double.isInfinite(temperature) || temperature <= 0.0) {
+      return false;
+    }
+    double minT = Double.MAX_VALUE;
+    double maxT = -Double.MAX_VALUE;
+    for (StreamInterface stream : streams) {
+      double t = stream.getThermoSystem().getTemperature();
+      if (Double.isNaN(t) || Double.isInfinite(t) || t <= 0.0) {
+        continue;
+      }
+      minT = Math.min(minT, t);
+      maxT = Math.max(maxT, t);
+    }
+    if (minT > maxT) {
+      return true;
+    }
+    return temperature >= minT - 100.0 && temperature <= maxT + 100.0;
+  }
+
+  /**
    * calcMixStreamEnthalpy.
    *
    * @return a double
@@ -479,6 +511,20 @@ public class Recycle extends ProcessEquipmentBaseClass
       // logger.info("temp guess " + guessTemperature());
       mixedStream.getThermoSystem().setTemperature(guessTemperature());
       testOps.PHflash(enthalpy, 0);
+      if (!isPhysicalMixTemperature(mixedStream.getThermoSystem().getTemperature())) {
+        // The two-phase PH flash can collapse to a few kelvin for three-phase water/hydrocarbon
+        // mixes of many-component fluids (seen with a 26-component PR78 E300 fluid). Restart it
+        // from a TP-flashed state at the flow-weighted inlet temperature.
+        mixedStream.getThermoSystem().setTemperature(guessTemperature());
+        testOps.TPflash();
+        testOps.PHflash(enthalpy, 0);
+        if (!isPhysicalMixTemperature(mixedStream.getThermoSystem().getTemperature())) {
+          logger.warn("Recycle {}: PH flash of the mixed inlets failed; using the flow-weighted inlet temperature {} K",
+              getName(), guessTemperature());
+          mixedStream.getThermoSystem().setTemperature(guessTemperature());
+          testOps.TPflash();
+        }
+      }
       // logger.info("filan temp " + mixedStream.getTemperature());
     } else {
       setDownstreamProperties();
