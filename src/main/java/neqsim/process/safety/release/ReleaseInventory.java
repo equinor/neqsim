@@ -170,8 +170,8 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
    *
    * <p>
    * The first phase must initially be present above the supplied exhaustion threshold. During transient execution the
-   * unit advances only to the next phase named by the caller when the active phase falls at or below that threshold.
-   * Missing or exhausted remaining phases fail atomically; no phase is inferred from density, position or phase count.
+   * unit advances only to the next phase named by the caller when the active phase falls at or below that threshold. A
+   * missing or exhausted next phase fails atomically; no phase is inferred from density, position or phase count.
    * </p>
    *
    * @param name unique process equipment name

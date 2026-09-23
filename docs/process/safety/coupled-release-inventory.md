@@ -20,8 +20,8 @@ entrainment, slip, interfacial transfer rate or automatic fallback phase is infe
 An overload accepting `List<PhaseType>` and `phaseExhaustionMassFraction` adds a caller-declared
 ordered transition plan. The first phase must initially be present above the threshold. A transient
 step advances only to the next named phase when the active phase inventory mass fraction reaches
-the explicit threshold. It never selects a phase from density, position or phase count. If no
-remaining planned phase is usable, the complete call fails atomically.
+the explicit threshold. It never selects a phase from density, position or phase count. If the
+immediately next planned phase is not usable, the complete call fails atomically.
 
 The constructor clones the supplied EOS system and scales its amount to the specified
 volume at its initial temperature and pressure. The supplied mole count defines composition,
@@ -174,8 +174,8 @@ Opening/closure changes occur at step boundaries; split steps at known event tim
 | Substep would reduce pressure below receiving pressure | Bounded event location lands on receiving pressure; provenance records the physical release duration. |
 | Selected phase is absent initially | Construction rejects the configuration. |
 | Selected phase disappears after re-equilibration | `INVENTORY_SELECTED_PHASE_ABSENT`; the unit call commits no state. |
-| Active planned phase reaches its explicit exhaustion threshold | Advances only to the next usable caller-declared phase and records the transition. |
-| No remaining planned phase is usable | `INVENTORY_WITHDRAWAL_PHASE_PLAN_EXHAUSTED`; the unit call commits no state. |
+| Active planned phase reaches its explicit exhaustion threshold | Advances only to the immediately next usable caller-declared phase and records the transition. |
+| Immediately next planned phase is absent or exhausted | `INVENTORY_WITHDRAWAL_PHASE_PLAN_EXHAUSTED`; the unit call commits no state. |
 | Reactions, forced phases, solids or hydrates | `INVENTORY_REGIME_UNSUPPORTED`; no fallback physics is invented. |
 | Invalid model, mismatched upstream state/composition, or screening result | Fail closed without committing inventory. |
 | Volume, component or energy closure failure | Fail closed, with the corresponding closure diagnostic. |
