@@ -7,14 +7,13 @@ import java.util.Objects;
  * Immutable rate receipt for a coupled sulfur/nitrogen hydrotreating recycle balance.
  *
  * <p>
- * This class scales a qualified basis receipt to kg/h and kmol/h. Internal recycle is reported
- * separately and is excluded from the external mass balance.
+ * This class scales a qualified basis receipt to kg/h and kmol/h. Internal recycle is reported separately and is
+ * excluded from the external mass balance.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycleBalance;
@@ -38,19 +37,14 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputB
   private final double externalMassBalanceResidualKgPerHour;
 
   private RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance(
-      RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycleBalance,
-      double feedMassFlowKgPerHour, double basisScalePerHour, double productMassFlowKgPerHour,
-      double hydrogenConsumedMassFlowKgPerHour, double freshMakeupGasMassFlowKgPerHour,
-      double recycleGasMassFlowKgPerHour, double exportGasMassFlowKgPerHour,
+      RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycleBalance, double feedMassFlowKgPerHour,
+      double basisScalePerHour, double productMassFlowKgPerHour, double hydrogenConsumedMassFlowKgPerHour,
+      double freshMakeupGasMassFlowKgPerHour, double recycleGasMassFlowKgPerHour, double exportGasMassFlowKgPerHour,
       double freshHydrogenMolarFlowKmolPerHour, double freshNonHydrogenMolarFlowKmolPerHour,
-      double recycleHydrogenMolarFlowKmolPerHour,
-      double recycleHydrogenSulfideMolarFlowKmolPerHour,
-      double recycleAmmoniaMolarFlowKmolPerHour,
-      double recycleNonHydrogenMolarFlowKmolPerHour,
-      double exportHydrogenMolarFlowKmolPerHour,
-      double exportHydrogenSulfideMolarFlowKmolPerHour,
-      double exportAmmoniaMolarFlowKmolPerHour,
-      double exportNonHydrogenMolarFlowKmolPerHour,
+      double recycleHydrogenMolarFlowKmolPerHour, double recycleHydrogenSulfideMolarFlowKmolPerHour,
+      double recycleAmmoniaMolarFlowKmolPerHour, double recycleNonHydrogenMolarFlowKmolPerHour,
+      double exportHydrogenMolarFlowKmolPerHour, double exportHydrogenSulfideMolarFlowKmolPerHour,
+      double exportAmmoniaMolarFlowKmolPerHour, double exportNonHydrogenMolarFlowKmolPerHour,
       double externalMassBalanceResidualKgPerHour) {
     this.recycleBalance = recycleBalance;
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
@@ -81,52 +75,40 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputB
    * @return immutable throughput receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance calculate(
-      RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycleBalance,
-      double feedMassFlowKgPerHour) {
+      RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycleBalance, double feedMassFlowKgPerHour) {
     Objects.requireNonNull(recycleBalance, "recycleBalance");
     if (!Double.isFinite(feedMassFlowKgPerHour) || feedMassFlowKgPerHour <= 0.0) {
       throw new IllegalArgumentException("feedMassFlowKgPerHour must be finite and positive");
     }
 
-    RefineryHydrotreatingSulfurNitrogenBalance material =
-        recycleBalance.getSupplyBalance().getMaterialBalance();
+    RefineryHydrotreatingSulfurNitrogenBalance material = recycleBalance.getSupplyBalance().getMaterialBalance();
     double basisScalePerHour = feedMassFlowKgPerHour / material.getFeedMassKg();
     double molarScale = basisScalePerHour / 1000.0;
     double productMassFlowKgPerHour = material.getProductMassKg() * basisScalePerHour;
-    double hydrogenConsumedMassFlowKgPerHour =
-        material.getTotalHydrogenConsumedMassKg() * basisScalePerHour;
-    double freshMakeupGasMassFlowKgPerHour =
-        recycleBalance.getFreshMakeupGasMassKg() * basisScalePerHour;
-    double recycleGasMassFlowKgPerHour =
-        recycleBalance.getRecycleGasMassKg() * basisScalePerHour;
-    double exportGasMassFlowKgPerHour =
-        recycleBalance.getExportGasMassKg() * basisScalePerHour;
-    double externalMassBalanceResidualKgPerHour = feedMassFlowKgPerHour
-        + freshMakeupGasMassFlowKgPerHour - productMassFlowKgPerHour
-        - exportGasMassFlowKgPerHour;
+    double hydrogenConsumedMassFlowKgPerHour = material.getTotalHydrogenConsumedMassKg() * basisScalePerHour;
+    double freshMakeupGasMassFlowKgPerHour = recycleBalance.getFreshMakeupGasMassKg() * basisScalePerHour;
+    double recycleGasMassFlowKgPerHour = recycleBalance.getRecycleGasMassKg() * basisScalePerHour;
+    double exportGasMassFlowKgPerHour = recycleBalance.getExportGasMassKg() * basisScalePerHour;
+    double externalMassBalanceResidualKgPerHour = feedMassFlowKgPerHour + freshMakeupGasMassFlowKgPerHour
+        - productMassFlowKgPerHour - exportGasMassFlowKgPerHour;
 
-    double tolerance = 1.0e-12
-        * Math.max(1.0, feedMassFlowKgPerHour + freshMakeupGasMassFlowKgPerHour);
+    double tolerance = 1.0e-12 * Math.max(1.0, feedMassFlowKgPerHour + freshMakeupGasMassFlowKgPerHour);
     if (!Double.isFinite(basisScalePerHour) || basisScalePerHour <= 0.0
         || !Double.isFinite(externalMassBalanceResidualKgPerHour)
         || Math.abs(externalMassBalanceResidualKgPerHour) > tolerance) {
       throw new IllegalArgumentException("inputs do not define a closed coupled throughput balance");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance(
-        recycleBalance, feedMassFlowKgPerHour, basisScalePerHour, productMassFlowKgPerHour,
-        hydrogenConsumedMassFlowKgPerHour, freshMakeupGasMassFlowKgPerHour,
-        recycleGasMassFlowKgPerHour, exportGasMassFlowKgPerHour,
-        recycleBalance.getFreshHydrogenMoles() * molarScale,
-        recycleBalance.getFreshNonHydrogenMoles() * molarScale,
+    return new RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance(recycleBalance,
+        feedMassFlowKgPerHour, basisScalePerHour, productMassFlowKgPerHour, hydrogenConsumedMassFlowKgPerHour,
+        freshMakeupGasMassFlowKgPerHour, recycleGasMassFlowKgPerHour, exportGasMassFlowKgPerHour,
+        recycleBalance.getFreshHydrogenMoles() * molarScale, recycleBalance.getFreshNonHydrogenMoles() * molarScale,
         recycleBalance.getRecycleHydrogenMoles() * molarScale,
         recycleBalance.getRecycleHydrogenSulfideMoles() * molarScale,
-        recycleBalance.getRecycleAmmoniaMoles() * molarScale,
-        recycleBalance.getRecycleNonHydrogenMoles() * molarScale,
+        recycleBalance.getRecycleAmmoniaMoles() * molarScale, recycleBalance.getRecycleNonHydrogenMoles() * molarScale,
         recycleBalance.getExportHydrogenMoles() * molarScale,
         recycleBalance.getExportHydrogenSulfideMoles() * molarScale,
-        recycleBalance.getExportAmmoniaMoles() * molarScale,
-        recycleBalance.getExportNonHydrogenMoles() * molarScale,
+        recycleBalance.getExportAmmoniaMoles() * molarScale, recycleBalance.getExportNonHydrogenMoles() * molarScale,
         externalMassBalanceResidualKgPerHour);
   }
 
