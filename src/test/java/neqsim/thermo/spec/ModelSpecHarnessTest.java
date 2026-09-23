@@ -54,6 +54,14 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"unifac", "psrk", "umr"}) {
+      ids.add("phase-" + fixture + "-pure-290");
+      ids.add("phase-" + fixture + "-pure-310");
+      ids.add("phase-" + fixture + "-group-r");
+      ids.add("phase-" + fixture + "-group-q");
+      ids.add("phase-" + fixture + "-a-methanol-water");
+      ids.add("phase-" + fixture + "-a-water-methanol");
+    }
     return ids;
   }
 
@@ -248,6 +256,22 @@ class ModelSpecHarnessTest {
     assertTrue(reference != null);
     final ModelSpec checked = reference;
     for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 0.95}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
+    }
+    ModelSpecTest.check(checked, checked.expected);
+  }
+
+  @Test
+  void signedInteractionCoefficientRejectsZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    ModelSpec reference = null;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if ("phase-unifac-a-methanol-water".equals(spec.id)) {
+        reference = spec;
+      }
+    }
+    assertTrue(reference != null);
+    final ModelSpec checked = reference;
+    for (double bad : new double[] {0.0, Double.NaN, Double.NEGATIVE_INFINITY, -180.0, 181.0}) {
       assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
     }
     ModelSpecTest.check(checked, checked.expected);

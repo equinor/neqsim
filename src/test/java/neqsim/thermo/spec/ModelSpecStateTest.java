@@ -9,6 +9,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
@@ -19,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
 
@@ -118,18 +121,18 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void binaryGroupModelsAreOrderIndependentAndReinitializable(boolean psrk) {
-    SystemInterface ordered = groupSystem(psrk, false);
-    SystemInterface reversed = groupSystem(psrk, true);
+  @ValueSource(strings = {"UNIFAC", "PSRK", "UMR"})
+  void binaryGroupModelsAreOrderIndependentAndReinitializable(String model) {
+    SystemInterface ordered = groupSystem(model, false);
+    SystemInterface reversed = groupSystem(model, true);
     for (double temperature : new double[] {290.0, 310.0, 290.0}) {
       ordered.setTemperature(temperature);
       reversed.setTemperature(temperature);
       ordered.init(0);
       reversed.init(0);
       for (String component : new String[] {"methanol", "water"}) {
-        double first = gamma(ordered, component);
-        double second = gamma(reversed, component);
+        double first = gamma(ordered, component, model);
+        double second = gamma(reversed, component, model);
         ModelSpecFixtures.positive(first, component);
         assertEquals(first, second, 1e-10, component);
       }
@@ -181,11 +184,16 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     assertEquals(gibbsEnergy, phase.getGibbsEnergy(), Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
   }
 
-  private static SystemInterface groupSystem(boolean psrk, boolean reverse) {
-    SystemInterface system = psrk ? new SystemUNIFACpsrk(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
+  private static SystemInterface groupSystem(String model, boolean reverse) {
+    SystemInterface system = "PSRK".equals(model) ? new SystemUNIFACpsrk(290.0, 1.0)
+        : "UMR".equals(model) ? new SystemUMRPRUEos(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
     system.addComponent(reverse ? "water" : "methanol", reverse ? 0.7 : 0.3);
     system.addComponent(reverse ? "methanol" : "water", reverse ? 0.3 : 0.7);
-    system.setMixingRule("classic");
+    if ("UMR".equals(model)) {
+      system.setMixingRule("HV", "UNIFAC_UMRPRU");
+    } else {
+      system.setMixingRule("classic");
+    }
     system.init(0);
     return system;
   }
@@ -210,8 +218,12 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return phase;
   }
 
-  private static double gamma(SystemInterface system, String name) {
+  private static double gamma(SystemInterface system, String name, String model) {
     PhaseInterface phase = system.getPhase(1);
+    if ("UMR".equals(model)) {
+      system.init(1);
+      phase = ((EosMixingRulesInterface) ((PhaseEosInterface) phase).getMixingRule()).getGEPhase();
+    }
     ComponentGEUnifac component = (ComponentGEUnifac) phase.getComponent(name);
     assertTrue(component.getUnifacGroups().length > 0);
     return component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
