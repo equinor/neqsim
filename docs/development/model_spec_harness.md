@@ -52,9 +52,10 @@ Each row declares:
 | Source, provenance, reason | Reference locator, evidence type and reuse provenance; exact absence reason |
 
 Comparison is `abs(actual - expected) <= absTol + relTol * abs(expected)`.
-Zero and negative values are valid for signed properties such as ideal enthalpy,
-ln(gamma) and group-interaction coefficients; gamma, fugacity coefficient, Z, group R/Q and
-applicable saturation pressure must be positive.
+Zero and negative values are valid for signed properties such as ideal or reference-state
+energies, entropy, derivatives, ln(gamma), Joule-Thomson coefficient and group-interaction
+coefficients; gamma, fugacity coefficient, Z, molar mass/density, heat capacities, sound speed,
+group R/Q and applicable saturation pressure must be positive.
 NaN and infinity always fail a `VALUE` case.
 
 An unavailable saturation case asserts its declared cause (missing correlation, ion,
@@ -71,8 +72,8 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 206 cases across seven system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK and UMR-PRU), direct SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU phase adapters, a component saturation
+The catalog has 236 cases across eight system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU and standard GERG-2008), direct SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008 phase adapters, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -87,6 +88,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Original UNIFAC | Published methanol/water gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K through `SystemUNIFAC` and exact `PhaseGEUnifac`; independent evaluation of the original equation uses DDBST R/Q and A parameters |
 | PSRK and UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no nonideal mixture accuracy is claimed |
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
+| GERG-2008 | Official NIST AGA8 21-component sample at 400 K and 500 bar: molar mass/density, Z, pressure derivatives, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemGERG2008Eos` and exact `PhaseGERG2008Eos` entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published SRK/PR equations with the declared methane
@@ -108,6 +110,13 @@ subclass works.
 fugacity coefficient after every initialization, and verifies `H = U + PV` and
 `G = H - TS` on one consistent extensive/molar basis. These identities accompany
 independent numerical anchors; they are not accepted as accuracy evidence by themselves.
+
+The GERG state control reuses one standard-model system at the official 400 K/500 bar
+state, moves to 350 K/100 bar, repeats evaluation, and returns to the reference state.
+It rejects stale cached values, checks finite nearby-state outputs and verifies that the
+phase-published U, H, S and G use the same molar basis as the official sample. The independent
+NIST vector also satisfies `H = U + P/rho` and `G = H - TS`; those identities supplement the
+external numerical anchors rather than replacing them.
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -154,9 +163,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (15 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (17 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (115 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (113 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -216,8 +225,14 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   `3.5e-4` gamma, `2.5e-4` ln(gamma), and `0.25 J/mol` excess-energy absolute tolerances
   cover only that documented parameter rounding. These are analytical original-model
   contracts, not experimental VLE validation or evidence for PSRK/UMR-PRU formulations.
+- The [official NIST AGA8 GERG-2008 sample](https://github.com/usnistgov/AGA8/blob/3bdb9ab8ff317c618b0b59d1b704c2c86ddc5fce/AGA8CODE/C/GERG2008_test_01.cpp)
+  supplies a 21-component composition and 15 outputs at 400 K and 50000 kPa. The catalog
+  records those values in their original molar units and evaluates the standard GERG-2008
+  path. This is an independent official cross-port/analytical implementation check, not an
+  experimental accuracy claim. GERG-2008-H2, GERG-2008-NH3, GERG-2004, EOS-CG, phase
+  equilibrium and derivatives absent from the sample remain explicit debt.
 
-NIST sources were inspected on 2026-09-18. Only a few numerical values derived from
+NIST WebBook sources were inspected on 2026-09-18 and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
 compilation. Source compilation rights remain with the source; the authored fixtures
 and analytical controls follow the repository's Apache-2.0 license. References are

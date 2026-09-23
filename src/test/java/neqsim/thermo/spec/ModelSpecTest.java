@@ -54,8 +54,7 @@ class ModelSpecTest extends neqsim.NeqSimTest {
     }
     assertEquals(ModelSpec.Outcome.VALUE, s.outcome, "numeric assertion cannot handle unsupported outcome");
     assertTrue(Double.isFinite(actual), s + ": nonfinite value " + actual);
-    if (s.property != ModelSpec.Property.HID && s.property != ModelSpec.Property.LN_GAMMA
-        && s.property != ModelSpec.Property.GEX && s.property != ModelSpec.Property.INTERACTION_A) {
+    if (ModelSpecFixtures.isPositiveOnly(s.property)) {
       ModelSpecFixtures.positive(actual, s.toString());
     }
     assertEquals(s.expected, actual, s.absTol + s.relTol * Math.abs(s.expected),

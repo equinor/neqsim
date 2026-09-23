@@ -73,6 +73,12 @@ class ModelSpecHarnessTest {
       ids.add("phase-" + fixture + "-a-methanol-water");
       ids.add("phase-" + fixture + "-a-water-methanol");
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String property : new String[] {"molar-mass", "molar-density", "z", "dpd-density", "d2pd-density2", "dpd-t",
+          "internal-energy", "enthalpy", "entropy", "cv", "cp", "sound-speed", "gibbs-energy", "jt", "kappa"}) {
+        ids.add("gerg-" + fixture + "-nist-" + property);
+      }
+    }
     return ids;
   }
 
@@ -270,6 +276,43 @@ class ModelSpecHarnessTest {
       assertThrows(AssertionError.class, () -> ModelSpecTest.check(checked, bad));
     }
     ModelSpecTest.check(checked, checked.expected);
+  }
+
+  @Test
+  void gergReferencesRejectZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    ModelSpec z = find("gerg-system-nist-z");
+    ModelSpec enthalpy = find("gerg-system-nist-enthalpy");
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.17}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(z, bad));
+    }
+    for (double bad : new double[] {0.0, Double.NaN, Double.NEGATIVE_INFINITY, 1000.0, 1161.0}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(enthalpy, bad));
+    }
+    ModelSpecTest.check(z, z.expected);
+    ModelSpecTest.check(enthalpy, enthalpy.expected);
+  }
+
+  @Test
+  void gergOfficialReferenceSatisfiesThermodynamicIdentities() throws IOException {
+    double density = find("gerg-system-nist-molar-density").expected;
+    double internalEnergy = find("gerg-system-nist-internal-energy").expected;
+    double enthalpy = find("gerg-system-nist-enthalpy").expected;
+    double entropy = find("gerg-system-nist-entropy").expected;
+    double gibbsEnergy = find("gerg-system-nist-gibbs-energy").expected;
+    double cv = find("gerg-system-nist-cv").expected;
+    double cp = find("gerg-system-nist-cp").expected;
+    assertEquals(enthalpy, internalEnergy + 50000.0 / density, 1e-9);
+    assertEquals(gibbsEnergy, enthalpy - 400.0 * entropy, 1e-9);
+    assertTrue(cp > cv && cv > 0.0);
+  }
+
+  private static ModelSpec find(String id) throws IOException {
+    for (ModelSpec spec : ModelSpec.load()) {
+      if (id.equals(spec.id)) {
+        return spec;
+      }
+    }
+    throw new AssertionError("missing case " + id);
   }
 
   @Test

@@ -13,11 +13,13 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseGEUnifac;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
+import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -25,6 +27,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
+import neqsim.thermo.util.gerg.GERG2008Type;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
@@ -203,6 +207,65 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.init(3);
     assertEquals(enthalpy, phase.getEnthalpy(), Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
     assertEquals(gibbsEnergy, phase.getGibbsEnergy(), Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+  }
+
+  @Test
+  void gergReferenceStateRefreshesAcrossTemperatureAndPressureChanges() {
+    SystemGERG2008Eos system = gergReferenceSystem();
+    system.init(0);
+    system.init(1);
+    PhaseGERG2008Eos phase = (PhaseGERG2008Eos) system.getPhase(0);
+    assertEquals(GERG2008Type.STANDARD, phase.getGergModelType());
+    double[] reference = phase.getProperties_GERG2008();
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(phase, GERG2008Type.STANDARD);
+    double referenceDensity = gerg.getMolarDensity();
+    assertEquals(12.79828626082062, referenceDensity, 1e-10);
+    assertEquals(1.174690666383717, reference[1], 1e-12);
+    assertEquals(1160.280160510973, phase.getEnthalpy() / phase.getNumberOfMolesInPhase(), 1e-7);
+    assertEquals(-2746.492901212530, phase.getInternalEnergy() / phase.getNumberOfMolesInPhase(), 1e-7);
+    assertEquals(-38.57590392409089, phase.getEntropy() / phase.getNumberOfMolesInPhase(), 1e-9);
+    assertEquals(16590.64173014733, phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), 1e-7);
+
+    system.setTemperature(350.0);
+    system.setPressure(100.0);
+    system.init(1);
+    double[] nearby = phase.getProperties_GERG2008();
+    double nearbyDensity = new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity();
+    assertNotEquals(reference[1], nearby[1]);
+    assertNotEquals(referenceDensity, nearbyDensity);
+    for (double value : nearby) {
+      assertTrue(Double.isFinite(value));
+    }
+
+    system.init(1);
+    double[] repeated = phase.getProperties_GERG2008();
+    assertEquals(nearbyDensity, new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity(), 0.0);
+    for (int i = 0; i < nearby.length; i++) {
+      assertEquals(nearby[i], repeated[i], 0.0, "GERG repeat property " + i);
+    }
+
+    system.setTemperature(400.0);
+    system.setPressure(500.0);
+    system.init(1);
+    double[] returned = phase.getProperties_GERG2008();
+    assertEquals(referenceDensity, new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity(), 1e-10);
+    for (int i = 0; i < reference.length; i++) {
+      assertEquals(reference[i], returned[i], Math.max(1e-12, Math.abs(reference[i]) * 1e-12),
+          "GERG returned property " + i);
+    }
+  }
+
+  private static SystemGERG2008Eos gergReferenceSystem() {
+    SystemGERG2008Eos system = new SystemGERG2008Eos(400.0, 500.0);
+    String[] names = {"methane", "nitrogen", "CO2", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "hydrogen", "oxygen", "CO", "water",
+        "H2S", "helium", "argon"};
+    double[] amounts = {0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
+    for (int i = 0; i < names.length; i++) {
+      system.addComponent(names[i], amounts[i]);
+    }
+    return system;
   }
 
   private static SystemInterface groupSystem(String model, boolean reverse) {
