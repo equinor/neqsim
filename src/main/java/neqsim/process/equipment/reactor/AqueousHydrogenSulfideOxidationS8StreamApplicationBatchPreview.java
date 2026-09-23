@@ -214,7 +214,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPrevie
 
     /** @return ordered immutable per-stream previews. */
     public List<AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.Result> getPreviews() {
-      return previews;
+      return Collections
+          .unmodifiableList(new ArrayList<AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.Result>(previews));
     }
 
     /** @return number of strict-append entries. */
