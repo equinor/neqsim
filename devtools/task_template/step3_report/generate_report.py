@@ -2664,7 +2664,7 @@ def _validate_analysis_scripts(analysis):
                 script_file))
             continue
         produces = entry.get("produces")
-        if produces and not os.path.exists(_resolve_task_path(produces)):
+        if produces and not glob.glob(_resolve_task_path(produces)):
             warnings.append("Analysis script {} declares an output that is missing: {}".format(
                 script_file, produces))
     return warnings

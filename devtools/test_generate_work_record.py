@@ -81,6 +81,25 @@ def test_generated_record_covers_method_data_and_map(task):
         assert heading in text
 
 
+def test_glob_outputs_and_optional_notebook_plan_are_not_missing(task):
+    config = (task / "study_config.yaml").read_text(encoding="utf-8")
+    config = config.replace(
+        "      produces: step2_analysis/pull.json",
+        "      produces: step2_analysis/case_*.json")
+    config = config.replace(
+        "  plan: []",
+        "  plan:\n    - file: 01_main_analysis.ipynb\n      purpose: Template notebook.")
+    config = config.replace("      evidence: step2_analysis/absent.json",
+                            "      evidence: step2_analysis/pull.json")
+    (task / "study_config.yaml").write_text(config, encoding="utf-8")
+    (task / "step2_analysis" / "case_a.json").write_text("{}", encoding="utf-8")
+    assert gwr.main([str(task)]) == 0
+    text = (task / "step3_report" / "WORK_RECORD.md").read_text(encoding="utf-8")
+    assert "case_*.json (missing)" not in text
+    assert "01_main_analysis.ipynb" not in text
+    assert "MISSING" not in text
+
+
 def test_check_flags_unfilled_narrative(task):
     gwr.main([str(task)])
     problems = gwr.check_work_record(task)
