@@ -58,7 +58,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal and is balance/refinement tested. Receiving-pressure events are conservatively located. | Assessed phase-level/geometry, entrainment/slip, finite-rate interfacial transfer and phase-exhaustion transitions beyond the current well-mixed equilibrium boundary. |
+| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. | Assessed phase-level/geometry, entrainment/slip and finite-rate interfacial transfer beyond the current well-mixed equilibrium boundary. |
 | Full-bore/long-pipe and non-equilibrium regimes | A bounded ideal-gas Fanno model covers quasi-steady one-sided constant-area pipe flow with specified Darcy friction and analytical validation. | Real-gas/transient decompression and separate non-equilibrium multiphase models, applicability controls and independent validation data. |
 | Independent qualification and dense-fluid accuracy | Analytical and conservation regressions; frames remain `UNQUALIFIED`. | Independent datasets, error/range analysis, model evidence records and domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
