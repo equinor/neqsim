@@ -65,7 +65,7 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.21.0</version>
+  <version>3.22.0</version>
 </dependency>
 ```
 
@@ -363,7 +363,7 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](htt
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.21.0</version>
+  <version>3.22.0</version>
 </dependency>
 ```
 
@@ -773,7 +773,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
 
 **APA-style citation** (software):
 
-> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.21.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
+> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.22.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
 
 **BibTeX:**
 
@@ -782,7 +782,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
   author       = {Solbraa, Even and {NeqSim Contributors}},
   title        = {NeqSim: A library for thermodynamic and process simulation},
   year         = {2026},
-  version      = {3.21.0},
+  version      = {3.22.0},
   publisher    = {Equinor},
   url          = {https://github.com/equinor/neqsim},
   license      = {Apache-2.0}

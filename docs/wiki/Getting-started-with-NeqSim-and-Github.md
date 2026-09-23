@@ -14,7 +14,7 @@ Add the current project version to a Maven build:
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.21.0</version>
+  <version>3.22.0</version>
 </dependency>
 ```
 
