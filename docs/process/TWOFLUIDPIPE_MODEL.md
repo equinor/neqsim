@@ -29,7 +29,9 @@ The under-2% result requires all three settings before initialization:
 `setEnableInterfacialPressure(true)`, and
 `setEnableCoupledPressureMomentum(true)`.
 Leaving shared slug forces disabled does not repair the earlier default-mode
-5.757% inventory-drift result. This release preparation does not change defaults.
+5.757% inventory-drift result. The steady slug-unit closure and steady-consistent
+transient initialization are now enabled by default; those changes do not qualify
+the severe-slugging benchmark or replace its required opt-in settings.
 
 The separate `setConservativeSlugForceIntegrationEnabled(true)` option remains
 experimental and off by default. Its 65.163 kPa inlet-pressure amplitude is below
@@ -251,17 +253,17 @@ temperature; receiving-phase composition still comes only from the equilibrium s
 wet-gas pipe just above its calculated water dew point, selects conservative film coupling, and
 cools the wall. Over 0.05 s, three outer-step partitions close phase/total mass, every named-component
 ledger, cellwise interphase transfer, and the wall/latent thermal residual. With trace inventories
-preserved and closed boundaries imposed at external faces, the regression records:
-
-| Outer step (s) | Aqueous-water transfer (kg) | Latent heat (J) | Mean temperature change (K) | Marker displacement (m) |
-| ---: | ---: | ---: | ---: | ---: |
-| 0.05 | 2.6680852621e-9 | 0.0058211670 | -0.0305404392 | 0.0793495261 |
-| 0.025 | 2.7746255186e-9 | 0.0060534204 | -0.0305445011 | 0.0819209781 |
-| 0.0125 | 2.8517992882e-9 | 0.0062209099 | -0.0305460516 | 0.0835877001 |
-
-Outer reporting boundaries truncate the adaptive internal CFL steps, so these are different
-integration grids. Water-transfer and latent-heat sensitivity are below 4% between adjacent grids;
-marker-displacement sensitivity decreases from 3.14% to 1.99% on further refinement. The tracked
+preserved and closed boundaries imposed at external faces, the regression checks
+outer steps of 0.05, 0.025, and 0.0125 s. Coarse-to-middle sensitivity must
+stay below 10% for aqueous-water transfer, latent heat, temperature response,
+and marker displacement. Middle-to-fine sensitivity must stay below 12% for
+water transfer and latent heat and below 10% for temperature and displacement;
+coarse-to-fine marker displacement must agree within 15%. The current fine-pair
+water and latent-heat sensitivities are 10.87% and 10.15% respectively. This
+short near-dew-point case checks coupling and balance, not a converged phase-
+appearance rate for an engineering application.
+Outer reporting boundaries truncate the adaptive internal CFL steps, so adjacent
+differences need not decrease monotonically. The tracked
 slug ages by exactly 0.05 s and retains its length on every partition. Transactional and ordinary
 execution retain identical results on the same partition. This is a
 coupling and conservation regression around a seeded marker, not evidence for spontaneous slug
@@ -367,6 +369,16 @@ project data before engineering use.
 | Mixture energy equation | Full energy balance including kinetic and potential terms |
 | Joule-Thomson effect | Enabled by default for accurate temperature prediction |
 | Multi-layer heat transfer | RadialThermalLayer and MultilayerThermalCalculator classes |
+
+The steady temperature solve estimates equilibrium heat capacity and Joule-Thomson
+response by finite differences of flashed specific enthalpy, including latent heat
+through phase changes. It also accounts for elevation work. The transient thermal
+handoff uses the steady reference fluid. By default, the transient momentum
+operator calibrates a correction at an unchanged steady boundary to hold the
+initial state; `setSteadyConsistentTransient(false)` disables it. A liquid-full
+line selects the coupled pressure-momentum solve unless
+`setEnableCoupledPressureMomentum(...)` was explicitly set. Recheck phase and
+energy balances when either option is changed for a specific application.
 
 ## Flow Regime Detection
 
@@ -501,6 +513,13 @@ scales as `G^2 / rho_mix` it also makes extra liquid *reduce* the gradient, whic
 The separated form is scoped to stratified flow because its wetted perimeters come from a circular-segment layer at the
 bottom of the bore. Annular flow, whose film wets the whole perimeter, is not described by that geometry: including it
 moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 12 MSm3/d into the pressure floor.
+
+The current stratified residual uses a bounded Andritsos-Hanratty interfacial wave enhancement
+and brackets the thinnest film root. Intermittent sections use a slug-unit balance for film and
+slug-body holdup and wall friction by default; `setSlugUnitClosureEnabled(false)` selects the
+earlier correlation. An annular film that reaches the liquid-bridging threshold falls back to
+intermittent holdup. These local closure changes require validation for the specific fluid,
+inclination, and rate range; they do not qualify transient severe-slug loads.
 
 #### Lean Gas Systems
 
@@ -732,13 +751,13 @@ bound is now inverted properly, $\alpha_L \ge X/(1+X)$ with $X = S\,v_{SL}/v_{SG
 one at every liquid loading; the flowline then solves to a hold-up of 0.334 with the liquid running
 downhill at 1.51 m/s against a gas velocity of 0.60 m/s.
 
-The riser is the part that is still wrong. The Taylor-bubble film in the slug closure is taken from
-an annular film balance that cannot close in a riser — the film weight exceeds the gas shear by more
-than two orders of magnitude — so the iteration stops at its 0.2 thickness clamp and returns a film
-hold-up of 0.64, which pins the riser slug unit at the 0.9 clamp. A riser that is always
-liquid-full cannot produce a riser-head pressure swing. Withdrawing the saturated film frees the
-riser and the swing rises to 1.59 heads at 16 sections, but 24 sections then gives 3.50 heads and
-reclassifies the riser as bubble flow, so that change is **not mesh converged and is not applied**.
+In the earlier closure, the Taylor-bubble film in the riser hit its 0.2 thickness clamp
+and returned a film hold-up of 0.64, pinning the riser slug unit at the 0.9 clamp.
+Withdrawing that saturated film then gave 1.59 riser heads at 16 sections but 3.50
+heads at 24 sections, so that historical candidate was not mesh converged.
+The current closure rejects an annular film once it reaches the bridging holdup
+and uses a separate slug-unit film balance. The historical swings are not validation
+results for this closure; severe-slug amplitude and mesh convergence remain open.
 
 Severe slugging in this configuration is additionally a **deterministically chaotic** limit
 cycle, so instantaneous extremes taken from a single trajectory are not asserted numerically.
