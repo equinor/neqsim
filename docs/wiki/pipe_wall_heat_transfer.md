@@ -454,6 +454,48 @@ System.out.printf("Outlet P: %.1f bara%n",
 
 ---
 
+## Local bare-pipe outer steel temperature in outdoor air
+
+`PipeBeggsAndBrills.calculateBarePipeSurfaceTemperature(...)` calculates a **local, steady**
+outer steel temperature for an uninsulated horizontal pipe. It uses the pipe's actual internal
+diameter, wall thickness and steel conductivity, plus a supplied local bulk-fluid temperature,
+fluid-side film coefficient, ambient air temperature, crosswind speed and surface emissivity.
+Temperatures are in K; geometry is in m. The result reports outer/inner wall temperatures (K),
+heat loss (W/m; negative for heat gain), separate convection/radiation (W/m), and external
+convection coefficient (W/(m² K)). The same calculation can be called without equipment through
+`BarePipeSurfaceTemperature.calculate(...)`.
+
+```java
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("screening example");
+pipe.setDiameter(0.0419); // actual bore: 48.3 mm OD less two 3.2 mm walls
+pipe.setThickness(0.0032);
+pipe.setPipeWallThermalConductivity(50.0);
+BarePipeSurfaceTemperature.Result result = pipe.calculateBarePipeSurfaceTemperature(
+    128.4 + 273.15, 20.0 + 273.15, 1500.0, 2.0, 0.8);
+double outerSteelC = result.getOuterTemperatureK() - 273.15;
+double heatLossWPerM = result.getHeatLossWPerM();
+```
+
+Add imports for `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` and
+`neqsim.process.util.heattransfer.BarePipeSurfaceTemperature`. The `1500 W/(m² K)`
+fluid-side coefficient is an **illustrative assumption**, not a measurement for FW-52-0106.
+For the stated 128.4 °C fluid, 20 °C air, 2 m/s wind, 0.8 emissivity and this
+48.3 mm OD geometry, 1,500 W/(m² K) gives about **125.75 °C** at the steel exterior,
+while 40,000 W/(m² K) gives about **128.08 °C**. The often quoted 128.1 °C
+therefore requires a very high assumed internal coefficient under these conditions.
+DN40 alone does not establish the actual bore or wall thickness. Determine the coefficient from
+fluid composition, phase, flow rate and local conditions, or show a sensitivity range. In
+particular, a small steel resistance does **not** establish that the outer surface equals the
+bulk process temperature: the fluid-side film can dominate that difference. The method rejects
+an insulated equipment configuration and does not alter its process simulation.
+
+The model evaluates air properties at the film temperature (approximately atmospheric pressure),
+Churchill-Bernstein forced crossflow and Churchill-Chu natural convection (the larger value),
+and Stefan-Boltzmann radiation to surroundings at ambient temperature. It omits solar load,
+shielding, mixed convection interaction, thermal bridges, wet surfaces, wind direction changes,
+axial temperature changes and transient response. Confirm these conditions and the inner film
+before using the result for personnel protection or insulation design.
+
 ## References
 
 1. Incropera, F.P. & DeWitt, D.P. (2011). *Fundamentals of Heat and Mass Transfer*. Wiley.
