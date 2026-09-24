@@ -309,6 +309,10 @@ The classification applies to both process containers and does not elevate runti
 activation remains `UNVERIFIED`, and source-frame evidence remains `UNQUALIFIED`. See the
 [coupled gas inventory guide](safety/coupled-release-inventory) for the rigid, adiabatic, single-gas-phase boundary.
 
+`IdealGasPipeDecompression` owns cell-resolved conservative mass, momentum and total-energy state, so its capability is
+`DYNAMIC_DISTRIBUTED`. The category describes spatial state ownership only: the model remains limited to its documented
+one-sided calorically perfect-gas boundary, and its source-frame evidence remains `UNQUALIFIED`.
+
 `EnergyConverter` owns the previous useful-output state when a finite ramp rate is configured. Its transient ramp is
 therefore classified as `DYNAMIC_LUMPED`. Repeated nonlinear/refinement evaluations with the same non-null physical-step
 identifier recompute from the output that existed at the start of that step, so refinement cannot consume the ramp a
