@@ -99,6 +99,9 @@
         },
         "evidenceLevel": {
           "const": "UNQUALIFIED"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidenceManifest"
         }
       }
     },
@@ -398,6 +401,88 @@
         "type": "number",
         "minimum": 0,
         "maximum": 1.00000001
+      }
+    },
+    "evidenceManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifestId",
+        "applicability",
+        "limitations",
+        "independentEvidence",
+        "records"
+      ],
+      "properties": {
+        "manifestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicability": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceCode"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceCode"
+          }
+        },
+        "independentEvidence": {
+          "type": "boolean"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRecord"
+          }
+        }
+      }
+    },
+    "evidenceCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "evidenceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "reference",
+        "description",
+        "independent"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "ANALYTICAL",
+            "CONSERVATION",
+            "NUMERICAL",
+            "EXPERIMENTAL"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "independent": {
+          "type": "boolean"
+        }
       }
     },
     "diagnostic": {

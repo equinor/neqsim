@@ -74,11 +74,13 @@ public final class ReleaseFlowResult implements Serializable {
   private final Map<Station, ReleaseState> stations;
   private final List<Diagnostic> diagnostics;
   private final Double throatSoundSpeedMs;
+  private final ReleaseModelEvidence evidence;
 
   private ReleaseFlowResult(String modelId, String version, Status status, double rate, boolean choked,
-      Map<Station, ReleaseState> stations, List<Diagnostic> diagnostics, Double soundSpeed) {
+      Map<Station, ReleaseState> stations, List<Diagnostic> diagnostics, Double soundSpeed,
+      ReleaseModelEvidence evidence) {
     if (modelId == null || modelId.trim().isEmpty() || version == null || version.trim().isEmpty() || status == null
-        || stations == null || diagnostics == null || diagnostics.contains(null)) {
+        || stations == null || diagnostics == null || diagnostics.contains(null) || evidence == null) {
       throw new IllegalArgumentException("Model identity, status, stations and diagnostics required");
     }
     boolean usable = status == Status.VALID || status == Status.VALID_WITH_WARNINGS;
@@ -99,6 +101,7 @@ public final class ReleaseFlowResult implements Serializable {
     this.stations = Collections.unmodifiableMap(copy);
     this.diagnostics = Collections.unmodifiableList(new ArrayList<Diagnostic>(diagnostics));
     throatSoundSpeedMs = soundSpeed;
+    this.evidence = evidence;
   }
 
   /**
@@ -116,7 +119,8 @@ public final class ReleaseFlowResult implements Serializable {
   public static ReleaseFlowResult success(ReleaseFlowModel model, double rate, boolean choked,
       Map<Station, ReleaseState> stations, List<Diagnostic> diagnostics, Double soundSpeed, boolean warning) {
     return new ReleaseFlowResult(model.getModelId(), model.getModelVersion(),
-        warning ? Status.VALID_WITH_WARNINGS : Status.VALID, rate, choked, stations, diagnostics, soundSpeed);
+        warning ? Status.VALID_WITH_WARNINGS : Status.VALID, rate, choked, stations, diagnostics, soundSpeed,
+        model.getEvidence());
   }
 
   /**
@@ -132,7 +136,7 @@ public final class ReleaseFlowResult implements Serializable {
     return new ReleaseFlowResult(model.getModelId(), model.getModelVersion(),
         unsupported ? Status.UNSUPPORTED : Status.INVALID, Double.NaN, false,
         new EnumMap<Station, ReleaseState>(Station.class),
-        Collections.singletonList(new Diagnostic(code, message == null ? code : message)), null);
+        Collections.singletonList(new Diagnostic(code, message == null ? code : message)), null, model.getEvidence());
   }
 
   /** @return whether physical quantities are usable within the documented model assumptions */
@@ -186,5 +190,10 @@ public final class ReleaseFlowResult implements Serializable {
   /** @return equilibrium throat sound speed in m/s, or null when unavailable */
   public Double getThroatSoundSpeedMs() {
     return throatSoundSpeedMs;
+  }
+
+  /** @return explicit immutable applicability and validation-evidence manifest */
+  public ReleaseModelEvidence getEvidence() {
+    return evidence;
   }
 }

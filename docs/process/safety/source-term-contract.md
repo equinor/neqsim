@@ -36,9 +36,13 @@ pipe calculation from a finite-pipe model identity.
 | `STALE` | Absent. Current successful process state was not established. |
 | `DISABLED` | Absent. Caller disabled the hypothetical opening; this does not assert zero equipment inventory. |
 
-Version 1 emits `evidenceLevel: UNQUALIFIED`. Regression tests establish software behavior,
-but do not create independently reviewed engineering qualification. Consumers must validate
-both schema and application-specific physical/balance requirements before using a frame.
+Version 1 emits `evidenceLevel: UNQUALIFIED`. Calculated frames also carry an optional-compatible
+`model.evidence` manifest containing stable applicability/limitation codes and typed evidence
+references. Existing v1 frames without that extension remain schema-compatible. The
+`independentEvidence` flag is false for the current built-in manifests; regression tests establish
+software behavior but do not create independently reviewed engineering qualification. Consumers
+must validate both schema and application-specific physical/balance requirements before using a
+frame.
 
 ## Serialization and verification
 

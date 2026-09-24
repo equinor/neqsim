@@ -1,6 +1,7 @@
 package neqsim.process.safety.release;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,23 @@ public final class IdealGasFannoPipeReleaseModel implements ReleaseFlowModel {
   @Override
   public String getModelId() {
     return "ideal-gas-fanno-pipe";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReleaseModelEvidence getEvidence() {
+    return new ReleaseModelEvidence("ideal-gas-fanno-pipe:1.0.0",
+        Arrays.asList("ONE_SIDED_FULL_BORE", "CONSTANT_AREA_PIPE", "CALORICALLY_PERFECT_GAS",
+            "SPECIFIED_DARCY_FRICTION"),
+        Arrays.asList("NO_REAL_GAS_DEPARTURE", "NO_TRANSIENT_DECOMPRESSION_WAVES", "NO_HEAT_TRANSFER",
+            "NO_MULTIPHASE_SLIP", "NO_EXPERIMENTAL_QUALIFICATION"),
+        Arrays.asList(
+            new ReleaseModelEvidence.Record("fanno-analytical-solution", ReleaseModelEvidence.Type.ANALYTICAL,
+                "src/test/java/neqsim/process/safety/release/IdealGasFannoPipeReleaseModelTest.java",
+                "Independent Fanno-function, choking, backpressure and friction-length comparisons", false),
+            new ReleaseModelEvidence.Record("fanno-inventory-refinement", ReleaseModelEvidence.Type.NUMERICAL,
+                "src/test/java/neqsim/process/safety/release/IdealGasFannoPipeReleaseModelTest.java",
+                "Coupled inventory conservation and timestep-refinement matrix", false)));
   }
 
   /** {@inheritDoc} */

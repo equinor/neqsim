@@ -1,6 +1,7 @@
 package neqsim.process.safety.release;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,21 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
   @Override
   public String getModelVersion() {
     return "1.2.0";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReleaseModelEvidence getEvidence() {
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.0",
+        Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
+        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "NO_EXPERIMENTAL_QUALIFICATION"),
+        Arrays.asList(
+            new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
+                "Component, mass and stagnation-energy closure for equilibrium release states", false),
+            new ReleaseModelEvidence.Record("hem-flashing-nearby-cases", ReleaseModelEvidence.Type.NUMERICAL,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowFlashingTest.java",
+                "Multicomponent flashing, nearby-mixture and continuation regression matrix", false)));
   }
 
   /** {@inheritDoc} */
