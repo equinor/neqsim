@@ -12,15 +12,13 @@ import neqsim.process.equipment.flare.Flare;
  * Bounded MCP runner for flare-tip thermal-radiation screening.
  *
  * <p>
- * The calculation delegates to the canonical {@link Flare} model. Results are screening evidence
- * only and do not establish standards compliance, safe siting, or accountable engineering
- * approval.
+ * The calculation delegates to the canonical {@link Flare} model. Results are screening evidence only and do not
+ * establish standards compliance, safe siting, or accountable engineering approval.
  * </p>
  */
 public final class FlareRadiationRunner {
 
-  private static final Gson GSON =
-      new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
   private static final int MAX_REQUEST_BYTES = 16384;
   private static final int MAX_DISTANCES = 200;
   private static final double MAX_HEAT_DUTY_W = 1.0e12;
@@ -31,11 +29,8 @@ public final class FlareRadiationRunner {
   private static final double[] API521_THRESHOLDS_W_M2 = {1580.0, 4730.0, 6310.0, 9460.0};
 
   /** Threshold descriptions used for the screening contour. */
-  private static final String[] API521_LABELS = {
-      "1.58 kW/m2 (continuous personnel exposure)",
-      "4.73 kW/m2 (3 s emergency egress)",
-      "6.31 kW/m2 (limited personnel access)",
-      "9.46 kW/m2 (equipment limit)"};
+  private static final String[] API521_LABELS = {"1.58 kW/m2 (continuous personnel exposure)",
+      "4.73 kW/m2 (3 s emergency egress)", "6.31 kW/m2 (limited personnel access)", "9.46 kW/m2 (equipment limit)"};
 
   private FlareRadiationRunner() {
   }
@@ -51,8 +46,7 @@ public final class FlareRadiationRunner {
       return errorJson("INVALID_INPUT", "JSON input is null or empty");
     }
     if (json.getBytes(StandardCharsets.UTF_8).length > MAX_REQUEST_BYTES) {
-      return errorJson("REQUEST_TOO_LARGE",
-          "Request exceeds the 16384 UTF-8 byte admission limit");
+      return errorJson("REQUEST_TOO_LARGE", "Request exceeds the 16384 UTF-8 byte admission limit");
     }
 
     try {
@@ -60,16 +54,13 @@ public final class FlareRadiationRunner {
       boolean hasMegawatts = input.has("heatDuty_MW");
       boolean hasWatts = input.has("heatDuty_W");
       if (hasMegawatts == hasWatts) {
-        return errorJson("INVALID_HEAT_DUTY",
-            "Provide exactly one of heatDuty_MW or heatDuty_W");
+        return errorJson("INVALID_HEAT_DUTY", "Provide exactly one of heatDuty_MW or heatDuty_W");
       }
 
-      double heatDutyW =
-          hasMegawatts ? input.get("heatDuty_MW").getAsDouble() * 1.0e6
-              : input.get("heatDuty_W").getAsDouble();
+      double heatDutyW = hasMegawatts ? input.get("heatDuty_MW").getAsDouble() * 1.0e6
+          : input.get("heatDuty_W").getAsDouble();
       if (!finitePositive(heatDutyW) || heatDutyW > MAX_HEAT_DUTY_W) {
-        return errorJson("INVALID_HEAT_DUTY",
-            "Heat duty must be finite, positive, and no greater than 1.0e12 W");
+        return errorJson("INVALID_HEAT_DUTY", "Heat duty must be finite, positive, and no greater than 1.0e12 W");
       }
 
       Flare flare = new Flare("flare-radiation");
@@ -84,21 +75,18 @@ public final class FlareRadiationRunner {
       if (input.has("radiantFraction")) {
         double radiantFraction = input.get("radiantFraction").getAsDouble();
         if (!finitePositive(radiantFraction) || radiantFraction > 1.0) {
-          return errorJson("INVALID_RADIANT_FRACTION",
-              "radiantFraction must be finite and in the interval (0, 1]");
+          return errorJson("INVALID_RADIANT_FRACTION", "radiantFraction must be finite and in the interval (0, 1]");
         }
         flare.setRadiantFraction(radiantFraction);
       }
 
       double[] distances = readDistances(input);
       if (distances == null) {
-        return errorJson("INVALID_DISTANCES",
-            "distances_m must contain between 1 and 200 numeric distances");
+        return errorJson("INVALID_DISTANCES", "distances_m must contain between 1 and 200 numeric distances");
       }
       for (double distance : distances) {
         if (!finitePositive(distance) || distance > MAX_DISTANCE_M) {
-          return errorJson("INVALID_DISTANCE",
-              "Each distance must be finite, positive, and no greater than 100000 m");
+          return errorJson("INVALID_DISTANCE", "Each distance must be finite, positive, and no greater than 100000 m");
         }
       }
 
@@ -120,8 +108,7 @@ public final class FlareRadiationRunner {
 
       JsonArray contour = new JsonArray();
       for (int i = 0; i < API521_THRESHOLDS_W_M2.length; i++) {
-        double safeDistance =
-            flare.radiationDistanceForFlux(heatDutyW, API521_THRESHOLDS_W_M2[i]);
+        double safeDistance = flare.radiationDistanceForFlux(heatDutyW, API521_THRESHOLDS_W_M2[i]);
         JsonObject row = new JsonObject();
         row.addProperty("threshold_W_m2", API521_THRESHOLDS_W_M2[i]);
         row.addProperty("threshold_kW_m2", API521_THRESHOLDS_W_M2[i] / 1000.0);
@@ -132,8 +119,7 @@ public final class FlareRadiationRunner {
       out.add("safeDistanceContour", contour);
       return GSON.toJson(out);
     } catch (Exception exception) {
-      return errorJson("INVALID_INPUT",
-          "Flare-radiation input could not be processed: " + exception.getMessage());
+      return errorJson("INVALID_INPUT", "Flare-radiation input could not be processed: " + exception.getMessage());
     }
   }
 

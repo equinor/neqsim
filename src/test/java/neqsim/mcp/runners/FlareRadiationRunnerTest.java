@@ -18,8 +18,7 @@ class FlareRadiationRunnerTest {
 
   @Test
   void testCanonicalProfileAndAdvisoryBoundary() {
-    JsonObject result =
-        run("{\"heatDuty_MW\":50.0,\"flameHeight_m\":40.0,\"radiantFraction\":0.20}");
+    JsonObject result = run("{\"heatDuty_MW\":50.0,\"flameHeight_m\":40.0,\"radiantFraction\":0.20}");
     assertEquals("success", result.get("status").getAsString());
     assertEquals(7, result.getAsJsonArray("radiationProfile").size());
     assertEquals(4, result.getAsJsonArray("safeDistanceContour").size());
@@ -36,33 +35,28 @@ class FlareRadiationRunnerTest {
     assertEquals(first, second);
     JsonArray profile = first.getAsJsonArray("radiationProfile");
     assertEquals(3, profile.size());
-    assertTrue(profile.get(0).getAsJsonObject().get("flux_W_m2").getAsDouble()
-        > profile.get(2).getAsJsonObject().get("flux_W_m2").getAsDouble());
+    assertTrue(profile.get(0).getAsJsonObject().get("flux_W_m2").getAsDouble() > profile.get(2).getAsJsonObject()
+        .get("flux_W_m2").getAsDouble());
   }
 
   @Test
   void testMissingOrDualHeatDutyFailsClosed() {
     assertEquals("INVALID_HEAT_DUTY", run("{}").get("errorCode").getAsString());
-    assertEquals("INVALID_HEAT_DUTY",
-        run("{\"heatDuty_MW\":1,\"heatDuty_W\":1000000}").get("errorCode").getAsString());
+    assertEquals("INVALID_HEAT_DUTY", run("{\"heatDuty_MW\":1,\"heatDuty_W\":1000000}").get("errorCode").getAsString());
   }
 
   @Test
   void testPhysicalBoundsFailClosed() {
-    assertEquals("INVALID_HEAT_DUTY",
-        run("{\"heatDuty_W\":0}").get("errorCode").getAsString());
-    assertEquals("INVALID_FLAME_HEIGHT",
-        run("{\"heatDuty_W\":1,\"flameHeight_m\":0}").get("errorCode").getAsString());
+    assertEquals("INVALID_HEAT_DUTY", run("{\"heatDuty_W\":0}").get("errorCode").getAsString());
+    assertEquals("INVALID_FLAME_HEIGHT", run("{\"heatDuty_W\":1,\"flameHeight_m\":0}").get("errorCode").getAsString());
     assertEquals("INVALID_RADIANT_FRACTION",
         run("{\"heatDuty_W\":1,\"radiantFraction\":1.1}").get("errorCode").getAsString());
   }
 
   @Test
   void testDistanceBoundsFailClosed() {
-    assertEquals("INVALID_DISTANCES",
-        run("{\"heatDuty_W\":1,\"distances_m\":[]}").get("errorCode").getAsString());
-    assertEquals("INVALID_DISTANCE",
-        run("{\"heatDuty_W\":1,\"distances_m\":[-1]}").get("errorCode").getAsString());
+    assertEquals("INVALID_DISTANCES", run("{\"heatDuty_W\":1,\"distances_m\":[]}").get("errorCode").getAsString());
+    assertEquals("INVALID_DISTANCE", run("{\"heatDuty_W\":1,\"distances_m\":[-1]}").get("errorCode").getAsString());
   }
 
   @Test

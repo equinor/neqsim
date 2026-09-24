@@ -1174,24 +1174,19 @@ class McpEvidenceInventoryFoundationTests {
   void testFlareRadiationPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject coverage =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("runFlareNetwork");
+    JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("runFlareNetwork");
 
     assertEquals("1.46", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
     assertEquals("CONTRACT_TESTED", coverage.get("coverageStatus").getAsString());
-    assertEquals(
-        "NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT",
+    assertEquals("NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("FlareRadiationRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_flare_radiation_protocol.py"));
-    assertTrue(coverage.get("evidenceBoundary").getAsString()
-        .contains("canonical NeqSim Flare delegation"));
-    assertTrue(coverage.get("evidenceBoundary").getAsString()
-        .contains("standards or regulatory compliance"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("FlareRadiationRunnerTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_flare_radiation_protocol.py"));
+    assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim Flare delegation"));
+    assertTrue(coverage.get("evidenceBoundary").getAsString().contains("standards or regulatory compliance"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runFlareNetwork"));
     assertEquals(46, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(5, limitations.get("confirmedGapToolCount").getAsInt());
