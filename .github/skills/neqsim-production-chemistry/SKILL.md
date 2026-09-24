@@ -605,6 +605,42 @@ Enums through jpype: `CIP.InhibitorChemistry.valueOf("IMIDAZOLINE")`.
 6. **Uncertainty + gaps** — §9 plus `getWarnings()` / `getDataGaps()` from every model.
 7. **Report** — `standards_applied`, `key_results`, `uncertainty`, `risk_evaluation`.
 
+## Closed Glycol Cooling/Heating Media — Biology and pH
+
+A closed MEG/water cooling or heating medium that has been contaminated (seawater ingress through a
+plate exchanger is the usual start) fails in three coupled ways: biofilm plugs strainers, pH drifts
+low, and stainless flanges suffer crevice/MIC attack. Three screening checks answer most of the
+questions an operations PEPR asks:
+
+1. **Is the blend biostatic?** Compute water activity with SRK-CPA and compare with the minimum a_w
+   for growth (most bacteria 0.91, most yeasts 0.88, most moulds 0.80; Scott 1957, Beuchat 1983).
+   ```python
+   f = ns.JClass("neqsim.thermo.system.SystemSrkCPAstatoil")(298.15, 1.01325)
+   f.addComponent("water", 1000 * (1 - w) / 18.015)   # per kg of solution
+   f.addComponent("MEG", 1000 * w / 62.068)
+   f.addComponent("CO2", 1e-8)
+   f.setMixingRule(10)
+   ns.JClass("neqsim.thermodynamicoperations.ThermodynamicOperations")(f).TPflash()
+   ph = f.getPhase(f.getNumberOfPhases() - 1)
+   a_w = ph.getComponent("water").getx() * ph.getActivityCoefficient(
+       ph.getComponent("water").getComponentNumber())
+   ```
+   Verified values at 25 °C: 20 wt% MEG → a_w 0.923 (NOT biostatic); a_w 0.91 at 22.7 wt%, 0.88 at
+   28.5 wt%, 0.80 at 41.5 wt%. The common "20/80" design blend allows bacterial growth.
+2. **Can caustic hold pH?** Near pH 7–9 unbuffered MEG/water has almost no buffer capacity: about
+   0.007 mmol/L of organic acid (MEG oxidation, microbial acids) moves pH 8 → 7, versus ~2.4 mmol/L
+   with a 5 mmol/L buffer (pKa 7.2). Repeated NaOH dosing that "cannot keep pH above 7.2" is this,
+   not a dosing error — recommend an inhibitor/buffer package or a hard trigger to add one.
+3. **Does fluid exchange clean the loop?** Exchange removes solutes and planktonic cells, not
+   attached biofilm. Reconcile any past feed-and-bleed with `C = C0·exp(−V_ex/V_mix)`; an inferred
+   V_mix far below the stated inventory means stagnant branches (where biofilm survives and dosing
+   does not reach). Trend the historised strainer dP as the leading indicator of regrowth.
+
+Gotchas: size the liquid at ~1 kg (55 mol water) when a gas phase is present, otherwise the aqueous
+phase evaporates into a 10-mol gas and no aqueous phase is returned. SRK-CPA gives the CO2–water
+Henry constant ~19 % low at 25 °C / 1 atm (0.0275 vs 0.034 mol/kg/bar) — use the reference value for
+carbonate pH work and keep NeqSim only for the MEG/water ratio.
+
 ## Agent Cooperation
 
 | Need | Route to |

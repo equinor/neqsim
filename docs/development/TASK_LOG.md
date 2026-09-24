@@ -935,3 +935,21 @@ floor binds in gas-condensate flow, liquid acoustic transients ring, and riser d
 Tooling fix: the report and work-record generators took glob `produces:` entries such as
 `figures/*.png` literally and flagged them missing, and the work record listed the template
 notebook plan as missing work even with `notebooks.required: false`.
+
+### 2026-09-24 — Contaminated closed MEG/water cooling-medium loop: cleaning, monitoring, materials basis
+**Type:** G (Workflow)
+**Keywords:** cooling medium, MEG, glycol, biofilm, MIC, crevice corrosion, strainer dP, water activity, pH buffer, feed and bleed, PEPR
+**Solution:** private task folder (redacted); pattern in .github/skills/neqsim-production-chemistry/SKILL.md "Closed Glycol Cooling/Heating Media"
+**Notes:** SRK-CPA water activity of 20 wt% MEG = 0.923 (above the ~0.91 bacterial growth limit;
+0.88 needs 28.5 wt%). Unbuffered MEG/water loses pH 8 -> 7 with ~0.007 mmol/L organic acid, so
+caustic dosing cannot hold pH. A past feed-and-bleed chloride drop reconciled to a well-mixed volume
+of ~10 m3 versus a stated 35 m3 -> stagnant branches/dead legs. Historised strainer dP was the leading
+indicator (48x baseline before the deposit find, regrowth within a year). SAP gotcha: a cleaning
+work order went TECO with every operation confirmed at 0 actual hours although the work was not done.
+NIP: SRK-CPA CO2-water Henry constant 19% low at 25 C / 1 atm.
+
+### 2026-09-24 - Lifetime-programme action for an ageing fire-door population (peer benchmark in the lifetime register)
+**Type:** G (Workflow)
+**Keywords:** levetidsprogram, lifetime programme, LTP action, fire doors, A60, barrier, failure to close on demand, Crow-AMSAA, peer benchmark, robustgjoring, Thelma
+**Solution:** private task folder (redacted); pattern in enterprise-life-extension-assessment steps 1b and 8b
+**Notes:** The lifetime programme had no action for the doors because a pre-yard lifetime evaluation had rated them satisfactory; 18 other installations carried a fire-door lifetime case, which gave a sourced expected life (25 y) and unit costs. Trend excluded ageing, but a flat demand-failure rate on A60/H doors made it a barrier case. Robust option = survey + pneumatic operators + targeted replacement + verified function test: same barrier gain as full replacement at one third of the cost; targeted-only collapses if failures do not concentrate on known bad doors (the discriminating test). Horizon in the lifetime register (2045) differed from the task horizon (2037) - assess both.
