@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 45 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 6 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 46 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 5 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -680,3 +680,13 @@ inputs, uncertainty, chemical dose, safe operating limits, standards
 conformance, certification, plant action, or accountable engineering approval.
 See
 [`CHEMISTRY_SCREENING_CONTRACT.md`](evidence/CHEMISTRY_SCREENING_CONTRACT.md).
+
+
+### runFlareNetwork bounded screening contract
+
+The tool accepts exactly one positive heat-duty basis and up to 200 positive finite
+distances in a request no larger than 16,384 UTF-8 bytes. It delegates to the
+canonical NeqSim `Flare` model and returns deterministic radiation profiles,
+reference-threshold contours, stable error codes, and explicit advisory metadata.
+The result is screening only and does not claim standards conformance or replace
+qualified engineering review.

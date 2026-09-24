@@ -71,6 +71,7 @@ JSON_TOOL_ARGS = {
     "runDynamic": "dynamicJson",
     "runBioprocess": "bioprocessJson",
     "runRelief": "reliefJson",
+    "runFlareNetwork": "flareJson",
     "sizeEquipment": "sizingJson",
     "designUtilities": "utilityJson",
     "compareProcesses": "comparisonJson",
@@ -1592,13 +1593,14 @@ def test_capabilities():
         "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
         "designUtilities",
         "runChemistry",
+        "runFlareNetwork",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-five bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.45"
-          and limitations.get("contractTestedToolCount") == 45
-          and limitations.get("confirmedGapToolCount") == 6
+    check("forty-six bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.46"
+          and limitations.get("contractTestedToolCount") == 46
+          and limitations.get("confirmedGapToolCount") == 5
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1677,6 +1679,17 @@ def test_capabilities():
           and "Canonical ChemistryRunner dispatch" in chemistry.get("evidenceBoundary", "")
           and "thermodynamic" in chemistry.get("evidenceBoundary", ""),
           str(chemistry))
+    flare = coverage_records.get("runFlareNetwork", {})
+    check("flare radiation has bounded canonical screening evidence",
+          flare.get("coverageStatus") == "CONTRACT_TESTED"
+          and flare.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_flare_radiation_protocol.py"
+          in flare.get("contractEvidenceSources", [])
+          and "canonical NeqSim Flare delegation" in flare.get("evidenceBoundary", "")
+          and "standards or regulatory compliance" in flare.get("evidenceBoundary", ""),
+          str(flare))
+
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1900,7 +1913,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 6
+          and limitations.get("confirmedGapToolCount") == 5
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2170,6 +2183,30 @@ def test_chemistry_contract():
         r = call_tool("runChemistry", {"chemistryJson": json.dumps(case)})
         check("chemistry " + case["analysis"] + " status=success",
               r.get("status") == "success", r.get("message", str(r)))
+
+
+# --- Flare-radiation screening ---
+
+def test_flare_radiation_contract():
+    """Exercise bounded canonical flare-radiation screening through packaged MCP."""
+    print("\n=== Flare Radiation Contract ===")
+    r = call_tool("runFlareNetwork", {
+        "heatDuty_MW": 50.0,
+        "flameHeight_m": 40.0,
+        "radiantFraction": 0.2,
+        "distances_m": [20.0, 50.0, 100.0],
+    })
+    data = r.get("data", r)
+    check("flare radiation status=success", r.get("status") == "success", str(r))
+    check("flare radiation profile and contour",
+          len(data.get("radiationProfile", [])) == 3
+          and len(data.get("safeDistanceContour", [])) == 4,
+          str(r))
+    check("flare radiation advisory boundary",
+          data.get("screeningOnly") is True
+          and data.get("standardConformanceClaimed") is False
+          and data.get("engineeringReviewRequired") is True,
+          str(r))
 
 
 # --- Utility design tools ---
@@ -2823,6 +2860,7 @@ if __name__ == "__main__":
         test_size_compressor()
         test_design_utilities()
         test_chemistry_contract()
+        test_flare_radiation_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()
