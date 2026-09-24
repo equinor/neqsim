@@ -23,7 +23,7 @@ final class ModelSpec {
   /** Curated drivers, not arbitrary class names or reflective method calls. */
   enum Fixture {
     SATURATION, ANTOINE_ANALYTIC, WILSON_ANALYTIC, WILSON_PHASE, NRTL_ANALYTIC, NRTL_PHASE, UNIFAC, PSRK, UMR, SRK, PR,
-    SRK_PHASE, PR_PHASE, UNIFAC_PHASE, PSRK_PHASE, UMR_PHASE, GERG, GERG_PHASE, UNIQUAC
+    SRK_PHASE, PR_PHASE, UNIFAC_PHASE, PSRK_PHASE, UMR_PHASE, GERG, GERG_PHASE, IDEAL_GAS, IDEAL_GAS_PHASE, UNIQUAC
   }
 
   /** Properties with distinct dimensional and sign contracts. */

@@ -79,6 +79,14 @@ class ModelSpecHarnessTest {
         ids.add("gerg-" + fixture + "-nist-" + property);
       }
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String temperature : new String[] {"298", "400", "600"}) {
+        for (String property : new String[] {"molar-mass", "molar-density", "z", "phi", "cp", "cv", "sound-speed",
+            "jt"}) {
+          ids.add("ideal-" + fixture + "-argon-" + temperature + "-" + property);
+        }
+      }
+    }
     return ids;
   }
 
@@ -304,6 +312,64 @@ class ModelSpecHarnessTest {
     assertEquals(enthalpy, internalEnergy + 50000.0 / density, 1e-9);
     assertEquals(gibbsEnergy, enthalpy - 400.0 * entropy, 1e-9);
     assertTrue(cp > cv && cv > 0.0);
+  }
+
+  @Test
+  void idealGasReferencesReconstructNistArgonAndIdealEquations() throws IOException {
+    int checked = 0;
+    for (ModelSpec spec : ModelSpec.load()) {
+      if (spec.fixture != ModelSpec.Fixture.IDEAL_GAS && spec.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+        continue;
+      }
+      double t = spec.temperature / 1000.0;
+      double cp = 20.78600 + 2.825911e-7 * t - 1.464191e-7 * t * t + 1.092131e-8 * t * t * t - 3.661371e-8 / (t * t);
+      double cv = cp - 8.31446261815324;
+      double expected;
+      switch (spec.property) {
+      case MOLAR_MASS:
+        expected = 39.948;
+        break;
+      case MOLAR_DENSITY:
+        expected = spec.pressure * 1.0e5 / (8.31446261815324 * spec.temperature) / 1000.0;
+        break;
+      case Z:
+      case PHI:
+        expected = 1.0;
+        break;
+      case CP:
+        expected = cp;
+        break;
+      case CV:
+        expected = cv;
+        break;
+      case SOUND_SPEED:
+        expected = Math.sqrt(cp / cv * 8.31446261815324 * spec.temperature / 0.039948);
+        break;
+      case JT:
+        expected = 0.0;
+        break;
+      default:
+        throw new AssertionError(spec.property);
+      }
+      assertEquals(expected, spec.expected, 1e-12, spec.toString());
+      checked++;
+    }
+    assertEquals(48, checked, "every NIST argon ideal-gas anchor must be independently reconstructed");
+  }
+
+  @Test
+  void idealGasAnchorsRejectPositiveAndZeroPlaceholders() throws IOException {
+    ModelSpec density = find("ideal-system-argon-400-molar-density");
+    ModelSpec heatCapacity = find("ideal-system-argon-600-cp");
+    ModelSpec zeroJouleThomson = find("ideal-system-argon-400-jt");
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(density, bad));
+    }
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 20.0, 21.0}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(heatCapacity, bad));
+    }
+    ModelSpecTest.check(zeroJouleThomson, 0.0);
+    assertThrows(AssertionError.class, () -> ModelSpecTest.check(zeroJouleThomson, 0.01));
   }
 
   private static ModelSpec find(String id) throws IOException {
