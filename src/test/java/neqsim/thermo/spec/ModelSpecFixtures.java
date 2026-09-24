@@ -19,11 +19,13 @@ import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseGEUniquac;
 import neqsim.thermo.phase.PhaseGEWilson;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
+import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -31,6 +33,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
+import neqsim.thermo.util.gerg.GERG2008Type;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 
 /** Small explicit adapters that drive production calculations and inspect published state. */
 final class ModelSpecFixtures {
@@ -71,6 +75,10 @@ final class ModelSpecFixtures {
       return PhaseSrkEos.class;
     case PR_PHASE:
       return PhasePrEos.class;
+    case GERG:
+      return SystemGERG2008Eos.class;
+    case GERG_PHASE:
+      return PhaseGERG2008Eos.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -79,12 +87,7 @@ final class ModelSpecFixtures {
   }
 
   static void validate(ModelSpec s) {
-    String unit = s.property == ModelSpec.Property.PSAT ? "bar"
-        : s.property == ModelSpec.Property.DPSAT_DT ? "bar/K"
-            : s.property == ModelSpec.Property.T_SAT ? "K"
-                : s.property == ModelSpec.Property.HID || s.property == ModelSpec.Property.GEX ? "J/mol"
-                    : s.property == ModelSpec.Property.INTERACTION_A ? "K" : "1";
-    ModelSpec.require(unit.equals(s.unit), "wrong unit for " + s.property);
+    ModelSpec.require(unit(s.property).equals(s.unit), "wrong unit for " + s.property);
     switch (s.fixture) {
     case ANTOINE_ANALYTIC:
       ModelSpec.require((s.property == ModelSpec.Property.DPSAT_DT || s.property == ModelSpec.Property.T_SAT)
@@ -119,6 +122,17 @@ final class ModelSpecFixtures {
                   && s.components.containsKey("methane") && "gas".equals(s.phase) && "classic".equals(s.mixingRule)
                   && "init1".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE,
               "invalid cubic phase fixture");
+      break;
+    case GERG:
+    case GERG_PHASE:
+      ModelSpec.require(isGergProperty(s.property) && s.components.size() == 21 && "gas".equals(s.phase)
+          && "none".equals(s.mixingRule) && "nist-aga8-gerg2008".equals(s.operation)
+          && s.outcome == ModelSpec.Outcome.VALUE && s.componentIndex == 0, "invalid GERG-2008 reference fixture");
+      for (String component : new String[] {"methane", "nitrogen", "CO2", "ethane", "propane", "i-butane", "n-butane",
+          "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "hydrogen", "oxygen", "CO",
+          "water", "H2S", "helium", "argon"}) {
+        ModelSpec.require(s.components.containsKey(component), "GERG-2008 reference composition missing " + component);
+      }
       break;
     case WILSON_ANALYTIC:
     case WILSON_PHASE:
@@ -177,10 +191,79 @@ final class ModelSpecFixtures {
     default:
       throw new IllegalArgumentException("unmapped fixture " + s.fixture);
     }
-    if (s.outcome == ModelSpec.Outcome.VALUE && s.property != ModelSpec.Property.LN_GAMMA
-        && s.property != ModelSpec.Property.HID && s.property != ModelSpec.Property.GEX
-        && s.property != ModelSpec.Property.INTERACTION_A) {
+    if (s.outcome == ModelSpec.Outcome.VALUE && isPositiveOnly(s.property)) {
       ModelSpec.require(s.expected > 0.0, "positive-only property reference must be positive");
+    }
+  }
+
+  private static String unit(ModelSpec.Property property) {
+    switch (property) {
+    case PSAT:
+      return "bar";
+    case DPSAT_DT:
+      return "bar/K";
+    case T_SAT:
+      return "K";
+    case HID:
+    case GEX:
+    case INTERNAL_ENERGY:
+    case ENTHALPY:
+    case GIBBS_ENERGY:
+      return "J/mol";
+    case INTERACTION_A:
+      return "K";
+    case MOLAR_MASS:
+      return "g/mol";
+    case MOLAR_DENSITY:
+      return "mol/L";
+    case DPD_DENSITY:
+      return "kPa/(mol/L)";
+    case D2PD_DENSITY2:
+      return "kPa/(mol/L)^2";
+    case DPD_T:
+      return "kPa/K";
+    case ENTROPY:
+    case CV:
+    case CP:
+      return "J/(mol*K)";
+    case SOUND_SPEED:
+      return "m/s";
+    case JT:
+      return "K/kPa";
+    default:
+      return "1";
+    }
+  }
+
+  static boolean isPositiveOnly(ModelSpec.Property property) {
+    return property != ModelSpec.Property.LN_GAMMA && property != ModelSpec.Property.HID
+        && property != ModelSpec.Property.GEX && property != ModelSpec.Property.INTERACTION_A
+        && property != ModelSpec.Property.D2PD_DENSITY2 && property != ModelSpec.Property.DPD_T
+        && property != ModelSpec.Property.INTERNAL_ENERGY && property != ModelSpec.Property.ENTHALPY
+        && property != ModelSpec.Property.ENTROPY && property != ModelSpec.Property.GIBBS_ENERGY
+        && property != ModelSpec.Property.JT;
+  }
+
+  private static boolean isGergProperty(ModelSpec.Property property) {
+    switch (property) {
+    case MOLAR_MASS:
+    case MOLAR_DENSITY:
+    case Z:
+    case DPD_DENSITY:
+    case D2PD_DENSITY2:
+    case DPD_T:
+    case INTERNAL_ENERGY:
+    case ENTHALPY:
+    case ENTROPY:
+    case CV:
+    case CP:
+    case SOUND_SPEED:
+    case GIBBS_ENERGY:
+    case JT:
+    case KAPPA:
+      return true;
+    default:
+      return false;
     }
   }
 
@@ -230,6 +313,25 @@ final class ModelSpecFixtures {
       assertEquals(type(s.fixture), system.getClass(), s.toString());
     }
     system.init(0);
+    if (s.fixture == ModelSpec.Fixture.GERG || s.fixture == ModelSpec.Fixture.GERG_PHASE) {
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.GERG_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      NeqSimGERG2008 gerg = new NeqSimGERG2008(phase, GERG2008Type.STANDARD);
+      double[] properties = s.fixture == ModelSpec.Fixture.GERG_PHASE ? phase.getProperties_GERG2008()
+          : gerg.propertiesGERG();
+      assertEquals(15, properties.length, s.toString());
+      for (double property : properties) {
+        assertTrue(Double.isFinite(property), s.toString());
+      }
+      double result = readGerg(s.property, gerg, properties);
+      double[] repeated = s.fixture == ModelSpec.Fixture.GERG_PHASE ? phase.getProperties_GERG2008()
+          : gerg.propertiesGERG();
+      assertEquals(result, readGerg(s.property, gerg, repeated), 0.0, s + " repeat read");
+      return result;
+    }
     if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
         || s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
       system.init(1);
@@ -279,6 +381,43 @@ final class ModelSpecFixtures {
     // Read again from the same state; do not merely check that init did not throw.
     assertEquals(result, readGe(s, liquid), 1e-11, s.toString());
     return result;
+  }
+
+  private static double readGerg(ModelSpec.Property property, NeqSimGERG2008 gerg, double[] values) {
+    switch (property) {
+    case MOLAR_MASS:
+      return gerg.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return gerg.getMolarDensity();
+    case Z:
+      return values[1];
+    case DPD_DENSITY:
+      return values[2];
+    case D2PD_DENSITY2:
+      return values[3];
+    case DPD_T:
+      return values[5];
+    case INTERNAL_ENERGY:
+      return values[6];
+    case ENTHALPY:
+      return values[7];
+    case ENTROPY:
+      return values[8];
+    case CV:
+      return values[9];
+    case CP:
+      return values[10];
+    case SOUND_SPEED:
+      return values[11];
+    case GIBBS_ENERGY:
+      return values[12];
+    case JT:
+      return values[13];
+    case KAPPA:
+      return values[14];
+    default:
+      throw new IllegalArgumentException("unmapped GERG-2008 property " + property);
+    }
   }
 
   private static double readGe(ModelSpec s, PhaseInterface liquid) {
@@ -388,6 +527,10 @@ final class ModelSpecFixtures {
     case PR_PHASE:
       system = new SystemPrEos(s.temperature, s.pressure);
       break;
+    case GERG:
+    case GERG_PHASE:
+      system = new SystemGERG2008Eos(s.temperature, s.pressure);
+      break;
     default:
       throw new IllegalArgumentException("no system factory for " + s.fixture);
     }
@@ -396,7 +539,7 @@ final class ModelSpecFixtures {
     }
     if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.setMixingRule("HV", "UNIFAC_UMRPRU");
-    } else {
+    } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE) {
       system.setMixingRule("classic");
     }
     return system;
@@ -406,7 +549,7 @@ final class ModelSpecFixtures {
     return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
         || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
         || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
-        || fixture == ModelSpec.Fixture.UMR_PHASE;
+        || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE;
   }
 
   static void positive(double value, String context) {
