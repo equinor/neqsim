@@ -60,6 +60,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
 - unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
 - coupled sulfur/nitrogen hydrogen energy and caller-priced utility receipts;
+- scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
 - hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
 - hydrotreating recycle/purge receipts with explicit component recovery and purge assumptions;
 - unit-explicit hydrotreating throughput receipts in kg/h and kmol/h;
@@ -177,6 +178,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
 - [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
 - [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
+- [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
 - [Hydrotreating hydrogen supply and outlet gas balance](refinery_hydrotreating_hydrogen_supply_balance)
 - [Hydrotreating hydrogen recycle and purge balance](refinery_hydrotreating_hydrogen_recycle_balance)
 - [Hydrotreating throughput-rate balance](refinery_hydrotreating_throughput_balance)
