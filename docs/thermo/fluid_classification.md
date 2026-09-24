@@ -1,281 +1,130 @@
 ---
 title: "Reservoir Fluid Classification"
-description: "This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology."
+description: "Screen reservoir fluids with NeqSim's C7+, GOR, and phase-envelope classification routes."
 ---
 
-This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology.
+`FluidClassifier` provides screening classifications for reservoir-fluid studies. Choose one
+route deliberately: the methods do not reconcile composition, measured GOR, API gravity, and
+laboratory phase behavior into a single validated fluid description.
 
-## Overview
+## Choose the classification route
 
-Reservoir fluid classification is essential for selecting appropriate modeling approaches and simulation strategies. NeqSim implements the industry-standard Whitson classification methodology to categorize fluids into:
+| Route | Input | What it does |
+| --- | --- | --- |
+| `classify(fluid)` | NeqSim fluid | Calculates C7+ mol% and applies the C7+ thresholds. |
+| `classifyByC7Plus(c7PlusMolPercent)` | C7+ in mol% | Applies the composition thresholds directly. |
+| `classifyByGOR(gorScfStb)` | GOR in scf/STB | Applies the GOR thresholds directly. |
+| `classifyWithPhaseEnvelope(fluid, reservoirTemperatureK)` | Fluid and reservoir temperature in K | Starts from the C7+ result and heuristically refines it using a calculated critical temperature. If phase-envelope calculation fails, it returns the C7+ result. |
 
-- **Dry Gas** - No liquid dropout at any pressure/temperature
-- **Wet Gas** - Produces liquid at surface but remains single-phase in reservoir
-- **Gas Condensate** - Exhibits retrograde condensation in reservoir
-- **Volatile Oil** - High shrinkage oil with significant gas liberation
-- **Black Oil** - Conventional crude oil with moderate gas content
-- **Heavy Oil** - High viscosity, low API gravity oil
+`classify(fluid)` is therefore a **C7+-screening route**, not a phase-envelope calculation and
+not a measured-GOR correlation. Use the explicit GOR route when a representative producing GOR
+is the controlling input.
 
-## Classification Criteria
+## Implemented thresholds
 
-The Whitson classification uses three primary criteria:
+The comparisons below describe the current public API exactly.
 
-| Fluid Type | GOR (scf/STB) | C7+ (mol%) | API Gravity |
-|------------|---------------|------------|-------------|
-| Dry Gas | > 100,000 | < 0.7 | N/A |
-| Wet Gas | 15,000 - 100,000 | 0.7 - 4 | 40-60° |
-| Gas Condensate | 3,300 - 15,000 | 4 - 12.5 | 40-60° |
-| Volatile Oil | 1,000 - 3,300 | 12.5 - 20 | 40-50° |
-| Black Oil | < 1,000 | > 20 | 15-40° |
-| Heavy Oil | < 200 | > 30 | 10-15° |
+| Result | C7+ route (mol%) | GOR route (scf/STB) |
+| --- | ---: | ---: |
+| Dry gas | `< 0.7` | `> 100,000` |
+| Wet gas | `0.7` to `< 4.0` | `> 15,000` to `<= 100,000` |
+| Gas condensate | `4.0` to `< 12.5` | `> 3,300` to `<= 15,000` |
+| Volatile oil | `12.5` to `< 20.0` | `> 1,000` to `<= 3,300` |
+| Black oil | `20.0` to `< 30.0` | `> 200` to `<= 1,000` |
+| Heavy oil | `>= 30.0` | `<= 200` |
 
-## Basic Usage
+`classifyByC7Plus` returns `UNKNOWN` for a negative or `NaN` value. The current GOR route does
+not reject invalid values, so callers must require a finite, non-negative GOR before calling it.
 
-### Classification by Composition
+## Executable classification example
+
+The program uses K, bara, mol%, and scf/STB explicitly. Run it with assertions enabled
+(`java -ea ...`); the documentation test compiles it for Java 8 and invokes it with assertions
+enabled.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.util.FluidClassifier;
 import neqsim.thermo.util.ReservoirFluidType;
 
-// Create a fluid
-SystemInterface fluid = new SystemSrkEos(373.15, 100.0);
-fluid.addComponent("methane", 0.70);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.08);
-fluid.addComponent("n-heptane", 0.07);
-fluid.addComponent("C10", 0.05);
-fluid.createDatabase(true);
-fluid.setMixingRule("classic");
+public final class FluidClassificationExample {
+  private static final Logger logger =
+      LogManager.getLogger(FluidClassificationExample.class);
 
-// Classify the fluid
-ReservoirFluidType type = FluidClassifier.classify(fluid);
-System.out.println("Fluid type: " + type.getDisplayName());
-// Output: Fluid type: Gas Condensate
-```
+  private FluidClassificationExample() {}
 
-### Classification by GOR
+  public static void main(String[] args) {
+    double temperatureK = 373.15;
+    double pressureBara = 100.0;
+    SystemInterface fluid = new SystemSrkEos(temperatureK, pressureBara);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-heptane", 0.10);
+    fluid.createDatabase(true);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
 
-```java
-// Classify directly from GOR measurement
-double gorScfStb = 5000.0;  // scf/STB
-ReservoirFluidType type = FluidClassifier.classifyByGOR(gorScfStb);
-System.out.println("Fluid type: " + type.getDisplayName());
-// Output: Fluid type: Gas Condensate
-```
+    double c7PlusMolPercent = FluidClassifier.calculateC7PlusContent(fluid);
+    ReservoirFluidType compositionScreen = FluidClassifier.classify(fluid);
 
-### Classification by C7+ Content
+    double producingGorScfStb = 5000.0;
+    if (!Double.isFinite(producingGorScfStb) || producingGorScfStb < 0.0) {
+      throw new IllegalArgumentException("GOR must be finite and non-negative");
+    }
+    ReservoirFluidType gorScreen = FluidClassifier.classifyByGOR(producingGorScfStb);
 
-```java
-// Classify directly from C7+ content
-double c7PlusMolPercent = 8.5;  // mol%
-ReservoirFluidType type = FluidClassifier.classifyByC7Plus(c7PlusMolPercent);
-System.out.println("Fluid type: " + type.getDisplayName());
-// Output: Fluid type: Gas Condensate
-```
+    assert Math.abs(c7PlusMolPercent - 10.0) < 1.0e-8;
+    assert compositionScreen == ReservoirFluidType.GAS_CONDENSATE;
+    assert gorScreen == ReservoirFluidType.GAS_CONDENSATE;
 
-## Advanced Classification
+    String report = FluidClassifier.generateClassificationReport(fluid);
+    assert report.contains("C7+ Content: 10.00 mol%");
+    assert report.contains("Fluid Type: Gas Condensate");
 
-### With Phase Envelope Analysis
-
-For more accurate classification, use the phase envelope method which considers:
-- Critical point location
-- Reservoir temperature relative to phase envelope
-- Cricondenbar and cricondentherm
-
-```java
-// Classify using phase envelope analysis
-double reservoirTempK = 373.15;  // 100°C
-ReservoirFluidType type = FluidClassifier.classifyWithPhaseEnvelope(fluid, reservoirTempK);
-System.out.println("Fluid type: " + type.getDisplayName());
-```
-
-### Calculating C7+ Content
-
-```java
-// Calculate C7+ content for any fluid
-double c7Plus = FluidClassifier.calculateC7PlusContent(fluid);
-System.out.println("C7+ content: " + c7Plus + " mol%");
-```
-
-### Estimating API Gravity
-
-```java
-// Estimate API gravity from fluid composition
-double apiGravity = FluidClassifier.estimateAPIGravity(fluid);
-if (!Double.isNaN(apiGravity)) {
-    System.out.println("Estimated API gravity: " + apiGravity + "°");
+    logger.info(
+        "C7+ screen: {} mol%, composition={}, GOR={} scf/STB, GOR screen={}",
+        c7PlusMolPercent,
+        compositionScreen,
+        producingGorScfStb,
+        gorScreen);
+  }
 }
 ```
 
-## Classification Report
+## Engineering boundaries
 
-Generate a comprehensive classification report:
+- Treat the result as a screening label. Confirm the fluid description against representative
+  PVT samples and laboratory CCE, CVD, DLE, separator, and viscosity data as applicable.
+- `calculateC7PlusContent` identifies heavy components using molar mass, component names, and
+  TBP/plus-fraction flags. Review the characterized pseudo-components before relying on the result.
+- GOR classification depends on the measurement basis and producing conditions. Convert to scf/STB
+  on the intended standard-condition basis before using `classifyByGOR`.
+- `estimateAPIGravity` flashes a cloned fluid at 288.71 K and 1.01325 bara and returns `NaN` when
+  no oil phase can be evaluated. It is an estimate, not a substitute for measured stock-tank density.
+- `classifyWithPhaseEnvelope` is a heuristic around calculated critical temperature. Inspect the
+  calculated envelope and fluid model rather than treating the label as design evidence.
 
-```java
-String report = FluidClassifier.generateClassificationReport(fluid);
-System.out.println(report);
-```
+## Result metadata and reports
 
-Output:
-```
-=== Reservoir Fluid Classification Report ===
-
-Composition Analysis:
-  C7+ Content: 12.00 mol%
-
-Classification Result:
-  Fluid Type: Gas Condensate
-  Typical GOR Range: 3,300 - 15,000 scf/STB
-  Typical C7+ Range: 4 - 12.5 mol%
-
-  Estimated API Gravity: 48.5°
-
-Modeling Recommendations:
-  - Compositional simulation recommended
-  - CVD experiment important for liquid dropout curve
-  - Consider modified black-oil with OGR (Rv)
-```
-
-## ReservoirFluidType Enum
-
-The `ReservoirFluidType` enum provides detailed information for each fluid type:
-
-```java
-ReservoirFluidType type = ReservoirFluidType.GAS_CONDENSATE;
-
-// Get display name
-String name = type.getDisplayName();  // "Gas Condensate"
-
-// Get typical ranges
-String gorRange = type.getTypicalGORRange();  // "3,300 - 15,000"
-String c7PlusRange = type.getTypicalC7PlusRange();  // "4 - 12.5"
-```
-
-### Available Fluid Types
-
-| Enum Value | Display Name | Description |
-|------------|--------------|-------------|
-| `DRY_GAS` | Dry Gas | No liquid dropout |
-| `WET_GAS` | Wet Gas | Surface liquid only |
-| `GAS_CONDENSATE` | Gas Condensate | Retrograde condensation |
-| `VOLATILE_OIL` | Volatile Oil | High shrinkage oil |
-| `BLACK_OIL` | Black Oil | Conventional crude |
-| `HEAVY_OIL` | Heavy Oil | High viscosity crude |
-| `UNKNOWN` | Unknown | Unclassified |
-
-## Python Usage
-
-```python
-from jpype import JClass
-
-# Import classes
-FluidClassifier = JClass('neqsim.thermo.util.FluidClassifier')
-ReservoirFluidType = JClass('neqsim.thermo.util.ReservoirFluidType')
-SystemSrkEos = JClass('neqsim.thermo.system.SystemSrkEos')
-
-# Create fluid
-fluid = SystemSrkEos(373.15, 100.0)
-fluid.addComponent("methane", 0.70)
-fluid.addComponent("ethane", 0.10)
-fluid.addComponent("n-heptane", 0.12)
-fluid.addComponent("C10", 0.08)
-fluid.createDatabase(True)
-fluid.setMixingRule("classic")
-
-# Classify
-fluid_type = FluidClassifier.classify(fluid)
-print(f"Fluid type: {fluid_type.getDisplayName()}")
-
-# Get C7+ content
-c7plus = FluidClassifier.calculateC7PlusContent(fluid)
-print(f"C7+ content: {c7plus:.2f} mol%")
-
-# Generate report
-report = FluidClassifier.generateClassificationReport(fluid)
-print(report)
-```
-
-## Modeling Recommendations by Fluid Type
-
-### Dry Gas and Wet Gas
-- Use equation of state (SRK or PR) for accurate Z-factor
-- Black-oil model may be sufficient for simulation
-- Focus on gas density and compressibility
-
-### Gas Condensate
-- **Compositional simulation recommended**
-- CVD experiment important for liquid dropout curve
-- Consider modified black-oil with OGR (Rv)
-- Track condensate banking near wellbore
-
-### Volatile Oil
-- **Compositional simulation strongly recommended**
-- Modified black-oil model may be acceptable
-- DLE and separator tests are essential
-- Significant solution gas-oil ratio variation
-
-### Black Oil
-- Traditional black-oil model typically adequate
-- DLE experiment for Bo, Rs, viscosity
-- Simpler correlation-based methods work well
-
-### Heavy Oil
-- **Viscosity modeling is critical**
-- Consider thermal effects if applicable
-- LBC viscosity may need tuning
-- Dead oil viscosity correlations important
-
-## Implementation Details
-
-### C7+ Detection Algorithm
-
-The `calculateC7PlusContent` method identifies C7+ components by:
-1. Molar mass ≥ 100 g/mol
-2. Component name starting with C7, C8, C9, etc.
-3. Component name containing "heptane", "octane", "nonane", "decane"
-4. Components flagged as TBP fractions (`isIsTBPfraction()`)
-5. Components flagged as plus fractions (`isIsPlusFraction()`)
-
-### Phase Envelope Classification
-
-The `classifyWithPhaseEnvelope` method refines composition-based classification by:
-1. Calculating the critical point using phase envelope algorithm
-2. Comparing reservoir temperature to critical temperature
-3. Adjusting classification if reservoir T is near or above Tc
+`ReservoirFluidType` exposes `getDisplayName()`, `getTypicalGORRange()`, and
+`getTypicalC7PlusRange()`. `generateClassificationReport(fluid)` reports the calculated C7+ screen,
+the typical ranges stored on the enum, an API-gravity estimate when available, and modeling
+recommendations. Parse neither the human-readable report nor the range strings as a stable data
+interface; retain the enum and numeric inputs in engineering records.
 
 ## References
 
-- Whitson, C.H. and Brulé, M.R., "Phase Behavior", SPE Monograph Series
-- [Whitson Wiki - Reservoir Fluid Classification](https://wiki.whitson.com/phase_behavior/classification/reservoir_fluid_type/)
-- McCain, W.D., "Properties of Petroleum Fluids", 2nd ed.
+- Whitson, C. H. and Brulé, M. R., *Phase Behavior*, SPE Monograph Series.
+- McCain, W. D., *Properties of Petroleum Fluids*, 2nd ed.
+- [Whitson Wiki: reservoir-fluid classification](https://wiki.whitson.com/phase_behavior/classification/reservoir_fluid_type/)
 
-## API Reference
+## See also
 
-### FluidClassifier Class
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `classify` | `SystemInterface fluid` | `ReservoirFluidType` | Classify by composition |
-| `classifyByGOR` | `double gorScfStb` | `ReservoirFluidType` | Classify by GOR |
-| `classifyByC7Plus` | `double c7PlusMolPercent` | `ReservoirFluidType` | Classify by C7+ content |
-| `classifyWithPhaseEnvelope` | `SystemInterface fluid, double reservoirTemperatureK` | `ReservoirFluidType` | Classify with phase envelope |
-| `calculateC7PlusContent` | `SystemInterface fluid` | `double` | Calculate C7+ content (mol%) |
-| `estimateAPIGravity` | `SystemInterface fluid` | `double` | Estimate API gravity |
-| `generateClassificationReport` | `SystemInterface fluid` | `String` | Generate full report |
-
-### ReservoirFluidType Enum
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `getDisplayName()` | `String` | Human-readable fluid type name |
-| `getTypicalGORRange()` | `String` | Typical GOR range string |
-| `getTypicalC7PlusRange()` | `String` | Typical C7+ range string |
-
-## See Also
-
-- [Fluid Creation Guide](fluid_creation_guide)
-- [PVT Characterization](pvt_fluid_characterization)
-- [Fluid Characterization](../wiki/fluid_characterization)
-- [Black Oil Models](../blackoil/)
+- [Fluid creation guide](fluid_creation_guide)
+- [PVT characterization](pvt_fluid_characterization)
+- [Fluid characterization](../wiki/fluid_characterization)
+- [Black-oil models](../blackoil/)
