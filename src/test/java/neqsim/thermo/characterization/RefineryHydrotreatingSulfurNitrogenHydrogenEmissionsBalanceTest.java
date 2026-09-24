@@ -74,21 +74,16 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalanceTest {
         .calculate(utility, EMISSION_FACTOR_KG_CO2E_PER_KG_H2, Double.POSITIVE_INFINITY));
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance publicUtility(
-      double feedMassFlowKgPerHour) {
-    RefineryHydrotreatingSulfurNitrogenBalance material =
-        RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129,
-            15.0e-6, 10.0e-6, 2.0, 4.0);
-    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply =
-        RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(material, 1.5, 0.90,
-            0.0280134);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10,
-            0.20, 0.50, 0.05);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance.calculate(recycle,
-            feedMassFlowKgPerHour);
-    return RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput,
-        LHV_MJ_PER_KG, HYDROGEN_COST_PER_KG);
+  private static RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance publicUtility(double feedMassFlowKgPerHour) {
+    RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0,
+        0.0040867518, 0.001095129, 15.0e-6, 10.0e-6, 2.0, 4.0);
+    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
+        .calculate(material, 1.5, 0.90, 0.0280134);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, 0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance
+        .calculate(recycle, feedMassFlowKgPerHour);
+    return RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, LHV_MJ_PER_KG,
+        HYDROGEN_COST_PER_KG);
   }
 }
