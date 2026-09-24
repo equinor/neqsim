@@ -1085,14 +1085,37 @@ for _key, _global in (("revision_history", "REVISION_HISTORY"),
 # Auto-read functions
 # ══════════════════════════════════════════════════════════
 
+_PASS_STATUSES = {"PASS", "PASSED", "OK", "MET"}
+_FAIL_STATUSES = {"FAIL", "FAILED", "NOT MET", "NOT_MET"}
+
+
+def _status_word(status):
+    """Map a validation-row status to PASS, FAIL or its own upper-cased text."""
+    if isinstance(status, bool):
+        return "PASS" if status else "FAIL"
+    word = str(status if status is not None else "").strip().upper()
+    if word in _PASS_STATUSES:
+        return "PASS"
+    if word in _FAIL_STATUSES:
+        return "FAIL"
+    return word or "N/A"
+
+
 def _normalize_validation(data):
     """Accept a list of check rows as `validation` by folding it into the dict shape used here."""
     validation = data.get("validation")
     if isinstance(validation, list):
         data["validation_rows"] = validation
-        data["validation"] = {
-            str(row.get("check", index)): str(row.get("status", "")).upper() != "FAIL"
-            for index, row in enumerate(validation) if isinstance(row, dict)}
+        folded = {}
+        for index, row in enumerate(validation):
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("check", index))
+            if name in folded:
+                name = "{} ({})".format(name, index + 1)
+            # Status words, not booleans: a boolean would be inverted for names such as "error".
+            folded[name] = _status_word(row.get("status", row.get("passed", row.get("pass"))))
+        data["validation"] = folded
     elif validation is not None and not isinstance(validation, dict):
         data["validation"] = {}
     return data
@@ -1614,6 +1637,8 @@ def _validation_outcome_is_failure(check, outcome):
     carries its own negation prefix flips back, so
     ``no_document_number_inferred`` passes on True.
     """
+    if isinstance(outcome, str):
+        return outcome.strip().upper() in _FAIL_STATUSES
     if outcome not in (True, False):
         return False
     tokens = check.lower().split("_")
@@ -2288,7 +2313,8 @@ def check_report_consistency(results):
     validation = results.get("validation", {})
     val_failures = []
     for check, outcome in validation.items():
-        if outcome is False:
+        if outcome is False or (isinstance(outcome, str)
+                                and outcome.strip().upper() in _FAIL_STATUSES):
             val_failures.append(check)
         elif (check.endswith(("_pct", "_percent"))
               and isinstance(outcome, (int, float)) and outcome >= 5.0):
@@ -3247,8 +3273,18 @@ def get_figure_caption(fig_path, results, fig_index):
         captions = results.get("figure_captions", {})
     if fig_name in captions:
         return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
-    # Auto-generate from filename
-    auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+    for entry in (results or {}).get("figure_discussion", []) or []:
+        if isinstance(entry, dict) and os.path.basename(
+                str(entry.get("figure", ""))) == fig_name:
+            title = str(entry.get("caption") or entry.get("title") or "").strip()
+            if title:
+                return "{} {}: {}".format(_t("Figure"), fig_index, title)
+    # Auto-generate from filename; drop an ordering prefix such as "fig03_".
+    stem = re.sub(r"^fig(ure)?[\s_-]*\d+[\s_-]*", "",
+                  fig_name.rsplit(".", 1)[0], flags=re.IGNORECASE)
+    stem = stem or fig_name.rsplit(".", 1)[0]
+    auto = stem.replace("_", " ").replace("-", " ").strip()
+    auto = auto[:1].upper() + auto[1:]
     return "{} {}: {}".format(_t("Figure"), fig_index, auto)
 
 
@@ -3841,7 +3877,8 @@ def format_validation_html(results):
             css_class = ' class="num"'
         else:
             status = str(outcome)
-            css_class = ""
+            css_class = {"PASS": ' class="pass"', "FAIL": ' class="fail"'}.get(
+                status.strip().upper(), "")
         rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
             label, css_class, status)
     return (_html_table_caption("Validation checks")
