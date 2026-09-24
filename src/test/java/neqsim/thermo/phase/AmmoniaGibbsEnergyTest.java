@@ -29,8 +29,7 @@ class AmmoniaGibbsEnergyTest {
     double molarEnthalpy = phase.getEnthalpy("J/mol");
     double molarEntropy = phase.getEntropy("J/molK");
     assertEquals(STATES[index][2], molarGibbs, 0.06, "CoolProp reference state " + index);
-    assertEquals(molarEnthalpy - STATES[index][0] * molarEntropy, molarGibbs, 1.0e-8,
-        "G = H - T*S at state " + index);
+    assertEquals(molarEnthalpy - STATES[index][0] * molarEntropy, molarGibbs, 1.0e-8, "G = H - T*S at state " + index);
   }
 
   @Test
