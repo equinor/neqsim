@@ -3,8 +3,6 @@ title: "Reservoir Fluid Classification"
 description: "Screen reservoir fluids with NeqSim's C7+, GOR, and phase-envelope classification routes."
 ---
 
-# Reservoir fluid classification
-
 `FluidClassifier` provides screening classifications for reservoir-fluid studies. Choose one
 route deliberately: the methods do not reconcile composition, measured GOR, API gravity, and
 laboratory phase behavior into a single validated fluid description.
