@@ -84,6 +84,12 @@ class ProseRenderingTest(unittest.TestCase):
     def test_single_line_paragraph_unchanged(self):
         self.assertEqual(GR._prose_to_html("One short line."), "<p>One short line.</p>")
 
+    def test_word_paragraphs_rejoin_prose_and_split_lists(self):
+        prose = GR._word_paragraphs(WRAPPED)
+        self.assertEqual(len(prose), 1)
+        self.assertNotIn("\n", prose[0])
+        self.assertEqual(len(GR._word_paragraphs(NUMBERED)), 3)
+
     def test_envelope_table_not_flattened_into_problem_description(self):
         text = GR.auto_problem_description({}, SPEC_WITH_TABLE)
         self.assertIn("Establish whether the drawings exist", text)

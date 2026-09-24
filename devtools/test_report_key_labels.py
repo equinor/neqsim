@@ -53,6 +53,23 @@ class KeyLabelTest(unittest.TestCase):
         label, _unit = GR._parse_key_name("lines_with_no_isometric_anywhere")
         self.assertEqual(label, "Lines With No Isometric Anywhere")
 
+    def test_encoded_decimal_and_mixed_case_tokens(self):
+        label, _unit = GR._parse_key_name("pH_limit_aw_below_0p91")
+        self.assertEqual(label, "pH Limit Aw Below 0.91")
+
+    def test_executive_summary_prefers_conclusions_over_key_dump(self):
+        results = {"conclusions": "First finding. Second finding. Third. Fourth.",
+                   "key_results": {"meg_wt_pct_for_aw_below_0p91": 22.7}}
+        text = GR.auto_executive_summary(results, "")
+        self.assertIn("First finding. Second finding. Third. Fourth.", text)
+        self.assertEqual(text.count("First finding"), 1)
+        self.assertNotIn("Key findings:", text)
+
+    def test_improvement_target_uses_repo_and_file(self):
+        text = GR.format_improvements_text({"improvements": [
+            {"repo": "neqsim", "file": "devtools/x.py", "change": "fixed"}]})
+        self.assertIn("neqsim: devtools/x.py", text)
+
     def test_single_uppercase_letter_is_not_treated_as_acronym(self):
         label, unit = GR._parse_key_name("H2S_upstream_stream_A_ppm")
         self.assertEqual(label, "H2S Upstream Stream A")
