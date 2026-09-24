@@ -3247,8 +3247,18 @@ def get_figure_caption(fig_path, results, fig_index):
         captions = results.get("figure_captions", {})
     if fig_name in captions:
         return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
-    # Auto-generate from filename
-    auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+    for entry in (results or {}).get("figure_discussion", []) or []:
+        if isinstance(entry, dict) and os.path.basename(
+                str(entry.get("figure", ""))) == fig_name:
+            title = str(entry.get("caption") or entry.get("title") or "").strip()
+            if title:
+                return "{} {}: {}".format(_t("Figure"), fig_index, title)
+    # Auto-generate from filename; drop an ordering prefix such as "fig03_".
+    stem = re.sub(r"^(fig(ure)?)?[\s_-]*\d+[\s_-]*", "",
+                  fig_name.rsplit(".", 1)[0], flags=re.IGNORECASE)
+    stem = stem or fig_name.rsplit(".", 1)[0]
+    auto = stem.replace("_", " ").replace("-", " ").strip()
+    auto = auto[:1].upper() + auto[1:]
     return "{} {}: {}".format(_t("Figure"), fig_index, auto)
 
 
