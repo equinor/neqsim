@@ -52,8 +52,10 @@ Every implementation also returns an immutable `ReleaseModelEvidence` manifest. 
 applicability and limitation codes state the modeled boundary, while evidence records distinguish
 analytical, conservation, numerical and experimental comparisons. A custom model that does not
 override `getEvidence()` fails closed to `NO_DECLARED_VALIDATION_EVIDENCE`. The current built-in
-records are repository-owned analytical and regression evidence, so all emitted frames remain
-`UNQUALIFIED` and report `independentEvidence: false`.
+records are primarily repository-owned analytical and regression evidence. The ideal-gas Fanno
+manifest additionally references the independently published NASA GFSSP nitrogen case described
+below. All emitted frames remain `UNQUALIFIED`; an independent record does not self-promote a
+model's evidence level.
 
 For example:
 
@@ -87,6 +89,24 @@ NeqSim reference minus $u^2/2$ and station entropy retains the upstream referenc
 relative energy/entropy consistency without presenting an arbitrary absolute ideal-gas reference
 as new property data. The adapter supports one gas phase only and excludes reaction, forced phases,
 solid/hydrate checks, real-gas departure, phase change, friction, heat transfer and depletion.
+
+## Independent Fanno benchmark
+
+`IdealGasFannoPipeReleaseModel` version 1.0.1 reproduces Case 1 from NASA NTRS
+[20070036728](https://ntrs.nasa.gov/citations/20070036728). The external case specifies nitrogen at
+50 psia, 80 °F and inlet Mach 0.5 in a 6-inch-diameter, 3207-inch-long adiabatic pipe with Darcy
+friction factor 0.002; the published analytical boundary is Mach 1 at the exit.
+
+The repository retains the converted SI inputs in
+`src/test/resources/neqsim/process/safety/release/nasa-gfssp-fanno-2007.csv`. A test independently
+converts the published inlet state to the reservoir stagnation boundary required by the API,
+requires a choked exit, checks the exit Mach number, and limits inlet mass-flux error to 1%. It
+writes the expected value, calculated value and relative error to
+`target/source-term-benchmarks/nasa-gfssp-fanno-2007-receipt.csv`.
+
+This is independently sourced analytical evidence for one calorically perfect single-gas case. It
+is not experimental qualification and does not validate real-gas departure, transient
+decompression waves, heat transfer, multiphase slip, phase change or solid-bearing transport.
 
 ## Ideal-gas Fanno pipe equations
 

@@ -39,10 +39,12 @@ pipe calculation from a finite-pipe model identity.
 Version 1 emits `evidenceLevel: UNQUALIFIED`. Calculated frames also carry an optional-compatible
 `model.evidence` manifest containing stable applicability/limitation codes and typed evidence
 references. Existing v1 frames without that extension remain schema-compatible. The
-`independentEvidence` flag is false for the current built-in manifests; regression tests establish
-software behavior but do not create independently reviewed engineering qualification. Consumers
-must validate both schema and application-specific physical/balance requirements before using a
-frame.
+`independentEvidence` flag is true only when at least one retained record was produced outside
+the model implementation. The ideal-gas Fanno manifest includes the public NASA GFSSP analytical
+case; the other current built-in manifests retain repository-owned evidence only. Every model
+still emits `UNQUALIFIED`: external analytical evidence and regression tests do not create
+independently reviewed engineering qualification. Consumers must validate both schema and
+application-specific physical/balance requirements before using a frame.
 
 ## Serialization and verification
 

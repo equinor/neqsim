@@ -1,0 +1,2 @@
+caseId,fluid,inletPressurePa,inletTemperatureK,inletMach,diameterM,lengthM,darcyFrictionFactor,exitMach,source
+nasa-gfssp-case-1,nitrogen,344737.8646584,299.8166666667,0.5,0.1524,81.4578,0.002,1.0,https://ntrs.nasa.gov/citations/20070036728
