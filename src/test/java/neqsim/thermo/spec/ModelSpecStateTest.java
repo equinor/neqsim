@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseAmmoniaEos;
 import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
@@ -20,6 +21,7 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
+import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
@@ -294,6 +296,67 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     assertEquals(firstDensity, phase.getDensity("mol/m3") / 1000.0, 0.0);
     assertEquals(firstCp, phase.getCp("J/molK"), 0.0);
     assertEquals(firstSoundSpeed, phase.getSoundSpeed(), 0.0);
+  }
+
+  @Test
+  void ammoniaRefreshesGasAndLiquidStateBeforeReturningToReference() {
+    SystemAmmoniaEos system = new SystemAmmoniaEos(293.15, 5.0);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+
+    double[] first = ammoniaState(system, 293.15, 5.0, PhaseType.GAS);
+    double[] hotGas = ammoniaState(system, 400.0, 50.0, PhaseType.GAS);
+    double[] warmLiquid = ammoniaState(system, 293.15, 10.0, PhaseType.LIQUID);
+    double[] coldLiquid = ammoniaState(system, 280.0, 10.0, PhaseType.LIQUID);
+    assertNotEquals(first[0], hotGas[0], "gas density must refresh");
+    assertNotEquals(hotGas[0], warmLiquid[0], "phase-forced density must refresh");
+    assertNotEquals(warmLiquid[1], coldLiquid[1], "liquid enthalpy must refresh");
+
+    double[] returned = ammoniaState(system, 293.15, 5.0, PhaseType.GAS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], Math.max(1e-12, Math.abs(first[i]) * 1e-12),
+          "ammonia returned property " + i);
+    }
+  }
+
+  private static double[] ammoniaState(SystemAmmoniaEos system, double temperature, double pressure,
+      PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    assertEquals(PhaseAmmoniaEos.class, system.getPhase(0).getClass());
+    PhaseAmmoniaEos phase = (PhaseAmmoniaEos) system.getPhase(0);
+    double density = 1.0e5 / phase.getMolarVolume() / 1000.0;
+    double enthalpy = phase.getEnthalpy("J/mol");
+    double internalEnergy = phase.getInternalEnergy("J/mol");
+    double cp = phase.getCp("J/molK");
+    double cv = phase.getCv("J/molK");
+    double soundSpeed = phase.getSoundSpeed();
+    double compressibility = phase.getIsothermalCompressibility();
+    double jouleThomson = phase.getJouleThomsonCoefficient() / 100.0;
+    for (double value : new double[] {density, enthalpy, internalEnergy, cp, cv, soundSpeed, compressibility,
+        jouleThomson}) {
+      assertTrue(Double.isFinite(value));
+    }
+    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && compressibility > 0.0,
+        "invalid ammonia state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed + ", kappa="
+            + compressibility);
+    assertEquals(enthalpy, internalEnergy + pressure * 100.0 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    double[] values = {density, enthalpy, internalEnergy, cp, cv, soundSpeed, compressibility, jouleThomson};
+    system.init(3);
+    assertEquals(PhaseAmmoniaEos.class, system.getPhase(0).getClass());
+    PhaseAmmoniaEos repeated = (PhaseAmmoniaEos) system.getPhase(0);
+    double[] repeatedValues = {1.0e5 / repeated.getMolarVolume() / 1000.0, repeated.getEnthalpy("J/mol"),
+        repeated.getInternalEnergy("J/mol"), repeated.getCp("J/molK"), repeated.getCv("J/molK"),
+        repeated.getSoundSpeed(), repeated.getIsothermalCompressibility(),
+        repeated.getJouleThomsonCoefficient() / 100.0};
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeatedValues[i], Math.max(1e-15, Math.abs(values[i]) * 1e-14),
+          "ammonia repeat property " + i);
+    }
+    return values;
   }
 
   private static SystemGERG2008Eos gergReferenceSystem() {

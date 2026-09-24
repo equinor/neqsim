@@ -72,9 +72,10 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 284 cases across nine system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008 and ideal gas), direct
-SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, a component saturation
+The catalog has 380 cases across ten system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas and ammonia), direct
+SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
+reference EOS through its System and exact phase paths, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -91,6 +92,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | GERG-2008 | Official NIST AGA8 21-component sample at 400 K and 500 bar: molar mass/density, Z, pressure derivatives, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemGERG2008Eos` and exact `PhaseGERG2008Eos` entry points |
 | Ideal gas | NIST argon molecular weight and Shomate heat capacity at 298.15, 400 and 600 K, combined with independently evaluated ideal-gas density, Z, fugacity, Cv, speed of sound and zero Joule-Thomson coefficient through `SystemIdealGas` and exact `PhaseIdealGas` entry points |
+| Ammonia | CoolProp 7.2.0's Gao 2020 ammonia EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemAmmoniaEos` and exact `PhaseAmmoniaEos` entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published SRK/PR equations with the declared methane
@@ -128,6 +130,16 @@ a 0.025 J/(mol K) physical-data tolerance and the derived speed of sound uses 0.
 ideal-law properties retain analytical tolerances. This qualifies only the declared pure-argon
 states, not arbitrary mixtures, reference-state enthalpy/entropy, transport properties or
 real-gas accuracy.
+
+The ammonia state control reuses one `SystemAmmoniaEos` while traversing 293.15 K/5 bar
+gas, 400 K/50 bar gas, 293.15 K/10 bar liquid, 280 K/10 bar liquid, and then the initial
+state. It checks exact phase dispatch, deterministic repeat reads, state refresh,
+`H = U + PV`, and `Cp > Cv > 0`. The independent anchors are evaluated with CoolProp
+7.2.0 from the Gao 2020 reference EOS identified by its versioned fluid definition.
+Tolerances cover the small cross-port differences rather than experimental model error.
+Flash, saturation, transport, mixtures and arbitrary states remain unqualified. Gibbs
+energy is deliberately excluded because its published value violates `G = H - TS`; the
+production defect is tracked by [issue #3973](https://github.com/equinor/neqsim/issues/3973).
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -174,9 +186,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (19 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (21 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (111 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (109 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -249,8 +261,15 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   with documented physical-data tolerances; Z = 1, phi = 1 and JT = 0 are exact ideal-model
   contracts. These are analytical/compiled-data checks for pure argon, not experimental
   validation of mixtures or real-gas behavior.
+- The [CoolProp 7.2.0 ammonia definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Ammonia.json)
+  identifies the Gao 2020 reference EOS and supplies the independent implementation used
+  to evaluate the four catalog states. The 195.495--725 K range is the declared EOS range,
+  while the catalog qualifies only its exact states. Density, energy, caloric, acoustic and
+  derivative tolerances cover observed cross-port roundoff and constant differences; they
+  are not experimental-accuracy claims. The stored values were not refreshed from NeqSim.
 
-NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
+NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
+definition on 2026-09-24, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
 compilation. Source compilation rights remain with the source; the authored fixtures
 and analytical controls follow the repository's Apache-2.0 license. References are
