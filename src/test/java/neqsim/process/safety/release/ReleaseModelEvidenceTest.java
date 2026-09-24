@@ -31,7 +31,7 @@ class ReleaseModelEvidenceTest extends neqsim.NeqSimTest {
       assertFalse(evidence.getApplicability().isEmpty());
       assertFalse(evidence.getLimitations().isEmpty());
       assertFalse(evidence.getRecords().isEmpty());
-      assertFalse(evidence.hasIndependentEvidence());
+      assertEquals(model instanceof IdealGasFannoPipeReleaseModel, evidence.hasIndependentEvidence());
       assertNotSame(evidence.getApplicability(), evidence.getApplicability());
       assertNotSame(evidence.getLimitations(), evidence.getLimitations());
       assertNotSame(evidence.getRecords(), evidence.getRecords());
@@ -40,6 +40,22 @@ class ReleaseModelEvidenceTest extends neqsim.NeqSimTest {
       assertThrows(UnsupportedOperationException.class, () -> evidence.getApplicability().add("OTHER"));
       assertThrows(UnsupportedOperationException.class, () -> evidence.getRecords().clear());
     }
+  }
+
+  @Test
+  void independentlyPublishedFannoEvidenceDoesNotSelfPromoteQualification() {
+    SystemInterface gas = new SystemSrkEos(315.0, 4.0);
+    gas.addComponent("nitrogen", 1.0);
+    gas.setMixingRule("classic");
+    ReleaseFlowRequest request = new ReleaseFlowRequest(gas, 0.1524, 1.0, 101325.0, 81.4578, 0.002);
+    ReleaseFlowResult result = new IdealGasFannoPipeReleaseModel().calculate(request);
+    assertTrue(result.isUsable(), result.getDiagnostics().toString());
+    SourceTermFrame frame = SourceTermFrame.calculated("evidence", "pipe", UUID.randomUUID(), 0, 0.0,
+        Instant.parse("2026-09-24T00:00:00Z"), request, result, Collections.singletonMap("mode", "STEADY"));
+    SourceTermFrame.verifyEnvelope(frame.toJson());
+    JsonObject model = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("model");
+    assertEquals("UNQUALIFIED", model.get("evidenceLevel").getAsString());
+    assertTrue(model.getAsJsonObject("evidence").get("independentEvidence").getAsBoolean());
   }
 
   @Test

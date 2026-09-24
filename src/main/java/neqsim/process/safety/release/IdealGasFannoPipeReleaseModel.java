@@ -32,10 +32,16 @@ public final class IdealGasFannoPipeReleaseModel implements ReleaseFlowModel {
     return "ideal-gas-fanno-pipe";
   }
 
+  /** @return model version including the independently sourced NASA benchmark manifest */
+  @Override
+  public String getModelVersion() {
+    return "1.0.1";
+  }
+
   /** {@inheritDoc} */
   @Override
   public ReleaseModelEvidence getEvidence() {
-    return new ReleaseModelEvidence("ideal-gas-fanno-pipe:1.0.0",
+    return new ReleaseModelEvidence("ideal-gas-fanno-pipe:1.0.1",
         Arrays.asList("ONE_SIDED_FULL_BORE", "CONSTANT_AREA_PIPE", "CALORICALLY_PERFECT_GAS",
             "SPECIFIED_DARCY_FRICTION"),
         Arrays.asList("NO_REAL_GAS_DEPARTURE", "NO_TRANSIENT_DECOMPRESSION_WAVES", "NO_HEAT_TRANSFER",
@@ -46,7 +52,10 @@ public final class IdealGasFannoPipeReleaseModel implements ReleaseFlowModel {
                 "Independent Fanno-function, choking, backpressure and friction-length comparisons", false),
             new ReleaseModelEvidence.Record("fanno-inventory-refinement", ReleaseModelEvidence.Type.NUMERICAL,
                 "src/test/java/neqsim/process/safety/release/IdealGasFannoPipeReleaseModelTest.java",
-                "Coupled inventory conservation and timestep-refinement matrix", false)));
+                "Coupled inventory conservation and timestep-refinement matrix", false),
+            new ReleaseModelEvidence.Record("nasa-gfssp-fanno-case-1", ReleaseModelEvidence.Type.ANALYTICAL,
+                "NASA NTRS 20070036728; src/test/resources/neqsim/process/safety/release/nasa-gfssp-fanno-2007.csv",
+                "Externally published nitrogen Fanno case: inlet Mach 0.5 and choked exit in a 3207-inch pipe", true)));
   }
 
   /** {@inheritDoc} */
