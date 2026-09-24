@@ -81,9 +81,8 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalanceTest {
         () -> RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, Double.NaN, COST_PER_KG));
     assertThrows(IllegalArgumentException.class,
         () -> RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, LHV_MJ_PER_KG, -1.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, LHV_MJ_PER_KG,
-            Double.POSITIVE_INFINITY));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance
+        .calculate(throughput, LHV_MJ_PER_KG, Double.POSITIVE_INFINITY));
   }
 
   private static RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance publicThroughput(
