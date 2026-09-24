@@ -83,7 +83,7 @@ try:
     from docx.enum.style import WD_STYLE_TYPE
     from docx.text.paragraph import Paragraph
     from docx.oxml.ns import nsdecls, qn
-    from docx.oxml import parse_xml
+    from docx.oxml import OxmlElement, parse_xml
 except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
     sys.exit(1)
@@ -268,6 +268,49 @@ REPORT_STRINGS = {
         "Evidence that does not fit": "Evidens som ikke passer",
         "Observations the accepted explanation does not account for.":
             "Observasjoner som den aksepterte forklaringen ikke dekker.",
+        # Table furniture inside generated sections
+        "Operating Envelope": "Driftsområde",
+        "Operating envelope": "Driftsområde",
+        "System": "System",
+        "Scope read": "Omfang lest",
+        "Access": "Tilgang",
+        "Captured evidence": "Lagret dokumentasjon",
+        "not recorded": "ikke registrert",
+        "missing": "mangler",
+        "Source system": "Kildesystem",
+        "Documents": "Dokumenter",
+        "Content": "Innhold",
+        "Documents sought but not obtained:": "Dokumenter som ble søkt etter, men ikke funnet:",
+        "Assumption": "Forutsetning",
+        "Basis": "Grunnlag",
+        "Effect on the result": "Effekt på resultatet",
+        "Information sought": "Informasjon søkt",
+        "Source": "Kilde",
+        "Assumed instead": "Antatt i stedet",
+        "Effect if wrong": "Effekt hvis feil",
+        "Each gap above is an open item: the conclusion holds only while the stated substitute assumption holds.":
+            "Hver mangel over er et åpent punkt: konklusjonen gjelder bare så lenge den angitte erstatningsforutsetningen holder.",
+        "Observation": "Observasjon",
+        "Physical Mechanism": "Fysisk mekanisme",
+        "Engineering Implication": "Ingeniørmessig betydning",
+        "Recommendation": "Anbefaling",
+        "Linked results": "Koblede resultater",
+        "Parameter": "Parameter",
+        "Value": "Verdi",
+        "Check": "Kontroll",
+        "Result": "Resultat",
+        "{} document(s) were collected from {} source system(s) and are stored with this task in step1_scope_and_research/references/.":
+            "{} dokument(er) ble hentet fra {} kildesystem(er) og er lagret med oppgaven i step1_scope_and_research/references/.",
+        "Standards and literature cited are listed in the References section; the per-file origin, retrieval date, and relevance of every collected document are in step1_scope_and_research/references/SOURCES.md.":
+            "Standarder og litteratur er listet under Referanser; opprinnelse, hentedato og relevans for hvert dokument står i step1_scope_and_research/references/SOURCES.md.",
+        "(Right-click and select 'Update Field' to populate)":
+            "(Høyreklikk og velg «Oppdater felt» for å fylle ut)",
+        "Reference source": "Referansekilde",
+        "Task type": "Oppgavetype",
+        "Scale": "Omfang",
+        "Mode": "Modus",
+        "AACE class": "AACE-klasse",
+        "FEL stage": "FEL-fase",
     },
 }
 
@@ -1529,7 +1572,7 @@ def _study_badges(study_config):
         value = str(study.get(key, "")).strip()
         if not value or value.lower() in ("auto", "none", "[title]"):
             continue
-        badges.append((label, value))
+        badges.append((_t(label), value))
     return badges
 
 
@@ -1682,12 +1725,19 @@ def _validation_outcome_is_failure(check, outcome):
     return outcome is True if negative else outcome is False
 
 
+def _validation_value(outcome):
+    """Return the scalar of a validation entry; entries may be {value, unit, label} dicts."""
+    if isinstance(outcome, dict) and "value" in outcome:
+        return outcome["value"]
+    return outcome
+
+
 def _validation_failures(results):
     """Return validation checks that are false and block design-grade use."""
     failures = []
     validation = results.get("validation", {}) if results else {}
     for check, outcome in validation.items():
-        if _validation_outcome_is_failure(check, outcome):
+        if _validation_outcome_is_failure(check, _validation_value(outcome)):
             failures.append(_label_from_key(check))
     return failures
 
@@ -1816,11 +1866,11 @@ def format_information_sources_text(config, results):
     if rows:
         total = sum(row[1] for row in rows)
         parts.append(
-            "{} document(s) were collected from {} source system(s) and are stored "
-            "with this task in step1_scope_and_research/references/.".format(
+            _t("{} document(s) were collected from {} source system(s) and are stored "
+               "with this task in step1_scope_and_research/references/.").format(
                 total, len(rows)))
         parts.append("")
-        table = ["| Source system | Documents | Content |",
+        table = ["| {} | {} | {} |".format(_t("Source system"), _t("Documents"), _t("Content")),
                  "|---|---|---|"]
         for name, count, description in rows:
             table.append("| {} | {} | {} |".format(name, count, description or "-"))
@@ -1829,18 +1879,19 @@ def format_information_sources_text(config, results):
     if data_sources:
         parts.append("")
         parts.append(_t("Source systems read") + ":")
-        table = ["| System | Scope read | Access | Captured evidence |",
+        table = ["| {} | {} | {} | {} |".format(
+                     _t("System"), _t("Scope read"), _t("Access"), _t("Captured evidence")),
                  "|---|---|---|---|"]
         for entry in data_sources:
             if not isinstance(entry, dict):
                 continue
             evidence = str(entry.get("evidence", "") or "")
             if not evidence:
-                state = "not recorded"
+                state = _t("not recorded")
             elif os.path.exists(_resolve_task_path(evidence)):
                 state = evidence
             else:
-                state = "{} (missing)".format(evidence)
+                state = "{} ({})".format(evidence, _t("missing"))
             table.append("| {} | {} | {} | {} |".format(
                 entry.get("system", "-"), entry.get("scope", "-"),
                 entry.get("access", "read-only"), state))
@@ -1850,7 +1901,7 @@ def format_information_sources_text(config, results):
     gaps = manifest.get("data_gaps", []) or []
     if gaps:
         parts.append("")
-        parts.append("Documents sought but not obtained:")
+        parts.append(_t("Documents sought but not obtained:"))
         for gap in gaps:
             if isinstance(gap, dict):
                 text = (gap.get("description") or gap.get("gap")
@@ -1862,10 +1913,10 @@ def format_information_sources_text(config, results):
 
     if results and results.get("references"):
         parts.append("")
-        parts.append("Standards and literature cited are listed in the References "
-                     "section; the per-file origin, retrieval date, and relevance of "
-                     "every collected document are in "
-                     "step1_scope_and_research/references/SOURCES.md.")
+        parts.append(_t("Standards and literature cited are listed in the References "
+                        "section; the per-file origin, retrieval date, and relevance of "
+                        "every collected document are in "
+                        "step1_scope_and_research/references/SOURCES.md."))
     elif rows:
         parts.append("")
         parts.append("Per-file origin, retrieval date, and relevance: "
@@ -1893,7 +1944,10 @@ def format_improvements_text(results):
         if not isinstance(item, dict):
             rows.append("- {}".format(item))
             continue
-        target = item.get("target") or item.get("component") or "tooling"
+        target = (item.get("target") or item.get("component") or item.get("file")
+                  or item.get("repo") or "tooling")
+        if item.get("repo") and item.get("file") and not item.get("target"):
+            target = "{}: {}".format(item["repo"], item["file"])
         gap = item.get("gap") or item.get("problem") or ""
         change = item.get("change") or item.get("improvement") or ""
         evidence = item.get("evidence") or item.get("test") or ""
@@ -1970,7 +2024,8 @@ def format_assumptions_text(results):
         # A table with two empty columns reads worse than a list; only tabulate
         # when the basis or effect was actually recorded.
         if any(basis or effect for _text, basis, effect in rows):
-            table = ["| # | Assumption | Basis | Effect on the result |",
+            table = ["| # | {} | {} | {} |".format(
+                         _t("Assumption"), _t("Basis"), _t("Effect on the result")),
                      "|---|---|---|---|"]
             for index, (text, basis, effect) in enumerate(rows, 1):
                 table.append("| A{} | {} | {} | {} |".format(
@@ -1988,7 +2043,9 @@ def format_assumptions_text(results):
                         "in its place") + ":")
         parts.append("")
         table = [
-            "| # | Information sought | Source | Status | Assumed instead | Effect if wrong |",
+            "| # | {} | {} | {} | {} | {} |".format(
+                _t("Information sought"), _t("Source"), _t("Status"),
+                _t("Assumed instead"), _t("Effect if wrong")),
             "|---|---|---|---|---|---|",
         ]
         for index, item in enumerate(gaps, 1):
@@ -2018,8 +2075,8 @@ def format_assumptions_text(results):
                 effect.replace("|", "/") or "-"))
         parts.append("\n".join(table))
         parts.append("")
-        parts.append("Each gap above is an open item: the conclusion holds only while "
-                     "the stated substitute assumption holds.")
+        parts.append(_t("Each gap above is an open item: the conclusion holds only while "
+                        "the stated substitute assumption holds."))
 
     return "\n".join(parts).strip()
 
@@ -2159,6 +2216,29 @@ def _body_paragraphs(text):
     return paragraphs
 
 
+def _word_paragraphs(text):
+    """Paragraphs for Word: wrapped prose rejoined, each list item or table row on its own.
+
+    Word keeps a literal newline as a line break, so hard-wrapped markdown would
+    otherwise print with ragged breaks mid-sentence.
+    """
+    paragraphs = []
+    for para in _body_paragraphs(text):
+        lines = [line.strip() for line in para.split("\n") if line.strip()]
+        if len(lines) > 1 and _is_line_structured(para):
+            items = []
+            for line in lines:
+                starts_item = _LIST_LINE_RE.match(line) or line.startswith("|")
+                if items and not starts_item:
+                    items[-1] += " " + line  # wrapped continuation of a list item
+                else:
+                    items.append(line)
+            paragraphs.extend(items)
+        else:
+            paragraphs.append(" ".join(lines))
+    return paragraphs
+
+
 _LIST_LINE_RE = re.compile(r"^\s*(?:[-*+\u2022]\s|\d+[.)]\s)")
 _INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
 
@@ -2198,9 +2278,12 @@ def _benchmark_tests(results):
     benchmark = (results or {}).get("benchmark_validation") or {}
     if not isinstance(benchmark, dict):
         return []
-    if isinstance(benchmark.get("tests"), list):
-        entries = (("Test {}".format(index), value)
-                   for index, value in enumerate(benchmark["tests"], 1))
+    listed = next((benchmark[key] for key in ("tests", "points")
+                   if isinstance(benchmark.get(key), list)), None)
+    if listed is not None:
+        entries = ((value.get("test") or value.get("name") or "Test {}".format(index)
+                    if isinstance(value, dict) else "Test {}".format(index), value)
+                   for index, value in enumerate(listed, 1))
     else:
         entries = benchmark.items()
     tests = []
@@ -2208,7 +2291,7 @@ def _benchmark_tests(results):
         if not isinstance(value, dict):
             continue
         test = dict(value)
-        test.setdefault("parameter", name.replace("_", " ").title())
+        test.setdefault("parameter", name if listed is not None else name.replace("_", " ").title())
         if "pass" not in test:
             status = str(test.get("status", "")).upper()
             if status in ("PASS", "FAIL"):
@@ -2226,7 +2309,10 @@ def auto_executive_summary(results, task_spec):
     if approach and not _is_placeholder_text(approach):
         first_sentence = approach.split(". ")[0].rstrip(".")
         parts.append(first_sentence + ".")
-    if results and results.get("key_results"):
+    conclusions = str((results or {}).get("conclusions") or "").strip()
+    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
+    # With written conclusions (appended below) a dump of machine key names only adds noise.
+    if not has_conclusions and results and results.get("key_results"):
         findings = []
         for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
             value_text = _fmt_cell(value)
@@ -2347,6 +2433,7 @@ def check_report_consistency(results):
     validation = results.get("validation", {})
     val_failures = []
     for check, outcome in validation.items():
+        outcome = _validation_value(outcome)
         if outcome is False or (isinstance(outcome, str)
                                 and outcome.strip().upper() in _FAIL_STATUSES):
             val_failures.append(check)
@@ -2473,6 +2560,8 @@ def check_report_consistency(results):
         for link_key in linked:
             if link_key in key_results:
                 expected_val = key_results[link_key]
+                if isinstance(expected_val, dict):
+                    expected_val = expected_val.get("value")
                 if isinstance(expected_val, float):
                     # Check if the observation mentions a consistent number.
                     # Small magnitudes are usually written in scientific notation in
@@ -2498,8 +2587,12 @@ def check_report_consistency(results):
                             "{}E{:+03d}".format(mant, exp_i),
                         ])
                     val_strs = [v for v in val_strs if v]
-                    # nb/de/fr reports write 20,1 for 20.1
-                    val_strs.extend([v.replace(".", ",") for v in val_strs if "." in v])
+                    # Norwegian and other decimal-comma prose write 169,9 and 49 229.
+                    localized = [v.replace(".", ",") for v in val_strs if "." in v and "e" not in v.lower()]
+                    if abs(expected_val) >= 1000:
+                        grouped = "{:,.0f}".format(expected_val)
+                        localized.extend([grouped, grouped.replace(",", " "), grouped.replace(",", "\u00a0")])
+                    val_strs.extend(localized)
                     if obs and not any(v in obs for v in val_strs):
                         issues.append({
                             "severity": "WARNING",
@@ -2594,7 +2687,9 @@ def auto_problem_description(results, task_spec):
     # A markdown table cannot be flattened into prose without becoming a line of
     # pipes; Scope and Standards already renders the same section as a table.
     if envelope and "|" not in envelope:
-        parts.append("Operating envelope: " + envelope.replace("\n", " ").strip())
+        items = [re.sub(r"^\s*[-*]\s+", "", line).strip().rstrip(".")
+                 for line in envelope.splitlines() if line.strip()]
+        parts.append(_t("Operating envelope") + ": " + "; ".join(items) + ".")
     if results and results.get("objective") and not parts:
         parts.append(str(results["objective"]))
     return "\n\n".join(parts)
@@ -3655,11 +3750,20 @@ def _fmt_number(value, sig=4):
     if float(number).is_integer() and magnitude < 1e12:
         return "{:,.0f}".format(number).replace(",", THOUSANDS_SEP)
     if magnitude >= 1e7 or magnitude < 1e-4:
-        return "{:.{}e}".format(number, max(1, sig - 1))
+        return _localize_decimal("{:.{}e}".format(number, max(1, sig - 1)))
     rounded = float("{:.{}g}".format(number, sig))
     if abs(rounded) >= 1000:
         return "{:,.0f}".format(rounded).replace(",", THOUSANDS_SEP)
-    return "{:.{}g}".format(rounded, sig)
+    return _localize_decimal("{:.{}g}".format(rounded, sig))
+
+
+# Report languages whose prose and tables use a decimal comma (ISO 80000-1 allows both).
+DECIMAL_COMMA_LANGUAGES = {"nb"}
+
+
+def _localize_decimal(text):
+    """Swap the decimal point for a comma when the report language writes 0,5."""
+    return text.replace(".", ",") if REPORT_LANGUAGE in DECIMAL_COMMA_LANGUAGES else text
 
 
 def _fmt_cell(value, sig=4):
@@ -3681,7 +3785,16 @@ def _label_from_key(name_part):
     for word in name_part.split("_"):
         if not word:
             continue
-        words.append(word if word.isupper() and len(word) > 1 else word.capitalize())
+        # "0p91" is how a decimal survives a snake_case key.
+        decimal = re.match(r"^(\d+)p(\d+)$", word)
+        if decimal:
+            words.append("{}.{}".format(*decimal.groups()))
+        elif word.isupper() and len(word) > 1:
+            words.append(word)
+        elif any(ch.isupper() for ch in word[1:]):
+            words.append(word)
+        else:
+            words.append(word.capitalize())
     return " ".join(words)
 
 
@@ -3815,6 +3928,7 @@ def _flatten_key_results(key_results):
         if isinstance(value, dict):
             if "value" in value and not isinstance(value["value"], (dict, list)):
                 label_part, unit = _leaf_label_and_unit(key_for_leaf, value.get("unit"))
+                label_part = value.get("label") or label_part
                 label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
                 note = value.get("description") or value.get("source") or value.get("basis")
                 rows.append((label, value["value"], unit, note))
@@ -3886,6 +4000,9 @@ def format_validation_table(results):
     lines = ["Validation Summary:", ""]
     for check, outcome in validation.items():
         label = _label_from_key(check)
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            outcome = outcome["value"]
         if isinstance(outcome, bool):
             status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
@@ -3904,12 +4021,17 @@ def format_validation_html(results):
     rows = ""
     for check, outcome in validation.items():
         label = _label_from_key(check)
+        unit = ""
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            unit = outcome.get("unit") or ""
+            outcome = outcome["value"]
         if isinstance(outcome, bool):
             failed = _validation_outcome_is_failure(check, outcome)
             status = "FAIL" if failed else "PASS"
             css_class = ' class="fail"' if failed else ' class="pass"'
         elif isinstance(outcome, (int, float)):
-            status = _fmt_number(outcome)
+            status = (_fmt_number(outcome) + " " + unit).strip()
             css_class = ' class="num"'
         else:
             status = str(outcome)
@@ -3918,8 +4040,9 @@ def format_validation_html(results):
         rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
             label, css_class, status)
     return (_html_table_caption(_t("Validation checks"))
-            + '<table class="validation-table"><thead><tr><th>Check</th>'
-            '<th>Result</th></tr></thead><tbody>\n{}</tbody></table>'.format(rows))
+            + '<table class="validation-table"><thead><tr><th>{}</th>'
+            '<th>{}</th></tr></thead><tbody>\n{}</tbody></table>'.format(
+                _t("Check"), _t("Result"), rows))
 
 
 def format_results_html(results):
@@ -3986,6 +4109,13 @@ def format_custom_tables_html(results):
     return "\n".join(html_parts)
 
 
+def _reference_text(ref):
+    """Citation text of a reference entry; results.json files use text, citation or title."""
+    if not isinstance(ref, dict):
+        return str(ref)
+    return str(ref.get("text") or ref.get("citation") or ref.get("title") or "")
+
+
 def format_references_html(results):
     """Format the references list from results.json as a styled HTML ordered list."""
     refs = results.get("references", [])
@@ -3994,7 +4124,7 @@ def format_references_html(results):
     h = '<ol class="reference-list">\n'
     for ref in refs:
         ref_id = ref.get("id", "")
-        ref_text = ref.get("text", "")
+        ref_text = _reference_text(ref)
         if ref_id:
             h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
                 ref_id, ref_id, ref_text)
@@ -4245,7 +4375,7 @@ def format_benchmark_html(results):
     if not bv:
         return ""
     source = bv.get("source", "")
-    h = '<p>Reference source: {}</p>\n'.format(_html_escape(str(source))) if source else ""
+    h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
     headers, rows, status_idx = _benchmark_table(results)
     h += '<table class="benchmark-table"><thead><tr>'
     h += "".join("<th>{}</th>".format(_html_escape(str(x))) for x in headers)
@@ -4419,7 +4549,7 @@ _BENCHMARK_VALUE_COLUMNS = (
     ("Deviation [%]", ("deviation_pct", "deviation_percent")),
     ("Tolerance [%]", ("tolerance_pct", "tolerance_percent")),
 )
-_BENCHMARK_TEXT_KEYS = {"parameter", "name", "description", "source",
+_BENCHMARK_TEXT_KEYS = {"parameter", "name", "test", "description", "source",
                         "status", "pass", "points"}
 
 
@@ -4483,8 +4613,9 @@ def _benchmark_table(results):
             row.append(_fmt_cell(test[key]) if key else "")
         row.append(str(status).upper())
         if has_notes:
-            row.append("; ".join("{}: {}".format(_label_from_key(key), _fmt_cell(value))
-                                 for key, value in test.items() if key not in used))
+            row.append("; ".join(_fmt_cell(value) if key in ("notes", "note", "comment")
+                                  else "{}: {}".format(_label_from_key(key), _fmt_cell(value))
+                                  for key, value in test.items() if key not in used))
         rows.append(row)
     return headers, rows, 1 + int(has_reference) + len(value_cols)
 
@@ -4495,7 +4626,7 @@ def add_benchmark_word_table(doc, results):
     if not bv:
         return
     if bv.get("source"):
-        doc.add_paragraph("Reference source: {}".format(bv["source"]))
+        doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
     headers, data_rows, status_idx = _benchmark_table(results)
     if not data_rows:
         return
@@ -4792,12 +4923,12 @@ def add_results_word_table(doc, results):
     flat_rows = _flatten_key_results(key_results)
     has_notes = any(note for _label, _value, _unit, note in flat_rows)
     if has_notes:
-        headers = ["Parameter", "Value", "Unit", "Source"]
+        headers = [_t("Parameter"), _t("Value"), _t("Unit"), _t("Source")]
         data_rows = [[label, _fmt_cell(value), unit, note or ""]
                      for label, value, unit, note in flat_rows]
         col_widths = [Inches(2.3), Inches(1.3), Inches(1.1), Inches(2.3)]
     else:
-        headers = ["Parameter", "Value", "Unit"]
+        headers = [_t("Parameter"), _t("Value"), _t("Unit")]
         data_rows = [[label, _fmt_cell(value), unit] for label, value, unit, _note in flat_rows]
         col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
     add_word_table(doc, headers, data_rows,
@@ -4810,10 +4941,17 @@ def add_validation_word_table(doc, results):
     validation = results.get("validation", {})
     if not validation:
         return
-    headers = ["Check", "Result"]
+    headers = [_t("Check"), _t("Result")]
     data_rows = []
     for check, outcome in validation.items():
         label = _label_from_key(check)
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            unit = outcome.get("unit") or ""
+            outcome = outcome["value"]
+            if isinstance(outcome, (int, float)) and not isinstance(outcome, bool) and unit:
+                data_rows.append([label, "{} {}".format(_fmt_number(outcome), unit)])
+                continue
         if isinstance(outcome, bool):
             status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
@@ -4959,6 +5097,19 @@ def format_depth_html(results):
     return html
 
 
+def add_references_word(doc, results):
+    """Numbered reference list, one paragraph per entry with a hanging indent."""
+    for index, ref in enumerate(results.get("references") or [], 1):
+        text = _reference_text(ref)
+        para = doc.add_paragraph()
+        fmt = para.paragraph_format
+        fmt.left_indent = Inches(0.4)
+        fmt.first_line_indent = Inches(-0.4)
+        fmt.space_after = Pt(3)
+        para.add_run("[{}]\t".format(index))
+        _add_bold_runs(para, text)
+
+
 def add_depth_word_section(doc, results):
     """Render the analytical-depth moves into the Word report."""
     entries = _depth_entries(results)
@@ -5005,20 +5156,20 @@ def format_discussion_html(results):
         insight_ref = disc.get("insight_question_ref", "")
 
         h += '<div class="discussion-block">\n'
-        h += '<h3>{} {}: {}</h3>\n'.format(_t('Discussion'), i, title)
+        h += '<h3>{} {}: {}</h3>\n'.format(_t("Discussion"), i, title)
         if observation:
-            h += '<p><strong>Observation:</strong> {}</p>\n'.format(observation)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Observation"), observation)
         if mechanism:
-            h += '<p><strong>Physical Mechanism:</strong> {}</p>\n'.format(mechanism)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Physical Mechanism"), mechanism)
         if implication:
-            h += '<p><strong>Engineering Implication:</strong> {}</p>\n'.format(implication)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Engineering Implication"), implication)
         if recommendation:
-            h += '<p class="recommendation"><strong>Recommendation:</strong> {}</p>\n'.format(
-                recommendation)
+            h += '<p class="recommendation"><strong>{}:</strong> {}</p>\n'.format(
+                _t("Recommendation"), recommendation)
         # Traceability footer
         trace_parts = []
         if linked:
-            trace_parts.append("Linked results: {}".format(", ".join(linked)))
+            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
         if insight_ref:
             trace_parts.append("Answers: {}".format(insight_ref))
         if trace_parts:
@@ -5050,28 +5201,28 @@ def add_discussion_word(doc, results):
 
         if observation:
             p = doc.add_paragraph()
-            r = p.add_run("Observation: ")
+            r = p.add_run(_t("Observation") + ": ")
             r.bold = True
             r.font.size = Pt(BODY_PT)
             p.add_run(observation).font.size = Pt(BODY_PT)
 
         if mechanism:
             p = doc.add_paragraph()
-            r = p.add_run("Physical Mechanism: ")
+            r = p.add_run(_t("Physical Mechanism") + ": ")
             r.bold = True
             r.font.size = Pt(BODY_PT)
             p.add_run(mechanism).font.size = Pt(BODY_PT)
 
         if implication:
             p = doc.add_paragraph()
-            r = p.add_run("Engineering Implication: ")
+            r = p.add_run(_t("Engineering Implication") + ": ")
             r.bold = True
             r.font.size = Pt(BODY_PT)
             p.add_run(implication).font.size = Pt(BODY_PT)
 
         if recommendation:
             p = doc.add_paragraph()
-            r = p.add_run("Recommendation: ")
+            r = p.add_run(_t("Recommendation") + ": ")
             r.bold = True
             r.font.size = Pt(BODY_PT)
             r2 = p.add_run(recommendation)
@@ -5081,7 +5232,7 @@ def add_discussion_word(doc, results):
         # Traceability line
         trace_parts = []
         if linked:
-            trace_parts.append("Linked results: {}".format(", ".join(linked)))
+            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
         if insight_ref:
             trace_parts.append("Answers: {}".format(insight_ref))
         if trace_parts:
@@ -5175,7 +5326,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         scope_parts.append(_t("Acceptance Criteria") + ":\n" + criteria)
     envelope = extract_spec_section(task_spec, "Operating Envelope")
     if envelope:
-        scope_parts.append("Operating Envelope:\n" + envelope)
+        scope_parts.append(_t("Operating Envelope") + ":\n" + envelope)
 
     scope_content = "\n\n".join(scope_parts) if scope_parts else (
         "[Auto-populated from task_spec.md when filled in. "
@@ -5360,7 +5511,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
             ref_id = ref.get("id", "")
-            ref_text = ref.get("text", "")
+            ref_text = _reference_text(ref)
             if ref_id:
                 ref_lines.append("[{}] {}".format(i, ref_text))
             else:
@@ -5623,7 +5774,7 @@ def _add_toc_field(doc, instruction):
         '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))
     )
     run3._r.append(fldChar2)
-    run4 = paragraph.add_run("(Right-click and select 'Update Field' to populate)")
+    run4 = paragraph.add_run(_t("(Right-click and select 'Update Field' to populate)"))
     run4.font.color.rgb = RGBColor(128, 128, 128)
     run4.font.italic = True
     run5 = paragraph.add_run()
@@ -5645,6 +5796,197 @@ def _set_update_fields_on_open(doc):
         settings.append(update)
     else:
         update.set(qn("w:val"), "true")
+
+
+def _heading_levels_by_style(doc):
+    """Map paragraph style id -> heading level for 'Heading 1..9' styles."""
+    levels = {}
+    for style in doc.styles:
+        match = re.match(r"^heading\s+(\d)$", (style.name or "").strip(), re.IGNORECASE)
+        if match and style.style_id:
+            levels[style.style_id] = int(match.group(1))
+    return levels
+
+
+def _collect_toc_entries(doc):
+    """Return (headings [(level, text)], captions {seq label: [text]}) in document order."""
+    levels = _heading_levels_by_style(doc)
+    headings, captions = [], {}
+    for p in doc.element.body.iter(qn("w:p")):
+        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText")))
+        if instr.strip().startswith("TOC"):
+            continue
+        text = "".join(t.text or "" for t in p.iter(qn("w:t"))).strip()
+        if not text:
+            continue
+        seq = re.search(r"\bSEQ\s+\"?([^\s\"\\]+)", instr)
+        if seq:
+            captions.setdefault(seq.group(1), []).append(text)
+            continue
+        style = p.find(qn("w:pPr") + "/" + qn("w:pStyle"))
+        level = levels.get(style.get(qn("w:val"))) if style is not None else None
+        if level:
+            headings.append((level, text))
+    return headings, captions
+
+
+def _write_field_result(doc, field_p, entries, style_for_level):
+    """Replace a TOC field's placeholder result with one paragraph per entry.
+
+    The field keeps its begin/instr/separate runs in the first paragraph and its
+    end run moves to the last one, so Word still sees one field and F9 or the
+    automatic update replaces the whole result (adding page numbers).
+    """
+    runs = list(field_p.iter(qn("w:r")))
+    kinds = [(r, r.find(qn("w:fldChar"))) for r in runs]
+    sep = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "separate")
+    end = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "end")
+    for r in runs[runs.index(sep) + 1:runs.index(end) + 1]:
+        field_p.remove(r)
+    previous = field_p
+    for index, (level, text) in enumerate(entries):
+        if index == 0:
+            p_el = field_p
+        else:
+            p_el = OxmlElement("w:p")
+            previous.addnext(p_el)
+        paragraph = Paragraph(p_el, doc._body)
+        style_name = style_for_level(level)
+        try:
+            paragraph.style = doc.styles[style_name]
+        except KeyError:
+            paragraph.paragraph_format.left_indent = Inches(0.25 * (level - 1))
+        paragraph.paragraph_format.space_after = Pt(2)
+        paragraph.add_run(text)
+        previous = p_el
+    previous.append(end)
+
+
+def _prefill_toc_fields(doc):
+    """Write the current headings and captions into every TOC-family field result.
+
+    Without this the contents, list of figures and list of tables show only a
+    placeholder until someone updates fields in Word; viewers that never update
+    fields (Word Online, Teams/SharePoint preview, LibreOffice) show nothing.
+    Page numbers are added when Word updates the fields.
+    """
+    headings, captions = _collect_toc_entries(doc)
+    for p in list(doc.element.body.iter(qn("w:p"))):
+        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText"))).strip()
+        if not instr.startswith("TOC"):
+            continue
+        caption = re.search(r'\\c\s+"([^"]+)"', instr)
+        if caption:
+            entries = [(1, text) for text in captions.get(caption.group(1), [])]
+            style_for_level = lambda level: "Table of Figures"  # noqa: E731
+        else:
+            outline = re.search(r'\\o\s+"(\d)-(\d)"', instr)
+            deepest = int(outline.group(2)) if outline else 3
+            entries = [(level, text) for level, text in headings if level <= deepest]
+            style_for_level = lambda level: "TOC {}".format(level)  # noqa: E731
+        if entries:
+            _write_field_result(doc, p, entries, style_for_level)
+
+
+_WORD_FIELD_UPDATE_SCRIPT = r'''
+import sys
+import pythoncom
+import win32com.client
+pythoncom.CoInitialize()
+word = win32com.client.DispatchEx("Word.Application")
+word.Visible = False
+word.DisplayAlerts = 0
+doc = word.Documents.Open(sys.argv[1], ConfirmConversions=False, ReadOnly=False,
+                          AddToRecentFiles=False, Visible=False)
+try:
+    doc.Fields.Update()
+    for i in range(1, doc.TablesOfContents.Count + 1):
+        doc.TablesOfContents(i).Update()
+    for i in range(1, doc.TablesOfFigures.Count + 1):
+        doc.TablesOfFigures(i).Update()
+    doc.Repaginate()
+    # Filling the lists moves the body, so refresh page numbers once more.
+    for i in range(1, doc.TablesOfContents.Count + 1):
+        doc.TablesOfContents(i).UpdatePageNumbers()
+    for i in range(1, doc.TablesOfFigures.Count + 1):
+        doc.TablesOfFigures(i).UpdatePageNumbers()
+    doc.Fields.Update()
+    doc.Save()
+finally:
+    doc.Close(0)
+    word.Quit()
+    pythoncom.CoUninitialize()
+'''
+
+
+def _clear_update_fields_flag(docx_path):
+    """Remove w:updateFields so Word does not ask to update an already-updated document."""
+    import zipfile
+    tmp_path = docx_path + ".tmp"
+    with zipfile.ZipFile(docx_path) as src, zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "word/settings.xml":
+                data = re.sub(rb"<w:updateFields\b[^>]*/>", b"", data)
+            dst.writestr(item, data)
+    os.replace(tmp_path, docx_path)
+
+
+def update_word_fields(docx_path, timeout=240):
+    """Let Microsoft Word fill the TOC, lists of figures/tables and page numbers.
+
+    Runs by default on Windows when Word and pywin32 are available; disable with
+    ``--no-field-update`` or ``NEQSIM_REPORT_FIELD_UPDATE=0``. Word runs in a
+    child process on a %TEMP% copy (Word automation can hang on OneDrive paths),
+    and any failure leaves the pre-filled document, which still carries the
+    update-on-open flag.
+
+    Returns
+    -------
+    str or None
+        ``None`` when Word updated the document, otherwise why it did not.
+    """
+    if "--no-field-update" in sys.argv or os.environ.get("NEQSIM_REPORT_FIELD_UPDATE", "1") == "0":
+        return "disabled"
+    if os.name != "nt":
+        return "Microsoft Word automation is only available on Windows"
+    try:
+        import win32com.client  # noqa: F401
+    except ImportError:
+        return "pywin32 is not installed"
+    import tempfile
+    workdir = tempfile.mkdtemp(prefix="neqsim_fields_")
+    work = os.path.join(workdir, "report.docx")
+    try:
+        shutil.copy2(docx_path, work)
+        _clear_update_fields_flag(work)
+        try:
+            completed = subprocess.run([sys.executable, "-c", _WORD_FIELD_UPDATE_SCRIPT, work],
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return "Word did not finish within {} s".format(timeout)
+        if completed.returncode != 0:
+            tail = completed.stdout.decode("utf-8", "replace").strip().splitlines()[-1:]
+            return "Word automation failed ({})".format(tail[0] if tail else completed.returncode)
+        try:
+            shutil.copy2(work, docx_path)
+        except PermissionError:
+            return "{} is open in Word or locked by OneDrive".format(os.path.basename(docx_path))
+        return None
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+def finalize_word_fields(docx_path, label="Report"):
+    """Update fields through Word and report the outcome in one line."""
+    reason = update_word_fields(docx_path)
+    if reason is None:
+        print("{}: table of contents, lists of figures/tables and page numbers filled by Word.".format(label))
+    elif reason != "disabled":
+        print("{}: contents and lists pre-filled without page numbers ({}); "
+              "Word adds page numbers when the file is opened.".format(label, reason))
+    return reason is None
 
 
 def _add_page_number_footer(doc):
@@ -5771,9 +6113,11 @@ def build_word_report(sections, results=None):
         elif section.get("has_depth") and results:
             # Analytical Depth: ranking, rule-outs, robustness, crossover
             add_depth_word_section(doc, results)
+        elif section.get("has_references") and results and results.get("references"):
+            add_references_word(doc, results)
         else:
             # Regular text content (bold spans and $...$ inline maths render)
-            for para_text in _body_paragraphs(section["content"]):
+            for para_text in _word_paragraphs(section["content"]):
                 _add_bold_runs(doc.add_paragraph(), para_text)
 
         # Embed figures after Results section
@@ -5811,6 +6155,7 @@ def build_word_report(sections, results=None):
                         _add_equation_fallback_paragraph(doc, label, latex)
 
     # Save
+    _prefill_toc_fields(doc)
     _add_page_number_footer(doc)
     _save_docx(doc, DOCX_FILE)
     print("Word report saved: {}".format(DOCX_FILE))
@@ -6454,7 +6799,7 @@ def build_paper_sections(results, task_spec):
     if results and results.get("references"):
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
-            ref_text = ref.get("text", "")
+            ref_text = _reference_text(ref)
             ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\n".join(ref_lines)
     elif not MANUAL_SECTIONS["references"].startswith("["):
@@ -6605,7 +6950,7 @@ def build_paper_docx(sections, results=None):
         elif stype == "references" and results and results.get("references"):
             # Numbered reference list
             for i, ref in enumerate(results["references"], 1):
-                ref_text = ref.get("text", "")
+                ref_text = _reference_text(ref)
                 p = doc.add_paragraph()
                 p.paragraph_format.left_indent = Inches(0.3)
                 p.paragraph_format.first_line_indent = Inches(-0.3)
@@ -7042,13 +7387,13 @@ if __name__ == "__main__":
     results = load_results()
     task_spec = load_task_spec()
     record_environment(results)
+    REPORT_LANGUAGE = resolve_report_language(study_config)  # before identity: badges are translated
     resolve_report_identity(study_config, task_spec, results)
     apply_report_output_names(TITLE)
 
     print("")
     print("Generating outputs for: {}".format(TITLE))
     REPORT_ORIENTATION = resolve_report_orientation(study_config)
-    REPORT_LANGUAGE = resolve_report_language(study_config)
     if REPORT_LANGUAGE != DEFAULT_REPORT_LANGUAGE:
         print("Report language: {} ({})".format(REPORT_LANGUAGE, _report_locale()))
     pdf_requested = want_pdf_output(study_config)
@@ -7084,6 +7429,7 @@ if __name__ == "__main__":
                                   study_config, consistency_issues)
         print("")
         build_word_report(sections, results)
+        finalize_word_fields(DOCX_FILE, "Report")
         build_html_report(sections, results)
         report_pdf_written = False
         if pdf_requested:

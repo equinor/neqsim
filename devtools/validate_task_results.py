@@ -394,6 +394,7 @@ def check_document_evidence(task_folder: Path) -> List[str]:
         "retrieval_manifest.json",
         "document_evidence_manifest.json",
         "related_peprs.json",
+        "document_root_index.md",
     }
     source_files = [
         path

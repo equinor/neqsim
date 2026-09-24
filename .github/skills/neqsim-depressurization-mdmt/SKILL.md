@@ -180,6 +180,12 @@ boolean twoPhase = res.vapourWithdrawalUsed;  // true when a step discharged vap
   total flare load. Operator flare reports often quote `vapour fraction = 1.00` for such a
   segment, which means the liquid contribution is not in the approved basis either — say so
   rather than silently matching their number.
+- `run()` removes moles from the **fluid you passed in** (no clone). Record the component
+  moles before `run()`; start minus end is the per-component composition sent to flare,
+  which is what flare CO2 needs: $m_{CO_2} = 44.01\,(\eta \sum_i n_{C,i} N_i + N_{CO_2})$
+  with $\eta \approx 0.98$ combustion efficiency. Clone first if you need the start state later.
+- A pip-installed `neqsim` older than 3.20 has no `setWithdrawalMode` (AttributeError);
+  load the workspace classes through `devtools/neqsim_dev_setup.py` instead.
 
 ### Cross-check the transient against a decomposed inventory
 

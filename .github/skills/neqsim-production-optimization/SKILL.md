@@ -380,6 +380,33 @@ ALQ ∈ {'' (singleton 0), GRAT}; METRIC or FIELD output.
 The arrival temperature is not part of `VFPPROD`; keep it in a side JSON
 (`arrival_temperature_C` per point) for the flow-assurance hand-off.
 
+### Gas-lifted well lift curves with `TwoFluidPipe`
+
+Verified on a deviated oil producer on 2026-09-24. The well had 4.7 km MD, 58 % water cut, and
+gas lift. The two-fluid model gave BHP within 4.3 % of Beggs & Brill tubing ΔP at the operating point.
+
+- **The default boundary conditions already give BHP.** The inlet is `STREAM_CONNECTED` and the
+  outlet is `CONSTANT_PRESSURE` = WHP. The steady solve marches top-down, so `getInletPressure()`
+  is the bottom-hole pressure and no shooting loop is needed. The inlet stream pressure is only
+  an initial guess.
+- **Use two legs with a `Mixer` at the gas-lift valve.** Upper leg: well fluid plus lift gas,
+  with the outlet at WHP. Lower leg: well fluid only, with the outlet at the upper leg's inlet
+  pressure. Run the lower leg once at a guessed pressure first, only to get the temperature
+  arriving at the valve.
+- **Fix the injection depth from data.** March a static lift-gas column down from the measured
+  surface casing pressure (`ANNULUS_PRESS_BARG` in PDM). The operating valve is where casing
+  pressure minus tubing pressure equals the valve differential.
+- **Calibrate the heat-transfer coefficient on WHT.** Use a secant on U with a geothermal
+  `setSurfaceTemperatureProfile` in K, one value per section.
+- **The pip wheel may be too old.** `neqsim` 3.18.0 has no `setCellFaceElevationProfile` or
+  `getSteadyStateConvergenceReport`, and there the same well did not converge. Load the source
+  checkout with `neqsim_dev_setup.neqsim_init(project_root=..., recompile=False)`.
+- `getPressureProfile()` returns cell-centre values, so the last cell sits one half-cell above
+  the outlet BC. On a vertical liquid column that is 2–3 bar at 36 cells.
+- **Parallel runs need care.** A `ProcessPoolExecutor` with one JVM per worker is fine, but CPU
+  contention can push points past `setSteadyStateMaxWallClockTime`. Re-run non-converged points
+  with a longer limit before marking them as failed.
+
 ---
 
 ## Gas Lift Optimization
