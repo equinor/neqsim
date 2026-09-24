@@ -1,6 +1,7 @@
 ---
 name: neqsim-lng-liquefaction
 description: LNG liquefaction modelling in NeqSim. USE WHEN: building or sizing a liquefaction plant (SMR, DMR, C3MR, cascade, nitrogen expander), calibrating a mixed refrigerant, computing liquefaction specific energy or power, scaling to trains, choosing gas-turbine against electric drive and the resulting carbon intensity, or sizing LNG storage and cargo loading. Covers LNGProcessBuilder, LNGProcessModel, the mandatory specific-energy benchmark gate, and the LNG bubble-point trap.
+last_verified: "2026-09-24"
 ---
 
 # LNG liquefaction with NeqSim

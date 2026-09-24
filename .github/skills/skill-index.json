@@ -1,4 +1,28 @@
 {
+ "lng liquefaction": [
+  "neqsim-lng-liquefaction",
+  "neqsim-process-modeling"
+ ],
+ "mixed refrigerant": [
+  "neqsim-lng-liquefaction"
+ ],
+ "c3mr": [
+  "neqsim-lng-liquefaction"
+ ],
+ "dmr liquefaction": [
+  "neqsim-lng-liquefaction"
+ ],
+ "nitrogen expander cycle": [
+  "neqsim-lng-liquefaction"
+ ],
+ "liquefaction specific energy": [
+  "neqsim-lng-liquefaction",
+  "neqsim-power-generation"
+ ],
+ "lng storage and loading": [
+  "neqsim-lng-liquefaction",
+  "neqsim-equipment-cost-estimation"
+ ],
  "flow accelerated corrosion": [
   "neqsim-flow-accelerated-corrosion",
   "neqsim-root-cause-analysis",
