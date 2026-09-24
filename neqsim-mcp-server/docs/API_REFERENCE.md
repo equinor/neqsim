@@ -236,7 +236,7 @@ runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false
 have coverage records, but only 20 have tool-specific trust pages; 45 generic-fallback tools have
 bounded `CONTRACT_TESTED` evidence and 6 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
-applicability, or no-limitations claim. The transport response-size guard retains both
+applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
 must be omitted.
 

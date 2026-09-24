@@ -240,7 +240,7 @@ Schema resource paths use snake_case tool names such as `run_flash`, but respons
 the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
 types; any other type is treated as schema-not-found.
 
-Responses larger than 256 KiB are reduced by the shared transport guard unless
+Responses larger than 272 KiB are reduced by the shared transport guard unless
 `neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
 `truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
 top-level and canonical `data` views are reduced together. For `getCapabilities`,

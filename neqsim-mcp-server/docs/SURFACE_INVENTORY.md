@@ -119,7 +119,7 @@ The eight MCP guides have distinct roles:
 | `neqsim-mcp-server/docs/CAMPAIGN_MATRIX.md` | All 66 campaign criteria and discipline-level trust maturity with explicit gaps |
 
 The default response-size guard may omit large capability-catalog sections when the full manifest
-exceeds 256 KiB. It retains `implementationInventory` and `phase0EvidenceInventory` because those
+exceeds 272 KiB. It retains `implementationInventory` and `phase0EvidenceInventory` because those
 contracts have no equivalent selective-retrieval routes. Omitted catalog detail remains identified
 in `truncation` and can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the
 MCP catalog resources.
