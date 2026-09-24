@@ -234,6 +234,40 @@ REPORT_STRINGS = {
         "Figure": "Figur",
         "Table": "Tabell",
         "Equation": "Ligning",
+        # Sub-headings
+        "Key results": "Hovedresultater",
+        "Validation checks": "Valideringskontroller",
+        "Applicable Standards": "Gjeldende standarder",
+        "Calculation Methods": "Beregningsmetoder",
+        "Acceptance Criteria": "Akseptkriterier",
+        "Source systems read": "Kildesystemer som er lest",
+        "Assumptions the results depend on": "Forutsetninger resultatene hviler på",
+        "Information sought but not available, and what was assumed in its place":
+            "Informasjon som ble søkt, men ikke funnet, og hva som ble antatt i stedet",
+        "Input Parameter Ranges": "Spenn i inngangsparametere",
+        "Output Distribution (P10 / P50 / P90)": "Resultatfordeling (P10 / P50 / P90)",
+        "Sensitivity Ranking (Tornado)": "Sensitivitetsrangering (tornado)",
+        "Contributors ranked on a common basis": "Bidragsytere rangert på felles grunnlag",
+        "Which effects actually carry the result, largest first.":
+            "Hvilke effekter som faktisk bærer resultatet, størst først.",
+        "Verdict on each source recommendation": "Vurdering av hver kildeanbefaling",
+        "Supported, supported with correction, or challenged \u2014 with the basis.":
+            "Støttet, støttet med korreksjon eller utfordret \u2014 med begrunnelse.",
+        "Hypotheses ruled out quantitatively": "Hypoteser utelukket kvantitativt",
+        "What was excluded, by which test, and with how much margin.":
+            "Hva som ble utelukket, med hvilken test og med hvor stor margin.",
+        "Robustness and crossover": "Robusthet og vippepunkt",
+        "How far an input can move before the conclusion flips.":
+            "Hvor langt en inngangsverdi kan flytte seg før konklusjonen snur.",
+        "Direction of each conservatism": "Retning på hver konservatisme",
+        "Whether each assumption bounds the answer from above or below.":
+            "Om hver antakelse avgrenser svaret ovenfra eller nedenfra.",
+        "Cheapest discriminating test": "Billigste avgjørende test",
+        "The one measurement that would separate the surviving explanations.":
+            "Den ene målingen som skiller forklaringene som gjenstår.",
+        "Evidence that does not fit": "Evidens som ikke passer",
+        "Observations the accepted explanation does not account for.":
+            "Observasjoner som den aksepterte forklaringen ikke dekker.",
     },
 }
 
@@ -1769,7 +1803,7 @@ def format_information_sources_text(config, results):
 
     if data_sources:
         parts.append("")
-        parts.append("Source systems read:")
+        parts.append(_t("Source systems read") + ":")
         table = ["| System | Scope read | Access | Captured evidence |",
                  "|---|---|---|---|"]
         for entry in data_sources:
@@ -1906,7 +1940,7 @@ def format_assumptions_text(results):
             else:
                 text, basis, effect = str(item), "", ""
             rows.append((text, basis, effect))
-        parts.append("Assumptions the results depend on:")
+        parts.append(_t("Assumptions the results depend on") + ":")
         parts.append("")
         # A table with two empty columns reads worse than a list; only tabulate
         # when the basis or effect was actually recorded.
@@ -1925,8 +1959,8 @@ def format_assumptions_text(results):
     if gaps:
         if parts:
             parts.append("")
-        parts.append("Information sought but not available, and what was assumed "
-                     "in its place:")
+        parts.append(_t("Information sought but not available, and what was assumed "
+                        "in its place") + ":")
         parts.append("")
         table = [
             "| # | Information sought | Source | Status | Assumed instead | Effect if wrong |",
@@ -2438,6 +2472,8 @@ def check_report_consistency(results):
                             "{}E{:+03d}".format(mant, exp_i),
                         ])
                     val_strs = [v for v in val_strs if v]
+                    # nb/de/fr reports write 20,1 for 20.1
+                    val_strs.extend([v.replace(".", ",") for v in val_strs if "." in v])
                     if obs and not any(v in obs for v in val_strs):
                         issues.append({
                             "severity": "WARNING",
@@ -3844,7 +3880,7 @@ def format_validation_html(results):
             css_class = ""
         rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
             label, css_class, status)
-    return (_html_table_caption("Validation checks")
+    return (_html_table_caption(_t("Validation checks"))
             + '<table class="validation-table"><thead><tr><th>Check</th>'
             '<th>Result</th></tr></thead><tbody>\n{}</tbody></table>'.format(rows))
 
@@ -3865,7 +3901,7 @@ def format_results_html(results):
         rows += '</tr>\n'
     extra_header = '<th>Source</th>' if has_notes else ""
     return (
-        _html_table_caption("Key results")
+        _html_table_caption(_t("Key results"))
         + '<table class="results-table"><thead>'
         '<tr><th>Parameter</th><th>Value</th><th>Unit</th>{}</tr>'
         '</thead><tbody>\n{}</tbody></table>'.format(extra_header, rows)
@@ -4107,7 +4143,7 @@ def format_uncertainty_html(results):
     # Input parameters table
     params = unc.get("input_parameters", [])
     if params:
-        h += '<h3>Input Parameter Ranges</h3>\n'
+        h += '<h3>' + _t('Input Parameter Ranges') + '</h3>\n'
         h += '<table class="uncertainty-table"><thead><tr>'
         h += '<th>Parameter</th><th>Unit</th><th>Low</th><th>Base</th>'
         h += '<th>High</th><th>Distribution</th>'
@@ -4127,7 +4163,7 @@ def format_uncertainty_html(results):
     out_param = unc.get("output_parameter", "")
     out_params = unc.get("output_parameters", {})
     if out_param or out_params:
-        h += '<h3>Output Distribution (P10 / P50 / P90)</h3>\n'
+        h += '<h3>' + _t('Output Distribution (P10 / P50 / P90)') + '</h3>\n'
         h += '<table class="uncertainty-table"><thead><tr>'
         h += '<th>Output Parameter</th><th>P10</th><th>P50</th><th>P90</th>'
         h += '</tr></thead><tbody>\n'
@@ -4147,7 +4183,7 @@ def format_uncertainty_html(results):
     # Tornado sensitivity table
     tornado = unc.get("tornado", [])
     if tornado:
-        h += '<h3>Sensitivity Ranking (Tornado)</h3>\n'
+        h += '<h3>' + _t('Sensitivity Ranking (Tornado)') + '</h3>\n'
         h += '<table class="tornado-table"><thead><tr>'
         # Detect column names from first tornado entry
         first = tornado[0]
@@ -4282,7 +4318,7 @@ def add_uncertainty_word_tables(doc, results):
     # Input parameters table
     params = unc.get("input_parameters", [])
     if params:
-        _add_heading(doc, "Input Parameter Ranges", level=2)
+        _add_heading(doc, _t("Input Parameter Ranges"), level=2)
         headers = ["Parameter", "Unit", "Low", "Base", "High", "Distribution"]
         data_rows = []
         for param in params:
@@ -4300,7 +4336,7 @@ def add_uncertainty_word_tables(doc, results):
     out_param = unc.get("output_parameter", "")
     out_params = unc.get("output_parameters", {})
     if out_param or out_params:
-        _add_heading(doc, "Output Distribution (P10 / P50 / P90)", level=2)
+        _add_heading(doc, _t("Output Distribution (P10 / P50 / P90)"), level=2)
         headers = ["Output Parameter", "P10", "P50", "P90"]
         data_rows = []
         if out_param:
@@ -4324,7 +4360,7 @@ def add_uncertainty_word_tables(doc, results):
     # Tornado sensitivity table
     tornado = unc.get("tornado", [])
     if tornado:
-        _add_heading(doc, "Sensitivity Ranking (Tornado)", level=2)
+        _add_heading(doc, _t("Sensitivity Ranking (Tornado)"), level=2)
         first = tornado[0]
         cols = [k for k in first.keys() if k != "parameter"]
         headers = ["Parameter"] + [c.replace("_", " ").title() for c in cols]
@@ -4729,7 +4765,7 @@ def add_results_word_table(doc, results):
         col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
     add_word_table(doc, headers, data_rows,
                    col_widths=col_widths,
-                   caption="Key results")
+                   caption=_t("Key results"))
 
 
 def add_validation_word_table(doc, results):
@@ -4750,7 +4786,7 @@ def add_validation_word_table(doc, results):
         data_rows.append([label, status])
     table = add_word_table(doc, headers, data_rows,
                            col_widths=[Inches(4.0), Inches(2.0)],
-                           caption="Validation checks")
+                           caption=_t("Validation checks"))
     # Color-code PASS/FAIL cells
     for row in table.rows[1:]:
         cell = row.cells[1]
@@ -4813,7 +4849,7 @@ def _depth_entries(results):
     """Return the depth moves that the study actually produced."""
     if not results:
         return []
-    return [(key, title, hint) for key, title, hint in DEPTH_MOVES
+    return [(key, _t(title), _t(hint)) for key, title, hint in DEPTH_MOVES
             if results.get(key)]
 
 
@@ -4932,7 +4968,7 @@ def format_discussion_html(results):
         insight_ref = disc.get("insight_question_ref", "")
 
         h += '<div class="discussion-block">\n'
-        h += '<h3>Discussion {}: {}</h3>\n'.format(i, title)
+        h += '<h3>{} {}: {}</h3>\n'.format(_t('Discussion'), i, title)
         if observation:
             h += '<p><strong>Observation:</strong> {}</p>\n'.format(observation)
         if mechanism:
@@ -4973,7 +5009,7 @@ def add_discussion_word(doc, results):
         linked = disc.get("linked_results", [])
         insight_ref = disc.get("insight_question_ref", "")
 
-        _add_heading(doc, "Discussion {}: {}".format(i, title), level=2)
+        _add_heading(doc, "{} {}: {}".format(_t("Discussion"), i, title), level=2)
 
         if observation:
             p = doc.add_paragraph()
@@ -5093,13 +5129,13 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     scope_parts = []
     standards = extract_spec_section(task_spec, "Applicable Standards")
     if standards:
-        scope_parts.append("Applicable Standards:\n" + standards)
+        scope_parts.append(_t("Applicable Standards") + ":\n" + standards)
     methods = extract_spec_section(task_spec, "Calculation Methods")
     if methods:
-        scope_parts.append("Calculation Methods:\n" + methods)
+        scope_parts.append(_t("Calculation Methods") + ":\n" + methods)
     criteria = extract_spec_section(task_spec, "Acceptance Criteria")
     if criteria:
-        scope_parts.append("Acceptance Criteria:\n" + criteria)
+        scope_parts.append(_t("Acceptance Criteria") + ":\n" + criteria)
     envelope = extract_spec_section(task_spec, "Operating Envelope")
     if envelope:
         scope_parts.append("Operating Envelope:\n" + envelope)
