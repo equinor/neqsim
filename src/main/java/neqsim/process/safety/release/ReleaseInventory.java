@@ -40,7 +40,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * confer engineering qualification.
  * </p>
  */
-public final class ReleaseInventory extends ProcessEquipmentBaseClass {
+public final class ReleaseInventory extends ProcessEquipmentBaseClass implements CoupledReleaseSource {
   private static final long serialVersionUID = 1L;
   private static final double CLOSURE_TOLERANCE = 1e-7;
   private static final double PRESSURE_EVENT_RELATIVE_TOLERANCE = 1e-9;
@@ -717,6 +717,46 @@ public final class ReleaseInventory extends ProcessEquipmentBaseClass {
   /** @return immutable current opening request, including a cloned fluid */
   public synchronized ReleaseFlowRequest getReleaseRequest() {
     return request(inventory, withdrawalPhaseIndex);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public synchronized ReleaseFlowResult getReleaseResult() {
+    return calculate(inventory, withdrawalPhaseIndex);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public synchronized String getReleaseBasis() {
+    if (hasPhaseTransitionPlan()) {
+      return "COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY";
+    }
+    return phaseSelective ? "COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY"
+        : "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public synchronized Map<String, String> getReleaseProvenance() {
+    Balance balance = getBalance();
+    Map<String, String> provenance = new TreeMap<String, String>();
+    provenance.put("inventoryTimeS", Double.toString(balance.getTimeS()));
+    provenance.put("inventoryVolumeM3", Double.toString(balance.getVolumeM3()));
+    provenance.put("cumulativeReleasedMassKg", Double.toString(balance.getReleasedMassKg()));
+    provenance.put("cumulativeReleasedEnthalpyJ", Double.toString(balance.getReleasedEnergyJ()));
+    provenance.put("inventoryIntegrator", "EXPLICIT_EULER_VOLUME_INTERNAL_ENERGY_V1");
+    provenance.put("inventoryMaxSubstepS", Double.toString(getMaxSubstepS()));
+    provenance.put("inventoryLastSubsteps", Integer.toString(balance.getSubsteps()));
+    provenance.put("inventoryVolumeEnergySolves", Integer.toString(getLastVolumeEnergySolves()));
+    provenance.put("inventoryPressureEquilibrationEvent", Boolean.toString(hadPressureEquilibrationEvent()));
+    provenance.put("inventoryReleaseDurationS", Double.toString(getLastReleaseDurationS()));
+    provenance.put("inventoryWithdrawalPhase", getWithdrawalPhaseType().name());
+    provenance.put("inventoryWithdrawalPhasePlan", getWithdrawalPhasePlan().toString());
+    provenance.put("inventoryPhaseExhaustionMassFraction", Double.toString(getPhaseExhaustionMassFraction()));
+    provenance.put("inventoryLastPhaseTransitions", Integer.toString(getLastPhaseTransitions()));
+    provenance.put("inventoryTotalPhaseTransitions", Integer.toString(getTotalPhaseTransitions()));
+    provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
+    return Collections.unmodifiableMap(provenance);
   }
 
   /** @return explicitly selected model; caller must not mutate a custom model during process access */

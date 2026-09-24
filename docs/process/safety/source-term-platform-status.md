@@ -51,6 +51,11 @@ The current implementation includes:
   every numerical state. It conserves mass flux and stagnation energy, matches an unchoked
   receiver, and fails closed on phase appearance. It explicitly excludes transient waves, line
   packing and non-equilibrium multiphase physics.
+- A separate one-dimensional perfect-gas finite-volume process unit now resolves finite-speed
+  decompression and line packing for a closed-end pipe discharging to a constant-pressure receiver.
+  It conserves pipe-plus-discharge mass and total energy, uses CFL-limited substeps, exports the
+  exact committed boundary flux through both process containers, and retains grid-refinement
+  evidence. It is a calorically perfect-gas model, not a real-gas or multiphase qualification.
 - Immutable per-model evidence manifests now retain stable applicability and limitation codes,
   typed analytical/conservation/numerical/experimental references, and an explicit independent-
   evidence flag in schema-validated frames. Current built-in manifests truthfully remain
@@ -72,7 +77,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
 | Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. | Assessed phase-level/geometry, entrainment/slip and finite-rate interfacial transfer beyond the current well-mixed equilibrium boundary. |
-| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow with specified Darcy friction. The ideal model retains one independently published NASA nitrogen case; the real-gas model has dilute-limit, conservation, trend and inventory-refinement evidence. | Transient decompression waves/line packing and separate non-equilibrium multiphase models, plus independent dense-gas validation data. |
+| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. A separate conservative perfect-gas finite-volume unit covers one-sided transient waves and line packing with a closed far end and constant-pressure receiver. | Real-gas transient decompression, pipe elasticity and upstream-vessel/two-sided coupling; separate non-equilibrium multiphase models; independent dense-gas validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |

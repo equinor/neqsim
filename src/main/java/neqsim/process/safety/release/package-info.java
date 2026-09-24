@@ -13,6 +13,8 @@
  * release with specified Darcy friction</li>
  * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
  * release with specified Darcy friction</li>
+ * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
+ * transient decompression and line packing</li>
  * </ul>
  *
  * <p>
@@ -28,8 +30,10 @@
  * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
  * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
- * calculate solid-bearing release flow. The finite-pipe models exclude transient decompression waves, heat transfer,
- * multiphase slip and solid-bearing transport. The real-gas model fails closed if an equilibrium phase appears.
+ * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
+ * separate perfect-gas transient model resolves waves and line packing but excludes real-gas property evolution, heat
+ * transfer, pipe elasticity, multiphase slip and solid-bearing transport. The real-gas Fanno model fails closed if an
+ * equilibrium phase appears.
  *
  * <p>
  * Example usage:
