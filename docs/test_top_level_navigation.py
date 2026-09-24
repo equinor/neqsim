@@ -1,6 +1,7 @@
 """Contracts for root and first-level documentation landing pages."""
 
 import re
+import unittest
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
@@ -231,7 +232,7 @@ def test_global_navigation_script_synchronizes_accessible_state() -> None:
         "closeAndFocus(dropdown)",
         "buttonFor(dropdown).focus()",
         "event.key === 'ArrowDown'",
-        "event.key === 'ArrowUp'",
+        "event.key !== 'ArrowDown' && event.key !== 'ArrowUp'",
         "event.key === 'Escape'",
         "links.indexOf(document.activeElement)",
         "document.querySelector('.nav-dropdown.is-open')",
@@ -285,3 +286,24 @@ def test_single_landing_directories_are_discoverable() -> None:
             assert landings[0].resolve() in linked, (
                 f"{landings[0]}: single landing page is absent from root/reference navigation"
             )
+
+def load_tests(
+    loader: unittest.TestLoader,
+    tests: unittest.TestSuite,
+    pattern: str | None,
+) -> unittest.TestSuite:
+    """Expose the module-level contracts to the repository's unittest gate."""
+    del loader, tests, pattern
+    return unittest.TestSuite(
+        unittest.FunctionTestCase(contract)
+        for contract in (
+            test_top_level_landing_metadata_and_rendered_titles,
+            test_top_level_landing_relative_targets_resolve,
+            test_main_landing_routes_to_foundational_package_guides,
+            test_global_navigation_is_task_oriented_and_complete,
+            test_global_navigation_script_synchronizes_accessible_state,
+            test_sis_navigation_describes_screening_and_review_boundary,
+            test_single_landing_directories_are_discoverable,
+        )
+    )
+
