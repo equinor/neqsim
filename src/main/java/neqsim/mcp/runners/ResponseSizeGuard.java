@@ -45,8 +45,8 @@ public final class ResponseSizeGuard {
 
   private static final Gson GSON = new GsonBuilder().serializeSpecialFloatingPointValues().create();
 
-  /** Default maximum serialized response size in bytes. */
-  private static final int DEFAULT_MAX_BYTES = 262144;
+  /** Default maximum serialized response size in bytes; accommodates both protected discovery views. */
+  private static final int DEFAULT_MAX_BYTES = 272 * 1024;
 
   /** Configured maximum serialized response size in bytes; 0 disables trimming. */
   private static final int MAX_BYTES = readLimit();

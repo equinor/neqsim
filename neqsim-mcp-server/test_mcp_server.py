@@ -1526,8 +1526,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 96 protocol scenarios",
-          tests.get("protocolScenarioCount") == 96,
+    check("evidence inventory freezes 97 protocol scenarios",
+          tests.get("protocolScenarioCount") == 97,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1591,13 +1591,14 @@ def test_capabilities():
         "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
         "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
         "designUtilities",
+        "runChemistry",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-four bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.44"
-          and limitations.get("contractTestedToolCount") == 44
-          and limitations.get("confirmedGapToolCount") == 7
+    check("forty-five bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.45"
+          and limitations.get("contractTestedToolCount") == 45
+          and limitations.get("confirmedGapToolCount") == 6
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1666,6 +1667,16 @@ def test_capabilities():
           and "canonical NeqSim Boiler" in utility_design.get("evidenceBoundary", "")
           and "design-basis completeness" in utility_design.get("evidenceBoundary", ""),
           str(utility_design))
+    chemistry = coverage_records.get("runChemistry", {})
+    check("chemistry has canonical dispatch evidence",
+          chemistry.get("coverageStatus") == "CONTRACT_TESTED"
+          and chemistry.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_CHEMISTRY_DISPATCH_AND_TRANSPORT_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_chemistry_protocol.py"
+          in chemistry.get("contractEvidenceSources", [])
+          and "Canonical ChemistryRunner dispatch" in chemistry.get("evidenceBoundary", "")
+          and "thermodynamic" in chemistry.get("evidenceBoundary", ""),
+          str(chemistry))
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1889,7 +1900,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 7
+          and limitations.get("confirmedGapToolCount") == 6
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2135,6 +2146,30 @@ def test_size_compressor():
         "polytropicEfficiency": 0.80,
     })
     check("size comp status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Chemistry tools ---
+
+def test_chemistry_contract():
+    """Exercise four fast canonical chemistry routes through packaged MCP."""
+    print("\n=== Chemistry Contract ===")
+    cases = [
+        {"analysis": "electrolyteScale", "temperature_C": 60.0, "pH": 7.5,
+         "pCO2_bar": 1.0, "ca_mgL": 600.0, "hco3_mgL": 300.0},
+        {"analysis": "mechanisticCorrosion", "temperature_C": 60.0,
+         "pressure_bara": 80.0, "co2_mol": 0.05, "velocity_ms": 2.0,
+         "diameter_m": 0.15, "dose_mgL": 50.0},
+        {"analysis": "langmuirInhibitor", "temperature_C": 60.0,
+         "dose_mgL": 50.0, "targetEfficiency": 0.5},
+        {"analysis": "packedBedScavenger", "diameter_m": 0.5,
+         "height_m": 2.0, "k_per_s": 8.0, "cInlet_molm3": 1.0,
+         "flow_m3s": 0.005, "nCells": 20, "nTimeSteps": 50,
+         "simTime_s": 864000.0},
+    ]
+    for case in cases:
+        r = call_tool("runChemistry", {"chemistryJson": json.dumps(case)})
+        check("chemistry " + case["analysis"] + " status=success",
+              r.get("status") == "success", r.get("message", str(r)))
 
 
 # --- Utility design tools ---
@@ -2787,6 +2822,7 @@ if __name__ == "__main__":
         test_size_separator()
         test_size_compressor()
         test_design_utilities()
+        test_chemistry_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()

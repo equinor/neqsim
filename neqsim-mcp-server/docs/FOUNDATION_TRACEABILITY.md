@@ -26,8 +26,8 @@ The reconciliation is intentionally conservative:
 Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
 
 - 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
-- Forty-four bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `designUtilities`, `diagnoseAutomation`, and `getAutomationLearningReport`.
-- 7 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+- Forty-five bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `designUtilities`, `runChemistry`, `diagnoseAutomation`, and `getAutomationLearningReport`.
+- 6 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
 
 The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested software-contract evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those surfaces. For `getSimulationVariable`, the qualified boundary is addressed read routing, requested-unit handling, standard envelope/provenance/validation/quality-gate preservation, fail-closed inputs, and packaged transport; the numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by that classification. For `manageModel`, the qualified boundary is the reusable registry lifecycle, canonical routing, revision/delete invalidation, fail-closed inputs, and packaged transport; restart persistence, distributed coherence, numerical fidelity, convergence, mass/energy closure, facility fidelity, and plant authority remain outside that classification. For `manageSession`, the qualified boundary is canonical-process lifecycle, owner isolation, close/invalidation, fail-closed behavior and packaged transport; restart durability, distributed coherence, numerical fidelity, convergence, conservation, facility fidelity and plant authority remain outside that classification.
 
@@ -244,4 +244,23 @@ availability or reliability, network optimization, emissions or cost forecast
 accuracy, mechanical design, safe operating limits, standards or regulatory
 compliance, plant or control authority, certification, or accountable
 engineering approval. No promotion candidate remains queued and
+`scientificValidationComplete=false`.
+
+
+Inventory version `1.45` atomically promotes `runChemistry` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving current Phase 0 accounting
+from 20/44/7 to 20/45/6. The existing MCP facade delegates to the canonical
+`ChemistryRunner`; it does not introduce a second chemistry, electrolyte,
+scale, corrosion, adsorption, reaction, or transport model. Direct runner
+tests, focused packaged STDIO qualification across all eight analyses,
+comprehensive protocol coverage, access enforcement, structured failure
+evidence, and standard response evidence move with the machine-readable
+classification on the same exact head.
+
+This bounded dispatch and transport contract does not establish composition or
+design-basis suitability, thermodynamic or kinetic accuracy, parameter or
+dataset applicability, convergence for arbitrary inputs, uncertainty, chemical
+dose, safe operating limits, standards or regulatory compliance, plant or
+control authority, certification, or accountable engineering approval. No
+promotion candidate remains queued and
 `scientificValidationComplete=false`.

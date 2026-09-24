@@ -233,10 +233,10 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 44 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 7 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 45 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 6 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
-applicability, or no-limitations claim. The transport response-size guard retains both
+applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
 must be omitted.
 
@@ -659,3 +659,24 @@ or cost forecasts, detailed mechanical design, safe operating limits,
 standards conformance, certification, plant action, or accountable engineering
 approval. See
 [`UTILITY_DESIGN_SCREENING_CONTRACT.md`](evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md).
+
+
+---
+
+## `runChemistry` — Canonical chemistry dispatch
+
+`runChemistry` accepts one JSON chemistry specification and delegates its
+`analysis` to the existing `ChemistryRunner`. The runner supports electrolyte
+and multi-mineral scale screening, mechanistic corrosion, Langmuir inhibitor
+screening, packed-bed scavenger breakthrough, authoritative single- and
+multi-mineral electrolyte equilibrium, and Pitzer qualification.
+
+The `CONTRACT_TESTED` classification covers deterministic eight-analysis
+dispatch, packaged transport, access enforcement, structured result and error
+envelopes, and fail-closed blank, malformed, and unknown analyses. It does not
+validate composition or design-basis suitability, model or dataset
+applicability, thermodynamic or kinetic accuracy, convergence for arbitrary
+inputs, uncertainty, chemical dose, safe operating limits, standards
+conformance, certification, plant action, or accountable engineering approval.
+See
+[`CHEMISTRY_SCREENING_CONTRACT.md`](evidence/CHEMISTRY_SCREENING_CONTRACT.md).

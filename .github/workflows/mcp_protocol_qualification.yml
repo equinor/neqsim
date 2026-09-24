@@ -148,6 +148,9 @@ jobs:
       - name: Run focused real-MCP utility-design qualification
         run: cd neqsim-mcp-server && python test_utility_design_protocol.py
 
+      - name: Run focused real-MCP chemistry qualification
+        run: cd neqsim-mcp-server && python test_chemistry_protocol.py
+
       - name: Run focused real-MCP simulation-variable mutation qualification
         run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
 
