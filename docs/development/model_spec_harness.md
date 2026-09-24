@@ -72,8 +72,9 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 236 cases across eight system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU and standard GERG-2008), direct SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008 phase adapters, a component saturation
+The catalog has 284 cases across nine system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008 and ideal gas), direct
+SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -89,6 +90,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | PSRK and UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no nonideal mixture accuracy is claimed |
 | SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
 | GERG-2008 | Official NIST AGA8 21-component sample at 400 K and 500 bar: molar mass/density, Z, pressure derivatives, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemGERG2008Eos` and exact `PhaseGERG2008Eos` entry points |
+| Ideal gas | NIST argon molecular weight and Shomate heat capacity at 298.15, 400 and 600 K, combined with independently evaluated ideal-gas density, Z, fugacity, Cv, speed of sound and zero Joule-Thomson coefficient through `SystemIdealGas` and exact `PhaseIdealGas` entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published SRK/PR equations with the declared methane
@@ -117,6 +119,15 @@ It rejects stale cached values, checks finite nearby-state outputs and verifies 
 phase-published U, H, S and G use the same molar basis as the official sample. The independent
 NIST vector also satisfies `H = U + P/rho` and `G = H - TS`; those identities supplement the
 external numerical anchors rather than replacing them.
+
+The ideal-gas state control reuses pure argon while moving from 298.15 K/1 bar to
+600 K/5 bar and back. It requires exact Z and fugacity coefficient of one, exact zero
+Joule-Thomson coefficient, changed molar density, heat capacity and sound speed, deterministic
+repeat reads, and recovery of the initial values. The catalog's NIST Shomate Cp comparison uses
+a 0.025 J/(mol K) physical-data tolerance and the derived speed of sound uses 0.2 m/s; exact
+ideal-law properties retain analytical tolerances. This qualifies only the declared pure-argon
+states, not arbitrary mixtures, reference-state enthalpy/entropy, transport properties or
+real-gas accuracy.
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -163,9 +174,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (17 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (19 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (113 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (111 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -231,8 +242,15 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   path. This is an independent official cross-port/analytical implementation check, not an
   experimental accuracy claim. GERG-2008-H2, GERG-2008-NH3, GERG-2004, EOS-CG, phase
   equilibrium and derivatives absent from the sample remain explicit debt.
+- The [NIST Chemistry WebBook argon record](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440371&Mask=1)
+  supplies molecular weight 39.948 g/mol and Chase's 298--6000 K Shomate coefficients.
+  The fixture independently evaluates Cp, Cv = Cp - R, sound speed and the ideal-gas law with
+  exact SI R = 8.31446261815324 J/(mol K). NeqSim's legacy R and caloric polynomial are compared
+  with documented physical-data tolerances; Z = 1, phi = 1 and JT = 0 are exact ideal-model
+  contracts. These are analytical/compiled-data checks for pure argon, not experimental
+  validation of mixtures or real-gas behavior.
 
-NIST WebBook sources were inspected on 2026-09-18 and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
+NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
 compilation. Source compilation rights remain with the source; the authored fixtures
 and analytical controls follow the repository's Apache-2.0 license. References are

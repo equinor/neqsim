@@ -14,12 +14,14 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
+import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemGERG2008Eos;
+import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -253,6 +255,45 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
       assertEquals(reference[i], returned[i], Math.max(1e-12, Math.abs(reference[i]) * 1e-12),
           "GERG returned property " + i);
     }
+  }
+
+  @Test
+  void idealGasRefreshesExactAndCaloricStateBeforeReturningToReference() {
+    SystemIdealGas system = new SystemIdealGas(298.15, 1.0);
+    system.addComponent("argon", 1.0);
+    system.init(1);
+    PhaseIdealGas phase = (PhaseIdealGas) system.getPhase(0);
+    double firstDensity = phase.getDensity("mol/m3") / 1000.0;
+    double firstCp = phase.getCp("J/molK");
+    double firstSoundSpeed = phase.getSoundSpeed();
+    assertEquals(1.0, phase.getZ(), 0.0);
+    assertEquals(1.0, phase.getComponent(0).fugcoef(phase), 0.0);
+    assertEquals(0.0, phase.getJouleThomsonCoefficient(), 0.0);
+
+    system.setTemperature(600.0);
+    system.setPressure(5.0);
+    system.init(1);
+    double nearbyDensity = phase.getDensity("mol/m3") / 1000.0;
+    double nearbyCp = phase.getCp("J/molK");
+    double nearbySoundSpeed = phase.getSoundSpeed();
+    assertNotEquals(firstDensity, nearbyDensity);
+    assertNotEquals(firstCp, nearbyCp);
+    assertNotEquals(firstSoundSpeed, nearbySoundSpeed);
+    assertEquals(1.0, phase.getZ(), 0.0);
+    assertEquals(1.0, phase.getComponent(0).fugcoef(phase), 0.0);
+    assertEquals(0.0, phase.getJouleThomsonCoefficient(), 0.0);
+
+    system.init(1);
+    assertEquals(nearbyDensity, phase.getDensity("mol/m3") / 1000.0, 0.0);
+    assertEquals(nearbyCp, phase.getCp("J/molK"), 0.0);
+    assertEquals(nearbySoundSpeed, phase.getSoundSpeed(), 0.0);
+
+    system.setTemperature(298.15);
+    system.setPressure(1.0);
+    system.init(1);
+    assertEquals(firstDensity, phase.getDensity("mol/m3") / 1000.0, 0.0);
+    assertEquals(firstCp, phase.getCp("J/molK"), 0.0);
+    assertEquals(firstSoundSpeed, phase.getSoundSpeed(), 0.0);
   }
 
   private static SystemGERG2008Eos gergReferenceSystem() {

@@ -20,12 +20,14 @@ import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseGEUniquac;
 import neqsim.thermo.phase.PhaseGEWilson;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
+import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemGERG2008Eos;
+import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -79,6 +81,10 @@ final class ModelSpecFixtures {
       return SystemGERG2008Eos.class;
     case GERG_PHASE:
       return PhaseGERG2008Eos.class;
+    case IDEAL_GAS:
+      return SystemIdealGas.class;
+    case IDEAL_GAS_PHASE:
+      return PhaseIdealGas.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -133,6 +139,12 @@ final class ModelSpecFixtures {
           "water", "H2S", "helium", "argon"}) {
         ModelSpec.require(s.components.containsKey(component), "GERG-2008 reference composition missing " + component);
       }
+      break;
+    case IDEAL_GAS:
+    case IDEAL_GAS_PHASE:
+      ModelSpec.require(isIdealGasProperty(s.property) && s.components.size() == 1 && s.components.containsKey("argon")
+          && "gas".equals(s.phase) && "none".equals(s.mixingRule) && "nist-argon-ideal-gas".equals(s.operation)
+          && s.outcome == ModelSpec.Outcome.VALUE && s.componentIndex == 0, "invalid ideal-gas reference fixture");
       break;
     case WILSON_ANALYTIC:
     case WILSON_PHASE:
@@ -267,6 +279,22 @@ final class ModelSpecFixtures {
     }
   }
 
+  private static boolean isIdealGasProperty(ModelSpec.Property property) {
+    switch (property) {
+    case MOLAR_MASS:
+    case MOLAR_DENSITY:
+    case Z:
+    case PHI:
+    case CP:
+    case CV:
+    case SOUND_SPEED:
+    case JT:
+      return true;
+    default:
+      return false;
+    }
+  }
+
   private static void validateGe(ModelSpec s, String mixingRule, String operation) {
     ModelSpec.require(s.outcome == ModelSpec.Outcome.VALUE && "liquid".equals(s.phase)
         && mixingRule.equals(s.mixingRule) && operation.equals(s.operation), "invalid GE fixture");
@@ -330,6 +358,16 @@ final class ModelSpecFixtures {
       double[] repeated = s.fixture == ModelSpec.Fixture.GERG_PHASE ? phase.getProperties_GERG2008()
           : gerg.propertiesGERG();
       assertEquals(result, readGerg(s.property, gerg, repeated), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.IDEAL_GAS || s.fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double result = readIdealGas(s.property, phase, s.componentIndex);
+      assertEquals(result, readIdealGas(s.property, phase, s.componentIndex), 0.0, s + " repeat read");
       return result;
     }
     if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
@@ -417,6 +455,31 @@ final class ModelSpecFixtures {
       return values[14];
     default:
       throw new IllegalArgumentException("unmapped GERG-2008 property " + property);
+    }
+  }
+
+  private static double readIdealGas(ModelSpec.Property property, PhaseInterface phase, int componentIndex) {
+    double phi = phase.getComponent(componentIndex).fugcoef(phase);
+    positive(phi, "ideal-gas fugacity coefficient");
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return phase.getDensity("mol/m3") / 1000.0;
+    case Z:
+      return phase.getZ();
+    case PHI:
+      return phi;
+    case CP:
+      return phase.getCp("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case JT:
+      return phase.getJouleThomsonCoefficient();
+    default:
+      throw new IllegalArgumentException("unmapped ideal-gas property " + property);
     }
   }
 
@@ -531,6 +594,10 @@ final class ModelSpecFixtures {
     case GERG_PHASE:
       system = new SystemGERG2008Eos(s.temperature, s.pressure);
       break;
+    case IDEAL_GAS:
+    case IDEAL_GAS_PHASE:
+      system = new SystemIdealGas(s.temperature, s.pressure);
+      break;
     default:
       throw new IllegalArgumentException("no system factory for " + s.fixture);
     }
@@ -539,7 +606,8 @@ final class ModelSpecFixtures {
     }
     if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.setMixingRule("HV", "UNIFAC_UMRPRU");
-    } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE) {
+    } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE
+        && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE) {
       system.setMixingRule("classic");
     }
     return system;
@@ -549,7 +617,8 @@ final class ModelSpecFixtures {
     return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
         || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
         || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
-        || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE;
+        || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE
+        || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE;
   }
 
   static void positive(double value, String context) {
