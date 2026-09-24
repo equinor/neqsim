@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable operating receipt composed from qualified coupled sulfur/nitrogen coupled sulfur/nitrogen hydrotreating utility and emissions balances.
+ * Immutable operating receipt composed from qualified coupled sulfur/nitrogen coupled sulfur/nitrogen hydrotreating
+ * utility and emissions balances.
  *
  * <p>
  * This class aggregates existing material, energy, emissions, and caller-priced scenario receipts. It introduces no
@@ -31,8 +32,9 @@ public final class RefineryHydrotreatingSulfurNitrogenOperatingReceipt implement
   private final double totalScenarioCostPerTonneFeed;
   private final double totalScenarioCostClosureResidualPerHour;
 
-  private RefineryHydrotreatingSulfurNitrogenOperatingReceipt(RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance emissionsBalance,
-      double feedMassFlowKgPerHour, double freshHydrogenMassFlowKgPerHour, double freshHydrogenEnergyMWhPerTonneFeed,
+  private RefineryHydrotreatingSulfurNitrogenOperatingReceipt(
+      RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance emissionsBalance, double feedMassFlowKgPerHour,
+      double freshHydrogenMassFlowKgPerHour, double freshHydrogenEnergyMWhPerTonneFeed,
       double hydrogenSupplyEmissionsKgCo2EquivalentPerHour, double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
       double hydrogenPurchaseCostPerHour, double carbonCostPerHour, double totalScenarioCostPerHour,
       double hydrogenPurchaseCostPerTonneFeed, double carbonCostPerTonneFeed, double totalScenarioCostPerTonneFeed,
@@ -55,7 +57,8 @@ public final class RefineryHydrotreatingSulfurNitrogenOperatingReceipt implement
   /**
    * Compose a process-integration and scenario-economics receipt.
    *
-   * @param emissionsBalance qualified coupled sulfur/nitrogen coupled sulfur/nitrogen hydrotreating hydrogen-supply emissions receipt
+   * @param emissionsBalance qualified coupled sulfur/nitrogen coupled sulfur/nitrogen hydrotreating hydrogen-supply
+   * emissions receipt
    * @return immutable integrated operating receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenOperatingReceipt calculate(
@@ -82,9 +85,10 @@ public final class RefineryHydrotreatingSulfurNitrogenOperatingReceipt implement
       throw new IllegalArgumentException("upstream receipts do not define finite non-negative operating results");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenOperatingReceipt(emissionsBalance, feedMassFlow, freshHydrogenMassFlow,
-        energyIntensity, emissionsPerHour, emissionsPerTonneFeed, hydrogenCostPerHour, carbonCostPerHour,
-        totalCostPerHour, hydrogenCostPerTonneFeed, carbonCostPerTonneFeed, totalCostPerTonneFeed, costResidual);
+    return new RefineryHydrotreatingSulfurNitrogenOperatingReceipt(emissionsBalance, feedMassFlow,
+        freshHydrogenMassFlow, energyIntensity, emissionsPerHour, emissionsPerTonneFeed, hydrogenCostPerHour,
+        carbonCostPerHour, totalCostPerHour, hydrogenCostPerTonneFeed, carbonCostPerTonneFeed, totalCostPerTonneFeed,
+        costResidual);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
@@ -161,3 +165,4 @@ public final class RefineryHydrotreatingSulfurNitrogenOperatingReceipt implement
     return totalScenarioCostClosureResidualPerHour;
   }
 }
+

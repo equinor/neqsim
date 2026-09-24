@@ -17,7 +17,8 @@ class RefineryHydrotreatingSulfurNitrogenOperatingReceiptTest {
   void qualifiesPublicBigHillOperatingReceipt() {
     RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance emissions = publicEmissions(1000.0);
 
-    RefineryHydrotreatingSulfurNitrogenOperatingReceipt receipt = RefineryHydrotreatingSulfurNitrogenOperatingReceipt.calculate(emissions);
+    RefineryHydrotreatingSulfurNitrogenOperatingReceipt receipt = RefineryHydrotreatingSulfurNitrogenOperatingReceipt
+        .calculate(emissions);
 
     assertSame(emissions, receipt.getEmissionsBalance());
     assertEquals(1000.0, receipt.getFeedMassFlowKgPerHour(), 0.0);
@@ -69,13 +70,15 @@ class RefineryHydrotreatingSulfurNitrogenOperatingReceiptTest {
     assertThrows(NullPointerException.class, () -> RefineryHydrotreatingSulfurNitrogenOperatingReceipt.calculate(null));
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance publicEmissions(double feedMassFlowKgPerHour) {
+  private static RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance publicEmissions(
+      double feedMassFlowKgPerHour) {
     return publicEmissions(feedMassFlowKgPerHour, HYDROGEN_COST_PER_KG, EMISSION_FACTOR_KG_CO2E_PER_KG_H2,
         CARBON_PRICE_PER_TONNE_CO2E);
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance publicEmissions(double feedMassFlowKgPerHour,
-      double hydrogenCostPerKg, double emissionFactorKgCo2ePerKgH2, double carbonPricePerTonneCo2e) {
+  private static RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance publicEmissions(
+      double feedMassFlowKgPerHour, double hydrogenCostPerKg, double emissionFactorKgCo2ePerKgH2,
+      double carbonPricePerTonneCo2e) {
     RefineryHydrotreatingSulfurNitrogenBalance material = RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0,
         0.0040867518, 0.001095129, 15.0e-6, 10.0e-6, 2.0, 4.0);
     RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
@@ -90,3 +93,4 @@ class RefineryHydrotreatingSulfurNitrogenOperatingReceiptTest {
         carbonPricePerTonneCo2e);
   }
 }
+
