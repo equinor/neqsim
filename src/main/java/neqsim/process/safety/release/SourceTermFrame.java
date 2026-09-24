@@ -78,6 +78,7 @@ public final class SourceTermFrame implements Serializable {
     model.addProperty("version", result.getModelVersion());
     model.addProperty("fluidModel", request.getFluid().getModelName());
     model.addProperty("evidenceLevel", "UNQUALIFIED");
+    model.add("evidence", evidence(result.getEvidence()));
     root.add("model", model);
     JsonArray diagnostics = new JsonArray();
     for (ReleaseFlowResult.Diagnostic diagnostic : result.getDiagnostics()) {
@@ -91,6 +92,10 @@ public final class SourceTermFrame implements Serializable {
       source.add("effectiveArea", quantity(request.getEffectiveAreaM2(), "m2"));
       source.add("dischargeCoefficient", quantity(request.getDischargeCoefficient(), "1"));
       source.add("backPressure", quantity(request.getBackPressurePa(), "Pa"));
+      if (request.hasFlowPath()) {
+        source.add("flowPathLength", quantity(request.getFlowPathLengthM(), "m"));
+        source.add("darcyFrictionFactor", quantity(request.getDarcyFrictionFactor(), "1"));
+      }
       source.add("massFlowRate", quantity(result.getMassFlowRateKgS(), "kg/s"));
       source.addProperty("choked", result.isChoked());
       ReleaseState exit = result.getStations().get(Station.ORIFICE_EXIT);
@@ -213,6 +218,34 @@ public final class SourceTermFrame implements Serializable {
     item.addProperty("code", code);
     item.addProperty("message", message);
     return item;
+  }
+
+  private static JsonObject evidence(ReleaseModelEvidence manifest) {
+    JsonObject value = new JsonObject();
+    value.addProperty("manifestId", manifest.getManifestId());
+    value.add("applicability", strings(manifest.getApplicability()));
+    value.add("limitations", strings(manifest.getLimitations()));
+    value.addProperty("independentEvidence", manifest.hasIndependentEvidence());
+    JsonArray records = new JsonArray();
+    for (ReleaseModelEvidence.Record record : manifest.getRecords()) {
+      JsonObject item = new JsonObject();
+      item.addProperty("id", record.getId());
+      item.addProperty("type", record.getType().name());
+      item.addProperty("reference", record.getReference());
+      item.addProperty("description", record.getDescription());
+      item.addProperty("independent", record.isIndependent());
+      records.add(item);
+    }
+    value.add("records", records);
+    return value;
+  }
+
+  private static JsonArray strings(Iterable<String> values) {
+    JsonArray result = new JsonArray();
+    for (String value : values) {
+      result.add(value);
+    }
+    return result;
   }
 
   private static JsonObject quantity(double value, String unit) {

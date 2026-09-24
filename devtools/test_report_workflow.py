@@ -93,5 +93,26 @@ class WorkflowSectionTest(unittest.TestCase):
         self.assertFalse(any(s.get("has_workflow") for s in sections))
 
 
+@unittest.skipIf(GR is None, "canonical generate_report not importable (python-docx missing)")
+class ReproducibilityAppendixTest(unittest.TestCase):
+    _REPRO = {"key_results": {"x": 1.0}, "reproducibility": {
+        "environment": ["Python 3.11", "NeqSim 3.1"],
+        "steps": ["python 01_profiles.py", "python 02_study.py"],
+        "checks": ["2026 bottleneck 23-VG06 at 117 %"],
+    }}
+
+    def test_dict_renders_numbered_steps_and_checks(self):
+        text = GR.format_reproducibility_text(self._REPRO)
+        self.assertIn("1. python 01_profiles.py", text)
+        self.assertIn("2. python 02_study.py", text)
+        self.assertIn("- 2026 bottleneck 23-VG06 at 117 %", text)
+
+    def test_appendix_added_and_absent_without_block(self):
+        headings = [s["heading"] for s in GR.build_sections(self._REPRO, None)]
+        self.assertTrue(any("Reproducing the Results" in h for h in headings))
+        headings = [s["heading"] for s in GR.build_sections({"key_results": {"x": 1.0}}, None)]
+        self.assertFalse(any("Reproducing the Results" in h for h in headings))
+
+
 if __name__ == "__main__":
     unittest.main()

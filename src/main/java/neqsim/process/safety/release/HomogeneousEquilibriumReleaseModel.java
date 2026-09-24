@@ -1,6 +1,7 @@
 package neqsim.process.safety.release;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,25 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
     return "homogeneous-equilibrium-orifice";
   }
 
-  /** @return numerical model version, including guarded incipient-phase continuation */
+  /** @return numerical model version, including guarded phase and solid-risk checks */
   @Override
   public String getModelVersion() {
-    return "1.1.0";
+    return "1.2.0";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ReleaseModelEvidence getEvidence() {
+    return new ReleaseModelEvidence("homogeneous-equilibrium-orifice:1.2.0",
+        Arrays.asList("SHORT_ORIFICE", "EQUILIBRIUM_PHASE_TRANSFER", "MULTICOMPONENT_EOS"),
+        Arrays.asList("NO_SLIP", "NO_DELAYED_FLASHING", "NO_SOLID_BEARING_FLOW", "NO_EXPERIMENTAL_QUALIFICATION"),
+        Arrays.asList(
+            new ReleaseModelEvidence.Record("hem-component-energy-closure", ReleaseModelEvidence.Type.CONSERVATION,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowModelTest.java",
+                "Component, mass and stagnation-energy closure for equilibrium release states", false),
+            new ReleaseModelEvidence.Record("hem-flashing-nearby-cases", ReleaseModelEvidence.Type.NUMERICAL,
+                "src/test/java/neqsim/process/safety/release/ReleaseFlowFlashingTest.java",
+                "Multicomponent flashing, nearby-mixture and continuation regression matrix", false)));
   }
 
   /** {@inheritDoc} */
@@ -44,6 +60,7 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       if (request == null) {
         throw new IllegalArgumentException("Request required");
       }
+      request.requireShortOpening();
       SystemInterface upstream = request.getFluid();
       ReleaseFlowRequest.positive(upstream.getPressure(), "upstream pressure");
       ReleaseFlowRequest.positive(upstream.getTemperature(), "upstream temperature");
@@ -69,6 +86,11 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
         states.put(Station.THROAT_CRITICAL, initial);
         states.put(Station.ORIFICE_EXIT, initial);
         diagnostics.add(new Diagnostic("NO_FORWARD_FLOW", "Upstream pressure is at or below receiving pressure"));
+        ReleaseSolidRiskAssessment applicability = ReleaseSolidRiskAssessment.assess(upstream);
+        if (!applicability.isClear()) {
+          return solidRiskFailure(applicability, "UPSTREAM_STAGNATION");
+        }
+        diagnostics.add(new Diagnostic("SOLID_RISK_ASSESSED", "UPSTREAM_STAGNATION: " + applicability.getMessage()));
         return ReleaseFlowResult.success(this, 0.0, false, states, diagnostics, null, false);
       }
       SolverDiagnostics solver = new SolverDiagnostics();
@@ -103,6 +125,10 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
       states.put(Station.THROAT_CRITICAL, best.state);
       states.put(Station.ORIFICE_EXIT, best.state);
       states.put(Station.AMBIENT_EXPANDED, samples[0].state);
+      ReleaseFlowResult applicabilityFailure = assessSolidRisk(diagnostics, upstream, best.fluid, samples[0].fluid);
+      if (applicabilityFailure != null) {
+        return applicabilityFailure;
+      }
       Double soundSpeed = null;
       boolean warning = false;
       if (choked) {
@@ -351,13 +377,26 @@ public final class HomogeneousEquilibriumReleaseModel implements ReleaseFlowMode
         throw new UnsupportedOperationException("Unsupported phase: " + type);
       }
     }
-    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-      if ("CO2".equals(fluid.getComponent(i).getComponentName()) && fluid.getComponent(i).getNumberOfmoles() > 0.0
-          && fluid.getTemperature() < 216.592) {
-        throw new UnsupportedOperationException(
-            "CO2 below 216.592 K requires a separately assessed solid-capable model");
+  }
+
+  private ReleaseFlowResult assessSolidRisk(List<Diagnostic> diagnostics, SystemInterface upstream,
+      SystemInterface throat, SystemInterface ambient) {
+    SystemInterface[] fluids = {upstream, throat, ambient};
+    String[] stations = {"UPSTREAM_STAGNATION", "THROAT_CRITICAL", "AMBIENT_EXPANDED"};
+    for (int index = 0; index < fluids.length; index++) {
+      ReleaseSolidRiskAssessment assessment = ReleaseSolidRiskAssessment.assess(fluids[index]);
+      if (!assessment.isClear()) {
+        return solidRiskFailure(assessment, stations[index]);
       }
+      diagnostics.add(new Diagnostic("SOLID_RISK_ASSESSED", stations[index] + ": " + assessment.getMessage()));
     }
+    return null;
+  }
+
+  private ReleaseFlowResult solidRiskFailure(ReleaseSolidRiskAssessment assessment, String station) {
+    boolean unresolved = assessment.getStatus() == ReleaseSolidRiskAssessment.Status.UNRESOLVED;
+    String code = unresolved ? "SOLID_RISK_ASSESSMENT_FAILED" : assessment.getStatus().name();
+    return ReleaseFlowResult.failure(this, !unresolved, code, station + ": " + assessment.getMessage());
   }
 
   private static void checkEquilibrium(SystemInterface fluid) {

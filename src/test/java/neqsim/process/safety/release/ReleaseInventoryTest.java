@@ -8,7 +8,11 @@ import java.nio.file.Paths;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -41,10 +45,51 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
         step);
   }
 
+  private static ReleaseFlowModel stablePhaseReleaseModel(final double massFlowRateKgS) {
+    return new ReleaseFlowModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public String getModelId() {
+        return "test-stable-phase-release";
+      }
+
+      @Override
+      public ReleaseFlowResult calculate(ReleaseFlowRequest request) {
+        SystemInterface fluid = request.getFluid();
+        fluid.init(3);
+        ReleaseState state = ReleaseState.fromFluid(fluid, 0.0);
+        Map<ReleaseFlowResult.Station, ReleaseState> stations = new EnumMap<ReleaseFlowResult.Station, ReleaseState>(
+            ReleaseFlowResult.Station.class);
+        stations.put(ReleaseFlowResult.Station.UPSTREAM_STAGNATION, state);
+        stations.put(ReleaseFlowResult.Station.THROAT_CRITICAL, state);
+        stations.put(ReleaseFlowResult.Station.ORIFICE_EXIT, state);
+        stations.put(ReleaseFlowResult.Station.AMBIENT_EXPANDED, state);
+        return ReleaseFlowResult.success(this, massFlowRateKgS, false, stations,
+            Collections.singletonList(new ReleaseFlowResult.Diagnostic("CONTROLLED_TEST_MODEL",
+                "Fixed flow isolates phase-plan and inventory conservation behavior")),
+            null, false);
+      }
+    };
+  }
+
   private static SystemInterface twoPhaseHydrocarbon() {
     SystemInterface fluid = new SystemSrkEos(250.0, 10.0);
     fluid.addComponent("methane", 0.5);
     fluid.addComponent("n-butane", 0.5);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+    assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+    assertTrue(fluid.hasPhaseType(PhaseType.OIL) || fluid.hasPhaseType(PhaseType.LIQUID));
+    return fluid;
+  }
+
+  private static SystemInterface nearGasExhaustionHydrocarbon() {
+    SystemInterface fluid = new SystemSrkEos(250.0, 5.0);
+    fluid.addComponent("methane", 0.1);
+    fluid.addComponent("n-butane", 0.9);
     fluid.setMixingRule("classic");
     fluid.setMultiPhaseCheck(true);
     new ThermodynamicOperations(fluid).TPflash();
@@ -203,6 +248,130 @@ class ReleaseInventoryTest extends neqsim.NeqSimTest {
       assertEquals("GAS", provenance.get("inventoryWithdrawalPhase").getAsString());
       balanced(vessel);
     }
+  }
+
+  @Test
+  void explicitPhaseExhaustionPlanTransitionsConservativelyAndExportsProvenance() {
+    for (boolean useModel : new boolean[] {false, true}) {
+      SystemInterface fluid = nearGasExhaustionHydrocarbon();
+      PhaseType liquidType = fluid.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+      List<PhaseType> plan = Arrays.asList(PhaseType.GAS, liquidType);
+      ReleaseInventory vessel = new ReleaseInventory("transition", fluid, 0.02, 0.001, 0.62, 101325.0,
+          stablePhaseReleaseModel(0.001), 0.15, plan, 0.02618);
+      double initialGasMethaneMassFraction = vessel.getReleaseRequest().getFluid().getComponent("methane")
+          .getNumberOfmoles() * vessel.getReleaseRequest().getFluid().getComponent("methane").getMolarMass()
+          / vessel.getReleaseRequest().getFluid().getMass("kg");
+      ProcessSystem process = new ProcessSystem();
+      process.add(vessel);
+      SourceTermSession session;
+      if (useModel) {
+        ProcessModel model = new ProcessModel();
+        model.add("transition-area", process);
+        session = new SourceTermSession("phase-transition", model, CLOCK);
+        session.addInventorySource("opening", "transition-area", "transition");
+      } else {
+        session = new SourceTermSession("phase-transition", process, CLOCK);
+        session.addInventorySource("opening", "transition");
+      }
+      assertEquals(SourceTermFrame.Status.VALID, session.runSteadyState().get(0).getStatus());
+      SourceTermFrame frame = session.step(0.3).get(0);
+      assertEquals(SourceTermFrame.Status.VALID, frame.getStatus(), frame.toJson());
+      assertEquals(liquidType, vessel.getWithdrawalPhaseType());
+      assertEquals(plan, vessel.getWithdrawalPhasePlan());
+      assertEquals(1, vessel.getLastPhaseTransitions());
+      assertEquals(1, vessel.getTotalPhaseTransitions());
+      assertTrue(vessel.getBalance().getReleasedComponentMassKg().get("methane")
+          / vessel.getBalance().getReleasedMassKg() < initialGasMethaneMassFraction);
+      SourceTermFrame.verifyEnvelope(frame.toJson());
+      JsonObject provenance = JsonParser.parseString(frame.toJson()).getAsJsonObject().getAsJsonObject("provenance");
+      assertEquals("COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY", provenance.get("releaseBasis").getAsString());
+      assertEquals(liquidType.name(), provenance.get("inventoryWithdrawalPhase").getAsString());
+      assertEquals("[GAS, " + liquidType.name() + "]", provenance.get("inventoryWithdrawalPhasePlan").getAsString());
+      assertEquals("1", provenance.get("inventoryLastPhaseTransitions").getAsString());
+      assertEquals("1", provenance.get("inventoryTotalPhaseTransitions").getAsString());
+      balanced(vessel);
+    }
+  }
+
+  @Test
+  void phaseTransitionRefinesAcrossNearbyThresholds() throws Exception {
+    StringBuilder csv = new StringBuilder(
+        "threshold_mass_fraction,max_substep_s,pressure_Pa,temperature_K,released_mass_kg,transitions\n");
+    double[][] pressures = new double[3][3];
+    double[] thresholds = {0.026175, 0.026180, 0.026185};
+    for (int thresholdIndex = 0; thresholdIndex < thresholds.length; thresholdIndex++) {
+      for (int refinement = 0; refinement < 3; refinement++) {
+        SystemInterface fluid = nearGasExhaustionHydrocarbon();
+        PhaseType liquidType = fluid.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+        double maxSubstep = 0.15 / Math.pow(2.0, refinement);
+        ReleaseInventory vessel = new ReleaseInventory("transition-refinement", fluid, 0.02, 0.001, 0.62, 101325.0,
+            stablePhaseReleaseModel(0.001), maxSubstep, Arrays.asList(PhaseType.GAS, liquidType),
+            thresholds[thresholdIndex]);
+        vessel.runTransient(0.3, UUID.randomUUID());
+        assertEquals(liquidType, vessel.getWithdrawalPhaseType());
+        assertEquals(1, vessel.getTotalPhaseTransitions());
+        assertEquals(0.0003, vessel.getBalance().getReleasedMassKg(), 1e-14);
+        balanced(vessel);
+        pressures[thresholdIndex][refinement] = vessel.getFluid().getPressure() * 1e5;
+        csv.append(thresholds[thresholdIndex]).append(',').append(maxSubstep).append(',')
+            .append(pressures[thresholdIndex][refinement]).append(',').append(vessel.getFluid().getTemperature())
+            .append(',').append(vessel.getBalance().getReleasedMassKg()).append(',')
+            .append(vessel.getTotalPhaseTransitions()).append('\n');
+      }
+      double coarseChange = Math.abs(pressures[thresholdIndex][1] - pressures[thresholdIndex][0]);
+      double fineChange = Math.abs(pressures[thresholdIndex][2] - pressures[thresholdIndex][1]);
+      assertTrue(fineChange <= coarseChange * 1.05 + 1e-6,
+          "phase-transition pressure did not refine for threshold " + thresholds[thresholdIndex]);
+    }
+    assertTrue(Math.abs(pressures[0][2] - pressures[2][2]) / pressures[1][2] < 5e-4,
+        "nearby exhaustion thresholds must remain numerically stable");
+    write("source-term-benchmarks", "inventory-phase-transition-refinement.csv", csv.toString());
+  }
+
+  @Test
+  void phasePlanIsValidatedImmutableAndNeverSkipsAMissingNextPhase() {
+    SystemInterface fluid = nearGasExhaustionHydrocarbon();
+    ReleaseFlowModel model = stablePhaseReleaseModel(0.001);
+    assertThrows(IllegalArgumentException.class, () -> new ReleaseInventory("empty", fluid, 0.02, 0.001, 0.62, 101325.0,
+        model, 0.15, Collections.<PhaseType>emptyList(), 0.0));
+    assertThrows(IllegalArgumentException.class, () -> new ReleaseInventory("duplicate", fluid, 0.02, 0.001, 0.62,
+        101325.0, model, 0.15, Arrays.asList(PhaseType.GAS, PhaseType.GAS), 0.0));
+    assertThrows(IllegalArgumentException.class, () -> new ReleaseInventory("threshold", fluid, 0.02, 0.001, 0.62,
+        101325.0, model, 0.15, Collections.singletonList(PhaseType.GAS), Double.NaN));
+
+    PhaseType liquidType = fluid.hasPhaseType(PhaseType.OIL) ? PhaseType.OIL : PhaseType.LIQUID;
+    List<PhaseType> callerPlan = new ArrayList<PhaseType>(Arrays.asList(PhaseType.GAS, PhaseType.AQUEOUS, liquidType));
+    ReleaseInventory vessel = new ReleaseInventory("ordered", fluid, 0.02, 0.001, 0.62, 101325.0, model, 0.15,
+        callerPlan, 0.02618);
+    callerPlan.clear();
+    assertEquals(Arrays.asList(PhaseType.GAS, PhaseType.AQUEOUS, liquidType), vessel.getWithdrawalPhasePlan());
+    ReleaseInventory.Balance before = vessel.getBalance();
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> vessel.runTransient(0.3, UUID.randomUUID()));
+    assertTrue(error.getMessage().contains("next=AQUEOUS"));
+    assertEquals(before.getReleasedMassKg(), vessel.getBalance().getReleasedMassKg(), 0.0);
+    assertEquals(before.getInternalEnergyJ(), vessel.getBalance().getInternalEnergyJ(), 0.0);
+    assertEquals(PhaseType.GAS, vessel.getWithdrawalPhaseType());
+    assertEquals(0, vessel.getTotalPhaseTransitions());
+  }
+
+  @Test
+  void exhaustedPlanFailsAtomicallyWithoutInferringAnotherPhase() {
+    SystemInterface fluid = nearGasExhaustionHydrocarbon();
+    ReleaseInventory vessel = new ReleaseInventory("exhausted", fluid, 0.02, 0.001, 0.62, 101325.0,
+        new HomogeneousEquilibriumReleaseModel(), 0.15, Collections.singletonList(PhaseType.GAS), 0.02618);
+    ReleaseInventory.Balance before = vessel.getBalance();
+    UUID beforeId = vessel.getCalculationIdentifier();
+    IllegalStateException error = assertThrows(IllegalStateException.class,
+        () -> vessel.runTransient(0.3, UUID.randomUUID()));
+    assertTrue(error.getMessage().contains("INVENTORY_WITHDRAWAL_PHASE_PLAN_EXHAUSTED"));
+    assertEquals(before.getReleasedMassKg(), vessel.getBalance().getReleasedMassKg(), 0.0);
+    assertEquals(before.getInternalEnergyJ(), vessel.getBalance().getInternalEnergyJ(), 0.0);
+    assertEquals(before.getTimeS(), vessel.getBalance().getTimeS(), 0.0);
+    assertEquals(beforeId, vessel.getCalculationIdentifier());
+    assertEquals(PhaseType.GAS, vessel.getWithdrawalPhaseType());
+    assertEquals(0, vessel.getLastPhaseTransitions());
+    assertEquals(0, vessel.getTotalPhaseTransitions());
   }
 
   @Test

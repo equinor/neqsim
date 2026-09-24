@@ -3694,6 +3694,75 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
+   * Tests a water-rich GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
+   *
+   * <p>
+   * A two-phase stability trial can miss the water-rich minimum after the hydrocarbon split has converged. The
+   * incumbent may satisfy gas/oil fugacity equality yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a
+   * material-balanced oil/aqueous active set on a clone and replace the incumbent only after solving equilibrium and
+   * checking component conservation and fugacities. Never accept the raw aqueous seed itself.
+   * </p>
+   */
+  void rescueMetastableGasOilMissingAqueous() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.getMaxNumberOfPhases() < 3
+        || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.OIL)
+        || !system.hasComponent("water") || system.getComponent("water").getz() < 0.05) {
+      return;
+    }
+    boolean validReference = isFeasiblePhaseEquilibrium(system);
+    double referenceGibbs = system.getGibbsEnergy();
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbs) * 1.0e-8);
+    try {
+      SystemInterface candidate = system.clone();
+      int aqueous = candidate.getPhaseNumberOfPhase("gas");
+      int oil = candidate.getPhaseNumberOfPhase("oil");
+      candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        candidate.getPhase(aqueous).getComponent(component).setx(
+            "water".equals(candidate.getPhase(aqueous).getComponent(component).getComponentName()) ? 1.0 : 1.0e-16);
+      }
+      candidate.getPhase(aqueous).normalize();
+      double aqueousSeed = Math.min(0.05, 0.5 * candidate.getComponent("water").getz());
+      candidate.setBeta(aqueous, aqueousSeed);
+      candidate.setBeta(oil, 1.0 - aqueousSeed);
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        double feed = candidate.getPhase(oil).getComponent(component).getz();
+        double waterPhase = candidate.getPhase(aqueous).getComponent(component).getx();
+        candidate.getPhase(oil).getComponent(component)
+            .setx(Math.max(0.0, (feed - aqueousSeed * waterPhase) / (1.0 - aqueousSeed)));
+      }
+      candidate.getPhase(oil).normalize();
+      candidate.normalizeBeta();
+      candidate.init(1);
+
+      TPmultiflash solver = new TPmultiflash(candidate, false);
+      solver.doStabilityAnalysis = false;
+      solver.multiPhaseTest = true;
+      solver.run();
+      candidate.init(1);
+      if (!candidate.hasPhaseType(PhaseType.AQUEOUS) || !isFeasiblePhaseEquilibrium(candidate)
+          || (validReference && !(candidate.getGibbsEnergy() < referenceGibbs - gibbsTolerance))) {
+        return;
+      }
+
+      PhaseSplitSnapshot original = new PhaseSplitSnapshot(system);
+      try {
+        restorePhaseSplit(new PhaseSplitSnapshot(candidate));
+        if (!isFeasiblePhaseEquilibrium(system)
+            || (validReference && system.getGibbsEnergy() >= referenceGibbs - gibbsTolerance)) {
+          restorePhaseSplit(original);
+        }
+      } catch (Exception ex) {
+        restorePhaseSplit(original);
+        logger.debug("Aqueous active-set adoption failed: {}", ex.getMessage());
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous active-set trial failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
    * Removes a non-persistent phase when a neutral three-phase beta solve stalls above the equilibrium tolerances.
    *
    * <p>

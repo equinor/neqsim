@@ -27,11 +27,23 @@ def main():
     for path in fixtures:
         frame = json.loads(path.read_text(encoding="utf-8"))
         validator.validate(frame)
+        if "model" in frame:
+            evidence = frame["model"].get("evidence")
+            if evidence is None:
+                raise AssertionError(f"Missing explicit model evidence in {path.name}")
+            has_independent_record = any(record["independent"] for record in evidence["records"])
+            if evidence["independentEvidence"] != has_independent_record:
+                raise AssertionError(f"Inconsistent independent-evidence flag in {path.name}")
         for station in frame.get("source", {}).get("stations", {}).values():
             for field in ("componentMoleFractions", "componentMassFractions", "phaseMassFractions"):
                 if abs(sum(station[field].values()) - 1.0) > 1e-8:
                     raise AssertionError(f"Unclosed {field} in {path.name}")
     valid = json.loads((root / "target/source-term-contract-fixtures/valid.json").read_text())
+    pipe = json.loads((root / "target/source-term-contract-fixtures/fanno-pipe.json").read_text())
+    if pipe["source"]["flowPathLength"]["unit"] != "m":
+        raise AssertionError("Finite-pipe fixture is missing SI path length")
+    if pipe["source"]["darcyFrictionFactor"]["unit"] != "1":
+        raise AssertionError("Finite-pipe fixture is missing dimensionless Darcy friction")
     mutations = []
     changed = copy.deepcopy(valid)
     changed["schemaVersion"] = "neqsim_safety_source_term.v2"
@@ -50,6 +62,21 @@ def main():
     mutations.append(changed)
     changed = copy.deepcopy(valid)
     changed["calculationId"] = "not-a-uuid"
+    mutations.append(changed)
+    changed = copy.deepcopy(pipe)
+    del changed["source"]["darcyFrictionFactor"]
+    mutations.append(changed)
+    changed = copy.deepcopy(pipe)
+    changed["source"]["flowPathLength"]["value"] = 0.0
+    mutations.append(changed)
+    changed = copy.deepcopy(valid)
+    changed["model"]["evidence"]["applicability"][0] = "not-a-stable-code"
+    mutations.append(changed)
+    changed = copy.deepcopy(valid)
+    changed["model"]["evidence"]["unexpected"] = True
+    mutations.append(changed)
+    changed = copy.deepcopy(valid)
+    changed["model"]["evidence"]["records"][0]["type"] = "SELF_CERTIFIED"
     mutations.append(changed)
     for field, value in (("diameter", -1), ("dischargeCoefficient", 1.1),
                          ("physicalArea", 0), ("backPressure", 0)):

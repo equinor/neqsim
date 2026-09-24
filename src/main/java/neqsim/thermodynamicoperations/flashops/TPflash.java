@@ -1208,6 +1208,13 @@ public class TPflash extends Flash {
     normalizeQualifiedNeutralSinglePhaseEndpoint();
     polishNearCriticalNeutralTwoPhaseEndpoint();
     refineIonicGasAqueousEndpoint();
+    // Earlier refinements can recover a balanced gas/oil split on a metastable root. Compare it with
+    // a seeded aqueous active set only after all other neutral endpoint repairs have finished.
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
+        && system.hasPhaseType(PhaseType.OIL) && system.hasComponent("water")
+        && system.getComponent("water").getz() >= 0.05) {
+      new TPmultiflash(system, false).rescueMetastableGasOilMissingAqueous();
+    }
 
     // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
     // ordinary single-topology calculation, solve chemistry after all phase reordering here.

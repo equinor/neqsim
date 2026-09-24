@@ -16,6 +16,19 @@ public interface ReleaseFlowModel extends Serializable {
   }
 
   /**
+   * Returns the model's explicit applicability and validation-evidence manifest.
+   *
+   * <p>
+   * Custom models that do not override this method fail closed to an unqualified, undeclared manifest. Software tests
+   * and analytical checks do not imply engineering qualification.
+   *
+   * @return immutable evidence manifest
+   */
+  default ReleaseModelEvidence getEvidence() {
+    return ReleaseModelEvidence.undeclared(getModelId(), getModelVersion());
+  }
+
+  /**
    * Calculates one instantaneous boundary source term.
    *
    * @param request immutable upstream state and opening definition

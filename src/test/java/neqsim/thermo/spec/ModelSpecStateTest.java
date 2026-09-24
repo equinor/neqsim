@@ -9,18 +9,26 @@ import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGENRTL;
+import neqsim.thermo.phase.PhaseGEUnifac;
+import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
+import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
+import neqsim.thermo.util.gerg.GERG2008Type;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
@@ -118,21 +126,41 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void binaryGroupModelsAreOrderIndependentAndReinitializable(boolean psrk) {
-    SystemInterface ordered = groupSystem(psrk, false);
-    SystemInterface reversed = groupSystem(psrk, true);
+  @ValueSource(strings = {"UNIFAC", "PSRK", "UMR"})
+  void binaryGroupModelsAreOrderIndependentAndReinitializable(String model) {
+    SystemInterface ordered = groupSystem(model, false);
+    SystemInterface reversed = groupSystem(model, true);
     for (double temperature : new double[] {290.0, 310.0, 290.0}) {
       ordered.setTemperature(temperature);
       reversed.setTemperature(temperature);
       ordered.init(0);
       reversed.init(0);
       for (String component : new String[] {"methanol", "water"}) {
-        double first = gamma(ordered, component);
-        double second = gamma(reversed, component);
+        double first = gamma(ordered, component, model);
+        double second = gamma(reversed, component, model);
         ModelSpecFixtures.positive(first, component);
         assertEquals(first, second, 1e-10, component);
       }
+    }
+  }
+
+  @Test
+  void classicUnifacRefreshesPublishedNonidealState() {
+    SystemInterface system = groupSystem("UNIFAC", false);
+    double[][] states = {{298.15, 0.2}, {323.15, 0.8}, {298.15, 0.5}, {298.15, 0.2}};
+    for (double[] state : states) {
+      system.setTemperature(state[0]);
+      system.setMolarComposition(new double[] {state[1], 1.0 - state[1]});
+      system.init(0);
+      PhaseGEUnifac phase = (PhaseGEUnifac) system.getPhase(1);
+      double[] expected = ModelSpecHarnessTest.originalUnifac(state[1], state[0]);
+      double excess = phase.getExcessGibbsEnergy(phase, 2, state[0], 1.0, PhaseType.LIQUID)
+          / phase.getNumberOfMolesInPhase();
+      assertEquals(expected[0], ((ComponentGEInterface) phase.getComponent("methanol")).getGamma(), 3.5e-4);
+      assertEquals(expected[1], ((ComponentGEInterface) phase.getComponent("water")).getGamma(), 3.5e-4);
+      assertEquals(expected[2], ((ComponentGEInterface) phase.getComponent("methanol")).getLnGamma(), 2.5e-4);
+      assertEquals(expected[3], ((ComponentGEInterface) phase.getComponent("water")).getLnGamma(), 2.5e-4);
+      assertEquals(expected[4], excess, 0.25);
     }
   }
 
@@ -181,11 +209,75 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     assertEquals(gibbsEnergy, phase.getGibbsEnergy(), Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
   }
 
-  private static SystemInterface groupSystem(boolean psrk, boolean reverse) {
-    SystemInterface system = psrk ? new SystemUNIFACpsrk(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
+  @Test
+  void gergReferenceStateRefreshesAcrossTemperatureAndPressureChanges() {
+    SystemGERG2008Eos system = gergReferenceSystem();
+    system.init(0);
+    system.init(1);
+    PhaseGERG2008Eos phase = (PhaseGERG2008Eos) system.getPhase(0);
+    assertEquals(GERG2008Type.STANDARD, phase.getGergModelType());
+    double[] reference = phase.getProperties_GERG2008();
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(phase, GERG2008Type.STANDARD);
+    double referenceDensity = gerg.getMolarDensity();
+    assertEquals(12.79828626082062, referenceDensity, 1e-10);
+    assertEquals(1.174690666383717, reference[1], 1e-12);
+    assertEquals(1160.280160510973, phase.getEnthalpy() / phase.getNumberOfMolesInPhase(), 1e-7);
+    assertEquals(-2746.492901212530, phase.getInternalEnergy() / phase.getNumberOfMolesInPhase(), 1e-7);
+    assertEquals(-38.57590392409089, phase.getEntropy() / phase.getNumberOfMolesInPhase(), 1e-9);
+    assertEquals(16590.64173014733, phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), 1e-7);
+
+    system.setTemperature(350.0);
+    system.setPressure(100.0);
+    system.init(1);
+    double[] nearby = phase.getProperties_GERG2008();
+    double nearbyDensity = new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity();
+    assertNotEquals(reference[1], nearby[1]);
+    assertNotEquals(referenceDensity, nearbyDensity);
+    for (double value : nearby) {
+      assertTrue(Double.isFinite(value));
+    }
+
+    system.init(1);
+    double[] repeated = phase.getProperties_GERG2008();
+    assertEquals(nearbyDensity, new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity(), 0.0);
+    for (int i = 0; i < nearby.length; i++) {
+      assertEquals(nearby[i], repeated[i], 0.0, "GERG repeat property " + i);
+    }
+
+    system.setTemperature(400.0);
+    system.setPressure(500.0);
+    system.init(1);
+    double[] returned = phase.getProperties_GERG2008();
+    assertEquals(referenceDensity, new NeqSimGERG2008(phase, GERG2008Type.STANDARD).getMolarDensity(), 1e-10);
+    for (int i = 0; i < reference.length; i++) {
+      assertEquals(reference[i], returned[i], Math.max(1e-12, Math.abs(reference[i]) * 1e-12),
+          "GERG returned property " + i);
+    }
+  }
+
+  private static SystemGERG2008Eos gergReferenceSystem() {
+    SystemGERG2008Eos system = new SystemGERG2008Eos(400.0, 500.0);
+    String[] names = {"methane", "nitrogen", "CO2", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "hydrogen", "oxygen", "CO", "water",
+        "H2S", "helium", "argon"};
+    double[] amounts = {0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
+    for (int i = 0; i < names.length; i++) {
+      system.addComponent(names[i], amounts[i]);
+    }
+    return system;
+  }
+
+  private static SystemInterface groupSystem(String model, boolean reverse) {
+    SystemInterface system = "PSRK".equals(model) ? new SystemUNIFACpsrk(290.0, 1.0)
+        : "UMR".equals(model) ? new SystemUMRPRUEos(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
     system.addComponent(reverse ? "water" : "methanol", reverse ? 0.7 : 0.3);
     system.addComponent(reverse ? "methanol" : "water", reverse ? 0.3 : 0.7);
-    system.setMixingRule("classic");
+    if ("UMR".equals(model)) {
+      system.setMixingRule("HV", "UNIFAC_UMRPRU");
+    } else {
+      system.setMixingRule("classic");
+    }
     system.init(0);
     return system;
   }
@@ -210,11 +302,18 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return phase;
   }
 
-  private static double gamma(SystemInterface system, String name) {
+  private static double gamma(SystemInterface system, String name, String model) {
     PhaseInterface phase = system.getPhase(1);
+    if ("UMR".equals(model)) {
+      system.init(1);
+      phase = ((EosMixingRulesInterface) ((PhaseEosInterface) phase).getMixingRule()).getGEPhase();
+    }
     ComponentGEUnifac component = (ComponentGEUnifac) phase.getComponent(name);
     assertTrue(component.getUnifacGroups().length > 0);
-    return component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
+    double result = component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
+    assertEquals(result, component.getGamma(), 1e-12);
+    assertEquals(Math.log(result), component.getLnGamma(), 1e-12);
+    return result;
   }
 
   private static double[] nrtl(double methanolFraction, double temperature) {

@@ -1,35 +1,38 @@
 package neqsim.process.equipment.pipeline;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.SerializationUtils;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SevereSluggingSystemDiagnostic;
-import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugFilmCoupling;
-import neqsim.process.equipment.pipeline.twophasepipe.numerics.CoupledPressureMomentumSolver.GasDensityModel;
+import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.OilWaterFlowRegimeDetector.OilWaterFlowRegime;
-import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
-import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugForceBalance;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.SlugUnitModel;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AnchoredIsothermalDensityModel;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.ConservativeStateLimiter;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.CoupledPressureMomentumSolver.GasDensityModel;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TimeIntegrator;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator;
-import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitPublication;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitIntegrator.PreparedInterval;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PhaseDensityModel;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitModelAdapter.PreparedStep;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.TwoFluidUnsplitPublication;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.UnsplitTransientSolver;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.TwoFluidPipeResponse;
@@ -154,6 +157,9 @@ public class TwoFluidPipe extends Pipeline {
   /** Upper no-slip fraction for the trace-liquid asymptote of the stratified closure. */
   private static final double STRATIFIED_TRACE_LIQUID_TRANSITION = 1.0e-6;
 
+  /** Geometric scan points used to bracket the thinnest stratified-film root. */
+  private static final int STRATIFIED_ROOT_SCAN_POINTS = 60;
+
   /** Bendiksen (1984) horizontal Taylor bubble drift coefficient. */
   private static final double SLUG_DRIFT_HORIZONTAL_COEFFICIENT = 0.54;
 
@@ -188,6 +194,9 @@ public class TwoFluidPipe extends Pipeline {
    * Off by default until the long-horizon liquid-rich and severe-slugging acceptance cases pass.
    */
   private boolean coupledPressureMomentumEnabled = false;
+
+  /** True once the user has chosen the coupled pressure-momentum option explicitly. */
+  private boolean coupledPressureMomentumExplicit = false;
 
   /** Whether any coupled nonlinear correction failed since the latest steady initialization. */
   private boolean transientCoupledPressureMomentumFailureDetected = false;
@@ -293,6 +302,21 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Shared stateless mechanical evaluator. */
   private SlugForceBalance sharedSlugForceBalance = new SlugForceBalance();
+
+  /** Steady slug-unit closure for the slug share of holdup and friction; on by default. */
+  private boolean slugUnitClosureEnabled = true;
+
+  /** Film holdup at which an annular film bridges the bore (Barnea 1986 blockage limit). */
+  private static final double ANNULAR_FILM_BRIDGING_HOLDUP = 0.24;
+
+  /** Half width of the bridging band, matching the flow-regime detector's level transition band. */
+  private static final double SLUG_BRIDGING_BAND = 0.08;
+
+  /** Inclination above which the stratified-layer bridging test no longer applies, radians. */
+  private static final double SLUG_BRIDGING_MAX_INCLINATION = Math.toRadians(45.0);
+
+  /** Stateless slug-unit evaluator. */
+  private SlugUnitModel slugUnitModel = new SlugUnitModel();
 
   /** Time integrator. */
   private TimeIntegrator timeIntegrator;
@@ -771,6 +795,42 @@ public class TwoFluidPipe extends Pipeline {
    */
   private boolean useSeparatedFrictionModel = true;
 
+  /** Gravitational acceleration used in the steady energy balance, m/s2. */
+  private static final double GRAVITY_ACCELERATION = 9.81;
+
+  /** Relative temperature perturbation for the equilibrium heat-capacity derivative, K. */
+  private static final double THERMAL_DERIVATIVE_TEMPERATURE_STEP = 0.5;
+
+  /** Pressure perturbation for the equilibrium enthalpy-pressure derivative, Pa. */
+  private static final double THERMAL_DERIVATIVE_PRESSURE_STEP = 0.5e5;
+
+  /** Per-section equilibrium heat capacity from the last steady thermal refresh, J/(kg K). */
+  private double[] steadyThermalCp;
+
+  /** Per-section equilibrium Joule-Thomson coefficient from the last steady thermal refresh, K/Pa. */
+  private double[] steadyThermalJouleThomson;
+
+  /** Steady thermal sweeps since initialization, used to refresh the derivatives on the flash cadence. */
+  private int steadyThermalCalls;
+
+  /** Calibrate the transient operator so the steady handoff is a fixed point (default true). */
+  private boolean steadyConsistentTransient = true;
+
+  /** Whether the steady-consistency correction has been calibrated since the last steady solve. */
+  private boolean steadyConsistencyCalibrated = false;
+
+  /** Inlet mass flow of the last steady solve, kg/s. */
+  private double steadyCalibrationInletFlow = Double.NaN;
+
+  /** Outlet pressure of the last steady solve, Pa. */
+  private double steadyCalibrationOutletPressure = Double.NaN;
+
+  /** Joule-Thomson coefficient of the steady reference fluid for the transient update, K/Pa; NaN until needed. */
+  private double transientJouleThomson = Double.NaN;
+
+  /** Heat capacity of the steady reference fluid for the transient update, J/(kg K); NaN until needed. */
+  private double transientHeatCapacity = Double.NaN;
+
   /**
    * Fraction of the inlet pressure the line must lose before the density coupling is taken to matter for steady-state
    * convergence. Below this the fluid density is uniform to within about the same fraction, so the pressure profile
@@ -1022,6 +1082,9 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
+    steadyThermalCp = null;
+    steadyThermalJouleThomson = null;
+    steadyThermalCalls = 0;
     equations.setThermodynamicCoupling(new ThermodynamicCoupling(referenceFluid));
     equations.setLocalEquilibriumStates(null);
 
@@ -2258,6 +2321,17 @@ public class TwoFluidPipe extends Pipeline {
     double pipePerimeter = Math.PI * diameter;
     double P_prev = sections[0].getPressure();
 
+    // Equilibrium thermal derivatives are refreshed on the flash cadence and reused in between.
+    boolean refreshThermal = enableJouleThomson && referenceFluid != null && (steadyThermalCp == null
+        || steadyThermalCp.length != numberOfSections || steadyThermalCalls % Math.max(1, ssFlashInterval) == 0);
+    if (steadyThermalCp == null || steadyThermalCp.length != numberOfSections) {
+      steadyThermalCp = new double[numberOfSections];
+      steadyThermalJouleThomson = new double[numberOfSections];
+      java.util.Arrays.fill(steadyThermalCp, Double.NaN);
+      java.util.Arrays.fill(steadyThermalJouleThomson, Double.NaN);
+    }
+    steadyThermalCalls++;
+
     // Initialize hydrate/wax risk arrays
     hydrateRiskSections = new boolean[numberOfSections];
     waxRiskSections = new boolean[numberOfSections];
@@ -2289,10 +2363,33 @@ public class TwoFluidPipe extends Pipeline {
 
       // Joule-Thomson cooling from pressure drop
       double dP = sec.getPressure() - P_prev;
-      // The coefficient rises strongly as the gas expands, so evaluate it at the local state
-      // rather than holding the inlet value over the whole line.
-      double muJTlocal = localJouleThomsonCoefficient(0.5 * (sec.getPressure() + P_prev), T_prev, muJT);
+      // Equilibrium (phase-change inclusive) heat capacity and Joule-Thomson coefficient at the local
+      // state: a frozen-phase Cp ignores the latent heat released as condensate drops out, so the
+      // same wall duty cools a two-phase line too fast.
+      double sectionCp = Cp;
+      double muJTlocal = muJT;
+      if (refreshThermal) {
+        double[] derivatives = equilibriumThermalDerivatives(0.5 * (sec.getPressure() + P_prev), T_prev);
+        if (derivatives != null) {
+          steadyThermalCp[i] = derivatives[0];
+          steadyThermalJouleThomson[i] = derivatives[1];
+        } else {
+          steadyThermalCp[i] = Double.NaN;
+          steadyThermalJouleThomson[i] = localJouleThomsonCoefficient(0.5 * (sec.getPressure() + P_prev), T_prev, muJT);
+        }
+      }
+      if (enableJouleThomson && referenceFluid != null) {
+        if (Double.isFinite(steadyThermalCp[i]) && steadyThermalCp[i] > 0.0) {
+          sectionCp = steadyThermalCp[i];
+        }
+        if (Double.isFinite(steadyThermalJouleThomson[i])) {
+          muJTlocal = steadyThermalJouleThomson[i];
+        }
+      }
       double dT_JT = muJTlocal * dP; // Temperature change due to J-T effect
+      // Steady flow energy balance dh = q - g dz: lifting the fluid converts enthalpy to potential
+      // energy. Without this term the hydrostatic part of dP is wrongly credited as JT heating.
+      double dT_gravity = -GRAVITY_ACCELERATION * (sec.getElevation() - prev.getElevation()) / sectionCp;
 
       // Heat transfer calculation with exponential solution. Direct electrical heating enters as a
       // uniform source, which shifts the asymptote the exponential decays towards from the surface
@@ -2300,14 +2397,14 @@ public class TwoFluidPipe extends Pipeline {
       // constant source and cannot overshoot the balance the way explicit per-segment stepping does.
       double T_new;
       double T_asymptote = T_surface;
-      if (h > 0 && massFlow > 0 && Cp > 0) {
+      if (h > 0 && massFlow > 0 && sectionCp > 0) {
         T_asymptote = T_surface + directElectricalHeatingPowerPerMeter / (h * pipePerimeter);
-        double exponent = -h * pipePerimeter * sec.getLength() / (massFlow * Cp);
+        double exponent = -h * pipePerimeter * sec.getLength() / (massFlow * sectionCp);
         T_new = T_asymptote + (T_prev - T_asymptote) * Math.exp(exponent);
       } else {
         T_new = T_prev;
-        if (massFlow > 0 && Cp > 0) {
-          T_new += directElectricalHeatingPowerPerMeter * sec.getLength() / (massFlow * Cp);
+        if (massFlow > 0 && sectionCp > 0) {
+          T_new += directElectricalHeatingPowerPerMeter * sec.getLength() / (massFlow * sectionCp);
         }
       }
 
@@ -2325,8 +2422,8 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
 
-      // Add Joule-Thomson effect
-      T_new += dT_JT;
+      // Add Joule-Thomson effect and the potential-energy change
+      T_new += dT_JT + dT_gravity;
 
       T_new = Math.max(T_new, 100.0); // Never below 100K (absolute minimum)
 
@@ -2377,6 +2474,57 @@ public class TwoFluidPipe extends Pipeline {
     }
   }
 
+  /**
+   * Equilibrium heat capacity and Joule-Thomson coefficient of the flowing mixture at a local state.
+   *
+   * <p>
+   * Both are finite differences of the equilibrium specific enthalpy, so condensation and vaporisation are included:
+   * {@code cp = (dh/dT)_P} and {@code muJT = -(dh/dP)_T / cp}. A frozen-phase heat capacity omits the latent heat and
+   * over-predicts wall cooling of a two-phase line.
+   * </p>
+   *
+   * @param pressurePa local pressure in Pa
+   * @param temperatureK local temperature in K
+   * @return {cp in J/(kg K), muJT in K/Pa}, or null when a flash fails or the result is not physical
+   */
+  private double[] equilibriumThermalDerivatives(double pressurePa, double temperatureK) {
+    if (referenceFluid == null || !(pressurePa > 2.0 * THERMAL_DERIVATIVE_PRESSURE_STEP) || !(temperatureK > 100.0)) {
+      return null;
+    }
+    try {
+      double h0 = equilibriumSpecificEnthalpy(pressurePa, temperatureK);
+      double hT = equilibriumSpecificEnthalpy(pressurePa, temperatureK + THERMAL_DERIVATIVE_TEMPERATURE_STEP);
+      double hP = equilibriumSpecificEnthalpy(pressurePa - THERMAL_DERIVATIVE_PRESSURE_STEP, temperatureK);
+      double cp = (hT - h0) / THERMAL_DERIVATIVE_TEMPERATURE_STEP;
+      if (!Double.isFinite(cp) || cp <= 0.0 || !Double.isFinite(hP)) {
+        return null;
+      }
+      double muJT = (hP - h0) / THERMAL_DERIVATIVE_PRESSURE_STEP / cp;
+      if (!Double.isFinite(muJT) || Math.abs(muJT) >= 10.0 / 1.0e5) {
+        return null;
+      }
+      return new double[] {cp, muJT};
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  /**
+   * Equilibrium specific enthalpy of the reference fluid.
+   *
+   * @param pressurePa pressure in Pa
+   * @param temperatureK temperature in K
+   * @return specific enthalpy in J/kg
+   */
+  private double equilibriumSpecificEnthalpy(double pressurePa, double temperatureK) {
+    SystemInterface local = referenceFluid.clone();
+    local.setPressure(pressurePa / 1.0e5, "bara");
+    local.setTemperature(temperatureK, "K");
+    new ThermodynamicOperations(local).TPflash();
+    local.init(2);
+    return local.getEnthalpy() / (local.getTotalNumberOfMoles() * local.getMolarMass());
+  }
+
   /** Time-integrated thermal-model terms for one accepted internal step. */
   private static final class ThermalEnergyStep {
     private double fluidEnergyChangeJ;
@@ -2407,15 +2555,22 @@ public class TwoFluidPipe extends Pipeline {
   private ThermalEnergyStep updateTransientTemperature(double dt, double[][] phaseMassFaceFluxes,
       double[] latentHeatEnergyByCellJ) {
     SystemInterface inletFluid = getInletStream().getFluid();
-    double Cp = inletFluid.getCp("J/kgK");
-    if (Cp <= 0.0 || !Double.isFinite(Cp)) {
-      Cp = 2000.0;
-    }
+    double Cp = transientHeatCapacity(inletFluid);
 
     if (wallTemperatureProfile == null || wallTemperatureProfile.length != numberOfSections) {
       wallTemperatureProfile = new double[numberOfSections];
       for (int i = 0; i < numberOfSections; i++) {
-        wallTemperatureProfile[i] = sections[i].getTemperature();
+        // Start the wall at its steady conduction temperature. The film and outer resistances are
+        // equal halves of the overall U (see below), so the steady wall sits midway between fluid
+        // and ambient; starting it at the fluid temperature suppresses the wall loss for a wall
+        // time constant (hours on a steel line) and warms the outlet after a steady handoff.
+        double fluidTemperature = sections[i].getTemperature();
+        double ambient = surfaceTemperature;
+        if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
+          ambient = surfaceTemperatureProfile[i];
+        }
+        boolean hasWallLoss = enableHeatTransfer && heatTransferCoefficient > 0.0 && !useMultilayerThermalModel;
+        wallTemperatureProfile[i] = hasWallLoss ? 0.5 * (fluidTemperature + ambient) : fluidTemperature;
       }
     }
 
@@ -2424,7 +2579,7 @@ public class TwoFluidPipe extends Pipeline {
       waxRiskSections = new boolean[numberOfSections];
     }
 
-    double muJT = enableJouleThomson ? 0.4 / 1.0e5 : 0.0;
+    double muJT = transientJouleThomsonCoefficient(inletFluid);
     double[] previousFluidTemperatures = new double[numberOfSections];
     for (int section = 0; section < numberOfSections; section++) {
       previousFluidTemperatures[section] = sections[section].getTemperature();
@@ -2459,15 +2614,21 @@ public class TwoFluidPipe extends Pipeline {
         ambientTemperature = surfaceTemperatureProfile[i];
       }
 
-      double hOuter = hInner;
+      double hOverall = hInner;
       if (soilThermalResistance > 0.0 && hInner > 0.0) {
-        hOuter = 1.0 / (1.0 / hInner + soilThermalResistance);
+        hOverall = 1.0 / (1.0 / hInner + soilThermalResistance);
       }
+      // The configured value is the OVERALL bore-referenced U used by the steady solve. Split its
+      // resistance equally between the fluid film and the wall-to-ambient path so the wall node
+      // carries thermal inertia while its quasi-steady limit reproduces the steady U exactly.
+      double hFilm = 2.0 * hOverall;
+      double hOuter = 2.0 * hOverall * diameter / outerDiameter;
 
-      double fluidToWallHeat = hInner * pipePerimeter * (oldFluidTemperature - wallTemperature);
+      double fluidToWallHeat = hFilm * pipePerimeter * (oldFluidTemperature - wallTemperature);
       double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
-      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
+      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT)
+          + calcGravityWorkSource(i, phaseMassFaceFluxes);
       double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
       double dehSource = directElectricalHeatingPowerPerMeter;
 
@@ -2589,6 +2750,101 @@ public class TwoFluidPipe extends Pipeline {
     double rightPressure = cell + 1 < numberOfSections ? sections[cell + 1].getPressure() : Double.NaN;
     return calculateLocalJouleThomsonSource(cell, phaseMassFaceFluxes, leftPressure, sections[cell].getPressure(),
         rightPressure, Cp, muJT, sections[cell].getLength());
+  }
+
+  /**
+   * Potential-energy work of the mass entering a cell through its internal faces, in W/m.
+   *
+   * <p>
+   * Mirrors the steady {@code dh = q - g dz} balance: fluid lifted between cell centres loses enthalpy.
+   * </p>
+   *
+   * @param cell zero-based cell index
+   * @param phaseMassFaceFluxes face-by-phase mass flows in kg/s
+   * @return gravity work source in W/m (negative for uphill flow)
+   */
+  private double calcGravityWorkSource(int cell, double[][] phaseMassFaceFluxes) {
+    double length = sections[cell].getLength();
+    if (length <= 0.0) {
+      return 0.0;
+    }
+    double source = 0.0;
+    for (int phase = 0; phase < 3; phase++) {
+      double left = phaseMassFaceFluxes[cell][phase];
+      if (left > 0.0 && cell > 0) {
+        source -= left * GRAVITY_ACCELERATION * (sections[cell].getElevation() - sections[cell - 1].getElevation())
+            / length;
+      }
+      double right = phaseMassFaceFluxes[cell + 1][phase];
+      if (right < 0.0 && cell + 1 < numberOfSections) {
+        source -= right * GRAVITY_ACCELERATION * (sections[cell + 1].getElevation() - sections[cell].getElevation())
+            / length;
+      }
+    }
+    return source;
+  }
+
+  /**
+   * Mass heat capacity for the transient energy update.
+   *
+   * <p>
+   * Taken from the steady reference fluid for the same reason as {@link #transientJouleThomsonCoefficient}: the live
+   * inlet stream's property state is not refreshed by a flow-rate edit, so reading it would couple a disconnected inlet
+   * into the thermal inertia of a closed pipe.
+   * </p>
+   *
+   * @param inletFluid the inlet fluid, used only when no reference fluid exists
+   * @return heat capacity in J/(kg K); 2000 when unavailable
+   */
+  private double transientHeatCapacity(SystemInterface inletFluid) {
+    if (Double.isFinite(transientHeatCapacity)) {
+      return transientHeatCapacity;
+    }
+    double value = Double.NaN;
+    try {
+      value = (referenceFluid != null ? referenceFluid : inletFluid).getCp("J/kgK");
+    } catch (Exception e) {
+      logger.debug("Transient heat capacity unavailable: {}", e.getMessage());
+    }
+    if (!Double.isFinite(value) || value <= 0.0) {
+      value = 2000.0;
+    }
+    transientHeatCapacity = value;
+    return value;
+  }
+
+  /**
+   * Joule-Thomson coefficient for the transient energy update.
+   *
+   * <p>
+   * Taken from the reference fluid captured at the steady solve rather than the live inlet stream, whose property state
+   * can change with a flow-rate edit that does not touch the thermodynamic state (and must not, for a closed inlet).
+   * </p>
+   *
+   * @param inletFluid the inlet fluid, used only when no reference fluid exists
+   * @return coefficient in K/Pa, zero when disabled or unavailable
+   */
+  private double transientJouleThomsonCoefficient(SystemInterface inletFluid) {
+    if (!enableJouleThomson) {
+      return 0.0;
+    }
+    if (Double.isFinite(transientJouleThomson)) {
+      return transientJouleThomson;
+    }
+    double value = 0.0;
+    try {
+      SystemInterface source = referenceFluid != null ? referenceFluid.clone() : inletFluid.clone();
+      new ThermodynamicOperations(source).TPflash();
+      source.initProperties();
+      double muJTperBar = source.getJouleThomsonCoefficient("K/bar");
+      if (Double.isFinite(muJTperBar) && Math.abs(muJTperBar) < 10.0) {
+        value = muJTperBar / 1.0e5;
+      }
+    } catch (Exception e) {
+      logger.debug("Inlet Joule-Thomson coefficient unavailable: {}", e.getMessage());
+    }
+    transientJouleThomson = value;
+    return value;
   }
 
   /**
@@ -2954,37 +3210,48 @@ public class TwoFluidPipe extends Pipeline {
       // Use flow-regime-specific literature correlations.
 
       Map<FlowRegime, Double> regimeWeights = sec.getRegimeWeights();
-      if (regimeWeights == null) {
-        alphaL = holdupForRegime(regime, vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
-      } else {
-        // On a transition the section is partly each regime; blending the closures removes the
-        // step change a hard switch would impose on hold-up.
-        alphaL = 0.0;
-        for (Map.Entry<FlowRegime, Double> entry : regimeWeights.entrySet()) {
-          alphaL += entry.getValue()
-              * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
+      Map<FlowRegime, Double> blend = regimeWeights != null ? regimeWeights : Collections.singletonMap(regime, 1.0);
+      // On a transition the section is partly each regime; blending the closures removes the
+      // step change a hard switch would impose on hold-up.
+      double unitShare = 0.0;
+      double unitPart = 0.0;
+      double otherPart = 0.0;
+      for (Map.Entry<FlowRegime, Double> entry : blend.entrySet()) {
+        double weight = entry.getValue();
+        if (weight == 0.0) {
+          continue;
         }
+        if (entry.getKey() == FlowRegime.SLUG && slugUnitClosureEnabled) {
+          SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness,
+              inclination);
+          if (unit.valid || unit.stratified) {
+            double stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+                inclination);
+            double bridging = unit.valid ? slugBridgingWeight(stratified, inclination) : 0.0;
+            unitShare += weight * bridging;
+            unitPart += weight * bridging * unit.unitHoldup;
+            otherPart += weight * (1.0 - bridging) * stratified;
+            continue;
+          }
+        }
+        otherPart += weight
+            * holdupForRegime(entry.getKey(), vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination, lambdaL);
       }
-
-      // Apply terrain accumulation enhancement
-      alphaL = applyTerrainAccumulation(sec, prev, alphaL);
 
       // Apply minimum slip constraint. The bound is a statement that the slip ratio cannot fall
       // below a given value, inverted for the hold-up it implies, so it stays a slip statement at
       // every liquid loading. It deliberately does NOT include a correlation-based term: see
-      // calculateAdaptiveMinimumHoldup.
+      // calculateAdaptiveMinimumHoldup. A slug unit carries its own slip and is not floored.
+      double effectiveMin = 0.0;
       if (enforceMinimumSlip && minimumSlipApplies(inclination)) {
-        double effectiveMin;
-        if (useAdaptiveMinimumOnly) {
-          effectiveMin = minimumSlipHoldup(vsG, vsL);
-        } else {
-          effectiveMin = minimumLiquidHoldup;
-        }
-        effectiveMin = Math.min(0.9, effectiveMin);
-
-        if (alphaL < effectiveMin) {
-          alphaL = effectiveMin;
-        }
+        effectiveMin = Math.min(0.9, useAdaptiveMinimumOnly ? minimumSlipHoldup(vsG, vsL) : minimumLiquidHoldup);
+      }
+      if (unitShare == 0.0) {
+        alphaL = applyTerrainAccumulation(sec, prev, otherPart);
+        alphaL = Math.max(alphaL, effectiveMin);
+      } else {
+        otherPart = Math.max(otherPart, (1.0 - unitShare) * effectiveMin);
+        alphaL = applyTerrainAccumulation(sec, prev, otherPart + unitPart);
       }
 
     } else if (olgaModelType == OLGAModelType.SIMPLIFIED) {
@@ -3163,6 +3430,11 @@ public class TwoFluidPipe extends Pipeline {
       if (enableAnnularFilmModel) {
         double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
             inclination);
+        // A film the gas cannot carry thickens until it bridges the bore (Barnea 1986); annular flow then does
+        // not exist and the section is intermittent.
+        if (annularResult[1] >= ANNULAR_FILM_BRIDGING_HOLDUP) {
+          return intermittentHoldup(vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination);
+        }
         return annularResult[0];
       }
 
@@ -3402,6 +3674,23 @@ public class TwoFluidPipe extends Pipeline {
 
     double low = lowerBound;
     double high = upperBound;
+    // Upward flow at low liquid loading can have three roots; only the thinnest film is structurally stable
+    // (Barnea and Taitel 1992), so bracket the first sign change scanning up from the thin end.
+    double ratio = Math.pow(upperBound / lowerBound, 1.0 / STRATIFIED_ROOT_SCAN_POINTS);
+    double previous = lowerBound;
+    for (int point = 1; point < STRATIFIED_ROOT_SCAN_POINTS; point++) {
+      double trial = previous * ratio;
+      double value = calculateStratifiedMomentumResidual(trial, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
+      if (Double.isFinite(value) && residualLow * value <= 0.0) {
+        high = trial;
+        break;
+      }
+      if (Double.isFinite(value)) {
+        low = trial;
+        residualLow = value;
+      }
+      previous = trial;
+    }
     for (int iter = 0; iter < 80; iter++) {
       double mid = 0.5 * (low + high);
       double residualMid = calculateStratifiedMomentumResidual(mid, vsG, vsL, rhoG, rhoL, muG, muL, D, theta);
@@ -3455,7 +3744,8 @@ public class TwoFluidPipe extends Pipeline {
         : 0.046 / Math.pow(liquidReynolds, 0.2);
     double gasFriction = gasReynolds < 2000.0 ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasReynolds)
         : 0.046 / Math.pow(gasReynolds, 0.2);
-    double interfacialFriction = gasFriction * (1.0 + 75.0 * alphaL);
+    double interfacialFriction = gasFriction
+        * InterfacialFriction.andritsosHanrattyEnhancement(vsG, rhoG, 0.5 * (1.0 - Math.cos(beta / 2.0)));
 
     double liquidWallShear = liquidFriction * rhoL * liquidVelocity * Math.abs(liquidVelocity) / 2.0;
     double gasWallShear = gasFriction * rhoG * gasVelocity * Math.abs(gasVelocity) / 2.0;
@@ -4174,6 +4464,31 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
 
+    double slugWeight = slugUnitClosureEnabled ? slugWeight(sec) : 0.0;
+    double vsG = alphaG * vG;
+    double vsL = alphaL * vL;
+    if (slugWeight > 0.0 && vsG > 0.0 && vsL > 0.0) {
+      SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sec.getSurfaceTension(), diameter,
+          roughness, sec.getInclination());
+      double slugFriction = Double.NaN;
+      if (unit.valid || unit.stratified) {
+        double separated = separatedFrictionGradient(sec);
+        double bridging = 0.0;
+        if (unit.valid) {
+          double stratified = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sec.getSurfaceTension(),
+              diameter, sec.getInclination());
+          bridging = slugBridgingWeight(stratified, sec.getInclination());
+        }
+        slugFriction = bridging > 0.0 && !Double.isFinite(separated) ? unit.frictionGradient
+            : bridging * unit.frictionGradient + (1.0 - bridging) * separated;
+      }
+      if (Double.isFinite(slugFriction)) {
+        // The slug share was charged the mixture friction above; replace it with the unit value.
+        double mixtureFriction = fTP * rhoMix * vMix * vMix / (2.0 * diameter);
+        dPdx_fric += slugWeight * (slugFriction - mixtureFriction);
+      }
+    }
+
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
 
@@ -4215,6 +4530,69 @@ public class TwoFluidPipe extends Pipeline {
       }
     }
     return Math.max(0.0, Math.min(1.0, separated));
+  }
+
+  /**
+   * Holdup of an intermittent section: the slug unit where one exists, otherwise the legacy slug correlation.
+   *
+   * @param vsG superficial gas velocity, m/s
+   * @param vsL superficial liquid velocity, m/s
+   * @param rhoG gas density, kg/m3
+   * @param rhoL liquid density, kg/m3
+   * @param muG gas viscosity, Pa.s
+   * @param muL liquid viscosity, Pa.s
+   * @param sigma surface tension, N/m
+   * @param inclination inclination, radians
+   * @return liquid holdup
+   */
+  private double intermittentHoldup(double vsG, double vsL, double rhoG, double rhoL, double muG, double muL,
+      double sigma, double inclination) {
+    if (slugUnitClosureEnabled) {
+      SlugUnitModel.Result unit = slugUnitModel.solve(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, roughness,
+          inclination);
+      if (unit.valid) {
+        return unit.unitHoldup;
+      }
+    }
+    return calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
+  }
+
+  /**
+   * Share of a slug-flagged section in which slugs can actually form.
+   *
+   * <p>
+   * Slugs grow from a stratified layer that bridges the bore. Below Barnea's (1987) blockage holdup the layer cannot
+   * bridge and the section stays stratified; the share ramps across the same band the flow-regime detector uses. The
+   * share therefore vanishes continuously with the liquid supply, where a slug unit alone would keep a finite
+   * recirculating inventory. On steep sections the layer geometry does not apply and the unit is used as solved.
+   * </p>
+   *
+   * @param stratifiedHoldup equilibrium stratified holdup at the same superficial velocities
+   * @param inclination inclination, radians
+   * @return slug share between zero and one
+   */
+  private static double slugBridgingWeight(double stratifiedHoldup, double inclination) {
+    if (Math.abs(inclination) > SLUG_BRIDGING_MAX_INCLINATION) {
+      return 1.0;
+    }
+    double lower = ANNULAR_FILM_BRIDGING_HOLDUP - SLUG_BRIDGING_BAND;
+    double weight = (stratifiedHoldup - lower) / (2.0 * SLUG_BRIDGING_BAND);
+    return Math.max(0.0, Math.min(1.0, weight));
+  }
+
+  /**
+   * Share of a section classified as slug flow.
+   *
+   * @param sec section being evaluated
+   * @return slug weight between zero and one
+   */
+  private static double slugWeight(TwoFluidSection sec) {
+    Map<FlowRegime, Double> weights = sec.getRegimeWeights();
+    if (weights == null) {
+      return sec.getFlowRegime() == FlowRegime.SLUG ? 1.0 : 0.0;
+    }
+    Double slug = weights.get(FlowRegime.SLUG);
+    return slug == null ? 0.0 : Math.max(0.0, Math.min(1.0, slug));
   }
 
   /**
@@ -4553,6 +4931,12 @@ public class TwoFluidPipe extends Pipeline {
     minimumTransientPressureDamping = 1.0;
     transientCoupledPressureMomentumRejectedSubsteps = 0;
     transientCoupledPressureMomentumFailureDiagnostic = "";
+    // A new steady state owns a new wall-temperature field.
+    wallTemperatureProfile = null;
+    transientJouleThomson = Double.NaN;
+    transientHeatCapacity = Double.NaN;
+    steadyConsistencyCalibrated = false;
+    equations.clearSteadyMomentumCorrection();
 
     // Initialize sections
     initializeSections();
@@ -4568,6 +4952,8 @@ public class TwoFluidPipe extends Pipeline {
 
     // Set up outlet stream
     updateOutletStream(true);
+    steadyCalibrationInletFlow = getInletStream().getFlowRate("kg/sec");
+    steadyCalibrationOutletPressure = outletPressure;
 
     setCalculationIdentifier(id);
   }
@@ -5056,6 +5442,7 @@ public class TwoFluidPipe extends Pipeline {
     transientOutletBackflowClamped = candidate.transientOutletBackflowClamped;
     implicitInterfacialPressureCoupling = candidate.implicitInterfacialPressureCoupling;
     coupledPressureMomentumEnabled = candidate.coupledPressureMomentumEnabled;
+    coupledPressureMomentumExplicit = candidate.coupledPressureMomentumExplicit;
     transientCoupledPressureMomentumFailureDetected = candidate.transientCoupledPressureMomentumFailureDetected;
     transientCoupledPressureMomentumCorrectionLimited = candidate.transientCoupledPressureMomentumCorrectionLimited;
     transientPressureLimitCount = candidate.transientPressureLimitCount;
@@ -5086,6 +5473,8 @@ public class TwoFluidPipe extends Pipeline {
     unsplitReferenceSections = candidate.unsplitReferenceSections;
     sharedSlugForceBalanceEnabled = candidate.sharedSlugForceBalanceEnabled;
     sharedSlugForceBalance = candidate.sharedSlugForceBalance;
+    slugUnitClosureEnabled = candidate.slugUnitClosureEnabled;
+    slugUnitModel = candidate.slugUnitModel;
     timeIntegrator = candidate.timeIntegrator;
     flowRegimeDetector = candidate.flowRegimeDetector;
     accumulationTracker = candidate.accumulationTracker;
@@ -5155,6 +5544,12 @@ public class TwoFluidPipe extends Pipeline {
     ssFlashInterval = candidate.ssFlashInterval;
     ssMaxWallClockTime = candidate.ssMaxWallClockTime;
     useSeparatedFrictionModel = candidate.useSeparatedFrictionModel;
+    steadyConsistentTransient = candidate.steadyConsistentTransient;
+    steadyConsistencyCalibrated = candidate.steadyConsistencyCalibrated;
+    steadyCalibrationInletFlow = candidate.steadyCalibrationInletFlow;
+    steadyCalibrationOutletPressure = candidate.steadyCalibrationOutletPressure;
+    transientJouleThomson = candidate.transientJouleThomson;
+    transientHeatCapacity = candidate.transientHeatCapacity;
     ssWallClockLimited = candidate.ssWallClockLimited;
     ssPressureFloorLimited = candidate.ssPressureFloorLimited;
     ssIterationsUsed = candidate.ssIterationsUsed;
@@ -5215,6 +5610,7 @@ public class TwoFluidPipe extends Pipeline {
       throw new IllegalArgumentException("Transient time step cannot advance the finite simulation clock");
     }
     isTransientMode = true;
+    selectCoupledPressureForLiquidFullLine();
     synchronizeUpstreamCompressibleVolumePressure();
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
@@ -5260,6 +5656,25 @@ public class TwoFluidPipe extends Pipeline {
     equations.getFluxCalculator().setCenteredPressureFluxEnabled(coupledPressureMomentumEnabled);
     boolean useImplicitVoidWave = equations.isEnableInterfacialPressure() && implicitInterfacialPressureCoupling;
     equations.setImplicitInterfacialPressure(useImplicitVoidWave);
+
+    if (steadyConsistentTransient && !steadyConsistencyCalibrated && !coupledPressureMomentumEnabled) {
+      // Calibrate only while the boundaries still carry the steady state; a boundary change made
+      // before the first step is the disturbance to simulate, not part of the steady residual.
+      boolean steadyBoundaries = inletBCType != BoundaryCondition.CLOSED && outletBCType != BoundaryCondition.CLOSED
+          && Math.abs(getInletStream().getFlowRate("kg/sec") - steadyCalibrationInletFlow) <= 1.0e-9
+              * Math.max(1.0, Math.abs(steadyCalibrationInletFlow))
+          && Math.abs(outletPressure - steadyCalibrationOutletPressure) <= 1.0e-9
+              * Math.max(1.0, Math.abs(steadyCalibrationOutletPressure));
+      if (steadyBoundaries) {
+        equations.calibrateSteadyMomentumCorrection(getSectionSnapshots(), dx);
+      }
+      steadyConsistencyCalibrated = true;
+    }
+    if (equations.hasSteadyMomentumCorrection() && steadyCalibrationInletFlow > 0.0) {
+      double flowRatio = Math.min(3.0,
+          Math.max(0.0, getInletStream().getFlowRate("kg/sec") / steadyCalibrationInletFlow));
+      equations.setSteadyMomentumCorrectionScale(flowRatio * flowRatio);
+    }
 
     // Calculate initial stable time step from the current-velocity CFL limit
     double dtCFL = isIMEX ? calcConvectiveTimeStep() : calcStableTimeStep();
@@ -9208,10 +9623,45 @@ public class TwoFluidPipe extends Pipeline {
    * @param enabled true to use the coupled correction
    */
   public void setEnableCoupledPressureMomentum(boolean enabled) {
+    coupledPressureMomentumExplicit = true;
+    applyCoupledPressureMomentum(enabled);
+  }
+
+  /**
+   * Set the coupled option without marking it as a user choice.
+   *
+   * @param enabled true to use the coupled correction
+   */
+  private void applyCoupledPressureMomentum(boolean enabled) {
     coupledPressureMomentumEnabled = enabled;
     if (timeIntegrator != null) {
       timeIntegrator.setCoupledPressureMomentumEnabled(enabled);
     }
+  }
+
+  /**
+   * Use the coupled pressure-momentum solve on a liquid-full line unless the user chose the option.
+   *
+   * <p>
+   * With the default post-step pressure reconstruction a liquid rate step rings with a period of hundreds of seconds,
+   * because pressure is marched from the outlet instead of advanced with the liquid acoustic response. On a line with
+   * no gas the coupled solve has no severe-slugging or void-wave qualification concern and settles the step within one
+   * acoustic transit. Two-phase lines keep the default until that option is qualified for them.
+   * </p>
+   */
+  private void selectCoupledPressureForLiquidFullLine() {
+    if (coupledPressureMomentumExplicit || coupledPressureMomentumEnabled || sharedSlugForceBalanceEnabled) {
+      return;
+    }
+    for (TwoFluidSection sec : sections) {
+      if (sec.getGasHoldup() > 0.0) {
+        return;
+      }
+    }
+    if (!equations.isEnableInterfacialPressure()) {
+      setEnableInterfacialPressure(true);
+    }
+    applyCoupledPressureMomentum(true);
   }
 
   /** @return true when the coupled pressure-momentum correction is selected */
@@ -9601,6 +10051,64 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isSharedSlugForceBalanceEnabled() {
     return sharedSlugForceBalanceEnabled;
+  }
+
+  /**
+   * Select the steady slug-unit closure for the slug share of a section.
+   *
+   * <p>
+   * With the closure on, the slug share of holdup and friction comes from {@link SlugUnitModel}: mixture friction over
+   * the slug body only, per-phase friction over the film zone, and the acceleration of the film picked up at the slug
+   * front. Where the unit balance admits no slugs the share is treated as stratified. The minimum-slip floor does not
+   * apply to the slug-unit holdup, which carries its own slip. With it off, the legacy slug correlation and mixture
+   * friction over the whole section are used.
+   * </p>
+   *
+   * @param enabled true to use the slug-unit closure; default true
+   */
+  public void setSlugUnitClosureEnabled(boolean enabled) {
+    slugUnitClosureEnabled = enabled;
+    if (slugUnitModel == null) {
+      slugUnitModel = new SlugUnitModel();
+    }
+  }
+
+  /**
+   * Return whether the steady slug-unit closure is selected.
+   *
+   * @return true when enabled
+   */
+  public boolean isSlugUnitClosureEnabled() {
+    return slugUnitClosureEnabled;
+  }
+
+  /**
+   * Make the converged steady state a fixed point of the legacy transient operator.
+   *
+   * <p>
+   * The steady solver and the transient momentum equations use different mechanical closures. Without this correction a
+   * liquid-loaded line drifts away from its own steady state at constant boundaries (measured: half the inventory lost
+   * in an hour on a 5 km gas-oil slug line; a 7 per cent outlet-flow deficit on a gas-condensate line). The correction
+   * is calibrated once, at the first transient step after {@link #run(UUID)} that still carries the steady boundary
+   * conditions, and scales with the square of the inlet mass flow relative to calibration, as a friction force does. It
+   * is not applied with the coupled pressure-momentum solver.
+   * </p>
+   *
+   * @param enabled true to calibrate (default), false for the uncorrected legacy operator
+   */
+  public void setSteadyConsistentTransient(boolean enabled) {
+    this.steadyConsistentTransient = enabled;
+    if (!enabled) {
+      steadyConsistencyCalibrated = false;
+      if (equations != null) {
+        equations.clearSteadyMomentumCorrection();
+      }
+    }
+  }
+
+  /** @return whether the steady-consistency transient correction is enabled */
+  public boolean isSteadyConsistentTransient() {
+    return steadyConsistentTransient;
   }
 
   /**

@@ -99,6 +99,9 @@
         },
         "evidenceLevel": {
           "const": "UNQUALIFIED"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidenceManifest"
         }
       }
     },
@@ -400,6 +403,88 @@
         "maximum": 1.00000001
       }
     },
+    "evidenceManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifestId",
+        "applicability",
+        "limitations",
+        "independentEvidence",
+        "records"
+      ],
+      "properties": {
+        "manifestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applicability": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceCode"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidenceCode"
+          }
+        },
+        "independentEvidence": {
+          "type": "boolean"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceRecord"
+          }
+        }
+      }
+    },
+    "evidenceCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "evidenceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "reference",
+        "description",
+        "independent"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "enum": [
+            "ANALYTICAL",
+            "CONSERVATION",
+            "NUMERICAL",
+            "EXPERIMENTAL"
+          ]
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "independent": {
+          "type": "boolean"
+        }
+      }
+    },
     "diagnostic": {
       "type": "object",
       "additionalProperties": false,
@@ -469,6 +554,14 @@
     "source": {
       "type": "object",
       "additionalProperties": false,
+      "dependentRequired": {
+        "flowPathLength": [
+          "darcyFrictionFactor"
+        ],
+        "darcyFrictionFactor": [
+          "flowPathLength"
+        ]
+      },
       "required": [
         "diameter",
         "physicalArea",
@@ -500,6 +593,22 @@
         },
         "backPressure": {
           "$ref": "#/$defs/pressure"
+        },
+        "flowPathLength": {
+          "$ref": "#/$defs/length",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
+        },
+        "darcyFrictionFactor": {
+          "$ref": "#/$defs/factor",
+          "properties": {
+            "value": {
+              "exclusiveMinimum": 0
+            }
+          }
         },
         "massFlowRate": {
           "$ref": "#/$defs/rate"

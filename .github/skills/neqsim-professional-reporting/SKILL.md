@@ -365,7 +365,14 @@ workflow gaps were found.
   },
   "results": { "...": "..." },
   "figures": [ { "id": "fig_01", "path": "...", "caption": "...", "discussed_in": "...", "linked_results": [] } ],
-  "tables": [ { "id": "tbl_01", "path": "...", "caption": "..." } ],
+  "tables": [ { "title": "caption text", "headers": ["Year", "Utilisation [%]"], "rows": [[2026, 117]] } ],
+  "reproducibility": {
+    "summary": "where the scripts live and which README is the user guide",
+    "environment": ["interpreter", "JDK", "NeqSim version or checkout, incl. unreleased changes the run depends on"],
+    "steps": ["script 1 - what it writes", "script 2 - ...", "generate_report.py"],
+    "checks": ["values a rerun must reproduce, e.g. 2026 bottleneck 23-VG06 at 117 %"],
+    "what_if": ["where to edit to change an input, and which step to rerun from"]
+  },
   "uncertainty": { "method": "Monte Carlo n=10000", "P10": ..., "P50": ..., "P90": ... },
   "risks": [ { "id": "R1", "description": "...", "P": 3, "C": 4, "score": 12, "mitigation": "..." } ],
   "standards_applied": ["API 521-2020", "NORSOK Z-013"],
@@ -385,6 +392,12 @@ workflow gaps were found.
 ```
 
 ## Common Mistakes
+
+A model-based deliverable is not finished until a reader can rerun it. Emit
+`reproducibility` (rendered as the report appendix *Reproducing the Results*) and
+keep a task-root `README.md` with the same prerequisites, the exact command
+sequence, the check values a rerun must hit, and where to edit to change a case.
+Name any unreleased NeqSim change the results depend on.
 
 | Mistake                                          | Fix                                                                 |
 | ------------------------------------------------ | ------------------------------------------------------------------- |

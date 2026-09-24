@@ -910,3 +910,28 @@ overlay-mechanism doc to `devtools/TASK_TEMPLATE_OVERLAY.md` (outside the walked
 can no longer leak into task folders). Lesson: nothing meant for humans browsing a source folder
 should be placed inside a directory that a tool copies wholesale — check what walks/overlays a
 directory before adding a README to it.
+
+### 2026-09-22 — TwoFluidPipe benchmark matrix: one-, two- and three-phase, steady and transient
+**Type:** G (Workflow)
+**Keywords:** TwoFluidPipe, multiphase pipe flow, benchmark matrix, gas condensate, gas-oil,
+three-phase, riser, hilly terrain, transient turndown, ramp-up, energy balance, equilibrium cp,
+Andritsos-Hanratty, steady-consistent transient, regime gate, work record
+**Solution:** private task folder (redacted); Java fixes in `TwoFluidPipe`,
+`TwoFluidConservationEquations`, `InterfacialFriction`; tests `TwoFluidPipeEnergyBalanceTest`,
+`SteadyMomentumCorrectionTest`
+**Notes:** 13 steady and 5 transient cases against an industry transient multiphase simulator on
+one shared NeqSim fluid basis (the reference PVT table and source phase fractions were written from
+the same SRK flash). Fixes that mattered:
+- the steady energy balance used a frozen-phase cp, which ignores condensation latent heat, so every
+  condensing case arrived too cold; now equilibrium cp/JT from flashed-enthalpy differences plus
+  the `g dz/cp` term;
+- the transient read cp/JT from the live inlet stream; now cached from the reference fluid;
+- the steady-consistency momentum correction must be **regime-gated** — applied after an
+  annular-to-stratified turndown it drained the line, while in slug flow it is required.
+Andritsos-Hanratty interfacial enhancement belongs in the solver, not in `FlowRegimeDetector` (it
+broke the flow-map validation there). Remaining gaps: slug-unit friction over-predicts dP, the
+three-phase stratified/slug boundary is evaluated on the combined liquid level, the two-phase slip
+floor binds in gas-condensate flow, liquid acoustic transients ring, and riser dP is high.
+Tooling fix: the report and work-record generators took glob `produces:` entries such as
+`figures/*.png` literally and flagged them missing, and the work record listed the template
+notebook plan as missing work even with `notebooks.required: false`.

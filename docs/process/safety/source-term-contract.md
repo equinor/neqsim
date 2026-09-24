@@ -24,6 +24,11 @@ aqueous and solid-like distinctions; no gas fraction is inferred from phase inde
 Advective momentum is mass rate multiplied by orifice-exit velocity; it excludes pressure thrust.
 Enthalpy and entropy retain the selected thermodynamic model's reference convention.
 
+Finite-pipe results add the paired optional fields `flowPathLength` [m] and
+`darcyFrictionFactor` [1] to the source object. The schema requires both when either is present.
+Their absence denotes the original short-opening geometry; consumers must not infer a zero-length
+pipe calculation from a finite-pipe model identity.
+
 | Status | Numeric source payload |
 |---|---|
 | `VALID` / `VALID_WITH_WARNINGS` | Required. Inspect diagnostics and applicability. |
@@ -31,9 +36,13 @@ Enthalpy and entropy retain the selected thermodynamic model's reference convent
 | `STALE` | Absent. Current successful process state was not established. |
 | `DISABLED` | Absent. Caller disabled the hypothetical opening; this does not assert zero equipment inventory. |
 
-Version 1 emits `evidenceLevel: UNQUALIFIED`. Regression tests establish software behavior,
-but do not create independently reviewed engineering qualification. Consumers must validate
-both schema and application-specific physical/balance requirements before using a frame.
+Version 1 emits `evidenceLevel: UNQUALIFIED`. Calculated frames also carry an optional-compatible
+`model.evidence` manifest containing stable applicability/limitation codes and typed evidence
+references. Existing v1 frames without that extension remain schema-compatible. The
+`independentEvidence` flag is false for the current built-in manifests; regression tests establish
+software behavior but do not create independently reviewed engineering qualification. Consumers
+must validate both schema and application-specific physical/balance requirements before using a
+frame.
 
 ## Serialization and verification
 

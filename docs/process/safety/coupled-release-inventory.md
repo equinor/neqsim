@@ -17,6 +17,12 @@ equilibrium phase supplies the upstream state and withdrawn composition; the ent
 inventory is then reflashed. This is a boundary condition, not a level/geometry model: no
 entrainment, slip, interfacial transfer rate or automatic fallback phase is inferred.
 
+An overload accepting `List<PhaseType>` and `phaseExhaustionMassFraction` adds a caller-declared
+ordered transition plan. The first phase must initially be present above the threshold. A transient
+step advances only to the next named phase when the active phase inventory mass fraction reaches
+the explicit threshold. It never selects a phase from density, position or phase count. If the
+immediately next planned phase is not usable, the complete call fails atomically.
+
 The constructor clones the supplied EOS system and scales its amount to the specified
 volume at its initial temperature and pressure. The supplied mole count defines composition,
 not vessel size or kg/s. Returned fluids and accounting snapshots are independent copies.
@@ -46,6 +52,12 @@ closure against the original inventory. The substep is limited by `maxSubstepS`,
 duration, and 1% of current selected-phase mass. This bound prevents overdraw; it is **not** an
 accuracy estimate. Refine `maxSubstepS` and the external output timestep for each study.
 A call needing more than 10,000 substeps fails without committing this unit's state.
+
+For an ordered plan, the phase-exhaustion threshold is a model input, not a numerical tolerance.
+It represents the minimum phase inventory for which the selected homogeneous withdrawal boundary
+is considered applicable. The transition preserves all residual material in the reflashed vessel;
+it changes only which explicitly named equilibrium phase supplies subsequent outflow composition
+and enthalpy. Threshold sensitivity therefore belongs in each study's validation matrix.
 
 The general VU flash's stopping tolerance is looser than the cumulative accounting target.
 Each substep therefore permits up to 32 repeated solves of the same VU equations until
@@ -99,6 +111,19 @@ Use the actual equilibrated phase type when selecting a hydrocarbon liquid (`OIL
 the selected phase during a transient call, the call fails atomically with
 `INVENTORY_SELECTED_PHASE_ABSENT`; callers must split the regime or select another assessed model.
 
+For an assessed gas-to-liquid transition, declare both phases and the inventory mass-fraction
+boundary explicitly:
+
+```java
+List<PhaseType> withdrawalPlan = Arrays.asList(PhaseType.GAS, liquidType);
+ReleaseInventory staged = new ReleaseInventory("staged", flashedFluid,
+    1.0, 0.01, 0.62, 101325.0, new HomogeneousEquilibriumReleaseModel(), 0.02,
+    withdrawalPlan, 1.0e-4);
+```
+
+This does not model a vessel level, interface geometry, entrainment or interfacial transfer rate.
+Use a threshold justified for the modeled inventory and verify sensitivity around it.
+
 For an area-based model, add `process` under `"gas-area"`, construct the session from that
 `ProcessModel`, and use `session.addInventorySource("opening", "gas-area", "inventory")`.
 Keep dynamic mode enabled; this unit is constructed with `setCalculateSteadyState(false)`.
@@ -116,7 +141,13 @@ apply the frame rate as an additional withdrawal from this unit.
 
 `addInventorySource` binds the inventory's own geometry and release model. It rejects a
 second physical-source registration for the same unit. Existing `addSource` remains a
-hypothetical sample and does not enable inventory coupling. Schema v1 is unchanged.
+hypothetical sample and does not enable inventory coupling.
+
+The finite-pipe `ReleaseInventory` constructor adds flow-path length and specified Darcy friction
+before the model argument. That geometry is retained as inventory pressure and composition evolve
+and is exported by `addInventorySource`. It enables quasi-steady coupling to the ideal-gas Fanno
+model; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
+paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
@@ -126,6 +157,10 @@ identity, inventory volume/time, cumulative released mass/enthalpy, and
 `rateTimeBasis=INSTANTANEOUS_AT_FRAME_TIME` in provenance. Evidence stays `UNQUALIFIED`.
 Process, equipment, calculation UUID and session sequence semantics are retained.
 The configured maximum substep and last substep count are also recorded in provenance.
+Ordered-plan frames instead carry
+`releaseBasis=COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY`, the complete ordered plan,
+the exhaustion threshold, active phase, last-call transition count and cumulative transition
+count. All remain string-valued provenance in schema v1; SI source quantities are unchanged.
 
 `vessel.setReleaseEnabled(false)` stops physical withdrawal and yields an
 `INVENTORY_OPENING_CLOSED` disabled frame after the next successful process call.
@@ -139,6 +174,8 @@ Opening/closure changes occur at step boundaries; split steps at known event tim
 | Substep would reduce pressure below receiving pressure | Bounded event location lands on receiving pressure; provenance records the physical release duration. |
 | Selected phase is absent initially | Construction rejects the configuration. |
 | Selected phase disappears after re-equilibration | `INVENTORY_SELECTED_PHASE_ABSENT`; the unit call commits no state. |
+| Active planned phase reaches its explicit exhaustion threshold | Advances only to the immediately next usable caller-declared phase and records the transition. |
+| Immediately next planned phase is absent or exhausted | `INVENTORY_WITHDRAWAL_PHASE_PLAN_EXHAUSTED`; the unit call commits no state. |
 | Reactions, forced phases, solids or hydrates | `INVENTORY_REGIME_UNSUPPORTED`; no fallback physics is invented. |
 | Invalid model, mismatched upstream state/composition, or screening result | Fail closed without committing inventory. |
 | Volume, component or energy closure failure | Fail closed, with the corresponding closure diagnostic. |
@@ -152,8 +189,10 @@ models must be deterministic and must not mutate themselves or the process durin
 
 ## Validation and applicability
 
-`ReleaseInventoryTest` checks multicomponent gas depletion and phase-selected gas-over-liquid
-and liquid withdrawal using the homogeneous-equilibrium release model, component/energy/volume closure, cooling and decreasing release rate, input
+`ReleaseInventoryTest` checks multicomponent gas depletion, phase-selected gas-over-liquid and
+liquid withdrawal using the homogeneous-equilibrium release model. A controlled deterministic
+release model isolates explicit gas-to-liquid exhaustion transition, conservation and timestep/
+threshold refinement from release-model solver noise. The suite also checks component/energy/volume closure, cooling and decreasing release rate, input
 immutability, cloning, zero flow, isolation/reopening, invalid steps, pressure-boundary
 rollback, injected mid-step failure, and both process containers. Actual frames, including
 disabled and failed cases, are validated against the bundled JSON Schema.
@@ -195,9 +234,14 @@ The local 0.05 s results at 10 s are:
 The fine/coarse pressure-difference ratio is approximately 0.499 in both cases. These results
 separate numerical refinement from the small real-EOS/constant-gamma reference difference.
 
-This increment covers equilibrium, phase-selected withdrawal from a well-mixed rigid inventory.
-Phase level/geometry, entrainment and slip, finite-rate interfacial transfer, wall/fire heat transfer,
-pipe decompression, non-equilibrium transfer, mixture-specific solid risk and experimental qualification
+The transition benchmark spans thresholds 0.026175--0.026185 and maximum substeps 0.15--0.0375 s.
+All nine cases conserve 0.0003 kg release, commit exactly one transition and retain component,
+energy and volume closure. The finest nearby-threshold pressure spread is below 0.032%; successive
+step refinement is non-increasing within the asserted numerical tolerance.
+
+This increment covers equilibrium, phase-selected withdrawal and explicit ordered phase-exhaustion
+transitions in a well-mixed rigid inventory. Phase level/geometry, entrainment and slip, finite-rate interfacial transfer, wall/fire heat transfer,
+pipe decompression, non-equilibrium transfer, solid-bearing flow physics and experimental qualification
 remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
 or independent safety/domain review is implied.

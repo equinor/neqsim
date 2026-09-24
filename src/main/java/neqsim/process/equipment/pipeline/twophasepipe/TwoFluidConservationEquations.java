@@ -331,6 +331,113 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Retained timestep setting for source compatibility with existing callers. */
   private double dt = 0.01;
 
+  /**
+   * Per-cell phase momentum forces, N/m in gas/oil/water order, that make the steady handoff a fixed point of the
+   * transient operator; null when not calibrated.
+   */
+  private double[][] steadyMomentumCorrection;
+
+  /** Phase momenta per length at calibration, kg/s, retained for diagnostics. */
+  private double[][] steadyMomentumReference;
+
+  /** Flow regime of each cell at calibration; the correction only holds while a cell keeps it. */
+  private PipeSection.FlowRegime[] steadyMomentumRegime;
+
+  /** Multiplier applied to the calibrated correction, set by the owner from the boundary flow. */
+  private double steadyMomentumCorrectionScale = 1.0;
+
+  /**
+   * Set the multiplier of the steady-consistency correction.
+   *
+   * <p>
+   * The owner scales it with the square of the inlet flow relative to calibration, as a friction force scales. A global
+   * factor is used deliberately: scaling with the local phase momentum makes a correction that drives a phase grow with
+   * that phase's own velocity, which is positive feedback and ran a turndown case away.
+   * </p>
+   *
+   * @param scale finite nonnegative multiplier
+   */
+  public void setSteadyMomentumCorrectionScale(double scale) {
+    steadyMomentumCorrectionScale = Double.isFinite(scale) && scale >= 0.0 ? scale : 1.0;
+  }
+
+  /**
+   * Calibrate a steady-consistency correction so the supplied steady state is a fixed point of this operator.
+   *
+   * <p>
+   * The steady solver and the transient operator use different mechanical closures, so the converged steady holdup and
+   * slip do not in general satisfy the transient phase momentum balances: evaluated at the handoff, a liquid-loaded
+   * slug state accelerated its gas at about -12 m/s2 and its oil at +1.6 m/s2, draining half the line inventory within
+   * an hour at constant boundaries. This stores the negative of each phase momentum rate as a force per length, applied
+   * with the multiplier set by {@link #setSteadyMomentumCorrectionScale(double)}. The force is the residual of one
+   * regime's closures, so a cell drops it once its flow regime differs from the regime at calibration.
+   * </p>
+   *
+   * @param sections steady sections; the caller must pass defensive copies
+   * @param dx representative cell size in m
+   */
+  public synchronized void calibrateSteadyMomentumCorrection(TwoFluidSection[] sections, double dx) {
+    steadyMomentumCorrection = null;
+    steadyMomentumReference = null;
+    steadyMomentumRegime = null;
+    double[][] rates = calcRHSTransactional(sections, dx);
+    double[][] correction = new double[sections.length][3];
+    double[][] reference = new double[sections.length][3];
+    PipeSection.FlowRegime[] regimes = new PipeSection.FlowRegime[sections.length];
+    int[] momentumIndex = {IDX_GAS_MOMENTUM, IDX_OIL_MOMENTUM, IDX_WATER_MOMENTUM};
+    for (int cell = 0; cell < sections.length; cell++) {
+      double[] state = sections[cell].getStateVector();
+      regimes[cell] = sections[cell].getFlowRegime();
+      for (int phase = 0; phase < 3; phase++) {
+        double rate = rates[cell][momentumIndex[phase]];
+        reference[cell][phase] = state[momentumIndex[phase]];
+        correction[cell][phase] = Double.isFinite(rate) && state[phase] > 0.0 ? -rate : 0.0;
+      }
+    }
+    steadyMomentumCorrection = correction;
+    steadyMomentumReference = reference;
+    steadyMomentumRegime = regimes;
+    steadyMomentumCorrectionScale = 1.0;
+  }
+
+  /** Remove any steady-consistency momentum correction. */
+  public synchronized void clearSteadyMomentumCorrection() {
+    steadyMomentumCorrection = null;
+    steadyMomentumReference = null;
+    steadyMomentumRegime = null;
+  }
+
+  /** @return whether a steady-consistency momentum correction is active */
+  public boolean hasSteadyMomentumCorrection() {
+    return steadyMomentumCorrection != null;
+  }
+
+  /**
+   * Add the calibrated steady-consistency force to the phase momentum rates.
+   *
+   * @param sections current sections
+   * @param dUdt rates to update in place
+   */
+  private void applySteadyMomentumCorrection(TwoFluidSection[] sections, double[][] dUdt) {
+    if (steadyMomentumCorrection == null || steadyMomentumCorrection.length != sections.length) {
+      return;
+    }
+    int[] momentumIndex = {IDX_GAS_MOMENTUM, IDX_OIL_MOMENTUM, IDX_WATER_MOMENTUM};
+    for (int cell = 0; cell < sections.length; cell++) {
+      if (steadyMomentumRegime != null && sections[cell].getFlowRegime() != steadyMomentumRegime[cell]) {
+        continue;
+      }
+      double[] state = sections[cell].getStateVector();
+      for (int phase = 0; phase < 3; phase++) {
+        double correction = steadyMomentumCorrection[cell][phase];
+        if (correction == 0.0 || state[phase] <= 0.0) {
+          continue;
+        }
+        dUdt[cell][momentumIndex[phase]] += correction * steadyMomentumCorrectionScale;
+      }
+    }
+  }
+
   /** Most recent phase-resolved boundary and source rates calculated by {@link #calcRHS}. */
   private MassBalanceRate lastMassBalanceRate = new MassBalanceRate(new double[3], new double[3], new double[3]);
 
@@ -677,6 +784,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     applyInterfacialPressure(sections, dUdt);
     applyVirtualMassCoupling(sections, dUdt);
+    applySteadyMomentumCorrection(sections, dUdt);
 
     double[] inletMassFlow = {inletFlux[IDX_GAS_MASS], inletFlux[IDX_OIL_MASS], inletFlux[IDX_WATER_MASS]};
     double[] outletMassFlow = {outletFlux[IDX_GAS_MASS], outletFlux[IDX_OIL_MASS], outletFlux[IDX_WATER_MASS]};
