@@ -42,7 +42,7 @@ public class FluidClassificationGuideDocumentationTest extends NeqSimTest {
     assertTrue(guide.contains("C7+-screening route"));
     assertTrue(guide.contains("finite, non-negative GOR"));
     assertTrue(guide.contains("temperature in K"));
-    assertTrue(guide.contains("pressure in bara"));
+    assertTrue(guide.contains("uses K, bara, mol%, and scf/STB explicitly"));
     assertTrue(guide.contains("C7+ in mol%"));
     assertTrue(guide.contains("GOR in scf/STB"));
     assertTrue(guide.contains("PVT samples and laboratory CCE, CVD, DLE"));
