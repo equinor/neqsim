@@ -145,8 +145,8 @@ hypothetical sample and does not enable inventory coupling.
 
 The finite-pipe `ReleaseInventory` constructor adds flow-path length and specified Darcy friction
 before the model argument. That geometry is retained as inventory pressure and composition evolve
-and is exported by `addInventorySource`. It enables quasi-steady coupling to the ideal-gas Fanno
-model; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
+and is exported by `addInventorySource`. It enables quasi-steady coupling to the ideal-gas and
+single-equilibrium-phase real-gas Fanno models; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
 paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.

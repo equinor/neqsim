@@ -1,6 +1,6 @@
 ---
 title: Model-explicit release source terms
-description: Explicit short-opening and ideal-gas Fanno pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
+description: Explicit short-opening and ideal/real-gas Fanno pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
@@ -46,6 +46,7 @@ identity, version and diagnostics with every frame:
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
+| `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
 | `LegacyScreeningReleaseModel` | Reproduce the historical `LeakModel.calculateMassFlowRate` rate during migration. | Always returns `VALID_WITH_WARNINGS` when usable and carries `SCREENING_ONLY`, unresolved-station and legacy-fallback diagnostics. |
 
 Every implementation also returns an immutable `ReleaseModelEvidence` manifest. Stable
@@ -152,6 +153,35 @@ heat transfer, real-gas departure, multiphase flow, slip, delayed flashing, entr
 finite-rate phase transfer or solid-bearing transport. It is software-validated against its
 analytical equations, not independently qualified for facility decisions.
 
+## Real-gas Fanno pipe equations
+
+`RealGasFannoPipeReleaseModel` uses the same finite-pipe request and process/inventory integration
+as the ideal model, but obtains density, enthalpy, entropy and acoustic speed from the selected
+NeqSim EOS at each numerical station. It preserves constant mass flux $G$ and stagnation enthalpy
+$h_0$:
+
+$$G=\rho u,\qquad h+\frac{u^2}{2}=h_0.$$
+
+For specified Darcy factor $f_D$, diameter $D$ and axial coordinate $x$, the steady momentum
+balance is:
+
+$$\frac{dp}{dx}=-\frac{f_DG^2}{2D\rho\left(1+G\left.\frac{du}{dp}\right|_{h_0,G}\right)}.$$
+
+The solver finds the subsonic isentropic inlet state connected to the reservoir, marches this
+equation with EOS enthalpy flashes, and brackets the largest solution whose exit Mach number
+remains below one. A receiving pressure above the critical exit pressure triggers a second
+bounded mass-flux solve so the physical exit pressure matches the receiver. A lower receiving
+pressure retains the critical pipe state and reports a separately resolved isentropic
+ambient-expanded station. The requested effective area remains $C_d\pi D^2/4$.
+
+This is a quasi-steady model, not a transient pipe solver. It represents neither pressure-wave
+propagation nor line packing, finite pipe inventory, the second side of a rupture, heat transfer,
+roughness/Reynolds friction correlations, non-equilibrium phase transfer, slip or solid-bearing
+flow. Every EOS marching and ambient state must remain one equilibrium gas phase. Phase
+appearance is not replaced with ideal-gas or homogeneous-equilibrium physics. The result remains
+`UNQUALIFIED`; dense-gas regression and dilute analytical agreement are software validation, not
+independent experimental qualification.
+
 ## Homogeneous-equilibrium equations and station semantics
 
 The upstream TP flash establishes stagnation enthalpy $h_0$ [J/kg] and entropy $s_0$
@@ -204,8 +234,9 @@ For upstream pressure at or below back pressure, the result is valid zero forwar
 | Forced phases, reactions, solid or hydrate checking enabled | `UNSUPPORTED`. |
 | Mixture-specific equilibrium solid or hydrate risk at a resolved station | `UNSUPPORTED`; a separately assessed solid-capable model is required. |
 | Required solid or hydrate assessment cannot resolve | `INVALID`; absence of risk is never inferred from a failed check. |
-| Full-bore gas pipe with specified constant Darcy friction | Select `IdealGasFannoPipeReleaseModel`; outside HEM physics. |
-| Transient decompression waves, real-gas pipe flow, slip, delayed flashing or heat transfer | Outside the delivered models. |
+| Full-bore calorically perfect gas pipe with specified constant Darcy friction | Select `IdealGasFannoPipeReleaseModel`; outside HEM physics. |
+| Full-bore single-equilibrium-gas pipe requiring EOS departure | Select `RealGasFannoPipeReleaseModel`; phase appearance fails closed. |
+| Transient decompression waves, line packing, multiphase slip, delayed flashing or heat transfer | Outside the delivered models. |
 | Failed flash, unclosed inventory/entropy/fugacity or invalid density | `INVALID`, without a numeric release payload. |
 
 Version `1.2.0` assesses the upstream, accepted throat and ambient-expanded states on defensive
