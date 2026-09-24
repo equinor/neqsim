@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.heattransfer.BarePipeSurfaceTemperature;
 import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -772,6 +773,28 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public double getThickness() {
     return this.pipeThickness;
+  }
+
+  /**
+   * Calculates the local external steel temperature of this bare, horizontal pipe in air. Geometry and steel
+   * conductivity come from this equipment; the local bulk-fluid temperature and fluid-side film coefficient must be
+   * supplied for the location being assessed. This independent screening calculation does not change the pipeline's
+   * heat-transfer mode or simulate the axial temperature profile.
+   *
+   * @param localFluidTemperatureK local bulk-fluid temperature in K
+   * @param ambientTemperatureK air and radiative-surroundings temperature in K
+   * @param innerFilmWPerM2K local fluid-side film coefficient in W/(m2 K)
+   * @param windSpeedMPerS perpendicular wind speed in m/s
+   * @param emissivity exposed steel emissivity in [0, 1]
+   * @return the local thermal balance and outer steel temperature in K
+   */
+  public BarePipeSurfaceTemperature.Result calculateBarePipeSurfaceTemperature(double localFluidTemperatureK,
+      double ambientTemperatureK, double innerFilmWPerM2K, double windSpeedMPerS, double emissivity) {
+    if (insulationThickness != 0.0) {
+      throw new IllegalStateException("Bare-pipe calculation requires zero insulation thickness");
+    }
+    return BarePipeSurfaceTemperature.calculate(localFluidTemperatureK, ambientTemperatureK, insideDiameter,
+        pipeThickness, pipeWallThermalConductivity, innerFilmWPerM2K, windSpeedMPerS, emissivity);
   }
 
   /**
