@@ -101,6 +101,7 @@ public class CO2InjectionWellAnalyzer {
    */
   public void setFluid(SystemInterface fluid) {
     this.fluid = fluid;
+    analysisComplete = false;
   }
 
   /**
@@ -114,6 +115,7 @@ public class CO2InjectionWellAnalyzer {
     this.wellDepth = depthMeters;
     this.tubingID = tubingIDMeters;
     this.roughness = roughnessMeters;
+    analysisComplete = false;
   }
 
   /**
@@ -127,6 +129,7 @@ public class CO2InjectionWellAnalyzer {
     this.wellheadPressure = pressureBara;
     this.wellheadTemperatureC = temperatureC;
     this.designFlowRate = flowRateKgPerHr;
+    analysisComplete = false;
   }
 
   /**
@@ -138,6 +141,7 @@ public class CO2InjectionWellAnalyzer {
   public void setFormationTemperature(double topTempC, double bottomTempC) {
     this.formationTempTopC = topTempC;
     this.formationTempBottomC = bottomTempC;
+    analysisComplete = false;
   }
 
   /**
@@ -149,12 +153,14 @@ public class CO2InjectionWellAnalyzer {
   public void addTrackedComponent(String componentName, double alarmMolFrac) {
     trackedComponents.add(componentName);
     alarmThresholds.put(componentName, alarmMolFrac);
+    analysisComplete = false;
   }
 
   /**
    * Runs the full analysis: steady-state, phase boundary scan, enrichment map, and shutdown assessment.
    */
   public void runFullAnalysis() {
+    analysisComplete = false;
     results.clear();
     results.put("name", name);
 
@@ -216,6 +222,52 @@ public class CO2InjectionWellAnalyzer {
     result.put("BHT_C", outlet.getTemperature() - 273.15);
     result.put("n_phases", outlet.getThermoSystem().getNumberOfPhases());
     result.put("flow_regime", pipe.getFlowRegime().toString());
+
+    // Evaluate the registered limits at the actual design outlet, not at a point in the
+    // independent cold-pressure envelope scan. A missing component makes the verdict unknown.
+    SystemInterface outletFluid = outlet.getThermoSystem();
+    Map<String, Object> alarms = new LinkedHashMap<>();
+    boolean anyAlarmExceeded = false;
+    boolean alarmsEvaluable = true;
+    for (Map.Entry<String, Double> entry : alarmThresholds.entrySet()) {
+      String component = entry.getKey();
+      double threshold = entry.getValue();
+      Map<String, Object> alarm = new LinkedHashMap<>();
+      alarm.put("threshold_mol_frac", threshold);
+      alarm.put("gas_mol_frac", null);
+      alarm.put("alarm_exceeded", false);
+      String status;
+      try {
+        if (!outletFluid.hasComponent(component)) {
+          status = "component_missing";
+          alarmsEvaluable = false;
+        } else if (threshold <= 0.0) {
+          status = "disabled";
+        } else if (!outletFluid.hasPhaseType("gas")) {
+          status = "no_gas_phase";
+        } else {
+          double gasFraction = outletFluid.getPhase("gas").getComponent(component).getx();
+          alarm.put("gas_mol_frac", gasFraction);
+          if (!Double.isFinite(gasFraction) || !Double.isFinite(threshold)) {
+            status = "unavailable";
+            alarmsEvaluable = false;
+          } else {
+            boolean exceeded = gasFraction > threshold;
+            alarm.put("alarm_exceeded", exceeded);
+            anyAlarmExceeded |= exceeded;
+            status = exceeded ? "exceeded" : "within_limit";
+          }
+        }
+      } catch (RuntimeException e) {
+        status = "unavailable";
+        alarmsEvaluable = false;
+      }
+      alarm.put("status", status);
+      alarms.put(component, alarm);
+    }
+    result.put("alarm_results", alarms);
+    result.put("any_alarm_exceeded", anyAlarmExceeded);
+    result.put("alarms_evaluable", alarmsEvaluable);
 
     return result;
   }
@@ -449,9 +501,11 @@ public class CO2InjectionWellAnalyzer {
   }
 
   /**
-   * Whether the well is safe to operate (no alarms exceeded at design conditions).
+   * Whether the design outlet is single-phase and all registered gas-phase impurity alarms are evaluable and within
+   * their thresholds. A missing component or unavailable reading fails the screening verdict closed. This does not
+   * qualify casing, cement, or other well integrity.
    *
-   * @return true if design conditions are single-phase and no alarms are exceeded
+   * @return true if the design outlet is single-phase with no registered alarm exceeded
    */
   @SuppressWarnings("unchecked")
   public boolean isSafeToOperate() {
@@ -463,7 +517,8 @@ public class CO2InjectionWellAnalyzer {
       return false;
     }
     int nPhases = (int) designCase.getOrDefault("n_phases", 0);
-    return nPhases == 1;
+    return nPhases == 1 && Boolean.TRUE.equals(designCase.get("alarms_evaluable"))
+        && !Boolean.TRUE.equals(designCase.get("any_alarm_exceeded"));
   }
 
   /**
