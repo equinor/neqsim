@@ -103,8 +103,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       entries.add(new Entry(expected.getTargetStateIdentifier(), expected.getApplicationIdempotencyKey(),
           expected.getTransitionDigestHex(), expected.getCandidateS8AmountMol(), observed.getCandidateS8AmountMol(),
           candidateS8ResidualMol, candidateS8ToleranceMol, expected.getCandidateTotalAmountMol(),
-          observed.getCandidateTotalAmountMol(), candidateTotalAmountResidualMol,
-          candidateTotalAmountToleranceMol));
+          observed.getCandidateTotalAmountMol(), candidateTotalAmountResidualMol, candidateTotalAmountToleranceMol));
     }
 
     requireClose(preview.getPlannedS8IncrementMol(), application.getPlannedS8IncrementMol(),
@@ -118,8 +117,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     requireFinite(totalAmountResidualMol, "Aggregate total-amount reconciliation residual");
     double s8ToleranceMol = s8EntryToleranceMol
         + summationTolerance(entries.size(), previewObservedS8IncrementMol, applicationObservedS8IncrementMol);
-    double totalAmountToleranceMol = totalEntryToleranceMol + summationTolerance(entries.size(),
-        previewObservedTotalIncrementMol, applicationObservedTotalIncrementMol);
+    double totalAmountToleranceMol = totalEntryToleranceMol
+        + summationTolerance(entries.size(), previewObservedTotalIncrementMol, applicationObservedTotalIncrementMol);
     requireNonNegativeFinite(s8ToleranceMol, "Aggregate S8 reconciliation tolerance");
     requireNonNegativeFinite(totalAmountToleranceMol, "Aggregate total-amount reconciliation tolerance");
     if (Math.abs(s8ResidualMol) > s8ToleranceMol) {
@@ -132,8 +131,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     return new Result(entries, preview.getStrictAppendCount(), preview.getUnchangedCount(),
         preview.getPlannedS8IncrementMol(), previewObservedS8IncrementMol, applicationObservedS8IncrementMol,
         s8ResidualMol, s8ToleranceMol, previewObservedTotalIncrementMol, applicationObservedTotalIncrementMol,
-        totalAmountResidualMol, totalAmountToleranceMol, maximumEntryS8ResidualMol,
-        maximumEntryTotalAmountResidualMol);
+        totalAmountResidualMol, totalAmountToleranceMol, maximumEntryS8ResidualMol, maximumEntryTotalAmountResidualMol);
   }
 
   private static void requireSameProvenance(

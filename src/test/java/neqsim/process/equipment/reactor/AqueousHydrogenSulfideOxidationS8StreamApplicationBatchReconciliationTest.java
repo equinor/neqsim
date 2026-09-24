@@ -27,8 +27,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationTest 
     Fixture append = fixture("target-A", "application-A", 2.0, true);
     Fixture unchanged = fixture("target-B", "application-B", 5.0, false);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview = preview(append, unchanged);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result application = application(append,
-        unchanged);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result application = application(append, unchanged);
 
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result result = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation
         .reconcile(preview, application);
@@ -54,8 +53,8 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationTest 
     Fixture second = fixture("target-B", "application-B", 5.0, false);
 
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(
-            preview(first, second), application(second, first)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview(first, second),
+            application(second, first)));
   }
 
   @Test
@@ -70,8 +69,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationTest 
         () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(null,
             application(expected)));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview(expected),
-            null));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview(expected), null));
   }
 
   @Test
@@ -79,26 +77,22 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationTest 
     Fixture append = fixture("target-A", "application-A", 2.0, true);
     Fixture unchanged = fixture("target-B", "application-B", 5.0, false);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview = preview(append, unchanged);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result application = application(append,
-        unchanged);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result application = application(append, unchanged);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation
         .reconcile(preview, application);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result second = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation
         .reconcile(preview, application);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result restored = serializeRoundTrip(
-        first);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result restored = serializeRoundTrip(first);
 
     assertThrows(UnsupportedOperationException.class, () -> first.getEntries().clear());
-    assertEquals(Double.doubleToLongBits(first.getS8ResidualMol()),
-        Double.doubleToLongBits(second.getS8ResidualMol()));
+    assertEquals(Double.doubleToLongBits(first.getS8ResidualMol()), Double.doubleToLongBits(second.getS8ResidualMol()));
     assertEquals(first.getEntries().get(0).getTransitionDigestHex(),
         restored.getEntries().get(0).getTransitionDigestHex());
     assertEquals(Double.doubleToLongBits(first.getTotalAmountResidualMol()),
         Double.doubleToLongBits(restored.getTotalAmountResidualMol()));
   }
 
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview(
-      Fixture... fixtures) {
+  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview(Fixture... fixtures) {
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request[] requests = new AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request[fixtures.length];
     for (int index = 0; index < fixtures.length; index++) {
       requests[index] = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request.create(
