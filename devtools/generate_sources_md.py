@@ -83,6 +83,7 @@ SKIP_FILES = {
     "retrieval_manifest.json",
     "document_evidence_manifest.json",
     "related_peprs.json",
+    "document_root_index.md",
 }
 
 

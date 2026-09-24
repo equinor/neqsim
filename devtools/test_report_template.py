@@ -224,6 +224,44 @@ def test_front_matter_equations_and_tables_are_typeset(tmp_path, use_template):
     assert widths[0] < min(widths[1:]), widths
 
 
+def _field_results(report, instruction_prefix):
+    """Return the result text of each field whose instruction starts with the prefix."""
+    results, collecting, current = [], False, []
+    for p in report.element.body.iter(W_NS + "p"):
+        for r in p.iter(W_NS + "r"):
+            fld = r.find(W_NS + "fldChar")
+            instr = r.find(W_NS + "instrText")
+            if instr is not None and (instr.text or "").strip().startswith(instruction_prefix):
+                collecting, current = "pending", []
+            elif fld is not None and collecting == "pending" and fld.get(W_NS + "fldCharType") == "separate":
+                collecting = True
+            elif fld is not None and collecting is True and fld.get(W_NS + "fldCharType") == "end":
+                results.append(current)
+                collecting = False
+            elif collecting is True:
+                current.extend(t.text for t in r.iter(W_NS + "t") if t.text)
+        if collecting is True:
+            current.append("\n")
+    return ["".join(parts) for parts in results]
+
+
+def test_contents_and_lists_are_prefilled_without_word(tmp_path):
+    """TOC and list of tables carry real entries even when Word never updates fields."""
+    task = _make_task(tmp_path)
+    _run(task, "--no-template")
+    report = docx.Document(str(_report_docx(task)))
+
+    toc = _field_results(report, 'TOC \\o')
+    assert len(toc) == 1
+    assert "Conclusions" in toc[0] and "Update Field" not in toc[0]
+    assert "Table of Contents" not in toc[0]
+    tables = _field_results(report, 'TOC \\h \\z \\c "Table"')
+    assert len(tables) == 1 and "Table 1" in tables[0]
+    # The update-on-open flag stays, so Word adds page numbers on first open.
+    settings = report.settings.element
+    assert settings.find(W_NS + "updateFields") is not None
+
+
 def test_keep_template_content_retains_boilerplate(tmp_path):
     template = _make_template(tmp_path / "company template.docx")
     task = _make_task(tmp_path)

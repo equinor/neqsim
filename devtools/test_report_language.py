@@ -131,3 +131,41 @@ def test_generated_report_defaults_to_english(tmp_path):
     html = next((task / "step3_report").glob("*.html")).read_text(encoding="utf-8")
     assert '<html lang="en-GB">' in html
     assert "Executive Summary" in html
+
+
+def test_consistency_check_accepts_decimal_comma_prose():
+    """A Norwegian observation writing 169,9 and 49 229 matches its linked key results."""
+    module = _load_generator()
+    results = {
+        "key_results": {"gor_Sm3_Sm3": 169.9, "lift_gas_Sm3_d": 49229.0, "bhp_bara": 266.8},
+        "figure_discussion": [{
+            "figure": "fig01.png", "title": "t",
+            "observation": "GOR var 169,9 Sm³/Sm³ med 49 229 Sm³/d løftegass.",
+            "linked_results": ["gor_Sm3_Sm3", "lift_gas_Sm3_d", "bhp_bara"],
+        }],
+    }
+    messages = [i["message"] for i in module.check_report_consistency(results)]
+    assert not any("gor_Sm3_Sm3" in m or "lift_gas_Sm3_d" in m for m in messages)
+    assert any("bhp_bara" in m for m in messages)
+
+
+def test_benchmark_points_list_is_rendered():
+    """benchmark_validation.points (a documented schema) must produce table rows, not an empty section."""
+    module = _load_generator()
+    results = {"benchmark_validation": {"reference": "PDM", "passed": True, "points": [
+        {"test": "Oil rate", "reference_value": 408.8, "neqsim_value": 408.8, "unit": "Sm3/d", "status": "PASS"},
+        {"test": "Gas rate", "reference_value": 69448, "neqsim_value": 69526, "unit": "Sm3/d", "status": "PASS"},
+    ]}}
+    headers, rows, _status_idx = module._benchmark_table(results)
+    assert [row[0] for row in rows] == ["Oil rate", "Gas rate"]
+    assert "Notes" not in headers
+
+
+def test_norwegian_report_uses_decimal_comma(monkeypatch):
+    """Tables in an nb report print 0,538 and 14,2; English keeps the point."""
+    module = _load_generator()
+    monkeypatch.setattr(module, "REPORT_LANGUAGE", "nb")
+    assert module._fmt_number(0.538) == "0,538"
+    assert module._fmt_number(14.2) == "14,2"
+    monkeypatch.setattr(module, "REPORT_LANGUAGE", "en")
+    assert module._fmt_number(14.2) == "14.2"
