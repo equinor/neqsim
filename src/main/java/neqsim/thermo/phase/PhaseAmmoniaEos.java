@@ -36,12 +36,22 @@ public class PhaseAmmoniaEos extends PhaseEos {
     thermoPropertyModelName = "Ammonia Reference Eos";
   }
 
+  private Ammonia2023 ammoniaUtil() {
+    if (ammoniaUtil == null) {
+      ammoniaUtil = new Ammonia2023(this);
+    } else {
+      ammoniaUtil.setPhase(this);
+    }
+    return ammoniaUtil;
+  }
+
   /** {@inheritDoc} */
   @Override
   public PhaseAmmoniaEos clone() {
     PhaseAmmoniaEos cloned = null;
     try {
       cloned = (PhaseAmmoniaEos) super.clone();
+      cloned.ammoniaUtil = new Ammonia2023(cloned);
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -59,8 +69,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     setType(pt);
-    ammoniaUtil.setPhase(this);
-    double[] props = ammoniaUtil.properties();
+    double[] props = ammoniaUtil().properties();
     pressure = props[0] / 100.0; // convert from kPa to bar
     Z = props[1];
     internalEnergy = props[6];
@@ -125,43 +134,34 @@ public class PhaseAmmoniaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getViscosity() {
-    ammoniaUtil.setPhase(this);
-    return ammoniaUtil.getViscosity();
+    return ammoniaUtil().getViscosity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getThermalConductivity() {
-    ammoniaUtil.setPhase(this);
-    return ammoniaUtil.getThermalConductivity();
+    return ammoniaUtil().getThermalConductivity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt) {
-    ammoniaUtil.setPhase(this);
     // Convert mol/m3 directly; the database molecular weight can differ from the reference model.
-    return 1.0e5 / ammoniaUtil.getMolarDensity();
+    return 1.0e5 / ammoniaUtil().getMolarDensity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressure() {
-    if (ammoniaUtil == null) {
-      ammoniaUtil = new Ammonia2023(this);
-    }
-    return ammoniaUtil.pressureFromDensity(1.0e5 / getMolarVolume(), temperature) / 1.0e5;
+    return ammoniaUtil().pressureFromDensity(1.0e5 / getMolarVolume(), temperature) / 1.0e5;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    if (ammoniaUtil == null) {
-      ammoniaUtil = new Ammonia2023(this);
-    }
     double density = 1.0e5 / getMolarVolume();
     // P is in bar and the independent total volume is V_SI * 1e5.
-    return -ammoniaUtil.pressureDerivativeDensity(density, temperature) * density * density
+    return -ammoniaUtil().pressureDerivativeDensity(density, temperature) * density * density
         / (numberOfMolesInPhase * 1.0e10);
   }
 
@@ -193,8 +193,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
-    ammoniaUtil.setPhase(this);
-    return ammoniaUtil.getDensity();
+    return ammoniaUtil().getDensity();
   }
 
   /**
