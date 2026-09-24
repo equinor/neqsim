@@ -62,19 +62,41 @@ analyzer.runFullAnalysis();
 // Results
 boolean safe = analyzer.isSafeToOperate();
 Map<String, Object> results = analyzer.getResults();
+Map<String, Object> designCase = (Map<String, Object>) results.get("design_case");
+Map<String, Object> alarms = (Map<String, Object>) designCase.get("alarm_results");
 ```
+
+`isSafeToOperate()` is a **design-outlet screening result**: it requires one phase,
+no exceeded registered gas-phase impurity alarm, and an evaluable reading for
+every registered component. It returns `false` before analysis, after a
+configuration change until analysis is rerun, or when a registered component is
+missing or its reading is unavailable. A positive result does not establish
+well integrity, including casing and cement condition, or shutdown safety.
+The separate cold-pressure `safe_operating_envelope` scan does not determine this
+design-outlet verdict. Thresholds are mole fractions, with `0` disabling an
+alarm as in `ImpurityMonitor`; an absent gas phase has no applicable gas alarm.
 
 ### Results Map Keys
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `safe_to_operate` | Boolean | Overall safety verdict |
-| `design_BHP_bara` | Double | Bottom-hole pressure at design rate |
-| `design_BHT_C` | Double | Bottom-hole temperature at design rate |
-| `min_safe_WHP_bara` | Double | Minimum wellhead pressure for single-phase |
-| `two_phase_conditions` | List | P-T points where two phases form |
-| `max_impurity_concentrations` | Map | Peak gas-phase concentrations per component |
-| `shutdown_safe` | Boolean | Whether shutdown at design WHP is safe |
+| `design_case` | Map | Outlet BHP, BHT, phase count, and registered design alarm status |
+| `phase_boundary_scan` | Map | Two-phase counts and pressure/temperature bounds in the scan |
+| `enrichment_map` | Map | Impurity scan by temperature |
+| `shutdown_assessment` | Map | Approximate shutdown results at sampled pressures |
+| `safe_operating_envelope` | Map | Separate cold-pressure phase and impurity screen |
+
+The returned map currently groups the results under `design_case`,
+`phase_boundary_scan`, `enrichment_map`, `shutdown_assessment`, and
+`safe_operating_envelope`. The `design_case` contains `BHP_bara`, `BHT_C`,
+`n_phases`, `flow_regime`, `any_alarm_exceeded`, `alarms_evaluable`, and
+`alarm_results`. For each registered component, `alarm_results` contains
+`threshold_mol_frac`, `gas_mol_frac` (null if unavailable or inapplicable),
+`alarm_exceeded`, and `status` (`within_limit`, `exceeded`, `no_gas_phase`,
+`disabled`, `component_missing`, or `unavailable`). A missing component or
+unavailable reading makes `alarms_evaluable` false and the screening verdict
+false. Call `analyzer.isSafeToOperate()` for the verdict; the map does not
+currently have a top-level `safe_to_operate` key.
 
 ---
 
