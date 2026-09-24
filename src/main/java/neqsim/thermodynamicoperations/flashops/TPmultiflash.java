@@ -3694,20 +3694,24 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Tests a water-rich GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
+   * Tests a water-rich OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
    *
    * <p>
-   * A two-phase stability trial can miss the water-rich minimum after the hydrocarbon split has converged. The
-   * incumbent may satisfy gas/oil fugacity equality yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a
-   * material-balanced oil/aqueous active set on a clone and replace the incumbent only after solving equilibrium and
-   * checking component conservation and fugacities. Never accept the raw aqueous seed itself.
+   * Stability trials or phase cleanup can lose the water-rich minimum after the hydrocarbon split has converged,
+   * including collapse to a single oil phase near the bubble point. The incumbent may satisfy gas/oil fugacity equality
+   * yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a material-balanced oil/aqueous active set on a clone
+   * and replace the incumbent only after solving equilibrium and checking component conservation and fugacities. Never
+   * accept the raw aqueous seed itself.
    * </p>
    */
-  void rescueMetastableGasOilMissingAqueous() {
-    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.getMaxNumberOfPhases() < 3
+  void rescueMetastableOilMissingAqueous() {
+    boolean singleOil = system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.OIL);
+    boolean gasOil = system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
+        && system.hasPhaseType(PhaseType.OIL);
+    if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
-        || system.isMultiphaseWaxCheck() || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.OIL)
-        || !system.hasComponent("water") || system.getComponent("water").getz() < 0.05) {
+        || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
+        || system.getComponent("water").getz() < 0.05) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);
@@ -3715,8 +3719,21 @@ public class TPmultiflash extends TPflash {
     double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbs) * 1.0e-8);
     try {
       SystemInterface candidate = system.clone();
-      int aqueous = candidate.getPhaseNumberOfPhase("gas");
       int oil = candidate.getPhaseNumberOfPhase("oil");
+      if (singleOil) {
+        // Phase removal can leave inactive logical indices pointing to an active physical slot.
+        // Rebuild unused indices before adding a trial, preserving the existing oil phase object.
+        int oilSlot = candidate.getPhaseIndex(oil);
+        int freeSlot = 0;
+        for (int phase = 1; phase < candidate.getMaxNumberOfPhases(); phase++) {
+          if (freeSlot == oilSlot) {
+            freeSlot++;
+          }
+          candidate.setPhaseIndex(phase, freeSlot++);
+        }
+        candidate.addPhase();
+      }
+      int aqueous = singleOil ? candidate.getNumberOfPhases() - 1 : candidate.getPhaseNumberOfPhase("gas");
       candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
       for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
         candidate.getPhase(aqueous).getComponent(component).setx(
