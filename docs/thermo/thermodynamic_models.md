@@ -408,7 +408,7 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 For pure ammonia, `PhaseAmmoniaEos.getGibbsEnergy()` returns extensive Gibbs energy
 in J. Divide by the phase mole count for J/mol. With enthalpy in J/mol and entropy
 in J/(mol K), its Helmholtz relation is $g = h - Ts$ at the same temperature in K.
-Forced gas and liquid states at 293.15 K and nearby conditions are checked against
+Selected forced gas and liquid states from 280 to 400 K are checked against
 CoolProp 7.2.0's Gao ammonia implementation; this does not validate mixtures or every
 state of the equation.
 
