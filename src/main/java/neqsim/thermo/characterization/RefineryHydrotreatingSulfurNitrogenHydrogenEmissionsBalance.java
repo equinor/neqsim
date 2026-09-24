@@ -25,7 +25,8 @@ public final class RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance i
   private final double carbonCostPerHour;
   private final double carbonCostPerTonneFeed;
 
-  private RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance(RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance utilityBalance,
+  private RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance(
+      RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance utilityBalance,
       double hydrogenSupplyEmissionFactorKgCo2EquivalentPerKgHydrogen, double carbonPricePerTonneCo2Equivalent,
       double hydrogenSupplyEmissionsKgCo2EquivalentPerHour, double hydrogenSupplyEmissionsKgCo2EquivalentPerTonneFeed,
       double carbonCostPerHour, double carbonCostPerTonneFeed) {

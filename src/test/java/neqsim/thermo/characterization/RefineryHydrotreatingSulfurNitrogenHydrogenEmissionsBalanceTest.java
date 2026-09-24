@@ -62,27 +62,33 @@ class RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalanceTest {
   void rejectsInvalidInputs() {
     RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance utility = publicUtility(1000.0);
 
-    assertThrows(NullPointerException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(null,
-        EMISSION_FACTOR_KG_CO2E_PER_KG_H2, CARBON_PRICE_PER_TONNE_CO2E));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(utility, -1.0, CARBON_PRICE_PER_TONNE_CO2E));
-    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(utility,
-        Double.NaN, CARBON_PRICE_PER_TONNE_CO2E));
-    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(utility,
-        EMISSION_FACTOR_KG_CO2E_PER_KG_H2, -1.0));
-    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(utility,
-        EMISSION_FACTOR_KG_CO2E_PER_KG_H2, Double.POSITIVE_INFINITY));
+    assertThrows(NullPointerException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(null, EMISSION_FACTOR_KG_CO2E_PER_KG_H2, CARBON_PRICE_PER_TONNE_CO2E));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(utility, -1.0, CARBON_PRICE_PER_TONNE_CO2E));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(utility, Double.NaN, CARBON_PRICE_PER_TONNE_CO2E));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(utility, EMISSION_FACTOR_KG_CO2E_PER_KG_H2, -1.0));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(utility, EMISSION_FACTOR_KG_CO2E_PER_KG_H2, Double.POSITIVE_INFINITY));
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance publicUtility(double feedMassFlowKgPerHour) {
-    RefineryHydrotreatingSulfurBalance sulfur = RefineryHydrotreatingSulfurBalance.calculate(1000.0, 0.0040867518,
-        15.0e-6, 2.0);
-    RefineryHydrotreatingHydrogenSupplyBalance supply = RefineryHydrotreatingHydrogenSupplyBalance.calculate(sulfur,
-        1.5, 0.90, 0.0280134);
-    RefineryHydrotreatingHydrogenRecycleBalance recycle = RefineryHydrotreatingHydrogenRecycleBalance.calculate(supply,
-        0.90, 0.10, 0.50, 0.05);
-    RefineryHydrotreatingThroughputBalance throughput = RefineryHydrotreatingThroughputBalance.calculate(recycle,
-        feedMassFlowKgPerHour);
-    return RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, LHV_MJ_PER_KG, HYDROGEN_COST_PER_KG);
+  private static RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance publicUtility(
+      double feedMassFlowKgPerHour) {
+    RefineryHydrotreatingSulfurNitrogenBalance material =
+        RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129,
+            15.0e-6, 10.0e-6, 2.0, 4.0);
+    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply =
+        RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(material, 1.5, 0.90,
+            0.0280134);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
+        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(supply, 0.90, 0.10,
+            0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput =
+        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance.calculate(recycle,
+            feedMassFlowKgPerHour);
+    return RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput,
+        LHV_MJ_PER_KG, HYDROGEN_COST_PER_KG);
   }
 }
