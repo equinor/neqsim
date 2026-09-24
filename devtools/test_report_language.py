@@ -131,3 +131,27 @@ def test_generated_report_defaults_to_english(tmp_path):
     html = next((task / "step3_report").glob("*.html")).read_text(encoding="utf-8")
     assert '<html lang="en-GB">' in html
     assert "Executive Summary" in html
+
+
+def test_subheadings_and_depth_moves_are_translated(monkeypatch):
+    """Sub-headings and analytical-depth titles follow the report language."""
+    module = _load_generator()
+    monkeypatch.setattr(module, "REPORT_LANGUAGE", "nb")
+    titles = [title for _, title, _ in module._depth_entries(
+        {key: ["x"] for key, _, _ in module.DEPTH_MOVES})]
+    assert titles[0] == "Bidragsytere rangert på felles grunnlag"
+    for phrase in ("Applicable Standards", "Input Parameter Ranges", "Key results",
+                   "Sensitivity Ranking (Tornado)", "Source systems read"):
+        assert module._t(phrase) != phrase
+
+
+def test_consistency_check_accepts_comma_decimals():
+    """A Norwegian observation writing 20,1 matches the linked value 20.1."""
+    module = _load_generator()
+    results = {
+        "key_results": {"capex_MNOK": 20.1},
+        "figure_discussion": [{"figure": "f.png", "observation": "Investeringen er 20,1 MNOK.",
+                               "linked_results": ["capex_MNOK"]}],
+    }
+    issues = module.check_report_consistency(results)
+    assert not any("capex_MNOK" in issue.get("message", "") for issue in issues)
