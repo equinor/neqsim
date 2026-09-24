@@ -93,4 +93,3 @@ class RefineryHydrotreatingSulfurNitrogenOperatingReceiptTest {
         carbonPricePerTonneCo2e);
   }
 }
-

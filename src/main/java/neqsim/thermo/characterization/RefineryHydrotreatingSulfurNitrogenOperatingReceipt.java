@@ -165,4 +165,3 @@ public final class RefineryHydrotreatingSulfurNitrogenOperatingReceipt implement
     return totalScenarioCostClosureResidualPerHour;
   }
 }
-
