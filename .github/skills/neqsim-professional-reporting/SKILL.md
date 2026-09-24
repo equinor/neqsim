@@ -370,7 +370,7 @@ workflow gaps were found.
     "summary": "where the scripts live and which README is the user guide",
     "environment": ["interpreter", "JDK", "NeqSim version or checkout, incl. unreleased changes the run depends on"],
     "steps": ["script 1 - what it writes", "script 2 - ...", "generate_report.py"],
-    "checks": ["values a rerun must reproduce, e.g. 2026 bottleneck 23-VG06 at 117 %"],
+    "checks": ["values a rerun must reproduce, e.g. 2026 bottleneck inlet scrubber at 117 %"],
     "what_if": ["where to edit to change an input, and which step to rerun from"]
   },
   "uncertainty": { "method": "Monte Carlo n=10000", "P10": ..., "P50": ..., "P90": ... },

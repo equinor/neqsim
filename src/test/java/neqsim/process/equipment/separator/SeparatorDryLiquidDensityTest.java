@@ -2,7 +2,6 @@ package neqsim.process.equipment.separator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -45,5 +44,15 @@ public class SeparatorDryLiquidDensityTest {
 
     scrubber.setDryLiquidDensity(0.0);
     assertEquals(kDefault, scrubber.getGasLoadFactor(), 1e-12);
+  }
+
+  @Test
+  void allowableGasVelocityUsesTheSameDryLiquidDensity() {
+    Separator scrubber = dryScrubber();
+    double vDefault = scrubber.getMaxAllowableGasVelocity();
+    double rhoGas = scrubber.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    scrubber.setDryLiquidDensity(600.0);
+    double expectedRatio = Math.sqrt((600.0 - rhoGas) / (1000.0 - rhoGas));
+    assertEquals(expectedRatio, scrubber.getMaxAllowableGasVelocity() / vDefault, 1e-9);
   }
 }
