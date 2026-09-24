@@ -250,13 +250,27 @@ for i in range(fluid.getNumberOfPhases()):
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
 3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
 
-For neutral, water-rich feeds with multiphase checking enabled, the final gas/oil
-split is also compared with a seeded aqueous equilibrium when the overall water
-fraction is at least 5%. The aqueous result must conserve the feed and satisfy
-phase equilibrium; it must also have lower Gibbs energy than a valid incumbent.
-This keeps the TP evaluations used by PS flashes on a consistent phase branch
-near liquid-liquid-vapor boundaries. The bounded trial does not prove global
-stability against every possible phase set.
+For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
+split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium
+when the overall water mole fraction is at least 5%. This also runs on the
+single-phase stability-return path: phase cleanup near a bubble point can remove
+an aqueous phase even after the stability analysis detected it. The trial runs
+on a clone and must conserve every component and satisfy phase normalization and
+log-fugacity equality within `1e-8`. It must lower Gibbs energy relative to a valid
+incumbent by more than `max(1e-6 J, 1e-8 abs(G))`. Phase-role locks, chemical,
+ionic, solid-check, and wax-check systems retain their existing paths. Dry feeds,
+already-aqueous endpoints, and genuine three-phase states do not run this trial.
+The bounded recovery does not prove global stability against every possible
+phase set.
+
+The public-API regression for issue #3955 retains water at all 81 points from
+11–31 °C and 1.8–5.0 bara. For its 3781.0149 kg/h pump inlet at 298.15 K and
+2.67 bara, compression to 19 bara gives approximately 2.824 kW and 298.669 K.
+The inlet EOS-volume estimate `Q * deltaP` is 2.829 kW. Using the separately
+volume-corrected physical density gives a different hydraulic estimate; the
+EOS volume is the consistent comparison for this enthalpy/entropy calculation.
+The regression also checks component balance, phase fugacities, repeated flashes,
+warm starts, and the pump entropy balance.
 
 When restarting a process from a saved fluid, run a TP flash before taking
 its inlet entropy if the saved phase split may have been computed with an older
