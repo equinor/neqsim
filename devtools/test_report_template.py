@@ -412,3 +412,20 @@ def test_analytical_depth_moves_are_reported(tmp_path):
     assert "2/7 depth moves reported" in body
     html = next((task / "step3_report").glob("*.html")).read_text(encoding="utf-8")
     assert "Contributors ranked on a common basis" in html
+
+
+def test_glob_declared_outputs_are_matched_not_taken_literally(tmp_path):
+    """A script that declares results/steady_*.json as output is satisfied by any matching file."""
+    task = _make_task(tmp_path)
+    (task / "step2_analysis").mkdir()
+    (task / "step2_analysis" / "make_figures.py").write_text("# stub\n", encoding="utf-8")
+    (task / "results").mkdir()
+    (task / "study_config.yaml").write_text(
+        "analysis:\n  engine: script\n  scripts:\n"
+        "    - file: step2_analysis/make_figures.py\n      produces: results/steady_*.json\n"
+        "    - file: step2_analysis/make_figures.py\n      produces: results/none_*.json\n",
+        encoding="utf-8")
+    (task / "results" / "steady_a.json").write_text("{}", encoding="utf-8")
+    out = _run(task).stdout
+    assert "declares an output that is missing: results/steady_*.json" not in out
+    assert "declares an output that is missing: results/none_*.json" in out
