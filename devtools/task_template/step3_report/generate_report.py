@@ -2307,7 +2307,10 @@ def auto_executive_summary(results, task_spec):
     if results and results.get("approach"):
         approach = results["approach"]
     if approach and not _is_placeholder_text(approach):
-        first_sentence = approach.split(". ")[0].rstrip(".")
+        # Skip run-in headings such as "Data." that open a paragraph.
+        sentences = [s.strip().rstrip(".") for s in approach.split(". ") if s.strip()]
+        first_sentence = next((s for s in sentences if len(s.split()) >= 4),
+                              sentences[0] if sentences else "")
         parts.append(first_sentence + ".")
     conclusions = str((results or {}).get("conclusions") or "").strip()
     has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
@@ -3401,10 +3404,26 @@ def _add_bold_runs(paragraph, text):
 
 
 def get_figures():
-    """Collect all PNG/SVG figures from the figures/ directory."""
+    """Collect all PNG/SVG figures from the figures/ directory.
+
+    Files named without an ordering prefix (``fig01_``, ``01_``) follow the order of
+    ``figure_captions`` in results.json, so the narrative order is the author's, not
+    the alphabet's; figures without a caption follow alphabetically.
+    """
     pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
     svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
-    return pngs + svgs
+    figures = pngs + svgs
+    prefixed = re.compile(r"^(fig(ure)?[\s_-]*)?\d", re.IGNORECASE)
+    if any(prefixed.match(os.path.basename(path)) for path in figures):
+        return figures
+    try:
+        with open(RESULTS_FILE, "r", encoding="utf-8") as source:
+            captions = list((json.load(source).get("figure_captions") or {}).keys())
+    except (OSError, ValueError, AttributeError):
+        return figures
+    rank = {name: index for index, name in enumerate(captions)}
+    return sorted(figures, key=lambda path: (rank.get(os.path.basename(path), len(rank)),
+                                             os.path.basename(path)))
 
 
 def get_figure_caption(fig_path, results, fig_index):
@@ -3830,6 +3849,8 @@ def _parse_key_name(key):
         ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
         ("_m3_hr", "m³/hr"), ("_m3_s", "m³/s"),
         ("_Sm3_day", "Sm³/day"), ("_Sm3_hr", "Sm³/hr"),
+        ("_Sm3d", "Sm³/d"), ("_Sm3", "Sm³"), ("_kSm3", "kSm³"), ("_MSm3", "MSm³"),
+        ("_GSm3", "GSm³"), ("_rm3_Sm3", "rm³/Sm³"),
         ("_kg_m3", "kg/m³"), ("_kg_Sm3", "kg/Sm³"), ("_g_cm3", "g/cm³"),
         ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
         ("_rpm", "rpm"), ("_Hz", "Hz"),
@@ -4594,6 +4615,14 @@ def _benchmark_table(results):
     tests = _benchmark_tests(results)
     value_cols = [(label, keys) for label, keys in _BENCHMARK_VALUE_COLUMNS
                   if any(_benchmark_value_key(t, keys, label) for t in tests)]
+    # A value from another simulator (OPM, OLGA) is not a "NeqSim value"; say what it is.
+    bv = (results or {}).get("benchmark_validation") or {}
+    value_label = bv.get("value_label") if isinstance(bv, dict) else None
+    if not value_label and not any(k in t for t in tests for k in ("neqsim_value", "neqsim")):
+        value_label = "Calculated value"
+    if value_label:
+        value_cols = [(value_label if label == "NeqSim value" else label, keys)
+                      for label, keys in value_cols]
     has_reference = any(_benchmark_reference_text(t) for t in tests)
     used_by_test = []
     for test in tests:

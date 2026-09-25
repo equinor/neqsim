@@ -304,6 +304,13 @@ deviation is not a model misfit: a conflict between two input sources, or a cros
 an alternative model that the deliverable does not use. Still name the failure in
 `conclusions` (the gate looks for "fail", "discrepancy", "deviation").
 
+When the compared value comes from another simulator (OPM Flow, OLGA) write it as
+`calculated`, not `neqsim_value`: the column is then headed "Calculated value" rather than
+"NeqSim value". `benchmark_validation.value_label` overrides the heading explicitly.
+
+Figures are numbered in the order of `figure_captions` when the PNG names carry no numeric
+prefix (`fig01_`, `01_`); otherwise alphabetically. Write the captions in narrative order.
+
 Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
 gate) now check this structure, so a malformed benchmark block fails the gate
 instead of crashing the report generator.
