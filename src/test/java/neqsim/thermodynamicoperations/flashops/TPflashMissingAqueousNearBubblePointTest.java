@@ -15,9 +15,18 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-/** Regression for the public API oil/water pump inlet in issue #3955. */
+/**
+ * Regression for the public API oil/water pump inlet in issue #3955.
+ *
+ * <p>
+ * Every recovered equilibrium must satisfy the #2937 normalization, material-balance, and fugacity-residual gates.
+ * </p>
+ */
 class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(TPflashMissingAqueousNearBubblePointTest.class);
+  private static final double NORMALIZATION_TOLERANCE = 1.0e-12;
+  private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private SystemInterface inlet() {
     Fluid creator = new Fluid();
@@ -177,9 +186,9 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
         assertTrue(Double.isFinite(x) && x >= 0.0 && x <= 1.0);
         xSum += x;
       }
-      assertEquals(1.0, xSum, 1.0e-10);
+      assertEquals(1.0, xSum, NORMALIZATION_TOLERANCE);
     }
-    assertEquals(1.0, betaSum, 1.0e-10);
+    assertEquals(1.0, betaSum, NORMALIZATION_TOLERANCE);
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       double recovered = 0.0;
       double referenceLogFugacity = Math.log(fluid.getPhase(0).getComponent(component).getx())
@@ -189,9 +198,9 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
         double x = fluid.getPhase(phase).getComponent(component).getx();
         recovered += fluid.getBeta(phase) * x;
         double logFugacity = Math.log(x) + fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient();
-        assertEquals(referenceLogFugacity, logFugacity, 1.0e-8, "Component " + component);
+        assertEquals(referenceLogFugacity, logFugacity, FUGACITY_TOLERANCE, "Component " + component);
       }
-      assertEquals(fluid.getPhase(0).getComponent(component).getz(), recovered, 1.0e-8);
+      assertEquals(fluid.getPhase(0).getComponent(component).getz(), recovered, MATERIAL_BALANCE_TOLERANCE);
     }
   }
 }
