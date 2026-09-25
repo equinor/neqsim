@@ -212,4 +212,160 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (23 types) | The named adapter, proper
+| `PARTIAL` (23 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
+| `DEBT` (107 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+
+Every fixture is bound exactly once to its concrete type. Property sets must agree with
+the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
+bindings fail. `coverage.tsv` contains every type, classification, property set, case IDs,
+scope, debt issue and review condition. `coverage.md` is a compact CI summary; it is not
+a percentage of validated physics. Existing focused tests outside this catalog still
+matter, but do not automatically establish a curated capability contract.
+
+`initial-debt.txt` is the explicit debt snapshot from master
+`c7cde46a78f18922534c18ec1241d61abac0a08c`. Do not expand or regenerate it to make CI pass.
+New concrete types must receive a real typed fixture and sourced cases; adding a new
+`DEBT` row is rejected. Qualifying an existing debt type changes its inventory row and
+adds the complete family evidence. Keep the initial snapshot fixed so qualification
+can be tracked without allowing new types to consume old debt slots. Changing a currently
+covered type to debt also fails because it was not in the initial debt snapshot.
+
+The standalone correlation scope is intentionally explicit: inherited saturation pressure,
+the prescribed pow10KPa derivative and inverse, and their declared absence contracts.
+It is not an inventory of all component, physical-property or transport APIs. Phase types
+are inventoried independently of System drivers: the exact `PhaseSrkEos` and `PhasePrEos`
+classes now have explicit Z/phi cases, while indirect use still does not qualify any other
+phase entry point. Family batches must define applicable properties, physical
+domains, sourced anchors and nearby-state/invariant checks before reducing this debt.
+
+## Reference provenance
+
+- [NIST acetone phase-change data](https://webbook.nist.gov/cgi/cbook.cgi?ID=C67641&Mask=4):
+  log10(P/bar) = 4.42448 - 1312.253/(T/K - 32.445).
+- [NIST i-pentane phase-change data](https://webbook.nist.gov/cgi/cbook.cgi?ID=C78784&Mask=4):
+  log10(P/bar) = 3.91457 - 1020.012/(T/K - 40.053), using the 1945 range above.
+- For the prescribed Wilson binary with x=x1 and x2=1-x:
+  ln(gamma1) = 1 - ln(x+2(1-x)) - x/(x+2(1-x)) - 0.5(1-x)/(0.5x+1-x).
+  The second coefficient follows the corresponding swapped component indices.
+- Methanol group R is the existing repository regression/data contract in
+  `UnifacGroupSynchronizationTest`, not an independently measured property.
+- [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
+  [Peng and Robinson's 1976 equation](https://doi.org/10.1021/i160057a011) define
+  the pure-fluid cubic and fugacity-coefficient references. The stored anchors use
+  methane Tc=190.56 K, Pc=45.99 bar and acentric factor 0.0115. An independent
+  calculation selected the largest real gas root and evaluated the published pure-fluid
+  fugacity expression at the three declared states. A dependency-free harness control
+  independently substitutes every stored Z into the published cubic and recomputes every
+  phi reference before production evaluation. Agreement tolerance is 1e-12 in Z or phi
+  because this is formula/dispatch evidence, not a physical-accuracy tolerance.
+- [Renon and Prausnitz (1968)](https://doi.org/10.1002/aic.690140124) is the
+  source for the NRTL local-composition form. Catalog anchors use authored prescribed
+  parameters and an independent dependency-free evaluation of both activity coefficients
+  stored logarithmic activity coefficients and molar excess Gibbs energy. The 1e-12 gamma/ln(gamma)
+  and 1e-9 J/mol excess-energy
+  tolerances are analytical implementation tolerances, not experimental accuracy claims.
+- [Fredenslund, Jones and Prausnitz (1975)](https://doi.org/10.1002/aic.690210607)
+  defines the original UNIFAC equation. The methanol/water fixtures independently evaluate
+  its combinatorial and residual terms using the [published DDBST original-UNIFAC
+  table](https://www.ddbst.com/published-parameters-unifac.html): CH3OH subgroup 15
+  `(R,Q)=(1.4311,1.432)`, H2O subgroup 16 `(R,Q)=(0.92,1.4)`, `A67=-180.95 K`, and
+  `A76=289.6 K`. NeqSim's packaged classic table rounds `A67` to `-181 K`; the declared
+  `3.5e-4` gamma, `2.5e-4` ln(gamma), and `0.25 J/mol` excess-energy absolute tolerances
+  cover only that documented parameter rounding. These are analytical original-model
+  contracts, not experimental VLE validation or evidence for PSRK/UMR-PRU formulations.
+- The [official NIST AGA8 GERG-2008 sample](https://github.com/usnistgov/AGA8/blob/3bdb9ab8ff317c618b0b59d1b704c2c86ddc5fce/AGA8CODE/C/GERG2008_test_01.cpp)
+  supplies a 21-component composition and 15 outputs at 400 K and 50000 kPa. The catalog
+  records those values in their original molar units and evaluates the standard GERG-2008
+  path. This is an independent official cross-port/analytical implementation check, not an
+  experimental accuracy claim. GERG-2008-H2, GERG-2008-NH3, GERG-2004, EOS-CG, phase
+  equilibrium and derivatives absent from the sample remain explicit debt.
+- The [NIST Chemistry WebBook argon record](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440371&Mask=1)
+  supplies molecular weight 39.948 g/mol and Chase's 298--6000 K Shomate coefficients.
+  The fixture independently evaluates Cp, Cv = Cp - R, sound speed and the ideal-gas law with
+  exact SI R = 8.31446261815324 J/(mol K). NeqSim's legacy R and caloric polynomial are compared
+  with documented physical-data tolerances; Z = 1, phi = 1 and JT = 0 are exact ideal-model
+  contracts. These are analytical/compiled-data checks for pure argon, not experimental
+  validation of mixtures or real-gas behavior.
+- The [CoolProp 7.2.0 ammonia definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Ammonia.json)
+  identifies the Gao 2020 reference EOS and supplies the independent implementation used
+  to evaluate the four catalog states. The 195.495--725 K range is the declared EOS range,
+  while the catalog qualifies only its exact states. Density, energy, caloric, acoustic and
+  derivative tolerances cover observed cross-port roundoff and constant differences; they
+  are not experimental-accuracy claims. The stored values were not refreshed from NeqSim.
+- The [CoolProp 7.2.0 normal-hydrogen definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Hydrogen.json)
+  identifies the Leachman 2009 reference EOS and supplies the independent implementation
+  used to evaluate the four catalog states. The underlying [NIST publication](https://www.nist.gov/publications/fundamental-equations-state-parahydrogen-normal-hydrogen-and-orthohydrogen)
+  declares a 13.957--1000 K temperature range and a 2000 MPa maximum pressure; the catalog
+  qualifies only its four exact single-phase states. The `1e-4` relative comparison
+  tolerance covers the known cross-port gas-constant and legacy hydrogen molar-mass
+  differences, while the tighter Joule-Thomson tolerance reflects direct derivative
+  agreement. These are cross-implementation checks of the published reference EOS, not
+  independent experimental validation, and the stored values were not refreshed from NeqSim.
+- The [CoolProp 7.2.0 helium definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Helium.json)
+  identifies the 2019 Ortiz-Vega helium-4 formulation (its bibliography records unpublished
+  REFPROP 10 coefficients used with permission) and supplies the external implementation
+  used to evaluate the four catalog states. The definition declares the triple point at
+  2.1768 K, an EOS maximum of 2000 K and a maximum pressure of 1 GPa; the catalog qualifies
+  only four gas/supercritical states from 100--300 K and 10--50 bar. The `1e-4` relative
+  tolerances cover density and energy cross-port differences, `5e-4` covers caloric,
+  acoustic and isentropic-exponent differences, and 2% is reserved for the small signed
+  Joule-Thomson derivative. These are cross-implementation checks of the shared
+  reference formulation, not independent experimental validation, and the stored values were not
+  refreshed from NeqSim.
+
+NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
+definitions on 2026-09-24 and 2026-09-25, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
+the identified correlations are included, not a redistributed NIST database or
+compilation. Source compilation rights remain with the source; the authored fixtures
+and analytical controls follow the repository's Apache-2.0 license. References are
+stored offline so CI does not depend on live scientific websites.
+
+Never replace a failed reference with the current implementation's answer. Investigate
+units, validity, phase selection, data and algorithms, then document any justified
+reference or tolerance change. Model-to-model agreement with shared formulas/data is
+cross-implementation evidence, not independent experimental validation.
+
+## Defect-detection and expansion policy
+
+Harness self-tests reject malformed catalogs, missing required cases, nonfinite
+numbers, zero positive-only properties, giant pressures and a plausible but wrong
+constant. They also prove legitimate signed/zero properties and declared absence pass.
+Production-path mutation evidence is recorded in the campaign PR/ledger separately;
+helper self-tests alone are not proof that a production regression is detected.
+
+Follow-up milestones reduce inventory debt with sourced mixture properties. PSRK, UMR-PRU,
+modified group-contribution variants and fitted/database activity models each require their
+own parameter-formalism provenance and validation matrix; the original-UNIFAC anchors do not
+qualify them. Fitted NRTL mixtures and experimental VLE accuracy are likewise not implied by
+the prescribed equation checks. Subsequent work will
+then add typed availability and enum dispatch. Java 8 enum switches are not
+compiler-exhaustive: each new fixture/form needs a coverage test and a fail-closed
+default. No public `double` signature is changed by this first increment.
+
+See [component data contracts](../thermo/component_database_guide.md) and
+[thermodynamic models](../thermo/thermodynamic_models.md) for production API behavior.
+
+
+## PC-SAFT differential and root contracts
+
+The JUnit contracts `SaftDerivativeConsistencyTest` and `PcsaftVolumeDomainTest`
+complement the portable fixtures. At fixed composition and volume they compare
+first and second temperature derivatives, the mixed derivative, volume curvature,
+and the third hard-chain volume derivative with independent perturbations of
+Helmholtz energy. They exercise both PC-SAFT implementations with pure fluids and
+mixtures. `PhasePCSAFTRahmatTest` also checks a cold, dense methane/hexane root.
+
+The packing fraction must satisfy `0 < eta < 1`; a returned molar volume must close
+the specified pressure. Gas and liquid root selection is deterministic across
+fresh and reused systems. Invalid input, a missing bracket, and a nonfinite or
+unconverged pressure residual produce an exception. The finite bracketing mesh
+is not a proof that every near-critical root can be resolved.
+
+Fixing the diameter and product-rule derivatives changes caloric properties.
+The methane/hexane regression at 250 K and 10 bara changes from about 172.366 to
+219.083 J/K. `SystemPCSAFTTest` checks this against `dH/dT` at constant pressure
+and fixed phase compositions. Reflashing at the perturbed temperatures would
+include phase redistribution and would not test the same heat capacity.
+The stored primitive regression values now refer to the physical pressure root;
+these are numerical consistency checks, not experimental validation of parameters.

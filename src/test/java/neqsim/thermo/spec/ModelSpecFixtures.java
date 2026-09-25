@@ -386,4 +386,488 @@ final class ModelSpecFixtures {
     }
     if (s.fixture == ModelSpec.Fixture.SATURATION) {
       ComponentInterface c = new ComponentSrk(s.components.keySet().iterator().next(), 1.0, 1.0, 0);
-      asse
+      assertEquals(type(s.fixture), c.getClass(), s.toString());
+      if (s.outcome == ModelSpec.Outcome.UNAVAILABLE) {
+        if ("supercritical".equals(s.reason)) {
+          assertTrue(c.hasAntoineVaporPressureCorrelation(), s.toString());
+          assertTrue(s.temperature > c.getTC(), s.toString());
+        } else {
+          assertFalse(c.hasAntoineVaporPressureCorrelation(), s.toString());
+          if ("ion".equals(s.reason)) {
+            assertTrue(c.getIonicCharge() != 0.0, s.toString());
+          } else {
+            assertEquals(0.0, c.getIonicCharge(), s.toString());
+          }
+        }
+        assertTrue(Double.isNaN(c.getAntoineVaporPressuredT(s.temperature)), s.toString());
+        return c.getAntoineVaporPressure(s.temperature);
+      }
+      assertTrue(c.hasAntoineVaporPressureCorrelation(), s.toString());
+      double value = c.getAntoineVaporPressure(s.temperature);
+      positive(value, s.toString());
+      assertTrue(s.temperature <= c.getTC() && value <= c.getPC() * (1.0 + 1e-8), s.toString());
+      return value;
+    }
+    SystemInterface system = create(s);
+    if (!isPhaseFixture(s.fixture)) {
+      assertEquals(type(s.fixture), system.getClass(), s.toString());
+    }
+    system.init(0);
+    if (s.fixture == ModelSpec.Fixture.GERG || s.fixture == ModelSpec.Fixture.GERG_PHASE) {
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.GERG_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      NeqSimGERG2008 gerg = new NeqSimGERG2008(phase, GERG2008Type.STANDARD);
+      double[] properties = s.fixture == ModelSpec.Fixture.GERG_PHASE ? phase.getProperties_GERG2008()
+          : gerg.propertiesGERG();
+      assertEquals(15, properties.length, s.toString());
+      for (double property : properties) {
+        assertTrue(Double.isFinite(property), s.toString());
+      }
+      double result = readGerg(s.property, gerg, properties);
+      double[] repeated = s.fixture == ModelSpec.Fixture.GERG_PHASE ? phase.getProperties_GERG2008()
+          : gerg.propertiesGERG();
+      assertEquals(result, readGerg(s.property, gerg, repeated), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.IDEAL_GAS || s.fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double result = readIdealGas(s.property, phase, s.componentIndex);
+      assertEquals(result, readIdealGas(s.property, phase, s.componentIndex), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.AMMONIA || s.fixture == ModelSpec.Fixture.AMMONIA_PHASE) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.AMMONIA_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double result = readAmmonia(s.property, phase);
+      assertEquals(result, readAmmonia(s.property, phase), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.LEACHMAN || s.fixture == ModelSpec.Fixture.LEACHMAN_PHASE) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.LEACHMAN_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      NeqSimLeachman leachman = new NeqSimLeachman(phase, "normal");
+      double[] properties = leachman.propertiesLeachman();
+      assertEquals(15, properties.length, s.toString());
+      for (double property : properties) {
+        assertTrue(Double.isFinite(property), s.toString());
+      }
+      double result = readLeachman(s.property, phase, leachman, properties);
+      double[] repeated = leachman.propertiesLeachman();
+      assertEquals(result, readLeachman(s.property, phase, leachman, repeated), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.VEGA || s.fixture == ModelSpec.Fixture.VEGA_PHASE) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, PhaseType.GAS);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.VEGA_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      NeqSimVega vega = new NeqSimVega(phase);
+      double[] properties = vega.propertiesVega();
+      assertEquals(15, properties.length, s.toString());
+      for (double property : properties) {
+        assertTrue(Double.isFinite(property), s.toString());
+      }
+      double result = readVega(s.property, phase, vega, properties);
+      double[] repeated = vega.propertiesVega();
+      assertEquals(result, readVega(s.property, phase, vega, repeated), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
+        || s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
+      system.init(1);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double phi = phase.getComponent(s.componentIndex).getFugacityCoefficient();
+      positive(phi, s.toString());
+      if (s.property == ModelSpec.Property.Z) {
+        return phase.getZ();
+      }
+      if (s.property == ModelSpec.Property.PHI) {
+        return phi;
+      }
+      return phase.getComponent(s.componentIndex).getHID(s.temperature);
+    }
+    PhaseInterface liquid = system.getPhase(1);
+    if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
+      system.init(1);
+      positive(liquid.getComponent(s.componentIndex).getFugacityCoefficient(), s.toString());
+      liquid = ((EosMixingRulesInterface) ((PhaseEosInterface) liquid).getMixingRule()).getGEPhase();
+    }
+    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC || s.fixture == ModelSpec.Fixture.WILSON_PHASE) {
+      for (int i = 0; i < 2; i++) {
+        ComponentInterface original = liquid.getComponent(i);
+        liquid.getcomponentArray()[i] = new ComponentGEWilson(original.getName(), original.getz(), original.getz(), i) {
+          private static final long serialVersionUID = 1L;
+
+          @Override
+          public double getCharEnergyParamter(PhaseInterface phase, int first, int second) {
+            return first == second ? 1.0 : first == 0 ? 2.0 : 0.5;
+          }
+        };
+        liquid.getComponent(i).setx(original.getz());
+      }
+    }
+    if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
+      PhaseGENRTL nrtl = (PhaseGENRTL) liquid;
+      nrtl.setAlpha(new double[][] {{0.0, 0.3}, {0.3, 0.0}});
+      nrtl.setDij(new double[][] {{0.0, 200.0}, {-100.0, 0.0}});
+    }
+    if (isPhaseFixture(s.fixture)) {
+      assertEquals(type(s.fixture), liquid.getClass(), s.toString());
+    }
+    double result = readGe(s, liquid);
+    // Read again from the same state; do not merely check that init did not throw.
+    assertEquals(result, readGe(s, liquid), 1e-11, s.toString());
+    return result;
+  }
+
+  private static double readGerg(ModelSpec.Property property, NeqSimGERG2008 gerg, double[] values) {
+    switch (property) {
+    case MOLAR_MASS:
+      return gerg.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return gerg.getMolarDensity();
+    case Z:
+      return values[1];
+    case DPD_DENSITY:
+      return values[2];
+    case D2PD_DENSITY2:
+      return values[3];
+    case DPD_T:
+      return values[5];
+    case INTERNAL_ENERGY:
+      return values[6];
+    case ENTHALPY:
+      return values[7];
+    case ENTROPY:
+      return values[8];
+    case CV:
+      return values[9];
+    case CP:
+      return values[10];
+    case SOUND_SPEED:
+      return values[11];
+    case GIBBS_ENERGY:
+      return values[12];
+    case JT:
+      return values[13];
+    case KAPPA:
+      return values[14];
+    default:
+      throw new IllegalArgumentException("unmapped GERG-2008 property " + property);
+    }
+  }
+
+  private static double readIdealGas(ModelSpec.Property property, PhaseInterface phase, int componentIndex) {
+    double phi = phase.getComponent(componentIndex).fugcoef(phase);
+    positive(phi, "ideal-gas fugacity coefficient");
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return phase.getDensity("mol/m3") / 1000.0;
+    case Z:
+      return phase.getZ();
+    case PHI:
+      return phi;
+    case CP:
+      return phase.getCp("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case JT:
+      return phase.getJouleThomsonCoefficient();
+    default:
+      throw new IllegalArgumentException("unmapped ideal-gas property " + property);
+    }
+  }
+
+  private static double readAmmonia(ModelSpec.Property property, PhaseInterface phase) {
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return 1.0e5 / phase.getMolarVolume() / 1000.0;
+    case MASS_DENSITY:
+      return phase.getDensity();
+    case Z:
+      return phase.getZ();
+    case INTERNAL_ENERGY:
+      return phase.getInternalEnergy("J/mol");
+    case ENTHALPY:
+      return phase.getEnthalpy("J/mol");
+    case ENTROPY:
+      return phase.getEntropy("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case CP:
+      return phase.getCp("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case JT:
+      return phase.getJouleThomsonCoefficient() / 100.0;
+    case KAPPA:
+      return phase.getIsothermalCompressibility();
+    default:
+      throw new IllegalArgumentException("unmapped ammonia property " + property);
+    }
+  }
+
+  private static double readLeachman(ModelSpec.Property property, PhaseInterface phase, NeqSimLeachman leachman,
+      double[] values) {
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return leachman.getMolarDensity();
+    case MASS_DENSITY:
+      return phase.getDensity();
+    case Z:
+      return phase.getZ();
+    case INTERNAL_ENERGY:
+      return phase.getInternalEnergy("J/mol");
+    case ENTHALPY:
+      return phase.getEnthalpy("J/mol");
+    case ENTROPY:
+      return phase.getEntropy("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case CP:
+      return phase.getCp("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case GIBBS_ENERGY:
+      return phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
+    case JT:
+      return phase.getJouleThomsonCoefficient() / 1000.0;
+    case KAPPA:
+      return values[14];
+    default:
+      throw new IllegalArgumentException("unmapped Leachman property " + property);
+    }
+  }
+
+  private static double readVega(ModelSpec.Property property, PhaseInterface phase, NeqSimVega vega, double[] values) {
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return vega.getMolarDensity();
+    case MASS_DENSITY:
+      return vega.getDensity();
+    case Z:
+      return phase.getZ();
+    case INTERNAL_ENERGY:
+      return phase.getInternalEnergy("J/mol");
+    case ENTHALPY:
+      return phase.getEnthalpy("J/mol");
+    case ENTROPY:
+      return phase.getEntropy("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case CP:
+      return phase.getCp("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case GIBBS_ENERGY:
+      return phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
+    case JT:
+      return phase.getJouleThomsonCoefficient() / 1000.0;
+    case KAPPA:
+      return values[14];
+    default:
+      throw new IllegalArgumentException("unmapped Vega property " + property);
+    }
+  }
+
+  private static double readGe(ModelSpec s, PhaseInterface liquid) {
+    ComponentGEInterface c = (ComponentGEInterface) liquid.getComponent(s.componentIndex);
+    if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
+      double total = ((PhaseGENRTL) liquid).getExcessGibbsEnergy(liquid, liquid.getNumberOfComponents(), s.temperature,
+          s.pressure, PhaseType.LIQUID);
+      assertTrue(Double.isFinite(total), s.toString());
+      for (int i = 0; i < liquid.getNumberOfComponents(); i++) {
+        ComponentGEInterface stored = (ComponentGEInterface) liquid.getComponent(i);
+        positive(stored.getGamma(), s.toString());
+        double phi = liquid.getComponent(i).fugcoef(liquid);
+        positive(phi, s.toString());
+        assertEquals(phi, liquid.getComponent(i).getFugacityCoefficient(), 0.0, s.toString());
+      }
+      if (s.property == ModelSpec.Property.GEX) {
+        return total / liquid.getNumberOfMolesInPhase();
+      }
+    }
+    if (c instanceof ComponentGEUnifac) {
+      ComponentGEUnifac group = (ComponentGEUnifac) c;
+      assertTrue(group.getNumberOfUNIFACgroups() > 0, s.toString());
+      assertEquals(group.getNumberOfUNIFACgroups(), group.getUnifacGroups().length, s.toString());
+      int actualGroups = 0;
+      for (int i = 0; i < group.getNumberOfUNIFACgroups(); i++) {
+        assertEquals(group.getUnifacGroups2().get(i).getSubGroup(), group.getUnifacGroup(i).getSubGroup());
+        actualGroups += group.getUnifacGroup(i).getN();
+      }
+      assertTrue(actualGroups > 0, s.toString());
+      if ("methanol".equals(group.getName())) {
+        assertEquals(15, group.getUnifacGroup(0).getSubGroup(), s.toString());
+        assertEquals(1, group.getUnifacGroup(0).getN(), s.toString());
+      }
+      if (s.property == ModelSpec.Property.GROUP_R) {
+        return group.getR();
+      }
+      if (s.property == ModelSpec.Property.GROUP_Q) {
+        return group.getQ();
+      }
+      if (s.property == ModelSpec.Property.INTERACTION_A) {
+        PhaseGEUnifac phase = (PhaseGEUnifac) liquid;
+        assertEquals(2, group.getNumberOfUNIFACgroups(), s.toString());
+        assertEquals(6, group.getUnifacGroup(0).getMainGroup(), s.toString());
+        assertEquals(7, group.getUnifacGroup(1).getMainGroup(), s.toString());
+        return phase.getAij(s.componentIndex, 1 - s.componentIndex);
+      }
+      if (s.property == ModelSpec.Property.GEX) {
+        PhaseGEUnifac phase = (PhaseGEUnifac) liquid;
+        double total = phase.getExcessGibbsEnergy(phase, liquid.getNumberOfComponents(), s.temperature, s.pressure,
+            PhaseType.LIQUID);
+        assertTrue(Double.isFinite(total), s.toString());
+        for (int i = 0; i < liquid.getNumberOfComponents(); i++) {
+          ComponentGEInterface stored = (ComponentGEInterface) liquid.getComponent(i);
+          positive(stored.getGamma(), s.toString());
+          assertEquals(Math.log(stored.getGamma()), stored.getLnGamma(), 1e-12, s.toString());
+        }
+        return total / liquid.getNumberOfMolesInPhase();
+      }
+    }
+    double gamma = c instanceof ComponentGEWilson
+        ? ((ComponentGEWilson) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
+            PhaseType.LIQUID)
+        : c instanceof ComponentGEUnifac
+            ? ((ComponentGEUnifac) c).getGamma(liquid, liquid.getNumberOfComponents(), s.temperature, s.pressure,
+                PhaseType.LIQUID)
+            : ((ComponentGeNRTL) c).getGamma();
+    positive(gamma, s.toString());
+    assertEquals(gamma, c.getGamma(), 1e-12, s + " returned/stored gamma");
+    assertEquals(Math.log(gamma), c.getLnGamma(), 1e-12, s + " stored ln-gamma");
+    if (s.fixture == ModelSpec.Fixture.WILSON_ANALYTIC || s.fixture == ModelSpec.Fixture.WILSON_PHASE
+        || s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
+      double phi = liquid.getComponent(s.componentIndex).fugcoef(liquid);
+      positive(phi, s.toString());
+      assertEquals(phi, liquid.getComponent(s.componentIndex).getFugacityCoefficient(), 0.0, s.toString());
+    }
+    return s.property == ModelSpec.Property.LN_GAMMA ? c.getLnGamma() : gamma;
+  }
+
+  private static SystemInterface create(ModelSpec s) {
+    SystemInterface system;
+    switch (s.fixture) {
+    case WILSON_ANALYTIC:
+    case WILSON_PHASE:
+      system = new SystemGEWilson(s.temperature, s.pressure);
+      break;
+    case NRTL_ANALYTIC:
+    case NRTL_PHASE:
+      system = new SystemNRTL(s.temperature, s.pressure);
+      break;
+    case UNIFAC:
+    case UNIFAC_PHASE:
+      system = new SystemUNIFAC(s.temperature, s.pressure);
+      break;
+    case PSRK:
+    case PSRK_PHASE:
+      system = new SystemUNIFACpsrk(s.temperature, s.pressure);
+      break;
+    case UMR:
+    case UMR_PHASE:
+      system = new SystemUMRPRUEos(s.temperature, s.pressure);
+      break;
+    case SRK:
+    case SRK_PHASE:
+      system = new SystemSrkEos(s.temperature, s.pressure);
+      break;
+    case PR:
+    case PR_PHASE:
+      system = new SystemPrEos(s.temperature, s.pressure);
+      break;
+    case GERG:
+    case GERG_PHASE:
+      system = new SystemGERG2008Eos(s.temperature, s.pressure);
+      break;
+    case IDEAL_GAS:
+    case IDEAL_GAS_PHASE:
+      system = new SystemIdealGas(s.temperature, s.pressure);
+      break;
+    case AMMONIA:
+    case AMMONIA_PHASE:
+      system = new SystemAmmoniaEos(s.temperature, s.pressure);
+      break;
+    case LEACHMAN:
+    case LEACHMAN_PHASE:
+      system = new SystemLeachmanEos(s.temperature, s.pressure);
+      break;
+    case VEGA:
+    case VEGA_PHASE:
+      system = new SystemVegaEos(s.temperature, s.pressure);
+      break;
+    default:
+      throw new IllegalArgumentException("no system factory for " + s.fixture);
+    }
+    if (s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE
+        && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
+        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE) {
+      for (Map.Entry<String, Double> entry : s.components.entrySet()) {
+        system.addComponent(entry.getKey(), entry.getValue());
+      }
+    }
+    if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
+      system.setMixingRule("HV", "UNIFAC_UMRPRU");
+    } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE
+        && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE
+        && s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE
+        && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
+        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE) {
+      system.setMixingRule("classic");
+    }
+    return system;
+  }
+
+  private static boolean isPhaseFixture(ModelSpec.Fixture fixture) {
+    return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
+        || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
+        || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
+        || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE
+        || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE || fixture == ModelSpec.Fixture.AMMONIA_PHASE
+        || fixture == ModelSpec.Fixture.LEACHMAN_PHASE || fixture == ModelSpec.Fixture.VEGA_PHASE;
+  }
+
+  static void positive(double value, String context) {
+    assertTrue(Double.isFinite(value) && value > 0.0, context + ": expected finite positive value, got " + value);
+  }
+}

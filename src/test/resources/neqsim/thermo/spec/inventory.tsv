@@ -82,4 +82,52 @@ neqsim.thermo.system.SystemGERG2008Eos	SYSTEM	PARTIAL	GERG	MOLAR_MASS;MOLAR_DENS
 neqsim.thermo.system.SystemGERGwaterEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
 neqsim.thermo.system.SystemGEWilson	SYSTEM	PARTIAL	WILSON_ANALYTIC	GAMMA;LN_GAMMA	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
 neqsim.thermo.system.SystemIdealGas	SYSTEM	PARTIAL	IDEAL_GAS	MOLAR_MASS;MOLAR_DENSITY;Z;PHI;CP;CV;SOUND_SPEED;JT	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming mixtures, entropy/enthalpy references, transport properties or additional domains
-neqsim.thermo.system.SystemKentEisenberg	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equin
+neqsim.thermo.system.SystemKentEisenberg	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemLeachmanEos	SYSTEM	PARTIAL	LEACHMAN	MOLAR_MASS;MOLAR_DENSITY;MASS_DENSITY;Z;INTERNAL_ENERGY;ENTHALPY;ENTROPY;CV;CP;SOUND_SPEED;GIBBS_ENERGY;JT;KAPPA	catalog-only	https://github.com/equinor/neqsim/issues/3792	Normal hydrogen at four sourced gas/liquid states only; review before spin isomers, flashes, transport, solids or additional domains
+neqsim.thermo.system.SystemNRTL	SYSTEM	PARTIAL	NRTL_ANALYTIC	GAMMA;LN_GAMMA;GEX	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming fitted mixtures, database parameters or additional properties
+neqsim.thermo.system.SystemPCSAFT	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPCSAFTa	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPitzer	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrCPA	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrDanesh	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrEos	SYSTEM	PARTIAL	PR	Z;PHI;HID	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming mixtures, liquid roots or additional properties
+neqsim.thermo.system.SystemPrEos1978	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrEosDelft1998	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrEosvolcor	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrGassemEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrLeeKeslerEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPrMathiasCopeman	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemPsrkEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemRKEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSAFTVRMie	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSolidHelmholtzEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSoreideWhitson	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSpanWagnerEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPA	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAs	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoil	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilAndersonMixing	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilAndersonReduced	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilBroydenImplicit	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicit	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilFullyImplicitReduced	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkCPAstatoilReduced	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkEos	SYSTEM	PARTIAL	SRK	Z;PHI;HID	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming mixtures, liquid roots or additional properties
+neqsim.thermo.system.SystemSrkEosvolcor	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkMathiasCopeman	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkPenelouxEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkSchwartzentruberEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkTwuCoonEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkTwuCoonParamEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemSrkTwuCoonStatoilEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemTSTEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemUMRCPAEoS	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemUMRCPAvolcor	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemUMRPRUEos	SYSTEM	PARTIAL	UMR	GAMMA;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
+neqsim.thermo.system.SystemUMRPRUMCEos	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemUMRPRUMCEosNew	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemUNIFAC	SYSTEM	PARTIAL	UNIFAC	GAMMA;LN_GAMMA;GEX;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming experimental mixture accuracy, derivatives or additional properties
+neqsim.thermo.system.SystemUNIFACpsrk	SYSTEM	PARTIAL	PSRK	GAMMA;GROUP_R	catalog-only	https://github.com/equinor/neqsim/issues/3792	Review before claiming any additional property or domain
+neqsim.thermo.system.SystemVanLaarActivitySRK	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
+neqsim.thermo.system.SystemVegaEos	SYSTEM	PARTIAL	VEGA	MOLAR_MASS;MOLAR_DENSITY;MASS_DENSITY;Z;INTERNAL_ENERGY;ENTHALPY;ENTROPY;CV;CP;SOUND_SPEED;GIBBS_ENERGY;JT;KAPPA	catalog-only	https://github.com/equinor/neqsim/issues/4007	Pure helium at four sourced gas/supercritical states only; liquid roots are blocked by the current vapor-root density dispatch and flashes, transport, saturation, mixtures and additional domains remain debt
+neqsim.thermo.system.SystemWaterIF97	SYSTEM	DEBT	-	-	not-qualified	https://github.com/equinor/neqsim/issues/3792	Require sourced family fixture before catalog qualification
