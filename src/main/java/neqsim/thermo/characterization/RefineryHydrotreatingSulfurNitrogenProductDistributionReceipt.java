@@ -4,25 +4,23 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable external liquid-product and export-gas distribution receipt for a coupled
- * sulfur/nitrogen hydrotreating screen.
+ * Immutable external liquid-product and export-gas distribution receipt for a coupled sulfur/nitrogen hydrotreating
+ * screen.
  *
  * <p>
  * The receipt derives mass rates, mass fractions, and feed-normalized yields from a qualified
- * {@link RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance}. Internal recycle is
- * excluded from every external-product result.
+ * {@link RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance}. Internal recycle is excluded from every
+ * external-product result.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final double MOLES_PER_KMOL = 1000.0;
   private static final double KILOGRAMS_PER_TONNE = 1000.0;
 
-  private final RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance
-      throughputBalance;
+  private final RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughputBalance;
   private final double totalExternalProductMassFlowKgPerHour;
   private final double liquidProductMassFraction;
   private final double exportGasMassFraction;
@@ -43,15 +41,13 @@ public final class RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
 
   private RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt(
       RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughputBalance,
-      double totalExternalProductMassFlowKgPerHour, double liquidProductMassFraction,
-      double exportGasMassFraction, double exportHydrogenMassFlowKgPerHour,
-      double exportHydrogenSulfideMassFlowKgPerHour, double exportAmmoniaMassFlowKgPerHour,
-      double exportNonHydrogenMassFlowKgPerHour, double exportHydrogenMassFraction,
-      double exportHydrogenSulfideMassFraction, double exportAmmoniaMassFraction,
-      double exportNonHydrogenMassFraction, double liquidProductKgPerTonneFeed,
-      double exportGasKgPerTonneFeed, double exportHydrogenSulfideKgPerTonneFeed,
-      double exportAmmoniaKgPerTonneFeed, double externalProductClosureResidualKgPerHour,
-      double exportGasComponentClosureResidualKgPerHour) {
+      double totalExternalProductMassFlowKgPerHour, double liquidProductMassFraction, double exportGasMassFraction,
+      double exportHydrogenMassFlowKgPerHour, double exportHydrogenSulfideMassFlowKgPerHour,
+      double exportAmmoniaMassFlowKgPerHour, double exportNonHydrogenMassFlowKgPerHour,
+      double exportHydrogenMassFraction, double exportHydrogenSulfideMassFraction, double exportAmmoniaMassFraction,
+      double exportNonHydrogenMassFraction, double liquidProductKgPerTonneFeed, double exportGasKgPerTonneFeed,
+      double exportHydrogenSulfideKgPerTonneFeed, double exportAmmoniaKgPerTonneFeed,
+      double externalProductClosureResidualKgPerHour, double exportGasComponentClosureResidualKgPerHour) {
     this.throughputBalance = throughputBalance;
     this.totalExternalProductMassFlowKgPerHour = totalExternalProductMassFlowKgPerHour;
     this.liquidProductMassFraction = liquidProductMassFraction;
@@ -86,44 +82,39 @@ public final class RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
     double liquid = throughputBalance.getProductMassFlowKgPerHour();
     double exportGas = throughputBalance.getExportGasMassFlowKgPerHour();
     double totalExternalProduct = liquid + exportGas;
-    double exportHydrogen = throughputBalance.getExportHydrogenMolarFlowKmolPerHour()
-        * MOLES_PER_KMOL * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
-    double exportHydrogenSulfide = throughputBalance.getExportHydrogenSulfideMolarFlowKmolPerHour()
-        * MOLES_PER_KMOL * RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
-    double exportAmmonia = throughputBalance.getExportAmmoniaMolarFlowKmolPerHour()
-        * MOLES_PER_KMOL * RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
+    double exportHydrogen = throughputBalance.getExportHydrogenMolarFlowKmolPerHour() * MOLES_PER_KMOL
+        * RefineryHydrotreatingSulfurBalance.HYDROGEN_MOLAR_MASS_KG_PER_MOL;
+    double exportHydrogenSulfide = throughputBalance.getExportHydrogenSulfideMolarFlowKmolPerHour() * MOLES_PER_KMOL
+        * RefineryHydrotreatingSulfurBalance.HYDROGEN_SULFIDE_MOLAR_MASS_KG_PER_MOL;
+    double exportAmmonia = throughputBalance.getExportAmmoniaMolarFlowKmolPerHour() * MOLES_PER_KMOL
+        * RefineryHydrotreatingNitrogenBalance.AMMONIA_MOLAR_MASS_KG_PER_MOL;
     double nonHydrogenMolarMass = throughputBalance.getRecycleBalance().getSupplyBalance()
         .getNonHydrogenMolarMassKgPerMol();
-    double exportNonHydrogen = throughputBalance.getExportNonHydrogenMolarFlowKmolPerHour()
-        * MOLES_PER_KMOL * nonHydrogenMolarMass;
+    double exportNonHydrogen = throughputBalance.getExportNonHydrogenMolarFlowKmolPerHour() * MOLES_PER_KMOL
+        * nonHydrogenMolarMass;
 
-    double componentSum = exportHydrogen + exportHydrogenSulfide + exportAmmonia
-        + exportNonHydrogen;
+    double componentSum = exportHydrogen + exportHydrogenSulfide + exportAmmonia + exportNonHydrogen;
     double productClosure = totalExternalProduct - liquid - exportGas;
     double gasClosure = exportGas - componentSum;
     double tolerance = 1.0e-12 * Math.max(1.0, totalExternalProduct);
-    if (!allFiniteNonNegative(feed, liquid, exportGas, totalExternalProduct, exportHydrogen,
-        exportHydrogenSulfide, exportAmmonia, exportNonHydrogen)
-        || Math.abs(productClosure) > tolerance || Math.abs(gasClosure) > tolerance) {
+    if (!allFiniteNonNegative(feed, liquid, exportGas, totalExternalProduct, exportHydrogen, exportHydrogenSulfide,
+        exportAmmonia, exportNonHydrogen) || Math.abs(productClosure) > tolerance || Math.abs(gasClosure) > tolerance) {
       throw new IllegalArgumentException("throughput does not define a closed external product distribution");
     }
 
     double liquidFraction = liquid / totalExternalProduct;
     double gasFraction = exportGas / totalExternalProduct;
     double exportHydrogenFraction = exportGas == 0.0 ? 0.0 : exportHydrogen / exportGas;
-    double exportHydrogenSulfideFraction =
-        exportGas == 0.0 ? 0.0 : exportHydrogenSulfide / exportGas;
+    double exportHydrogenSulfideFraction = exportGas == 0.0 ? 0.0 : exportHydrogenSulfide / exportGas;
     double exportAmmoniaFraction = exportGas == 0.0 ? 0.0 : exportAmmonia / exportGas;
     double exportNonHydrogenFraction = exportGas == 0.0 ? 0.0 : exportNonHydrogen / exportGas;
     double tonnesPerHour = feed / KILOGRAMS_PER_TONNE;
 
-    return new RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt(
-        throughputBalance, totalExternalProduct, liquidFraction, gasFraction, exportHydrogen,
-        exportHydrogenSulfide, exportAmmonia, exportNonHydrogen, exportHydrogenFraction,
-        exportHydrogenSulfideFraction, exportAmmoniaFraction, exportNonHydrogenFraction,
-        liquid / tonnesPerHour, exportGas / tonnesPerHour,
-        exportHydrogenSulfide / tonnesPerHour, exportAmmonia / tonnesPerHour, productClosure,
-        gasClosure);
+    return new RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt(throughputBalance, totalExternalProduct,
+        liquidFraction, gasFraction, exportHydrogen, exportHydrogenSulfide, exportAmmonia, exportNonHydrogen,
+        exportHydrogenFraction, exportHydrogenSulfideFraction, exportAmmoniaFraction, exportNonHydrogenFraction,
+        liquid / tonnesPerHour, exportGas / tonnesPerHour, exportHydrogenSulfide / tonnesPerHour,
+        exportAmmonia / tonnesPerHour, productClosure, gasClosure);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
