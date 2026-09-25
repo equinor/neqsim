@@ -13,9 +13,8 @@ import java.util.List;
  * Creates deterministic integrity checkpoints for ordered S8 batch-reconciliation evidence.
  *
  * <p>
- * The checkpoint uses a versioned canonical binary encoding and SHA-256. It is an integrity
- * fingerprint, not a digital signature, authentication mechanism, transaction, or exactly-once
- * guarantee.
+ * The checkpoint uses a versioned canonical binary encoding and SHA-256. It is an integrity fingerprint, not a digital
+ * signature, authentication mechanism, transaction, or exactly-once guarantee.
  * </p>
  *
  * @author esol
@@ -26,8 +25,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static final String DIGEST_ALGORITHM = "SHA-256";
 
   /** Versioned canonical-encoding identifier. */
-  public static final String SCHEMA_IDENTIFIER =
-      "neqsim-s8-stream-application-batch-reconciliation-checkpoint-v1";
+  public static final String SCHEMA_IDENTIFIER = "neqsim-s8-stream-application-batch-reconciliation-checkpoint-v1";
 
   private AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint() {
   }
@@ -40,13 +38,10 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    */
   public static Result create(
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation) {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result validated =
-        validate(reconciliation);
-    return new Result(validated.getEntries().size(), validated.getStrictAppendCount(),
-        validated.getUnchangedCount(), validated.getPlannedS8IncrementMol(),
-        validated.getS8ResidualMol(), validated.getS8ToleranceMol(),
-        validated.getTotalAmountResidualMol(), validated.getTotalAmountToleranceMol(),
-        digest(validated));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result validated = validate(reconciliation);
+    return new Result(validated.getEntries().size(), validated.getStrictAppendCount(), validated.getUnchangedCount(),
+        validated.getPlannedS8IncrementMol(), validated.getS8ResidualMol(), validated.getS8ToleranceMol(),
+        validated.getTotalAmountResidualMol(), validated.getTotalAmountToleranceMol(), digest(validated));
   }
 
   /**
@@ -57,8 +52,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @return true only when the canonical reconciliation digest matches
    */
   public static boolean verify(
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation,
-      Result checkpoint) {
+      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation, Result checkpoint) {
     if (checkpoint == null) {
       throw new IllegalArgumentException("S8 batch-reconciliation checkpoint is required");
     }
@@ -71,14 +65,13 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     if (reconciliation == null) {
       throw new IllegalArgumentException("S8 batch reconciliation is required");
     }
-    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Entry> entries =
-        reconciliation.getEntries();
+    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Entry> entries = reconciliation
+        .getEntries();
     if (entries.isEmpty()) {
       throw new IllegalArgumentException("S8 batch reconciliation cannot be empty");
     }
     if (reconciliation.getStrictAppendCount() < 0 || reconciliation.getUnchangedCount() < 0
-        || reconciliation.getStrictAppendCount() + reconciliation.getUnchangedCount()
-            != entries.size()) {
+        || reconciliation.getStrictAppendCount() + reconciliation.getUnchangedCount() != entries.size()) {
       throw new IllegalArgumentException("S8 batch reconciliation state counts are inconsistent");
     }
 
@@ -92,39 +85,29 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       requireText(entry.getApplicationIdempotencyKey(), "Application idempotency key");
       requireText(entry.getTransitionDigestHex(), "Transition digest");
       requireNonNegativeFinite(entry.getPreviewCandidateS8AmountMol(), "Preview candidate S8 amount");
-      requireNonNegativeFinite(entry.getApplicationCandidateS8AmountMol(),
-          "Application candidate S8 amount");
-      requireNonNegativeFinite(entry.getPreviewCandidateTotalAmountMol(),
-          "Preview candidate total amount");
-      requireNonNegativeFinite(entry.getApplicationCandidateTotalAmountMol(),
-          "Application candidate total amount");
-      requireResidual(entry.getCandidateS8ResidualMol(), entry.getCandidateS8ToleranceMol(),
-          "Candidate S8 residual");
-      requireResidual(entry.getCandidateTotalAmountResidualMol(),
-          entry.getCandidateTotalAmountToleranceMol(), "Candidate total-amount residual");
-      maximumS8ResidualMol = Math.max(maximumS8ResidualMol,
-          Math.abs(entry.getCandidateS8ResidualMol()));
-      maximumTotalResidualMol = Math.max(maximumTotalResidualMol,
-          Math.abs(entry.getCandidateTotalAmountResidualMol()));
+      requireNonNegativeFinite(entry.getApplicationCandidateS8AmountMol(), "Application candidate S8 amount");
+      requireNonNegativeFinite(entry.getPreviewCandidateTotalAmountMol(), "Preview candidate total amount");
+      requireNonNegativeFinite(entry.getApplicationCandidateTotalAmountMol(), "Application candidate total amount");
+      requireResidual(entry.getCandidateS8ResidualMol(), entry.getCandidateS8ToleranceMol(), "Candidate S8 residual");
+      requireResidual(entry.getCandidateTotalAmountResidualMol(), entry.getCandidateTotalAmountToleranceMol(),
+          "Candidate total-amount residual");
+      maximumS8ResidualMol = Math.max(maximumS8ResidualMol, Math.abs(entry.getCandidateS8ResidualMol()));
+      maximumTotalResidualMol = Math.max(maximumTotalResidualMol, Math.abs(entry.getCandidateTotalAmountResidualMol()));
     }
 
     requireNonNegativeFinite(reconciliation.getPlannedS8IncrementMol(), "Planned S8 increment");
-    requireNonNegativeFinite(reconciliation.getPreviewObservedS8IncrementMol(),
-        "Preview observed S8 increment");
+    requireNonNegativeFinite(reconciliation.getPreviewObservedS8IncrementMol(), "Preview observed S8 increment");
     requireNonNegativeFinite(reconciliation.getApplicationObservedS8IncrementMol(),
         "Application observed S8 increment");
-    requireNonNegativeFinite(reconciliation.getPreviewObservedTotalIncrementMol(),
-        "Preview observed total increment");
+    requireNonNegativeFinite(reconciliation.getPreviewObservedTotalIncrementMol(), "Preview observed total increment");
     requireNonNegativeFinite(reconciliation.getApplicationObservedTotalIncrementMol(),
         "Application observed total increment");
-    requireResidual(reconciliation.getS8ResidualMol(), reconciliation.getS8ToleranceMol(),
-        "Aggregate S8 residual");
-    requireResidual(reconciliation.getTotalAmountResidualMol(),
-        reconciliation.getTotalAmountToleranceMol(), "Aggregate total-amount residual");
+    requireResidual(reconciliation.getS8ResidualMol(), reconciliation.getS8ToleranceMol(), "Aggregate S8 residual");
+    requireResidual(reconciliation.getTotalAmountResidualMol(), reconciliation.getTotalAmountToleranceMol(),
+        "Aggregate total-amount residual");
     requireExactDouble(maximumS8ResidualMol, reconciliation.getMaximumEntryS8ResidualMol(),
         "Maximum entry S8 residual");
-    requireExactDouble(maximumTotalResidualMol,
-        reconciliation.getMaximumEntryTotalAmountResidualMol(),
+    requireExactDouble(maximumTotalResidualMol, reconciliation.getMaximumEntryTotalAmountResidualMol(),
         "Maximum entry total-amount residual");
     return reconciliation;
   }
@@ -136,8 +119,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
       try (DataOutputStream output = new DataOutputStream(bytes)) {
         writeString(output, SCHEMA_IDENTIFIER);
-        List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Entry> entries =
-            reconciliation.getEntries();
+        List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Entry> entries = reconciliation
+            .getEntries();
         output.writeInt(entries.size());
         output.writeInt(reconciliation.getStrictAppendCount());
         output.writeInt(reconciliation.getUnchangedCount());
@@ -170,8 +153,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     } catch (NoSuchAlgorithmException exception) {
       throw new IllegalStateException("Required SHA-256 digest algorithm is unavailable", exception);
     } catch (IOException exception) {
-      throw new IllegalStateException("Unable to encode the S8 batch-reconciliation checkpoint",
-          exception);
+      throw new IllegalStateException("Unable to encode the S8 batch-reconciliation checkpoint", exception);
     }
   }
 
@@ -243,9 +225,9 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     private final double totalAmountToleranceMol;
     private final byte[] digest;
 
-    private Result(int entryCount, int strictAppendCount, int unchangedCount,
-        double plannedS8IncrementMol, double s8ResidualMol, double s8ToleranceMol,
-        double totalAmountResidualMol, double totalAmountToleranceMol, byte[] digest) {
+    private Result(int entryCount, int strictAppendCount, int unchangedCount, double plannedS8IncrementMol,
+        double s8ResidualMol, double s8ToleranceMol, double totalAmountResidualMol, double totalAmountToleranceMol,
+        byte[] digest) {
       this.entryCount = entryCount;
       this.strictAppendCount = strictAppendCount;
       this.unchangedCount = unchangedCount;

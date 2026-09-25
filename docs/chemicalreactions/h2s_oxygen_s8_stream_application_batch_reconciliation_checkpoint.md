@@ -1,3 +1,8 @@
+---
+title: S8 stream-application batch-reconciliation checkpoints
+description: Create deterministic integrity fingerprints for ordered reconciliation evidence
+---
+
 # S8 stream-application batch-reconciliation checkpoints
 
 `AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint` creates a
