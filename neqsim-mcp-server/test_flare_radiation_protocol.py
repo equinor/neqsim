@@ -109,9 +109,9 @@ def test_fail_closed_bounds(client):
         ({"heatDuty_W": 1, "distances_m": [-1]}, "INVALID_DISTANCE"),
     ]
     for definition, code in cases:
-        result = payload(flare(client, definition))
-        require(result.get("status") == "error" and result.get("errorCode") == code,
-                "flare bound did not fail closed", result)
+        response = flare(client, definition)
+        require(response.get("status") == "error" and payload(response).get("errorCode") == code,
+                "flare bound did not fail closed", response)
     oversized = client.call("runFlareNetwork", {"flareJson": json.dumps(
         {"heatDuty_W": 1, "padding": "x" * 17000})})
     require(payload(oversized).get("errorCode") == "REQUEST_TOO_LARGE",
