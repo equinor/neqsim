@@ -96,6 +96,14 @@ class AntoineDataAvailabilityTest {
   }
 
   @Test
+  void zeroCoefficientTupleCannotBecomeAProvenCorrelation() {
+    ComponentSrk peroxide = new ComponentSrk("H2O2", 1.0, 1.0, 0);
+    peroxide.antoineLiqVapPresType = "log";
+    assertFalse(peroxide.hasAntoineVaporPressureCorrelation());
+    assertTrue(Double.isNaN(peroxide.getAntoineVaporPressure(298.15)));
+  }
+
+  @Test
   void ordinaryWaterAndEosFallbackRemainUsable() throws Exception {
     ComponentInterface water = new ComponentSrk("water", 1.0, 1.0, 0);
     assertEquals(0.0317, water.getAntoineVaporPressure(298.15), 0.0003);
@@ -137,6 +145,11 @@ class AntoineDataAvailabilityTest {
         double c = rows.getDouble("ANTOINEC");
         double d = rows.getDouble("ANTOINED");
         double e = rows.getDouble("ANTOINEE");
+        String correlationType = rows.getString("AntoineVapPresLiqType");
+        if (correlationType != null && !correlationType.trim().isEmpty() && !"none".equals(correlationType)) {
+          assertTrue(Math.abs(a) + Math.abs(b) + Math.abs(c) + Math.abs(d) + Math.abs(e) > 0.0,
+              "A live vapor-pressure label needs a nonzero fitted coefficient: " + name);
+        }
         assertFalse(a == -7.76451 && b == 1.45838 && c == -2.7758 && d == -1.23303 && e == 0.0, name);
         assertFalse(a == -8.54796 && b == 0.76982 && c == -3.1085 && d == 1.54481 && e == 0.0, name);
         assertFalse(a == -8.54 && b == 0.76 && c == -3.1 && d == 1.54 && e == 0.0, name);

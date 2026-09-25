@@ -339,10 +339,6 @@ public abstract class Component implements ComponentInterface {
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
         normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
-        if (AntoineA == 0 && !"none".equals(antoineLiqVapPresType)) {
-          AntoineA = 1.0;
-          AntoineB = getNormalBoilingPoint() - 273.15;
-        }
 
         AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
         AntoineBSolid = Double.parseDouble(dataSet.getString("ANTOINESolidB"));
@@ -1481,7 +1477,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public boolean hasAntoineVaporPressureCorrelation() {
     return ionicCharge == 0 && !isIsIon() && antoineLiqVapPresType != null && !antoineLiqVapPresType.trim().isEmpty()
-        && !"none".equals(antoineLiqVapPresType);
+        && !"none".equals(antoineLiqVapPresType)
+        && (AntoineA != 0.0 || AntoineB != 0.0 || AntoineC != 0.0 || AntoineD != 0.0 || AntoineE != 0.0);
   }
 
   /**

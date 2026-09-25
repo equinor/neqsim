@@ -146,6 +146,11 @@ have not been reinterpreted as measured Wagner fits or replaced with guessed dat
 Water and seawater retain their existing correlation. Solid sublimation
 coefficients and EOS parameters are separate and are unchanged.
 
+If all five liquid-vapor coefficients are zero, NeqSim also reports the
+correlation as unavailable, even if an imported row has a live type label.
+It does not infer or store a fitted Antoine curve from a normal boiling point.
+Supply a sourced fit when vapor pressure is required.
+
 `ComponentInterface.hasAntoineVaporPressureCorrelation()` distinguishes missing
 data from an available correlation. Availability alone does not certify the
 accuracy or fitted range of older data. `getAntoineVaporPressure(T)` and its
