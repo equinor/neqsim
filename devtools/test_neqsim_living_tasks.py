@@ -126,6 +126,50 @@ def test_solve_until_goal_and_infeasible(reference, tmp_path):
     assert state["state"] == "infeasible"
 
 
+def test_living_report_follows_every_change(reference, tmp_path):
+    task = _copy(reference, tmp_path, "report")
+    report = os.path.join(task, "continuous", "LIVING_REPORT.md")
+    assert os.path.exists(report), "task-living writes the first living report"
+    run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    text = open(report, encoding="utf-8").read()
+    assert "Latest values against the baseline" in text and "polytropic_efficiency" in text
+    state = nc.solve(task, until="goal", no_agent=True)
+    text = open(report, encoding="utf-8").read()
+    assert "Goal progress" in text and "goal_met" in text and "task-promote" in text
+    promote(task, state["history"][-1]["cycle"], "Reviewer", note="accepted")
+    text = open(report, encoding="utf-8").read()
+    assert "B-{} (current)".format(state["history"][-1]["cycle"]) in text and "Reviewer" in text
+    assert "task-promote" not in text
+    kpis = json.load(open(os.path.join(task, "continuous", "baseline", "kpis.json")))
+    assert kpis["polytropic_efficiency"] == 0.8 and kpis["power_reduction_pct"] >= 2.0
+    assert cli.main(["ledger", task, "set", "OPP-0001", "accepted", "--by", "Reviewer"]) == 0
+    assert "| OPP-0001 | accepted |" in open(report, encoding="utf-8").read()
+    os.remove(report)
+    assert cli.main(["report", task]) == 0 and os.path.exists(report)
+
+
+def test_living_report_never_breaks_a_cycle(reference, tmp_path, monkeypatch):
+    from neqsim_continuous import living_report
+    task = _copy(reference, tmp_path, "report_fail")
+    monkeypatch.setattr(living_report, "build", lambda task_dir: 1 / 0)
+    manifest = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    assert manifest["status"] == "complete"
+
+
+def test_living_report_regenerates_formal_report_when_configured(reference, tmp_path, monkeypatch):
+    from neqsim_continuous import living_report
+    task = _copy(reference, tmp_path, "report_formal")
+    calls = []
+    monkeypatch.setattr(living_report, "regenerate_formal", lambda task_dir: calls.append(task_dir))
+    plan_path = os.path.join(task, "continuous", "cycle_plan.yaml")
+    plan = yaml.safe_load(open(plan_path))
+    plan["report"] = {"formal": "on_promote"}
+    yaml.safe_dump(plan, open(plan_path, "w"))
+    manifest = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    assert calls == []
+    promote(task, manifest["cycle_id"], "Reviewer")
+    assert len(calls) == 1
+
 def test_solve_refuses_unconfirmed_goal(reference, tmp_path):
     task = _copy(reference, tmp_path, "unconfirmed")
     goal_path = os.path.join(task, "continuous", "goal.yaml")

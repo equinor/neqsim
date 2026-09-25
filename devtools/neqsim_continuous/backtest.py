@@ -97,4 +97,6 @@ def run_backtest(task_dir, start, end, step_hours=24.0, run_name="backtest", che
             report["reproducibility"])]
     with open(os.path.join(run_dir, "backtest_report.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
+    from .living_report import update
+    update(task_dir, event="backtest")
     return report

@@ -8,6 +8,7 @@
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
     neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
     neqsim task-status <task-or-task-root>
+    neqsim task-report <task> [--formal]
     neqsim task-reference-case <parent-folder>
 """
 
@@ -17,7 +18,7 @@ import os
 import sys
 
 COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger", "status",
-            "reference-case")
+            "report", "reference-case")
 
 
 def _print(data):
@@ -96,6 +97,10 @@ def main(argv=None):
     p = sub.add_parser("status", help="status of one living task or every living task in a folder")
     p.add_argument("path")
 
+    p = sub.add_parser("report", help="rebuild continuous/LIVING_REPORT.md now")
+    p.add_argument("task")
+    p.add_argument("--formal", action="store_true", help="also regenerate the Word/HTML report")
+
     p = sub.add_parser("reference-case", help="create the public reference task")
     p.add_argument("parent")
 
@@ -144,9 +149,12 @@ def main(argv=None):
     elif args.command == "promote":
         from .living import promote
         _print(promote(_task(args.task), args.cycle, args.reviewer, args.note))
-        print("Regenerate the report for the new baseline with: neqsim report \"{}\"".format(args.task))
+        print("Living report updated: {}".format(os.path.join(args.task, "continuous", "LIVING_REPORT.md")))
+        print("Regenerate the formal report with: neqsim report \"{}\" "
+              "(or set report.formal: on_promote in cycle_plan.yaml)".format(args.task))
     elif args.command == "ledger":
         from .ledger import Ledger
+        from .living_report import update
         book = Ledger(os.path.join(_task(args.task), "continuous", "ledger", "events.jsonl"))
         if args.action == "list":
             for key, item in sorted(book.current().items()):
@@ -158,8 +166,10 @@ def main(argv=None):
             if len(args.args) != 2 or not args.by:
                 raise SystemExit("usage: task-ledger <task> set ID STATUS --by NAME")
             _print(book.set_status(args.args[0], args.args[1], args.by, args.note))
+            update(args.task, event="ledger")
         elif args.action == "merge":
             print("{} new events merged".format(book.merge(args.args[0])))
+            update(args.task, event="ledger")
     elif args.command == "status":
         from .living import status
         from .plan import is_living
@@ -170,6 +180,12 @@ def main(argv=None):
             rows = [status(os.path.join(path, n)) for n in sorted(os.listdir(path))
                     if os.path.isdir(os.path.join(path, n)) and is_living(os.path.join(path, n))]
             _print(rows)
+    elif args.command == "report":
+        from .living_report import regenerate_formal, update
+        path = update(_task(args.task), event="manual")
+        print(path or "ERROR: living report not written (is the task living?)")
+        if args.formal:
+            regenerate_formal(args.task)
     elif args.command == "reference-case":
         from .reference_case import create_reference_task
         os.makedirs(args.parent, exist_ok=True)

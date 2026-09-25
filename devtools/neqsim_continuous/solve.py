@@ -92,9 +92,12 @@ def solve(task_dir, until="goal", max_rounds=None, no_agent=False, allow_unconfi
                                           agent=plan["solve"]["critic"].get("agent", "continuous-improvement"))
         critic = agent_launch.launch(argv, cwd=str(task_dir))
         sessions += 1
-    return write_state(task_dir, {"state": decision_state["state"], "phase": "monitoring",
-                                  "reason": decision_state["reason"],
-                                  "details": decision_state.get("details", {}),
-                                  "rounds": len(history), "history": history,
-                                  "paused_branches": paused, "agent_sessions": sessions,
-                                  "critic": critic, "until": until})
+    final = write_state(task_dir, {"state": decision_state["state"], "phase": "monitoring",
+                                   "reason": decision_state["reason"],
+                                   "details": decision_state.get("details", {}),
+                                   "rounds": len(history), "history": history,
+                                   "paused_branches": paused, "agent_sessions": sessions,
+                                   "critic": critic, "until": until})
+    from .living_report import update
+    update(task_dir, event="solve")
+    return final

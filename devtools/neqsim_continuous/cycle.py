@@ -187,6 +187,10 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     if not dry_run:
         _append_kpi_history(state_dir, cycle_id, now, ctx.kpis)
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+    if not dry_run and mode != "backtest" and os.path.abspath(state_dir) == os.path.abspath(
+            continuous_dir(task_dir)):
+        from .living_report import update
+        update(task_dir, event="cycle")
     return manifest
 
 

@@ -43,6 +43,8 @@ solve: {}
 #  critic: {enabled: false}
 backtest: {}
 #  expected: [{trigger: "drift:polytropic_efficiency", onset: "2026-02-01", max_delay_days: 30}]
+# continuous/LIVING_REPORT.md is always rewritten; formal also regenerates the Word/HTML report
+report: {formal: never}                 # never | on_promote | every_cycle
 """
 
 CATEGORY_HINTS = (
@@ -188,6 +190,9 @@ def make_living(task_dir, brief=None):
             with open(config, "a", encoding="utf-8") as f:
                 f.write("\ncontinuous:\n  enabled: true\n  plan: continuous/cycle_plan.yaml\n")
             report["created"].append("study_config.yaml: continuous block")
+    from .living_report import update
+    if update(task_dir, event="living"):
+        report["living_report"] = "continuous/LIVING_REPORT.md"
     return report
 
 
@@ -203,13 +208,16 @@ def promote(task_dir, cycle_id, reviewer, note=""):
         raise ValueError("Cycle {} is not complete".format(cycle_id))
     base = os.path.join(cont, "baseline")
     old = load_baseline(task_dir)["meta"]
+    old_kpis = load_baseline(task_dir)["kpis"] or {}
     if old.get("id"):
         archive = os.path.join(base, "history", old["id"])
         os.makedirs(archive, exist_ok=True)
         for name in os.listdir(base):
             if os.path.isfile(os.path.join(base, name)):
                 shutil.copy2(os.path.join(base, name), os.path.join(archive, name))
-    shutil.copy2(os.path.join(cycle_dir, "kpis.json"), os.path.join(base, "kpis.json"))
+    # A solve round reports only the objective; keep the baseline of every KPI it did not report.
+    write_json(os.path.join(base, "kpis.json"),
+               dict(old_kpis, **(read_json(os.path.join(cycle_dir, "kpis.json"), {}) or {})))
     candidate = os.path.join(cycle_dir, "results.json")
     if os.path.exists(candidate):
         shutil.copy2(candidate, os.path.join(task_dir, "results.json"))
@@ -220,6 +228,8 @@ def promote(task_dir, cycle_id, reviewer, note=""):
             "previous": old.get("id"), "versions": manifest.get("versions", {}),
             "references_sha256": sense.get("references_sha256")}
     write_json(os.path.join(base, "baseline.json"), meta)
+    from .living_report import update
+    update(task_dir, event="promote")
     return meta
 
 
@@ -241,6 +251,8 @@ def note_reopen(task_dir, manifest):
         state.update({"phase": "reopen_requested", "reopen_reasons": reasons,
                       "reopen_cycle": manifest.get("cycle_id")})
         write_state(task_dir, state)
+        from .living_report import update
+        update(task_dir, event="reopen")
     return reasons
 
 

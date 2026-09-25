@@ -41,7 +41,7 @@ import sys
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
 CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger",
-                       "status", "reference-case")
+                       "status", "report", "reference-case")
 
 COMMANDS = {
     "try": {
@@ -124,6 +124,7 @@ def _print_usage():
     print("  task-promote DIR CYCLE   Promote a reviewed cycle to the baseline")
     print("  task-ledger DIR          List or update the improvement ledger")
     print("  task-status PATH         Status of a living task or all living tasks in a folder")
+    print("  task-report TASK         Rebuild continuous/LIVING_REPORT.md (--formal: also Word/HTML)")
     print("  task-reference-case DIR  Create the public reference task (synthetic station)")
     print()
     print("Task destination:")

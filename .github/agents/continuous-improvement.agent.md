@@ -34,7 +34,9 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 
 ## Workflow
 
-1. **Resolve the task** (`neqsim --show-task-root`), then `neqsim task-status <task>`.
+1. **Resolve the task** (`neqsim --show-task-root`), then `neqsim task-status <task>`
+   and read `continuous/LIVING_REPORT.md` — the always-current view of state, goal
+   progress, trends, events, pending decisions and next actions.
 2. **Make living** if needed: `neqsim task-living <task> [--brief FILE]`. Fill
    `goal.yaml` objective/constraints from the brief sections and ask the user to
    confirm (they set `confirmed_by`).
@@ -54,7 +56,9 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 7. **Critic pass** (solve mode, when enabled): challenge the best candidate —
    is the gain inside model uncertainty? was a constraint relaxed? Record it.
 8. **Hand over**: tell the reviewer which cycle to promote and which ledger items
-   need a decision; after promotion run `neqsim report <task>`.
+   need a decision (both are listed under "Next actions" in the living report). The
+   living report updates itself; set `report.formal: on_promote` in the plan so the
+   Word/HTML report is regenerated at every promotion, or run `neqsim report <task>`.
 9. **Improve the tooling**: when a cycle needed a workaround, fix the stage,
    adapter, skill or this agent (see AGENTS.md step 4) and log it.
 

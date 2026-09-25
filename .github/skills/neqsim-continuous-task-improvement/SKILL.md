@@ -52,9 +52,35 @@ All commands run through the shared interpreter:
 5. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
    `neqsim task-schedule <task> --daily 05:00 --install` (Windows Task Scheduler;
    the `cron` line is printed for Linux servers).
-6. **Review and promote** — read `cycles/<id>/digest.md`, decide ledger items
+6. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
+   view) and `cycles/<id>/digest.md`, decide ledger items
    (`task-ledger <task> set OPP-0002 accepted --by NAME`), then
-   `neqsim task-promote <task> <cycle-id> --reviewer NAME` and regenerate the report.
+   `neqsim task-promote <task> <cycle-id> --reviewer NAME`.
+
+## Living report (always up to date)
+
+`continuous/LIVING_REPORT.md` (+ `continuous/report/kpi_trends.png`) is rewritten
+automatically after `task-living`, every live cycle and solve round, `task-solve`,
+`task-backtest`, `task-promote`, a reopen and every `task-ledger set/merge`. It shows:
+
+- the state, the stop reason, the goal and the baseline;
+- the latest value of every KPI against the baseline;
+- the solve rounds;
+- the KPI trends;
+- the trigger events;
+- the ledger with its pending decisions;
+- the baseline history and the backtests;
+- the next actions.
+
+It is a view built from the folder — never edit it; `neqsim task-report <task>` rebuilds it.
+A report failure is logged and never fails the cycle.
+
+The formal Word/HTML report (`neqsim report`) follows the plan's `report.formal`:
+`never` (default), `on_promote` (recommended: the formal report always matches the
+promoted baseline) or `every_cycle`. `task-report <task> --formal` forces it once.
+
+Promotion merges the cycle's KPIs over the previous baseline, so promoting a solve
+round (which reports only the objective) keeps the baseline of the monitored KPIs.
 
 ## Folder layout
 
@@ -62,6 +88,7 @@ All commands run through the shared interpreter:
 continuous/
   cycle_plan.yaml   goal.yaml   state.json   watermarks.json   drift_state.json
   kpi_history.csv   LOCK (while a cycle runs)
+  LIVING_REPORT.md  report/kpi_trends.png   always-current view (rebuilt, never edited)
   baseline/         baseline.json, kpis.json, results_snapshot.json, history/<id>/
   ledger/events.jsonl                    append-only; merge between hosts by event_id
   stages/*.py                            task-local stage scripts
