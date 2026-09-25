@@ -15,6 +15,8 @@ Usage:
     neqsim new-task "field study" --notebooks "01_basis.ipynb,02_model.ipynb"
     neqsim new-task "field study" --intake-pause always
     neqsim new-task "field study" --config-file study_config.yaml
+    neqsim new-task "PEPR title" --slug 2026-09-25_pepr_80298789_x   # exact folder name;
+                                         # scaffolds around files already in it
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
     neqsim new-task --set-default-folder "D:/Engineering Tasks"
@@ -2147,9 +2149,27 @@ def _attach_prompt_file(task_dir, prompt_file):
     return relative
 
 
+def _copy_template_missing(template_dir, task_dir, ignore):
+    """Copy template files into an existing folder, never overwriting a file.
+
+    @param template_dir the TASK_TEMPLATE folder
+    @param task_dir the existing task folder
+    @param ignore a shutil ignore callable
+    """
+    for root, dirs, files in os.walk(template_dir):
+        skipped = ignore(root, dirs + files)
+        dirs[:] = [d for d in dirs if d not in skipped]
+        dest_root = os.path.join(task_dir, os.path.relpath(root, template_dir))
+        os.makedirs(dest_root, exist_ok=True)
+        for name in files:
+            dest = os.path.join(dest_root, name)
+            if name not in skipped and not os.path.exists(dest):
+                shutil.copy2(os.path.join(root, name), dest)
+
+
 def create_task(title, task_type="B", author="", prompt="", scale="",
                 report_depth="", notebooks="", config_file="",
-                intake_pause="", task_root=None, prompt_file=""):
+                intake_pause="", task_root=None, prompt_file="", slug=""):
     """Create a new task folder from the template.
 
     Parameters
@@ -2178,6 +2198,11 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     prompt_file : str
         Optional task brief (.md, .txt or .docx). Its text becomes the prompt
         when ``prompt`` is empty; the original is kept in references/manual/.
+    slug : str
+        Optional exact folder name. When the folder already exists but has not
+        been scaffolded (no README.md) - e.g. created by a PEPR/M1 intake tool
+        that downloaded attachments first - the template is filled in around
+        the existing files instead of creating a second folder.
     """
     if prompt_file and not prompt:
         prompt = read_prompt_file(prompt_file)
@@ -2195,19 +2220,23 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         setup_workspace(task_root)
 
     today = date.today().isoformat()
-    folder_name = "{}_{}".format(today, slugify(title))
+    slug = (slug or "").strip()
+    if slug and (slug in (".", "..") or os.path.basename(slug) != slug
+                 or "/" in slug or "\\" in slug):
+        raise ValueError("--slug must be a single folder name, got: {}".format(slug))
+    folder_name = slug or "{}_{}".format(today, slugify(title))
     task_dir = os.path.join(task_root, folder_name)
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
     if os.path.exists(task_dir):
-        print("ERROR: Folder already exists: {}".format(task_dir))
-        sys.exit(1)
-
-    # Copy template
-    shutil.copytree(
-        template_dir,
-        task_dir,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
-    )
+        if not slug or os.path.exists(os.path.join(task_dir, "README.md")):
+            print("ERROR: Folder already exists: {}".format(task_dir))
+            sys.exit(1)
+        # Pre-created by an intake tool: add the template without touching its files.
+        _copy_template_missing(template_dir, task_dir, ignore)
+        print("Scaffolding existing folder: {}".format(task_dir))
+    else:
+        shutil.copytree(template_dir, task_dir, ignore=ignore)
 
     # Seed explicit task-depth configuration before the agent starts planning.
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
@@ -2444,6 +2473,7 @@ def _main(argv, task_root=None):
     notebooks = ""
     config_file = ""
     intake_pause = ""
+    slug = ""
 
     i = 2
     while i < len(argv):
@@ -2478,6 +2508,9 @@ def _main(argv, task_root=None):
         elif argv[i] == "--config-file" and i + 1 < len(argv):
             config_file = argv[i + 1]
             i += 2
+        elif argv[i] == "--slug" and i + 1 < len(argv):
+            slug = argv[i + 1]
+            i += 2
         else:
             i += 1
 
@@ -2500,7 +2533,7 @@ def _main(argv, task_root=None):
 
     create_task(title, task_type, author, prompt, scale, report_depth,
                 notebooks, config_file, intake_pause, task_root=task_root,
-                prompt_file=prompt_file)
+                prompt_file=prompt_file, slug=slug)
 
 
 if __name__ == "__main__":
