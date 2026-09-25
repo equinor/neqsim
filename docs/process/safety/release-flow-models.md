@@ -303,6 +303,35 @@ still reports `THROAT_MACH_MISMATCH` (Mach approximately 0.1215), so this exampl
 `VALID_WITH_WARNINGS`; frames remain `UNQUALIFIED`. Full mixture-flashing qualification
 requires independent release measurements and domain review.
 
+## Transient ideal-gas pipe decompression
+
+`IdealGasPipeDecompression` owns the line-pack state and advances it during native process
+transient execution. It is deliberately not a stateless `ReleaseFlowModel`: direct calls through
+its model identity fail closed with `TRANSIENT_STATE_REQUIRED`. Register the process unit through
+`SourceTermSession.addInventorySource` so the session exports the committed boundary flux rather
+than recalculating a hypothetical steady opening.
+
+For conservative state $U=(\rho,\rho u,\rho E)$ and perfect-gas pressure
+$p=(\gamma-1)[\rho E-(\rho u)^2/(2\rho)]$, each finite-volume cell advances as
+
+$$U_i^{n+1}=U_i^n-\frac{\Delta t}{\Delta x}\left(F_{i+1/2}-F_{i-1/2}\right)+\Delta t S_i.$$
+
+The local Lax--Friedrichs interface flux is
+
+$$F_{i+1/2}=\frac{F(U_L)+F(U_R)}{2}-\frac{a_{\max}}{2}(U_R-U_L),$$
+
+where $a_{\max}=\max(|u_L|+c_L,|u_R|+c_R)$. The timestep satisfies the configured
+Courant bound. The closed-end ghost state reflects velocity; the receiver ghost state retains
+the outlet temperature at the declared absolute backpressure. Specified Darcy friction contributes
+$-f_D\rho u|u|/(2D)$ to momentum only. Internal interface fluxes cancel exactly, and tests close
+remaining plus discharged mass and total energy while checking pressure-wave and discharge
+refinement.
+
+This is a first-order, one-sided, calorically perfect single-gas model. It excludes EOS-property
+evolution, pipe elasticity, heat transfer, an upstream vessel, two-sided rupture, phase change,
+non-equilibrium multiphase flow and solids. Its evidence is numerical/conservative and remains
+`UNQUALIFIED`; it is not an experimental dense-gas validation.
+
 ## Compatibility and extension
 
 Existing scalar `LeakModel` methods keep their screening rate equations. Its lumped gas

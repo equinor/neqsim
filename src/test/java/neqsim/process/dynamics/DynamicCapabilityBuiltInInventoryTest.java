@@ -33,6 +33,7 @@ import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.reactor.IronSulfideOxidationSource;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.tank.VesselDepressurization;
+import neqsim.process.safety.release.IdealGasPipeDecompression;
 import neqsim.process.safety.release.ReleaseInventory;
 
 /** CI inventory gate for built-in implementations of the standard transient boundary. */
@@ -95,7 +96,7 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
         VesselDepressurization.class, Electrolyzer.class, ReleaseInventory.class);
     assertCapability(DynamicCapability.DYNAMIC_DISTRIBUTED, DistillationColumn.class, AdsorptionBed.class,
         MercuryRemovalBed.class, Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, PipeFlowNetwork.class,
-        WellFlowlineNetwork.class);
+        WellFlowlineNetwork.class, IdealGasPipeDecompression.class);
     assertCapability(DynamicCapability.BOUNDARY_DYNAMIC, IronSulfideOxidationSource.class);
   }
 

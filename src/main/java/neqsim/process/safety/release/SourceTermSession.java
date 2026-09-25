@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * Synchronous source-term sampling of a caller-owned process. Runs preserve process orchestration; release calculations
- * use cloned fluid snapshots. Ordinary sources are hypothetical; explicitly registered {@link ReleaseInventory} units
- * remove their own inventory through native process transient execution.
+ * use cloned fluid snapshots. Ordinary sources are hypothetical; explicitly registered {@link CoupledReleaseSource}
+ * units remove their own inventory through native process transient execution.
  *
  * <p>
  * The caller must serialize all access to the underlying process, including external updates. Session synchronization
@@ -210,10 +210,10 @@ public final class SourceTermSession {
   }
 
   /**
-   * Registers the physical opening owned by a ReleaseInventory in a single process.
+   * Registers the physical opening owned by coupled release equipment in a single process.
    *
    * @param sourceId stable unique source identity
-   * @param unitName name of the ReleaseInventory unit
+   * @param unitName name of the coupled release unit
    * @throws IllegalArgumentException for an unknown inventory or an area-based model
    */
   public synchronized void addInventorySource(String sourceId, String unitName) {
@@ -224,28 +224,27 @@ public final class SourceTermSession {
   }
 
   /**
-   * Registers an inventory's own release geometry and model without creating a second withdrawal. Frames report
-   * instantaneous end-of-step rates; cumulative balances belong to the inventory. Use
-   * ReleaseInventory.setReleaseEnabled to isolate the physical opening.
+   * Registers coupled equipment's own release geometry and model without creating a second withdrawal. Frames report
+   * instantaneous end-of-step rates; cumulative balances belong to the equipment.
    *
    * @param sourceId stable unique source identity
    * @param areaName process area, or SINGLE_AREA for a single process
-   * @param unitName name of the ReleaseInventory unit
+   * @param unitName name of the coupled release unit
    * @throws IllegalArgumentException for unknown or duplicate ownership
    */
   public synchronized void addInventorySource(String sourceId, String areaName, String unitName) {
     idle();
     ProcessSystem area = areas().get(areaName);
     ProcessEquipmentInterface unit = area == null ? null : area.getUnit(unitName);
-    if (!(unit instanceof ReleaseInventory)) {
-      throw new IllegalArgumentException("A ReleaseInventory unit is required");
+    if (!(unit instanceof CoupledReleaseSource)) {
+      throw new IllegalArgumentException("Coupled release equipment is required");
     }
     for (Source existing : sources.values()) {
       if (existing.inventorySource && existing.unit == unit) {
         throw new IllegalArgumentException("Physical inventory opening already registered");
       }
     }
-    ReleaseInventory inventory = (ReleaseInventory) unit;
+    CoupledReleaseSource inventory = (CoupledReleaseSource) unit;
     ReleaseFlowRequest request = inventory.getReleaseRequest();
     addSourceConfiguration(sourceId, areaName, unitName, -1, request.getDiameterM(), request.getDischargeCoefficient(),
         request.getBackPressurePa(), request.getFlowPathLengthM(), request.getDarcyFrictionFactor(),
@@ -459,7 +458,7 @@ public final class SourceTermSession {
             && Math.abs(source.unit.getTime() - coherentTime) > 1e-9 * Math.max(1.0, Math.abs(coherentTime))) {
           throw new IllegalStateException("Inventory and process clocks differ");
         }
-        if (source.inventorySource && !((ReleaseInventory) source.unit).isReleaseEnabled()) {
+        if (source.inventorySource && !((CoupledReleaseSource) source.unit).isReleaseEnabled()) {
           snapshot.status = SourceTermFrame.Status.DISABLED;
           snapshot.code = "INVENTORY_OPENING_CLOSED";
           snapshot.message = "Physical inventory opening isolated by caller";
@@ -478,6 +477,9 @@ public final class SourceTermSession {
         }
         snapshot.request = new ReleaseFlowRequest(fluid, source.diameter, source.coefficient, source.backPressure,
             source.flowPathLength, source.darcyFrictionFactor);
+        if (source.inventorySource) {
+          snapshot.result = ((CoupledReleaseSource) source.unit).getReleaseResult();
+        }
       } catch (RuntimeException ex) {
         snapshot.status = SourceTermFrame.Status.STALE;
         snapshot.code = "SOURCE_STATE_STALE";
@@ -492,7 +494,12 @@ public final class SourceTermSession {
         frame = failed(snapshot.source, id, snapshot.status, snapshot.code, snapshot.message, snapshot.provenance);
       } else {
         try {
-          ReleaseFlowResult result = snapshot.source.releaseModel.calculate(snapshot.request);
+          ReleaseFlowResult result = snapshot.result == null ? snapshot.source.releaseModel.calculate(snapshot.request)
+              : snapshot.result;
+          if (result == null || !snapshot.source.releaseModel.getModelId().equals(result.getModelId())
+              || !snapshot.source.releaseModel.getModelVersion().equals(result.getModelVersion())) {
+            throw new IllegalStateException("Release result identity does not match the registered model");
+          }
           frame = SourceTermFrame.calculated(scenarioId, snapshot.source.id, id, nextSequence(), coherentTime,
               clock.instant(), snapshot.request, result, snapshot.provenance);
         } catch (RuntimeException ex) {
@@ -605,37 +612,10 @@ public final class SourceTermSession {
     provenance.put("equipment", source.unitName);
     provenance.put("samplingPoint", source.outletIndex < 0 ? "EQUIPMENT_FLUID" : "OUTLET_" + source.outletIndex);
     provenance.put("mode", mode);
-    provenance
-        .put("releaseBasis",
-            source.inventorySource ? (((ReleaseInventory) source.unit).hasPhaseTransitionPlan()
-                ? "COUPLED_RIGID_ADIABATIC_PHASE_TRANSITION_INVENTORY"
-                : (((ReleaseInventory) source.unit).isPhaseSelective()
-                    ? "COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY"
-                    : "COUPLED_RIGID_ADIABATIC_GAS_INVENTORY"))
-                : "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
+    provenance.put("releaseBasis", source.inventorySource ? ((CoupledReleaseSource) source.unit).getReleaseBasis()
+        : "HYPOTHETICAL_OPENING_NO_INVENTORY_FEEDBACK");
     if (source.inventorySource) {
-      ReleaseInventory.Balance balance = ((ReleaseInventory) source.unit).getBalance();
-      provenance.put("inventoryTimeS", Double.toString(balance.getTimeS()));
-      provenance.put("inventoryVolumeM3", Double.toString(balance.getVolumeM3()));
-      provenance.put("cumulativeReleasedMassKg", Double.toString(balance.getReleasedMassKg()));
-      provenance.put("cumulativeReleasedEnthalpyJ", Double.toString(balance.getReleasedEnergyJ()));
-      provenance.put("inventoryIntegrator", "EXPLICIT_EULER_VOLUME_INTERNAL_ENERGY_V1");
-      provenance.put("inventoryMaxSubstepS", Double.toString(((ReleaseInventory) source.unit).getMaxSubstepS()));
-      provenance.put("inventoryLastSubsteps", Integer.toString(balance.getSubsteps()));
-      provenance.put("inventoryVolumeEnergySolves",
-          Integer.toString(((ReleaseInventory) source.unit).getLastVolumeEnergySolves()));
-      provenance.put("inventoryPressureEquilibrationEvent",
-          Boolean.toString(((ReleaseInventory) source.unit).hadPressureEquilibrationEvent()));
-      provenance.put("inventoryReleaseDurationS",
-          Double.toString(((ReleaseInventory) source.unit).getLastReleaseDurationS()));
-      ReleaseInventory inventory = (ReleaseInventory) source.unit;
-      provenance.put("inventoryWithdrawalPhase", inventory.getWithdrawalPhaseType().name());
-      provenance.put("inventoryWithdrawalPhasePlan", inventory.getWithdrawalPhasePlan().toString());
-      provenance.put("inventoryPhaseExhaustionMassFraction",
-          Double.toString(inventory.getPhaseExhaustionMassFraction()));
-      provenance.put("inventoryLastPhaseTransitions", Integer.toString(inventory.getLastPhaseTransitions()));
-      provenance.put("inventoryTotalPhaseTransitions", Integer.toString(inventory.getTotalPhaseTransitions()));
-      provenance.put("rateTimeBasis", "INSTANTANEOUS_AT_FRAME_TIME");
+      provenance.putAll(((CoupledReleaseSource) source.unit).getReleaseProvenance());
     }
     UUID areaId = source.area.getCalculationIdentifier();
     UUID unitId = source.unit.getCalculationIdentifier();
@@ -756,6 +736,7 @@ public final class SourceTermSession {
     private final Source source;
     private final Map<String, String> provenance;
     private ReleaseFlowRequest request;
+    private ReleaseFlowResult result;
     private SourceTermFrame.Status status;
     private String code;
     private String message;

@@ -149,6 +149,37 @@ and is exported by `addInventorySource`. It enables quasi-steady coupling to the
 single-equilibrium-phase real-gas Fanno models; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
 paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
 
+## Transient perfect-gas pipe line packing
+
+`IdealGasPipeDecompression` is a separate process unit for finite-speed wave propagation and
+line-pack discharge. It solves the one-dimensional conservative mass, momentum and total-energy
+equations on a caller-selected finite-volume grid. The upstream end is closed; the downstream end
+is connected to a constant absolute receiver pressure. A local Lax--Friedrichs numerical flux and
+CFL-limited substeps advance the state, while specified Darcy friction changes momentum without
+removing adiabatic total energy.
+
+```java
+IdealGasPipeDecompression pipe = new IdealGasPipeDecompression(
+    "ruptured-line", gas, 100.0, 0.20, 1.0, 101325.0, 0.012, 80, 0.45);
+process.add(pipe);
+
+SourceTermSession session = new SourceTermSession("linepack-case", process);
+session.addInventorySource("rupture", "ruptured-line");
+SourceTermFrame frame = session.step(0.05).get(0);
+```
+
+The committed frame rate is the exact downstream mass flux used by the conservative update. Frame
+provenance includes pipe length/diameter, cell count, CFL, friction factor, integrator identity,
+last substep count, remaining clock, and cumulative discharged mass and total energy. Both
+`ProcessSystem` and `ProcessModel` paths use the same coupled-source registration; no second
+hypothetical withdrawal is calculated.
+
+The model requires one nonreacting equilibrium gas phase, freezes composition and calorically
+perfect properties at the initial state, and remains `UNQUALIFIED`. It excludes real-gas property
+evolution, heat transfer, pipe elasticity, an upstream vessel, two-sided rupture, phase change,
+slip, entrainment and solid-bearing flow. Refine the grid and compare retained pressure/rate
+histories before using a result even inside this applicability boundary.
+
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
 `releaseBasis=COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTORY` and
@@ -241,7 +272,7 @@ step refinement is non-increasing within the asserted numerical tolerance.
 
 This increment covers equilibrium, phase-selected withdrawal and explicit ordered phase-exhaustion
 transitions in a well-mixed rigid inventory. Phase level/geometry, entrainment and slip, finite-rate interfacial transfer, wall/fire heat transfer,
-pipe decompression, non-equilibrium transfer, solid-bearing flow physics and experimental qualification
+real-gas transient decompression, non-equilibrium transfer, solid-bearing flow physics and experimental qualification
 remain separate work in [#3860](https://github.com/equinor/neqsim/issues/3860).
 The numerical limit of the selected release model still applies. No facility qualification
 or independent safety/domain review is implied.

@@ -141,13 +141,19 @@ phase-selected overload reports `COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTOR
 `inventoryWithdrawalPhase`. Both are bounded to a rigid adiabatic equilibrium inventory and
 have no automatic entrainment, phase or release-model fallback.
 
+`addInventorySource` also accepts `IdealGasPipeDecompression`. That process unit advances a
+conservative one-dimensional perfect-gas line pack and exports its already committed downstream
+boundary flux, with `COUPLED_1D_IDEAL_GAS_PIPE_DECOMPRESSION_LINE_PACKING` provenance. It does not
+reuse the rigid well-mixed inventory integrator and does not imply real-gas transient or
+multiphase qualification.
+
 A sampled mass rate is not a timestep average or an integrated release mass. Retain the initial
 frame, integrate only over valid intervals using a documented quadrature, and refine timesteps
 around openings, closures and phase transitions. Do not interpolate across failed, stale or
 disabled intervals as if their missing values were zero.
 
 `setEnabled(sourceId, false)` disables source export only, including for a coupled inventory.
-Use `ReleaseInventory.setReleaseEnabled(false)` to stop its physical withdrawal. An upstream shutdown or
+Use the coupled unit's `setReleaseEnabled(false)` method to stop its physical withdrawal. An upstream shutdown or
 isolation valve closing does not empty trapped inventory or necessarily stop an existing leak.
 Represent those actions in the process model and use its event scheduling/control facilities.
 Specify source position/orientation through `SourceTermFrame.withLocation` when spatial boundary
