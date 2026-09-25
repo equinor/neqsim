@@ -437,6 +437,10 @@ def _default_evidence_status(name: str) -> str:
         return "structured_data"
     if lower.endswith((".md", ".txt", ".log", ".py")):
         return "structured_data"
+    # Eclipse/OPM/ERT/RESQML model inputs are keyword text read by a simulator, not prose to extract.
+    simulator = (".inc", ".ecl", ".data", ".sch", ".grdecl", ".vfp", ".ert", ".cfg", ".epc")
+    if lower.endswith(simulator):
+        return "structured_data"
     return "not_started"
 
 
@@ -457,12 +461,16 @@ def build_document_evidence(record: dict, existing: dict | None) -> dict:
         for doc in block.get("documents", []):
             path = doc["file"]
             prior = previous.get(path, {})
+            status = prior.get("status")
+            # A placeholder status is re-derived, so an improved default reaches existing tasks.
+            if not status or status == "not_started":
+                status = _default_evidence_status(doc["name"])
             sources.append(
                 {
                     "path": path,
                     "source": block["source"],
                     "system_name": block["system_name"],
-                    "status": prior.get("status") or _default_evidence_status(doc["name"]),
+                    "status": status,
                     "title": prior.get("title") or doc.get("title") or doc["name"],
                     "summary": prior.get("summary") or doc.get("summary", ""),
                     "sha256": doc.get("sha256", ""),

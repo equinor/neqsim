@@ -2385,11 +2385,20 @@ def check_report_consistency(results):
     if n_fail > 0:
         # Check if any failure has large deviation (>20%) => calculation fix
         large_devs = []
+        documented = []
         for t in bmk_tests:
             if t.get("pass") is False:
                 dev_pct = t.get("deviation_pct")
                 if dev_pct is not None and abs(dev_pct) > 20:
-                    large_devs.append(t)
+                    # A written disposition (e.g. two input sources disagree) is a finding, not a misfit.
+                    (documented if str(t.get("disposition", "")).strip() else large_devs).append(t)
+        if documented:
+            issues.append({
+                "severity": "WARNING",
+                "message": "Benchmark deviation >20% kept with a written disposition: {}.".format(
+                    ", ".join(t.get("parameter", "?") for t in documented)),
+                "fix_type": "none",
+            })
 
         failure_words = ["fail", "exceed", "deviation", "caution", "attention",
                          "issue", "concern", "discrepanc", "not met"]
@@ -2871,9 +2880,11 @@ def _validate_analysis_scripts(analysis):
         script_file = entry.get("file")
         if not script_file:
             continue
-        script_path = os.path.join(TASK_DIR, "step2_analysis", str(script_file))
-        if not os.path.exists(script_path) and not os.path.exists(
-                _resolve_task_path(script_file)):
+        # Data-retrieval scripts live in step1; the work record resolves bare names in both folders.
+        candidates = [os.path.join(TASK_DIR, folder, str(script_file))
+                      for folder in ("step2_analysis", "step1_scope_and_research")]
+        candidates.append(_resolve_task_path(script_file))
+        if not any(os.path.exists(path) for path in candidates):
             warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
                 script_file))
             continue

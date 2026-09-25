@@ -325,17 +325,16 @@ class ConsistencyChecker:
 
     def _check_gudrun_vs_calculations(self):
         """Specifically check Gudrun study values against notebook calculations."""
-        print("Checking Gudrun study vs notebook calculations...")
-
         if not hasattr(self, 'results'):
             return
 
         gudrun = self.results.get('gudrun_field_validation', {})
         gca = self.results.get('gas_composition_analysis', {})
 
+        # Only one legacy study carries these keys; stay silent for every other task.
         if not gudrun or not gca:
-            print("  No Gudrun or gas composition data to compare")
             return
+        print("Checking Gudrun study vs notebook calculations...")
 
         # Key comparisons to make
         comparisons = []
