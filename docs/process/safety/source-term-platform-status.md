@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope as of 2026-09-24; this does not confer qualification or replace domain review.
+Implementation scope as of 2026-09-25; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -56,6 +56,12 @@ The current implementation includes:
   It conserves pipe-plus-discharge mass and total energy, uses CFL-limited substeps, exports the
   exact committed boundary flux through both process containers, and retains grid-refinement
   evidence. It is a calorically perfect-gas model, not a real-gas or multiphase qualification.
+- An EOS-backed single-gas finite-volume process unit applies the same conservative transient
+  boundary while recovering cell pressure, temperature, phase state and acoustic speed through
+  NeqSim volume/internal-energy flashes. It retains exact pipe-plus-discharge mass and total-energy
+  accounting, both process-container paths, dilute-limit and grid-refinement evidence, and fails
+  closed on phase appearance or detected/unresolved solid risk. It remains unqualified and excludes heat transfer, elasticity,
+  upstream-vessel/two-sided coupling and non-equilibrium multiphase physics.
 - Immutable per-model evidence manifests now retain stable applicability and limitation codes,
   typed analytical/conservation/numerical/experimental references, and an explicit independent-
   evidence flag in schema-validated frames. Current built-in manifests truthfully remain
@@ -77,7 +83,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
 | Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. | Assessed phase-level/geometry, entrainment/slip and finite-rate interfacial transfer beyond the current well-mixed equilibrium boundary. |
-| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. A separate conservative perfect-gas finite-volume unit covers one-sided transient waves and line packing with a closed far end and constant-pressure receiver. | Real-gas transient decompression, pipe elasticity and upstream-vessel/two-sided coupling; separate non-equilibrium multiphase models; independent dense-gas validation data. |
+| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing with a closed far end and constant-pressure receiver. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; separate non-equilibrium multiphase models; independent dense-gas validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |

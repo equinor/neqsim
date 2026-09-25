@@ -141,11 +141,11 @@ phase-selected overload reports `COUPLED_RIGID_ADIABATIC_PHASE_SELECTED_INVENTOR
 `inventoryWithdrawalPhase`. Both are bounded to a rigid adiabatic equilibrium inventory and
 have no automatic entrainment, phase or release-model fallback.
 
-`addInventorySource` also accepts `IdealGasPipeDecompression`. That process unit advances a
-conservative one-dimensional perfect-gas line pack and exports its already committed downstream
-boundary flux, with `COUPLED_1D_IDEAL_GAS_PIPE_DECOMPRESSION_LINE_PACKING` provenance. It does not
-reuse the rigid well-mixed inventory integrator and does not imply real-gas transient or
-multiphase qualification.
+`addInventorySource` also accepts `IdealGasPipeDecompression` and `RealGasPipeDecompression`.
+Those process units advance conservative one-dimensional single-gas line packs and export their
+already committed downstream boundary flux, with model-explicit ideal-gas or EOS-backed
+provenance. They do not reuse the rigid well-mixed inventory integrator and do not imply
+multiphase or facility qualification.
 
 A sampled mass rate is not a timestep average or an integrated release mass. Retain the initial
 frame, integrate only over valid intervals using a documented quadrature, and refine timesteps

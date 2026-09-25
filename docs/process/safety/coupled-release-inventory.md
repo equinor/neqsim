@@ -149,7 +149,7 @@ and is exported by `addInventorySource`. It enables quasi-steady coupling to the
 single-equilibrium-phase real-gas Fanno models; it does not add transient pipe-wave storage to the lumped inventory. Schema v1 accepts the
 paired optional `flowPathLength` and `darcyFrictionFactor` source fields.
 
-## Transient perfect-gas pipe line packing
+## Transient single-gas pipe line packing
 
 `IdealGasPipeDecompression` is a separate process unit for finite-speed wave propagation and
 line-pack discharge. It solves the one-dimensional conservative mass, momentum and total-energy
@@ -179,6 +179,13 @@ perfect properties at the initial state, and remains `UNQUALIFIED`. It excludes 
 evolution, heat transfer, pipe elasticity, an upstream vessel, two-sided rupture, phase change,
 slip, entrainment and solid-bearing flow. Refine the grid and compare retained pressure/rate
 histories before using a result even inside this applicability boundary.
+
+`RealGasPipeDecompression` uses the same geometry, process-container registration and conservative
+accounting, but recovers each cell through a NeqSim volume/internal-energy flash. Pressure,
+temperature and acoustic speed therefore evolve with the selected EOS. It fails the whole caller
+step atomically if any cell or the receiver boundary ceases to be one equilibrium gas phase. This
+adds real-gas transient property evolution, not heat transfer, wall elasticity, finite upstream
+vessel or two-sided coupling, non-equilibrium multiphase transport, solids, or qualification.
 
 Compatibility frames carry `releaseBasis=COUPLED_RIGID_ADIABATIC_GAS_INVENTORY`.
 Explicit phase-selected frames carry
