@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentPow10KPaVaporPressureTest;
 import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseAmmoniaEos;
 import neqsim.thermo.phase.PhaseGENRTL;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
@@ -26,6 +27,7 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
+import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
@@ -85,6 +87,10 @@ final class ModelSpecFixtures {
       return SystemIdealGas.class;
     case IDEAL_GAS_PHASE:
       return PhaseIdealGas.class;
+    case AMMONIA:
+      return SystemAmmoniaEos.class;
+    case AMMONIA_PHASE:
+      return PhaseAmmoniaEos.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -145,6 +151,13 @@ final class ModelSpecFixtures {
       ModelSpec.require(isIdealGasProperty(s.property) && s.components.size() == 1 && s.components.containsKey("argon")
           && "gas".equals(s.phase) && "none".equals(s.mixingRule) && "nist-argon-ideal-gas".equals(s.operation)
           && s.outcome == ModelSpec.Outcome.VALUE && s.componentIndex == 0, "invalid ideal-gas reference fixture");
+      break;
+    case AMMONIA:
+    case AMMONIA_PHASE:
+      ModelSpec.require(isAmmoniaProperty(s.property) && s.components.size() == 1 && s.components.containsKey("ammonia")
+          && ("gas".equals(s.phase) || "liquid".equals(s.phase)) && "none".equals(s.mixingRule)
+          && "coolprop-7.2.0-gao-2020".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE
+          && s.componentIndex == 0, "invalid ammonia reference fixture");
       break;
     case WILSON_ANALYTIC:
     case WILSON_PHASE:
@@ -228,6 +241,8 @@ final class ModelSpecFixtures {
       return "g/mol";
     case MOLAR_DENSITY:
       return "mol/L";
+    case MASS_DENSITY:
+      return "kg/m3";
     case DPD_DENSITY:
       return "kPa/(mol/L)";
     case D2PD_DENSITY2:
@@ -289,6 +304,26 @@ final class ModelSpecFixtures {
     case CV:
     case SOUND_SPEED:
     case JT:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  private static boolean isAmmoniaProperty(ModelSpec.Property property) {
+    switch (property) {
+    case MOLAR_MASS:
+    case MOLAR_DENSITY:
+    case MASS_DENSITY:
+    case Z:
+    case INTERNAL_ENERGY:
+    case ENTHALPY:
+    case ENTROPY:
+    case CV:
+    case CP:
+    case SOUND_SPEED:
+    case JT:
+    case KAPPA:
       return true;
     default:
       return false;
@@ -368,6 +403,20 @@ final class ModelSpecFixtures {
       }
       double result = readIdealGas(s.property, phase, s.componentIndex);
       assertEquals(result, readIdealGas(s.property, phase, s.componentIndex), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.AMMONIA || s.fixture == ModelSpec.Fixture.AMMONIA_PHASE) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.AMMONIA_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double result = readAmmonia(s.property, phase);
+      assertEquals(result, readAmmonia(s.property, phase), 0.0, s + " repeat read");
       return result;
     }
     if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
@@ -480,6 +529,37 @@ final class ModelSpecFixtures {
       return phase.getJouleThomsonCoefficient();
     default:
       throw new IllegalArgumentException("unmapped ideal-gas property " + property);
+    }
+  }
+
+  private static double readAmmonia(ModelSpec.Property property, PhaseInterface phase) {
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return 1.0e5 / phase.getMolarVolume() / 1000.0;
+    case MASS_DENSITY:
+      return phase.getDensity();
+    case Z:
+      return phase.getZ();
+    case INTERNAL_ENERGY:
+      return phase.getInternalEnergy("J/mol");
+    case ENTHALPY:
+      return phase.getEnthalpy("J/mol");
+    case ENTROPY:
+      return phase.getEntropy("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case CP:
+      return phase.getCp("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case JT:
+      return phase.getJouleThomsonCoefficient() / 100.0;
+    case KAPPA:
+      return phase.getIsothermalCompressibility();
+    default:
+      throw new IllegalArgumentException("unmapped ammonia property " + property);
     }
   }
 
@@ -598,16 +678,23 @@ final class ModelSpecFixtures {
     case IDEAL_GAS_PHASE:
       system = new SystemIdealGas(s.temperature, s.pressure);
       break;
+    case AMMONIA:
+    case AMMONIA_PHASE:
+      system = new SystemAmmoniaEos(s.temperature, s.pressure);
+      break;
     default:
       throw new IllegalArgumentException("no system factory for " + s.fixture);
     }
-    for (Map.Entry<String, Double> entry : s.components.entrySet()) {
-      system.addComponent(entry.getKey(), entry.getValue());
+    if (s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE) {
+      for (Map.Entry<String, Double> entry : s.components.entrySet()) {
+        system.addComponent(entry.getKey(), entry.getValue());
+      }
     }
     if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE
-        && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE) {
+        && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE
+        && s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE) {
       system.setMixingRule("classic");
     }
     return system;
@@ -618,7 +705,7 @@ final class ModelSpecFixtures {
         || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
         || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
         || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE
-        || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE;
+        || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE || fixture == ModelSpec.Fixture.AMMONIA_PHASE;
   }
 
   static void positive(double value, String context) {
