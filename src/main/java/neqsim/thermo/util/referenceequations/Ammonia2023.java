@@ -404,7 +404,9 @@ public class Ammonia2023 {
     double u = R * T * tau * (id.dalpha_dTau + r.dalpha_dTau);
     double h = R * T * (1.0 + tau * (id.dalpha_dTau + r.dalpha_dTau) + delta * r.dalpha_dDelta);
     double s = R * (tau * (id.dalpha_dTau + r.dalpha_dTau) - (id.alpha0 + r.alpha));
-    double g = R * T * (1.0 + id.alpha0 + r.alpha + delta * r.dalpha_dDelta - tau * (id.dalpha_dTau + r.dalpha_dTau));
+    // For a Helmholtz EOS, g/(RT) = 1 + alpha0 + alphar + delta * alphar_delta.
+    // The temperature derivatives cancel between h and T*s.
+    double g = R * T * (1.0 + id.alpha0 + r.alpha + delta * r.dalpha_dDelta);
 
     double dpdrho = R * T * (1.0 + 2.0 * delta * r.dalpha_dDelta + delta * delta * r.d2alpha_dDelta2);
     double dpdT = rhoMolar * R * (1.0 + delta * r.dalpha_dDelta - delta * tau * r.d2alpha_dDelta_dTau);

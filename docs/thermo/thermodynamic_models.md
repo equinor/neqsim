@@ -403,7 +403,14 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 | `SystemArgonSolidHelmholtzEos` | Maltby-Hammer-Wilhelmsen solid Helmholtz EOS | Pure solid argon; experimental and opt-in |
 | `SystemSolidHelmholtzEos` | Extensible pure-solid Helmholtz system | Custom single-component solid equations |
 | `SystemVegaEos` | Vega equation | Specialized applications |
-| `SystemAmmoniaEos` | Ammonia-specific | Ammonia systems |
+| `SystemAmmoniaEos` | Gao 2020 Helmholtz reference equation | Pure ammonia |
+
+For pure ammonia, `PhaseAmmoniaEos.getGibbsEnergy()` returns extensive Gibbs energy
+in J. Divide by the phase mole count for J/mol. With enthalpy in J/mol and entropy
+in J/(mol K), its Helmholtz relation is $g = h - Ts$ at the same temperature in K.
+Selected forced gas and liquid states from 280 to 400 K are checked against
+CoolProp 7.2.0's Gao ammonia implementation; this does not validate mixtures or every
+state of the equation.
 
 ---
 
