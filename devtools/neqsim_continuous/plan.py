@@ -5,8 +5,6 @@ import json
 import os
 import time
 
-import yaml
-
 DEFAULT_STAGES = ["sense", "refresh", "kpis", "drift", "goal", "diff", "ledger", "digest",
                   "notify", "agent"]
 PLAN_FILE = "cycle_plan.yaml"
@@ -24,6 +22,8 @@ def is_living(task_dir):
 def _read_yaml(path):
     if not os.path.exists(path):
         return {}
+    import yaml  # lazy: the package must import without PyYAML installed
+
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f) or {}
 
