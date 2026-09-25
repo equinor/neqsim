@@ -444,6 +444,7 @@ public class Recycle extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    requireOutletStream();
     iterations++;
     isActive(true);
     /*
@@ -1200,6 +1201,20 @@ public class Recycle extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public StreamInterface getOutletStream() {
+    return requireOutletStream();
+  }
+
+  /**
+   * Returns the configured tear stream or explains the missing recycle connection.
+   *
+   * @return configured outlet stream
+   * @throws IllegalStateException if the caller has not configured an outlet stream
+   */
+  private StreamInterface requireOutletStream() {
+    if (outletStream == null) {
+      throw new IllegalStateException(
+          "Recycle '" + getName() + "' has no outlet stream; call setOutletStream(...) before wiring or running it");
+    }
     return outletStream;
   }
 
