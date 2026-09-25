@@ -145,8 +145,10 @@ def build(task_dir):
         ("Stop reason", state.get("reason", "-")),
         ("Baseline", "{} (promoted by {} on {})".format(meta.get("id"), meta.get("promoted_by", "-"),
                                                        str(meta.get("promoted_at", meta.get("created", "-")))[:19])),
-        ("Goal", "{} {} {} (confirmed by {})".format(objective.get("direction", "-"), objective.get("metric", "-"),
-                                                   objective.get("target", "-"), goal.get("confirmed_by") or "NOT CONFIRMED")),
+        ("Goal", "{} {} to {} (confirmed by {})".format(
+            objective.get("direction", "maximize"), objective["metric"], _fmt(objective.get("target")),
+            goal.get("confirmed_by") or "NOT CONFIRMED") if objective.get("metric")
+         else "not set (edit continuous/goal.yaml)"),
         ("Constraints", "; ".join(goal.get("constraints", [])) or "-"),
         ("Cycles run", "{} ({} degraded)".format(len(cycles), sum(1 for c in cycles if c.get("degraded")))),
         ("Last cycle", "{} at {} ({})".format(last["cycle_id"], last.get("now", "")[:19], last.get("mode"))
@@ -157,17 +159,20 @@ def build(task_dir):
                 "solve loop.".format(state.get("reopen_cycle"), ", ".join(state.get("reopen_reasons", [])))]
 
     series = _history(cont)
-    if series or base_kpis:
+    if series:
         out += ["", "## Latest values against the baseline", ""]
         rows = []
-        for name in sorted(set(series) | set(base_kpis)):
-            points = series.get(name, [])
-            value = points[-1][1] if points else None
-            ref = base_kpis.get(name)
-            delta = value - ref if value is not None and isinstance(ref, (int, float)) else None
-            rows.append((name, value, points[-1][0][:19] if points else None,
-                         points[-2][1] if len(points) > 1 else None, ref, delta))
+        for name in sorted(series):
+            points = series[name]
+            value, ref = points[-1][1], base_kpis.get(name)
+            delta = value - ref if isinstance(ref, (int, float)) else None
+            rows.append((name, value, points[-1][0][:19], points[-2][1] if len(points) > 1 else None,
+                         ref, delta))
         out += _table(["KPI", "Latest", "At", "Previous", "Baseline", "Latest - baseline"], rows)
+    unmeasured = sorted(k for k in base_kpis if k not in series)
+    if unmeasured:
+        out += ["", "{} baseline value(s) from the study are not yet measured by any cycle: {}.".format(
+            len(unmeasured), ", ".join(unmeasured))]
     monitor = [c for c in live if c.get("mode") == "monitor"]
     if monitor:
         out += ["", "Last monitor cycle {}: sources ".format(monitor[-1]["cycle_id"]) +
@@ -234,12 +239,17 @@ def build(task_dir):
     if runs:
         out += ["", "## Backtests", ""]
         out += _table(["Run", "Period", "Cycles", "Detected", "Delays (days)", "False alarms / month",
-                       "Reproducibility"],
+                       "Unscored triggers", "Reproducibility"],
                       [(r.get("run"), "{} to {}".format(str(r.get("start"))[:10], str(r.get("end"))[:10]),
                         r.get("cycles"), "{} of {}".format(r.get("detected"), len(r.get("expected", []))),
                         ", ".join("{} {}".format(e["trigger"].split(":")[-1], _fmt(e.get("delay_days")))
                                   for e in r.get("expected", [])) or "-",
-                        r.get("false_alarms_per_month"), r.get("reproducibility")) for r in runs])
+                        r.get("false_alarms_per_month"), len(r.get("other_triggers", [])),
+                        r.get("reproducibility")) for r in runs])
+        if any(not r.get("expected") for r in runs):
+            out += ["", "A run without `backtest.expected` events cannot score detection or false "
+                    "alarms; its triggers are counted as unscored (`other_triggers` in the run's "
+                    "backtest_report.json)."]
 
     out += ["", "## Next actions", ""]
     actions = []
