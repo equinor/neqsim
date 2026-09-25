@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
@@ -27,6 +28,7 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -36,6 +38,7 @@ import neqsim.thermo.system.SystemUNIFACpsrk;
 import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermo.util.gerg.NeqSimGERG2008;
 import neqsim.thermo.util.leachman.NeqSimLeachman;
+import neqsim.thermo.util.Vega.NeqSimVega;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
@@ -327,205 +330,4 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   void leachmanRefreshesGasAndLiquidStateBeforeReturningToReference() {
     SystemLeachmanEos system = new SystemLeachmanEos(300.0, 10.0);
     system.setNumberOfPhases(1);
-    system.setMaxNumberOfPhases(1);
-    system.setForcePhaseTypes(true);
-
-    double[] first = leachmanState(system, 300.0, 10.0, PhaseType.GAS);
-    double[] coldGas = leachmanState(system, 100.0, 50.0, PhaseType.GAS);
-    double[] warmLiquid = leachmanState(system, 25.0, 10.0, PhaseType.LIQUID);
-    double[] coldLiquid = leachmanState(system, 20.0, 5.0, PhaseType.LIQUID);
-    assertNotEquals(first[0], coldGas[0], "gas density must refresh");
-    assertNotEquals(coldGas[0], warmLiquid[0], "phase-forced density must refresh");
-    assertNotEquals(warmLiquid[1], coldLiquid[1], "liquid enthalpy must refresh");
-
-    double[] returned = leachmanState(system, 300.0, 10.0, PhaseType.GAS);
-    for (int i = 0; i < first.length; i++) {
-      assertEquals(first[i], returned[i], Math.max(1e-12, Math.abs(first[i]) * 1e-12),
-          "Leachman returned property " + i);
-    }
-  }
-
-  private static double[] leachmanState(SystemLeachmanEos system, double temperature, double pressure,
-      PhaseType phaseType) {
-    system.setTemperature(temperature);
-    system.setPressure(pressure);
-    system.setPhaseType(0, phaseType);
-    system.init(3);
-    assertEquals(PhaseLeachmanEos.class, system.getPhase(0).getClass());
-    PhaseLeachmanEos phase = (PhaseLeachmanEos) system.getPhase(0);
-    NeqSimLeachman leachman = new NeqSimLeachman(phase, "normal");
-    double[] raw = leachman.propertiesLeachman();
-    double density = leachman.getMolarDensity();
-    double enthalpy = phase.getEnthalpy("J/mol");
-    double internalEnergy = phase.getInternalEnergy("J/mol");
-    double entropy = phase.getEntropy("J/molK");
-    double gibbsEnergy = phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
-    double cp = phase.getCp("J/molK");
-    double cv = phase.getCv("J/molK");
-    double soundSpeed = phase.getSoundSpeed();
-    double jouleThomson = phase.getJouleThomsonCoefficient() / 1000.0;
-    double kappa = raw[14];
-    double z = phase.getZ();
-    for (double value : new double[] {density, enthalpy, internalEnergy, entropy, gibbsEnergy, cp, cv, soundSpeed,
-        jouleThomson, kappa, z}) {
-      assertTrue(Double.isFinite(value));
-    }
-    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && kappa > 0.0 && z > 0.0,
-        "invalid Leachman state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed
-            + ", kappa=" + kappa + ", Z=" + z);
-    assertEquals(enthalpy, internalEnergy + pressure * 100.0 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
-    assertEquals(gibbsEnergy, enthalpy - temperature * entropy, Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
-    double[] values = {density, enthalpy, internalEnergy, entropy, gibbsEnergy, cp, cv, soundSpeed, jouleThomson, kappa,
-        z};
-    system.init(3);
-    double[] repeated = leachmanStateWithoutInit((PhaseLeachmanEos) system.getPhase(0));
-    for (int i = 0; i < values.length; i++) {
-      assertEquals(values[i], repeated[i], Math.max(1e-15, Math.abs(values[i]) * 1e-14),
-          "Leachman repeat property " + i);
-    }
-    return values;
-  }
-
-  private static double[] leachmanStateWithoutInit(PhaseLeachmanEos phase) {
-    NeqSimLeachman leachman = new NeqSimLeachman(phase, "normal");
-    double[] raw = leachman.propertiesLeachman();
-    return new double[] {leachman.getMolarDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
-        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
-        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
-        phase.getZ()};
-  }
-
-  private static double[] ammoniaState(SystemAmmoniaEos system, double temperature, double pressure,
-      PhaseType phaseType) {
-    system.setTemperature(temperature);
-    system.setPressure(pressure);
-    system.setPhaseType(0, phaseType);
-    system.init(3);
-    assertEquals(PhaseAmmoniaEos.class, system.getPhase(0).getClass());
-    PhaseAmmoniaEos phase = (PhaseAmmoniaEos) system.getPhase(0);
-    double density = 1.0e5 / phase.getMolarVolume() / 1000.0;
-    double enthalpy = phase.getEnthalpy("J/mol");
-    double internalEnergy = phase.getInternalEnergy("J/mol");
-    double cp = phase.getCp("J/molK");
-    double cv = phase.getCv("J/molK");
-    double soundSpeed = phase.getSoundSpeed();
-    double compressibility = phase.getIsothermalCompressibility();
-    double jouleThomson = phase.getJouleThomsonCoefficient() / 100.0;
-    for (double value : new double[] {density, enthalpy, internalEnergy, cp, cv, soundSpeed, compressibility,
-        jouleThomson}) {
-      assertTrue(Double.isFinite(value));
-    }
-    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && compressibility > 0.0,
-        "invalid ammonia state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed + ", kappa="
-            + compressibility);
-    assertEquals(enthalpy, internalEnergy + pressure * 100.0 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
-    double[] values = {density, enthalpy, internalEnergy, cp, cv, soundSpeed, compressibility, jouleThomson};
-    system.init(3);
-    assertEquals(PhaseAmmoniaEos.class, system.getPhase(0).getClass());
-    PhaseAmmoniaEos repeated = (PhaseAmmoniaEos) system.getPhase(0);
-    double[] repeatedValues = {1.0e5 / repeated.getMolarVolume() / 1000.0, repeated.getEnthalpy("J/mol"),
-        repeated.getInternalEnergy("J/mol"), repeated.getCp("J/molK"), repeated.getCv("J/molK"),
-        repeated.getSoundSpeed(), repeated.getIsothermalCompressibility(),
-        repeated.getJouleThomsonCoefficient() / 100.0};
-    for (int i = 0; i < values.length; i++) {
-      assertEquals(values[i], repeatedValues[i], Math.max(1e-15, Math.abs(values[i]) * 1e-14),
-          "ammonia repeat property " + i);
-    }
-    return values;
-  }
-
-  private static SystemGERG2008Eos gergReferenceSystem() {
-    SystemGERG2008Eos system = new SystemGERG2008Eos(400.0, 500.0);
-    String[] names = {"methane", "nitrogen", "CO2", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10", "hydrogen", "oxygen", "CO", "water",
-        "H2S", "helium", "argon"};
-    double[] amounts = {0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
-    for (int i = 0; i < names.length; i++) {
-      system.addComponent(names[i], amounts[i]);
-    }
-    return system;
-  }
-
-  private static SystemInterface groupSystem(String model, boolean reverse) {
-    SystemInterface system = "PSRK".equals(model) ? new SystemUNIFACpsrk(290.0, 1.0)
-        : "UMR".equals(model) ? new SystemUMRPRUEos(290.0, 1.0) : new SystemUNIFAC(290.0, 1.0);
-    system.addComponent(reverse ? "water" : "methanol", reverse ? 0.7 : 0.3);
-    system.addComponent(reverse ? "methanol" : "water", reverse ? 0.3 : 0.7);
-    if ("UMR".equals(model)) {
-      system.setMixingRule("HV", "UNIFAC_UMRPRU");
-    } else {
-      system.setMixingRule("classic");
-    }
-    system.init(0);
-    return system;
-  }
-
-  private static SystemInterface cubicSystem(boolean pengRobinson, double temperature, double pressure, double moles) {
-    SystemInterface system = pengRobinson ? new SystemPrEos(temperature, pressure)
-        : new SystemSrkEos(temperature, pressure);
-    system.addComponent("methane", moles);
-    system.setMixingRule("classic");
-    return system;
-  }
-
-  private static PhaseGENRTL nrtlPhase(boolean reverse) {
-    SystemNRTL system = new SystemNRTL(298.15, 1.0);
-    system.addComponent(reverse ? "water" : "methanol", reverse ? 0.8 : 0.2);
-    system.addComponent(reverse ? "methanol" : "water", reverse ? 0.2 : 0.8);
-    system.setMixingRule("classic");
-    system.init(0);
-    PhaseGENRTL phase = (PhaseGENRTL) system.getPhase(1);
-    phase.setAlpha(new double[][] {{0.0, 0.3}, {0.3, 0.0}});
-    phase.setDij(reverse ? new double[][] {{0.0, -100.0}, {200.0, 0.0}} : new double[][] {{0.0, 200.0}, {-100.0, 0.0}});
-    return phase;
-  }
-
-  private static double gamma(SystemInterface system, String name, String model) {
-    PhaseInterface phase = system.getPhase(1);
-    if ("UMR".equals(model)) {
-      system.init(1);
-      phase = ((EosMixingRulesInterface) ((PhaseEosInterface) phase).getMixingRule()).getGEPhase();
-    }
-    ComponentGEUnifac component = (ComponentGEUnifac) phase.getComponent(name);
-    assertTrue(component.getUnifacGroups().length > 0);
-    double result = component.getGamma(phase, 2, system.getTemperature(), system.getPressure(), phase.getType());
-    assertEquals(result, component.getGamma(), 1e-12);
-    assertEquals(Math.log(result), component.getLnGamma(), 1e-12);
-    return result;
-  }
-
-  private static double[] nrtl(double methanolFraction, double temperature) {
-    double[] x = {methanolFraction, 1.0 - methanolFraction};
-    double[][] alpha = {{0.0, 0.3}, {0.3, 0.0}};
-    double[][] interaction = {{0.0, 200.0}, {-100.0, 0.0}};
-    double[] gamma = new double[2];
-    for (int i = 0; i < 2; i++) {
-      double numerator = 0.0;
-      double denominator = 0.0;
-      for (int j = 0; j < 2; j++) {
-        double tau = interaction[j][i] / temperature;
-        double g = Math.exp(-alpha[j][i] * tau);
-        numerator += x[j] * tau * g;
-        denominator += x[j] * g;
-      }
-      double second = 0.0;
-      for (int j = 0; j < 2; j++) {
-        double tau = interaction[i][j] / temperature;
-        double g = Math.exp(-alpha[i][j] * tau);
-        double column = 0.0;
-        double weightedColumn = 0.0;
-        for (int k = 0; k < 2; k++) {
-          double tauKj = interaction[k][j] / temperature;
-          double gKj = Math.exp(-alpha[k][j] * tauKj);
-          column += x[k] * gKj;
-          weightedColumn += x[k] * tauKj * gKj;
-        }
-        second += x[j] * g / column * (tau - weightedColumn / column);
-      }
-      gamma[i] = Math.exp(numerator / denominator + second);
-    }
-    double excess = 8.3144621 * temperature * (x[0] * Math.log(gamma[0]) + x[1] * Math.log(gamma[1]));
-    return new double[] {gamma[0], gamma[1], excess};
-  }
-}
+    system.setMax
