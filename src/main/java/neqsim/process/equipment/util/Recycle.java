@@ -1198,10 +1198,17 @@ public class Recycle extends ProcessEquipmentBaseClass
     return downstreamProperty;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns {@code null} until the tear outlet is configured. Process-module assembly inspects this getter before
+   * wiring the recycle; {@link #run(UUID)} requires an outlet and reports a configuration error if it is absent.
+   * </p>
+   */
   @Override
   public StreamInterface getOutletStream() {
-    return requireOutletStream();
+    return outletStream;
   }
 
   /**

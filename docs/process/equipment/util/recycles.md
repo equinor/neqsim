@@ -158,9 +158,10 @@ inverse-Jacobian step. It uses direct substitution for its first two calls;
 the first Broyden step is taken on the third call. Monitor convergence on a
 representative process before using this option for a difficult recycle.
 
-A `Recycle` requires a configured tear outlet before `run()` or
-`getOutletStream()`; wire an existing stream using `setOutletStream(stream)`.
-If missing, those calls report the recycle name and the required configuration.
+A `Recycle` requires a configured tear outlet before `run()`; wire an existing
+stream using `setOutletStream(stream)`. If missing, `run()` reports the recycle
+name and the required configuration. Before wiring, `getOutletStream()` returns
+`null` so process modules can inspect the connection without running the recycle.
 
 ### Direct Substitution
 
