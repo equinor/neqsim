@@ -9,6 +9,22 @@
 
 ---
 
+## 2026-09-25 — `RotorUnbalanceAssessment`: coupling/rotor unbalance and shaft-vibration criteria
+
+New `neqsim.process.mechanicaldesign.compressor.RotorUnbalanceAssessment` (static helpers + `evaluate(...)`
+returning a `Result` with `toJson()`), added while diagnosing a coupling drive-bolt fracture on an LP
+recompression train:
+
+* `unbalanceFromMass(massG, radiusMm)` — U = m r (g mm) for a lost/added mass (bolt fragment, balance weight, deposit).
+* `apiAllowableUnbalance(planeMassKg, mcsRpm, applyApi671Floor)` — API 617/671 `6350 W/N` g mm, optional 7.2 g mm floor.
+* `isoPermissibleUnbalance(G, rotorMassKg, rpm)` — ISO 21940-11.
+* `centrifugalForce(unbalanceGmm, rpm)`, `apiShaftVibrationLimit(mcsRpm)` (API 617, capped 25.4 um),
+  `isoZoneBoundaries(rpm)` (ISO 7919-3 shaft relative A/B, B/C, C/D), `significantChangeThreshold(rpm)`
+  (ISO 20816-1, 25 % of B/C), `vectorChange(...)` (1X vector difference), `influenceCoefficient(...)`.
+* Tests: `RotorUnbalanceAssessmentTest` (hand-calculated values). No existing API changed.
+
+---
+
 ## 2026-09-18 — MCP tool contracts: schema coverage gate, `validateInput` for every tool, no more silent "success"
 
 An end-to-end probe of the packaged MCP server (`tools/list` + four task chains) found that
