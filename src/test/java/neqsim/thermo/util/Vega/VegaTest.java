@@ -58,6 +58,11 @@ public class VegaTest {
       assertEquals(anchor[3], phase.getZ(), 1e-5);
       assertEquals(anchor[4], phase.getCp("J/molK"), 1e-4);
       assertTrue(phase.getCp("J/molK") > 0);
+      double firstZ = phase.getZ();
+      double firstCp = phase.getCp("J/molK");
+      system.init(3);
+      assertEquals(firstZ, phase.getZ(), 1e-8);
+      assertEquals(firstCp, phase.getCp("J/molK"), 1e-8);
     }
   }
 
