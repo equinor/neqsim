@@ -4,25 +4,22 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable caller-scenario thermal-duty receipt for a coupled sulfur/nitrogen hydrotreating
- * screen.
+ * Immutable caller-scenario thermal-duty receipt for a coupled sulfur/nitrogen hydrotreating screen.
  *
  * <p>
- * The receipt converts caller-supplied sulfur- and nitrogen-removal heat-release factors to
- * process rates and offsets them against a caller-supplied sensible-heating duty. It does not
- * supply reaction enthalpies or calculate process enthalpy.
+ * The receipt converts caller-supplied sulfur- and nitrogen-removal heat-release factors to process rates and offsets
+ * them against a caller-supplied sensible-heating duty. It does not supply reaction enthalpies or calculate process
+ * enthalpy.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final double SECONDS_PER_HOUR = 3600.0;
   private static final double KILOGRAMS_PER_TONNE = 1000.0;
 
-  private final RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-      productDistributionReceipt;
+  private final RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt productDistributionReceipt;
   private final double sulfurReactionHeatReleaseMegaJoulePerKgRemoved;
   private final double nitrogenReactionHeatReleaseMegaJoulePerKgRemoved;
   private final double sensibleHeatingDutyMegaWatt;
@@ -37,27 +34,21 @@ public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
   private final double dutyClosureResidualMegaWatt;
 
   private RefineryHydrotreatingSulfurNitrogenThermalDutyBalance(
-      RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-          productDistributionReceipt,
-      double sulfurReactionHeatReleaseMegaJoulePerKgRemoved,
-      double nitrogenReactionHeatReleaseMegaJoulePerKgRemoved,
+      RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt productDistributionReceipt,
+      double sulfurReactionHeatReleaseMegaJoulePerKgRemoved, double nitrogenReactionHeatReleaseMegaJoulePerKgRemoved,
       double sensibleHeatingDutyMegaWatt, double sulfurReactionHeatReleaseMegaWatt,
       double nitrogenReactionHeatReleaseMegaWatt, double totalReactionHeatReleaseMegaWatt,
-      double reactionHeatReleaseMegaWattHourPerTonneFeed,
-      double sensibleHeatingMegaWattHourPerTonneFeed, double netExternalDutyMegaWatt,
-      double externalHeatingDutyMegaWatt, double externalCoolingDutyMegaWatt,
+      double reactionHeatReleaseMegaWattHourPerTonneFeed, double sensibleHeatingMegaWattHourPerTonneFeed,
+      double netExternalDutyMegaWatt, double externalHeatingDutyMegaWatt, double externalCoolingDutyMegaWatt,
       double dutyClosureResidualMegaWatt) {
     this.productDistributionReceipt = productDistributionReceipt;
-    this.sulfurReactionHeatReleaseMegaJoulePerKgRemoved =
-        sulfurReactionHeatReleaseMegaJoulePerKgRemoved;
-    this.nitrogenReactionHeatReleaseMegaJoulePerKgRemoved =
-        nitrogenReactionHeatReleaseMegaJoulePerKgRemoved;
+    this.sulfurReactionHeatReleaseMegaJoulePerKgRemoved = sulfurReactionHeatReleaseMegaJoulePerKgRemoved;
+    this.nitrogenReactionHeatReleaseMegaJoulePerKgRemoved = nitrogenReactionHeatReleaseMegaJoulePerKgRemoved;
     this.sensibleHeatingDutyMegaWatt = sensibleHeatingDutyMegaWatt;
     this.sulfurReactionHeatReleaseMegaWatt = sulfurReactionHeatReleaseMegaWatt;
     this.nitrogenReactionHeatReleaseMegaWatt = nitrogenReactionHeatReleaseMegaWatt;
     this.totalReactionHeatReleaseMegaWatt = totalReactionHeatReleaseMegaWatt;
-    this.reactionHeatReleaseMegaWattHourPerTonneFeed =
-        reactionHeatReleaseMegaWattHourPerTonneFeed;
+    this.reactionHeatReleaseMegaWattHourPerTonneFeed = reactionHeatReleaseMegaWattHourPerTonneFeed;
     this.sensibleHeatingMegaWattHourPerTonneFeed = sensibleHeatingMegaWattHourPerTonneFeed;
     this.netExternalDutyMegaWatt = netExternalDutyMegaWatt;
     this.externalHeatingDutyMegaWatt = externalHeatingDutyMegaWatt;
@@ -69,18 +60,14 @@ public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
    * Calculate caller-owned reaction-heat and net external-duty bookkeeping.
    *
    * @param productDistributionReceipt qualified coupled product-distribution receipt
-   * @param sulfurReactionHeatReleaseMegaJoulePerKgRemoved caller-supplied heat release in MJ per
-   *        kg sulfur removed
-   * @param nitrogenReactionHeatReleaseMegaJoulePerKgRemoved caller-supplied heat release in MJ per
-   *        kg nitrogen removed
+   * @param sulfurReactionHeatReleaseMegaJoulePerKgRemoved caller-supplied heat release in MJ per kg sulfur removed
+   * @param nitrogenReactionHeatReleaseMegaJoulePerKgRemoved caller-supplied heat release in MJ per kg nitrogen removed
    * @param sensibleHeatingDutyMegaWatt caller-supplied non-reaction heating duty in MW
    * @return immutable thermal-duty receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenThermalDutyBalance calculate(
-      RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-          productDistributionReceipt,
-      double sulfurReactionHeatReleaseMegaJoulePerKgRemoved,
-      double nitrogenReactionHeatReleaseMegaJoulePerKgRemoved,
+      RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt productDistributionReceipt,
+      double sulfurReactionHeatReleaseMegaJoulePerKgRemoved, double nitrogenReactionHeatReleaseMegaJoulePerKgRemoved,
       double sensibleHeatingDutyMegaWatt) {
     Objects.requireNonNull(productDistributionReceipt, "productDistributionReceipt");
     requireFiniteNonNegative("sulfurReactionHeatReleaseMegaJoulePerKgRemoved",
@@ -89,17 +76,17 @@ public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
         nitrogenReactionHeatReleaseMegaJoulePerKgRemoved);
     requireFiniteNonNegative("sensibleHeatingDutyMegaWatt", sensibleHeatingDutyMegaWatt);
 
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput =
-        productDistributionReceipt.getThroughputBalance();
-    RefineryHydrotreatingSulfurNitrogenBalance material =
-        throughput.getRecycleBalance().getSupplyBalance().getMaterialBalance();
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput = productDistributionReceipt
+        .getThroughputBalance();
+    RefineryHydrotreatingSulfurNitrogenBalance material = throughput.getRecycleBalance().getSupplyBalance()
+        .getMaterialBalance();
     double scale = throughput.getBasisScalePerHour();
     double sulfurRemovedKgPerHour = material.getSulfurRemovedMassKg() * scale;
     double nitrogenRemovedKgPerHour = material.getNitrogenRemovedMassKg() * scale;
-    double sulfurReactionHeat = sulfurRemovedKgPerHour
-        * sulfurReactionHeatReleaseMegaJoulePerKgRemoved / SECONDS_PER_HOUR;
-    double nitrogenReactionHeat = nitrogenRemovedKgPerHour
-        * nitrogenReactionHeatReleaseMegaJoulePerKgRemoved / SECONDS_PER_HOUR;
+    double sulfurReactionHeat = sulfurRemovedKgPerHour * sulfurReactionHeatReleaseMegaJoulePerKgRemoved
+        / SECONDS_PER_HOUR;
+    double nitrogenReactionHeat = nitrogenRemovedKgPerHour * nitrogenReactionHeatReleaseMegaJoulePerKgRemoved
+        / SECONDS_PER_HOUR;
     double totalReactionHeat = sulfurReactionHeat + nitrogenReactionHeat;
     double tonnesFeedPerHour = throughput.getFeedMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
     double reactionHeatPerTonneFeed = totalReactionHeat / tonnesFeedPerHour;
@@ -107,24 +94,20 @@ public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
     double netExternalDuty = sensibleHeatingDutyMegaWatt - totalReactionHeat;
     double externalHeatingDuty = Math.max(0.0, netExternalDuty);
     double externalCoolingDuty = Math.max(0.0, -netExternalDuty);
-    double dutyClosure =
-        externalHeatingDuty - externalCoolingDuty + totalReactionHeat - sensibleHeatingDutyMegaWatt;
+    double dutyClosure = externalHeatingDuty - externalCoolingDuty + totalReactionHeat - sensibleHeatingDutyMegaWatt;
 
-    double tolerance = 1.0e-12
-        * Math.max(1.0, sensibleHeatingDutyMegaWatt + totalReactionHeat);
-    if (!allFinite(sulfurReactionHeat, nitrogenReactionHeat, totalReactionHeat,
-        reactionHeatPerTonneFeed, sensibleHeatingPerTonneFeed, netExternalDuty,
-        externalHeatingDuty, externalCoolingDuty, dutyClosure)
+    double tolerance = 1.0e-12 * Math.max(1.0, sensibleHeatingDutyMegaWatt + totalReactionHeat);
+    if (!allFinite(sulfurReactionHeat, nitrogenReactionHeat, totalReactionHeat, reactionHeatPerTonneFeed,
+        sensibleHeatingPerTonneFeed, netExternalDuty, externalHeatingDuty, externalCoolingDuty, dutyClosure)
         || Math.abs(dutyClosure) > tolerance) {
       throw new IllegalArgumentException("inputs do not define a closed thermal-duty receipt");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenThermalDutyBalance(
-        productDistributionReceipt, sulfurReactionHeatReleaseMegaJoulePerKgRemoved,
-        nitrogenReactionHeatReleaseMegaJoulePerKgRemoved, sensibleHeatingDutyMegaWatt,
-        sulfurReactionHeat, nitrogenReactionHeat, totalReactionHeat, reactionHeatPerTonneFeed,
-        sensibleHeatingPerTonneFeed, netExternalDuty, externalHeatingDuty, externalCoolingDuty,
-        dutyClosure);
+    return new RefineryHydrotreatingSulfurNitrogenThermalDutyBalance(productDistributionReceipt,
+        sulfurReactionHeatReleaseMegaJoulePerKgRemoved, nitrogenReactionHeatReleaseMegaJoulePerKgRemoved,
+        sensibleHeatingDutyMegaWatt, sulfurReactionHeat, nitrogenReactionHeat, totalReactionHeat,
+        reactionHeatPerTonneFeed, sensibleHeatingPerTonneFeed, netExternalDuty, externalHeatingDuty,
+        externalCoolingDuty, dutyClosure);
   }
 
   private static void requireFiniteNonNegative(String name, double value) {
@@ -143,8 +126,7 @@ public final class RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
   }
 
   /** @return upstream qualified coupled product-distribution receipt */
-  public RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-      getProductDistributionReceipt() {
+  public RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt getProductDistributionReceipt() {
     return productDistributionReceipt;
   }
 
