@@ -34,8 +34,10 @@
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
  * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
  * separate perfect-gas and EOS-backed single-gas transient models resolve waves and line packing but exclude heat
- * transfer, pipe elasticity, multiphase slip and solid-bearing transport. Both real-gas models fail closed if an
- * equilibrium phase appears.
+ * transfer, pipe elasticity and solid-bearing transport. A separate short-opening model can apply a caller-declared
+ * gas/liquid velocity ratio to an equilibrium thermodynamic station with explicit phase-area and kinetic-energy
+ * closure; it does not infer slip, entrainment or finite-rate phase transfer. Both real-gas pipe models fail closed if
+ * an equilibrium phase appears.
  *
  * <p>
  * Example usage:

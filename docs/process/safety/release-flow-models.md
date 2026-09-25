@@ -1,6 +1,6 @@
 ---
 title: Model-explicit release source terms
-description: Explicit short-opening and ideal/real-gas Fanno pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
+description: Explicit homogeneous, prescribed-slip and ideal/real-gas pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
@@ -44,6 +44,7 @@ identity, version and diagnostics with every frame:
 | Model | Intended use | Required behavior |
 |---|---|---|
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
+| `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
@@ -73,6 +74,33 @@ behavior as strict physics. Because the legacy equation never solves throat or e
 its opening snapshots alias the initialized upstream pressure and temperature. Consumers can detect
 this limitation from `UNRESOLVED_STATIONS`; they must not interpret those snapshots as a nozzle
 solution.
+
+## Prescribed gas/liquid slip
+
+`SlipCorrectedHomogeneousEquilibriumReleaseModel` separates thermodynamic equilibrium from
+hydrodynamic equilibrium. The HEM calculation first resolves the isentropic opening state and
+homogeneous velocity $u_h$. The caller supplies the gas-to-liquid velocity ratio
+$S=u_g/u_l\ge 1$. With gas and liquid mass fractions $y_g$ and $y_l$, conservation of the HEM
+specific kinetic energy gives
+
+$$u_l=\frac{u_h}{\sqrt{y_gS^2+y_l}},\qquad u_g=Su_l.$$
+
+The total mass flux $G$ then follows from phase-area closure using the EOS phase densities
+$\rho_g$ and $\rho_l$:
+
+$$G=\left(\frac{y_g}{\rho_gu_g}+\frac{y_l}{\rho_lu_l}\right)^{-1},\qquad \alpha_g+\alpha_l=1.$$
+
+The station's scalar velocity is $G/\rho_{mix}$ so its existing `massFlux` field remains the total
+mass flux. The optional `phaseDensities` and `phaseVelocities` maps retain the phase-resolved SI
+basis. At $S=1$ the calculation reproduces HEM. Tests enforce that limit, phase-area closure,
+phase kinetic-energy closure, immutable inputs, deterministic schema output, and steady/dynamic
+frames from both process-container types.
+
+This is a prescribed-slip sensitivity model, not a general non-equilibrium qualification. It
+does not predict slip, entrainment, droplet size, finite-rate vaporization/condensation, wall
+friction, heat transfer, solids, or pipe decompression. Select $S$ from an independently justified
+engineering basis and retain it with scenario provenance. Results and evidence remain
+`UNQUALIFIED` pending experimental validation and accountable domain review.
 
 ## Ideal-gas equations
 
