@@ -57,6 +57,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ModuleInterface;
 import neqsim.process.safety.release.IdealGasPipeDecompression;
+import neqsim.process.safety.release.RealGasPipeDecompression;
 import neqsim.process.safety.release.ReleaseInventory;
 
 /**
@@ -163,7 +164,8 @@ public final class DynamicCapabilityResolver {
 
     if (isOneOf(type, OnePhasePipeLine.class, TwoFluidPipe.class, TransientPipe.class, WaterHammerPipe.class,
         Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, DistillationColumn.class, AdsorptionBed.class,
-        MercuryRemovalBed.class, PipeFlowNetwork.class, WellFlowlineNetwork.class, IdealGasPipeDecompression.class)) {
+        MercuryRemovalBed.class, PipeFlowNetwork.class, WellFlowlineNetwork.class, IdealGasPipeDecompression.class,
+        RealGasPipeDecompression.class)) {
       return DynamicCapability.DYNAMIC_DISTRIBUTED;
     }
 

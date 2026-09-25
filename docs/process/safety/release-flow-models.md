@@ -182,6 +182,39 @@ appearance is not replaced with ideal-gas or homogeneous-equilibrium physics. Th
 `UNQUALIFIED`; dense-gas regression and dilute analytical agreement are software validation, not
 independent experimental qualification.
 
+## EOS-backed transient pipe decompression
+
+`RealGasPipeDecompression` is the state-owning transient counterpart to the quasi-steady model.
+It stores cell-centred conservative density, momentum and total-energy values for a rigid,
+constant-area pipe. A local Lax-Friedrichs finite-volume update advances
+
+$$\frac{\partial}{\partial t}\begin{bmatrix}\rho\\ \rho u\\ E\end{bmatrix}
++\frac{\partial}{\partial x}\begin{bmatrix}\rho u\\ \rho u^2+p\\ u(E+p)\end{bmatrix}
+=\begin{bmatrix}0\\ -f_D\rho u|u|/(2D)\\ 0\end{bmatrix}.$$
+
+For every candidate cell, a NeqSim volume/internal-energy flash recovers pressure, temperature,
+phase state and acoustic speed from the selected EOS. The CFL limit therefore follows the local
+EOS signal speed rather than a constant heat-capacity ratio. The closed upstream boundary reflects
+momentum. The downstream ghost state uses the declared constant receiver pressure and the local
+exit temperature; the declared discharge coefficient multiplies the complete conservative
+boundary flux. The same mass and total-enthalpy flux is accumulated in pipe accounting and
+exported through `CoupledReleaseSource`, so `ProcessSystem` and `ProcessModel` frames do not
+perform a second hypothetical withdrawal.
+
+Construct the unit with the initial gas, pipe length and diameter, effective area coefficient,
+receiver pressure, specified Darcy friction factor, cell count and CFL number. It must run in
+dynamic mode. The input state must be one nonreacting equilibrium gas phase, and every VU-flashed
+cell plus the receiver ghost state must remain one gas phase. Phase appearance, unresolved
+properties, density closure failures, and detected or unresolved mixture-specific solid/hydrate
+risk abort the whole caller step without committing partial state.
+
+Tests retain exact pipe-plus-discharge mass and total-energy closure, fixed composition, atomic
+isolation, both process-container paths, a dilute-gas comparison with the perfect-gas solver, and
+an 8/12/16-cell refinement receipt. This is software evidence only. The model excludes heat
+transfer, wall elasticity, a finite upstream vessel, two-sided rupture, finite-rate phase transfer,
+multiphase slip/entrainment and solid-bearing transport, and it has no independent experimental
+qualification.
+
 ## Homogeneous-equilibrium equations and station semantics
 
 The upstream TP flash establishes stagnation enthalpy $h_0$ [J/kg] and entropy $s_0$

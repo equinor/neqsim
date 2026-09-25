@@ -15,6 +15,8 @@
  * release with specified Darcy friction</li>
  * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
  * transient decompression and line packing</li>
+ * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
+ * single-gas transient decompression and line packing</li>
  * </ul>
  *
  * <p>
@@ -31,8 +33,8 @@
  * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
  * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
- * separate perfect-gas transient model resolves waves and line packing but excludes real-gas property evolution, heat
- * transfer, pipe elasticity, multiphase slip and solid-bearing transport. The real-gas Fanno model fails closed if an
+ * separate perfect-gas and EOS-backed single-gas transient models resolve waves and line packing but exclude heat
+ * transfer, pipe elasticity, multiphase slip and solid-bearing transport. Both real-gas models fail closed if an
  * equilibrium phase appears.
  *
  * <p>
