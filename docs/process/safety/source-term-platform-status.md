@@ -24,6 +24,12 @@ The current implementation includes:
   partitioning kinetic energy between exactly one gas and one liquid phase using a caller-declared
   velocity ratio. It exposes phase densities/velocities and enforces phase-area and kinetic-energy
   closure. It does not infer slip, entrainment or finite-rate phase transfer and remains unqualified.
+- A bounded vertical-upward drift-flux short-opening model predicts gas/liquid slip from the
+  Zuber-Findlay relation and Harmathy bubble drift velocity while retaining HEM thermodynamics.
+  It requires one gas and one liquid phase, explicit positive interfacial tension in N/m, gas area
+  fraction at most 0.80, and simultaneous drift-flux, phase-area and kinetic-energy closure. It
+  remains unqualified and does not model entrainment, finite-rate phase transfer, annular jets or
+  solids.
 - Versioned deterministic JSON, NDJSON and reduced CSV, bundled JSON Schema,
   source identity, provenance and machine-readable failure/lifecycle states.
 - Steady runs, external capture and native dynamic stepping for `ProcessSystem` and
@@ -87,7 +93,7 @@ caller-owned; no phase-count rule silently changes the requested physics.
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
 | Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. | Assessed phase-level/geometry, entrainment and finite-rate interfacial transfer beyond the current well-mixed equilibrium boundary. |
-| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. A short-opening prescribed-slip model adds explicit hydrodynamic non-equilibrium sensitivity for one gas and one liquid phase. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; predictive slip/entrainment and finite-rate phase-transfer models; independent dense-gas and multiphase validation data. |
+| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. Short-opening prescribed-slip and bounded vertical drift-flux models add explicit and predictive hydrodynamic non-equilibrium for one gas and one liquid phase. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; predictive entrainment and finite-rate phase-transfer models; annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |
