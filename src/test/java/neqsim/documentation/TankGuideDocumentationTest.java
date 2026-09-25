@@ -28,10 +28,9 @@ public class TankGuideDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/process/equipment/tanks.md";
   private static final Pattern EXECUTABLE_JAVA = Pattern
       .compile("(?ms)^## Executable LNG boil-off example.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern ALL_JAVA = Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -39,17 +38,18 @@ public class TankGuideDocumentationTest extends NeqSimTest {
   @Test
   void guideStatesCurrentApisUnitsAndEngineeringBoundaries() throws Exception {
     String guide = readGuide();
+    String prose = guide.replaceAll("\\s+", " ");
 
     assertTrue(guide.contains("There is no unit-string overload"));
     assertTrue(guide.contains("does not provide `setLiquidLevel` or `setPressure` methods"));
     assertTrue(guide.contains("Pressure and temperature enter through the connected stream state"));
     assertTrue(guide.contains("W/m²/K"));
-    assertTrue(guide.contains("storage pressure in bara"));
+    assertTrue(guide.contains("Storage pressure in bara"));
     assertTrue(guide.contains("getBOGMassFlowRate()"));
     assertTrue(guide.contains("getBoilOffRatePctPerDay()"));
     assertTrue(guide.contains("already returns percent/day"));
-    assertTrue(guide.contains("not a detailed storage-tank design or operations simulator"));
-    assertTrue(guide.contains("does not replace a vendor thermal design"));
+    assertTrue(prose.contains("not a detailed storage-tank design or operations simulator"));
+    assertTrue(prose.contains("does not replace a vendor thermal design"));
     assertTrue(guide.contains("java -ea"));
 
     Matcher fences = ALL_JAVA.matcher(guide);
@@ -103,16 +103,12 @@ public class TankGuideDocumentationTest extends NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
