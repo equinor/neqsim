@@ -1,4 +1,22 @@
 {
+ "living task": [
+  "neqsim-continuous-task-improvement"
+ ],
+ "continuous task improvement": [
+  "neqsim-continuous-task-improvement",
+  "neqsim-model-calibration-and-data-reconciliation"
+ ],
+ "solve until goal met": [
+  "neqsim-continuous-task-improvement",
+  "neqsim-agentic-process-optimization"
+ ],
+ "daily monitoring cycle": [
+  "neqsim-continuous-task-improvement",
+  "neqsim-plant-data"
+ ],
+ "backtest drift detection": [
+  "neqsim-continuous-task-improvement"
+ ],
  "lng liquefaction": [
   "neqsim-lng-liquefaction",
   "neqsim-process-modeling"

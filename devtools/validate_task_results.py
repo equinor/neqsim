@@ -342,6 +342,60 @@ def check_tooling_improvements(task_folder: Path, results: dict) -> List[str]:
     return warnings
 
 
+def check_continuous(task_folder: Path) -> List[str]:
+    """Return warnings for a living task (``continuous/``); silent for ordinary tasks.
+
+    Checks the plan, a confirmed goal before any solve loop has run, the baseline,
+    ledger integrity (every event parses and every status transition is legal) and
+    that the last cycle was not left incomplete.
+    """
+    cont = task_folder / "continuous"
+    if not cont.is_dir():
+        return []
+    name = task_folder.name
+    warnings: List[str] = []
+    if not (cont / "cycle_plan.yaml").exists():
+        warnings.append(f"{name}: continuous/cycle_plan.yaml is missing — run `neqsim task-living`")
+    baseline = cont / "baseline" / "baseline.json"
+    if not baseline.exists():
+        warnings.append(f"{name}: continuous/baseline/baseline.json is missing")
+    state = {}
+    try:
+        state = json.loads((cont / "state.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    goal_text = ""
+    try:
+        goal_text = (cont / "goal.yaml").read_text(encoding="utf-8")
+    except OSError:
+        pass
+    if state.get("history") and re.search(r"^confirmed_by:\s*(null|~)?\s*$", goal_text, re.M):
+        warnings.append(f"{name}: a solve loop ran on an unconfirmed goal.yaml — set confirmed_by")
+    ledger = cont / "ledger" / "events.jsonl"
+    if ledger.exists():
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            from neqsim_continuous.ledger import Ledger, LedgerError
+            try:
+                Ledger(str(ledger)).current()
+            except (LedgerError, ValueError) as exc:
+                warnings.append(f"{name}: continuous ledger is inconsistent — {exc}")
+        except ImportError:
+            pass
+    cycles = cont / "cycles"
+    if cycles.is_dir():
+        names = sorted(p.name for p in cycles.iterdir() if p.is_dir())
+        if names:
+            try:
+                last = json.loads((cycles / names[-1] / "cycle.json").read_text(encoding="utf-8"))
+                if last.get("status") not in ("complete", "dry_run"):
+                    warnings.append(f"{name}: last cycle {names[-1]} is {last.get('status')} — "
+                                    f"rerun `neqsim task-cycle` to resume it")
+            except (OSError, ValueError):
+                warnings.append(f"{name}: last cycle {names[-1]} has no readable cycle.json")
+    return warnings
+
+
 def check_work_record(task_folder: Path) -> List[str]:
     """Return warnings when the method-and-data record is missing or unfilled.
 
@@ -604,7 +658,9 @@ def find_results_files(roots: List[Path]) -> List[Path]:
             out.append(root)
             continue
         if root.is_dir():
-            out.extend(sorted(root.glob("**/results.json")))
+            # Cycle and baseline snapshots of a living task are not task roots.
+            out.extend(p for p in sorted(root.glob("**/results.json"))
+                       if "continuous" not in p.relative_to(root).parts)
     # dedupe
     seen = set()
     unique = []
@@ -717,6 +773,7 @@ def main() -> int:
             warnings.extend(check_capability_assessment(task_folder))
             warnings.extend(check_document_evidence(task_folder))
             warnings.extend(check_work_record(task_folder))
+            warnings.extend(check_continuous(task_folder))
             warnings.extend(
                 check_tooling_improvements(task_folder, parsed if isinstance(parsed, dict) else {})
             )

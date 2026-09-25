@@ -40,6 +40,8 @@ import sys
 
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
+CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger",
+                       "status", "reference-case")
 
 COMMANDS = {
     "try": {
@@ -112,6 +114,17 @@ def _print_usage():
                                 "Generate the report (files named after its title)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
+    print()
+    print("Living tasks (continuous task solving):")
+    print("  task-living DIR          Make a task living (continuous/, baseline, ledger, goal)")
+    print("  task-cycle DIR           Run one monitor or solve cycle")
+    print("  task-solve DIR           Solve until the goal is met or improvement is marginal")
+    print("  task-backtest DIR        Replay archived data with a simulated clock")
+    print("  task-schedule DIR        Schedule daily cycles (Windows Task Scheduler / cron)")
+    print("  task-promote DIR CYCLE   Promote a reviewed cycle to the baseline")
+    print("  task-ledger DIR          List or update the improvement ledger")
+    print("  task-status PATH         Status of a living task or all living tasks in a folder")
+    print("  task-reference-case DIR  Create the public reference task (synthetic station)")
     print()
     print("Task destination:")
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
@@ -522,6 +535,10 @@ def main():
 
     if cmd in ("work-record", "workrecord"):
         sys.exit(_handle_work_record(sys.argv[2:]))
+
+    if cmd.startswith("task-") and cmd[5:] in CONTINUOUS_COMMANDS:
+        from neqsim_continuous import cli as continuous_cli
+        sys.exit(continuous_cli.main([cmd[5:]] + sys.argv[2:]))
 
     if cmd not in COMMANDS:
         print("Unknown command: {!r}".format(cmd))
