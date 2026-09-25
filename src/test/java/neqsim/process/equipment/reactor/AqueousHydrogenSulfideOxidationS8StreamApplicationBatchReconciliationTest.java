@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
 
 class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationTest {
-  private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 1.0e-3;
+  private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 2.5e-5;
   private static final double WATER_INVENTORY_KG = 1000.0;
   private static final String ALLOCATION_BASIS = "caller-owned elemental sulfur scenario";
   private static final String PRODUCT_BASIS = "caller-owned S8 product identity";
