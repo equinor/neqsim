@@ -60,6 +60,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
 - unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
 - coupled sulfur/nitrogen hydrogen energy and caller-priced utility receipts;
+- coupled sulfur/nitrogen external liquid-product and export-gas distribution receipts;
 - scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
 - integrated coupled sulfur/nitrogen material, energy, emissions, and scenario-cost receipts;
 - hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
@@ -178,6 +179,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Hydrotreating nitrogen and ammonia balance](refinery_hydrotreating_nitrogen_balance)\n- [Coupled hydrotreating sulfur and nitrogen balance](refinery_hydrotreating_sulfur_nitrogen_balance)\n- [Coupled hydrotreating sulfur/nitrogen throughput balance](refinery_hydrotreating_sulfur_nitrogen_throughput_balance)\n- [Coupled sulfur/nitrogen hydrotreating hydrogen supply](refinery_hydrotreating_sulfur_nitrogen_hydrogen_supply_balance)
 - [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
 - [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
+- [Coupled sulfur/nitrogen product-distribution receipt](refinery_hydrotreating_sulfur_nitrogen_product_distribution_receipt)
 - [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
 - [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
 - [Integrated coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_operating_receipt)
