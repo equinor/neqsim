@@ -4,19 +4,17 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable caller-scenario fired-heater utility receipt for coupled sulfur/nitrogen
- * hydrotreating.
+ * Immutable caller-scenario fired-heater utility receipt for coupled sulfur/nitrogen hydrotreating.
  *
  * <p>
- * The receipt converts the external-heating duty from a qualified thermal-duty balance to
- * caller-owned fuel input, cost, and indirect-emissions rates. It does not select a fuel, define a
- * lifecycle boundary, or model combustion or furnace performance.
+ * The receipt converts the external-heating duty from a qualified thermal-duty balance to caller-owned fuel input,
+ * cost, and indirect-emissions rates. It does not select a fuel, define a lifecycle boundary, or model combustion or
+ * furnace performance.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final double SECONDS_PER_HOUR = 3600.0;
   private static final double KILOGRAMS_PER_TONNE = 1000.0;
@@ -39,16 +37,12 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
   private final double heatingDeliveryResidualMegaWatt;
 
   private RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance(
-      RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermalDutyBalance,
-      double furnaceEfficiencyFraction, double fuelLowerHeatingValueMegaJoulePerKg,
-      double fuelCostPerKg, double fuelEmissionsKgCo2EquivalentPerKg,
-      double deliveredHeatingDutyMegaWatt, double coolingDutyMegaWatt,
-      double fuelChemicalPowerMegaWatt, double furnaceLossMegaWatt,
-      double fuelMassFlowKgPerHour, double fuelMassKgPerTonneFeed,
-      double fuelCostPerHour, double fuelCostPerTonneFeed,
-      double fuelEmissionsKgCo2EquivalentPerHour,
-      double fuelEmissionsKgCo2EquivalentPerTonneFeed,
-      double heatingDeliveryResidualMegaWatt) {
+      RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermalDutyBalance, double furnaceEfficiencyFraction,
+      double fuelLowerHeatingValueMegaJoulePerKg, double fuelCostPerKg, double fuelEmissionsKgCo2EquivalentPerKg,
+      double deliveredHeatingDutyMegaWatt, double coolingDutyMegaWatt, double fuelChemicalPowerMegaWatt,
+      double furnaceLossMegaWatt, double fuelMassFlowKgPerHour, double fuelMassKgPerTonneFeed, double fuelCostPerHour,
+      double fuelCostPerTonneFeed, double fuelEmissionsKgCo2EquivalentPerHour,
+      double fuelEmissionsKgCo2EquivalentPerTonneFeed, double heatingDeliveryResidualMegaWatt) {
     this.thermalDutyBalance = thermalDutyBalance;
     this.furnaceEfficiencyFraction = furnaceEfficiencyFraction;
     this.fuelLowerHeatingValueMegaJoulePerKg = fuelLowerHeatingValueMegaJoulePerKg;
@@ -63,8 +57,7 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
     this.fuelCostPerHour = fuelCostPerHour;
     this.fuelCostPerTonneFeed = fuelCostPerTonneFeed;
     this.fuelEmissionsKgCo2EquivalentPerHour = fuelEmissionsKgCo2EquivalentPerHour;
-    this.fuelEmissionsKgCo2EquivalentPerTonneFeed =
-        fuelEmissionsKgCo2EquivalentPerTonneFeed;
+    this.fuelEmissionsKgCo2EquivalentPerTonneFeed = fuelEmissionsKgCo2EquivalentPerTonneFeed;
     this.heatingDeliveryResidualMegaWatt = heatingDeliveryResidualMegaWatt;
   }
 
@@ -79,51 +72,42 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
    * @return immutable fired-heater utility receipt
    */
   public static RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance calculate(
-      RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermalDutyBalance,
-      double furnaceEfficiencyFraction, double fuelLowerHeatingValueMegaJoulePerKg,
-      double fuelCostPerKg, double fuelEmissionsKgCo2EquivalentPerKg) {
+      RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermalDutyBalance, double furnaceEfficiencyFraction,
+      double fuelLowerHeatingValueMegaJoulePerKg, double fuelCostPerKg, double fuelEmissionsKgCo2EquivalentPerKg) {
     Objects.requireNonNull(thermalDutyBalance, "thermalDutyBalance");
     requireFinitePositive("furnaceEfficiencyFraction", furnaceEfficiencyFraction);
     if (furnaceEfficiencyFraction > 1.0) {
       throw new IllegalArgumentException("furnaceEfficiencyFraction must not exceed 1.0");
     }
-    requireFinitePositive("fuelLowerHeatingValueMegaJoulePerKg",
-        fuelLowerHeatingValueMegaJoulePerKg);
+    requireFinitePositive("fuelLowerHeatingValueMegaJoulePerKg", fuelLowerHeatingValueMegaJoulePerKg);
     requireFiniteNonNegative("fuelCostPerKg", fuelCostPerKg);
-    requireFiniteNonNegative("fuelEmissionsKgCo2EquivalentPerKg",
-        fuelEmissionsKgCo2EquivalentPerKg);
+    requireFiniteNonNegative("fuelEmissionsKgCo2EquivalentPerKg", fuelEmissionsKgCo2EquivalentPerKg);
 
     double deliveredHeating = thermalDutyBalance.getExternalHeatingDutyMegaWatt();
     double coolingDuty = thermalDutyBalance.getExternalCoolingDutyMegaWatt();
     double fuelChemicalPower = deliveredHeating / furnaceEfficiencyFraction;
     double furnaceLoss = fuelChemicalPower - deliveredHeating;
-    double fuelMassFlow = fuelChemicalPower * SECONDS_PER_HOUR
-        / fuelLowerHeatingValueMegaJoulePerKg;
-    double feedMassFlow = thermalDutyBalance.getProductDistributionReceipt()
-        .getThroughputBalance().getFeedMassFlowKgPerHour();
+    double fuelMassFlow = fuelChemicalPower * SECONDS_PER_HOUR / fuelLowerHeatingValueMegaJoulePerKg;
+    double feedMassFlow = thermalDutyBalance.getProductDistributionReceipt().getThroughputBalance()
+        .getFeedMassFlowKgPerHour();
     double fuelMassPerTonneFeed = fuelMassFlow * KILOGRAMS_PER_TONNE / feedMassFlow;
     double fuelCostRate = fuelMassFlow * fuelCostPerKg;
     double fuelCostPerTonneFeed = fuelCostRate * KILOGRAMS_PER_TONNE / feedMassFlow;
     double fuelEmissionsRate = fuelMassFlow * fuelEmissionsKgCo2EquivalentPerKg;
-    double fuelEmissionsPerTonneFeed = fuelEmissionsRate * KILOGRAMS_PER_TONNE
-        / feedMassFlow;
-    double heatingDeliveryResidual = fuelChemicalPower * furnaceEfficiencyFraction
-        - deliveredHeating;
+    double fuelEmissionsPerTonneFeed = fuelEmissionsRate * KILOGRAMS_PER_TONNE / feedMassFlow;
+    double heatingDeliveryResidual = fuelChemicalPower * furnaceEfficiencyFraction - deliveredHeating;
 
     double tolerance = 1.0e-12 * Math.max(1.0, deliveredHeating + fuelChemicalPower);
-    if (!allFiniteNonNegative(deliveredHeating, coolingDuty, fuelChemicalPower, furnaceLoss,
-        fuelMassFlow, fuelMassPerTonneFeed, fuelCostRate, fuelCostPerTonneFeed,
-        fuelEmissionsRate, fuelEmissionsPerTonneFeed)
-        || !Double.isFinite(heatingDeliveryResidual)
-        || Math.abs(heatingDeliveryResidual) > tolerance) {
+    if (!allFiniteNonNegative(deliveredHeating, coolingDuty, fuelChemicalPower, furnaceLoss, fuelMassFlow,
+        fuelMassPerTonneFeed, fuelCostRate, fuelCostPerTonneFeed, fuelEmissionsRate, fuelEmissionsPerTonneFeed)
+        || !Double.isFinite(heatingDeliveryResidual) || Math.abs(heatingDeliveryResidual) > tolerance) {
       throw new IllegalArgumentException("inputs do not define a closed fired-heater receipt");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance(
-        thermalDutyBalance, furnaceEfficiencyFraction, fuelLowerHeatingValueMegaJoulePerKg,
-        fuelCostPerKg, fuelEmissionsKgCo2EquivalentPerKg, deliveredHeating, coolingDuty,
-        fuelChemicalPower, furnaceLoss, fuelMassFlow, fuelMassPerTonneFeed, fuelCostRate,
-        fuelCostPerTonneFeed, fuelEmissionsRate, fuelEmissionsPerTonneFeed,
+    return new RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance(thermalDutyBalance,
+        furnaceEfficiencyFraction, fuelLowerHeatingValueMegaJoulePerKg, fuelCostPerKg,
+        fuelEmissionsKgCo2EquivalentPerKg, deliveredHeating, coolingDuty, fuelChemicalPower, furnaceLoss, fuelMassFlow,
+        fuelMassPerTonneFeed, fuelCostRate, fuelCostPerTonneFeed, fuelEmissionsRate, fuelEmissionsPerTonneFeed,
         heatingDeliveryResidual);
   }
 
