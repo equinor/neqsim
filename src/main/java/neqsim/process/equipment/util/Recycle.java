@@ -169,9 +169,11 @@ public class Recycle extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Setter for the field <code>flowTolerance</code>.
+   * Sets the legacy flow tolerance: kg/sec below 1 kg/sec loop flow, percent otherwise. For example, 0.01 permits 0.01
+   * kg/sec change on a 0.02 kg/sec loop (50%). The optional absolute tolerance is an OR criterion and cannot tighten
+   * this threshold.
    *
-   * @param flowTolerance a double
+   * @param flowTolerance tolerance in the units returned by flowBalanceCheck()
    */
   public void setFlowTolerance(double flowTolerance) {
     this.flowTolerance = flowTolerance;
@@ -929,7 +931,7 @@ public class Recycle extends ProcessEquipmentBaseClass
    * Applies Wegstein acceleration to calculate accelerated values.
    *
    * <p>
-   * The Wegstein method uses the formula: x_{n+1} = q * g(x_n) + (1-q) * x_n where q = s / (s - 1) and s is the slope
+   * The Wegstein method uses the formula: x_{n+1} = q * x_n + (1-q) * g(x_n) where q = s / (s - 1) and s is the slope
    * estimate.
    *
    * <p>
@@ -974,7 +976,7 @@ public class Recycle extends ProcessEquipmentBaseClass
       if (Math.abs(slope - 1.0) > 1e-10) {
         q = slope / (slope - 1.0);
       } else {
-        // slope ≈ 1 means diverging, use minimum q for maximum damping
+        // slope ≈ 1 has an unbounded secant factor; use the configured lower bound
         q = wegsteinQMin;
       }
 
@@ -982,8 +984,8 @@ public class Recycle extends ProcessEquipmentBaseClass
       q = Math.max(wegsteinQMin, Math.min(wegsteinQMax, q));
       wegsteinQFactors[i] = q;
 
-      // Apply Wegstein formula: x_{n+1} = q * g(x_n) + (1-q) * x_n
-      acceleratedValues[i] = q * currentOutput[i] + (1.0 - q) * currentInput[i];
+      // Apply Wegstein formula: x_{n+1} = q * x_n + (1-q) * g(x_n)
+      acceleratedValues[i] = q * currentInput[i] + (1.0 - q) * currentOutput[i];
     }
 
     return acceleratedValues;

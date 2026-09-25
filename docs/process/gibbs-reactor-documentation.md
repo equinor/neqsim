@@ -256,15 +256,20 @@ reactor.setArmijoMaxBacktracks(20);  // default
 When enabled (`setUseRegularization(true)`), the solver regularizes the Hessian block of the Jacobian when its condition number exceeds a threshold:
 
 $$
-\tilde{H} = H + \tau I, \quad \tau = \tau_0 \cdot \max_i |H_{ii}|
+\tilde{H} = H + \tau I, \quad \tau = \max(\tau_0, 10^{-8}\max_i |H_{ii}|)
 $$
 
-This is applied only when $\kappa(H) > \kappa_{\max}$, making it a Levenberg-Marquardt-type modification that interpolates between the Newton direction and steepest descent.
+The trigger uses the condition number of the full constrained Jacobian. The
+composition block is shifted **before** solving for the Newton direction. The
+modified matrix is used even if its condition number remains above the threshold.
+The recorded condition number is measured after this optional shift. The full
+matrix remains a saddle-point system; regularization does not guarantee that
+every singularity or thermodynamic convergence problem can be resolved.
 
 | Parameter | Method | Default | Description |
 |-----------|--------|---------|-------------|
 | Condition threshold | `setRegularizationThreshold(double)` | 1e10 | $\kappa_{\max}$: trigger regularization when condition number exceeds this |
-| Regularization scale | `setRegularizationTau(double)` | 1e-6 | $\tau_0$: scaling factor for the regularization term |
+| Regularization scale | `setRegularizationTau(double)` | 1e-6 | $\tau_0$: minimum diagonal shift |
 
 ```java
 reactor.setUseRegularization(true);
@@ -345,6 +350,23 @@ double ppm_i = z_i * 1e6;
 outlet.initProperties();
 double rho = outlet.getDensity("kg/m3");
 ```
+
+### Convergence return values and fallback thermodynamics
+
+`solveGibbsEquilibrium()` returns `false` when the iteration limit is reached
+without convergence, consistent with `hasConverged()`. `run()` retains the last
+iterate for diagnosis, so callers must check convergence before using results.
+The convergence tolerance applies to the norm of the full Newton vector,
+including multiplier changes, **before** composition damping.
+
+When direct Gibbs polynomial coefficients are unavailable, the fallback obtains
+heat capacities from the thermodynamic component database and subtracts the
+elemental reference contributions. Stored Cp columns in the Gibbs CSV remain
+available through the legacy getter; they do not control that fallback. The
+corrected integration constant is
+$J = \Delta H_f^\circ - (\Delta A T_r + \Delta B T_r^2/2 + \Delta C T_r^3/3 + \Delta D T_r^4/4)/1000$,
+in kJ/mol. This preserves both the reference Gibbs energy and
+$H=-T^2\,d(G/T)/dT$. The diagnostic `calculateEntropy()` returns kJ/(mol K).
 
 ### 3.7 Advanced — Jacobian Inspection
 
@@ -461,15 +483,26 @@ The reactor reads species thermodynamic data from `GibbsReactDatabase.csv` in `s
 
 - Gibbs energy of formation $G_f^{\circ}(T)$ via polynomial coefficients
 - Enthalpy of formation $H_f^{\circ}(T)$ via polynomial coefficients
-- Elemental composition ($a_{ki}$): number of O, N, C, H, S, Ar atoms per molecule
+- Elemental composition ($a_{ki}$): number of O, N, C, H, S, Ar, Na atoms per molecule, plus signed charge
 
 ### 5.2 Available Elements
 
-The solver tracks 7 elements: **O, N, C, H, S, Ar, Z** (where Z is a charge balance placeholder for ionic species).
+The balance arrays use **O, N, C, H, S, Ar, Z, Na**. The original indices
+0–6 retain their names; sodium is appended at index 7. Use `getElementNames()`
+to interpret diagnostic arrays rather than assuming a fixed length. CSV columns
+are matched by name, so sodium, argon, and charge have distinct balances. `Z`
+is signed net charge in molar charge equivalents and has zero atomic mass.
+
+Zero net feed charge does not exclude ionic candidates. The solver enforces an
+independent set of stoichiometric constraints; a charge row that is already a
+linear combination of atom balances is redundant and is omitted from the
+Jacobian. Diagnostics still report all eight balances. Charge conservation does
+not establish that the selected EOS and standard-state data are suitable for
+aqueous electrolyte equilibrium.
 
 ### 5.3 Species Matching
 
-Components in the inlet stream are matched (case-insensitive) to the Gibbs database. Unmatched components are treated as pass-through (moles unchanged). When `setUseAllDatabaseSpecies(true)` is called, all database species are added to the system at trace concentrations (1e-20 mol).
+Components in the inlet stream are matched (case-insensitive) to the Gibbs database. Unmatched components are treated as pass-through (moles unchanged). When `setUseAllDatabaseSpecies(true)` is called, missing database species are added at zero feed inventory. Candidates requiring an absent atom are excluded before the remaining reaction variables are seeded. Existing feed quantities are preserved.
 
 ---
 
@@ -604,7 +637,8 @@ double so2_ppm = outlet.getComponent("SO2").getz() * 1e6;
 
 ### Phase Issues
 
-- The Gibbs reactor operates on a single gas phase. For systems that might form liquids or solids, run a flash calculation on the outlet stream.
+- All phases in the inlet contribute their **total component inventory**. The cloned working fluid is consolidated into one homogeneous phase before reaction iterations. The final outlet stream is flashed.
+- This is a homogeneous reaction calculation followed by a phase flash, not simultaneous multiphase reactive equilibrium. A condensed feed does not by itself establish validity of the homogeneous reaction model.
 - For solid sulfur (S₈) precipitation, use `ThermodynamicOperations.TPSolidflash()` on the outlet.
 
 ---
