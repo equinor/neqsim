@@ -21,7 +21,14 @@ station properties, and overall/phase composition.
 All dimensional values use `{ "value": number, "unit": "SI token" }`. Pressure is absolute.
 Composition maps explicitly distinguish mole and mass fractions. Native phase names retain the
 aqueous and solid-like distinctions; no gas fraction is inferred from phase index.
-Advective momentum is mass rate multiplied by orifice-exit velocity; it excludes pressure thrust.
+Every generated station also carries EOS native-phase densities. A slip-flow station adds
+`phaseVelocities`; absent phase velocities mean the station uses one homogeneous axial velocity.
+Both maps use explicit SI quantity objects and native phase names. Existing version-one frames
+without these additive fields remain schema-compatible.
+
+Advective momentum is mass rate multiplied by orifice-exit bulk velocity; it excludes pressure thrust.
+For a slip-flow station, the scalar bulk velocity is total mass flux divided by EOS mixture density;
+use `phaseVelocities` for phase-resolved momentum analysis.
 Enthalpy and entropy retain the selected thermodynamic model's reference convention.
 
 Finite-pipe results add the paired optional fields `flowPathLength` [m] and

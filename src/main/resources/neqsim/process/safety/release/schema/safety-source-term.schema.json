@@ -548,6 +548,20 @@
         },
         "phaseMassFractions": {
           "$ref": "#/$defs/fractions"
+        },
+        "phaseDensities": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/density"
+          }
+        },
+        "phaseVelocities": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/velocity"
+          }
         }
       }
     },
