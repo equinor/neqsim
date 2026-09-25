@@ -462,8 +462,7 @@ public abstract class Component implements ComponentInterface {
         liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
         liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
-            || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
+        if (this instanceof ComponentSrkCPA) {
           parachorParameter = Double.parseDouble(dataSet.getString("PARACHOR_CPA"));
         } else {
           parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
