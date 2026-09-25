@@ -17,6 +17,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
@@ -25,6 +26,7 @@ import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemLeachmanEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -33,6 +35,7 @@ import neqsim.thermo.system.SystemUNIFAC;
 import neqsim.thermo.system.SystemUNIFACpsrk;
 import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermo.util.gerg.NeqSimGERG2008;
+import neqsim.thermo.util.leachman.NeqSimLeachman;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
@@ -318,6 +321,78 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
       assertEquals(first[i], returned[i], Math.max(1e-12, Math.abs(first[i]) * 1e-12),
           "ammonia returned property " + i);
     }
+  }
+
+  @Test
+  void leachmanRefreshesGasAndLiquidStateBeforeReturningToReference() {
+    SystemLeachmanEos system = new SystemLeachmanEos(300.0, 10.0);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+
+    double[] first = leachmanState(system, 300.0, 10.0, PhaseType.GAS);
+    double[] coldGas = leachmanState(system, 100.0, 50.0, PhaseType.GAS);
+    double[] warmLiquid = leachmanState(system, 25.0, 10.0, PhaseType.LIQUID);
+    double[] coldLiquid = leachmanState(system, 20.0, 5.0, PhaseType.LIQUID);
+    assertNotEquals(first[0], coldGas[0], "gas density must refresh");
+    assertNotEquals(coldGas[0], warmLiquid[0], "phase-forced density must refresh");
+    assertNotEquals(warmLiquid[1], coldLiquid[1], "liquid enthalpy must refresh");
+
+    double[] returned = leachmanState(system, 300.0, 10.0, PhaseType.GAS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], Math.max(1e-12, Math.abs(first[i]) * 1e-12),
+          "Leachman returned property " + i);
+    }
+  }
+
+  private static double[] leachmanState(SystemLeachmanEos system, double temperature, double pressure,
+      PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    assertEquals(PhaseLeachmanEos.class, system.getPhase(0).getClass());
+    PhaseLeachmanEos phase = (PhaseLeachmanEos) system.getPhase(0);
+    NeqSimLeachman leachman = new NeqSimLeachman(phase, "normal");
+    double[] raw = leachman.propertiesLeachman();
+    double density = leachman.getMolarDensity();
+    double enthalpy = phase.getEnthalpy("J/mol");
+    double internalEnergy = phase.getInternalEnergy("J/mol");
+    double entropy = phase.getEntropy("J/molK");
+    double gibbsEnergy = phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
+    double cp = phase.getCp("J/molK");
+    double cv = phase.getCv("J/molK");
+    double soundSpeed = phase.getSoundSpeed();
+    double jouleThomson = phase.getJouleThomsonCoefficient() / 1000.0;
+    double kappa = raw[14];
+    double z = phase.getZ();
+    for (double value : new double[] {density, enthalpy, internalEnergy, entropy, gibbsEnergy, cp, cv, soundSpeed,
+        jouleThomson, kappa, z}) {
+      assertTrue(Double.isFinite(value));
+    }
+    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && kappa > 0.0 && z > 0.0,
+        "invalid Leachman state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed
+            + ", kappa=" + kappa + ", Z=" + z);
+    assertEquals(enthalpy, internalEnergy + pressure * 100.0 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, enthalpy - temperature * entropy, Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+    double[] values = {density, enthalpy, internalEnergy, entropy, gibbsEnergy, cp, cv, soundSpeed, jouleThomson, kappa,
+        z};
+    system.init(3);
+    double[] repeated = leachmanStateWithoutInit((PhaseLeachmanEos) system.getPhase(0));
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeated[i], Math.max(1e-15, Math.abs(values[i]) * 1e-14),
+          "Leachman repeat property " + i);
+    }
+    return values;
+  }
+
+  private static double[] leachmanStateWithoutInit(PhaseLeachmanEos phase) {
+    NeqSimLeachman leachman = new NeqSimLeachman(phase, "normal");
+    double[] raw = leachman.propertiesLeachman();
+    return new double[] {leachman.getMolarDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
+        phase.getZ()};
   }
 
   private static double[] ammoniaState(SystemAmmoniaEos system, double temperature, double pressure,

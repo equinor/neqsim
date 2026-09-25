@@ -95,6 +95,14 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String state : new String[] {"gas-300-10", "gas-100-50", "liquid-25-10", "liquid-20-5"}) {
+        for (String property : new String[] {"molar-mass", "molar-density", "mass-density", "z", "internal-energy",
+            "enthalpy", "entropy", "cv", "cp", "sound-speed", "gibbs-energy", "jt", "kappa"}) {
+          ids.add("leachman-" + fixture + "-" + state + "-" + property);
+        }
+      }
+    }
     return ids;
   }
 
@@ -415,6 +423,54 @@ class ModelSpecHarnessTest {
       assertThrows(AssertionError.class, () -> ModelSpecTest.check(signed, bad), signed.id);
     }
     ModelSpecTest.check(signed, signed.expected);
+  }
+
+  @Test
+  void leachmanReferencesSatisfyIndependentThermodynamicIdentities() throws IOException {
+    int checked = 0;
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String state : new String[] {"gas-300-10", "gas-100-50", "liquid-25-10", "liquid-20-5"}) {
+        String prefix = "leachman-" + fixture + "-" + state + "-";
+        ModelSpec molarMass = find(prefix + "molar-mass");
+        ModelSpec molarDensity = find(prefix + "molar-density");
+        ModelSpec massDensity = find(prefix + "mass-density");
+        ModelSpec internalEnergy = find(prefix + "internal-energy");
+        ModelSpec enthalpy = find(prefix + "enthalpy");
+        ModelSpec entropy = find(prefix + "entropy");
+        ModelSpec gibbsEnergy = find(prefix + "gibbs-energy");
+        ModelSpec cv = find(prefix + "cv");
+        ModelSpec cp = find(prefix + "cp");
+        assertEquals(massDensity.expected, molarDensity.expected * molarMass.expected, 1e-12,
+            prefix + "mass/molar density basis");
+        assertEquals(enthalpy.expected, internalEnergy.expected + molarDensity.pressure * 100.0 / molarDensity.expected,
+            1e-7, prefix + "H=U+PV");
+        assertEquals(gibbsEnergy.expected, enthalpy.expected - enthalpy.temperature * entropy.expected, 1e-9,
+            prefix + "G=H-TS");
+        assertTrue(cp.expected > cv.expected && cv.expected > 0.0, prefix + "Cp>Cv>0");
+        checked += 13;
+      }
+    }
+    assertEquals(104, checked, "every CoolProp/Leachman normal-hydrogen anchor must be covered");
+  }
+
+  @Test
+  void leachmanAnchorsRejectZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    for (String id : new String[] {"leachman-system-gas-300-10-molar-density", "leachman-system-gas-300-10-z",
+        "leachman-system-liquid-25-10-cp", "leachman-system-liquid-20-5-kappa"}) {
+      ModelSpec reference = find(id);
+      for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+        assertThrows(AssertionError.class, () -> ModelSpecTest.check(reference, bad), id);
+      }
+      ModelSpecTest.check(reference, reference.expected);
+    }
+    for (String id : new String[] {"leachman-system-gas-300-10-gibbs-energy",
+        "leachman-system-liquid-20-5-internal-energy", "leachman-system-liquid-20-5-jt"}) {
+      ModelSpec reference = find(id);
+      for (double bad : new double[] {0.0, Double.NaN, Double.NEGATIVE_INFINITY, 1.0, 1.05}) {
+        assertThrows(AssertionError.class, () -> ModelSpecTest.check(reference, bad), id);
+      }
+      ModelSpecTest.check(reference, reference.expected);
+    }
   }
 
   private static ModelSpec find(String id) throws IOException {
