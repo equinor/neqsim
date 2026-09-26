@@ -13,9 +13,9 @@ import java.util.List;
  * Links two S8 reconciliation-checkpoint manifests as one exact-prefix transition receipt.
  *
  * <p>
- * The receipt proves only that a candidate manifest is unchanged or is a strict ordered append of a prior manifest.
- * It is deterministic integrity evidence, not a persistence store, authentication mechanism, transaction
- * coordinator, compare-and-swap operation, or exactly-once guarantee.
+ * The receipt proves only that a candidate manifest is unchanged or is a strict ordered append of a prior manifest. It
+ * is deterministic integrity evidence, not a persistence store, authentication mechanism, transaction coordinator,
+ * compare-and-swap operation, or exactly-once guarantee.
  * </p>
  *
  * @author esol
@@ -26,8 +26,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static final String DIGEST_ALGORITHM = "SHA-256";
 
   /** Versioned canonical transition-encoding identifier. */
-  public static final String SCHEMA_IDENTIFIER =
-      "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-v1";
+  public static final String SCHEMA_IDENTIFIER = "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-v1";
 
   private AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition() {
   }
@@ -63,12 +62,11 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       }
     }
 
-    int addedReconciliationCount = subtractCount(candidateEntries.size(), priorEntries.size(),
-        "Reconciliation count");
+    int addedReconciliationCount = subtractCount(candidateEntries.size(), priorEntries.size(), "Reconciliation count");
     int addedEntryCount = subtractCount(candidate.getTotalEntryCount(), prior.getTotalEntryCount(),
         "Represented entry count");
-    int addedStrictAppendCount = subtractCount(candidate.getTotalStrictAppendCount(),
-        prior.getTotalStrictAppendCount(), "Strict-append count");
+    int addedStrictAppendCount = subtractCount(candidate.getTotalStrictAppendCount(), prior.getTotalStrictAppendCount(),
+        "Strict-append count");
     int addedUnchangedCount = subtractCount(candidate.getTotalUnchangedCount(), prior.getTotalUnchangedCount(),
         "Unchanged count");
     if (addExact(addedStrictAppendCount, addedUnchangedCount, "Added state count") != addedEntryCount) {
