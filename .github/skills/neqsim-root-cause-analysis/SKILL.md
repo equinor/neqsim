@@ -1,7 +1,7 @@
 ---
 name: neqsim-root-cause-analysis
 version: "1.3.0"
-description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) as prior, plant historian evidence (likelihood), and NeqSim simulation verification. Includes the control-loop correlation trap: when a controller closes the path between two signals, difference both series and resolve direction from the sign of the lag. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
+description: "Root cause analysis for process equipment - Bayesian-style diagnosis combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification, including the control-loop correlation trap (difference both series, resolve direction from the lag sign). USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling or any operational anomaly. Anchors on neqsim.process.diagnostics."
 last_verified: "2026-09-17"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]

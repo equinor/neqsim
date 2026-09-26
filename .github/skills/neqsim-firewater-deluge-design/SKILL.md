@@ -1,6 +1,6 @@
 ---
 name: neqsim-firewater-deluge-design
-description: Fire-water and deluge coverage design for process areas — NORSOK S-001 / ISO 13702 / NFPA 15 application rates, area versus dedicated object protection, deluge nozzle-net sizing from both the flow and the spacing criterion, fire-monitor screening with wind drift, hydraulic-feasibility gating against an existing fire-water system, and the active-versus-passive substitution rules. USE WHEN a task asks whether an area has adequate deluge coverage, how many nozzles are needed, whether passive fire protection can replace fire water, whether monitors can replace a fixed system, or whether an existing fire-water system can absorb a new deluge section. Anchors on neqsim.process.safety.firewater.
+description: "Fire-water and deluge coverage design per NORSOK S-001 / ISO 13702 / NFPA 15 - application rates, area vs dedicated object protection, nozzle-net sizing, fire monitors with wind drift, hydraulic feasibility against an existing system, active-vs-passive substitution. USE WHEN: a task asks if an area has adequate deluge coverage, how many nozzles are needed, whether PFP or monitors can replace fire water, or whether a system can absorb a new deluge section."
 last_verified: "2026-09-12"
 ---
 

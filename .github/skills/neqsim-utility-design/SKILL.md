@@ -1,7 +1,7 @@
 ---
 name: neqsim-utility-design
 version: "1.0.0"
-description: "Screening-level utility-system DESIGN with NeqSim Java classes and the MCP designUtilities tool — fired steam Boiler, Deaerator, vapour-compression RefrigerationCycle, on-site NitrogenSystem generator, and multi-pressure SteamNetwork header cascade, plus the UtilitySystemDesigner aggregator that harvests demands from a run ProcessSystem/ProcessModel. USE WHEN: a task needs to size a utility duty/flow/power, estimate utility CO2 and operating cost, build a steam header balance, or expose utility sizing through MCP. Pairs with neqsim-utilities-specification (which decides utility LEVELS) and neqsim-heat-integration (grand composite curve drives the duties)."
+description: "Screening-level utility-system design with NeqSim and the MCP designUtilities tool - fired Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, multi-pressure SteamNetwork and the UtilitySystemDesigner that harvests demands from a run flowsheet. USE WHEN: sizing a utility duty/flow/power, estimating utility CO2 and cost, building a steam header balance, or exposing utility sizing through MCP. Levels: neqsim-utilities-specification; duties: neqsim-heat-integration."
 last_verified: "2026-06-27"
 ---
 

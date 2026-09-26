@@ -1,5 +1,5 @@
 ---
-name: write neqsim documentation
+name: documentation
 description: Creates and updates NeqSim documentation — markdown guides, API references, cookbook recipes, tutorials, and reference manual entries. Follows Jekyll front matter requirements, correct link formatting, LaTeX math with KaTeX, and proper indexing in REFERENCE_MANUAL_INDEX.md.
 required_skills:
 - neqsim-api-patterns

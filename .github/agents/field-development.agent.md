@@ -1,5 +1,5 @@
 ---
-name: develop oil and gas field
+name: field-development
 description: "Expert oil & gas field development agent. Performs concept screening, tieback analysis, production forecasting, economic evaluation (NPV/IRR), subsea design, well planning, facility sizing, flow assurance screening, and risk assessment. Integrates NeqSim's thermodynamic engine with field development workflows to deliver complete development studies from discovery through operations."
 required_skills:
 - neqsim-field-development

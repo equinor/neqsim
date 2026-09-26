@@ -1,7 +1,7 @@
 ---
 name: neqsim-autonomous-investigation
 version: "1.1.0"
-description: "Autonomous investigation loop for operational and engineering anomalies — turns an agent from 'told what to look for' into 'discovers relationships and hypotheses on its own'. USE WHEN: solving a PEPR action, root-cause, or operational study where the symptom, driver, or important relationships are NOT given up front. Runs an observe -> hypothesize -> predict -> test -> discriminate loop, using neqsim.process.diagnostics.RelationshipGraph for unsupervised lead-lag relationship discovery across historian tags, then hands the discovered relationships to neqsim-root-cause-analysis. Anchors on neqsim.process.diagnostics classes."
+description: "Autonomous observe-hypothesize-predict-test-discriminate loop for operational anomalies. USE WHEN: solving a PEPR action, root-cause or operational study where the symptom, driver or important relationships are NOT given up front. Uses neqsim.process.diagnostics.RelationshipGraph for lead-lag relationship discovery across historian tags, then hands off to neqsim-root-cause-analysis."
 last_verified: "2026-07-19"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.automation]

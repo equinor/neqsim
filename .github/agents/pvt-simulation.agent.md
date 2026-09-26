@@ -1,5 +1,5 @@
 ---
-name: run a neqsim PVT simulation
+name: pvt-simulation
 description: Creates and runs PVT laboratory simulations using NeqSim — constant mass expansion (CME), constant volume depletion (CVD), differential liberation, separator tests, swelling tests, saturation pressure/temperature, GOR, viscosity, and slim tube simulations. Supports parameter fitting against experimental data.
 required_skills:
 - neqsim-phase-envelope

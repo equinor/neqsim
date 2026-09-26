@@ -1,5 +1,5 @@
 ---
-name: create a neqsim thermodynamic fluid
+name: thermo-fluid
 description: Creates and configures NeqSim thermodynamic fluids and generates, plots, interprets, or troubleshoots PT phase envelopes. Selects the EOS, adds components, sets mixing rules, runs flash calculations, calculates dew/bubble curves, cricondenbar, cricondentherm, and critical points, and diagnoses Michelsen continuation or zero/trace-component failures. Handles oil characterization, CPA polar systems, and multiphase checks.
 required_skills:
 - neqsim-phase-envelope

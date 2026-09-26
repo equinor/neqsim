@@ -1,7 +1,7 @@
 ---
 name: neqsim-optimization-and-doe
 version: "1.0.0"
-description: "Process flowsheet optimization and Design of Experiments using NeqSim's built-in stack — SQP for constrained NLP, Particle Swarm / Nelder-Mead for global / non-smooth, ProductionOptimizer for throughput, MultiObjectiveOptimizer for Pareto, BatchStudy for parallel sweeps, MonteCarloSimulator for uncertainty, ProcessSimulationEvaluator for SciPy/NLopt/Pyomo bridging. USE WHEN: a task involves minimize/maximize over decision variables, sensitivity studies, Pareto trade-offs, max throughput, parameter screening, or DoE — distinct from `neqsim-production-optimization` which covers reservoir-level decline / gas-lift / network problems."
+description: "Flowsheet optimization and Design of Experiments with NeqSim's built-in stack - SQP, Particle Swarm, Nelder-Mead, ProductionOptimizer, MultiObjectiveOptimizer (Pareto), BatchStudy sweeps, MonteCarloSimulator, ProcessSimulationEvaluator for SciPy/Pyomo. USE WHEN: minimize/maximize over decision variables, sensitivity studies, Pareto trade-offs, max throughput, parameter screening or DoE (reservoir/gas-lift/network problems: neqsim-production-optimization)."
 last_verified: "2026-04-26"
 requires:
   java_packages:

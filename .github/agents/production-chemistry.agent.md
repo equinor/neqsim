@@ -1,6 +1,6 @@
 ---
-name: manage production chemistry
-description: Selects, doses and troubleshoots production chemicals with NeqSim — scale inhibitor, corrosion inhibitor, MEG/MeOH and KHI hydrate inhibitors, wax and asphaltene inhibitors, H2S and oxygen scavengers, biocide, demulsifier, antifoam, pH adjuster and acid. Checks chemical-chemical and chemical-fluid compatibility of the injection cocktail, computes minimum effective dose, residual saturation index, inhibited corrosion rate, scavenger breakthrough and oil-in-water compliance, and runs an explainable chemical root-cause analysis on deposits, emulsions, pH excursions and H2S breakthrough.
+name: production-chemistry
+description: "Selects, doses and troubleshoots production chemicals with NeqSim - scale, corrosion, hydrate (MEG/MeOH/KHI), wax and asphaltene inhibitors, H2S/O2 scavengers, biocide, demulsifier, antifoam, pH adjuster and acid. Checks cocktail compatibility, computes minimum dose, residual SI, inhibited corrosion, scavenger breakthrough and oil-in-water compliance, and runs chemical root-cause on deposits, emulsions and pH or H2S excursions."
 required_skills:
 - neqsim-production-chemistry
 - neqsim-flow-assurance

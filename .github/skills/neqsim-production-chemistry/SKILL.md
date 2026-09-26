@@ -1,6 +1,6 @@
 ---
 name: neqsim-production-chemistry
-description: "Production-chemistry patterns for NeqSim. USE WHEN: selecting or dosing production chemicals (scale inhibitor, corrosion inhibitor, MEG/MeOH THI, KHI/AA LDHI, wax inhibitor, asphaltene inhibitor, H2S scavenger, oxygen scavenger, biocide, demulsifier, antifoam, pH adjuster, chelant, acid), checking chemical-chemical or chemical-fluid COMPATIBILITY of an injection cocktail, computing minimum effective dose / MIC / residual saturation index / inhibited corrosion rate / scavenger breakthrough, placing a chemical injection point in a flowsheet, optimising demulsifier dose against an oil-in-water spec, quantifying how a treatment changes brine pH and scaling tendency, or running an explainable chemical root-cause analysis on a deposit, emulsion, pH excursion or H2S breakthrough. Anchors on neqsim.process.chemistry and neqsim.process.equipment.watertreatment."
+description: "Production-chemistry patterns for NeqSim. USE WHEN: selecting or dosing scale/corrosion/hydrate/wax/asphaltene inhibitors, H2S or oxygen scavengers, biocide, demulsifier, antifoam, pH adjuster or acid; checking chemical-chemical or chemical-fluid COMPATIBILITY; computing minimum dose, residual SI, inhibited corrosion rate or scavenger breakthrough; placing an injection point; or chemical root-cause of a deposit, emulsion, pH excursion or H2S breakthrough."
 last_verified: "2026-09-07"
 ---
 

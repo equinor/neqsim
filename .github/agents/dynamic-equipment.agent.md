@@ -1,5 +1,5 @@
 ---
-name: implement neqsim dynamic equipment
+name: dynamic-equipment
 description: Implements and tests runTransient support for NeqSim process equipment classes, including dynamic inventory volume, component and energy accumulation, actuator/controller state, and focused JUnit tests for ProcessSystem transient execution.
 required_skills:
 - neqsim-dynamic-equipment-implementation

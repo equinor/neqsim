@@ -1,5 +1,5 @@
 ---
-name: solve engineering task
+name: solve-task
 description: "Solves process-engineering problems using the NeqSim Java API with proportional depth: quick answer-first calculations, notebook-backed studies, or full reports. Delivers auditable task folders with validation evidence, runner-executed notebooks/scripts, and reports when needed. When NeqSim lacks a needed capability, extends it with Java classes and tests."
 required_skills:
 - neqsim-task-workflow

@@ -1,5 +1,5 @@
 ---
-name: analyze consequences and dispersion
+name: consequence-analysis
 description: Performs quantitative consequence analysis for fire, explosion and toxic releases — jet/pool fires, vapour-cloud explosions, BLEVE, Gaussian and heavy-gas dispersion, probit-based fatality probabilities, and individual-risk roll-up per API 521 / 752, NORSOK Z-013 / S-001 and CCPS QRA guidelines. Generates source terms for external CFD tools (PHAST, FLACS, KFX) and integrates with depressurization, relief and HAZID workflows.
 required_skills:
 - neqsim-consequence-analysis

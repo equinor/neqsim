@@ -1,6 +1,6 @@
 ---
 name: neqsim-literature-search
-description: "Literature and web research workflow for NeqSim engineering tasks. USE WHEN: a task needs related papers, standards, textbook data, benchmark/reference data, or background information gathered from the open web and paper sources, then stored and summarized so it is reusable and distributable. Stores papers under references/literature/, saved web pages/extracts under references/web/, writes a structured literature_findings.md (claims + citations + relevance), and feeds the distributable references/SOURCES.md."
+description: "Literature and web research workflow for NeqSim tasks. USE WHEN: a task needs papers, standards, textbook or benchmark data, or background from the open web, stored and summarized so it is reusable. Saves papers to references/literature/ and web extracts to references/web/, writes literature_findings.md (claims, citations, relevance) and feeds references/SOURCES.md."
 last_verified: "2026-07-13"
 ---
 

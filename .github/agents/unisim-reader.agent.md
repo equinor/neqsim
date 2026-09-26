@@ -1,6 +1,6 @@
 ---
-name: read unisim to neqsim
-description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM automation and converts them to running NeqSim ProcessSystem / ProcessModule models. Extracts fluid packages, components, operations (55+ typed operation handlers including columns via AttachedFeeds/AttachedProducts, reactors, electrolyzers, fired heaters, controllers, adapters), streams, sub-flowsheets, and topology. Handles E300 full-fluid transfer, registry-driven operation mapping, recycle loops with port-specific forward reference placeholders, Python scripts, Jupyter notebooks, EOT simulators, JSON, batch regression against the UniSim sample library, and UniSim-vs-NeqSim verification."
+name: unisim-reader
+description: "Reads Honeywell UniSim Design / Aspen HYSYS .usc files via COM and converts them to running NeqSim ProcessSystem / ProcessModule models - fluid packages, components, 55+ typed operation handlers, streams, sub-flowsheets, topology, E300 fluid transfer and recycle placeholders - emitting Python, notebooks, EOT simulators or JSON, with batch regression and UniSim-vs-NeqSim verification."
 required_skills:
 - neqsim-unisim-reader
 - neqsim-api-patterns

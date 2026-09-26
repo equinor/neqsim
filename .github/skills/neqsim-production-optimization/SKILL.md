@@ -1,6 +1,6 @@
 ---
 name: neqsim-production-optimization
-description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, running multi-scenario production comparisons, or generating Eclipse/OPM Flow VFPPROD lift-curve tables for a flowline, riser or tubing from a NeqSim pipe model."
+description: "Production optimization, bottleneck analysis, decline curves and history matching (Arps, Duong), material-balance surveillance (OGIP/OOIP, drive indices, aquifer) and IOR/EOR screening with NeqSim. USE WHEN: optimizing rates, finding facility bottlenecks, forecasting profiles, fitting decline curves, estimating reserves, allocating gas lift, comparing production scenarios, or generating Eclipse/OPM VFPPROD lift-curve tables from a NeqSim pipe model."
 last_verified: "2026-09-21"
 ---
 

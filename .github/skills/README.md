@@ -163,8 +163,9 @@ Every code example must work against NeqSim's actual API. Test by:
 **4. Register the skill:**
 
 - Add an entry to the **Skill Index** table in this README
-- Add a `<skill>` entry in `.github/copilot-instructions.md` under the `<skills>` section
-- Add a row to the **Skills Reference** table in `AGENTS.md`
+- Do **not** add it to `AGENTS.md` or `.github/copilot-instructions.md`: those are resent on
+  every model call and stay lean. VS Code lists skills from their frontmatter, and
+  `devtools/skill_search.py` indexes them; reference the skill from the agents that use it.
 
 **5. Submit a PR:**
 
@@ -316,7 +317,8 @@ neqsim skill list                          # community skills (catalog)
 1. Run `neqsim new-skill "name"` to scaffold
 2. Edit `.github/skills/neqsim-<name>/SKILL.md`
 3. Test all code patterns against the actual API
-4. Register in `copilot-instructions.md`, `AGENTS.md`, and this README
+4. Register in this README and in the agents that load it (not in `AGENTS.md` /
+   `copilot-instructions.md`, which are kept lean)
 5. Submit PR with `[Skill]` prefix
 
 ### Skill File Format

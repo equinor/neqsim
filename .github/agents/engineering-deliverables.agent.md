@@ -1,5 +1,5 @@
 ---
-name: generate engineering deliverables
+name: engineering-deliverables
 description: "Generates the full engineering deliverables package for a field development or process design study. Takes a completed ProcessSystem and study class (A/B/C) and produces PFDs, thermal utility summaries, alarm/trip schedules, instrument schedules (with live device bridge), spare parts inventories, fire scenario assessments, and noise assessments. Integrates with FieldDevelopmentDesignOrchestrator for end-to-end design workflows."
 required_skills:
 - neqsim-process-modeling

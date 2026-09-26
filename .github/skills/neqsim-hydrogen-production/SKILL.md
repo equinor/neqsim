@@ -1,6 +1,6 @@
 ---
 name: neqsim-hydrogen-production
-description: "Hydrogen production routes (SMR/ATR/POX, blue-H2 WGS/capture/compression chains, electrolysis, ammonia cracking) with NeqSim. USE WHEN: modeling fired SMR reformers, ATR and POX syngas generators, water-gas shift, pressure-swing adsorption (PSA), CO2 capture/compression/export placeholders, H2 drying/compression/export, water electrolyzers (PEM/Alkaline/SOEC/AEM), stack I-V curves, hydrogen plant cost estimation, para/ortho hydrogen conversion, catalyst deactivation, or blue/green H2 flowsheets. Covers ReformerFurnace, CatalyticTubeReformer, WaterGasShiftReactor, ComponentCaptureUnit, BlueHydrogenPlantBuilder, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer, ParaOrthoH2Correction, CatalystDeactivationKinetics, and cost estimates."
+description: "Hydrogen production routes with NeqSim - SMR, ATR, POX, WGS, PSA, CO2 capture, electrolysis (PEM/Alkaline/SOEC/AEM), ammonia cracking, blue/green H2 flowsheets and plant cost. USE WHEN: modeling reformers, syngas generators, shift reactors, PSA, H2 drying/compression/export, electrolyzer I-V curves, para/ortho conversion or catalyst deactivation. Covers ReformerFurnace, WaterGasShiftReactor, BlueHydrogenPlantBuilder, PSACascade, Electrolyzer."
 last_verified: "2026-05-27"
 ---
 

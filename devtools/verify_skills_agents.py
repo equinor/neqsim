@@ -48,6 +48,9 @@ KEBAB_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 AGENT_ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 # Agent Skills spec cap on SKILL.md description; the excess is silently truncated by clients.
 MAX_DESCRIPTION = 1024
+# Every chat request resends each installed skill/agent description, so the catalog is a
+# per-call token cost; detail belongs in the body.
+MAX_CATALOG_DESCRIPTION = 500
 BARE_PYTHON_LAUNCH_RE = re.compile(
     r"(?<![A-Za-z0-9_./\\-])(?:(python(?:\.exe)?|py)\s+"
     r"(?:-m\s+|-[A-Za-z]|[^\s`]+\.py\b|devtools[\\/]|<)|"
@@ -137,6 +140,12 @@ def check_skills() -> Tuple[List[str], List[str]]:
                 f"Skills cap is {MAX_DESCRIPTION} and clients truncate, silently dropping the "
                 "trigger words used for routing"
             )
+        elif len(fm["description"]) > MAX_CATALOG_DESCRIPTION:
+            errors.append(
+                f"{skill_dir.name}: description is {len(fm['description'])} chars; keep it "
+                f"<= {MAX_CATALOG_DESCRIPTION} (resent on every chat request) and move detail "
+                "into the SKILL.md body"
+            )
     return errors, warnings
 
 
@@ -162,6 +171,11 @@ def check_agents() -> Tuple[List[str], List[str]]:
             errors.append(f"{agent_md.name}: front-matter missing 'description'")
         elif len(fm["description"]) < 40:
             warnings.append(f"{agent_md.name}: description is very short")
+        elif len(fm["description"]) > MAX_CATALOG_DESCRIPTION:
+            errors.append(
+                f"{agent_md.name}: description is {len(fm['description'])} chars; keep it "
+                f"<= {MAX_CATALOG_DESCRIPTION} (resent on every chat request)"
+            )
         full_fm = af.parse_frontmatter(text)
         declared = full_fm.get("required_skills")
         if not isinstance(declared, list):

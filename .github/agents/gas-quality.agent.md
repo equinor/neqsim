@@ -1,5 +1,5 @@
 ---
-name: calculate gas quality and standards
+name: gas-quality
 description: Calculates gas properties per industry standards — ISO 6976 (calorific value, Wobbe index, density), ISO 6578 (LNG custody transfer), AGA 3/7 (flow measurement), GPA 2145/2172 (physical constants), and European gas quality standards (EN 16723, EN 16726). Handles fiscal metering, sales gas specs, and quality compliance checking.
 required_skills:
 - neqsim-api-patterns

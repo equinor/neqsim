@@ -1,6 +1,6 @@
 ---
 name: neqsim-task-workflow
-description: "The full NeqSim engineering task workflow that @solve-task orchestrates. USE WHEN: executing any Standard or Comprehensive task end to end - Phase 0 setup and scale classification, Phase 1 scope and research, Phase 1.5 deep analysis, Phase 2 notebooks with benchmark validation and uncertainty/risk, the Phase 1.5->2 and 2->3 quality gates, independent checks, Phase 3 report and work record, Phase 4 knowledge capture, task-type guidance (A-G), delegation to specialist agents, NeqSim Improvement Proposals, engineering interpretation in reports, critical rules, delivery, and lessons learned from solved tasks. Quick tasks need only section 0 of the agent."
+description: "The full NeqSim engineering task workflow that @solve-task orchestrates. USE WHEN: executing any Standard or Comprehensive task end to end - setup and scale classification, scope and research, deep analysis, notebooks with benchmark validation and uncertainty/risk, quality gates, report and work record, knowledge capture, task-type guidance, delegation, NeqSim Improvement Proposals and lessons learned. Load one phase section at a time."
 last_verified: "2026-09-18"
 ---
 
@@ -1567,10 +1567,17 @@ Document the independent check in `step2_analysis/notes.md` under a
     achieved. Give each conclusion its own "what remains open" instead of one
     lumped gap register at the end.
 
-16. **Update `generate_report.py`** in `step3_report/`:
+16. **Prepare the report inputs** (never open or edit `generate_report.py`):
+    - The generator is ~320 KB; reading it costs ~80k tokens and it is never
+      forked per task. Run it with `neqsim report <task_dir>`.
     - The report **auto-reads** `task_spec.md` and `results.json` — verify both exist
-    - Fill in the executive summary with actual findings
-    - Add conclusions and recommendations to `MANUAL_SECTIONS` (or rely on `results.json`)
+    - Hand-written prose goes in `step3_report/report_sections.json`:
+      `{"manual_sections": {"executive_summary": "...", "problem_description": "...",
+      "approach": "...", "conclusions": "...", "references": "..."},
+      "doc_number": "...", "revision": "...", "revision_history": [...]}`
+      (`paper_sections` / `paper_*` keys for `--paper`). Non-empty values
+      override the generator's placeholders.
+    - Prefer `results.json` `conclusions` over hand-written numbers
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
     - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
     - **Discussion section** auto-populates from `results.json["figure_discussion"]` —
@@ -1621,8 +1628,8 @@ Document the independent check in `step2_analysis/notes.md` under a
     | # | Assumption | Impact | Confidence | Replace With |
     Each assumption is numbered and traceable to the results it affects.
 
-    **Stale numbers trap:** MANUAL_SECTIONS text (executive_summary, conclusions)
-    contains hardcoded numbers. When design parameters change (dimensions, flow rates),
+    **Stale numbers trap:** `report_sections.json` `manual_sections` text
+    (executive_summary, conclusions) contains hardcoded numbers. When design parameters change (dimensions, flow rates),
     you MUST update these strings to match the latest results. Where possible, let
     conclusions come from `results.json["conclusions"]` instead of hardcoding.
 
@@ -1924,7 +1931,7 @@ For complex sub-tasks within your workflow, you may delegate to specialist agent
 | Flow assurance | `@flow-assurance` | Hydrate curves, wax, corrosion |
 | Safety | `@safety-depressuring` | Blowdown, PSV sizing |
 | Field development | `@field-development` | Concept selection, subsea tieback, NPV/IRR, production forecasting |
-| Document / image reading | `@read technical documents` | Extract data from PDFs, vendor datasheets, P&IDs, mechanical drawings, performance maps, API datasheets |
+| Document / image reading | `@technical-reader` | Extract data from PDFs, vendor datasheets, P&IDs, mechanical drawings, performance maps, API datasheets |
 
 You don't have to delegate — you can handle everything yourself. But for deep
 specialist work, the dedicated agents have more detailed instructions.
@@ -2147,7 +2154,8 @@ The report generator auto-renders `figure_discussion` entries as a structured
 
 ### 7.4 — Report Section Enhancement
 
-Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
+Add these sections to the report (as `manual_sections` entries in
+`step3_report/report_sections.json`; do not edit `generate_report.py`):
 
 - **Engineering Context**: Why this analysis matters, what problem it solves,
   consequences of the wrong answer (1-2 paragraphs)
@@ -2253,14 +2261,16 @@ L2. **Four layers must stay synchronised for every report section:**
    The template has these pre-wired for standard section types. Only add
    custom handling if you need task-specific rendering beyond the built-in formatters.
    If any one layer is missing, that section will render as plain text or be blank.
+   This matters only when changing the canonical generator in the NeqSim repo;
+   task work never reads or forks it — use `report_sections.json` instead.
    **Default output is report only** — do not generate papers unless the user asks.
 
-L3. **Hardcoded numbers in MANUAL_SECTIONS go stale.** When equipment dimensions,
+L3. **Hardcoded numbers in `report_sections.json` go stale.** When equipment dimensions,
    flow rates, or other design parameters change during iterative design, the
    executive summary and conclusions text must be updated manually. The report
    generator does not auto-update these strings from results.json.
    **Best practice:** Write conclusions in `results.json["conclusions"]` and let
-   the generator read from there. Only use MANUAL_SECTIONS as a fallback.
+   the generator read from there. Only use `report_sections.json` as a fallback.
 
 L4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
    benchmark validation, uncertainty/risk) generates its own figures. All figure

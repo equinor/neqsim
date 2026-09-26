@@ -1,6 +1,6 @@
 ---
-name: run neqsim mechanical design
-description: Performs mechanical design and CAPEX calculations for process equipment and process systems — wall thickness, pipeline limit-state, free-span/VIV, pipe-soil interaction, global-buckling response, and corroded-pipeline metal-loss screening, material selection, weight estimation, CostEstimateResult reconciliation, and cost analysis per ASME, API, DNV, ISO, NORSOK, and AACE-style estimate classes. Supports separators, pipelines, heat exchangers, compressors, valves, vessels, topsides, SURF, subsea, and well rollups with company-specific TR document requirements.
+name: mechanical-design
+description: "Performs mechanical design and CAPEX for process equipment and systems - wall thickness, pipeline limit states, free span/VIV, pipe-soil, global buckling, corroded-pipe screening, materials, weight and AACE-class cost per ASME, API, DNV, ISO and NORSOK. Covers separators, pipelines, exchangers, compressors, valves, vessels, topsides, SURF, subsea and well rollups, with company TR requirements."
 required_skills:
 - neqsim-api-patterns
 - neqsim-standards-lookup

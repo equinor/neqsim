@@ -1,7 +1,7 @@
 ---
 name: neqsim-depressurization-mdmt
 version: "1.0.0"
-description: "Emergency depressurization (blowdown) per API 521 §5.20 and minimum design metal temperature (MDMT) assessment per ASME UCS-66 / API 579 / EN 13445 — VU-flash transient inventory model, time-to-target-pressure, low-temperature embrittlement screening, and integration with PSV/flare loads. USE WHEN: a task requires sizing a blowdown valve, generating a P-vs-time curve for a vessel under fire / depressurization, checking MDMT against blowdown end-temperature, providing source terms for relief and flare networks, or distinguishing blowdown from trapped-liquid fire rupture screening. Anchors on neqsim.process.safety.depressurization.DepressurizationSimulator and neqsim.process.safety.mdmt.MDMTCalculator."
+description: "Emergency depressurization (blowdown) per API 521 and MDMT assessment per ASME UCS-66 / API 579 / EN 13445 with a VU-flash transient model. USE WHEN: sizing a blowdown valve, producing a P-vs-time curve under fire or depressurization, checking MDMT against blowdown end-temperature, supplying relief/flare source terms, or separating blowdown from trapped-liquid rupture. Anchors on DepressurizationSimulator and MDMTCalculator."
 last_verified: "2026-09-16"
 requires:
   java_packages:

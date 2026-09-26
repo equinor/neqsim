@@ -1,7 +1,7 @@
 ---
 name: neqsim-agentic-process-optimization
 version: "1.0.0"
-description: "Agentic, closed-loop optimization of large multi-area NeqSim ProcessModel plants using the newest automation, convergence-gating, and equipment-introspection APIs. USE WHEN: an agent must optimize a live full-plant flowsheet (operating setpoints, compressor pressures, heater temperatures, routing fractions) across one or more years/scenarios, with robust convergence handling, surge/RVP/spec constraints, and per-trial feasibility gating. Covers ProcessAutomation.getAdjustableParameters, ProcessModel.runUntilConverged + getConvergenceReportJson, RunStatus failure tracking, Compressor.getOperatingPoint surge margins, Standard_ASTM_D6377 RvpResult, ProcessSystem.copy parallel sweeps, and the rebuild-to-pick-up-new-NeqSim-functionality workflow. Complements neqsim-optimization-and-doe (built-in optimizer classes) and neqsim-platform-modeling (how the plant is built)."
+description: "Agentic closed-loop optimization of large multi-area NeqSim ProcessModel plants with convergence gating and equipment introspection. USE WHEN: an agent must optimize a live full-plant flowsheet (setpoints, compressor pressures, heater temperatures, routing fractions) across years/scenarios with surge/RVP/spec constraints and per-trial feasibility gating. Covers getAdjustableParameters, runUntilConverged, RunStatus, getOperatingPoint surge margins, RVP, copy() sweeps."
 last_verified: "2026-06-13"
 requires:
   java_packages:

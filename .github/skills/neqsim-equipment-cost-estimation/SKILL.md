@@ -1,7 +1,7 @@
 ---
 name: neqsim-equipment-cost-estimation
 version: "1.0.0"
-description: "Equipment and process CAPEX estimation — Turton/Peters/Ulrich/Seider correlations, CEPCI escalation, material/pressure factors, bare-module to grass-roots, AACE class 1-5, location factors, currency conversion, CostEstimateResult reconciliation, and mechanical-design-driven topsides/SURF/well rollups. USE WHEN: a task requires a +30%/-30% Class-3/4 estimate for equipment, a process flowsheet, topsides, SURF, wells, or reservoir-to-market CAPEX. Anchors on CostEstimationCalculator and ProcessCostEstimate."
+description: "Equipment and process CAPEX estimation - Turton/Peters/Seider correlations, CEPCI escalation, material/pressure factors, bare-module to grass-roots, AACE class 1-5, location and currency factors, mechanical-design-driven topsides/SURF/well rollups. USE WHEN: a task needs a Class 3/4 estimate for equipment, a flowsheet, topsides, SURF, wells or reservoir-to-market CAPEX. Anchors on CostEstimationCalculator and ProcessCostEstimate."
 last_verified: "2026-06-28"
 requires:
   java_packages: [neqsim.process.costestimation]

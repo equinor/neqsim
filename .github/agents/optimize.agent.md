@@ -1,6 +1,6 @@
 ---
-name: optimize neqsim process
-description: "Sets up and solves process flowsheet optimization and DoE problems using NeqSim's built-in optimizers — ProcessOptimizationEngine for throughput, ProductionOptimizer for custom objectives, SQPoptimizer for constrained NLP, MultiObjectiveOptimizer for Pareto, BatchStudy for parameter sweeps, MonteCarloSimulator for uncertainty, and ProcessSimulationEvaluator as a bridge to SciPy / Pyomo / BoTorch. Picks the right algorithm by problem characteristics. Distinct from @field-development (production optimization at field level)."
+name: optimize
+description: "Sets up and solves flowsheet optimization and DoE with NeqSim's built-in optimizers - ProcessOptimizationEngine, ProductionOptimizer, SQPoptimizer, MultiObjectiveOptimizer (Pareto), BatchStudy sweeps, MonteCarloSimulator and ProcessSimulationEvaluator for SciPy/Pyomo/BoTorch - choosing the algorithm by problem type. Distinct from @field-development (field-level production optimization)."
 required_skills:
 - neqsim-optimization-and-doe
 - neqsim-agentic-process-optimization

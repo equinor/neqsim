@@ -1,5 +1,5 @@
 ---
-name: scout neqsim capabilities
+name: capability-scout
 description: "Analyzes engineering tasks to identify required capabilities (physics, chemistry, process, economics), checks NeqSim's existing coverage, identifies gaps, plans implementations, and recommends skills to load. Use before starting any complex engineering task to ensure all needed tools and models are available."
 required_skills:
 - neqsim-capability-map

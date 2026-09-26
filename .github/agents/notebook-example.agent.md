@@ -1,5 +1,5 @@
 ---
-name: create a neqsim jupyter notebook
+name: notebook-example
 description: Creates Jupyter notebook examples demonstrating NeqSim capabilities — process simulations, thermodynamic calculations, PVT studies, and engineering workflows. Uses devtools workspace class imports for task notebooks, with proper structured markdown cells and visualization.
 required_skills:
 - neqsim-notebook-patterns

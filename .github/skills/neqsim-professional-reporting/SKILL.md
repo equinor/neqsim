@@ -1,7 +1,7 @@
 ---
 name: neqsim-professional-reporting
 version: "1.0.0"
-description: "Engineering deliverable quality — the nine analytical-depth moves (contributor ranking, adjudicating the source document, quantitative rule-outs, robustness crossover, conservatism direction, discriminating test), results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, a PEPR/M1/root-cause problem-solving report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
+description: "Engineering deliverable quality - the nine analytical-depth moves, results.json schema, figure-discussion-results traceability, evidence matrices, assumptions/gaps registers, citations, KaTeX, units, executive-summary structure, AACE class. USE WHEN: producing a task report, a PEPR/M1/root-cause report, a notebook deliverable, or finalizing any engineering output that must read like a senior engineer's work."
 last_verified: "2026-07-09"
 ---
 

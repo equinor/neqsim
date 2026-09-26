@@ -192,8 +192,8 @@ simulation agent to a mechanical design agent, or between task iterations.
   "schema": "neqsim-lifecycle-state",
   "version": "1.0",
   "handoff": {
-    "source_agent": "make a neqsim process simulation",
-    "target_agent": "run neqsim mechanical design",
+    "source_agent": "process-model",
+    "target_agent": "mechanical-design",
     "state_type": "ProcessSystemState | ProcessModelState",
     "state_name": "Gas Processing Base Case",
     "state_version": "1.0.0",

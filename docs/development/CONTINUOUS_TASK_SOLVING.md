@@ -604,7 +604,7 @@ what ran. If `copilot` is not installed the cycle records `not_installed` and
 continues.
 
 You can also work with the agent interactively in VS Code Copilot Chat: pick
-**continuous improvement of living tasks** in the agent picker and ask, for example:
+**continuous-improvement** in the agent picker and ask, for example:
 
 - "Make `<task>` living, compile the goal from its brief and backtest it."
 - "Triage the last cycle of `<task>`."

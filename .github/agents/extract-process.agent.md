@@ -1,5 +1,5 @@
 ---
-name: extract process to neqsim json
+name: extract-process
 description: Extracts process simulation data from unstructured input (text descriptions, PFDs, operating data, tables, data sheets) and converts it into running NeqSim simulations. Small/medium processes use the JSON builder (ProcessSystem.fromJsonAndRun). Large multi-area processes are split into multiple ProcessSystems composed inside a ProcessModule, or use pre-built module classes (TEG dehydration, separation train, CO2 removal, etc.).
 required_skills:
 - neqsim-process-extraction

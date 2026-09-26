@@ -1,7 +1,7 @@
 ---
 name: neqsim-trapped-liquid-fire-rupture
 version: "1.0.0"
-description: "Fire rupture study workflow for blocked-in liquid-filled pipe segments and blowdown pipe fire heat-up / time-to-rupture strain-rate screening. USE WHEN: a task asks for trapped liquid, blocked-in liquid, thermal expansion rupture, fire exposure without relief, PFP demand, flange/pipe rupture screening, supplied blowdown pressure profile, pipe wall heat-up, strain-rate rupture time, or generating a Word/HTML safety study from P&IDs, line lists, piping specifications, material certificates, and fire documents. Anchors on neqsim.process.safety.rupture plus trapped inventory, document retrieval, pressure-profile handoff, and source-term handoff."
+description: "Fire rupture studies for blocked-in liquid-filled pipe segments and blowdown pipe heat-up / strain-rate time-to-rupture. USE WHEN: a task involves trapped or blocked-in liquid, thermal expansion rupture, fire exposure without relief, PFP demand, flange/pipe rupture screening, a supplied blowdown pressure profile, or a Word/HTML safety study from P&IDs, line lists, piping specs, material certificates and fire documents. Anchors on neqsim.process.safety.rupture."
 last_verified: "2026-06-23"
 requires:
   java_packages:
