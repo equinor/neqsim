@@ -260,9 +260,9 @@ def test_deterministic_and_inventory_boundary(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runBarrierRegister", {})
     require(
-        inventory.get("inventoryVersion") == "1.46"
-        and limitations.get("contractTestedToolCount") == 46
-        and limitations.get("confirmedGapToolCount") == 5
+        inventory.get("inventoryVersion") == "1.47"
+        and limitations.get("contractTestedToolCount") == 47
+        and limitations.get("confirmedGapToolCount") == 4
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_BOUNDED_BARRIER_REGISTER_SCREENING_SOFTWARE_CONTRACT"

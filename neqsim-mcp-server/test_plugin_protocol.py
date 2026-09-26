@@ -222,10 +222,10 @@ def test_inventory_promotion(client):
     inventory = result.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     plugin = limitations.get("coverageRecords", {}).get("runPlugin", {})
-    require(inventory.get("inventoryVersion") == "1.46", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.47", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 46
-        and limitations.get("confirmedGapToolCount") == 5,
+        limitations.get("contractTestedToolCount") == 47
+        and limitations.get("confirmedGapToolCount") == 4,
         "plugin promotion accounting drifted",
         limitations,
     )

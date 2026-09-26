@@ -108,6 +108,9 @@ jobs:
       - name: Run focused bounded operational-study Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.OperationalStudyRunnerTest test -ntp
 
+      - name: Run focused HAZOP-scenario Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.HazopScenarioRunnerTest test -ntp
+
       - name: Run focused reporting Java contracts
         run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
 
@@ -153,6 +156,9 @@ jobs:
 
       - name: Run focused real-MCP flare-radiation qualification
         run: cd neqsim-mcp-server && python test_flare_radiation_protocol.py
+
+      - name: Run focused real-MCP HAZOP-scenario qualification
+        run: cd neqsim-mcp-server && python test_hazop_scenario_protocol.py
 
       - name: Run focused real-MCP simulation-variable mutation qualification
         run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
