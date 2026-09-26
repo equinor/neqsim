@@ -183,7 +183,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws RuntimeException wrapping {@link neqsim.util.exception.InvalidInputException} if {@code i} does not
+   * correspond to a known attractive-term formulation (valid range: 0-23). On this failure, neither
+   * {@link #getAttractiveTermNumber()} nor {@link #getAttractiveTerm()} is changed.
+   */
   @Override
   public void setAttractiveTerm(int i) {
     AttractiveTermInterface term = selectAttractiveTerm(i);
@@ -197,36 +203,58 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   private AttractiveTermInterface selectAttractiveTerm(int i) {
     switch (i) {
-      case 0: return new AttractiveTermSrk(this);
-      case 1: return new AttractiveTermPr(this);
-      case 2: return new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams());
-      case 3: return new AttractiveTermMollerup(this, getSchwartzentruberParams());
-      case 4: return new AttractiveTermMatCop(this, getMatiascopemanParams());
-      case 5: return new AttractiveTermRk(this);
-      case 6: return new AttractiveTermPr1978(this);
-      case 7: return new AttractiveTermPrDelft1998(this);
-      case 8: return new AttractiveTermPrGassem2001(this);
-      case 9: return new AttractiveTermPrDanesh(this);
-      case 10: return new AttractiveTermGERG(this);
-      case 11: return new AttractiveTermTwuCoon(this);
-      case 12: return new AttractiveTermTwuCoonParam(this, getTwuCoonParams());
-      case 13: return new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR());
-      case 14: return new AttractiveTermTwu(this);
-      case 15: return new AttractiveTermCPAstatoil(this);
-      case 16: return new AttractiveTermUMRPRU(this);
-      case 17: return new AttractiveTermMatCopPRUMR(this);
-      case 18:
-        return componentName.equals("mercury")
-            ? new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams())
-            : new AttractiveTermSrk(this);
-      case 19: return new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU());
-      case 20: return new AttractiveTermSoreideWhitson(this);
-      case 21: return new AttractiveTermPrLeeKesler(this);
-      case 22: return new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA());
-      case 23:
-        return "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this)
-            : new AttractiveTermCPAstatoil(this);
-      default: return null;
+    case 0:
+      return new AttractiveTermSrk(this);
+    case 1:
+      return new AttractiveTermPr(this);
+    case 2:
+      return new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+    case 3:
+      return new AttractiveTermMollerup(this, getSchwartzentruberParams());
+    case 4:
+      return new AttractiveTermMatCop(this, getMatiascopemanParams());
+    case 5:
+      return new AttractiveTermRk(this);
+    case 6:
+      return new AttractiveTermPr1978(this);
+    case 7:
+      return new AttractiveTermPrDelft1998(this);
+    case 8:
+      return new AttractiveTermPrGassem2001(this);
+    case 9:
+      return new AttractiveTermPrDanesh(this);
+    case 10:
+      return new AttractiveTermGERG(this);
+    case 11:
+      return new AttractiveTermTwuCoon(this);
+    case 12:
+      return new AttractiveTermTwuCoonParam(this, getTwuCoonParams());
+    case 13:
+      return new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR());
+    case 14:
+      return new AttractiveTermTwu(this);
+    case 15:
+      return new AttractiveTermCPAstatoil(this);
+    case 16:
+      return new AttractiveTermUMRPRU(this);
+    case 17:
+      return new AttractiveTermMatCopPRUMR(this);
+    case 18:
+      return componentName.equals("mercury") ? new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams())
+          : new AttractiveTermSrk(this);
+    case 19:
+      return new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU());
+    case 20:
+      return new AttractiveTermSoreideWhitson(this);
+    case 21:
+      return new AttractiveTermPrLeeKesler(this);
+    case 22:
+      return new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA());
+    case 23:
+      return "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this)
+          : new AttractiveTermCPAstatoil(this);
+    default:
+      return null;
     }
   }
 

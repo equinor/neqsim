@@ -1,13 +1,17 @@
 package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos1978;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Verifies that a cloned component's attractive term follows the clone rather than the component it was originally
@@ -129,8 +133,7 @@ public class ComponentEosCloneAttractiveTermTest {
     c.setAttractiveTerm(1);
 
     assertEquals(1, c.getAttractiveTermNumber());
-    assertEquals(neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.class,
-        c.getAttractiveTerm().getClass());
+    assertEquals(neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.class, c.getAttractiveTerm().getClass());
   }
 
   @Test
@@ -142,12 +145,37 @@ public class ComponentEosCloneAttractiveTermTest {
 
     c.setAttractiveTerm(0);
     int numberBefore = c.getAttractiveTermNumber();
-    Object termBefore = c.getAttractiveTerm();
+    AttractiveTermInterface termBefore = c.getAttractiveTerm();
 
-    assertThrows(RuntimeException.class, () -> c.setAttractiveTerm(999));
+    RuntimeException thrown = assertThrows(RuntimeException.class, () -> c.setAttractiveTerm(999));
+
+    assertInstanceOf(InvalidInputException.class, thrown.getCause());
+    assertTrue(thrown.getCause().getMessage().contains("999"), "exception should identify the rejected selector");
 
     // state must be unchanged after the failed call
     assertEquals(numberBefore, c.getAttractiveTermNumber());
-    assertEquals(termBefore, c.getAttractiveTerm());
+    assertSame(termBefore, c.getAttractiveTerm(), "installed term instance must not change on a rejected selector");
   }
+
+  @Test
+  void setAttractiveTerm_negativeNumber_throws() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 1.0);
+    system.init(0);
+    ComponentEos c = (ComponentEos) system.getPhase(0).getComponent(0);
+
+    assertThrows(RuntimeException.class, () -> c.setAttractiveTerm(-1));
+  }
+
+  @Test
+  void setAttractiveTerm_firstOutOfRangeNumber_throws() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 1.0);
+    system.init(0);
+    ComponentEos c = (ComponentEos) system.getPhase(0).getComponent(0);
+
+    // 24 is the first value beyond the last valid case (23)
+    assertThrows(RuntimeException.class, () -> c.setAttractiveTerm(24));
+  }
+
 }
