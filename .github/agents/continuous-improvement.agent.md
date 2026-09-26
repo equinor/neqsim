@@ -64,6 +64,7 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 
 ## Composition
 
+- User-facing guide to point engineers at: `docs/development/CONTINUOUS_TASK_SOLVING.md`.
 - Site data: enterprise adapters (`enterprise-continuous-improvement-adapters`)
   register through entry points; with them absent the task still runs on file drops.
 - Calibration stage → `neqsim-model-calibration-and-data-reconciliation`.
