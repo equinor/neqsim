@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 47 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 4 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 48 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 3 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -696,7 +696,7 @@ qualified engineering review.
 
 The existing tool builds and runs the caller-supplied canonical `ProcessSystem`, filters quantified
 findings by node, guide word, and parameter, and returns the computed value, caller-owned design
-limit, verdict, standard reference, and auditable limit basis. Inventory 1.47 records the direct Java,
+limit, verdict, standard reference, and auditable limit basis. Inventory 1.48 records the direct Java,
 catalog, server-facade, documentation, comprehensive-protocol, and focused packaged-MCP evidence as
 `CONTRACT_TESTED`.
 
@@ -708,3 +708,18 @@ This classification qualifies software-contract behavior only. It does not estab
 identification or scenario completeness, source-document fidelity, thermodynamic or process-model
 accuracy, suitability of caller limits, governing-standard applicability or conformance, safe
 operating limits, plant authority, certification, or accountable HAZOP/process-safety approval.
+
+
+### runSafetySystemPerformance software contract
+
+Inventory 1.48 records direct runner, analyzer, Java-test, server-facade, comprehensive-protocol,
+focused packaged-MCP, and documentation evidence for the existing
+`runSafetySystemPerformance` surface as `CONTRACT_TESTED`. The catalog example deterministically
+returns the performance report and its assessment summary together with NORSOK S-001,
+ISO 13702, TR1055-style, and STID-extraction templates through the standard MCP envelope.
+
+This classification qualifies software behavior only. It does not establish source-document or tag
+extraction fidelity, hazard or demand completeness, barrier or safeguard adequacy, SIL/PFD validity,
+independence, common-cause, proof-test or lifecycle evidence, facility fidelity, governing-standard
+applicability or conformance, safe operating limits, plant authority, certification, or accountable
+functional-safety and process-safety approval.

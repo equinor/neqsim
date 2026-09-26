@@ -1528,8 +1528,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 99 protocol scenarios",
-          tests.get("protocolScenarioCount") == 99,
+    check("evidence inventory freezes 100 protocol scenarios",
+          tests.get("protocolScenarioCount") == 100,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1596,13 +1596,14 @@ def test_capabilities():
         "runChemistry",
         "runFlareNetwork",
         "runHazopScenario",
+        "runSafetySystemPerformance",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-seven bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.47"
-          and limitations.get("contractTestedToolCount") == 47
-          and limitations.get("confirmedGapToolCount") == 4
+    check("forty-eight bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.48"
+          and limitations.get("contractTestedToolCount") == 48
+          and limitations.get("confirmedGapToolCount") == 3
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1702,6 +1703,19 @@ def test_capabilities():
           and "Canonical ProcessSystem" in hazop_scenario.get("evidenceBoundary", "")
           and "hazard-identification" in hazop_scenario.get("evidenceBoundary", ""),
           str(hazop_scenario))
+
+    safety_performance = coverage_records.get("runSafetySystemPerformance", {})
+    check("safety-system performance has bounded transport evidence",
+          safety_performance.get("coverageStatus") == "CONTRACT_TESTED"
+          and safety_performance.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SAFETY_SYSTEM_PERFORMANCE_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_safety_system_performance_protocol.py"
+          in safety_performance.get("contractEvidenceSources", [])
+          and "standards applicability or conformance"
+          in safety_performance.get("evidenceBoundary", "")
+          and "accountable functional-safety"
+          in safety_performance.get("evidenceBoundary", ""),
+          str(safety_performance))
 
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
@@ -2262,6 +2276,31 @@ def test_hazop_scenario_contract():
           and findings[0].get("parameter") == "TEMPERATURE"
           and findings[0].get("standardReference")
           and findings[0].get("limitBasis"),
+          str(response))
+
+
+# --- Safety-system performance software contract ---
+
+def test_safety_system_performance_contract():
+    """Exercise the catalog safety-system example through packaged MCP."""
+    print("\n=== Safety System Performance Contract ===")
+    example = call_tool("getExample", {
+        "category": "safety",
+        "name": "safety-system-performance",
+    })
+    response = call_tool("runSafetySystemPerformance", {
+        "safetySystemJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    summary = data.get("summary", {})
+    check("safety-system performance status=success",
+          response.get("status") == "success" and data.get("status") == "success",
+          str(response))
+    check("safety-system performance report and templates",
+          summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and "assessments" in data.get("performanceReport", {})
+          and "NORSOK-S-001" in data.get("standardsTemplates", {})
+          and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
           str(response))
 
 
@@ -2918,6 +2957,7 @@ if __name__ == "__main__":
         test_chemistry_contract()
         test_flare_radiation_contract()
         test_hazop_scenario_contract()
+        test_safety_system_performance_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()
