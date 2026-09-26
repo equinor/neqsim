@@ -28,9 +28,9 @@ public class FieldDevelopmentPlanningDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/wiki/field_development_planning.md";
   private static final Pattern EXECUTABLE_JAVA =
       Pattern.compile(
-          "(?ms)^## Executable field-development planning example.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+          "(?ms)^## Executable field-development planning example.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
@@ -41,8 +41,8 @@ public class FieldDevelopmentPlanningDocumentationTest extends NeqSimTest {
     String guide = readGuide();
     String prose = guide.replaceAll("\\s+", " ");
 
-    assertTrue(guide.contains("There is no \`FacilityCapacity\` class"));
-    assertTrue(guide.contains("The constructor takes a \`ProcessSystem\`"));
+    assertTrue(guide.contains("There is no `FacilityCapacity` class"));
+    assertTrue(guide.contains("The constructor takes a `ProcessSystem`"));
     assertTrue(guide.contains("multiply the returned rate-years value by 365.25 day/year"));
     assertTrue(guide.contains("means a fractional 12% potential increase"));
     assertTrue(guide.contains("Schedule availability is a fraction from 0 to 1"));
