@@ -13,6 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -122,6 +123,9 @@ class BuildPluginTest(unittest.TestCase):
         # unsigned .ps1 even under -ExecutionPolicy Bypass.
         self.assertIn("scripts/install_skill_packages.py", decoded)
         self.assertNotIn("install_skill_packages.ps1", decoded)
+        # Python off PATH is still found; the Store alias stub is skipped.
+        self.assertIn("-notlike '*\\WindowsApps\\*'", decoded)
+        self.assertIn("Programs\\Python\\Python3*\\python.exe", decoded)
         self.assertNotIn("{{", decoded)
         scripts = plugin / "scripts"
         for name in ("install_skill_packages.sh", "install_skill_packages.ps1",
@@ -324,6 +328,54 @@ class HookJavaResolutionTest(unittest.TestCase):
         self.ns["state"] = self.root / "state"
         self.ns["mcp_log"] = self.root / "state" / "mcp-prefetch.log"
         self.ns["java_install_roots"] = lambda: [self.root / "jdks"]
+        # Keep the machine's real JDKs (VS Code Java extension JRE, registry) out of the test.
+        self.registry_java_candidates = self.ns["registry_java_candidates"]
+        self.ns["vscode_java_candidates"] = lambda: iter(())
+        self.ns["registry_java_candidates"] = lambda: iter(())
+
+    def test_registry_jdk_found_without_path_or_java_home(self):
+        """An MSI-installed JDK is found from the registry when PATH and JAVA_HOME are unset."""
+        tree = {(2, "SOFTWARE\\Eclipse Adoptium\\JDK"): (["21.0.4.7"], {}),
+                (2, "SOFTWARE\\Eclipse Adoptium\\JDK\\21.0.4.7"): (["hotspot"], {}),
+                (2, "SOFTWARE\\Eclipse Adoptium\\JDK\\21.0.4.7\\hotspot"): (["MSI"], {}),
+                (2, "SOFTWARE\\Eclipse Adoptium\\JDK\\21.0.4.7\\hotspot\\MSI"):
+                    ([], {"Path": str(self.jdk21)})}
+
+        class Handle:
+            def __init__(self, node):
+                self.node = node
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        def open_key(hive, key):
+            if (hive, key) not in tree:
+                raise OSError(key)
+            return Handle(tree[(hive, key)])
+
+        def query_value(handle, name):
+            if name not in handle.node[1]:
+                raise OSError(name)
+            return handle.node[1][name], 1
+
+        def enum_key(handle, index):
+            if index >= len(handle.node[0]):
+                raise OSError(index)
+            return handle.node[0][index]
+
+        fake = SimpleNamespace(HKEY_CURRENT_USER=1, HKEY_LOCAL_MACHINE=2, OpenKey=open_key,
+                               QueryValueEx=query_value, EnumKey=enum_key)
+        real_os = self.ns["os"]
+        self.ns["os"] = SimpleNamespace(name="nt", environ=os.environ)
+        try:
+            with mock.patch.dict(sys.modules, {"winreg": fake}):
+                found = list(self.registry_java_candidates())
+        finally:
+            self.ns["os"] = real_os
+        self.assertEqual(found, [self.jdk21 / "bin" / self.ns["JAVA_EXE"]])
 
     def tearDown(self):
         os.environ.clear()
