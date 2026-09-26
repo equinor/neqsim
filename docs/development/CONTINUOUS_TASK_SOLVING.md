@@ -103,6 +103,22 @@ C:\appl\neqsim-venv\Scripts\python.exe devtools\neqsim_cli.py task-status <task>
 Nothing else is needed for the reference case: it uses a CSV file drop and the
 Python standard library only.
 
+### Where living tasks are created and found
+
+Living tasks use the **same task root as every other task** — the folder shown by
+`neqsim --show-task-root` (set it once with `neqsim --set-task-root "PATH"`, or
+for one shell with `NEQSIM_TASK_ROOT`). So you never have to type full paths:
+
+| You type | The runner uses |
+|----------|-----------------|
+| `neqsim task-cycle C:\work\my_task` | That folder (an existing path always wins) |
+| `neqsim task-cycle 2026-09-24_my_task` | `<task root>\2026-09-24_my_task` |
+| `neqsim task-status` | Every living task in the task root |
+| `neqsim task-reference-case` | Creates `<task root>\reference_compressor_station` |
+
+This works from any folder. If the name is found in neither place, the error
+names both locations it looked in.
+
 ---
 
 ## 3. Try it in five minutes
@@ -112,8 +128,8 @@ injected at known dates (efficiency decline, flow-meter bias, suction-pressure
 step). Use it to learn the loop before you touch a real task.
 
 ```powershell
-neqsim task-reference-case C:\tmp\living
-$task = "C:\tmp\living\reference_compressor_station"
+neqsim task-reference-case                     # created in your task root
+$task = "reference_compressor_station"         # a name inside the task root is enough
 
 # 1. Replay a year of data and check the monitor finds the three faults
 neqsim task-backtest $task --start 2025-10-02 --end 2026-09-30
@@ -140,6 +156,10 @@ Expected results:
   and the best expected gain are below the tolerance.
 
 Open `continuous/LIVING_REPORT.md` to see all of this in one page.
+
+To keep the experiment out of your task root, give a folder:
+`neqsim task-reference-case C:\tmp\living`, then use the full path
+`C:\tmp\living\reference_compressor_station` in the commands above.
 
 ---
 
@@ -665,9 +685,11 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `neqsim task-schedule <task> [--daily HH:MM] [--install\|--remove\|--show]` | Schedule monitor cycles |
 | `neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]` | Promote a cycle to the baseline |
 | `neqsim task-ledger <task> [list\|show ID\|set ID STATUS --by NAME [--note TEXT]\|merge FILE]` | Improvement ledger |
-| `neqsim task-status <task-or-task-root>` | Status of one task or all living tasks in a folder |
+| `neqsim task-status [task-or-folder]` | Status of one task, or of all living tasks in a folder (default: the task root) |
 | `neqsim task-report <task> [--formal]` | Rebuild the living report (and the Word/HTML report) |
-| `neqsim task-reference-case <parent-folder>` | Create the public reference task |
+| `neqsim task-reference-case [parent-folder]` | Create the public reference task (default: in the task root) |
+
+`<task>` is a folder path, or the name of a folder inside the task root.
 
 ## Related documentation
 

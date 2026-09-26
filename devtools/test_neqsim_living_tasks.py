@@ -222,3 +222,19 @@ def test_cli_status_and_ledger(reference, tmp_path, capsys):
     assert cli.main(["ledger", task, "set", "OPP-0001", "accepted", "--by", "engineer"]) == 0
     items = nc.Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl")).current()
     assert items["OPP-0001"]["status"] == "accepted"
+
+
+def test_cli_defaults_to_the_task_root(tmp_path, monkeypatch, capsys):
+    root = tmp_path / "task_root"
+    monkeypatch.setenv("NEQSIM_TASK_ROOT", str(root))
+    monkeypatch.chdir(tmp_path)
+    assert cli.task_root() == str(root)
+    assert cli.main(["reference-case"]) == 0
+    task = os.path.join(str(root), "reference_compressor_station")
+    assert capsys.readouterr().out.strip() == task and os.path.isdir(task)
+    assert cli.main(["status", "reference_compressor_station"]) == 0
+    assert '"task": "reference_compressor_station"' in capsys.readouterr().out
+    assert cli.main(["status"]) == 0
+    assert "reference_compressor_station" in capsys.readouterr().out
+    with pytest.raises(SystemExit, match="also looked in the task root"):
+        cli.main(["cycle", "no_such_task"])

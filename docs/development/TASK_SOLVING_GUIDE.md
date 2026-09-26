@@ -1523,11 +1523,14 @@ Then, day to day: read `continuous/LIVING_REPORT.md`, decide ledger items with
 `neqsim task-ledger`, and promote reviewed cycles with `neqsim task-promote`.
 
 To learn the loop without company data, create the public reference case —
-a synthetic compressor station with three injected faults:
+a synthetic compressor station with three injected faults. Living tasks use the
+same task root as all other tasks (`neqsim --show-task-root`), so a folder name
+is enough:
 
 ```powershell
-neqsim task-reference-case C:\tmp\living
-neqsim task-backtest C:\tmp\living\reference_compressor_station --start 2025-10-02 --end 2026-09-30
+neqsim task-reference-case          # created in your task root
+neqsim task-backtest reference_compressor_station --start 2025-10-02 --end 2026-09-30
+neqsim task-status                  # every living task in the task root
 ```
 
 In Copilot Chat, the **continuous improvement of living tasks** agent does the

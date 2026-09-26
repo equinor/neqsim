@@ -27,6 +27,8 @@ calls; agents run only when a trigger fires; people decide.
 
 All commands run through the shared interpreter:
 `<python-executable> devtools/neqsim_cli.py task-<command> ...` (or `neqsim task-<command>`).
+`<task>` may be a path or a folder name inside the task root (`neqsim --show-task-root`);
+`task-status` and `task-reference-case` default to the task root when no folder is given.
 
 ## Workflow
 
