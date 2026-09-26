@@ -25,7 +25,12 @@ def _read_yaml(path):
     import yaml  # lazy: the package must import without PyYAML installed
 
     with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+        try:
+            return yaml.safe_load(f) or {}
+        except yaml.YAMLError as error:
+            raise ValueError(
+                "Cannot parse {}: {}. Hint: quote any value that contains a colon, e.g. "
+                "confirmed_by: \"Name, 2026-01-01: approved\"".format(path, error)) from error
 
 
 def _read_json(path, default=None):

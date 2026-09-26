@@ -675,6 +675,10 @@ a standard, datasheet or drawing
 unavailable; when undefined, work from user-supplied documents and log a data
 gap. It is read-only: copy the documents a task uses into that task's
 `step1_scope_and_research/references/<source>/` instead of writing there.
+Plant P&IDs, data sheets and drawings come from the retrieval backend (STID),
+not the document root: run `neqsim fetch-docs <task_dir>` (automatic in
+`new-task` and Standard-first living cycles) and report the status in
+`references/stid/retrieval_status.json` before declaring them unavailable.
 
 > **Full workflow is in `docs/development/TASK_SOLVING_GUIDE.md`.** Read it before starting any task.
 > Past solved tasks are indexed in `docs/development/TASK_LOG.md` — search before starting from scratch.

@@ -1,15 +1,19 @@
 """Command line for living tasks, dispatched as ``neqsim task-<command>``.
 
     neqsim task-living <task> [--brief FILE]
-    neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]
+    neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--standard-first]
     neqsim task-solve <task> [--until goal|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed]
     neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
     neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
-    neqsim task-status <task-or-task-root>
+    neqsim task-status [task-or-task-root]
     neqsim task-report <task> [--formal]
-    neqsim task-reference-case <parent-folder>
+    neqsim task-reference-case [parent-folder]
+
+A <task> that is not an existing folder is looked up in the task root used for new tasks
+(``neqsim --show-task-root``), so ``neqsim task-cycle 2026-09-24_my_task`` works from any
+folder. Without a folder, ``task-status`` and ``task-reference-case`` use that task root.
 """
 
 import argparse
@@ -25,11 +29,25 @@ def _print(data):
     print(json.dumps(data, indent=2, sort_keys=True, default=str))
 
 
+def task_root():
+    """Return the task root for new tasks: --task-root, NEQSIM_TASK_ROOT, saved default, task_solve/."""
+    try:
+        from new_task import resolve_task_root
+    except ImportError:  # runner used outside devtools
+        return os.path.abspath(os.environ.get("NEQSIM_TASK_ROOT") or os.getcwd())
+    return resolve_task_root()
+
+
 def _task(path):
-    path = os.path.abspath(path)
-    if not os.path.isdir(path):
-        raise SystemExit("ERROR: task folder not found: {}".format(path))
-    return path
+    candidate = os.path.abspath(path)
+    if not os.path.isdir(candidate) and not os.path.isabs(os.path.expanduser(path)):
+        in_root = os.path.join(task_root(), path)
+        if os.path.isdir(in_root):
+            candidate = in_root
+    if not os.path.isdir(candidate):
+        raise SystemExit("ERROR: task folder not found: {} (also looked in the task root {})".format(
+            os.path.abspath(path), task_root()))
+    return candidate
 
 
 def _parse_time(text):
@@ -56,6 +74,8 @@ def main(argv=None):
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--no-agent", action="store_true")
     p.add_argument("--now", help="override the cycle clock (ISO time)")
+    p.add_argument("--standard-first", action="store_true",
+                   help="verify/generate the initial Standard-task report basis before the cycle")
 
     p = sub.add_parser("solve", help="solve until the goal is met or improvement is marginal")
     p.add_argument("task")
@@ -95,16 +115,18 @@ def main(argv=None):
     p.add_argument("--note", default="")
 
     p = sub.add_parser("status", help="status of one living task or every living task in a folder")
-    p.add_argument("path")
+    p.add_argument("path", nargs="?", help="task or folder (default: the task root)")
 
     p = sub.add_parser("report", help="rebuild continuous/LIVING_REPORT.md now")
     p.add_argument("task")
     p.add_argument("--formal", action="store_true", help="also regenerate the Word/HTML report")
 
     p = sub.add_parser("reference-case", help="create the public reference task")
-    p.add_argument("parent")
+    p.add_argument("parent", nargs="?", help="parent folder (default: the task root)")
 
     args = parser.parse_args(argv)
+    if getattr(args, "task", None):
+        args.task = _task(args.task)
 
     if args.command == "living":
         from .living import make_living
@@ -114,7 +136,8 @@ def main(argv=None):
         from .living import note_reopen
         stages = args.stages.split(",") if args.stages else None
         manifest = run_cycle(_task(args.task), mode=args.mode, now=_parse_time(args.now),
-                             stages=stages, dry_run=args.dry_run, no_agent=args.no_agent)
+                             stages=stages, dry_run=args.dry_run, no_agent=args.no_agent,
+                             standard_first=args.standard_first)
         if not args.dry_run:
             note_reopen(args.task, manifest)
         print(open(os.path.join(args.task, "continuous", "cycles", manifest["cycle_id"], "digest.md"),
@@ -173,11 +196,12 @@ def main(argv=None):
     elif args.command == "status":
         from .living import status
         from .plan import is_living
-        path = os.path.abspath(args.path)
+        path = _task(args.path) if args.path else task_root()
         if is_living(path):
             _print(status(path))
         else:
-            rows = [status(os.path.join(path, n)) for n in sorted(os.listdir(path))
+            names = sorted(os.listdir(path)) if os.path.isdir(path) else []
+            rows = [status(os.path.join(path, n)) for n in names
                     if os.path.isdir(os.path.join(path, n)) and is_living(os.path.join(path, n))]
             _print(rows)
     elif args.command == "report":
@@ -188,8 +212,9 @@ def main(argv=None):
             regenerate_formal(args.task)
     elif args.command == "reference-case":
         from .reference_case import create_reference_task
-        os.makedirs(args.parent, exist_ok=True)
-        print(create_reference_task(os.path.abspath(args.parent)))
+        parent = os.path.abspath(args.parent) if args.parent else task_root()
+        os.makedirs(parent, exist_ok=True)
+        print(create_reference_task(parent))
     return 0
 
 

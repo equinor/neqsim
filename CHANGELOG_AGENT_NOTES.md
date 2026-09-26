@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-09-26 — Living tasks use the general task root; user guide added
+
+- Every `neqsim task-*` command accepts a `<task>` path **or** a folder name inside
+  the task root (`neqsim --show-task-root`), from any directory. An existing path wins.
+- `neqsim task-status` without a folder lists every living task in the task root;
+  `neqsim task-reference-case` without a folder creates the reference case there.
+- New user guide `docs/development/CONTINUOUS_TASK_SOLVING.md` (setup, goal and plan
+  reference, stage scripts, backtest, scheduling, headless agents, ledger, promotion),
+  introduced in `TASK_SOLVING_GUIDE.md` § "Keeping a Task Alive".
+- Updated: skill `neqsim-continuous-task-improvement`, agent `continuous-improvement`,
+  community `continuous-task-improvement-agent`, enterprise
+  `enterprise-continuous-improvement-agent` workflow.
+
 ## 2026-09-25 — `RotorUnbalanceAssessment`: coupling/rotor unbalance and shaft-vibration criteria
 
 New `neqsim.process.mechanicaldesign.compressor.RotorUnbalanceAssessment` (static helpers + `evaluate(...)`

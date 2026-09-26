@@ -145,6 +145,17 @@ this cycle — not the other way around.
 
 ## 0 ── OPERATING PRINCIPLES (read before execution)
 
+### Automatic Evidence Retrieval (use the chat-equivalent paths)
+
+Plant P&IDs, data sheets and drawings come from the retrieval backend, not the
+document root (which is usually a standards library). `neqsim new-task` already
+runs `devtools/doc_retriever.py`; when resuming a task or when a data gap
+appears, run `neqsim fetch-docs <task_dir>` (infers the installation, downloads
+ranked P&IDs/data sheets to `references/stid/`). Likewise use tagreader source
+discovery for historian data without asking for source names. Only declare
+evidence unavailable with the concrete status from
+`references/stid/retrieval_status.json` (or the tagreader error) as the blocker.
+
 ### Proportionality Rule
 
 Solve the user’s engineering problem with the **smallest complete package** that
