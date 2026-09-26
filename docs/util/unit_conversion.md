@@ -42,6 +42,32 @@ NeqSim provides comprehensive unit handling capabilities:
 | `NeqSimUnitSet` | Complete unit set definition |
 
 `LengthUnit`, `EnergyUnit`, `PowerUnit`, and `TimeUnit` implement `LinearScaleUnit`.
+Each exposes a static `convert(value, fromUnit, toUnit)` that converts a value between
+any two supported units without needing an instance, plus the instance methods
+`getConversionFactor(unit)` (the factor from that unit to SI) and `getValue(toUnit)`
+(convert the stored value). Unsupported source or target units are rejected.
+
+Construction with a unit outside the class's allowed-unit list throws
+`IllegalArgumentException`, retaining the detailed `InvalidInputException` as its
+cause. Temperature conversions also reject unsupported source and target units
+with `IllegalArgumentException`, including the condenser and reboiler temperature
+setters that use `TemperatureUnit`.
+
+`RateUnit` also implements `LinearScaleUnit`, with conversion factors determined by
+its stored fluid properties. `getValue(toUnit)` works through a `Unit` reference
+without changing the stored value. `BaseUnit` leaves this method to the concrete
+conversion strategy so it does not shadow the interface default.
+`RateUnit.getSIvalue()` returns mol/s using the stored rate and fluid properties.
+The six-argument static
+`RateUnit.convert(value, fromUnit, toUnit, molarmass, stddens, boilp)` requires
+the fluid properties explicitly. There is no three-argument static overload:
+flow-rate conversion requires fluid context.
+
+`PressureUnit` uses the `BiasAdjustedUnit` strategy because gauge conversions
+include an atmospheric offset. Use `getValue(toUnit)` or
+`PressureUnit.convert(value, fromUnit, toUnit)`; the former
+`getConversionFactor(unit)` method is not part of this pressure API.
+
 Construct a unit with the source value and unit, then use `getValue(targetUnit)`
 to read the converted value. The removed three-argument overload is no longer
 part of `Unit`. Temperature constructors convert K, C, F and R to Kelvin,

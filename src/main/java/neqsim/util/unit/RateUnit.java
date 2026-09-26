@@ -17,9 +17,10 @@ import neqsim.util.exception.InvalidInputException;
  * @author esol
  * @version $Id: $Id
  */
-public class RateUnit extends neqsim.util.unit.BaseUnit {
+public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(RateUnit.class);
 
@@ -71,6 +72,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     } else {
       mol_m3 = 1.0 / (molarmass) * stddens * 1000;
     }
+    double factor = 1.0;
 
     if (unit.equals("mole/sec") || unit.equals("mol/sec") || unit.equals("SI") || unit.equals("mol")) {
       factor = 1.0;
@@ -157,12 +159,28 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
   /** {@inheritDoc} */
   @Override
   public double getSIvalue() {
-    return getValue(getSIUnit());
+    return invalue * getConversionFactor(inunit);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(String tounit) {
-    return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
+  public double getValue(String toUnit) {
+    return getSIvalue() / getConversionFactor(toUnit);
+  }
+
+  /**
+   * Convert a rate value between units using fluid properties.
+   *
+   * @param value value to convert
+   * @param unit source unit
+   * @param toUnit target unit
+   * @param molarmass molar mass
+   * @param stddens standard density
+   * @param boilp boiling point proxy
+   * @return converted rate value
+   */
+  public static double convert(double value, String unit, String toUnit, double molarmass, double stddens,
+      double boilp) {
+    return new RateUnit(value, unit, molarmass, stddens, boilp).getValue(toUnit);
   }
 }
