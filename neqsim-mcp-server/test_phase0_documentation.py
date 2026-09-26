@@ -23,6 +23,17 @@ def require(text, expected, path):
         raise AssertionError(f"{path}: missing expected current-state text: {expected!r}")
 
 
+def require_groups(text, pattern, expected, path, label):
+    """Require a parsed current-state summary to match canonical accounting."""
+    match = re.search(pattern, text, re.MULTILINE)
+    if match is None:
+        raise AssertionError(f"{path}: missing {label}")
+    if match.groups() != expected:
+        raise AssertionError(
+            f"{path}: stale {label}: {match.groups()!r}; expected {expected!r}"
+        )
+
+
 source = SOURCE_PATH.read_text(encoding="utf-8")
 # Recount the harness before packaging so newly added scenarios cannot leave
 # the published evidence inventory and its documentation silently out of date.
@@ -87,6 +98,41 @@ for focused_path in sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
             )
 
 surface = SURFACE_PATH.read_text(encoding="utf-8")
+require_groups(
+    surface,
+    r"as the primary harness: version `([^`]+)`, (\d+) contract-tested tools "
+    r"and (\d+) confirmed\ngaps\.",
+    ("1.46", "46", "5"),
+    SURFACE_PATH,
+    "focused-harness inventory summary",
+)
+require_groups(
+    surface,
+    r"\| Trust coverage records \| 71 = 20 explicit benchmark \+ "
+    r"(\d+) bounded contract-tested software contracts \+ (\d+) confirmed gaps \|",
+    ("46", "5"),
+    SURFACE_PATH,
+    "trust-coverage table row",
+)
+require_groups(
+    surface,
+    r"No candidate is queued in inventory ([0-9.]+);",
+    ("1.46",),
+    SURFACE_PATH,
+    "promotion-candidate version",
+)
+require_groups(
+    surface,
+    r"now reconciles inventory ([0-9.]+) with 20/(\d+)/(\d+) coverage accounting",
+    ("1.46", "46", "5"),
+    SURFACE_PATH,
+    "API-inspection reconciliation",
+)
+require(
+    surface,
+    "among its forty-six bounded software contracts and requires 5 confirmed gaps.",
+    SURFACE_PATH,
+)
 require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
 require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
