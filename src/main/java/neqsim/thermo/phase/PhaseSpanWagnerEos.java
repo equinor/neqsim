@@ -24,6 +24,10 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   // Caching state for performance optimization
   private transient double cachedTemperature = Double.NaN;
   private transient double cachedPressure = Double.NaN;
+  private transient PhaseType cachedEffectiveType;
+  private transient PhaseType cachedPublishedType;
+  private transient double cachedZ = Double.NaN;
+  private transient double cachedFugacityCoefficient = Double.NaN;
   private transient boolean propertiesCalculated = false;
 
   /**
@@ -51,12 +55,6 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType >= 1) {
-      // Check if we can skip Span-Wagner calculations (state unchanged)
-      if (propertiesCalculated && !hasStateChanged()) {
-        // State unchanged - skip expensive Span-Wagner calculations
-        return;
-      }
-
       // Determine correct phase type before calling Span-Wagner
       // CO2 critical point: Tc = 304.1282 K, Pc = 7.3773 MPa = 73.773 bar
       PhaseType effectiveType = pt;
@@ -75,6 +73,13 @@ public class PhaseSpanWagnerEos extends PhaseEos {
         // At critical point, rhoc = 467.6 kg/m3 = 10624.9 mol/m3
         // Use gas-like initial guess and let algorithm find the solution
         effectiveType = pt;
+      }
+
+      // PhaseEos.init updates its own Z and component state before this method runs. On a cache
+      // hit, restore the coherent Span-Wagner values rather than publishing a mixed state.
+      if (propertiesCalculated && !hasStateChanged(effectiveType)) {
+        restoreCachedState();
+        return;
       }
 
       double[] props = NeqSimSpanWagner.getProperties(temperature, pressure * 1e5, effectiveType);
@@ -98,7 +103,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
       }
 
       // Cache current state after successful calculation
-      cacheCurrentState();
+      cacheCurrentState(effectiveType);
     }
   }
 
@@ -107,7 +112,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
    *
    * @return true if state has changed, false if unchanged
    */
-  private boolean hasStateChanged() {
+  private boolean hasStateChanged(PhaseType effectiveType) {
     // Check temperature
     if (Math.abs(temperature - cachedTemperature) > 1e-10) {
       return true;
@@ -116,16 +121,27 @@ public class PhaseSpanWagnerEos extends PhaseEos {
     if (Math.abs(pressure - cachedPressure) > 1e-10) {
       return true;
     }
-    return false;
+    return effectiveType != cachedEffectiveType;
   }
 
   /**
    * Cache the current thermodynamic state for change detection.
    */
-  private void cacheCurrentState() {
+  private void cacheCurrentState(PhaseType effectiveType) {
     cachedTemperature = temperature;
     cachedPressure = pressure;
+    cachedEffectiveType = effectiveType;
+    cachedPublishedType = getType();
+    cachedZ = Z;
+    cachedFugacityCoefficient = getComponent(0).getFugacityCoefficient();
     propertiesCalculated = true;
+  }
+
+  /** Restore values overwritten by the generic EOS initializer on an unchanged-state cache hit. */
+  private void restoreCachedState() {
+    Z = cachedZ;
+    getComponent(0).setFugacityCoefficient(cachedFugacityCoefficient);
+    setType(cachedPublishedType);
   }
 
   /**
@@ -135,6 +151,10 @@ public class PhaseSpanWagnerEos extends PhaseEos {
     propertiesCalculated = false;
     cachedTemperature = Double.NaN;
     cachedPressure = Double.NaN;
+    cachedEffectiveType = null;
+    cachedPublishedType = null;
+    cachedZ = Double.NaN;
+    cachedFugacityCoefficient = Double.NaN;
   }
 
   /** {@inheritDoc} */

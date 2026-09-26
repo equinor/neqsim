@@ -405,6 +405,12 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 | `SystemVegaEos` | Vega equation | Specialized applications |
 | `SystemAmmoniaEos` | Gao 2020 Helmholtz reference equation | Pure ammonia |
 
+`PhaseSpanWagnerEos` caches its pure-CO2 reference-EOS state. Repeating initialization at
+unchanged temperature, pressure and effective phase selection republishes the same coherent
+density, Z, fugacity and caloric state. Changing any of those state inputs recalculates the
+reference properties; callers do not need to invalidate the cache manually during ordinary
+system initialization.
+
 For pure ammonia, `PhaseAmmoniaEos.getGibbsEnergy()` returns extensive Gibbs energy
 in J. Divide by the phase mole count for J/mol. With enthalpy in J/mol and entropy
 in J/(mol K), its Helmholtz relation is $g = h - Ts$ at the same temperature in K.

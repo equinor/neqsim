@@ -1,6 +1,7 @@
 package neqsim.thermo.util.spanwagner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -24,7 +25,7 @@ public class SpanWagnerTest {
     PhaseInterface phase = sys.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
     assertEquals(422.164519, phase.getDensity() / phase.getMolarMass(), 1e-3);
-    assertEquals(0.9496482691809078, phase.getZ(), 1e-6);
+    assertEquals(0.949642965410136, phase.getZ(), 1e-6);
     assertEquals(21953.7555, phase.getEnthalpy() / moles, 1e-2);
     assertEquals(100.754536, phase.getEntropy() / moles, 1e-3);
     assertEquals(40.528088, phase.getCp() / moles, 1e-3);
@@ -67,5 +68,66 @@ public class SpanWagnerTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
     ops.TPflash();
     assertEquals(PhaseType.LIQUID, sys.getPhase(0).getType());
+  }
+
+  @Test
+  public void testRepeatedInitRestoresCoherentCachedState() {
+    SystemInterface sys = new SystemSpanWagnerEos(300.0, 10.0);
+    sys.setNumberOfPhases(1);
+    sys.setMaxNumberOfPhases(1);
+    sys.setForcePhaseTypes(true);
+    sys.setPhaseType(0, PhaseType.GAS);
+    sys.init(3);
+    PhaseInterface phase = sys.getPhase(0);
+    double[] first = state(phase);
+
+    sys.init(3);
+    double[] repeated = state(phase);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], repeated[i], 0.0, "repeated Span-Wagner property " + i);
+    }
+
+    assertEquals(phase.getPressure() * 1.0e5 / (phase.getDensity("mol/m3") * 8.31451 * phase.getTemperature()),
+        phase.getZ(), 1e-12);
+  }
+
+  @Test
+  public void testCacheRefreshesAcrossGasLiquidAndSupercriticalStates() {
+    SystemInterface sys = new SystemSpanWagnerEos(300.0, 10.0);
+    sys.setNumberOfPhases(1);
+    sys.setMaxNumberOfPhases(1);
+    sys.setForcePhaseTypes(true);
+
+    double[] gas = state(sys, 300.0, 10.0, PhaseType.GAS);
+    double[] liquid = state(sys, 280.0, 50.0, PhaseType.LIQUID);
+    double[] supercritical = state(sys, 320.0, 80.0, PhaseType.GAS);
+    assertNotEquals(gas[1], liquid[1]);
+    assertNotEquals(liquid[1], supercritical[1]);
+    assertNotEquals(gas[3], supercritical[3]);
+
+    double[] returned = state(sys, 300.0, 10.0, PhaseType.GAS);
+    for (int i = 0; i < gas.length; i++) {
+      assertEquals(gas[i], returned[i], 0.0, "returned Span-Wagner property " + i);
+    }
+  }
+
+  private static double[] state(SystemInterface system, double temperature, double pressure, PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    double[] first = state(system.getPhase(0));
+    system.init(3);
+    double[] repeated = state(system.getPhase(0));
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], repeated[i], 0.0, "same-state Span-Wagner property " + i);
+    }
+    return first;
+  }
+
+  private static double[] state(PhaseInterface phase) {
+    return new double[] {phase.getZ(), phase.getDensity("mol/m3"), phase.getComponent(0).getFugacityCoefficient(),
+        phase.getEnthalpy("J/mol"), phase.getEntropy("J/molK"), phase.getCp("J/molK"), phase.getCv("J/molK"),
+        phase.getSoundSpeed(), phase.getJouleThomsonCoefficient()};
   }
 }
