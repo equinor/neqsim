@@ -40,6 +40,7 @@ Analyze the request and match it to one or more agents:
 | Documentation, guide, tutorial, cookbook, markdown | `@documentation` | — |
 | Field development, NPV, economics, concept selection, multi-discipline | `@field-development` | `@solve-task` for formal report, specialists as needed |
 | Tieback analysis, subsea design, SURF cost, well planning, production forecast | `@field-development` | `@mechanical-design` for detailed equipment |
+| Whole Norwegian Continental Shelf system: how fields, pipelines, processing plants and terminals connect, shared-capacity bottlenecks, outage impact, tie-in ullage, shelf-wide production/value optimisation | `ncs-value-chain-agent` (community; `enterprise-ncs-value-chain-optimization-agent` for governed RNB/PDM/Gassled data) | `@field-development` for one tie-back, `@optimize-processmodel` for the host plant |
 | Quick process sim, working notebook fast | `@solve-process` | — |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
 | Complex multi-discipline task needing pre-assessment | `@capability-scout` | then specialist agents |

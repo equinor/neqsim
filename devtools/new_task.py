@@ -2331,6 +2331,20 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         except Exception as e:
             print("  WARNING: could not seed user_input.md ({})".format(e))
 
+    # Pull controlled documents automatically when a retrieval backend is
+    # configured (same zero-argument path agents use in chat). Non-fatal.
+    try:
+        import doc_retriever
+        retrieval = doc_retriever.retrieve_for_task(task_dir, quiet=True)
+        if retrieval.get("status") == "ok":
+            print("  Documents: {} retrieved into step1_scope_and_research/references/stid/".format(
+                retrieval.get("documents_downloaded", 0) + retrieval.get("documents_cached", 0)))
+        elif retrieval.get("status") not in ("no_backend", "disabled", "no_installation"):
+            print("  Document retrieval {}: {}".format(retrieval.get("status"),
+                                                      retrieval.get("message", "")))
+    except Exception as error:  # noqa: BLE001
+        print("  WARNING: automatic document retrieval skipped ({})".format(str(error)[:120]))
+
     print("Created: {}".format(task_dir))
     print("")
     print("Task input can be added before analysis starts:")

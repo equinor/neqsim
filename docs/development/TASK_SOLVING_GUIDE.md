@@ -13,6 +13,17 @@ The workflow **adapts to any scale** — from a 5-minute property lookup to a
 multi-discipline Class A field development study. You describe the task, the
 agent decides how deep to go based on what you ask for.
 
+### How this guide is organised
+
+| Part | Sections | Read it when |
+|------|----------|--------------|
+| **1. Solve a task** | [AI-Supported Task Solving](#ai-supported-task-solving-while-developing) to [Making Solutions Reusable](#making-solutions-reusable) | You want one task solved and reported |
+| **2. Keep a task alive** | [Continuous Task Solving](#keeping-a-task-alive-continuous-task-solving) | A finished task must keep improving as new data arrives, or must be solved iteratively until the goal is met |
+| **3. Reference** | [Common Pitfalls](#common-pitfalls) to [Related Documentation](#related-documentation) | You need agents, quick starts, other AI tools or PR steps |
+
+Part 2 builds on Part 1: a living task is an ordinary task folder with a
+`continuous/` folder added.
+
 ---
 
 ## AI-Supported Task Solving While Developing
@@ -1471,6 +1482,79 @@ install the released `neqsim` package for repository task calculations.
 
 ---
 
+## Keeping a Task Alive: Continuous Task Solving
+
+Everything above solves a task **once**: the report is a snapshot of the data
+and the model on the day it was written. Some tasks should not stop there — a
+compressor efficiency study is out of date the week after the next wash, and an
+optimisation study is worth repeating when the plant changes. For those, make
+the task **living**.
+
+A living task keeps its normal three steps and adds a `continuous/` folder. A
+**cycle** then runs daily or on demand: it pulls new data, recomputes the KPIs,
+checks for drift, updates an improvement ledger and writes a digest. An agent is
+launched only when a trigger fires. You review the result and promote a cycle to
+the new baseline — nothing changes without a named reviewer.
+
+### When to use it
+
+| Situation | Use |
+|-----------|-----|
+| A one-off question or study | The normal workflow above — no living task needed |
+| A finished study that should stay current as data arrives | Monitor cycles: `neqsim task-cycle` |
+| A task that must be solved iteratively until a goal is met, or until improvement is marginal | Solve loop: `neqsim task-solve` |
+
+### The five steps to set one up
+
+1. **Make it living** — `neqsim task-living <task> --brief brief.docx` scaffolds
+   `continuous/` and a draft goal from the brief. It never overwrites files.
+2. **Confirm the goal** — edit `continuous/goal.yaml` (objective metric, target,
+   stop rules) and set `confirmed_by`.
+3. **Write the plan** — edit `continuous/cycle_plan.yaml`: data sources, KPIs,
+   drift signals with engineering floors, triggers, and task-local stage scripts
+   that run the NeqSim model.
+4. **Backtest** — `neqsim task-backtest <task> --start ... --end ...` replays
+   archived data and checks the monitor finds the events it should, with no
+   false alarms.
+5. **Run it** — by hand with `neqsim task-cycle <task>` / `neqsim task-solve <task>`,
+   or on a schedule with `neqsim task-schedule <task> --daily 05:00 --install`.
+
+Scheduled living tasks enforce a **Standard-first gate**. The generated schedule
+runs `task-cycle --standard-first`, which checks that the initial task solve has
+Step 1 research, capability assessment, Step 2 model/notebook/script,
+`results.json`, consistency status, first formal report and
+`step3_report/WORK_RECORD.md`. Missing reports/work records are generated with
+the normal `neqsim report` / `neqsim work-record` tools when possible. If the
+task is still incomplete, the cycle is marked degraded with a
+`standard_first:*` trigger and `continuous/standard_first_status.json` records
+what is missing. This lets a schedule collect evidence, but prevents the hourly
+loop from being treated as operational before the first Standard task basis is
+finished or explicitly blocked with data gaps.
+
+Then, day to day: read `continuous/LIVING_REPORT.md`, decide ledger items with
+`neqsim task-ledger`, and promote reviewed cycles with `neqsim task-promote`.
+
+To learn the loop without company data, create the public reference case —
+a synthetic compressor station with three injected faults. Living tasks use the
+same task root as all other tasks (`neqsim --show-task-root`), so a folder name
+is enough:
+
+```powershell
+neqsim task-reference-case          # created in your task root
+neqsim task-backtest reference_compressor_station --start 2025-10-02 --end 2026-09-30
+neqsim task-status                  # every living task in the task root
+```
+
+In Copilot Chat, the **continuous improvement of living tasks** agent does the
+setup, backtesting and triage for you, and stops before every decision.
+
+**Full guide:** [Continuous Task Solving (Living Tasks)](CONTINUOUS_TASK_SOLVING.md)
+— setup, goal and plan reference, stage scripts, backtesting, scheduling on a
+laptop or server, headless agents, day-to-day work, company data sources and
+troubleshooting.
+
+---
+
 ## Common Pitfalls
 
 | Mistake | Symptom | Fix |
@@ -1523,6 +1607,7 @@ install the released `neqsim` package for repository task calculations.
 | `@flow-assurance` | Hydrates, wax, corrosion, slugging |
 | `@safety-depressuring` | Depressurization, PSV, fire cases |
 | `@documentation` | Writing docs and wiki pages |
+| `continuous improvement of living tasks` | Living tasks: monitor cycles, solve loops, backtests, triage ([guide](CONTINUOUS_TASK_SOLVING.md)) |
 
 ---
 
@@ -1720,6 +1805,7 @@ gh pr create --title "Add [description]" --body "From task-solving workflow"
 | `task_solve/TASK_TEMPLATE/` | Template folder with task_spec, prompts, and report generator |
 | `.github/agents/solve-task.agent.md` | The `@solve-task` Copilot agent (does everything end-to-end) |
 | `CONTEXT.md` | 60-second repo orientation |
+| [CONTINUOUS_TASK_SOLVING.md](CONTINUOUS_TASK_SOLVING.md) | Living tasks: keep a task improving with scheduled cycles |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Persistent task memory |
 | `docs/development/extending_process_equipment.md` | Adding new equipment |

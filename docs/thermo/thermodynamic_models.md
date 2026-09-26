@@ -405,6 +405,26 @@ double density = fluid.getPhase(0).getDensity_EOSCG();
 | `SystemVegaEos` | Vega equation | Specialized applications |
 | `SystemAmmoniaEos` | Gao 2020 Helmholtz reference equation | Pure ammonia |
 
+`PhaseSpanWagnerEos` caches its pure-CO2 reference-EOS state. Repeating initialization at
+unchanged temperature, pressure and effective phase selection republishes the same coherent
+density, molar volume, Z, fugacity, caloric state and pressure derivatives. Changing any of
+those state inputs recalculates the reference properties; callers do not need to invalidate
+the cache manually during ordinary system initialization.
+
+Below the critical temperature, the existing saturation-pressure rule selects the stable
+gas or liquid branch, regardless of the requested phase label. At and above the critical
+temperature, the requested phase type selects the density solver's initial guess and is
+part of the cache key. The published phase label follows the calculated density. The model
+supports pure CO2 only; changing its mole count scales extensive properties without a new
+density solve.
+
+Volume is synchronized on the first initialization and after every state change, not only
+after a repeated call. `getdPdTVn()` and `getdPdVTn()` use analytic Span-Wagner derivatives
+in bar/K and bar per internal volume unit (1e-5 m3), respectively. The inherited density
+derivatives `getdrhodP()` and `getdrhodT()` therefore return (kg/m3)/bar and (kg/m3)/K.
+The utility `NeqSimSpanWagner.getPressureDerivatives(T, rho)` accepts Kelvin and mol/m3
+and returns `[dP/dT, dP/drho]` in Pa/K and Pa/(mol/m3), without another density solve.
+
 For pure ammonia, `PhaseAmmoniaEos.getGibbsEnergy()` returns extensive Gibbs energy
 in J. Divide by the phase mole count for J/mol. With enthalpy in J/mol and entropy
 in J/(mol K), its Helmholtz relation is $g = h - Ts$ at the same temperature in K.
