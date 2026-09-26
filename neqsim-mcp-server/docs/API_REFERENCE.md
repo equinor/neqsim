@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 46 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 5 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 47 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 4 remain `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -690,3 +690,21 @@ canonical NeqSim `Flare` model and returns deterministic radiation profiles,
 reference-threshold contours, stable error codes, and explicit advisory metadata.
 The result is screening only and does not claim standards conformance or replace
 qualified engineering review.
+
+
+### runHazopScenario simulation-backed software contract
+
+The existing tool builds and runs the caller-supplied canonical `ProcessSystem`, filters quantified
+findings by node, guide word, and parameter, and returns the computed value, caller-owned design
+limit, verdict, standard reference, and auditable limit basis. Inventory 1.47 records the direct Java,
+catalog, server-facade, documentation, comprehensive-protocol, and focused packaged-MCP evidence as
+`CONTRACT_TESTED`.
+
+The MCP response uses `status: "success"` and `validation.valid: true` for a completed calculation,
+with the runner's `status: "ok"` and the full finding payload in `data`. Existing top-level finding
+fields remain available. An invalid scenario retains an error envelope and failed validation.
+
+This classification qualifies software-contract behavior only. It does not establish hazard-
+identification or scenario completeness, source-document fidelity, thermodynamic or process-model
+accuracy, suitability of caller limits, governing-standard applicability or conformance, safe
+operating limits, plant authority, certification, or accountable HAZOP/process-safety approval.

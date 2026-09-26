@@ -2340,8 +2340,17 @@ public class NeqSimTools {
       return policyBlocked;
     }
     try {
-      return standardizeResponse("runHazopScenario", HazopScenarioRunner.run(scenarioJson),
-          "general");
+      String runnerResult = HazopScenarioRunner.run(scenarioJson);
+      JsonObject runner = JsonParser.parseString(runnerResult).getAsJsonObject();
+      if (runner.has("status") && "ok".equals(runner.get("status").getAsString())) {
+        // The runner's "ok" is its own result status; the MCP envelope uses "success".
+        // Retain legacy top-level finding fields and the complete runner result in data.
+        JsonObject envelope = runner.deepCopy();
+        envelope.addProperty("status", "success");
+        envelope.add("data", runner);
+        return standardizeResponse("runHazopScenario", envelope.toString(), "general");
+      }
+      return standardizeResponse("runHazopScenario", runnerResult, "general");
     } catch (Exception e) {
       return errorJson("HAZOP scenario evaluation failed: " + e.getMessage());
     } finally {

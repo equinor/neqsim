@@ -72,6 +72,7 @@ JSON_TOOL_ARGS = {
     "runBioprocess": "bioprocessJson",
     "runRelief": "reliefJson",
     "runFlareNetwork": "flareJson",
+    "runHazopScenario": "scenarioJson",
     "sizeEquipment": "sizingJson",
     "designUtilities": "utilityJson",
     "compareProcesses": "comparisonJson",
@@ -1527,8 +1528,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 98 protocol scenarios",
-          tests.get("protocolScenarioCount") == 98,
+    check("evidence inventory freezes 99 protocol scenarios",
+          tests.get("protocolScenarioCount") == 99,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1594,13 +1595,14 @@ def test_capabilities():
         "designUtilities",
         "runChemistry",
         "runFlareNetwork",
+        "runHazopScenario",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-six bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.46"
-          and limitations.get("contractTestedToolCount") == 46
-          and limitations.get("confirmedGapToolCount") == 5
+    check("forty-seven bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.47"
+          and limitations.get("contractTestedToolCount") == 47
+          and limitations.get("confirmedGapToolCount") == 4
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1689,6 +1691,17 @@ def test_capabilities():
           and "canonical NeqSim Flare delegation" in flare.get("evidenceBoundary", "")
           and "standards or regulatory compliance" in flare.get("evidenceBoundary", ""),
           str(flare))
+
+    hazop_scenario = coverage_records.get("runHazopScenario", {})
+    check("HAZOP scenario has focused simulation-backed contract evidence",
+          hazop_scenario.get("coverageStatus") == "CONTRACT_TESTED"
+          and hazop_scenario.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_SIMULATION_BACKED_HAZOP_SCENARIO_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_hazop_scenario_protocol.py"
+          in hazop_scenario.get("contractEvidenceSources", [])
+          and "Canonical ProcessSystem" in hazop_scenario.get("evidenceBoundary", "")
+          and "hazard-identification" in hazop_scenario.get("evidenceBoundary", ""),
+          str(hazop_scenario))
 
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
@@ -1913,7 +1926,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 5
+          and limitations.get("confirmedGapToolCount") == 4
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2207,6 +2220,49 @@ def test_flare_radiation_contract():
           and data.get("standardConformanceClaimed") is False
           and data.get("engineeringReviewRequired") is True,
           str(r))
+
+
+# --- Simulation-backed HAZOP scenario ---
+
+def test_hazop_scenario_contract():
+    """Exercise one focused simulation-backed HAZOP deviation through packaged MCP."""
+    print("\n=== HAZOP Scenario Contract ===")
+    definition = {
+        "nodeTag": "2nd Stage",
+        "guideWord": "MORE",
+        "parameter": "TEMPERATURE",
+        "limits": {
+            "maxDischargeTemperatureC": 150.0,
+            "maxDischargeTemperatureByUnit": {"2nd Stage": 170.0},
+        },
+        "process": {
+            "fluid": {
+                "model": "SRK",
+                "temperature": 298.15,
+                "pressure": 10.0,
+                "mixingRule": "classic",
+                "components": {"methane": 0.90, "ethane": 0.07, "propane": 0.03},
+            },
+            "process": [
+                {"type": "Stream", "name": "feed",
+                 "properties": {"flowRate": [5000.0, "kg/hr"]}},
+                {"type": "Compressor", "name": "2nd Stage", "inlet": "feed",
+                 "properties": {"outletPressure": [80.0, "bara"]}},
+            ],
+        },
+    }
+    response = call_tool("runHazopScenario", {"scenarioJson": json.dumps(definition)})
+    data = response.get("data", response)
+    findings = data.get("findings", [])
+    check("HAZOP scenario status=success",
+          response.get("status") == "success" and data.get("status") == "ok", str(response))
+    check("HAZOP scenario returns auditable quantified finding",
+          data.get("matchCount", 0) >= 1 and findings
+          and findings[0].get("guideWord") == "MORE"
+          and findings[0].get("parameter") == "TEMPERATURE"
+          and findings[0].get("standardReference")
+          and findings[0].get("limitBasis"),
+          str(response))
 
 
 # --- Utility design tools ---
@@ -2861,6 +2917,7 @@ if __name__ == "__main__":
         test_design_utilities()
         test_chemistry_contract()
         test_flare_radiation_contract()
+        test_hazop_scenario_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()
