@@ -17,9 +17,10 @@ import neqsim.thermodynamicoperations.BaseOperation;
  *
  * <p>
  * The outer loop solves a thermochemical enthalpy balance. NeqSim's process-stream enthalpy uses a sensible-enthalpy
- * reference and intentionally excludes ideal-gas formation enthalpies. A reactive flash must therefore add the species
- * formation-enthalpy inventory to both the supplied feed enthalpy and each trial equilibrium state. The secant updates
- * capture composition-dependent reaction heat while the first heat-capacity step supplies a robust initial estimate.
+ * reference by default. In that legacy mode the species formation-enthalpy inventory is added to the supplied feed
+ * enthalpy and each trial state. If the system explicitly enables the 298.15 K formation reference, its enthalpy is
+ * used directly, without adding formation heat a second time. The secant updates capture composition-dependent reaction
+ * heat while the first heat-capacity step supplies a robust initial estimate.
  * </p>
  *
  * <p>
@@ -526,6 +527,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * @return sum of n_i times the ideal-gas formation enthalpy of species i, in J
    */
   private double getFormationEnthalpyInventory() {
+    if (system.isUsingIdealGasEnthalpyOfFormation()) {
+      return 0.0; // Already included in the selected 298.15 K stream reference.
+    }
     double formationEnthalpy = 0.0;
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
