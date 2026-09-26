@@ -9,6 +9,34 @@
 
 ---
 
+## 2026-09-26 — Gibbs reactor conservation and recycle Wegstein corrections (#3986)
+
+- `GibbsReactor` uses total component feed inventories across all inlet phases,
+  then performs homogeneous reaction equilibrium followed by the outlet flash.
+  This does not add simultaneous multiphase reactive equilibrium.
+- Element diagnostics now include sodium: **O, N, C, H, S, Ar, Z, Na**. Existing
+  indices 0–6 keep their names; read `getElementNames()` instead of assuming seven
+  entries. Argon, sodium, and signed charge map to distinct CSV columns.
+  Independent charge constraints remain active for neutral feeds.
+- Corrected the fallback Gibbs integration constant to satisfy the
+  Gibbs–Helmholtz identity. Direct polynomial data retain their existing route.
+- Regularization is applied before the Newton solve. The objective reads
+  fugacity from the state being evaluated. An exhausted unconverged solve now
+  returns `false`; callers of `run()` must still inspect `hasConverged()`.
+- The final outlet flash receives mole fractions consistent with the component
+  inventory. This corrects stale `getz()` ppm reporting in the CO2 scenarios
+  without changing their numerical baselines. The CO2 wrapper refreshes the
+  working fugacity state after each iteration; the generic reactor retains its
+  historical iteration behavior pending independent adiabatic qualification.
+- `Recycle` uses `q*x + (1-q)*g(x)` with `q=s/(s-1)`, making `q=0` direct
+  substitution and recovering affine fixed points. Legacy mixed-unit flow
+  tolerances are unchanged and explicitly documented, including the OR semantics
+  of the optional absolute tolerance.
+- Updated reactor/recycle guides and Javadocs. Reaction-engineering and process
+  examples should use the named balance columns and check convergence status.
+
+---
+
 ## 2026-09-26 — Optional formation-referenced enthalpy (#3991)
 
 `SystemInterface.setUseIdealGasEnthalpyOfFormation(true)` enables gas-phase

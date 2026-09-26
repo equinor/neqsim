@@ -262,6 +262,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   private GibbsReactor createConfiguredReactor(String name, StreamInterface inlet) {
     GibbsReactor reactor = new GibbsReactor(name, inlet);
     reactor.setUseAllDatabaseSpecies(false);
+    reactor.setReconcileCompositionBeforeFugacity(true);
     reactor.setDampingComposition(DEFAULT_DAMPING);
     reactor.setMaxIterations(DEFAULT_MAX_ITERATIONS);
     reactor.setConvergenceTolerance(DEFAULT_TOLERANCE);

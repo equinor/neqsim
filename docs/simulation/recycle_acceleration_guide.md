@@ -116,7 +116,7 @@ recycle.setAccelerationMethod(AccelerationMethod.DIRECT_SUBSTITUTION);
 
 **Algorithm**: Extrapolates based on the slope between consecutive iterations.
 
-$$x_{n+1} = q \cdot g(x_n) + (1-q) \cdot x_n$$
+$$x_{n+1} = q \cdot x_n + (1-q) \cdot g(x_n)$$
 
 where the q-factor is calculated from the slope:
 
@@ -124,13 +124,17 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 
 **Bounded q-factor**: NeqSim bounds q ∈ [-5, 0] to prevent divergence:
 - q = 0: Pure direct substitution
-- q < 0: Damping for oscillatory behavior
-- q = -5: Maximum damping
+- q < 0: Extrapolation beyond the direct-substitution output
+- q = -5: Strongest extrapolation within these bounds
+
+For the affine map $g(x)=0.5x+1$, the measured slope gives $q=-1$.
+Starting from $x=1$ and $g(x)=1.5$, the update is $-1+2(1.5)=2$, the exact
+fixed point. At $q=0$, the update is $g(x)$ (direct substitution).
 
 **Characteristics**:
 - Low overhead (O(1) per variable)
 - Excellent for single-variable problems
-- Adaptive damping prevents oscillation
+- Bounded extrapolation limits the acceleration step
 - Each variable accelerated independently
 
 **When to Use**:
@@ -142,7 +146,7 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 // Optional: Tune the q-factor bounds
-recycle.setWegsteinQMin(-5.0);  // More damping
+recycle.setWegsteinQMin(-5.0);  // Allow stronger extrapolation
 recycle.setWegsteinQMax(0.0);   // Maximum q (direct substitution)
 ```
 
@@ -427,7 +431,7 @@ recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 ```java
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
-recycle.setWegsteinQMin(-10.0);  // Stronger damping
+recycle.setWegsteinQMin(-10.0);  // Allow stronger extrapolation
 recycle.setWegsteinQMax(-0.5);   // Never use direct substitution
 ```
 
