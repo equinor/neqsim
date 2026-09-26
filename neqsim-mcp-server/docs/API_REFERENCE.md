@@ -700,6 +700,10 @@ limit, verdict, standard reference, and auditable limit basis. Inventory 1.47 re
 catalog, server-facade, documentation, comprehensive-protocol, and focused packaged-MCP evidence as
 `CONTRACT_TESTED`.
 
+The MCP response uses `status: "success"` and `validation.valid: true` for a completed calculation,
+with the runner's `status: "ok"` and the full finding payload in `data`. Existing top-level finding
+fields remain available. An invalid scenario retains an error envelope and failed validation.
+
 This classification qualifies software-contract behavior only. It does not establish hazard-
 identification or scenario completeness, source-document fidelity, thermodynamic or process-model
 accuracy, suitability of caller limits, governing-standard applicability or conformance, safe

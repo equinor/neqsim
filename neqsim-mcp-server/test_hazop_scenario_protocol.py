@@ -118,6 +118,8 @@ def test_quantified_finding(client):
     data = payload(response)
     findings = data.get("findings", [])
     require(response.get("status") == "success" and data.get("status") == "ok"
+            and response.get("validation", {}).get("valid") is True
+            and response.get("qualityGate", {}).get("verdict") == "passed"
             and data.get("schemaVersion") == "1.0" and data.get("matchCount", 0) >= 1
             and findings and findings[0].get("guideWord") == "MORE"
             and findings[0].get("parameter") == "TEMPERATURE"
@@ -133,12 +135,17 @@ def test_deterministic_replay(client):
 
 
 def test_no_match_and_fail_closed_input(client):
-    no_match = payload(run_scenario(client, definition("does-not-exist")))
+    no_match_response = run_scenario(client, definition("does-not-exist"))
+    no_match = payload(no_match_response)
+    require(no_match_response.get("status") == "success"
+            and no_match_response.get("validation", {}).get("valid") is True,
+            "HAZOP no-match envelope was not successful", no_match_response)
     require(no_match.get("status") == "ok" and no_match.get("matchCount") == 0
             and no_match.get("note"), "HAZOP no-match evidence was hidden", no_match)
     invalid = client.call("runHazopScenario", {"scenarioJson": ""})
     invalid_data = payload(invalid)
-    require(invalid.get("status") == "error" or invalid_data.get("status") == "error",
+    require((invalid.get("status") == "error" or invalid_data.get("status") == "error")
+            and invalid.get("validation", {}).get("valid") is False,
             "empty HAZOP scenario input did not fail closed", invalid)
 
 

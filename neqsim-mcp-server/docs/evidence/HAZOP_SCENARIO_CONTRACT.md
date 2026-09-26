@@ -23,6 +23,11 @@ scenario, deterministic replay, explicit zero-match evidence, fail-closed empty 
 inventory accounting. The primary protocol suite independently exercises a quantified finding and
 the standard response envelope.
 
+The MCP facade maps the runner's successful `ok` status to the standard envelope's `success`
+status while retaining the runner result under `data` and the existing top-level finding fields.
+The focused protocol requires successful validation and quality-gate metadata and checks that
+invalid input remains an error.
+
 ## Engineering and safety boundary
 
 This is software-contract qualification, not scientific or standards validation. It does not
