@@ -131,7 +131,7 @@ require_groups(
 )
 require(
     surface,
-    "among its forty-six bounded software contracts and requires 5 confirmed gaps.",
+    "among its forty-seven bounded software contracts and requires 4 confirmed gaps.",
     SURFACE_PATH,
 )
 require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
@@ -174,7 +174,7 @@ require(
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.46 / 20 explicit + 46 contract-tested + 5\n"
+    "Current inventory `1.47 / 20 explicit + 47 contract-tested + 4\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )
