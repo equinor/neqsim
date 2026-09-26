@@ -32,7 +32,7 @@ jobs:
           # pytest for the hermetic suites; python-docx + matplotlib for the
           # report-generator tests; scikit-learn so discovery uses the TF-IDF
           # path (it also has a pure-python fallback).
-          python -m pip install pytest python-docx matplotlib scikit-learn trimesh
+          python -m pip install pytest python-docx matplotlib scikit-learn trimesh pyyaml
 
       - name: Run hermetic pytest suites
         run: |
@@ -48,6 +48,8 @@ jobs:
             devtools/test_generate_work_record.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
+            devtools/test_neqsim_continuous.py \
+            devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_unisim_outputs.py \
             devtools/test_stid_download.py
