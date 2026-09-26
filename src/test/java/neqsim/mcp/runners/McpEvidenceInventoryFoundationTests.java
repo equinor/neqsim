@@ -1214,5 +1214,4 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, limitations.get("confirmedGapToolCount").getAsInt());
   }
 
-
 }
