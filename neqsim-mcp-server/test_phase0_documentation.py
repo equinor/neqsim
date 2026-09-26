@@ -47,10 +47,10 @@ require(
     f"int PROTOCOL_SCENARIO_COUNT = {protocol_scenario_count};",
     SOURCE_PATH,
 )
-require(source, 'inventory.addProperty("inventoryVersion", "1.47")', SOURCE_PATH)
+require(source, 'inventory.addProperty("inventoryVersion", "1.48")', SOURCE_PATH)
 require(
     source,
-    "All 71 tools have coverage records; 47 are CONTRACT_TESTED and 4 remain "
+    "All 71 tools have coverage records; 48 are CONTRACT_TESTED and 3 remain "
     "CONFIRMED_GAP.",
     SOURCE_PATH,
 )
@@ -64,14 +64,15 @@ require(source, 'case "designUtilities":', SOURCE_PATH)
 require(source, 'case "runChemistry":', SOURCE_PATH)
 require(source, 'case "runFlareNetwork":', SOURCE_PATH)
 require(source, 'case "runHazopScenario":', SOURCE_PATH)
+require(source, 'case "runSafetySystemPerformance":', SOURCE_PATH)
 
 # Every focused protocol harness must freeze the same inventory as the primary
 # harness. Otherwise CI stops at the first stale promotion and never qualifies
 # the remaining tools.
 expected_inventory = {
-    "inventoryVersion": "1.47",
-    "contractTestedToolCount": 47,
-    "confirmedGapToolCount": 4,
+    "inventoryVersion": "1.48",
+    "contractTestedToolCount": 48,
+    "confirmedGapToolCount": 3,
 }
 for focused_path in sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
     focused_tree = ast.parse(focused_path.read_text(encoding="utf-8"))
@@ -103,7 +104,7 @@ require_groups(
     surface,
     r"as the primary harness: version `([^`]+)`, (\d+) contract-tested tools "
     r"and (\d+) confirmed\ngaps\.",
-    ("1.47", "47", "4"),
+    ("1.48", "48", "3"),
     SURFACE_PATH,
     "focused-harness inventory summary",
 )
@@ -111,27 +112,27 @@ require_groups(
     surface,
     r"\| Trust coverage records \| 71 = 20 explicit benchmark \+ "
     r"(\d+) bounded contract-tested software contracts \+ (\d+) confirmed gaps \|",
-    ("47", "4"),
+    ("48", "3"),
     SURFACE_PATH,
     "trust-coverage table row",
 )
 require_groups(
     surface,
     r"No candidate is queued in inventory ([0-9.]+);",
-    ("1.47",),
+    ("1.48",),
     SURFACE_PATH,
     "promotion-candidate version",
 )
 require_groups(
     surface,
     r"now reconciles inventory ([0-9.]+) with 20/(\d+)/(\d+) coverage accounting",
-    ("1.47", "47", "4"),
+    ("1.48", "48", "3"),
     SURFACE_PATH,
     "API-inspection reconciliation",
 )
 require(
     surface,
-    "among its forty-seven bounded software contracts and requires 4 confirmed gaps.",
+    "among its forty-eight bounded software contracts and requires 3 confirmed gaps.",
     SURFACE_PATH,
 )
 require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURFACE_PATH)
@@ -139,7 +140,7 @@ require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
     "scientifically validated: 4 records remain\n"
-    "`CONFIRMED_GAP`, forty-seven are `CONTRACT_TESTED`",
+    "`CONFIRMED_GAP`, forty-eight are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
 
@@ -153,11 +154,11 @@ contract_line = next(
     None,
 )
 if contract_line is None:
-    raise AssertionError(f"{FOUNDATION_PATH}: missing current 47-contract summary")
+    raise AssertionError(f"{FOUNDATION_PATH}: missing current 48-contract summary")
 contract_tools = re.findall(r"`([A-Za-z][A-Za-z0-9]+)`", contract_line)
-if len(contract_tools) != 47 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "runRelief" not in contract_tools or "runOperationalStudy" not in contract_tools or "compareProcesses" not in contract_tools or "runProcessLoop" not in contract_tools or "designUtilities" not in contract_tools or "runChemistry" not in contract_tools or "runFlareNetwork" not in contract_tools or "runHazopScenario" not in contract_tools:
+if len(contract_tools) != 48 or "runSIL" not in contract_tools or "runBarrierRegister" not in contract_tools or "runRelief" not in contract_tools or "runOperationalStudy" not in contract_tools or "compareProcesses" not in contract_tools or "runProcessLoop" not in contract_tools or "designUtilities" not in contract_tools or "runChemistry" not in contract_tools or "runFlareNetwork" not in contract_tools or "runHazopScenario" not in contract_tools or "runSafetySystemPerformance" not in contract_tools:
     raise AssertionError(
-        f"{FOUNDATION_PATH}: expected 47 named contracts including runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, and runChemistry, runFlareNetwork, and runHazopScenario, "
+        f"{FOUNDATION_PATH}: expected 48 named contracts including runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, and runChemistry, runFlareNetwork, and runHazopScenario, "
         f"found {len(contract_tools)}"
     )
 require(foundation, "- 4 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
@@ -166,7 +167,7 @@ api_reference = API_PATH.read_text(encoding="utf-8")
 require(
     api_reference,
     "all 71 tools\nhave coverage records, but only 20 have tool-specific trust pages; "
-    "47 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
+    "48 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
     "4 remain `CONFIRMED_GAP`",
     API_PATH,
 )
@@ -174,12 +175,12 @@ require(
 plugin_contract = PLUGIN_PATH.read_text(encoding="utf-8")
 require(
     plugin_contract,
-    "Current inventory `1.47 / 20 explicit + 47 contract-tested + 4\n"
+    "Current inventory `1.48 / 20 explicit + 48 contract-tested + 3\n"
     "confirmed gaps`",
     PLUGIN_PATH,
 )
 
 print(
-    "Phase 0 documentation accounting is consistent: 1.47 / 20 + 47 + 4; "
+    "Phase 0 documentation accounting is consistent: 1.48 / 20 + 48 + 3; "
     f"{protocol_scenario_count} primary protocol scenarios"
 )

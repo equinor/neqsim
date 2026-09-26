@@ -144,9 +144,9 @@ def test_phase0_contract_is_promoted(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("designUtilities", {})
     require(
-        inventory.get("inventoryVersion") == "1.47"
-        and limitations.get("contractTestedToolCount") == 47
-        and limitations.get("confirmedGapToolCount") == 4
+        inventory.get("inventoryVersion") == "1.48"
+        and limitations.get("contractTestedToolCount") == 48
+        and limitations.get("confirmedGapToolCount") == 3
         and limitations.get("contractPromotionCandidateCount") == 0
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")

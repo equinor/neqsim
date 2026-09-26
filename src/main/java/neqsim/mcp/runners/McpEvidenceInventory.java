@@ -15,7 +15,7 @@ import com.google.gson.JsonParser;
 public final class McpEvidenceInventory {
 
   private static final int JAVA_TEST_CLASS_COUNT = 72;
-  private static final int PROTOCOL_SCENARIO_COUNT = 99;
+  private static final int PROTOCOL_SCENARIO_COUNT = 100;
   private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
 
   /** Private constructor for utility class. */
@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.47");
+    inventory.addProperty("inventoryVersion", "1.48");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, runChemistry, runFlareNetwork, runHazopScenario. Inventory 1.47 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, runChemistry, runFlareNetwork, runHazopScenario, runSafetySystemPerformance. Inventory 1.48 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 47 are CONTRACT_TESTED and 4 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 48 are CONTRACT_TESTED and 3 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -630,6 +630,18 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_utility_design_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md"};
       evidenceBoundary = "Deterministic dispatch to the canonical NeqSim Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, and SteamNetwork screening models, five utility-type result envelopes, fail-closed blank, malformed and unsupported-type inputs, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish design-basis completeness, property or correlation accuracy, equipment sizing adequacy, utility availability or reliability, network optimization, emissions or cost forecast accuracy, mechanical design, safe operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "runSafetySystemPerformance":
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_SAFETY_SYSTEM_PERFORMANCE_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/SafetySystemPerformanceRunner.java",
+          "src/main/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzer.java",
+          "src/test/java/neqsim/mcp/runners/SafetySystemPerformanceRunnerTest.java",
+          "src/test/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_safety_system_performance_protocol.py",
+          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/SAFETY_SYSTEM_PERFORMANCE_CONTRACT.md"};
+      evidenceBoundary = "Catalog-example execution, deterministic active and passive safety-system performance summaries, assessment reporting, standards and STID-extraction template presence, fail-closed invalid input handling, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish source-document or tag extraction fidelity, hazard or demand completeness, barrier or safeguard adequacy, SIL or PFD validity, independence, common-cause, proof-test or lifecycle evidence, process or facility fidelity, standards applicability or conformance, safe operating limits, plant or control authority, certification, or accountable functional-safety and process-safety approval";
       break;
     case "runHazopScenario":
       benchmarkApplicability = "NOT_APPLICABLE_SIMULATION_BACKED_HAZOP_SCENARIO_SOFTWARE_CONTRACT";
