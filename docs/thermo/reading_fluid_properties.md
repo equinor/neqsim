@@ -446,6 +446,63 @@ double Pc = fluid.getComponent("methane").getPC();  // Critical pressure in Pa
 double omega = fluid.getComponent("methane").getAcentricFactor();
 ```
 
+### Formation enthalpy reference
+
+For Cp-polynomial/EOS-departure models such as SRK, PR and CPA, stream enthalpy
+uses a sensible reference at 273.15 K by default. Formation-based enthalpy is an
+explicit option:
+
+```java
+SystemInterface fluid = new SystemSrkEos(298.15, 1.0);
+fluid.addComponent("methane", 1.0);
+fluid.setMixingRule("classic");
+fluid.setUseIdealGasEnthalpyOfFormation(true);
+double idealEnthalpy = fluid.getComponent("methane").getHID(298.15);
+// idealEnthalpy = -74873.10 J/mol; real-fluid enthalpy also includes the EOS departure.
+```
+
+The selected ideal-gas reference is
+
+$$h_i^{ig}(T)=\Delta_f H_i^{ig,\circ}(298.15\,\mathrm{K})+\int_{298.15\,\mathrm{K}}^T C_{p,i}^{ig}(T')\,dT'.$$
+
+`getHID(T, true)` evaluates this reference for a single component without changing
+its selection. `getHID(T, false)` evaluates the legacy sensible reference.
+`hasIdealGasEnthalpyOfFormation()` and `getFormationEnthalpySource()` expose data
+availability and provenance. See the [database guide](component_database_guide.md#formation-enthalpy-availability-and-sources)
+for the initial 13 reviewed species. Unsupported data cause an exception, including
+an attempted system switch; the switch validates every phase before modifying it.
+
+The choice propagates to subsequently added supported components and is retained
+by cloning, phase extraction and Java serialization. Old serialized objects keep
+the legacy default. Set the option explicitly when rebuilding a model from input
+data; no JSON schema migration is introduced by this API.
+
+For conserved component inventories the added reference cancels in enthalpy
+differences: heater duty, latent heat, compressor work, Cp and phase equilibrium
+are unchanged. Reactions change the inventory and therefore include formation
+heat. At 298.15 K the ideal-gas methane combustion benchmark with water vapor is
+-802.3021 kJ/mol, water-gas shift is -41.1689 kJ/mol, and ammonia synthesis
+(`N2 + 3 H2 -> 2 NH3`) is -91.79612 kJ per stoichiometric reaction.
+
+Select a common reference on all connected streams **before** recording PH-flash
+targets or energy balances. Do not reuse a saved numerical enthalpy target from
+another reference. `ReactiveMultiphasePHflash` detects the option and does not
+add formation heat again. Its legacy sensible-plus-formation convention remains
+available for existing workflows. Reactors or combustion equipment that calculate
+reaction heat from separate datasets still have their own energy contracts; this
+option does not replace those correlations.
+
+Entropy is unchanged. Consequently `H - T*S` shifts with the enthalpy reference
+but is not thereby a standard Gibbs energy of formation or an absolute chemical
+potential. Native caloric models such as GERG, IAPWS, Vega and Span-Wagner retain
+their own reference conventions and reject this system option. Solids and aqueous
+ions are not qualified for it. The Cp polynomial's original temperature validity
+is unchanged; enabling formation data does not extend it.
+
+The example and reference equations are exercised by `FormationEnthalpyReferenceTest`
+and `SystemFormationEnthalpyTest`; `FormationEnthalpyDatabaseTest` covers both
+database loading routes.
+
 ### Derivative Properties (requires init(3))
 
 | Method | Description |

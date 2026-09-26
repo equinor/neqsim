@@ -9,6 +9,23 @@
 
 ---
 
+## 2026-09-26 — Optional formation-referenced enthalpy (#3991)
+
+`SystemInterface.setUseIdealGasEnthalpyOfFormation(true)` enables gas-phase
+formation enthalpy at 298.15 K plus the existing Cp integral and EOS departure.
+The default remains the legacy sensible reference at 273.15 K. `getHID(T, true)`
+also provides explicit component evaluation; availability and source getters
+distinguish reviewed zero values from placeholders. `COMP.csv` stores 13 sourced
+entries, including the correction of helium's -242000 J/mol placeholder to zero;
+the extended loader copies reviewed value/source pairs. Updated tabulated values
+also affect existing direct consumers of formation data, including reactive
+equilibrium calculations, even when the new stream option is not enabled.
+
+Reactive PH avoids double-counting when formation heat is already in stream
+enthalpy. Recompute numerical PH targets after switching reference, and select
+the same convention for every connected stream. Native caloric models and
+aqueous ionic/solid references are outside this option. See the
+[reference guide](docs/thermo/reading_fluid_properties.md#formation-enthalpy-reference).
 ## 2026-09-26 — Living tasks use the general task root; user guide added
 
 - Every `neqsim task-*` command accepts a `<task>` path **or** a folder name inside

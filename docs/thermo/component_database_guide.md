@@ -302,9 +302,10 @@ Parameters for gas hydrate equilibrium calculations.
 
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
-| `Href` | Reference enthalpy | J/mol | Enthalpy calculations |
+| `Href` | Separate legacy reference metadata | J/mol | Not the formation enthalpy used by `getHID` |
 | `GIBBSENERGYOFFORMATION` | Gibbs energy of formation | J/mol | Chemical equilibrium |
-| `ENTHALPYOFFORMATION` | Standard enthalpy of formation | J/mol | Reaction thermodynamics |
+| `ENTHALPYOFFORMATION` | Standard ideal-gas enthalpy of formation at 298.15 K for reviewed neutral species | J/mol | Reaction thermodynamics and optional formation-referenced stream enthalpy |
+| `FORMATIONENTHALPYSOURCE` | Provenance of a reviewed gas-phase formation enthalpy; blank means unavailable | - | Enables explicit formation-reference calculations; zero values require provenance too |
 | `ABSOLUTEENTROPY` | Absolute entropy | J/(mol·K) | Entropy calculations |
 | `HEATOFFUSION` | Heat of fusion | J/mol | Solid-liquid equilibrium |
 | `Hsub` | Heat of sublimation | J/mol | Solid-vapor equilibrium |
@@ -312,6 +313,52 @@ Parameters for gas hydrate equilibrium calculations.
 | `TRIPLEPOINTPRESSURE` | Triple point pressure | bar | Phase boundaries |
 | `TRIPLEPOINTDENSITY` | Triple point density | kg/m³ | Reference state |
 | `MELTINGPOINTTEMPERATURE` | Melting point | K | Solid calculations |
+
+### Formation enthalpy availability and sources
+
+`getHID(T)` retains the default sensible-enthalpy convention, zero at 273.15 K.
+Enable `fluid.setUseIdealGasEnthalpyOfFormation(true)` to include
+`ENTHALPYOFFORMATION` and integrate Cp from **298.15 K**, where the tabulated
+formation enthalpy applies. See the [reference-state guide](reading_fluid_properties.md#formation-enthalpy-reference).
+This does not use `Href`, which is separate legacy metadata.
+
+The following gas-phase values have explicit provenance. Values are stored in
+J/mol; the table displays kJ/mol. Each link points to the NIST Chemistry WebBook
+entry (SRD 69). Chase values use the displayed Shomate `H` reference constant;
+Cp continues to use NeqSim's existing polynomial, not the Shomate correlation.
+
+| Component | Formation enthalpy at 298.15 K (kJ/mol) | Source |
+|---|---:|---|
+| methane | -74.87310 | [Chase 1998](https://webbook.nist.gov/cgi/cbook.cgi?ID=C74828&Mask=1) |
+| CO2 | -393.5224 | [Chase 1998](https://webbook.nist.gov/cgi/cbook.cgi?ID=C124389&Mask=1) |
+| water (ideal gas) | -241.8264 | [Chase 1998](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=1) |
+| CO | -110.5271 | [Chase 1998](https://webbook.nist.gov/cgi/cbook.cgi?ID=C630080&Mask=1) |
+| ammonia | -45.89806 | [Chase 1998](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7664417&Mask=1) |
+| H2S | -20.600 | [CODATA 1984](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7783064&Mask=1) |
+| ethane | -83.800 | [Pittam and Pilcher 1972](https://webbook.nist.gov/cgi/cbook.cgi?ID=C74840&Mask=1) |
+| propane | -104.700 | [Pittam and Pilcher 1972](https://webbook.nist.gov/cgi/cbook.cgi?ID=C74986&Mask=1) |
+| hydrogen | 0 | [Element standard state](https://webbook.nist.gov/cgi/cbook.cgi?ID=C1333740&Mask=1) |
+| nitrogen | 0 | [Element standard state](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7727379&Mask=1) |
+| oxygen | 0 | [Element standard state](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7782447&Mask=1) |
+| helium | 0 | [Element standard state](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440597&Mask=1) |
+| argon | 0 | [Element standard state](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7440371&Mask=1) |
+
+In particular, helium no longer carries the old -242000 J/mol placeholder.
+The extended-database loader copies these reviewed **value/source pairs** from
+`COMP.csv` into the loaded extended table. Other extended entries remain
+unreviewed. The optional column is also preserved when adding missing standard
+components. Older custom databases without the column continue to work in
+legacy mode; they cannot silently opt into formation-based enthalpy.
+
+Blank provenance does not mean that formation enthalpy is physically zero.
+It means the entry has not been reviewed for this gas-phase reference. Supply
+a finite value with `setIdealGasEnthalpyOfFormation(value)` on each phase's
+component before enabling the system option, or add a sourced database entry.
+The setter marks the value as `user-supplied`. Aqueous ionic formation properties
+must not be interpreted as ideal-gas values and remain outside this option.
+Generated TBP estimates and combined pseudo-component estimates retain their
+legacy numeric values but have no reviewed provenance. Supply appropriate
+formation data explicitly before using those fractions in this reference mode.
 
 ### Ionic and Electrolyte Parameters
 
