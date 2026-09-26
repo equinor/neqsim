@@ -564,6 +564,7 @@ public class GibbsReactor extends TwoPortEquipment {
   private int maxIterations = 5000;
   private double convergenceTolerance = 1e-3;
   private double dampingComposition = 0.05; // Default damping factor for composition updates
+  private boolean reconcileCompositionBeforeFugacity = false;
   private int actualIterations = 0;
   private boolean converged = false;
   private double finalConvergenceError = 0.0;
@@ -1247,7 +1248,7 @@ public class GibbsReactor extends TwoPortEquipment {
     // Calculate initial element mole balance
     calculateElementMoleBalance(system, elementMoleBalanceIn, true);
 
-    // Perform Gibbs minimization
+    // Prepare candidate species before minimizing Gibbs energy.
     if (useAllDatabaseSpecies) {
       // Add all database species to system
       for (GibbsComponent component : gibbsDatabase) {
@@ -1265,8 +1266,8 @@ public class GibbsReactor extends TwoPortEquipment {
     // Exclude unavailable atoms after expanding the candidate set, without adding feed inventory.
     determineFeedExcludedComponents(system);
 
-    // Minimize Gibbs energy
-    performGibbsMinimization(system);
+    // Seed candidate species with a positive initial guess.
+    seedMinimumComponentMoles(system);
 
     // Enforce minimum concentrations
     enforceMinimumConcentrations(system);
@@ -1314,12 +1315,17 @@ public class GibbsReactor extends TwoPortEquipment {
     }
 
     // Calculate objective function values
+    if (reconcileCompositionBeforeFugacity) {
+      system.init_x_y();
+      system.init(1);
+    }
     calculateObjectiveFunctionValues(system);
 
     solveGibbsEquilibrium();
 
-    // Set outlet stream
-    // getOutletStream().setThermoSystem(system);
+    // The TP flash consumes bulk mole fractions. Reconcile these with the final
+    // component inventories before the stream clones the working fluid.
+    system.init_x_y();
     getOutletStream().run(id);
 
     // Mass balance check at the end
@@ -1330,14 +1336,11 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform Gibbs free energy minimization.
+   * Seed eligible component amounts for the later Gibbs equilibrium solve.
    *
    * @param system The thermodynamic system
    */
-  private void performGibbsMinimization(SystemInterface system) {
-    // Set iteration to 1
-    final int iteration = 1;
-
+  private void seedMinimumComponentMoles(SystemInterface system) {
     // Create initial guess for moles
     final Map<String, Double> initialGuess = new HashMap<>();
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
@@ -1363,7 +1366,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    logger.info("Gibbs minimization completed for iteration " + iteration);
+    logger.debug("Seeded eligible Gibbs species before equilibrium minimization");
   }
 
   /**
@@ -2359,6 +2362,12 @@ public class GibbsReactor extends TwoPortEquipment {
         getOutletStream().setThermoSystem(system);
       }
 
+      if (reconcileCompositionBeforeFugacity) {
+        // addComponent updates inventories but not the stored bulk/phase fractions.
+        system.init_x_y();
+        system.init(1);
+      }
+
       // Recalculate objective function values with new compositions and Lagrange multipliers
       calculateObjectiveFunctionValues(system);
 
@@ -2470,6 +2479,17 @@ public class GibbsReactor extends TwoPortEquipment {
    */
   public void setDampingComposition(double dampingComposition) {
     this.dampingComposition = dampingComposition;
+  }
+
+  /**
+   * Refresh composition and fugacity properties after each iteration. The acid-gas wrapper uses this mode; the generic
+   * reactor retains its historical iteration behavior until its broader numerical baselines are independently
+   * qualified.
+   *
+   * @param reconcile whether to refresh the working state before objective evaluation
+   */
+  void setReconcileCompositionBeforeFugacity(boolean reconcile) {
+    this.reconcileCompositionBeforeFugacity = reconcile;
   }
 
   /**

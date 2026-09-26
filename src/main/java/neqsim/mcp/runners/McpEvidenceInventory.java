@@ -15,7 +15,7 @@ import com.google.gson.JsonParser;
 public final class McpEvidenceInventory {
 
   private static final int JAVA_TEST_CLASS_COUNT = 72;
-  private static final int PROTOCOL_SCENARIO_COUNT = 97;
+  private static final int PROTOCOL_SCENARIO_COUNT = 98;
   private static final int FOCUSED_API_PROTOCOL_SCENARIO_COUNT = 3;
 
   /** Private constructor for utility class. */
@@ -29,7 +29,7 @@ public final class McpEvidenceInventory {
    */
   public static JsonObject build() {
     JsonObject inventory = new JsonObject();
-    inventory.addProperty("inventoryVersion", "1.45");
+    inventory.addProperty("inventoryVersion", "1.46");
     inventory.add("tests", buildTests());
     inventory.add("guides", buildGuides());
     inventory.add("mergedFoundations", buildMergedFoundations());
@@ -241,10 +241,10 @@ public final class McpEvidenceInventory {
     limitations.addProperty("contractPromotionCandidateCount", promotionCandidates.size());
     limitations.add("contractPromotionCandidates", promotionCandidates);
     limitations.addProperty("promotionBoundary",
-        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, runChemistry. Inventory 1.45 has no candidate.");
+        "CONTRACT_TESTED evidence: generateReport, bridgeTaskWorkflow, manageSecurity, setSimulationVariable, saveSimulationState, compareSimulationStates, generateVisualization, runPlugin, runCapability, composeWorkflow, solveTask, streamSimulation, composeMultiServerWorkflow, runRiskMatrix, runLOPA, runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, runChemistry, runFlareNetwork. Inventory 1.46 has no candidate.");
     limitations.addProperty("complete", genericTools.isEmpty());
     limitations.addProperty("gapBoundary",
-        "All 71 tools have coverage records; 45 are CONTRACT_TESTED and 6 remain CONFIRMED_GAP.");
+        "All 71 tools have coverage records; 46 are CONTRACT_TESTED and 5 remain CONFIRMED_GAP.");
     limitations.addProperty("resultBoundary",
         "Per-result provenance, convergence, warnings, assumptions, units, and limitations remain authoritative for an executed case");
     return limitations;
@@ -630,6 +630,16 @@ public final class McpEvidenceInventory {
           "neqsim-mcp-server/test_utility_design_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md"};
       evidenceBoundary = "Deterministic dispatch to the canonical NeqSim Boiler, Deaerator, RefrigerationCycle, NitrogenSystem, and SteamNetwork screening models, five utility-type result envelopes, fail-closed blank, malformed and unsupported-type inputs, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish design-basis completeness, property or correlation accuracy, equipment sizing adequacy, utility availability or reliability, network optimization, emissions or cost forecast accuracy, mechanical design, safe operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
+      break;
+    case "runFlareNetwork":
+      benchmarkApplicability = "NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT";
+      evidenceSources = new String[] {"src/main/java/neqsim/mcp/runners/FlareRadiationRunner.java",
+          "src/test/java/neqsim/mcp/runners/FlareRadiationRunnerTest.java",
+          "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
+          "neqsim-mcp-server/test_flare_radiation_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/docs/evidence/FLARE_RADIATION_SCREENING_CONTRACT.md",
+          "src/main/java/neqsim/process/equipment/flare/Flare.java"};
+      evidenceBoundary = "Bounded caller-supplied flare heat duty and distance admission, canonical NeqSim Flare delegation, deterministic radiation profiles and reference-threshold contours, stable failure codes, normal MCP access enforcement, advisory metadata, and packaged transport are contract-tested; this does not establish source-term or design-basis completeness, dispersion, weather, terrain, shielding, multi-flare interaction, mechanical design, safe siting or operating limits, standards or regulatory compliance, plant or control authority, certification, or accountable engineering approval";
       break;
     case "runChemistry":
       benchmarkApplicability = "NOT_APPLICABLE_CANONICAL_CHEMISTRY_DISPATCH_AND_TRANSPORT_SOFTWARE_CONTRACT";

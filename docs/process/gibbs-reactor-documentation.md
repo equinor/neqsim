@@ -638,6 +638,8 @@ double so2_ppm = outlet.getComponent("SO2").getz() * 1e6;
 ### Phase Issues
 
 - All phases in the inlet contribute their **total component inventory**. The cloned working fluid is consolidated into one homogeneous phase before reaction iterations. The final outlet stream is flashed.
+- Immediately before the outlet flash, the working fluid's bulk and phase mole fractions are reconciled with its component inventories. This makes `getz()` in the flashed stream describe the reported component moles. Check `hasConverged()` and the element-balance diagnostics separately before treating those amounts as an equilibrium prediction.
+- The `GibbsReactorCO2` wrapper also refreshes the working composition and fugacity properties after each iteration. The generic `GibbsReactor` retains its previous iteration behavior while its adiabatic numerical baselines are reviewed. Some acid-gas cases can still exhaust the iteration limit; matching selected ppm assertions is not proof of convergence.
 - This is a homogeneous reaction calculation followed by a phase flash, not simultaneous multiphase reactive equilibrium. A condensed feed does not by itself establish validity of the homogeneous reaction model.
 - For solid sulfur (S₈) precipitation, use `ThermodynamicOperations.TPSolidflash()` on the outlet.
 

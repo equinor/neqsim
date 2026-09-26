@@ -270,9 +270,9 @@ def test_inventory_promotes_contract_atomically(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runSIL", {})
     require(
-        inventory.get("inventoryVersion") == "1.45"
-        and limitations.get("contractTestedToolCount") == 45
-        and limitations.get("confirmedGapToolCount") == 6
+        inventory.get("inventoryVersion") == "1.46"
+        and limitations.get("contractTestedToolCount") == 46
+        and limitations.get("confirmedGapToolCount") == 5
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"

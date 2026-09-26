@@ -22,6 +22,8 @@ public final class ReleaseState implements Serializable {
   private final Map<String, Double> componentMoleFractions;
   private final Map<String, Double> componentMassFractions;
   private final Map<String, Double> phaseMassFractions;
+  private final Map<String, Double> phaseDensitiesKgM3;
+  private final Map<String, Double> phaseVelocitiesMs;
 
   private ReleaseState(SystemInterface fluid, double velocityMs) {
     pressurePa = ReleaseFlowRequest.positive(fluid.getPressure() * 1e5, "pressurePa");
@@ -38,6 +40,7 @@ public final class ReleaseState implements Serializable {
     Map<String, Double> mole = new TreeMap<String, Double>();
     Map<String, Double> weight = new TreeMap<String, Double>();
     Map<String, Double> phase = new TreeMap<String, Double>();
+    Map<String, Double> phaseDensities = new TreeMap<String, Double>();
     double moles = ReleaseFlowRequest.positive(fluid.getTotalNumberOfMoles(), "total moles");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
       String name = fluid.getComponent(i).getComponentName();
@@ -49,10 +52,17 @@ public final class ReleaseState implements Serializable {
       String type = fluid.getPhase(i).getType().name();
       double fraction = fluid.getPhase(i).getMass() / mass;
       phase.put(type, fraction + (phase.containsKey(type) ? phase.get(type) : 0.0));
+      if (phaseDensities.containsKey(type)) {
+        throw new IllegalStateException("Duplicate native phase type cannot expose one phase density: " + type);
+      }
+      phaseDensities.put(type, ReleaseFlowRequest
+          .positive(fluid.getPhase(i).getMass() / fluid.getPhase(i).getVolume("m3"), type + " phase density"));
     }
     componentMoleFractions = fractions(mole);
     componentMassFractions = fractions(weight);
     phaseMassFractions = fractions(phase);
+    phaseDensitiesKgM3 = positiveValues(phaseDensities, "phase density");
+    phaseVelocitiesMs = Collections.emptyMap();
   }
 
   private ReleaseState(SystemInterface compositionReference, double pressurePa, double temperatureK, double densityKgM3,
@@ -82,6 +92,31 @@ public final class ReleaseState implements Serializable {
     Map<String, Double> phase = new TreeMap<String, Double>();
     phase.put(PhaseType.GAS.name(), 1.0);
     phaseMassFractions = fractions(phase);
+    Map<String, Double> phaseDensities = new TreeMap<String, Double>();
+    phaseDensities.put(PhaseType.GAS.name(), densityKgM3);
+    phaseDensitiesKgM3 = positiveValues(phaseDensities, "phase density");
+    phaseVelocitiesMs = Collections.emptyMap();
+  }
+
+  private ReleaseState(ReleaseState reference, double bulkVelocityMs, Map<String, Double> phaseVelocitiesMs) {
+    if (!Double.isFinite(bulkVelocityMs) || bulkVelocityMs < 0.0 || phaseVelocitiesMs == null
+        || phaseVelocitiesMs.isEmpty()) {
+      throw new IllegalArgumentException("Finite bulk velocity and phase velocities required");
+    }
+    if (!reference.phaseMassFractions.keySet().equals(phaseVelocitiesMs.keySet())) {
+      throw new IllegalArgumentException("Phase velocity keys must match phase mass fractions");
+    }
+    pressurePa = reference.pressurePa;
+    temperatureK = reference.temperatureK;
+    densityKgM3 = reference.densityKgM3;
+    enthalpyJkg = reference.enthalpyJkg;
+    entropyJkgK = reference.entropyJkgK;
+    velocityMs = bulkVelocityMs;
+    componentMoleFractions = reference.componentMoleFractions;
+    componentMassFractions = reference.componentMassFractions;
+    phaseMassFractions = reference.phaseMassFractions;
+    phaseDensitiesKgM3 = reference.phaseDensitiesKgM3;
+    this.phaseVelocitiesMs = positiveValues(phaseVelocitiesMs, "phase velocity");
   }
 
   /**
@@ -115,6 +150,21 @@ public final class ReleaseState implements Serializable {
         velocityMs);
   }
 
+  /**
+   * Returns the same thermodynamic snapshot with an explicit slip-flow velocity basis.
+   *
+   * <p>
+   * The scalar velocity is the bulk superficial velocity, so density times velocity remains the total mass flux. Phase
+   * velocities are absolute axial velocities and must be supplied for every reported phase.
+   *
+   * @param bulkVelocityMs total mass flux divided by EOS mixture density, in m/s
+   * @param phaseVelocitiesMs phase velocities in m/s indexed by native phase type
+   * @return immutable hydrodynamic snapshot
+   */
+  ReleaseState withPhaseVelocities(double bulkVelocityMs, Map<String, Double> phaseVelocitiesMs) {
+    return new ReleaseState(this, bulkVelocityMs, phaseVelocitiesMs);
+  }
+
   private static Map<String, Double> fractions(Map<String, Double> values) {
     double sum = 0.0;
     for (double value : values.values()) {
@@ -127,6 +177,18 @@ public final class ReleaseState implements Serializable {
       throw new IllegalStateException("Composition or phase mass fractions do not close");
     }
     return Collections.unmodifiableMap(new TreeMap<String, Double>(values));
+  }
+
+  private static Map<String, Double> positiveValues(Map<String, Double> values, String description) {
+    Map<String, Double> copy = new TreeMap<String, Double>();
+    for (Map.Entry<String, Double> entry : values.entrySet()) {
+      if (entry.getKey() == null || entry.getKey().trim().isEmpty() || !Double.isFinite(entry.getValue())
+          || entry.getValue() <= 0.0) {
+        throw new IllegalStateException("Invalid " + description);
+      }
+      copy.put(entry.getKey(), entry.getValue());
+    }
+    return Collections.unmodifiableMap(copy);
   }
 
   /** @return absolute pressure in Pa */
@@ -154,7 +216,7 @@ public final class ReleaseState implements Serializable {
     return entropyJkgK;
   }
 
-  /** @return velocity in m/s */
+  /** @return axial velocity in m/s, or bulk superficial velocity for a slip-flow state */
   public double getVelocityMs() {
     return velocityMs;
   }
@@ -177,6 +239,16 @@ public final class ReleaseState implements Serializable {
   /** @return immutable mass fractions indexed by native phase type */
   public Map<String, Double> getPhaseMassFractions() {
     return phaseMassFractions;
+  }
+
+  /** @return immutable native-phase densities in kg/m3 */
+  public Map<String, Double> getPhaseDensitiesKgM3() {
+    return phaseDensitiesKgM3;
+  }
+
+  /** @return immutable native-phase velocities in m/s; empty for a homogeneous-flow state */
+  public Map<String, Double> getPhaseVelocitiesMs() {
+    return phaseVelocitiesMs;
   }
 
   /** @return gas mass fraction (not molar phase fraction) */

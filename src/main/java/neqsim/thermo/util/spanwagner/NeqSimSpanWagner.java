@@ -158,7 +158,7 @@ public final class NeqSimSpanWagner {
    * @param temperature Kelvin
    * @param pressure Pascal
    * @param type phase type for which properties are calculated
-   * @return array [rho, Z, h, s, cp, cv, u, g, w]
+   * @return array [rho, Z, h, s, cp, cv, u, g, w, phi, muJT], with muJT in K/Pa
    */
   public static double[] getProperties(double temperature, double pressure, PhaseType type) {
     double tau = TC / temperature;
@@ -188,6 +188,24 @@ public final class NeqSimSpanWagner {
     double phi = Math.exp(lnPhi);
 
     return new double[] {rho, Z, h, s, cp, cv, u, g, w, phi, muJT};
+  }
+
+  /**
+   * Evaluate analytic pressure derivatives at a known reference-EOS density. This reuses the Helmholtz derivatives
+   * without repeating the density solve.
+   *
+   * @param temperature temperature in Kelvin
+   * @param molarDensity molar density in mol/m3
+   * @return array [dP/dT at fixed density in Pa/K, dP/drho at fixed temperature in Pa/(mol/m3)]
+   */
+  public static double[] getPressureDerivatives(double temperature, double molarDensity) {
+    double tau = TC / temperature;
+    double delta = molarDensity / RHOC;
+    Derivs d = new Derivs();
+    alphar(delta, tau, d);
+    double dPdT = R * molarDensity * (1 + delta * d.ar_d - delta * tau * d.ar_dt);
+    double dPdrho = R * temperature * (1 + 2 * delta * d.ar_d + delta * delta * d.ar_dd);
+    return new double[] {dPdT, dPdrho};
   }
 
   /**

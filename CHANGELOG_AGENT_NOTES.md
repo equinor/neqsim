@@ -9,7 +9,7 @@
 
 ---
 
-## 2026-09-25 — Gibbs reactor conservation and recycle Wegstein corrections (#3986)
+## 2026-09-26 — Gibbs reactor conservation and recycle Wegstein corrections (#3986)
 
 - `GibbsReactor` uses total component feed inventories across all inlet phases,
   then performs homogeneous reaction equilibrium followed by the outlet flash.
@@ -23,12 +23,65 @@
 - Regularization is applied before the Newton solve. The objective reads
   fugacity from the state being evaluated. An exhausted unconverged solve now
   returns `false`; callers of `run()` must still inspect `hasConverged()`.
+- The final outlet flash receives mole fractions consistent with the component
+  inventory. This corrects stale `getz()` ppm reporting in the CO2 scenarios
+  without changing their numerical baselines. The CO2 wrapper refreshes the
+  working fugacity state after each iteration; the generic reactor retains its
+  historical iteration behavior pending independent adiabatic qualification.
 - `Recycle` uses `q*x + (1-q)*g(x)` with `q=s/(s-1)`, making `q=0` direct
   substitution and recovering affine fixed points. Legacy mixed-unit flow
   tolerances are unchanged and explicitly documented, including the OR semantics
   of the optional absolute tolerance.
 - Updated reactor/recycle guides and Javadocs. Reaction-engineering and process
   examples should use the named balance columns and check convergence status.
+
+---
+
+## 2026-09-26 — Optional formation-referenced enthalpy (#3991)
+
+`SystemInterface.setUseIdealGasEnthalpyOfFormation(true)` enables gas-phase
+formation enthalpy at 298.15 K plus the existing Cp integral and EOS departure.
+The default remains the legacy sensible reference at 273.15 K. `getHID(T, true)`
+also provides explicit component evaluation; availability and source getters
+distinguish reviewed zero values from placeholders. `COMP.csv` stores 13 sourced
+entries, including the correction of helium's -242000 J/mol placeholder to zero;
+the extended loader copies reviewed value/source pairs. Updated tabulated values
+also affect existing direct consumers of formation data, including reactive
+equilibrium calculations, even when the new stream option is not enabled.
+
+Reactive PH avoids double-counting when formation heat is already in stream
+enthalpy. Recompute numerical PH targets after switching reference, and select
+the same convention for every connected stream. Native caloric models and
+aqueous ionic/solid references are outside this option. See the
+[reference guide](docs/thermo/reading_fluid_properties.md#formation-enthalpy-reference).
+## 2026-09-26 — Living tasks use the general task root; user guide added
+
+- Every `neqsim task-*` command accepts a `<task>` path **or** a folder name inside
+  the task root (`neqsim --show-task-root`), from any directory. An existing path wins.
+- `neqsim task-status` without a folder lists every living task in the task root;
+  `neqsim task-reference-case` without a folder creates the reference case there.
+- New user guide `docs/development/CONTINUOUS_TASK_SOLVING.md` (setup, goal and plan
+  reference, stage scripts, backtest, scheduling, headless agents, ledger, promotion),
+  introduced in `TASK_SOLVING_GUIDE.md` § "Keeping a Task Alive".
+- Updated: skill `neqsim-continuous-task-improvement`, agent `continuous-improvement`,
+  community `continuous-task-improvement-agent`, enterprise
+  `enterprise-continuous-improvement-agent` workflow.
+
+## 2026-09-25 — `RotorUnbalanceAssessment`: coupling/rotor unbalance and shaft-vibration criteria
+
+New `neqsim.process.mechanicaldesign.compressor.RotorUnbalanceAssessment` (static helpers + `evaluate(...)`
+returning a `Result` with `toJson()`), added while diagnosing a coupling drive-bolt fracture on an LP
+recompression train:
+
+* `unbalanceFromMass(massG, radiusMm)` — U = m r (g mm) for a lost/added mass (bolt fragment, balance weight, deposit).
+* `apiAllowableUnbalance(planeMassKg, mcsRpm, applyApi671Floor)` — API 617/671 `6350 W/N` g mm, optional 7.2 g mm floor.
+* `isoPermissibleUnbalance(G, rotorMassKg, rpm)` — ISO 21940-11.
+* `centrifugalForce(unbalanceGmm, rpm)`, `apiShaftVibrationLimit(mcsRpm)` (API 617, capped 25.4 um),
+  `isoZoneBoundaries(rpm)` (ISO 7919-3 shaft relative A/B, B/C, C/D), `significantChangeThreshold(rpm)`
+  (ISO 20816-1, 25 % of B/C), `vectorChange(...)` (1X vector difference), `influenceCoefficient(...)`.
+* Tests: `RotorUnbalanceAssessmentTest` (hand-calculated values). No existing API changed.
+
+---
 
 ## 2026-09-18 — MCP tool contracts: schema coverage gate, `validateInput` for every tool, no more silent "success"
 

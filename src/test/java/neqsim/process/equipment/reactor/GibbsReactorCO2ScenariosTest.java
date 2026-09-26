@@ -117,7 +117,17 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("oxygen", 30.0);
     double[] expectedPpm = new double[] {48.6, 1.0, 7.3, 30.0, 0.0, 0.0, 0.82, 1.9};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
-    runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
+    SystemInterface outlet = runAndPrintWithAssertions(sys, "2", expectedNames, expectedPpm);
+    double totalMoles = outlet.getTotalNumberOfMoles();
+    for (int i = 0; i < outlet.getNumberOfComponents(); i++) {
+      double actualFraction = outlet.getComponent(i).getNumberOfmoles() / totalMoles;
+      Assertions.assertEquals(actualFraction, outlet.getComponent(i).getz(), 1e-10,
+          "Reported ppm must represent the actual outlet inventory for " + outlet.getComponent(i).getComponentName());
+    }
+    // One mole of SO2 and ten moles of NO2 were fed; the reported acid fractions
+    // must not imply hundreds of moles of sulfur or nitrogen products.
+    Assertions.assertTrue(outlet.getComponent("sulfuric acid").getNumberOfmoles() <= 1.05);
+    Assertions.assertTrue(outlet.getComponent("HNO2").getNumberOfmoles() <= 10.05);
   }
 
   // Scenario 3
@@ -232,10 +242,12 @@ public class GibbsReactorCO2ScenariosTest {
   /**
    * Run reactor and assert selected component ppm values against expected with tolerance.
    */
-  private void runAndPrintWithAssertions(SystemInterface system, String label, String[] names, double[] expectedPpm) {
+  private SystemInterface runAndPrintWithAssertions(SystemInterface system, String label, String[] names,
+      double[] expectedPpm) {
     SystemInterface outSys = runReactor(system);
     printComposition(outSys, label);
     assertSelectedPpm(outSys, names, expectedPpm, 2.0, label);
+    return outSys;
   }
 
   /**

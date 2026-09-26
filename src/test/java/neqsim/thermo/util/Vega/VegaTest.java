@@ -1,6 +1,7 @@
 package neqsim.thermo.util.Vega;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,6 +11,9 @@ import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemVegaEos;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PhaseVegaEos;
 
 public class VegaTest {
   private static final Logger logger = LogManager.getLogger(VegaTest.class);
@@ -34,6 +38,105 @@ public class VegaTest {
     assertEquals(0, ierr.val);
     assertTrue(D.val > 0);
     assertEquals(0.43802, D.val, 1e-5);
+  }
+
+  @Test
+  void forcedLiquidUsesDenseVegaRoot() {
+    // CoolProp 7.2.0, dev/fluids/Helium.json (Ortiz-Vega EOS), as recorded in issue #4007.
+    double[][] anchors = {{4.0, 2.0, 33.446484273, 0.1797982634, 15.15132388},
+        {3.0, 1.0, 35.746312243, 0.1121536631, 10.04780424}};
+    for (double[] anchor : anchors) {
+      SystemVegaEos system = new SystemVegaEos(anchor[0], anchor[1]);
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, PhaseType.LIQUID);
+      system.init(3);
+
+      PhaseVegaEos phase = (PhaseVegaEos) system.getPhase(0);
+      assertEquals(anchor[2], new NeqSimVega(phase).getMolarDensity(), 1e-5);
+      assertEquals(anchor[3], phase.getZ(), 1e-5);
+      assertEquals(anchor[4], phase.getCp("J/molK"), 1e-4);
+      assertTrue(phase.getCp("J/molK") > 0);
+      double firstZ = phase.getZ();
+      double firstCp = phase.getCp("J/molK");
+      system.init(3);
+      assertEquals(firstZ, phase.getZ(), 1e-8);
+      assertEquals(firstCp, phase.getCp("J/molK"), 1e-8);
+    }
+  }
+
+  @Test
+  void changingPhaseTypeAtSameTemperatureAndPressureRecalculatesVegaProperties() {
+    SystemVegaEos system = new SystemVegaEos(4.0, 0.8);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+    system.setPhaseType(0, PhaseType.LIQUID);
+    system.init(3);
+    PhaseVegaEos phase = (PhaseVegaEos) system.getPhase(0);
+    double liquidZ = phase.getZ();
+    double liquidDensity = new NeqSimVega(phase).getMolarDensity();
+    assertEquals(PhaseType.LIQUID, phase.getType());
+
+    system.setPhaseType(0, PhaseType.GAS);
+    system.init(3);
+    assertTrue(Math.abs(liquidZ - phase.getZ()) > 0.1);
+    assertTrue(liquidDensity > 5 * new NeqSimVega(phase).getMolarDensity());
+    assertEquals(PhaseType.GAS, phase.getType());
+    assertEquals(new NeqSimVega(phase).propertiesVega()[1], phase.getZ(), 2e-6);
+  }
+
+  @Test
+  void liquidPressureDerivativeAgreesWithFiniteDifference() {
+    for (double[] state : new double[][] {{4.0, 33.446484273}, {3.0, 35.746312243}}) {
+      doubleW pressure = new doubleW(0.0);
+      doubleW z = new doubleW(0.0);
+      Vega.PressureVega(state[0], state[1], pressure, z);
+      double analytic = Vega.dPdDsave;
+      double step = 1e-4;
+      Vega.PressureVega(state[0], state[1] + step, pressure, z);
+      double above = pressure.val;
+      Vega.PressureVega(state[0], state[1] - step, pressure, z);
+      double below = pressure.val;
+      assertEquals((above - below) / (2 * step), analytic, 1e-4);
+      assertTrue(analytic > 0);
+    }
+  }
+
+  @Test
+  void densitySolverErrorDoesNotPublishIdealGasFallback() {
+    SystemVegaEos system = new SystemVegaEos(300.0, 10.0);
+    NeqSimVega wrapper = new NeqSimVega(system.getPhase(0));
+    wrapper.Vega = new Vega() {
+      @Override
+      public void DensityVega(int flag, double temperature, double pressure, doubleW density, intW error,
+          StringW message) {
+        density.val = pressure / R / temperature;
+        error.val = 1;
+        message.val = "forced solver failure";
+      }
+    };
+    wrapper.Vega.SetupVega();
+    assertThrows(IllegalStateException.class, wrapper::getMolarDensity);
+    assertThrows(IllegalStateException.class, wrapper::propertiesVega);
+  }
+
+  @Test
+  void liquidWrapperRejectsLowDensityRootEvenWithoutSolverError() {
+    SystemVegaEos system = new SystemVegaEos(4.0, 0.8);
+    system.getPhase(0).setType(PhaseType.LIQUID);
+    NeqSimVega wrapper = new NeqSimVega(system.getPhase(0));
+    wrapper.Vega = new Vega() {
+      @Override
+      public void DensityVega(int flag, double temperature, double pressure, doubleW density, intW error,
+          StringW message) {
+        assertEquals(2, flag);
+        density.val = 3.0;
+      }
+    };
+    wrapper.Vega.SetupVega();
+    assertThrows(IllegalStateException.class, wrapper::getMolarDensity);
   }
 
   @Test

@@ -35,6 +35,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonParam;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermTwuCoonStatoil;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.util.exception.InvalidInputException;
 
 /**
  * Abstract ComponentEos class.
@@ -182,66 +183,78 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws RuntimeException wrapping {@link neqsim.util.exception.InvalidInputException} if {@code i} does not
+   * correspond to a known attractive-term formulation (valid range: 0-23). On this failure, neither
+   * {@link #getAttractiveTermNumber()} nor {@link #getAttractiveTerm()} is changed.
+   */
   @Override
   public void setAttractiveTerm(int i) {
+    AttractiveTermInterface term = selectAttractiveTerm(i);
+    if (term == null) {
+      throw new RuntimeException(
+          new InvalidInputException(this, "setAttractiveTerm", "i", "unrecognised attractive term " + i));
+    }
+    setAttractiveParameter(term);
     attractiveTermNumber = i;
-    if (i == 0) {
-      setAttractiveParameter(new AttractiveTermSrk(this));
-    } else if (i == 1) {
-      setAttractiveParameter(new AttractiveTermPr(this));
-    } else if (i == 2) {
-      setAttractiveParameter(new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams()));
-    } else if (i == 3) {
-      setAttractiveParameter(new AttractiveTermMollerup(this, getSchwartzentruberParams()));
-    } else if (i == 4) {
-      setAttractiveParameter(new AttractiveTermMatCop(this, getMatiascopemanParams()));
-    } else if (i == 5) {
-      setAttractiveParameter(new AttractiveTermRk(this));
-    } else if (i == 6) {
-      setAttractiveParameter(new AttractiveTermPr1978(this));
-    } else if (i == 7) {
-      setAttractiveParameter(new AttractiveTermPrDelft1998(this));
-    } else if (i == 8) {
-      setAttractiveParameter(new AttractiveTermPrGassem2001(this));
-    } else if (i == 9) {
-      setAttractiveParameter(new AttractiveTermPrDanesh(this));
-    } else if (i == 10) {
-      setAttractiveParameter(new AttractiveTermGERG(this));
-    } else if (i == 11) {
-      setAttractiveParameter(new AttractiveTermTwuCoon(this));
-    } else if (i == 12) {
-      setAttractiveParameter(new AttractiveTermTwuCoonParam(this, getTwuCoonParams()));
-    } else if (i == 13) {
-      setAttractiveParameter(new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR()));
-    } else if (i == 14) {
-      setAttractiveParameter(new AttractiveTermTwu(this));
-    } else if (i == 15) {
-      setAttractiveParameter(new AttractiveTermCPAstatoil(this));
-    } else if (i == 16) {
-      setAttractiveParameter(new AttractiveTermUMRPRU(this));
-    } else if (i == 17) {
-      setAttractiveParameter(new AttractiveTermMatCopPRUMR(this));
-    } else if (i == 18) {
-      if (componentName.equals("mercury")) {
-        setAttractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
-      } else {
-        setAttractiveParameter(new AttractiveTermSrk(this));
-      }
-    } else if (i == 19) {
-      setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
-    } else if (i == 20) {
-      setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
-    } else if (i == 21) {
-      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
-    } else if (i == 22) {
-      setAttractiveParameter(new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA()));
-    } else if (i == 23) {
-      setAttractiveParameter(
-          "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this) : new AttractiveTermCPAstatoil(this));
-    } else {
-      logger.error("error selecting an alpha formulation term");
-      logger.info("ok setting alpha function");
+  }
+
+  private AttractiveTermInterface selectAttractiveTerm(int i) {
+    switch (i) {
+    case 0:
+      return new AttractiveTermSrk(this);
+    case 1:
+      return new AttractiveTermPr(this);
+    case 2:
+      return new AttractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+    case 3:
+      return new AttractiveTermMollerup(this, getSchwartzentruberParams());
+    case 4:
+      return new AttractiveTermMatCop(this, getMatiascopemanParams());
+    case 5:
+      return new AttractiveTermRk(this);
+    case 6:
+      return new AttractiveTermPr1978(this);
+    case 7:
+      return new AttractiveTermPrDelft1998(this);
+    case 8:
+      return new AttractiveTermPrGassem2001(this);
+    case 9:
+      return new AttractiveTermPrDanesh(this);
+    case 10:
+      return new AttractiveTermGERG(this);
+    case 11:
+      return new AttractiveTermTwuCoon(this);
+    case 12:
+      return new AttractiveTermTwuCoonParam(this, getTwuCoonParams());
+    case 13:
+      return new AttractiveTermMatCopPR(this, getMatiascopemanParamsPR());
+    case 14:
+      return new AttractiveTermTwu(this);
+    case 15:
+      return new AttractiveTermCPAstatoil(this);
+    case 16:
+      return new AttractiveTermUMRPRU(this);
+    case 17:
+      return new AttractiveTermMatCopPRUMR(this);
+    case 18:
+      return componentName.equals("mercury") ? new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams())
+          : new AttractiveTermSrk(this);
+    case 19:
+      return new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU());
+    case 20:
+      return new AttractiveTermSoreideWhitson(this);
+    case 21:
+      return new AttractiveTermPrLeeKesler(this);
+    case 22:
+      return new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA());
+    case 23:
+      return "water".equals(componentName) ? new AttractiveTermCPAWaterCaloric(this)
+          : new AttractiveTermCPAstatoil(this);
+    default:
+      return null;
     }
   }
 

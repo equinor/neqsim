@@ -451,9 +451,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    *
    * <p>
    * The extended resource is maintained independently. Existing extended rows retain their properties except for
-   * explicitly unavailable liquid-vapor pressure data and the corrected acetone, ammonia and H2S correlations, taken
-   * from the standard table. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings,
-   * including optional identity metadata.
+   * reviewed formation enthalpies, explicitly unavailable liquid-vapor pressure data and the corrected acetone, ammonia
+   * and H2S correlations, taken from the standard table. Newly added standard names are copied with fresh IDs. CSVREAD
+   * exposes columns as strings, including optional identity metadata.
    * </p>
    */
   private static void includeMissingStandardComponents() {
@@ -494,6 +494,21 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
       database.execute("INSERT INTO COMP (" + names + ") SELECT " + values + " FROM " + source
           + " standard WHERE NOT EXISTS (SELECT 1 FROM COMP extended WHERE extended.NAME=standard.NAME)");
+      // Copy reviewed gas-phase formation data as a value/provenance pair. Never label an
+      // unrelated extended-table placeholder as reviewed merely because the name matches.
+      try (
+          ResultSet formation = database.getResultSet("SELECT NAME,ENTHALPYOFFORMATION,FORMATIONENTHALPYSOURCE FROM "
+              + source + " WHERE FORMATIONENTHALPYSOURCE IS NOT NULL AND FORMATIONENTHALPYSOURCE<>''");
+          java.sql.PreparedStatement update = database.getConnection()
+              .prepareStatement("UPDATE COMP SET ENTHALPYOFFORMATION=?,FORMATIONENTHALPYSOURCE=? WHERE NAME=?")) {
+        while (formation.next()) {
+          update.setString(1, formation.getString("ENTHALPYOFFORMATION"));
+          update.setString(2, formation.getString("FORMATIONENTHALPYSOURCE"));
+          update.setString(3, formation.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
       // Apply only the reviewed vapor-pressure corrections, preserving other extended-table data.
       String vaporColumns = "AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE";
       try (

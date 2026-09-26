@@ -189,6 +189,11 @@ public abstract class Component implements ComponentInterface {
   double meltingPointTemperature = 110.0;
 
   private double idealGasEnthalpyOfFormation = 0.0;
+  /** Provenance of a reviewed ideal-gas formation enthalpy at 298.15 K; null means unavailable. */
+  private String formationEnthalpySource;
+  /** Opt-in formation reference; old serialized components retain the legacy sensible reference. */
+  private boolean useIdealGasEnthalpyOfFormation;
+
   double idealGasGibbsEnergyOfFormation = 0.0;
   double idealGasAbsoluteEntropy = 0.0;
 
@@ -339,10 +344,6 @@ public abstract class Component implements ComponentInterface {
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
         normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
-        if (AntoineA == 0 && !"none".equals(antoineLiqVapPresType)) {
-          AntoineA = 1.0;
-          AntoineB = getNormalBoilingPoint() - 273.15;
-        }
 
         AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
         AntoineBSolid = Double.parseDouble(dataSet.getString("ANTOINESolidB"));
@@ -462,8 +463,7 @@ public abstract class Component implements ComponentInterface {
         liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
         liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
-            || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
+        if (this instanceof ComponentSrkCPA) {
           parachorParameter = Double.parseDouble(dataSet.getString("PARACHOR_CPA"));
         } else {
           parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
@@ -478,7 +478,15 @@ public abstract class Component implements ComponentInterface {
 
         Hsub = Double.parseDouble(dataSet.getString("Hsub"));
 
-        setIdealGasEnthalpyOfFormation(Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
+        idealGasEnthalpyOfFormation = Double.parseDouble(dataSet.getString("EnthalpyOfFormation"));
+        // Older/custom databases have no provenance column: keep legacy operation available,
+        // but do not silently certify their placeholder formation properties.
+        formationEnthalpySource = null;
+        try {
+          formationEnthalpySource = dataSet.getString("FORMATIONENTHALPYSOURCE");
+        } catch (java.sql.SQLException missingOptionalColumn) {
+          logger.debug("No formation-enthalpy provenance column for {}", name);
+        }
         idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
@@ -1481,7 +1489,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public boolean hasAntoineVaporPressureCorrelation() {
     return ionicCharge == 0 && !isIsIon() && antoineLiqVapPresType != null && !antoineLiqVapPresType.trim().isEmpty()
-        && !"none".equals(antoineLiqVapPresType);
+        && !"none".equals(antoineLiqVapPresType)
+        && (AntoineA != 0.0 || AntoineB != 0.0 || AntoineC != 0.0 || AntoineD != 0.0 || AntoineE != 0.0);
   }
 
   /**
@@ -1650,13 +1659,35 @@ public abstract class Component implements ComponentInterface {
         + getCpE() * Math.pow(temperature, 4) - R;
   }
 
-  // integralet av Cp0 mhp T
   /** {@inheritDoc} */
   @Override
   public final double getHID(double T) {
-    return 0 * getIdealGasEnthalpyOfFormation()
-        + (getCpA() * T
-            + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T + 1.0 / 4.0 * getCpD() * T * T * T * T)
+    return getHID(T, useIdealGasEnthalpyOfFormation);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getHID(double T, boolean includeFormationEnthalpy) {
+    double sensible = getSensibleIdealGasEnthalpy(T);
+    if (!includeFormationEnthalpy) {
+      return sensible;
+    }
+    if (!hasIdealGasEnthalpyOfFormation()) {
+      throw new IllegalStateException("No reviewed ideal-gas formation enthalpy for " + componentName
+          + "; supply a value in J/mol at 298.15 K before enabling the formation reference");
+    }
+    return idealGasEnthalpyOfFormation + (sensible - getSensibleIdealGasEnthalpy(298.15));
+  }
+
+  /**
+   * Integrate the existing Cp polynomial from the legacy 273.15 K reference.
+   *
+   * @param T temperature in K
+   * @return sensible ideal-gas molar enthalpy in J/mol
+   */
+  private double getSensibleIdealGasEnthalpy(double T) {
+    return (getCpA() * T + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T
+        + 1.0 / 4.0 * getCpD() * T * T * T * T)
         + 1.0 / 5.0 * getCpE() * T * T * T * T * T
         - (getCpA() * referenceTemperature + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
             + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature * referenceTemperature
@@ -2748,7 +2779,48 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation) {
-    this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
+    setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation, "user-supplied");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setIdealGasEnthalpyOfFormation(double value, String source) {
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException("Formation enthalpy must be finite, in J/mol at 298.15 K");
+    }
+    this.idealGasEnthalpyOfFormation = value;
+    formationEnthalpySource = source;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasIdealGasEnthalpyOfFormation() {
+    return formationEnthalpySource != null && !formationEnthalpySource.trim().isEmpty()
+        && Double.isFinite(idealGasEnthalpyOfFormation) && getIonicCharge() == 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFormationEnthalpySource() {
+    return formationEnthalpySource == null ? "" : formationEnthalpySource;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isUsingIdealGasEnthalpyOfFormation() {
+    return useIdealGasEnthalpyOfFormation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy == useIdealGasEnthalpyOfFormation) {
+      return;
+    }
+    if (useFormationEnthalpy) {
+      getHID(298.15, true); // Validate before changing the reference.
+    }
+    useIdealGasEnthalpyOfFormation = useFormationEnthalpy;
   }
 
   /** {@inheritDoc} */

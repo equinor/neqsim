@@ -1108,6 +1108,32 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getEnthalpy();
 
   /**
+   * Select formation-based enthalpy for every component and phase. Supported phases use the standard Cp-polynomial plus
+   * EOS-departure enthalpy. Native caloric models with independent references, solids and aqueous ions are not
+   * supported by this option. Add components and any user-supplied formation data before enabling it. All streams
+   * connected in an energy balance must use the same reference. Entropy is unchanged.
+   *
+   * @param useFormationEnthalpy true for Hf(298.15 K) plus the Cp integral from 298.15 K; false for the legacy sensible
+   * enthalpy reference at 273.15 K (default)
+   * @throws IllegalStateException if any component lacks reviewed formation data or a phase uses an unsupported caloric
+   * reference
+   */
+  public default void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this system");
+    }
+  }
+
+  /**
+   * Check the selected system enthalpy reference.
+   *
+   * @return true if formation enthalpies are included in stream enthalpy
+   */
+  public default boolean isUsingIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
    * method to return total enthalpy in a specified unit.
    *
    * @param unit Supported units are 'J', 'J/mol', 'kJ/kmol', 'J/kg' and 'kJ/kg'

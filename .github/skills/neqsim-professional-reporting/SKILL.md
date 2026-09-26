@@ -296,6 +296,20 @@ array (or an object wrapping `benchmarks`/`cases`). Each entry must carry:
 | `reference` / `source` / `benchmark` / `reference_value` | the independent reference |
 | `delta_pct` / `deviation_pct` / `status` / `neqsim_value` | the comparison result |
 | `status` (optional) | one of `PASS`, `FAIL`, `WARN`, `INFO` (any other value is rejected) |
+| `disposition` (optional) | why a `FAIL` stands, e.g. two published input sources disagree and nothing was tuned |
+
+A `FAIL` above 20% deviation is an ERROR ("model may need retuning") unless it carries a
+written `disposition`; then it is reported as a documented finding. Use it only when the
+deviation is not a model misfit: a conflict between two input sources, or a cross-check of
+an alternative model that the deliverable does not use. Still name the failure in
+`conclusions` (the gate looks for "fail", "discrepancy", "deviation").
+
+When the compared value comes from another simulator (OPM Flow, OLGA) write it as
+`calculated`, not `neqsim_value`: the column is then headed "Calculated value" rather than
+"NeqSim value". `benchmark_validation.value_label` overrides the heading explicitly.
+
+Figures are numbered in the order of `figure_captions` when the PNG names carry no numeric
+prefix (`fig01_`, `01_`); otherwise alphabetically. Write the captions in narrative order.
 
 Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
 gate) now check this structure, so a malformed benchmark block fails the gate

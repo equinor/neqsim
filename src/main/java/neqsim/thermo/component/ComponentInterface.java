@@ -37,11 +37,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public boolean isInert();
 
   /**
-   * setIdealGasEnthalpyOfFormation.
+   * Supply an ideal-gas standard formation enthalpy at 298.15 K. This explicitly marks the value as user-supplied; it
+   * does not enable the formation reference by itself.
    *
-   * @param idealGasEnthalpyOfFormation a double
+   * @param idealGasEnthalpyOfFormation finite value in J/mol
+   * @throws IllegalArgumentException if the value is not finite
    */
   public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation);
+
+  /**
+   * Set a formation enthalpy together with its provenance. An empty source retains a legacy value or unreviewed
+   * estimate without declaring it available for the formation reference.
+   *
+   * @param value formation enthalpy in J/mol at 298.15 K
+   * @param source provenance identifier, or null/empty for unavailable data
+   * @throws IllegalArgumentException if the value is not finite
+   */
+  public default void setIdealGasEnthalpyOfFormation(double value, String source) {
+    setIdealGasEnthalpyOfFormation(value);
+  }
 
   /**
    * getFormulae.
@@ -582,9 +596,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getMeltingPointTemperature();
 
   /**
-   * getIdealGasEnthalpyOfFormation.
+   * Read the stored standard ideal-gas formation enthalpy at 298.15 K. Legacy database rows can contain placeholders;
+   * check {@link #hasIdealGasEnthalpyOfFormation()} before using a value in a thermochemical balance.
    *
-   * @return a double
+   * @return stored value in J/mol
    */
   public double getIdealGasEnthalpyOfFormation();
 
@@ -1000,12 +1015,70 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getCv0(double temperature);
 
   /**
-   * getHID.
+   * Ideal-gas molar enthalpy using this component's selected reference. The default is sensible enthalpy relative to
+   * 273.15 K. With formation enthalpy enabled, returns Hf(298.15 K) + integral from 298.15 K to T of Cp dT.
    *
-   * @param T a double
-   * @return a double
+   * @param T temperature in K
+   * @return ideal-gas molar enthalpy in J/mol
    */
   public double getHID(double T);
+
+  /**
+   * Evaluate an explicit enthalpy reference without modifying the component.
+   *
+   * @param T temperature in K
+   * @param includeFormationEnthalpy true for Hf(298.15 K) plus sensible heat from 298.15 K; false for the legacy
+   * sensible reference at 273.15 K
+   * @return ideal-gas molar enthalpy in J/mol
+   * @throws IllegalStateException if formation data are unavailable
+   */
+  public default double getHID(double T, boolean includeFormationEnthalpy) {
+    if (includeFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this component");
+    }
+    return getHID(T);
+  }
+
+  /**
+   * Check whether reviewed or explicitly supplied gas-phase formation data are available. Zero is a valid value for
+   * elements; availability is never inferred from its magnitude.
+   *
+   * @return true if formation data are available for the neutral component
+   */
+  public default boolean hasIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
+   * Get provenance of the available formation enthalpy.
+   *
+   * @return source identifier, user-supplied, or empty if unavailable
+   */
+  public default String getFormationEnthalpySource() {
+    return "";
+  }
+
+  /**
+   * Check the selected enthalpy reference.
+   *
+   * @return true if getHID includes formation enthalpy
+   */
+  public default boolean isUsingIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
+   * Select the ideal-gas enthalpy reference. Prefer the corresponding system method so every phase and subsequently
+   * added component uses the same convention.
+   *
+   * @param useFormationEnthalpy true to include formation enthalpy referenced to 298.15 K
+   * @throws IllegalStateException if formation data are unavailable
+   */
+  public default void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this component");
+    }
+  }
 
   /**
    * getEnthalpy.

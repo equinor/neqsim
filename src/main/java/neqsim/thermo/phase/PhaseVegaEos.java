@@ -31,6 +31,7 @@ public class PhaseVegaEos extends PhaseEos {
   // State caching for performance optimization
   private transient double cachedTemperature = Double.NaN;
   private transient double cachedPressure = Double.NaN;
+  private transient PhaseType cachedPhaseType = null;
   private transient double[] cachedMoleFractions = null;
   private transient boolean propertiesCalculated = false;
 
@@ -59,6 +60,10 @@ public class PhaseVegaEos extends PhaseEos {
       return true;
     }
 
+    if (cachedPhaseType != getType()) {
+      return true;
+    }
+
     if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
       return true;
     }
@@ -78,6 +83,7 @@ public class PhaseVegaEos extends PhaseEos {
   private void cacheCurrentState() {
     cachedTemperature = temperature;
     cachedPressure = pressure;
+    cachedPhaseType = getType();
 
     if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
       cachedMoleFractions = new double[numberOfComponents];
@@ -96,6 +102,7 @@ public class PhaseVegaEos extends PhaseEos {
   public void invalidateCache() {
     cachedTemperature = Double.NaN;
     cachedPressure = Double.NaN;
+    cachedPhaseType = null;
     cachedMoleFractions = null;
     propertiesCalculated = false;
   }
@@ -129,10 +136,13 @@ public class PhaseVegaEos extends PhaseEos {
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     IPHASE = pt == PhaseType.LIQUID ? -1 : -2;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    // PhaseEos infers a phase label from its cubic volume; Vega must use the requested root.
+    setType(pt);
 
     if (!okVolume) {
       IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      setType(pt);
     }
     if (initType >= 1) {
       // Check if we can skip Vega calculations (state unchanged)
@@ -162,6 +172,7 @@ public class PhaseVegaEos extends PhaseEos {
       cacheCurrentState();
 
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+      setType(pt);
     }
   }
 

@@ -446,6 +446,7 @@ public class Recycle extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    requireOutletStream();
     iterations++;
     isActive(true);
     /*
@@ -1199,9 +1200,30 @@ public class Recycle extends ProcessEquipmentBaseClass
     return downstreamProperty;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns {@code null} until the tear outlet is configured. Process-module assembly inspects this getter before
+   * wiring the recycle; {@link #run(UUID)} requires an outlet and reports a configuration error if it is absent.
+   * </p>
+   */
   @Override
   public StreamInterface getOutletStream() {
+    return outletStream;
+  }
+
+  /**
+   * Returns the configured tear stream or explains the missing recycle connection.
+   *
+   * @return configured outlet stream
+   * @throws IllegalStateException if the caller has not configured an outlet stream
+   */
+  private StreamInterface requireOutletStream() {
+    if (outletStream == null) {
+      throw new IllegalStateException(
+          "Recycle '" + getName() + "' has no outlet stream; call setOutletStream(...) before wiring or running it");
+    }
     return outletStream;
   }
 

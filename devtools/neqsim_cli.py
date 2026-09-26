@@ -40,6 +40,8 @@ import sys
 
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
+CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger",
+                       "status", "report", "reference-case")
 
 COMMANDS = {
     "try": {
@@ -61,6 +63,10 @@ COMMANDS = {
     "new-task": {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
+    },
+    "fetch-docs": {
+        "module": "doc_retriever",
+        "desc": "Auto-retrieve STID/backend documents into a task (infers installation)",
     },
     "tasks": {
         "module": "task_corpus",
@@ -112,6 +118,19 @@ def _print_usage():
                                 "Generate the report (files named after its title)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
+    print()
+    print("Living tasks (continuous task solving):")
+    print("  task-living TASK         Make a task living (continuous/, baseline, ledger, goal)")
+    print("  task-cycle TASK          Run one monitor or solve cycle (--standard-first for scheduled readiness)")
+    print("  task-solve TASK          Solve until the goal is met or improvement is marginal")
+    print("  task-backtest TASK       Replay archived data with a simulated clock")
+    print("  task-schedule TASK       Schedule daily cycles (Windows Task Scheduler / cron)")
+    print("  task-promote TASK CYCLE  Promote a reviewed cycle to the baseline")
+    print("  task-ledger TASK         List or update the improvement ledger")
+    print("  task-status [PATH]       Status of a living task, or all living tasks (default: task root)")
+    print("  task-report TASK         Rebuild continuous/LIVING_REPORT.md (--formal: also Word/HTML)")
+    print("  task-reference-case [DIR] Create the public reference task (default: task root)")
+    print("  (TASK is a folder path, or a folder name inside the task root)")
     print()
     print("Task destination:")
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
@@ -517,11 +536,19 @@ def main():
     if cmd == "documents":
         sys.exit(_handle_documents(sys.argv[2:]))
 
+    if cmd in ("fetch-docs", "fetch-documents"):
+        import doc_retriever
+        sys.exit(doc_retriever.main(sys.argv[2:]))
+
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
 
     if cmd in ("work-record", "workrecord"):
         sys.exit(_handle_work_record(sys.argv[2:]))
+
+    if cmd.startswith("task-") and cmd[5:] in CONTINUOUS_COMMANDS:
+        from neqsim_continuous import cli as continuous_cli
+        sys.exit(continuous_cli.main([cmd[5:]] + sys.argv[2:]))
 
     if cmd not in COMMANDS:
         print("Unknown command: {!r}".format(cmd))

@@ -355,9 +355,9 @@ def test_inventory_is_promoted(client):
     )
     sources = record.get("contractEvidenceSources", [])
     require(
-        inventory.get("inventoryVersion") == "1.45"
-        and limitations.get("contractTestedToolCount") == 45
-        and limitations.get("confirmedGapToolCount") == 6
+        inventory.get("inventoryVersion") == "1.46"
+        and limitations.get("contractTestedToolCount") == 46
+        and limitations.get("confirmedGapToolCount") == 5
         and limitations.get("contractPromotionCandidateCount") == 0,
         "composition promotion did not update inventory accounting",
         inventory,

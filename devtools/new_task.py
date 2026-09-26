@@ -10,10 +10,13 @@ Usage:
     neqsim new-task "hydrate formation temperature" --type A --author "Your Name"
     neqsim new-task "task title" --prompt "verbatim user request"
     neqsim new-task "task title" --prompt-file path/to/request.txt
+    neqsim new-task "task title" --prompt-file path/to/task_brief.docx   # or .md
     neqsim new-task "field study" --scale comprehensive --report-depth detailed
     neqsim new-task "field study" --notebooks "01_basis.ipynb,02_model.ipynb"
     neqsim new-task "field study" --intake-pause always
     neqsim new-task "field study" --config-file study_config.yaml
+    neqsim new-task "PEPR title" --slug 2026-09-25_pepr_80298789_x   # exact folder name;
+                                         # scaffolds around files already in it
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
     neqsim new-task --set-default-folder "D:/Engineering Tasks"
@@ -1497,7 +1500,7 @@ STUDY_CONFIG = "\n".join([
     "  confirm_before_notebooks: true",
     "",
     "inputs:",
-    "  prompt_file: \"\"       # Optional text/markdown file used as the original task prompt.",
+    "  prompt_file: \"\"       # Optional task brief (.md/.txt/.docx) used as the original task prompt.",
     "  document_root: \"\"     # Source document library, root + all subfolders. Empty = not configured.",
     "  documents_required: false",
     "  document_extraction_required: auto  # auto | required | optional | skip",
@@ -2063,9 +2066,110 @@ def _seed_study_config(task_dir, title, task_type, scale, report_depth,
         config.write(content)
 
 
+def _docx_table_to_markdown(table):
+    rows = []
+    for row in table.rows:
+        cells = [" ".join(cell.text.split()).replace("|", "\\|") for cell in row.cells]
+        rows.append("| " + " | ".join(cells) + " |")
+    if not rows:
+        return ""
+    width = len(table.rows[0].cells)
+    rows.insert(1, "|" + "|".join(["---"] * width) + "|")
+    return "\n".join(rows)
+
+
+def _docx_to_markdown(path):
+    """Convert a Word task brief to Markdown, keeping headings, lists and tables in order."""
+    try:
+        import docx
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+    except ImportError:
+        raise ValueError("Reading a .docx prompt file needs python-docx "
+                         "(pip install python-docx)")
+    document = docx.Document(path)
+    blocks = []
+    for child in document.element.body.iterchildren():
+        tag = child.tag.rsplit("}", 1)[-1]
+        if tag == "tbl":
+            text = _docx_table_to_markdown(Table(child, document))
+        elif tag == "p":
+            paragraph = Paragraph(child, document)
+            text = paragraph.text.strip()
+            if not text:
+                continue
+            style = (paragraph.style.name if paragraph.style is not None else "").lower()
+            if style == "title":
+                text = "# " + text
+            elif style.startswith("heading"):
+                level = style.replace("heading", "").strip()
+                text = "#" * (int(level) if level.isdigit() else 2) + " " + text
+            elif "list" in style:
+                text = ("1. " if "number" in style else "- ") + text
+        else:
+            continue
+        if text:
+            blocks.append(text)
+    return "\n\n".join(blocks)
+
+
+def read_prompt_file(path):
+    """Return the text of a task brief as Markdown.
+
+    A .docx brief is converted (headings, lists and tables in order); any other
+    file is read as UTF-8 text, as before. Raises ValueError for a missing or
+    unreadable file.
+    """
+    if not path or not os.path.isfile(path):
+        raise ValueError("Prompt file not found: {}".format(path))
+    if os.path.splitext(path)[1].lower() == ".docx":
+        return _docx_to_markdown(path)
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        raise ValueError("Prompt file is not UTF-8 text or .docx: {}. For a PDF, place it "
+                         "in references/ and extract it in Step 1.".format(path))
+
+
+def _attach_prompt_file(task_dir, prompt_file):
+    """Copy the brief into references/manual/ and record it in study_config.yaml."""
+    manual_dir = os.path.join(task_dir, "step1_scope_and_research", "references", "manual")
+    os.makedirs(manual_dir, exist_ok=True)
+    target = os.path.join(manual_dir, os.path.basename(prompt_file))
+    shutil.copy2(prompt_file, target)
+    relative = os.path.relpath(target, task_dir).replace("\\", "/")
+    config_path = os.path.join(task_dir, "study_config.yaml")
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = f.read()
+        config = config.replace('prompt_file: ""', 'prompt_file: "{}"'.format(relative), 1)
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write(config)
+    return relative
+
+
+def _copy_template_missing(template_dir, task_dir, ignore):
+    """Copy template files into an existing folder, never overwriting a file.
+
+    @param template_dir the TASK_TEMPLATE folder
+    @param task_dir the existing task folder
+    @param ignore a shutil ignore callable
+    """
+    for root, dirs, files in os.walk(template_dir):
+        skipped = ignore(root, dirs + files)
+        dirs[:] = [d for d in dirs if d not in skipped]
+        dest_root = os.path.join(task_dir, os.path.relpath(root, template_dir))
+        os.makedirs(dest_root, exist_ok=True)
+        for name in files:
+            dest = os.path.join(dest_root, name)
+            if name not in skipped and not os.path.exists(dest):
+                shutil.copy2(os.path.join(root, name), dest)
+
+
 def create_task(title, task_type="B", author="", prompt="", scale="",
                 report_depth="", notebooks="", config_file="",
-                intake_pause="", task_root=None):
+                intake_pause="", task_root=None, prompt_file="", slug=""):
     """Create a new task folder from the template.
 
     Parameters
@@ -2091,7 +2195,17 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         Optional intake pause setting: auto, always, or never.
     task_root : str
         Optional parent folder overriding the environment and saved default.
+    prompt_file : str
+        Optional task brief (.md, .txt or .docx). Its text becomes the prompt
+        when ``prompt`` is empty; the original is kept in references/manual/.
+    slug : str
+        Optional exact folder name. When the folder already exists but has not
+        been scaffolded (no README.md) - e.g. created by a PEPR/M1 intake tool
+        that downloaded attachments first - the template is filled in around
+        the existing files instead of creating a second folder.
     """
+    if prompt_file and not prompt:
+        prompt = read_prompt_file(prompt_file)
     task_root = resolve_task_root(task_root)
     template_dir = os.path.join(task_root, "TASK_TEMPLATE")
     # Ensure workspace exists
@@ -2106,23 +2220,28 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         setup_workspace(task_root)
 
     today = date.today().isoformat()
-    folder_name = "{}_{}".format(today, slugify(title))
+    slug = (slug or "").strip()
+    if slug and (slug in (".", "..") or os.path.basename(slug) != slug
+                 or "/" in slug or "\\" in slug):
+        raise ValueError("--slug must be a single folder name, got: {}".format(slug))
+    folder_name = slug or "{}_{}".format(today, slugify(title))
     task_dir = os.path.join(task_root, folder_name)
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
     if os.path.exists(task_dir):
-        print("ERROR: Folder already exists: {}".format(task_dir))
-        sys.exit(1)
-
-    # Copy template
-    shutil.copytree(
-        template_dir,
-        task_dir,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
-    )
+        if not slug or os.path.exists(os.path.join(task_dir, "README.md")):
+            print("ERROR: Folder already exists: {}".format(task_dir))
+            sys.exit(1)
+        # Pre-created by an intake tool: add the template without touching its files.
+        _copy_template_missing(template_dir, task_dir, ignore)
+        print("Scaffolding existing folder: {}".format(task_dir))
+    else:
+        shutil.copytree(template_dir, task_dir, ignore=ignore)
 
     # Seed explicit task-depth configuration before the agent starts planning.
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
                        notebooks, config_file, intake_pause)
+    brief_path = _attach_prompt_file(task_dir, prompt_file) if prompt_file else ""
 
     # List the source-document library where agents already look, so a
     # configured root is discoverable without knowing the CLI exists.
@@ -2202,10 +2321,29 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
                 if placeholder_block in ui:
                     ui = ui.replace(placeholder_block,
                                     marker + "\n" + prompt.strip())
+            if brief_path:
+                attachment = ("- [List any files, images, PDFs, links, or pasted tables "
+                              "the user provided]")
+                ui = ui.replace(attachment, "- `{}` - task brief supplied with --prompt-file "
+                                "(its text is the original request above)".format(brief_path), 1)
             with open(user_input_path, "w", encoding="utf-8") as f:
                 f.write(ui)
         except Exception as e:
             print("  WARNING: could not seed user_input.md ({})".format(e))
+
+    # Pull controlled documents automatically when a retrieval backend is
+    # configured (same zero-argument path agents use in chat). Non-fatal.
+    try:
+        import doc_retriever
+        retrieval = doc_retriever.retrieve_for_task(task_dir, quiet=True)
+        if retrieval.get("status") == "ok":
+            print("  Documents: {} retrieved into step1_scope_and_research/references/stid/".format(
+                retrieval.get("documents_downloaded", 0) + retrieval.get("documents_cached", 0)))
+        elif retrieval.get("status") not in ("no_backend", "disabled", "no_installation"):
+            print("  Document retrieval {}: {}".format(retrieval.get("status"),
+                                                      retrieval.get("message", "")))
+    except Exception as error:  # noqa: BLE001
+        print("  WARNING: automatic document retrieval skipped ({})".format(str(error)[:120]))
 
     print("Created: {}".format(task_dir))
     print("")
@@ -2343,11 +2481,13 @@ def _main(argv, task_root=None):
     task_type = "B"
     author = ""
     prompt = ""
+    prompt_file = ""
     scale = ""
     report_depth = ""
     notebooks = ""
     config_file = ""
     intake_pause = ""
+    slug = ""
 
     i = 2
     while i < len(argv):
@@ -2362,9 +2502,9 @@ def _main(argv, task_root=None):
             i += 2
         elif argv[i] == "--prompt-file" and i + 1 < len(argv):
             try:
-                with open(argv[i + 1], "r", encoding="utf-8") as f:
-                    prompt = f.read()
-            except Exception as e:
+                prompt = read_prompt_file(argv[i + 1])
+                prompt_file = argv[i + 1]
+            except ValueError as e:
                 print("WARNING: could not read --prompt-file: {}".format(e))
             i += 2
         elif argv[i] == "--scale" and i + 1 < len(argv):
@@ -2381,6 +2521,9 @@ def _main(argv, task_root=None):
             i += 2
         elif argv[i] == "--config-file" and i + 1 < len(argv):
             config_file = argv[i + 1]
+            i += 2
+        elif argv[i] == "--slug" and i + 1 < len(argv):
+            slug = argv[i + 1]
             i += 2
         else:
             i += 1
@@ -2403,7 +2546,8 @@ def _main(argv, task_root=None):
         intake_pause = ""
 
     create_task(title, task_type, author, prompt, scale, report_depth,
-                notebooks, config_file, intake_pause, task_root=task_root)
+                notebooks, config_file, intake_pause, task_root=task_root,
+                prompt_file=prompt_file, slug=slug)
 
 
 if __name__ == "__main__":
