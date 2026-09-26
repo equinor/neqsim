@@ -52,6 +52,54 @@ def test_invalid_default_fails_closed(defaults):
         new_task.resolve_task_root()
 
 
+def test_word_brief_becomes_prompt_and_is_kept(defaults, tmp_path):
+    docx = pytest.importorskip("docx")
+    brief = tmp_path / "Increase production brief.docx"
+    document = docx.Document()
+    document.add_heading("Goal", level=1)
+    document.add_paragraph("Find operational levers worth at least 2 MSm3/d.")
+    document.add_paragraph("No modifications", style="List Bullet")
+    table = document.add_table(rows=2, cols=2)
+    table.cell(0, 0).text, table.cell(0, 1).text = "KPI", "Target"
+    table.cell(1, 0).text, table.cell(1, 1).text = "uplift", "2 MSm3/d"
+    document.save(str(brief))
+
+    text = new_task.read_prompt_file(str(brief))
+    assert text.splitlines()[0] == "# Goal"
+    assert "- No modifications" in text
+    assert "| uplift | 2 MSm3/d |" in text
+
+    new_task.save_default_task_root(str(tmp_path / "tasks"))
+    task = Path(new_task.create_task("Brief task", prompt_file=str(brief)))
+    kept = task / "step1_scope_and_research" / "references" / "manual" / brief.name
+    assert kept.is_file()
+    assert "Find operational levers" in (task / "user_input.md").read_text(encoding="utf-8")
+    config = (task / "study_config.yaml").read_text(encoding="utf-8")
+    assert 'prompt_file: "step1_scope_and_research/references/manual/{}"'.format(brief.name) in config
+
+
+def test_markdown_brief_and_legacy_text_files(tmp_path, defaults, monkeypatch, capsys):
+    brief = tmp_path / "brief.md"
+    brief.write_text("# Goal\nReduce compressor power by 5 %.\n", encoding="utf-8")
+    assert new_task.read_prompt_file(str(brief)).startswith("# Goal")
+    legacy = tmp_path / "request.prompt"
+    legacy.write_text("verbatim request", encoding="utf-8")
+    assert new_task.read_prompt_file(str(legacy)) == "verbatim request"
+    pdf = tmp_path / "brief.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n\xff\xfe\x00binary")
+    with pytest.raises(ValueError, match="not UTF-8 text"):
+        new_task.read_prompt_file(str(pdf))
+    with pytest.raises(ValueError, match="not found"):
+        new_task.read_prompt_file(str(tmp_path / "missing.md"))
+    # Unreadable prompt files keep the historical behaviour: warn and still create the task.
+    root = tmp_path / "cli tasks"
+    monkeypatch.setattr(sys, "argv", ["new_task", "Legacy prompt", "--task-root", str(root),
+                                     "--prompt-file", str(pdf)])
+    new_task.main()
+    assert "WARNING: could not read --prompt-file" in capsys.readouterr().out
+    assert len(list(root.glob("*_legacy_prompt"))) == 1
+
+
 def test_cli_settings_and_override(defaults, tmp_path, monkeypatch, capsys):
     saved = str(tmp_path / "saved")
     monkeypatch.setattr(sys, "argv", ["new_task", "--set-default-folder", saved])

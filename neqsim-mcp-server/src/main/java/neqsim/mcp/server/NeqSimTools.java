@@ -2261,10 +2261,12 @@ public class NeqSimTools {
    * @param flareJson JSON spec with heat duty and radiation parameters
    * @return JSON string with radiation profile and safe-distance contour
    */
-  @Tool(description = "Compute flare-tip thermal radiation per API 521 §6 / API 537. "
-      + "Calculates the radiant heat flux at user-specified ground distances and the "
-      + "safe ground distance to API 521 thresholds (1.58, 4.73, 6.31, 9.46 kW/m²) "
-      + "used for personnel exposure and equipment limits.")
+  @Tool(description = "Compute bounded flare-tip thermal-radiation screening with the canonical "
+      + "NeqSim Flare model. Requests are capped at 16384 UTF-8 bytes and exactly one positive "
+      + "finite heat duty. Accepts 1 to 200 positive finite distances plus bounded flame height "
+      + "and radiant fraction. Returns deterministic profiles and reference-threshold contours "
+      + "for screening only; it does not claim standards conformance, safe siting, mechanical "
+      + "design, plant authority, or replace qualified engineering review.")
   public String runFlareNetwork(
       @ToolArg(description = "JSON with: 'heatDuty_MW' (or 'heatDuty_W'), optional "
           + "'flameHeight_m' (default 30), 'radiantFraction' (default 0.18), and "

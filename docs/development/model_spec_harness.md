@@ -72,10 +72,10 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 484 cases across eleven system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia and Leachman), direct
+The catalog has 588 cases across twelve system drivers (SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman and Vega), direct
 SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
-reference EOS and normal-hydrogen Leachman reference EOS through their System and exact phase paths, a component saturation
+reference EOS, normal-hydrogen Leachman reference EOS and helium Vega reference EOS through their System and exact phase paths, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -94,6 +94,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Ideal gas | NIST argon molecular weight and Shomate heat capacity at 298.15, 400 and 600 K, combined with independently evaluated ideal-gas density, Z, fugacity, Cv, speed of sound and zero Joule-Thomson coefficient through `SystemIdealGas` and exact `PhaseIdealGas` entry points |
 | Ammonia | CoolProp 7.2.0's Gao 2020 ammonia EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemAmmoniaEos` and exact `PhaseAmmoniaEos` entry points |
 | Normal hydrogen | CoolProp 7.2.0's Leachman 2009 hydrogen EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemLeachmanEos` and exact `PhaseLeachmanEos` entry points |
+| Helium | CoolProp 7.2.0's Ortiz Vega 2019 helium EOS at four gas/supercritical states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemVegaEos` and exact `PhaseVegaEos` entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published SRK/PR equations with the declared methane
@@ -152,6 +153,19 @@ external numerical anchors; the identities supplement them and cannot make an
 incorrect model pass by themselves. Qualification is limited to normal hydrogen at
 those four single-phase states. Para/ortho hydrogen, phase equilibrium, solids,
 transport, flashes and the rest of the published Leachman domain remain explicit debt.
+
+The Vega state control reuses one pure-helium system while moving from 300 K/10 bar
+through 250 K/25 bar, 150 K/50 bar and 100 K/50 bar before returning to the initial
+state. It requires the exact `PhaseVegaEos` path, deterministic repeat reads, refreshed
+density and caloric state, `Cp > Cv > 0`, `H = U + PV`, and `G = H - TS`. The CoolProp
+values are external numerical anchors; the identities supplement them and cannot make
+an incorrect model pass by themselves. Qualification is limited to the four declared
+gas/supercritical states. The current density adapter always requests the vapor root,
+so forced-liquid helium can return a low-density root with nonphysical heat capacity
+([issue #4007](https://github.com/equinor/neqsim/issues/4007));
+liquid states therefore remain explicitly unqualified pending the owning defect fix.
+Flashes, phase equilibrium, transport, saturation, mixtures and the rest of the
+declared Vega domain remain debt.
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -288,6 +302,17 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   differences, while the tighter Joule-Thomson tolerance reflects direct derivative
   agreement. These are cross-implementation checks of the published reference EOS, not
   independent experimental validation, and the stored values were not refreshed from NeqSim.
+- The [CoolProp 7.2.0 helium definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Helium.json)
+  identifies the 2019 Ortiz-Vega helium-4 formulation (its bibliography records unpublished
+  REFPROP 10 coefficients used with permission) and supplies the external implementation
+  used to evaluate the four catalog states. The definition declares the triple point at
+  2.1768 K, an EOS maximum of 2000 K and a maximum pressure of 1 GPa; the catalog qualifies
+  only four gas/supercritical states from 100--300 K and 10--50 bar. The `1e-4` relative
+  tolerances cover density and energy cross-port differences, `5e-4` covers caloric,
+  acoustic and isentropic-exponent differences, and 2% is reserved for the small signed
+  Joule-Thomson derivative. These are cross-implementation checks of the shared
+  reference formulation, not independent experimental validation, and the stored values were not
+  refreshed from NeqSim.
 
 NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
 definitions on 2026-09-24 and 2026-09-25, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from

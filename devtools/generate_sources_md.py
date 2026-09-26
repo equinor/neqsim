@@ -64,12 +64,16 @@ SOURCE_CATALOG = [
     ("rigga", "Rigga (legacy)", "Legacy PDM Streamer production-volume exports"),
     ("vendor", "Vendor", "Vendor datasheets, manuals, performance maps"),
     ("lab", "Lab / PVT", "Lab, PVT and gas-sample reports"),
+    ("osdu", "OSDU Data Platform", "OSDU Storage records and Reservoir DDMS (RESQML) exports"),
+    ("fmu", "FMU project share", "Reservoir-model project files (Eclipse includes, ERT, RMS volumes)"),
     ("literature", "Literature", "Papers, standards, textbooks"),
     ("web", "Web", "Saved web pages, article extracts, online references"),
     ("manual", "Manual upload", "User-provided documents"),
     ("other", "Other", "Uncategorised / needs filing"),
 ]
 SOURCE_KEYS = [key for key, _name, _desc in SOURCE_CATALOG]
+# Folder names agents already write that belong to a catalogued source.
+SOURCE_FOLDER_ALIASES = {"fmu_share": "fmu", "ores": "osdu", "rddms": "osdu"}
 SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}
 SOURCE_DESC = {key: desc for key, _name, desc in SOURCE_CATALOG}
 
@@ -253,8 +257,9 @@ def scan_references(task_dir: Path, references_dir: Path) -> dict:
 
             record = dict(metadata.get(filename.lower(), {}))
             # Source precedence: subfolder > manifest > filename inference > other.
-            if len(rel_parts) > 1 and rel_parts[0] in SOURCE_KEYS:
-                source = rel_parts[0]
+            folder = SOURCE_FOLDER_ALIASES.get(rel_parts[0], rel_parts[0]) if len(rel_parts) > 1 else ""
+            if folder in SOURCE_KEYS:
+                source = folder
             else:
                 source = _record_source(record) or _infer_source_from_name(filename) or "other"
 
@@ -437,6 +442,10 @@ def _default_evidence_status(name: str) -> str:
         return "structured_data"
     if lower.endswith((".md", ".txt", ".log", ".py")):
         return "structured_data"
+    # Eclipse/OPM/ERT/RESQML model inputs are keyword text read by a simulator, not prose to extract.
+    simulator = (".inc", ".ecl", ".data", ".sch", ".grdecl", ".vfp", ".ert", ".cfg", ".epc")
+    if lower.endswith(simulator):
+        return "structured_data"
     return "not_started"
 
 
@@ -457,12 +466,16 @@ def build_document_evidence(record: dict, existing: dict | None) -> dict:
         for doc in block.get("documents", []):
             path = doc["file"]
             prior = previous.get(path, {})
+            status = prior.get("status")
+            # A placeholder status is re-derived, so an improved default reaches existing tasks.
+            if not status or status == "not_started":
+                status = _default_evidence_status(doc["name"])
             sources.append(
                 {
                     "path": path,
                     "source": block["source"],
                     "system_name": block["system_name"],
-                    "status": prior.get("status") or _default_evidence_status(doc["name"]),
+                    "status": status,
                     "title": prior.get("title") or doc.get("title") or doc["name"],
                     "summary": prior.get("summary") or doc.get("summary", ""),
                     "sha256": doc.get("sha256", ""),

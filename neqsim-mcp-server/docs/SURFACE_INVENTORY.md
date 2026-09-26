@@ -23,7 +23,7 @@ Per-tool evidence counts and historical promotion records remain independent.
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
-| MCP protocol scenarios | 97 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
+| MCP protocol scenarios | 98 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
@@ -94,7 +94,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
-`src/test/java/neqsim/mcp`, 97 named scenarios in the primary real-STDIO JSON-RPC harness
+`src/test/java/neqsim/mcp`, 98 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts. The dependency-free
@@ -153,8 +153,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 6 records remain
-`CONFIRMED_GAP`, forty-five are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 5 records remain
+`CONFIRMED_GAP`, forty-six are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
