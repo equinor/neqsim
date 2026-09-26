@@ -46,7 +46,7 @@ public class PipeWallHeatTransferDocumentationTest extends NeqSimTest {
     assertTrue(guide.contains("Each array must contain"));
     assertTrue(prose.contains("numberOfLegs + 1 values"));
     assertTrue(prose.contains("There is no singular `setOuterTemperature(double)`"));
-    assertTrue(guide.contains("It does not automatically configure a `OnePhasePipeLine`"));
+    assertTrue(prose.contains("It does not automatically configure a `OnePhasePipeLine`"));
     assertTrue(guide.contains("java -ea"));
     assertTrue(prose.contains("It does not predict fluid outlet temperature, multiphase behaviour, "
         + "hydrate risk, cooldown, or restart response"));
