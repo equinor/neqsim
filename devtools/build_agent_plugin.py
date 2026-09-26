@@ -428,6 +428,54 @@ def installed_java_candidates():
                     break
     for cand in vscode_java_candidates():
         yield cand
+    for cand in registry_java_candidates():
+        yield cand
+
+
+def registry_java_candidates():
+    """JDK homes that vendor MSI installers record in the Windows registry.
+
+    Catches a JDK installed outside the usual folders when neither PATH nor
+    JAVA_HOME points at it.
+    """
+    if os.name != "nt":
+        return
+    try:
+        import winreg
+    except ImportError:
+        return
+    sep = chr(92)  # backslash, kept out of this template's escaping
+    vendors = (("JavaSoft", "JDK"), ("Eclipse Adoptium", "JDK"), ("Eclipse Foundation", "JDK"),
+               ("Microsoft", "JDK"), ("Azul Systems", "Zulu"), ("Amazon Corretto", "JDK"),
+               ("BellSoft", "Liberica"))
+
+    def walk(hive, key, depth):
+        try:
+            handle = winreg.OpenKey(hive, key)
+        except OSError:
+            return
+        with handle:
+            for value in ("JavaHome", "Path", "InstallationPath"):
+                try:
+                    home, _kind = winreg.QueryValueEx(handle, value)
+                except OSError:
+                    continue
+                if home:
+                    yield Path(str(home)) / "bin" / JAVA_EXE
+            if depth <= 0:
+                return
+            index = 0
+            while True:
+                try:
+                    sub = winreg.EnumKey(handle, index)
+                except OSError:
+                    break
+                index += 1
+                yield from walk(hive, key + sep + sub, depth - 1)
+
+    for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        for vendor, product in vendors:
+            yield from walk(hive, sep.join(("SOFTWARE", vendor, product)), 3)
 
 
 def find_mcp_java():
@@ -852,7 +900,8 @@ $root = if ($env:PLUGIN_ROOT) { $env:PLUGIN_ROOT } else { Split-Path -Parent $PS
 $script = Join-Path $root "scripts/install_skill_packages.py"
 if ($env:NEQSIM_PYTHON -and (Test-Path $env:NEQSIM_PYTHON)) { & $env:NEQSIM_PYTHON $script; exit 0 }
 if (Get-Command py -ErrorAction SilentlyContinue) { & py -3 $script; exit 0 }
-if (Get-Command python -ErrorAction SilentlyContinue) { & python $script; exit 0 }
+$py = Get-Command python -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -notlike '*\\WindowsApps\\*' } | Select-Object -First 1
+if ($py) { & $py.Source $script; exit 0 }
 exit 0
 '''
 
@@ -901,12 +950,23 @@ _HOOK_WINDOWS_SCRIPT_TEMPLATE = (
     "if (-not $r) {{ exit 0 }}; "
     "$env:PLUGIN_ROOT = $r; "
     "$s = Join-Path $r 'scripts/install_skill_packages.py'; "
-    "if ($env:NEQSIM_PYTHON -and (Test-Path $env:NEQSIM_PYTHON)) {{ & $env:NEQSIM_PYTHON $s }} "
-    "elseif (Get-Command py -ErrorAction SilentlyContinue) {{ & py -3 $s }} "
-    "elseif (Get-Command python -ErrorAction SilentlyContinue) {{ & python $s }} "
-    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python interpreter "
-    "found on PATH (install Python 3.10+, or set NEQSIM_PYTHON to a python.exe). The MCP "
-    "server and the skills still load; the task toolkit is not installed.\"}}' }}")
+    # Python off PATH is common on managed PCs; the Store alias stub under WindowsApps
+    # opens the Store instead of running, so it is skipped.
+    "$p = @(); "
+    "if ($env:NEQSIM_PYTHON -and (Test-Path $env:NEQSIM_PYTHON)) {{ $p = @($env:NEQSIM_PYTHON) }} "
+    "elseif (Get-Command py -ErrorAction SilentlyContinue) {{ $p = @('py', '-3') }} "
+    "else {{ $c = Get-Command python -CommandType Application -ErrorAction SilentlyContinue | "
+    "Where-Object {{ $_.Source -notlike '*\\WindowsApps\\*' }} | Select-Object -First 1; "
+    "if ($c) {{ $p = @($c.Source) }} "
+    "else {{ $f = Get-ChildItem -Path \"$env:LOCALAPPDATA\\Programs\\Python\\Python3*\\python.exe\", "
+    "\"$env:ProgramFiles\\Python3*\\python.exe\", 'C:\\appl\\*\\Scripts\\python.exe' "
+    "-ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1; "
+    "if ($f) {{ $p = @($f.FullName) }} }} }}; "
+    "if ($p.Count -gt 0) {{ $x = $p[0]; $a = @($p | Select-Object -Skip 1) + @($s); & $x @a }} "
+    "else {{ Write-Output '{{\"systemMessage\":\"NeqSim plugin {name}: no Python 3.10+ found "
+    "(checked NEQSIM_PYTHON, py, python on PATH and the usual install folders). Install Python "
+    "from AccessIT or set NEQSIM_PYTHON to a python.exe, then start a new chat. Until then the "
+    "neqsim_* MCP tools cannot be registered and the task toolkit is not installed.\"}}' }}")
 
 _HOOK_POSIX_TEMPLATE = (
     "sh -c 'r=\"${{PLUGIN_ROOT:-${{CLAUDE_PLUGIN_ROOT:-$COPILOT_PLUGIN_ROOT}}}}\"; "
