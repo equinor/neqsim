@@ -24,6 +24,8 @@ For the broader workflow, see the
 [field-development overview](../fielddevelopment/README), the
 [field-development API guide](../fielddevelopment/API_GUIDE), and the
 [host tie-in capacity guide](../fielddevelopment/HOST_TIE_IN_CAPACITY).
+For generated API details, use the
+[current NeqSim Javadoc](https://equinor.github.io/neqsim/javadoc/index.html).
 
 ## Units and interpretation
 
@@ -85,8 +87,9 @@ public final class FieldDevelopmentPlanningExample {
 
     double expectedRateSm3PerDay =
         initialRateSm3PerDay * Math.exp(-nominalDeclinePerYear * 2.0);
+    double rateAfterFiveYearsSm3PerDay = ProductionProfile.calculateRate(decline, 5.0);
     assert Math.abs(rateAfterTwoYearsSm3PerDay - expectedRateSm3PerDay) < 1.0e-8;
-    assert cumulativeFiveYearsSm3 > rateAfterTwoYearsSm3PerDay * 365.25 * 5.0;
+    assert cumulativeFiveYearsSm3 > rateAfterFiveYearsSm3PerDay * 365.25 * 5.0;
     assert cumulativeFiveYearsSm3 < initialRateSm3PerDay * 365.25 * 5.0;
 
     WellScheduler scheduler = new WellScheduler();
