@@ -1218,7 +1218,7 @@ public class GibbsReactor extends TwoPortEquipment {
     // solver cannot create spurious trace amounts (e.g. sulfuric acid when no sulfur is fed).
     determineFeedExcludedComponents(system);
 
-    // Perform Gibbs minimization
+    // Prepare candidate species before minimizing Gibbs energy.
     if (useAllDatabaseSpecies) {
       // Add all database species to system
       for (GibbsComponent component : gibbsDatabase) {
@@ -1230,8 +1230,8 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    // Minimize Gibbs energy
-    performGibbsMinimization(system);
+    // Seed candidate species with a positive initial guess.
+    seedMinimumComponentMoles(system);
 
     // Enforce minimum concentrations
     enforceMinimumConcentrations(system);
@@ -1295,14 +1295,11 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform Gibbs free energy minimization.
+   * Seed eligible component amounts for the later Gibbs equilibrium solve.
    *
    * @param system The thermodynamic system
    */
-  private void performGibbsMinimization(SystemInterface system) {
-    // Set iteration to 1
-    final int iteration = 1;
-
+  private void seedMinimumComponentMoles(SystemInterface system) {
     // Create initial guess for moles
     final Map<String, Double> initialGuess = new HashMap<>();
     for (int i = 0; i < system.getNumberOfComponents(); i++) {
@@ -1328,7 +1325,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-    logger.info("Gibbs minimization completed for iteration " + iteration);
+    logger.debug("Seeded eligible Gibbs species before equilibrium minimization");
   }
 
   /**
