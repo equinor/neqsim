@@ -40,7 +40,7 @@ jobs:
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check
-          ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowFlashingTest,ReleaseFlowAdapterTest,IdealGasFannoPipeReleaseModelTest,ReleaseInventoryTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
+          ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowFlashingTest,ReleaseFlowAdapterTest,IdealGasFannoPipeReleaseModelTest,DriftFluxHomogeneousEquilibriumReleaseModelTest,ReleaseInventoryTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
       - name: Validate emitted frames and schema rejection cases
         run: |
           python -m pip install jsonschema==4.26.0

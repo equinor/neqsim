@@ -9,6 +9,8 @@
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
  * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
  * applicability assessment</li>
+ * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
+ * gas/liquid drift-flux short-opening screening</li>
  * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
  * release with specified Darcy friction</li>
  * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
@@ -34,10 +36,11 @@
  * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
  * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
  * separate perfect-gas and EOS-backed single-gas transient models resolve waves and line packing but exclude heat
- * transfer, pipe elasticity and solid-bearing transport. A separate short-opening model can apply a caller-declared
- * gas/liquid velocity ratio to an equilibrium thermodynamic station with explicit phase-area and kinetic-energy
- * closure; it does not infer slip, entrainment or finite-rate phase transfer. Both real-gas pipe models fail closed if
- * an equilibrium phase appears.
+ * transfer, pipe elasticity and solid-bearing transport. Separate short-opening models can either apply a
+ * caller-declared gas/liquid velocity ratio or predict vertical-upward bubbly/dispersed slip with a bounded
+ * Zuber-Findlay/Harmathy closure. Both retain equilibrium thermodynamics and explicit phase-area and kinetic-energy
+ * closure; neither represents entrainment, finite-rate phase transfer, annular jets or solid-bearing flow. Both
+ * real-gas pipe models fail closed if an equilibrium phase appears.
  *
  * <p>
  * Example usage:

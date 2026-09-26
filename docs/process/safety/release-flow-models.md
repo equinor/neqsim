@@ -1,6 +1,6 @@
 ---
 title: Model-explicit release source terms
-description: Explicit homogeneous, prescribed-slip and ideal/real-gas pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
+description: Explicit homogeneous, drift-flux and ideal/real-gas pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
@@ -45,6 +45,7 @@ identity, version and diagnostics with every frame:
 |---|---|---|
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
 | `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
+| `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
@@ -101,6 +102,44 @@ does not predict slip, entrainment, droplet size, finite-rate vaporization/conde
 friction, heat transfer, solids, or pipe decompression. Select $S$ from an independently justified
 engineering basis and retain it with scenario provenance. Results and evidence remain
 `UNQUALIFIED` pending experimental validation and accountable domain review.
+
+## Predictive vertical drift flux
+
+`DriftFluxHomogeneousEquilibriumReleaseModel` removes the caller-declared slip ratio for a bounded
+vertical-upward bubbly/dispersed screening case. It retains the HEM equilibrium thermodynamic
+station and specific kinetic energy, then solves the Zuber-Findlay relation
+
+$$u_g=C_0j+V_{gj},\qquad C_0=1.2,$$
+
+where $j=\alpha_gu_g+\alpha_lu_l$ is total volumetric flux [m/s]. The bubble drift velocity uses
+the Harmathy relation
+
+$$V_{gj}=1.53\left[\frac{g\sigma(\rho_l-\rho_g)}{\rho_l^2}\right]^{1/4}.$$
+
+Here $g$ is gravitational acceleration [m/s²], $\sigma$ is the caller-declared gas/liquid
+interfacial tension [N/m], and $\rho_g$ and $\rho_l$ are native-phase densities [kg/m³]. The solver
+couples this relation to the same phase-area and kinetic-energy equations documented for prescribed
+slip. It returns explicit phase velocities and densities and checks the drift residual, phase-area
+sum and specific kinetic-energy error.
+
+```java
+ReleaseFlowModel model = new DriftFluxHomogeneousEquilibriumReleaseModel(0.020); // N/m
+```
+
+The closure requires exactly one gas and one oil, generic-liquid or aqueous phase. The caller must
+retain the source and applicability of the mixture-specific interfacial tension with scenario
+provenance; missing, non-finite or non-positive values are rejected at construction. A predicted
+gas area fraction above 0.80 is `UNSUPPORTED` rather than being silently extrapolated toward annular
+flow. The opening is assumed vertical and upward because the current request contract carries no
+orientation field.
+
+The model basis is Zuber and Findlay, *Journal of Heat Transfer* 87 (1965), 453–468,
+[doi:10.1115/1.3689137](https://doi.org/10.1115/1.3689137), and Harmathy, *AIChE Journal* 6
+(1960), 281–288, [doi:10.1002/aic.690060222](https://doi.org/10.1002/aic.690060222). These
+correlations are model provenance, not independent rate validation. The implementation excludes
+finite-rate phase transfer, entrainment and droplet-size transport, annular/high-Weber jets, pipe
+friction, heat transfer and solid-bearing flow. It remains `UNQUALIFIED` pending experimental
+multiphase evidence and accountable domain review.
 
 ## Ideal-gas equations
 
