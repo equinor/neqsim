@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
@@ -27,6 +28,7 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -36,6 +38,7 @@ import neqsim.thermo.system.SystemUNIFACpsrk;
 import neqsim.thermo.util.gerg.GERG2008Type;
 import neqsim.thermo.util.gerg.NeqSimGERG2008;
 import neqsim.thermo.util.leachman.NeqSimLeachman;
+import neqsim.thermo.util.Vega.NeqSimVega;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
@@ -393,6 +396,71 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
         phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
         phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
         phase.getZ()};
+  }
+
+  @Test
+  void vegaRefreshesGasStateBeforeReturningToReference() {
+    SystemVegaEos system = new SystemVegaEos(300.0, 10.0);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+
+    double[] first = vegaState(system, 300.0, 10.0);
+    double[] warmDense = vegaState(system, 250.0, 25.0);
+    double[] coolDense = vegaState(system, 150.0, 50.0);
+    double[] coldDense = vegaState(system, 100.0, 50.0);
+    assertNotEquals(first[0], warmDense[0], "Vega density must refresh");
+    assertNotEquals(warmDense[0], coolDense[0], "Vega density must refresh again");
+    assertNotEquals(coolDense[1], coldDense[1], "Vega enthalpy must refresh");
+
+    double[] returned = vegaState(system, 300.0, 10.0);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], Math.max(1e-12, Math.abs(first[i]) * 1e-12), "Vega returned property " + i);
+    }
+  }
+
+  private static double[] vegaState(SystemVegaEos system, double temperature, double pressure) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, PhaseType.GAS);
+    system.init(3);
+    assertEquals(PhaseVegaEos.class, system.getPhase(0).getClass());
+    PhaseVegaEos phase = (PhaseVegaEos) system.getPhase(0);
+    double[] values = vegaStateWithoutInit(phase);
+    double density = values[0];
+    double enthalpy = values[1];
+    double internalEnergy = values[2];
+    double entropy = values[3];
+    double gibbsEnergy = values[4];
+    double cp = values[5];
+    double cv = values[6];
+    double soundSpeed = values[7];
+    double kappa = values[9];
+    double z = values[10];
+    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && kappa > 0.0 && z > 0.0,
+        "invalid Vega state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed + ", kappa="
+            + kappa + ", Z=" + z);
+    assertEquals(enthalpy, internalEnergy + pressure * 100.0 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, enthalpy - temperature * entropy, Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+    system.init(3);
+    double[] repeated = vegaStateWithoutInit((PhaseVegaEos) system.getPhase(0));
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeated[i], Math.max(1e-15, Math.abs(values[i]) * 1e-14), "Vega repeat property " + i);
+    }
+    return values;
+  }
+
+  private static double[] vegaStateWithoutInit(PhaseVegaEos phase) {
+    NeqSimVega vega = new NeqSimVega(phase);
+    double[] raw = vega.propertiesVega();
+    double[] values = {vega.getMolarDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
+        phase.getZ()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value));
+    }
+    return values;
   }
 
   private static double[] ammoniaState(SystemAmmoniaEos system, double temperature, double pressure,
