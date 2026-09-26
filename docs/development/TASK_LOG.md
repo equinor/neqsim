@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-09-25 — Suspected gearbox damage on a motor-driven recompression train was coupling drive-bolt fatigue
+**Type:** G (Workflow)
+**Keywords:** gearbox vibration, 1X step, phase change, disc coupling, drive bolt fatigue, coupling unbalance, API 671, ISO 21940-11, ISO 7919-3, ISO 20816-1, fault localisation, historian, condition monitoring dropout, RotorUnbalanceAssessment
+**Solution:** `src/main/java/neqsim/process/mechanicaldesign/compressor/RotorUnbalanceAssessment.java`, `RotorUnbalanceAssessmentTest`; private task folder (redacted)
+**Notes:** A 1X step with phase change at the gear high-speed-shaft drive-end bearing, after months of slow rise, was diagnosed as gear damage; the inspection found a fatigued coupling drive bolt and a second one failed on the other flex pack ten weeks later. Localising each step by the change of every probe at unchanged speed and load pointed to the right flex pack both times (affected-bearing / other-bearing ratio > 10); a lost fragment of ~10 g at ~57 mm is ~80x the API 671 residual unbalance, so a single fragment explains the step. Torque was a third of the coupling rating, so the fatigue load is alternating (misalignment / hub separation / torsional / structure), not steady torque. Lessons: read SAP records raised after the action on every related tag; mask historian running state on driver power (interpolation holds values through stops); an all-zero vibration feed while the driver runs is a monitoring dropout.
+
 ### 2026-09-22 — Router's agent_search.py could not find a CLI-installed agent (OLGA case study)
 **Type:** G (Workflow)
 **Keywords:** agent_search.py, router.agent.md, neqsim help, agent discovery, installed agents, ~/.neqsim/agents, sibling repo clone, olga-simulation-agent, NEQSIM_AGENTS_HOME, hermetic test

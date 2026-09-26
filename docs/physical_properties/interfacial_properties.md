@@ -139,7 +139,9 @@ model choice.
 The Parachor model relates surface tension to the phase-density/composition contrast and
 component parachors. It is the default gas-liquid model and is computationally useful
 for screening. The result is only as reliable as the equilibrium state, equation of
-state, mixing rule, and component parachor data.
+state, mixing rule, and component parachor data. CPA components, including
+electrolyte CPA subclasses, read the `PARACHOR_CPA` database column; other
+components read `PARACHOR`.
 
 ### Gradient-theory models
 
