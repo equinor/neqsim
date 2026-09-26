@@ -139,7 +139,7 @@ require(surface, f"| MCP protocol scenarios | {protocol_scenario_count} |", SURF
 require(surface, f"{protocol_scenario_count} named scenarios", SURFACE_PATH)
 require(
     surface,
-    "scientifically validated: 4 records remain\n"
+    "scientifically validated: 3 records remain\n"
     "`CONFIRMED_GAP`, forty-eight are `CONTRACT_TESTED`",
     SURFACE_PATH,
 )
@@ -149,7 +149,7 @@ contract_line = next(
     (
         line
         for line in foundation.splitlines()
-        if line.startswith("- Forty-seven bounded software contracts")
+        if line.startswith("- Forty-eight bounded software contracts")
     ),
     None,
 )
@@ -161,14 +161,14 @@ if len(contract_tools) != 48 or "runSIL" not in contract_tools or "runBarrierReg
         f"{FOUNDATION_PATH}: expected 48 named contracts including runSIL, runBarrierRegister, runRelief, runOperationalStudy, compareProcesses, runProcessLoop, designUtilities, and runChemistry, runFlareNetwork, and runHazopScenario, "
         f"found {len(contract_tools)}"
     )
-require(foundation, "- 4 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
+require(foundation, "- 3 tools remain `CONFIRMED_GAP`", FOUNDATION_PATH)
 
 api_reference = API_PATH.read_text(encoding="utf-8")
 require(
     api_reference,
     "all 71 tools\nhave coverage records, but only 20 have tool-specific trust pages; "
     "48 generic-fallback tools have\nbounded `CONTRACT_TESTED` evidence and "
-    "4 remain `CONFIRMED_GAP`",
+    "3 remain `CONFIRMED_GAP`",
     API_PATH,
 )
 
