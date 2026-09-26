@@ -36,7 +36,9 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 
 1. **Resolve the task** (`neqsim --show-task-root`), then `neqsim task-status <task>`
    and read `continuous/LIVING_REPORT.md` — the always-current view of state, goal
-   progress, trends, events, pending decisions and next actions.
+   progress, trends, events, pending decisions and next actions. `<task>` may be a
+   path or a folder name inside the task root; `task-status` and
+   `task-reference-case` without a folder use the task root.
 2. **Make living** if needed: `neqsim task-living <task> [--brief FILE]`. Fill
    `goal.yaml` objective/constraints from the brief sections and ask the user to
    confirm (they set `confirmed_by`).
