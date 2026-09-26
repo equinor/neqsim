@@ -27,19 +27,15 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
 
   @Test
   void testDeterministicSerializedManifest() throws Exception {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry first =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-A",
-            reconciliation(fixture("target-A", "application-A", 2.0, true),
-                fixture("target-B", "application-B", 5.0, false)));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry second =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-B", reconciliation(fixture("target-C", "application-C", 7.0, true)));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Arrays.asList(first, second));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result restored =
-        serializeManifest(manifest);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-A", reconciliation(fixture("target-A", "application-A", 2.0, true),
+            fixture("target-B", "application-B", 5.0, false)));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry second = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-B", reconciliation(fixture("target-C", "application-C", 7.0, true)));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .create("manifest-A", Arrays.asList(first, second));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result restored = serializeManifest(
+        manifest);
 
     assertEquals("SHA-256", manifest.getDigestAlgorithm());
     assertEquals("neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-v1",
@@ -52,51 +48,45 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(2, manifest.getTotalStrictAppendCount());
     assertEquals(1, manifest.getTotalUnchangedCount());
     assertEquals(manifest.getDigestHex(), restored.getDigestHex());
-    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-        "manifest-A", Arrays.asList(first, second), restored));
+    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .verify("manifest-A", Arrays.asList(first, second), restored));
   }
 
   @Test
   void testOrderIdentityAndDuplicateEvidenceFailClosed() {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result firstReconciliation =
-        reconciliation(fixture("target-A", "application-A", 2.0, true));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result secondReconciliation =
-        reconciliation(fixture("target-B", "application-B", 5.0, false));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry first =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-A", firstReconciliation);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry second =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-B", secondReconciliation);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Arrays.asList(first, second));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry renamed =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-C", firstReconciliation);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result firstReconciliation = reconciliation(
+        fixture("target-A", "application-A", 2.0, true));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result secondReconciliation = reconciliation(
+        fixture("target-B", "application-B", 5.0, false));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-A", firstReconciliation);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry second = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-B", secondReconciliation);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .create("manifest-A", Arrays.asList(first, second));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry renamed = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-C", firstReconciliation);
 
-    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-        "manifest-A", Arrays.asList(second, first), manifest));
-    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-        "manifest-A", Arrays.asList(renamed, second), manifest));
-    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-        "manifest-B", Arrays.asList(first, second), manifest));
+    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .verify("manifest-A", Arrays.asList(second, first), manifest));
+    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .verify("manifest-A", Arrays.asList(renamed, second), manifest));
+    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .verify("manifest-B", Arrays.asList(first, second), manifest));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Arrays.asList(first, first)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .create("manifest-A", Arrays.asList(first, first)));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Arrays.asList(first, renamed)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .create("manifest-A", Arrays.asList(first, renamed)));
   }
 
   @Test
   void testManifestCollectionsAndDigestAreDefensive() throws Exception {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry entry =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-A", reconciliation(fixture("target-A", "application-A", 2.0, true)));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Collections.singletonList(entry));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry entry = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-A", reconciliation(fixture("target-A", "application-A", 2.0, true)));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .create("manifest-A", Collections.singletonList(entry));
     byte[] firstDigest = manifest.getDigestBytes();
     byte[] secondDigest = manifest.getDigestBytes();
     firstDigest[0] ^= 0xff;
@@ -109,38 +99,36 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
 
   @Test
   void testMissingInputsFailClosed() {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation =
-        reconciliation(fixture("target-A", "application-A", 2.0, true));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry entry =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-A", reconciliation);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Collections.singletonList(entry));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation = reconciliation(
+        fixture("target-A", "application-A", 2.0, true));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Entry entry = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .entry("reconciliation-A", reconciliation);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result manifest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .create("manifest-A", Collections.singletonList(entry));
 
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            " ", reconciliation));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(" ",
+            reconciliation));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.entry(
-            "reconciliation-A", null));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .entry("reconciliation-A", null));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            " ", Collections.singletonList(entry)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(" ",
+            Collections.singletonList(entry)));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", null));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .create("manifest-A", null));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Collections.emptyList()));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .create("manifest-A", Collections.emptyList()));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.create(
-            "manifest-A", Collections.singletonList(null)));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .create("manifest-A", Collections.singletonList(null)));
     assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-            "manifest-A", Collections.singletonList(entry), null));
-    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.verify(
-        "manifest-A", Collections.singletonList(entry), manifest));
+        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+            .verify("manifest-A", Collections.singletonList(entry), null));
+    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest
+        .verify("manifest-A", Collections.singletonList(entry), manifest));
   }
 
   private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation(
@@ -233,4 +221,3 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     }
   }
 }
-

@@ -30,8 +30,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static final String DIGEST_ALGORITHM = "SHA-256";
 
   /** Versioned canonical-encoding identifier. */
-  public static final String SCHEMA_IDENTIFIER =
-      "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-v1";
+  public static final String SCHEMA_IDENTIFIER = "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-v1";
 
   private AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest() {
   }
@@ -46,8 +45,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static Entry entry(String reconciliationIdentifier,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation) {
     requireText(reconciliationIdentifier, "Reconciliation identifier");
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint.Result checkpoint =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint.create(reconciliation);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint.Result checkpoint = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint
+        .create(reconciliation);
     return new Entry(reconciliationIdentifier, checkpoint);
   }
 
@@ -134,8 +133,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         output.writeInt(entries.size());
         for (Entry entry : entries) {
           writeString(output, entry.reconciliationIdentifier);
-          AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint.Result checkpoint =
-              entry.checkpoint;
+          AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpoint.Result checkpoint = entry.checkpoint;
           writeString(output, checkpoint.getSchemaIdentifier());
           writeString(output, checkpoint.getDigestAlgorithm());
           writeBytes(output, checkpoint.getDigestBytes());
