@@ -14,7 +14,7 @@ def task_name(task_dir):
         os.path.abspath(str(task_dir))))[:180]
 
 
-def build(task_dir, daily="05:00", mode="monitor", python=None):
+def build(task_dir, daily="05:00", mode="monitor", python=None, standard_first=True):
     """Return the scheduled command for Windows and a cron line for Linux servers."""
     if not re.match(r"^\d{2}:\d{2}$", daily):
         raise ValueError("daily must be HH:MM")
@@ -22,6 +22,8 @@ def build(task_dir, daily="05:00", mode="monitor", python=None):
     task_dir = os.path.abspath(str(task_dir))
     cli = os.path.join(DEVTOOLS, "neqsim_cli.py")
     command = '"{}" "{}" task-cycle "{}" --mode {}'.format(python, cli, task_dir, mode)
+    if standard_first:
+        command += " --standard-first"
     hour, minute = daily.split(":")
     name = task_name(task_dir)
     return {"name": name, "command": command,

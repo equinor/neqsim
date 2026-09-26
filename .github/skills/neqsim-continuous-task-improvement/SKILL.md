@@ -27,6 +27,8 @@ calls; agents run only when a trigger fires; people decide.
 
 All commands run through the shared interpreter:
 `<python-executable> devtools/neqsim_cli.py task-<command> ...` (or `neqsim task-<command>`).
+`<task>` may be a path or a folder name inside the task root (`neqsim --show-task-root`);
+`task-status` and `task-reference-case` default to the task root when no folder is given.
 
 ## Workflow
 
@@ -166,6 +168,8 @@ and a **degraded** cycle — never a crash.
 
 ## Related
 
+- User guide: `docs/development/CONTINUOUS_TASK_SOLVING.md` (setup, scheduling, day-to-day work);
+  introduced in `docs/development/TASK_SOLVING_GUIDE.md` § "Keeping a Task Alive".
 - `neqsim-model-calibration-and-data-reconciliation` — calibrate inside a stage.
 - `neqsim-agentic-process-optimization` / `neqsim-optimization-and-doe` — solve stages.
 - `neqsim-plant-data` — historian reads for a custom adapter.

@@ -195,8 +195,30 @@ def test_promote_archives_previous_baseline(reference, tmp_path):
 def test_schedule_build_uses_shared_python(reference):
     spec = schedule.build(reference, daily="05:30")
     assert "task-cycle" in spec["command"] and "--mode monitor" in spec["command"]
+    assert "--standard-first" in spec["command"]
     assert spec["windows"][spec["windows"].index("/ST") + 1] == "05:30"
     assert spec["cron"].startswith("30 5 * * *")
+
+
+def test_cycle_standard_first_marks_degraded(reference, tmp_path, monkeypatch):
+    from neqsim_continuous import standard_first
+    task = _copy(reference, tmp_path, "standard_first")
+
+    def fake_ensure(task_dir):
+        return {
+            "schema_version": "1.0",
+            "ready": False,
+            "readiness": "incomplete",
+            "hard_missing": ["formal_report"],
+            "checks": {"formal_report": False},
+        }
+
+    monkeypatch.setattr(standard_first, "ensure", fake_ensure)
+    manifest = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc),
+                         no_agent=True, standard_first=True)
+    assert manifest["degraded"]
+    assert manifest["standard_first"]["hard_missing"] == ["formal_report"]
+    assert "standard_first:incomplete" in manifest["triggers"]
 
 
 def test_validator_checks_living_tasks_only(reference, tmp_path):
@@ -222,3 +244,19 @@ def test_cli_status_and_ledger(reference, tmp_path, capsys):
     assert cli.main(["ledger", task, "set", "OPP-0001", "accepted", "--by", "engineer"]) == 0
     items = nc.Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl")).current()
     assert items["OPP-0001"]["status"] == "accepted"
+
+
+def test_cli_defaults_to_the_task_root(tmp_path, monkeypatch, capsys):
+    root = tmp_path / "task_root"
+    monkeypatch.setenv("NEQSIM_TASK_ROOT", str(root))
+    monkeypatch.chdir(tmp_path)
+    assert cli.task_root() == str(root)
+    assert cli.main(["reference-case"]) == 0
+    task = os.path.join(str(root), "reference_compressor_station")
+    assert capsys.readouterr().out.strip() == task and os.path.isdir(task)
+    assert cli.main(["status", "reference_compressor_station"]) == 0
+    assert '"task": "reference_compressor_station"' in capsys.readouterr().out
+    assert cli.main(["status"]) == 0
+    assert "reference_compressor_station" in capsys.readouterr().out
+    with pytest.raises(SystemExit, match="also looked in the task root"):
+        cli.main(["cycle", "no_such_task"])

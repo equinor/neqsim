@@ -64,6 +64,10 @@ COMMANDS = {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
     },
+    "fetch-docs": {
+        "module": "doc_retriever",
+        "desc": "Auto-retrieve STID/backend documents into a task (infers installation)",
+    },
     "tasks": {
         "module": "task_corpus",
         "desc": "Work across solved tasks (index/relink/env/duplicates)",
@@ -116,16 +120,17 @@ def _print_usage():
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print()
     print("Living tasks (continuous task solving):")
-    print("  task-living DIR          Make a task living (continuous/, baseline, ledger, goal)")
-    print("  task-cycle DIR           Run one monitor or solve cycle")
-    print("  task-solve DIR           Solve until the goal is met or improvement is marginal")
-    print("  task-backtest DIR        Replay archived data with a simulated clock")
-    print("  task-schedule DIR        Schedule daily cycles (Windows Task Scheduler / cron)")
-    print("  task-promote DIR CYCLE   Promote a reviewed cycle to the baseline")
-    print("  task-ledger DIR          List or update the improvement ledger")
-    print("  task-status PATH         Status of a living task or all living tasks in a folder")
+    print("  task-living TASK         Make a task living (continuous/, baseline, ledger, goal)")
+    print("  task-cycle TASK          Run one monitor or solve cycle (--standard-first for scheduled readiness)")
+    print("  task-solve TASK          Solve until the goal is met or improvement is marginal")
+    print("  task-backtest TASK       Replay archived data with a simulated clock")
+    print("  task-schedule TASK       Schedule daily cycles (Windows Task Scheduler / cron)")
+    print("  task-promote TASK CYCLE  Promote a reviewed cycle to the baseline")
+    print("  task-ledger TASK         List or update the improvement ledger")
+    print("  task-status [PATH]       Status of a living task, or all living tasks (default: task root)")
     print("  task-report TASK         Rebuild continuous/LIVING_REPORT.md (--formal: also Word/HTML)")
-    print("  task-reference-case DIR  Create the public reference task (synthetic station)")
+    print("  task-reference-case [DIR] Create the public reference task (default: task root)")
+    print("  (TASK is a folder path, or a folder name inside the task root)")
     print()
     print("Task destination:")
     print("  --set-task-root P  Create new tasks in folder P ('cwd' follows the terminal)")
@@ -530,6 +535,10 @@ def main():
 
     if cmd == "documents":
         sys.exit(_handle_documents(sys.argv[2:]))
+
+    if cmd in ("fetch-docs", "fetch-documents"):
+        import doc_retriever
+        sys.exit(doc_retriever.main(sys.argv[2:]))
 
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
