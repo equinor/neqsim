@@ -24,6 +24,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -34,6 +35,7 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -105,6 +107,10 @@ final class ModelSpecFixtures {
       return SystemVegaEos.class;
     case VEGA_PHASE:
       return PhaseVegaEos.class;
+    case SPAN_WAGNER:
+      return SystemSpanWagnerEos.class;
+    case SPAN_WAGNER_PHASE:
+      return PhaseSpanWagnerEos.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -187,6 +193,15 @@ final class ModelSpecFixtures {
           && "gas".equals(s.phase) && "none".equals(s.mixingRule)
           && "coolprop-7.2.0-ortiz-vega-2019".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE
           && s.componentIndex == 0, "invalid helium Vega reference fixture");
+      break;
+    case SPAN_WAGNER:
+    case SPAN_WAGNER_PHASE:
+      ModelSpec.require(
+          isSpanWagnerProperty(s.property) && s.components.size() == 1 && s.components.containsKey("CO2")
+              && ("gas".equals(s.phase) || "liquid".equals(s.phase) || "supercritical".equals(s.phase))
+              && "none".equals(s.mixingRule) && "coolprop-7.2.0-span-wagner-1996".equals(s.operation)
+              && s.outcome == ModelSpec.Outcome.VALUE && s.componentIndex == 0,
+          "invalid pure-CO2 Span-Wagner reference fixture");
       break;
     case WILSON_ANALYTIC:
     case WILSON_PHASE:
@@ -367,6 +382,10 @@ final class ModelSpecFixtures {
     return isAmmoniaProperty(property) || property == ModelSpec.Property.GIBBS_ENERGY;
   }
 
+  private static boolean isSpanWagnerProperty(ModelSpec.Property property) {
+    return (isVegaProperty(property) && property != ModelSpec.Property.KAPPA) || property == ModelSpec.Property.PHI;
+  }
+
   private static void validateGe(ModelSpec s, String mixingRule, String operation) {
     ModelSpec.require(s.outcome == ModelSpec.Outcome.VALUE && "liquid".equals(s.phase)
         && mixingRule.equals(s.mixingRule) && operation.equals(s.operation), "invalid GE fixture");
@@ -496,6 +515,21 @@ final class ModelSpecFixtures {
       double result = readVega(s.property, phase, vega, properties);
       double[] repeated = vega.propertiesVega();
       assertEquals(result, readVega(s.property, phase, vega, repeated), 0.0, s + " repeat read");
+      return result;
+    }
+    if (s.fixture == ModelSpec.Fixture.SPAN_WAGNER || s.fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      system.setPhaseType(0, "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      double result = readSpanWagner(s.property, phase);
+      system.init(3);
+      assertEquals(result, readSpanWagner(s.property, phase), 0.0, s + " repeat initialization");
       return result;
     }
     if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
@@ -709,6 +743,39 @@ final class ModelSpecFixtures {
     }
   }
 
+  private static double readSpanWagner(ModelSpec.Property property, PhaseInterface phase) {
+    switch (property) {
+    case MOLAR_MASS:
+      return phase.getMolarMass() * 1000.0;
+    case MOLAR_DENSITY:
+      return phase.getDensity("mol/m3") / 1000.0;
+    case MASS_DENSITY:
+      return phase.getDensity();
+    case Z:
+      return phase.getZ();
+    case PHI:
+      return phase.getComponent(0).getFugacityCoefficient();
+    case INTERNAL_ENERGY:
+      return phase.getInternalEnergy("J/mol");
+    case ENTHALPY:
+      return phase.getEnthalpy("J/mol");
+    case ENTROPY:
+      return phase.getEntropy("J/molK");
+    case CV:
+      return phase.getCv("J/molK");
+    case CP:
+      return phase.getCp("J/molK");
+    case SOUND_SPEED:
+      return phase.getSoundSpeed();
+    case GIBBS_ENERGY:
+      return phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase();
+    case JT:
+      return phase.getJouleThomsonCoefficient() / 100.0;
+    default:
+      throw new IllegalArgumentException("unmapped Span-Wagner property " + property);
+    }
+  }
+
   private static double readGe(ModelSpec s, PhaseInterface liquid) {
     ComponentGEInterface c = (ComponentGEInterface) liquid.getComponent(s.componentIndex);
     if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
@@ -836,12 +903,17 @@ final class ModelSpecFixtures {
     case VEGA_PHASE:
       system = new SystemVegaEos(s.temperature, s.pressure);
       break;
+    case SPAN_WAGNER:
+    case SPAN_WAGNER_PHASE:
+      system = new SystemSpanWagnerEos(s.temperature, s.pressure);
+      break;
     default:
       throw new IllegalArgumentException("no system factory for " + s.fixture);
     }
     if (s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE
         && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
-        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE) {
+        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE
+        && s.fixture != ModelSpec.Fixture.SPAN_WAGNER && s.fixture != ModelSpec.Fixture.SPAN_WAGNER_PHASE) {
       for (Map.Entry<String, Double> entry : s.components.entrySet()) {
         system.addComponent(entry.getKey(), entry.getValue());
       }
@@ -852,7 +924,8 @@ final class ModelSpecFixtures {
         && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE
         && s.fixture != ModelSpec.Fixture.AMMONIA && s.fixture != ModelSpec.Fixture.AMMONIA_PHASE
         && s.fixture != ModelSpec.Fixture.LEACHMAN && s.fixture != ModelSpec.Fixture.LEACHMAN_PHASE
-        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE) {
+        && s.fixture != ModelSpec.Fixture.VEGA && s.fixture != ModelSpec.Fixture.VEGA_PHASE
+        && s.fixture != ModelSpec.Fixture.SPAN_WAGNER && s.fixture != ModelSpec.Fixture.SPAN_WAGNER_PHASE) {
       system.setMixingRule("classic");
     }
     return system;
@@ -864,7 +937,8 @@ final class ModelSpecFixtures {
         || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
         || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE
         || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE || fixture == ModelSpec.Fixture.AMMONIA_PHASE
-        || fixture == ModelSpec.Fixture.LEACHMAN_PHASE || fixture == ModelSpec.Fixture.VEGA_PHASE;
+        || fixture == ModelSpec.Fixture.LEACHMAN_PHASE || fixture == ModelSpec.Fixture.VEGA_PHASE
+        || fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE;
   }
 
   static void positive(double value, String context) {
