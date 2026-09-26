@@ -298,8 +298,8 @@ public class Vega {
       double d3Bddelta3 = B * d_i[k] * (d_i[k] - 1) * (d_i[k] - 2) / Math.pow(delta, 3);
 
       double deddelta = -l_i[k] * Math.pow(delta, l_i[k] - 1);
-      double d2eddelta2 = l_i[k] * (l_i[k] - 1) * Math.pow(delta, l_i[k] - 2);
-      double d3eddelta3 = l_i[k] * (l_i[k] - 1) * (l_i[k] - 2) * Math.pow(delta, l_i[k] - 3);
+      double d2eddelta2 = -l_i[k] * (l_i[k] - 1) * Math.pow(delta, l_i[k] - 2);
+      double d3eddelta3 = -l_i[k] * (l_i[k] - 1) * (l_i[k] - 2) * Math.pow(delta, l_i[k] - 3);
 
       // derivates of tau
       double dBdtau = B * t_i[k] / tau;
@@ -371,7 +371,7 @@ public class Vega {
       // d(alpha^r)/d(tau)
       ar[1][0].val += dBdtau * E + B * E * dedtau;
       // d^2(alpha^r)/d(tau)^2
-      ar[2][0].val += d2Bdtau2 * E + 2 * dBdtau * dedtau * E + B * E * d2edtau2;
+      ar[2][0].val += d2Bdtau2 * E + 2 * dBdtau * dedtau * E + B * E * (d2edtau2 + dedtau * dedtau);
 
       // d^2(alpha^r)/d(delta)d(tau)
       ar[1][1].val += d2Bddeltadtau * E + dBddelta * dedtau * E + dBdtau * deddelta * E + B * d2edeltadtau * E

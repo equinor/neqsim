@@ -372,13 +372,20 @@ For gases, NeqSim provides specialized high-accuracy density methods:
 | `getDensity_GERG2008()` | GERG-2008 density | Natural gas |
 | `getDensity_EOSCG()` | EOS-CG density | CO2-rich gases |
 | `getDensity_Leachman()` | Leachman EoS | Hydrogen |
-| `getDensity_Vega()` | Vega EoS | Helium |
+| `getDensity_Vega()` | Vega EoS | Pure helium; selects the root from the phase type |
 
 ```java
 // High-accuracy gas density for custody transfer
 double densityAGA8 = fluid.getPhase("gas").getDensity_AGA8();
 double densityGERG = fluid.getPhase("gas").getDensity_GERG2008();
 ```
+
+For pure helium, `SystemVegaEos` uses the gas root for a gas phase and the dense
+root for a liquid phase. You can also call `getDensity_Vega()` on a helium phase
+with an explicitly assigned phase type. A failed Vega density solve throws
+`IllegalStateException`; its ideal-gas fallback is not a valid calculated state.
+The Vega density solver does not locate the saturation boundary, so a forced
+phase type does not establish thermodynamic stability or perform a flash.
 
 ---
 
