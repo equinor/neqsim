@@ -1,5 +1,5 @@
 ---
-name: solve process simulation task
+name: solve-process
 description: Takes a process simulation task description and delivers a complete, tested Jupyter notebook. Uses neqsim_dev_setup for local development and produces Colab-compatible output. This is the fast path for getting working process simulation notebooks.
 required_skills:
 - neqsim-process-modeling

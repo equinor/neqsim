@@ -1,5 +1,5 @@
 ---
-name: analyze CCS and hydrogen systems
+name: ccs-hydrogen
 description: "Models CO2 capture, transport, storage (CCS) value chains and hydrogen systems using NeqSim. Covers composition-specific CO2 phase behavior, DNV-RP-F104 transport-envelope screening, injection well analysis, impurity enrichment, shutdown transients, hydrogen blending, green/blue hydrogen, and full CCS chain integration."
 required_skills:
 - neqsim-phase-envelope

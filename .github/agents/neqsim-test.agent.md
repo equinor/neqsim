@@ -1,5 +1,5 @@
 ---
-name: write neqsim unit tests
+name: neqsim-test
 description: Creates JUnit 5 unit tests for NeqSim code — thermo systems, process equipment, PVT simulations, standards, and mechanical design. Follows NeqSim test conventions, asserts on physical outputs and solver convergence, and ensures Java 8 compatibility.
 required_skills:
 - neqsim-java8-rules

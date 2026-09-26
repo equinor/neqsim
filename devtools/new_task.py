@@ -1034,7 +1034,7 @@ Create a Jupyter notebook in step2_analysis/ that:
 The deliverables are a **Word report** (`.docx`) and optionally an **HTML report**.
 
 - [ ] Figures saved to `figures/`
-- [ ] `generate_report.py` customized and runs end-to-end
+- [ ] Hand-written report prose in `step3_report/report_sections.json` (never edit `generate_report.py`)
 - [ ] Report(s) generated in `step3_report/`
 - [ ] `WORK_RECORD.md` generated and its narrative blocks filled
 - [ ] All required deliverables from task spec produced
@@ -1074,8 +1074,10 @@ is what turns the auto-built sections into a real method and data record.
 **AI prompt - paste into VS Code Copilot Chat:**
 
 ```
-Customize step3_report/generate_report.py for this task.
-Read the task spec in step1_scope_and_research/task_spec.md for required deliverables.
+Prepare the Step 3 report for this task with `neqsim report <this task folder>`.
+Put hand-written prose (executive_summary, problem_description, approach, conclusions)
+in step3_report/report_sections.json under "manual_sections"; do not open or edit
+generate_report.py. Read step1_scope_and_research/task_spec.md for required deliverables.
 Fill in the report sections with actual results from step2_analysis/.
 Embed all figures from figures/.
 Generate both Word (.docx) and HTML output.
@@ -1336,7 +1338,8 @@ After placing files here, add each to the Sources table in `notes.md`:
 | 2 | API 521 6th Ed | Standard | Relief sizing per Section 5.4 |
 
 And add structured entries to the `references` list in `results.json` so they
-appear in the final report (see `results.json` schema in AGENTS.md).
+appear in the final report (see `results.json` schema in
+docs/development/AGENT_REFERENCE.md, Part A).
 """
 
 TASK_SPEC = """# Task Specification

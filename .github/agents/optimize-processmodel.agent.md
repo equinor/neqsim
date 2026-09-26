@@ -1,6 +1,6 @@
 ---
-name: optimize neqsim process model plant
-description: "Runs closed-loop, agentic optimization of a large already-built multi-area NeqSim ProcessModel plant (offshore separation + recompression + export trains) across one or more years/scenarios. Drives operating setpoints (compressor pressures, heater/cooler temperatures, stage pressures, routing fractions) using the newest automation and introspection APIs: ProcessAutomation.getAdjustableParameters (bounded decision space), ProcessModel.runUntilConverged + getConvergenceReportJson + getRunStatus (robust per-trial gating), Compressor.getOperatingPoint (power + surge/stonewall margins), and Standard_ASTM_D6377 RvpResult (certified export-oil RVP spec). Minimises compression power / maximises export subject to RVP and surge constraints, with penalty-based feasibility and multi-year rebuilds. Distinct from @optimize (built-in optimizer classes on a single flowsheet) and @field-development (reservoir/field-level production optimization)."
+name: optimize-processmodel
+description: "Runs closed-loop agentic optimization of a large, already-built multi-area NeqSim ProcessModel plant across years/scenarios - drives compressor pressures, heater temperatures, stage pressures and routing with getAdjustableParameters, runUntilConverged gating, compressor surge margins and RVP specs, minimising power or maximising export with penalty-based feasibility. Distinct from @optimize (single flowsheet) and @field-development."
 required_skills:
 - neqsim-agentic-process-optimization
 - neqsim-optimization-and-doe

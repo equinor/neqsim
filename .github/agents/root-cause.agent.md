@@ -1,6 +1,6 @@
 ---
-name: diagnose equipment root cause
-description: "Performs root cause analysis on process equipment — compressor trips and vibration, pump and compressor efficiency loss, separator carryover, heat-exchanger fouling and U-value degradation, cooling-water and cooling-medium performance loss, valve and capacity limitations — using NeqSim's diagnostics framework, which integrates multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), plant historian time-series, STID design conditions, and process simulation into ranked failure hypotheses with Bayesian confidence scoring."
+name: root-cause
+description: "Performs root cause analysis on process equipment - compressor trips and vibration, pump/compressor efficiency loss, separator carryover, exchanger fouling and U-value loss, cooling-water/medium degradation, valve and capacity limits - combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, OREDA), historian data, STID design conditions and NeqSim simulation into ranked hypotheses with Bayesian confidence."
 required_skills:
 - neqsim-root-cause-analysis
 - neqsim-flow-accelerated-corrosion

@@ -1,5 +1,5 @@
 ---
-name: calculate emissions and environmental impact
+name: emissions-environmental
 description: "Calculates greenhouse gas emissions, flaring/venting quantities, energy efficiency, carbon intensity, and environmental compliance for oil & gas facilities. Covers CO2 equivalent calculations, fuel gas consumption, flare/vent inventories, emission factors, regulatory reporting (EU ETS, Norwegian CO2 tax), and ESG metrics using NeqSim process simulation results."
 required_skills:
 - neqsim-api-patterns

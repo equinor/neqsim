@@ -1,6 +1,6 @@
 ---
-name: read technical documents
-description: Reads and extracts structured engineering data from technical documents and engineering images — equipment data sheets, design basis, heat & mass balance tables, technical requirements, well test reports, inspection reports, piping specifications, material certificates, standards documents, P&ID drawings, mechanical arrangement drawings, vendor API datasheets, compressor performance maps, phase envelopes, and trapped-liquid fire rupture evidence packs. Supports PDF, Word (.docx), Excel (.xlsx), CSV, and image files (PNG, JPG). Uses view_image for multimodal analysis of engineering drawings and diagrams. Outputs structured JSON for process simulation, mechanical design, safety rupture studies, and engineering analysis.
+name: technical-reader
+description: "Reads and extracts structured engineering data from documents and images - datasheets, design basis, heat and mass balances, technical requirements, well tests, inspection reports, piping specs, material certificates, standards, P&IDs, arrangement drawings, vendor datasheets, compressor maps, phase envelopes and rupture evidence packs (PDF, Word, Excel, CSV, PNG/JPG) - into JSON for simulation, mechanical design and safety studies."
 required_skills:
 - neqsim-document-intelligence-extraction
 - neqsim-technical-document-reading

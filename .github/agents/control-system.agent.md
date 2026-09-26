@@ -1,5 +1,5 @@
 ---
-name: design control systems
+name: control-system
 description: "Designs process control systems using NeqSim's dynamic simulation infrastructure — PID controller tuning, ControllerTuningStudy metrics, control loop architecture, measurement device selection, alarm/trip configuration, cascade/feedforward strategies, P&ID valve scenarios, and control narrative generation."
 required_skills:
 - neqsim-dynamic-simulation

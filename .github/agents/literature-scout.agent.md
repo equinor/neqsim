@@ -1,5 +1,5 @@
 ---
-name: scout literature and databases
+name: literature-scout
 description: "Searches public literature and internal/private databases for material relevant to a NeqSim engineering task. Saves PDFs to step1_scope_and_research/references/, summarizes each source in notes.md, and produces a Literature & Reference Documents section with citations. Wraps @stid.retriever for private corpora and supports configurable external search backends."
 required_skills:
 - neqsim-literature-search

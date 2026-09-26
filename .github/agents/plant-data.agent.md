@@ -1,5 +1,5 @@
 ---
-name: integrate neqsim with plant data
+name: plant-data
 description: "Helps connect NeqSim process simulations to real plant data via tagreader (PI/IP.21 historians). Covers OperationalTagMap binding, data reading, model-vs-plant comparison, digital twin loops, continuous model tuning, and MCP runOperationalStudy workflows. Use when integrating NeqSim with operational data."
 required_skills:
 - neqsim-plant-data

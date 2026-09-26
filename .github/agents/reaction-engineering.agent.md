@@ -1,5 +1,5 @@
 ---
-name: design reaction engineering systems
+name: reaction-engineering
 description: "Designs and simulates chemical reactors using NeqSim — equilibrium (GibbsReactor), kinetic PFR (PlugFlowReactor), CSTR (StirredTankReactor), and stoichiometric reactors. Handles reaction setup, catalyst configuration, conversion analysis, reactor sizing, and integration with upstream/downstream process equipment."
 required_skills:
 - neqsim-reaction-engineering

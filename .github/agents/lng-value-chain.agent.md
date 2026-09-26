@@ -1,5 +1,5 @@
 ---
-name: lng.value.chain
+name: lng-value-chain
 description: Builds and evaluates a complete gas-to-LNG value chain in NeqSim — reservoir gas supply and plateau screening, offshore gas hub conversion, dense-phase or lean-gas export pipeline with hydrate control, onshore/at-shore treatment, liquefaction, LNG storage and marine, then CAPEX and economics — on a single shared fluid and feed-rate basis so the stages cannot drift apart.
 required_skills:
 - neqsim-lng-liquefaction

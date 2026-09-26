@@ -1,6 +1,6 @@
 ---
-name: design neqsim utility systems
-description: "Coordinates screening-level utility-system DESIGN with NeqSim — sizes fired steam boilers, deaerators, vapour-compression refrigeration, on-site nitrogen generation, and multi-pressure steam networks, aggregates plant utility demands from a run flowsheet, and runs the agentic closed loop that optimizes a two-stage compression utility. Backed by the neqsim.process.util.utilitydesign classes and the MCP designUtilities tool. Pairs with @optimize (general flowsheet optimization) and is distinct from utility-LEVEL selection (neqsim-utilities-specification)."
+name: utility-design
+description: "Coordinates screening-level utility-system design with NeqSim - fired boilers, deaerators, refrigeration, nitrogen generation and multi-pressure steam networks - aggregating plant utility demands from a run flowsheet and optimizing a two-stage compression utility. Backed by neqsim.process.util.utilitydesign and MCP designUtilities; distinct from utility-level selection (neqsim-utilities-specification)."
 required_skills:
 - neqsim-utility-design
 - neqsim-utilities-specification

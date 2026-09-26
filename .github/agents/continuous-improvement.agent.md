@@ -1,5 +1,5 @@
 ---
-name: continuous improvement of living tasks
+name: continuous-improvement
 description: "Keeps NeqSim engineering tasks improving after the first report: makes a task living, compiles a Word/Markdown brief into a checkable goal, runs and schedules monitor cycles (on demand or on a server), solves until the goal is met or improvement is marginal, backtests the monitoring against known events, triages triggered cycles, maintains the improvement ledger and prepares baseline promotion for human review. Works for any task type and without enterprise access."
 required_skills:
 - neqsim-continuous-task-improvement

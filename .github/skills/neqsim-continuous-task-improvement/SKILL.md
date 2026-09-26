@@ -1,6 +1,6 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim. USE WHEN: a solved task must keep improving over time (daily or on events), a task must be solved iteratively until the goal is met or improvement becomes marginal, new plant/historian data or a changed brief must reopen a task, a Word or Markdown brief must become a checkable goal, or a monitoring pipeline must be backtested against known fault dates. Covers neqsim task-living/task-cycle/task-solve/task-backtest/task-schedule/task-promote/task-ledger, cycle_plan.yaml, goal.yaml, stop rules, drift detection (EWMA/CUSUM with engineering floors), the improvement ledger, plugin adapters/stages/notifiers, and the public reference case."
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, be solved until the goal is met or gains are marginal, reopen on new plant data or a changed brief, turn a Word/Markdown brief into a checkable goal, or backtest monitoring against known fault dates."
 last_verified: "2026-09-25"
 ---
 

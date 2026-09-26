@@ -1,6 +1,6 @@
 ---
-name: review task deliverables
-description: "Reviews a completed task folder under task_solve/ for quality and consistency before PR. Runs the schema validator, the consistency checker, the capability_assessment.md presence check, audits figure→discussion→linked_results traceability, and grades analytical depth (contributor ranking, source-recommendation verdicts, quantitative rule-outs, robustness crossover, discriminating test). Returns a graded report (PASS / WARN / FAIL) with concrete fix-ups. Wraps devtools/validate_task_results.py + devtools/consistency_checker.py + devtools/verify_skills_agents.py."
+name: review
+description: "Reviews a completed task folder for quality and consistency before PR - schema validator, consistency checker, capability_assessment.md presence, figure-discussion-results traceability and analytical-depth grading (contributor ranking, rule-outs, robustness crossover, discriminating test). Returns a PASS/WARN/FAIL report with concrete fix-ups."
 required_skills:
 - neqsim-professional-reporting
 - neqsim-agent-handoff

@@ -367,7 +367,7 @@ python generate_manual.py
 - `String.repeat()` → Use `StringUtils.repeat()`
 - Text blocks `"""..."""` → Regular strings with `\n`
 
-See [copilot-instructions.md](../../.github/copilot-instructions.md#java-8-compatibility) for complete list.
+See [AGENT_REFERENCE.md](AGENT_REFERENCE.md) (Part B, Java 8 Compatibility) for complete list.
 
 ---
 

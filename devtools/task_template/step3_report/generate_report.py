@@ -59,7 +59,8 @@ Report files written under an earlier title are removed, so a renamed study does
 not leave a superseded deliverable beside the current one.
 
 If results.json or task_spec.md are missing, the report uses placeholder text.
-Customize MANUAL_SECTIONS below for content that can't be auto-generated.
+Hand-written content goes in step3_report/report_sections.json (see
+_load_report_sections); do not fork or edit this script per task.
 """
 import os
 import re

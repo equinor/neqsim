@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging and Cv drift (ValveScaleDrift), deposit remediation and dissolver selection (ScaleRemediationAdvisor), elemental sulfur (S8) deposition at letdowns, compressor inlets and dry-gas seals, per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free-span, DNV-RP-F104 CO2 envelope, DNV-RP-F110 global-buckling and DNV-RP-F114 pipe-soil screening, water hammer, slug flow, thermal analysis, or chemical inhibitor dosing. Covers every flow-assurance threat with NeqSim code patterns and the governing industry standards."
+description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
 last_verified: "2026-09-07"
 ---
 

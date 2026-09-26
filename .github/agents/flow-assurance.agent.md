@@ -1,5 +1,5 @@
 ---
-name: run neqsim flow assurance analysis
+name: flow-assurance
 description: Performs flow assurance studies using NeqSim — hydrate prediction, wax appearance temperature, asphaltene stability, CO2/H2S corrosion, inspected metal-loss, on-bottom stability, free-span, global-buckling response and pipe-soil screening inputs, pipeline pressure drop, slug flow, and thermal-hydraulic analysis. Supports steady-state and transient pipe flow with heat transfer.
 required_skills:
 - neqsim-phase-envelope

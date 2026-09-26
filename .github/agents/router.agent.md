@@ -1,5 +1,5 @@
 ---
-name: neqsim help
+name: router
 description: "Routes engineering requests to the most appropriate NeqSim specialist agent. Analyzes the user's question, classifies it by domain, and delegates to the right agent — or composes multi-agent pipelines for complex cross-discipline tasks. Use this when you're unsure which agent to pick."
 required_skills: []
 argument-hint: "Describe your engineering problem in plain language — e.g., 'I need to size a pipeline and check for hydrates', 'calculate density of CO2 at 200 bar', or 'full field development study with economics'."

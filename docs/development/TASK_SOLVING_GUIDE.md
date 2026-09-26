@@ -1097,7 +1097,8 @@ includes a comparison table:
 
 ### Report Generation Best Practices
 
-The `generate_report.py` template needs customisation for each task. Common failure
+The report is customised per task through `results.json` and
+`step3_report/report_sections.json`, never by editing `generate_report.py`. Common failure
 modes and how to avoid them:
 
 **1. Section completeness:** The default template only renders Results, Validation,
@@ -1112,8 +1113,8 @@ requires changes in three places:
 
 | # | Section | Data Source | Figures |
 |---|---------|-------------|---------|
-| 1 | Executive Summary | MANUAL_SECTIONS | — |
-| 2 | Problem Description | MANUAL_SECTIONS | — |
+| 1 | Executive Summary | report_sections.json `manual_sections` | — |
+| 2 | Problem Description | report_sections.json `manual_sections` | — |
 | 3 | Scope & Standards | task_spec.md | — |
 | 4 | Approach | results.json or MANUAL | — |
 | 5 | Results | results.json key_results + tables | Main notebook figs |
@@ -1121,7 +1122,7 @@ requires changes in three places:
 | 7 | Benchmark Validation | results.json benchmark_validation | benchmark_*.png |
 | 8 | Uncertainty Analysis | results.json uncertainty | uncertainty_*.png |
 | 9 | Risk Evaluation | results.json risk_evaluation | risk_matrix.png |
-| 10 | Conclusions | MANUAL_SECTIONS or results.json | — |
+| 10 | Conclusions | results.json or report_sections.json | — |
 | 11 | References | results.json references | — |
 
 **3. Figure captions:** Every PNG in `figures/` should have a caption entry in
@@ -1129,8 +1130,9 @@ requires changes in three places:
 all notebooks (main, benchmark, uncertainty) must be captioned.
 
 **4. Stale numbers:** When design parameters change iteratively, hardcoded text in
-`MANUAL_SECTIONS["executive_summary"]` and `MANUAL_SECTIONS["conclusions"]` becomes
-stale. Prefer writing conclusions programmatically from results.json where possible.
+`step3_report/report_sections.json` (`manual_sections.executive_summary`,
+`manual_sections.conclusions`) becomes stale. Never edit or fork
+`generate_report.py` for task content; run it with `neqsim report <task_dir>`. Prefer writing conclusions programmatically from results.json where possible.
 At minimum, re-verify all hardcoded numbers after each parameter change.
 
 **5. Figure placement:** Embed figures in their relevant section, not all at the end of
@@ -1545,7 +1547,7 @@ neqsim task-backtest reference_compressor_station --start 2025-10-02 --end 2026-
 neqsim task-status                  # every living task in the task root
 ```
 
-In Copilot Chat, the **continuous improvement of living tasks** agent does the
+In Copilot Chat, the **continuous-improvement** agent does the
 setup, backtesting and triage for you, and stops before every decision.
 
 **Full guide:** [Continuous Task Solving (Living Tasks)](CONTINUOUS_TASK_SOLVING.md)
@@ -1583,7 +1585,7 @@ troubleshooting.
 | Old JAR in Python site-packages | `from neqsim import jneqsim` loads stale class | Use the devtools setup cell and `ns.JClass()` so notebooks load workspace classes from `target/classes` |
 | Report generator missing sections | Benchmark/uncertainty/risk data in results.json but absent from report | Add rendering to `build_sections()`, `build_word_report()`, AND `build_html_report()` for each data section |
 | Figure captions only from main notebook | Benchmark/uncertainty figures show generic captions | Add ALL figure filenames to `results.json["figure_captions"]` from every notebook |
-| Stale numbers in MANUAL_SECTIONS | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update MANUAL_SECTIONS when parameters change |
+| Stale numbers in report_sections.json | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update `manual_sections` when parameters change |
 | Design change not propagated to all notebooks | Benchmark/uncertainty results reflect old parameters | Re-run ALL notebooks (restart kernels) when base case parameters change |
 | All figures dumped in one report section | 12 figures after Results, none in Benchmark/Uncertainty/Risk | Use section flags (`has_benchmark`, `has_uncertainty`, `has_risk`) to embed figures in their own section |
 
@@ -1607,7 +1609,7 @@ troubleshooting.
 | `@flow-assurance` | Hydrates, wax, corrosion, slugging |
 | `@safety-depressuring` | Depressurization, PSV, fire cases |
 | `@documentation` | Writing docs and wiki pages |
-| `continuous improvement of living tasks` | Living tasks: monitor cycles, solve loops, backtests, triage ([guide](CONTINUOUS_TASK_SOLVING.md)) |
+| `continuous-improvement` | Living tasks: monitor cycles, solve loops, backtests, triage ([guide](CONTINUOUS_TASK_SOLVING.md)) |
 
 ---
 

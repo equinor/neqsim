@@ -1,6 +1,6 @@
 ---
 name: neqsim-setup
-description: "Configure and verify the NeqSim task-solving environment: where new task folders are created (task root), which folder of standards/datasheets/drawings agents read (document root), which Word template reports use, and whether Java, the packaged NeqSim JAR, the MCP server and the neqsim CLI are healthy. USE WHEN: a user invokes /neqsim-setup, asks to set or show the task folder, document folder, work path or report template, asks 'is my NeqSim setup working', runs first-time setup after installing the NeqSim agent plugin, or when @solve-task cannot resolve a task root. Works identically in a source checkout and in a plugin-only install; settings live in ~/.neqsim/task_defaults.json and apply to both."
+description: "Configure and verify the NeqSim task environment: task root, document root, Word report template, and health of Java, the NeqSim JAR, the MCP server and the neqsim CLI. USE WHEN: a user runs /neqsim-setup, asks to set or show the task/document folder, work path or report template, asks 'is my NeqSim setup working', does first-time setup after installing the plugin, or @solve-task cannot resolve a task root. Settings live in ~/.neqsim/task_defaults.json."
 last_verified: "2026-09-20"
 ---
 

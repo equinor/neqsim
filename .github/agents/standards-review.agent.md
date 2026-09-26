@@ -1,6 +1,6 @@
 ---
-name: review technical standards compliance
-description: Reviews NeqSim process systems, calculations, and extracted technical documents against standards and technical requirements such as DNV-ST-F101 pipeline screening, DNV-RP-F101 corroded-pipeline screening, DNV-RP-F104 CO2-pipeline envelope screening, DNV-RP-F105 free-span screening, DNV-RP-F109 on-bottom stability, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, STS0131, TR1965, TR2237, NORSOK S-001, and NORSOK P-002. Uses calculated evidence from standards-aware NeqSim classes and produces compliance findings with remediation actions.
+name: standards-review
+description: "Reviews NeqSim process systems, calculations and extracted documents against standards and technical requirements - DNV-ST-F101 and DNV-RP-F101/F104/F105/F109/F110/F114 pipeline screening, STS0131, TR1965, TR2237, NORSOK S-001 and P-002 - using standards-aware NeqSim classes, and produces compliance findings with remediation actions."
 required_skills:
 - neqsim-standards-lookup
 - neqsim-standard-requirement-extraction

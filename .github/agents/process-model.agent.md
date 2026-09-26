@@ -1,6 +1,6 @@
 ---
-name: make a neqsim process simulation
-description: Creates an executable NeqSim process simulation from an engineering description. Builds thermodynamic fluids, assembles flowsheets with ProcessSystem, runs the simulation, validates results, and can evaluate P&ID-derived valve/action scenarios through neqsim.process.operations or MCP runOperationalStudy. Supports separators, compressors, heat exchangers, valves, distillation columns, pipe flow, recycles, adjusters, and complete process trains such as multi-stage gas compression with intercooling, HP/LP separation, and gas treatment such as TEG dehydration.
+name: process-model
+description: "Creates an executable NeqSim process simulation from an engineering description. Builds thermodynamic fluids, assembles ProcessSystem flowsheets, runs and validates them, and evaluates P&ID-derived valve/action scenarios via neqsim.process.operations or MCP runOperationalStudy. Covers separators, compressors, heat exchangers, valves, distillation columns, pipe flow, recycles, adjusters and trains such as multi-stage gas compression with intercooling, HP/LP separation and TEG dehydration."
 required_skills:
 - neqsim-process-modeling
 - neqsim-api-patterns
