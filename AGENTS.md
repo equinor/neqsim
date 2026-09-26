@@ -149,6 +149,17 @@ never write task output there; copy the documents a task uses into that task's
 user-supplied documents and log the missing evidence as a data gap; a configured
 folder that is missing or unreadable is a reported blocker, not a silent fallback.
 
+**Plant documents come from the retrieval backend, not the document root.** When
+`devtools/doc_retrieval_config.yaml` configures a backend (e.g. STID via
+`stidapi`), `neqsim new-task` and every Standard-first living cycle run
+`devtools/doc_retriever.py` automatically; run `neqsim fetch-docs <task_dir>`
+yourself when resuming a task or when a data gap appears. It infers the
+installation from the task text and downloads ranked P&IDs and data sheets into
+`references/stid/`. Never declare P&IDs, data sheets or drawings unavailable
+until `references/stid/retrieval_status.json` shows a concrete blocker
+(`no_backend`, `no_installation`, `no_matches`, `auth_error`) — and report
+that blocker.
+
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an
 engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 

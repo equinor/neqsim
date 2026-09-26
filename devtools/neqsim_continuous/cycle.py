@@ -113,7 +113,7 @@ def _append_kpi_history(state_dir, cycle_id, now, kpis):
 
 
 def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no_agent=False,
-              state_dir=None, next_action=None):
+              state_dir=None, next_action=None, standard_first=False):
     """Run one cycle and return its manifest (the content of ``cycle.json``)."""
     task_dir = os.path.abspath(str(task_dir))
     plan = load_plan(task_dir)
@@ -128,6 +128,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     previous = read_json(os.path.join(cycle_dir, "cycle.json"), {})
     done = {s["name"]: s for s in previous.get("stages", []) if s["status"] in ("ok", "warn")}
 
+    standard_status = None
     ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
                        cycle_id, cycle_dir, state_dir, data_dir, dry_run, no_agent, next_action)
     ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
@@ -137,6 +138,18 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                 "baseline_id": ctx.baseline.get("meta", {}).get("id"), "status": "running",
                 "stages": [], "versions": {"python": sys.version.split()[0]}}
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+
+    if standard_first and mode != "backtest" and not dry_run:
+        from .standard_first import ensure
+        standard_status = ensure(task_dir)
+        if not standard_status.get("ready"):
+            ctx.triggers.append("standard_first:{}".format(standard_status.get(
+                "readiness", "incomplete")))
+        manifest["standard_first"] = standard_status
+        if not standard_status.get("ready"):
+            manifest.setdefault("triggers", []).append("standard_first:{}".format(
+                standard_status.get("readiness", "incomplete")))
+        write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
 
     with _Lock(state_dir, now):
         for entry in stages or plan["stages"]:
@@ -176,9 +189,11 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     manifest["sources"] = {k: v.get("status") for k, v in ctx.sources.items()}
     manifest["notifications"] = ctx.notifications
     manifest["agent_review"] = ctx.agent_run
+    manifest["standard_first"] = standard_status
     manifest["degraded"] = any(s["status"] in ("fail", "skipped", "not_installed")
                                for s in manifest["stages"]) or any(
-        v not in ("ok",) for v in manifest["sources"].values())
+        v not in ("ok",) for v in manifest["sources"].values()) or (
+            bool(standard_first) and bool(standard_status) and not standard_status.get("ready"))
     manifest["solve"] = ctx.solve
     manifest["finished_at"] = _utc().isoformat()
     manifest["status"] = "complete"

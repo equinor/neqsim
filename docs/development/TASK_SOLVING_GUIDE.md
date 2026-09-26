@@ -1519,6 +1519,18 @@ the new baseline — nothing changes without a named reviewer.
 5. **Run it** — by hand with `neqsim task-cycle <task>` / `neqsim task-solve <task>`,
    or on a schedule with `neqsim task-schedule <task> --daily 05:00 --install`.
 
+Scheduled living tasks enforce a **Standard-first gate**. The generated schedule
+runs `task-cycle --standard-first`, which checks that the initial task solve has
+Step 1 research, capability assessment, Step 2 model/notebook/script,
+`results.json`, consistency status, first formal report and
+`step3_report/WORK_RECORD.md`. Missing reports/work records are generated with
+the normal `neqsim report` / `neqsim work-record` tools when possible. If the
+task is still incomplete, the cycle is marked degraded with a
+`standard_first:*` trigger and `continuous/standard_first_status.json` records
+what is missing. This lets a schedule collect evidence, but prevents the hourly
+loop from being treated as operational before the first Standard task basis is
+finished or explicitly blocked with data gaps.
+
 Then, day to day: read `continuous/LIVING_REPORT.md`, decide ledger items with
 `neqsim task-ledger`, and promote reviewed cycles with `neqsim task-promote`.
 

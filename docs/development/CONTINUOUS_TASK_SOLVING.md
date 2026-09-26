@@ -26,11 +26,12 @@ folder with a `results.json`.
 8. [Backtest before you trust it](#8-backtest-before-you-trust-it)
 9. [Run cycles by hand](#9-run-cycles-by-hand)
 10. [Make it run by itself](#10-make-it-run-by-itself)
-11. [Let an agent handle the triggers](#11-let-an-agent-handle-the-triggers)
-12. [Day-to-day work with a living task](#12-day-to-day-work-with-a-living-task)
-13. [Company data sources](#13-company-data-sources)
-14. [Troubleshooting](#14-troubleshooting)
-15. [Command reference](#15-command-reference)
+11. [Standard-first gate for scheduled tasks](#11-standard-first-gate-for-scheduled-tasks)
+12. [Let an agent handle the triggers](#12-let-an-agent-handle-the-triggers)
+13. [Day-to-day work with a living task](#13-day-to-day-work-with-a-living-task)
+14. [Company data sources](#14-company-data-sources)
+15. [Troubleshooting](#15-troubleshooting)
+16. [Command reference](#16-command-reference)
 
 ---
 
@@ -91,7 +92,7 @@ continuous/
 | A NeqSim source checkout | Runner code lives in `devtools/neqsim_continuous/` | `neqsim --show-task-root` |
 | Java (only for stages that call NeqSim) | NeqSim thermodynamics | `python devtools/java_locator.py` |
 | GitHub Copilot CLI, signed in (only for automatic agent triage) | Headless agent sessions | `copilot --version` |
-| A community or enterprise adapter (only for live historian data) | Pulls data from PI/IP.21, OTS, PDM | see [section 13](#13-company-data-sources) |
+| A community or enterprise adapter (only for live historian data) | Pulls data from PI/IP.21, OTS, PDM | see [section 14](#14-company-data-sources) |
 
 If `neqsim` is not on `PATH` in your shell, use the identical command through
 the interpreter:
@@ -478,11 +479,17 @@ neqsim task-schedule <task> --remove                 # delete it
 
 `--install` creates a Windows Task Scheduler entry named
 `NeqSim living task <folder>` that runs
-`python devtools\neqsim_cli.py task-cycle <task> --mode monitor` with the shared
-interpreter. By default it runs only while you are signed in. To run it while
-signed out, open Task Scheduler, select the task and choose
+`python devtools\neqsim_cli.py task-cycle <task> --mode monitor --standard-first`
+with the shared interpreter. By default it runs only while you are signed in. To
+run it while signed out, open Task Scheduler, select the task and choose
 *Run whether user is logged on or not* (Windows asks for your password there;
 the runner never sees it).
+
+Scheduled cycles are intended to maintain a solved engineering task, not replace
+the first solve. The generated command therefore includes `--standard-first`:
+before every scheduled cycle, NeqSim checks that the initial Standard task basis
+exists and tries to create missing formal report/work-record artifacts with the
+normal report tools.
 
 ### 10.2 On a Linux server
 
@@ -496,7 +503,7 @@ crontab -e      # paste the "cron" line from the output
 Server checklist:
 
 1. Clone NeqSim, build once (`./mvnw compile`) and set `NEQSIM_PROJECT_ROOT`.
-2. Install the Python dependencies and any adapter packages (section 13).
+2. Install the Python dependencies and any adapter packages (section 14).
 3. Set `NEQSIM_CONTINUOUS_HOST` so cycle ids show which machine ran them.
 4. Set `data_root` in the plan to local disk if the task folder is on a share.
 5. Put notification secrets in the service environment, not in the plan.
@@ -516,7 +523,65 @@ decision.
 
 ---
 
-## 11. Let an agent handle the triggers
+## 11. Standard-first gate for scheduled tasks
+
+The Standard-first gate is also available for a manual cycle:
+
+```powershell
+neqsim task-cycle <task> --standard-first
+```
+
+Use it before switching an ad-hoc living task to a server or laptop schedule.
+The gate checks that the task has:
+
+- Step 1 scope/research files, including capability assessment;
+- Step 2 runnable model, notebook or script, or an explicit data-gap blocker;
+- `results.json` with assumptions/data gaps;
+- consistency-check status where available;
+- first formal Word/HTML report; and
+- `step3_report/WORK_RECORD.md`.
+
+When the report or work record is missing, the gate calls the same configured
+tools as the normal workflow (`neqsim report`, `neqsim work-record`, and the
+consistency checker when present). It does not fabricate missing inputs. If
+documents, live data, engineering limits or validation evidence are unavailable,
+the correct outcome is a first report that states the data gap and explains what
+was assumed instead.
+
+Before judging the basis, the gate runs the automatic document retriever
+(`devtools/doc_retriever.py`, also `neqsim fetch-docs <task>`) when a retrieval
+backend is configured. It infers the installation from the task text, pulls the
+highest-ranked P&IDs and data sheets into `references/stid/`, re-indexes
+`SOURCES.md`, and records a `document_retrieval` action. A successful retrieval
+is reused for 24 h; a failed one is retried after 6 h. The `controlled_documents`
+check shows whether any controlled PDFs are present. Its status file,
+`references/stid/retrieval_status.json`, names the concrete blocker
+(`no_backend`, `no_installation`, `no_matches`, `auth_error`), so "no documents
+found" is never reported after searching only the standards library.
+
+The audit is written to `continuous/standard_first_status.json`:
+
+| Field | Meaning |
+|-------|---------|
+| `ready` | True only when the initial Standard task basis is complete |
+| `readiness` | `ready`, `blocked` or `incomplete` |
+| `checks` | Per-artifact pass/fail map |
+| `hard_missing` | Items that still prevent operational scheduled monitoring |
+| `actions` | Document retrieval, report, work-record and consistency commands attempted by the gate |
+
+If the gate cannot finish the Standard basis, the cycle may still run to collect
+evidence, but it is marked degraded and raises a `standard_first:*` trigger.
+Treat that trigger as a work item: finish the report, fill the work-record
+narrative, or record the blocker/data gap explicitly.
+
+The gate is deliberately about task readiness, not process correctness. A task
+can pass Standard-first and still block operational recommendations if its model
+representativeness, tag map, equipment limits or safety basis are insufficient;
+those are domain-specific KPIs handled by the cycle plan and stage scripts.
+
+---
+
+## 12. Let an agent handle the triggers
 
 When a cycle raises a trigger and the plan enables it, the `agent` stage starts
 a bounded, headless GitHub Copilot CLI session with the
@@ -550,9 +615,9 @@ The agent follows the same rules: it prepares, you decide.
 
 ---
 
-## 12. Day-to-day work with a living task
+## 13. Day-to-day work with a living task
 
-### 12.1 Read the living report
+### 13.1 Read the living report
 
 `continuous/LIVING_REPORT.md` is the one page to open. It is rebuilt after every
 cycle, solve round, backtest, promotion, reopen and ledger decision, and shows
@@ -567,7 +632,7 @@ For all living tasks in a folder at once:
 neqsim task-status C:\path\to\task-root
 ```
 
-### 12.2 Triage a triggered cycle
+### 13.2 Triage a triggered cycle
 
 Open `continuous/cycles/<id>/`:
 
@@ -583,7 +648,7 @@ Open `continuous/cycles/<id>/`:
 Classify each trigger: data fault, model mismatch, real plant change, or new
 opportunity. A data fault usually means fixing the source, not the plant.
 
-### 12.3 Decide ledger items
+### 13.3 Decide ledger items
 
 ```powershell
 neqsim task-ledger <task> list
@@ -606,7 +671,7 @@ Categories are `operational`, `maintenance`, `modification`, `model`, `data` and
 cycle, so after `implemented` you can see whether it worked before you set
 `verified`.
 
-### 12.4 Promote a cycle to the baseline
+### 13.4 Promote a cycle to the baseline
 
 ```powershell
 neqsim task-promote <task> 2026-09-30T0500Z@myhost --reviewer "A. Engineer" --note "after wash"
@@ -618,7 +683,7 @@ the objective) keeps the baseline of the monitored KPIs. With
 `report.formal: on_promote` the Word/HTML report is regenerated; otherwise run
 `neqsim report <task>`.
 
-### 12.5 When the task reopens
+### 13.5 When the task reopens
 
 A monitoring task reopens when the objective drops more than `regress_margin`
 below the baseline, or on `new_evidence` (the references manifest changed),
@@ -627,7 +692,7 @@ The living report shows the reason; run `neqsim task-solve <task>` to continue.
 
 ---
 
-## 13. Company data sources
+## 14. Company data sources
 
 The runner is public-first. The only built-in adapter is `file`, which reads CSV
 exports dropped into a folder, so every task works without company access.
@@ -656,7 +721,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 
 ---
 
-## 14. Troubleshooting
+## 15. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
@@ -664,7 +729,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `goal.yaml is not confirmed` | `confirmed_by` is empty | Confirm the goal (section 5) |
 | `goal.yaml has no objective.metric` | The goal was not filled in | Set `objective.metric` to a KPI a stage produces |
 | Source `stale` | No new rows for `stale_after_hours` | Check that the export or historian is still delivering |
-| Source `not_installed` | Adapter package missing | Install it into the shared environment (section 13) |
+| Source `not_installed` | Adapter package missing | Install it into the shared environment (section 14) |
 | Cycle `degraded` | A stage failed or was skipped, or a source was not `ok` | Read `cycle.json` stage messages; rerun the cycle to resume |
 | `kpis` stage `warn: no data for ...` | The source returned no rows for that column | Check `column` and `source` names in the plan |
 | Too many drift alarms | Engineering floor missing or too small | Set or raise `min_sigma`; raise `confirm`; backtest again |
@@ -674,7 +739,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 
 ---
 
-## 15. Command reference
+## 16. Command reference
 
 | Command | Purpose |
 |---------|---------|

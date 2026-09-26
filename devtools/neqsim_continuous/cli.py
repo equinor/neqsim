@@ -1,7 +1,7 @@
 """Command line for living tasks, dispatched as ``neqsim task-<command>``.
 
     neqsim task-living <task> [--brief FILE]
-    neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]
+    neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--standard-first]
     neqsim task-solve <task> [--until goal|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed]
     neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
@@ -74,6 +74,8 @@ def main(argv=None):
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--no-agent", action="store_true")
     p.add_argument("--now", help="override the cycle clock (ISO time)")
+    p.add_argument("--standard-first", action="store_true",
+                   help="verify/generate the initial Standard-task report basis before the cycle")
 
     p = sub.add_parser("solve", help="solve until the goal is met or improvement is marginal")
     p.add_argument("task")
@@ -134,7 +136,8 @@ def main(argv=None):
         from .living import note_reopen
         stages = args.stages.split(",") if args.stages else None
         manifest = run_cycle(_task(args.task), mode=args.mode, now=_parse_time(args.now),
-                             stages=stages, dry_run=args.dry_run, no_agent=args.no_agent)
+                             stages=stages, dry_run=args.dry_run, no_agent=args.no_agent,
+                             standard_first=args.standard_first)
         if not args.dry_run:
             note_reopen(args.task, manifest)
         print(open(os.path.join(args.task, "continuous", "cycles", manifest["cycle_id"], "digest.md"),

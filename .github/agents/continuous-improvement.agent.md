@@ -31,6 +31,19 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 3. Reuse the shared interpreter; do not create environments.
 4. A missing adapter (`not_installed`) is a degraded cycle, not an error — report it.
 5. Before scheduling, backtest. Before solving, the goal must be confirmed.
+6. **Standard-first:** every scheduled cycle runs with `--standard-first`
+   (default in `task-schedule`). The first run completes the Standard task
+   (scope, model, first formal report, work record) before monitoring counts as
+   operational; read `continuous/standard_first_status.json`.
+7. **Tools work as in chat:** use the configured automatic paths (tagreader
+   source discovery, `neqsim fetch-docs` for STID P&IDs/data sheets, document
+   root) without asking the user for source names; degrade only after a real
+   failure and report the concrete status.
+8. **Bottleneck claims need topology:** do not rank bottlenecks or propose
+   production changes from a placeholder model — first fetch P&IDs/data sheets,
+   build the topology-aware model with design limits, and pass a
+   representativeness check. Quote YAML values containing colons in
+   `goal.yaml` / `cycle_plan.yaml`.
 
 ## Workflow
 

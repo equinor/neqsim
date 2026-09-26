@@ -64,6 +64,10 @@ COMMANDS = {
         "module": "new_task",
         "desc": "Create a task-solving workspace",
     },
+    "fetch-docs": {
+        "module": "doc_retriever",
+        "desc": "Auto-retrieve STID/backend documents into a task (infers installation)",
+    },
     "tasks": {
         "module": "task_corpus",
         "desc": "Work across solved tasks (index/relink/env/duplicates)",
@@ -117,7 +121,7 @@ def _print_usage():
     print()
     print("Living tasks (continuous task solving):")
     print("  task-living TASK         Make a task living (continuous/, baseline, ledger, goal)")
-    print("  task-cycle TASK          Run one monitor or solve cycle")
+    print("  task-cycle TASK          Run one monitor or solve cycle (--standard-first for scheduled readiness)")
     print("  task-solve TASK          Solve until the goal is met or improvement is marginal")
     print("  task-backtest TASK       Replay archived data with a simulated clock")
     print("  task-schedule TASK       Schedule daily cycles (Windows Task Scheduler / cron)")
@@ -531,6 +535,10 @@ def main():
 
     if cmd == "documents":
         sys.exit(_handle_documents(sys.argv[2:]))
+
+    if cmd in ("fetch-docs", "fetch-documents"):
+        import doc_retriever
+        sys.exit(doc_retriever.main(sys.argv[2:]))
 
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
