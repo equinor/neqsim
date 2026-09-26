@@ -11,4 +11,6 @@
 neqsim-benchmark-reference-data   equinor/neqsim-community-skills
 neqsim-cfd-coupling              equinor/neqsim-community-skills
 neqsim-near-well-and-injectivity  equinor/neqsim-community-skills
+neqsim-ncs-infrastructure-network equinor/neqsim-community-skills
+neqsim-ncs-value-chain-optimization equinor/neqsim-community-skills
 neqsim-uncertainty-quantification equinor/neqsim-community-skills
