@@ -2,6 +2,7 @@ package neqsim.thermo.util.spanwagner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -111,13 +112,68 @@ public class SpanWagnerTest {
     }
   }
 
+  @Test
+  public void testPressureDerivativesMatchFiniteDifferences() {
+    SystemInterface sys = new SystemSpanWagnerEos(300.0, 10.0);
+    sys.setNumberOfPhases(1);
+    sys.setMaxNumberOfPhases(1);
+    sys.setForcePhaseTypes(true);
+    for (double[] tp : new double[][] {{300.0, 10.0}, {280.0, 50.0}, {320.0, 80.0}}) {
+      state(sys, tp[0], tp[1], PhaseType.GAS);
+      PhaseInterface phase = sys.getPhase(0);
+      double step = 1.0e-3;
+      double drhodP = (density(sys, tp[0], tp[1] + step) - density(sys, tp[0], tp[1] - step)) / (2 * step);
+      double drhodT = (density(sys, tp[0] + step, tp[1]) - density(sys, tp[0] - step, tp[1])) / (2 * step);
+      assertEquals(drhodP, phase.getdrhodP(), Math.abs(drhodP) * 1e-6);
+      assertEquals(drhodT, phase.getdrhodT(), Math.abs(drhodT) * 1e-6);
+      double dPdT = -drhodT / drhodP;
+      assertEquals(dPdT, phase.getdPdTVn(), Math.abs(dPdT) * 1e-6);
+      double dPdV = -Math.pow(phase.getDensity(), 2)
+          / (drhodP * phase.getNumberOfMolesInPhase() * phase.getMolarMass() * 1e5);
+      assertEquals(dPdV, phase.getdPdVTn(), Math.abs(dPdV) * 1e-6);
+    }
+  }
+
+  @Test
+  public void testPhaseSelectionAndMoleScalingAtFixedTemperatureAndPressure() {
+    SystemInterface sys = new SystemSpanWagnerEos(320.0, 80.0);
+    sys.setNumberOfPhases(1);
+    sys.setMaxNumberOfPhases(1);
+    sys.setForcePhaseTypes(true);
+    for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.LIQUID, PhaseType.GAS}) {
+      double[] actual = state(sys, 320.0, 80.0, type);
+      double[] expected = NeqSimSpanWagner.getProperties(320.0, 80.0e5, type);
+      assertEquals(expected[0], actual[1], 0.0);
+      assertEquals(expected[1], actual[0], 0.0);
+      double enthalpy = sys.getPhase(0).getEnthalpy();
+      double volume = sys.getPhase(0).getVolume();
+      double dPdV = sys.getPhase(0).getdPdVTn();
+      double moles = sys.getTotalNumberOfMoles();
+      sys.addComponent("CO2", moles);
+      sys.init(3);
+      assertEquals(2 * enthalpy, sys.getPhase(0).getEnthalpy(), Math.abs(enthalpy) * 1e-12);
+      assertEquals(2 * volume, sys.getPhase(0).getVolume(), volume * 1e-12);
+      assertEquals(dPdV / 2, sys.getPhase(0).getdPdVTn(), Math.abs(dPdV) * 1e-12);
+    }
+  }
+
+  private static double density(SystemInterface system, double temperature, double pressure) {
+    SystemInterface copy = system.clone();
+    copy.setTemperature(temperature);
+    copy.setPressure(pressure);
+    copy.init(3);
+    return copy.getPhase(0).getDensity();
+  }
+
   private static double[] state(SystemInterface system, double temperature, double pressure, PhaseType phaseType) {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.setPhaseType(0, phaseType);
     system.init(3);
     double[] first = state(system.getPhase(0));
+    PhaseType publishedType = system.getPhase(0).getType();
     system.init(3);
+    assertEquals(publishedType, system.getPhase(0).getType());
     double[] repeated = state(system.getPhase(0));
     for (int i = 0; i < first.length; i++) {
       assertEquals(first[i], repeated[i], 0.0, "same-state Span-Wagner property " + i);
@@ -126,8 +182,12 @@ public class SpanWagnerTest {
   }
 
   private static double[] state(PhaseInterface phase) {
+    assertEquals(1.0, phase.getDensity("mol/m3") * phase.getMolarVolume() / 1e5, 1e-12);
+    assertTrue(Double.isFinite(phase.getdPdTVn()));
+    assertTrue(Double.isFinite(phase.getdPdVTn()));
     return new double[] {phase.getZ(), phase.getDensity("mol/m3"), phase.getComponent(0).getFugacityCoefficient(),
         phase.getEnthalpy("J/mol"), phase.getEntropy("J/molK"), phase.getCp("J/molK"), phase.getCv("J/molK"),
-        phase.getSoundSpeed(), phase.getJouleThomsonCoefficient()};
+        phase.getSoundSpeed(), phase.getJouleThomsonCoefficient(), phase.getMolarVolume(), phase.getdPdTVn(),
+        phase.getdPdVTn(), phase.getGibbsEnergy(), phase.getInternalEnergy()};
   }
 }
