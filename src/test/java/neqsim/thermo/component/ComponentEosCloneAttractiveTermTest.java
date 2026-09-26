@@ -2,10 +2,12 @@ package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos1978;
+import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Verifies that a cloned component's attractive term follows the clone rather than the component it was originally
@@ -115,5 +117,37 @@ public class ComponentEosCloneAttractiveTermTest {
     fluid.init(0);
     fluid.init(3);
     return fluid.getPhase(0).getComponent(1).getFugacityCoefficient();
+  }
+
+  @Test
+  void setAttractiveTerm_validNumber_updatesBothAccessors() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 1.0);
+    system.init(0);
+    ComponentEos c = (ComponentEos) system.getPhase(0).getComponent(0);
+
+    c.setAttractiveTerm(1);
+
+    assertEquals(1, c.getAttractiveTermNumber());
+    assertEquals(neqsim.thermo.component.attractiveeosterm.AttractiveTermPr.class,
+        c.getAttractiveTerm().getClass());
+  }
+
+  @Test
+  void setAttractiveTerm_invalidNumber_throwsAndLeavesStateUnchanged() {
+    SystemInterface system = new SystemSrkEos(298.15, 10.0);
+    system.addComponent("methane", 1.0);
+    system.init(0);
+    ComponentEos c = (ComponentEos) system.getPhase(0).getComponent(0);
+
+    c.setAttractiveTerm(0);
+    int numberBefore = c.getAttractiveTermNumber();
+    Object termBefore = c.getAttractiveTerm();
+
+    assertThrows(RuntimeException.class, () -> c.setAttractiveTerm(999));
+
+    // state must be unchanged after the failed call
+    assertEquals(numberBefore, c.getAttractiveTermNumber());
+    assertEquals(termBefore, c.getAttractiveTerm());
   }
 }
