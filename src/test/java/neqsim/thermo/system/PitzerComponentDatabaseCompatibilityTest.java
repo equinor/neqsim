@@ -104,8 +104,8 @@ public class PitzerComponentDatabaseCompatibilityTest extends neqsim.NeqSimTest 
         phase.getActivityCoefficient(water, water) * phase.getComponent(water).getx(), phase.getDensity(),
         phase.getMolarVolume(), phase.getHresTP(), phase.getSresTP(), phase.getGresTP()};
 
-    // COMP_EXT intentionally retains its own ideal heat capacities and reference properties. Compare the Pitzer
-    // excess contributions above, while requiring the total caloric properties to remain calculable in both modes.
+    // Ion rows in COMP_EXT intentionally retain their own caloric and reference properties. Compare the Pitzer
+    // excess contributions above, while requiring total caloric properties to remain calculable in both modes.
     assertTrue(Double.isFinite(phase.getEnthalpy()));
     assertTrue(Double.isFinite(phase.getEntropy()));
     assertTrue(Double.isFinite(phase.getGibbsEnergy()));
