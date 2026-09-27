@@ -10,13 +10,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
- * Proves that one S8 reconciliation-checkpoint manifest-transition chain is unchanged or an
- * ordered strict append of another chain.
+ * Proves that one S8 reconciliation-checkpoint manifest-transition chain is unchanged or an ordered strict append of
+ * another chain.
  *
  * <p>
- * This immutable receipt compares already-qualified transition chains. It does not revalidate
- * transition receipts against manifests and is not a durable ledger, authentication mechanism,
- * transaction coordinator, compare-and-swap operation, or exactly-once guarantee.
+ * This immutable receipt compares already-qualified transition chains. It does not revalidate transition receipts
+ * against manifests and is not a durable ledger, authentication mechanism, transaction coordinator, compare-and-swap
+ * operation, or exactly-once guarantee.
  * </p>
  *
  * @author esol
@@ -39,8 +39,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @param prior prior qualified transition chain
    * @param candidate candidate qualified transition chain
    * @return immutable chain-transition receipt
-   * @throws IllegalArgumentException if either chain is invalid or the candidate is not an exact
-   *         ordered continuation
+   * @throws IllegalArgumentException if either chain is invalid or the candidate is not an exact ordered continuation
    */
   public static Result create(
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result prior,
@@ -63,8 +62,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         .getTransitions();
     for (int index = 0; index < priorTransitions.size(); index++) {
       if (!sameTransition(priorTransitions.get(index), candidateTransitions.get(index))) {
-        throw new IllegalArgumentException(
-            "Candidate transition chain must preserve the exact ordered prior prefix");
+        throw new IllegalArgumentException("Candidate transition chain must preserve the exact ordered prior prefix");
       }
     }
 
@@ -78,17 +76,16 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         prior.getAddedReconciliationCount(), "Added reconciliation count");
     int addedEntryCount = subtractExact(candidate.getAddedEntryCount(), prior.getAddedEntryCount(),
         "Added represented-entry count");
-    int addedStrictAppendCount = subtractExact(candidate.getAddedStrictAppendCount(),
-        prior.getAddedStrictAppendCount(), "Added strict-append entry count");
-    int addedUnchangedCount = subtractExact(candidate.getAddedUnchangedCount(),
-        prior.getAddedUnchangedCount(), "Added unchanged entry count");
+    int addedStrictAppendCount = subtractExact(candidate.getAddedStrictAppendCount(), prior.getAddedStrictAppendCount(),
+        "Added strict-append entry count");
+    int addedUnchangedCount = subtractExact(candidate.getAddedUnchangedCount(), prior.getAddedUnchangedCount(),
+        "Added unchanged entry count");
 
     if (addExact(addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
         "Added transition-state count") != addedTransitionCount) {
       throw new IllegalArgumentException("Transition-chain transition-count deltas are inconsistent");
     }
-    if (addExact(addedStrictAppendCount, addedUnchangedCount,
-        "Added entry-state count") != addedEntryCount) {
+    if (addExact(addedStrictAppendCount, addedUnchangedCount, "Added entry-state count") != addedEntryCount) {
       throw new IllegalArgumentException("Transition-chain entry-count deltas are inconsistent");
     }
 
@@ -103,13 +100,12 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     }
 
     byte[] transitionDigest = digest(prior, candidate, unchanged, strictAppend, addedTransitionCount,
-        addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
-        addedEntryCount, addedStrictAppendCount, addedUnchangedCount);
-    return new Result(prior.getChainIdentifier(), prior.getManifestIdentifier(),
-        prior.getChainDigestHex(), candidate.getChainDigestHex(), prior.getFinalManifestDigestHex(),
-        candidate.getFinalManifestDigestHex(), unchanged, strictAppend, addedTransitionCount,
-        addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
-        addedEntryCount, addedStrictAppendCount, addedUnchangedCount, transitionDigest);
+        addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount, addedEntryCount,
+        addedStrictAppendCount, addedUnchangedCount);
+    return new Result(prior.getChainIdentifier(), prior.getManifestIdentifier(), prior.getChainDigestHex(),
+        candidate.getChainDigestHex(), prior.getFinalManifestDigestHex(), candidate.getFinalManifestDigestHex(),
+        unchanged, strictAppend, addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
+        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount, transitionDigest);
   }
 
   /**
@@ -181,8 +177,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         && left.getManifestIdentifier().equals(right.getManifestIdentifier())
         && left.getPriorManifestDigestHex().equals(right.getPriorManifestDigestHex())
         && left.getCandidateManifestDigestHex().equals(right.getCandidateManifestDigestHex())
-        && left.isUnchanged() == right.isUnchanged()
-        && left.isStrictAppend() == right.isStrictAppend()
+        && left.isUnchanged() == right.isUnchanged() && left.isStrictAppend() == right.isStrictAppend()
         && left.getAddedReconciliationCount() == right.getAddedReconciliationCount()
         && left.getAddedEntryCount() == right.getAddedEntryCount()
         && left.getAddedStrictAppendCount() == right.getAddedStrictAppendCount()
@@ -248,9 +243,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   private static byte[] digest(
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result prior,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result candidate,
-      boolean unchanged, boolean strictAppend, int addedTransitionCount,
-      int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount,
-      int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount,
+      boolean unchanged, boolean strictAppend, int addedTransitionCount, int addedStrictAppendTransitionCount,
+      int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount,
       int addedUnchangedCount) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
@@ -378,9 +372,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
      * @param transitionDigest canonical transition digest
      */
     private Result(String chainIdentifier, String manifestIdentifier, String priorChainDigestHex,
-        String candidateChainDigestHex, String priorFinalManifestDigestHex,
-        String candidateFinalManifestDigestHex, boolean unchanged, boolean strictAppend,
-        int addedTransitionCount, int addedStrictAppendTransitionCount,
+        String candidateChainDigestHex, String priorFinalManifestDigestHex, String candidateFinalManifestDigestHex,
+        boolean unchanged, boolean strictAppend, int addedTransitionCount, int addedStrictAppendTransitionCount,
         int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount,
         int addedStrictAppendCount, int addedUnchangedCount, byte[] transitionDigest) {
       this.chainIdentifier = chainIdentifier;

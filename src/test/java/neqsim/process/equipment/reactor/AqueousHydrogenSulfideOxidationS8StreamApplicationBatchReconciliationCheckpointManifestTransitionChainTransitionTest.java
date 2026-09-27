@@ -36,8 +36,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
         .create(chains.candidate, chains.candidate);
 
     assertEquals("SHA-256", appended.getDigestAlgorithm());
-    assertEquals(
-        "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-chain-transition-v1",
+    assertEquals("neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-chain-transition-v1",
         appended.getSchemaIdentifier());
     assertEquals("chain-A", appended.getChainIdentifier());
     assertEquals("manifest-A", appended.getManifestIdentifier());
@@ -53,14 +52,16 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(0, appended.getAddedStrictAppendCount());
     assertEquals(0, appended.getAddedUnchangedCount());
     assertTrue(appended.getTransitionDigestHex().matches("[0-9a-f]{64}"));
-    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .verify(chains.prior, chains.candidate, appended));
+    assertTrue(
+        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+            .verify(chains.prior, chains.candidate, appended));
 
     assertTrue(unchanged.isUnchanged());
     assertFalse(unchanged.isStrictAppend());
     assertEquals(0, unchanged.getAddedTransitionCount());
-    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .verify(chains.candidate, chains.candidate, unchanged));
+    assertTrue(
+        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+            .verify(chains.candidate, chains.candidate, unchanged));
     assertNotEquals(appended.getTransitionDigestHex(), unchanged.getTransitionDigestHex());
   }
 
@@ -110,10 +111,12 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
 
     assertNotSame(firstDigest, secondDigest);
     assertEquals(transition.getTransitionDigestHex(), restored.getTransitionDigestHex());
-    assertTrue(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .verify(chains.prior, chains.candidate, restored));
-    assertFalse(AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-        .verify(chains.candidate, chains.candidate, restored));
+    assertTrue(
+        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+            .verify(chains.prior, chains.candidate, restored));
+    assertFalse(
+        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+            .verify(chains.candidate, chains.candidate, restored));
   }
 
   /**
@@ -181,8 +184,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request previewRequest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request
         .create(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
     AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.Result candidate = AqueousHydrogenSulfideOxidationS8StreamApplicationPreview
-        .applyToClone(fixture.plan, fixture.targetIdentifier, fixture.applicationKey,
-            fixture.priorStream);
+        .applyToClone(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request receiptRequest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request
         .create(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream,
             candidate.getCandidateStream());
@@ -190,8 +192,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
         .applyToClones(Collections.singletonList(previewRequest));
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result receipt = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
         .verify(Collections.singletonList(receiptRequest));
-    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview,
-        receipt);
+    return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview, receipt);
   }
 
   /**
@@ -203,21 +204,17 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
    * @param append true to append one transfer-ledger batch
    * @return fixture
    */
-  private static Fixture fixture(String targetIdentifier, String applicationKey,
-      double priorS8AmountMol, boolean append) {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(
-        batch(4.0, 0.25, "batch-0", "segment-0"));
+  private static Fixture fixture(String targetIdentifier, String applicationKey, double priorS8AmountMol,
+      boolean append) {
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result candidate = append
-        ? ledger(batch(4.0, 0.25, "batch-0", "segment-0"),
-            batch(6.0, 0.50, "batch-1", "segment-1"))
+        ? ledger(batch(4.0, 0.25, "batch-0", "segment-0"), batch(6.0, 0.50, "batch-1", "segment-1"))
         : prior;
     AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result ledgerTransition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
         .create(prior, candidate);
     AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan = AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan
-        .create(prior, candidate, ledgerTransition, targetIdentifier, applicationKey,
-            priorS8AmountMol);
-    return new Fixture(plan, targetIdentifier, applicationKey,
-        stream("prior-" + targetIdentifier, priorS8AmountMol));
+        .create(prior, candidate, ledgerTransition, targetIdentifier, applicationKey, priorS8AmountMol);
+    return new Fixture(plan, targetIdentifier, applicationKey, stream("prior-" + targetIdentifier, priorS8AmountMol));
   }
 
   /**
@@ -244,8 +241,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
    */
   private static AqueousHydrogenSulfideOxidationS8TransferLedger.Result ledger(
       AqueousHydrogenSulfideOxidationS8TransferBatch.Result... batches) {
-    return AqueousHydrogenSulfideOxidationS8TransferLedger.create(Arrays.asList(batches),
-        "ledger-A");
+    return AqueousHydrogenSulfideOxidationS8TransferLedger.create(Arrays.asList(batches), "ledger-A");
   }
 
   /**
@@ -257,22 +253,18 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
    * @param idempotencyKey transfer idempotency key
    * @return transfer batch
    */
-  private static AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch(
-      double durationHours, double allocationFraction, String batchIdentifier,
-      String idempotencyKey) {
+  private static AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch(double durationHours,
+      double allocationFraction, String batchIdentifier, String idempotencyKey) {
     AqueousHydrogenSulfideOxidationTrajectory.Segment segment = new AqueousHydrogenSulfideOxidationTrajectory.Segment(
         durationHours, 298.15, 8.0, 0.723, 250.0e-6);
     AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult = AqueousHydrogenSulfideOxidationTrajectory
-        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(segment))
-        .getSegmentResults().get(0);
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(segment)).getSegmentResults().get(0);
     AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation = AqueousHydrogenSulfideOxidationElementalSulfurAllocation
-        .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult,
-            WATER_INVENTORY_KG), allocationFraction, ALLOCATION_BASIS);
+        .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
+            allocationFraction, ALLOCATION_BASIS);
     AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer
-        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL,
-            PRODUCT_BASIS, idempotencyKey);
-    return AqueousHydrogenSulfideOxidationS8TransferBatch
-        .create(Collections.singletonList(transfer), batchIdentifier);
+        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
+    return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer), batchIdentifier);
   }
 
   /**
@@ -289,8 +281,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(result);
     }
-    try (ObjectInputStream input = new ObjectInputStream(
-        new ByteArrayInputStream(bytes.toByteArray()))) {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       return (AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result) input
           .readObject();
     }
@@ -334,8 +325,8 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
      * @param applicationKey application idempotency key
      * @param priorStream prior stream
      */
-    private Fixture(AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan,
-        String targetIdentifier, String applicationKey, StreamInterface priorStream) {
+    private Fixture(AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan, String targetIdentifier,
+        String applicationKey, StreamInterface priorStream) {
       this.plan = plan;
       this.targetIdentifier = targetIdentifier;
       this.applicationKey = applicationKey;
