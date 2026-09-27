@@ -1000,6 +1000,7 @@ public class ProductionOptimizer {
     private double upperBound;
     private double tolerance = 1e-3;
     private int maxIterations = 30;
+    private int selectedPointReplays = 1;
     private String rateUnit = "kg/hr";
     private double defaultUtilizationLimit = DEFAULT_UTILIZATION_LIMIT;
     private double utilizationMarginFraction = 0.0;
@@ -1064,6 +1065,25 @@ public class ProductionOptimizer {
      */
     public OptimizationConfig maxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
+      return this;
+    }
+
+    /**
+     * Requires consecutive fresh process solves before accepting the selected point or a fallback as feasible.
+     *
+     * <p>
+     * Search probes are unchanged. Use more than one replay for stateful processes near a hard capacity limit; each
+     * additional replay costs one full process solve. The default is one replay.
+     * </p>
+     *
+     * @param replays number of consecutive selected-point solves, from 1 to 10
+     * @return this config for method chaining
+     */
+    public OptimizationConfig selectedPointReplays(int replays) {
+      if (replays < 1 || replays > 10) {
+        throw new IllegalArgumentException("Selected-point replays must be between 1 and 10");
+      }
+      this.selectedPointReplays = replays;
       return this;
     }
 
@@ -2388,13 +2408,12 @@ public class ProductionOptimizer {
     for (int i = 0; i < variables.size(); i++) {
       selectedPoint[i] = selected.getDecisionVariables().get(variables.get(i).getName());
     }
-    // Search algorithms commonly finish at a rejected probe or a cached point. Reapply and re-evaluate once so live
-    // equipment, reported decisions, objectives and capacity evidence all describe the selected operating point.
-    Evaluation verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
-        selectedPoint);
+    // Search algorithms commonly finish at a rejected probe or a cached point. Fresh consecutive solves also catch
+    // stateful equipment whose first replay is feasible but whose next replay exceeds a capacity limit.
+    Evaluation verified = replayCandidate(process, variables, config, safeObjectives, safeConstraints, selectedPoint,
+        selected.getRateUnit(), iterationHistory);
     double[] verifiedPoint = selectedPoint;
     if (selected.isFeasible() && !isFeasible(verified)) {
-      recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, false);
       VerifiedSelection fallback = replayFeasibleSearchPoint(process, variables, config, safeObjectives,
           safeConstraints, selectedPoint, iterationHistory);
       if (fallback != null) {
@@ -2403,9 +2422,8 @@ public class ProductionOptimizer {
       } else {
         // Candidate recovery leaves mutable equipment at its last probe. Restore the selected point once more so an
         // infeasible result and the live process still describe the same exact decision vector.
-        verified = evaluateCandidateInternal(process, variables, config, safeObjectives, safeConstraints,
-            selectedPoint);
-        recordIteration(iterationHistory, selectedPoint[0], selected.getRateUnit(), verified, isFeasible(verified));
+        verified = replayCandidate(process, variables, config, safeObjectives, safeConstraints, selectedPoint,
+            selected.getRateUnit(), iterationHistory);
       }
     }
     return toResult(verifiedPoint[0], selected.getRateUnit(), selected.getIterations(), verified, iterationHistory);
@@ -2445,14 +2463,42 @@ public class ProductionOptimizer {
       if (point == null || sameDecisionVector(point, selectedPoint)) {
         continue;
       }
-      Evaluation replayed = evaluateCandidateInternal(process, variables, config, objectives, constraints, point);
+      Evaluation replayed = replayCandidate(process, variables, config, objectives, constraints, point,
+          candidate.getRateUnit(), iterationHistory);
       boolean feasible = isFeasible(replayed);
-      recordIteration(iterationHistory, point[0], candidate.getRateUnit(), replayed, feasible);
       if (feasible) {
         return new VerifiedSelection(point, replayed);
       }
     }
     return null;
+  }
+
+  /**
+   * Solves one decision vector repeatedly without the search cache, stopping at the first infeasible observation.
+   *
+   * @param process mutable process to solve
+   * @param variables manipulated variables in deterministic order
+   * @param config optimization configuration
+   * @param objectives configured objectives
+   * @param constraints configured constraints
+   * @param point decision vector to replay
+   * @param rateUnit unit for the history records
+   * @param iterationHistory search and replay evidence
+   * @return the last fresh evaluation, feasible only if all required replays passed
+   */
+  private Evaluation replayCandidate(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
+      double[] point, String rateUnit, List<IterationRecord> iterationHistory) {
+    Evaluation evaluation = null;
+    for (int replay = 0; replay < config.selectedPointReplays; replay++) {
+      evaluation = evaluateCandidateInternal(process, variables, config, objectives, constraints, point);
+      boolean feasible = isFeasible(evaluation);
+      recordIteration(iterationHistory, point[0], rateUnit, evaluation, feasible);
+      if (!feasible) {
+        break;
+      }
+    }
+    return evaluation;
   }
 
   private double[] decisionVector(IterationRecord record, List<ManipulatedVariable> variables) {
