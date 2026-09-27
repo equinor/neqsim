@@ -1740,10 +1740,26 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setHenryCoefParameter(double[] henryCoefParameter);
 
   /**
-   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
+   * Tests whether finite non-placeholder Henry polynomial parameters are present. This does not qualify a temperature
+   * range or aqueous reaction model.
+   *
+   * @return true for a supplied correlation, false for missing data or legacy sentinels
+   */
+  public default boolean hasHenryCorrelation() {
+    return Double.isFinite(getHenryCoef(298.15));
+  }
+
+  /**
+   * Returns the legacy molality-scale pure-water Henry reference, in bar kg/mol.
+   *
+   * <p>
+   * Hm = 1.802 exp(C1 + C2/T + C3 ln(T) + C4 T). Divide by the water molar mass in kg/mol to obtain the limiting
+   * mole-fraction reference in bar. The compiled Sander correlations are local temperature approximations, not
+   * qualified broad-range fits. Missing, sentinel, invalid, overflowing and underflowing correlations return NaN.
+   * </p>
    *
    * @param temperature a double
-   * @return Henrys Coefficient in bar
+   * @return molality Henry reference in bar kg/mol, or NaN when unavailable
    */
   public double getHenryCoef(double temperature);
 
@@ -1755,7 +1771,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature temperature in K
-   * @return Henry-coefficient derivative in bar/K
+   * @return Henry-coefficient derivative in bar kg/(mol K), or NaN when unavailable
    */
   public double getHenryCoefdT(double temperature);
 

@@ -1263,4 +1263,6 @@ badges; version history and merge dates remain available in Git.
 
 ---
 
+- [Pure-water Henry database](thermo/henry_water_database.md)
+
 *Curated index entries are validated against repository source paths by CI.*

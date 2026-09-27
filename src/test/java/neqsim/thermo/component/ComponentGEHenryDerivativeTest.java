@@ -41,7 +41,7 @@ class ComponentGEHenryDerivativeTest {
     ComponentGeNRTL component = new ComponentGeNRTL("CO2", 1.0, 1.0, 0);
     component.setHenryCoefParameter(new double[] {1000.0, 0.0, 0.0, 0.0});
 
-    assertTrue(Double.isInfinite(component.getHenryCoef(TEMPERATURE)));
+    assertTrue(Double.isNaN(component.getHenryCoef(TEMPERATURE)));
     assertEquals(0.0, component.fugcoefDiffTemp(phaseAt(TEMPERATURE)), 0.0);
   }
 
