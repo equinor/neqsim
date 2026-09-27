@@ -332,6 +332,7 @@ neqsim.process.ml.surrogate
 neqsim.process.modelpackage
 neqsim.process.mpc
 neqsim.process.operations
+neqsim.process.operations.continuous
 neqsim.process.operations.envelope
 neqsim.process.optimization.valuechain
 neqsim.process.processmodel
