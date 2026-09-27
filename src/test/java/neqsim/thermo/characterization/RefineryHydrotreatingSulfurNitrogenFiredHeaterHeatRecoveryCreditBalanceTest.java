@@ -76,8 +76,8 @@ class RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalanceTes
         () -> RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance.calculate(recovery, -0.01));
     assertThrows(IllegalArgumentException.class,
         () -> RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance.calculate(recovery, 1.01));
-    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance
-        .calculate(recovery, Double.NaN));
+    assertThrows(IllegalArgumentException.class,
+        () -> RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance.calculate(recovery, Double.NaN));
   }
 
   private static RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance publicRecovery(
