@@ -3,8 +3,6 @@ title: Pure-water Henry database and missing-data contract
 description: Sourced Henry coefficients, molality and mole-fraction conventions, and qualification limits
 ---
 
-# Pure-water Henry database
-
 The Henry columns in `COMP.csv` are backed by the 76 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
