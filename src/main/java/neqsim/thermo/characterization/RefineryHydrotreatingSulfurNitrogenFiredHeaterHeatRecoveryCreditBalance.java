@@ -8,8 +8,8 @@ import java.util.Objects;
  *
  * <p>
  * The receipt applies a caller-owned utilization fraction to a qualified fired-heater heat-recovery balance. Avoided
- * and net fuel, cost, and emissions values use only the already-qualified fired-heater efficiency, fuel LHV, price,
- * and emissions factor. It introduces no equipment, market, or lifecycle defaults.
+ * and net fuel, cost, and emissions values use only the already-qualified fired-heater efficiency, fuel LHV, price, and
+ * emissions factor. It introduces no equipment, market, or lifecycle defaults.
  *
  * @author esolbr1
  * @version 1.0
@@ -41,12 +41,10 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCre
       RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance heatRecoveryBalance,
       double callerSpecifiedUtilizationFraction, double utilizedRecoveredHeatMegaWatt,
       double unutilizedRecoveredHeatMegaWatt, double avoidedFuelChemicalPowerMegaWatt,
-      double avoidedFuelMassFlowKgPerHour, double avoidedFuelMassKgPerTonneFeed,
-      double avoidedFuelCostPerHour, double avoidedFuelCostPerTonneFeed,
-      double avoidedFuelEmissionsKgCo2EquivalentPerHour,
+      double avoidedFuelMassFlowKgPerHour, double avoidedFuelMassKgPerTonneFeed, double avoidedFuelCostPerHour,
+      double avoidedFuelCostPerTonneFeed, double avoidedFuelEmissionsKgCo2EquivalentPerHour,
       double avoidedFuelEmissionsKgCo2EquivalentPerTonneFeed, double netFuelChemicalPowerMegaWatt,
-      double netFuelMassFlowKgPerHour, double netFuelCostPerHour,
-      double netFuelEmissionsKgCo2EquivalentPerHour,
+      double netFuelMassFlowKgPerHour, double netFuelCostPerHour, double netFuelEmissionsKgCo2EquivalentPerHour,
       double recoveredHeatUtilizationClosureResidualMegaWatt, double fuelCreditClosureResidualMegaWatt) {
     this.heatRecoveryBalance = heatRecoveryBalance;
     this.callerSpecifiedUtilizationFraction = callerSpecifiedUtilizationFraction;
@@ -81,8 +79,7 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCre
     Objects.requireNonNull(heatRecoveryBalance, "heatRecoveryBalance");
     if (!Double.isFinite(callerSpecifiedUtilizationFraction) || callerSpecifiedUtilizationFraction < 0.0
         || callerSpecifiedUtilizationFraction > 1.0) {
-      throw new IllegalArgumentException(
-          "callerSpecifiedUtilizationFraction must be finite and between zero and one");
+      throw new IllegalArgumentException("callerSpecifiedUtilizationFraction must be finite and between zero and one");
     }
 
     RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance utility = heatRecoveryBalance.getStackLossBalance()
@@ -97,8 +94,7 @@ public final class RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCre
     }
 
     double avoidedFuelPower = utilizedRecoveredHeat / utility.getFurnaceEfficiencyFraction();
-    double avoidedFuelMass = avoidedFuelPower * SECONDS_PER_HOUR
-        / utility.getFuelLowerHeatingValueMegaJoulePerKg();
+    double avoidedFuelMass = avoidedFuelPower * SECONDS_PER_HOUR / utility.getFuelLowerHeatingValueMegaJoulePerKg();
     double feedMassFlow = utility.getThermalDutyBalance().getProductDistributionReceipt().getThroughputBalance()
         .getFeedMassFlowKgPerHour();
     double avoidedFuelMassPerTonneFeed = avoidedFuelMass * KILOGRAMS_PER_TONNE / feedMassFlow;
