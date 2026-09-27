@@ -111,6 +111,15 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String state : new String[] {"gas-300-10", "liquid-280-50", "supercritical-320-80",
+          "supercritical-350-200"}) {
+        for (String property : new String[] {"molar-mass", "molar-density", "mass-density", "z", "phi",
+            "internal-energy", "enthalpy", "entropy", "gibbs-energy", "cv", "cp", "sound-speed", "jt"}) {
+          ids.add("span-wagner-" + fixture + "-" + state + "-" + property);
+        }
+      }
+    }
     return ids;
   }
 

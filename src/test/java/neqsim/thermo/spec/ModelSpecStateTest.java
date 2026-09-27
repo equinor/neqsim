@@ -18,6 +18,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -28,6 +29,7 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
@@ -457,6 +459,72 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
         phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
         phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient() / 1000.0, raw[14],
         phase.getZ()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value));
+    }
+    return values;
+  }
+
+  @Test
+  void spanWagnerRefreshesGasLiquidAndSupercriticalStateBeforeReturningToReference() {
+    SystemSpanWagnerEos system = new SystemSpanWagnerEos(300.0, 10.0);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+
+    double[] first = spanWagnerState(system, 300.0, 10.0, PhaseType.GAS);
+    double[] liquid = spanWagnerState(system, 280.0, 50.0, PhaseType.LIQUID);
+    double[] supercritical = spanWagnerState(system, 320.0, 80.0, PhaseType.GAS);
+    double[] denseSupercritical = spanWagnerState(system, 350.0, 200.0, PhaseType.GAS);
+    assertNotEquals(first[0], liquid[0], "Span-Wagner density must refresh");
+    assertNotEquals(liquid[0], supercritical[0], "Span-Wagner density must refresh again");
+    assertNotEquals(supercritical[1], denseSupercritical[1], "Span-Wagner enthalpy must refresh");
+
+    double[] returned = spanWagnerState(system, 300.0, 10.0, PhaseType.GAS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], 0.0, "Span-Wagner returned property " + i);
+    }
+  }
+
+  private static double[] spanWagnerState(SystemSpanWagnerEos system, double temperature, double pressure,
+      PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    assertEquals(PhaseSpanWagnerEos.class, system.getPhase(0).getClass());
+    PhaseSpanWagnerEos phase = (PhaseSpanWagnerEos) system.getPhase(0);
+    double[] values = spanWagnerStateWithoutInit(phase);
+    double density = values[0];
+    double enthalpy = values[1];
+    double internalEnergy = values[2];
+    double entropy = values[3];
+    double gibbsEnergy = values[4];
+    double cp = values[5];
+    double cv = values[6];
+    double soundSpeed = values[7];
+    double z = values[9];
+    double phi = values[10];
+    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && z > 0.0 && phi > 0.0,
+        "invalid Span-Wagner state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed + ", Z="
+            + z + ", phi=" + phi);
+    assertEquals(enthalpy, internalEnergy + pressure * 1.0e5 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, enthalpy - temperature * entropy, Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+    assertEquals(1.0, density * phase.getMolarVolume() / 1.0e5, 1e-12);
+
+    system.init(3);
+    double[] repeated = spanWagnerStateWithoutInit((PhaseSpanWagnerEos) system.getPhase(0));
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeated[i], 0.0, "Span-Wagner repeat property " + i);
+    }
+    return values;
+  }
+
+  private static double[] spanWagnerStateWithoutInit(PhaseSpanWagnerEos phase) {
+    double[] values = {phase.getDensity("mol/m3"), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient(), phase.getZ(),
+        phase.getComponent(0).getFugacityCoefficient(), phase.getMolarVolume(), phase.getdPdTVn(), phase.getdPdVTn()};
     for (double value : values) {
       assertTrue(Double.isFinite(value));
     }
