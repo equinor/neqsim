@@ -21,6 +21,7 @@ import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
+import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
@@ -33,6 +34,7 @@ import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemRKEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
@@ -44,6 +46,9 @@ import neqsim.thermo.util.Vega.NeqSimVega;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
+  private static final double[][] RK_STATES = {{280.0, 10.0, 0.9774248393446097, 0.9776161031540137},
+      {320.0, 50.0, 0.9355257766333793, 0.9342381396262072}, {300.0, 30.0, 0.9482327005534241, 0.9485344705786386},
+      {280.0, 10.0, 0.9774248393446097, 0.9776161031540137}};
   private static final double[][] SRK_STATES = {{280.0, 10.0, 0.9785422334202201, 0.9786921663056776},
       {320.0, 50.0, 0.9433373091166810, 0.9413806064762114}, {300.0, 30.0, 0.9523798940724555, 0.9523599084051405},
       {280.0, 10.0, 0.9785422334202201, 0.9786921663056776}};
@@ -177,11 +182,11 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cubicModelsRefreshPublishedStateAtNearbyConditions(boolean pengRobinson) {
-    SystemInterface system = cubicSystem(pengRobinson, 280.0, 10.0, 1.0);
-    double[][] states = pengRobinson ? PR_STATES : SRK_STATES;
-    Class<?> phaseType = pengRobinson ? PhasePrEos.class : PhaseSrkEos.class;
+  @ValueSource(strings = {"RK", "SRK", "PR"})
+  void cubicModelsRefreshPublishedStateAtNearbyConditions(String model) {
+    SystemInterface system = cubicSystem(model, 280.0, 10.0, 1.0);
+    double[][] states = "RK".equals(model) ? RK_STATES : "PR".equals(model) ? PR_STATES : SRK_STATES;
+    Class<?> phaseType = "RK".equals(model) ? PhaseRK.class : "PR".equals(model) ? PhasePrEos.class : PhaseSrkEos.class;
     for (double[] state : states) {
       system.setTemperature(state[0]);
       system.setPressure(state[1]);
@@ -197,9 +202,9 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cubicCaloricIdentitiesUseOneConsistentExtensiveBasis(boolean pengRobinson) {
-    SystemInterface system = cubicSystem(pengRobinson, 300.0, 30.0, 2.0);
+  @ValueSource(strings = {"RK", "SRK", "PR"})
+  void cubicCaloricIdentitiesUseOneConsistentExtensiveBasis(String model) {
+    SystemInterface system = cubicSystem(model, 300.0, 30.0, 2.0);
     system.init(3);
     PhaseInterface phase = system.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
@@ -597,9 +602,9 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return system;
   }
 
-  private static SystemInterface cubicSystem(boolean pengRobinson, double temperature, double pressure, double moles) {
-    SystemInterface system = pengRobinson ? new SystemPrEos(temperature, pressure)
-        : new SystemSrkEos(temperature, pressure);
+  private static SystemInterface cubicSystem(String model, double temperature, double pressure, double moles) {
+    SystemInterface system = "RK".equals(model) ? new SystemRKEos(temperature, pressure)
+        : "PR".equals(model) ? new SystemPrEos(temperature, pressure) : new SystemSrkEos(temperature, pressure);
     system.addComponent("methane", moles);
     system.setMixingRule("classic");
     return system;

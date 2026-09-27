@@ -41,6 +41,12 @@ class ModelSpecHarnessTest {
       "phase-pr-methane-z-320-50", "phase-pr-methane-phi-320-50")));
 
   private static Set<String> required(Set<String> ids) {
+    for (String fixture : new String[] {"rk", "phase-rk"}) {
+      for (String state : new String[] {"280-10", "300-30", "320-50"}) {
+        ids.add(fixture + "-methane-z-" + state);
+        ids.add(fixture + "-methane-phi-" + state);
+      }
+    }
     ids.addAll(Arrays.asList("phase-wilson-0-2-0", "phase-wilson-0-2-1", "phase-wilson-0-5-0", "phase-wilson-0-5-1",
         "phase-wilson-0-8-0", "phase-wilson-0-8-1", "phase-wilson-negative-log"));
     for (String fixture : new String[] {"system", "phase"}) {
@@ -279,10 +285,11 @@ class ModelSpecHarnessTest {
       }
       double tr = spec.temperature / METHANE_TC_K;
       double pr = spec.pressure / METHANE_PC_BAR;
+      boolean redlichKwong = spec.fixture == ModelSpec.Fixture.RK || spec.fixture == ModelSpec.Fixture.RK_PHASE;
       boolean pengRobinson = spec.fixture == ModelSpec.Fixture.PR || spec.fixture == ModelSpec.Fixture.PR_PHASE;
       double m = pengRobinson ? 0.37464 + 1.54226 * METHANE_OMEGA - 0.26992 * METHANE_OMEGA * METHANE_OMEGA
           : 0.48 + 1.574 * METHANE_OMEGA - 0.176 * METHANE_OMEGA * METHANE_OMEGA;
-      double alpha = Math.pow(1.0 + m * (1.0 - Math.sqrt(tr)), 2.0);
+      double alpha = redlichKwong ? Math.sqrt(1.0 / tr) : Math.pow(1.0 + m * (1.0 - Math.sqrt(tr)), 2.0);
       double omegaA = pengRobinson ? 0.45724333333 : 1.0 / (9.0 * (Math.cbrt(2.0) - 1.0));
       double omegaB = pengRobinson ? 0.077803333 : (Math.cbrt(2.0) - 1.0) / 3.0;
       double a = omegaA * alpha * pr / (tr * tr);
@@ -307,7 +314,7 @@ class ModelSpecHarnessTest {
   void cubicFugacityRejectsZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
     ModelSpec reference = null;
     for (ModelSpec spec : ModelSpec.load()) {
-      if ("srk-methane-phi-300-30".equals(spec.id)) {
+      if ("rk-methane-phi-300-30".equals(spec.id)) {
         reference = spec;
       }
     }
@@ -674,7 +681,8 @@ class ModelSpecHarnessTest {
   }
 
   private static boolean isCubic(ModelSpec.Fixture fixture) {
-    return fixture == ModelSpec.Fixture.SRK || fixture == ModelSpec.Fixture.PR || fixture == ModelSpec.Fixture.SRK_PHASE
+    return fixture == ModelSpec.Fixture.RK || fixture == ModelSpec.Fixture.SRK || fixture == ModelSpec.Fixture.PR
+        || fixture == ModelSpec.Fixture.RK_PHASE || fixture == ModelSpec.Fixture.SRK_PHASE
         || fixture == ModelSpec.Fixture.PR_PHASE;
   }
 
