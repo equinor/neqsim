@@ -274,6 +274,14 @@ public final class SourceTermFrame implements Serializable {
     return result;
   }
 
+  private static JsonObject nestedFractions(Map<String, Map<String, Double>> values) {
+    JsonObject result = new JsonObject();
+    for (Map.Entry<String, Map<String, Double>> entry : values.entrySet()) {
+      result.add(entry.getKey(), fractions(entry.getValue()));
+    }
+    return result;
+  }
+
   private static JsonObject state(ReleaseState state) {
     JsonObject value = new JsonObject();
     value.add("pressure", quantity(state.getPressurePa(), "Pa"));
@@ -286,6 +294,9 @@ public final class SourceTermFrame implements Serializable {
     value.add("componentMoleFractions", fractions(state.getComponentMoleFractions()));
     value.add("componentMassFractions", fractions(state.getComponentMassFractions()));
     value.add("phaseMassFractions", fractions(state.getPhaseMassFractions()));
+    if (!state.getPhaseComponentMassFractions().isEmpty()) {
+      value.add("phaseComponentMassFractions", nestedFractions(state.getPhaseComponentMassFractions()));
+    }
     value.add("phaseDensities", quantities(state.getPhaseDensitiesKgM3(), "kg/m3"));
     if (!state.getPhaseVelocitiesMs().isEmpty()) {
       value.add("phaseVelocities", quantities(state.getPhaseVelocitiesMs(), "m/s"));

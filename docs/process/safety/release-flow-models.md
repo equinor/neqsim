@@ -47,6 +47,7 @@ identity, version and diagnostics with every frame:
 | `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
 | `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
 | `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
+| `ComponentSelectiveFiniteRateReleaseModel` | Sensitivity screening for component-dependent gas/liquid phase-partition response at a vertical short opening. | Applies an exact first-order relaxation to each component's gas-held mass, reconstructs phase compositions with exact component conservation, then solves the bounded drift-flux closure. A relaxation time for every component, residence time, surface tension and parameter provenance are mandatory. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
@@ -175,6 +176,43 @@ coefficients, infer residence time, predict entrainment or droplet size, represe
 jets, transport solids, or provide experimental qualification. If the resolved opening does not
 retain one gas and one supported liquid phase, or the bubbly/dispersed drift-flux applicability
 limit is exceeded, the result fails closed with no numeric source payload.
+
+## Component-selective phase-partition relaxation
+
+`ComponentSelectiveFiniteRateReleaseModel` generalizes the bounded relaxation sensitivity to a
+separate caller-declared time constant $\tau_i$ [s] for every overall component $i$. Let $w_i$ be
+the overall component mass fraction, and let $q_{i,g,0}$ and $q_{i,g,eq}$ be the fractions of total
+mixture mass held as component $i$ in the upstream and equilibrium-station gas phases. The exact
+component endpoint is
+
+$$\chi_i=1-\exp\left(-\frac{t_r}{\tau_i}\right),\qquad q_{i,g}=q_{i,g,0}+\chi_i(q_{i,g,eq}-q_{i,g,0}).$$
+
+The gas mass fraction is $y_g=\sum_i q_{i,g}$ and the liquid fraction is $y_l=1-y_g$. The reported
+within-phase component mass fractions are reconstructed as
+
+$$w_{i,g}=\frac{q_{i,g}}{y_g},\qquad w_{i,l}=\frac{w_i-q_{i,g}}{y_l}.$$
+
+Every emitted component therefore satisfies $w_i=y_gw_{i,g}+y_lw_{i,l}$ within the enforced
+numerical tolerance. When all $\tau_i$ are equal, the model reproduces the uniform
+`FiniteRateDriftFluxReleaseModel` phase fraction and mass flow. The optional
+`phaseComponentMassFractions` station field exposes the reconstructed gas and liquid compositions;
+older version-one frames without this field remain schema compatible.
+
+```java
+Map<String, Double> relaxationTimesS = new TreeMap<String, Double>();
+relaxationTimesS.put("methane", 0.10);
+relaxationTimesS.put("n-heptane", 1.00);
+ReleaseFlowModel componentSelective = new ComponentSelectiveFiniteRateReleaseModel(
+    0.020, relaxationTimesS, 0.25, "public-component-screening-assumption:v1");
+```
+
+The supplied map must match the fluid component names exactly; missing, extra, non-finite or
+non-positive entries fail closed. These time constants are sensitivity parameters, not predicted
+mass-transfer coefficients. The model retains equilibrium station enthalpy and phase densities,
+does not solve interfacial heat transfer or composition-dependent latent heat, and does not infer
+residence time, area, droplet size, entrainment, annular/high-Weber flow, solids or experimental
+accuracy. Results remain `UNQUALIFIED` pending independent multiphase evidence and accountable
+domain review.
 
 ## Ideal-gas equations
 
