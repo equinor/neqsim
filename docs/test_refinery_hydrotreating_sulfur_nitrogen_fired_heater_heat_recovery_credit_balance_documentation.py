@@ -6,7 +6,7 @@ class RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalanceDoc
     unittest.TestCase
 ):
     def setUp(self):
-        self.root = pathlib.Path(__file__).resolve().parent.parent
+        self.root = pathlib.Path(__file__).resolve().parent
         self.guide = (
             self.root
             / "thermo"
