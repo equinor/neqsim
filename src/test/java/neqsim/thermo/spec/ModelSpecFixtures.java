@@ -27,6 +27,7 @@ import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhasePrEos;
+import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
@@ -39,6 +40,7 @@ import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemRKEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
@@ -83,6 +85,10 @@ final class ModelSpecFixtures {
       return SystemSrkEos.class;
     case PR:
       return SystemPrEos.class;
+    case RK:
+      return SystemRKEos.class;
+    case RK_PHASE:
+      return PhaseRK.class;
     case SRK_PHASE:
       return PhaseSrkEos.class;
     case PR_PHASE:
@@ -154,6 +160,15 @@ final class ModelSpecFixtures {
                   && s.components.containsKey("methane") && "gas".equals(s.phase) && "classic".equals(s.mixingRule)
                   && "init1".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE,
               "invalid cubic phase fixture");
+      break;
+    case RK:
+    case RK_PHASE:
+      ModelSpec
+          .require(
+              (s.property == ModelSpec.Property.Z || s.property == ModelSpec.Property.PHI) && s.components.size() == 1
+                  && s.components.containsKey("methane") && "gas".equals(s.phase) && "classic".equals(s.mixingRule)
+                  && "init1".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE,
+              "invalid Redlich-Kwong fixture");
       break;
     case GERG:
     case GERG_PHASE:
@@ -532,11 +547,13 @@ final class ModelSpecFixtures {
       assertEquals(result, readSpanWagner(s.property, phase), 0.0, s + " repeat initialization");
       return result;
     }
-    if (s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
-        || s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
+    if (s.fixture == ModelSpec.Fixture.RK || s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
+        || s.fixture == ModelSpec.Fixture.RK_PHASE || s.fixture == ModelSpec.Fixture.SRK_PHASE
+        || s.fixture == ModelSpec.Fixture.PR_PHASE) {
       system.init(1);
       PhaseInterface phase = system.getPhase(0);
-      if (s.fixture == ModelSpec.Fixture.SRK_PHASE || s.fixture == ModelSpec.Fixture.PR_PHASE) {
+      if (s.fixture == ModelSpec.Fixture.RK_PHASE || s.fixture == ModelSpec.Fixture.SRK_PHASE
+          || s.fixture == ModelSpec.Fixture.PR_PHASE) {
         assertEquals(type(s.fixture), phase.getClass(), s.toString());
       }
       double phi = phase.getComponent(s.componentIndex).getFugacityCoefficient();
@@ -879,6 +896,10 @@ final class ModelSpecFixtures {
     case SRK_PHASE:
       system = new SystemSrkEos(s.temperature, s.pressure);
       break;
+    case RK:
+    case RK_PHASE:
+      system = new SystemRKEos(s.temperature, s.pressure);
+      break;
     case PR:
     case PR_PHASE:
       system = new SystemPrEos(s.temperature, s.pressure);
@@ -932,13 +953,13 @@ final class ModelSpecFixtures {
   }
 
   private static boolean isPhaseFixture(ModelSpec.Fixture fixture) {
-    return fixture == ModelSpec.Fixture.SRK_PHASE || fixture == ModelSpec.Fixture.PR_PHASE
-        || fixture == ModelSpec.Fixture.WILSON_PHASE || fixture == ModelSpec.Fixture.NRTL_PHASE
-        || fixture == ModelSpec.Fixture.UNIFAC_PHASE || fixture == ModelSpec.Fixture.PSRK_PHASE
-        || fixture == ModelSpec.Fixture.UMR_PHASE || fixture == ModelSpec.Fixture.GERG_PHASE
-        || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE || fixture == ModelSpec.Fixture.AMMONIA_PHASE
-        || fixture == ModelSpec.Fixture.LEACHMAN_PHASE || fixture == ModelSpec.Fixture.VEGA_PHASE
-        || fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE;
+    return fixture == ModelSpec.Fixture.RK_PHASE || fixture == ModelSpec.Fixture.SRK_PHASE
+        || fixture == ModelSpec.Fixture.PR_PHASE || fixture == ModelSpec.Fixture.WILSON_PHASE
+        || fixture == ModelSpec.Fixture.NRTL_PHASE || fixture == ModelSpec.Fixture.UNIFAC_PHASE
+        || fixture == ModelSpec.Fixture.PSRK_PHASE || fixture == ModelSpec.Fixture.UMR_PHASE
+        || fixture == ModelSpec.Fixture.GERG_PHASE || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE
+        || fixture == ModelSpec.Fixture.AMMONIA_PHASE || fixture == ModelSpec.Fixture.LEACHMAN_PHASE
+        || fixture == ModelSpec.Fixture.VEGA_PHASE || fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE;
   }
 
   static void positive(double value, String context) {

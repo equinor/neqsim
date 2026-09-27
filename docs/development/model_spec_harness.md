@@ -72,9 +72,9 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 692 cases across fourteen system drivers (SRK, PR, Wilson, NRTL,
+The catalog has 704 cases across fifteen system drivers (RK, SRK, PR, Wilson, NRTL,
 classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman, Vega and Span-Wagner), direct
-SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
+RK/SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
 reference EOS, normal-hydrogen Leachman reference EOS, helium Vega reference EOS and pure-CO2
 Span-Wagner reference EOS through their System and exact phase paths, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
@@ -90,7 +90,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Binary NRTL | Published local-composition equation with prescribed alpha12=alpha21=0.3, D12=200 K and D21=-100 K; gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K for SystemNRTL and exact PhaseGENRTL entry points |
 | Original UNIFAC | Published methanol/water gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K through `SystemUNIFAC` and exact `PhaseGEUnifac`; independent evaluation of the original equation uses DDBST R/Q and A parameters |
 | PSRK and UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no nonideal mixture accuracy is claimed |
-| SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
+| RK, SRK and PR | Independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for every System and exact phase entry point; SRK/PR retain low-pressure Z and zero ideal-enthalpy controls |
 | GERG-2008 | Official NIST AGA8 21-component sample at 400 K and 500 bar: molar mass/density, Z, pressure derivatives, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemGERG2008Eos` and exact `PhaseGERG2008Eos` entry points |
 | Ideal gas | NIST argon molecular weight and Shomate heat capacity at 298.15, 400 and 600 K, combined with independently evaluated ideal-gas density, Z, fugacity, Cv, speed of sound and zero Joule-Thomson coefficient through `SystemIdealGas` and exact `PhaseIdealGas` entry points |
 | Ammonia | CoolProp 7.2.0's Gao 2020 ammonia EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemAmmoniaEos` and exact `PhaseAmmoniaEos` entry points |
@@ -99,8 +99,8 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Carbon dioxide | CoolProp 7.2.0's Span-Wagner 1996 CO2 EOS at one gas, one liquid and two supercritical states: molar mass, molar/mass density, Z, fugacity coefficient, U/H/S/G, Cv/Cp, sound speed and Joule-Thomson coefficient through `SystemSpanWagnerEos` and exact `PhaseSpanWagnerEos` entry points |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
-The cubic cases use the original published SRK/PR equations with the declared methane
-Tc, Pc and acentric factor. They validate analytical implementation and state publication,
+The cubic cases use the original published RK, SRK and PR equations with the declared methane
+Tc and Pc, plus acentric factor where applicable. They validate analytical implementation and state publication,
 not experimental model accuracy, mixture behavior, liquid roots or near-critical behavior.
 The low-pressure EOS and pure-component GE cases are intentionally limited controls.
 Gamma=1 alone cannot detect an always-one stub. The original UNIFAC methanol/water cases
@@ -227,9 +227,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (27 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (29 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (103 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (101 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -265,10 +265,11 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   The second coefficient follows the corresponding swapped component indices.
 - Methanol group R is the existing repository regression/data contract in
   `UnifacGroupSynchronizationTest`, not an independently measured property.
-- [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
+- [Redlich and Kwong's 1949 equation](https://doi.org/10.1021/cr60137a013),
+  [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
   [Peng and Robinson's 1976 equation](https://doi.org/10.1021/i160057a011) define
   the pure-fluid cubic and fugacity-coefficient references. The stored anchors use
-  methane Tc=190.56 K, Pc=45.99 bar and acentric factor 0.0115. An independent
+  methane Tc=190.56 K, Pc=45.99 bar and, for SRK/PR, acentric factor 0.0115. An independent
   calculation selected the largest real gas root and evaluated the published pure-fluid
   fugacity expression at the three declared states. A dependency-free harness control
   independently substitutes every stored Z into the published cubic and recomputes every
