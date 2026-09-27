@@ -30,8 +30,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static final String DIGEST_ALGORITHM = "SHA-256";
 
   /** Versioned canonical chain-encoding identifier. */
-  public static final String SCHEMA_IDENTIFIER =
-      "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-chain-v1";
+  public static final String SCHEMA_IDENTIFIER = "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-chain-v1";
 
   /** Prevent instantiation. */
   private AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain() {
@@ -222,8 +221,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    */
   private static byte[] digest(String chainIdentifier, String manifestIdentifier,
       List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result> transitions,
-      int strictAppendTransitionCount, int unchangedTransitionCount, int addedReconciliationCount,
-      int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount) {
+      int strictAppendTransitionCount, int unchangedTransitionCount, int addedReconciliationCount, int addedEntryCount,
+      int addedStrictAppendCount, int addedUnchangedCount) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
