@@ -86,8 +86,14 @@ compatibility with component tables that have no `InChIKey` column.
 When adding standard components, also update the case-insensitive canonical-name
 index in `ComponentNameResolver`. Loading the extended database also imports any
 standard component names and optional columns absent from `COMP_EXT.csv`.
-Existing extended component properties are retained, and imported rows receive
-new unique IDs; the original extended resource remains unchanged.
+For names shared with the standard table, neutral components use `COMP.csv` as
+the source of their common pure-component parameters. The extended table keeps
+its own unique `ID` and `COMPINDEX`, and ion rows retain their electrolyte model
+parameters. Newly imported standard names receive unique IDs. The stored
+`COMP_EXT.csv` is synchronized with the neutral rows by
+`python3 devtools/repair_water_cp_placeholders.py --write`; the database loader
+also reapplies the standard values on switching modes so future additions to
+`COMP.csv` cannot silently revive stale extended values.
 Read CSV names with a CSV parser because systematic names can contain commas.
 
 ### Critical Properties
@@ -166,8 +172,9 @@ EOS saturation calculations and adsorption estimates already recognize NaN and
 use their own initial guesses or estimation paths. Activity models requiring a
 pure-liquid reference need actual vapor-pressure data or an appropriate Henry
 reference; the `none` marker does not supply either. Selecting the extended
-database applies the standard table's unavailable-data markers and corrected
-acetone coefficients to matching names, preserving other extended properties.
+database synchronizes common neutral pure-component properties from the
+standard table, including unavailable-data markers and corrected acetone
+coefficients. Ion-specific extended properties remain separate.
 
 **Acetone provenance:** the [NIST Chemistry WebBook](https://webbook.nist.gov/cgi/cbook.cgi?ID=C67641&Mask=4&Type=ANTOINE)
 reports A = 4.42448, B = 1312.253, C = -32.445 for T in K and P in bar,
@@ -194,6 +201,50 @@ Polynomial coefficients for ideal gas heat capacity: $C_p^{ig} = A + BT + CT^2 +
 | `CPliquid1-5` | Liquid phase Cp coefficients | J/(mol·K) |
 
 **Usage:** Enthalpy, entropy, and Gibbs energy departure functions for all EoS models.
+
+#### Repaired water Cp placeholders (issue #4049)
+
+The 130 non-water hydrocarbon rows in `COMP.csv` that previously contained
+water's exact five ideal-gas Cp coefficients now have component-specific
+polynomials. The 121 corresponding rows present in `COMP_EXT.csv` have the same
+replacement. Other shared neutral pure-component fields have likewise been
+aligned between the two stored tables; their row IDs remain independent.
+Water's own coefficients are retained. The full list of Cp names,
+CAS numbers, structure-group counts, method, and predicted values at 298.15 and
+500 K is in [the Cp replacement inventory](data/water_cp_replacements.csv).
+The migration can be checked with
+`python3 devtools/repair_water_cp_placeholders.py --check`.
+
+For 1,2,4-trimethylbenzene, `CPA`–`CPE` are a quartic least-squares fit to
+[NIST Chemistry WebBook gas-phase Cp data for CAS 95-63-6](https://webbook.nist.gov/cgi/cbook.cgi?ID=C95636&Mask=1)
+over 273.15–1000 K (maximum error at the ten tabulated points: 0.365
+J/(mol K)). The remaining 129 estimates use the [Joback–Reid group-contribution
+method](https://doi.org/10.1080/00986448708960487) for ideal-gas Cp:
+
+$$C_p^{ig}(T)=(\sum n_i a_i-37.93)+(\sum n_i b_i+0.210)T+(\sum n_i c_i-3.91\times10^{-4})T^2+(\sum n_i d_i+2.06\times10^{-7})T^3$$
+
+The Joback–Reid values are **estimates**, not measured component correlations;
+isomers with the same first-order group counts receive the same estimate. The
+structure decomposition checks each row's carbon/hydrogen count against its
+formula, and the resulting Cp is positive at 250, 298.15, 500, 800, and
+1000 K. Use 250–1000 K as the documented screening interval for these
+estimates; validate individual compounds against experimental data for
+engineering caloric work. The NIST fit has direct supporting data only over
+273.15–1000 K.
+
+Independent points illustrate the estimation error: the method gives
+104.85 and 189.59 J/(mol K) for cyclohexane at 298.15 and 500 K, compared
+with [NIST's 105.3 and 188.68](https://webbook.nist.gov/cgi/cbook.cgi?ID=C110827&Mask=1);
+for trans-2-pentene it gives 105.91 and 162.54 against
+[108.9 and 162.0](https://webbook.nist.gov/cgi/cbook.cgi?ID=C646048&Mask=1E9F).
+These comparisons validate scale and trend, not a universal error bound for
+all 129 hydrocarbons.
+
+The extended database includes many other `GEN` rows absent from the standard
+table. Their Cp provenance has not been established by this shared-component
+repair; a matching water polynomial in such a row must not be interpreted as
+measured data. Ion-specific extended properties are intentionally exempt from
+the neutral-component synchronization.
 
 ### Liquid Phase Properties
 
