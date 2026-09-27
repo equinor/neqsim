@@ -65,9 +65,10 @@ public final class HenryWaterReferencePointCatalog {
         HenryWaterReferencePoint point = new HenryWaterReferencePoint(text(row, "name"), text(row, "source_species"),
             text(row, "cas"), row.get("Hsbp_mol_kg_atm").getAsDouble(),
             root.get("reference_temperature_K").getAsDouble(), root.get("reference_pressure_MPa").getAsDouble(),
-            text(row, "reference"), text(root, "status"), text(root, "convention"), text(root, "source"),
-            text(root, "doi"), text(root, "compilation_license"), text(root, "original_reference"),
-            text(root, "original_reference_doi"), text(root, "uncertainty"), text(root, "temperature_scope"));
+            text(row, "reference"), text(root, "status"), text(root, "solvent"), text(root, "convention"),
+            text(root, "source"), text(root, "doi"), text(root, "compilation_license"),
+            text(root, "original_reference"), text(root, "original_reference_doi"), text(root, "uncertainty"),
+            text(root, "temperature_scope"));
         requirePositiveFinite(point.getSolubilityMolalityPerAtm(), point.getComponentName());
         requirePositiveFinite(point.getReferenceTemperatureK(), point.getComponentName());
         requirePositiveFinite(point.getReferencePressureMPa(), point.getComponentName());

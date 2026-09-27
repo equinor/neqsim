@@ -25,6 +25,7 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
   private final double referencePressureMPa;
   private final String referenceId;
   private final String status;
+  private final String solvent;
   private final String convention;
   private final String source;
   private final String compilationDoi;
@@ -36,7 +37,7 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
 
   HenryWaterReferencePoint(String componentName, String sourceSpeciesName, String casNumber,
       double solubilityMolalityPerAtm, double referenceTemperatureK, double referencePressureMPa, String referenceId,
-      String status, String convention, String source, String compilationDoi, String compilationLicense,
+      String status, String solvent, String convention, String source, String compilationDoi, String compilationLicense,
       String originalReference, String originalReferenceDoi, String uncertainty, String temperatureScope) {
     this.componentName = componentName;
     this.sourceSpeciesName = sourceSpeciesName;
@@ -46,6 +47,7 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
     this.referencePressureMPa = referencePressureMPa;
     this.referenceId = referenceId;
     this.status = status;
+    this.solvent = solvent;
     this.convention = convention;
     this.source = source;
     this.compilationDoi = compilationDoi;
@@ -94,6 +96,11 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
   /** @return qualification status */
   public String getStatus() {
     return status;
+  }
+
+  /** @return explicitly qualified solvent */
+  public String getSolvent() {
+    return solvent;
   }
 
   /** @return stored Henry convention and units */

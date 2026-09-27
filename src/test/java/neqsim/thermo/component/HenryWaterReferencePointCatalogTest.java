@@ -28,6 +28,7 @@ class HenryWaterReferencePointCatalogTest {
       ComponentSrk component = new ComponentSrk(point.getComponentName(), 1.0, 1.0, 0);
       assertEquals(point.getCasNumber(), component.getCASnumber(), point.getComponentName());
       assertEquals("reference_point_only", point.getStatus());
+      assertEquals("water", point.getSolvent());
       assertEquals("3673", point.getReferenceId());
       assertEquals("10.1016/S0016-7037(99)00330-0", point.getOriginalReferenceDoi());
       assertEquals("CC BY 4.0", point.getCompilationLicense());
