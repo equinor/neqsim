@@ -280,7 +280,7 @@ public final class ComponentSelectiveFiniteRateReleaseModel implements ReleaseFl
 
   /** @return immutable sorted component relaxation times in s */
   public Map<String, Double> getComponentRelaxationTimesS() {
-    return componentRelaxationTimesS;
+    return Collections.unmodifiableMap(new TreeMap<String, Double>(componentRelaxationTimesS));
   }
 
   /** @return caller-declared residence time in s */

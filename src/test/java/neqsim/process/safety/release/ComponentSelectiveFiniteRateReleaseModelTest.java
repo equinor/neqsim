@@ -2,6 +2,7 @@ package neqsim.process.safety.release;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
@@ -137,6 +138,7 @@ class ComponentSelectiveFiniteRateReleaseModelTest extends neqsim.NeqSimTest {
         "source");
     times.put("methane", 9.0);
     assertEquals(0.10, model.getComponentRelaxationTimesS().get("methane"), 0.0);
+    assertNotSame(model.getComponentRelaxationTimesS(), model.getComponentRelaxationTimesS());
     assertThrows(UnsupportedOperationException.class, () -> model.getComponentRelaxationTimesS().put("methane", 2.0));
     assertThrows(IllegalArgumentException.class,
         () -> new ComponentSelectiveFiniteRateReleaseModel(0.020, relaxationTimes(0.0, 1.0), 0.25, "source"));
