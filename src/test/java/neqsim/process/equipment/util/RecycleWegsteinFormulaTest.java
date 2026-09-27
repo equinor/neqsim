@@ -27,7 +27,7 @@ class RecycleWegsteinFormulaTest extends neqsim.NeqSimTest {
     seed(recycle, "previousOutputValues", 1.0);
     // g(x) = 0.5*x + 1 has the exact fixed point x = 2 and q = -1.
     assertEquals(2.0, accelerate(recycle, 1.0, 1.5), 1e-12);
-    assertEquals(-1.0, recycle.getWegsteinQFactors()[0], 1e-12);
+    assertEquals(-1.0, recycle.getCompositionWegsteinQFactors()[0], 1e-12);
   }
 
   @Test
@@ -36,6 +36,26 @@ class RecycleWegsteinFormulaTest extends neqsim.NeqSimTest {
     seed(recycle, "previousInputValues", 0.0);
     seed(recycle, "previousOutputValues", 2.0);
     assertEquals(2.0, accelerate(recycle, 1.0, 2.0), 1e-12);
+    assertEquals(0.0, recycle.getCompositionWegsteinQFactors()[0], 1e-12);
+  }
+
+  /**
+   * Positive factors damp an oscillating affine map when explicitly enabled.
+   *
+   * @throws Exception if reflective access to the accelerator fails
+   */
+  @Test
+  void positiveQBoundsAllowOscillationDamping() throws Exception {
+    Recycle recycle = new Recycle("oscillating");
+    recycle.setWegsteinQMin(0.0);
+    recycle.setWegsteinQMax(0.5);
+    seed(recycle, "previousInputValues", 0.0);
+    seed(recycle, "previousOutputValues", 1.0);
+    // g(x) = 1 - x has slope -1, q = 0.5 and fixed point x = 0.5.
+    assertEquals(0.5, accelerate(recycle, 1.0, 0.0), 1e-12);
+    assertEquals(0.5, recycle.getCompositionWegsteinQFactors()[0], 1e-12);
+    assertEquals(0.5, recycle.getWegsteinQFactors()[3], 1e-12);
     assertEquals(0.0, recycle.getWegsteinQFactors()[0], 1e-12);
   }
+
 }
