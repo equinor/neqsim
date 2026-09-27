@@ -31,7 +31,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /**
@@ -44,6 +44,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
    */
   @Override
   public double toSIvalue(double value, String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "bara":
     case "bar":
@@ -64,7 +65,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
     case "atm":
       return value * ThermodynamicConstantsInterface.referencePressure * 1.0e5;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "toSIvalue", unit, "unit not supported"));
+      throw new IllegalArgumentException(new InvalidInputException(this, "toSIvalue", unit, "unit not supported"));
     }
   }
 
@@ -78,6 +79,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
    */
   @Override
   public double fromSIvalue(double siValue, String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "bara":
     case "bar":
@@ -98,7 +100,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
     case "atm":
       return siValue / 1.0e5 / ThermodynamicConstantsInterface.referencePressure;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "fromSIvalue", unit, "unit not supported"));
+      throw new IllegalArgumentException(new InvalidInputException(this, "fromSIvalue", unit, "unit not supported"));
     }
   }
 
@@ -130,5 +132,37 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjus
    */
   public static double convert(double value, String unit, String toUnit) {
     return new PressureUnit(value, unit).getValue(toUnit);
+  }
+
+  /**
+   * Convert a signed pressure difference without applying atmospheric offsets.
+   *
+   * Gauge aliases use the corresponding absolute scale. Zero remains exactly zero; negative differences are retained.
+   * This method does not clamp pressure drops or validate absolute-pressure feasibility.
+   *
+   * @param value pressure difference
+   * @param unit source pressure unit
+   * @param toUnit target pressure unit
+   * @return difference in the target unit
+   * @throws IllegalArgumentException if either unit is null, blank or unsupported
+   */
+  public static double convertDifference(double value, String unit, String toUnit) {
+    String source = "barg".equals(unit) ? "bar" : "psig".equals(unit) ? "psi" : unit;
+    String target = "barg".equals(toUnit) ? "bar" : "psig".equals(toUnit) ? "psi" : toUnit;
+    return convert(value, source, target);
+  }
+
+  /**
+   * Return the legacy pressure scale to bar, ignoring gauge offsets.
+   *
+   * @param unit source pressure unit
+   * @return multiplier to bar, not to SI Pascals
+   * @throws IllegalArgumentException if the unit is null, blank or unsupported
+   * @deprecated Use {@link #convert(double, String, String)} for pressures or
+   * {@link #convertDifference(double, String, String)} for differences.
+   */
+  @Deprecated
+  public double getConversionFactor(String unit) {
+    return convertDifference(1.0, unit, "bar");
   }
 }

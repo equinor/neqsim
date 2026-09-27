@@ -10,6 +10,22 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /**
+   * Legacy SI storage for subclasses compiled against earlier releases.
+   *
+   * @deprecated New implementations should calculate SI values from their stored input.
+   */
+  @Deprecated
+  protected double SIvalue = 0.0;
+
+  /**
+   * Legacy scale storage for subclasses compiled against earlier releases.
+   *
+   * @deprecated Use a local conversion factor to avoid mutable conversion state.
+   */
+  @Deprecated
+  protected double factor = 1.0;
+
   /** Process value in given unit */
   protected double invalue;
   /** Unit of process value */
@@ -26,5 +42,17 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
     validateAllowedUnit(unit);
     this.invalue = value;
     this.inunit = unit;
+  }
+
+  /**
+   * Return the SI storage used by legacy subclasses.
+   *
+   * @return stored SI value
+   * @deprecated New implementations should override this method with their conversion strategy.
+   */
+  @Deprecated
+  @Override
+  public double getSIvalue() {
+    return SIvalue;
   }
 }

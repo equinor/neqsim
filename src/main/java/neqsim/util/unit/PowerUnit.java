@@ -26,12 +26,13 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getConversionFactor(String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "W":
       return 1.0;
@@ -44,7 +45,8 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit implements LinearScaleU
     case "BTU/hr":
       return 0.29307107;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
+      throw new IllegalArgumentException(
+          new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
     }
   }
 

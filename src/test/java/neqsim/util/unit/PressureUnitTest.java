@@ -15,10 +15,6 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     fluid.addComponent("nitrogen", 1.0);
     fluid.setPressure(0.0, "barg");
 
-    // ThermodynamicOperations testOps = new ThermodynamicOperations(fluid);
-    // testOps.TPflash();
-    // fluid.initProperties();
-
     assertEquals(ThermodynamicConstantsInterface.referencePressure, fluid.getPressure("bara"), 1e-4);
     assertEquals(0.0, fluid.getPressure("barg"), 1e-4);
     assertEquals(1.01325, fluid.getPressure("bara"), 1e-4);
@@ -30,7 +26,6 @@ class PressureUnitTest extends neqsim.NeqSimTest {
     assertEquals(0.0, fluid.getPressure("psig"), 1e-4);
 
     fluid.setPressure(11.0, "bara");
-    // testOps.TPflash();
 
     assertEquals(11.0, fluid.getPressure(), 1e-4);
     assertEquals(11.0 - 1.01325, fluid.getPressure("barg"), 1e-4);

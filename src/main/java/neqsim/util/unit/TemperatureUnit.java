@@ -21,12 +21,14 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
    */
   public TemperatureUnit(double value, String unit) {
     super(value, unit);
+    // Preserve the protected legacy snapshot for existing subclasses.
+    SIvalue = toSIvalue(value, unit);
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /** {@inheritDoc} */
@@ -45,6 +47,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
    */
   @Override
   public double toSIvalue(double value, String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "K":
       return value;
@@ -62,6 +65,7 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
   /** {@inheritDoc} */
   @Override
   public double fromSIvalue(double siValue, String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "K":
       return siValue;
@@ -98,5 +102,53 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAd
    */
   public static double convert(double value, String unit, String toUnit) {
     return new TemperatureUnit(value, unit).getValue(toUnit);
+  }
+
+  /**
+   * Convert a signed temperature difference without Celsius or Fahrenheit offsets.
+   *
+   * @param value temperature difference
+   * @param unit source temperature unit
+   * @param toUnit target temperature unit
+   * @return difference in the target unit
+   * @throws IllegalArgumentException if either unit is null, blank or unsupported
+   */
+  public static double convertDifference(double value, String unit, String toUnit) {
+    return value * differenceScale(unit) / differenceScale(toUnit);
+  }
+
+  /**
+   * Return the temperature-difference multiplier to Kelvin.
+   *
+   * @param unit temperature unit
+   * @return scale multiplier to Kelvin
+   * @throws IllegalArgumentException if the unit is null, blank or unsupported
+   */
+  private static double differenceScale(String unit) {
+    Unit.validateUnitInput(unit, "unit");
+    switch (unit) {
+    case "K":
+    case "C":
+      return 1.0;
+    case "F":
+    case "R":
+      return 5.0 / 9.0;
+    default:
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+  }
+
+  /**
+   * Return the legacy temperature scale to Kelvin, excluding offsets.
+   *
+   * @param unit temperature unit
+   * @return scale multiplier to Kelvin
+   * @throws IllegalArgumentException if the unit is null, blank or unsupported
+   * @deprecated Use {@link #convert(double, String, String)} for temperatures or
+   * {@link #convertDifference(double, String, String)} for differences.
+   */
+  @Deprecated
+  public double getConversionFactor(String unit) {
+    return differenceScale(unit);
   }
 }

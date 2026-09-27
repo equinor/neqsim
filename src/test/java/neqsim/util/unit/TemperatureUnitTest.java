@@ -2,7 +2,6 @@ package neqsim.util.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -11,7 +10,6 @@ class TemperatureUnitTest extends neqsim.NeqSimTest {
   /**
    * testSetPressure
    */
-  @Disabled
   @Test
   public void testSetTemperature() {
     neqsim.thermo.system.SystemPrEos fluid = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);

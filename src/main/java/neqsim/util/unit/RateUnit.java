@@ -54,7 +54,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /**
@@ -64,6 +64,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
    * @return a double
    */
   public double getConversionFactor(String unit) {
+    Unit.validateUnitInput(unit, "unit");
     double mol_m3 = 0.0;
     double mol_Sm3 = ThermodynamicConstantsInterface.atm
         / (ThermodynamicConstantsInterface.R * standardStateTemperature);
@@ -137,7 +138,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
     } else if (unit.equals("barrel/day") || unit.equals("bbl/day")) {
       factor = 1.0 / molarmass / (3600.0 * 24.0) / 2.20462262 / 0.068;
     } else {
-      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", "unit",
+      throw new IllegalArgumentException(new InvalidInputException(this, "getConversionFactor", "unit",
           "'" + unit + "' is not supported. Supported units: mole/sec, mol/sec, mole/min, "
               + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
               + "kmole/hr, kmol/hr, kmole/day, kmol/day, kg/sec, kg/min, kg/hr, kg/day, "

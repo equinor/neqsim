@@ -147,6 +147,7 @@ public class Units {
    * @return a {@link java.lang.String} object
    */
   public static synchronized String getSymbol(String unit) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -164,6 +165,7 @@ public class Units {
    * @return a {@link java.lang.String} object
    */
   public static synchronized String getSymbolName(String unit) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -182,6 +184,7 @@ public class Units {
    * @param symbolName a {@link java.lang.String} object
    */
   public static synchronized void setUnit(String unit, String symbol, String symbolName) {
+    Unit.validateUnitInput(unit, "property");
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -200,7 +203,7 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getTemperatureUnits() {
-    return temperatureUnits;
+    return temperatureUnits.clone();
   }
 
   /**
@@ -209,7 +212,7 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getPressureUnits() {
-    return pressureUnits;
+    return pressureUnits.clone();
   }
 
   /**
@@ -218,6 +221,6 @@ public class Units {
    * @return an array of {@link java.lang.String} objects
    */
   public String[] getMolarVolumeUnits() {
-    return molarVolumeUnits;
+    return molarVolumeUnits.clone();
   }
 }

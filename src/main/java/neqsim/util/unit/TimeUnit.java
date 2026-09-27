@@ -33,7 +33,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /** {@inheritDoc} */
@@ -45,6 +45,7 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
   /** {@inheritDoc} */
   @Override
   public double getConversionFactor(String unit) {
+    Unit.validateUnitInput(unit, "unit");
     if ("s".equals(unit) || "sec".equals(unit) || "second".equals(unit)) {
       return 1.0;
     } else if ("min".equals(unit) || "minute".equals(unit)) {
@@ -55,7 +56,8 @@ public class TimeUnit extends neqsim.util.unit.BaseUnit implements LinearScaleUn
       return 86400.0;
     }
 
-    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
+    throw new IllegalArgumentException(
+        new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
   }
 
   /**

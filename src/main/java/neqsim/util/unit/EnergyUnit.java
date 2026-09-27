@@ -36,6 +36,7 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** {@inheritDoc} */
   @Override
   public double getConversionFactor(String unit) {
+    Unit.validateUnitInput(unit, "unit");
     switch (unit) {
     case "J":
       return 1.0;
@@ -54,7 +55,8 @@ public class EnergyUnit extends neqsim.util.unit.BaseUnit implements LinearScale
     case "kcal":
       return 4184.0;
     default:
-      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
+      throw new IllegalArgumentException(
+          new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
     }
   }
 
