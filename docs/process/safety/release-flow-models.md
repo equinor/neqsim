@@ -1,6 +1,6 @@
 ---
 title: Model-explicit release source terms
-description: Explicit homogeneous, drift-flux and ideal/real-gas pipe release models with immutable thermodynamic stations and fail-closed diagnostics.
+description: Explicit equilibrium, finite-rate, drift-flux and ideal/real-gas release models with immutable stations and fail-closed diagnostics.
 ---
 
 # Model-explicit release source terms
@@ -46,6 +46,7 @@ identity, version and diagnostics with every frame:
 | `HomogeneousEquilibriumReleaseModel` | Short-opening equilibrium gas, liquid and flashing calculations. | EOS/flash closure is strict; unsupported phase physics and failed required properties return no numeric payload. |
 | `SlipCorrectedHomogeneousEquilibriumReleaseModel` | Short-opening gas/liquid flow with equilibrium thermodynamics and caller-declared velocity slip. | Requires exactly one gas and one liquid phase at the opening, exposes phase densities and velocities, and closes phase area and kinetic energy. It does not infer a slip or entrainment correlation. |
 | `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
+| `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
@@ -140,6 +141,40 @@ correlations are model provenance, not independent rate validation. The implemen
 finite-rate phase transfer, entrainment and droplet-size transport, annular/high-Weber jets, pipe
 friction, heat transfer and solid-bearing flow. It remains `UNQUALIFIED` pending experimental
 multiphase evidence and accountable domain review.
+
+## Finite-rate phase-split relaxation
+
+`FiniteRateDriftFluxReleaseModel` adds a bounded delayed-phase-response sensitivity without
+presenting a caller assumption as predictive kinetics. For upstream gas mass fraction $y_{g,0}$,
+equilibrium station fraction $y_{g,eq}$, residence time $t_r$ [s] and phase-transfer relaxation
+time $\tau$ [s], the exact first-order solution is
+
+$$\chi=1-\exp\left(-\frac{t_r}{\tau}\right),\qquad y_g=y_{g,0}+\chi(y_{g,eq}-y_{g,0}).$$
+
+The liquid mass fraction is $1-y_g$. Phase densities and equilibrium specific enthalpy come from
+the resolved EOS station. Mixture density is recomputed from phase specific volumes. The shared
+vertical drift-flux solver then partitions the HEM kinetic energy, so the reported station closes
+phase area, drift flux and stagnation energy while retaining the HEM overall component mass
+fractions exactly.
+
+```java
+ReleaseFlowModel finiteRate = new FiniteRateDriftFluxReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.50,   // phase-transfer relaxation time, s
+    0.25,   // available residence time, s
+    "public-screening-assumption:v1");
+```
+
+`FiniteRateDriftFluxReleaseModelTest.schemaCarriesFiniteRateProvenanceThroughBothProcessContainers`
+executes this construction through steady and dynamic `ProcessSystem` and `ProcessModel` paths.
+The analytical exponential is timestep independent; a retained explicit-Euler refinement receipt
+demonstrates convergence toward it. Frames retain the supplied parameter provenance in diagnostics.
+
+This is a uniform phase-split relaxation model. It does not supply component-selective mass-transfer
+coefficients, infer residence time, predict entrainment or droplet size, represent annular/high-Weber
+jets, transport solids, or provide experimental qualification. If the resolved opening does not
+retain one gas and one supported liquid phase, or the bubbly/dispersed drift-flux applicability
+limit is exceeded, the result fails closed with no numeric source payload.
 
 ## Ideal-gas equations
 

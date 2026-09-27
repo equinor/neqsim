@@ -120,6 +120,36 @@ public final class ReleaseState implements Serializable {
   }
 
   /**
+   * Creates a nonequilibrium phase-basis snapshot while retaining overall composition and caloric properties.
+   *
+   * @param reference immutable reference station
+   * @param phaseMassFractions replacement phase mass fractions
+   * @param phaseDensitiesKgM3 replacement phase densities in kg/m3
+   */
+  private ReleaseState(ReleaseState reference, Map<String, Double> phaseMassFractions,
+      Map<String, Double> phaseDensitiesKgM3) {
+    if (phaseMassFractions == null || phaseDensitiesKgM3 == null || phaseMassFractions.isEmpty()
+        || !phaseMassFractions.keySet().equals(phaseDensitiesKgM3.keySet())) {
+      throw new IllegalArgumentException("Matching phase mass fractions and densities required");
+    }
+    this.phaseMassFractions = fractions(phaseMassFractions);
+    this.phaseDensitiesKgM3 = positiveValues(phaseDensitiesKgM3, "phase density");
+    double specificVolumeM3Kg = 0.0;
+    for (Map.Entry<String, Double> entry : this.phaseMassFractions.entrySet()) {
+      specificVolumeM3Kg += entry.getValue() / this.phaseDensitiesKgM3.get(entry.getKey());
+    }
+    pressurePa = reference.pressurePa;
+    temperatureK = reference.temperatureK;
+    densityKgM3 = ReleaseFlowRequest.positive(1.0 / specificVolumeM3Kg, "relaxed mixture density");
+    enthalpyJkg = reference.enthalpyJkg;
+    entropyJkgK = reference.entropyJkgK;
+    velocityMs = reference.velocityMs;
+    componentMoleFractions = reference.componentMoleFractions;
+    componentMassFractions = reference.componentMassFractions;
+    phaseVelocitiesMs = Collections.emptyMap();
+  }
+
+  /**
    * Snapshots an initialized fluid without flashing or modifying it.
    *
    * @param fluid initialized, equilibrated station state
@@ -163,6 +193,21 @@ public final class ReleaseState implements Serializable {
    */
   ReleaseState withPhaseVelocities(double bulkVelocityMs, Map<String, Double> phaseVelocitiesMs) {
     return new ReleaseState(this, bulkVelocityMs, phaseVelocitiesMs);
+  }
+
+  /**
+   * Returns the same caloric and overall-composition snapshot with a caller-resolved nonequilibrium phase basis.
+   *
+   * <p>
+   * The mixture density is recomputed from phase mass fractions and phase specific volumes. This method is
+   * package-private so release models retain responsibility for component, energy and applicability checks.
+   *
+   * @param phaseMassFractions phase mass fractions summing to one
+   * @param phaseDensitiesKgM3 positive phase densities in kg/m3 on the same key set
+   * @return immutable state with no phase-velocity assignment
+   */
+  ReleaseState withPhaseBasis(Map<String, Double> phaseMassFractions, Map<String, Double> phaseDensitiesKgM3) {
+    return new ReleaseState(this, phaseMassFractions, phaseDensitiesKgM3);
   }
 
   private static Map<String, Double> fractions(Map<String, Double> values) {
