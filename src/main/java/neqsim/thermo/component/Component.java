@@ -2267,19 +2267,44 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasHenryCorrelation() {
+    if (henryCoefParameter == null || henryCoefParameter.length != 4) {
+      return false;
+    }
+    boolean nonzero = false;
+    for (double parameter : henryCoefParameter) {
+      if (!Double.isFinite(parameter)) {
+        return false;
+      }
+      nonzero |= parameter != 0.0;
+    }
+    // Historical 900/0/0/0 rows are absence markers, never measured insolubility.
+    return nonzero && !(henryCoefParameter[0] >= 700.0 && henryCoefParameter[1] == 0.0 && henryCoefParameter[2] == 0.0
+        && henryCoefParameter[3] == 0.0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getHenryCoef(double temperature) {
-    // System.out.println("henry " +
-    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
-    // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
-    return Math.exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
-        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature) * 0.01802 * 100;
+    if (!hasHenryCorrelation() || !Double.isFinite(temperature) || temperature <= 0.0) {
+      return Double.NaN;
+    }
+    double logarithm = henryCoefParameter[0] + henryCoefParameter[1] / temperature
+        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature + Math.log(1.802);
+    double coefficient = Math.exp(logarithm);
+    return Double.isFinite(coefficient) && coefficient > 0.0 ? coefficient : Double.NaN;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getHenryCoefdT(double temperature) {
-    return getHenryCoef(temperature) * (-henryCoefParameter[1] / (temperature * temperature)
+    double coefficient = getHenryCoef(temperature);
+    if (!Double.isFinite(coefficient)) {
+      return Double.NaN;
+    }
+    double derivative = coefficient * (-henryCoefParameter[1] / (temperature * temperature)
         + henryCoefParameter[2] / temperature + henryCoefParameter[3]);
+    return Double.isFinite(derivative) ? derivative : Double.NaN;
   }
 
   /** {@inheritDoc} */

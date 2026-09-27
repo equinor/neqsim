@@ -77,10 +77,10 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    * </p>
    *
    * @param temperature temperature in K
-   * @return effective Henry coefficient in bar
+   * @return effective mole-fraction Henry coefficient in bar
    */
   protected double getEffectiveHenryCoefficient(double temperature) {
-    double henryCoefficient = getHenryCoef(temperature);
+    double henryCoefficient = getHenryCoef(temperature) / IapwsHenryLaw.WATER_MOLAR_MASS_KG_PER_MOL;
     return isHenryCoefficientCapped(henryCoefficient) ? INSOLUBLE_HENRY_COEFFICIENT : henryCoefficient;
   }
 
@@ -129,7 +129,8 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    */
   protected double getLnHenryCoefficientTemperatureDerivative(double temperature) {
     double henryCoefficient = getHenryCoef(temperature);
-    if (isHenryCoefficientCapped(henryCoefficient)) {
+    if (isHenryCoefficientCapped(henryCoefficient)
+        || getEffectiveHenryCoefficient(temperature) >= INSOLUBLE_HENRY_COEFFICIENT) {
       return 0.0;
     }
     return getHenryCoefdT(temperature) / henryCoefficient;

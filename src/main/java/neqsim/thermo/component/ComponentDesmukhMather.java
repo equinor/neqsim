@@ -102,6 +102,19 @@ public class ComponentDesmukhMather extends ComponentGE {
     return gamma;
   }
 
+  /**
+   * Preserves this empirical reactive model's calibrated database reference convention. A generic mole-fraction
+   * conversion cannot be applied independently of its reaction constants.
+   *
+   * @param temperature temperature in K
+   * @return legacy molality-scale reference or the finite unsupported-solute limit
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double coefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
@@ -123,7 +136,7 @@ public class ComponentDesmukhMather extends ComponentGE {
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
-      fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+      fugacityCoefficient = activinf * getEffectiveHenryCoefficient(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = activinf;
     } else {
       fugacityCoefficient = 1e-15;
