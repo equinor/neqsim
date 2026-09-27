@@ -112,11 +112,45 @@ $$x_{n+1} = g(x_n)$$
 recycle.setAccelerationMethod(AccelerationMethod.DIRECT_SUBSTITUTION);
 ```
 
+### Per-recycle acceleration coordinates
+
+A `Recycle` accelerates the **overall mole fractions** in component order. Its
+Broyden matrix is therefore `n` by `n` for `n` components. Temperature, pressure
+and total molar flow retain the current mixed/flashed return-stream values;
+there are no unused thermal or flow coordinates in the accelerator.
+
+The proposed composition is clipped at zero and normalized, then applied to a
+cloned fluid's component inventories and TP-flashed at the return temperature
+and pressure. Each phase receives its own equilibrium composition and phase
+fraction. Invalid proposals or failed flashes retain the unaccelerated return.
+A changed component list resets the acceleration history. An accelerated tear
+is an iteration estimate: component and energy balances across the loop must
+be checked after convergence. Convergence uses the unaccelerated return versus
+the previous tear estimate, so damping or clipping cannot hide a residual.
+
+This scope applies to acceleration inside each `Recycle`. The separate
+`RecycleController` simultaneous-acceleration interface has its own coordinates.
+
+#### Diagnostic compatibility
+
+| API | Coordinate layout |
+| --- | --- |
+| `getCompositionWegsteinQFactors()` | `n` factors for overall mole fractions in component order |
+| `getWegsteinQFactors()` | Existing `3 + n` layout; T, P and flow entries are reserved zeros, followed by composition factors |
+| `getBroydenAccelerator().getInverseJacobian()` | `n` by `n` composition matrix for this recycle |
+
+Both Wegstein getters return defensive copies, or `null` before factors exist.
+The factors describe the proposal **before** clipping and normalization. Previously
+reported nonzero T/P/flow factors had no effect; consumers should no longer
+interpret them as acceleration of those properties. Composition entries now refer
+to overall composition, rather than the first phase. Reset acceleration state
+before reusing persisted solver history from an older version.
+
 ### 2. Wegstein Acceleration
 
 **Algorithm**: Extrapolates based on the slope between consecutive iterations.
 
-$$x_{n+1} = q \cdot g(x_n) + (1-q) \cdot x_n$$
+$$x_{n+1} = q \cdot x_n + (1-q) \cdot g(x_n)$$
 
 where the q-factor is calculated from the slope:
 
@@ -124,8 +158,9 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 
 **Bounded q-factor**: NeqSim bounds q ∈ [-5, 0] to prevent divergence:
 - q = 0: Pure direct substitution
-- q < 0: Damping for oscillatory behavior
-- q = -5: Maximum damping
+- q < 0: Extrapolation for monotonic convergence
+- q = -5: Strongest extrapolation with the default bounds
+- 0 < q < 1: Damping when a positive maximum is explicitly enabled
 
 **Characteristics**:
 - Low overhead (O(1) per variable)
@@ -142,7 +177,7 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 // Optional: Tune the q-factor bounds
-recycle.setWegsteinQMin(-5.0);  // More damping
+recycle.setWegsteinQMin(-5.0);  // Allow extrapolation
 recycle.setWegsteinQMax(0.0);   // Maximum q (direct substitution)
 ```
 
@@ -427,7 +462,7 @@ recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 ```java
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
-recycle.setWegsteinQMin(-10.0);  // Stronger damping
+recycle.setWegsteinQMin(-10.0);  // Stronger extrapolation
 recycle.setWegsteinQMax(-0.5);   // Never use direct substitution
 ```
 

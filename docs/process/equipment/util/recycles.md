@@ -163,6 +163,27 @@ stream using `setOutletStream(stream)`. If missing, `run()` reports the recycle
 name and the required configuration. Before wiring, `getOutletStream()` returns
 `null` so process modules can inspect the connection without running the recycle.
 
+### Composition acceleration and diagnostics
+
+Per-recycle Wegstein and Broyden acceleration operates on overall component mole
+fractions. Temperature, pressure and total molar flow use the current return
+stream values. The accelerated composition updates component inventories and
+is TP-flashed before publication; the gas and liquid phases retain distinct
+equilibrium compositions. Negative proposals are clipped and normalized; an
+invalid proposal or failed flash falls back to the unaccelerated return.
+
+The composition convergence residual compares overall mole fractions **before**
+acceleration. This prevents a damped or clipped step from reporting a false
+converged state. A changed component list resets the acceleration history.
+
+`getCompositionWegsteinQFactors()` returns one factor per component.
+`getWegsteinQFactors()` preserves the `3 + n` layout, with three reserved zeros
+for the unaccelerated T/P/flow entries followed by the composition factors.
+Factors describe the proposal before clipping and normalization. The per-recycle
+Broyden matrix contains only the `n` composition coordinates. See the
+[acceleration guide](../../../simulation/recycle_acceleration_guide.md#per-recycle-acceleration-coordinates)
+for coordinate definitions and compatibility guidance.
+
 ### Direct Substitution
 
 Simple successive substitution (default):
