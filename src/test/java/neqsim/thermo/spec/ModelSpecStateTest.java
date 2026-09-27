@@ -20,6 +20,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
+import neqsim.thermo.phase.PhaseWaterIAPWS;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -32,6 +33,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
 import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
+import neqsim.thermo.system.SystemWaterIF97;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemRKEos;
@@ -489,6 +491,61 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     for (int i = 0; i < first.length; i++) {
       assertEquals(first[i], returned[i], 0.0, "Span-Wagner returned property " + i);
     }
+  }
+
+  @Test
+  void waterIf97RefreshesRegionOneAndTwoStateBeforeReturningToReference() {
+    SystemWaterIF97 system = new SystemWaterIF97(300.0, 30.0);
+
+    double[] first = waterIf97State(system, 300.0, 30.0, PhaseType.AQUEOUS);
+    double[] compressed = waterIf97State(system, 300.0, 800.0, PhaseType.AQUEOUS);
+    double[] hotLiquid = waterIf97State(system, 500.0, 30.0, PhaseType.AQUEOUS);
+    double[] diluteSteam = waterIf97State(system, 300.0, 0.035, PhaseType.GAS);
+    double[] hotSteam = waterIf97State(system, 700.0, 0.035, PhaseType.GAS);
+    double[] denseSteam = waterIf97State(system, 700.0, 300.0, PhaseType.GAS);
+    assertNotEquals(first[0], compressed[0], "IF97 density must refresh with pressure");
+    assertNotEquals(compressed[1], hotLiquid[1], "IF97 enthalpy must refresh with temperature");
+    assertNotEquals(hotLiquid[0], diluteSteam[0], "IF97 density must refresh across regions");
+    assertNotEquals(diluteSteam[1], hotSteam[1], "IF97 steam enthalpy must refresh");
+    assertNotEquals(hotSteam[0], denseSteam[0], "IF97 steam density must refresh with pressure");
+
+    double[] returned = waterIf97State(system, 300.0, 30.0, PhaseType.AQUEOUS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], 0.0, "IF97 returned property " + i);
+    }
+  }
+
+  private static double[] waterIf97State(SystemWaterIF97 system, double temperature, double pressure,
+      PhaseType expectedType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.init(2);
+    assertEquals(PhaseWaterIAPWS.class, system.getPhase(0).getClass());
+    assertEquals(expectedType, system.getPhase(0).getType());
+    PhaseWaterIAPWS phase = (PhaseWaterIAPWS) system.getPhase(0);
+    double[] values = {phase.getDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getSoundSpeed(), phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getMolarVolume()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value));
+    }
+    assertTrue(
+        values[0] > 0.0 && values[5] > 0.0 && values[6] > 0.0 && values[7] > 0.0 && values[8] > 0.0 && values[9] > 0.0,
+        "invalid IF97 state");
+    assertEquals(values[1], values[2] + pressure * 1.0e5 * values[9], Math.max(1e-9, Math.abs(values[1]) * 1e-12));
+    assertEquals(values[4], values[1] - temperature * values[3], Math.max(1e-9, Math.abs(values[4]) * 1e-12));
+    assertEquals(1.0, values[0] * values[9] / phase.getMolarMass(), 1e-12);
+
+    system.init(2);
+    PhaseWaterIAPWS repeated = (PhaseWaterIAPWS) system.getPhase(0);
+    double[] repeatedValues = {repeated.getDensity(), repeated.getEnthalpy("J/mol"),
+        repeated.getInternalEnergy("J/mol"), repeated.getEntropy("J/molK"),
+        repeated.getGibbsEnergy() / repeated.getNumberOfMolesInPhase(), repeated.getCp("J/molK"),
+        repeated.getSoundSpeed(), repeated.getZ(), repeated.getDensity("mol/m3") / 1000.0, repeated.getMolarVolume()};
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeatedValues[i], 0.0, "IF97 repeat property " + i);
+    }
+    return values;
   }
 
   private static double[] spanWagnerState(SystemSpanWagnerEos system, double temperature, double pressure,
