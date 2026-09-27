@@ -66,6 +66,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - caller-owned wet-flue-gas sensible stack-loss receipts reconciled to qualified furnace loss;
 - caller-owned wet-flue-gas heat-recovery receipts with explicit recovered/remaining loss closure;
 - caller-owned recovered-heat utilization with avoided/net fired-heater fuel, cost, and emissions receipts;
+- integrated net hydrogen/fired-heater energy, emissions, and caller-priced operating receipts;
 - scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
 - integrated coupled sulfur/nitrogen material, energy, emissions, and scenario-cost receipts;
 - hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
@@ -190,6 +191,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Coupled sulfur/nitrogen fired-heater stack-loss balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_stack_loss_balance)
 - [Coupled sulfur/nitrogen fired-heater heat-recovery balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_balance)
 - [Coupled sulfur/nitrogen fired-heater heat-recovery credit balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_credit_balance)
+- [Net coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_net_operating_receipt)
 - [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
 - [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
 - [Integrated coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_operating_receipt)
