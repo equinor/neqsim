@@ -114,6 +114,16 @@ recycle.setTemperatureTolerance(0.1);  // K
 recycle.setPressureTolerance(0.01);    // bar
 ```
 
+`setFlowTolerance()` retains its legacy units: **kg/s below 1 kg/s** loop
+flow and **percent at or above 1 kg/s**. For example, the default 0.01 permits
+0.01 kg/s change on a 0.02 kg/s loop, which is 50% of that loop flow. Choose a
+smaller flow tolerance for small loops.
+
+`getAbsoluteFlowChange()` always reports kg/hr. `setAbsoluteFlowTolerance()`
+adds an **OR** acceptance criterion: it can relax the legacy criterion, but it
+cannot make a loose legacy tolerance stricter. Tighten `setFlowTolerance()`
+first when an absolute limit should govern convergence.
+
 ### Maximum Iterations
 
 ```java
