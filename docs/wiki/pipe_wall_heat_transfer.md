@@ -1,504 +1,155 @@
 ---
 title: "Pipe Wall Construction and Heat Transfer Modeling"
-description: "This document describes the pipe wall construction and heat transfer modeling capabilities in NeqSim, including material properties, multi-layer walls, and surrounding environment modeling."
+description: "Build multilayer pipe walls and screen cylindrical heat transfer with explicit units, environmental assumptions, and NeqSim API boundaries."
 ---
 
-# Pipe Wall Construction and Heat Transfer Modeling
+NeqSim represents a pipe wall as concentric material layers and can combine their
+cylindrical conduction resistance with a simplified surrounding-environment model.
+Use this page for screening and for preparing heat-transfer inputs. It does not replace
+a hydraulic flow model, a transient thermal model, or a qualified insulation design.
 
-This document describes the pipe wall construction and heat transfer modeling capabilities in NeqSim, including material properties, multi-layer walls, and surrounding environment modeling.
+## Model basis
 
-## Table of Contents
+For a layer with inner radius $r_i$, outer radius $r_o$, thermal conductivity $k$, and
+unit pipe length, NeqSim uses
 
-1. [Overview](#overview)
-2. [Pipe Materials](#pipe-materials)
-3. [Material Layers](#material-layers)
-4. [Pipe Wall Assembly](#pipe-wall-assembly)
-5. [Surrounding Environment](#surrounding-environment)
-6. [Heat Transfer Calculations](#heat-transfer-calculations)
-7. [API Reference](#api-reference)
-8. [Examples](#examples)
+$$
+R'_{layer} = \frac{\ln(r_o/r_i)}{2\pi k}
+$$
 
----
+where $R'$ is in K m/W. `PipeWall.calcCylindricalThermalResistancePerLength()` sums
+this resistance over all layers. `PipeWallBuilder.calcOverallUValue(double)` adds the
+inner-film and outer-environment resistances and returns an overall coefficient in
+W/(m² K), referenced to the inner pipe area.
 
-## Overview
+The builder's inner-film argument is caller-owned. NeqSim does not infer it from a flow
+regime in this geometry calculation. The air, seawater, and soil environment factories
+also use simplified correlations; verify their applicability for the actual installation.
 
-The pipe wall modeling system in NeqSim provides:
-- **Material database** with thermal properties
-- **Multi-layer wall construction** (pipe + insulation + coating)
-- **Surrounding environment models** (air, water, soil)
-- **Heat transfer resistance calculations**
-- **Integration with transient flow simulation**
+## Units and current API
 
----
+| Quantity | Unit | Current API |
+| --- | --- | --- |
+| Inner diameter, radius, layer thickness | m | `PipeWallBuilder`, `MaterialLayer`, `PipeWall` |
+| Material conductivity | W/(m K) | `PipeMaterial.getThermalConductivity()` |
+| Density | kg/m³ | `PipeMaterial.getDensity()` |
+| Specific heat capacity | J/(kg K) | `PipeMaterial.getSpecificHeatCapacity()` |
+| Ambient temperature | K | `exposedToAir`, `subseaEnvironment`, `buriedInSoil` |
+| Wind or current velocity | m/s | environment factory argument |
+| Inner-film coefficient | W/(m² K) | `calcOverallUValue(double)` |
+| Resistance per unit length | K m/W | `calcCylindricalThermalResistancePerLength()` |
 
-## Pipe Materials
+`PipeWallBuilder` has a private constructor. Start with a factory such as
+`carbonSteelPipe`, `barePipe`, `withInnerDiameter`, or `subseaPipe`. Add layers from the
+inside out. The predefined `PipeMaterial` values are nominal properties near 20 °C, not
+temperature-dependent material certificates.
 
-### Standard Materials
+## Executable subsea screening example
 
-NeqSim includes pre-defined pipe materials with thermal properties:
-
-| Material | Thermal Conductivity (W/m·K) | Density (kg/m³) | Specific Heat (J/kg·K) |
-|----------|------------------------------|-----------------|------------------------|
-| Carbon Steel | 50.0 | 7850 | 490 |
-| Stainless Steel 316 | 16.3 | 8000 | 500 |
-| Duplex Steel | 15.0 | 7800 | 500 |
-| Super Duplex | 14.0 | 7800 | 500 |
-| Titanium | 21.9 | 4500 | 523 |
-| Inconel 625 | 9.8 | 8440 | 410 |
-| Monel 400 | 21.8 | 8800 | 427 |
-| Copper | 401.0 | 8960 | 385 |
-| HDPE | 0.5 | 960 | 1800 |
-| PVC | 0.19 | 1400 | 1000 |
-| GRP (Fiberglass) | 0.3 | 1850 | 900 |
-
-### Creating Custom Materials
+This complete Java 8 program builds carbon steel, FBE, and polyurethane layers. It adds
+a simplified seawater environment, evaluates the overall coefficient, and calculates a
+screening heat loss per metre from bulk-fluid to ambient temperature.
 
 ```java
-// Using standard material
-PipeMaterial steel = PipeMaterial.CARBON_STEEL;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeMaterial;
+import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWall;
+import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeWallBuilder;
+import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment;
 
-// Creating custom material
-PipeMaterial custom = new PipeMaterial(
-    "Custom Alloy",
-    25.0,    // thermalConductivity (W/m·K)
-    7500,    // density (kg/m³)
-    480      // specificHeatCapacity (J/kg·K)
-);
-```
+public final class PipeWallHeatTransferGuideExample {
+  private static final Logger LOGGER =
+      LogManager.getLogger(PipeWallHeatTransferGuideExample.class);
 
-### Material Properties
+  private PipeWallHeatTransferGuideExample() {}
 
-- **Thermal Conductivity ($k$)**: Ability to conduct heat (W/m·K)
-- **Density ($\rho$)**: Material mass per unit volume (kg/m³)
-- **Specific Heat Capacity ($C_p$)**: Energy to raise temperature by 1 K (J/kg·K)
-- **Thermal Diffusivity**: $\alpha = k / (\rho C_p)$ (m²/s)
+  public static void main(String[] args) {
+    double innerDiameterM = 0.254;
+    double steelThicknessM = 0.0127;
+    double fbeThicknessM = 0.0004;
+    double insulationThicknessM = 0.050;
+    double bulkFluidTemperatureK = 333.15;
+    double seawaterTemperatureK = 277.15;
+    double seawaterCurrentMPerS = 0.5;
+    double innerFilmCoefficientWPerM2K = 800.0;
 
----
+    PipeWallBuilder builder =
+        PipeWallBuilder.carbonSteelPipe(innerDiameterM, steelThicknessM)
+            .addFBECoating(fbeThicknessM)
+            .addInsulation(PipeMaterial.POLYURETHANE_FOAM, insulationThicknessM)
+            .subseaEnvironment(seawaterTemperatureK, seawaterCurrentMPerS);
 
-## Material Layers
+    PipeWall wall = builder.build();
+    PipeSurroundingEnvironment environment = builder.buildEnvironment();
+    double resistanceKMW = wall.calcCylindricalThermalResistancePerLength();
+    double overallUWPerM2K = builder.calcOverallUValue(innerFilmCoefficientWPerM2K);
+    double heatLossWPerM =
+        overallUWPerM2K
+            * 2.0
+            * Math.PI
+            * wall.getInnerRadius()
+            * (bulkFluidTemperatureK - seawaterTemperatureK);
 
-A `MaterialLayer` combines a material with its thickness:
+    assert wall.getNumberOfLayers() == 3;
+    assert environment.isSubsea();
+    assert resistanceKMW > 0.0;
+    assert overallUWPerM2K > 0.0;
+    assert overallUWPerM2K < innerFilmCoefficientWPerM2K;
+    assert heatLossWPerM > 0.0;
 
-```java
-// Create insulation layer
-MaterialLayer insulation = new MaterialLayer(
-    "Polyurethane Foam",
-    0.025,   // thermalConductivity (W/m·K)
-    40,      // density (kg/m³)
-    1500,    // specificHeatCapacity (J/kg·K)
-    0.05     // thickness (m) = 50 mm
-);
-
-// Using pipe material
-MaterialLayer pipeWall = new MaterialLayer(
-    PipeMaterial.CARBON_STEEL,
-    0.012    // thickness = 12 mm
-);
-```
-
-### Layer Properties
-
-| Property | Description | Units |
-|----------|-------------|-------|
-| `thickness` | Layer thickness | m |
-| `thermalConductivity` | Heat conduction coefficient | W/(m·K) |
-| `density` | Material density | kg/m³ |
-| `specificHeatCapacity` | Thermal capacity | J/(kg·K) |
-
----
-
-## Pipe Wall Assembly
-
-### Multi-Layer Construction
-
-The `PipeWall` class represents a complete pipe wall with multiple layers:
-
-```java
-// Method 1: Create layer by layer
-PipeWall wall = new PipeWall(0.15);  // inner radius = 150 mm
-
-wall.addLayer(new MaterialLayer(PipeMaterial.CARBON_STEEL, 0.012));
-wall.addLayer(new MaterialLayer("Insulation", 0.025, 40, 1500, 0.050));
-wall.addLayer(new MaterialLayer("Coating", 0.3, 1200, 1400, 0.005));
-
-// Method 2: Using PipeWallBuilder (fluent API)
-PipeWall wall = new PipeWallBuilder()
-    .innerRadius(0.15)
-    .addPipeLayer(PipeMaterial.CARBON_STEEL, 0.012)
-    .addInsulationLayer(0.025, 0.050)
-    .addCoatingLayer(0.3, 0.005)
-    .build();
-```
-
-### Thermal Resistance
-
-The total radial thermal resistance through a cylindrical wall:
-
-$$
-R_{total} = \sum_{i=1}^{n} R_i = \sum_{i=1}^{n} \frac{\ln(r_{i+1}/r_i)}{2\pi k_i L}
-$$
-
-Where:
-- $r_i$ = inner radius of layer $i$ (m)
-- $r_{i+1}$ = outer radius of layer $i$ (m)
-- $k_i$ = thermal conductivity of layer $i$ (W/m·K)
-- $L$ = pipe length (m)
-
-Per unit length:
-
-$$
-R'_{total} = \sum_{i=1}^{n} \frac{\ln(r_{i+1}/r_i)}{2\pi k_i} \quad \text{(m·K/W)}
-$$
-
-### Key Properties
-
-```java
-double outerRadius = wall.getOuterRadius();           // m
-double totalThickness = wall.getTotalWallThickness(); // m
-double resistance = wall.getTotalResistancePerLength(); // m·K/W
-double heatCapacity = wall.getThermalMass();          // J/(m·K)
-int layerCount = wall.getLayerCount();
-```
-
----
-
-## Surrounding Environment
-
-### Environment Types
-
-The `PipeSurroundingEnvironment` class models the external conditions:
-
-| Environment | Description | Typical $h$ (W/m²·K) |
-|-------------|-------------|----------------------|
-| Still Air | Natural convection | 5-25 |
-| Moving Air | Forced convection | 10-200 |
-| Seawater | Subsea pipelines | 150-1000 |
-| Soil | Buried pipelines | 1-10 |
-
-### Creating Environments
-
-```java
-// Using factory methods
-PipeSurroundingEnvironment air = 
-    PipeSurroundingEnvironment.stillAir(25.0);  // 25°C
-
-PipeSurroundingEnvironment seawater = 
-    PipeSurroundingEnvironment.seawater(4.0);   // 4°C
-
-PipeSurroundingEnvironment soil = 
-    PipeSurroundingEnvironment.soil(15.0, 1.5); // 15°C, k=1.5 W/m·K
-
-// Custom environment
-PipeSurroundingEnvironment custom = 
-    new PipeSurroundingEnvironment("Wind", 10.0, 50.0);
-    // 10°C ambient, h = 50 W/m²·K
-```
-
-### Convection Coefficients
-
-**Still Air (Natural Convection)**:
-$$
-h \approx 5 + 5\sqrt{T_{surface} - T_{ambient}} \quad \text{W/(m²·K)}
-$$
-
-**Seawater**:
-$$
-h \approx 150 + 70 \cdot v_{current}^{0.8} \quad \text{W/(m²·K)}
-$$
-
-**Soil (Buried Pipe)**:
-$$
-h_{equiv} = \frac{k_{soil}}{r_o \cdot \ln(2H/r_o)} \quad \text{W/(m²·K)}
-$$
-
-Where $H$ is burial depth and $r_o$ is outer radius.
-
----
-
-## Heat Transfer Calculations
-
-### Overall Heat Transfer Coefficient
-
-The overall U-value combining all resistances:
-
-$$
-\frac{1}{U A} = \frac{1}{h_i A_i} + \sum \frac{\ln(r_{o}/r_i)}{2\pi k L} + \frac{1}{h_o A_o}
-$$
-
-Based on outer surface area:
-
-$$
-U_o = \frac{1}{r_o \left(\frac{1}{h_i r_i} + \sum \frac{\ln(r_{i+1}/r_i)}{k_i} + \frac{1}{h_o}\right)}
-$$
-
-### Heat Transfer Rate
-
-Heat flow per unit length:
-
-$$
-q' = U_o \cdot 2\pi r_o \cdot (T_{fluid} - T_{ambient}) \quad \text{W/m}
-$$
-
-Total heat flow:
-
-$$
-Q = q' \cdot L = U_o \cdot A_o \cdot \Delta T \quad \text{W}
-$$
-
-### Temperature Profile
-
-The fluid temperature along the pipe (steady-state):
-
-$$
-T(x) = T_{ambient} + (T_{inlet} - T_{ambient}) \exp\left(-\frac{U_o \cdot \pi D_o}{\dot{m} C_p} x\right)
-$$
-
-### Wall Temperature Distribution
-
-Temperature at interface between layers $j$ and $j+1$:
-
-$$
-T_j = T_{fluid} - q' \cdot \left(\frac{1}{h_i \cdot 2\pi r_i} + \sum_{k=1}^{j} \frac{\ln(r_{k+1}/r_k)}{2\pi k_k}\right)
-$$
-
----
-
-## API Reference
-
-### PipeMaterial Enum
-
-```java
-public enum PipeMaterial {
-    CARBON_STEEL(50.0, 7850, 490),
-    STAINLESS_316(16.3, 8000, 500),
-    // ... more materials
-    
-    double getThermalConductivity();
-    double getDensity();
-    double getSpecificHeatCapacity();
-    double getThermalDiffusivity();
+    LOGGER.info(
+        "layers={}, outerDiameter={} m, resistance={} K m/W, U={} W/(m2 K), heatLoss={} W/m",
+        wall.getNumberOfLayers(),
+        2.0 * wall.getOuterRadius(),
+        resistanceKMW,
+        overallUWPerM2K,
+        heatLossWPerM);
+  }
 }
 ```
 
-### MaterialLayer Class
+Run the program with assertions enabled (`java -ea ...`). The assertions are executable
+checks, not design acceptance criteria.
 
-```java
-public class MaterialLayer {
-    // Constructors
-    MaterialLayer(String name, double k, double rho, double cp, double t);
-    MaterialLayer(PipeMaterial material, double thickness);
-    
-    // Properties
-    double getThickness();
-    double getThermalConductivity();
-    double getDensity();
-    double getSpecificHeatCapacity();
-    
-    // Calculations
-    double getRadialResistance(double innerRadius);
-    double getHeatCapacityPerLength(double innerRadius);
-}
-```
+## Environment choices
 
-### PipeWall Class
+- `exposedToAir(temperatureK, windVelocityMPerS)` uses a simple natural-plus-forced
+  convection estimate.
+- `subseaEnvironment(temperatureK, currentVelocityMPerS)` uses a simple seawater
+  convection estimate.
+- `buriedInSoil(temperatureK, depthToCentreM, soilMaterial)` uses the cylindrical
+  shape-factor model and requires burial depth greater than the finished outer radius.
 
-```java
-public class PipeWall {
-    // Construction
-    PipeWall(double innerRadius);
-    void addLayer(MaterialLayer layer);
-    
-    // Properties
-    double getInnerRadius();
-    double getOuterRadius();
-    double getTotalWallThickness();
-    int getLayerCount();
-    
-    // Thermal calculations
-    double getTotalResistancePerLength();
-    double getUValuePerLength(double hInner, double hOuter);
-    double getThermalMass();
-}
-```
+For a custom material, use `addCustomLayer(name, thicknessM, conductivityWPerMK,
+densityKgPerM3, specificHeatJPerKgK)`. The thickness is the second argument; older
+examples that put conductivity second are incorrect.
 
-### PipeSurroundingEnvironment Class
+## Flow-solver integration boundary
 
-```java
-public class PipeSurroundingEnvironment {
-    // Factory methods
-    static stillAir(double ambientTemp);
-    static movingAir(double ambientTemp, double windSpeed);
-    static seawater(double ambientTemp);
-    static soil(double ambientTemp, double thermalConductivity);
-    
-    // Properties
-    double getAmbientTemperature();
-    double getConvectionCoefficient();
-}
-```
+`PipeWallBuilder` is a geometry screening API. It does not automatically configure a
+`OnePhasePipeLine`. The `Pipeline` API uses the plural array setters
+`setOuterTemperatures(double[])`, `setPipeOuterHeatTransferCoefficients(double[])`, and
+`setPipeWallHeatTransferCoefficients(double[])`. Each array must contain
+`numberOfLegs + 1` values, representing the boundary values along the legs. There is no
+singular `setOuterTemperature(double)` or `setOverallHeatTransferCoefficient(double)` on
+this pipeline type.
 
-### PipeWallBuilder Class
+Do not insert the builder's overall coefficient into a wall-film or outer-film array
+without reconciling the resistance basis. For a correlation-based pipeline model, follow
+the model-specific heat-transfer contract in the
+[pipeline simulation guide](../process/equipment/pipeline_simulation.md#heat-transfer).
 
-```java
-public class PipeWallBuilder {
-    PipeWallBuilder innerRadius(double r);
-    PipeWallBuilder innerDiameter(double d);
-    PipeWallBuilder addLayer(MaterialLayer layer);
-    PipeWallBuilder addPipeLayer(PipeMaterial material, double thickness);
-    PipeWallBuilder addInsulationLayer(double k, double thickness);
-    PipeWallBuilder addCoatingLayer(double k, double thickness);
-    PipeWall build();
-}
-```
+## Engineering limits
 
----
+- Material properties are nominal constants; account for temperature, aging, moisture,
+  compression, manufacturing tolerances, and installation condition where relevant.
+- The environment correlations omit detailed radiation, solar load, seabed contact,
+  burial layering, fouling, wet insulation, thermal bridges, and transient heat storage.
+- `calcOverallUValue` is a steady screening calculation. It does not predict fluid
+  outlet temperature, multiphase behaviour, hydrate risk, cooldown, or restart response.
+- Confirm geometry, coefficients, boundary conditions, uncertainty, and governing design
+  standards with qualified discipline engineers before design or safety decisions.
 
-## Examples
-
-### Example 1: Subsea Pipeline
-
-```java
-// Create multi-layer subsea pipe wall
-PipeWall subseaPipe = new PipeWallBuilder()
-    .innerDiameter(0.254)  // 10" ID
-    .addPipeLayer(PipeMaterial.DUPLEX_STEEL, 0.0127)
-    .addInsulationLayer(0.15, 0.060)  // Syntactic foam
-    .addCoatingLayer(0.22, 0.006)     // Polypropylene
-    .build();
-
-// Seawater environment at 4°C
-PipeSurroundingEnvironment seawater = 
-    PipeSurroundingEnvironment.seawater(4.0);
-
-// Calculate overall U-value
-double hInner = 500;   // W/m²·K (turbulent gas flow)
-double hOuter = seawater.getConvectionCoefficient();
-double U = subseaPipe.getUValuePerLength(hInner, hOuter);
-
-System.out.printf("U-value: %.2f W/(m²·K)%n", U);
-```
-
-### Example 2: Buried Gas Pipeline
-
-```java
-// Create insulated buried pipeline
-PipeWall buriedPipe = new PipeWallBuilder()
-    .innerDiameter(0.508)  // 20" ID
-    .addPipeLayer(PipeMaterial.CARBON_STEEL, 0.0127)
-    .addCoatingLayer(0.22, 0.003)  // FBE coating
-    .build();
-
-// Soil at 12°C, buried 1.5m deep
-PipeSurroundingEnvironment soil = 
-    PipeSurroundingEnvironment.soil(12.0, 1.2);
-
-// Print configuration
-System.out.printf("Wall thickness: %.1f mm%n", 
-    buriedPipe.getTotalWallThickness() * 1000);
-System.out.printf("Total resistance: %.4f m·K/W%n", 
-    buriedPipe.getTotalResistancePerLength());
-```
-
-### Example 3: Temperature Profile Calculation
-
-```java
-// Pipeline parameters
-double length = 50000;     // 50 km
-double mDot = 15.0;        // kg/s
-double Cp = 2500;          // J/(kg·K) - gas
-double Tinlet = 80;        // °C
-double Tambient = 5;       // °C
-double Uo = 2.5;           // W/(m²·K) - overall U-value
-double Do = 0.32;          // m - outer diameter
-
-// Calculate outlet temperature
-double exponent = -Uo * Math.PI * Do * length / (mDot * Cp);
-double Toutlet = Tambient + (Tinlet - Tambient) * Math.exp(exponent);
-
-System.out.printf("Outlet temperature: %.1f °C%n", Toutlet);
-System.out.printf("Heat loss: %.0f kW%n", mDot * Cp * (Tinlet - Toutlet) / 1000);
-```
-
-### Example 4: Integration with Flow Simulation
-
-```java
-// Create fluid
-SystemInterface gas = new SystemSrkEos(323.15, 50e5);
-gas.addComponent("methane", 0.9);
-gas.addComponent("ethane", 0.07);
-gas.addComponent("propane", 0.03);
-gas.setMixingRule("classic");
-
-// Create inlet stream
-Stream inlet = new Stream("Inlet", gas);
-inlet.setFlowRate(500000, "kg/hr");
-inlet.run();
-
-// Create pipeline with heat transfer
-OnePhasePipeLine pipe = new OnePhasePipeLine("Export", inlet);
-pipe.setNumberOfLegs(1);
-pipe.setNumberOfNodesInLeg(100);
-pipe.setPipeDiameters(new double[] {0.508, 0.508});
-pipe.setLegPositions(new double[] {0.0, 50000.0});
-pipe.setOuterTemperature(278.15);  // 5°C ambient
-
-// Run steady-state
-pipe.run();
-
-// Get outlet conditions
-System.out.printf("Outlet T: %.1f °C%n", 
-    pipe.getOutStream().getTemperature("C"));
-System.out.printf("Outlet P: %.1f bara%n", 
-    pipe.getOutStream().getPressure("bara"));
-```
-
----
-
-## Local bare-pipe outer steel temperature in outdoor air
-
-`PipeBeggsAndBrills.calculateBarePipeSurfaceTemperature(...)` calculates a **local, steady**
-outer steel temperature for an uninsulated horizontal pipe. It uses the pipe's actual internal
-diameter, wall thickness and steel conductivity, plus a supplied local bulk-fluid temperature,
-fluid-side film coefficient, ambient air temperature, crosswind speed and surface emissivity.
-Temperatures are in K; geometry is in m. The result reports outer/inner wall temperatures (K),
-heat loss (W/m; negative for heat gain), separate convection/radiation (W/m), and external
-convection coefficient (W/(m² K)). The same calculation can be called without equipment through
-`BarePipeSurfaceTemperature.calculate(...)`.
-
-```java
-PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("screening example");
-pipe.setDiameter(0.0419); // actual bore: 48.3 mm OD less two 3.2 mm walls
-pipe.setThickness(0.0032);
-pipe.setPipeWallThermalConductivity(50.0);
-BarePipeSurfaceTemperature.Result result = pipe.calculateBarePipeSurfaceTemperature(
-    128.4 + 273.15, 20.0 + 273.15, 1500.0, 2.0, 0.8);
-double outerSteelC = result.getOuterTemperatureK() - 273.15;
-double heatLossWPerM = result.getHeatLossWPerM();
-```
-
-Add imports for `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` and
-`neqsim.process.util.heattransfer.BarePipeSurfaceTemperature`. The `1500 W/(m² K)`
-fluid-side coefficient is an **illustrative assumption**, not a measurement for FW-52-0106.
-For the stated 128.4 °C fluid, 20 °C air, 2 m/s wind, 0.8 emissivity and this
-48.3 mm OD geometry, 1,500 W/(m² K) gives about **125.75 °C** at the steel exterior,
-while 40,000 W/(m² K) gives about **128.08 °C**. The often quoted 128.1 °C
-therefore requires a very high assumed internal coefficient under these conditions.
-DN40 alone does not establish the actual bore or wall thickness. Determine the coefficient from
-fluid composition, phase, flow rate and local conditions, or show a sensitivity range. In
-particular, a small steel resistance does **not** establish that the outer surface equals the
-bulk process temperature: the fluid-side film can dominate that difference. The method rejects
-an insulated equipment configuration and does not alter its process simulation.
-
-The model evaluates air properties at the film temperature (approximately atmospheric pressure),
-Churchill-Bernstein forced crossflow and Churchill-Chu natural convection (the larger value),
-and Stefan-Boltzmann radiation to surroundings at ambient temperature. It omits solar load,
-shielding, mixed convection interaction, thermal bridges, wet surfaces, wind direction changes,
-axial temperature changes and transient response. Confirm these conditions and the inner film
-before using the result for personnel protection or insulation design.
-
-## References
-
-1. Incropera, F.P. & DeWitt, D.P. (2011). *Fundamentals of Heat and Mass Transfer*. Wiley.
-2. GPSA Engineering Data Book. Gas Processors Suppliers Association.
-3. API 5L - Specification for Line Pipe.
-4. DNVGL-ST-F101 - Submarine Pipeline Systems.
+For a local bare-pipe outdoor surface-temperature calculation, see the
+[heat-transfer guide](../fluidmechanics/heat_transfer.md#wall-heat-transfer).
