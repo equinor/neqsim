@@ -158,14 +158,18 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 
 **Bounded q-factor**: NeqSim bounds q ∈ [-5, 0] to prevent divergence:
 - q = 0: Pure direct substitution
-- q < 0: Extrapolation for monotonic convergence
-- q = -5: Strongest extrapolation with the default bounds
+- q < 0: Extrapolation beyond the direct-substitution output
+- q = -5: Strongest extrapolation within these bounds
 - 0 < q < 1: Damping when a positive maximum is explicitly enabled
+
+For the affine map $g(x)=0.5x+1$, the measured slope gives $q=-1$.
+Starting from $x=1$ and $g(x)=1.5$, the update is $-1+2(1.5)=2$, the exact
+fixed point. At $q=0$, the update is $g(x)$ (direct substitution).
 
 **Characteristics**:
 - Low overhead (O(1) per variable)
 - Excellent for single-variable problems
-- Adaptive damping prevents oscillation
+- Bounded extrapolation limits the acceleration step
 - Each variable accelerated independently
 
 **When to Use**:
@@ -177,7 +181,7 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 // Optional: Tune the q-factor bounds
-recycle.setWegsteinQMin(-5.0);  // Allow extrapolation
+recycle.setWegsteinQMin(-5.0);  // Allow stronger extrapolation
 recycle.setWegsteinQMax(0.0);   // Maximum q (direct substitution)
 ```
 
@@ -441,7 +445,7 @@ Benchmarks on a 3-stage separation train with 2 liquid recycles (~20 process uni
 **Solutions**:
 1. Increase `maxIterations`
 2. Loosen tolerance with `setTolerance()`
-3. Try `WEGSTEIN` for damping
+3. Try `WEGSTEIN` acceleration; enable positive q-factors if damping is needed
 4. Check initial estimates are reasonable
 5. Verify process is physically feasible
 
@@ -456,14 +460,14 @@ recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 **Symptoms**: Error bounces between values, never settles
 
 **Solutions**:
-1. Use `WEGSTEIN` method (provides damping)
-2. Reduce Wegstein qMax toward 0
+1. Use `WEGSTEIN` with positive q-factors enabled for damping
+2. Limit negative q-factors to avoid extrapolating an oscillatory return
 3. Check for competing recycles
 
 ```java
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
-recycle.setWegsteinQMin(-10.0);  // Stronger extrapolation
-recycle.setWegsteinQMax(-0.5);   // Never use direct substitution
+recycle.setWegsteinQMin(0.0);   // Disable extrapolation
+recycle.setWegsteinQMax(0.5);   // Allow damping of oscillatory returns
 ```
 
 ### Problem: Broyden diverges

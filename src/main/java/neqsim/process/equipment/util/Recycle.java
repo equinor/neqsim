@@ -172,9 +172,11 @@ public class Recycle extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Setter for the field <code>flowTolerance</code>.
+   * Sets the legacy flow tolerance: kg/sec below 1 kg/sec loop flow, percent otherwise. For example, 0.01 permits 0.01
+   * kg/sec change on a 0.02 kg/sec loop (50%). The optional absolute tolerance is an OR criterion and cannot tighten
+   * this threshold.
    *
-   * @param flowTolerance a double
+   * @param flowTolerance tolerance in the units returned by flowBalanceCheck()
    */
   public void setFlowTolerance(double flowTolerance) {
     this.flowTolerance = flowTolerance;
@@ -1019,7 +1021,7 @@ public class Recycle extends ProcessEquipmentBaseClass
       if (Math.abs(slope - 1.0) > 1e-10) {
         q = slope / (slope - 1.0);
       } else {
-        // slope ≈ 1 means diverging, use minimum q for maximum damping
+        // slope ≈ 1 has an unbounded secant factor; use the configured lower bound
         q = wegsteinQMin;
       }
 
