@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.JsonElement;
@@ -19,10 +20,12 @@ import org.junit.jupiter.api.Test;
 class HenryWaterDatabaseTest {
   /** Checks every imported species against the source molality/pressure convention. */
   @Test
-  void importedRowsReproduceSourcesAndDerivatives() {
-    JsonObject source = JsonParser.parseReader(
-        new InputStreamReader(getClass().getResourceAsStream("/data/HenryWaterSource.json"), StandardCharsets.UTF_8))
-        .getAsJsonObject();
+  void importedRowsReproduceSourcesAndDerivatives() throws IOException {
+    JsonObject source;
+    try (InputStreamReader reader = new InputStreamReader(getClass().getResourceAsStream("/data/HenryWaterSource.json"),
+        StandardCharsets.UTF_8)) {
+      source = JsonParser.parseReader(reader).getAsJsonObject();
+    }
     int count = 0;
     for (JsonElement entry : source.getAsJsonArray("rows")) {
       JsonObject row = entry.getAsJsonObject();
