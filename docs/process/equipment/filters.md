@@ -167,6 +167,13 @@ the accumulated loading state.
 
 Actual volumetric flow is evaluated at the filter inlet.
 
+`setDeltaP(value)` takes a pressure difference in bar. The unit overload
+`setDeltaP(value, unit)` converts the pressure scale only: `barg` and `psig`
+are treated as differential bar and psi, with no atmospheric offset. Zero
+remains zero in every supported unit, and negative drops are clamped to zero.
+This overload delegates to `PressureUnit.convertDifference(value, fromUnit, toUnit)`;
+use that API for pressure differences outside the filter as well.
+
 | Model | Relation | Required data |
 | --- | --- | --- |
 | `FIXED` | Constant clean differential pressure | `setDeltaP(...)` |

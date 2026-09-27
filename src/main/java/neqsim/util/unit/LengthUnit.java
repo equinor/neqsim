@@ -33,7 +33,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** {@inheritDoc} */
   @Override
   public String[] getAllowedUnits() {
-    return ALLOWED_UNITS;
+    return ALLOWED_UNITS.clone();
   }
 
   /** {@inheritDoc} */
@@ -45,6 +45,7 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
   /** {@inheritDoc} */
   @Override
   public double getConversionFactor(String unit) {
+    Unit.validateUnitInput(unit, "unit");
     if ("m".equals(unit) || "meter".equals(unit) || "metre".equals(unit)) {
       return 1.0;
     } else if ("cm".equals(unit)) {
@@ -59,7 +60,8 @@ public class LengthUnit extends neqsim.util.unit.BaseUnit implements LinearScale
       return 0.3048;
     }
 
-    throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
+    throw new IllegalArgumentException(
+        new InvalidInputException(this, "getConversionFactor", unit, "unit not supported"));
   }
 
   /**

@@ -255,8 +255,7 @@ public class Filter extends TwoPortEquipment {
    * @param unit pressure unit; barg and psig use the same differential scale as bar and psi
    */
   public void setDeltaP(double deltaP, String unit) {
-    String differentialUnit = "barg".equals(unit) ? "bar" : "psig".equals(unit) ? "psi" : unit;
-    double pressureDropBar = new PressureUnit(Math.max(0.0, deltaP), differentialUnit).getValue("bara");
+    double pressureDropBar = PressureUnit.convertDifference(Math.max(0.0, deltaP), unit, "bar");
     setDeltaP(pressureDropBar);
   }
 
