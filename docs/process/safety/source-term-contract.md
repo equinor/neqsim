@@ -23,8 +23,11 @@ Composition maps explicitly distinguish mole and mass fractions. Native phase na
 aqueous and solid-like distinctions; no gas fraction is inferred from phase index.
 Every generated station also carries EOS native-phase densities. A slip-flow station adds
 `phaseVelocities`; absent phase velocities mean the station uses one homogeneous axial velocity.
-Both maps use explicit SI quantity objects and native phase names. Existing version-one frames
-without these additive fields remain schema-compatible.
+Component-resolved stations add `phaseComponentMassFractions`, indexed first by native phase and
+then by component; every inner map is mass based and sums to one. Models that alter phase split
+without resolving component partition omit this field rather than inventing a composition. Density
+and velocity maps use explicit SI quantity objects and native phase names. Existing version-one
+frames without these additive fields remain schema-compatible.
 
 Advective momentum is mass rate multiplied by orifice-exit bulk velocity; it excludes pressure thrust.
 For a slip-flow station, the scalar bulk velocity is total mass flux divided by EOS mixture density;
