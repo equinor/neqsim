@@ -212,6 +212,7 @@ This documentation is organized into the following sections:
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
+| **Solid Hydride Storage Screening** | [hydride_storage_screening.md](hydride_storage_screening) | Crystallographic H2 capacity and pressure-dependent desorption screening using NeqSim gas fugacity |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Gas Network Operations | [gas_network_operations.md](gas_network_operations) | Conservative mixing, coupled hydraulics, quality, optimization, and linepack |
 | Oil Network Operations | [oil_network_operations.md](oil_network_operations) | Pumps, assays, tanks, parcels, blends, and cargo scheduling |

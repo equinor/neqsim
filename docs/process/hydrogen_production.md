@@ -14,7 +14,8 @@ NeqSim covers thermochemical and electrochemical hydrogen production routes nati
 This page documents the hydrogen-production route models, PSA cascade and PSA
 CAPEX additions, electrolysis stack models, and foundation utilities for
 cryogenic H₂ spin-isomer corrections and catalyst life screening. Companion
-guides: [CO₂ injection well analysis](co2_injection_well_analysis.md) and
+guides: [solid hydride hydrogen storage screening](hydride_storage_screening.md),
+[CO₂ injection well analysis](co2_injection_well_analysis.md) and
 [reaction engineering](../chemicalreactions/index.md) reformer kinetics.
 
 ## Applicable standards
