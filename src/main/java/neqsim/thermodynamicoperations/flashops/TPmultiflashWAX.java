@@ -71,9 +71,8 @@ public class TPmultiflashWAX extends TPflash {
           system.getPhase(k).getComponent(i).setx(
               system.getPhase(k).getComponent(i).getNumberOfmoles() / system.getPhase(k).getNumberOfMolesInPhase());
         }
-        if (system.hasPhaseType("wax")) {
-          system.getPhaseOfType("wax").getComponent(i).setx(0);
-        }
+        // Keep the equilibrium wax fractions calculated above. Clearing the entire wax phase here
+        // used to appear harmless only because Component.setx(0.0) ignored exact zero.
       }
       system.getPhase(k).normalize();
     }

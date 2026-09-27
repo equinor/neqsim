@@ -1184,7 +1184,7 @@ public abstract class Component implements ComponentInterface {
     if (newx < 0) {
       x = 1.0e-50;
     }
-    if (newx > 0) {
+    if (newx >= 0) {
       x = newx;
     }
     if (newx > 5) {

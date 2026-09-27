@@ -940,9 +940,12 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getIdEntropy(double temperature);
 
   /**
-   * setx.
+   * Sets the mole fraction in this phase. Both signs of zero overwrite the previous value. Negative finite values
+   * retain the legacy trace floor of 1e-50, values above 5 are capped at 5, and nonfinite inputs leave the value
+   * unchanged. This low-level setter does not update the overall component inventory or normalize the other phase
+   * fractions.
    *
-   * @param newx a double
+   * @param newx phase mole fraction
    */
   public void setx(double newx);
 

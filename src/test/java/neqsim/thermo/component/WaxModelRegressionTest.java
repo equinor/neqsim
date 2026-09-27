@@ -161,8 +161,9 @@ class WaxModelRegressionTest {
     }
     assertTrue(selected >= 0);
     ComponentSolid component = (ComponentSolid) wax.getComponent(selected);
-    // Exercise the exact zero limit; Component.setx(0) currently preserves its previous value.
-    component.x = 0.0;
+    // Exercise the public setter at the exact infinite-dilution limit.
+    component.setx(0.0);
+    assertEquals(0.0, component.getx(), 0.0);
     double coefficient = component.fugcoef2(wax);
     assertTrue(Double.isFinite(coefficient) && coefficient > 0.0);
   }

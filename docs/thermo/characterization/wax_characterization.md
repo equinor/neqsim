@@ -214,6 +214,14 @@ fluid.setMultiPhaseCheck(true);
 
 ### Numerical behavior and limits
 
+`Component.setx(0.0)` now stores an exact zero phase fraction; it no longer keeps
+the previous value. The wax flash retains the equilibrium fractions computed from
+the component balances and fugacity coefficients instead of clearing the wax phase.
+Non-wax-forming components remain excluded through their large wax fugacity
+coefficients and the wax-former-only activity sums. An individual wax former may
+have zero mole fraction while others remain present; the alternative activity
+models still reject an entirely empty wax-former composition.
+
 The alternative models use Morgan-Kobayashi (1994) vaporization enthalpies with
 the PERT2 coefficients. These correlations are evaluated only for wax-forming
 components and require `0 < T < Tc`; methane and other excluded fluid components
