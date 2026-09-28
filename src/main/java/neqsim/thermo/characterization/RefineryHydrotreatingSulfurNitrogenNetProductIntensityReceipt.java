@@ -4,19 +4,17 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Immutable liquid-product-basis intensity receipt for a qualified net hydrotreating operating
- * receipt.
+ * Immutable liquid-product-basis intensity receipt for a qualified net hydrotreating operating receipt.
  *
  * <p>
- * This class converts existing feed-basis energy, emissions, and operating-cost results to the
- * qualified external liquid-product basis. It does not allocate burdens to export gas and adds no
- * process model, product value, price, emissions factor, lifecycle boundary, or quality claim.
+ * This class converts existing feed-basis energy, emissions, and operating-cost results to the qualified external
+ * liquid-product basis. It does not allocate burdens to export gas and adds no process model, product value, price,
+ * emissions factor, lifecycle boundary, or quality claim.
  *
  * @author esolbr1
  * @version 1.0
  */
-public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
-    implements Serializable {
+public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final double KILOGRAMS_PER_TONNE = 1000.0;
 
@@ -38,14 +36,11 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
   private RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt(
       RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt netOperatingReceipt,
       RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt productDistributionReceipt,
-      double feedMassFlowKgPerHour, double liquidProductMassFlowKgPerHour,
-      double liquidProductKgPerTonneFeed, double totalExternalEnergyMWhPerTonneFeed,
-      double totalExternalEnergyMWhPerTonneLiquidProduct,
-      double totalEmissionsKgCo2EquivalentPerTonneFeed,
-      double totalEmissionsKgCo2EquivalentPerTonneLiquidProduct,
+      double feedMassFlowKgPerHour, double liquidProductMassFlowKgPerHour, double liquidProductKgPerTonneFeed,
+      double totalExternalEnergyMWhPerTonneFeed, double totalExternalEnergyMWhPerTonneLiquidProduct,
+      double totalEmissionsKgCo2EquivalentPerTonneFeed, double totalEmissionsKgCo2EquivalentPerTonneLiquidProduct,
       double totalOperatingCostPerTonneFeed, double totalOperatingCostPerTonneLiquidProduct,
-      double energyBasisClosureResidualMWhPerHour,
-      double emissionsBasisClosureResidualKgCo2EquivalentPerHour,
+      double energyBasisClosureResidualMWhPerHour, double emissionsBasisClosureResidualKgCo2EquivalentPerHour,
       double costBasisClosureResidualPerHour) {
     this.netOperatingReceipt = netOperatingReceipt;
     this.productDistributionReceipt = productDistributionReceipt;
@@ -55,13 +50,11 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
     this.totalExternalEnergyMWhPerTonneFeed = totalExternalEnergyMWhPerTonneFeed;
     this.totalExternalEnergyMWhPerTonneLiquidProduct = totalExternalEnergyMWhPerTonneLiquidProduct;
     this.totalEmissionsKgCo2EquivalentPerTonneFeed = totalEmissionsKgCo2EquivalentPerTonneFeed;
-    this.totalEmissionsKgCo2EquivalentPerTonneLiquidProduct =
-        totalEmissionsKgCo2EquivalentPerTonneLiquidProduct;
+    this.totalEmissionsKgCo2EquivalentPerTonneLiquidProduct = totalEmissionsKgCo2EquivalentPerTonneLiquidProduct;
     this.totalOperatingCostPerTonneFeed = totalOperatingCostPerTonneFeed;
     this.totalOperatingCostPerTonneLiquidProduct = totalOperatingCostPerTonneLiquidProduct;
     this.energyBasisClosureResidualMWhPerHour = energyBasisClosureResidualMWhPerHour;
-    this.emissionsBasisClosureResidualKgCo2EquivalentPerHour =
-        emissionsBasisClosureResidualKgCo2EquivalentPerHour;
+    this.emissionsBasisClosureResidualKgCo2EquivalentPerHour = emissionsBasisClosureResidualKgCo2EquivalentPerHour;
     this.costBasisClosureResidualPerHour = costBasisClosureResidualPerHour;
   }
 
@@ -75,17 +68,15 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
       RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt netOperatingReceipt) {
     Objects.requireNonNull(netOperatingReceipt, "netOperatingReceipt");
 
-    RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt distribution =
-        netOperatingReceipt.getHeatRecoveryCredit().getHeatRecoveryBalance().getStackLossBalance()
-            .getCombustionBalance().getUtilityBalance().getThermalDutyBalance()
-            .getProductDistributionReceipt();
+    RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt distribution = netOperatingReceipt
+        .getHeatRecoveryCredit().getHeatRecoveryBalance().getStackLossBalance().getCombustionBalance()
+        .getUtilityBalance().getThermalDutyBalance().getProductDistributionReceipt();
     double feedMassFlow = netOperatingReceipt.getHydrogenOperatingReceipt().getFeedMassFlowKgPerHour();
     double distributionFeedMassFlow = distribution.getThroughputBalance().getFeedMassFlowKgPerHour();
     double liquidProductMassFlow = distribution.getThroughputBalance().getProductMassFlowKgPerHour();
-    double feedTolerance =
-        1.0e-12 * Math.max(1.0, Math.max(feedMassFlow, distributionFeedMassFlow));
-    if (Math.abs(feedMassFlow - distributionFeedMassFlow) > feedTolerance
-        || !Double.isFinite(liquidProductMassFlow) || liquidProductMassFlow <= 0.0) {
+    double feedTolerance = 1.0e-12 * Math.max(1.0, Math.max(feedMassFlow, distributionFeedMassFlow));
+    if (Math.abs(feedMassFlow - distributionFeedMassFlow) > feedTolerance || !Double.isFinite(liquidProductMassFlow)
+        || liquidProductMassFlow <= 0.0) {
       throw new IllegalArgumentException(
           "upstream receipts must define one common basis and positive liquid product flow");
     }
@@ -93,8 +84,7 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
     double feedTonnesPerHour = feedMassFlow / KILOGRAMS_PER_TONNE;
     double liquidProductTonnesPerHour = liquidProductMassFlow / KILOGRAMS_PER_TONNE;
     double energyPerTonneFeed = netOperatingReceipt.getTotalExternalEnergyMWhPerTonneFeed();
-    double emissionsPerTonneFeed =
-        netOperatingReceipt.getTotalEmissionsKgCo2EquivalentPerTonneFeed();
+    double emissionsPerTonneFeed = netOperatingReceipt.getTotalEmissionsKgCo2EquivalentPerTonneFeed();
     double costPerTonneFeed = netOperatingReceipt.getTotalOperatingCostPerTonneFeed();
     double energyRate = energyPerTonneFeed * feedTonnesPerHour;
     double emissionsRate = netOperatingReceipt.getTotalEmissionsKgCo2EquivalentPerHour();
@@ -103,25 +93,20 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
     double emissionsPerTonneProduct = emissionsRate / liquidProductTonnesPerHour;
     double costPerTonneProduct = costRate / liquidProductTonnesPerHour;
     double energyResidual = energyPerTonneProduct * liquidProductTonnesPerHour - energyRate;
-    double emissionsResidual =
-        emissionsPerTonneProduct * liquidProductTonnesPerHour - emissionsRate;
+    double emissionsResidual = emissionsPerTonneProduct * liquidProductTonnesPerHour - emissionsRate;
     double costResidual = costPerTonneProduct * liquidProductTonnesPerHour - costRate;
 
-    if (!allFiniteNonNegative(feedMassFlow, liquidProductMassFlow, energyPerTonneFeed,
-        emissionsPerTonneFeed, costPerTonneFeed, energyPerTonneProduct,
-        emissionsPerTonneProduct, costPerTonneProduct)
-        || Math.abs(energyResidual) > 1.0e-12
-        || Math.abs(emissionsResidual) > 1.0e-9
+    if (!allFiniteNonNegative(feedMassFlow, liquidProductMassFlow, energyPerTonneFeed, emissionsPerTonneFeed,
+        costPerTonneFeed, energyPerTonneProduct, emissionsPerTonneProduct, costPerTonneProduct)
+        || Math.abs(energyResidual) > 1.0e-12 || Math.abs(emissionsResidual) > 1.0e-9
         || Math.abs(costResidual) > 1.0e-9) {
-      throw new IllegalArgumentException(
-          "upstream receipts do not define closed liquid-product-basis intensities");
+      throw new IllegalArgumentException("upstream receipts do not define closed liquid-product-basis intensities");
     }
 
-    return new RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt(
-        netOperatingReceipt, distribution, feedMassFlow, liquidProductMassFlow,
-        distribution.getLiquidProductKgPerTonneFeed(), energyPerTonneFeed,
-        energyPerTonneProduct, emissionsPerTonneFeed, emissionsPerTonneProduct,
-        costPerTonneFeed, costPerTonneProduct, energyResidual, emissionsResidual, costResidual);
+    return new RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt(netOperatingReceipt, distribution,
+        feedMassFlow, liquidProductMassFlow, distribution.getLiquidProductKgPerTonneFeed(), energyPerTonneFeed,
+        energyPerTonneProduct, emissionsPerTonneFeed, emissionsPerTonneProduct, costPerTonneFeed, costPerTonneProduct,
+        energyResidual, emissionsResidual, costResidual);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
@@ -139,8 +124,7 @@ public final class RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
   }
 
   /** @return qualified upstream product-distribution receipt */
-  public RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
-      getProductDistributionReceipt() {
+  public RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt getProductDistributionReceipt() {
     return productDistributionReceipt;
   }
 
