@@ -52,11 +52,12 @@ public final class HenryWaterReferencePointCatalog {
   }
 
   private static CatalogData load() {
-    try (InputStream stream = HenryWaterReferencePointCatalog.class.getResourceAsStream(RESOURCE)) {
+    try (InputStream stream = HenryWaterReferencePointCatalog.class.getResourceAsStream(RESOURCE);
+        InputStreamReader reader = stream == null ? null : new InputStreamReader(stream, StandardCharsets.UTF_8)) {
       if (stream == null) {
         throw new IllegalStateException("Missing built-in Henry reference-point catalog: " + RESOURCE);
       }
-      JsonObject root = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
+      JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
       List<HenryWaterReferencePoint> points = new ArrayList<>();
       Map<String, HenryWaterReferencePoint> byCasNumber = new LinkedHashMap<>();
       Map<String, HenryWaterReferencePoint> byComponentName = new LinkedHashMap<>();
