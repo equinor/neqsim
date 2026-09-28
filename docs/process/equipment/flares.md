@@ -71,9 +71,21 @@ Flare flare = new Flare("Flare", flareGas);
 
 ### Heat Release
 
-The flare calculates heat release based on the Lower Calorific Value (LCV):
+The flare calculates heat release from the ISO 6976:1995 molar lower calorific
+value, with the existing 15.55 °C combustion reference:
 
-$$Q = LCV \times \dot{V}_{Sm3}$$
+$$Q = LCV_{molar} \times \dot{n}$$
+
+Here $LCV_{molar}$ is in J/mol and $\dot{n}$ is in mol/s, giving heat release
+in watts. This avoids mixing the 0 °C real-volume basis of the legacy
+`Stream.LCV()` with NeqSim's 15 °C standard-volume flow. It also avoids
+mixing real-gas calorific volumes with ideal standard-volume flow conversions.
+The legacy `Flare.getLCV()` getter retains its J/m³ at 0 °C value; its former
+J/kg documentation was incorrect. Corrected heat release propagates to
+radiation estimates, capacity checks and cumulative heat.
+
+The 1995 and 2016 ISO constant tables remain separate. These flare results
+use the 1995 table, not `Standard_ISO6976_2016`.
 
 ```java
 // Get heat release rate
