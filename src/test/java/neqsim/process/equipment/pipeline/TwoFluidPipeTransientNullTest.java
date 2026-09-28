@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.stream.Stream;
@@ -72,6 +73,7 @@ public class TwoFluidPipeTransientNullTest {
   }
 
   @Test
+  @Tag("slow")
   void testFiniteVolumeMassBalanceClosesForLiquidRichFlow() {
     TwoFluidPipe pipe = buildPipe(true, 50.0);
     for (int i = 0; i < 20; i++) {
@@ -108,6 +110,7 @@ public class TwoFluidPipeTransientNullTest {
   }
 
   @Test
+  @Tag("slow")
   void testLiquidKeepsLeavingTheOutletUnderConstantBoundaryConditions() {
     TwoFluidPipe pipe = buildPipe(true, 50.0);
     for (int i = 0; i < 120; i++) {

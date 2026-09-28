@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -240,6 +241,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
 
   /** Native sum-rates must match the damped phase state and products across the issue envelope. */
   @Test
+  @Tag("slow")
   public void nativeSumRatesMatchesDampedAcrossNearbyOperatingAndInitializationPoints() {
     double[][] operatingPoints = {{313.15, 1200.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05},
         {318.15, 1300.0, 30.0, 1000.0, 0.70, 0.15, 0.10, 0.05}, {315.15, 1250.0, 29.5, 980.0, 0.69, 0.16, 0.10, 0.05},
@@ -394,6 +396,7 @@ public class ReboilerOnlySumRatesPhaseStabilityTest {
 
   /** Any condenser configuration must remain routed to damped substitution. */
   @Test
+  @Tag("slow")
   public void condenserConfigurationsRemainGuarded() {
     SystemInterface feedFluid = new SystemSrkEos(323.15, 10.0);
     feedFluid.addComponent("propane", 1.0);
