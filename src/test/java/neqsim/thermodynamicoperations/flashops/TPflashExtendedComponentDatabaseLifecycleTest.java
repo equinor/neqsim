@@ -1,3 +1,4 @@
+  inflating: /workspace/scratch/0c1826b22f04/format_work/spotless.patch  
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,8 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Qualifies TP-flash lifecycle invariance between the standard and extended component
- * databases.
+ * Qualifies TP-flash lifecycle invariance between the standard and extended component databases.
  *
  * @author OpenAI
  * @version 1.0
@@ -22,10 +22,8 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double STATE_TOLERANCE = 1.0e-10;
-  private static final String[] STATE_LABELS = {
-    "ordinary reference", "multiphase reference", "poor initialization", "nearby low pressure",
-    "nearby high pressure", "changed state", "returned state", "deterministic repeat"
-  };
+  private static final String[] STATE_LABELS = {"ordinary reference", "multiphase reference", "poor initialization",
+      "nearby low pressure", "nearby high pressure", "changed state", "returned state", "deterministic repeat"};
 
   /**
    * Verifies the synchronized neutral-component rows preserve the qualified TP-flash lifecycle.
@@ -53,8 +51,7 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
   }
 
   /**
-   * Runs and qualifies the frozen water-rich PR lifecycle in the currently selected component
-   * database.
+   * Runs and qualifies the frozen water-rich PR lifecycle in the currently selected component database.
    *
    * @param databaseLabel selected component-database label for assertion diagnostics
    * @return immutable snapshot of each qualified lifecycle state
@@ -68,32 +65,26 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
 
     assertEquivalentState(ordinaryReference, multiphaseReference, 1.0e-8,
         databaseLabel + " ordinary versus multiphase");
-    assertEquivalentState(multiphaseReference, poorInitialization, 1.0e-8,
-        databaseLabel + " poor initialization");
+    assertEquivalentState(multiphaseReference, poorInitialization, 1.0e-8, databaseLabel + " poor initialization");
 
     SystemInterface reused = multiphaseReference.clone();
     reused.setPressure(501.0, "bara");
     flashInPlace(reused);
     SystemInterface changedState = reused.clone();
-    assertEquivalentState(nearbyHighPressure, changedState, 1.0e-8,
-        databaseLabel + " changed pressure");
+    assertEquivalentState(nearbyHighPressure, changedState, 1.0e-8, databaseLabel + " changed pressure");
 
     reused.setPressure(500.0, "bara");
     flashInPlace(reused);
     SystemInterface returnedState = reused.clone();
-    assertEquivalentState(multiphaseReference, returnedState, 1.0e-8,
-        databaseLabel + " returned pressure");
+    assertEquivalentState(multiphaseReference, returnedState, 1.0e-8, databaseLabel + " returned pressure");
 
     SystemInterface beforeRepeat = reused.clone();
     flashInPlace(reused);
     SystemInterface repeatedState = reused.clone();
-    assertEquivalentState(beforeRepeat, repeatedState, STATE_TOLERANCE,
-        databaseLabel + " deterministic repeat");
+    assertEquivalentState(beforeRepeat, repeatedState, STATE_TOLERANCE, databaseLabel + " deterministic repeat");
 
-    SystemInterface[] states = {
-      ordinaryReference, multiphaseReference, poorInitialization, nearbyLowPressure,
-      nearbyHighPressure, changedState, returnedState, repeatedState
-    };
+    SystemInterface[] states = {ordinaryReference, multiphaseReference, poorInitialization, nearbyLowPressure,
+        nearbyHighPressure, changedState, returnedState, repeatedState};
     for (int state = 0; state < states.length; state++) {
       assertClosedEquilibrium(states[state], databaseLabel + " " + STATE_LABELS[state]);
     }
@@ -108,8 +99,7 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
    * @param poorGuess whether to seed an intentionally poor two-phase beta split
    * @return flashed and initialized thermodynamic system
    */
-  private SystemInterface flashWaterBearingPr(
-      double pressure, boolean multiphaseCheck, boolean poorGuess) {
+  private SystemInterface flashWaterBearingPr(double pressure, boolean multiphaseCheck, boolean poorGuess) {
     SystemInterface system = createWaterBearingPrSystem();
     system.setTemperature(288.15, "K");
     system.setPressure(pressure, "bara");
@@ -170,14 +160,12 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
       double compositionSum = 0.0;
       for (int component = 0; component < componentCount; component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
-        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0,
-            label + " composition");
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0, label + " composition");
         compositionSum += composition;
       }
-      assertEquals(1.0, compositionSum, NORMALIZATION_TOLERANCE,
-          label + " phase normalization");
-      assertTrue(Double.isFinite(system.getPhase(phase).getZ())
-          && system.getPhase(phase).getZ() > 0.0, label + " compressibility");
+      assertEquals(1.0, compositionSum, NORMALIZATION_TOLERANCE, label + " phase normalization");
+      assertTrue(Double.isFinite(system.getPhase(phase).getZ()) && system.getPhase(phase).getZ() > 0.0,
+          label + " compressibility");
     }
     assertEquals(1.0, betaSum, NORMALIZATION_TOLERANCE, label + " beta normalization");
 
@@ -187,27 +175,21 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
     for (int component = 0; component < componentCount; component++) {
       double recovered = 0.0;
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        recovered += system.getBeta(phase)
-            * system.getPhase(phase).getComponent(component).getx();
+        recovered += system.getBeta(phase) * system.getPhase(phase).getComponent(component).getx();
       }
       maximumMaterialResidual = Math.max(maximumMaterialResidual,
           Math.abs(system.getPhase(0).getComponent(component).getz() - recovered));
 
       if (system.getNumberOfPhases() >= 2) {
         for (int phase = 1; phase < system.getNumberOfPhases(); phase++) {
-          double referenceComposition =
-              system.getPhase(0).getComponent(component).getx();
+          double referenceComposition = system.getPhase(0).getComponent(component).getx();
           double otherComposition = system.getPhase(phase).getComponent(component).getx();
-          double referenceCoefficient =
-              system.getPhase(0).getComponent(component).getFugacityCoefficient();
-          double otherCoefficient =
-              system.getPhase(phase).getComponent(component).getFugacityCoefficient();
-          if (referenceComposition > 1.0e-20 && otherComposition > 1.0e-20
-              && Double.isFinite(referenceCoefficient) && referenceCoefficient > 0.0
-              && Double.isFinite(otherCoefficient) && otherCoefficient > 0.0) {
-            maximumFugacityResidual = Math.max(maximumFugacityResidual,
-                Math.abs(Math.log(referenceComposition * referenceCoefficient)
-                    - Math.log(otherComposition * otherCoefficient)));
+          double referenceCoefficient = system.getPhase(0).getComponent(component).getFugacityCoefficient();
+          double otherCoefficient = system.getPhase(phase).getComponent(component).getFugacityCoefficient();
+          if (referenceComposition > 1.0e-20 && otherComposition > 1.0e-20 && Double.isFinite(referenceCoefficient)
+              && referenceCoefficient > 0.0 && Double.isFinite(otherCoefficient) && otherCoefficient > 0.0) {
+            maximumFugacityResidual = Math.max(maximumFugacityResidual, Math.abs(
+                Math.log(referenceComposition * referenceCoefficient) - Math.log(otherComposition * otherCoefficient)));
             fugacityComparisons++;
           }
         }
@@ -218,8 +200,7 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
         label + " material-balance residual " + maximumMaterialResidual);
     if (system.getNumberOfPhases() >= 2) {
       assertTrue(fugacityComparisons > 0, label + " must expose fugacity comparisons");
-      assertTrue(maximumFugacityResidual < FUGACITY_TOLERANCE,
-          label + " fugacity residual " + maximumFugacityResidual);
+      assertTrue(maximumFugacityResidual < FUGACITY_TOLERANCE, label + " fugacity residual " + maximumFugacityResidual);
     }
     assertTrue(Double.isFinite(system.getEnthalpy()), label + " enthalpy");
     assertTrue(Double.isFinite(system.getGibbsEnergy()), label + " Gibbs energy");
@@ -233,8 +214,7 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
    * @param tolerance absolute fraction/composition tolerance and relative property tolerance
    * @param label assertion label
    */
-  private void assertEquivalentState(
-      SystemInterface expected, SystemInterface actual, double tolerance, String label) {
+  private void assertEquivalentState(SystemInterface expected, SystemInterface actual, double tolerance, String label) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases(), label);
     assertClosedEquilibrium(expected, label + " expected");
     assertClosedEquilibrium(actual, label + " actual");
@@ -245,11 +225,8 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
       int expectedPhase = expectedOrder[orderedPhase];
       int actualPhase = actualOrder[orderedPhase];
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label);
-      assertEquals(expected.getPhase(expectedPhase).getZ(),
-          actual.getPhase(actualPhase).getZ(), tolerance, label);
-      for (int component = 0;
-          component < expected.getPhase(expectedPhase).getNumberOfComponents();
-          component++) {
+      assertEquals(expected.getPhase(expectedPhase).getZ(), actual.getPhase(actualPhase).getZ(), tolerance, label);
+      for (int component = 0; component < expected.getPhase(expectedPhase).getNumberOfComponents(); component++) {
         assertEquals(expected.getPhase(expectedPhase).getComponent(component).getx(),
             actual.getPhase(actualPhase).getComponent(component).getx(), tolerance, label);
       }
@@ -270,8 +247,8 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
   private Integer[] phaseOrderByWaterFraction(SystemInterface system) {
     Integer[] order = new Integer[system.getNumberOfPhases()];
     Arrays.setAll(order, index -> index);
-    Arrays.sort(order, Comparator.comparingDouble(
-        (Integer index) -> system.getPhase(index).getComponent("water").getx()));
+    Arrays.sort(order,
+        Comparator.comparingDouble((Integer index) -> system.getPhase(index).getComponent("water").getx()));
     return order;
   }
 
@@ -289,3 +266,4 @@ class TPflashExtendedComponentDatabaseLifecycleTest {
     }
   }
 }
+
