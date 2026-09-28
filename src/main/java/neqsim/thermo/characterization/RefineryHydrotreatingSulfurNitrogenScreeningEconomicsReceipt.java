@@ -112,10 +112,9 @@ public final class RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt 
     double variableCostResidual = totalVariableCost - feedCost - operatingCost;
     double screeningMarginResidual = screeningMargin - totalProductValue + totalVariableCost;
 
-    if (!allFiniteNonNegative(feedTonnesPerHour, liquidProductTonnesPerHour, exportGasTonnesPerHour,
-        liquidProductValue, exportGasValue, totalProductValue, feedCost, operatingCost, totalVariableCost,
-        productValuePerTonneFeed, variableCostPerTonneFeed, productValuePerTonneProduct,
-        variableCostPerTonneProduct)
+    if (!allFiniteNonNegative(feedTonnesPerHour, liquidProductTonnesPerHour, exportGasTonnesPerHour, liquidProductValue,
+        exportGasValue, totalProductValue, feedCost, operatingCost, totalVariableCost, productValuePerTonneFeed,
+        variableCostPerTonneFeed, productValuePerTonneProduct, variableCostPerTonneProduct)
         || !allFinite(screeningMargin, screeningMarginPerTonneFeed, screeningMarginPerTonneProduct)
         || Math.abs(productValueResidual) > 1.0e-9 || Math.abs(variableCostResidual) > 1.0e-9
         || Math.abs(screeningMarginResidual) > 1.0e-9) {
@@ -125,9 +124,8 @@ public final class RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt 
     return new RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt(netProductIntensityReceipt,
         liquidProductPricePerTonne, exportGasPricePerTonne, feedCostPerTonne, liquidProductValue, exportGasValue,
         totalProductValue, feedCost, operatingCost, totalVariableCost, screeningMargin, productValuePerTonneFeed,
-        variableCostPerTonneFeed, screeningMarginPerTonneFeed, productValuePerTonneProduct,
-        variableCostPerTonneProduct, screeningMarginPerTonneProduct, productValueResidual, variableCostResidual,
-        screeningMarginResidual);
+        variableCostPerTonneFeed, screeningMarginPerTonneFeed, productValuePerTonneProduct, variableCostPerTonneProduct,
+        screeningMarginPerTonneProduct, productValueResidual, variableCostResidual, screeningMarginResidual);
   }
 
   private static boolean allFiniteNonNegative(double... values) {
