@@ -1,5 +1,5 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 THERMO_INDEX = ROOT / "docs" / "thermo" / "index.md"
@@ -10,7 +10,7 @@ EXPECTED_LINKS = {
 }
 
 
-class RecentThermoDocumentationNavigationTest(unittest.TestCase):
+class TestRecentThermoDocumentationNavigation(unittest.TestCase):
     """Protect discoverability of recently updated thermodynamics documentation."""
 
     def test_index_has_required_front_matter_and_readme_include(self):
