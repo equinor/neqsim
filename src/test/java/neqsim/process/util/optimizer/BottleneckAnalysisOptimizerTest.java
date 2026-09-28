@@ -987,7 +987,7 @@ public class BottleneckAnalysisOptimizerTest {
         "The balanced compressor trains must have a verified feasible rate in the search range");
 
     OptimizationConfig stage2Config = new OptimizationConfig(feasibleLowerRate, upperRate).rateUnit("kg/hr")
-        .tolerance(originalFlow * 0.001).maxIterations(20).defaultUtilizationLimit(1.0) // Strict
+        .tolerance(originalFlow * 0.001).maxIterations(20).selectedPointReplays(4).defaultUtilizationLimit(1.0) // Strict
         // 100%
         // limit
         .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);

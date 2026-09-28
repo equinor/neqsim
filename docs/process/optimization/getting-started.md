@@ -175,6 +175,13 @@ if (!Double.isFinite(powerKW) || powerKW <= 0.0) {
 4. Optimize, check feasibility and convergence, and re-run the selected point.
 5. Inspect all active constraints and the governing bottleneck before using the result.
 
+When the process is stateful and a selected point lies near a hard capacity boundary,
+`OptimizationConfig.selectedPointReplays(4)` requires four consecutive fresh process solves
+before reporting it as feasible. The same check applies to fallback points from the search
+history. Each replay is recorded in the iteration history and adds one full process solve;
+the default remains one. This check does not increase the configured capacity limit or
+guarantee feasibility under changed inputs, solver settings, or operating conditions.
+
 ## 5) Next reading
 
 - [Optimization Overview](OPTIMIZATION_OVERVIEW.md)
