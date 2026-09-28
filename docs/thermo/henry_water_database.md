@@ -37,7 +37,12 @@ without slopes need separate qualification. No claim of complete coverage is mad
 Four legacy PVTsim-named rows (`methanolPVTsim`, `propanePVTsim`,
 `ethanolPVTsim` and `nbutanePVTsim`) have the same CAS number, molecular formula
 and InChIKey as their qualified canonical component. They therefore reuse the
-same molecular Henry expression and source record. This does not assert that
+same molecular Henry expression and source record. The inherited type-L record is
+Sander reference 3500, Burkholder et al. (2019), JPL Publication 19-5. The
+implemented numerical subset remains attributed to the CC BY 4.0 Sander
+compilation; no JPL report text is reproduced. The machine-readable record gives
+no numerical uncertainty or primary experimental range, so published precision
+and the local 298.15 K van't Hoff scope are retained. This does not assert that
 their other pure-component parameters are identical. The two MEG PVTsim rows
 remain unavailable because the canonical MEG row has not yet passed source,
 definition and range qualification.

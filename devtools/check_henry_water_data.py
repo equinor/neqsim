@@ -80,6 +80,13 @@ def main():
             assert alias_row[field] == canonical_row[field], (
                 f"Alias identity mismatch for {name}: {field}")
         assert selected[name]["cas"] == selected[canonical_name]["cas"], name
+        assert selected[name]["solvent"] == "water", name
+        assert selected[name]["henry_definition"] == (
+            "neutral molecular Hsbp = molality / partial pressure"), name
+        assert selected[name]["reference"] == selected[canonical_name]["reference"], name
+        assert selected[name]["Hsbp_mol_kg_atm"] == (
+            selected[canonical_name]["Hsbp_mol_kg_atm"]), name
+        assert selected[name]["B_K"] == selected[canonical_name]["B_K"], name
         alias_parameters = [
             float(alias_row[f"HenryCoef{i}"]) for i in range(1, 5)]
         canonical_parameters = [
