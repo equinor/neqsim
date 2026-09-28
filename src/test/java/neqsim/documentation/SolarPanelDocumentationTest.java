@@ -52,7 +52,7 @@ public class SolarPanelDocumentationTest extends NeqSimTest {
 
     assertTrue(guide.contains("irradiance in `W/m²`"));
     assertTrue(guide.contains("panel area in `m²`"));
-    assertTrue(guide.contains("efficiency must be finite and between `0.0` and `1.0`"));
+    assertTrue(guide.contains("Efficiency must be finite and between `0.0` and `1.0`"));
     assertTrue(guide.contains("negative duty in `W`"));
     assertTrue(prose.contains("does not calculate sun angle, shading, spectral response"));
     assertTrue(guide.contains("java -ea"));
