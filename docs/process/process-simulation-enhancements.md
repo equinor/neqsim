@@ -425,11 +425,25 @@ Fenske-Underwood-Gilliland (FUG) shortcut method for conceptual column design.
 - Feed tray location (Kirkbride equation)
 - Condenser and reboiler duties
 
+The Kirkbride correlation uses **product mole fractions**, not recovery fractions:
+
+$$r=\frac{N_R}{N_S}=\left[\frac{z_{HK}}{z_{LK}}\left(\frac{x_{LK,B}}{x_{HK,D}}\right)^2\frac{B}{D}\right]^{0.206}$$
+
+Here $B/D$ is the bottoms-to-distillate molar flow ratio, $z$ denotes feed mole fractions,
+and $x$ denotes normalized product mole fractions. The light-key and heavy-key recoveries
+are converted to product compositions using the calculated product flows. The shortcut
+partitions its Gilliland stage count as $N_R=N r/(1+r)$ and reports
+`getFeedTrayNumber()` as `round(N_R) + 1`, one-based from the top. This conceptual
+estimate does not replace rigorous tray calculations. See equation (24) in
+[Optimum Feed Plate Location for Multi-Component Distillation Separation](https://openresearch.okstate.edu/server/api/core/bitstreams/407cd62a-cdff-43e9-beb3-6d13b8f547ac/content).
+
 ### Java Example
 
 ```java
 import neqsim.process.equipment.distillation.ShortcutDistillationColumn;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 // Feed: light hydrocarbons
 SystemInterface feed = new SystemSrkEos(273.15 + 60.0, 15.0);
@@ -448,17 +462,17 @@ ShortcutDistillationColumn shortcut =
     new ShortcutDistillationColumn("Deethanizer", feedStream);
 shortcut.setLightKey("ethane");
 shortcut.setHeavyKey("propane");
-shortcut.setLightKeyRecoveryInDistillate(0.99);
-shortcut.setHeavyKeyRecoveryInBottoms(0.99);
-shortcut.setRefluxRatio(1.5);
+shortcut.setLightKeyRecoveryDistillate(0.99);
+shortcut.setHeavyKeyRecoveryBottoms(0.99);
+shortcut.setRefluxRatioMultiplier(1.5);
 shortcut.run();
 
-System.out.println("Min stages:    " + shortcut.getMinimumStages());
-System.out.println("Min reflux:    " + shortcut.getMinimumRefluxRatio());
-System.out.println("Actual stages: " + shortcut.getActualStages());
-System.out.println("Feed tray:     " + shortcut.getFeedTray());
-System.out.println("Cond. duty:    " + shortcut.getCondenserDuty("kW") + " kW");
-System.out.println("Reb. duty:     " + shortcut.getReboilerDuty("kW") + " kW");
+double minimumStages = shortcut.getMinimumNumberOfStages();
+double minimumReflux = shortcut.getMinimumRefluxRatio();
+double actualStages = shortcut.getActualNumberOfStages();
+int feedTrayFromTop = shortcut.getFeedTrayNumber();
+double condenserDutyKW = shortcut.getCondenserDuty() / 1000.0;
+double reboilerDutyKW = shortcut.getReboilerDuty() / 1000.0;
 ```
 
 ---
