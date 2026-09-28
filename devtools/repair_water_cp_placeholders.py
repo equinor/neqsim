@@ -144,10 +144,10 @@ def build(name):
     n = re.sub(r"pentamethylbenzene", "1,2,3,4,5-pentamethylbenzene", n)
 
     if n.endswith("benzene"):
-        root, prefix, aromatic = "benzene", n[:-7], True
+        root, prefix = "benzene", n[:-7]
         atoms = m.ring(6, True)
     elif n.endswith("toluene"):
-        root, prefix, aromatic = "benzene", n[:-7], True
+        root, prefix = "benzene", n[:-7]
         atoms = m.ring(6, True)
         m.chain(1, parent=True, at=atoms[0])
     else:
@@ -158,7 +158,6 @@ def build(name):
         prefix = n[:root_match.start()]
         is_ring = bool(root_match.group("ring"))
         atoms = m.ring(ROOT[root]) if is_ring else m.chain(ROOT[root])
-        aromatic = False
         suffix = root_match.group("suffix")
         if suffix != "ane":
             # Locants immediately before the parent root (or default 1).
