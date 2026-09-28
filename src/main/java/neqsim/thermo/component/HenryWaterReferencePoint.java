@@ -175,10 +175,9 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
   /**
    * A single reference point does not define a temperature derivative.
    *
-   * @param temperatureK temperature in kelvin
    * @return always {@link Double#NaN}
    */
-  public double getMolalityVolatilityTemperatureDerivative(double temperatureK) {
+  public double getMolalityVolatilityTemperatureDerivative() {
     return Double.NaN;
   }
 
