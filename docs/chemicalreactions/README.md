@@ -139,6 +139,23 @@ re-evaluating potentially underflowing activity products. Use the
 [qualified CO₂ impurity execution guide](co2_impurity_qualified_execution) when an experimental kinetic network
 requires evidence-bound execution.
 
+### Disabled methane-combustion placeholder
+
+The `methanecombustion` record in both `REACTIONDATA.csv` and
+`REACTIONDATAPITZER.csv` is disabled (`USEREACTION=0`). Its reference is
+`UNFITTED_PLACEHOLDER_COPIED_FROM_H2SMDEAsolbraa`: the retained coefficients were
+copied from an H2S/MDEA row and are **not fitted methane-combustion data**. The
+former `Solbraa2020` label did not establish provenance for those coefficients.
+The Pitzer row also retains its `UNVALIDATED` status.
+
+The row identifiers, stoichiometry and numerical fields are retained for
+compatibility and audit history, not for use as combustion equilibrium or
+kinetic parameters. The normal reaction-list loader skips this disabled row;
+direct database/factory access does not turn it into a validated model. Do not
+enable it without independently sourced data, reference-state and unit checks,
+and combustion-specific validation. This metadata correction does not change
+any active reaction or qualify a combustion calculation.
+
 ## Kinetics boundary
 
 The legacy `neqsim.chemicalreactions.kinetics.Kinetics` class is coupled to an initialized
