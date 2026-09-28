@@ -49,7 +49,7 @@ jobs:
         run: python devtools/check_documentation_search.py
       - name: Retain test reports and emitted contract fixtures
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: safety-source-term-validation
           path: |
