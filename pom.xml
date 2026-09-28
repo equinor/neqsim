@@ -218,6 +218,15 @@
 		</profile>
 	</profiles>
 	<build>
+		<!-- Database backups belong in Git history, never in runtime resources. -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>**/*.bak</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
