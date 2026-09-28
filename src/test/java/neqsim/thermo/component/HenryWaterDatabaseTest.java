@@ -74,8 +74,8 @@ class HenryWaterDatabaseTest {
   /** Exact molecular aliases must reuse, not independently reinterpret, qualified data. */
   @Test
   void exactIdentityAliasesReuseQualifiedCorrelations() {
-    String[][] aliases = {{"methanolPVTsim", "methanol"}, {"propanePVTsim", "propane"},
-        {"ethanolPVTsim", "ethanol"}, {"nbutanePVTsim", "n-butane"}};
+    String[][] aliases = {{"methanolPVTsim", "methanol"}, {"propanePVTsim", "propane"}, {"ethanolPVTsim", "ethanol"},
+        {"nbutanePVTsim", "n-butane"}};
     for (String[] names : aliases) {
       ComponentSrk alias = new ComponentSrk(names[0], 1.0, 1.0, 0);
       ComponentSrk canonical = new ComponentSrk(names[1], 1.0, 1.0, 0);
