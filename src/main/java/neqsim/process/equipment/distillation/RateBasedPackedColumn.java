@@ -927,6 +927,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    isSolved = false;
     validateRuntimeSetup();
     SystemInterface gasIn = gasInStream.getThermoSystem().clone();
     SystemInterface liquidIn = liquidInStream.getThermoSystem().clone();
@@ -1079,7 +1080,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    *
    * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
-   * @return equation-oriented counter-current solution
+   * @return converged equation-oriented counter-current solution
+   * @throws IllegalStateException if the final full-transfer residual exceeds its tolerance
    */
   private CounterCurrentSolution solveEquationOrientedProfile(SystemInterface gasIn, SystemInterface liquidIn) {
     CounterCurrentSolution seed = solveFixedPointProfile(gasIn, liquidIn);
@@ -1104,6 +1106,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
     lastColumnEnergyBalanceResidual = evaluation.maxEnergyBalanceResidual;
     lastIterationCount = Math.max(1, totalIterations);
     lastConvergenceResidual = evaluation.norm;
+    if (!Double.isFinite(evaluation.norm) || evaluation.norm > columnResidualTolerance) {
+      throw new IllegalStateException("Equation-oriented packed column did not converge: residual " + evaluation.norm
+          + " exceeds tolerance " + columnResidualTolerance
+          + ". Inspect the column residual diagnostics; outlet streams have not been updated.");
+    }
     acceptSolution(evaluation.solution);
     return evaluation.solution;
   }
