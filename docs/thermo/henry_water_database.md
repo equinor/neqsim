@@ -7,10 +7,12 @@ The Henry columns in `COMP.csv` are backed by the 76 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
-`HenryWaterCoverage.csv` inventories all 389 rows: 76 imported, 64 remaining
-literature candidates, 140 estimated/other-source candidates, 59 ionic rows,
-49 without an exact CAS match in the archive, and water itself. A candidate match
-is a research lead, not validated data. All other rows contain zero coefficients and represent **unavailable data**.
+`HenryWaterCoverage.csv` inventories all 389 rows: 76 imported correlations,
+28 qualified reference-temperature-only points, 36 remaining literature candidates,
+140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
+match in the archive, and water itself. A candidate match is a research lead,
+not validated data. Rows without a dispatched correlation contain zero
+coefficients and represent **unavailable correlation data**.
 Zero coefficients are not a physical constant, and the former `900,0,0,0`
 overflow sentinels have been removed.
 
@@ -38,6 +40,28 @@ temperature ranges and uncertainty are not qualified by this import. Tests at
 accuracy throughout that interval. Do not use this coverage as an unrestricted
 high-temperature, brine, mixed-solvent or reactive-absorption model. Existing
 qualified IAPWS selection remains preferred for supported aqueous gases.
+
+## Qualified reference-temperature-only points
+
+`HenryWaterReferencePoints.json` contains 28 exact-CAS neutral hydrocarbon points
+from the type-L entries attributed by Sander to Plyasunov and Shock (2000),
+[doi:10.1016/S0016-7037(99)00330-0](https://doi.org/10.1016/S0016-7037(99)00330-0).
+That source evaluates hydration thermodynamics at 298.15 K and 0.1 MPa. The
+machine-readable Sander rows do not encode a numerical uncertainty, so the catalog
+retains their published precision and states the uncertainty limitation rather
+than inventing one. The set covers selected branched C6-C9 alkanes, C10-C14
+n-alkanes, cycloalkanes, pentenes/heptenes and alkylbenzenes. It excludes reactive
+species, ions, aliases and estimated (Q/E) rows.
+
+`HenryWaterReferencePointCatalog` exposes immutable lookups by exact CAS number or
+the exact NeqSim component name. A point stores source identity, convention, units,
+reference temperature and pressure, bibliography, license, uncertainty note and
+validity statement. Its temperature-taking getter succeeds only at exactly
+298.15 K; all other temperatures and every temperature derivative return `NaN`.
+These points are intentionally not copied into `COMP.csv`, do not make
+`hasHenryCorrelation()` true, and do not enter GE, Pitzer or IAPWS dispatch. A
+single value therefore cannot silently become a constant polynomial with a fake
+zero slope.
 
 ## Units and equations
 
@@ -85,10 +109,13 @@ require regression review when their underlying Henry reference changes.
 ## Reproduction and remaining work
 
 Run `python3 devtools/check_henry_water_data.py` to check every compiled row,
-identity, provenance coverage and polynomial conversion. Supply the downloaded
-`henry_5.0.0_f90.zip` as an argument to additionally verify each selected value
-against the original Fortran source. `HenryWaterDatabaseTest` checks database
-loading, source values, finite-difference derivatives, standard states and absence.
+identity, provenance coverage, point-only separation and polynomial conversion.
+Supply the downloaded `henry_5.0.0_f90.zip` as an argument to additionally verify
+each selected correlation and reference point against the original Fortran source.
+`HenryWaterDatabaseTest` checks database loading, source values, finite-difference
+derivatives, standard states and absence. `HenryWaterReferencePointCatalogTest`
+checks exact-CAS identity, immutability, point-only evaluation, unit conversion,
+cloning and serialization.
 
 [Issue #4044](https://github.com/equinor/neqsim/issues/4044) tracks the remaining
 component-by-component source review, reference-only data, experimental range and

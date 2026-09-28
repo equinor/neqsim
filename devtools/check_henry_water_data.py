@@ -23,6 +23,19 @@ def main():
     manifest = json.loads((data / "HenryWaterSource.json").read_text())
     selected = {row["name"]: row for row in manifest["rows"]}
     assert len(selected) == len(manifest["rows"]), "Duplicate selected component"
+    reference_manifest = json.loads(
+        (data / "HenryWaterReferencePoints.json").read_text())
+    reference_points = {
+        row["name"]: row for row in reference_manifest["rows"]}
+    assert len(reference_points) == len(reference_manifest["rows"]), (
+        "Duplicate reference-point component")
+    assert len({row["cas"] for row in reference_points.values()}) == len(
+        reference_points), "Duplicate reference-point CAS"
+    coverage = {
+        row["name"]: row
+        for row in csv.DictReader(
+            (data / "HenryWaterCoverage.csv").open(encoding="utf-8"))
+    }
     source_lines = None
     if len(sys.argv) > 1:
         with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -52,8 +65,33 @@ def main():
             assert any(match and float(match[1]) == kh and float(match[2]) == slope
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
+    component_rows = {row["NAME"]: row for row in rows}
+    for name, provenance in reference_points.items():
+        assert name not in selected, f"Reference point also dispatched as correlation: {name}"
+        assert name in component_rows, f"Reference point component absent from database: {name}"
+        component = component_rows[name]
+        assert float(component["IONICCHARGE"]) == 0.0, f"Reference point on ion: {name}"
+        assert component["CASnumber"] == provenance["cas"], name
+        assert coverage[name]["status"] == "qualified_reference_point_only", name
+        assert provenance["reference"] == "3673", name
+        kh = provenance["Hsbp_mol_kg_atm"]
+        assert kh > 0.0 and math.isfinite(kh), name
+        if source_lines is not None:
+            cas = provenance["cas"].replace("-", "_")
+            pattern = re.compile(r"Hsbp_+" + cas + r"\s*=\s*([\d.E+\-]+)"
+                                 r"\s+!.*type: L, ref: (\S+)")
+            matches = [pattern.match(line) for line in source_lines if "EXP(" not in line]
+            assert any(match and float(match[1]) == kh
+                       and match[2] == provenance["reference"]
+                       for match in matches), name
+    qualified = sum(
+        row["status"] == "qualified_reference_point_only"
+        for row in coverage.values())
+    assert qualified == len(reference_points), "Coverage/reference manifest mismatch"
     print(f"PASS: {len(rows)} rows; {len(found)} sourced correlations; "
-          f"{len(rows) - len(found)} explicitly unavailable; no nonzero unattributed rows.")
+          f"{len(reference_points)} qualified reference points; "
+          f"{len(rows) - len(found)} rows without dispatched correlations; "
+          "no nonzero unattributed rows.")
 
 
 if __name__ == "__main__":
