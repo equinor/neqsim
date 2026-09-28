@@ -728,7 +728,7 @@ where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan
 
 ### Column-Wide Equation-Oriented Solver
 
-The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. For research-grade absorber and stripper studies, `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
+The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. The experimental `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
 
 The equation-oriented residual vector includes:
 
@@ -751,7 +751,7 @@ double gasBalance = column.getLastGasComponentBalanceResidual();
 double liquidBalance = column.getLastLiquidComponentBalanceResidual();
 ```
 
-Keep the fixed-point solver for routine screening and production workflows. Use the equation-oriented solver when coupled heat and mass transfer, interface equilibrium, and whole-column balance residuals are part of the study acceptance criteria.
+Keep the fixed-point solver for routine screening. The equation-oriented solver throws `IllegalStateException` if its final full-transfer residual is non-finite or exceeds the configured tolerance. On failure, `solved()` is false and residual diagnostics remain available, but the outlets are not updated; previous outlets must not be treated as current results. The CO2/water and TEG benchmark cases are not yet numerically qualified for this experimental solver (issues #4093 and #4094). The simultaneous segment solver also has an unresolved enthalpy-conservation regression tracked in #4094.
 
 Use this model when these details matter:
 

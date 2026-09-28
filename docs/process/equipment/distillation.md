@@ -4,14 +4,6 @@ description: Documentation for distillation column equipment in NeqSim process s
 keywords: "distillation, column, tray, absorber, stripper, deethanizer, debutanizer, reboiler, condenser, reflux, side draw, pumparound, hydraulics, Murphree efficiency, shortcut distillation, rate-based packed column, NGL, inside-out solver, AUTO solver, automatic solver, specification homotopy, matrix inside-out, Naphtali-Sandholm, MESH residual, convergence diagnostics"
 ---
 
-`ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
-residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved
-flag and retains residual diagnostics, but does not replace the outlet streams. Any outlets from a
-previous successful run are stale after this exception and must not be consumed as current results.
-The optional equation-oriented solver is not yet qualified for the CO2/water and TEG benchmark
-cases tracked in issues #4093 and #4094. The separate simultaneous segment solver's enthalpy
-conservation regression remains unresolved in #4094.
-
 NeqSim's distillation package provides equilibrium-stage columns, shortcut design,
 hydraulic rating, internal recycles, side products, and a separate rate-based packed
 column model for absorption and stripping. The main implementation lives in
@@ -537,6 +529,14 @@ String report = absorber.toJson();
 
 The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
+
+`ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
+residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved
+flag and retains residual diagnostics, but does not replace the outlet streams. Any outlets from a
+previous successful run are stale after this exception and must not be consumed as current results.
+The optional equation-oriented solver is not yet qualified for the CO2/water and TEG benchmark
+cases tracked in issues #4093 and #4094. The separate simultaneous segment solver's enthalpy
+conservation regression remains unresolved in #4094.
 
 ## Diagnostics and Results
 
