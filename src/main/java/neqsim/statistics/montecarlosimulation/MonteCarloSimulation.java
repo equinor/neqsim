@@ -6,7 +6,6 @@
 
 package neqsim.statistics.montecarlosimulation;
 
-import Jama.Matrix;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.statistics.parameterfitting.StatisticsInterface;
 
@@ -82,8 +81,5 @@ public class MonteCarloSimulation {
         reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
       }
     }
-
-    Matrix report = new Matrix(reportMatrix); // .print(10,2);
-    report.print(10, 17);
   }
 }

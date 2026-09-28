@@ -6,7 +6,8 @@
 
 package neqsim.statistics.dataanalysis.datasmoothing;
 
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 
 /**
  * DataSmoothor class.
@@ -15,6 +16,8 @@ import Jama.Matrix;
  * @version $Id: $Id
  */
 public class DataSmoother {
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+
   double[] nonSmoothedNumbers;
   double[] smoothedNumbers;
   double[] cCoef;
@@ -99,13 +102,7 @@ public class DataSmoother {
     }
     b[ld] = 1.0;
 
-    Matrix amatrix = new Matrix(a);
-    // amatrix.print(10,2);
-    Matrix bmatrix = new Matrix(b, 1);
-    bmatrix = amatrix.solve(bmatrix.transpose());
-    // bmatrix.print(10,2);
-    b = bmatrix.transpose().getArray()[0];
-
+    b = ALGEBRA.solve(a, b);
     for (int kk = 0; kk < nonSmoothedNumbers.length; kk++) {
       cCoef[kk] = 0.0;
     }
