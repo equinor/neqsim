@@ -1,4 +1,3 @@
-  inflating: /workspace/scratch/0c1826b22f04/format_work/spotless.patch  
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
