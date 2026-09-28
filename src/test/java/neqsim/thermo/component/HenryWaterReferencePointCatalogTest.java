@@ -47,7 +47,7 @@ class HenryWaterReferencePointCatalogTest {
     assertEquals(point.getMolalityVolatilityBarKgPerMol(), point.getMolalityVolatilityBarKgPerMol(298.15), 0.0);
     assertTrue(Double.isNaN(point.getMolalityVolatilityBarKgPerMol(298.1500000001)));
     assertTrue(Double.isNaN(point.getMolalityVolatilityBarKgPerMol(288.15)));
-    assertTrue(Double.isNaN(point.getMolalityVolatilityTemperatureDerivative(298.15)));
+    assertTrue(Double.isNaN(point.getMolalityVolatilityTemperatureDerivative()));
     assertFalse(HenryWaterReferencePointCatalog.findByCasNumber("74-82-8").isPresent());
   }
 
