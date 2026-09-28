@@ -187,6 +187,7 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   }
 
   @Test
+  @Tag("slow")
   void refinedSubstepsDoNotLeaveAnUnrepresentableClockRemainder() {
     TwoFluidPipe pipe = liquidRichPipe(true, 80, 0.25);
     for (int step = 0; step < 28; step++) {

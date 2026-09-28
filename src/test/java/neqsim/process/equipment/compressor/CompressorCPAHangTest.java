@@ -1,6 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.mixer.Mixer;
@@ -33,6 +34,7 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    */
   @Test
   @Timeout(300)
+  @Tag("slow")
   public void testCompressorWithWaterWashCPAPlusFractions() {
     double compPin = 27.9;
     double compTin = 27.0;

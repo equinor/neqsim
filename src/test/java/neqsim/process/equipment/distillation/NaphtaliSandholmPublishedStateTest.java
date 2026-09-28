@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -221,6 +222,7 @@ class NaphtaliSandholmPublishedStateTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  @Tag("slow")
   void convergedSequentialReferenceAgreesWithPublishedState() {
     // Use a compact, independently initialized reference: the ten-stage reproducer can stall
     // under sequential substitution, so its acceptance is covered by the full balance audit.

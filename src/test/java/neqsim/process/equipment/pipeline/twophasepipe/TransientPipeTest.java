@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe.BoundaryCondition;
 import neqsim.process.equipment.stream.Stream;
@@ -617,6 +618,7 @@ class TransientPipeTest {
   }
 
   @Test
+  @Tag("slow")
   void testRunTransientWithProcessSystem() {
     // Create fluid
     SystemInterface fluid = new SystemSrkEos(300, 50);

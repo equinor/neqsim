@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -144,6 +145,7 @@ public class DistillationColumnModeTest {
    * Qualify partial-condenser and vapor-boilup ratio control across a repeated solve and nearby operating point.
    */
   @Test
+  @Tag("slow")
   public void partialCondenserAndVaporBoilupRatiosRemainPhysicalAcrossNearbyPoints() {
     DistillationColumn column = createTerminalControlColumn("nearby terminal ratio column");
     column.setReboilerVaporBoilupRatio(1.20);
@@ -246,6 +248,7 @@ public class DistillationColumnModeTest {
    * Reject an incomplete total-condenser declaration before a previously accepted tray state can be changed.
    */
   @Test
+  @Tag("slow")
   public void totalCondenserWithoutRatioFailsBeforeMutatingAcceptedProducts() {
     DistillationColumn column = createTerminalControlColumn("total preflight column");
     column.run(UUID.randomUUID());
