@@ -161,10 +161,12 @@ Supply a sourced fit when vapor pressure is required.
 data from an available correlation. Availability alone does not certify the
 accuracy or fitted range of older data. `getAntoineVaporPressure(T)` and its
 temperature derivative return `Double.NaN` for missing data, ions, nonpositive or
-nonfinite T, and T above the component's critical temperature. The inverse
+nonfinite T, T above the component's critical temperature, nonfinite/nonpositive
+evaluated pressure, or evaluated pressure above the component's finite critical
+pressure. A missing or nonfinite critical pressure also makes the result unavailable. The inverse
 `getAntoineVaporTemperature(P)` returns NaN for missing data, nonpositive or
 nonfinite P, and P above the critical pressure. A fitted correlation may have a
-narrower range; subcritical results are not clipped to Pc and are not a general
+narrower range; rejected results are not clipped to Pc and admitted results are not a general
 quality guarantee. Below the melting point a liquid correlation can describe a
 metastable liquid, not solid sublimation.
 

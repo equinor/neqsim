@@ -1508,10 +1508,12 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getAntoineVaporPressure(double temp) {
     double value = evaluateAntoineVaporPressure(temp);
-    return Double.isFinite(value) && value > 0.0 ? value : Double.NaN;
+    return Double.isFinite(value) && value > 0.0 && Double.isFinite(criticalPressure) && value <= criticalPressure
+        ? value
+        : Double.NaN;
   }
 
-  /** Evaluate the correlation before enforcing its finite, positive output contract. */
+  /** Evaluate the correlation before enforcing its finite, positive, subcritical-pressure output contract. */
   private double evaluateAntoineVaporPressure(double temp) {
     if (!isLiquidVaporPressureApplicable(temp)) {
       return Double.NaN;
@@ -1612,7 +1614,12 @@ public abstract class Component implements ComponentInterface {
       double high = tCrit;
       for (int i = 0; i < 100; i++) {
         nyTemp = 0.5 * (low + high);
-        nyPres = getAntoineVaporPressure(nyTemp);
+        // Retain the raw value for bracketing: an extrapolation above Pc is above every admitted target,
+        // not an unavailable value to be interpreted as below the target. The final result is checked below.
+        nyPres = evaluateAntoineVaporPressure(nyTemp);
+        if (Double.isNaN(nyPres) || nyPres < 0.0) {
+          return Double.NaN;
+        }
         if (Math.abs((nyPres - pres) / pres) < 1e-10) {
           break;
         }
