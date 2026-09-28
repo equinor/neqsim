@@ -8,6 +8,7 @@ package neqsim.statistics.parameterfitting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,6 +22,7 @@ public class SampleSet implements Cloneable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SampleSet.class);
   private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
+  private transient Random random = new Random();
 
   /**
    * Constructor for SampleSet.
@@ -114,6 +116,16 @@ public class SampleSet implements Cloneable {
   }
 
   /**
+   * Sets the seed of the random generator used by {@link #createNewNormalDistributedSet()} to make resampling
+   * reproducible.
+   *
+   * @param seed a long
+   */
+  public void setRandomSeed(long seed) {
+    random = new Random(seed);
+  }
+
+  /**
    * createNewNormalDistributedSet.
    *
    * @return a {@link neqsim.statistics.parameterfitting.SampleSet} object
@@ -122,14 +134,12 @@ public class SampleSet implements Cloneable {
     SampleSet newSet = this.clone();
 
     for (int i = 0; i < samples.size(); i++) {
-      for (int j = 0; j < newSet.getSample(i).getDependentValues().length; j++) {
-        System.out.println("old Var: " + newSet.getSample(i).getDependentValue(j));
-        double newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
-            newSet.getSample(i).getStandardDeviation(j));
-        newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
-            newSet.getSample(i).getStandardDeviation(j));
-        newSet.getSample(i).setDependentValue(j, newVar);
-        System.out.println("new var: " + newVar);
+      SampleValue sample = newSet.getSample(i);
+      for (int j = 0; j < sample.getDependentValues().length; j++) {
+        double oldVar = sample.getDependentValue(j);
+        double newVar = oldVar + random.nextGaussian() * sample.getStandardDeviation(j);
+        sample.setDependentValue(j, newVar);
+        logger.debug("dependent value {} resampled from {} to {}", j, oldVar, newVar);
       }
     }
     return newSet;
