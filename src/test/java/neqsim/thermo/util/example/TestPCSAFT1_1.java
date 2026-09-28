@@ -1,5 +1,6 @@
 package neqsim.thermo.util.example;
 
+import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestPCSAFT1_1 {
   private static final Logger logger = LogManager.getLogger(TestPCSAFT1_1.class);
+  private static final Random RANDOM = new Random();
 
   /** Logger object for class. */
 
@@ -38,8 +40,7 @@ public class TestPCSAFT1_1 {
       for (int k = 0; k < 1; k++) {
         testSystem = new SystemSrkEos(testSystem.getTemperature(), pres);
         for (int i = 0; i < componentName.length; i++) {
-          double newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
-          newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+          double newVar = compositions[i] + RANDOM.nextGaussian() * uncertcompositions[i];
           runcompositions[i] = compositions[i] + newVar;
           testSystem.addComponent(componentName[i], runcompositions[i]);
         }
