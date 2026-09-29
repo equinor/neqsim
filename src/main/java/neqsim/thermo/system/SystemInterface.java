@@ -2706,14 +2706,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Prepares the fluid for wax-equilibrium calculations using the selected solid-solution model.
    *
    * <p>
-   * If an unresolved plus fraction is present it is characterized first. The method then creates
-   * wax-forming pseudo-components, refreshes component database data, installs the wax phase,
-   * enables wax and multiphase checks, and initializes the system. The EOS and mixing rule are
-   * intentionally left unchanged.
+   * If an unresolved plus fraction is present it is characterized first. The method then creates wax-forming
+   * pseudo-components, refreshes component database data, installs the wax phase, enables wax and multiphase checks,
+   * and initializes the system. The EOS and mixing rule are intentionally left unchanged.
    * </p>
    *
-   * @param modelName wax model name, for example {@code "Pedersen"}, {@code "Won"},
-   *        {@code "Wilson"}, or {@code "Coutinho"}
+   * @param modelName wax model name, for example {@code "Pedersen"}, {@code "Won"}, {@code "Wilson"}, or
+   * {@code "Coutinho"}
    */
   public default void enableWaxModel(String modelName) {
     throw new UnsupportedOperationException("Wax model setup is not supported by this system implementation");
