@@ -77,6 +77,26 @@
       "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
     },
     {
+      "name": "n-pentane",
+      "cas": "109-66-0",
+      "Hsbp_mol_kg_atm": 0.00073,
+      "B_K": 3900.0,
+      "reference": "3518",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "pentane",
+      "source_formula": "C5H12",
+      "source_inchikey": "OFBQJSOFQDEBGM-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS and InChIKey; NeqSim nC5 is the formula-equivalent abbreviation for C5H12.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Brockbank (2013), Aqueous Henry's law constants, infinite dilution activity coefficients, and water solubility",
+      "original_reference_access": "https://scholarsarchive.byu.edu/etd/3691/",
+      "original_reference_rights": "The thesis record links the BYU institutional copyright policy and gives no permissive reuse license; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row; three type-L temperature rows span 7.3e-4 to 8.8e-4 mol kg^-1 atm^-1 and 3400 to 3900 K.",
+      "selection_rationale": "Use the first, highest-ranked Sander type-L row; it is the only Brockbank recommended row with both value and local slope.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K; no experimental validity interval is claimed"
+    },
+    {
       "name": "n-hexane",
       "cas": "110-54-3",
       "Hsbp_mol_kg_atm": 0.00058,
@@ -300,6 +320,26 @@
       "reference": "3518",
       "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
       "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
+    },
+    {
+      "name": "i-pentane",
+      "cas": "78-78-4",
+      "Hsbp_mol_kg_atm": 0.00079,
+      "B_K": 3000.0,
+      "reference": "3673",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "2-methylbutane (isopentane)",
+      "source_formula": "C5H12",
+      "source_inchikey": "QWTDNUCVQCZILF-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS and InChIKey; NeqSim iC5 is the formula-equivalent abbreviation for C5H12.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Plyasunov and Shock (2000), Thermodynamic functions of hydration of hydrocarbons at 298.15 K and 0.1 MPa",
+      "original_reference_access": "https://doi.org/10.1016/S0016-7037(99)00330-0",
+      "original_reference_rights": "The original article is publisher-copyrighted; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row; the other type-L reference value is 7.4e-4 mol kg^-1 atm^-1 and has no slope.",
+      "selection_rationale": "Use the only Sander type-L row that provides both a value and local temperature slope.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K and 0.1 MPa; no finite extrapolation interval is claimed"
     },
     {
       "name": "H2S",
