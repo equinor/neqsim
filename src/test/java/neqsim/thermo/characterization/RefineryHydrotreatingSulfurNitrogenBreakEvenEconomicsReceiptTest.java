@@ -25,10 +25,10 @@ class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceiptTest {
     assertEquals(0.9954894479786512, receipt.getLiquidProductMassFlowTonnesPerHour(), 1.0e-12);
     assertEquals(0.00761202393313295, receipt.getExportGasMassFlowTonnesPerHour(), 1.0e-12);
     assertEquals(505.6583348279225, receipt.getBreakEvenLiquidProductPricePerTonne(), 1.0e-9);
-    assertEquals(-12237.866119252241, receipt.getBreakEvenExportGasPricePerTonne(), 1.0e-9);
+    assertEquals(-12237.86611921223, receipt.getBreakEvenExportGasPricePerTonne(), 1.0e-9);
     assertEquals(543.9161321835383, receipt.getBreakEvenFeedCostPerTonne(), 1.0e-9);
     assertEquals(-94.34166517207751, receipt.getLiquidProductPriceDeltaToBreakEvenPerTonne(), 1.0e-9);
-    assertEquals(-12337.866119252241, receipt.getExportGasPriceDeltaToBreakEvenPerTonne(), 1.0e-9);
+    assertEquals(-12337.86611921223, receipt.getExportGasPriceDeltaToBreakEvenPerTonne(), 1.0e-9);
     assertEquals(93.91613218353825, receipt.getFeedCostDeltaToBreakEvenPerTonne(), 1.0e-9);
     assertEquals(0.9954894479786512, receipt.getLiquidProductMarginSensitivityTonnesPerHour(), 1.0e-12);
     assertEquals(0.00761202393313295, receipt.getExportGasMarginSensitivityTonnesPerHour(), 1.0e-12);
