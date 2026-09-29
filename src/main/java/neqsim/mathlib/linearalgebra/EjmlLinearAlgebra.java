@@ -18,9 +18,10 @@ import org.ejml.interfaces.linsol.LinearSolverDense;
  * </p>
  *
  * <p>
- * EJML reports a singular system by returning {@code false} from {@code LinearSolverDense.setA}, which is mapped here
- * to a {@link LinearAlgebraException}. A system that is merely close to singular is caught afterwards by rejecting a
- * non-finite solution.
+ * A failure reported by {@code LinearSolverDense.setA} and any non-finite solve or inverse result are mapped to a
+ * {@link LinearAlgebraException}. LU solves and inversion do not apply a numerical rank or conditioning threshold. An
+ * ill-conditioned system can therefore return a finite result with poor accuracy; callers must assess conditioning and
+ * residuals when accuracy matters. Least squares explicitly checks numerical column rank before solving.
  * </p>
  *
  * @author Even Solbraa

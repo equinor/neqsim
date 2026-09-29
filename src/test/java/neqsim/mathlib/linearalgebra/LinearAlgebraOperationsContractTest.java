@@ -208,6 +208,46 @@ class LinearAlgebraOperationsContractTest {
         .solveLeastSquares(new double[][] {{1.0, 2.0}, {2.0, 4.0}, {3.0, 6.0}}, new double[] {1.0, 2.0, 3.0}));
   }
 
+  /**
+   * Distinguish finite LU output from an explicit numerical rank assessment.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void finiteLuResultsDoNotImplyGoodConditioning(LinearAlgebraOperations algebra) {
+    double[][] matrix = {{1.0, 0.0}, {0.0, 1.0e-18}};
+    double[] rhs = {1.0, 1.0e-18};
+
+    // LU can solve this diagonal system despite its numerical rank being one at the SVD tolerance.
+    assertEquals(1, algebra.rank(matrix));
+    assertEquals(Double.POSITIVE_INFINITY, algebra.conditionNumber(matrix));
+    double[] solution = algebra.solve(matrix, rhs);
+    assertArrayEquals(new double[] {1.0, 1.0}, solution, 1.0e-12);
+    assertArrayEquals(new double[] {1.0, 0.0}, algebra.invert(matrix)[0], 1.0e-12);
+    assertEquals(1.0, algebra.invert(matrix)[1][1] * 1.0e-18, 1.0e-12);
+    assertThrows(LinearAlgebraException.class, () -> algebra.solveLeastSquares(matrix, rhs));
+
+    // A tiny absolute RHS perturbation gives an order-one change despite finite solutions and zero residuals.
+    double[] perturbedRhs = {1.0, 2.0e-18};
+    double[] perturbedSolution = algebra.solve(matrix, perturbedRhs);
+    assertEquals(1.0, perturbedSolution[1] - solution[1], 1.0e-12);
+    assertArrayEquals(perturbedRhs, algebra.multiply(matrix, perturbedSolution), 1.0e-30);
+  }
+
+  /**
+   * Verify non-finite result rejection separately from numerical conditioning checks.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void rejectsOverflowingLuResults(LinearAlgebraOperations algebra) {
+    double[][] matrix = {{1.0e-310}};
+    assertThrows(LinearAlgebraException.class, () -> algebra.solve(matrix, new double[] {1.0}));
+    assertThrows(LinearAlgebraException.class, () -> algebra.invert(matrix));
+  }
+
   @ParameterizedTest
   @MethodSource("backends")
   void rejectsInvalidInput(LinearAlgebraOperations algebra) {

@@ -17,9 +17,15 @@ package neqsim.mathlib.linearalgebra;
  *
  * <p>
  * Implementations must never modify their arguments, must return freshly allocated arrays, and must be stateless and
- * safe for concurrent use. Every failure is reported as a {@link LinearAlgebraException}, including inconsistent
- * dimensions, non-finite input and singular or rank-deficient systems, so callers do not have to distinguish the
- * failure signalling of the individual backends.
+ * safe for concurrent use. Validation and detected solver failures are reported as a {@link LinearAlgebraException},
+ * including inconsistent dimensions, non-finite input and detected singularity, so callers do not have to distinguish
+ * the failure signalling of the individual backends. A finite solve or inverse result is not an accuracy guarantee;
+ * numerical rank is checked explicitly by least squares, but not by LU solves or inversion.
+ * </p>
+ *
+ * <p>
+ * Validation and defensive array conversions add work and allocations. This interface makes no speedup guarantee;
+ * benchmark complete representative solver workloads before migrating performance-critical loops or choosing a backend.
  * </p>
  *
  * <p>
@@ -42,11 +48,17 @@ public interface LinearAlgebraOperations {
   /**
    * Solve the square system {@code A x = b}.
    *
+   * <p>
+   * Uses LU without a numerical rank or conditioning threshold. An ill-conditioned matrix can yield a finite but
+   * inaccurate result, even when {@link #rank(double[][])} reports numerical rank deficiency. Use
+   * {@link #conditionNumber(double[][])} and residual checks to assess suitability for the caller's accuracy target.
+   * </p>
+   *
    * @param matrixA square coefficient matrix
    * @param vectorB right-hand-side vector with one entry per row of {@code matrixA}
    * @return the solution vector
    * @throws LinearAlgebraException if the matrix is not square, the dimensions disagree, any entry is non-finite, or
-   * the system is singular or too ill-conditioned to solve
+   * the backend reports a failed factorisation or the computed solution contains a non-finite entry
    */
   double[] solve(double[][] matrixA, double[] vectorB);
 
@@ -73,12 +85,14 @@ public interface LinearAlgebraOperations {
    * <p>
    * Prefer {@link #solve(double[][], double[])} when the inverse is only needed to multiply a right-hand side; an
    * explicit inverse is both slower and numerically weaker. Use this only when the inverse itself is the result, as in
-   * a covariance or sensitivity matrix.
+   * a covariance or sensitivity matrix. As with {@link #solve(double[][], double[])}, no numerical rank or conditioning
+   * threshold is applied; a finite inverse can still be inaccurate for an ill-conditioned matrix.
    * </p>
    *
    * @param matrix square matrix to invert
    * @return the inverse matrix
-   * @throws LinearAlgebraException if the matrix is not square, any entry is non-finite, or the matrix is singular
+   * @throws LinearAlgebraException if the matrix is not square, any entry is non-finite, the backend reports a failed
+   * factorisation or the computed inverse contains a non-finite entry
    */
   double[][] invert(double[][] matrix);
 

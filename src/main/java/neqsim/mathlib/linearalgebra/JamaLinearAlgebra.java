@@ -17,8 +17,11 @@ import Jama.SingularValueDecomposition;
  * <p>
  * Square solves and inversion use LU with partial pivoting, least squares uses QR, and rank and conditioning come from
  * a singular value decomposition. JAMA signals a singular or rank-deficient system by throwing a plain
- * {@link RuntimeException}, which is caught here and re-thrown as a {@link LinearAlgebraException}; a system that is
- * merely close to singular is caught afterwards by rejecting a non-finite solution.
+ * {@link RuntimeException}, which is caught for LU solves and inversion and re-thrown as a
+ * {@link LinearAlgebraException}. Non-finite solve and inverse results are also rejected. LU solves and inversion do
+ * not apply a numerical rank or conditioning threshold: an ill-conditioned system can return a finite result with poor
+ * accuracy. Callers must assess conditioning and residuals when accuracy matters. Least squares explicitly checks
+ * numerical column rank before solving.
  * </p>
  *
  * @author Even Solbraa
