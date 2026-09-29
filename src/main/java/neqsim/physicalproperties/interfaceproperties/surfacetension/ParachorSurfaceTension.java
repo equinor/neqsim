@@ -53,27 +53,24 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
-    double temp = 0;
     if (system.getNumberOfPhases() < 2) {
       return 0.0;
     }
-    // if(interface1>=2 || interface2>=2) return 0.0;
-    // return 0.0;
-    try {
-      for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        // System.out.println("density1 parachor " +
-        // system.getPhase(interface1).getPhysicalProperties().getDensity());
-        // System.out.println("density2 parachor " +
-        // system.getPhase(interface2).getPhysicalProperties().getDensity());
-        temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
-            * (system.getPhase(interface2).getPhysicalProperties().getDensity()
-                / system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
-                - system.getPhase(interface1).getPhysicalProperties().getDensity()
-                    / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
-      }
-    } catch (Exception ex) {
-      // logger.error(ex.getMessage(), ex);
-      temp = 0.0;
+    if (interface1 < 0 || interface2 < 0 || interface1 >= system.getNumberOfPhases()
+        || interface2 >= system.getNumberOfPhases()) {
+      throw new IllegalArgumentException("Surface-tension phase index is outside the current phase set");
+    }
+    if (interface1 == interface2) {
+      throw new IllegalArgumentException("Surface tension requires two distinct phases");
+    }
+
+    double temp = 0.0;
+    for (int i = 0; i < system.getPhase(interface1).getNumberOfComponents(); i++) {
+      temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
+          * (system.getPhase(interface2).getPhysicalProperties().getDensity()
+              / system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
+              - system.getPhase(interface1).getPhysicalProperties().getDensity()
+                  / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
     }
     return Math.pow(temp, 4.0) / 1000.0;
   }
