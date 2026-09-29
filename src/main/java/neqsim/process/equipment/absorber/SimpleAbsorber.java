@@ -1,6 +1,8 @@
 package neqsim.process.equipment.absorber;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -18,6 +20,15 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Logger for diagnostic output. */
+  private static final Logger logger = LogManager.getLogger(SimpleAbsorber.class);
+
+  /** Fixed-point convergence tolerance used by the legacy loading calculation. */
+  private static final double CONVERGENCE_TOLERANCE = 1.0e-4;
+
+  /** Maximum number of legacy loading iterations. */
+  private static final int MAX_ITERATIONS = 30;
+
   boolean setTemperature = false;
   StreamInterface[] outStream = new Stream[2];
   StreamInterface[] inStream = new Stream[2];
@@ -31,6 +42,18 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   private double NTU = 2.0;
   private double stageEfficiency = 0.25;
   private double fsFactor = 0.0;
+
+  /** Iterations completed by the most recent run. */
+  private int lastIterationCount = 0;
+
+  /** Final loading residual from the most recent run. */
+  private double lastConvergenceError = Double.NaN;
+
+  /** Whether the most recent run satisfied the fixed-point tolerance. */
+  private boolean lastRunConverged = false;
+
+  /** Exit reason from the most recent run. */
+  private String lastRunExitReason = "NOT_RUN";
 
   /**
    * Constructor for SimpleAbsorber.
@@ -59,7 +82,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     outStream[0].setThermoSystem(systemOut1);
 
     double molCO2 = inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
-    System.out.println("mol CO2 " + molCO2);
+    logger.debug("{}: inlet CO2 amount = {} mol", getName(), molCO2);
     SystemInterface systemOut0 = inStream1.getThermoSystem().clone();
     systemOut0.init(0);
     systemOut0.addComponent("MDEA", molCO2 * absorptionEfficiency);
@@ -208,13 +231,17 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    lastIterationCount = 0;
+    lastConvergenceError = Double.NaN;
+    lastRunConverged = false;
+    lastRunExitReason = "RUNNING";
+
     SystemInterface systemOut1 = inStream[1].getThermoSystem().clone();
     outStream[0].setThermoSystem(systemOut1);
     outStream[0].run(id);
     outStream[1].run(id);
 
-    double error = 1e5;
-    error = absorptionEfficiency
+    double error = absorptionEfficiency
         - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase()
             + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
             / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
@@ -224,7 +251,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
       iter++;
       double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
           + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
-      // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
       outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
       outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
       outStream[1].run();
@@ -233,12 +259,62 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
               + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
               / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
                   + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase()));
-
-      System.out.println("error " + error);
-    } while (Math.abs(error) > 1e-4 && iter < 30 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
+      logger.debug("{}: loading iteration {} residual {}", getName(), iter, error);
+    } while (Math.abs(error) > CONVERGENCE_TOLERANCE && iter < MAX_ITERATIONS
+        && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
         && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
+
+    lastIterationCount = iter;
+    lastConvergenceError = error;
+    lastRunConverged = Double.isFinite(error) && Math.abs(error) <= CONVERGENCE_TOLERANCE;
+    if (lastRunConverged) {
+      lastRunExitReason = "CONVERGED";
+    } else if (!Double.isFinite(error)) {
+      lastRunExitReason = "NON_FINITE_RESIDUAL";
+    } else if (iter >= MAX_ITERATIONS) {
+      lastRunExitReason = "MAX_ITERATIONS";
+    } else {
+      lastRunExitReason = "PHASE_LOSS";
+    }
+
     outStream[1].setCalculationIdentifier(id);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Reports whether the most recent fixed-point loading calculation met its tolerance.
+   *
+   * @return true only when the most recent run converged
+   */
+  public boolean isLastRunConverged() {
+    return lastRunConverged;
+  }
+
+  /**
+   * Gets the number of fixed-point iterations completed by the most recent run.
+   *
+   * @return iteration count
+   */
+  public int getLastIterationCount() {
+    return lastIterationCount;
+  }
+
+  /**
+   * Gets the final loading residual from the most recent run.
+   *
+   * @return dimensionless loading residual, or NaN before a run
+   */
+  public double getLastConvergenceError() {
+    return lastConvergenceError;
+  }
+
+  /**
+   * Gets the exit reason from the most recent loading calculation.
+   *
+   * @return one of NOT_RUN, CONVERGED, NON_FINITE_RESIDUAL, MAX_ITERATIONS, or PHASE_LOSS
+   */
+  public String getLastRunExitReason() {
+    return lastRunExitReason;
   }
 
   /** {@inheritDoc} */
@@ -265,10 +341,13 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * Setter for the field <code>numberOfTheoreticalStages</code>.
+   * Stores a legacy theoretical-stage metadata value. This value is not used by the SimpleAbsorber calculation.
    *
    * @param numberOfTheoreticalStages a double
+   * @deprecated SimpleAbsorber has no staged calculation; use a staged or rate-based absorber model when stage count
+   *             must affect the result
    */
+  @Deprecated
   public void setNumberOfTheoreticalStages(double numberOfTheoreticalStages) {
     this.numberOfTheoreticalStages = numberOfTheoreticalStages;
   }
@@ -283,10 +362,13 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * Setter for the field <code>numberOfStages</code>.
+   * Stores a legacy stage-count metadata value. This value is not used by the SimpleAbsorber calculation.
    *
    * @param numberOfStages a int
+   * @deprecated SimpleAbsorber has no staged calculation; use a staged or rate-based absorber model when stage count
+   *             must affect the result
    */
+  @Deprecated
   public void setNumberOfStages(int numberOfStages) {
     this.numberOfStages = numberOfStages;
   }
@@ -301,10 +383,12 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * Setter for the field <code>stageEfficiency</code>.
+   * Stores a legacy stage-efficiency metadata value. This value is not used by the SimpleAbsorber calculation.
    *
    * @param stageEfficiency a double
+   * @deprecated SimpleAbsorber has no stage-efficiency calculation
    */
+  @Deprecated
   public void setStageEfficiency(double stageEfficiency) {
     this.stageEfficiency = stageEfficiency;
   }
@@ -319,10 +403,12 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * setHTU.
+   * Stores a legacy HTU metadata value. This value is not used by the SimpleAbsorber calculation.
    *
    * @param HTU a double
+   * @deprecated SimpleAbsorber does not use an HTU/NTU rate-based model
    */
+  @Deprecated
   public void setHTU(double HTU) {
     this.HTU = HTU;
   }
@@ -337,10 +423,12 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   }
 
   /**
-   * setNTU.
+   * Stores a legacy NTU metadata value. This value is not used by the SimpleAbsorber calculation.
    *
    * @param NTU a double
+   * @deprecated SimpleAbsorber does not use an HTU/NTU rate-based model
    */
+  @Deprecated
   public void setNTU(double NTU) {
     this.NTU = NTU;
   }
