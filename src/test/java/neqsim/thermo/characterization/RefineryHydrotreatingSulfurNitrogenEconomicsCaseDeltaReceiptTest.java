@@ -15,10 +15,10 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
 
   @Test
   void attributesPublicBigHillThroughputCaseDelta() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(
-        intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(
-        intensity(2000.0, 2.0, 100.0), 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity(2000.0, 2.0, 100.0),
+        600.0, 100.0, 450.0);
 
     RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
         .calculate(baseline, candidate);
@@ -44,10 +44,10 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
 
   @Test
   void equivalentIndependentCasesHaveZeroDelta() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(
-        intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(
-        intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
 
     RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
         .calculate(baseline, candidate);
@@ -59,10 +59,10 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
 
   @Test
   void lowerThroughputRetainsSignedMarginDelta() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(
-        intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(
-        intensity(500.0, 0.5, 100.0), 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity(500.0, 0.5, 100.0),
+        600.0, 100.0, 450.0);
 
     RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
         .calculate(baseline, candidate);
@@ -75,24 +75,21 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
   void rejectsChangedCallerScreeningPrices() {
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt baselineIntensity = intensity(1000.0, 1.0, 100.0);
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt candidateIntensity = intensity(2000.0, 2.0, 100.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(baselineIntensity, 600.0,
-        100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(baselineIntensity, 600.0, 100.0,
+        450.0);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt.calculate(baseline,
-            screening(candidateIntensity, 601.0, 100.0, 450.0)));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt.calculate(baseline,
-            screening(candidateIntensity, 600.0, 101.0, 450.0)));
-    assertThrows(IllegalArgumentException.class,
-        () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt.calculate(baseline,
-            screening(candidateIntensity, 600.0, 100.0, 451.0)));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
+        .calculate(baseline, screening(candidateIntensity, 601.0, 100.0, 450.0)));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
+        .calculate(baseline, screening(candidateIntensity, 600.0, 101.0, 450.0)));
+    assertThrows(IllegalArgumentException.class, () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt
+        .calculate(baseline, screening(candidateIntensity, 600.0, 100.0, 451.0)));
   }
 
   @Test
   void rejectsMissingCase() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(
-        intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
 
     assertThrows(NullPointerException.class,
         () -> RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt.calculate(null, baseline));
@@ -103,8 +100,8 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
   private static RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening(
       RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity, double liquidProductPricePerTonne,
       double exportGasPricePerTonne, double feedCostPerTonne) {
-    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity,
-        liquidProductPricePerTonne, exportGasPricePerTonne, feedCostPerTonne);
+    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity, liquidProductPricePerTonne,
+        exportGasPricePerTonne, feedCostPerTonne);
   }
 
   private static RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity(double feedMassFlowKgPerHour,
@@ -144,8 +141,7 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
     RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance utility = RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
         .calculate(thermal, 0.85, 50.0, 0.40, 3.0);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance combustion = RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance
-        .calculate(utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095,
-            0.15);
+        .calculate(utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095, 0.15);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance stack = RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance
         .calculate(combustion, 473.15, 298.15, 34.0);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance recovery = RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance
@@ -154,7 +150,7 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceiptTest {
   }
 
   private static RefineryHydrotreatingSulfurNitrogenBalance material() {
-    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129, 15.0e-6,
-        10.0e-6, 2.0, 4.0);
+    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6,
+        2.0, 4.0);
   }
 }

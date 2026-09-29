@@ -7,10 +7,10 @@ import java.util.Objects;
  * Immutable fixed-screening-price case-delta receipt for qualified hydrotreating economics.
  *
  * <p>
- * The receipt compares two qualified upstream cases under identical caller-owned liquid-product price,
- * export-gas price, and feed cost. It attributes the screening-margin change to external liquid-product flow,
- * export-gas flow, feed flow, and the qualified aggregate operating-cost change. It does not infer causality inside
- * the upstream operating-cost receipt or embed prices, forecasts, optimization, or investment semantics.
+ * The receipt compares two qualified upstream cases under identical caller-owned liquid-product price, export-gas
+ * price, and feed cost. It attributes the screening-margin change to external liquid-product flow, export-gas flow,
+ * feed flow, and the qualified aggregate operating-cost change. It does not infer causality inside the upstream
+ * operating-cost receipt or embed prices, forecasts, optimization, or investment semantics.
  *
  * @author esolbr1
  * @version 1.0
@@ -92,8 +92,8 @@ public final class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt 
     RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt candidateDistribution = candidateIntensity
         .getProductDistributionReceipt();
 
-    double feedDelta = (candidateIntensity.getFeedMassFlowKgPerHour()
-        - baselineIntensity.getFeedMassFlowKgPerHour()) / KILOGRAMS_PER_TONNE;
+    double feedDelta = (candidateIntensity.getFeedMassFlowKgPerHour() - baselineIntensity.getFeedMassFlowKgPerHour())
+        / KILOGRAMS_PER_TONNE;
     double liquidProductDelta = (candidateIntensity.getLiquidProductMassFlowKgPerHour()
         - baselineIntensity.getLiquidProductMassFlowKgPerHour()) / KILOGRAMS_PER_TONNE;
     double exportGasDelta = (candidateDistribution.getThroughputBalance().getExportGasMassFlowKgPerHour()
@@ -101,8 +101,7 @@ public final class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt 
     double liquidProductContribution = liquidProductDelta * baselineReceipt.getLiquidProductPricePerTonne();
     double exportGasContribution = exportGasDelta * baselineReceipt.getExportGasPricePerTonne();
     double feedContribution = -feedDelta * baselineReceipt.getFeedCostPerTonne();
-    double operatingCostDelta = candidateReceipt.getOperatingCostPerHour()
-        - baselineReceipt.getOperatingCostPerHour();
+    double operatingCostDelta = candidateReceipt.getOperatingCostPerHour() - baselineReceipt.getOperatingCostPerHour();
     double operatingCostContribution = -operatingCostDelta;
     double attributedMarginDelta = liquidProductContribution + exportGasContribution + feedContribution
         + operatingCostContribution;
@@ -124,12 +123,10 @@ public final class RefineryHydrotreatingSulfurNitrogenEconomicsCaseDeltaReceipt 
     double attributionResidual = screeningMarginDelta - attributedMarginDelta;
 
     if (!allFinite(feedDelta, liquidProductDelta, exportGasDelta, liquidProductContribution, exportGasContribution,
-        feedContribution, operatingCostDelta, operatingCostContribution, attributedMarginDelta,
-        totalProductValueDelta, totalVariableCostDelta, screeningMarginDelta, productValueResidual,
-        variableCostResidual, screeningMarginResidual, attributionResidual)
-        || Math.abs(productValueResidual) > CLOSURE_TOLERANCE
-        || Math.abs(variableCostResidual) > CLOSURE_TOLERANCE
-        || Math.abs(screeningMarginResidual) > CLOSURE_TOLERANCE
+        feedContribution, operatingCostDelta, operatingCostContribution, attributedMarginDelta, totalProductValueDelta,
+        totalVariableCostDelta, screeningMarginDelta, productValueResidual, variableCostResidual,
+        screeningMarginResidual, attributionResidual) || Math.abs(productValueResidual) > CLOSURE_TOLERANCE
+        || Math.abs(variableCostResidual) > CLOSURE_TOLERANCE || Math.abs(screeningMarginResidual) > CLOSURE_TOLERANCE
         || Math.abs(attributionResidual) > CLOSURE_TOLERANCE) {
       throw new IllegalArgumentException("cases do not define a closed finite economics case-delta receipt");
     }
