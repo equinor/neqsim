@@ -12,9 +12,9 @@ import org.ejml.interfaces.linsol.LinearSolverDense;
  * {@link LinearAlgebraOperations} backed by EJML.
  *
  * <p>
- * This is the fastest of the NeqSim backends for dense systems and the intended default. Square solves and inversion
- * use LU with partial pivoting, least squares uses QR, and rank and conditioning come from a singular value
- * decomposition.
+ * Square solves and inversion use LU with partial pivoting, least squares uses QR, and rank and conditioning come from
+ * a singular value decomposition. Backend performance depends on matrix size, operation and runtime; select a backend
+ * using representative benchmarks.
  * </p>
  *
  * <p>

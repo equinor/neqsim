@@ -54,9 +54,9 @@ public interface LinearAlgebraOperations {
    * Solve {@code A x = b} in the least-squares sense, minimising the Euclidean norm of the residual.
    *
    * <p>
-   * Use this for over-determined systems from parameter fitting and for systems whose square solve is expected to be
-   * rank-deficient. For a well-conditioned square system it returns the same answer as
-   * {@link #solve(double[][], double[])} but generally costs more.
+   * Use this for over-determined systems from parameter fitting with full column rank. Rank-deficient systems are
+   * rejected; this method is not a pseudoinverse fallback. For a well-conditioned square system it returns the same
+   * answer as {@link #solve(double[][], double[])} but generally costs more.
    * </p>
    *
    * @param matrixA coefficient matrix with at least as many rows as columns

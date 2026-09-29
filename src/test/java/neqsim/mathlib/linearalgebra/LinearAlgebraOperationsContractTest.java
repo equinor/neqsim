@@ -203,6 +203,7 @@ class LinearAlgebraOperationsContractTest {
 
     assertThrows(LinearAlgebraException.class, () -> algebra.solve(singular, new double[] {1.0, 2.0}));
     assertThrows(LinearAlgebraException.class, () -> algebra.invert(singular));
+    assertThrows(LinearAlgebraException.class, () -> algebra.solveLeastSquares(singular, new double[] {1.0, 2.0}));
     assertThrows(LinearAlgebraException.class, () -> algebra
         .solveLeastSquares(new double[][] {{1.0, 2.0}, {2.0, 4.0}, {3.0, 6.0}}, new double[] {1.0, 2.0, 3.0}));
   }
