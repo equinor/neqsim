@@ -72,6 +72,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Reactors (Overview) | [reactors.md](reactors) | All reactor types: PFR, CSTR, Gibbs, stoichiometric, ammonia, sulfur, bio-processing |
+| Multi-burner hot-oil heater | [multi_burner_fired_heater.md](multi_burner_fired_heater) | Optional finite-rate chemistry, burner switching, tube heat, refractory and oil balance |
 | Iron-Sulfide Wall Source | [iron_sulfide_wall_source.md](iron_sulfide_wall_source) | Stateful FeS/FeCO3 scale, oxygen ingress, S8 generation, and compressor deposition coupling |
 | Plug Flow Reactor | [plug_flow_reactor.md](plug_flow_reactor) | Kinetic PFR with power-law/LHHW/reversible kinetics, catalyst bed, Ergun ΔP, energy modes |
 | Electrolyzers | [electrolyzers.md](electrolyzers) | Water and CO₂ electrolysis |
