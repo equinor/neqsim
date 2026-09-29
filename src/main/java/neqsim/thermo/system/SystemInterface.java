@@ -2454,6 +2454,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Setter for property <code>beta</code>.
+   *
    * <p>
    * NB! Sets beta = b for first (heaviest) phase and 1-b for second (lightest) phase, not for multiphase systems.
    * </p>
@@ -2948,6 +2949,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Disabling is safe and idempotent even when no solid phase has been allocated. It preserves the phase count,
    * composition and component inventories without reallocating phases or recalculating equilibrium.
    * </p>
+   *
    * <p>
    * Enabling allocates solid storage but does not change {@link #doMultiPhaseCheck()}. Enable fluid multiphase checking
    * separately when additional liquid phases are required.

@@ -121,7 +121,7 @@ public class PhaseEnvelope {
       // isFinished = testOps.waitAndCheckForFinishedCalculation(10000);
       // testOps.addData("water", waterData);
       // testOps.addData("hydrate", hydData);
-      // testOps.calcPTphaseEnvelopeNew();
+      // testOps.calcPTphaseEnvelope();
       // testOps.displayResult();
 
       testSystem.setTemperature(273.15 - 0.0);

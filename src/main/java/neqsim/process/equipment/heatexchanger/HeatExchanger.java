@@ -31,8 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider,
-    neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
+public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 

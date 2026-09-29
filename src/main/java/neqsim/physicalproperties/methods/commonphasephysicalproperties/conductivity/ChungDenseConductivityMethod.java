@@ -1,7 +1,6 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  * Full Chung et al. (1988) thermal conductivity method including both dilute-gas and dense-fluid contributions. Works
@@ -20,7 +19,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @author Even Solbraa
  * @version 1.0
  */
-public class ChungDenseConductivityMethod extends Conductivity implements ThermodynamicConstantsInterface {
+public class ChungDenseConductivityMethod extends Conductivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
