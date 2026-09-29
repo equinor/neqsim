@@ -452,8 +452,8 @@ Complete parameter list with units and typical values:
 | Parameter | Unit | Example (methane) | Example (water) |
 |-----------|------|-------------------|-----------------|
 | `MOLARMASS` | g/mol | 16.043 | 18.015 |
-| `TC` | °C | -82.59 | 374.15 |
-| `PC` | bara | 45.99 | 220.89 |
+| `TC` | °C | -82.59 | 373.946 |
+| `PC` | bara | 45.99 | 220.64 |
 | `ACSFACT` | - | 0.0115 | 0.344 |
 | `CRITVOL` | cm³/mol | 99.0 | 56.0 |
 | `NORMBOIL` | °C | -161.55 | 100.0 |
