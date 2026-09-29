@@ -53,6 +53,9 @@ public class PackedColumn extends DistillationColumn {
   /** Logger. */
   private static final Logger logger = LogManager.getLogger(PackedColumn.class);
 
+  /** Initial HETP used only to choose the rigorous stage topology before hydraulics are available [m]. */
+  private static final double INITIAL_HETP_GUESS_M = 0.5;
+
   // ======================== Packing configuration ========================
 
   /** Packed bed height [m]. */
@@ -96,12 +99,19 @@ public class PackedColumn extends DistillationColumn {
   /** Whether hydraulics design is feasible. */
   private boolean hydraulicsOk = false;
 
+  /** Whether the most recent packing-hydraulics calculation produced a result. */
+  private boolean hydraulicsCalculated = false;
+
+  /** Diagnostic message when the most recent packing-hydraulics calculation failed. */
+  private String lastHydraulicsError = "";
+
   /**
    * Create a packed column with a given number of stages (from HETP).
    *
    * <p>
-   * The default HETP of ~0.5 m is used initially. After running, HETP is recalculated from packing correlations and the
-   * internal stage count is updated.
+   * The default 0.5 m HETP is used only to choose the rigorous stage topology at construction. After running, packing
+   * correlations calculate a separate hydraulic HETP and equivalent theoretical-stage count; those reported hydraulic
+   * values do not retroactively change the stage topology that was solved.
    * </p>
    *
    * @param name equipment name
@@ -109,7 +119,7 @@ public class PackedColumn extends DistillationColumn {
    * @param hasReboiler true to include a reboiler
    */
   public PackedColumn(String name, boolean hasCondenser, boolean hasReboiler) {
-    super(name, estimateStages(5.0, 0.5), hasReboiler, hasCondenser);
+    super(name, estimateStages(5.0, INITIAL_HETP_GUESS_M), hasReboiler, hasCondenser);
   }
 
   /**
@@ -133,7 +143,7 @@ public class PackedColumn extends DistillationColumn {
    * @param hasReboiler true for reboiler
    */
   public PackedColumn(String name, double packedHeight, String packingType, boolean hasCondenser, boolean hasReboiler) {
-    super(name, estimateStages(packedHeight, 0.5), hasReboiler, hasCondenser);
+    super(name, estimateStages(packedHeight, INITIAL_HETP_GUESS_M), hasReboiler, hasCondenser);
     this.packedHeight = packedHeight;
     this.packingType = packingType;
   }
@@ -252,7 +262,13 @@ public class PackedColumn extends DistillationColumn {
   }
 
   /**
-   * Override column diameter [m]. Set to &lt;= 0 for auto-sizing.
+   * Override column diameter [m].
+   *
+   * <p>
+   * Set to &lt;= 0 to request post-solve hydraulic auto-sizing. In auto-sizing mode the internally reported diameter is
+   * replaced by the hydraulics designer result after the rigorous column solve; the diameter therefore describes the
+   * design evaluation, not an input used by the VLE solve.
+   * </p>
    *
    * @param diameter column diameter
    */
@@ -285,12 +301,36 @@ public class PackedColumn extends DistillationColumn {
   }
 
   /**
-   * Get the number of theoretical stages.
+   * Get the packing-correlation equivalent number of theoretical stages.
    *
-   * @return theoretical stages
+   * <p>
+   * This value is calculated after the rigorous column solve as packed height divided by hydraulic HETP. It is a
+   * hydraulic/design result and is not the number of stage objects used by the preceding VLE calculation. Use
+   * {@link #getNumberOfTrays()} for the stage topology that was actually solved.
+   * </p>
+   *
+   * @return packing-correlation equivalent theoretical stages
    */
   public double getTheoreticalStages() {
     return theoreticalStages;
+  }
+
+  /**
+   * Check whether the most recent packing-hydraulics calculation produced a usable result.
+   *
+   * @return true when hydraulic result fields belong to the most recent run
+   */
+  public boolean isHydraulicsCalculated() {
+    return hydraulicsCalculated;
+  }
+
+  /**
+   * Return the diagnostic message from the most recent failed packing-hydraulics calculation.
+   *
+   * @return empty string after successful hydraulics, otherwise the failure message
+   */
+  public String getLastHydraulicsError() {
+    return lastHydraulicsError;
   }
 
   /**
@@ -358,14 +398,31 @@ public class PackedColumn extends DistillationColumn {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // Run the underlying distillation column for VLE
+    // Run the underlying distillation column for VLE.
     super.run(id);
 
-    // Now evaluate packing hydraulics
+    // Hydraulic results must never silently describe an earlier run.
+    hydraulics = null;
+    hetp = Double.NaN;
+    theoreticalStages = Double.NaN;
+    percentFlood = Double.NaN;
+    packingPressureDrop = Double.NaN;
+    floodingVelocity = Double.NaN;
+    hydraulicsOk = false;
+    hydraulicsCalculated = false;
+    lastHydraulicsError = "";
+
+    // Now evaluate packing hydraulics.
     try {
       calcPackingHydraulics();
+      hydraulicsCalculated = hydraulics != null;
+      if (!hydraulicsCalculated) {
+        lastHydraulicsError = "Packing hydraulics returned no result";
+        logger.warn("{}: {}", getName(), lastHydraulicsError);
+      }
     } catch (Exception ex) {
-      logger.warn("Packing hydraulics calculation failed: " + ex.getMessage());
+      lastHydraulicsError = ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+      logger.warn("{}: packing hydraulics calculation failed: {}", getName(), lastHydraulicsError);
     }
   }
 
@@ -428,7 +485,10 @@ public class PackedColumn extends DistillationColumn {
     // Hydraulic results
     JsonObject hydResults = new JsonObject();
     hydResults.addProperty("HETP_m", hetp);
-    hydResults.addProperty("theoreticalStages", theoreticalStages);
+    hydResults.addProperty("packingEquivalentTheoreticalStages", theoreticalStages);
+    hydResults.addProperty("solvedStageCount", getNumberOfTrays());
+    hydResults.addProperty("hydraulicsCalculated", hydraulicsCalculated);
+    hydResults.addProperty("hydraulicsError", lastHydraulicsError);
     hydResults.addProperty("percentFlood", percentFlood);
     hydResults.addProperty("floodingVelocity_ms", floodingVelocity);
     hydResults.addProperty("packingPressureDrop_Pa", packingPressureDrop);
