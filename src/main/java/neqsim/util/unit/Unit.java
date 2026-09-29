@@ -45,6 +45,7 @@ public interface Unit {
    * @throws IllegalArgumentException if the unit is not supported
    */
   public default void validateAllowedUnit(String unit) {
+    validateUnitInput(unit, "unit");
     String[] allowedUnits = getAllowedUnits();
     if (allowedUnits == null) {
       return;

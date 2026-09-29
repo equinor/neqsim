@@ -132,6 +132,45 @@ class ProductionOptimizerSelectedPointTest extends NeqSimTest {
   }
 
   @Test
+  void binarySearchRejectsPointThatFailsOnThirdFreshReplay() {
+    Stream feed = createFeed();
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    AtomicInteger boundaryEvaluations = new AtomicInteger();
+    OptimizationConstraint delayedViolation = OptimizationConstraint.lessThan("delayed boundary", ps -> {
+      double rate = feed.getFlowRate("kg/hr");
+      if (Math.abs(rate - 1750.0) < 1.0e-12 && boundaryEvaluations.incrementAndGet() >= 3) {
+        return 1801.0;
+      }
+      return rate;
+    }, 1800.0, ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
+        "A stateful capacity reading changes after the first selected-point replay");
+    OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0).rateUnit("kg/hr").maxIterations(3).tolerance(1.0)
+        .selectedPointReplays(3);
+
+    OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null,
+        Collections.singletonList(delayedViolation));
+
+    assertTrue(result.isFeasible(), result.getInfeasibilityDiagnosis());
+    assertEquals(3, boundaryEvaluations.get());
+    assertEquals(1500.0, result.getOptimalRate(), 1.0e-12);
+    assertEquals(result.getOptimalRate(), feed.getFlowRate("kg/hr"), 1.0e-12);
+    assertTrue(
+        result.getIterationHistory().stream().filter(record -> record.getRate() == 1500.0)
+            .filter(IterationRecord::isFeasible).count() >= 4,
+        "The fallback must have three fresh feasible replays in addition to its search evaluation");
+    process.run();
+    assertEquals(1500.0, feed.getFlowRate("kg/hr"), 1.0e-12);
+  }
+
+  @Test
+  void selectedPointReplayCountMustBeBounded() {
+    OptimizationConfig config = new OptimizationConfig(1000.0, 2000.0);
+    assertThrows(IllegalArgumentException.class, () -> config.selectedPointReplays(0));
+    assertThrows(IllegalArgumentException.class, () -> config.selectedPointReplays(11));
+  }
+
+  @Test
   void binarySearchRetainsLowerBoundWhenEveryInteriorPointFailsReplay() {
     Stream feed = createFeed();
     ProcessSystem process = new ProcessSystem();

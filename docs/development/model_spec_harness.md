@@ -72,10 +72,13 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 588 cases across twelve system drivers (SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman and Vega), direct
-SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
-reference EOS, normal-hydrogen Leachman reference EOS and helium Vega reference EOS through their System and exact phase paths, a component saturation
+The catalog has 812 cases across sixteen system drivers (RK, SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman, Vega, Span-Wagner and
+IAPWS-IF97), direct
+RK/SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, IAPWS-IF97 water through its
+System and exact phase paths, the Gao ammonia
+reference EOS, normal-hydrogen Leachman reference EOS, helium Vega reference EOS and pure-CO2
+Span-Wagner reference EOS through their System and exact phase paths, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
@@ -89,16 +92,18 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Binary NRTL | Published local-composition equation with prescribed alpha12=alpha21=0.3, D12=200 K and D21=-100 K; gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K for SystemNRTL and exact PhaseGENRTL entry points |
 | Original UNIFAC | Published methanol/water gamma, stored ln(gamma) and molar excess Gibbs energy at three compositions and 298.15/323.15 K through `SystemUNIFAC` and exact `PhaseGEUnifac`; independent evaluation of the original equation uses DDBST R/Q and A parameters |
 | PSRK and UMR-PRU | Pure methanol gamma=1 reference identity; DDBST subgroup-15 R=1.4311 and Q=1.432 data; signed main-group 6/7 A coefficients in both directions; exact phase class and table dispatch are checked, but no nonideal mixture accuracy is claimed |
-| SRK and PR | Low-pressure methane Z approaching unity and zero ideal enthalpy controls; independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for both System and exact phase entry points |
+| RK, SRK and PR | Independent pure-methane cubic-root and fugacity calculations at 280 K/10 bar, 300 K/30 bar and 320 K/50 bar for every System and exact phase entry point; SRK/PR retain low-pressure Z and zero ideal-enthalpy controls |
 | GERG-2008 | Official NIST AGA8 21-component sample at 400 K and 500 bar: molar mass/density, Z, pressure derivatives, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemGERG2008Eos` and exact `PhaseGERG2008Eos` entry points |
 | Ideal gas | NIST argon molecular weight and Shomate heat capacity at 298.15, 400 and 600 K, combined with independently evaluated ideal-gas density, Z, fugacity, Cv, speed of sound and zero Joule-Thomson coefficient through `SystemIdealGas` and exact `PhaseIdealGas` entry points |
 | Ammonia | CoolProp 7.2.0's Gao 2020 ammonia EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S, Cv/Cp, sound speed, Joule-Thomson coefficient and kappa through `SystemAmmoniaEos` and exact `PhaseAmmoniaEos` entry points |
 | Normal hydrogen | CoolProp 7.2.0's Leachman 2009 hydrogen EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemLeachmanEos` and exact `PhaseLeachmanEos` entry points |
 | Helium | CoolProp 7.2.0's Ortiz Vega 2019 helium EOS at four gas/supercritical states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemVegaEos` and exact `PhaseVegaEos` entry points |
+| Carbon dioxide | CoolProp 7.2.0's Span-Wagner 1996 CO2 EOS at one gas, one liquid and two supercritical states: molar mass, molar/mass density, Z, fugacity coefficient, U/H/S/G, Cv/Cp, sound speed and Joule-Thomson coefficient through `SystemSpanWagnerEos` and exact `PhaseSpanWagnerEos` entry points |
+| Water/steam | Official IAPWS-IF97 Region 1 Table 5 and Region 2 Table 15 verification points: molar/mass density, Z, U/H/S/G, Cp and sound speed through `SystemWaterIF97` and exact `PhaseWaterIAPWS`; density, Z and G are independently derived from the published specific volume and caloric values |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
-The cubic cases use the original published SRK/PR equations with the declared methane
-Tc, Pc and acentric factor. They validate analytical implementation and state publication,
+The cubic cases use the original published RK, SRK and PR equations with the declared methane
+Tc and Pc, plus acentric factor where applicable. They validate analytical implementation and state publication,
 not experimental model accuracy, mixture behavior, liquid roots or near-critical behavior.
 The low-pressure EOS and pure-component GE cases are intentionally limited controls.
 Gamma=1 alone cannot detect an always-one stub. The original UNIFAC methanol/water cases
@@ -160,12 +165,37 @@ state. It requires the exact `PhaseVegaEos` path, deterministic repeat reads, re
 density and caloric state, `Cp > Cv > 0`, `H = U + PV`, and `G = H - TS`. The CoolProp
 values are external numerical anchors; the identities supplement them and cannot make
 an incorrect model pass by themselves. Qualification is limited to the four declared
-gas/supercritical states. The current density adapter always requests the vapor root,
-so forced-liquid helium can return a low-density root with nonphysical heat capacity
-([issue #4007](https://github.com/equinor/neqsim/issues/4007));
-liquid states therefore remain explicitly unqualified pending the owning defect fix.
+gas/supercritical states. [Issue #4007](https://github.com/equinor/neqsim/issues/4007)
+and [PR #4012](https://github.com/equinor/neqsim/pull/4012) corrected the forced-liquid
+root dispatch after this batch; liquid states remain explicitly unqualified until a
+sourced expansion exercises the merged behavior.
 Flashes, phase equilibrium, transport, saturation, mixtures and the rest of the
 declared Vega domain remain debt.
+
+The Span-Wagner state control reuses one pure-CO2 system while moving from the
+300 K/10 bar gas state to 280 K/50 bar liquid, 320 K/80 bar supercritical fluid and
+350 K/200 bar dense supercritical fluid before returning to the initial state. It
+requires the exact `PhaseSpanWagnerEos` path, deterministic repeated initialization,
+refreshed density, Z, fugacity and caloric state, finite pressure derivatives,
+`Cp > Cv > 0`, `H = U + PV`, and `G = H - TS`. The repeat-initialization regression
+historically fails before [PR #4020](https://github.com/equinor/neqsim/pull/4020),
+which restored a coherent cached state and volume. CoolProp values are external
+numerical anchors from the same published formulation; the identities supplement them
+and cannot make an incorrect model pass by themselves. Qualification is limited to
+pure CO2 at the four exact single-phase states. Phase equilibrium, saturation,
+transport, mixtures, arbitrary-state behavior and experimental accuracy remain debt.
+
+The IF97 state control reuses one pure-water system across all six official Region 1
+and Region 2 verification points before returning to its initial state. It requires
+the exact `PhaseWaterIAPWS` path, deterministic repeated initialization, refreshed
+density and caloric state, the published liquid/steam region, `H = U + PV`, and
+`G = H - TS`. The official IAPWS values are implementation-verification anchors,
+not experimental fits. [Issue #4055](https://github.com/equinor/neqsim/issues/4055)
+records the discovered factor-100,000 public-density defect, and
+[issue #4056](https://github.com/equinor/neqsim/issues/4056) records the dense Region 2
+phase-label defect. Qualification is limited to the six declared single-phase points
+from the compact Region 1/2 implementation. Cv, fugacity, saturation, Region 3/5,
+flashes, transport, mixtures and arbitrary states remain explicit debt.
 
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
@@ -212,9 +242,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (23 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (31 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (107 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (99 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -250,10 +280,11 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   The second coefficient follows the corresponding swapped component indices.
 - Methanol group R is the existing repository regression/data contract in
   `UnifacGroupSynchronizationTest`, not an independently measured property.
-- [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
+- [Redlich and Kwong's 1949 equation](https://doi.org/10.1021/cr60137a013),
+  [Soave's 1972 SRK equation](https://doi.org/10.1016/0009-2509(72)80096-4) and
   [Peng and Robinson's 1976 equation](https://doi.org/10.1021/i160057a011) define
   the pure-fluid cubic and fugacity-coefficient references. The stored anchors use
-  methane Tc=190.56 K, Pc=45.99 bar and acentric factor 0.0115. An independent
+  methane Tc=190.56 K, Pc=45.99 bar and, for SRK/PR, acentric factor 0.0115. An independent
   calculation selected the largest real gas root and evaluated the published pure-fluid
   fugacity expression at the three declared states. A dependency-free harness control
   independently substitutes every stored Z into the published cubic and recomputes every
@@ -313,9 +344,32 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   Joule-Thomson derivative. These are cross-implementation checks of the shared
   reference formulation, not independent experimental validation, and the stored values were not
   refreshed from NeqSim.
+- The [CoolProp 7.2.0 carbon-dioxide definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/CarbonDioxide.json)
+  identifies the 1996 Span-Wagner reference EOS and supplies the external implementation
+  used to evaluate the four catalog states. Its declared EOS range is 216.592--2000 K
+  with a maximum pressure of 800 MPa; the catalog qualifies only 280--350 K and
+  10--200 bar. Fugacity coefficient is reconstructed independently from CoolProp's
+  residual Helmholtz terms as `ln(phi) = alphar + delta*d(alphar)/d(delta) - ln(Z)`.
+  The independently generated anchors showed a maximum NeqSim/CoolProp deviation of
+  `3.24e-4` for density/Z, `1.41e-5` for fugacity coefficient, `1.14e-4` for U/H,
+  `2.73e-3` for Cv/Cp, `1.26e-3` for sound speed, and `1.03e-3` for the
+  Joule-Thomson coefficient over this matrix. Rounded physical-comparison tolerances are
+  therefore `5e-4`, `5e-5`, `2e-4`, `3e-3`, `2e-3`, and `2e-3`, respectively;
+  entropy and Gibbs energy retain their tighter catalog tolerances. These limits cover
+  cross-port constants and derivative evaluation rather than experimental model error. These are
+  cross-implementation checks of a shared formulation, not independent experimental
+  validation, and the stored values were generated before evaluating NeqSim.
+- The [revised IAPWS-IF97 release](https://iapws.org/technical-guidance/release/IF97-Rev)
+  supplies the six Region 1 Table 5 and Region 2 Table 15 verification points. The
+  catalog transcribes `v`, `u`, `h`, `s`, `cp` and sound speed, converts the mass-specific
+  caloric values with NeqSim's declared water molar mass, and independently derives
+  density, `Z` and `G = H - TS`. The `1e-7` implementation tolerances cover only the
+  published tables' rounding. These are official formula-verification values, not
+  experimental validation, and were not refreshed from NeqSim output.
 
 NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
-definitions on 2026-09-24 and 2026-09-25, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
+definitions on 2026-09-24, 2026-09-25 and 2026-09-26, the NIST AGA8 source on 2026-09-23,
+and the revised IAPWS-IF97 release on 2026-09-27. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
 compilation. Source compilation rights remain with the source; the authored fixtures
 and analytical controls follow the repository's Apache-2.0 license. References are

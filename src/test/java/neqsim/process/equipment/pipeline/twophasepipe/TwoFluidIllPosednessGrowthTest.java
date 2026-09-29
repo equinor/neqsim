@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
@@ -26,6 +27,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * not a general well-posedness proof for the model.
  * </p>
  */
+@Tag("slow")
 public class TwoFluidIllPosednessGrowthTest {
 
   private static final double LENGTH = 500.0;

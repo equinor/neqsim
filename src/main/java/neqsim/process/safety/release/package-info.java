@@ -11,6 +11,10 @@
  * applicability assessment</li>
  * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
  * gas/liquid drift-flux short-opening screening</li>
+ * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
+ * phase-split relaxation with bounded vertical drift flux</li>
+ * <li>{@link neqsim.process.safety.release.ComponentSelectiveFiniteRateReleaseModel} - Component-resolved first-order
+ * phase-partition relaxation with bounded vertical drift flux</li>
  * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
  * release with specified Darcy friction</li>
  * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
@@ -38,9 +42,11 @@
  * separate perfect-gas and EOS-backed single-gas transient models resolve waves and line packing but exclude heat
  * transfer, pipe elasticity and solid-bearing transport. Separate short-opening models can either apply a
  * caller-declared gas/liquid velocity ratio or predict vertical-upward bubbly/dispersed slip with a bounded
- * Zuber-Findlay/Harmathy closure. Both retain equilibrium thermodynamics and explicit phase-area and kinetic-energy
- * closure; neither represents entrainment, finite-rate phase transfer, annular jets or solid-bearing flow. Both
- * real-gas pipe models fail closed if an equilibrium phase appears.
+ * Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized first-order phase-split relaxation before
+ * the same drift-flux closure. A fourth resolves component-specific phase-partition relaxation and emits phase
+ * compositions while retaining exact component conservation. These models retain explicit phase-area and kinetic-energy
+ * closure; none predicts transfer coefficients, entrainment, annular jets or solid-bearing flow. Both real-gas pipe
+ * models fail closed if an equilibrium phase appears.
  *
  * <p>
  * Example usage:

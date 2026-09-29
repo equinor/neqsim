@@ -549,6 +549,13 @@
         "phaseMassFractions": {
           "$ref": "#/$defs/fractions"
         },
+        "phaseComponentMassFractions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/fractions"
+          }
+        },
         "phaseDensities": {
           "type": "object",
           "minProperties": 1,

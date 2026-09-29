@@ -3,6 +3,7 @@ package neqsim.mcp.runners;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -88,6 +89,7 @@ class ChemistryRunnerTest {
   }
 
   @Test
+  @Tag("slow")
   void electrolyteScaleEquilibriumElectrolyteCpaUsesItsOwnAqueousModel() {
     String input = "{\"analysis\":\"electrolyteScaleEquilibrium\",\"model\":\"electrolyte-cpa\","
         + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","

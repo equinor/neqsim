@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import neqsim.process.equipment.distillation.SarirAtmosphericFractionationCase.OperatingInputs;
@@ -87,6 +87,7 @@ public class SarirAtmosphericMainSteamScreenTest {
   /** Execute the explicit main-column steam screen and qualify total inlet/product closure. */
   @Test
   @Timeout(value = 240, unit = TimeUnit.SECONDS)
+  @Tag("slow")
   public void explicitMainColumnSteamScreenRunsConservatively() {
     SarirAtmosphericFractionationCase model = createModel();
     SarirAtmosphericMainSteamScreen screen = SarirAtmosphericMainSteamScreen.configure(model, 1,

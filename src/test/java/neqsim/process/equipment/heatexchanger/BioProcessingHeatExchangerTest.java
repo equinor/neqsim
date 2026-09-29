@@ -3,6 +3,7 @@ package neqsim.process.equipment.heatexchanger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @author NeqSim team
  * @version 1.0
  */
+@Tag("slow")
 public class BioProcessingHeatExchangerTest {
 
   /**

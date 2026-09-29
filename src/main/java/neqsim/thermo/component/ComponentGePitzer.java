@@ -63,6 +63,18 @@ public class ComponentGePitzer extends ComponentGE {
   }
 
   /**
+   * Keeps the database reference on the molality scale used by Pitzer activities.
+   *
+   * @param temperature temperature in K
+   * @return molality reference in bar kg/mol, or the finite unsupported limit
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double coefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /**
    * Returns the Pitzer molality-scale Henry reference.
    *
    * <p>

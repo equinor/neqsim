@@ -36,6 +36,18 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     gasStream.setPressure(2.0, "bara");
   }
 
+  /**
+   * Calculate an independent molar energy reference for the fuel composition.
+   *
+   * @param fuel fuel stream
+   * @return fuel energy rate in W
+   */
+  private double molarFuelHeat(Stream fuel) {
+    Standard_ISO6976 reference = fuel.getISO6976("molar", 0.0, 15.55);
+    reference.calculate();
+    return reference.getValue("InferiorCalorificValue") * 1000.0 * fuel.getFlowRate("mole/sec");
+  }
+
   @Test
   void testSetInletStream() {
     GasTurbine gasturb = new GasTurbine("turbine");
@@ -166,7 +178,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     fuelStream.setPressure(20.0, "bara");
     fuelStream.run();
 
-    double fuelHeat = fuelStream.LCV() * fuelStream.getFlowRate("Sm3/sec");
+    double fuelHeat = molarFuelHeat(fuelStream);
 
     GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
     gasturb.setThermalEfficiency(0.35);
@@ -224,7 +236,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     // The turbine must deliver exactly the required power.
     assertEquals(requiredPowerW, gasturb.getPower(), requiredPowerW * 1e-6);
     // The sized fuel flow must close the energy balance: power = efficiency x fuel LHV.
-    double fuelHeat = fuelStream.LCV() * gasturb.getFuelFlowRate("Sm3/sec");
+    double fuelHeat = molarFuelHeat(fuelStream);
     assertEquals(requiredPowerW, efficiency * fuelHeat, requiredPowerW * 1e-4);
     // Fuel flow must be positive and finite.
     Assertions.assertTrue(gasturb.getFuelFlowRate("mole/sec") > 0.0, "fuel flow must be positive");
@@ -312,7 +324,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     // The turbine delivers exactly the aggregated driven power.
     assertEquals(expectedPower, gasturb.getPower(), expectedPower * 1e-6);
     // The fuel flow closes the energy balance: aggregated power = efficiency x fuel LHV.
-    double fuelHeat = fuelStream.LCV() * gasturb.getFuelFlowRate("Sm3/sec");
+    double fuelHeat = molarFuelHeat(fuelStream);
     assertEquals(expectedPower, efficiency * fuelHeat, expectedPower * 1e-4);
     Assertions.assertEquals(1, gasturb.getDrivenLoads().size());
   }

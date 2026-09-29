@@ -22,6 +22,7 @@ public final class ReleaseState implements Serializable {
   private final Map<String, Double> componentMoleFractions;
   private final Map<String, Double> componentMassFractions;
   private final Map<String, Double> phaseMassFractions;
+  private final Map<String, Map<String, Double>> phaseComponentMassFractions;
   private final Map<String, Double> phaseDensitiesKgM3;
   private final Map<String, Double> phaseVelocitiesMs;
 
@@ -40,6 +41,7 @@ public final class ReleaseState implements Serializable {
     Map<String, Double> mole = new TreeMap<String, Double>();
     Map<String, Double> weight = new TreeMap<String, Double>();
     Map<String, Double> phase = new TreeMap<String, Double>();
+    Map<String, Map<String, Double>> phaseComponents = new TreeMap<String, Map<String, Double>>();
     Map<String, Double> phaseDensities = new TreeMap<String, Double>();
     double moles = ReleaseFlowRequest.positive(fluid.getTotalNumberOfMoles(), "total moles");
     for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
@@ -55,12 +57,19 @@ public final class ReleaseState implements Serializable {
       if (phaseDensities.containsKey(type)) {
         throw new IllegalStateException("Duplicate native phase type cannot expose one phase density: " + type);
       }
+      Map<String, Double> phaseWeights = new TreeMap<String, Double>();
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        phaseWeights.put(fluid.getPhase(i).getComponent(component).getComponentName(),
+            fluid.getPhase(i).getWtFrac(component));
+      }
+      phaseComponents.put(type, fractions(phaseWeights));
       phaseDensities.put(type, ReleaseFlowRequest
           .positive(fluid.getPhase(i).getMass() / fluid.getPhase(i).getVolume("m3"), type + " phase density"));
     }
     componentMoleFractions = fractions(mole);
     componentMassFractions = fractions(weight);
     phaseMassFractions = fractions(phase);
+    phaseComponentMassFractions = phaseFractions(phaseComponents, phaseMassFractions.keySet());
     phaseDensitiesKgM3 = positiveValues(phaseDensities, "phase density");
     phaseVelocitiesMs = Collections.emptyMap();
   }
@@ -92,6 +101,9 @@ public final class ReleaseState implements Serializable {
     Map<String, Double> phase = new TreeMap<String, Double>();
     phase.put(PhaseType.GAS.name(), 1.0);
     phaseMassFractions = fractions(phase);
+    Map<String, Map<String, Double>> phaseComponents = new TreeMap<String, Map<String, Double>>();
+    phaseComponents.put(PhaseType.GAS.name(), componentMassFractions);
+    phaseComponentMassFractions = phaseFractions(phaseComponents, phaseMassFractions.keySet());
     Map<String, Double> phaseDensities = new TreeMap<String, Double>();
     phaseDensities.put(PhaseType.GAS.name(), densityKgM3);
     phaseDensitiesKgM3 = positiveValues(phaseDensities, "phase density");
@@ -115,8 +127,73 @@ public final class ReleaseState implements Serializable {
     componentMoleFractions = reference.componentMoleFractions;
     componentMassFractions = reference.componentMassFractions;
     phaseMassFractions = reference.phaseMassFractions;
+    phaseComponentMassFractions = reference.phaseComponentMassFractions;
     phaseDensitiesKgM3 = reference.phaseDensitiesKgM3;
     this.phaseVelocitiesMs = positiveValues(phaseVelocitiesMs, "phase velocity");
+  }
+
+  /**
+   * Creates a nonequilibrium phase-basis snapshot while retaining overall composition and caloric properties.
+   *
+   * @param reference immutable reference station
+   * @param phaseMassFractions replacement phase mass fractions
+   * @param phaseDensitiesKgM3 replacement phase densities in kg/m3
+   */
+  private ReleaseState(ReleaseState reference, Map<String, Double> phaseMassFractions,
+      Map<String, Double> phaseDensitiesKgM3) {
+    if (phaseMassFractions == null || phaseDensitiesKgM3 == null || phaseMassFractions.isEmpty()
+        || !phaseMassFractions.keySet().equals(phaseDensitiesKgM3.keySet())) {
+      throw new IllegalArgumentException("Matching phase mass fractions and densities required");
+    }
+    this.phaseMassFractions = fractions(phaseMassFractions);
+    this.phaseDensitiesKgM3 = positiveValues(phaseDensitiesKgM3, "phase density");
+    double specificVolumeM3Kg = 0.0;
+    for (Map.Entry<String, Double> entry : this.phaseMassFractions.entrySet()) {
+      specificVolumeM3Kg += entry.getValue() / this.phaseDensitiesKgM3.get(entry.getKey());
+    }
+    pressurePa = reference.pressurePa;
+    temperatureK = reference.temperatureK;
+    densityKgM3 = ReleaseFlowRequest.positive(1.0 / specificVolumeM3Kg, "relaxed mixture density");
+    enthalpyJkg = reference.enthalpyJkg;
+    entropyJkgK = reference.entropyJkgK;
+    velocityMs = reference.velocityMs;
+    componentMoleFractions = reference.componentMoleFractions;
+    componentMassFractions = reference.componentMassFractions;
+    phaseComponentMassFractions = Collections.emptyMap();
+    phaseVelocitiesMs = Collections.emptyMap();
+  }
+
+  /**
+   * Creates a nonequilibrium phase-basis snapshot with explicit component mass fractions in each phase.
+   *
+   * @param reference immutable reference station
+   * @param phaseMassFractions replacement phase mass fractions
+   * @param phaseDensitiesKgM3 replacement phase densities in kg/m3
+   * @param phaseComponentMassFractions component mass fractions indexed first by phase and then component
+   */
+  private ReleaseState(ReleaseState reference, Map<String, Double> phaseMassFractions,
+      Map<String, Double> phaseDensitiesKgM3, Map<String, Map<String, Double>> phaseComponentMassFractions) {
+    if (phaseMassFractions == null || phaseDensitiesKgM3 == null || phaseComponentMassFractions == null
+        || phaseMassFractions.isEmpty() || !phaseMassFractions.keySet().equals(phaseDensitiesKgM3.keySet())
+        || !phaseMassFractions.keySet().equals(phaseComponentMassFractions.keySet())) {
+      throw new IllegalArgumentException("Matching phase fractions, densities and component bases required");
+    }
+    this.phaseMassFractions = fractions(phaseMassFractions);
+    this.phaseDensitiesKgM3 = positiveValues(phaseDensitiesKgM3, "phase density");
+    this.phaseComponentMassFractions = phaseFractions(phaseComponentMassFractions, this.phaseMassFractions.keySet());
+    double specificVolumeM3Kg = 0.0;
+    for (Map.Entry<String, Double> entry : this.phaseMassFractions.entrySet()) {
+      specificVolumeM3Kg += entry.getValue() / this.phaseDensitiesKgM3.get(entry.getKey());
+    }
+    pressurePa = reference.pressurePa;
+    temperatureK = reference.temperatureK;
+    densityKgM3 = ReleaseFlowRequest.positive(1.0 / specificVolumeM3Kg, "relaxed mixture density");
+    enthalpyJkg = reference.enthalpyJkg;
+    entropyJkgK = reference.entropyJkgK;
+    velocityMs = reference.velocityMs;
+    componentMoleFractions = reference.componentMoleFractions;
+    componentMassFractions = reference.componentMassFractions;
+    phaseVelocitiesMs = Collections.emptyMap();
   }
 
   /**
@@ -165,6 +242,34 @@ public final class ReleaseState implements Serializable {
     return new ReleaseState(this, bulkVelocityMs, phaseVelocitiesMs);
   }
 
+  /**
+   * Returns the same caloric and overall-composition snapshot with a caller-resolved nonequilibrium phase basis.
+   *
+   * <p>
+   * The mixture density is recomputed from phase mass fractions and phase specific volumes. This method is
+   * package-private so release models retain responsibility for component, energy and applicability checks.
+   *
+   * @param phaseMassFractions phase mass fractions summing to one
+   * @param phaseDensitiesKgM3 positive phase densities in kg/m3 on the same key set
+   * @return immutable state with no phase-velocity assignment
+   */
+  ReleaseState withPhaseBasis(Map<String, Double> phaseMassFractions, Map<String, Double> phaseDensitiesKgM3) {
+    return new ReleaseState(this, phaseMassFractions, phaseDensitiesKgM3);
+  }
+
+  /**
+   * Returns the same caloric and overall-composition snapshot with an explicit component-resolved phase basis.
+   *
+   * @param phaseMassFractions phase mass fractions summing to one
+   * @param phaseDensitiesKgM3 positive phase densities in kg/m3 on the same key set
+   * @param phaseComponentMassFractions normalized component mass fractions for every phase
+   * @return immutable component-resolved nonequilibrium state
+   */
+  ReleaseState withPhaseBasis(Map<String, Double> phaseMassFractions, Map<String, Double> phaseDensitiesKgM3,
+      Map<String, Map<String, Double>> phaseComponentMassFractions) {
+    return new ReleaseState(this, phaseMassFractions, phaseDensitiesKgM3, phaseComponentMassFractions);
+  }
+
   private static Map<String, Double> fractions(Map<String, Double> values) {
     double sum = 0.0;
     for (double value : values.values()) {
@@ -187,6 +292,25 @@ public final class ReleaseState implements Serializable {
         throw new IllegalStateException("Invalid " + description);
       }
       copy.put(entry.getKey(), entry.getValue());
+    }
+    return Collections.unmodifiableMap(copy);
+  }
+
+  private static Map<String, Map<String, Double>> phaseFractions(
+      Map<String, Map<String, Double>> phaseComponentMassFractions, java.util.Set<String> phaseNames) {
+    if (!phaseNames.equals(phaseComponentMassFractions.keySet())) {
+      throw new IllegalStateException("Phase component basis must match phase mass fractions");
+    }
+    Map<String, Map<String, Double>> copy = new TreeMap<String, Map<String, Double>>();
+    java.util.Set<String> components = null;
+    for (Map.Entry<String, Map<String, Double>> entry : phaseComponentMassFractions.entrySet()) {
+      Map<String, Double> normalized = fractions(entry.getValue());
+      if (components == null) {
+        components = normalized.keySet();
+      } else if (!components.equals(normalized.keySet())) {
+        throw new IllegalStateException("Every phase must use the same component basis");
+      }
+      copy.put(entry.getKey(), normalized);
     }
     return Collections.unmodifiableMap(copy);
   }
@@ -239,6 +363,19 @@ public final class ReleaseState implements Serializable {
   /** @return immutable mass fractions indexed by native phase type */
   public Map<String, Double> getPhaseMassFractions() {
     return phaseMassFractions;
+  }
+
+  /**
+   * Returns component mass fractions within each native phase.
+   *
+   * <p>
+   * The outer map is indexed by phase type and each inner map sums to one. It is empty only for a nonequilibrium
+   * phase-basis snapshot whose model did not resolve component partitioning.
+   *
+   * @return immutable nested phase-component mass-fraction map
+   */
+  public Map<String, Map<String, Double>> getPhaseComponentMassFractions() {
+    return phaseComponentMassFractions;
   }
 
   /** @return immutable native-phase densities in kg/m3 */

@@ -632,7 +632,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     // parameterStdDevMatrix.print(2,10);
     calcCorrelationMatrix();
 
-    incompleteGammaComplemented = cern.jet.stat.Gamma.incompleteGammaComplement(
+    incompleteGammaComplemented = org.apache.commons.math3.special.Gamma.regularizedGammaQ(
         (sampleSet.getLength() - sampleSet.getSample(0).getFunction().getFittingParams().length) / 2.0,
         0.5 * chiSquare);
   }

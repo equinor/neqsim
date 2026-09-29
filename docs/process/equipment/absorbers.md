@@ -728,7 +728,11 @@ where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan
 
 ### Column-Wide Equation-Oriented Solver
 
-The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. For research-grade absorber and stripper studies, `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+The five-segment TEG dehydration regression requires more than 20 profile iterations to meet its unchanged 1e-9 mol/s tolerance; it verifies rejection at 20 and convergence with a budget of 40. Increase the iteration budget only while checking the residual; a larger budget does not guarantee convergence.
+
+The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. The experimental `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
 
 The equation-oriented residual vector includes:
 
@@ -751,7 +755,7 @@ double gasBalance = column.getLastGasComponentBalanceResidual();
 double liquidBalance = column.getLastLiquidComponentBalanceResidual();
 ```
 
-Keep the fixed-point solver for routine screening and production workflows. Use the equation-oriented solver when coupled heat and mass transfer, interface equilibrium, and whole-column balance residuals are part of the study acceptance criteria.
+Keep the fixed-point solver for routine screening. The equation-oriented solver throws `IllegalStateException` if its final full-transfer residual is non-finite or exceeds the configured tolerance. On failure, `solved()` is false and residual diagnostics remain available, but the outlets are not updated; previous outlets must not be treated as current results. The CO2/water and TEG benchmark cases are not yet numerically qualified for this experimental solver (issues #4093 and #4094). The simultaneous segment solver also has an unresolved enthalpy-conservation regression tracked in #4094.
 
 Use this model when these details matter:
 

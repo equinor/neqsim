@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.22.0</revision>
+		<revision>3.23.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
@@ -87,12 +87,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>colt</groupId>
-			<artifactId>colt</artifactId>
-			<version>1.2.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.20.0</version>
@@ -140,7 +134,7 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.22.2</version>
+			<version>2.22.3</version>
 		</dependency>
 	</dependencies>
 	<profiles>
@@ -224,6 +218,15 @@
 		</profile>
 	</profiles>
 	<build>
+		<!-- Database backups belong in Git history, never in runtime resources. -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<excludes>
+					<exclude>**/*.bak</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

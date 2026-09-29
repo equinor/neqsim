@@ -24,6 +24,19 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     super(name, moles, molesInPhase, compIndex);
   }
 
+  /**
+   * Preserves this empirical reactive model's calibrated database reference convention. A generic mole-fraction
+   * conversion cannot be applied independently of its reaction constants.
+   *
+   * @param temperature temperature in K
+   * @return legacy molality-scale reference or the finite unsupported-solute limit
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double coefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
@@ -34,7 +47,7 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     } else {
       double activinf = 1.0;
       if (ionicCharge == 0) {
-        fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+        fugacityCoefficient = activinf * getEffectiveHenryCoefficient(phase.getTemperature()) / phase.getPressure();
       } else {
         fugacityCoefficient = 1e8;
       }

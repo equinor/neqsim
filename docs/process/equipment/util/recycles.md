@@ -114,6 +114,16 @@ recycle.setTemperatureTolerance(0.1);  // K
 recycle.setPressureTolerance(0.01);    // bar
 ```
 
+`setFlowTolerance()` retains its legacy units: **kg/s below 1 kg/s** loop
+flow and **percent at or above 1 kg/s**. For example, the default 0.01 permits
+0.01 kg/s change on a 0.02 kg/s loop, which is 50% of that loop flow. Choose a
+smaller flow tolerance for small loops.
+
+`getAbsoluteFlowChange()` always reports kg/hr. `setAbsoluteFlowTolerance()`
+adds an **OR** acceptance criterion: it can relax the legacy criterion, but it
+cannot make a loose legacy tolerance stricter. Tighten `setFlowTolerance()`
+first when an absolute limit should govern convergence.
+
 ### Maximum Iterations
 
 ```java
@@ -162,6 +172,27 @@ A `Recycle` requires a configured tear outlet before `run()`; wire an existing
 stream using `setOutletStream(stream)`. If missing, `run()` reports the recycle
 name and the required configuration. Before wiring, `getOutletStream()` returns
 `null` so process modules can inspect the connection without running the recycle.
+
+### Composition acceleration and diagnostics
+
+Per-recycle Wegstein and Broyden acceleration operates on overall component mole
+fractions. Temperature, pressure and total molar flow use the current return
+stream values. The accelerated composition updates component inventories and
+is TP-flashed before publication; the gas and liquid phases retain distinct
+equilibrium compositions. Negative proposals are clipped and normalized; an
+invalid proposal or failed flash falls back to the unaccelerated return.
+
+The composition convergence residual compares overall mole fractions **before**
+acceleration. This prevents a damped or clipped step from reporting a false
+converged state. A changed component list resets the acceleration history.
+
+`getCompositionWegsteinQFactors()` returns one factor per component.
+`getWegsteinQFactors()` preserves the `3 + n` layout, with three reserved zeros
+for the unaccelerated T/P/flow entries followed by the composition factors.
+Factors describe the proposal before clipping and normalization. The per-recycle
+Broyden matrix contains only the `n` composition coordinates. See the
+[acceleration guide](../../../simulation/recycle_acceleration_guide.md#per-recycle-acceleration-coordinates)
+for coordinate definitions and compatibility guidance.
 
 ### Direct Substitution
 

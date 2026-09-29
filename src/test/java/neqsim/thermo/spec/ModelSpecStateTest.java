@@ -18,8 +18,11 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseIdealGas;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseLeachmanEos;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
+import neqsim.thermo.phase.PhaseWaterIAPWS;
 import neqsim.thermo.phase.PhasePrEos;
+import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemGEWilson;
@@ -28,9 +31,12 @@ import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemIdealGas;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemLeachmanEos;
+import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
+import neqsim.thermo.system.SystemWaterIF97;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemRKEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUEos;
 import neqsim.thermo.system.SystemUNIFAC;
@@ -42,6 +48,9 @@ import neqsim.thermo.util.Vega.NeqSimVega;
 
 /** Nearby-state checks complement fixed anchors; all comparisons drive production APIs. */
 class ModelSpecStateTest extends neqsim.NeqSimTest {
+  private static final double[][] RK_STATES = {{280.0, 10.0, 0.9774248393446097, 0.9776161031540137},
+      {320.0, 50.0, 0.9355257766333793, 0.9342381396262072}, {300.0, 30.0, 0.9482327005534241, 0.9485344705786386},
+      {280.0, 10.0, 0.9774248393446097, 0.9776161031540137}};
   private static final double[][] SRK_STATES = {{280.0, 10.0, 0.9785422334202201, 0.9786921663056776},
       {320.0, 50.0, 0.9433373091166810, 0.9413806064762114}, {300.0, 30.0, 0.9523798940724555, 0.9523599084051405},
       {280.0, 10.0, 0.9785422334202201, 0.9786921663056776}};
@@ -175,11 +184,11 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cubicModelsRefreshPublishedStateAtNearbyConditions(boolean pengRobinson) {
-    SystemInterface system = cubicSystem(pengRobinson, 280.0, 10.0, 1.0);
-    double[][] states = pengRobinson ? PR_STATES : SRK_STATES;
-    Class<?> phaseType = pengRobinson ? PhasePrEos.class : PhaseSrkEos.class;
+  @ValueSource(strings = {"RK", "SRK", "PR"})
+  void cubicModelsRefreshPublishedStateAtNearbyConditions(String model) {
+    SystemInterface system = cubicSystem(model, 280.0, 10.0, 1.0);
+    double[][] states = "RK".equals(model) ? RK_STATES : "PR".equals(model) ? PR_STATES : SRK_STATES;
+    Class<?> phaseType = "RK".equals(model) ? PhaseRK.class : "PR".equals(model) ? PhasePrEos.class : PhaseSrkEos.class;
     for (double[] state : states) {
       system.setTemperature(state[0]);
       system.setPressure(state[1]);
@@ -195,9 +204,9 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = {false, true})
-  void cubicCaloricIdentitiesUseOneConsistentExtensiveBasis(boolean pengRobinson) {
-    SystemInterface system = cubicSystem(pengRobinson, 300.0, 30.0, 2.0);
+  @ValueSource(strings = {"RK", "SRK", "PR"})
+  void cubicCaloricIdentitiesUseOneConsistentExtensiveBasis(String model) {
+    SystemInterface system = cubicSystem(model, 300.0, 30.0, 2.0);
     system.init(3);
     PhaseInterface phase = system.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
@@ -463,6 +472,127 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return values;
   }
 
+  @Test
+  void spanWagnerRefreshesGasLiquidAndSupercriticalStateBeforeReturningToReference() {
+    SystemSpanWagnerEos system = new SystemSpanWagnerEos(300.0, 10.0);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+
+    double[] first = spanWagnerState(system, 300.0, 10.0, PhaseType.GAS);
+    double[] liquid = spanWagnerState(system, 280.0, 50.0, PhaseType.LIQUID);
+    double[] supercritical = spanWagnerState(system, 320.0, 80.0, PhaseType.GAS);
+    double[] denseSupercritical = spanWagnerState(system, 350.0, 200.0, PhaseType.GAS);
+    assertNotEquals(first[0], liquid[0], "Span-Wagner density must refresh");
+    assertNotEquals(liquid[0], supercritical[0], "Span-Wagner density must refresh again");
+    assertNotEquals(supercritical[1], denseSupercritical[1], "Span-Wagner enthalpy must refresh");
+
+    double[] returned = spanWagnerState(system, 300.0, 10.0, PhaseType.GAS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], 0.0, "Span-Wagner returned property " + i);
+    }
+  }
+
+  @Test
+  void waterIf97RefreshesRegionOneAndTwoStateBeforeReturningToReference() {
+    SystemWaterIF97 system = new SystemWaterIF97(300.0, 30.0);
+
+    double[] first = waterIf97State(system, 300.0, 30.0, PhaseType.AQUEOUS);
+    double[] compressed = waterIf97State(system, 300.0, 800.0, PhaseType.AQUEOUS);
+    double[] hotLiquid = waterIf97State(system, 500.0, 30.0, PhaseType.AQUEOUS);
+    double[] diluteSteam = waterIf97State(system, 300.0, 0.035, PhaseType.GAS);
+    double[] hotSteam = waterIf97State(system, 700.0, 0.035, PhaseType.GAS);
+    double[] denseSteam = waterIf97State(system, 700.0, 300.0, PhaseType.GAS);
+    assertNotEquals(first[0], compressed[0], "IF97 density must refresh with pressure");
+    assertNotEquals(compressed[1], hotLiquid[1], "IF97 enthalpy must refresh with temperature");
+    assertNotEquals(hotLiquid[0], diluteSteam[0], "IF97 density must refresh across regions");
+    assertNotEquals(diluteSteam[1], hotSteam[1], "IF97 steam enthalpy must refresh");
+    assertNotEquals(hotSteam[0], denseSteam[0], "IF97 steam density must refresh with pressure");
+
+    double[] returned = waterIf97State(system, 300.0, 30.0, PhaseType.AQUEOUS);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], 0.0, "IF97 returned property " + i);
+    }
+  }
+
+  private static double[] waterIf97State(SystemWaterIF97 system, double temperature, double pressure,
+      PhaseType expectedType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.init(2);
+    assertEquals(PhaseWaterIAPWS.class, system.getPhase(0).getClass());
+    assertEquals(expectedType, system.getPhase(0).getType());
+    PhaseWaterIAPWS phase = (PhaseWaterIAPWS) system.getPhase(0);
+    double[] values = {phase.getDensity(), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getSoundSpeed(), phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getMolarVolume()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value));
+    }
+    assertTrue(
+        values[0] > 0.0 && values[5] > 0.0 && values[6] > 0.0 && values[7] > 0.0 && values[8] > 0.0 && values[9] > 0.0,
+        "invalid IF97 state");
+    assertEquals(values[1], values[2] + pressure * 1.0e5 * values[9], Math.max(1e-9, Math.abs(values[1]) * 1e-12));
+    assertEquals(values[4], values[1] - temperature * values[3], Math.max(1e-9, Math.abs(values[4]) * 1e-12));
+    assertEquals(1.0, values[0] * values[9] / phase.getMolarMass(), 1e-12);
+
+    system.init(2);
+    PhaseWaterIAPWS repeated = (PhaseWaterIAPWS) system.getPhase(0);
+    double[] repeatedValues = {repeated.getDensity(), repeated.getEnthalpy("J/mol"),
+        repeated.getInternalEnergy("J/mol"), repeated.getEntropy("J/molK"),
+        repeated.getGibbsEnergy() / repeated.getNumberOfMolesInPhase(), repeated.getCp("J/molK"),
+        repeated.getSoundSpeed(), repeated.getZ(), repeated.getDensity("mol/m3") / 1000.0, repeated.getMolarVolume()};
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeatedValues[i], 0.0, "IF97 repeat property " + i);
+    }
+    return values;
+  }
+
+  private static double[] spanWagnerState(SystemSpanWagnerEos system, double temperature, double pressure,
+      PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    assertEquals(PhaseSpanWagnerEos.class, system.getPhase(0).getClass());
+    PhaseSpanWagnerEos phase = (PhaseSpanWagnerEos) system.getPhase(0);
+    double[] values = spanWagnerStateWithoutInit(phase);
+    double density = values[0];
+    double enthalpy = values[1];
+    double internalEnergy = values[2];
+    double entropy = values[3];
+    double gibbsEnergy = values[4];
+    double cp = values[5];
+    double cv = values[6];
+    double soundSpeed = values[7];
+    double z = values[9];
+    double phi = values[10];
+    assertTrue(density > 0.0 && cp > cv && cv > 0.0 && soundSpeed > 0.0 && z > 0.0 && phi > 0.0,
+        "invalid Span-Wagner state: density=" + density + ", cp=" + cp + ", cv=" + cv + ", sound=" + soundSpeed + ", Z="
+            + z + ", phi=" + phi);
+    assertEquals(enthalpy, internalEnergy + pressure * 1.0e5 / density, Math.max(1e-9, Math.abs(enthalpy) * 1e-12));
+    assertEquals(gibbsEnergy, enthalpy - temperature * entropy, Math.max(1e-9, Math.abs(gibbsEnergy) * 1e-12));
+    assertEquals(1.0, density * phase.getMolarVolume() / 1.0e5, 1e-12);
+
+    system.init(3);
+    double[] repeated = spanWagnerStateWithoutInit((PhaseSpanWagnerEos) system.getPhase(0));
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeated[i], 0.0, "Span-Wagner repeat property " + i);
+    }
+    return values;
+  }
+
+  private static double[] spanWagnerStateWithoutInit(PhaseSpanWagnerEos phase) {
+    double[] values = {phase.getDensity("mol/m3"), phase.getEnthalpy("J/mol"), phase.getInternalEnergy("J/mol"),
+        phase.getEntropy("J/molK"), phase.getGibbsEnergy() / phase.getNumberOfMolesInPhase(), phase.getCp("J/molK"),
+        phase.getCv("J/molK"), phase.getSoundSpeed(), phase.getJouleThomsonCoefficient(), phase.getZ(),
+        phase.getComponent(0).getFugacityCoefficient(), phase.getMolarVolume(), phase.getdPdTVn(), phase.getdPdVTn()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value));
+    }
+    return values;
+  }
+
   private static double[] ammoniaState(SystemAmmoniaEos system, double temperature, double pressure,
       PhaseType phaseType) {
     system.setTemperature(temperature);
@@ -529,9 +659,9 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     return system;
   }
 
-  private static SystemInterface cubicSystem(boolean pengRobinson, double temperature, double pressure, double moles) {
-    SystemInterface system = pengRobinson ? new SystemPrEos(temperature, pressure)
-        : new SystemSrkEos(temperature, pressure);
+  private static SystemInterface cubicSystem(String model, double temperature, double pressure, double moles) {
+    SystemInterface system = "RK".equals(model) ? new SystemRKEos(temperature, pressure)
+        : "PR".equals(model) ? new SystemPrEos(temperature, pressure) : new SystemSrkEos(temperature, pressure);
     system.addComponent("methane", moles);
     system.setMixingRule("classic");
     return system;

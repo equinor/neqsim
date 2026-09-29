@@ -450,10 +450,11 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * Preserve standard components and optional columns when loading the extended database.
    *
    * <p>
-   * The extended resource is maintained independently. Existing extended rows retain their properties except for
-   * reviewed formation enthalpies, explicitly unavailable liquid-vapor pressure data and the corrected acetone, ammonia
-   * and H2S correlations, taken from the standard table. Newly added standard names are copied with fresh IDs. CSVREAD
-   * exposes columns as strings, including optional identity metadata.
+   * The standard resource is authoritative for shared neutral components. Existing extended rows retain their own ID
+   * and COMPINDEX, while common pure-component fields are updated from the standard table. Ions retain their
+   * electrolyte-specific extended properties, except for the existing reviewed formation and vapor-pressure
+   * corrections. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including
+   * optional identity metadata.
    * </p>
    */
   private static void includeMissingStandardComponents() {
@@ -494,6 +495,32 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       }
       database.execute("INSERT INTO COMP (" + names + ") SELECT " + values + " FROM " + source
           + " standard WHERE NOT EXISTS (SELECT 1 FROM COMP extended WHERE extended.NAME=standard.NAME)");
+      // Standard component properties also govern matching neutral names already in COMP_EXT.
+      // Preserve the extended row's unique identity and leave electrolyte ion models alone.
+      java.util.List<String> synchronizedColumns = new java.util.ArrayList<String>();
+      StringBuilder setColumns = new StringBuilder();
+      for (String column : standardColumns) {
+        if ("ID".equalsIgnoreCase(column) || "COMPINDEX".equalsIgnoreCase(column) || "NAME".equalsIgnoreCase(column)) {
+          continue;
+        }
+        if (setColumns.length() > 0) {
+          setColumns.append(',');
+        }
+        setColumns.append('"').append(column.replace("\"", "\"\"")).append("\"=?");
+        synchronizedColumns.add(column);
+      }
+      try (ResultSet canonical = database.getResultSet("SELECT * FROM " + source + " WHERE COMPTYPE<>'ion'");
+          java.sql.PreparedStatement update = database.getConnection()
+              .prepareStatement("UPDATE COMP SET " + setColumns + " WHERE NAME=?")) {
+        while (canonical.next()) {
+          for (int i = 0; i < synchronizedColumns.size(); i++) {
+            update.setString(i + 1, canonical.getString(synchronizedColumns.get(i)));
+          }
+          update.setString(synchronizedColumns.size() + 1, canonical.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
       // Copy reviewed gas-phase formation data as a value/provenance pair. Never label an
       // unrelated extended-table placeholder as reviewed merely because the name matches.
       try (

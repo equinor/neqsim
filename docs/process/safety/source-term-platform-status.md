@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope as of 2026-09-25; this does not confer qualification or replace domain review.
+Implementation scope as of 2026-09-27; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -30,6 +30,19 @@ The current implementation includes:
   fraction at most 0.80, and simultaneous drift-flux, phase-area and kinetic-energy closure. It
   remains unqualified and does not model entrainment, finite-rate phase transfer, annular jets or
   solids.
+- A separate finite-rate phase-split sensitivity model applies an exact first-order relaxation
+  from the upstream gas mass fraction toward the equilibrium station value before using the same
+  bounded drift-flux closure. It requires explicit relaxation time, residence time, interfacial
+  tension and parameter provenance; retains overall component fractions and stagnation-energy
+  closure; emits timestep-independent analytical and refinement evidence; and fails closed outside
+  one-gas/one-liquid bubbly/dispersed scope. It is not component-selective kinetic prediction or
+  experimental qualification.
+- A component-selective finite-rate sensitivity model applies caller-declared first-order time
+  constants to each component's gas-held mass, reconstructs explicit gas/liquid compositions with
+  exact overall component conservation, and retains the same bounded drift-flux and stagnation-
+  energy closures. Equal component times recover the uniform phase-split model. The parameters are
+  not predicted transfer coefficients, and the model excludes interfacial heat transfer,
+  entrainment, droplet area, annular flow, solids and experimental qualification.
 - Versioned deterministic JSON, NDJSON and reduced CSV, bundled JSON Schema,
   source identity, provenance and machine-readable failure/lifecycle states.
 - Steady runs, external capture and native dynamic stepping for `ProcessSystem` and
@@ -92,8 +105,8 @@ caller-owned; no phase-count rule silently changes the requested physics.
 
 | Work item | Current boundary | Completion evidence required |
 |---|---|---|
-| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. | Assessed phase-level/geometry, entrainment and finite-rate interfacial transfer beyond the current well-mixed equilibrium boundary. |
-| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. Short-opening prescribed-slip and bounded vertical drift-flux models add explicit and predictive hydrodynamic non-equilibrium for one gas and one liquid phase. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; predictive entrainment and finite-rate phase-transfer models; annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. |
+| Broader transient inventory regimes | Rigid adiabatic equilibrium inventory supports explicit phase-selected withdrawal, caller-declared ordered phase-exhaustion transitions, conservative receiving-pressure events, and balance/refinement tests. Short-opening finite-rate models provide uniform and component-selective analytical phase-partition relaxation but do not alter inventory phase-transfer dynamics. | Assessed phase-level/geometry and entrainment in the coupled inventory; predictive transfer coefficients and coupled interfacial heat/mass transfer beyond caller-declared relaxation. |
+| Full-bore/long-pipe and non-equilibrium regimes | Bounded ideal-gas and EOS-backed real-gas Fanno models cover quasi-steady one-sided constant-area single-gas pipe flow. Conservative perfect-gas and EOS-backed single-gas finite-volume units cover one-sided transient waves and line packing. Short-opening prescribed-slip, bounded vertical drift-flux and finite-rate phase-partition models cover one gas and one liquid within explicit screening limits. | Pipe heat transfer/elasticity and upstream-vessel/two-sided coupling; predictive entrainment, droplet-size and transfer-coefficient models; annular/high-Weber and solid-bearing transport; independent dense-gas and multiphase validation data. |
 | Independent qualification and dense-fluid accuracy | Machine-readable evidence records distinguish applicability, limitations, evidence type and independence. The Fanno manifest retains one external analytical case with explicit error bounds; frames remain `UNQUALIFIED`. | Add independent experimental/dense-fluid datasets with range and uncertainty analysis, then obtain accountable domain review. |
 | Solid-formation applicability | Mixture-specific solid/hydrate station assessment now fails closed and retains machine-readable diagnostics. | Assessed solid-bearing release physics where supported, plus independent mixture validation. |
 | Multicomponent flashing qualification | The documented 80/20 propane/butane entropy root and nearby cases now close with guarded continuation; a separate same-EOS saturation path checks the maximum. Acoustic warnings remain explicit. | Independent experimental benchmarks and domain review; broader mixtures are not qualified by the regression matrix. |

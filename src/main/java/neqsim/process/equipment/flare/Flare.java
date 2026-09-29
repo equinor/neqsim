@@ -11,6 +11,7 @@ import neqsim.process.equipment.flare.dto.FlareDispersionSurrogateDTO;
 import neqsim.process.equipment.flare.dto.FlarePerformanceDTO;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.unit.PowerUnit;
 
@@ -71,8 +72,10 @@ public class Flare extends TwoPortEquipment {
   @Override
   public void run(UUID id) {
     SystemInterface thermoSystem = inStream.getThermoSystem().clone();
-    double flowSm3sec = inStream.getFlowRate("Sm3/sec");
-    heatDuty = inStream.LCV() * flowSm3sec;
+    // ISO 6976:1995, legacy 15.55 C combustion reference, independent of volume basis.
+    Standard_ISO6976 calorificValue = inStream.getISO6976("molar", 0.0, 15.55);
+    calorificValue.calculate();
+    heatDuty = calorificValue.getValue("InferiorCalorificValue") * 1000.0 * inStream.getFlowRate("mole/sec");
 
     double molesTotalPerSec = inStream.getFlowRate("mole/sec");
     double molesCarbonPerSec = 0.0;
@@ -190,9 +193,14 @@ public class Flare extends TwoPortEquipment {
   }
 
   /**
-   * Gets the lower calorific value of the inlet gas in J/kg.
+   * Gets the legacy volumetric lower calorific value of the inlet gas.
    *
-   * @return LCV in J/kg, or 0 if inlet stream is not set
+   * <p>
+   * Uses ISO 6976:1995, real gas volume at 0 C and combustion at 15.55 C. Heat duty is computed separately on a molar
+   * basis.
+   * </p>
+   *
+   * @return LCV in J/m3 at 0 C, or 0 if inlet stream is not set
    */
   public double getLCV() {
     if (inStream != null) {
