@@ -328,7 +328,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
   /**
    * Sets the target CO2-to-amine loading used by the legacy fixed-point calculation.
    *
-   * <p>This parameter is retained under the historical interface name, but it is not a tray or stage efficiency.</p>
+   * <p>
+   * This parameter is retained under the historical interface name, but it is not a tray or stage efficiency.
+   * </p>
    *
    * @param eff target dimensionless loading ratio
    */
@@ -351,7 +353,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    *
    * @param numberOfTheoreticalStages a double
    * @deprecated SimpleAbsorber has no staged calculation; use a staged or rate-based absorber model when stage count
-   *             must affect the result
+   * must affect the result
    */
   @Deprecated
   public void setNumberOfTheoreticalStages(double numberOfTheoreticalStages) {
