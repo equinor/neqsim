@@ -357,6 +357,28 @@ double[] fractions = calc.getWaxWeightFractions();
 
 ## Wax Curve Calculation
 
+### Simple wax setup
+
+For ordinary wax-equilibrium work, use the high-level setup helper instead of
+manually wiring characterization, wax pseudo-components, database refresh,
+solid-phase registration, phase checks and initialization:
+
+```java
+SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+fluid.addComponent("methane", 6.78);
+fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
+fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
+fluid.setMixingRule(2);
+fluid.enableWaxModel("Coutinho");
+```
+
+`enableWaxModel(...)` characterizes an unresolved plus fraction when present,
+creates the wax-forming pseudo-components, refreshes component data, installs
+the wax phase, enables the required phase checks and initializes the fluid. It
+does **not** change the EOS or mixing rule, so those remain explicit engineering
+choices. The lower-level setup methods remain available for research workflows
+that need control over individual characterization steps.
+
 ### WaxCurveCalculator
 
 `WaxCurveCalculator` scans from high to low temperature using independent TP
