@@ -164,16 +164,8 @@ class WaxCurveCalculatorTest {
       fluid.addComponent("methane", 6.78);
       fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
       fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
-      fluid.getCharacterization().characterisePlusFraction();
-      fluid.getWaxModel().addTBPWax();
-      fluid.createDatabase(true);
       fluid.setMixingRule(2);
-      fluid.setWaxModelType(model);
-      fluid.addSolidComplexPhase("wax");
-      fluid.setMultiphaseWaxCheck(true);
-      fluid.setMultiPhaseCheck(true);
-      fluid.init(0);
-      fluid.init(1);
+      fluid.enableWaxModel(model);
       return fluid;
     } finally {
       NeqSimDataBase.setCreateTemporaryTables(false);
