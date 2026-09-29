@@ -13,6 +13,8 @@ import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -29,6 +31,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionList.class);
+
+  /** Dense linear algebra used for the stoichiometric rank test. */
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
   String[] reactiveComponentList;
@@ -245,8 +250,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
       }
 
-      Matrix mat = new Matrix(matrixData);
-      int rank = mat.rank();
+      int rank = ALGEBRA.rank(matrixData);
 
       if (rank < independentReactions.size()) {
         // Rank didn't increase (or is less than rows), so this reaction is dependent
