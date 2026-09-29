@@ -105,6 +105,76 @@ public class RateBasedPackedColumnTest {
   }
 
   /**
+   * Reject an exhausted profile and preserve the previously accepted outlets and profile.
+   */
+  @Test
+  public void testFixedPointRejectsExhaustedRerun() {
+    RateBasedPackedColumn column = configuredColumn(createGasStream("gas", 0.10), createLiquidStream("liquid", 0.0),
+        6.0);
+    column.run();
+    Assertions.assertTrue(column.solved());
+    Assertions.assertTrue(column.getLastConvergenceResidual() <= column.getConvergenceTolerance());
+    SystemInterface previousGas = column.getGasOutStream().getThermoSystem();
+    SystemInterface previousLiquid = column.getLiquidOutStream().getThermoSystem();
+    double previousTransfer = column.getTotalAbsoluteMolarTransfer();
+    column.setMaxIterations(2);
+
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class, column::run);
+
+    Assertions.assertTrue(failure.getMessage().contains("Fixed-point packed column did not converge"));
+    Assertions.assertEquals(2, column.getLastIterationCount());
+    Assertions.assertTrue(Double.isFinite(column.getLastConvergenceResidual()));
+    Assertions.assertTrue(column.getLastConvergenceResidual() > column.getConvergenceTolerance());
+    Assertions.assertFalse(column.solved());
+    Assertions.assertSame(previousGas, column.getGasOutStream().getThermoSystem());
+    Assertions.assertSame(previousLiquid, column.getLiquidOutStream().getThermoSystem());
+    Assertions.assertEquals(previousTransfer, column.getTotalAbsoluteMolarTransfer(), 0.0);
+  }
+
+  /**
+   * A single pass has no previous outlet against which convergence can be established.
+   */
+  @Test
+  public void testFixedPointRejectsNonFiniteResidual() {
+    RateBasedPackedColumn column = configuredColumn(createGasStream("gas", 0.10), createLiquidStream("liquid", 0.0),
+        6.0);
+    column.setMaxIterations(1);
+    Assertions.assertThrows(IllegalStateException.class, column::run);
+    Assertions.assertEquals(Double.POSITIVE_INFINITY, column.getLastConvergenceResidual());
+    Assertions.assertFalse(column.solved());
+  }
+
+  /**
+   * Reproduce the simultaneous-segment fixed-point exhaustion reported in issue 4111.
+   */
+  @Test
+  public void testSimultaneousFixedPointRejectsUnconvergedProfile() {
+    RateBasedPackedColumn column = configuredColumn(createGasStream("gas", 0.10), createLiquidStream("liquid", 0.0),
+        6.0);
+    column.setSegmentSolver(RateBasedPackedColumn.SegmentSolver.SIMULTANEOUS_RESIDUAL);
+    Assertions.assertThrows(IllegalStateException.class, column::run);
+    Assertions.assertEquals(column.getMaxIterations(), column.getLastIterationCount());
+    Assertions.assertTrue(column.getLastConvergenceResidual() > column.getConvergenceTolerance());
+    Assertions.assertFalse(column.solved());
+  }
+
+  /**
+   * An exhausted fixed-point seed must still reach the independent EO residual test.
+   */
+  @Test
+  public void testEquationOrientedDoesNotAcceptOrRejectItsSeedAsFinal() {
+    RateBasedPackedColumn column = configuredColumn(createGasStream("gas", 0.10), createLiquidStream("liquid", 0.0),
+        6.0);
+    column.setMaxIterations(1);
+    column.setColumnSolver(RateBasedPackedColumn.ColumnSolver.EQUATION_ORIENTED);
+    IllegalStateException failure = Assertions.assertThrows(IllegalStateException.class, column::run);
+    Assertions.assertTrue(failure.getMessage().contains("Equation-oriented packed column did not converge"));
+    Assertions.assertTrue(Double.isFinite(column.getLastColumnResidualNorm()));
+    Assertions.assertTrue(column.getSegmentResults().isEmpty(), "An internal seed must not be published");
+    Assertions.assertFalse(column.solved());
+  }
+
+  /**
    * Reject the reported CO2 case instead of accepting a finite but unconverged profile.
    */
   @Test
@@ -179,7 +249,14 @@ public class RateBasedPackedColumnTest {
     column.setMassTransferCorrectionFactor(5.0);
     column.setConvergenceTolerance(1.0e-9);
 
+    Assertions.assertThrows(IllegalStateException.class, column::run);
+    Assertions.assertTrue(column.getLastConvergenceResidual() > column.getConvergenceTolerance());
+    Assertions.assertFalse(column.solved());
+    column.setMaxIterations(40);
     column.run();
+    Assertions.assertTrue(column.solved());
+    Assertions.assertTrue(Double.isFinite(column.getLastConvergenceResidual()));
+    Assertions.assertTrue(column.getLastConvergenceResidual() <= column.getConvergenceTolerance());
 
     Double waterTransfer = column.getComponentTransferTotals().get("water");
     double outletGasWater = componentMoles(column.getGasOutStream().getThermoSystem(), "water");

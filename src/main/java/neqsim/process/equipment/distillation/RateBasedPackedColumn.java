@@ -1034,13 +1034,35 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Solve the counter-current profile by fixed-point liquid profile iteration.
+   * Solve the counter-current profile by fixed-point liquid profile iteration. Reject an exhausted or non-finite
+   * residual before publishing the profile.
    *
    * @param gasIn gas inlet system
    * @param liquidIn liquid inlet system
    * @return converged counter-current solution
+   * @throws IllegalStateException if a positive-height profile fails its convergence tolerance
    */
   private CounterCurrentSolution solveFixedPointProfile(SystemInterface gasIn, SystemInterface liquidIn) {
+    CounterCurrentSolution solution = iterateFixedPointProfile(gasIn, liquidIn);
+    if (packedHeight > 0.0
+        && (!Double.isFinite(lastConvergenceResidual) || lastConvergenceResidual > convergenceTolerance)) {
+      throw new IllegalStateException("Fixed-point packed column did not converge after " + lastIterationCount
+          + " iterations: residual " + lastConvergenceResidual + " exceeds tolerance " + convergenceTolerance
+          + ". Inspect the profile diagnostics; outlet streams have not been updated.");
+    }
+    acceptSolution(solution);
+    return solution;
+  }
+
+  /**
+   * Iterate a profile without publishing it. An exhausted profile may seed the EO solver, whose final solution is
+   * subject to its own residual acceptance test.
+   *
+   * @param gasIn gas inlet system
+   * @param liquidIn liquid inlet system
+   * @return last profile, which is not necessarily converged
+   */
+  private CounterCurrentSolution iterateFixedPointProfile(SystemInterface gasIn, SystemInterface liquidIn) {
     resetColumnResidualDiagnostics();
     List<SystemInterface> liquidEntering = initializeLiquidProfile(liquidIn);
     SystemInterface previousGasOutlet = null;
@@ -1053,14 +1075,12 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       lastIterationCount = iteration;
       lastConvergenceResidual = residual;
       if (residual <= convergenceTolerance || packedHeight == 0.0) {
-        acceptSolution(solution);
         return solution;
       }
       previousGasOutlet = solution.gasOutlet.clone();
       previousLiquidOutlet = solution.liquidOutlet.clone();
       liquidEntering = updateLiquidProfile(liquidIn, solution.liquidLeavingSegments);
     }
-    acceptSolution(solution);
     return solution;
   }
 
@@ -1084,11 +1104,11 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @throws IllegalStateException if the final full-transfer residual exceeds its tolerance
    */
   private CounterCurrentSolution solveEquationOrientedProfile(SystemInterface gasIn, SystemInterface liquidIn) {
-    CounterCurrentSolution seed = solveFixedPointProfile(gasIn, liquidIn);
     List<String> components = getTransferComponentList(gasIn, liquidIn);
     if (components.isEmpty()) {
-      return seed;
+      return solveFixedPointProfile(gasIn, liquidIn);
     }
+    CounterCurrentSolution seed = iterateFixedPointProfile(gasIn, liquidIn);
     double[] unknowns = createColumnUnknowns(seed, components);
     ColumnResidualEvaluation evaluation = null;
     int totalIterations = 0;
