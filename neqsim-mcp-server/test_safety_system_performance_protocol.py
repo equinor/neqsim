@@ -90,7 +90,7 @@ def test_discovery_boundary(client):
     tool = next(item for item in client.list_tools()
                 if item.get("name") == "runSafetySystemPerformance")
     description = tool.get("description", "")
-    require("active/passive safety-system performance" in description
+    require("active and passive safety-system barrier performance" in description
             and "quantitative SIL/PFD" in description
             and "SafetySystemPerformanceReport" in description
             and "NORSOK S-001" in description,

@@ -638,8 +638,7 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/SafetySystemPerformanceRunnerTest.java",
           "src/test/java/neqsim/process/safety/barrier/SafetySystemPerformanceAnalyzerTest.java",
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-          "neqsim-mcp-server/test_safety_system_performance_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/test_safety_system_performance_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/SAFETY_SYSTEM_PERFORMANCE_CONTRACT.md"};
       evidenceBoundary = "Catalog-example execution, deterministic active and passive safety-system performance summaries, assessment reporting, standards and STID-extraction template presence, fail-closed invalid input handling, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish source-document or tag extraction fidelity, hazard or demand completeness, barrier or safeguard adequacy, SIL or PFD validity, independence, common-cause, proof-test or lifecycle evidence, process or facility fidelity, standards applicability or conformance, safe operating limits, plant or control authority, certification, or accountable functional-safety and process-safety approval";
       break;
