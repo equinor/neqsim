@@ -122,12 +122,12 @@ helium,7440-59-7,imported_local_temperature_expression,? L M Q T V
 c-C7,291-64-5,imported_local_temperature_expression,? L Q V X
 c-C8,292-64-8,imported_local_temperature_expression,? L M Q V X
 CO,630-08-0,imported_local_temperature_expression,? L M Q T
-methanolPVTsim,67-56-1,literature_candidate_requires_identity_reaction_and_range_review,? L M Q R T V X
+methanolPVTsim,67-56-1,imported_exact_identity_alias,? L M Q R T V X
 MEGPVTsim18,107-21-1,literature_candidate_requires_identity_reaction_and_range_review,? L M Q V X
 MEGPVTsim19,107-21-1,literature_candidate_requires_identity_reaction_and_range_review,? L M Q V X
-propanePVTsim,74-98-6,literature_candidate_requires_identity_reaction_and_range_review,? C L M Q V X
-ethanolPVTsim,64-17-5,literature_candidate_requires_identity_reaction_and_range_review,? L M Q T V X
-nbutanePVTsim,106-97-8,literature_candidate_requires_identity_reaction_and_range_review,? C L M Q V X
+propanePVTsim,74-98-6,imported_exact_identity_alias,? C L M Q V X
+ethanolPVTsim,64-17-5,imported_exact_identity_alias,? L M Q T V X
+nbutanePVTsim,106-97-8,imported_exact_identity_alias,? C L M Q V X
 mercury,7439-97-6,literature_candidate_requires_identity_reaction_and_range_review,? C L M V
 propylbenzene,103-65-1,imported_local_temperature_expression,? L M Q T V X
 NaCl,7647-14-5,no_exact_CAS_match_in_source_archive,

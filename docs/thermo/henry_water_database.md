@@ -7,8 +7,9 @@ The Henry columns in `COMP.csv` are backed by the 76 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
-`HenryWaterCoverage.csv` inventories all 389 rows: 76 imported correlations,
-28 qualified reference-temperature-only points, 36 remaining literature candidates,
+`HenryWaterCoverage.csv` inventories all 389 rows: 80 imported correlations
+(76 distinct database identities plus four exact-identity aliases), 28 qualified
+reference-temperature-only points, 32 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -32,6 +33,19 @@ covers neutral hydrocarbons, common gases, refrigerants and selected solvents.
 Neutral data are never assigned to a charged component merely because it shares
 a CAS number. Reactive acids, amines, hydrated species and reference-only data
 without slopes need separate qualification. No claim of complete coverage is made.
+
+Four legacy PVTsim-named rows (`methanolPVTsim`, `propanePVTsim`,
+`ethanolPVTsim` and `nbutanePVTsim`) have the same CAS number, molecular formula
+and InChIKey as their qualified canonical component. They therefore reuse the
+same molecular Henry expression and source record. The inherited type-L record is
+Sander reference 3500, Burkholder et al. (2019), JPL Publication 19-5. The
+implemented numerical subset remains attributed to the CC BY 4.0 Sander
+compilation; no JPL report text is reproduced. The machine-readable record gives
+no numerical uncertainty or primary experimental range, so published precision
+and the local 298.15 K van't Hoff scope are retained. This does not assert that
+their other pure-component parameters are identical. The two MEG PVTsim rows
+remain unavailable because the canonical MEG row has not yet passed source,
+definition and range qualification.
 
 The two-parameter expressions are **local van't Hoff approximations about
 298.15 K**, not newly fitted experimental data. Their individual experimental
@@ -109,7 +123,7 @@ require regression review when their underlying Henry reference changes.
 ## Reproduction and remaining work
 
 Run `python3 devtools/check_henry_water_data.py` to check every compiled row,
-identity, provenance coverage, point-only separation and polynomial conversion.
+identity, exact-alias equivalence, provenance coverage, point-only separation and polynomial conversion.
 Supply the downloaded `henry_5.0.0_f90.zip` as an argument to additionally verify
 each selected correlation and reference point against the original Fortran source.
 `HenryWaterDatabaseTest` checks database loading, source values, finite-difference

@@ -66,6 +66,41 @@ def main():
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
     component_rows = {row["NAME"]: row for row in rows}
+    aliases = {
+        name: provenance["alias_of"]
+        for name, provenance in selected.items()
+        if "alias_of" in provenance
+    }
+    for name, canonical_name in aliases.items():
+        assert canonical_name in selected, f"Unknown canonical component: {name}"
+        assert "alias_of" not in selected[canonical_name], f"Alias chain: {name}"
+        alias_row = component_rows[name]
+        canonical_row = component_rows[canonical_name]
+        for field in ("CASnumber", "FORMULA", "InChIKey"):
+            assert alias_row[field] == canonical_row[field], (
+                f"Alias identity mismatch for {name}: {field}")
+        assert selected[name]["cas"] == selected[canonical_name]["cas"], name
+        assert selected[name]["solvent"] == "water", name
+        assert selected[name]["henry_definition"] == (
+            "neutral molecular Hsbp = molality / partial pressure"), name
+        assert selected[name]["reference"] == selected[canonical_name]["reference"], name
+        assert selected[name]["Hsbp_mol_kg_atm"] == (
+            selected[canonical_name]["Hsbp_mol_kg_atm"]), name
+        assert selected[name]["B_K"] == selected[canonical_name]["B_K"], name
+        alias_parameters = [
+            float(alias_row[f"HenryCoef{i}"]) for i in range(1, 5)]
+        canonical_parameters = [
+            float(canonical_row[f"HenryCoef{i}"]) for i in range(1, 5)]
+        assert alias_parameters == canonical_parameters, (
+            f"Alias correlation mismatch: {name}")
+        assert coverage[name]["status"] == "imported_exact_identity_alias", name
+    dispatched = sum(
+        row["status"] in {
+            "imported_local_temperature_expression",
+            "imported_exact_identity_alias",
+        }
+        for row in coverage.values())
+    assert dispatched == len(selected), "Coverage/source manifest mismatch"
     for name, provenance in reference_points.items():
         assert name not in selected, f"Reference point also dispatched as correlation: {name}"
         assert name in component_rows, f"Reference point component absent from database: {name}"
