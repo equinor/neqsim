@@ -27,9 +27,9 @@ import neqsim.NeqSimTest;
 public class PvtFluidCharacterizationGuideDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/thermo/pvt_fluid_characterization.md";
   private static final Pattern EXECUTABLE_JAVA = Pattern.compile(
-      "(?ms)^## Executable characterized-fluid example.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      "(?ms)^## Executable characterized-fluid example.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
@@ -47,7 +47,7 @@ public class PvtFluidCharacterizationGuideDocumentationTest extends NeqSimTest {
     assertTrue(guide.contains("select the TBP correlation before adding TBP or plus fractions"));
     assertTrue(guide.contains(".model(\"PVTlumpingModel\").plusFractionGroups(n)"));
     assertTrue(guide.contains(".model(\"standard\").totalPseudoComponents(n)"));
-    assertTrue(guide.contains("Do not use \`plusFractionGroups\` and \`totalPseudoComponents\` interchangeably"));
+    assertTrue(guide.contains("Do not use `plusFractionGroups` and `totalPseudoComponents` interchangeably"));
     assertTrue(prose.contains("Characterization does not tune an equation of state"));
     assertTrue(prose.contains("require named stock-tank and separator conditions"));
     assertTrue(prose.contains("correlations, not measurements"));

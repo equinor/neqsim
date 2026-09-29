@@ -16,9 +16,9 @@ during initialization; the values do not have to sum to one.
 
 | Input | Method | Required basis |
 | --- | --- | --- |
-| Identified component | \`addComponent(name, moles)\` | Component name from the NeqSim database and a non-negative relative mole amount |
-| Pre-binned petroleum cut | \`addTBPfraction(name, moles, molarMass, density)\` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
-| Unresolved heavy end | \`addPlusFraction(name, moles, molarMass, density)\` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
+| Identified component | `addComponent(name, moles)` | Component name from the NeqSim database and a non-negative relative mole amount |
+| Pre-binned petroleum cut | `addTBPfraction(name, moles, molarMass, density)` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
+| Unresolved heavy end | `addPlusFraction(name, moles, molarMass, density)` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
 | Thermodynamic state | system constructor or setters | Temperature in K and absolute pressure in bara |
 
 The four-argument density methods accept the usual petroleum-cut relative-density
@@ -32,23 +32,23 @@ Apply the setup in this order:
 2. select the TBP correlation before adding TBP or plus fractions;
 3. add identified components, TBP cuts, and one unresolved plus fraction;
 4. select the plus-fraction and lumping models;
-5. call \`characterisePlusFraction()\`;
+5. call `characterisePlusFraction()`;
 6. set the mixing rule, flash the characterized system, and inspect the result.
 
 ## Characterization and lumping routes
 
-\`setPlusFractionModel("Pedersen")\` distributes the unresolved heavy end into
+`setPlusFractionModel("Pedersen")` distributes the unresolved heavy end into
 single-carbon-number components using the selected TBP correlation.
-\`characterisePlusFraction()\` then applies the configured lumping model.
+`characterisePlusFraction()` then applies the configured lumping model.
 
 | Lumping route | Fluent configuration | Meaning |
 | --- | --- | --- |
-| Preserve the light TBP cuts and lump only the heavy end | \`.model("PVTlumpingModel").plusFractionGroups(n)\` | Keeps the explicit C6-C9 TBP cuts and creates \`n\` groups from C10+ |
-| Lump all heavy fractions from C6 | \`.model("standard").totalPseudoComponents(n)\` | Creates \`n\` total heavy pseudo-components |
-| Retain every generated SCN component | \`.noLumping()\` | Highest component count; useful for diagnosis rather than routine simulation |
-| Match project-owned carbon-number bins | \`.customBoundaries(...)\` | Uses the supplied starting carbon number for each group |
+| Preserve the light TBP cuts and lump only the heavy end | `.model("PVTlumpingModel").plusFractionGroups(n)` | Keeps the explicit C6-C9 TBP cuts and creates `n` groups from C10+ |
+| Lump all heavy fractions from C6 | `.model("standard").totalPseudoComponents(n)` | Creates `n` total heavy pseudo-components |
+| Retain every generated SCN component | `.noLumping()` | Highest component count; useful for diagnosis rather than routine simulation |
+| Match project-owned carbon-number bins | `.customBoundaries(...)` | Uses the supplied starting carbon number for each group |
 
-Do not use \`plusFractionGroups\` and \`totalPseudoComponents\` interchangeably.
+Do not use `plusFractionGroups` and `totalPseudoComponents` interchangeably.
 Their counts have different meanings. The final component slate also contains
 the identified components and any TBP cuts preserved by the selected route.
 
@@ -57,9 +57,9 @@ the identified components and any TBP cuts preserved by the selected route.
 The program below uses the public fluent lumping API, performs a TP flash, and
 checks the resulting component count and phase split. It is one complete Java 8
 program and uses Log4j2 instead of console output. Run documentation examples
-with assertions enabled (\`java -ea\`) so the engineering checks execute.
+with assertions enabled (`java -ea`) so the engineering checks execute.
 
-\`\`\`java
+```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -115,7 +115,7 @@ public final class PvtFluidCharacterizationExample {
         vaporMoleFraction);
   }
 }
-\`\`\`
+```
 
 The 17-component assertion closes the intended slate: four identified
 components, four preserved C6-C9 TBP cuts, and nine groups created from C10+.
