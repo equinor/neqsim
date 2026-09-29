@@ -1,106 +1,168 @@
 ---
-title: "PVT and Fluid Characterization"
-description: "Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components."
+title: "PVT fluid characterization"
+description: "Build, characterize, lump, and validate petroleum-fluid descriptions with explicit units and executable Java coverage."
 ---
 
-Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components.
+Fluid characterization converts measured light components, true-boiling-point
+(TBP) cuts, and an unresolved heavy-end or plus fraction into the
+pseudo-components used by a compositional equation of state. The generated
+fluid description is a model input: it still requires comparison with
+representative PVT laboratory data before engineering use.
 
-## Building Compositions
-1. **Known components**: Add pure components directly using critical-property data from the internal database.
-2. **Plus fractions (C7+)**: Use `addPlusFraction(name, moles, molarMass, density)` when only overall heavy fraction data are available.
-3. **TBP/assay data**: Use `addTBPfraction(name, moles, molarMass, density)` to preserve multiple heavy cuts with their own boiling ranges. Molar mass is in kg/mol and density is the specific gravity in g/cm3.
+## Input contract and order of operations
 
-```java
-SystemInterface oil = new SystemSrkEos(323.15, 150.0);
-oil.createDatabase(true);
-oil.addComponent("nitrogen", 0.01);
-oil.addComponent("methane", 0.60);
-oil.addTBPfraction("C7", 0.08, 0.096, 0.738);
-oil.addTBPfraction("C10", 0.10, 0.134, 0.792);
-oil.addPlusFraction("C20", 0.21, 0.275, 0.870);
-oil.setMixingRule(2);
-```
+Use relative mole amounts for every component. NeqSim normalizes composition
+during initialization; the values do not have to sum to one.
 
-## Tuning and Regression
-- **Binary interaction parameters (kij)**: Adjust kij tables (`setBinaryInteractionParameter`) to match dew/bubble points.
-- **Volume shift/critical-point matching**: Enable volume corrections on PR/SRK fluids to improve density fits.
-- **Plus-fraction splitting**: Use `splitTBPfraction` to subdivide heavy cuts using predefined distillation curves.
-- **Viscosity tuning**: Adjust heavy-end Watson K or user-defined viscosity correlations when matching lab rheology.
+| Input | Method | Required basis |
+| --- | --- | --- |
+| Identified component | `addComponent(name, moles)` | Component name from the NeqSim database and a non-negative relative mole amount |
+| Pre-binned petroleum cut | `addTBPfraction(name, moles, molarMass, density)` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
+| Unresolved heavy end | `addPlusFraction(name, moles, molarMass, density)` | Molar mass in kg/mol; density argument as specific gravity/relative density, numerically equal to g/cm³ |
+| Thermodynamic state | system constructor or setters | Temperature in K and absolute pressure in bara |
 
-## Lumping Models
+The four-argument density methods accept the usual petroleum-cut relative-density
+range. Values above 1.5 are interpreted by the API as kg/m³ and converted.
+Prefer the documented relative-density basis so an accidental unit change does
+not silently change the characterization.
 
-After plus-fraction splitting generates many single-carbon-number (SCN) components, lumping groups them for computational efficiency.
+Apply the setup in this order:
 
-### Fluent API (Recommended)
+1. create the equation-of-state system at the intended temperature and pressure;
+2. select the TBP correlation before adding TBP or plus fractions;
+3. add identified components, TBP cuts, and one unresolved plus fraction;
+4. select the plus-fraction and lumping models;
+5. call `characterisePlusFraction()`;
+6. set the mixing rule, flash the characterized system, and inspect the result.
 
-```java
-// PVTlumpingModel: Preserve C6-C9 TBP fractions, lump only C10+ into 6 groups
-oil.getCharacterization().configureLumping()
-    .model("PVTlumpingModel")
-    .plusFractionGroups(6)
-    .build();
+## Characterization and lumping routes
 
-// Standard model: Lump all heavy fractions (C6-C80) into 5 pseudo-components
-oil.getCharacterization().configureLumping()
-    .model("standard")
-    .totalPseudoComponents(5)
-    .build();
+`setPlusFractionModel("Pedersen")` distributes the unresolved heavy end into
+single-carbon-number components using the selected TBP correlation.
+`characterisePlusFraction()` then applies the configured lumping model.
 
-// Custom boundaries: Match PVT lab report groupings (C6, C7-C9, C10-C19, C20+)
-oil.getCharacterization().configureLumping()
-    .customBoundaries(6, 7, 10, 20)
-    .build();
+| Lumping route | Fluent configuration | Meaning |
+| --- | --- | --- |
+| Preserve the light TBP cuts and lump only the heavy end | `.model("PVTlumpingModel").plusFractionGroups(n)` | Keeps the explicit C6-C9 TBP cuts and creates `n` groups from C10+ |
+| Lump all heavy fractions from C6 | `.model("standard").totalPseudoComponents(n)` | Creates `n` total heavy pseudo-components |
+| Retain every generated SCN component | `.noLumping()` | Highest component count; useful for diagnosis rather than routine simulation |
+| Match project-owned carbon-number bins | `.customBoundaries(...)` | Uses the supplied starting carbon number for each group |
 
-// No lumping: Keep all individual SCN components (for detailed studies)
-oil.getCharacterization().configureLumping()
-    .noLumping()
-    .build();
-```
+Do not use `plusFractionGroups` and `totalPseudoComponents` interchangeably.
+Their counts have different meanings. The final component slate also contains
+the identified components and any TBP cuts preserved by the selected route.
 
-### Lumping Model Comparison
+## Executable characterized-fluid example
 
-| Model | Behavior | Use Case |
-|-------|----------|----------|
-| `PVTlumpingModel` | Preserves C6-C9 as individual pseudo-components, lumps only C10+ | Standard PVT matching |
-| `standard` | Lumps all heavy fractions from C6 onwards | Minimal components for fast simulation |
-| `no lumping` | Keeps all individual SCN components | Detailed compositional studies |
-
-For more details on the mathematical background, see [Fluid Characterization Mathematics](../pvtsimulation/fluid_characterization_mathematics).
-
-## Asphaltene Modeling
-
-For fluids with asphaltene precipitation risk, use the `PedersenAsphalteneCharacterization` class:
+The program below uses the public fluent lumping API, performs a TP flash, and
+checks the resulting component count and phase split. It is one complete Java 8
+program and uses Log4j2 instead of console output. Run documentation examples
+with assertions enabled (`java -ea`) so the engineering checks execute.
 
 ```java
-import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create asphaltene characterization
-PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
-asphChar.setAsphalteneMW(750.0);     // Molecular weight g/mol
-asphChar.setAsphalteneDensity(1.10); // Density g/cm³
+public final class PvtFluidCharacterizationExample {
+  private static final Logger logger =
+      LogManager.getLogger(PvtFluidCharacterizationExample.class);
 
-// Add asphaltene as pseudo-component (before mixing rule)
-asphChar.addAsphalteneToSystem(oil, 0.02);  // 2 mol% asphaltene
-oil.setMixingRule("classic");
+  private PvtFluidCharacterizationExample() {}
 
-// Perform TPflash with asphaltene detection
-boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(oil);
+  public static void main(String[] args) {
+    double temperatureK = 298.0;
+    double pressureBara = 10.0;
+
+    SystemInterface fluid = new SystemSrkEos(temperatureK, pressureBara);
+    fluid.getCharacterization().setTBPModel("PedersenSRK");
+
+    fluid.addComponent("CO2", 1.0);
+    fluid.addComponent("methane", 51.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.addComponent("propane", 1.0);
+
+    // name, relative moles, molar mass [kg/mol], relative density [-]
+    fluid.addTBPfraction("C6", 1.0, 0.090, 0.70);
+    fluid.addTBPfraction("C7", 1.0, 0.110, 0.73);
+    fluid.addTBPfraction("C8", 1.0, 0.120, 0.76);
+    fluid.addTBPfraction("C9", 1.0, 0.140, 0.79);
+    fluid.addPlusFraction("C10", 11.0, 0.290, 0.82);
+
+    fluid.getCharacterization().setPlusFractionModel("Pedersen");
+    fluid.getCharacterization().configureLumping()
+        .model("PVTlumpingModel")
+        .plusFractionGroups(9)
+        .build();
+    fluid.getCharacterization().characterisePlusFraction();
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+
+    double vaporMoleFraction = fluid.getBeta();
+    assert fluid.getNumberOfComponents() == 17;
+    assert Double.isFinite(vaporMoleFraction);
+    assert vaporMoleFraction > 0.0 && vaporMoleFraction < 1.0;
+
+    logger.info(
+        "Characterized {} components at {} K and {} bara; vapor mole fraction={}",
+        fluid.getNumberOfComponents(),
+        temperatureK,
+        pressureBara,
+        vaporMoleFraction);
+  }
+}
 ```
 
-NeqSim supports two asphaltene phase types:
-- `PhaseType.ASPHALTENE`: Solid asphaltene with literature-based properties
-- `PhaseType.LIQUID_ASPHALTENE`: Pedersen's liquid approach using cubic EOS
+The 17-component assertion closes the intended slate: four identified
+components, four preserved C6-C9 TBP cuts, and nine groups created from C10+.
+It is a regression check for this stated example, not a universal component
+count for other assays or lumping choices.
 
-## PVT Reports
-After running `ThermodynamicOperations.TPflash()`, collect standard PVT outputs:
-```java
-oil.initProperties();
-System.out.println("Bo at separator: " + oil.getPhase("oil").getVolume() / oil.getTotalNumberOfMoles());
-System.out.println("GOR at separator: " + oil.getPhase("gas").getNumberOfMoles()/oil.getPhase("oil").getNumberOfMoles());
-```
-For multi-stage separators, clone the fluid after each flash and continue flashing at downstream conditions.
+## Tuning, experiments, and reported properties
 
-## Data Management
-- Store compositions and tuned parameters as JSON using `toJson()` for reproducible studies.
-- Use `addFluid(existingSystem)` to combine live-oil and gas-cap fluids or to merge lab and model data sets.
-- When integrating with black-oil simulators, export pseudo-component properties (MW, density, Z-factor) for each stage.
+Characterization does not tune an equation of state. Match uncertain
+plus-fraction properties, binary-interaction parameters, volume translation,
+and viscosity parameters against project-owned measurements using a documented
+objective function, bounds, weights, and holdout data. Preserve the raw assay,
+unit conversions, model names, fitted parameters, software version, and
+residuals with the fluid description.
+
+Do not calculate oil formation-volume factor or gas-oil ratio from a phase
+volume divided by total feed moles. Those quantities require named stock-tank
+and separator conditions plus an explicit standard-volume basis. Use the
+dedicated CCE, CVD, differential-liberation, separator, and viscosity workflows,
+and record every pressure as absolute or gauge and every gas/oil standard
+condition.
+
+## Engineering boundaries
+
+The Pedersen and Whitson-style characterization routes are correlations, not
+measurements. Results can be sensitive to plus-fraction molar mass and density,
+TBP correlation, number and boundaries of lumped groups, equation of state,
+mixing rule, and volume translation.
+
+Before relying on a characterized fluid:
+
+1. validate the input assay, composition closure, units, and sample provenance;
+2. compare saturation pressure, density, relative volume, liquid dropout,
+   separator yields, and viscosity with representative laboratory data;
+3. rerun sensitivity cases for plausible heavy-end and lumping choices;
+4. freeze the exact component slate and fitted parameters used downstream; and
+5. obtain independent PVT/model review for reserves, facilities, flow assurance,
+   custody, or safety-critical decisions.
+
+Asphaltene, wax, hydrate, electrolyte, and solid-phase behavior require their
+own qualified models and data. A characterized hydrocarbon slate does not
+establish those risks.
+
+## Related documentation
+
+- [Characterization package and route selection](characterization/README.md)
+- [Fluid-characterization mathematics](../pvtsimulation/fluid_characterization_mathematics.md)
+- [PVT laboratory simulations](../pvtsimulation/pvt_lab_tests.md)
+- [Thermodynamic workflows](thermodynamic_workflows.md)
+- [Fluid creation](fluid_creation_guide.md)
