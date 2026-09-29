@@ -485,6 +485,7 @@ public class PackedColumn extends DistillationColumn {
     // Hydraulic results
     JsonObject hydResults = new JsonObject();
     hydResults.addProperty("HETP_m", hetp);
+    hydResults.addProperty("theoreticalStages", theoreticalStages);
     hydResults.addProperty("packingEquivalentTheoreticalStages", theoreticalStages);
     hydResults.addProperty("solvedStageCount", getNumberOfTrays());
     hydResults.addProperty("hydraulicsCalculated", hydraulicsCalculated);
