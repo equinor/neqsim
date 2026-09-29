@@ -11,13 +11,13 @@ No default price, market forecast, or economic datum is embedded in NeqSim. The 
 
 ## Calculation contract
 
-For unchanged qualified liquid-product, export-gas, and feed rates $dot m_L$, $dot m_G$, and $dot m_F$ in t/h, define candidate-minus-baseline price and feed-cost changes $Delta p_L$, $Delta p_G$, and $Delta c_F$.
+For unchanged qualified liquid-product, export-gas, and feed rates $\dot{m}_L$, $\dot{m}_G$, and $\dot{m}_F$ in t/h, define candidate-minus-baseline price and feed-cost changes $\Delta p_L$, $\Delta p_G$, and $\Delta c_F$.
 
-$$Delta M_L=dot m_LDelta p_L,qquad Delta M_G=dot m_GDelta p_G,qquad Delta M_F=-dot m_FDelta c_F$$
+$\Delta M_L = \dot{m}_L \Delta p_L, \qquad \Delta M_G = \dot{m}_G \Delta p_G, \qquad \Delta M_F = -\dot{m}_F \Delta c_F$
 
 The attributed screening-margin change is:
 
-$$Delta M_{mathrm{attr}}=Delta M_L+Delta M_G+Delta M_F$$
+$\Delta M_{\mathrm{attr}} = \Delta M_L + \Delta M_G + \Delta M_F$
 
 Four explicit residuals independently close product-value delta, variable-cost delta, screening-margin delta, and price attribution. Signed contributions are preserved; an unfavorable price or higher feed cost produces a negative contribution.
 

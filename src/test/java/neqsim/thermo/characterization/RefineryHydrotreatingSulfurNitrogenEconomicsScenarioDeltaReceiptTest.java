@@ -16,13 +16,11 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
   @Test
   void attributesPublicBigHillScenarioDelta() {
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity = intensity(1000.0, 1.0, 100.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline =
-        screening(intensity, 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate =
-        screening(intensity, 625.0, 80.0, 460.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity, 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity, 625.0, 80.0, 460.0);
 
-    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt =
-        RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(baseline, candidate);
+    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt
+        .calculate(baseline, candidate);
 
     assertSame(baseline, receipt.getBaselineReceipt());
     assertSame(candidate, receipt.getCandidateReceipt());
@@ -45,13 +43,11 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
   @Test
   void unchangedScenarioHasZeroDelta() {
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity = intensity(1000.0, 1.0, 100.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline =
-        screening(intensity, 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate =
-        screening(intensity, 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity, 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity, 600.0, 100.0, 450.0);
 
-    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt =
-        RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(baseline, candidate);
+    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt
+        .calculate(baseline, candidate);
 
     assertEquals(0.0, receipt.getAttributedMarginDeltaPerHour(), 1.0e-12);
     assertEquals(0.0, receipt.getScreeningMarginDeltaPerHour(), 1.0e-12);
@@ -61,13 +57,11 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
   @Test
   void adverseCallerScenarioRetainsSignedMarginDelta() {
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity = intensity(1000.0, 1.0, 100.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline =
-        screening(intensity, 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate =
-        screening(intensity, 550.0, 50.0, 500.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity, 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity, 550.0, 50.0, 500.0);
 
-    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt =
-        RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(baseline, candidate);
+    RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt receipt = RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt
+        .calculate(baseline, candidate);
 
     assertTrue(receipt.getScreeningMarginDeltaPerHour() < 0.0);
     assertEquals(receipt.getScreeningMarginDeltaPerHour(), receipt.getAttributedMarginDeltaPerHour(), 1.0e-9);
@@ -87,10 +81,10 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
 
   @Test
   void rejectsDifferentPhysicalEvidence() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline =
-        screening(intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate =
-        screening(intensity(1000.0, 1.0, 100.0), 625.0, 80.0, 460.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidate = screening(intensity(1000.0, 1.0, 100.0),
+        625.0, 80.0, 460.0);
 
     assertThrows(IllegalArgumentException.class,
         () -> RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(baseline, candidate));
@@ -98,8 +92,8 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
 
   @Test
   void rejectsMissingScenario() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline =
-        screening(intensity(1000.0, 1.0, 100.0), 600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baseline = screening(intensity(1000.0, 1.0, 100.0),
+        600.0, 100.0, 450.0);
 
     assertThrows(NullPointerException.class,
         () -> RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(null, baseline));
@@ -109,78 +103,66 @@ class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceiptTest {
 
   private static RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt scenarioDelta(
       double feedMassFlowKgPerHour, double sensibleHeatingDutyMegaWatt) {
-    RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity =
-        intensity(feedMassFlowKgPerHour, sensibleHeatingDutyMegaWatt, 100.0);
-    return RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt.calculate(
-        screening(intensity, 600.0, 100.0, 450.0), screening(intensity, 625.0, 80.0, 460.0));
+    RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity = intensity(feedMassFlowKgPerHour,
+        sensibleHeatingDutyMegaWatt, 100.0);
+    return RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt
+        .calculate(screening(intensity, 600.0, 100.0, 450.0), screening(intensity, 625.0, 80.0, 460.0));
   }
 
   private static RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening(
-      RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity,
-      double liquidProductPricePerTonne, double exportGasPricePerTonne, double feedCostPerTonne) {
-    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity,
-        liquidProductPricePerTonne, exportGasPricePerTonne, feedCostPerTonne);
+      RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity, double liquidProductPricePerTonne,
+      double exportGasPricePerTonne, double feedCostPerTonne) {
+    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity, liquidProductPricePerTonne,
+        exportGasPricePerTonne, feedCostPerTonne);
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity(
-      double feedMassFlowKgPerHour, double sensibleHeatingDutyMegaWatt, double carbonPricePerTonneCo2e) {
-    RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt net =
-        RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt.calculate(
-            hydrogenReceipt(feedMassFlowKgPerHour),
+  private static RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity(double feedMassFlowKgPerHour,
+      double sensibleHeatingDutyMegaWatt, double carbonPricePerTonneCo2e) {
+    RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt net = RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt
+        .calculate(hydrogenReceipt(feedMassFlowKgPerHour),
             heatCredit(feedMassFlowKgPerHour, sensibleHeatingDutyMegaWatt), carbonPricePerTonneCo2e);
     return RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt.calculate(net);
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenOperatingReceipt hydrogenReceipt(
-      double feedMassFlowKgPerHour) {
-    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply =
-        RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(
-            material(), 1.5, 0.90, NON_HYDROGEN_MOLAR_MASS_KG_PER_MOL);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(
-            supply, 0.90, 0.10, 0.20, 0.50, 0.05);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance.calculate(
-            recycle, feedMassFlowKgPerHour);
-    RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance utility =
-        RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance.calculate(throughput, 120.0, 3.0);
-    RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance emissions =
-        RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance.calculate(utility, 10.0, 100.0);
+  private static RefineryHydrotreatingSulfurNitrogenOperatingReceipt hydrogenReceipt(double feedMassFlowKgPerHour) {
+    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
+        .calculate(material(), 1.5, 0.90, NON_HYDROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, 0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance
+        .calculate(recycle, feedMassFlowKgPerHour);
+    RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance utility = RefineryHydrotreatingSulfurNitrogenHydrogenUtilityBalance
+        .calculate(throughput, 120.0, 3.0);
+    RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance emissions = RefineryHydrotreatingSulfurNitrogenHydrogenEmissionsBalance
+        .calculate(utility, 10.0, 100.0);
     return RefineryHydrotreatingSulfurNitrogenOperatingReceipt.calculate(emissions);
   }
 
   private static RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance heatCredit(
       double feedMassFlowKgPerHour, double sensibleHeatingDutyMegaWatt) {
-    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply =
-        RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance.calculate(
-            material(), 1.5, 0.90, NON_HYDROGEN_MOLAR_MASS_KG_PER_MOL);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance.calculate(
-            supply, 0.90, 0.10, 0.20, 0.50, 0.05);
-    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput =
-        RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance.calculate(
-            recycle, feedMassFlowKgPerHour);
-    RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt distribution =
-        RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt.calculate(throughput);
-    RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermal =
-        RefineryHydrotreatingSulfurNitrogenThermalDutyBalance.calculate(
-            distribution, 100.0, 50.0, sensibleHeatingDutyMegaWatt);
-    RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance utility =
-        RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance.calculate(
-            thermal, 0.85, 50.0, 0.40, 3.0);
-    RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance combustion =
-        RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance.calculate(
-            utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095, 0.15);
-    RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance stack =
-        RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance.calculate(
-            combustion, 473.15, 298.15, 34.0);
-    RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance recovery =
-        RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance.calculate(stack, 0.60);
+    RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance supply = RefineryHydrotreatingSulfurNitrogenHydrogenSupplyBalance
+        .calculate(material(), 1.5, 0.90, NON_HYDROGEN_MOLAR_MASS_KG_PER_MOL);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance recycle = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleBalance
+        .calculate(supply, 0.90, 0.10, 0.20, 0.50, 0.05);
+    RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance throughput = RefineryHydrotreatingSulfurNitrogenHydrogenRecycleThroughputBalance
+        .calculate(recycle, feedMassFlowKgPerHour);
+    RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt distribution = RefineryHydrotreatingSulfurNitrogenProductDistributionReceipt
+        .calculate(throughput);
+    RefineryHydrotreatingSulfurNitrogenThermalDutyBalance thermal = RefineryHydrotreatingSulfurNitrogenThermalDutyBalance
+        .calculate(distribution, 100.0, 50.0, sensibleHeatingDutyMegaWatt);
+    RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance utility = RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
+        .calculate(thermal, 0.85, 50.0, 0.40, 3.0);
+    RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance combustion = RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance
+        .calculate(utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095, 0.15);
+    RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance stack = RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance
+        .calculate(combustion, 473.15, 298.15, 34.0);
+    RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance recovery = RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance
+        .calculate(stack, 0.60);
     return RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryCreditBalance.calculate(recovery, 0.75);
   }
 
   private static RefineryHydrotreatingSulfurNitrogenBalance material() {
-    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(
-        1000.0, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6, 2.0, 4.0);
+    return RefineryHydrotreatingSulfurNitrogenBalance.calculate(1000.0, 0.0040867518, 0.001095129, 15.0e-6, 10.0e-6,
+        2.0, 4.0);
   }
 }

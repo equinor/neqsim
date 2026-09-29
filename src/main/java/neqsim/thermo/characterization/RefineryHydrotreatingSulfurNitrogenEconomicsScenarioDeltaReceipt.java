@@ -59,11 +59,10 @@ public final class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaRece
   private RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt(
       RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt baselineReceipt,
       RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt candidateReceipt,
-      double liquidProductPriceDeltaPerTonne, double exportGasPriceDeltaPerTonne,
-      double feedCostDeltaPerTonne, double liquidProductMarginContributionPerHour,
-      double exportGasMarginContributionPerHour, double feedCostMarginContributionPerHour,
-      double attributedMarginDeltaPerHour, double totalProductValueDeltaPerHour,
-      double totalVariableCostDeltaPerHour, double screeningMarginDeltaPerHour,
+      double liquidProductPriceDeltaPerTonne, double exportGasPriceDeltaPerTonne, double feedCostDeltaPerTonne,
+      double liquidProductMarginContributionPerHour, double exportGasMarginContributionPerHour,
+      double feedCostMarginContributionPerHour, double attributedMarginDeltaPerHour,
+      double totalProductValueDeltaPerHour, double totalVariableCostDeltaPerHour, double screeningMarginDeltaPerHour,
       double productValueDeltaClosureResidualPerHour, double variableCostDeltaClosureResidualPerHour,
       double screeningMarginDeltaClosureResidualPerHour, double priceAttributionClosureResidualPerHour) {
     this.baselineReceipt = baselineReceipt;
@@ -108,50 +107,46 @@ public final class RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaRece
         .getProductDistributionReceipt();
     double feedRate = intensity.getFeedMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
     double liquidProductRate = intensity.getLiquidProductMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
-    double exportGasRate = distribution.getThroughputBalance().getExportGasMassFlowKgPerHour()
-        / KILOGRAMS_PER_TONNE;
+    double exportGasRate = distribution.getThroughputBalance().getExportGasMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
 
-    double liquidProductPriceDelta =
-        candidateReceipt.getLiquidProductPricePerTonne() - baselineReceipt.getLiquidProductPricePerTonne();
-    double exportGasPriceDelta =
-        candidateReceipt.getExportGasPricePerTonne() - baselineReceipt.getExportGasPricePerTonne();
+    double liquidProductPriceDelta = candidateReceipt.getLiquidProductPricePerTonne()
+        - baselineReceipt.getLiquidProductPricePerTonne();
+    double exportGasPriceDelta = candidateReceipt.getExportGasPricePerTonne()
+        - baselineReceipt.getExportGasPricePerTonne();
     double feedCostDelta = candidateReceipt.getFeedCostPerTonne() - baselineReceipt.getFeedCostPerTonne();
     double liquidProductContribution = liquidProductRate * liquidProductPriceDelta;
     double exportGasContribution = exportGasRate * exportGasPriceDelta;
     double feedCostContribution = -feedRate * feedCostDelta;
     double attributedMarginDelta = liquidProductContribution + exportGasContribution + feedCostContribution;
-    double totalProductValueDelta =
-        candidateReceipt.getTotalProductValuePerHour() - baselineReceipt.getTotalProductValuePerHour();
-    double totalVariableCostDelta =
-        candidateReceipt.getTotalVariableCostPerHour() - baselineReceipt.getTotalVariableCostPerHour();
-    double screeningMarginDelta =
-        candidateReceipt.getScreeningMarginPerHour() - baselineReceipt.getScreeningMarginPerHour();
+    double totalProductValueDelta = candidateReceipt.getTotalProductValuePerHour()
+        - baselineReceipt.getTotalProductValuePerHour();
+    double totalVariableCostDelta = candidateReceipt.getTotalVariableCostPerHour()
+        - baselineReceipt.getTotalVariableCostPerHour();
+    double screeningMarginDelta = candidateReceipt.getScreeningMarginPerHour()
+        - baselineReceipt.getScreeningMarginPerHour();
     double feedCostPerHourDelta = candidateReceipt.getFeedCostPerHour() - baselineReceipt.getFeedCostPerHour();
-    double liquidProductValueDelta =
-        candidateReceipt.getLiquidProductValuePerHour() - baselineReceipt.getLiquidProductValuePerHour();
-    double exportGasValueDelta =
-        candidateReceipt.getExportGasValuePerHour() - baselineReceipt.getExportGasValuePerHour();
+    double liquidProductValueDelta = candidateReceipt.getLiquidProductValuePerHour()
+        - baselineReceipt.getLiquidProductValuePerHour();
+    double exportGasValueDelta = candidateReceipt.getExportGasValuePerHour()
+        - baselineReceipt.getExportGasValuePerHour();
     double productValueResidual = totalProductValueDelta - liquidProductValueDelta - exportGasValueDelta;
     double variableCostResidual = totalVariableCostDelta - feedCostPerHourDelta;
     double screeningMarginResidual = screeningMarginDelta - totalProductValueDelta + totalVariableCostDelta;
     double attributionResidual = screeningMarginDelta - attributedMarginDelta;
 
     if (!allFinite(feedRate, liquidProductRate, exportGasRate, liquidProductPriceDelta, exportGasPriceDelta,
-        feedCostDelta, liquidProductContribution, exportGasContribution, feedCostContribution,
-        attributedMarginDelta, totalProductValueDelta, totalVariableCostDelta, screeningMarginDelta,
-        productValueResidual, variableCostResidual, screeningMarginResidual, attributionResidual)
-        || Math.abs(productValueResidual) > CLOSURE_TOLERANCE
-        || Math.abs(variableCostResidual) > CLOSURE_TOLERANCE
-        || Math.abs(screeningMarginResidual) > CLOSURE_TOLERANCE
-        || Math.abs(attributionResidual) > CLOSURE_TOLERANCE) {
+        feedCostDelta, liquidProductContribution, exportGasContribution, feedCostContribution, attributedMarginDelta,
+        totalProductValueDelta, totalVariableCostDelta, screeningMarginDelta, productValueResidual,
+        variableCostResidual, screeningMarginResidual, attributionResidual)
+        || Math.abs(productValueResidual) > CLOSURE_TOLERANCE || Math.abs(variableCostResidual) > CLOSURE_TOLERANCE
+        || Math.abs(screeningMarginResidual) > CLOSURE_TOLERANCE || Math.abs(attributionResidual) > CLOSURE_TOLERANCE) {
       throw new IllegalArgumentException("scenarios do not define a closed finite economics delta receipt");
     }
 
     return new RefineryHydrotreatingSulfurNitrogenEconomicsScenarioDeltaReceipt(baselineReceipt, candidateReceipt,
-        liquidProductPriceDelta, exportGasPriceDelta, feedCostDelta, liquidProductContribution,
-        exportGasContribution, feedCostContribution, attributedMarginDelta, totalProductValueDelta,
-        totalVariableCostDelta, screeningMarginDelta, productValueResidual, variableCostResidual,
-        screeningMarginResidual, attributionResidual);
+        liquidProductPriceDelta, exportGasPriceDelta, feedCostDelta, liquidProductContribution, exportGasContribution,
+        feedCostContribution, attributedMarginDelta, totalProductValueDelta, totalVariableCostDelta,
+        screeningMarginDelta, productValueResidual, variableCostResidual, screeningMarginResidual, attributionResidual);
   }
 
   /**
