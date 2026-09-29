@@ -346,16 +346,20 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
     double zLK_F = zFeed[lkIdx];
     double zHK_F = zFeed[hkIdx];
     double B_over_D = computeBottomsToDistillateRatio(zFeed, alpha, numComponents, lkIdx, hkIdx);
-    double xHK_distillate = xHK_D * zHK_F;
-    double xLK_bottoms = xLK_B * zLK_F;
+    // Convert key amounts per feed mole to normalized product mole fractions.
+    double distillateFraction = 1.0 / (1.0 + B_over_D);
+    double bottomsFraction = B_over_D * distillateFraction;
+    double xHK_distillate = xHK_D * zHK_F / distillateFraction;
+    double xLK_bottoms = xLK_B * zLK_F / bottomsFraction;
 
     double kirkbrideRatio = 0.0;
     if (xLK_bottoms > 1.0e-15 && B_over_D > 1.0e-15) {
-      kirkbrideRatio = Math.pow((zHK_F / zLK_F) * (xLK_bottoms / xHK_distillate) * (B_over_D * B_over_D), 0.206);
+      // Kirkbride: N_rectifying / N_stripping; the composition ratio is squared.
+      double compositionRatio = xLK_bottoms / xHK_distillate;
+      kirkbrideRatio = Math.pow((zHK_F / zLK_F) * compositionRatio * compositionRatio * B_over_D, 0.206);
     }
 
-    double nRectifying = nActual / (1.0 + kirkbrideRatio);
-    double nStripping = nActual - nRectifying;
+    double nRectifying = nActual * kirkbrideRatio / (1.0 + kirkbrideRatio);
     feedTrayNumber = (int) Math.round(nRectifying) + 1;
 
     // ============================
@@ -712,7 +716,8 @@ public class ShortcutDistillationColumn extends ProcessEquipmentBaseClass implem
   }
 
   /**
-   * Get the optimal feed tray number from the top.
+   * Get the estimated feed tray number, one-based from the top. The Kirkbride rectifying-to-stripping stage ratio
+   * partitions the Gilliland stage count; the returned tray is the rounded rectifying count plus one.
    *
    * @return feed tray number
    */
