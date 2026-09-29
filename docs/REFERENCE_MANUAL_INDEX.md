@@ -147,6 +147,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | **Fluid Classification** | [docs/thermo/fluid_classification.md](thermo/fluid_classification.md)         | **Whitson methodology: FluidClassifier, ReservoirFluidType, GOR/C7+ classification**       |
 | **Component List**       | [docs/thermo/component_list.md](thermo/component_list.md)                     | **Complete searchable list of all ~150+ components with CAS numbers and EoS availability** |
 | Component Database       | [docs/thermo/component_database_guide.md](thermo/component_database_guide.md) | Component properties and database                                                          |
+| Pure-water Henry Database | [docs/thermo/henry_water_database.md](thermo/henry_water_database.md) | Database-backed pure-water Henry coefficients, provenance, units, and validity limits |
 | Component Package        | [docs/thermo/component/README.md](thermo/component/README.md)                       | Component class documentation                                                              |
 | Mathematical Models      | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md)           | Underlying mathematical models                                                             |
 
@@ -1262,7 +1263,5 @@ badges; version history and merge dates remain available in Git.
 8. **Process Serialization**: See [Chapter 23](simulation/process_serialization.md) for save/load
 
 ---
-
-- [Pure-water Henry database](thermo/henry_water_database.md)
 
 *Curated index entries are validated against repository source paths by CI.*
