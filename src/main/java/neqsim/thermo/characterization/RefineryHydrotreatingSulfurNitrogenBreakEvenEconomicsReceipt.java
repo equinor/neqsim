@@ -80,8 +80,7 @@ public final class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt 
         .getProductDistributionReceipt();
     double feedRate = intensity.getFeedMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
     double liquidProductRate = intensity.getLiquidProductMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
-    double exportGasRate = distribution.getThroughputBalance().getExportGasMassFlowKgPerHour()
-        / KILOGRAMS_PER_TONNE;
+    double exportGasRate = distribution.getThroughputBalance().getExportGasMassFlowKgPerHour() / KILOGRAMS_PER_TONNE;
     if (!allFinitePositive(feedRate, liquidProductRate, exportGasRate)) {
       throw new IllegalArgumentException("qualified feed, liquid-product, and export-gas rates must be positive");
     }
@@ -92,8 +91,7 @@ public final class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt 
         - screeningEconomicsReceipt.getLiquidProductValuePerHour()) / exportGasRate;
     double breakEvenFeedCost = (screeningEconomicsReceipt.getTotalProductValuePerHour()
         - screeningEconomicsReceipt.getOperatingCostPerHour()) / feedRate;
-    double liquidProductDelta = breakEvenLiquidProductPrice
-        - screeningEconomicsReceipt.getLiquidProductPricePerTonne();
+    double liquidProductDelta = breakEvenLiquidProductPrice - screeningEconomicsReceipt.getLiquidProductPricePerTonne();
     double exportGasDelta = breakEvenExportGasPrice - screeningEconomicsReceipt.getExportGasPricePerTonne();
     double feedCostDelta = breakEvenFeedCost - screeningEconomicsReceipt.getFeedCostPerTonne();
     double liquidProductSensitivity = liquidProductRate;
@@ -107,8 +105,7 @@ public final class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt 
     if (!allFinite(breakEvenLiquidProductPrice, breakEvenExportGasPrice, breakEvenFeedCost, liquidProductDelta,
         exportGasDelta, feedCostDelta, liquidProductSensitivity, exportGasSensitivity, feedCostSensitivity,
         liquidProductResidual, exportGasResidual, feedCostResidual)
-        || Math.abs(liquidProductResidual) > CLOSURE_TOLERANCE
-        || Math.abs(exportGasResidual) > CLOSURE_TOLERANCE
+        || Math.abs(liquidProductResidual) > CLOSURE_TOLERANCE || Math.abs(exportGasResidual) > CLOSURE_TOLERANCE
         || Math.abs(feedCostResidual) > CLOSURE_TOLERANCE) {
       throw new IllegalArgumentException("inputs do not define a closed finite break-even economics receipt");
     }
