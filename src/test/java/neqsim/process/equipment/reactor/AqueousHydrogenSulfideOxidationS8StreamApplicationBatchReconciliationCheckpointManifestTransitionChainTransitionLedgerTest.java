@@ -32,9 +32,8 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   @Test
   void testOrderedLedgerClosesAggregatesAndEndpoints() {
     LedgerFixtures fixtures = ledgerFixtures("chain-A", "manifest-A");
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
-            .create("ledger-A", Arrays.asList(fixtures.firstReceipt, fixtures.secondReceipt));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
+        .create("ledger-A", Arrays.asList(fixtures.firstReceipt, fixtures.secondReceipt));
 
     assertEquals("SHA-256", ledger.getDigestAlgorithm());
     assertEquals(
@@ -46,20 +45,20 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(2, ledger.getTransitionCount());
     assertEquals(fixtures.firstReceipt.getPriorChainDigestHex(), ledger.getFirstPriorChainDigestHex());
     assertEquals(fixtures.secondReceipt.getCandidateChainDigestHex(), ledger.getFinalCandidateChainDigestHex());
-    assertEquals(fixtures.firstReceipt.getPriorFinalManifestDigestHex(),
-        ledger.getFirstPriorFinalManifestDigestHex());
+    assertEquals(fixtures.firstReceipt.getPriorFinalManifestDigestHex(), ledger.getFirstPriorFinalManifestDigestHex());
     assertEquals(fixtures.secondReceipt.getCandidateFinalManifestDigestHex(),
         ledger.getFinalCandidateFinalManifestDigestHex());
-    assertEquals(fixtures.firstReceipt.getAddedTransitionCount()
-        + fixtures.secondReceipt.getAddedTransitionCount(), ledger.getAddedTransitionCount());
-    assertEquals(fixtures.firstReceipt.getAddedStrictAppendTransitionCount()
-        + fixtures.secondReceipt.getAddedStrictAppendTransitionCount(),
+    assertEquals(fixtures.firstReceipt.getAddedTransitionCount() + fixtures.secondReceipt.getAddedTransitionCount(),
+        ledger.getAddedTransitionCount());
+    assertEquals(
+        fixtures.firstReceipt.getAddedStrictAppendTransitionCount()
+            + fixtures.secondReceipt.getAddedStrictAppendTransitionCount(),
         ledger.getAddedStrictAppendTransitionCount());
     assertEquals(fixtures.firstReceipt.getAddedUnchangedTransitionCount()
-        + fixtures.secondReceipt.getAddedUnchangedTransitionCount(),
-        ledger.getAddedUnchangedTransitionCount());
-    assertEquals(fixtures.firstReceipt.getAddedReconciliationCount()
-        + fixtures.secondReceipt.getAddedReconciliationCount(), ledger.getAddedReconciliationCount());
+        + fixtures.secondReceipt.getAddedUnchangedTransitionCount(), ledger.getAddedUnchangedTransitionCount());
+    assertEquals(
+        fixtures.firstReceipt.getAddedReconciliationCount() + fixtures.secondReceipt.getAddedReconciliationCount(),
+        ledger.getAddedReconciliationCount());
     assertEquals(fixtures.firstReceipt.getAddedEntryCount() + fixtures.secondReceipt.getAddedEntryCount(),
         ledger.getAddedEntryCount());
     assertTrue(
@@ -91,17 +90,15 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   @Test
   void testImmutabilitySerializationAndIdentityBinding() throws Exception {
     LedgerFixtures fixtures = ledgerFixtures("chain-A", "manifest-A");
-    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> receipts =
-        Arrays.asList(fixtures.firstReceipt, fixtures.secondReceipt);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
-            .create("ledger-A", receipts);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result restored =
-        serializeLedger(ledger);
+    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> receipts = Arrays
+        .asList(fixtures.firstReceipt, fixtures.secondReceipt);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result ledger = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger
+        .create("ledger-A", receipts);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result restored = serializeLedger(
+        ledger);
 
     assertNotSame(ledger.getTransitions(), ledger.getTransitions());
-    assertThrows(UnsupportedOperationException.class,
-        () -> ledger.getTransitions().add(fixtures.firstReceipt));
+    assertThrows(UnsupportedOperationException.class, () -> ledger.getTransitions().add(fixtures.firstReceipt));
     byte[] digest = ledger.getLedgerDigestBytes();
     assertNotSame(digest, ledger.getLedgerDigestBytes());
     digest[0] ^= 0x01;
@@ -117,9 +114,8 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   /** Verify internal count accumulation fails closed on integer overflow. */
   @Test
   void testCountOverflowFailsClosed() throws Exception {
-    Method addExact =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.class
-            .getDeclaredMethod("addExact", int.class, int.class, String.class);
+    Method addExact = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.class
+        .getDeclaredMethod("addExact", int.class, int.class, String.class);
     addExact.setAccessible(true);
     InvocationTargetException exception = assertThrows(InvocationTargetException.class,
         () -> addExact.invoke(null, Integer.MAX_VALUE, 1, "Count"));
@@ -140,30 +136,22 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
         manifestIdentifier, first, second);
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifest.Result state2 = manifest(
         manifestIdentifier, first, second, third);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result firstAppend =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-            .create(state0, state1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result unchanged =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-            .create(state1, state1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result secondAppend =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
-            .create(state1, state2);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain0 =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-            .create(chainIdentifier, Collections.singletonList(firstAppend));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain1 =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-            .create(chainIdentifier, Arrays.asList(firstAppend, unchanged));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain2 =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
-            .create(chainIdentifier, Arrays.asList(firstAppend, unchanged, secondAppend));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result firstReceipt =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-            .create(chain0, chain1);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result secondReceipt =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
-            .create(chain1, chain2);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result firstAppend = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
+        .create(state0, state1);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result unchanged = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
+        .create(state1, state1);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition.Result secondAppend = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransition
+        .create(state1, state2);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain0 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
+        .create(chainIdentifier, Collections.singletonList(firstAppend));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain1 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
+        .create(chainIdentifier, Arrays.asList(firstAppend, unchanged));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain.Result chain2 = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChain
+        .create(chainIdentifier, Arrays.asList(firstAppend, unchanged, secondAppend));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result firstReceipt = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+        .create(chain0, chain1);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result secondReceipt = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition
+        .create(chain1, chain2);
     return new LedgerFixtures(firstReceipt, secondReceipt);
   }
 
@@ -185,40 +173,32 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   /** Create one reconciled stream-application result. */
   private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.Result reconciliation(
       Fixture fixture) {
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request previewRequest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request.create(fixture.plan,
-            fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.Result candidate =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.applyToClone(fixture.plan,
-            fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request receiptRequest =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request.create(fixture.plan,
-            fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream,
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request previewRequest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Request
+        .create(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.Result candidate = AqueousHydrogenSulfideOxidationS8StreamApplicationPreview
+        .applyToClone(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream);
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request receiptRequest = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Request
+        .create(fixture.plan, fixture.targetIdentifier, fixture.applicationKey, fixture.priorStream,
             candidate.getCandidateStream());
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview
-            .applyToClones(Collections.singletonList(previewRequest));
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result receipt =
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
-            .verify(Collections.singletonList(receiptRequest));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview.Result preview = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchPreview
+        .applyToClones(Collections.singletonList(previewRequest));
+    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt.Result receipt = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReceipt
+        .verify(Collections.singletonList(receiptRequest));
     return AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliation.reconcile(preview, receipt);
   }
 
   /** Build one stream-application fixture. */
   private static Fixture fixture(String targetIdentifier, String applicationKey, double priorS8AmountMol,
       boolean append) {
-    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior =
-        ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
+    AqueousHydrogenSulfideOxidationS8TransferLedger.Result prior = ledger(batch(4.0, 0.25, "batch-0", "segment-0"));
     AqueousHydrogenSulfideOxidationS8TransferLedger.Result candidate = append
         ? ledger(batch(4.0, 0.25, "batch-0", "segment-0"), batch(6.0, 0.50, "batch-1", "segment-1"))
         : prior;
-    AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result ledgerTransition =
-        AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.create(prior, candidate);
-    AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan =
-        AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.create(prior, candidate, ledgerTransition,
-            targetIdentifier, applicationKey, priorS8AmountMol);
-    return new Fixture(plan, targetIdentifier, applicationKey,
-        stream("prior-" + targetIdentifier, priorS8AmountMol));
+    AqueousHydrogenSulfideOxidationS8TransferLedgerTransition.Result ledgerTransition = AqueousHydrogenSulfideOxidationS8TransferLedgerTransition
+        .create(prior, candidate);
+    AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan.Result plan = AqueousHydrogenSulfideOxidationS8ComponentAdditionPlan
+        .create(prior, candidate, ledgerTransition, targetIdentifier, applicationKey, priorS8AmountMol);
+    return new Fixture(plan, targetIdentifier, applicationKey, stream("prior-" + targetIdentifier, priorS8AmountMol));
   }
 
   /** Create a stream containing S8. */
@@ -240,20 +220,16 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   /** Create one qualified S8 transfer batch. */
   private static AqueousHydrogenSulfideOxidationS8TransferBatch.Result batch(double durationHours,
       double allocationFraction, String batchIdentifier, String idempotencyKey) {
-    AqueousHydrogenSulfideOxidationTrajectory.Segment segment =
-        new AqueousHydrogenSulfideOxidationTrajectory.Segment(durationHours, 298.15, 8.0, 0.723, 250.0e-6);
-    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult =
-        AqueousHydrogenSulfideOxidationTrajectory.advance(INITIAL_TOTAL_SULFIDE_MOLALITY,
-            Collections.singletonList(segment)).getSegmentResults().get(0);
-    AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation =
-        AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(
-            AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
+    AqueousHydrogenSulfideOxidationTrajectory.Segment segment = new AqueousHydrogenSulfideOxidationTrajectory.Segment(
+        durationHours, 298.15, 8.0, 0.723, 250.0e-6);
+    AqueousHydrogenSulfideOxidationTrajectory.SegmentResult segmentResult = AqueousHydrogenSulfideOxidationTrajectory
+        .advance(INITIAL_TOTAL_SULFIDE_MOLALITY, Collections.singletonList(segment)).getSegmentResults().get(0);
+    AqueousHydrogenSulfideOxidationElementalSulfurAllocation.Result allocation = AqueousHydrogenSulfideOxidationElementalSulfurAllocation
+        .allocate(AqueousHydrogenSulfideOxidationWaterInventoryProjection.project(segmentResult, WATER_INVENTORY_KG),
             allocationFraction, ALLOCATION_BASIS);
-    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer =
-        AqueousHydrogenSulfideOxidationS8Transfer.create(allocation,
-            AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
-    return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer),
-        batchIdentifier);
+    AqueousHydrogenSulfideOxidationS8Transfer.Result transfer = AqueousHydrogenSulfideOxidationS8Transfer
+        .create(allocation, AqueousHydrogenSulfideOxidationS8Transfer.FitPath.NOMINAL, PRODUCT_BASIS, idempotencyKey);
+    return AqueousHydrogenSulfideOxidationS8TransferBatch.create(Collections.singletonList(transfer), batchIdentifier);
   }
 
   /** Serialize and restore one ledger result. */
