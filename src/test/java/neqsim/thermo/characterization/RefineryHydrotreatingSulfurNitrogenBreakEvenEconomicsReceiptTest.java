@@ -15,8 +15,8 @@ class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceiptTest {
 
   @Test
   void qualifiesPublicBigHillBreakEvenEconomics() {
-    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening = screening(1000.0, 1.0, 100.0,
-        600.0, 100.0, 450.0);
+    RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening = screening(1000.0, 1.0, 100.0, 600.0, 100.0,
+        450.0);
     RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt receipt = RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt
         .calculate(screening);
 
@@ -54,8 +54,8 @@ class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceiptTest {
     RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt doubled = RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt
         .calculate(screening(2000.0, 2.0, 100.0, 600.0, 100.0, 450.0));
 
-    assertEquals(base.getBreakEvenLiquidProductPricePerTonne(),
-        doubled.getBreakEvenLiquidProductPricePerTonne(), 1.0e-9);
+    assertEquals(base.getBreakEvenLiquidProductPricePerTonne(), doubled.getBreakEvenLiquidProductPricePerTonne(),
+        1.0e-9);
     assertEquals(base.getBreakEvenExportGasPricePerTonne(), doubled.getBreakEvenExportGasPricePerTonne(), 1.0e-9);
     assertEquals(base.getBreakEvenFeedCostPerTonne(), doubled.getBreakEvenFeedCostPerTonne(), 1.0e-9);
     assertEquals(2.0 * base.getLiquidProductMarginSensitivityTonnesPerHour(),
@@ -72,16 +72,16 @@ class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceiptTest {
         () -> RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceipt.calculate(null));
   }
 
-  private static RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening(
-      double feedMassFlowKgPerHour, double sensibleHeatingDutyMegaWatt, double carbonPricePerTonneCo2e,
-      double liquidProductPricePerTonne, double exportGasPricePerTonne, double feedCostPerTonne) {
+  private static RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt screening(double feedMassFlowKgPerHour,
+      double sensibleHeatingDutyMegaWatt, double carbonPricePerTonneCo2e, double liquidProductPricePerTonne,
+      double exportGasPricePerTonne, double feedCostPerTonne) {
     RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt net = RefineryHydrotreatingSulfurNitrogenNetOperatingReceipt
         .calculate(hydrogenReceipt(feedMassFlowKgPerHour),
             heatCredit(feedMassFlowKgPerHour, sensibleHeatingDutyMegaWatt), carbonPricePerTonneCo2e);
     RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt intensity = RefineryHydrotreatingSulfurNitrogenNetProductIntensityReceipt
         .calculate(net);
-    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity,
-        liquidProductPricePerTonne, exportGasPricePerTonne, feedCostPerTonne);
+    return RefineryHydrotreatingSulfurNitrogenScreeningEconomicsReceipt.calculate(intensity, liquidProductPricePerTonne,
+        exportGasPricePerTonne, feedCostPerTonne);
   }
 
   private static RefineryHydrotreatingSulfurNitrogenOperatingReceipt hydrogenReceipt(double feedMassFlowKgPerHour) {
@@ -113,8 +113,7 @@ class RefineryHydrotreatingSulfurNitrogenBreakEvenEconomicsReceiptTest {
     RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance utility = RefineryHydrotreatingSulfurNitrogenFiredHeaterUtilityBalance
         .calculate(thermal, 0.85, 50.0, 0.40, 3.0);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance combustion = RefineryHydrotreatingSulfurNitrogenFiredHeaterCombustionBalance
-        .calculate(utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095,
-            0.15);
+        .calculate(utility, METHANE_CARBON_MASS_FRACTION, METHANE_HYDROGEN_MASS_FRACTION, 0.0, 0.0, 0.0, 0.2095, 0.15);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance stack = RefineryHydrotreatingSulfurNitrogenFiredHeaterStackLossBalance
         .calculate(combustion, 473.15, 298.15, 34.0);
     RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance recovery = RefineryHydrotreatingSulfurNitrogenFiredHeaterHeatRecoveryBalance
