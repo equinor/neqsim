@@ -325,7 +325,13 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     outStream[1].displayResult();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Sets the target CO2-to-amine loading used by the legacy fixed-point calculation.
+   *
+   * <p>This parameter is retained under the historical interface name, but it is not a tray or stage efficiency.</p>
+   *
+   * @param eff target dimensionless loading ratio
+   */
   @Override
   public void setAproachToEquilibrium(double eff) {
     this.absorptionEfficiency = eff;
