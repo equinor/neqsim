@@ -126,6 +126,15 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"system", "phase"}) {
+      for (String state : new String[] {"r1-300-30", "r1-300-800", "r1-500-30", "r2-300-0035", "r2-700-0035",
+          "r2-700-300"}) {
+        for (String property : new String[] {"molar-density", "mass-density", "z", "internal-energy", "enthalpy",
+            "entropy", "gibbs-energy", "cp", "sound-speed"}) {
+          ids.add("water-if97-" + fixture + "-" + state + "-" + property);
+        }
+      }
+    }
     return ids;
   }
 

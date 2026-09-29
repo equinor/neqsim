@@ -240,9 +240,11 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   public Standard_ISO6976 getISO6976(String unit, double refTVolume, double refTCombustion);
 
   /**
-   * LCV.
+   * Return the ISO 6976:1995 inferior calorific value on the legacy volume basis. The real-gas volume reference is 0 C
+   * at reference pressure; combustion is at 15.55 C. This is not a 15 C standard-volume value. For energy rates use a
+   * molar calorific value from {@link #getISO6976(String, double, double)} multiplied by molar flow.
    *
-   * @return a double
+   * @return inferior calorific value in J/m3 at 0 C
    */
   public double LCV();
 

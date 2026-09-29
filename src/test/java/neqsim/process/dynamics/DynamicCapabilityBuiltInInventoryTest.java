@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.equipment.adsorber.AdsorptionBed;
@@ -46,6 +47,7 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
 
   /** Every built-in ProcessElement transient override must be mapped or cite an existing explicit ADR. */
   @Test
+  @Tag("slow")
   public void everyBuiltInTransientOverrideIsMappedOrHasAdr() throws Exception {
     assertTrue(Files.isDirectory(PROCESS_SOURCE_ROOT), "production process source tree is missing");
 

@@ -2,6 +2,7 @@ package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -76,6 +77,7 @@ class GeneralCapabilityRunnerTest {
   }
 
   @Test
+  @Tag("slow")
   void testSearchClampsLimitAndReturnsDeterministicRoutingMetadata() {
     JsonObject first = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();
     JsonObject second = JsonParser.parseString(GeneralCapabilityRunner.search("sulfur", 1000)).getAsJsonObject();

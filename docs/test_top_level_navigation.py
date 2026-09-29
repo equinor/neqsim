@@ -128,6 +128,26 @@ def test_main_landing_routes_to_foundational_package_guides() -> None:
 
 
 
+def test_reference_index_places_henry_database_with_component_guides() -> None:
+    text = REFERENCE_INDEX.read_text(encoding="utf-8")
+    marker = (
+        "| Pure-water Henry Database | "
+        "[docs/thermo/henry_water_database.md](thermo/henry_water_database.md) |"
+    )
+    target = DOCS / "thermo" / "henry_water_database.md"
+
+    assert text.count(marker) == 1
+    assert (
+        text.index("### Chapter 5: Fluid Creation & Components")
+        < text.index(marker)
+        < text.index("### Chapter 6: Equations of State")
+    )
+    assert target.is_file()
+
+    navigation_tips = text.index("## Navigation Tips")
+    assert "thermo/henry_water_database.md" not in text[navigation_tips:]
+
+
 def _layout_routes(text: str) -> tuple[str, ...]:
     return tuple(
         re.findall(r'href="{{ \'([^\']+)\' \| relative_url }}"', text)
@@ -300,6 +320,7 @@ def load_tests(
             test_top_level_landing_metadata_and_rendered_titles,
             test_top_level_landing_relative_targets_resolve,
             test_main_landing_routes_to_foundational_package_guides,
+            test_reference_index_places_henry_database_with_component_guides,
             test_global_navigation_is_task_oriented_and_complete,
             test_global_navigation_script_synchronizes_accessible_state,
             test_sis_navigation_describes_screening_and_review_boundary,

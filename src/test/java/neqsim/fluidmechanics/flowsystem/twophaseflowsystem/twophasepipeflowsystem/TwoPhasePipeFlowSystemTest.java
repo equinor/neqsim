@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
@@ -636,6 +637,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithBeggsAndBrills() {
     // Create identical fluid for both simulations
     double temperature = 293.15; // 20C
@@ -783,6 +785,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithTwoFluidPipe() {
     // Use same conditions as the Beggs-Brill comparison
     double temperature = 293.15; // 20C
@@ -949,6 +952,7 @@ public class TwoPhasePipeFlowSystemTest {
    */
   // @Disabled("Long-running comparison test")
   @Test
+  @Tag("slow")
   void testCompareWithTransientPipe() {
     // Use same conditions as other comparisons
     double temperature = 293.15; // 20C

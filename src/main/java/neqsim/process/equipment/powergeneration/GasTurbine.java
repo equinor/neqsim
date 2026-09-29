@@ -305,10 +305,9 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This
     // gives a realistic driver power out of the box for screening studies, independent of the
     // detailed air-compressor / expander pressure-ratio assumptions of the Brayton cycle above.
-    // Stream.LCV() is a volumetric heating value (J/Sm3), so it must be multiplied by the volumetric
-    // standard flow (Sm3/s) to obtain the combustion heat in watts.
+    // Use the legacy 15.55 C combustion reference on a molar basis.
     if (thermalEfficiency > 0.0) {
-      double fuelHeat = inStream.LCV() * inStream.getFlowRate("Sm3/sec");
+      double fuelHeat = getFuelMolarLCV() * inStream.getFlowRate("mole/sec");
       power = thermalEfficiency * fuelHeat;
       this.heat = fuelHeat - power;
     }
@@ -320,10 +319,10 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    * Inverse (power-demand) run: size the fuel flow so the turbine delivers {@link #requiredPower}.
    *
    * <p>
-   * The fuel volumetric flow is computed from the fuel lower heating value (LCV, J/Sm3) and the simple-cycle
-   * {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[Sm3/s] = fuelHeat / LCV. The inlet
-   * fuel stream flow is set to this value, so the fuel consumption always matches the required load. The remaining fuel
-   * heat is reported as exhaust heat.
+   * The fuel molar flow is computed from the ISO 6976:1995 lower heating value (J/mol, combustion at 15.55 C) and the
+   * simple-cycle {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[mol/s] = fuelHeat /
+   * LCV. The inlet fuel stream flow is set to this value, so the fuel consumption always matches the required load. The
+   * remaining fuel heat is reported as exhaust heat.
    * </p>
    *
    * @param id the calculation identifier
@@ -342,10 +341,10 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       inStream.setFlowRate(1.0, "mole/sec");
     }
     inStream.run(id);
-    double lcvVolumetric = inStream.LCV(); // J/Sm3
+    double lcvMolar = getFuelMolarLCV(); // J/mol
     double fuelHeat = requiredPower / thermalEfficiency; // W
-    double reqStdFlow = lcvVolumetric > 0.0 ? fuelHeat / lcvVolumetric : 0.0; // Sm3/s
-    inStream.setFlowRate(reqStdFlow, "Sm3/sec");
+    double requiredMolarFlow = lcvMolar > 0.0 ? fuelHeat / lcvMolar : 0.0; // mol/s
+    inStream.setFlowRate(requiredMolarFlow, "mole/sec");
     inStream.run(id);
     thermoSystem = inStream.getThermoSystem().clone();
     power = requiredPower;
@@ -354,6 +353,17 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     outStream.setCalculationIdentifier(id);
     publishEnergyPorts();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Calculate fuel LCV without imposing a metering-volume reference.
+   *
+   * @return ISO 6976:1995 lower calorific value in J/mol, combustion at 15.55 C
+   */
+  private double getFuelMolarLCV() {
+    Standard_ISO6976 calorificValue = inStream.getISO6976("molar", 0.0, 15.55);
+    calorificValue.calculate();
+    return calorificValue.getValue("InferiorCalorificValue") * 1000.0;
   }
 
   /**

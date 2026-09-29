@@ -84,7 +84,7 @@ required workflow before engineering reuse. For a supported starting point, use 
 | Example | Build status | Capability |
 |---------|---------------|------------|
 | [AcousticCompressibilityConversionExample](AcousticCompressibilityConversionExample.java) | **Build-verified source** | Java example |
-| [ChemicalReactionEquilibriumExample](ChemicalReactionEquilibriumExample.java) | **Build-verified source** | Water-gas-shift reactive-equilibrium quickstart |
+| [ChemicalReactionEquilibriumExample](ChemicalReactionEquilibriumExample.java) | **Build-verified source** | Java example |
 | [EclipseE300ExportImportExample](EclipseE300ExportImportExample.java) | **Build-verified source** | Eclipse E300 fluid export and import workflow |
 | [FlowRegimeDebug](FlowRegimeDebug.java) | **Build-verified source** | Flow-regime diagnostic calculations |
 | [FlowRegimeDetectionExample](FlowRegimeDetectionExample.java) | **Build-verified source** | Flow-regime detection across operating cases |

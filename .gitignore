@@ -149,3 +149,7 @@ neqsim_profile.jfr
 .release-run-status.json
 benchmark_results.txt
 .vscode/settings.json
+
+
+# Database backup copies are retained in Git history, not as runtime resources.
+/src/main/resources/**/*.bak

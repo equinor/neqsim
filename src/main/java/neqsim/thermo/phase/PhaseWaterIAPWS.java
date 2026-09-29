@@ -59,8 +59,9 @@ public class PhaseWaterIAPWS extends PhaseEos {
     this.molarVolume = vMolar;
     this.phaseVolume = vMolar * numberOfMolesInPhase;
 
-    // Set phase type based on density
-    if (vSpec < 0.01) {
+    // Keep phase publication consistent with the Region 1/2 boundary used by
+    // Iapws_if97 for all property calculations.
+    if (temperature <= Iapws_if97.T4_p(pMPa)) {
       setType(PhaseType.AQUEOUS);
     } else {
       setType(PhaseType.GAS);
@@ -127,6 +128,28 @@ public class PhaseWaterIAPWS extends PhaseEos {
   @Override
   public double getSoundSpeed() {
     return soundSpeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDensity() {
+    return getMolarMass() / getMolarVolume();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDensity(String unit) {
+    double density = getDensity();
+    switch (unit) {
+    case "kg/m3":
+      return density;
+    case "mol/m3":
+      return density / getMolarMass();
+    case "lb/ft3":
+      return density * 0.0624279606;
+    default:
+      throw new IllegalArgumentException("Unit not supported: " + unit);
+    }
   }
 
   /** {@inheritDoc} */

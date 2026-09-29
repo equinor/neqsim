@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.JsonElement;
@@ -19,10 +20,12 @@ import org.junit.jupiter.api.Test;
 class HenryWaterDatabaseTest {
   /** Checks every imported species against the source molality/pressure convention. */
   @Test
-  void importedRowsReproduceSourcesAndDerivatives() {
-    JsonObject source = JsonParser.parseReader(
-        new InputStreamReader(getClass().getResourceAsStream("/data/HenryWaterSource.json"), StandardCharsets.UTF_8))
-        .getAsJsonObject();
+  void importedRowsReproduceSourcesAndDerivatives() throws IOException {
+    JsonObject source;
+    try (InputStreamReader reader = new InputStreamReader(getClass().getResourceAsStream("/data/HenryWaterSource.json"),
+        StandardCharsets.UTF_8)) {
+      source = JsonParser.parseReader(reader).getAsJsonObject();
+    }
     int count = 0;
     for (JsonElement entry : source.getAsJsonArray("rows")) {
       JsonObject row = entry.getAsJsonObject();
@@ -43,7 +46,7 @@ class HenryWaterDatabaseTest {
       }
       count++;
     }
-    assertEquals(76, count);
+    assertEquals(82, count);
   }
 
   /** Missing and overflow placeholders must never look like a measured finite constant. */
@@ -66,6 +69,23 @@ class HenryWaterDatabaseTest {
     assertTrue(Double.isNaN(component.getHenryCoef(298.15)));
     component.setHenryCoefParameter(new double[] {-1000, 0, 0, 0});
     assertTrue(Double.isNaN(component.getHenryCoef(298.15)));
+  }
+
+  /** Exact molecular aliases must reuse, not independently reinterpret, qualified data. */
+  @Test
+  void exactIdentityAliasesReuseQualifiedCorrelations() {
+    String[][] aliases = {{"methanolPVTsim", "methanol"}, {"propanePVTsim", "propane"}, {"ethanolPVTsim", "ethanol"},
+        {"nbutanePVTsim", "n-butane"}};
+    for (String[] names : aliases) {
+      ComponentSrk alias = new ComponentSrk(names[0], 1.0, 1.0, 0);
+      ComponentSrk canonical = new ComponentSrk(names[1], 1.0, 1.0, 0);
+      assertEquals(canonical.getCASnumber(), alias.getCASnumber(), names[0]);
+      assertTrue(alias.hasHenryCorrelation(), names[0]);
+      for (double temperature : new double[] {288.15, 298.15, 308.15}) {
+        assertEquals(canonical.getHenryCoef(temperature), alias.getHenryCoef(temperature), 0.0, names[0]);
+        assertEquals(canonical.getHenryCoefdT(temperature), alias.getHenryCoefdT(temperature), 0.0, names[0]);
+      }
+    }
   }
 
   /** Published gases must be distinct and of the correct physical magnitude. */

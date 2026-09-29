@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
 import neqsim.process.equipment.stream.Stream;
@@ -183,6 +184,7 @@ class TwoFluidPipeEnergyBalanceTest {
 
   @Test
   @DisplayName("transient thermal update keeps the steady state as a fixed point")
+  @Tag("slow")
   void testSteadyTemperatureIsAFixedPointOfTheTransient() {
     SystemInterface fluid = new SystemSrkEos(273.15 + 40.0, 90.0);
     fluid.addComponent("methane", 0.92);

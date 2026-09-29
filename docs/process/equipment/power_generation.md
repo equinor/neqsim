@@ -46,6 +46,14 @@ The power generation package provides equipment models for converting chemical a
 
 The `GasTurbine` class models a simple cycle gas turbine with integrated air compression, combustion, and expansion.
 
+The thermal-efficiency and power-demand modes use ISO 6976:1995 molar LCV
+at the legacy 15.55 °C combustion reference. Energy rate is molar LCV
+(J/mol) times fuel molar flow (mol/s); inverse mode sizes that molar flow.
+This corrects the former pairing of a 0 °C calorific volume with 15 °C
+standard-volume flow. The detailed Brayton-cycle enthalpy calculation retains
+its 0 °C combustion reference. `GasTurbineUnit` already uses mass-basis
+ISO 6976:1995 LCV at 15.55 °C and is unchanged.
+
 ### Class Hierarchy
 
 ```

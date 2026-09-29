@@ -72,9 +72,11 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 704 cases across fifteen system drivers (RK, SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman, Vega and Span-Wagner), direct
-RK/SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, the Gao ammonia
+The catalog has 812 cases across sixteen system drivers (RK, SRK, PR, Wilson, NRTL,
+classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman, Vega, Span-Wagner and
+IAPWS-IF97), direct
+RK/SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, IAPWS-IF97 water through its
+System and exact phase paths, the Gao ammonia
 reference EOS, normal-hydrogen Leachman reference EOS, helium Vega reference EOS and pure-CO2
 Span-Wagner reference EOS through their System and exact phase paths, a component saturation
 adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
@@ -97,6 +99,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Normal hydrogen | CoolProp 7.2.0's Leachman 2009 hydrogen EOS at two forced gas and two forced liquid states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemLeachmanEos` and exact `PhaseLeachmanEos` entry points |
 | Helium | CoolProp 7.2.0's Ortiz Vega 2019 helium EOS at four gas/supercritical states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemVegaEos` and exact `PhaseVegaEos` entry points |
 | Carbon dioxide | CoolProp 7.2.0's Span-Wagner 1996 CO2 EOS at one gas, one liquid and two supercritical states: molar mass, molar/mass density, Z, fugacity coefficient, U/H/S/G, Cv/Cp, sound speed and Joule-Thomson coefficient through `SystemSpanWagnerEos` and exact `PhaseSpanWagnerEos` entry points |
+| Water/steam | Official IAPWS-IF97 Region 1 Table 5 and Region 2 Table 15 verification points: molar/mass density, Z, U/H/S/G, Cp and sound speed through `SystemWaterIF97` and exact `PhaseWaterIAPWS`; density, Z and G are independently derived from the published specific volume and caloric values |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published RK, SRK and PR equations with the declared methane
@@ -182,6 +185,18 @@ and cannot make an incorrect model pass by themselves. Qualification is limited 
 pure CO2 at the four exact single-phase states. Phase equilibrium, saturation,
 transport, mixtures, arbitrary-state behavior and experimental accuracy remain debt.
 
+The IF97 state control reuses one pure-water system across all six official Region 1
+and Region 2 verification points before returning to its initial state. It requires
+the exact `PhaseWaterIAPWS` path, deterministic repeated initialization, refreshed
+density and caloric state, the published liquid/steam region, `H = U + PV`, and
+`G = H - TS`. The official IAPWS values are implementation-verification anchors,
+not experimental fits. [Issue #4055](https://github.com/equinor/neqsim/issues/4055)
+records the discovered factor-100,000 public-density defect, and
+[issue #4056](https://github.com/equinor/neqsim/issues/4056) records the dense Region 2
+phase-label defect. Qualification is limited to the six declared single-phase points
+from the compact Region 1/2 implementation. Cv, fugacity, saturation, Region 3/5,
+flashes, transport, mixtures and arbitrary states remain explicit debt.
+
 The NRTL fixtures independently reconstruct both activity coefficients from the
 Renon-Prausnitz local-composition equation and verify `G^E = RT sum(x_i ln(gamma_i))`.
 The production phase publishes gamma, ln(gamma) and fugacity, and repeated evaluation traverses
@@ -227,9 +242,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (29 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (31 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (101 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (99 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -344,9 +359,17 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   cross-port constants and derivative evaluation rather than experimental model error. These are
   cross-implementation checks of a shared formulation, not independent experimental
   validation, and the stored values were generated before evaluating NeqSim.
+- The [revised IAPWS-IF97 release](https://iapws.org/technical-guidance/release/IF97-Rev)
+  supplies the six Region 1 Table 5 and Region 2 Table 15 verification points. The
+  catalog transcribes `v`, `u`, `h`, `s`, `cp` and sound speed, converts the mass-specific
+  caloric values with NeqSim's declared water molar mass, and independently derives
+  density, `Z` and `G = H - TS`. The `1e-7` implementation tolerances cover only the
+  published tables' rounding. These are official formula-verification values, not
+  experimental validation, and were not refreshed from NeqSim output.
 
 NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
-definitions on 2026-09-24, 2026-09-25 and 2026-09-26, and the NIST AGA8 source on 2026-09-23. Only a few numerical values derived from
+definitions on 2026-09-24, 2026-09-25 and 2026-09-26, the NIST AGA8 source on 2026-09-23,
+and the revised IAPWS-IF97 release on 2026-09-27. Only a few numerical values derived from
 the identified correlations are included, not a redistributed NIST database or
 compilation. Source compilation rights remain with the source; the authored fixtures
 and analytical controls follow the repository's Apache-2.0 license. References are
