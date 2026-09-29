@@ -157,10 +157,10 @@ cy-C9,293-55-0,no_exact_CAS_match_in_source_archive,
 2-E-p-xylene,1758-88-9,estimate_or_other_source_requires_review,? Q X
 nC5-Benzene,538-68-1,imported_local_temperature_expression,? L M Q T V X
 nC6-Benzene,1077-16-3,imported_local_temperature_expression,? L Q T V X
-nC7-Benzene,1078-71-3,literature_candidate_requires_identity_reaction_and_range_review,? L Q V X
+nC7-Benzene,1078-71-3,qualified_reference_point_only,? L Q V X
 nC10-cy-C5,1795-21-7,estimate_or_other_source_requires_review,Q X
-nC8-Benzene,2189-60-8,literature_candidate_requires_identity_reaction_and_range_review,? L Q V X
-nC9-Benzene,1081-77-2,literature_candidate_requires_identity_reaction_and_range_review,? L Q
+nC8-Benzene,2189-60-8,qualified_reference_point_only,? L Q V X
+nC9-Benzene,1081-77-2,qualified_reference_point_only,? L Q
 3-M-4.4-DE-heptane,62198-98-5,estimate_or_other_source_requires_review,Q X
 nC12-cy-C5,5634-30-0,no_exact_CAS_match_in_source_archive,
 nC10-Benzene,104-72-3,qualified_reference_point_only,? L Q V
@@ -333,7 +333,7 @@ MEACOO-,141-43-5,ionic_not_a_neutral_Henry_solute,? M Q
 3-methylnonane,5911-04-6,estimate_or_other_source_requires_review,? Q X
 4-ethylheptane,2216-32-2,estimate_or_other_source_requires_review,? Q X
 4-methyl-1-hexene,3769-23-1,estimate_or_other_source_requires_review,? Q X
-4-methylheptane,589-53-7,literature_candidate_requires_identity_reaction_and_range_review,? L Q X
+4-methylheptane,589-53-7,qualified_reference_point_only,? L Q X
 4-methylnonane,17301-94-9,estimate_or_other_source_requires_review,? Q X
 5-ethyltetralin,42775-75-7,no_exact_CAS_match_in_source_archive,
 5-methyl-3-heptene,13172-91-3,no_exact_CAS_match_in_source_archive,
@@ -345,8 +345,8 @@ MEACOO-,141-43-5,ionic_not_a_neutral_Henry_solute,? M Q
 biphenyl,92-52-4,imported_local_temperature_expression,? L M Q T V X
 butylbenzene,104-51-8,imported_local_temperature_expression,? L M Q T V X
 cis-2-Octene,7642-04-8,estimate_or_other_source_requires_review,Q X
-cis-2-heptene,6443-92-1,literature_candidate_requires_identity_reaction_and_range_review,? L Q X
-cis-2-pentene,627-20-3,literature_candidate_requires_identity_reaction_and_range_review,? L Q V X
+cis-2-heptene,6443-92-1,qualified_reference_point_only,? L Q X
+cis-2-pentene,627-20-3,qualified_reference_point_only,? L Q V X
 cis-3-hexene,13269-52-8,estimate_or_other_source_requires_review,? Q X
 cis-3-octene,14850-22-7,estimate_or_other_source_requires_review,Q X
 cis-4-octene,14850-23-8,estimate_or_other_source_requires_review,? Q X

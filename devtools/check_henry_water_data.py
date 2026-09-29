@@ -15,6 +15,11 @@ import sys
 import zipfile
 
 
+def inherited(row, defaults, key):
+    """Return a row-specific provenance field or its manifest default."""
+    return row.get(key, defaults.get(key))
+
+
 def main():
     """Check all compiled rows and every selected source value."""
     root = Path(__file__).resolve().parents[1]
@@ -124,6 +129,11 @@ def main():
         }
         for row in coverage.values())
     assert dispatched == len(selected), "Coverage/source manifest mismatch"
+    brockbank_names = {
+        "4-methylheptane", "cis-2-pentene", "cis-2-heptene",
+        "nC7-Benzene", "nC8-Benzene", "nC9-Benzene",
+    }
+    reference_counts = {"3673": 0, "3518": 0}
     for name, provenance in reference_points.items():
         assert name not in selected, f"Reference point also dispatched as correlation: {name}"
         assert name in component_rows, f"Reference point component absent from database: {name}"
@@ -131,17 +141,50 @@ def main():
         assert float(component["IONICCHARGE"]) == 0.0, f"Reference point on ion: {name}"
         assert component["CASnumber"] == provenance["cas"], name
         assert coverage[name]["status"] == "qualified_reference_point_only", name
-        assert provenance["reference"] == "3673", name
+        reference = provenance["reference"]
+        assert reference in reference_counts, f"Unexpected reference family: {name}"
+        reference_counts[reference] += 1
+        for field in (
+                "status", "solvent", "convention", "source",
+                "compilation_license", "original_reference",
+                "original_reference_url", "original_reference_rights",
+                "identity_basis", "uncertainty", "temperature_scope"):
+            assert inherited(provenance, reference_manifest, field).strip(), (
+                f"Missing {field}: {name}")
+        assert inherited(provenance, reference_manifest, "status") == (
+            "reference_point_only"), name
+        assert inherited(provenance, reference_manifest, "solvent") == "water", name
+        assert inherited(provenance, reference_manifest, "reference_temperature_K") == 298.15, name
+        assert inherited(provenance, reference_manifest, "reference_pressure_MPa") == 0.1, name
         kh = provenance["Hsbp_mol_kg_atm"]
         assert kh > 0.0 and math.isfinite(kh), name
+        if name in brockbank_names:
+            source_inchikey = provenance["source_inchikey"]
+            assert source_inchikey[:14] == component["InChIKey"][:14], (
+                f"Connectivity identity mismatch: {name}")
+            assert reference == "3518", name
+            assert provenance["original_reference_doi"] == "", name
+            assert inherited(provenance, reference_manifest, "original_reference_url") == (
+                "https://scholarsarchive.byu.edu/etd/3691/"), name
+        else:
+            assert reference == "3673", name
+            assert inherited(provenance, reference_manifest, "original_reference_doi") == (
+                "10.1016/S0016-7037(99)00330-0"), name
         if source_lines is not None:
+            cas_marker = f"! casrn:    {provenance['cas']}"
+            source_index = source_lines.index(cas_marker)
+            identity_block = source_lines[source_index:source_index + 3]
+            if name in brockbank_names:
+                assert any(provenance["source_inchikey"] in line
+                           for line in identity_block), name
             cas = provenance["cas"].replace("-", "_")
             pattern = re.compile(r"Hsbp_+" + cas + r"\s*=\s*([\d.E+\-]+)"
                                  r"\s+!.*type: L, ref: (\S+)")
             matches = [pattern.match(line) for line in source_lines if "EXP(" not in line]
             assert any(match and float(match[1]) == kh
-                       and match[2] == provenance["reference"]
+                       and match[2] == reference
                        for match in matches), name
+    assert reference_counts == {"3673": 28, "3518": 6}
     qualified = sum(
         row["status"] == "qualified_reference_point_only"
         for row in coverage.values())
