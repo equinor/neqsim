@@ -94,11 +94,11 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
   void explicitBaseTenLabelsRetainPrecedence(String label) {
     Component component = component("i-pentane");
     component.antoineLiqVapPresType = label;
-    component.AntoineA = 6.0;
+    component.AntoineA = "pow10".equals(label) ? 2.0 : 6.0;
     component.AntoineB = 300.0;
     component.AntoineC = "pow10".equals(label) ? 273.15 : 0.0;
     // Retain the nonzero E to guard the existing priority of explicit base-ten labels.
-    double expected = "pow10".equals(label) ? 1.0e5 : 1.0;
+    double expected = "pow10".equals(label) ? 10.0 : 1.0;
     assertEquals(expected, component.getAntoineVaporPressure(300.0), expected * 1.0e-12);
     double expectedDerivative = expected * Math.log(10.0) / 300.0;
     assertEquals(expectedDerivative, component.getAntoineVaporPressuredT(300.0), expectedDerivative * 1.0e-12);
@@ -110,5 +110,55 @@ class ComponentAntoineVaporPressureTest extends neqsim.NeqSimTest {
     component.antoineLiqVapPresType = "loglog";
     component.AntoineE = 0.0;
     assertEquals(component.getPC(), component.getAntoineVaporPressure(component.getTC()), 1.0e-12);
+  }
+
+  /**
+   * Reject the finite low-temperature pole extrapolations reported in issue 4071.
+   *
+   * @param temperature trial temperature in K
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {1.0, 60.85})
+  void carbonDioxidePoleExtrapolationIsUnavailable(double temperature) {
+    Component carbonDioxide = component("CO2");
+    assertTrue(Double.isNaN(carbonDioxide.getAntoineVaporPressure(temperature)));
+    assertTrue(Double.isNaN(carbonDioxide.getAntoineVaporPressuredT(temperature)));
+  }
+
+  /**
+   * Keep ordinary carbon dioxide saturation usable on the physically relevant branch.
+   *
+   * @param temperature trial temperature in K
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {230.0, 250.0, 280.0})
+  void carbonDioxidePressureDerivativeAndInverseRemainConsistent(double temperature) {
+    Component carbonDioxide = component("CO2");
+    double pressure = carbonDioxide.getAntoineVaporPressure(temperature);
+    assertTrue(pressure > 0.0 && pressure <= carbonDioxide.getPC());
+    assertTrue(carbonDioxide.getAntoineVaporPressuredT(temperature) > 0.0);
+    assertEquals(temperature, carbonDioxide.getAntoineVaporTemperature(pressure), 1.0e-3);
+  }
+
+  /** A correlation that overshoots Pc must still invert valid lower pressures. */
+  @Test
+  void inverseBracketsThroughAboveCriticalCorrelationValues() {
+    Component component = component("i-pentane");
+    component.antoineLiqVapPresType = "log";
+    component.AntoineA = 10.0;
+    component.AntoineB = 1000.0;
+    component.AntoineC = 0.0;
+    component.AntoineE = 0.0;
+    component.setTC(500.0);
+    component.setPC(100.0);
+    component.setTriplePointTemperature(100.0);
+    // The initial inverse guess (350 K) and first bisection point (300 K) both exceed Pc.
+    assertTrue(Double.isNaN(component.getAntoineVaporPressure(300.0)));
+    assertTrue(Double.isNaN(component.getAntoineVaporPressuredT(300.0)));
+    double targetTemperature = 150.0;
+    double targetPressure = Math.exp(10.0 - 1000.0 / targetTemperature);
+    assertEquals(targetPressure, component.getAntoineVaporPressure(targetTemperature), 1.0e-12);
+    assertEquals(targetTemperature, component.getAntoineVaporTemperature(targetPressure), 1.0e-6);
+    assertTrue(Double.isNaN(component.getAntoineVaporTemperature(101.0)));
   }
 }

@@ -1233,7 +1233,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temp temperature in K
-   * @return vapor pressure in bara, or NaN when unavailable or outside the liquid-vapor domain
+   * @return vapor pressure in bara, or NaN when unavailable, outside the liquid-vapor domain, or the evaluated pressure
+   * exceeds the finite critical pressure; results are never clipped to the critical pressure
    */
   public double getAntoineVaporPressure(double temp);
 
