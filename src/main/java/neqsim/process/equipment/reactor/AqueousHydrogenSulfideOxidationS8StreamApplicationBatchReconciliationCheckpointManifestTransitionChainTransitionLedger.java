@@ -51,9 +51,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       throw new IllegalArgumentException("S8 manifest transition-chain transition ledger cannot be empty");
     }
 
-    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> copy =
-        new ArrayList<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result>(
-            transitions.size());
+    List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> copy = new ArrayList<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result>(
+        transitions.size());
     Set<String> transitionDigests = new HashSet<String>();
     String chainIdentifier = null;
     String manifestIdentifier = null;
@@ -72,8 +71,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     int addedUnchangedCount = 0;
 
     for (int index = 0; index < transitions.size(); index++) {
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result transition =
-          transitions.get(index);
+      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result transition = transitions
+          .get(index);
       validateTransition(transition);
       if (!transitionDigests.add(transition.getTransitionDigestHex())) {
         throw new IllegalArgumentException("Transition ledger cannot contain duplicate receipt evidence");
@@ -102,8 +101,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       previousCandidateFinalManifestDigestHex = transition.getCandidateFinalManifestDigestHex();
       finalCandidateChainDigestHex = previousCandidateChainDigestHex;
       finalCandidateFinalManifestDigestHex = previousCandidateFinalManifestDigestHex;
-      addedTransitionCount =
-          addExact(addedTransitionCount, transition.getAddedTransitionCount(), "Added transition count");
+      addedTransitionCount = addExact(addedTransitionCount, transition.getAddedTransitionCount(),
+          "Added transition count");
       addedStrictAppendTransitionCount = addExact(addedStrictAppendTransitionCount,
           transition.getAddedStrictAppendTransitionCount(), "Added strict-append transition count");
       addedUnchangedTransitionCount = addExact(addedUnchangedTransitionCount,
@@ -126,15 +125,14 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       throw new IllegalArgumentException("Transition-ledger entry-count aggregates are inconsistent");
     }
 
-    byte[] ledgerDigest = digest(ledgerIdentifier, chainIdentifier, manifestIdentifier, copy,
-        firstPriorChainDigestHex, finalCandidateChainDigestHex, firstPriorFinalManifestDigestHex,
-        finalCandidateFinalManifestDigestHex, addedTransitionCount, addedStrictAppendTransitionCount,
-        addedUnchangedTransitionCount, addedReconciliationCount, addedEntryCount, addedStrictAppendCount,
-        addedUnchangedCount);
+    byte[] ledgerDigest = digest(ledgerIdentifier, chainIdentifier, manifestIdentifier, copy, firstPriorChainDigestHex,
+        finalCandidateChainDigestHex, firstPriorFinalManifestDigestHex, finalCandidateFinalManifestDigestHex,
+        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
+        addedEntryCount, addedStrictAppendCount, addedUnchangedCount);
     return new Result(ledgerIdentifier, chainIdentifier, manifestIdentifier, copy, firstPriorChainDigestHex,
         finalCandidateChainDigestHex, firstPriorFinalManifestDigestHex, finalCandidateFinalManifestDigestHex,
-        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
-        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount, ledgerDigest);
+        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
+        addedEntryCount, addedStrictAppendCount, addedUnchangedCount, ledgerDigest);
   }
 
   /**
@@ -220,10 +218,10 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    */
   private static byte[] digest(String ledgerIdentifier, String chainIdentifier, String manifestIdentifier,
       List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> transitions,
-      String firstPriorChainDigestHex, String finalCandidateChainDigestHex,
-      String firstPriorFinalManifestDigestHex, String finalCandidateFinalManifestDigestHex, int addedTransitionCount,
-      int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount, int addedReconciliationCount,
-      int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount) {
+      String firstPriorChainDigestHex, String finalCandidateChainDigestHex, String firstPriorFinalManifestDigestHex,
+      String finalCandidateFinalManifestDigestHex, int addedTransitionCount, int addedStrictAppendTransitionCount,
+      int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount,
+      int addedUnchangedCount) {
     try {
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
       DataOutputStream output = new DataOutputStream(bytes);
@@ -349,10 +347,10 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     /** Create an immutable result. */
     private Result(String ledgerIdentifier, String chainIdentifier, String manifestIdentifier,
         List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransition.Result> transitions,
-        String firstPriorChainDigestHex, String finalCandidateChainDigestHex,
-        String firstPriorFinalManifestDigestHex, String finalCandidateFinalManifestDigestHex, int addedTransitionCount,
-        int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount, int addedReconciliationCount,
-        int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount, byte[] ledgerDigest) {
+        String firstPriorChainDigestHex, String finalCandidateChainDigestHex, String firstPriorFinalManifestDigestHex,
+        String finalCandidateFinalManifestDigestHex, int addedTransitionCount, int addedStrictAppendTransitionCount,
+        int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount,
+        int addedStrictAppendCount, int addedUnchangedCount, byte[] ledgerDigest) {
       this.ledgerIdentifier = ledgerIdentifier;
       this.chainIdentifier = chainIdentifier;
       this.manifestIdentifier = manifestIdentifier;
