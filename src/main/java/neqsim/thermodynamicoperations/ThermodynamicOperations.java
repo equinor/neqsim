@@ -2279,6 +2279,28 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the standard phase envelope
+   * calculation.
+   */
+  @Deprecated
+  public void calcPTphaseEnvelope2() {
+    calcPTphaseEnvelope();
+  }
+
+  /**
+   * Calculates a PT phase envelope.
+   *
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the standard phase envelope
+   * calculation.
+   */
+  @Deprecated
+  public void calcPTphaseEnvelopeNew() {
+    calcPTphaseEnvelope();
+  }
+
+  /**
    * Calculates a phase envelope matrix using PTphaseEnvelopeNew3. This grid-based method evaluates the phase state at
    * each point in a P-T grid, rather than tracing the boundary.
    *
