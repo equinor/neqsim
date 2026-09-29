@@ -359,16 +359,44 @@ double[] fractions = calc.getWaxWeightFractions();
 
 ### WaxCurveCalculator
 
-The `WaxCurveCalculator` class provides the most robust way to generate wax
-precipitation curves. It scans from high to low temperature, performs a
-TP flash at each point, and applies monotonicity enforcement to remove
-non-physical artifacts.
+`WaxCurveCalculator` scans from high to low temperature using independent TP
+flashes of the configured feed. Configure the wax phase and enable
+`setMultiphaseWaxCheck(true)` before calculating. A disabled or missing wax
+phase is a setup failure, not evidence of zero wax.
+
+Failed flashes, nonfinite phase states, unnormalized phase compositions and
+component-balance errors above an absolute feed mole-fraction tolerance of
+$10^{-6}$ produce `NaN`, never zero or the preceding result. The per-point
+`getFailureMessages()` array records temperature, pressure and the failure
+reason; successful entries are null. Inspect it together with `getFailCount()`.
+The pressure-sweep API uses the same checks and returns `NaN` for failed trials.
+These checks establish finite and conserved results, not global phase stability
+or experimental accuracy.
+
+For compatibility, running-maximum smoothing remains enabled by default. It is
+only postprocessing: it can conceal a physical or numerical trend and must not
+be used as validation. Use `setEnforceMonotonicity(false)` for research, model
+comparison and condensate studies, and retain `getRawWaxFractions()`. Missing
+points stay missing, and smoothing restarts after each gap. Correction counts
+reset on every calculation.
+
+`getWaxAppearanceTemperatureC()` is a coarse interpolation of adjacent raw
+samples across a total-feed wax mass fraction of $10^{-8}$. It returns `NaN`
+when wax is already present at the warm boundary, when no onset is found, or
+when a failed warmer point prevents a reliable bracket. This intentionally
+replaces the previous misleading boundary-temperature result. Use
+`calculateWAT()` for the native refined TP onset search described above; the
+curve estimate is grid-dependent and is not an experimental WAT. Pressure must
+be finite and positive in bara; grid temperatures must be finite and above
+absolute zero, the upper bound must exceed the lower, and the step must be
+positive. The minimum effective step remains 0.1 C and the grid is limited to
+10001 points.
 
 ```java
 WaxCurveCalculator calc = new WaxCurveCalculator(fluid);
 calc.setPressure(100.0);
 calc.setTemperatureRange(-10.0, 80.0, 1.0);
-calc.setEnforceMonotonicity(true); // default
+calc.setEnforceMonotonicity(false); // preserve raw trends for model comparison
 calc.calculate();
 
 // Results
@@ -380,6 +408,31 @@ double[] waxWtFractions = calc.getWaxWeightFractions();
 double[] pressures = {50.0, 100.0, 200.0};
 Map<Double, Double> results = calc.calculateAtMultiplePressures(pressures, 10.0);
 ```
+
+
+### Waxy-condensate research case: Hong et al. (2026)
+
+[Issue #4116](https://github.com/equinor/neqsim/issues/4116) tracks qualification
+against Hong, Wang, Meng and Wang, *AIP Advances* 16, 075039,
+[DOI: 10.1063/5.0326546](https://doi.org/10.1063/5.0326546).
+The paper combines gas/liquid/solid equilibrium, heavy-end characterization and
+modified PR models. Its reported 12.4% wax-temperature and 20.2% best dew-point
+pressure deviations are comparisons with reference/theoretical or simulated
+results; they must not be relabeled as NeqSim experimental accuracy.
+
+A reproducible comparison must preserve Table I's **mass-percent basis** and
+convert to mole fractions using the selected component molar masses. Carbon
+number cuts must not silently be replaced by pure normal paraffins: cut molar
+masses, densities and normal-paraffin content affect the wax-forming inventory.
+Record any such surrogate assumption explicitly. Obtain numerical reference
+curves and their provenance before reporting a quantitative benchmark.
+
+The current four-model regression fluid is a synthetic consistency test, not a
+reconstruction of this field fluid. Required follow-up includes a sourced case
+fixture, pressure/temperature phase and wax maps without smoothing, numerical
+WAT brackets, characterization sensitivity, independent experimental WAT and
+wax-fraction data, and a cleanly executed Colab example. Equilibrium wax amount
+does not establish a deposition rate, location, or plugging time.
 
 ### WaxFractionSim
 
