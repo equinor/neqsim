@@ -30,10 +30,10 @@ For the retained Big Hill scenario at 1000 kg/h feed, 995.4894479786512 kg/h liq
 | Result | Value |
 | --- | ---: |
 | Break-even liquid-product price | 505.6583348279225 currency/t |
-| Break-even export-gas price | -12237.866119252241 currency/t |
+| Break-even export-gas price | -12237.86611921223 currency/t |
 | Break-even feed cost | 543.9161321835383 currency/t |
 | Liquid-product price delta to break even | -94.34166517207751 currency/t |
-| Export-gas price delta to break even | -12337.866119252241 currency/t |
+| Export-gas price delta to break even | -12337.86611921223 currency/t |
 | Feed-cost delta to break even | 93.91613218353825 currency/t |
 
 The three reconstructed zero-margin residuals close within 1e-9 currency/h. Throughput scaling preserves all break-even prices and deltas while scaling the margin sensitivities with the qualified mass rates.
