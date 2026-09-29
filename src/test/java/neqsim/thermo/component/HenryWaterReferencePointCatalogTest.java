@@ -21,19 +21,50 @@ class HenryWaterReferencePointCatalogTest {
   @Test
   void catalogContainsQualifiedExactCasIdentities() {
     List<HenryWaterReferencePoint> points = HenryWaterReferencePointCatalog.getAll();
-    assertEquals(28, points.size());
+    assertEquals(34, points.size());
     Set<String> casNumbers = new HashSet<>();
+    int plyasunovCount = 0;
+    int brockbankCount = 0;
     for (HenryWaterReferencePoint point : points) {
       assertTrue(casNumbers.add(point.getCasNumber()), point.getCasNumber());
       ComponentSrk component = new ComponentSrk(point.getComponentName(), 1.0, 1.0, 0);
       assertEquals(point.getCasNumber(), component.getCASnumber(), point.getComponentName());
       assertEquals("reference_point_only", point.getStatus());
       assertEquals("water", point.getSolvent());
-      assertEquals("3673", point.getReferenceId());
-      assertEquals("10.1016/S0016-7037(99)00330-0", point.getOriginalReferenceDoi());
       assertEquals("CC BY 4.0", point.getCompilationLicense());
+      assertFalse(point.getOriginalReferenceUrl().isEmpty());
+      assertFalse(point.getOriginalReferenceRights().isEmpty());
+      assertFalse(point.getIdentityBasis().isEmpty());
+      if ("3673".equals(point.getReferenceId())) {
+        plyasunovCount++;
+        assertEquals("10.1016/S0016-7037(99)00330-0", point.getOriginalReferenceDoi());
+      } else {
+        brockbankCount++;
+        assertEquals("3518", point.getReferenceId());
+        assertEquals("", point.getOriginalReferenceDoi());
+        assertEquals("https://scholarsarchive.byu.edu/etd/3691/", point.getOriginalReferenceUrl());
+        assertFalse(point.getSourceInchiKey().isEmpty());
+      }
     }
+    assertEquals(28, plyasunovCount);
+    assertEquals(6, brockbankCount);
     assertThrows(UnsupportedOperationException.class, () -> points.add(points.get(0)));
+  }
+
+  /** Brockbank rows retain their exact source values and per-row provenance. */
+  @Test
+  void brockbankRowsRetainPerRowSourceEvidence() {
+    String[] names = {"4-methylheptane", "cis-2-pentene", "cis-2-heptene", "nC7-Benzene", "nC8-Benzene", "nC9-Benzene"};
+    double[] values = {2.7e-4, 4.5e-3, 2.4e-3, 2.7e-2, 1.9e-2, 1.5e-2};
+    for (int index = 0; index < names.length; index++) {
+      HenryWaterReferencePoint point = HenryWaterReferencePointCatalog.findByComponentName(names[index])
+          .orElseThrow(AssertionError::new);
+      assertEquals(values[index], point.getSolubilityMolalityPerAtm(), 0.0);
+      assertEquals("3518", point.getReferenceId());
+      assertEquals(298.15, point.getReferenceTemperatureK(), 0.0);
+      assertEquals(0.1, point.getReferencePressureMPa(), 0.0);
+      assertTrue(Double.isNaN(point.getMolalityVolatilityBarKgPerMol(308.15)));
+    }
   }
 
   /** A point evaluates at 298.15 K only; it cannot masquerade as a zero-slope correlation. */
@@ -54,7 +85,7 @@ class HenryWaterReferencePointCatalogTest {
   /** Immutable points retain their complete contract through cloning and Java serialization. */
   @Test
   void referencePointIsCloneAndSerializationStable() throws Exception {
-    HenryWaterReferencePoint original = HenryWaterReferencePointCatalog.findByComponentName("o-E-toluene")
+    HenryWaterReferencePoint original = HenryWaterReferencePointCatalog.findByComponentName("nC8-Benzene")
         .orElseThrow(AssertionError::new);
     assertSame(original, original.clone());
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -71,5 +102,9 @@ class HenryWaterReferencePointCatalogTest {
     assertEquals(original.getSolubilityMolalityPerAtm(), restored.getSolubilityMolalityPerAtm(), 0.0);
     assertEquals(original.getTemperatureScope(), restored.getTemperatureScope());
     assertEquals(original.getUncertainty(), restored.getUncertainty());
+    assertEquals(original.getOriginalReferenceUrl(), restored.getOriginalReferenceUrl());
+    assertEquals(original.getOriginalReferenceRights(), restored.getOriginalReferenceRights());
+    assertEquals(original.getSourceInchiKey(), restored.getSourceInchiKey());
+    assertEquals(original.getIdentityBasis(), restored.getIdentityBasis());
   }
 }

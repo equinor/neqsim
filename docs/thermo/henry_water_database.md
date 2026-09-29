@@ -8,8 +8,8 @@ The Henry columns in `COMP.csv` are backed by 82 selected rows in
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
 `HenryWaterCoverage.csv` inventories all 389 rows: 82 imported correlations
-(78 distinct database identities plus four exact-identity aliases), 28 qualified
-reference-temperature-only points, 30 remaining literature candidates,
+(78 distinct database identities plus four exact-identity aliases), 34 qualified
+reference-temperature-only points, 24 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -85,6 +85,24 @@ retains their published precision and states the uncertainty limitation rather
 than inventing one. The set covers selected branched C6-C9 alkanes, C10-C14
 n-alkanes, cycloalkanes, pentenes/heptenes and alkylbenzenes. It excludes reactive
 species, ions, aliases and estimated (Q/E) rows.
+
+Six additional type-L points attributed by Sander to Brockbank (2013) cover
+4-methylheptane, cis-2-pentene, cis-2-heptene, heptylbenzene, octylbenzene
+and nonylbenzene. The selected raw `Hsbp` values are respectively 2.7e-4,
+4.5e-3, 2.4e-3, 2.7e-2, 1.9e-2 and 1.5e-2 mol kg^-1 atm^-1. Brockbank's
+public thesis describes critically evaluated recommended values and group-contribution
+methods at 298.15 K and 100 kPa; these six values are retained only as type-L
+reference points, not characterized as new measurements or NeqSim fits. The
+ScholarsArchive record links institutional copyright terms rather than a permissive
+data license, so NeqSim reproduces numerical facts only from the CC BY 4.0 Sander
+compilation.
+
+Each catalog row can override original-reference citation, URL, rights,
+uncertainty, identity basis, and point conditions. Exact CAS and molecular identity
+are required. Four rows also match the Sander InChIKey exactly; the two cis-alkene
+NeqSim rows have the same connectivity block and exact cis CAS/name but omit the
+stereochemical InChIKey layer. That limitation is explicit rather than silently
+treated as an exact key match. None of the six rows receives a temperature slope.
 
 `HenryWaterReferencePointCatalog` exposes immutable lookups by exact CAS number or
 the exact NeqSim component name. A point stores source identity, convention, units,
