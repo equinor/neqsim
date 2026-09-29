@@ -66,6 +66,29 @@ def main():
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
     component_rows = {row["NAME"]: row for row in rows}
+    reviewed_pentanes = {"n-pentane", "i-pentane"}
+    for name in reviewed_pentanes:
+        provenance = selected[name]
+        component = component_rows[name]
+        assert float(component["IONICCHARGE"]) == 0.0, name
+        assert component["CASnumber"] == provenance["cas"], name
+        assert component["InChIKey"] == provenance["source_inchikey"], name
+        assert provenance["solvent"] == "water", name
+        assert provenance["henry_definition"] == (
+            "neutral molecular Hsbp = molality / partial pressure"), name
+        for field in (
+                "identity_match_basis", "original_reference",
+                "original_reference_access", "original_reference_rights",
+                "uncertainty", "selection_rationale", "temperature_scope"):
+            assert provenance[field].strip(), f"Missing {field}: {name}"
+        assert coverage[name]["status"] == (
+            "imported_local_temperature_expression"), name
+        if source_lines is not None:
+            cas_marker = f"! casrn:    {provenance['cas']}"
+            source_index = source_lines.index(cas_marker)
+            identity_block = source_lines[source_index:source_index + 3]
+            assert any(provenance["source_inchikey"] in line
+                       for line in identity_block), name
     aliases = {
         name: provenance["alias_of"]
         for name, provenance in selected.items()

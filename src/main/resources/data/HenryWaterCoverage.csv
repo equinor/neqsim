@@ -27,7 +27,7 @@ OH-,14280-30-9,ionic_not_a_neutral_Henry_solute,
 CO3--,3812-32-6,ionic_not_a_neutral_Henry_solute,
 NH4+,14798-03-9,ionic_not_a_neutral_Henry_solute,
 Br-,24959-67-9,ionic_not_a_neutral_Henry_solute,
-n-pentane,109-66-0,literature_candidate_requires_identity_reaction_and_range_review,? L M Q V X
+n-pentane,109-66-0,imported_local_temperature_expression,? L M Q V X
 n-hexane,110-54-3,imported_local_temperature_expression,? L M Q T V X
 benzene,71-43-2,imported_local_temperature_expression,? C L M Q T V X
 toluene,108-88-3,imported_local_temperature_expression,? C L M Q T V X
@@ -96,7 +96,7 @@ p-Xylene,106-42-3,imported_local_temperature_expression,? C L M Q V X
 o-Xylene,95-47-6,imported_local_temperature_expression,? C L M Q V X
 2-M-C8,3221-61-2,estimate_or_other_source_requires_review,? Q X
 ethylcyclohexane,1678-91-7,imported_local_temperature_expression,? L M Q V X
-i-pentane,78-78-4,literature_candidate_requires_identity_reaction_and_range_review,? L Q V X
+i-pentane,78-78-4,imported_local_temperature_expression,? L Q V X
 H2S,7783-06-4,imported_local_temperature_expression,? L M Q R T
 S8,10544-50-0,no_exact_CAS_match_in_source_archive,
 acetic acid,64-19-7,literature_candidate_requires_identity_reaction_and_range_review,? C L M Q T V X

@@ -46,7 +46,7 @@ class HenryWaterDatabaseTest {
       }
       count++;
     }
-    assertEquals(80, count);
+    assertEquals(82, count);
   }
 
   /** Missing and overflow placeholders must never look like a measured finite constant. */

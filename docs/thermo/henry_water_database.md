@@ -3,13 +3,13 @@ title: Pure-water Henry database and missing-data contract
 description: Sourced Henry coefficients, molality and mole-fraction conventions, and qualification limits
 ---
 
-The Henry columns in `COMP.csv` are backed by the 76 selected rows in
+The Henry columns in `COMP.csv` are backed by 82 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
-`HenryWaterCoverage.csv` inventories all 389 rows: 80 imported correlations
-(76 distinct database identities plus four exact-identity aliases), 28 qualified
-reference-temperature-only points, 32 remaining literature candidates,
+`HenryWaterCoverage.csv` inventories all 389 rows: 82 imported correlations
+(78 distinct database identities plus four exact-identity aliases), 28 qualified
+reference-temperature-only points, 30 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -46,6 +46,25 @@ and the local 298.15 K van't Hoff scope are retained. This does not assert that
 their other pure-component parameters are identical. The two MEG PVTsim rows
 remain unavailable because the canonical MEG row has not yet passed source,
 definition and range qualification.
+
+The neutral `n-pentane` and `i-pentane` rows are exact CAS and InChIKey
+matches to Sander's pentane and 2-methylbutane records; NeqSim's `nC5` and
+`iC5` formula labels are abbreviations for `C5H12`. The selected type-L
+rows are the highest-ranked slope-bearing Brockbank (2013) value for n-pentane
+and the only slope-bearing type-L value, from Plyasunov and Shock (2000), for
+isopentane. The raw values are respectively 7.3e-4 and 7.9e-4 mol kg^-1
+atm^-1, with local slopes 3900 and 3000 K at 298.15 K. Neither Sander row
+contains a numerical uncertainty. Other type-L rows provide an explicit source
+spread: n-pentane values span 7.3e-4 to 8.8e-4 with slopes from 3400 to 3900 K;
+the alternate isopentane point is 7.4e-4 and has no slope. These comparisons are
+not fitted uncertainty intervals.
+
+The Brockbank thesis is publicly readable but its record identifies only an
+institutional copyright policy, not a permissive reuse license; the Plyasunov
+article is publisher-copyrighted. NeqSim reproduces only the numerical facts from
+the CC BY 4.0 Sander compilation. Both expressions remain local van't Hoff
+descriptions about 298.15 K (and 0.1 MPa where stated), not qualified finite
+extrapolation ranges or independent new regressions.
 
 The two-parameter expressions are **local van't Hoff approximations about
 298.15 K**, not newly fitted experimental data. Their individual experimental
