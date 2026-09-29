@@ -728,6 +728,10 @@ where $N_i$ is the segment molar transfer rate, $N_{i,MS}$ is the Maxwell-Stefan
 
 ### Column-Wide Equation-Oriented Solver
 
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+The five-segment TEG dehydration regression requires more than 20 profile iterations to meet its unchanged 1e-9 mol/s tolerance; it verifies rejection at 20 and convergence with a budget of 40. Increase the iteration budget only while checking the residual; a larger budget does not guarantee convergence.
+
 The default column solver is `ColumnSolver.FIXED_POINT_PROFILE`. The experimental `ColumnSolver.EQUATION_ORIENTED` uses the fixed-point profile as a seed and then solves a column-wide residual system with homotopy continuation and damped Newton steps. The unknown vector contains, for every segment, the component molar fluxes, interface temperature, gas outlet temperature, and liquid outlet temperature. Gas and liquid segment compositions and molar flows are reconstructed from the full-column component balances at every residual evaluation.
 
 The equation-oriented residual vector includes:

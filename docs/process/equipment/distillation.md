@@ -530,6 +530,8 @@ String report = absorber.toJson();
 The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
 
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
 `ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
 residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved
 flag and retains residual diagnostics, but does not replace the outlet streams. Any outlets from a
