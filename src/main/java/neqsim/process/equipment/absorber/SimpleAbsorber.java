@@ -374,7 +374,7 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
    *
    * @param numberOfStages a int
    * @deprecated SimpleAbsorber has no staged calculation; use a staged or rate-based absorber model when stage count
-   *             must affect the result
+   * must affect the result
    */
   @Deprecated
   public void setNumberOfStages(int numberOfStages) {
