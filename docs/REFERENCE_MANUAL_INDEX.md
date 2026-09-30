@@ -322,6 +322,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document          | Path                                                                                           | Description                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
+| Seal Support-System Monitoring | [docs/process/equipment/dry_gas_seal_monitoring.md](process/equipment/dry_gas_seal_monitoring.md) | Timed advisory supply/vent/buffer/separation monitoring |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md)             | Compressor performance curves                     |
 | Compressor Anti-Surge Control | [docs/process/equipment/compressor_antisurge_control.md](process/equipment/compressor_antisurge_control.md) | Dynamic anti-surge recycle, pressure-speed control, predictive supervision, coordinated override philosophy, and application-design scan logic |
 | Compressor Shaft (shared drive) | [docs/process/equipment/compressor_shaft.md](process/equipment/compressor_shaft.md) | Multiple compressor bodies on one shaft at a single common speed; iterate the common speed to the final discharge with floating intermediates |
