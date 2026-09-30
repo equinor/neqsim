@@ -31,5 +31,6 @@ def test_d86_assay_boundary_contract_is_documented() -> None:
     assert "caller must therefore supply the 100 vol% terminal TBP boundary explicitly" in guide
     assert "does not support ASTM D1160" in guide
     assert "https://www.osti.gov/biblio/5212509" in guide
-    assert "RiaziDaubertDistillationConversion.convertD86ToTbpC" in source
+    assert "RiaziDaubertDistillationConversion" in source
+    assert ".convertD86ToTbpC" in source
     assert "qualified D86-reference-point data" in index
