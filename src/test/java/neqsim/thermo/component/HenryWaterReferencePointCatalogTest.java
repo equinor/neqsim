@@ -106,7 +106,7 @@ class HenryWaterReferencePointCatalogTest {
   /** Immutable points retain their complete contract through cloning and Java serialization. */
   @Test
   void referencePointIsCloneAndSerializationStable() throws Exception {
-    HenryWaterReferencePoint original = HenryWaterReferencePointCatalog.findByComponentName("nC8-Benzene")
+    HenryWaterReferencePoint original = HenryWaterReferencePointCatalog.findByComponentName("4-ethyltoluene")
         .orElseThrow(AssertionError::new);
     assertSame(original, original.clone());
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -121,6 +121,7 @@ class HenryWaterReferencePointCatalogTest {
     assertEquals(original.getComponentName(), restored.getComponentName());
     assertEquals(original.getCasNumber(), restored.getCasNumber());
     assertEquals(original.getSolubilityMolalityPerAtm(), restored.getSolubilityMolalityPerAtm(), 0.0);
+    assertTrue(Double.isNaN(restored.getReferencePressureMPa()));
     assertEquals(original.getTemperatureScope(), restored.getTemperatureScope());
     assertEquals(original.getUncertainty(), restored.getUncertainty());
     assertEquals(original.getOriginalReferenceUrl(), restored.getOriginalReferenceUrl());
