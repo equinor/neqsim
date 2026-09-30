@@ -74,8 +74,8 @@ class OilAssayCharacterisationD86ReferencePointTest {
         () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, Double.NaN, SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
-    assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, PUBLISHED_TBP_C[6] - 1.0, SPECIFIC_GRAVITY));
+    assertThrows(IllegalArgumentException.class, () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C,
+        PUBLISHED_TBP_C[6] - 1.0, SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
     assertThrows(IllegalArgumentException.class,
