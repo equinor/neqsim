@@ -70,7 +70,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - liquid-product-basis energy, emissions, and caller-priced operating-intensity receipts;
 - caller-priced coupled sulfur/nitrogen screening-economics receipts;
 - single-variable break-even economics and price-sensitivity receipts;
-- same-physical-case economics scenario-delta attribution receipts;
+- same-physical-case economics scenario-delta attribution receipts;\n- fixed-screening-price economics case-delta receipts;
 - scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
 - integrated coupled sulfur/nitrogen material, energy, emissions, and scenario-cost receipts;
 - hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
@@ -199,7 +199,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Net coupled sulfur/nitrogen hydrotreating liquid-product intensity receipt](refinery_hydrotreating_sulfur_nitrogen_net_product_intensity_receipt)
 - [Coupled sulfur/nitrogen hydrotreating screening-economics receipt](refinery_hydrotreating_sulfur_nitrogen_screening_economics_receipt)
 - [Coupled sulfur/nitrogen hydrotreating break-even economics receipt](refinery_hydrotreating_sulfur_nitrogen_break_even_economics_receipt)
-- [Coupled sulfur/nitrogen hydrotreating economics scenario-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_scenario_delta_receipt)
+- [Coupled sulfur/nitrogen hydrotreating economics scenario-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_scenario_delta_receipt)\n- [Coupled sulfur/nitrogen hydrotreating economics case-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_case_delta_receipt)
 - [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
 - [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
 - [Integrated coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_operating_receipt)
