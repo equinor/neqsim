@@ -3,13 +3,13 @@ title: Pure-water Henry database and missing-data contract
 description: Sourced Henry coefficients, molality and mole-fraction conventions, and qualification limits
 ---
 
-The Henry columns in `COMP.csv` are backed by 82 selected rows in
+The Henry columns in `COMP.csv` are backed by 83 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
-`HenryWaterCoverage.csv` inventories all 389 rows: 82 imported correlations
-(78 distinct database identities plus four exact-identity aliases), 34 qualified
-reference-temperature-only points, 24 remaining literature candidates,
+`HenryWaterCoverage.csv` inventories all 389 rows: 83 imported correlations
+(79 distinct database identities plus four exact-identity aliases), 34 qualified
+reference-temperature-only points, 23 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -65,6 +65,17 @@ article is publisher-copyrighted. NeqSim reproduces only the numerical facts fro
 the CC BY 4.0 Sander compilation. Both expressions remain local van't Hoff
 descriptions about 298.15 K (and 0.1 MPa where stated), not qualified finite
 extrapolation ranges or independent new regressions.
+
+Elemental `mercury` is an exact CAS, formula, neutral-charge and InChIKey match
+to Sander's water-solvent record. The selected type-L JPL Evaluation 19 row is
+`Hsbp = 0.13 mol kg^-1 atm^-1` with a 2600 K local slope at 298.15 K. The first
+independent measured row, Andersson et al. (2008), reports the same value and
+slope at compilation precision; Sanemasa (1975) reports 0.13 and 2500 K. This
+agreement is validation, not a refit or uncertainty interval. The Sander machine
+row reports no numerical uncertainty or finite experimental range, so the
+implemented expression remains a local van't Hoff approximation. Only numerical
+facts from the CC BY 4.0 compilation are reproduced; no JPL or publisher text is
+copied.
 
 The two-parameter expressions are **local van't Hoff approximations about
 298.15 K**, not newly fitted experimental data. Their individual experimental
