@@ -133,7 +133,8 @@ def main():
         "4-methylheptane", "cis-2-pentene", "cis-2-heptene",
         "nC7-Benzene", "nC8-Benzene", "nC9-Benzene",
     }
-    reference_counts = {"3673": 0, "3518": 0}
+    mackay_shiu_names = {"4-ethyltoluene"}
+    reference_counts = {"3673": 0, "3518": 0, "479": 0}
     for name, provenance in reference_points.items():
         assert name not in selected, f"Reference point also dispatched as correlation: {name}"
         assert name in component_rows, f"Reference point component absent from database: {name}"
@@ -155,7 +156,12 @@ def main():
             "reference_point_only"), name
         assert inherited(provenance, reference_manifest, "solvent") == "water", name
         assert inherited(provenance, reference_manifest, "reference_temperature_K") == 298.15, name
-        assert inherited(provenance, reference_manifest, "reference_pressure_MPa") == 0.1, name
+        reference_pressure = inherited(
+            provenance, reference_manifest, "reference_pressure_MPa")
+        if name in mackay_shiu_names:
+            assert reference_pressure is None, name
+        else:
+            assert reference_pressure == 0.1, name
         kh = provenance["Hsbp_mol_kg_atm"]
         assert kh > 0.0 and math.isfinite(kh), name
         if name in brockbank_names:
@@ -166,6 +172,12 @@ def main():
             assert provenance["original_reference_doi"] == "", name
             assert inherited(provenance, reference_manifest, "original_reference_url") == (
                 "https://scholarsarchive.byu.edu/etd/3691/"), name
+        elif name in mackay_shiu_names:
+            assert provenance["source_inchikey"] == component["InChIKey"], name
+            assert reference == "479", name
+            assert provenance["original_reference_doi"] == "10.1063/1.555654", name
+            assert inherited(provenance, reference_manifest, "original_reference_url") == (
+                "https://doi.org/10.1063/1.555654"), name
         else:
             assert reference == "3673", name
             assert inherited(provenance, reference_manifest, "original_reference_doi") == (
@@ -174,7 +186,7 @@ def main():
             cas_marker = f"! casrn:    {provenance['cas']}"
             source_index = source_lines.index(cas_marker)
             identity_block = source_lines[source_index:source_index + 3]
-            if name in brockbank_names:
+            if name in brockbank_names or name in mackay_shiu_names:
                 assert any(provenance["source_inchikey"] in line
                            for line in identity_block), name
             cas = provenance["cas"].replace("-", "_")
@@ -184,7 +196,7 @@ def main():
             assert any(match and float(match[1]) == kh
                        and match[2] == reference
                        for match in matches), name
-    assert reference_counts == {"3673": 28, "3518": 6}
+    assert reference_counts == {"3673": 28, "3518": 6, "479": 1}
     qualified = sum(
         row["status"] == "qualified_reference_point_only"
         for row in coverage.values())
