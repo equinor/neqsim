@@ -47,17 +47,14 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(3, result.getTransitionCount());
     assertEquals(2, result.getStrictAppendReceiptCount());
     assertEquals(1, result.getUnchangedReceiptCount());
-    assertEquals(fixtures.firstTransition.getAddedReceiptCount()
-        + fixtures.secondTransition.getAddedReceiptCount(), result.getAddedLedgerReceiptCount());
-    assertEquals(result.getTransitionCount(),
-        result.getStrictAppendReceiptCount() + result.getUnchangedReceiptCount());
-    assertEquals(result.getAddedTransitionCount(), result.getAddedStrictAppendTransitionCount()
-        + result.getAddedUnchangedTransitionCount());
-    assertEquals(result.getAddedEntryCount(),
-        result.getAddedStrictAppendCount() + result.getAddedUnchangedCount());
+    assertEquals(fixtures.firstTransition.getAddedReceiptCount() + fixtures.secondTransition.getAddedReceiptCount(),
+        result.getAddedLedgerReceiptCount());
+    assertEquals(result.getTransitionCount(), result.getStrictAppendReceiptCount() + result.getUnchangedReceiptCount());
+    assertEquals(result.getAddedTransitionCount(),
+        result.getAddedStrictAppendTransitionCount() + result.getAddedUnchangedTransitionCount());
+    assertEquals(result.getAddedEntryCount(), result.getAddedStrictAppendCount() + result.getAddedUnchangedCount());
     assertEquals(fixtures.firstTransition.getPriorLedgerDigestHex(), result.getFirstPriorLedgerDigestHex());
-    assertEquals(fixtures.unchangedTransition.getCandidateLedgerDigestHex(),
-        result.getFinalCandidateLedgerDigestHex());
+    assertEquals(fixtures.unchangedTransition.getCandidateLedgerDigestHex(), result.getFinalCandidateLedgerDigestHex());
     assertTrue(
         AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain
             .verify("ledger-transition-chain-A", receipts, result));
@@ -109,8 +106,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     firstDigest[0] ^= 0xff;
 
     assertEquals(2, result.getTransitions().size());
-    assertThrows(UnsupportedOperationException.class,
-        () -> result.getTransitions().add(fixtures.unchangedTransition));
+    assertThrows(UnsupportedOperationException.class, () -> result.getTransitions().add(fixtures.unchangedTransition));
     assertNotSame(firstDigest, secondDigest);
     assertEquals(result.getChainDigestHex(), restored.getChainDigestHex());
     assertTrue(
