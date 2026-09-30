@@ -1940,7 +1940,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 4
+          and limitations.get("confirmedGapToolCount") == 3
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2294,7 +2294,9 @@ def test_safety_system_performance_contract():
     data = response.get("data", response)
     summary = data.get("summary", {})
     check("safety-system performance status=success",
-          response.get("status") == "success" and data.get("status") == "success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
           str(response))
     check("safety-system performance report and templates",
           summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
