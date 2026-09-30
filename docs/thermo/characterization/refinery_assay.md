@@ -1,13 +1,13 @@
 ---
 title: "Refinery Assay and TBP Cut Characterization"
-description: "Create mass- or volume-basis refinery assay cuts, ingest pre-binned TBP boundaries, and generate NeqSim pseudo-components with explicit units and mass closure."
+description: "Create refinery assay cuts from mass, volume, pre-binned TBP, or qualified D86 reference-point data with explicit units and mass closure."
 ---
 
 # Refinery Assay and TBP Cut Characterization
 
 `OilAssayCharacterisation` is the first refinery-specific assay entry point in NeqSim. It converts a pre-binned crude or petroleum-fraction assay into TBP pseudo-components that can be used by the existing thermodynamic and `ProcessSystem` APIs.
 
-This API is intentionally conservative. It handles **assay representation and pseudo-component generation**; it does not claim to replace a laboratory assay package or to convert ASTM D86/D1160 data to true boiling point (TBP).
+This API is intentionally conservative. It handles **assay representation and pseudo-component generation**. It can convert the seven literature-qualified ASTM D86 reference points to true boiling point (TBP) boundaries, but it does not replace a laboratory assay package, interpolate unqualified recovery points, or support ASTM D1160 conversion.
 
 ## Scope and unit contract
 
@@ -96,6 +96,26 @@ This creates `TBP1_PC` through `TBP4_PC`. Each `AssayCut` retains its lower and 
 When molecular weight is not supplied, the inverse petroleum correlation first produces a g/mol-sized value and `OilAssayCharacterisation` converts it to kg/mol before creating the pseudo-component. This unit conversion is part of the assay API contract; generated refinery cuts must not be passed to `addTBPfraction(...)` with g/mol interpreted as kg/mol.
 
 The input is required to span 0 to 100 liquid-volume percent with strictly increasing yield and temperature boundaries. This is deliberate: the method represents a complete, already-TBP cut table and does not invent unmeasured light or residue tails.
+
+## Qualified ASTM D86 reference-point boundaries
+
+`addD86ReferencePointCutBoundariesCelsius(...)` accepts exactly seven D86 temperatures at 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent recovery. It delegates each point to `RiaziDaubertDistillationConversion`, which implements the published Riazi–Daubert atmospheric D86-to-TBP correlation and rejects temperatures outside each point's published applicability range.
+
+The source worked example produces the following rounded atmospheric TBP boundaries:
+
+| Recovery (vol%) | D86 (degC) | Published TBP (degC) |
+| ---: | ---: | ---: |
+| 0 | 36.5 | 14.1 |
+| 10 | 54.1 | 33.4 |
+| 30 | 76.9 | 68.9 |
+| 50 | 101.5 | 101.6 |
+| 70 | 131.0 | 135.1 |
+| 90 | 171.0 | 180.5 |
+| 95 | 186.5 | 194.1 |
+
+The qualified correlation does not provide a 100 vol% point. The caller must therefore supply the 100 vol% terminal TBP boundary explicitly; it must be finite and greater than the converted 95 vol% boundary. With one specific gravity for each interval, the resulting liquid-volume fractions are 0.10, 0.20, 0.20, 0.20, 0.20, 0.05, and 0.05. All conversion and validation completes before any assay cut is added.
+
+This path intentionally does not support ASTM D1160, intermediate recovery-point interpolation, an inferred 100 vol% conversion, or an ASTM laboratory-compliance claim. The correlation source is M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert distillation-curve types,” *Oil & Gas Journal* 84(34), 1986; public bibliographic record: [OSTI 5212509](https://www.osti.gov/biblio/5212509). No coefficients beyond the existing source-qualified NeqSim implementation are introduced here.
 
 ## Volume-basis conversion
 
