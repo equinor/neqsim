@@ -421,6 +421,15 @@ as an external feed or product.
 
 ## Hydraulics and Pressure-Drop Coupling
 
+After solving a column, `DistillationColumnMechanicalDesign.calcDesign()` initializes the
+bottom-tray outlet fluid properties before reading densities for preliminary tray sizing.
+Column-product fallback streams are initialized in the same way. Callers do not need to
+initialize these outlet properties manually or run the design twice. This also applies to
+`AbsorptionColumn` and `StrippingColumn`, which share the mechanical-design class.
+The preliminary `getWeirLoading()` is in m³/h per metre of weir, and
+`getTrayPressureDrop()` is in mbar per tray, including the liquid-head contribution.
+These remain screening correlations; initializing properties does not establish column convergence.
+
 `calcColumnInternals()` evaluates tray or packing hydraulics for the latest column state.
 
 ```java
