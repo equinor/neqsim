@@ -17,9 +17,9 @@ import java.util.Set;
  * Binds an ordered chain of qualified S8 transition-ledger transition receipts.
  *
  * <p>
- * This immutable evidence object validates identity, ledger-digest adjacency, chain and manifest
- * endpoint continuity, unique receipt digests, and exact aggregate counts. It does not replay or
- * revalidate the underlying ledgers, chains, manifests, reconciliations, or stream evidence.
+ * This immutable evidence object validates identity, ledger-digest adjacency, chain and manifest endpoint continuity,
+ * unique receipt digests, and exact aggregate counts. It does not replay or revalidate the underlying ledgers, chains,
+ * manifests, reconciliations, or stream evidence.
  * </p>
  *
  * @author esol
@@ -91,8 +91,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
 
       strictAppendReceiptCount = addExact(strictAppendReceiptCount, receipt.isStrictAppend() ? 1 : 0,
           "Strict-append receipt count");
-      unchangedReceiptCount = addExact(unchangedReceiptCount, receipt.isUnchanged() ? 1 : 0,
-          "Unchanged receipt count");
+      unchangedReceiptCount = addExact(unchangedReceiptCount, receipt.isUnchanged() ? 1 : 0, "Unchanged receipt count");
       addedLedgerReceiptCount = addExact(addedLedgerReceiptCount, receipt.getAddedReceiptCount(),
           "Added ledger-receipt count");
       addedTransitionCount = addExact(addedTransitionCount, receipt.getAddedTransitionCount(),
@@ -111,16 +110,15 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       previous = receipt;
     }
 
-    if (addExact(strictAppendReceiptCount, unchangedReceiptCount,
-        "Transition-ledger receipt state count") != ordered.size()) {
+    if (addExact(strictAppendReceiptCount, unchangedReceiptCount, "Transition-ledger receipt state count") != ordered
+        .size()) {
       throw new IllegalArgumentException("Transition-ledger receipt state counts are inconsistent");
     }
     if (addExact(addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
         "Underlying transition state count") != addedTransitionCount) {
       throw new IllegalArgumentException("Underlying transition-count aggregates are inconsistent");
     }
-    if (addExact(addedStrictAppendCount, addedUnchangedCount,
-        "Represented-entry state count") != addedEntryCount) {
+    if (addExact(addedStrictAppendCount, addedUnchangedCount, "Represented-entry state count") != addedEntryCount) {
       throw new IllegalArgumentException("Represented-entry count aggregates are inconsistent");
     }
 
@@ -128,8 +126,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         .get(ordered.size() - 1);
     byte[] chainDigest = digest(transitionChainIdentifier, ordered, ledgerIdentifier, chainIdentifier,
         manifestIdentifier, strictAppendReceiptCount, unchangedReceiptCount, addedLedgerReceiptCount,
-        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
-        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount);
+        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
+        addedEntryCount, addedStrictAppendCount, addedUnchangedCount);
     return new Result(transitionChainIdentifier, ledgerIdentifier, chainIdentifier, manifestIdentifier,
         first.getPriorLedgerDigestHex(), last.getCandidateLedgerDigestHex(),
         first.getPriorFinalCandidateChainDigestHex(), last.getCandidateFinalCandidateChainDigestHex(),
@@ -233,8 +231,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     if (!previous.getCandidateLedgerDigestHex().equals(next.getPriorLedgerDigestHex())) {
       throw new IllegalArgumentException("Transition-ledger receipts contain a ledger gap or fork");
     }
-    if (!previous.getCandidateFinalCandidateChainDigestHex()
-        .equals(next.getPriorFinalCandidateChainDigestHex())) {
+    if (!previous.getCandidateFinalCandidateChainDigestHex().equals(next.getPriorFinalCandidateChainDigestHex())) {
       throw new IllegalArgumentException("Transition-ledger receipts contain a chain-endpoint gap or fork");
     }
     if (!previous.getCandidateFinalCandidateManifestDigestHex()
@@ -389,10 +386,9 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         String firstPriorChainDigestHex, String finalCandidateChainDigestHex, String firstPriorManifestDigestHex,
         String finalCandidateManifestDigestHex,
         List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result> transitions,
-        int strictAppendReceiptCount, int unchangedReceiptCount, int addedLedgerReceiptCount,
-        int addedTransitionCount, int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount,
-        int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount,
-        byte[] chainDigest) {
+        int strictAppendReceiptCount, int unchangedReceiptCount, int addedLedgerReceiptCount, int addedTransitionCount,
+        int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount, int addedReconciliationCount,
+        int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount, byte[] chainDigest) {
       this.transitionChainIdentifier = transitionChainIdentifier;
       this.ledgerIdentifier = ledgerIdentifier;
       this.chainIdentifier = chainIdentifier;
@@ -403,8 +399,9 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       this.finalCandidateChainDigestHex = finalCandidateChainDigestHex;
       this.firstPriorManifestDigestHex = firstPriorManifestDigestHex;
       this.finalCandidateManifestDigestHex = finalCandidateManifestDigestHex;
-      this.transitions = Collections.unmodifiableList(new ArrayList<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result>(
-          transitions));
+      this.transitions = Collections.unmodifiableList(
+          new ArrayList<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result>(
+              transitions));
       this.transitionCount = transitions.size();
       this.strictAppendReceiptCount = strictAppendReceiptCount;
       this.unchangedReceiptCount = unchangedReceiptCount;
@@ -420,56 +417,133 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     }
 
     /** @return digest algorithm name. */
-    public String getDigestAlgorithm() { return DIGEST_ALGORITHM; }
+    public String getDigestAlgorithm() {
+      return DIGEST_ALGORITHM;
+    }
+
     /** @return versioned canonical encoding identifier. */
-    public String getSchemaIdentifier() { return SCHEMA_IDENTIFIER; }
+    public String getSchemaIdentifier() {
+      return SCHEMA_IDENTIFIER;
+    }
+
     /** @return caller-owned transition-chain identity. */
-    public String getTransitionChainIdentifier() { return transitionChainIdentifier; }
+    public String getTransitionChainIdentifier() {
+      return transitionChainIdentifier;
+    }
+
     /** @return inherited ledger identity. */
-    public String getLedgerIdentifier() { return ledgerIdentifier; }
+    public String getLedgerIdentifier() {
+      return ledgerIdentifier;
+    }
+
     /** @return inherited chain identity. */
-    public String getChainIdentifier() { return chainIdentifier; }
+    public String getChainIdentifier() {
+      return chainIdentifier;
+    }
+
     /** @return inherited manifest identity. */
-    public String getManifestIdentifier() { return manifestIdentifier; }
+    public String getManifestIdentifier() {
+      return manifestIdentifier;
+    }
+
     /** @return first prior-ledger digest. */
-    public String getFirstPriorLedgerDigestHex() { return firstPriorLedgerDigestHex; }
+    public String getFirstPriorLedgerDigestHex() {
+      return firstPriorLedgerDigestHex;
+    }
+
     /** @return final candidate-ledger digest. */
-    public String getFinalCandidateLedgerDigestHex() { return finalCandidateLedgerDigestHex; }
+    public String getFinalCandidateLedgerDigestHex() {
+      return finalCandidateLedgerDigestHex;
+    }
+
     /** @return first prior chain endpoint. */
-    public String getFirstPriorChainDigestHex() { return firstPriorChainDigestHex; }
+    public String getFirstPriorChainDigestHex() {
+      return firstPriorChainDigestHex;
+    }
+
     /** @return final candidate chain endpoint. */
-    public String getFinalCandidateChainDigestHex() { return finalCandidateChainDigestHex; }
+    public String getFinalCandidateChainDigestHex() {
+      return finalCandidateChainDigestHex;
+    }
+
     /** @return first prior manifest endpoint. */
-    public String getFirstPriorManifestDigestHex() { return firstPriorManifestDigestHex; }
+    public String getFirstPriorManifestDigestHex() {
+      return firstPriorManifestDigestHex;
+    }
+
     /** @return final candidate manifest endpoint. */
-    public String getFinalCandidateManifestDigestHex() { return finalCandidateManifestDigestHex; }
+    public String getFinalCandidateManifestDigestHex() {
+      return finalCandidateManifestDigestHex;
+    }
+
     /** @return immutable ordered receipt list. */
-    public List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result> getTransitions() { return transitions; }
+    public List<AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransition.Result> getTransitions() {
+      return transitions;
+    }
+
     /** @return receipt count. */
-    public int getTransitionCount() { return transitionCount; }
+    public int getTransitionCount() {
+      return transitionCount;
+    }
+
     /** @return strict-append receipt count. */
-    public int getStrictAppendReceiptCount() { return strictAppendReceiptCount; }
+    public int getStrictAppendReceiptCount() {
+      return strictAppendReceiptCount;
+    }
+
     /** @return unchanged receipt count. */
-    public int getUnchangedReceiptCount() { return unchangedReceiptCount; }
+    public int getUnchangedReceiptCount() {
+      return unchangedReceiptCount;
+    }
+
     /** @return aggregate appended ledger-receipt count. */
-    public int getAddedLedgerReceiptCount() { return addedLedgerReceiptCount; }
+    public int getAddedLedgerReceiptCount() {
+      return addedLedgerReceiptCount;
+    }
+
     /** @return aggregate appended underlying transition count. */
-    public int getAddedTransitionCount() { return addedTransitionCount; }
+    public int getAddedTransitionCount() {
+      return addedTransitionCount;
+    }
+
     /** @return aggregate appended strict-append transition count. */
-    public int getAddedStrictAppendTransitionCount() { return addedStrictAppendTransitionCount; }
+    public int getAddedStrictAppendTransitionCount() {
+      return addedStrictAppendTransitionCount;
+    }
+
     /** @return aggregate appended unchanged transition count. */
-    public int getAddedUnchangedTransitionCount() { return addedUnchangedTransitionCount; }
+    public int getAddedUnchangedTransitionCount() {
+      return addedUnchangedTransitionCount;
+    }
+
     /** @return aggregate appended reconciliation count. */
-    public int getAddedReconciliationCount() { return addedReconciliationCount; }
+    public int getAddedReconciliationCount() {
+      return addedReconciliationCount;
+    }
+
     /** @return aggregate appended represented-entry count. */
-    public int getAddedEntryCount() { return addedEntryCount; }
+    public int getAddedEntryCount() {
+      return addedEntryCount;
+    }
+
     /** @return aggregate appended strict-append entry count. */
-    public int getAddedStrictAppendCount() { return addedStrictAppendCount; }
+    public int getAddedStrictAppendCount() {
+      return addedStrictAppendCount;
+    }
+
     /** @return aggregate appended unchanged entry count. */
-    public int getAddedUnchangedCount() { return addedUnchangedCount; }
+    public int getAddedUnchangedCount() {
+      return addedUnchangedCount;
+    }
+
     /** @return lowercase hexadecimal SHA-256 chain digest. */
-    public String getChainDigestHex() { return toHex(chainDigest); }
+    public String getChainDigestHex() {
+      return toHex(chainDigest);
+    }
+
     /** @return defensive copy of raw chain digest bytes. */
-    public byte[] getChainDigestBytes() { return chainDigest.clone(); }
+    public byte[] getChainDigestBytes() {
+      return chainDigest.clone();
+    }
   }
 }
