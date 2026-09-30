@@ -66,15 +66,15 @@ require(source, 'case "runFlareNetwork":', SOURCE_PATH)
 require(source, 'case "runHazopScenario":', SOURCE_PATH)
 require(source, 'case "runSafetySystemPerformance":', SOURCE_PATH)
 
-# Every focused protocol harness must freeze the same inventory as the primary
-# harness. Otherwise CI stops at the first stale promotion and never qualifies
-# the remaining tools.
+# Every protocol harness, including the primary harness itself, must freeze
+# the current inventory. Otherwise CI can pass the focused checks and only
+# discover stale accounting at the final comprehensive regression.
 expected_inventory = {
     "inventoryVersion": "1.48",
     "contractTestedToolCount": 48,
     "confirmedGapToolCount": 3,
 }
-for focused_path in sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
+for focused_path in [PROTOCOL_PATH] + sorted(PROTOCOL_PATH.parent.glob("test_*_protocol.py")):
     focused_tree = ast.parse(focused_path.read_text(encoding="utf-8"))
     for node in ast.walk(focused_tree):
         if not isinstance(node, ast.Compare) or len(node.ops) != 1:
