@@ -500,47 +500,89 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
-   * polytropicEfficiency.
+   * Evaluates polytropic efficiency using the selected map backend.
    *
-   * @param flow a double
-   * @param speed a double
-   * @return a double
+   * @param flow actual suction volume in m3/hr
+   * @param speed shaft speed in rpm
+   * @return polytropic efficiency in percent
    */
   public double polytropicEfficiency(double flow, double speed) {
-    return 100.0;
+    return getPolytropicEfficiency(flow, speed);
   }
 
   /**
-   * checkSurge1.
+   * Checks the explicit surge boundary at a given head. An absent boundary is unresolved, rather than a negative surge
+   * test.
    *
-   * @param flow a double
-   * @param head a double
-   * @return a boolean
+   * @param flow actual suction volume in m3/hr
+   * @param head ordinate in chart head units
+   * @return true when outside the specified boundary
+   * @throws IllegalArgumentException if coordinates are invalid
+   * @throws IllegalStateException if boundary evidence is absent or invalid
    */
   public boolean checkSurge1(double flow, double head) {
-    return false;
+    validateQuery(flow, head, false);
+    if (surgeCurve == null || !surgeCurve.isActive()) {
+      throw new IllegalStateException("No active head-based surge boundary");
+    }
+    double boundary = surgeCurve.getSurgeFlow(head);
+    if (!Double.isFinite(boundary) || boundary <= 0) {
+      throw new IllegalStateException("Invalid surge boundary");
+    }
+    return flow < boundary;
   }
 
   /**
-   * checkSurge2.
+   * Checks flow against the digitized minimum-flow endpoint at the nearest map speed. This endpoint is a screening
+   * bound and may differ from the OEM surge curve.
    *
-   * @param flow a double
-   * @param speed a double
-   * @return a boolean
+   * @param flow actual suction volume in m3/hr
+   * @param speed ordinate in rpm
+   * @return true when outside the specified boundary
+   * @throws IllegalArgumentException if coordinates are invalid
+   * @throws IllegalStateException if boundary evidence is absent or invalid
    */
   public boolean checkSurge2(double flow, double speed) {
-    return false;
+    validateQuery(flow, speed, true);
+    double boundary = getSurgeFlowAtSpeed(speed);
+    if (!Double.isFinite(boundary) || boundary <= 0) {
+      throw new IllegalStateException("No valid speed-based minimum-flow boundary");
+    }
+    return flow < boundary;
   }
 
   /**
-   * checkStoneWall.
+   * Checks flow against the digitized maximum-flow endpoint at the nearest map speed. This endpoint is a screening
+   * bound and may differ from the OEM choke curve.
    *
-   * @param flow a double
-   * @param speed a double
-   * @return a boolean
+   * @param flow actual suction volume in m3/hr
+   * @param speed ordinate in rpm
+   * @return true when outside the specified boundary
+   * @throws IllegalArgumentException if coordinates are invalid
+   * @throws IllegalStateException if boundary evidence is absent or invalid
    */
   public boolean checkStoneWall(double flow, double speed) {
-    return false;
+    validateQuery(flow, speed, true);
+    double boundary = getStonewallFlowAtSpeed(speed);
+    if (!Double.isFinite(boundary) || boundary <= 0) {
+      throw new IllegalStateException("No valid speed-based maximum-flow boundary");
+    }
+    return flow > boundary;
+  }
+
+  /**
+   * Validates a map query before consulting a boundary.
+   *
+   * @param flow actual inlet flow in m3/hr
+   * @param ordinate speed in rpm or head in chart units
+   * @param speedQuery true for a strictly positive speed
+   * @throws IllegalArgumentException if a coordinate is invalid
+   */
+  private static void validateQuery(double flow, double ordinate, boolean speedQuery) {
+    if (!Double.isFinite(flow) || flow < 0 || !Double.isFinite(ordinate)
+        || (speedQuery ? ordinate <= 0 : ordinate < 0)) {
+      throw new IllegalArgumentException("Map query requires finite physical coordinates");
+    }
   }
 
   /** {@inheritDoc} */
@@ -831,25 +873,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    */
   @Override
   public double getStonewallFlowAtSpeed(double speed) {
-    if (chartValues.isEmpty()) {
-      return Double.NaN;
-    }
-    CompressorCurve closestCurve = chartValues.get(0);
-    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
-    for (CompressorCurve curve : chartValues) {
-      double speedDiff = Math.abs(curve.speed - speed);
-      if (speedDiff < minSpeedDiff) {
-        minSpeedDiff = speedDiff;
-        closestCurve = curve;
-      }
-    }
-    double maxFlow = closestCurve.flow[0];
-    for (double flow : closestCurve.flow) {
-      if (flow > maxFlow) {
-        maxFlow = flow;
-      }
-    }
-    return maxFlow;
+    return getStoneWallFlowAtSpeed(speed);
   }
 
   /**
@@ -865,6 +889,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    */
   @Override
   public String getFlowRangeStatus(double flow, double speed) {
+    validateQuery(flow, speed, true);
     if (chartValues.isEmpty()) {
       return "NO_CHART";
     }
