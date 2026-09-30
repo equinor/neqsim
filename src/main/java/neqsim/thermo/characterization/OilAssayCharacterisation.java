@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.standards.oilquality.RiaziDaubertDistillationConversion;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -36,8 +37,9 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * The TBP cut-boundary helpers preserve cut yields and boiling ranges, then use the midpoint of each boiling interval
- * as the representative boiling point for the existing NeqSim petroleum correlation. They do not convert ASTM D86/D1160
- * or other laboratory distillation methods to TBP.
+ * as the representative boiling point for the existing NeqSim petroleum correlation. The qualified D86 helper converts
+ * only the seven published Riazi-Daubert reference points and requires a caller-supplied terminal TBP boundary. It does
+ * not interpolate intermediate recovery points or convert ASTM D1160 data.
  * </p>
  */
 public class OilAssayCharacterisation implements Cloneable, Serializable {
@@ -221,6 +223,61 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    */
   public List<AssayCut> getCuts() {
     return Collections.unmodifiableList(cuts);
+  }
+
+  /**
+   * Add source-qualified ASTM D86 reference-point cuts as atmospheric TBP boundaries.
+   *
+   * <p>
+   * Exactly seven D86 temperatures are required, ordered at the published 0, 10, 30, 50, 70, 90, and 95 liquid-volume
+   * recovery points. Each point is converted with {@link RiaziDaubertDistillationConversion}. Because the qualified
+   * correlation has no 100 vol% point, the final TBP boundary is supplied explicitly by the caller and must exceed the
+   * converted 95 vol% boundary. One specific gravity is required for each resulting interval.
+   * </p>
+   *
+   * <p>
+   * Conversion and terminal-boundary validation complete before any cut is added, so invalid input cannot partially
+   * mutate the assay. This method does not interpolate intermediate recovery points and does not support ASTM D1160.
+   * </p>
+   *
+   * @param namePrefix component-name prefix; generated names are prefix + 1, prefix + 2, ...
+   * @param d86TemperatureCelsius exactly seven D86 temperatures in degC at the qualified recovery points
+   * @param terminalTbpTemperatureCelsius caller-supplied 100 vol% terminal TBP boundary in degC
+   * @param specificGravity specific gravity for each of the seven resulting intervals
+   */
+  public void addD86ReferencePointCutBoundariesCelsius(String namePrefix, double[] d86TemperatureCelsius,
+      double terminalTbpTemperatureCelsius, double[] specificGravity) {
+    if (d86TemperatureCelsius == null) {
+      throw new IllegalArgumentException("D86 reference-point temperatures cannot be null");
+    }
+
+    double[][] referenceData = RiaziDaubertDistillationConversion.getReferenceData();
+    if (d86TemperatureCelsius.length != referenceData.length) {
+      throw new IllegalArgumentException(
+          "Exactly " + referenceData.length + " D86 reference-point temperatures are required");
+    }
+    if (!Double.isFinite(terminalTbpTemperatureCelsius)) {
+      throw new IllegalArgumentException("Terminal TBP boundary must be finite");
+    }
+
+    double[] cumulativeVolumePercent = new double[referenceData.length + 1];
+    double[] tbpTemperatureCelsius = new double[referenceData.length + 1];
+    for (int i = 0; i < referenceData.length; i++) {
+      cumulativeVolumePercent[i] = referenceData[i][0];
+      tbpTemperatureCelsius[i] = RiaziDaubertDistillationConversion
+          .convertD86ToTbpC(d86TemperatureCelsius[i], cumulativeVolumePercent[i]);
+    }
+
+    int terminalIndex = referenceData.length;
+    cumulativeVolumePercent[terminalIndex] = 100.0;
+    tbpTemperatureCelsius[terminalIndex] = terminalTbpTemperatureCelsius;
+    if (!(terminalTbpTemperatureCelsius > tbpTemperatureCelsius[terminalIndex - 1])) {
+      throw new IllegalArgumentException(
+          "Terminal TBP boundary must exceed the converted 95 vol% boundary");
+    }
+
+    addTBPCutBoundariesCelsius(namePrefix, cumulativeVolumePercent, tbpTemperatureCelsius,
+        specificGravity);
   }
 
   /**
