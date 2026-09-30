@@ -10,14 +10,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
- * Proves that one S8 manifest-transition-chain transition ledger is unchanged or an ordered
- * strict append of another ledger.
+ * Proves that one S8 manifest-transition-chain transition ledger is unchanged or an ordered strict append of another
+ * ledger.
  *
  * <p>
- * This immutable receipt compares already-qualified ledger values. It does not revalidate the
- * underlying chains, manifests, reconciliations, or stream-application evidence and is not a
- * durable store, authentication mechanism, transaction coordinator, compare-and-swap operation,
- * or exactly-once guarantee.
+ * This immutable receipt compares already-qualified ledger values. It does not revalidate the underlying chains,
+ * manifests, reconciliations, or stream-application evidence and is not a durable store, authentication mechanism,
+ * transaction coordinator, compare-and-swap operation, or exactly-once guarantee.
  * </p>
  *
  * @author esol
@@ -40,8 +39,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @param prior prior qualified transition ledger
    * @param candidate candidate qualified transition ledger
    * @return immutable ledger-transition receipt
-   * @throws IllegalArgumentException if either ledger is invalid or the candidate is not an exact
-   *         ordered continuation
+   * @throws IllegalArgumentException if either ledger is invalid or the candidate is not an exact ordered continuation
    */
   public static Result create(
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedger.Result prior,
@@ -107,21 +105,20 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       if (!prior.getFinalCandidateChainDigestHex().equals(firstAppended.getPriorChainDigestHex())) {
         throw new IllegalArgumentException("Candidate transition ledger does not continue the prior chain endpoint");
       }
-      if (!prior.getFinalCandidateFinalManifestDigestHex()
-          .equals(firstAppended.getPriorFinalManifestDigestHex())) {
+      if (!prior.getFinalCandidateFinalManifestDigestHex().equals(firstAppended.getPriorFinalManifestDigestHex())) {
         throw new IllegalArgumentException("Candidate transition ledger does not continue the prior manifest endpoint");
       }
     }
 
-    byte[] transitionDigest = digest(prior, candidate, unchanged, strictAppend, addedReceiptCount,
-        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
-        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount);
+    byte[] transitionDigest = digest(prior, candidate, unchanged, strictAppend, addedReceiptCount, addedTransitionCount,
+        addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount, addedEntryCount,
+        addedStrictAppendCount, addedUnchangedCount);
     return new Result(prior.getLedgerIdentifier(), prior.getChainIdentifier(), prior.getManifestIdentifier(),
         prior.getLedgerDigestHex(), candidate.getLedgerDigestHex(), prior.getFinalCandidateChainDigestHex(),
         candidate.getFinalCandidateChainDigestHex(), prior.getFinalCandidateFinalManifestDigestHex(),
         candidate.getFinalCandidateFinalManifestDigestHex(), unchanged, strictAppend, addedReceiptCount,
-        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
-        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount, transitionDigest);
+        addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount, addedReconciliationCount,
+        addedEntryCount, addedStrictAppendCount, addedUnchangedCount, transitionDigest);
   }
 
   /**
@@ -322,13 +319,12 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
 
     /** Create an immutable ledger-transition receipt. */
     private Result(String ledgerIdentifier, String chainIdentifier, String manifestIdentifier,
-        String priorLedgerDigestHex, String candidateLedgerDigestHex,
-        String priorFinalCandidateChainDigestHex, String candidateFinalCandidateChainDigestHex,
-        String priorFinalCandidateManifestDigestHex, String candidateFinalCandidateManifestDigestHex,
-        boolean unchanged, boolean strictAppend, int addedReceiptCount, int addedTransitionCount,
-        int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount,
-        int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount,
-        int addedUnchangedCount, byte[] transitionDigest) {
+        String priorLedgerDigestHex, String candidateLedgerDigestHex, String priorFinalCandidateChainDigestHex,
+        String candidateFinalCandidateChainDigestHex, String priorFinalCandidateManifestDigestHex,
+        String candidateFinalCandidateManifestDigestHex, boolean unchanged, boolean strictAppend, int addedReceiptCount,
+        int addedTransitionCount, int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount,
+        int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount,
+        byte[] transitionDigest) {
       this.ledgerIdentifier = ledgerIdentifier;
       this.chainIdentifier = chainIdentifier;
       this.manifestIdentifier = manifestIdentifier;
