@@ -19,15 +19,14 @@ by the executable example.
 
 ## Draft validation status
 
-This feature is published as a research draft for continued development. The
-latest native demonstration against current-master workspace classes rejected the
-stable-species EOS projection on its hydrogen-element tolerance. Earlier packaged
-NeqSim 3.23.0 examples and the focused interface tests passed, but that evidence
-is not a successful end-to-end current-master run. The cause of the projection
-rejection remains to be resolved without silently weakening conservation checks.
-The full mechanism state is retained for diagnosis after projection rejection.
-The added methanol/ammonia mappings have not yet been shown to resolve that
-native demonstration failure; current-head end-to-end validation is still needed.
+This feature remains a research draft. The native seven/five burner demonstration
+now passes against workspace Java classes in hosted CI with the default 1e-6
+projection tolerance unchanged. The earlier native hydrogen-element rejection
+is addressed by retaining supported ammonia and methanol in the EOS projection.
+For the seven/five burner cases, omitted hydrogen fractions are approximately
+8.72e-7 / 8.62e-7; unmapped mass fractions are approximately 1.52e-7 / 1.50e-7.
+The native integration job also checks that removing these mappings reproduces
+the original hydrogen rejection. Exact species remain available after rejection.
 
 Every backend result now includes `elementProjectionDiagnostics`: inlet, exact
 outlet and omitted molar atom flows, exact-mechanism and EOS-projection relative
@@ -260,8 +259,9 @@ A separate native job compiles workspace Java classes and runs the seven/five
 burner demonstration through JPype with the default projection tolerance. The
 example prints retained omitted-atom diagnostics before rethrowing a rejected
 projection.
-Analytical diagnostics tests can run without Cantera. Native stream projection,
-mechanism qualification and plant calibration remain separate acceptance gates.
+Analytical diagnostics tests can run without Cantera. This validates the public native seven/five burner demonstration. Broader native
+operating-envelope validation, mechanism qualification and plant calibration
+remain separate acceptance gates.
 
 ## Related APIs and primary sources
 

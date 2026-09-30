@@ -51,10 +51,28 @@ jobs:
           import sys
           from pathlib import Path
           sys.path.insert(0, "examples/combustion")
-          from multi_burner_fired_heater import initialize_runtime, run_demonstration
-          from cantera_backend import CanteraBackend
+          import json
+          from multi_burner_fired_heater import build_case, initialize_runtime, run_demonstration
+          from cantera_backend import CanteraBackend, DEFAULT_COMPONENT_TO_SPECIES
           classpath = [str(Path("target/classes").resolve())]
           classpath.extend(Path("target/combustion-classpath.txt").read_text().strip().split(os.pathsep))
           java_class = initialize_runtime(".", classpath)
+          # Reproduce the original omission with the same compiled Java boundary.
+          legacy_mapping = dict(DEFAULT_COMPONENT_TO_SPECIES)
+          del legacy_mapping["ammonia"]
+          del legacy_mapping["methanol"]
+          legacy = CanteraBackend("gri30.yaml", component_to_species=legacy_mapping)
+          process, heater, *_ = build_case(java_class, legacy)
+          try:
+              process.run()
+          except Exception as error:
+              if "EOS projection does not conserve element H" not in str(error):
+                  raise
+              detailed = json.loads(str(heater.getKineticsResultJson()))
+              hydrogen = detailed["elementProjectionDiagnostics"]["H"]
+              assert hydrogen["omittedInletElementFraction"] > 1.0e-6
+              print("Original hydrogen omission reproduced:", hydrogen)
+          else:
+              raise AssertionError("Legacy mapping should reproduce the hydrogen rejection")
           print(run_demonstration(java_class, CanteraBackend("gri30.yaml")))
           PY
