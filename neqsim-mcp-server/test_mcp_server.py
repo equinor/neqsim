@@ -1597,6 +1597,7 @@ def test_capabilities():
         "runFlareNetwork",
         "runHazopScenario",
         "runSafetySystemPerformance",
+        "runOpenDrainReview",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
@@ -2306,6 +2307,36 @@ def test_safety_system_performance_contract():
           str(response))
 
 
+# --- Open-drain review software contract ---
+
+def test_open_drain_review_contract():
+    """Exercise the catalog open-drain example through packaged MCP."""
+    print("\n=== Open Drain Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "open-drain-review",
+        "name": "norsok-s001-stid",
+    })
+    response = call_tool("runOpenDrainReview", {
+        "openDrainReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("open-drain review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("open-drain review report and provenance",
+          data.get("reviewType") == "open_drain_review"
+          and data.get("overallVerdict") == "PASS"
+          and data.get("itemCount") == 2
+          and len(data.get("results", [])) == 2
+          and "NORSOK S-001:2020+AC:2021 Clause 9"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "open drain review",
+          str(response))
+
+
 # --- Utility design tools ---
 
 def test_design_utilities():
@@ -2960,6 +2991,7 @@ if __name__ == "__main__":
         test_flare_radiation_contract()
         test_hazop_scenario_contract()
         test_safety_system_performance_contract()
+        test_open_drain_review_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()
