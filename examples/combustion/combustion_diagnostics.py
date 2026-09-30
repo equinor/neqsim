@@ -1,5 +1,50 @@
 """Conservation diagnostics independent of a chemistry or EOS package."""
 
+import math
+
+
+def conservation_diagnostics(inlet_flows, outlet_flows, masses, atoms, label):
+    """Fail closed on mass and every element at an exact-mechanism boundary.
+
+    Flows are mol/s and molecular masses are kg/mol from the same mechanism.
+    The fixed 1e-7 relative gate and 1e-20 mol-atoms/s denominator floor match
+    the native detailed-mechanism check, independently of EOS projection limits.
+    No species is clipped, renormalized, mapped or omitted here. Signed solver
+    roundoff is retained; callers separately enforce their species-state bounds.
+    """
+    for flows in (inlet_flows, outlet_flows):
+        if any(not math.isfinite(flow) for flow in flows.values()):
+            raise ValueError(f"{label}: species flows must be finite")
+    inlet_mass = math.fsum(flow * masses[species] for species, flow in inlet_flows.items())
+    outlet_mass = math.fsum(flow * masses[species] for species, flow in outlet_flows.items())
+    if inlet_mass <= 0.0 or not math.isfinite(inlet_mass + outlet_mass):
+        raise ValueError(f"{label}: mass flow must be finite and positive")
+    mass_residual = outlet_mass / inlet_mass - 1.0
+    balances = {}
+    for element in sorted({element for counts in atoms.values() for element in counts}):
+        initial = math.fsum(flow * atoms[species].get(element, 0.0)
+                            for species, flow in inlet_flows.items())
+        final = math.fsum(flow * atoms[species].get(element, 0.0)
+                          for species, flow in outlet_flows.items())
+        residual = final - initial
+        balances[element] = {
+            "inletMolAtomsPerSecond": initial,
+            "outletMolAtomsPerSecond": final,
+            "residualMolAtomsPerSecond": residual,
+            "relativeResidual": residual / initial if initial else None,
+            "acceptanceScaledResidual": residual / max(initial, 1.0e-20),
+        }
+        if abs(residual) > 1.0e-7 * max(initial, 1.0e-20):
+            raise ValueError(
+                f"{label}: element {element} balance exceeds 1e-7; "
+                f"inlet={initial:.16g}, outlet={final:.16g} mol atoms/s"
+            )
+    if abs(mass_residual) > 1.0e-7:
+        raise ValueError(f"{label}: mass balance exceeds 1e-7; residual={mass_residual:.16g}")
+    return {"zone": label, "massBalanceRelativeResidual": mass_residual,
+            "elementBalances": balances, "relativeTolerance": 1.0e-7,
+            "elementScaleFloorMolAtomsPerSecond": 1.0e-20}
+
 
 def projection_diagnostics(inlet_flows, outlet_flows, masses, atoms, mapping):
     """Identify omitted atoms without replacing species or relaxing acceptance gates.

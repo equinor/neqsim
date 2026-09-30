@@ -89,6 +89,9 @@ def summarize(heater):
         "organicCarbonFraction", "methaneMgPerNormalM3Dry",
         "organicCarbonMgCPerNormalM3Dry", "nonMethaneOrganicCarbonMgCPerNormalM3Dry",
         "pollutantAvailability",
+        "zoneConservationDiagnostics", "elementProjectionDiagnostics",
+        "provenance", "referenceOxygenVolPercent", "referenceOxygenCorrectionValid",
+        "coMgPerNormalM3DryAtReferenceOxygen",
     )
     summary = {field: result[field] for field in fields}
     summary["unmappedMassFraction"] = heater.getUnmappedMassFraction()

@@ -256,6 +256,37 @@ identity, failure invalidation and utility PH closure. Optional Python tests cov
 finite-rate chemistry, carbon-free hydrogen fuel, independently integrated nonzero wall heat, species/element
 balances, radiation effects, reproducible provenance and seven/five burner cases.
 
+The detailed heater result and executable example retain
+`zoneConservationDiagnostics` for each burner inlet mixer and PSR, the common
+mixer including bypass air, and the post-flame PFR. Each boundary checks mass and
+every mechanism element at the native detailed-mechanism limit of 1e-7, using
+mechanism molecular masses and a 1e-20 mol-atoms/s element scale floor. These
+checks are independent of the EOS projection limit, which remains unchanged.
+PSR checks use the actual controller outlet mass flow. Inventories, absolute and
+relative residuals, and acceptance-scaled residuals identify the first failing
+zone; a rejected solve raises an error naming that zone and element rather than
+returning a converged result.
+
+The existing outlet convention permits negative solver mass fractions down to
+-1e-12 to be zeroed, without renormalization. The zone records disclose the
+zeroed negative mass fraction and the signed raw element residuals as well as
+the checked inventories. Positive intermediates are never removed. An element
+absent from the supply still has an absolute acceptance bound of 1e-27 mol
+atoms/s; numerical creation of a trace element fails this check. The carbon-free
+hydrogen regression therefore selects a tighter integration absolute tolerance
+of 1e-28 rather than relaxing element acceptance. With Cantera 3.2.0 and Python
+3.12.14, 1e-18 and
+1e-22 produced rejected trace carbon, while 1e-28 and 1e-32 passed. This is a
+numerical qualification boundary, not evidence of physical carbon production.
+No automatic solver-tolerance adjustment is performed.
+
+The additional staged-air test sends 15% of common air around the burner PSRs
+and transfers 2% of tube/refractory exchange area in the primary zones. It checks
+all 16 boundaries at unchanged acceptance limits. This synthetic case tests
+accounting and thermal coupling; its air-capture fractions remain assumptions.
+The example also retains the mechanism fingerprint and the validity/value of
+the reference-O2 concentration correction alongside raw CO mass and dry basis.
+
 The `Optional combustion physics` workflow installs Cantera 3.2.0 and runs these
 Python tests for combustion changes; Java-only CI is not chemistry validation.
 A separate native job compiles workspace Java classes and runs the seven/five

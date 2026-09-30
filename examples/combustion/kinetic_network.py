@@ -9,7 +9,9 @@ import math
 
 import cantera as ct
 
-from combustion_diagnostics import combustion_branch, projection_diagnostics
+from combustion_diagnostics import (
+    combustion_branch, conservation_diagnostics, projection_diagnostics,
+)
 
 
 STEFAN_BOLTZMANN = 5.670374419e-8
@@ -136,6 +138,43 @@ def _mass_flow(gas, species_flows):
     )
 
 
+def _species_flows(gas, mass_flow):
+    """Read every species with the existing 1e-12 negative-mass-fraction bound.
+
+    Bounded negative solver roundoff is zeroed, as at the existing final outlet.
+    This is never a renormalization or an omission of positive intermediates.
+    """
+    if any(not math.isfinite(value) or value < -1.0e-12 for value in gas.Y):
+        raise ValueError("Zone solver returned invalid species mass fractions")
+    return {
+        species: float(mass_flow * max(0.0, gas.Y[index]) * 1000.0 / gas.molecular_weights[index])
+        for index, species in enumerate(gas.species_names)
+    }
+
+
+def _zone_conservation(inlet_flows, gas, mass_flow, masses, atoms, label):
+    """Check the outlet convention while retaining signed raw solver evidence."""
+    result = conservation_diagnostics(
+        inlet_flows, _species_flows(gas, mass_flow), masses, atoms, label,
+    )
+    result["negativeSpeciesMassFractionClipped"] = float(sum(-y for y in gas.Y if y < 0.0))
+    result["rawElementBalanceResidualsMolAtomsPerSecond"] = {
+        element: float(sum(
+            mass_flow * gas.Y[index] * 1000.0 / gas.molecular_weights[index]
+            * atoms[species].get(element, 0.0)
+            for index, species in enumerate(gas.species_names)
+        ) - balance["inletMolAtomsPerSecond"])
+        for element, balance in result["elementBalances"].items()
+    }
+    return result
+
+
+def _add_flows(destination, source, fraction=1.0):
+    """Accumulate supplied species mol/s, preserving trace species and atoms."""
+    for species, flow in source.items():
+        destination[species] = destination.get(species, 0.0) + fraction * flow
+
+
 def _quantity(gas, mass, backend):
     """Keep Quantity's mutable phase separate from supply and reactor states."""
     separate = _gas(backend)
@@ -188,6 +227,17 @@ def solve_fired_heater(request, backend):
     air_flows = _flows(request["airMolarFlows"], backend)
     fuel = _gas(backend)
     fuel.TPX = request["fuelTemperatureK"], pressure, fuel_flows
+    masses = {
+        species: float(fuel.molecular_weights[index] / 1000.0)
+        for index, species in enumerate(fuel.species_names)
+    }
+    atoms = {
+        species: {
+            element: float(fuel.n_atoms(species, element))
+            for element in fuel.element_names if fuel.n_atoms(species, element) > 0.0
+        }
+        for species in fuel.species_names
+    }
     air = _gas(backend)
     air.TPX = request["airTemperatureK"], pressure, air_flows
     fuel_mass = _mass_flow(fuel, fuel_flows)
@@ -205,6 +255,8 @@ def solve_fired_heater(request, backend):
     shell_heat = 0.0
     primary_residual = 0.0
     burner_diagnostics = []
+    zone_diagnostics = []
+    mixer_inlet_flows = {}
     hot_products = None
     cache = {}
     for burner in active:
@@ -216,6 +268,13 @@ def solve_fired_heater(request, backend):
             _quantity(fuel, local_fuel_mass, backend)
             + _quantity(air, local_air_mass, backend)
         )
+        local_inlet_flows = {}
+        _add_flows(local_inlet_flows, fuel_flows, fuel_fraction)
+        _add_flows(local_inlet_flows, air_flows, burner["airCaptureFraction"])
+        zone_diagnostics.append(_zone_conservation(
+            local_inlet_flows, mixture, local_mass, masses, atoms,
+            f"burner {burner['id']} inlet mixing",
+        ))
         key = (fuel_fraction, burner["airCaptureFraction"], burner["volumeM3"])
         heat = ZoneHeatTransfer(
             request,
@@ -223,7 +282,7 @@ def solve_fired_heater(request, backend):
             request["refractoryAreaM2"] * request["primaryHeatingAreaFraction"] * fuel_fraction,
         )
         if key in cache:
-            temperature, composition, oil, shell, residual, residence, mass_residual = cache[key]
+            temperature, composition, oil, shell, residual, residence, mass_residual, exit_mass = cache[key]
             product = _gas(backend)
             product.TPY = temperature, pressure, composition
         else:
@@ -254,6 +313,7 @@ def solve_fired_heater(request, backend):
                 product.enthalpy_mass
             ) - oil - shell
             mass_residual = exit_flow.mass_flow_rate / local_mass - 1.0
+            exit_mass = exit_flow.mass_flow_rate
             if abs(mass_residual) > 1.0e-7:
                 raise ValueError("Burner PSR does not conserve steady mass flow")
             if abs(product.P / pressure - 1.0) > 1.0e-5:
@@ -267,8 +327,13 @@ def solve_fired_heater(request, backend):
                 raise ValueError("Burner PSR energy balance exceeds tolerance")
             residence = reactor.mass / local_mass
             cache[key] = (
-                product.T, product.Y.copy(), oil, shell, residual, residence, mass_residual
+                product.T, product.Y.copy(), oil, shell, residual, residence, mass_residual, exit_mass
             )
+        zone_diagnostics.append(_zone_conservation(
+            local_inlet_flows, product, exit_mass, masses, atoms,
+            f"burner {burner['id']} PSR",
+        ))
+        _add_flows(mixer_inlet_flows, _species_flows(product, local_mass))
         oil_heat += oil
         shell_heat += shell
         primary_residual += residual
@@ -284,8 +349,13 @@ def solve_fired_heater(request, backend):
     bypass = air_mass * max(0.0, 1.0 - captured_fraction)
     if bypass > 0.0:
         hot_products += _quantity(air, bypass, backend)
+        _add_flows(mixer_inlet_flows, air_flows, bypass / air_mass)
     mixed = _gas(backend)
     mixed.TPY = hot_products.T, pressure, hot_products.Y
+    mixed_flows = _species_flows(mixed, total_mass)
+    zone_diagnostics.append(_zone_conservation(
+        mixer_inlet_flows, mixed, total_mass, masses, atoms, "common mixer including bypass air",
+    ))
     mixed_enthalpy = mixed.enthalpy_mass
     common_volume = request["commonReactiveVolumeM3"]
     common_heat = ZoneHeatTransfer(
@@ -308,6 +378,9 @@ def solve_fired_heater(request, backend):
     if abs(volume_residual) > 1.0e-6:
         raise ValueError("Post-flame integration exceeded the specified reactive volume")
     outlet = post.phase
+    zone_diagnostics.append(_zone_conservation(
+        mixed_flows, outlet, total_mass, masses, atoms, "post-flame PFR",
+    ))
     oil_heat += total_mass * post.oil_heat_j_per_kg
     shell_heat += total_mass * post.shell_heat_j_per_kg
     post_residual = total_mass * (
@@ -330,17 +403,6 @@ def solve_fired_heater(request, backend):
     species_flows = {
         species: float(total_mass * max(0.0, outlet.Y[index]) * 1000.0 / outlet.molecular_weights[index])
         for index, species in enumerate(outlet.species_names)
-    }
-    masses = {
-        species: float(outlet.molecular_weights[index] / 1000.0)
-        for index, species in enumerate(outlet.species_names)
-    }
-    atoms = {
-        species: {
-            element: float(outlet.n_atoms(species, element))
-            for element in outlet.element_names if outlet.n_atoms(species, element) > 0.0
-        }
-        for species in outlet.species_names
     }
     carbon_in = sum(
         flow * atoms[species].get("C", 0.0) for species, flow in fuel_flows.items()
@@ -387,6 +449,7 @@ def solve_fired_heater(request, backend):
         "specifiedPostFlameVolumeM3": common_volume,
         "postFlameVolumeRelativeResidual": float(volume_residual),
         "burnerDiagnostics": burner_diagnostics,
+        "zoneConservationDiagnostics": zone_diagnostics,
         "coMassRateKgPerHour": species_flows.get("CO", 0.0) * masses["CO"] * 3600.0,
         "coPpmvDry": co_dry_ppm, "coMgPerNormalM3DryAt273_15K101325Pa": co_normal,
         "oxygenDryVolPercent": oxygen_percent,

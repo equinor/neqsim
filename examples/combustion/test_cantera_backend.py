@@ -4,7 +4,10 @@ import copy
 import json
 import unittest
 
+import cantera as ct
+
 from cantera_backend import CanteraBackend
+from kinetic_network import _species_flows, _zone_conservation
 
 
 def heater_request():
@@ -57,10 +60,13 @@ class CanteraBackendTest(unittest.TestCase):
         self.assertEqual(self.backend.mapping["ammonia"], "NH3")
 
     def test_hydrogen_heater_has_no_carbon_division(self):
-        """A carbon-free fuel must retain chemistry and energy diagnostics."""
+        """Refined carbon-free solve must preserve even absent-element invariants."""
         request = heater_request()
         request["fuelMolarFlows"] = {"hydrogen": 120.0}
-        result = json.loads(self.backend.solve(json.dumps(request)))
+        # Scalar CVODES atol=1e-18 can generate absent-C roundoff above the native
+        # 1e-27 mol-atoms/s absolute gate. Tighten integration, never that gate.
+        refined = CanteraBackend("gri30.yaml", absolute_tolerance=1.0e-28)
+        result = json.loads(refined.solve(json.dumps(request)))
         self.assertGreater(result["usefulHeatToOilW"], 0.0)
         self.assertEqual(result["branchDiagnostic"], "BURNING")
         self.assertLess(abs(result["fullEnergyBalanceRelativeResidual"]), 1.0e-6)
@@ -68,6 +74,43 @@ class CanteraBackendTest(unittest.TestCase):
         for element in ("H", "O", "N"):
             diagnostic = result["elementProjectionDiagnostics"][element]
             self.assertLess(abs(diagnostic["mechanismRelativeResidual"]), 1.0e-7)
+        self.check_zones(result, 16)
+
+    def check_zones(self, result, count):
+        """Check all elements, including absent elements, at every retained boundary."""
+        self.assertEqual(len(result["zoneConservationDiagnostics"]), count)
+        for zone in result["zoneConservationDiagnostics"]:
+            self.assertLessEqual(abs(zone["massBalanceRelativeResidual"]), 1.0e-7)
+            self.assertEqual(set(zone["elementBalances"]), {"C", "H", "O", "N", "Ar"})
+            for balance in zone["elementBalances"].values():
+                self.assertLessEqual(abs(balance["acceptanceScaledResidual"]), 1.0e-7)
+
+    def test_absent_element_contamination_fails_closed(self):
+        """Tiny spurious carbon cannot pass an otherwise mass-balanced N2 state."""
+        gas = ct.Solution("gri30.yaml")
+        gas.TPX = 600.0, 101325.0, {"N2": 1.0, "CH4": 1.0e-15}
+        atoms = {s: {e: gas.n_atoms(s, e) for e in gas.element_names}
+                 for s in gas.species_names}
+        masses = dict(zip(gas.species_names, gas.molecular_weights / 1000.0))
+        with self.assertRaisesRegex(ValueError, "post-flame: element C"):
+            _zone_conservation({"N2": 1.0}, gas, 0.028014, masses, atoms, "post-flame")
+        fractions = [0.0] * gas.n_species
+        fractions[gas.species_index("N2")] = 1.0
+        fractions[gas.species_index("CH4")] = -1.0e-5
+        gas.set_unnormalized_mass_fractions(fractions)
+        with self.assertRaisesRegex(ValueError, "invalid species mass fractions"):
+            _species_flows(gas, 0.028014)
+
+    def test_bypass_air_and_primary_heat_preserve_zone_inventories(self):
+        """Stage 15% common-air bypass and independently transfer heat in burner zones."""
+        request = heater_request()
+        request["primaryHeatingAreaFraction"] = 0.02
+        for burner in request["burners"]:
+            burner["airCaptureFraction"] = 0.85 / 7.0
+        result = json.loads(self.backend.solve(json.dumps(request)))
+        self.check_zones(result, 16)
+        self.assertGreater(result["usefulHeatToOilW"], 20.0e6)
+        self.assertLess(abs(result["fullEnergyBalanceRelativeResidual"]), 1.0e-6)
 
     def test_stable_mechanism_fingerprint(self):
         """Generated timestamps and phase state must not alter mechanism identity."""
@@ -107,6 +150,7 @@ class CanteraBackendTest(unittest.TestCase):
         request = heater_request()
         result = json.loads(self.backend.solve(json.dumps(request)))
         self.assertGreater(result["usefulHeatToOilW"], 20.0e6)
+        self.check_zones(result, 16)
         self.assertGreater(result["shellHeatLossW"], 0.0)
         self.assertLess(result["stackSensibleHeatW"], 7.0e6)
         self.assertLess(abs(result["fullEnergyBalanceRelativeResidual"]), 1.0e-6)
@@ -140,6 +184,7 @@ class CanteraBackendTest(unittest.TestCase):
             burner["enabled"] = index < 5
             burner["airCaptureFraction"] = 1.0 / 5.0
         five = json.loads(self.backend.solve(json.dumps(request)))
+        self.check_zones(five, 12)
         self.assertEqual(len(five["burnerDiagnostics"]), 5)
         self.assertAlmostEqual(five["fuelChemicalPowerW"], seven["fuelChemicalPowerW"])
         self.assertGreater(five["burnerDiagnostics"][0]["fuelMassFlowKgPerSecond"],
