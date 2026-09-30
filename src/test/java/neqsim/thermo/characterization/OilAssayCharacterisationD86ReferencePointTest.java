@@ -25,14 +25,12 @@ class OilAssayCharacterisationD86ReferencePointTest {
     assay.clearCuts();
     assay.setTotalAssayMass(1.0);
 
-    assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, TERMINAL_TBP_C,
-        SPECIFIC_GRAVITY);
+    assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, TERMINAL_TBP_C, SPECIFIC_GRAVITY);
 
     assertEquals(7, assay.getCuts().size());
     for (int i = 0; i < assay.getCuts().size(); i++) {
       AssayCut cut = assay.getCuts().get(i);
-      double expectedUpperC = i + 1 < PUBLISHED_TBP_C.length
-          ? PUBLISHED_TBP_C[i + 1] : TERMINAL_TBP_C;
+      double expectedUpperC = i + 1 < PUBLISHED_TBP_C.length ? PUBLISHED_TBP_C[i + 1] : TERMINAL_TBP_C;
       assertEquals(VOLUME_FRACTION[i], cut.getVolumeFraction(), 1.0e-12);
       assertEquals(PUBLISHED_TBP_C[i], cut.getLowerBoilingPointKelvin() - 273.15, 0.08,
           "published rounded lower TBP boundary");
@@ -59,35 +57,29 @@ class OilAssayCharacterisationD86ReferencePointTest {
 
   @Test
   void rejectsInvalidReferenceInputsWithoutMutatingAssay() {
-    OilAssayCharacterisation assay =
-        new SystemSrkEos(298.15, 1.01325).getOilAssayCharacterisation();
+    OilAssayCharacterisation assay = new SystemSrkEos(298.15, 1.01325).getOilAssayCharacterisation();
     assay.clearCuts();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut",
-            new double[] {36.5, 54.1}, TERMINAL_TBP_C, SPECIFIC_GRAVITY));
+    assertThrows(IllegalArgumentException.class, () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut",
+        new double[] {36.5, 54.1}, TERMINAL_TBP_C, SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
     double[] outOfDomainD86 = D86_C.clone();
     outOfDomainD86[1] = 34.9;
-    assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", outOfDomainD86,
-            TERMINAL_TBP_C, SPECIFIC_GRAVITY));
+    assertThrows(IllegalArgumentException.class, () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut",
+        outOfDomainD86, TERMINAL_TBP_C, SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
     assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C,
-            Double.NaN, SPECIFIC_GRAVITY));
+        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, Double.NaN, SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
     assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C,
-            PUBLISHED_TBP_C[6], SPECIFIC_GRAVITY));
+        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, PUBLISHED_TBP_C[6], SPECIFIC_GRAVITY));
     assertTrue(assay.getCuts().isEmpty());
 
     assertThrows(IllegalArgumentException.class,
-        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C,
-            TERMINAL_TBP_C, new double[] {0.70}));
+        () -> assay.addD86ReferencePointCutBoundariesCelsius("D86Cut", D86_C, TERMINAL_TBP_C, new double[] {0.70}));
     assertTrue(assay.getCuts().isEmpty());
   }
 }
