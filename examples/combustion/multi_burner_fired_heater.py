@@ -117,14 +117,30 @@ def summarize(heater):
     return summary
 
 
+def run_with_diagnostics(process, heater):
+    """Keep the exact omitted-atom evidence visible when native projection fails."""
+    try:
+        process.run()
+    except Exception:
+        retained = heater.getKineticsResultJson()
+        if retained is not None:
+            result = json.loads(str(retained))
+            print(json.dumps({
+                "projectionFailureDiagnostics": result.get("elementProjectionDiagnostics"),
+                "unmappedMechanismMassFraction": result.get("unmappedMechanismMassFraction"),
+                "temperatureK": result.get("temperatureK"),
+            }, indent=2, allow_nan=False))
+        raise
+
+
 def run_demonstration(java_class, backend, include_sweep=False, sweep_projection_tolerance=1.0e-3):
     """Compare installed burner states at constant total fuel and common air."""
     process, heater, fuel, air, oil, design_fuel_mass = build_case(java_class, backend)
-    process.run()
+    run_with_diagnostics(process, heater)
     seven = summarize(heater)
     for index in range(7):
         heater.configureBurner(index, index < 5, 1.0, 1.0 / 5.0, 1.0 / 7.0)
-    process.run()
+    run_with_diagnostics(process, heater)
     five = summarize(heater)
     results = {"seven_burners": seven, "five_burners_same_total_fuel_air": five}
     if include_sweep:
@@ -139,7 +155,7 @@ def run_demonstration(java_class, backend, include_sweep=False, sweep_projection
             captured_air_fraction = min(1.0, 2.0 * 0.9 * load)
             for index in range(7):
                 heater.configureBurner(index, True, 1.0, captured_air_fraction / 7.0, 1.0 / 7.0)
-            process.run()
+            run_with_diagnostics(process, heater)
             row = summarize(heater)
             row["fuelLoadFraction"] = load
             row["assumedCapturedAirFraction"] = captured_air_fraction
@@ -169,7 +185,7 @@ def main():
         scaled = []
         for firing_mw in (10.0, 20.0, 30.0, 40.0):
             process, heater, fuel, air, oil, fuel_mass = build_case(java_class, backend, firing_mw)
-            process.run()
+            run_with_diagnostics(process, heater)
             row = summarize(heater)
             row["nominalFiringMW"] = firing_mw
             scaled.append(row)

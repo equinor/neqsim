@@ -256,6 +256,10 @@ balances, radiation effects, reproducible provenance and seven/five burner cases
 
 The `Optional combustion physics` workflow installs Cantera 3.2.0 and runs these
 Python tests for combustion changes; Java-only CI is not chemistry validation.
+A separate native job compiles workspace Java classes and runs the seven/five
+burner demonstration through JPype with the default projection tolerance. The
+example prints retained omitted-atom diagnostics before rethrowing a rejected
+projection.
 Analytical diagnostics tests can run without Cantera. Native stream projection,
 mechanism qualification and plant calibration remain separate acceptance gates.
 
