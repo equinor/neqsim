@@ -361,7 +361,16 @@ public class Heater extends TwoPortEquipment
    * @see #getSpecifiedOutletTemperatureUnit()
    */
   public double getSpecifiedOutletTemperature() {
-    return temperatureOut;
+    return setTemperature ? temperatureOut : 0.0;
+  }
+
+  /**
+   * Checks whether an explicit outlet-temperature specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the outlet-temperature specification
+   */
+  public boolean hasOutletTemperatureSpecification() {
+    return setTemperature;
   }
 
   /**
@@ -566,6 +575,15 @@ public class Heater extends TwoPortEquipment
     this.energyInput = energyInput;
     setTemperature = false;
     setEnergyInput = true;
+  }
+
+  /**
+   * Checks whether an explicit duty specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the specified duty
+   */
+  public boolean hasDutySpecification() {
+    return setEnergyInput;
   }
 
   /**
