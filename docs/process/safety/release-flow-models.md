@@ -214,6 +214,56 @@ residence time, area, droplet size, entrainment, annular/high-Weber flow, solids
 accuracy. Results remain `UNQUALIFIED` pending independent multiphase evidence and accountable
 domain review.
 
+## Ranz-Marshall external-film component transfer
+
+`RanzMarshallMassTransferCorrelation` replaces caller-declared component relaxation times with an
+explicit spherical-dispersion external-film calculation. The caller must identify the morphology
+as `GAS_BUBBLES` or `LIQUID_DROPLETS` and supply the Sauter mean diameter $d_{32}$ [m],
+continuous-phase density $\rho_c$ [kg/m³], dynamic viscosity $\mu_c$ [Pa s], relative speed
+$u_r$ [m/s], and continuous-phase diffusivity $D_i$ [m²/s] for every fluid component. The
+correlation evaluates
+
+$$Re=\frac{\rho_cu_rd_{32}}{\mu_c},\qquad Sc_i=\frac{\mu_c}{\rho_cD_i},$$
+
+$$Sh_i=2+0.6\sqrt{Re}\sqrt[3]{Sc_i},\qquad k_i=\frac{Sh_iD_i}{d_{32}},\qquad \tau_i=\frac{d_{32}}{6k_i}.$$
+
+At zero relative speed, $Sh_i=2$ and the implementation recovers the exact stagnant-sphere limit
+$\tau_i=d_{32}^2/(12D_i)$. The supported screening range is $0\le Re<200$ and
+$0<Sc_i<250$ for every component. Values at or beyond either upper boundary are retained in
+diagnostics but produce `UNSUPPORTED`; values are never clamped. Missing, extra, non-finite or
+non-positive inputs produce `INVALID` or constructor rejection rather than a zero coefficient.
+
+`RanzMarshallFiniteRateReleaseModel` couples the calculated $\tau_i$ values to the existing
+component-selective phase reconstruction and bounded vertical Zuber-Findlay/Harmathy closure:
+
+```java
+Map<String, Double> diffusivitiesM2S = new TreeMap<String, Double>();
+diffusivitiesM2S.put("methane", 1.0e-8);
+diffusivitiesM2S.put("n-heptane", 2.0e-8);
+RanzMarshallMassTransferCorrelation transfer = new RanzMarshallMassTransferCorrelation(
+    RanzMarshallMassTransferCorrelation.Morphology.GAS_BUBBLES,
+    1.0e-3,  // d32, m
+    800.0,   // continuous-liquid density, kg/m3
+    1.0e-3,  // continuous-liquid dynamic viscosity, Pa s
+    0.010,   // bubble-to-liquid relative speed, m/s
+    diffusivitiesM2S,
+    "ranz-marshall-public-basis:v1");
+ReleaseFlowModel model = new RanzMarshallFiniteRateReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.25,   // available transfer residence time, s
+    transfer);
+```
+
+The correlation object can calculate coefficients for liquid droplets in a continuous gas, but
+the release adapter deliberately reports `LIQUID_DROPLET_HYDRODYNAMICS_UNSUPPORTED`: the current
+hydrodynamic closure represents gas bubbles in a continuous liquid and is not reused with the
+phase roles reversed. The model also excludes interfacial heat and latent-heat kinetics, internal
+dispersed-phase resistance, Stefan-flow corrections, predictive residence time, breakup,
+coalescence, entrainment, annular/high-Weber flow and solids. Ranz and Marshall,
+*Chemical Engineering Progress* 48 (1952), 141–146 and 173–180, is independent correlation
+provenance, not release-rate or facility qualification. Results remain `UNQUALIFIED` pending
+experimental multiphase evidence and accountable domain review.
+
 ## Ideal-gas equations
 
 The ideal-gas adapter uses the initialized mixture molar mass $M$ [kg/mol] and heat-capacity ratio
