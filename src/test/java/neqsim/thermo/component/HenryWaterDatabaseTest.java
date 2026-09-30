@@ -46,7 +46,7 @@ class HenryWaterDatabaseTest {
       }
       count++;
     }
-    assertEquals(82, count);
+    assertEquals(83, count);
   }
 
   /** Missing and overflow placeholders must never look like a measured finite constant. */
@@ -86,6 +86,20 @@ class HenryWaterDatabaseTest {
         assertEquals(canonical.getHenryCoefdT(temperature), alias.getHenryCoefdT(temperature), 0.0, names[0]);
       }
     }
+  }
+
+  /** Elemental mercury must reproduce the independently measured reference value and local slope. */
+  @Test
+  void mercuryCorrelationMatchesIndependentMeasuredEvidence() {
+    ComponentSrk mercury = new ComponentSrk("mercury", 1.0, 1.0, 0);
+    double temperature = 298.15;
+    double expected = 1.01325 / 0.13;
+
+    assertEquals("7439-97-6", mercury.getCASnumber());
+    assertTrue(mercury.hasHenryCorrelation());
+    assertEquals(expected, mercury.getHenryCoef(temperature), expected * 1.0e-12);
+    assertEquals(expected * 2600.0 / (temperature * temperature), mercury.getHenryCoefdT(temperature),
+        expected * 1.0e-12);
   }
 
   /** Published gases must be distinct and of the correct physical magnitude. */

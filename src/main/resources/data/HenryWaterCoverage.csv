@@ -128,7 +128,7 @@ MEGPVTsim19,107-21-1,literature_candidate_requires_identity_reaction_and_range_r
 propanePVTsim,74-98-6,imported_exact_identity_alias,? C L M Q V X
 ethanolPVTsim,64-17-5,imported_exact_identity_alias,? L M Q T V X
 nbutanePVTsim,106-97-8,imported_exact_identity_alias,? C L M Q V X
-mercury,7439-97-6,literature_candidate_requires_identity_reaction_and_range_review,? C L M V
+mercury,7439-97-6,imported_local_temperature_expression,? C L M V
 propylbenzene,103-65-1,imported_local_temperature_expression,? L M Q T V X
 NaCl,7647-14-5,no_exact_CAS_match_in_source_archive,
 CaCl2,10043-52-4,no_exact_CAS_match_in_source_archive,

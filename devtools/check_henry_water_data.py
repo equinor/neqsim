@@ -71,8 +71,8 @@ def main():
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
     component_rows = {row["NAME"]: row for row in rows}
-    reviewed_pentanes = {"n-pentane", "i-pentane"}
-    for name in reviewed_pentanes:
+    reviewed_correlations = {"n-pentane", "i-pentane", "mercury"}
+    for name in reviewed_correlations:
         provenance = selected[name]
         component = component_rows[name]
         assert float(component["IONICCHARGE"]) == 0.0, name
