@@ -1,0 +1,28 @@
+name: Optional combustion physics
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "examples/combustion/**"
+      - "src/main/java/neqsim/process/equipment/reactor/FiniteRateCombustionReactor.java"
+      - "src/main/java/neqsim/process/equipment/reactor/MultiBurnerFiredHeater.java"
+      - "src/main/java/neqsim/process/util/combustion/**"
+      - ".github/workflows/combustion_physics.yml"
+  workflow_dispatch:
+
+jobs:
+  chemistry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install optional mechanism solver
+        run: python -m pip install cantera==3.2.0
+      - name: Run analytical and detailed chemistry regressions
+        run: python -m unittest discover -s examples/combustion -p 'test_*.py' -v

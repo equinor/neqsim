@@ -9,6 +9,8 @@ import math
 
 import cantera as ct
 
+from combustion_diagnostics import combustion_branch, projection_diagnostics
+
 
 STEFAN_BOLTZMANN = 5.670374419e-8
 
@@ -221,7 +223,7 @@ def solve_fired_heater(request, backend):
             request["refractoryAreaM2"] * request["primaryHeatingAreaFraction"] * fuel_fraction,
         )
         if key in cache:
-            temperature, composition, oil, shell, residual, residence = cache[key]
+            temperature, composition, oil, shell, residual, residence, mass_residual = cache[key]
             product = _gas(backend)
             product.TPY = temperature, pressure, composition
         else:
@@ -237,7 +239,7 @@ def solve_fired_heater(request, backend):
                 reactor, downstream, primary=flow, K=local_mass / pressure * 100.0
             )
             sink = ct.Reservoir(initial, clone=True)
-            wall = ct.Wall(
+            ct.Wall(
                 reactor, sink, A=1.0,
                 Q=lambda time: sum(heat.rates(reactor.T)),
             )
@@ -251,8 +253,22 @@ def solve_fired_heater(request, backend):
             residual = local_mass * inlet.enthalpy_mass - exit_flow.mass_flow_rate * (
                 product.enthalpy_mass
             ) - oil - shell
+            mass_residual = exit_flow.mass_flow_rate / local_mass - 1.0
+            if abs(mass_residual) > 1.0e-7:
+                raise ValueError("Burner PSR does not conserve steady mass flow")
+            if abs(product.P / pressure - 1.0) > 1.0e-5:
+                raise ValueError("Burner PSR does not preserve prescribed pressure")
+            energy_scale = max(
+                abs(local_mass * inlet.enthalpy_mass),
+                abs(local_mass * product.enthalpy_mass),
+                abs(oil) + abs(shell), local_mass * 1.0e6,
+            )
+            if abs(residual) > 1.0e-6 * energy_scale:
+                raise ValueError("Burner PSR energy balance exceeds tolerance")
             residence = reactor.mass / local_mass
-            cache[key] = (product.T, product.Y.copy(), oil, shell, residual, residence)
+            cache[key] = (
+                product.T, product.Y.copy(), oil, shell, residual, residence, mass_residual
+            )
         oil_heat += oil
         shell_heat += shell
         primary_residual += residual
@@ -263,6 +279,7 @@ def solve_fired_heater(request, backend):
             "residenceTimeSeconds": float(residence), "fuelMassFlowKgPerSecond": local_fuel_mass,
             "capturedAirMassFlowKgPerSecond": local_air_mass,
             "energyResidualW": float(residual),
+            "massBalanceRelativeResidual": float(mass_residual),
         })
     bypass = air_mass * max(0.0, 1.0 - captured_fraction)
     if bypass > 0.0:
@@ -287,6 +304,9 @@ def solve_fired_heater(request, backend):
         remaining = common_volume - post.swept_volume
         step = min(0.005, 0.9 * remaining * post.phase.density / total_mass)
         network.advance(network.time + step)
+    volume_residual = post.swept_volume / common_volume - 1.0
+    if abs(volume_residual) > 1.0e-6:
+        raise ValueError("Post-flame integration exceeded the specified reactive volume")
     outlet = post.phase
     oil_heat += total_mass * post.oil_heat_j_per_kg
     shell_heat += total_mass * post.shell_heat_j_per_kg
@@ -345,7 +365,7 @@ def solve_fired_heater(request, backend):
     normal_molar_density = 101325.0 / (ct.gas_constant / 1000.0 * 273.15)
     carbon_molecular_mass = outlet.atomic_weights[outlet.element_index("C")] / 1000.0
     organic_factor = normal_molar_density * carbon_molecular_mass * 1.0e6 / dry_moles
-    return {
+    result = {
         "schemaVersion": 1, "converged": True,
         "reactorModel": "MULTI_BURNER_FIRED_HEATER",
         "temperatureK": float(outlet.T), "pressurePa": float(outlet.P),
@@ -361,8 +381,11 @@ def solve_fired_heater(request, backend):
         "usefulHeatToOilW": float(oil_heat), "shellHeatLossW": float(shell_heat),
         "stackSensibleHeatW": float(stack_sensible), "residualChemicalPowerW": float(residual_chemical),
         "fuelChemicalPowerW": float(chemical_input), "inletSensibleHeatW": float(inlet_sensible),
+        "airChemicalPowerW": float(air_chemical),
         "stackSensibleReferenceTemperatureK": 298.15,
-        "postFlameResidenceTimeSeconds": float(network.time), "postFlameVolumeM3": common_volume,
+        "postFlameResidenceTimeSeconds": float(network.time), "postFlameVolumeM3": float(post.swept_volume),
+        "specifiedPostFlameVolumeM3": common_volume,
+        "postFlameVolumeRelativeResidual": float(volume_residual),
         "burnerDiagnostics": burner_diagnostics,
         "coMassRateKgPerHour": species_flows.get("CO", 0.0) * masses["CO"] * 3600.0,
         "coPpmvDry": co_dry_ppm, "coMgPerNormalM3DryAt273_15K101325Pa": co_normal,
@@ -373,9 +396,10 @@ def solve_fired_heater(request, backend):
         if reference_valid else None,
         "hydrocarbonCarbonFraction": hydrocarbon_carbon / carbon_in if carbon_in else 0.0,
         "carbonToCO2Fraction": species_flows.get("CO2", 0.0) / carbon_in if carbon_in else 0.0,
-        "branchDiagnostic": "BURNING" if oil_heat > 0.0 and organic_carbon / carbon_in < 0.01
-        and species_flows.get("CO2", 0.0) / carbon_in > 0.99
-        else "INCOMPLETE_CONVERSION_OR_NO_USEFUL_HEAT",
+        "branchDiagnostic": combustion_branch(
+            oil_heat, chemical_input + air_chemical, residual_chemical,
+            carbon_in, organic_carbon, species_flows.get("CO2", 0.0)
+        ),
         "organicCarbonFraction": organic_carbon / carbon_in if carbon_in else 0.0,
         "negativeSpeciesMassFractionClipped": clipped_fraction,
         "methaneMgPerNormalM3Dry": methane_carbon * masses.get("CH4", 0.0)
@@ -395,3 +419,11 @@ def solve_fired_heater(request, backend):
             "mechanismQualification": "Caller-selected; reduced-zone model, no industrial emissions guarantee",
         },
     }
+
+    combined_flows = dict(fuel_flows)
+    for species, flow in air_flows.items():
+        combined_flows[species] = combined_flows.get(species, 0.0) + flow
+    result.update(projection_diagnostics(
+        combined_flows, species_flows, masses, atoms, backend.mapping
+    ))
+    return result

@@ -26,6 +26,16 @@ NeqSim 3.23.0 examples and the focused interface tests passed, but that evidence
 is not a successful end-to-end current-master run. The cause of the projection
 rejection remains to be resolved without silently weakening conservation checks.
 The full mechanism state is retained for diagnosis after projection rejection.
+The added methanol/ammonia mappings have not yet been shown to resolve that
+native demonstration failure; current-head end-to-end validation is still needed.
+
+Every backend result now includes `elementProjectionDiagnostics`: inlet, exact
+outlet and omitted molar atom flows, exact-mechanism and EOS-projection relative
+residuals, and omitted species ranked by their contribution to each element.
+Relative values use the inlet elemental inventory, matching the Java gate. For
+an absent inlet element the relative value is null; absolute outlet and omitted
+flows remain available. `unmappedMechanismMassFraction` is a separate diagnostic.
+No diagnostic changes the existing acceptance tolerances or renormalizes species.
 
 A bounded comparison with supplied field observations did not establish plant
 calibration. Air capture, fuel assay, geometry and temperature remain insufficiently
@@ -113,6 +123,14 @@ Residual chemical power includes incomplete combustion and fuel slip, rather tha
 calling all unabsorbed fuel energy a stack sensible loss. Inlet sensible heat is
 included explicitly. The detailed result contains the relative residual, individual
 PSR balances and independently integrated post-flame wall-heat balance.
+Each burner now separately rejects mass-flow residuals above 1e-7, relative
+pressure deviations above 1e-5 and energy residuals above 1e-6 of the local
+enthalpy/heat scale (with a 1 MJ/kg mass-flow scale floor). This prevents local
+errors from cancelling in the total furnace balance. `postFlameVolumeM3` reports
+the actual integrated swept volume; `specifiedPostFlameVolumeM3` reports the
+requested volume. A relative mismatch above 1e-6 rejects the solve.
+`airChemicalPowerW` exposes any chemical energy carried by the air stream, so
+that reactive contaminants can be included explicitly in the full energy split.
 
 If a hot-oil stream is connected, `HotOilHeatBalance` applies only the useful tube
 heat to a cloned oil fluid with a NeqSim PH flash, preserving pressure and flow.
@@ -138,7 +156,10 @@ this change. Verify its source, license and validity before use.
 
 Default component mappings are one-to-one and independently checked against the
 NeqSim element database. Methane, ethane, propane and common stable combustion
-species are mapped when present in the selected mechanism. C4 mappings are enabled
+species are mapped when present in the selected mechanism. Methanol (`CH3OH`) and
+ammonia (`NH3`) are also retained: both have component and elemental records in
+NeqSim. This preserves real stable species; it does not recombine radicals or
+replace missing species with surrogate molecules. C4 mappings are enabled
 only when the mechanism contains `C4H10`/`NC4H10` and/or `IC4H10`. Unsupported inlet
 species fail explicitly. GRI's C2H2 remains in the exact result because NeqSim does
 not have independently supported acetylene component/element data for this mapping.
@@ -164,8 +185,12 @@ values only after checking normal/actual volume, wet/dry basis and reference O2.
 
 Low CO alone is not evidence of good combustion. Inspect useful oil heat, burner
 temperature, carbon-to-CO2 conversion and total organic-carbon fraction, including
-oxygenates. The `BURNING` diagnostic requires positive useful heat and more than
-99% carbon conversion to CO2 with less than 1% organic carbon. Other points retain
+oxygenates. The `BURNING` diagnostic requires positive useful heat, residual chemical power
+below 1% of the supplied chemical power, and (for carbon-containing fuel) more
+than 99% carbon conversion to CO2 with less than 1% organic carbon. The energy
+criterion prevents a carbon-only check from hiding H2 slip. Carbon-free fuel
+uses the energy criterion without dividing by a nonexistent carbon inventory.
+These thresholds are diagnostic conventions, not burner safety limits. Other points retain
 their species and energy diagnostics. Extinguished cases cannot explain a plant
 that continues to supply useful hot-oil heat.
 
@@ -195,7 +220,7 @@ For a built checkout with the normal NeqSim Python runtime and Cantera 3.2:
 
 ```bash
 python examples/combustion/multi_burner_fired_heater.py --project-root . --mechanism gri30.yaml --sweep --scale-study --output heater_results.json
-python -m unittest discover -s examples/combustion -p test_cantera_backend.py
+python -m unittest discover -s examples/combustion -p "test_*.py"
 ```
 
 The example constructs SRK fuel, common-air and hot-oil streams, attaches the
@@ -226,8 +251,13 @@ conservation and a conditional trend; they are not the private plant's CO curve.
 
 Focused Java tests cover ports, total-supply preservation, switching, outlet
 identity, failure invalidation and utility PH closure. Optional Python tests cover
-finite-rate chemistry, independently integrated nonzero wall heat, species/element
+finite-rate chemistry, carbon-free hydrogen fuel, independently integrated nonzero wall heat, species/element
 balances, radiation effects, reproducible provenance and seven/five burner cases.
+
+The `Optional combustion physics` workflow installs Cantera 3.2.0 and runs these
+Python tests for combustion changes; Java-only CI is not chemistry validation.
+Analytical diagnostics tests can run without Cantera. Native stream projection,
+mechanism qualification and plant calibration remain separate acceptance gates.
 
 ## Related APIs and primary sources
 

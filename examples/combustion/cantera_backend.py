@@ -12,6 +12,8 @@ import math
 
 import cantera as ct
 
+from combustion_diagnostics import projection_diagnostics
+
 
 DEFAULT_COMPONENT_TO_SPECIES = {
     "methane": "CH4",
@@ -21,6 +23,8 @@ DEFAULT_COMPONENT_TO_SPECIES = {
     "i-butane": "IC4H10",
     "ethylene": "C2H4",
     "hydrogen": "H2",
+    "methanol": "CH3OH",
+    "ammonia": "NH3",
     "oxygen": "O2",
     "nitrogen": "N2",
     "water": "H2O",
@@ -187,16 +191,16 @@ class CanteraBackend:
         reactor.volume = 1.0
         if model == "PERFECTLY_STIRRED":
             controlled_mass_flow = reactor.mass / residence
-            inlet_controller = ct.MassFlowController(
+            ct.MassFlowController(
                 upstream, reactor, mdot=controlled_mass_flow
             )
-            outlet_controller = ct.MassFlowController(
+            ct.MassFlowController(
                 reactor, downstream, mdot=controlled_mass_flow
             )
         ambient_gas = ct.Solution(self.mechanism)
         ambient_gas.TPX = surroundings, pressure, inlet_flows
         ambient = ct.Reservoir(ambient_gas, clone=True)
-        wall = ct.Wall(
+        ct.Wall(
             reactor,
             ambient,
             A=1.0,
@@ -307,6 +311,9 @@ class CanteraBackend:
                 "mechanismQualification": "Caller-selected; no plant or propane-validation claim",
             },
         }
+        result.update(projection_diagnostics(
+            inlet_flows, species_flows, molecular_masses, atom_counts, self.mapping
+        ))
         return json.dumps(result, allow_nan=False)
 
 

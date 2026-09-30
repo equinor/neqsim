@@ -2,7 +2,6 @@
 
 import copy
 import json
-import math
 import unittest
 
 from cantera_backend import CanteraBackend
@@ -52,6 +51,24 @@ class CanteraBackendTest(unittest.TestCase):
         """Use the bundled demonstration mechanism, without a propane qualification claim."""
         cls.backend = CanteraBackend("gri30.yaml")
 
+    def test_supported_stable_species_are_projected(self):
+        """Keep actual methanol and ammonia, with their independently supported atoms."""
+        self.assertEqual(self.backend.mapping["methanol"], "CH3OH")
+        self.assertEqual(self.backend.mapping["ammonia"], "NH3")
+
+    def test_hydrogen_heater_has_no_carbon_division(self):
+        """A carbon-free fuel must retain chemistry and energy diagnostics."""
+        request = heater_request()
+        request["fuelMolarFlows"] = {"hydrogen": 120.0}
+        result = json.loads(self.backend.solve(json.dumps(request)))
+        self.assertGreater(result["usefulHeatToOilW"], 0.0)
+        self.assertEqual(result["branchDiagnostic"], "BURNING")
+        self.assertLess(abs(result["fullEnergyBalanceRelativeResidual"]), 1.0e-6)
+        self.assertLess(abs(result["postFlameVolumeRelativeResidual"]), 1.0e-6)
+        for element in ("H", "O", "N"):
+            diagnostic = result["elementProjectionDiagnostics"][element]
+            self.assertLess(abs(diagnostic["mechanismRelativeResidual"]), 1.0e-7)
+
     def test_stable_mechanism_fingerprint(self):
         """Generated timestamps and phase state must not alter mechanism identity."""
         self.assertEqual(
@@ -95,6 +112,9 @@ class CanteraBackendTest(unittest.TestCase):
         self.assertLess(abs(result["fullEnergyBalanceRelativeResidual"]), 1.0e-6)
         self.assertLess(result["hydrocarbonCarbonFraction"], 1.0e-4)
         self.assertEqual(result["branchDiagnostic"], "BURNING")
+        self.assertLess(abs(result["postFlameVolumeRelativeResidual"]), 1.0e-6)
+        for burner in result["burnerDiagnostics"]:
+            self.assertLess(abs(burner["massBalanceRelativeResidual"]), 1.0e-7)
         for element in ("C", "H", "O", "N"):
             initial = sum(
                 value * result["speciesAtomCounts"][self.backend.mapping[component]].get(element, 0.0)
