@@ -322,6 +322,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document          | Path                                                                                           | Description                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
+| Compression Train Assessment | [docs/process/equipment/compression_train_assessment.md](process/equipment/compression_train_assessment.md) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md)             | Compressor performance curves                     |
 | Compressor Anti-Surge Control | [docs/process/equipment/compressor_antisurge_control.md](process/equipment/compressor_antisurge_control.md) | Dynamic anti-surge recycle, pressure-speed control, predictive supervision, coordinated override philosophy, and application-design scan logic |
 | Compressor Shaft (shared drive) | [docs/process/equipment/compressor_shaft.md](process/equipment/compressor_shaft.md) | Multiple compressor bodies on one shaft at a single common speed; iterate the common speed to the final discharge with floating intermediates |

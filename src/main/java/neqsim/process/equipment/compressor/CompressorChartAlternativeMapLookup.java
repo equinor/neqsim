@@ -361,7 +361,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   /** {@inheritDoc} */
   @Override
   public double polytropicEfficiency(double flow, double speed) {
-    return 100.0;
+    return getPolytropicEfficiency(flow, speed);
   }
 
   /** {@inheritDoc} */
@@ -498,7 +498,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    */
   @Override
   public boolean checkSurge1(double flow, double head) {
-    return false;
+    return super.checkSurge1(flow, head);
   }
 
   /**
@@ -510,7 +510,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    */
   @Override
   public boolean checkSurge2(double flow, double speed) {
-    return false;
+    return super.checkSurge2(flow, speed);
   }
 
   /**
@@ -522,7 +522,7 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
    */
   @Override
   public boolean checkStoneWall(double flow, double speed) {
-    return false;
+    return super.checkStoneWall(flow, speed);
   }
 
   /** {@inheritDoc} */
