@@ -264,20 +264,18 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     double[] tbpTemperatureCelsius = new double[referenceData.length + 1];
     for (int i = 0; i < referenceData.length; i++) {
       cumulativeVolumePercent[i] = referenceData[i][0];
-      tbpTemperatureCelsius[i] = RiaziDaubertDistillationConversion
-          .convertD86ToTbpC(d86TemperatureCelsius[i], cumulativeVolumePercent[i]);
+      tbpTemperatureCelsius[i] = RiaziDaubertDistillationConversion.convertD86ToTbpC(d86TemperatureCelsius[i],
+          cumulativeVolumePercent[i]);
     }
 
     int terminalIndex = referenceData.length;
     cumulativeVolumePercent[terminalIndex] = 100.0;
     tbpTemperatureCelsius[terminalIndex] = terminalTbpTemperatureCelsius;
     if (!(terminalTbpTemperatureCelsius > tbpTemperatureCelsius[terminalIndex - 1])) {
-      throw new IllegalArgumentException(
-          "Terminal TBP boundary must exceed the converted 95 vol% boundary");
+      throw new IllegalArgumentException("Terminal TBP boundary must exceed the converted 95 vol% boundary");
     }
 
-    addTBPCutBoundariesCelsius(namePrefix, cumulativeVolumePercent, tbpTemperatureCelsius,
-        specificGravity);
+    addTBPCutBoundariesCelsius(namePrefix, cumulativeVolumePercent, tbpTemperatureCelsius, specificGravity);
   }
 
   /**
