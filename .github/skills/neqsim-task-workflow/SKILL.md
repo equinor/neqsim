@@ -2047,7 +2047,60 @@ Never ask the user for permission to do this step.
 This turns every task into a potential NeqSim enhancement — the development
 flywheel: **task → gap → implementation → better next task**.
 
-### 6.4 — Workaround Documentation
+### 6.4 — Offer to File It Upstream (standard agentic step, consent required)
+
+Once a gap is recorded (§6.1–6.3), offer the user the option to close the loop
+on `equinor/neqsim` instead of letting the NIP sit only in the task folder.
+This is a **standard step for every task that records a NeqSim gap** — ask it
+once, every time — but it is opt-in per use: never file an issue or push a
+branch without the user's explicit go-ahead in that conversation.
+
+```bash
+neqsim file-issue <task>            # list gaps, prompt to file each as an issue
+neqsim file-issue <task> --list     # preview only — no prompts, no gh/git calls
+neqsim file-issue <task> --dry-run  # print the exact gh/git commands, run nothing
+neqsim file-issue <task> --pr       # also offer a PR for gaps already implemented here
+```
+
+What it does, and the guardrails that make it safe to offer by default:
+
+- Reads NIPs from `step1_scope_and_research/neqsim_improvements.md` and any
+  `results.json` → `improvements[]` entry with `"target": "neqsim"`, skipping
+  ones that already carry a recorded issue URL (`--force` re-offers them).
+- Checks for an existing open issue with the same title first (`gh issue list
+  --search`) so re-running a task never opens a duplicate.
+- **Always confirms before doing anything**: each issue and each PR gets its
+  own `[y/N]` prompt (default No) unless `--yes` is passed; `--dry-run` never
+  calls `gh`/`git` at all, so it is safe to run with no GitHub CLI installed.
+- The PR half (`--pr`) only fires when this checkout actually has changed
+  `.java` files under `src/main/java/neqsim/` or `src/test/java/neqsim/` (the
+  gap was implemented per §6.3) — it will not open an empty PR for a NIP that
+  was only documented. It runs `spotless:apply`, `spotless:check` and
+  `checkstyle:check` first and aborts the PR if any of them fail, matching the
+  same file-scope restriction as `create-neqsim-pr.yml` (only NeqSim `.java`
+  files under those two trees are ever staged/pushed).
+- On success it writes the issue URL back into the NIP block (or the
+  `results.json` entry), so a second run of the same task does not re-offer it.
+
+**Degrades gracefully when `gh` isn't usable — this matters most for plugin
+users.** A full `neqsim` checkout with `gh` installed and authenticated gets
+the fast path above. Someone using NeqSim only through the **Copilot plugin**
+(no local neqsim source tree, so `--pr` is a no-op for them anyway, and often
+no `gh` CLI either) still gets the point of this step: whenever `gh` is
+missing, unauthenticated, or its `issue create` call itself fails (rate limit,
+network), the tool falls back to printing a pre-filled
+`github.com/equinor/neqsim/issues/new?title=...&body=...` link
+(`github_new_issue_url`) and, once confirmed, opens it in a normal browser —
+the issue is filed under the user's own GitHub account, no install, auth, or
+repo write access required (`--no-browser` prints the link instead of opening
+it, e.g. for headless use). A fallback link is a *form*, not a created issue,
+so it is never written back as a recorded `**GitHub issue:**` marker — only a
+real `gh`-created URL is.
+
+See `devtools/file_neqsim_issue.py` for the implementation and
+`devtools/test_file_neqsim_issue.py` for its regression tests.
+
+### 6.5 — Workaround Documentation
 
 When a NeqSim gap cannot be implemented during the task, document the
 Python workaround used AND why the Java implementation would be better:

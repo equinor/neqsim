@@ -265,6 +265,18 @@ then implement the improvement:
 Note the improvements made (agents, skills, and NeqSim code) in the task summary.
 Do not over-engineer — only concrete changes motivated by the task.
 
+**Then offer to close the loop upstream.** Whenever this step recorded a NIP
+or a `results.json` `improvements` entry, ask the user once whether to file it
+on `equinor/neqsim` now with `neqsim file-issue <task>` (`--pr` too, if the gap
+was implemented in this checkout). This is standard for every task with a
+recorded gap — but it is consent-gated: the tool confirms each issue/PR
+individually and never files or pushes without an explicit "yes" (or
+`--dry-run`, which never calls `gh`/`git`). Without `gh` installed/authenticated
+or a local checkout — the normal situation for Copilot-plugin users, who have
+no source tree to implement a fix in and often no `gh` either — it falls back
+to a pre-filled `issues/new` link opened in a browser, so the issue still gets
+filed under their own account. See `neqsim-task-workflow` §6.4.
+
 ### Stop Conditions
 
 Stop when all are true:

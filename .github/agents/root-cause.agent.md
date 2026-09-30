@@ -31,6 +31,13 @@ off to `@production-chemistry`. It owns `neqsim.process.chemistry.rca.RootCauseA
 (explainable chemical candidate ranking), the compatibility rule base, and
 `ScaleRemediationAdvisor` for the dissolver/wash recommendation.
 
+When weather (ambient temperature, wind, sea state) may be a contributing factor — an
+air-cooler or gas-turbine margin loss on a hot day, a wind-affected flare/fire-water case,
+a storm-related trip, or a cold-snap hydrate/freeze event — pull historical conditions for
+the equipment's location and the event window from the community `neqsim-weather-data`
+skill (or the `installation-weather-agent`) before scoring weather as evidence; see the
+root-cause-analysis skill's "Weather as Evidence" section for the confidence bands.
+
 ## Operating Principles
 
 1. **Understand the symptom**: Classify the reported issue using the Symptom enum
