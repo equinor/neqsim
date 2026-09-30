@@ -22,11 +22,14 @@ by the executable example.
 This feature remains a research draft. The native seven/five burner demonstration
 now passes against workspace Java classes in hosted CI with the default 1e-6
 projection tolerance unchanged. The earlier native hydrogen-element rejection
-is addressed by retaining supported ammonia and methanol in the EOS projection.
+has not been reproduced in this hosted environment, including with the old
+mappings. Its historical cause is therefore not established. Supported ammonia
+and methanol are now retained in the EOS projection without claiming that they
+caused that rejection.
 For the seven/five burner cases, omitted hydrogen fractions are approximately
 8.72e-7 / 8.62e-7; unmapped mass fractions are approximately 1.52e-7 / 1.50e-7.
-The native integration job also checks that removing these mappings reproduces
-the original hydrogen rejection. Exact species remain available after rejection.
+The native integration job also reports the result with the old mappings,
+allowing a direct comparison instead of assuming the cause of a prior failure. Exact species remain available after rejection.
 
 Every backend result now includes `elementProjectionDiagnostics`: inlet, exact
 outlet and omitted molar atom flows, exact-mechanism and EOS-projection relative
