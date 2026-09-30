@@ -1226,13 +1226,12 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals("NOT_APPLICABLE_BOUNDED_OPEN_DRAIN_REVIEW_SOFTWARE_CONTRACT",
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("OpenDrainReviewRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_open_drain_review_protocol.py"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OpenDrainReviewRunnerTest.java"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_open_drain_review_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("NORSOK S-001 Clause 9"));
-    assertTrue(coverage.get("evidenceBoundary").getAsString()
-        .contains("direct STID or tagreader connectivity"));
+    assertTrue(coverage.get("evidenceBoundary").getAsString().contains("direct STID or tagreader connectivity"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runOpenDrainReview"));
     assertEquals(49, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(2, limitations.get("confirmedGapToolCount").getAsInt());
