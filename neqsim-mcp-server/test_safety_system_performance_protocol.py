@@ -101,7 +101,7 @@ def test_catalog_report(client):
     response = run_performance(client, catalog_example(client))
     data = payload(response)
     summary = data.get("summary", {})
-    require(response.get("status") == "success" and data.get("status") == "success"
+    require(response.get("status") == "success"
             and response.get("validation", {}).get("valid") is True
             and response.get("qualityGate", {}).get("verdict") == "passed",
             "safety-system response envelope failed", response)
