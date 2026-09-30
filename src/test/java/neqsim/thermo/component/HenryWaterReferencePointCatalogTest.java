@@ -21,10 +21,11 @@ class HenryWaterReferencePointCatalogTest {
   @Test
   void catalogContainsQualifiedExactCasIdentities() {
     List<HenryWaterReferencePoint> points = HenryWaterReferencePointCatalog.getAll();
-    assertEquals(34, points.size());
+    assertEquals(35, points.size());
     Set<String> casNumbers = new HashSet<>();
     int plyasunovCount = 0;
     int brockbankCount = 0;
+    int mackayShiuCount = 0;
     for (HenryWaterReferencePoint point : points) {
       assertTrue(casNumbers.add(point.getCasNumber()), point.getCasNumber());
       ComponentSrk component = new ComponentSrk(point.getComponentName(), 1.0, 1.0, 0);
@@ -38,17 +39,37 @@ class HenryWaterReferencePointCatalogTest {
       if ("3673".equals(point.getReferenceId())) {
         plyasunovCount++;
         assertEquals("10.1016/S0016-7037(99)00330-0", point.getOriginalReferenceDoi());
-      } else {
+      } else if ("3518".equals(point.getReferenceId())) {
         brockbankCount++;
-        assertEquals("3518", point.getReferenceId());
         assertEquals("", point.getOriginalReferenceDoi());
         assertEquals("https://scholarsarchive.byu.edu/etd/3691/", point.getOriginalReferenceUrl());
         assertFalse(point.getSourceInchiKey().isEmpty());
+      } else {
+        mackayShiuCount++;
+        assertEquals("479", point.getReferenceId());
+        assertEquals("10.1063/1.555654", point.getOriginalReferenceDoi());
+        assertEquals("https://doi.org/10.1063/1.555654", point.getOriginalReferenceUrl());
       }
     }
     assertEquals(28, plyasunovCount);
     assertEquals(6, brockbankCount);
+    assertEquals(1, mackayShiuCount);
     assertThrows(UnsupportedOperationException.class, () -> points.add(points.get(0)));
+  }
+
+  /** The Mackay-Shiu point retains its exact identity and unknown pressure basis. */
+  @Test
+  void ethyltoluenePointRetainsSourceLimitations() {
+    HenryWaterReferencePoint point = HenryWaterReferencePointCatalog.findByComponentName("4-ethyltoluene")
+        .orElseThrow(AssertionError::new);
+    assertEquals("622-96-8", point.getCasNumber());
+    assertEquals("JRLPEMVDPFPYPJ-UHFFFAOYSA-N", point.getSourceInchiKey());
+    assertEquals(2.0e-1, point.getSolubilityMolalityPerAtm(), 0.0);
+    assertEquals(298.15, point.getReferenceTemperatureK(), 0.0);
+    assertTrue(Double.isNaN(point.getReferencePressureMPa()));
+    assertEquals(1.01325 / 2.0e-1, point.getMolalityVolatilityBarKgPerMol(298.15), 0.0);
+    assertTrue(Double.isNaN(point.getMolalityVolatilityBarKgPerMol(298.1500000001)));
+    assertTrue(Double.isNaN(point.getMolalityVolatilityTemperatureDerivative()));
   }
 
   /** Brockbank rows retain their exact source values and per-row provenance. */
