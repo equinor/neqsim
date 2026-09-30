@@ -291,9 +291,9 @@ def test_inventory_remains_qualification_only(client):
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runOperationalStudy", {})
     require(
-        inventory.get("inventoryVersion") == "1.47"
-        and limitations.get("contractTestedToolCount") == 47
-        and limitations.get("confirmedGapToolCount") == 4
+        inventory.get("inventoryVersion") == "1.48"
+        and limitations.get("contractTestedToolCount") == 48
+        and limitations.get("confirmedGapToolCount") == 3
         and record.get("coverageStatus") == "CONTRACT_TESTED"
         and record.get("benchmarkApplicability")
         == "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT"

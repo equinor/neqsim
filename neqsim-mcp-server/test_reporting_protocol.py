@@ -299,10 +299,10 @@ def test_phase0_inventory_promotes_reporting_contracts(client):
     require(isinstance(inventory, dict), "capabilities omitted Phase 0 inventory", result)
     limitations = inventory.get("knownLimitations", {})
     records = limitations.get("coverageRecords", {})
-    require(inventory.get("inventoryVersion") == "1.47", "inventory version drifted", inventory)
+    require(inventory.get("inventoryVersion") == "1.48", "inventory version drifted", inventory)
     require(
-        limitations.get("contractTestedToolCount") == 47
-        and limitations.get("confirmedGapToolCount") == 4
+        limitations.get("contractTestedToolCount") == 48
+        and limitations.get("confirmedGapToolCount") == 3
         and limitations.get("contractPromotionCandidateCount") == 0,
         "reporting promotion accounting drifted",
         limitations,
