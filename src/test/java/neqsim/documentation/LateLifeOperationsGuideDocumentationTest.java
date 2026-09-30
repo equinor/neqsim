@@ -46,7 +46,7 @@ public class LateLifeOperationsGuideDocumentationTest extends NeqSimTest {
     assertTrue(guide.contains("Gas price / tariff | 0.30 / 0.02 USD/Sm³"));
     assertTrue(prose.contains("returns annual production volumes"));
     assertTrue(prose.contains("multiplying by days per year again would overstate revenue"));
-    assertTrue(prose.contains("does not determine a safe operating limit or an abandonment date"));
+    assertTrue(prose.contains("do not determine a safe operating limit or an abandonment date"));
     assertTrue(prose.contains("does not simulate water cut, GOR evolution, artificial lift"));
     assertTrue(prose.contains("A positive NPV is not permission to operate"));
     assertTrue(guide.contains("java -ea"));
