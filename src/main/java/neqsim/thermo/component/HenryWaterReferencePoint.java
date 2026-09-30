@@ -93,7 +93,7 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
     return referenceTemperatureK;
   }
 
-  /** @return reference pressure in MPa */
+  /** @return source reference pressure in MPa, or {@link Double#NaN} when not reported */
   public double getReferencePressureMPa() {
     return referencePressureMPa;
   }
