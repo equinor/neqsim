@@ -117,6 +117,29 @@ The qualified correlation does not provide a 100 vol% point. The caller must the
 
 This path intentionally does not support ASTM D1160, intermediate recovery-point interpolation, an inferred 100 vol% conversion, or an ASTM laboratory-compliance claim. The correlation source is M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert distillation-curve types,” *Oil & Gas Journal* 84(34), 1986; public bibliographic record: [OSTI 5212509](https://www.osti.gov/biblio/5212509). No coefficients beyond the existing source-qualified NeqSim implementation are introduced here.
 
+## Auditable TBP cut-table export
+
+`exportTbpCutTable()` creates an immutable round-trip table from a complete assay. The table returns defensive copies of:
+
+- cumulative liquid-volume yield from 0 to 100 percent;
+- contiguous TBP boundaries in K or degC; and
+- one dimensionless specific gravity for each boiling interval.
+
+A volume-basis assay recovers its normalized declared yields. For a mass-basis assay, NeqSim applies the ideal-additive-volume identity $v_i=(w_i/SG_i)/\sum_j(w_j/SG_j)$ before accumulating volume percent. This is a basis conversion, not a temperature correction, excess-volume model, blend-contraction model, or distillation-curve fit.
+
+```java
+OilAssayCharacterisation.TbpCutTable table = assay.exportTbpCutTable();
+
+OilAssayCharacterisation copy = anotherSystem.getOilAssayCharacterisation();
+copy.addTBPCutBoundariesKelvin(
+    "RoundTrip",
+    table.getCumulativeVolumePercent(),
+    table.getBoilingPointKelvin(),
+    table.getSpecificGravity());
+```
+
+Export fails closed unless the assay is non-empty and every interval has positive yield, a density, a complete boiling range, and an exactly shared boundary with its neighbour. Gaps and overlaps are not interpolated or repaired. This preserves the input cut topology and makes mass/volume closure auditable; it is not a re-lumping or resampling algorithm.
+
 ## Volume-basis conversion
 
 For cut volume fractions `v_i` and cut densities `rho_i`, NeqSim first calculates the normalized mass fraction
