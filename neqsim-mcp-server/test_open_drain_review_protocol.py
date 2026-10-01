@@ -1,4 +1,4 @@
-"""Focused packaged-MCP qualification for the safety-system-performance contract."""
+"""Focused packaged-MCP qualification for the open-drain-review contract."""
 import json
 import subprocess
 import sys
@@ -36,7 +36,7 @@ class McpClient:
         self.message_id += 1
         self.send({"jsonrpc": "2.0", "id": self.message_id, "method": "initialize",
                    "params": {"protocolVersion": "2025-11-25", "capabilities": {},
-                              "clientInfo": {"name": "neqsim-safety-performance-contract-test",
+                              "clientInfo": {"name": "neqsim-open-drain-contract-test",
                                              "version": "1.0"}}})
         require("result" in self.receive(), "MCP initialize failed")
         self.send({"jsonrpc": "2.0", "method": "notifications/initialized"})
@@ -75,73 +75,86 @@ def payload(response):
 
 def catalog_example(client):
     return client.call("getExample", {
-        "category": "safety",
-        "name": "safety-system-performance",
+        "category": "open-drain-review",
+        "name": "norsok-s001-stid",
     })
 
 
-def run_performance(client, request):
-    return client.call("runSafetySystemPerformance", {
-        "safetySystemJson": json.dumps(request),
+def run_review(client, request):
+    return client.call("runOpenDrainReview", {
+        "openDrainReviewJson": json.dumps(request),
     })
 
 
 def test_discovery_boundary(client):
     tool = next(item for item in client.list_tools()
-                if item.get("name") == "runSafetySystemPerformance")
+                if item.get("name") == "runOpenDrainReview")
     description = tool.get("description", "")
-    require("active and passive safety-system barrier performance" in description
-            and "quantitative SIL/PFD" in description
-            and "SafetySystemPerformanceReport" in description
-            and "NORSOK S-001" in description,
-            "safety-system discovery boundary drifted", tool)
+    require("NORSOK S-001 Clause 9" in description
+            and "normalized STID/P&ID evidence" in description
+            and "tagreader/historian evidence" in description
+            and "does not connect directly" in description,
+            "open-drain discovery boundary drifted", tool)
 
 
 def test_catalog_report(client):
-    response = run_performance(client, catalog_example(client))
+    response = run_review(client, catalog_example(client))
     data = payload(response)
-    summary = data.get("summary", {})
     require(response.get("status") == "success"
             and response.get("validation", {}).get("valid") is True
             and response.get("qualityGate", {}).get("verdict") == "passed",
-            "safety-system response envelope failed", response)
-    require(summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
-            and summary.get("assessmentCount", 0) > 0
-            and "assessments" in data.get("performanceReport", {})
-            and "NORSOK-S-001" in data.get("standardsTemplates", {})
-            and "ISO-13702" in data.get("standardsTemplates", {})
-            and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
-            "safety-system report or templates drifted", data)
+            "open-drain response envelope failed", response)
+    require(data.get("reviewType") == "open_drain_review"
+            and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+            and data.get("failedItems") == 0
+            and data.get("warningItems") == 1
+            and data.get("itemCount") == 2
+            and len(data.get("results", [])) == 2
+            and "NORSOK S-001:2020+AC:2021 Clause 9"
+            in data.get("standardsApplied", [])
+            and response.get("provenance", {}).get("calculationType")
+            == "open drain review",
+            "open-drain report or provenance drifted", response)
 
 
 def test_deterministic_replay(client):
     request = catalog_example(client)
-    require(run_performance(client, request) == run_performance(client, request),
-            "safety-system response is not deterministic")
+    first = run_review(client, request)
+    second = run_review(client, request)
+    for response in (first, second):
+        provenance = response.get("provenance", {})
+        require(provenance.get("timestamp")
+                and provenance.get("computationTimeMs", -1) >= 0,
+                "open-drain execution provenance missing", response)
+        # Execution time varies; all engineering results and other provenance must agree.
+        provenance.pop("timestamp", None)
+        provenance.pop("computationTimeMs", None)
+    require(first == second,
+            "open-drain response is not deterministic")
 
 
 def test_fail_closed_input(client):
-    invalid = client.call("runSafetySystemPerformance", {"safetySystemJson": ""})
+    invalid = client.call("runOpenDrainReview", {"openDrainReviewJson": ""})
     invalid_data = payload(invalid)
     require((invalid.get("status") == "error" or invalid_data.get("status") == "error")
             and invalid.get("validation", {}).get("valid") is False,
-            "empty safety-system input did not fail closed", invalid)
+            "empty open-drain input did not fail closed", invalid)
 
 
 def test_inventory_promotion(client):
     capabilities = payload(client.call("getCapabilities", {}))
     inventory = capabilities.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
-    record = limitations.get("coverageRecords", {}).get("runSafetySystemPerformance", {})
+    record = limitations.get("coverageRecords", {}).get("runOpenDrainReview", {})
     require(inventory.get("inventoryVersion") == "1.49"
             and limitations.get("contractTestedToolCount") == 49
             and limitations.get("confirmedGapToolCount") == 2
             and limitations.get("contractPromotionCandidateCount") == 0
             and record.get("coverageStatus") == "CONTRACT_TESTED"
-            and record.get("contractEvidenceCount") == 8
-            and "neqsim-mcp-server/test_safety_system_performance_protocol.py"
+            and record.get("contractEvidenceCount") == 7
+            and "neqsim-mcp-server/test_open_drain_review_protocol.py"
             in record.get("contractEvidenceSources", []),
-            "safety-system inventory promotion drifted", limitations)
+            "open-drain inventory promotion drifted", limitations)
 
 
 def main():
@@ -160,7 +173,7 @@ def main():
             print("PASS:", label)
     finally:
         client.close()
-    print(f"\n{len(tests)}/{len(tests)} safety-system-performance contract scenarios passed.")
+    print(f"\n{len(tests)}/{len(tests)} open-drain-review contract scenarios passed.")
 
 
 if __name__ == "__main__":
