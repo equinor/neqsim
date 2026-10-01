@@ -53,6 +53,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double CARBON_ATOMIC_WEIGHT_GRAM_PER_MOL = 12.011;
   private static final double HYDROGEN_ATOMIC_WEIGHT_GRAM_PER_MOL = 1.008;
   private static final double PIANO_PERCENT_CLOSURE_TOLERANCE = 0.1;
+  private static final double BOILING_POINT_BOUNDARY_TOLERANCE_K = 1e-8;
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0;
@@ -337,6 +338,93 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   public double[] getResolvedMassFractions() {
     double[] fractions = resolveMassFractions();
     return fractions.clone();
+  }
+
+  /**
+   * Resolve the configured assay to liquid-volume fractions without mutating the thermodynamic system.
+   *
+   * <p>
+   * For mass-basis assays, ideal additive liquid volumes are calculated as {@code w_i / SG_i} and normalized by their
+   * sum. Volume-basis assays are recovered through the same mass-resolution path, providing one consistent round-trip
+   * calculation. No temperature correction, excess-volume, or blend-contraction model is applied.
+   * </p>
+   *
+   * @return normalized liquid-volume fractions in the same order as {@link #getCuts()}
+   * @throws IllegalStateException if the assay is incomplete, mixed-basis, or lacks a cut density
+   */
+  public double[] getResolvedVolumeFractions() {
+    double[] massFractions = resolveMassFractions();
+    double[] volumeFractions = new double[cuts.size()];
+    double totalRelativeVolume = 0.0;
+
+    for (int i = 0; i < cuts.size(); i++) {
+      double relativeVolume = massFractions[i] / cuts.get(i).resolveDensity();
+      if (!Double.isFinite(relativeVolume) || relativeVolume < 0.0) {
+        throw new IllegalStateException("Unable to derive volume fraction for assay cut " + cuts.get(i).getName());
+      }
+      volumeFractions[i] = relativeVolume;
+      totalRelativeVolume += relativeVolume;
+    }
+
+    if (cuts.size() > 0 && (!Double.isFinite(totalRelativeVolume) || !(totalRelativeVolume > 0.0))) {
+      throw new IllegalStateException("Unable to derive volume fractions from assay data");
+    }
+    for (int i = 0; i < volumeFractions.length; i++) {
+      volumeFractions[i] /= totalRelativeVolume;
+    }
+    return volumeFractions;
+  }
+
+  /**
+   * Export an immutable TBP cut table from the configured assay.
+   *
+   * <p>
+   * The table contains normalized cumulative liquid-volume percent, contiguous TBP boundaries, and interval specific
+   * gravities. Mass-basis assays are converted using ideal additive liquid volumes through
+   * {@link #getResolvedVolumeFractions()}. Every cut must have positive yield, a complete boiling range, a density, and
+   * a boundary shared with its neighbour. The returned arrays are defensive copies and can be passed back to
+   * {@link #addTBPCutBoundariesKelvin(String, double[], double[], double[])}.
+   * </p>
+   *
+   * @return immutable round-trip TBP cut table
+   * @throws IllegalStateException if the assay cannot define one complete, contiguous, positive-yield TBP table
+   */
+  public TbpCutTable exportTbpCutTable() {
+    if (cuts.isEmpty()) {
+      throw new IllegalStateException("No assay cuts supplied");
+    }
+
+    double[] volumeFractions = getResolvedVolumeFractions();
+    double[] cumulativeVolumePercent = new double[cuts.size() + 1];
+    double[] boilingPointKelvin = new double[cuts.size() + 1];
+    double[] specificGravity = new double[cuts.size()];
+
+    for (int i = 0; i < cuts.size(); i++) {
+      AssayCut cut = cuts.get(i);
+      if (!(volumeFractions[i] > 0.0)) {
+        throw new IllegalStateException("TBP cut-table export requires positive yield for cut " + cut.getName());
+      }
+      if (!cut.hasBoilingRange()) {
+        throw new IllegalStateException(
+            "TBP cut-table export requires a complete boiling range for cut " + cut.getName());
+      }
+
+      double lowerBoundary = cut.getLowerBoilingPointKelvin();
+      double upperBoundary = cut.getUpperBoilingPointKelvin();
+      if (i == 0) {
+        boilingPointKelvin[0] = lowerBoundary;
+      } else if (Math.abs(lowerBoundary - boilingPointKelvin[i]) > BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+        throw new IllegalStateException(
+            "TBP cut boiling ranges must be contiguous between " + cuts.get(i - 1).getName() + " and " + cut.getName());
+      }
+
+      cumulativeVolumePercent[i + 1] = cumulativeVolumePercent[i] + 100.0 * volumeFractions[i];
+      boilingPointKelvin[i + 1] = upperBoundary;
+      specificGravity[i] = cut.resolveDensity();
+    }
+
+    cumulativeVolumePercent[cumulativeVolumePercent.length - 1] = 100.0;
+    return new TbpCutTable(cumulativeVolumePercent, boilingPointKelvin, specificGravity);
   }
 
   /**
@@ -741,6 +829,71 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
   private enum FractionBasis {
     MASS, VOLUME
+  }
+
+  /**
+   * Immutable export of one complete, contiguous TBP cut table.
+   */
+  public static final class TbpCutTable implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double[] cumulativeVolumePercent;
+    private final double[] boilingPointKelvin;
+    private final double[] specificGravity;
+
+    private TbpCutTable(double[] cumulativeVolumePercent, double[] boilingPointKelvin, double[] specificGravity) {
+      this.cumulativeVolumePercent = cumulativeVolumePercent.clone();
+      this.boilingPointKelvin = boilingPointKelvin.clone();
+      this.specificGravity = specificGravity.clone();
+    }
+
+    /**
+     * Return the number of exported boiling intervals.
+     *
+     * @return number of TBP cuts
+     */
+    public int getCutCount() {
+      return specificGravity.length;
+    }
+
+    /**
+     * Return cumulative liquid-volume yield from 0 to 100 percent.
+     *
+     * @return defensive copy of cumulative liquid-volume percent
+     */
+    public double[] getCumulativeVolumePercent() {
+      return cumulativeVolumePercent.clone();
+    }
+
+    /**
+     * Return the TBP boundaries in K.
+     *
+     * @return defensive copy of TBP boundaries in K
+     */
+    public double[] getBoilingPointKelvin() {
+      return boilingPointKelvin.clone();
+    }
+
+    /**
+     * Return the TBP boundaries in degC.
+     *
+     * @return defensive copy of TBP boundaries in degC
+     */
+    public double[] getBoilingPointCelsius() {
+      double[] boilingPointCelsius = new double[boilingPointKelvin.length];
+      for (int i = 0; i < boilingPointKelvin.length; i++) {
+        boilingPointCelsius[i] = boilingPointKelvin[i] - KELVIN_OFFSET;
+      }
+      return boilingPointCelsius;
+    }
+
+    /**
+     * Return the interval specific gravities.
+     *
+     * @return defensive copy of dimensionless interval specific gravities
+     */
+    public double[] getSpecificGravity() {
+      return specificGravity.clone();
+    }
   }
 
   private static final class ResolvedCut {
