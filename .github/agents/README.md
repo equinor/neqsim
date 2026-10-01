@@ -40,7 +40,7 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 | Agent | Command | Purpose |
 |-------|---------|---------|
 | **solve-task** | `@solve-task <description>` | **End-to-end task solving** with report generation (3-step workflow) |
-| **solve-process** | `@solve-process <description>` | **Quick process simulation** → working notebook (skips formal reporting) |
+| **solve-process** | `@solve-process <description>` | **Process model/notebook** → reusable flowsheet, staged convergence and physical validation (skips formal reporting) |
 
 **Examples:**
 ```
@@ -109,7 +109,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **process-model** | `@process-model <description>` | Build process simulations (separators, compressors, heat exchangers, flowsheets) |
+| **process-model** | `@process-model <description>` | Build reusable oil and gas models with explicit basis, topology, balances and scenario handoffs |
 
 **Examples:**
 ```

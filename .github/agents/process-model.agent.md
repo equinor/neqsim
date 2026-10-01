@@ -75,22 +75,20 @@ A study that reports only throughput is incomplete and will not pass an oil-and-
 review. More flow changes the relief demand, the blowdown inventory and the
 overpressure exposure, so run the safety pass inside the same study:
 
-1. **Overpressure protection per vessel whose duty changes.** Tabulate design
-   pressure, PSV set pressure and measured operating pressure. Flag a set point
-   above design (accumulation beyond the ASME VIII 110 percent single-device
-   allowance) and one far below design (it likely protects a lower-rated
-   downstream section - confirm which). Use roughly a 1 percent tolerance before
-   calling a set point above design a non-conformance: the two numbers normally
-   come from different documents.
-2. **Relief adequacy** against the governing case via
-eqsim-relief-flare-network
-   (API 520 Part I). A PSV sized at a few percent of normal flow is normal for a
-   thermal or blocked-outlet case - it means blowby protection rests on the
-   SHUTDOWN system, not the valve. State that rather than implying full-flow relief.
+1. **Overpressure protection per affected pressure section.** Record design
+   pressure/MAWP, PSV set pressure, operating pressure, protected equipment and
+   source/reference conditions. Investigate discrepancies using the applicable
+   project/code basis; do not excuse them with an invented rounding allowance or
+   confuse set pressure with allowable accumulation.
+2. **Relief adequacy against credible governing cases.** Use
+   `neqsim-relief-flare-network` with documented scenarios, inflow and device data.
+   Compare required capacity with installed capacity including applicable backpressure.
+   A small relief load does not by itself establish adequate blowby protection or
+   credit a shutdown function. Missing protection evidence remains a gap.
 3. **Bound the inflow** with the upstream choke Cv. Without it the blowby and
    overpressure cases cannot be closed from first principles - record the gap.
-4. **Blowdown** time from the restriction-orifice size (
-eqsim-depressurization-mdmt).
+4. **Blowdown** time using documented inventory, heat-transfer and restriction/valve
+   inputs (`neqsim-depressurization-mdmt`); missing evidence stays a gap.
 5. **Follow the carry-over path of any vessel above its gas-load limit.** A
    separator over its Souders-Brown limit sends liquid to the compressor, the
    dehydration bed or the flare KO drum. That is a SAFETY finding, not only a
@@ -116,26 +114,37 @@ After building any process simulation, identify and check applicable design stan
 NeqSim's standards database (`src/main/resources/designdata/standards/`) provides design
 limits for common equipment. Load the `neqsim-standards-lookup` skill for lookup patterns.
 
-| Equipment | Key Standards | Check Against |
-|-----------|--------------|---------------|
-| Separator | NORSOK P-001, API 12J | K-factor 0.10–0.18 m/s, retention time |
-| Compressor | API 617 | Surge margin >10%, tip speed <350 m/s, power margin 1.05–1.10 |
-| Pump | API 610 | NPSH margin, power margin 1.10–1.25 |
-| Heat exchanger | API 660/661, TEMA | Tube velocity, pressure drop, fouling factor |
-| Pipeline | NORSOK L-001, DNV-ST-F101 | Wall thickness usage factor, corrosion allowance |
-| Vessel | ASME VIII Div.1, NORSOK P-001 | Design pressure margin 1.10, temperature margin |
+Identify equipment-specific standards through the current project basis and
+`neqsim-standards-lookup`. Record the edition, applicable clause, controlled input
+and performed check. Generic K factors, surge/power margins and pressure ratios
+are screening assumptions, not universal compliance limits. Report missing evidence
+as incomplete rather than assigning compliance from a converged model.
 
 **Output requirement:** When producing results.json, include `standards_applied` array
 documenting which standards were checked and their compliance status.
 
 ## Workflow
-1. **Interpret** the process description; make reasonable engineering assumptions for missing data (temperatures, pressures, compositions).
-2. **Choose the right thermodynamic model**: `SystemSrkEos` for gas systems, `SystemSrkCPAstatoil` for water/glycol/polar systems, `SystemPrEos` for general hydrocarbons, `SystemGERG2008Eos` for custody transfer accuracy.
-3. **Build the fluid**: constructor takes `(T_kelvin, P_bara)` → `addComponent()` for each species → `setMixingRule()` (use `"classic"` for SRK/PR or numeric `10` for CPA) → optionally `setMultiPhaseCheck(true)`.
-4. **Assemble the flowsheet** using `ProcessSystem`: create a `Stream` from the fluid → add equipment in topological order → connect outlet streams to downstream equipment inlets.
-5. **Run** with `processSystem.run()`, then extract results (temperatures, pressures, flow rates, compositions, duties, powers).
-6. **Validate** results against engineering sense (energy balance, expected phase splits, reasonable pressure drops).
-7. **Mass-balance acceptance gate (MANDATORY)**: before accepting/returning any process-model solution, verify the overall mass balance closes — sum the `kg/hr` of all feed streams and all product/export streams; the closure error must be `< 0.1 %`. If it does not close, a stream was dropped (e.g. an unconnected scrubber liquid), a recycle did not converge, or a split fraction is wrong — fix the flowsheet and re-run. Never report results from an unbalanced model. For a multi-area `ProcessModel`, also confirm `plant.run()` converged. See `neqsim-platform-modeling` Section 8.3 for the check helper.
+
+Use `neqsim-process-modeling` as the canonical construction workflow. Read its
+[model-build contract](../skills/neqsim-process-modeling/references/model-build-contract.md)
+before building and select the relevant
+[oil and gas task pattern](../skills/neqsim-process-modeling/references/oil-and-gas-task-patterns.md).
+
+1. Define battery limits, intended fidelity, input provenance and acceptance criteria.
+   Synthetic screening assumptions must be labeled; unknown plant data remain gaps.
+2. Verify the fluid/EOS for the property and operating range. Check composition
+   basis, heavy ends, water and standard-volume reference conditions.
+3. Build a fresh reusable model from case inputs; return the process/plant and
+   named stream/equipment registries. Preserve live connections and all products.
+4. Solve feeds and the once-through train, then physical recycles, then adjusters.
+   Use automatic tears where supported and check `runUntilConverged(n)` for
+   coupled models. Retain residuals and iteration-limit failures.
+5. Accept only cases with external total/component balances, energy evidence
+   where heat/work matters, correct phases and applicable equipment checks.
+   Verify repeat execution and nearby-point robustness before scenario studies.
+6. Run scenarios from independent verified baselines; report failures and gaps.
+   Pass the reusable model and validation evidence to specialists. A thermodynamic
+   operating point alone cannot establish installed capacity or a safe operating limit.
 
 ## Output Format
 - **Java**: runnable `main()` method, Java 8 compatible (NO `var`, `List.of()`, `String.repeat()`, or any Java 9+ syntax). All types explicitly declared.
@@ -145,12 +154,12 @@ documenting which standards were checked and their compliance status.
 ## Key NeqSim Patterns
 - Equipment constructors: `new Separator("name", inletStream)` or `new Compressor("name", gasStream)`
 - Outlet streams: `separator.getGasOutStream()`, `separator.getLiquidOutStream()`, `compressor.getOutletStream()`
-- Recycles: create `Recycle("name")` → `addStream(outletStream)` → add to process after the equipment loop
-- Recompression default: when building a recompression/export-compression train, ALWAYS close each suction/export scrubber's `getLiquidOutStream()` back to the separator at the matching pressure (HP scrubber→stage-1, MP scrubber→stage-2, LP scrubber→stage-3) via a seed stream + TP-setter `Heater` + `Recycle`. Never leave scrubber liquid unconnected — it is silently dropped and under-counts condensate recovery. See `neqsim-platform-modeling` Section 4.
+- Recycles: prefer `makeRecycles()` / `setAutoRecycles(true)` for supported mixer/manifold loops. Use explicit tears only when required, with documented physical routing and convergence evidence.
+- Recompression: route every scrubber liquid to an appropriate pressure section or explicit terminal drain/product. Include physical letdown/pumping for pressure mismatch and account for its heat/work. Never use a TP setter to imply free pressure rise. Prefer automatic tears through mixer/manifold inlets; consult `neqsim-platform-modeling` and the model-build contract for initialization and validation.
 - Adjusters: `Adjuster("name")` → `setAdjustedVariable(equipment, "methodName")` → `setTargetVariable(stream, "methodName", targetValue)`
 - Distillation: `DistillationColumn("name", numTrays, hasReboiler, hasCondenser)` → `addFeedStream(stream, trayNumber)`
 - Multiple compressor charts: a `Compressor` can hold several named performance maps in a `CompressorChartLibrary` and switch the active one with `compressor.selectChart("name")` (after `addChart(name, chart[, metadata])`). Use for vendor-expected vs as-tested vs field-fitted curves, revamp what-ifs, and digital twins. See `neqsim-api-patterns` and `docs/process/equipment/compressor_curves.md`.
-- Always call `process.run()` ONCE after adding all equipment
+- Assemble equipment before solving; use staged initialization and bounded convergence for coupled models. A completed `run()` call is not evidence that recycles converged.
 - Clone fluids with `system.clone()` before branching to avoid shared-state bugs
 
 ## Equipment Library
@@ -242,7 +251,7 @@ When the simulation code will be included in documentation or examples:
 5. See `neqsim-input-validation` skill to pre-check equipment inputs (pressure ratios, temperatures, flow rates)
 5. See `neqsim-troubleshooting` skill when process simulation fails to converge or gives unexpected results
 6. See `neqsim-regression-baselines` skill when modifying equipment calculations — capture baselines first
-7. **Equipment feasibility:** After running compressors or heat exchangers, use the Design Feasibility Report classes to validate that equipment can actually be built. See `neqsim-api-patterns` skill for the feasibility report patterns:
+7. **Equipment feasibility:** For installed-capacity or mechanical-design questions, use the Design Feasibility Report classes with documented inputs. Treat missing geometry/maps/driver data as gaps; supplier matching alone does not establish buildability. See `neqsim-api-patterns` skill for the feasibility report patterns:
    - `CompressorDesignFeasibilityReport` — combines API 617 mechanical design, cost estimation, supplier matching, and performance curve generation
    - `HeatExchangerDesignFeasibilityReport` — combines TEMA/ASME mechanical design, cost estimation, and supplier matching
    - These report FEASIBLE / FEASIBLE_WITH_WARNINGS / NOT_FEASIBLE verdicts and produce JSON reports with full design data
