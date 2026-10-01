@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
+import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -380,7 +381,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * runMonteCarloSimulation.
    */
   public void runMonteCarloSimulation() {
-    neqsim.statistics.montecarlosimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
+    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
         this, 10);
     montCarlSim.runSimulation();
   }
@@ -388,7 +389,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   /** {@inheritDoc} */
   @Override
   public void runMonteCarloSimulation(int numRuns) {
-    neqsim.statistics.montecarlosimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
+    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
         this, numRuns);
     montCarlSim.runSimulation();
   }
