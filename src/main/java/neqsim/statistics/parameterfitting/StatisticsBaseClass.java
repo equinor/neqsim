@@ -381,16 +381,14 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * runMonteCarloSimulation.
    */
   public void runMonteCarloSimulation() {
-    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
-        this, 10);
+    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(this, 10);
     montCarlSim.runSimulation();
   }
 
   /** {@inheritDoc} */
   @Override
   public void runMonteCarloSimulation(int numRuns) {
-    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(
-        this, numRuns);
+    MonteCarloSimulation montCarlSim = new neqsim.statistics.montecarlosimulation.MonteCarloSimulation(this, numRuns);
     montCarlSim.runSimulation();
   }
 
