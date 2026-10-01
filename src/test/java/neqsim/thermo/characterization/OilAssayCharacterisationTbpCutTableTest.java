@@ -34,8 +34,8 @@ class OilAssayCharacterisationTbpCutTableTest {
     assertEquals(300.0 / 7.0, table.getCumulativeVolumePercent()[1], 1.0e-12);
 
     OilAssayCharacterisation roundTrip = assay();
-    roundTrip.addTBPCutBoundariesKelvin("RoundTrip", table.getCumulativeVolumePercent(),
-        table.getBoilingPointKelvin(), table.getSpecificGravity());
+    roundTrip.addTBPCutBoundariesKelvin("RoundTrip", table.getCumulativeVolumePercent(), table.getBoilingPointKelvin(),
+        table.getSpecificGravity());
 
     assertArrayEquals(source.getResolvedMassFractions(), roundTrip.getResolvedMassFractions(), 1.0e-12);
     assertArrayEquals(source.getResolvedVolumeFractions(), roundTrip.getResolvedVolumeFractions(), 1.0e-12);
@@ -49,8 +49,8 @@ class OilAssayCharacterisationTbpCutTableTest {
 
     TbpCutTable table = assay.exportTbpCutTable();
 
-    assertArrayEquals(new double[] {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0, 100.0},
-        table.getCumulativeVolumePercent(), 1.0e-12);
+    assertArrayEquals(new double[] {0.0, 10.0, 30.0, 50.0, 70.0, 90.0, 95.0, 100.0}, table.getCumulativeVolumePercent(),
+        1.0e-12);
     assertArrayEquals(SPECIFIC_GRAVITY, table.getSpecificGravity(), 0.0);
     assertEquals(8, table.getBoilingPointCelsius().length);
     assertEquals(225.0, table.getBoilingPointCelsius()[7], 1.0e-12);
@@ -63,8 +63,7 @@ class OilAssayCharacterisationTbpCutTableTest {
     assertThrows(IllegalStateException.class, empty::exportTbpCutTable);
 
     OilAssayCharacterisation missingDensity = assay();
-    missingDensity.addCut(new AssayCut("missingDensity").withMassFraction(1.0)
-        .withBoilingRangeKelvin(300.0, 400.0));
+    missingDensity.addCut(new AssayCut("missingDensity").withMassFraction(1.0).withBoilingRangeKelvin(300.0, 400.0));
     assertThrows(IllegalStateException.class, missingDensity::exportTbpCutTable);
 
     OilAssayCharacterisation missingRange = assay();
