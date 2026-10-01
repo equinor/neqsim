@@ -53,7 +53,7 @@
       "id": "gri-mech-3.0-cantera-3.2",
       "role": "software-demonstration",
       "sourceUrl": "https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml",
-      "reportedCanonicalSha256": "3cb2078bb8dbd3998e98ac05ec8f62372d88185831121e8392c60058695e087e",
+      "reportedCanonicalSha256": "3cb2078af590038e2f9d3f33a8079ac882e6c1a4701c709a1b345905a80f53f8",
       "license": {
         "redistributionVerified": false,
         "spdxId": null,
