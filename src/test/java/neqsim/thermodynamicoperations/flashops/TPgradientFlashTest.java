@@ -70,4 +70,28 @@ public class TPgradientFlashTest {
     }
     assertEquals(0.0964169380341, x_h2.get(6), 1e-4);
   }
+
+  /**
+   * Pins a five-component reservoir gas gradient exactly, captured before the Newton solve moved off Jama.Matrix.
+   */
+  @Test
+  void reservoirGasGradientIsUnchanged() {
+    SystemInterface testSystem = new SystemSrkEos(360.0, 250.0);
+    testSystem.addComponent("nitrogen", 1.0);
+    testSystem.addComponent("CO2", 2.0);
+    testSystem.addComponent("methane", 85.0);
+    testSystem.addComponent("ethane", 7.0);
+    testSystem.addComponent("propane", 5.0);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
+
+    SystemInterface result = new ThermodynamicOperations(testSystem).TPgradientFlash(3000.0, 390.0);
+
+    assertEquals(279.7907442693551, result.getPressure(), 0.0);
+    double[] expected = {0.011540669377441238, 0.024552332095877594, 0.8378273954275861, 0.07181519967243205,
+        0.05426440342666295};
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], result.getPhase(0).getComponent(i).getx(), 0.0);
+    }
+  }
 }
