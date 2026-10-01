@@ -151,6 +151,9 @@ detailed of these selectors and generally the most computationally demanding. Do
 interpret the selector name as a validated accuracy guarantee: benchmark the chosen
 equation of state and influence parameters against data in the intended range.
 
+Simple Gradient Theory solves the transposed density-gradient system through
+`LinearAlgebraOperations` with the JAMA backend.
+
 ### Classical density functional theory
 
 `cDFT` and `Classical DFT` are aliases for `CDFTSurfaceTension`. The model is available

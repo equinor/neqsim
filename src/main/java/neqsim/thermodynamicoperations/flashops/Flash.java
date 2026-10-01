@@ -11,7 +11,8 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -28,6 +29,59 @@ public abstract class Flash extends BaseOperation {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Flash.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+
+  /**
+   * Euclidean norm computed exactly as Jama's column-vector norm2, including returning NaN instead of throwing.
+   *
+   * <p>
+   * The stability analysis monitors the residual before any solve has validated it, and trace components can make it
+   * NaN; a NaN norm fails the convergence comparisons so the next substitution step recovers.
+   * </p>
+   *
+   * @param vector values to measure
+   * @return the Euclidean norm, NaN if any entry is NaN
+   */
+  private static double euclideanNorm(double[] vector) {
+    double norm = 0.0;
+    for (double value : vector) {
+      norm = hypot(norm, value);
+    }
+    return norm;
+  }
+
+  /**
+   * Overflow-safe sqrt(a*a + b*b), identical to Jama.util.Maths.hypot.
+   *
+   * @param a first value
+   * @param b second value
+   * @return the hypotenuse
+   */
+  private static double hypot(double a, double b) {
+    double ratio;
+    if (Math.abs(a) > Math.abs(b)) {
+      ratio = b / a;
+      return Math.abs(a) * Math.sqrt(1 + ratio * ratio);
+    } else if (b != 0) {
+      ratio = a / b;
+      return Math.abs(b) * Math.sqrt(1 + ratio * ratio);
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sum of absolute values, summed in index order like Jama's column-matrix norm1.
+   *
+   * @param vector values to sum
+   * @return the 1-norm of the vector, NaN if any entry is NaN
+   */
+  private static double oneNorm(double[] vector) {
+    double sum = 0.0;
+    for (double value : vector) {
+      sum += Math.abs(value);
+    }
+    return sum;
+  }
 
   SystemInterface system;
   SystemInterface minimumGibbsEnergySystem;
@@ -421,7 +475,7 @@ public abstract class Flash extends BaseOperation {
       int maxiter = 100;
       int accelInterval = 5;
       double err;
-      Matrix f = new Matrix(numComp, 1);
+      double[] f = new double[numComp];
       double fNorm = 1e10;
       double fNormOld;
       boolean converged = false;
@@ -437,10 +491,10 @@ public abstract class Flash extends BaseOperation {
         }
         fNormOld = fNorm;
         for (int i = 0; i < numComp; i++) {
-          f.set(i, 0, Math.sqrt(Wi[i])
-              * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]));
+          f[i] = Math.sqrt(Wi[i])
+              * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]);
         }
-        fNorm = f.norm2();
+        fNorm = euclideanNorm(f);
         if (fNorm > fNormOld && iter > 3) {
           if (iter > 10) {
             break;
@@ -492,7 +546,7 @@ public abstract class Flash extends BaseOperation {
           testSystem.getPhase(1).getComponent(i).setx(Wi[i] / sumwTrial);
         }
 
-        if (f.norm1() < 1e-6 && err < 1e-6) {
+        if (oneNorm(f) < 1e-6 && err < 1e-6) {
           converged = true;
           break;
         }
@@ -580,8 +634,8 @@ public abstract class Flash extends BaseOperation {
     double[] error = new double[2];
     tm = new double[2];
     double[] alpha = null;
-    Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
-    Matrix df = null;
+    double[] f = new double[system.getPhases()[0].getNumberOfComponents()];
+    double[][] df = null;
     // Reduced from 100 - Wilson K-value initialization converges faster
     int maxiterations = 50;
     // Acceleration interval reduced from 7 to 5 for faster convergence
@@ -663,10 +717,10 @@ public abstract class Flash extends BaseOperation {
           }
           fNormOld = fNorm;
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            f.set(i, 0, Math.sqrt(Wi[j][i])
-                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
+            f[i] = Math.sqrt(Wi[j][i])
+                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
           }
-          fNorm = f.norm2();
+          fNorm = euclideanNorm(f);
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % accelerateInterval != 0) {
             if (iterations > 10) {
               break;
@@ -710,8 +764,8 @@ public abstract class Flash extends BaseOperation {
         } else {
           if (!secondOrderStabilityAnalysis) {
             alpha = new double[system.getPhases()[0].getNumberOfComponents()];
-            df = new Matrix(system.getPhases()[0].getNumberOfComponents(),
-                system.getPhases()[0].getNumberOfComponents());
+            df = new double[system.getPhases()[0].getNumberOfComponents()][system.getPhases()[0]
+                .getNumberOfComponents()];
             secondOrderStabilityAnalysis = true;
           }
 
@@ -726,18 +780,18 @@ public abstract class Flash extends BaseOperation {
           }
 
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            f.set(i, 0, Math.sqrt(Wi[j][i])
-                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
+            f[i] = Math.sqrt(Wi[j][i])
+                * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
             for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.5 : 0.0;
-              df.set(i, k,
-                  kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));
+              df[i][k] = kronDelt
+                  + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k);
             }
           }
 
-          Matrix dx = df.solve(f).times(-1.0);
+          double[] dx = ALGEBRA.scale(ALGEBRA.solve(df, f), -1.0);
           for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-            Wi[j][i] = Math.pow((alpha[i] + dx.get(i, 0)) / 2.0, 2.0);
+            Wi[j][i] = Math.pow((alpha[i] + dx[i]) / 2.0, 2.0);
             logWi[i] = Math.log(Wi[j][i]);
             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
@@ -754,7 +808,7 @@ public abstract class Flash extends BaseOperation {
           clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
         olderror = error[j];
-      } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
+      } while ((oneNorm(f) > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % accelerateInterval) == 0 || iterations < 3);
 
       if (iterations >= maxiterations) {
