@@ -32,6 +32,44 @@ public abstract class Flash extends BaseOperation {
   private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   /**
+   * Euclidean norm computed exactly as Jama's column-vector norm2, including returning NaN instead of throwing.
+   *
+   * <p>
+   * The stability analysis monitors the residual before any solve has validated it, and trace components can make it
+   * NaN; a NaN norm fails the convergence comparisons so the next substitution step recovers.
+   * </p>
+   *
+   * @param vector values to measure
+   * @return the Euclidean norm, NaN if any entry is NaN
+   */
+  private static double euclideanNorm(double[] vector) {
+    double norm = 0.0;
+    for (double value : vector) {
+      norm = hypot(norm, value);
+    }
+    return norm;
+  }
+
+  /**
+   * Overflow-safe sqrt(a*a + b*b), identical to Jama.util.Maths.hypot.
+   *
+   * @param a first value
+   * @param b second value
+   * @return the hypotenuse
+   */
+  private static double hypot(double a, double b) {
+    double ratio;
+    if (Math.abs(a) > Math.abs(b)) {
+      ratio = b / a;
+      return Math.abs(a) * Math.sqrt(1 + ratio * ratio);
+    } else if (b != 0) {
+      ratio = a / b;
+      return Math.abs(b) * Math.sqrt(1 + ratio * ratio);
+    }
+    return 0.0;
+  }
+
+  /**
    * Sum of absolute values, summed in index order like Jama's column-matrix norm1.
    *
    * @param vector values to sum
@@ -456,7 +494,7 @@ public abstract class Flash extends BaseOperation {
           f[i] = Math.sqrt(Wi[i])
               * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]);
         }
-        fNorm = ALGEBRA.euclideanNorm(f);
+        fNorm = euclideanNorm(f);
         if (fNorm > fNormOld && iter > 3) {
           if (iter > 10) {
             break;
@@ -682,7 +720,7 @@ public abstract class Flash extends BaseOperation {
             f[i] = Math.sqrt(Wi[j][i])
                 * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
           }
-          fNorm = ALGEBRA.euclideanNorm(f);
+          fNorm = euclideanNorm(f);
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % accelerateInterval != 0) {
             if (iterations > 10) {
               break;
