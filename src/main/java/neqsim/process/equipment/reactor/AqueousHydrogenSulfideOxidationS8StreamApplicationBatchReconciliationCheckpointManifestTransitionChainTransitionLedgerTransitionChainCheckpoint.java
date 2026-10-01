@@ -12,10 +12,9 @@ import java.security.NoSuchAlgorithmException;
  * Freezes one qualified S8 transition-ledger transition chain as an immutable checkpoint.
  *
  * <p>
- * The checkpoint preserves the upstream identities, endpoints, exact aggregate counts and raw
- * chain digest under a caller-owned checkpoint identity and sequence. It does not replay or
- * revalidate the underlying transition receipts, ledgers, chains, manifests, reconciliations or
- * stream evidence.
+ * The checkpoint preserves the upstream identities, endpoints, exact aggregate counts and raw chain digest under a
+ * caller-owned checkpoint identity and sequence. It does not replay or revalidate the underlying transition receipts,
+ * ledgers, chains, manifests, reconciliations or stream evidence.
  * </p>
  *
  * @author esol
@@ -53,12 +52,12 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         chain.getLedgerIdentifier(), chain.getChainIdentifier(), chain.getManifestIdentifier(),
         chain.getFirstPriorLedgerDigestHex(), chain.getFinalCandidateLedgerDigestHex(),
         chain.getFirstPriorChainDigestHex(), chain.getFinalCandidateChainDigestHex(),
-        chain.getFirstPriorManifestDigestHex(), chain.getFinalCandidateManifestDigestHex(),
-        chain.getTransitionCount(), chain.getStrictAppendReceiptCount(), chain.getUnchangedReceiptCount(),
-        chain.getAddedLedgerReceiptCount(), chain.getAddedTransitionCount(),
-        chain.getAddedStrictAppendTransitionCount(), chain.getAddedUnchangedTransitionCount(),
-        chain.getAddedReconciliationCount(), chain.getAddedEntryCount(), chain.getAddedStrictAppendCount(),
-        chain.getAddedUnchangedCount(), chain.getChainDigestBytes(), checkpointDigest);
+        chain.getFirstPriorManifestDigestHex(), chain.getFinalCandidateManifestDigestHex(), chain.getTransitionCount(),
+        chain.getStrictAppendReceiptCount(), chain.getUnchangedReceiptCount(), chain.getAddedLedgerReceiptCount(),
+        chain.getAddedTransitionCount(), chain.getAddedStrictAppendTransitionCount(),
+        chain.getAddedUnchangedTransitionCount(), chain.getAddedReconciliationCount(), chain.getAddedEntryCount(),
+        chain.getAddedStrictAppendCount(), chain.getAddedUnchangedCount(), chain.getChainDigestBytes(),
+        checkpointDigest);
   }
 
   /**
