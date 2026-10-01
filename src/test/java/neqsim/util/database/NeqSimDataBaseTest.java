@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.thermo.system.SystemInterface;
@@ -27,6 +28,7 @@ public class NeqSimDataBaseTest extends NeqSimTest {
    * database.
    */
   @Test
+  @Tag("slow")
   void testComponentOnlyInExtendedDatabase() {
     try {
       // 1-decene is not part of the default component database.
