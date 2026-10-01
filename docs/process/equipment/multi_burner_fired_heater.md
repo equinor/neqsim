@@ -17,9 +17,10 @@ CO emissions or replace a resolved flame/CFD model, furnace vendor data or a pla
 combustion safety system. No plant measurements or proprietary geometry are used
 by the executable example.
 
-## Draft validation status
+## Qualification status
 
-This feature remains a research draft. The native seven/five burner demonstration
+The implementation is on `master`, but scientific qualification remains incomplete.
+The native seven/five burner demonstration
 now passes against workspace Java classes in hosted CI with the default 1e-6
 projection tolerance unchanged. The earlier native hydrogen-element rejection
 has not been reproduced in this hosted environment, including with the old
@@ -178,6 +179,41 @@ Mechanism provenance includes solver version, species/reaction counts and a SHA-
 fingerprint of canonical resolved phase/species/reaction input data. Generated
 timestamps and phase state are excluded from that fingerprint.
 
+## Benchmark and mechanism qualification gate
+
+`examples/combustion/benchmark_catalog.json` is the durable public evidence index.
+`benchmark_qualification.py` validates it without Cantera and fails closed on incomplete
+provenance. A record marked `conditions-only` may define a reproducible apparatus,
+pressure, temperature range, residence time, equivalence ratios and fuel composition,
+but it cannot contain observations and never counts as quantitative qualification.
+
+Promotion to `quantitative` requires redistributable machine-readable observations,
+an exact source URL and SHA-256, a verified SPDX license, and uncertainty for every
+reported value. A qualification mechanism separately requires the exact mechanism-file
+SHA-256, a verified SPDX redistribution license and the
+`qualification-candidate` role. A citation, an installed filename or a successful
+solver run cannot satisfy these gates.
+
+The initial catalog records two primary experimental condition sets: the 2003 LPG
+JSR study of Dagaut and Hadj Ali (36.2% propane, 24.8% isobutane and 39.0% n-butane,
+1 atm, 950-1450 K) and the 2018 propane JSFR study of Sabia et al. (1.1 atm,
+720-1100 K, 0.5 s, equivalence ratios 0.5, 1.0 and 1.5). No plot points have been
+digitized or redistributed. The records therefore expose the missing residence time
+or species-specific uncertainty rather than silently filling it.
+
+GRI-Mech 3.0 remains a `software-demonstration` record. Its reported canonical
+backend fingerprint is distinct from a byte-level mechanism-file SHA-256 and cannot
+promote it to a C2/C3/C4 qualification mechanism. Check the current status with:
+
+```bash
+python examples/combustion/benchmark_qualification.py \
+  examples/combustion/benchmark_catalog.json --readiness
+```
+
+The expected result remains ineligible until both a licensed quantitative dataset and
+a licensed, fingerprinted qualification mechanism are added. This is an explicit
+campaign blocker, not a reason to relax conservation or projection tolerances.
+
 ## CO, fuel slip and other species
 
 CO is obtained from the reacted mechanism state. Reports include kg/h, dry ppmv
@@ -306,3 +342,5 @@ remain separate acceptance gates.
 - [Cantera extensible reactor example](https://cantera.org/3.2/examples/python/reactors/custom2.html)
 - [GRI-Mech 3.0 bundled mechanism](https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml)
 - [University of Galway combustion mechanisms](https://www.universityofgalway.ie/combustionchemistrycentre/mechanismdownloads/)
+- [Dagaut and Hadj Ali LPG JSR study](https://doi.org/10.1016/S0016-2361(02)00335-6)
+- [Sabia et al. propane JSFR study](https://doi.org/10.1016/j.expthermflusci.2018.01.008)
