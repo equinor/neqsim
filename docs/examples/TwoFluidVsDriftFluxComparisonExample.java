@@ -48,8 +48,7 @@ public final class TwoFluidVsDriftFluxComparisonExample {
     double heatTransferCoefficientWPerM2K = 25.0;
     double ambientTemperatureC = 4.0;
     double[] flowRatesKgPerSecond = smoke ? new double[] {50.0} : new double[] {50.0, 100.0, 150.0};
-    double[] elevationMetres =
-        createSubseaTerrainProfile(numberOfSections);
+    double[] elevationMetres = createSubseaTerrainProfile(numberOfSections);
 
     logger.info(
         "Comparison basis: length={} km, diameter={} m, inlet={} bara/{} C, sections={}",
