@@ -14,6 +14,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  qualification-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Validate benchmark and mechanism provenance gates
+        run: |
+          python -m unittest discover -s examples/combustion -p 'test_benchmark_qualification.py' -v
+          python examples/combustion/benchmark_qualification.py \
+            examples/combustion/benchmark_catalog.json --readiness
+
   chemistry:
     runs-on: ubuntu-latest
     timeout-minutes: 20

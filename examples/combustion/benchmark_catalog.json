@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "benchmarks": [
+    {
+      "id": "dagaut-hadj-ali-2003-lpg-jsr",
+      "apparatus": "JSR",
+      "primarySource": {
+        "citation": "Dagaut, P. and Hadj Ali, K. (2003), Kinetics of oxidation of a LPG blend mixture in a JSR, Fuel 82, 475-480.",
+        "doi": "10.1016/S0016-2361(02)00335-6",
+        "url": "https://doi.org/10.1016/S0016-2361(02)00335-6"
+      },
+      "conditions": {
+        "pressurePa": 101325.0,
+        "temperatureK": {"minimum": 950.0, "maximum": 1450.0},
+        "residenceTimeS": null,
+        "equivalenceRatios": [0.25, 0.5, 1.0, 1.5, 2.0, 4.0],
+        "fuelMoleFractions": {"C3H8": 0.362, "IC4H10": 0.248, "NC4H10": 0.39}
+      },
+      "measuredQuantities": ["fuel species", "CO", "CO2", "light intermediates"],
+      "uncertainty": {
+        "reported": false,
+        "details": "A machine-readable uncertainty record has not been obtained."
+      },
+      "dataAvailability": "conditions-only",
+      "limitation": "The catalog records only conditions reported in the primary paper metadata. No plot points were digitized and no copyrighted numerical table is redistributed. Residence time and measurement uncertainties must be recovered from an authorized primary source before execution."
+    },
+    {
+      "id": "sabia-et-al-2018-propane-jsfr",
+      "apparatus": "JSR",
+      "primarySource": {
+        "citation": "Sabia et al. (2018), Experimental and modeling study of propane oxidation in a jet-stirred flow reactor, Experimental Thermal and Fluid Science.",
+        "doi": "10.1016/j.expthermflusci.2018.01.008",
+        "url": "https://doi.org/10.1016/j.expthermflusci.2018.01.008"
+      },
+      "conditions": {
+        "pressurePa": 111457.5,
+        "temperatureK": {"minimum": 720.0, "maximum": 1100.0},
+        "residenceTimeS": 0.5,
+        "equivalenceRatios": [0.5, 1.0, 1.5],
+        "fuelMoleFractions": {"C3H8": 1.0}
+      },
+      "measuredQuantities": ["C3H8", "O2", "CO", "CO2", "oxygenated intermediates"],
+      "uncertainty": {
+        "reported": false,
+        "details": "Species-specific numerical uncertainties have not been transcribed from an authorized source."
+      },
+      "dataAvailability": "conditions-only",
+      "limitation": "The public record establishes the nominal pressure, temperature, residence time, equivalence ratios and dilution study. Numerical profiles, their basis and species-specific uncertainty remain unavailable for redistribution, so this record cannot qualify a mechanism."
+    }
+  ],
+  "mechanisms": [
+    {
+      "id": "gri-mech-3.0-cantera-3.2",
+      "role": "software-demonstration",
+      "sourceUrl": "https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml",
+      "reportedCanonicalSha256": "3cb2078bb8dbd3998e98ac05ec8f62372d88185831121e8392c60058695e087e",
+      "license": {
+        "redistributionVerified": false,
+        "spdxId": null,
+        "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."
+      },
+      "validity": "Software integration demonstration only; not a C2/C3/C4 heater qualification mechanism."
+    }
+  ]
+}

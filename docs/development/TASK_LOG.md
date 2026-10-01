@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-01 — Fail-closed combustion benchmark and mechanism qualification provenance
+**Type:** G (Workflow)
+**Keywords:** combustion qualification, JSR, JSFR, LPG, propane, butane, CO, mechanism license, SHA-256, uncertainty, Cantera
+**Solution:** `examples/combustion/benchmark_qualification.py`, `benchmark_catalog.json`, and `test_benchmark_qualification.py`; guide `docs/process/equipment/multi_burner_fired_heater.md`.
+**Notes:** Conditions from the Dagaut-Hadj Ali LPG JSR and Sabia propane JSFR primary papers are indexed without digitizing or redistributing copyrighted profiles. Conditions-only records cannot count as quantitative validation. Quantitative data require verified redistribution rights, an exact source fingerprint, and uncertainty coverage for every value. Qualification mechanisms independently require verified SPDX rights, an exact file SHA-256 and an explicit qualification role. GRI-Mech 3.0 remains a software demonstration; its canonical backend fingerprint is not treated as a file hash or C2/C3/C4 qualification evidence.
+
+
 ### 2026-09-25 — Suspected gearbox damage on a motor-driven recompression train was coupling drive-bolt fatigue
 **Type:** G (Workflow)
 **Keywords:** gearbox vibration, 1X step, phase change, disc coupling, drive bolt fatigue, coupling unbalance, API 671, ISO 21940-11, ISO 7919-3, ISO 20816-1, fault localisation, historian, condition monitoring dropout, RotorUnbalanceAssessment
