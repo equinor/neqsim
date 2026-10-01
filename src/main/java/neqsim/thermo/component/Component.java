@@ -1181,14 +1181,15 @@ public abstract class Component implements ComponentInterface {
     if (Double.isNaN(newx) || Double.isInfinite(newx)) {
       return;
     }
-    if (newx < 0) {
-      x = 1.0e-50;
-    }
-    if (newx > 0) {
-      x = newx;
-    }
-    if (newx > 5) {
+    double MIN_VALUE = 1.0e-50;
+
+    // Ensure that the mole fraction x stays within the range [MIN_VALUE, 5]
+    if (newx < MIN_VALUE) {
+      x = MIN_VALUE;
+    } else if (newx > 5) {
       x = 5;
+    } else {
+      x = newx;
     }
   }
 
