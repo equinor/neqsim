@@ -5,7 +5,8 @@ import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -19,6 +20,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   int ite_step = 200;
   SystemInterface localSystem = null;
@@ -81,7 +83,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     double[][] fmatrix = new double[localSystem.getPhase(0).getNumberOfComponents()
         - 1][localSystem.getPhase(0).getNumberOfComponents() - 1];
     double[] bmatrix = new double[localSystem.getPhase(0).getNumberOfComponents() - 1];
-    Matrix ans = null;
+    double[] ans = null;
     z_step = new double[ite_step];
     den_interface = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
     pressure_interface = new double[ite_step];
@@ -158,10 +160,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       }
 
       if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
-        Matrix fmatrixJama = new Matrix(fmatrix);
-        Matrix bmatrixJama = new Matrix(bmatrix, localSystem.getPhase(0).getNumberOfComponents() - 1);
         try {
-          ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
+          ans = ALGEBRA.solve(ALGEBRA.transpose(fmatrix), bmatrix);
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
         }
@@ -170,9 +170,9 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       int pp = 0;
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         if (i != referenceComponentNumber) {
-          del_den_interface[i] = ans.get(pp, 0) * del_den_interface[referenceComponentNumber];
-          if (Math.abs(ans.get(pp, 0)) * del_den_interface[referenceComponentNumber] / den_interface[j - 1][i] > 0.1) {
-            del_den_interface[i] = Math.signum(ans.get(pp, 0)) * den_interface[j - 1][i];
+          del_den_interface[i] = ans[pp] * del_den_interface[referenceComponentNumber];
+          if (Math.abs(ans[pp]) * del_den_interface[referenceComponentNumber] / den_interface[j - 1][i] > 0.1) {
+            del_den_interface[i] = Math.signum(ans[pp]) * den_interface[j - 1][i];
           }
           pp++;
         }
