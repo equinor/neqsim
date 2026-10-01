@@ -30,6 +30,14 @@ The stable Java package is `neqsim.statistics.parameterfitting` with the nested 
 - `SampleValue`, `SampleSet`, `BaseFunction`, and `LevenbergMarquardtFunction` are still available in the same packages.
 - Existing code can still set initial guesses on the function, create samples manually, call `optimizer.setSampleSet(sampleSet)`, and call `optimizer.solve()`.
 - New diagnostics are additive through `optimizer.getResult()` and `ParameterFittingStudy.Result`.
+- Dense solves and covariance inversion use `LinearAlgebraOperations` with the JAMA backend during migration.
+  The protected JAMA covariance/correlation fields, `checkBounds(Matrix)`, `displayMatrix(Matrix, String, int)`,
+  and the JAMA-based `LevenbergMarquardtResult` constructor remain available for existing integrations and subclasses.
+  The array-based bound check dispatches through the legacy hook, preserving subclass overrides.
+- `getCoVarianceMatrix()` and `getParameterCorrelationMatrix()` return defensive `double[][]` copies, or `null`
+  before calculation. New backend-independent result construction uses `LevenbergMarquardtResult.fromArrays(...)`;
+  the existing constructor remains unambiguous when covariance and correlation are both `null`.
+- Covariance inversion failures restore the optimizer's previous damping factor before reporting the solver error.
 
 ## Weighted Least Squares
 

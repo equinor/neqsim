@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -42,9 +43,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   protected double[] parameterUncertainty;
   protected double multiFactor = 10.0;
   private int numberOfTuningParameters = 1;
-  protected double[][] coVarianceMatrix;
+  /** Legacy covariance storage retained for source and binary compatibility with subclasses. */
+  protected Matrix coVarianceMatrix;
 
-  protected double[][] parameterCorrelationMatrix;
+  /** Legacy correlation storage retained for source and binary compatibility with subclasses. */
+  protected Matrix parameterCorrelationMatrix;
 
   protected double[][] xVal;
   protected double[] expVal;
@@ -123,6 +126,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @param newParameters parameter values, clamped in place onto the declared bounds
    */
   public void checkBounds(double[] newParameters) {
+    Matrix matrix = new Matrix(newParameters, 1);
+    // Dispatch through the legacy signature so existing subclass overrides remain effective.
+    checkBounds(matrix);
+    System.arraycopy(matrix.getArray()[0], 0, newParameters, 0, newParameters.length);
+  }
+
+  /**
+   * Applies the declared bounds to parameter values.
+   *
+   * @param newParameters parameter values clamped in place
+   */
+  private void clampBounds(double[] newParameters) {
     String okstring = "";
     int errors = 0;
     if (sampleSet.getSample(0).getFunction().getBounds() != null) {
@@ -139,6 +154,19 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
       }
       logger.debug("bounds checked - errors: {}{}", errors, okstring.trim().isEmpty() ? "" : "\n" + okstring);
+    }
+  }
+
+  /**
+   * Clamps the legacy row-matrix parameter vector in place.
+   *
+   * @param newParameters parameter values in the first row of a JAMA matrix
+   */
+  public void checkBounds(Matrix newParameters) {
+    double[] values = newParameters.getArrayCopy()[0];
+    clampBounds(values);
+    for (int column = 0; column < values.length; column++) {
+      newParameters.set(0, column, values[column]);
     }
   }
 
@@ -294,7 +322,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public void calcParameterStandardDeviation() {
     parameterStandardDeviation = new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
     for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
-      parameterStandardDeviation[j] = Math.sqrt(coVarianceMatrix[j][j]);
+      parameterStandardDeviation[j] = Math.sqrt(coVarianceMatrix.get(j, j));
     }
   }
 
@@ -304,7 +332,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   public void calcParameterUncertainty() {
     parameterUncertainty = new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
     for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
-      parameterUncertainty[j] = Math.sqrt(4.0) * Math.sqrt(coVarianceMatrix[j][j]);
+      parameterUncertainty[j] = Math.sqrt(4.0) * Math.sqrt(coVarianceMatrix.get(j, j));
     }
   }
 
@@ -313,10 +341,13 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   public void calcCoVarianceMatrix() {
     final double old = multiFactor;
-    multiFactor = 0.0;
-    alpha = calcAlphaMatrix();
-    coVarianceMatrix = ALGEBRA.invert(alpha);
-    multiFactor = old;
+    try {
+      multiFactor = 0.0;
+      alpha = calcAlphaMatrix();
+      coVarianceMatrix = new Matrix(ALGEBRA.invert(alpha));
+    } finally {
+      multiFactor = old;
+    }
   }
 
   /**
@@ -324,13 +355,14 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   public void calcCorrelationMatrix() {
     int params = sampleSet.getSample(0).getFunction().getNumberOfFittingParams();
-    parameterCorrelationMatrix = new double[params][params];
+    double[][] covariance = getCoVarianceMatrix();
+    double[][] correlation = new double[params][params];
     for (int i = 0; i < params; i++) {
       for (int j = 0; j < params; j++) {
-        parameterCorrelationMatrix[i][j] = coVarianceMatrix[i][j]
-            / Math.sqrt(coVarianceMatrix[j][j] * coVarianceMatrix[i][i]);
+        correlation[i][j] = covariance[i][j] / Math.sqrt(covariance[j][j] * covariance[i][i]);
       }
     }
+    parameterCorrelationMatrix = new Matrix(correlation);
   }
 
   /**
@@ -339,7 +371,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @return covariance matrix values, or null if it has not been calculated
    */
   public double[][] getCoVarianceMatrix() {
-    return copyMatrix(coVarianceMatrix);
+    return coVarianceMatrix == null ? null : coVarianceMatrix.getArrayCopy();
   }
 
   /**
@@ -348,24 +380,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @return correlation matrix values, or null if it has not been calculated
    */
   public double[][] getParameterCorrelationMatrix() {
-    return copyMatrix(parameterCorrelationMatrix);
-  }
-
-  /**
-   * Copy a matrix, preserving null.
-   *
-   * @param matrix matrix to copy, possibly null
-   * @return a deep copy, or null
-   */
-  private static double[][] copyMatrix(double[][] matrix) {
-    if (matrix == null) {
-      return null;
-    }
-    double[][] copy = new double[matrix.length][];
-    for (int row = 0; row < matrix.length; row++) {
-      copy[row] = matrix[row].clone();
-    }
-    return copy;
+    return parameterCorrelationMatrix == null ? null : parameterCorrelationMatrix.getArrayCopy();
   }
 
   /** {@inheritDoc} */
@@ -646,6 +661,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.add(scrollpane);
     dialog.pack();
     dialog.setVisible(true);
+  }
+
+  /**
+   * Displays a matrix through the legacy JAMA signature.
+   *
+   * @param matrix matrix values to display
+   * @param name matrix label
+   * @param d maximum number of fractional digits
+   */
+  @ExcludeFromJacocoGeneratedReport
+  public void displayMatrix(Matrix matrix, String name, int d) {
+    displayMatrix(matrix.getArrayCopy(), name, d);
   }
 
   /**

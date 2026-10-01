@@ -1,7 +1,10 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
+import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -11,9 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * The expected values were captured from the implementation that called {@code Jama.Matrix.solveTranspose}, before it
- * was rewritten as a solve against the transposed matrix. The comparison is exact on purpose: solving against the
- * untransposed matrix only shifts these results by about 1e-15 relative, because the solution merely seeds an iteration
- * that converges to almost the same density profile.
+ * was rewritten as a solve against the transposed matrix. The integrated results allow 1e-12 N/m of floating-point
+ * variation across JVMs. A separate nonsymmetric system checks the transpose directly, since integration masks that
+ * error by converging to almost the same density profile.
  * </p>
  *
  * @author asmf
@@ -49,7 +52,7 @@ class GTSurfaceTensionSimpleTest {
   @Test
   void methaneDecaneTensionIsUnchanged() {
     assertEquals(0.015989522215911635,
-        simpleGradientTheoryTension(new String[] {"methane", "n-decane"}, new double[] {0.6, 0.4}, 310.0, 50.0), 0.0);
+        simpleGradientTheoryTension(new String[] {"methane", "n-decane"}, new double[] {0.6, 0.4}, 310.0, 50.0), 1e-12);
   }
 
   /**
@@ -58,7 +61,7 @@ class GTSurfaceTensionSimpleTest {
   @Test
   void methanePropaneHeptaneTensionIsUnchanged() {
     assertEquals(0.007770644492084066, simpleGradientTheoryTension(new String[] {"methane", "propane", "n-heptane"},
-        new double[] {0.5, 0.2, 0.3}, 320.0, 60.0), 0.0);
+        new double[] {0.5, 0.2, 0.3}, 320.0, 60.0), 1e-12);
   }
 
   /**
@@ -69,6 +72,22 @@ class GTSurfaceTensionSimpleTest {
     assertEquals(0.008762064537835006,
         simpleGradientTheoryTension(new String[] {"methane", "ethane", "propane", "n-decane"},
             new double[] {0.5, 0.1, 0.1, 0.3}, 330.0, 80.0),
-        0.0);
+        1e-12);
+  }
+
+  /** Verifies the transpose against an analytical solution that differs strongly from an untransposed solve. */
+  @Test
+  void densityGradientUsesTransposedMatrix() {
+    // A^T * [1, 2] = [8, 9], whereas A * x = [8, 9] gives [1.4, 1.8].
+    assertArrayEquals(new double[] {1.0, 2.0},
+        GTSurfaceTensionSimple.solveDensityGradient(new double[][] {{2.0, 1.0}, {3.0, 4.0}}, new double[] {8.0, 9.0}),
+        1e-12);
+  }
+
+  /** Verifies that a singular density-gradient system reports failure rather than continuing with stale values. */
+  @Test
+  void singularDensityGradientReportsFailure() {
+    assertThrows(LinearAlgebraException.class, () -> GTSurfaceTensionSimple
+        .solveDensityGradient(new double[][] {{1.0, 2.0}, {2.0, 4.0}}, new double[] {1.0, 2.0}));
   }
 }

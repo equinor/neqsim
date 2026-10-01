@@ -6,6 +6,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
@@ -83,7 +84,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     double[][] fmatrix = new double[localSystem.getPhase(0).getNumberOfComponents()
         - 1][localSystem.getPhase(0).getNumberOfComponents() - 1];
     double[] bmatrix = new double[localSystem.getPhase(0).getNumberOfComponents() - 1];
-    double[] ans = null;
     z_step = new double[ite_step];
     den_interface = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
     pressure_interface = new double[ite_step];
@@ -159,13 +159,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         ii++;
       }
 
-      if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
-        try {
-          ans = ALGEBRA.solve(ALGEBRA.transpose(fmatrix), bmatrix);
-        } catch (Exception ex) {
-          logger.error(ex.getMessage(), ex);
-        }
-      }
+      double[] ans = bmatrix.length == 0 ? new double[0] : solveDensityGradient(fmatrix, bmatrix);
 
       int pp = 0;
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -302,6 +296,18 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
 
     // System.out.println("end ");
     return Math.abs(surdenstemp);
+  }
+
+  /**
+   * Solves the transposed density-gradient system used to seed the density profile.
+   *
+   * @param matrix density-gradient coefficient matrix
+   * @param rhs density-gradient right-hand side
+   * @return gradient ratios for the non-reference components
+   * @throws LinearAlgebraException if the system cannot be solved; no stale or zero gradient is substituted
+   */
+  static double[] solveDensityGradient(double[][] matrix, double[] rhs) {
+    return ALGEBRA.solve(ALGEBRA.transpose(matrix), rhs);
   }
 
   /**

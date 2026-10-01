@@ -9,6 +9,20 @@ dependency. Each Java block below is independent: place the imports at the top
 of a file and the statements inside a method. The examples are compiled and
 executed directly from this page by `MathAndExpanderDocumentationTest`.
 
+Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
+operations are being routed through `LinearAlgebraOperations`, initially using
+`JamaLinearAlgebra`. This changes the integration boundary; it does not replace the
+JAMA backend or establish a performance improvement. Numerical integration tests allow
+small JVM rounding differences, while nonsymmetric matrix and residual checks verify
+the actual linear systems.
+
+Compatibility adapters retain the existing statistics JAMA API and cricondenbar
+serialized matrix fields. Unused JAMA fields in the legacy OLGA water-table generators
+retain their serialized types during this migration. `CricondenbarFlash.run2()` reports
+an unsolvable Newton system with `LinearAlgebraException` instead of repeating the failed
+iteration. This experimental search is sensitive to initialization and floating-point
+arithmetic; use the established phase-envelope calculation for engineering extrema.
+
 ## Table of Contents
 
 - [Overview](#overview)

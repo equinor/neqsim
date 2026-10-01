@@ -9,6 +9,7 @@ import org.apache.commons.math3.analysis.interpolation.BicubicInterpolatingFunct
 import org.apache.commons.math3.analysis.interpolation.BicubicInterpolator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -44,9 +45,9 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
   double[] dewP;
   double[] bubPLOG;
   double[] dewPLOG;
-  double[][] XMatrixgas;
-  double[][] XMatrixoil;
-  double[][] XMatrixwater;
+  Matrix XMatrixgas;
+  Matrix XMatrixoil;
+  Matrix XMatrixwater;
   double[][] ROG = null;
   double TC;
   double PC;
@@ -54,7 +55,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
   double[][][] props;
   int nProps;
   String[] names;
-  double[][] xcoef = new double[9][];
+  Matrix[] xcoef = new Matrix[9];
   String[] units;
   int temperatureSteps;
   int pressureSteps;
@@ -63,8 +64,8 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
   boolean hasOilValues = false;
   boolean hasWaterValues = false;
   boolean[][][] hasValue;
-  double[][] aMatrix = new double[4][4];
-  double[] s = new double[4];
+  Matrix aMatrix = new Matrix(4, 4);
+  Matrix s = new Matrix(1, 4);
   String fileName = "c:/Appl/OLGAneqsim.tab";
 
   /**
@@ -76,9 +77,9 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicoperati
     this.thermoSystem = system;
     thermoOps = new ThermodynamicOperations(thermoSystem);
 
-    XMatrixgas = new double[9][4];
-    XMatrixoil = new double[9][4];
-    XMatrixwater = new double[9][4];
+    XMatrixgas = new Matrix(9, 4);
+    XMatrixoil = new Matrix(9, 4);
+    XMatrixwater = new Matrix(9, 4);
 
     gasSystem = new SystemSrkEos(298, 10);
     gasSystem.addComponent("methane", 1);

@@ -3,9 +3,18 @@ package neqsim.statistics.parameterfitting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
+import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult;
+import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult.ConvergenceReason;
 
 /**
  * Unit tests for {@link neqsim.statistics.parameterfitting.StatisticsBaseClass}, exercised through its concrete
@@ -15,6 +24,100 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  * @version 1.0
  */
 class StatisticsBaseClassTest {
+  /** Legacy subclass using the protected JAMA fields and bound-check hook. */
+  private static class LegacyStatistics extends LevenbergMarquardt {
+    private boolean boundsHookCalled;
+
+    /** {@inheritDoc} */
+    @Override
+    public void checkBounds(Matrix parameters) {
+      boundsHookCalled = true;
+      super.checkBounds(parameters);
+    }
+
+    /**
+     * Sets the legacy protected covariance fields as an external subclass would.
+     *
+     * @param covariance covariance values
+     */
+    void setLegacyCovariance(double[][] covariance) {
+      coVarianceMatrix = new Matrix(covariance);
+      parameterCorrelationMatrix = Matrix.identity(2, 2);
+    }
+  }
+
+  /** Optimizer whose normal matrix is singular, for testing covariance failure cleanup. */
+  private static class SingularStatistics extends LevenbergMarquardt {
+    /** {@inheritDoc} */
+    @Override
+    public double[][] calcAlphaMatrix() {
+      return new double[][] {{1.0, 2.0}, {2.0, 4.0}};
+    }
+  }
+
+  /** Verifies legacy subclass hooks, protected field descriptors and defensive array diagnostics. */
+  @Test
+  void legacyMatrixApiAndSubclassHooksRemainAvailable() {
+    LegacyStatistics optimizer = new LegacyStatistics();
+    optimizer.setSampleSet(createOptimizer().getSampleSet());
+    optimizer.getSample(0).getFunction().setBounds(new double[][] {{0.0, 1.0}, {0.0, 1.0}});
+    Matrix parameters = new Matrix(new double[][] {{-0.5, 2.0}});
+    optimizer.checkBounds(parameters);
+    assertArrayEquals(new double[] {0.0, 1.0}, parameters.getArray()[0], 0.0);
+    optimizer.boundsHookCalled = false;
+    double[] values = {-0.5, 2.0};
+    optimizer.checkBounds(values);
+    assertTrue(optimizer.boundsHookCalled);
+    assertArrayEquals(new double[] {0.0, 1.0}, values, 0.0);
+    optimizer.setLegacyCovariance(new double[][] {{4.0, 1.0}, {1.0, 9.0}});
+    double[][] covariance = optimizer.getCoVarianceMatrix();
+    covariance[0][0] = -1.0;
+    assertEquals(4.0, optimizer.getCoVarianceMatrix()[0][0], 0.0);
+    double[][] correlation = optimizer.getParameterCorrelationMatrix();
+    correlation[0][0] = -1.0;
+    assertEquals(1.0, optimizer.getParameterCorrelationMatrix()[0][0], 0.0);
+    optimizer.calcParameterStandardDeviation();
+    assertArrayEquals(new double[] {2.0, 3.0}, optimizer.parameterStandardDeviation, 0.0);
+  }
+
+  /**
+   * Verifies the legacy display signature without opening a GUI.
+   *
+   * @throws NoSuchMethodException if the legacy signature was removed
+   */
+  @Test
+  void legacyDisplaySignatureRemainsAvailable() throws NoSuchMethodException {
+    Method method = StatisticsBaseClass.class.getMethod("displayMatrix", Matrix.class, String.class, int.class);
+    assertEquals(void.class, method.getReturnType());
+  }
+
+  /** Verifies that covariance failure restores the previous damping factor. */
+  @Test
+  void singularCovarianceRestoresDamping() {
+    SingularStatistics optimizer = new SingularStatistics();
+    optimizer.multiFactor = 7.0;
+    assertThrows(LinearAlgebraException.class, optimizer::calcCoVarianceMatrix);
+    assertEquals(7.0, optimizer.multiFactor, 0.0);
+  }
+
+  /** Verifies the old result constructor, null arguments and defensive array construction. */
+  @Test
+  void legacyResultConstructorAndArrayFactoryCopyValues() {
+    Matrix covariance = new Matrix(new double[][] {{4.0}});
+    LevenbergMarquardtResult legacy = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, 0.0, 0.0, covariance,
+        null, null);
+    covariance.set(0, 0, -1.0);
+    assertEquals(4.0, legacy.getCovarianceMatrixArray()[0][0], 0.0);
+    LevenbergMarquardtResult empty = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, 0.0, 0.0, null, null,
+        null);
+    assertNull(empty.getCovarianceMatrixArray());
+    double[][] values = {{9.0}};
+    LevenbergMarquardtResult arrayResult = LevenbergMarquardtResult.fromArrays(ConvergenceReason.NOT_RUN, 0, 0.0, 0.0,
+        values, null, null);
+    values[0][0] = -1.0;
+    assertEquals(9.0, arrayResult.getCovarianceMatrixArray()[0][0], 0.0);
+  }
+
   /**
    * Linear test function so that calculated values are analytically known.
    */
