@@ -547,18 +547,7 @@ public class BatchParameterEstimator implements Serializable {
    * @return the covariance matrix
    */
   private double[][] getCoVarianceMatrix() {
-    try {
-      java.lang.reflect.Field field = optimizer.getClass().getSuperclass().getDeclaredField("coVarianceMatrix");
-      field.setAccessible(true);
-      Object matrix = field.get(optimizer);
-      if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
-      }
-    } catch (Exception e) {
-      // Ignore
-    }
-    return null;
+    return optimizer.getCoVarianceMatrix();
   }
 
   /**
@@ -567,20 +556,8 @@ public class BatchParameterEstimator implements Serializable {
    * @return the correlation matrix
    */
   private double[][] getCorrelationMatrix() {
-    try {
-      optimizer.calcCorrelationMatrix();
-      java.lang.reflect.Field field = optimizer.getClass().getSuperclass()
-          .getDeclaredField("parameterCorrelationMatrix");
-      field.setAccessible(true);
-      Object matrix = field.get(optimizer);
-      if (matrix != null) {
-        java.lang.reflect.Method method = matrix.getClass().getMethod("getArrayCopy");
-        return (double[][]) method.invoke(matrix);
-      }
-    } catch (Exception e) {
-      // Ignore
-    }
-    return null;
+    optimizer.calcCorrelationMatrix();
+    return optimizer.getParameterCorrelationMatrix();
   }
 
   /**

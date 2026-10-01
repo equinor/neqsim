@@ -141,7 +141,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     try {
       multiFactor = 0.0;
       alpha = calcAlphaMatrix();
-      coVarianceMatrix = new Matrix(alpha).inverse();
+      coVarianceMatrix = ALGEBRA.invert(alpha);
       calcParameterStandardDeviation();
       calcCorrelationMatrix();
     } catch (RuntimeException ex) {
