@@ -894,6 +894,66 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     public double[] getSpecificGravity() {
       return specificGravity.clone();
     }
+
+    /**
+     * Merge adjacent source cuts into a caller-defined sequence of coarser lumps.
+     *
+     * <p>
+     * Each argument gives the number of consecutive source cuts in one output lump. Liquid-volume yield and retained
+     * TBP boundaries are copied exactly. The specific gravity of each output lump is the liquid-volume-weighted mean of
+     * its source intervals, preserving the implied mass under the same ideal-additive-volume assumption used by the
+     * assay export. This method never splits a source cut, interpolates a boundary, or estimates molecular weight or
+     * other pseudo-component properties.
+     * </p>
+     *
+     * @param sourceCutsPerLump positive number of adjacent source cuts in each output lump
+     * @return immutable coarser TBP cut table
+     * @throws IllegalArgumentException if the partition is null, empty, contains a non-positive count, or does not
+     * consume every source cut exactly once
+     */
+    public TbpCutTable relumpAdjacentCuts(int... sourceCutsPerLump) {
+      if (sourceCutsPerLump == null || sourceCutsPerLump.length == 0) {
+        throw new IllegalArgumentException("At least one adjacent-cut lump is required");
+      }
+
+      int consumedCutCount = 0;
+      for (int cutCount : sourceCutsPerLump) {
+        if (cutCount <= 0) {
+          throw new IllegalArgumentException("Each adjacent-cut lump must contain at least one source cut");
+        }
+        if (cutCount > getCutCount() - consumedCutCount) {
+          throw new IllegalArgumentException("Adjacent-cut partition exceeds the source cut count");
+        }
+        consumedCutCount += cutCount;
+      }
+      if (consumedCutCount != getCutCount()) {
+        throw new IllegalArgumentException("Adjacent-cut partition must consume every source cut exactly once");
+      }
+
+      double[] relumpedCumulativeVolumePercent = new double[sourceCutsPerLump.length + 1];
+      double[] relumpedBoilingPointKelvin = new double[sourceCutsPerLump.length + 1];
+      double[] relumpedSpecificGravity = new double[sourceCutsPerLump.length];
+      relumpedCumulativeVolumePercent[0] = cumulativeVolumePercent[0];
+      relumpedBoilingPointKelvin[0] = boilingPointKelvin[0];
+
+      int sourceCutIndex = 0;
+      for (int lumpIndex = 0; lumpIndex < sourceCutsPerLump.length; lumpIndex++) {
+        int sourceCutEnd = sourceCutIndex + sourceCutsPerLump[lumpIndex];
+        double lumpVolumePercent = cumulativeVolumePercent[sourceCutEnd] - cumulativeVolumePercent[sourceCutIndex];
+        double volumeWeightedSpecificGravity = 0.0;
+        for (int cutIndex = sourceCutIndex; cutIndex < sourceCutEnd; cutIndex++) {
+          double cutVolumePercent = cumulativeVolumePercent[cutIndex + 1] - cumulativeVolumePercent[cutIndex];
+          volumeWeightedSpecificGravity += cutVolumePercent * specificGravity[cutIndex];
+        }
+
+        relumpedCumulativeVolumePercent[lumpIndex + 1] = cumulativeVolumePercent[sourceCutEnd];
+        relumpedBoilingPointKelvin[lumpIndex + 1] = boilingPointKelvin[sourceCutEnd];
+        relumpedSpecificGravity[lumpIndex] = volumeWeightedSpecificGravity / lumpVolumePercent;
+        sourceCutIndex = sourceCutEnd;
+      }
+
+      return new TbpCutTable(relumpedCumulativeVolumePercent, relumpedBoilingPointKelvin, relumpedSpecificGravity);
+    }
   }
 
   private static final class ResolvedCut {
