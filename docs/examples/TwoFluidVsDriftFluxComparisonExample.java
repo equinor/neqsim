@@ -49,7 +49,7 @@ public final class TwoFluidVsDriftFluxComparisonExample {
     double ambientTemperatureC = 4.0;
     double[] flowRatesKgPerSecond = smoke ? new double[] {50.0} : new double[] {50.0, 100.0, 150.0};
     double[] elevationMetres =
-        createSubseaTerrainProfile(numberOfSections, pipeLengthMetres);
+        createSubseaTerrainProfile(numberOfSections);
 
     logger.info(
         "Comparison basis: length={} km, diameter={} m, inlet={} bara/{} C, sections={}",
@@ -97,8 +97,7 @@ public final class TwoFluidVsDriftFluxComparisonExample {
     return fluid;
   }
 
-  private static double[] createSubseaTerrainProfile(int numberOfSections,
-      double totalLengthMetres) {
+  private static double[] createSubseaTerrainProfile(int numberOfSections) {
     double[] elevationMetres = new double[numberOfSections];
     for (int section = 0; section < numberOfSections; section++) {
       double fraction = (double) section / Math.max(1, numberOfSections - 1);
