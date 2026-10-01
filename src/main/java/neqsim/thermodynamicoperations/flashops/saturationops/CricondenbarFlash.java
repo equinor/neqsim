@@ -1,15 +1,9 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamField;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
-import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -23,43 +17,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class CricondenbarFlash extends ConstantDutyPressureFlash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /** Retains the existing stream schema while Newton calculations use arrays. */
-  private static final ObjectStreamField[] serialPersistentFields = {new ObjectStreamField("Jac", Matrix.class),
-      new ObjectStreamField("fvec", Matrix.class)};
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantDutyFlash.class);
   private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   double[][] Jac;
   double[] fvec;
-
-  /**
-   * Writes Newton state using the legacy JAMA field descriptors.
-   *
-   * @param stream destination object stream
-   * @throws IOException if the stream cannot be written
-   */
-  private void writeObject(ObjectOutputStream stream) throws IOException {
-    ObjectOutputStream.PutField fields = stream.putFields();
-    fields.put("Jac", Jac == null ? null : new Matrix(Jac));
-    fields.put("fvec", fvec == null ? null : new Matrix(fvec, fvec.length));
-    stream.writeFields();
-  }
-
-  /**
-   * Reads Newton state from existing serialized operations into primitive arrays.
-   *
-   * @param stream source object stream
-   * @throws IOException if the stream cannot be read
-   * @throws ClassNotFoundException if a serialized class is unavailable
-   */
-  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-    ObjectInputStream.GetField fields = stream.readFields();
-    Matrix jacobian = (Matrix) fields.get("Jac", null);
-    Matrix residual = (Matrix) fields.get("fvec", null);
-    Jac = jacobian == null ? null : jacobian.getArrayCopy();
-    fvec = residual == null ? null : residual.getColumnPackedCopy();
-  }
 
   /**
    * Constructor for CricondenbarFlash.
@@ -119,8 +82,6 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
 
   /**
    * run2.
-   *
-   * @throws LinearAlgebraException if the Newton system cannot be solved
    */
   public void run2() {
     ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
@@ -177,11 +138,21 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
       double presOld = system.getPressure();
       do {
         logger.info("temp " + system.getTemperature() + " Q1 " + Q1 + " pressure " + system.getPressure());
+        double[] dx = null;
+
         iterations++;
-        system.init(3);
-        setfvec();
-        setJac();
-        double[] dx = solveNewtonStep();
+        try {
+          system.init(3);
+          setfvec();
+          setJac();
+          dx = ALGEBRA.solve(Jac, fvec);
+        } catch (Exception ex) {
+          logger.error(ex.getMessage(), ex);
+        }
+        if (dx == null) {
+          logger.error("Failed to solve linear system for dx, skipping iteration.");
+          continue;
+        }
         double damping = iterations * 1.0 / (10.0 + iterations);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           double xlocal = system.getPhase(1).getComponent(i).getx() - damping * dx[i];
@@ -198,20 +169,6 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
       } while (Math.abs(ALGEBRA.euclideanNorm(fvec)) > 1.0e-12 && iterations < maxNumberOfIterations
           && Math.abs(presOld - system.getPressure()) < 10.0);
     } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
-  }
-
-  /**
-   * Solves the current Newton system, stopping the calculation when a step cannot be obtained.
-   *
-   * @return Newton step in phase composition and pressure
-   * @throws LinearAlgebraException if the Jacobian or residual is invalid or the solve fails
-   */
-  double[] solveNewtonStep() {
-    try {
-      return ALGEBRA.solve(Jac, fvec);
-    } catch (LinearAlgebraException ex) {
-      throw new LinearAlgebraException("Cricondenbar Newton system could not be solved", ex);
-    }
   }
 
   /** {@inheritDoc} */

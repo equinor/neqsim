@@ -8,7 +8,6 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult.ConvergenceReason;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -135,7 +134,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     try {
       multiFactor = 0.0;
       alpha = calcAlphaMatrix();
-      coVarianceMatrix = new Matrix(ALGEBRA.invert(alpha));
+      coVarianceMatrix = ALGEBRA.invert(alpha);
       calcParameterStandardDeviation();
       calcCorrelationMatrix();
     } catch (RuntimeException ex) {
