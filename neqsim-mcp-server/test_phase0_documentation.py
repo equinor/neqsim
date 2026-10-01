@@ -106,14 +106,14 @@ require_groups(
     surface,
     r"as the primary harness: version `([^`]+)`, (\d+) contract-tested tools "
     r"and (\d+) confirmed\ngaps?\.",
-    ("1.50", "49", "2"),
+    ("1.50", "50", "1"),
     SURFACE_PATH,
     "focused-harness inventory summary",
 )
 require_groups(
     surface,
     r"\| Trust coverage records \| 71 = 20 explicit benchmark \+ "
-    r"(\d+) bounded contract-tested software contracts \+ (\d+) confirmed gaps \|",
+    r"(\d+) bounded contract-tested software contracts \+ (\d+) confirmed gaps? \|",
     ("50", "1"),
     SURFACE_PATH,
     "trust-coverage table row",
@@ -128,7 +128,7 @@ require_groups(
 require_groups(
     surface,
     r"now reconciles inventory ([0-9.]+) with 20/(\d+)/(\d+) coverage accounting",
-    ("1.50", "49", "2"),
+    ("1.50", "50", "1"),
     SURFACE_PATH,
     "API-inspection reconciliation",
 )
