@@ -45,8 +45,7 @@ public final class TwoFluidPipelineLiquidAccumulationExample {
     double inletTemperatureC = 60.0;
     double inletPressureBara = 120.0;
     double[] flowRatesKgPerSecond = smoke ? new double[] {50.0} : new double[] {50.0, 100.0, 150.0};
-    double[] elevationMetres =
-        createSubseaTerrainProfile(numberOfSections);
+    double[] elevationMetres = createSubseaTerrainProfile(numberOfSections);
 
     logger.info(
         "Sensitivity basis: length={} km, diameter={} m, inlet={} bara/{} C, sections={}",
