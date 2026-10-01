@@ -154,6 +154,9 @@ specified UA rather than a fit to independently measured temperatures.
 To pin one exchanger side, first call `setOutStreamSpecificationNumber(0)` or
 `setOutStreamSpecificationNumber(1)`, then call `setOutTemperature(value, unit)`. The selected
 side is flashed to that temperature at its inlet pressure and the other side is energy-balanced.
+The pinned outlet's enthalpy and entropy are initialized after its TP flash, before its enthalpy
+change is used to solve the opposite outlet. Published caloric properties therefore describe
+the new outlet state, including on repeated runs with a changed temperature pin.
 This unit-bearing overload exists on `HeatExchanger`; do not confuse it with the heater API.
 
 ### Results and checks
