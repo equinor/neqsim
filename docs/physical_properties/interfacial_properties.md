@@ -151,10 +151,8 @@ detailed of these selectors and generally the most computationally demanding. Do
 interpret the selector name as a validated accuracy guarantee: benchmark the chosen
 equation of state and influence parameters against data in the intended range.
 
-Simple Gradient Theory solves the transposed density-gradient system through the JAMA
-`LinearAlgebraOperations` backend. A singular or non-finite system raises
-`LinearAlgebraException`; the density profile is not continued using a previous step
-or a fabricated zero gradient. Treat that exception as a failed calculation.
+Simple Gradient Theory solves the transposed density-gradient system through
+`LinearAlgebraOperations` with the JAMA backend.
 
 ### Classical density functional theory
 

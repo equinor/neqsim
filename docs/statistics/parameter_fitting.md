@@ -24,20 +24,21 @@ The parameter fitting package calibrates model parameters against experimental d
 
 ## Compatibility
 
-The stable Java package is `neqsim.statistics.parameterfitting` with the nested optimizer package `neqsim.statistics.parameterfitting.nonlinearparameterfitting`. Backward compatibility is maintained by keeping the existing class names, constructors, and fluent methods intact:
+The stable Java package is `neqsim.statistics.parameterfitting` with the nested optimizer package `neqsim.statistics.parameterfitting.nonlinearparameterfitting`. Existing fitting workflows keep working because the class names, constructors of the fitting classes, and fluent methods are unchanged:
 
 - `LevenbergMarquardt.solve()` still returns `void`.
 - `SampleValue`, `SampleSet`, `BaseFunction`, and `LevenbergMarquardtFunction` are still available in the same packages.
 - Existing code can still set initial guesses on the function, create samples manually, call `optimizer.setSampleSet(sampleSet)`, and call `optimizer.solve()`.
 - New diagnostics are additive through `optimizer.getResult()` and `ParameterFittingStudy.Result`.
-- Dense solves and covariance inversion use `LinearAlgebraOperations` with the JAMA backend during migration.
-  The protected JAMA covariance/correlation fields, `checkBounds(Matrix)`, `displayMatrix(Matrix, String, int)`,
-  and the JAMA-based `LevenbergMarquardtResult` constructor remain available for existing integrations and subclasses.
-  The array-based bound check dispatches through the legacy hook, preserving subclass overrides.
-- `getCoVarianceMatrix()` and `getParameterCorrelationMatrix()` return defensive `double[][]` copies, or `null`
-  before calculation. New backend-independent result construction uses `LevenbergMarquardtResult.fromArrays(...)`;
-  the existing constructor remains unambiguous when covariance and correlation are both `null`.
-- Covariance inversion failures restore the optimizer's previous damping factor before reporting the solver error.
+
+Code that subclasses `StatisticsBaseClass` or builds a `LevenbergMarquardtResult` directly must be updated, because JAMA `Matrix` was replaced by arrays:
+
+- Subclasses of `StatisticsBaseClass` are not source compatible: the protected covariance and correlation fields,
+  `checkBounds(double[])` and `displayMatrix(double[][], String, int)` use arrays instead of JAMA `Matrix`.
+- `getCoVarianceMatrix()` and `getParameterCorrelationMatrix()` return `double[][]` copies, or `null` before
+  calculation. The `LevenbergMarquardtResult` constructor takes `double[][]` matrices instead of JAMA `Matrix`;
+  `getCovarianceMatrix()` and `getCorrelationMatrix()` still return JAMA `Matrix` copies, and
+  `getCovarianceMatrixArray()` and `getCorrelationMatrixArray()` return arrays.
 
 ## Weighted Least Squares
 

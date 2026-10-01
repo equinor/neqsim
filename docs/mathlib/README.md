@@ -13,15 +13,15 @@ Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitti
 operations are being routed through `LinearAlgebraOperations`, initially using
 `JamaLinearAlgebra`. This changes the integration boundary; it does not replace the
 JAMA backend or establish a performance improvement. Numerical integration tests allow
-small JVM rounding differences, while nonsymmetric matrix and residual checks verify
-the actual linear systems.
+small floating-point differences between CPU architectures, while small linear systems
+with exact solutions, and comparisons against a direct JAMA solve, verify the linear
+systems themselves.
 
-Compatibility adapters retain the existing statistics JAMA API and cricondenbar
-serialized matrix fields. Unused JAMA fields in the legacy OLGA water-table generators
-retain their serialized types during this migration. `CricondenbarFlash.run2()` reports
-an unsolvable Newton system with `LinearAlgebraException` instead of repeating the failed
-iteration. This experimental search is sensitive to initialization and floating-point
-arithmetic; use the established phase-envelope calculation for engineering extrema.
+`CricondenbarFlash` and the OLGA water-table generators now store their matrices as
+`double[][]` instead of JAMA `Matrix`, so instances serialized by earlier versions
+cannot be deserialized. The cricondenbar search is sensitive to initialization and
+floating-point arithmetic; use the established phase-envelope calculation for
+engineering extrema.
 
 The flash stability analysis solves its Newton steps through `LinearAlgebraOperations`
 but computes its residual norms with a private copy of the JAMA norm. Trace components
