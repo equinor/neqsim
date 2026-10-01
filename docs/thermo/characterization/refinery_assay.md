@@ -125,7 +125,7 @@ This path intentionally does not support ASTM D1160, intermediate recovery-point
 - contiguous TBP boundaries in K or degC; and
 - one dimensionless specific gravity for each boiling interval.
 
-A volume-basis assay recovers its normalized declared yields. For a mass-basis assay, NeqSim applies the ideal-additive-volume identity $v_i=(w_i/SG_i)/\sum_j(w_j/SG_j)$ before accumulating volume percent. This is a basis conversion, not a temperature correction, excess-volume model, blend-contraction model, or distillation-curve fit.
+`getResolvedVolumeFractions()` recovers the normalized declared yields of a volume-basis assay. For a mass-basis assay, NeqSim applies the ideal-additive-volume identity $v_i=(w_i/SG_i)/\sum_j(w_j/SG_j)$ before accumulating volume percent. This is a basis conversion, not a temperature correction, excess-volume model, blend-contraction model, or distillation-curve fit.
 
 ```java
 OilAssayCharacterisation.TbpCutTable table = assay.exportTbpCutTable();
@@ -139,6 +139,23 @@ copy.addTBPCutBoundariesKelvin(
 ```
 
 Export fails closed unless the assay is non-empty and every interval has positive yield, a density, a complete boiling range, and an exactly shared boundary with its neighbour. Gaps and overlaps are not interpolated or repaired. This preserves the input cut topology and makes mass/volume closure auditable; it is not a re-lumping or resampling algorithm.
+
+### Conservative adjacent-cut re-lumping
+
+After export, `TbpCutTable.relumpAdjacentCuts(...)` can combine complete adjacent intervals into a coarser table. Each argument is the positive number of source cuts assigned to one output lump, and the arguments must consume every source cut exactly once:
+
+```java
+OilAssayCharacterisation.TbpCutTable coarseTable =
+    table.relumpAdjacentCuts(1, 2, 2, 2);
+```
+
+The operation keeps the first and last TBP boundaries plus each boundary between requested lumps. It preserves cumulative liquid-volume yield exactly. For source-interval liquid-volume yields $v_i$ and specific gravities $SG_i$, each lump uses the ideal-volume-weighted value
+
+$$SG_{lump}=\frac{\sum_i v_i SG_i}{\sum_i v_i}$$
+
+so the implied mass $\sum_i v_iSG_i$ also closes exactly on the same ideal-additive-volume basis as the cut-table export. The returned table remains immutable and can be passed directly to `addTBPCutBoundariesKelvin(...)`.
+
+This is deliberately conservative adjacent whole-cut merging. It does not split a cut, interpolate or smooth a boundary, build an arbitrary target grid, average molecular weight or critical properties, or define how pseudo-component properties should be regenerated. Empty, incomplete, excessive, zero, or negative partitions fail before a table is returned.
 
 ## Volume-basis conversion
 
