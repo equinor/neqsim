@@ -6,6 +6,7 @@ required_skills:
 - neqsim-setup
 - neqsim-document-intelligence-extraction
 - neqsim-api-patterns
+- neqsim-process-modeling
 - neqsim-notebook-patterns
 - neqsim-professional-reporting
 - neqsim-troubleshooting
@@ -109,6 +110,20 @@ deeper and more formal output. Simple question → quick answer with minimal cer
 > submissions. The agent applies recognised standards and validates against
 > benchmarks, but cannot substitute for professional engineering judgement,
 > field-specific data, or independent peer review.
+
+### Process-model handoff
+
+For any task needing a flowsheet, use `process-model` (or `solve-process` for a
+notebook deliverable) with `neqsim-process-modeling`. Pass the absolute existing
+task path, input provenance, battery limits, product specs and requested fidelity.
+Require its [model-build contract](../skills/neqsim-process-modeling/references/model-build-contract.md):
+a reusable process/plant with named feeds/products/equipment, explicit connections,
+validated base case and independently initialized scenarios. Specialists consume
+that same model and basis; they must not reconstruct disconnected fluids from a
+summary table. Record missing capacity, map, geometry or protection inputs as gaps
+rather than converting screening assumptions into asset-specific conclusions.
+Use the [oil and gas task patterns](../skills/neqsim-process-modeling/references/oil-and-gas-task-patterns.md)
+to discover relevant specialists without loading every skill upfront.
 
 ### Core Purpose
 

@@ -78,6 +78,39 @@
       "prompt": "how do I set the folder where new tasks are created and the document root for my standards, and check that my NeqSim setup works",
       "expect_agent_top3": ["solve-task"],
       "expect_skills_top5": ["neqsim-setup"]
+    },
+    {
+      "id": "separator-recompression-model-build",
+      "prompt": "Build a reusable NeqSim ProcessSystem flowsheet for HP LP oil separation with gas recompression, intercooling, scrubber condensate recycles and produced water; validate stream topology and component mass balance",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
+    },
+    {
+      "id": "multi-area-process-model-handoff",
+      "prompt": "Build a multi-area ProcessModel for oil and gas separation, compression and export with named streams, live outlet connections, battery limits and reusable model handoff",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
+    },
+    {
+      "id": "process-recycle-failed-case",
+      "prompt": "NeqSim process flowsheet recycle convergence fails after a scenario; rebuild the base case, check balances and prevent stale outputs",
+      "expect_agent_top3": [
+        "process-model",
+        "solve-process"
+      ],
+      "expect_skills_top5": [
+        "neqsim-process-modeling"
+      ]
     }
   ],
   "contracts": [
