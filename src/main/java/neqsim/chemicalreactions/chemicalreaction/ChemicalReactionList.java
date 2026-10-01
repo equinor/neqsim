@@ -415,37 +415,33 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     }
     int nCols = reacGMatrix[0].length - 1;
 
-    // Get B matrix (last column contains -RT*ln(K) for each reaction)
-    double[][] bData = new double[nRows][1];
+    // Right-hand side -B, where the last column of reacGMatrix holds B = -RT*ln(K) per reaction
+    double[] negB = new double[nRows];
     for (int i = 0; i < nRows; i++) {
-      bData[i][0] = reacGMatrix[i][nCols];
+      negB[i] = -reacGMatrix[i][nCols];
     }
-    Matrix Bmatrix = new Matrix(bData);
 
     // Find independent columns (components with linearly independent stoichiometry)
     ArrayList<Integer> independentColumns = new ArrayList<>();
     ArrayList<Integer> dependentColumns = new ArrayList<>();
-    Matrix currentMat = null;
+    double[][] currentMat = null;
+    int currentRank = 0;
 
     for (int j = 0; j < nCols; j++) {
       // Create a candidate matrix with the new column added
-      Matrix nextMat;
-      if (currentMat == null) {
-        nextMat = new Matrix(nRows, 1);
-        for (int i = 0; i < nRows; i++) {
-          nextMat.set(i, 0, reacGMatrix[i][j]);
-        }
-      } else {
-        nextMat = new Matrix(nRows, currentMat.getColumnDimension() + 1);
-        nextMat.setMatrix(0, nRows - 1, 0, currentMat.getColumnDimension() - 1, currentMat);
-        for (int i = 0; i < nRows; i++) {
-          nextMat.set(i, currentMat.getColumnDimension(), reacGMatrix[i][j]);
-        }
+      int nextCols = (currentMat == null) ? 1 : currentMat[0].length + 1;
+      double[][] nextMat = new double[nRows][nextCols];
+      if (currentMat != null) {
+        nextMat = ALGEBRA.withSubmatrix(nextMat, 0, 0, currentMat);
+      }
+      for (int i = 0; i < nRows; i++) {
+        nextMat[i][nextCols - 1] = reacGMatrix[i][j];
       }
 
-      int currentRank = (currentMat == null) ? 0 : currentMat.rank();
-      if (nextMat.rank() > currentRank) {
+      int nextRank = ALGEBRA.rank(nextMat);
+      if (nextRank > currentRank) {
         currentMat = nextMat;
+        currentRank = nextRank;
         independentColumns.add(j);
         if (independentColumns.size() == nRows) {
           // Remaining columns are dependent
@@ -465,7 +461,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     }
 
     // Solve A_indep * x_indep = -B for independent component reference potentials
-    Matrix solv = currentMat.solve(Bmatrix.times(-1.0));
+    double[] solv = ALGEBRA.solve(currentMat, negB);
 
     double[] result = new double[nCols];
     boolean[] computed = new boolean[nCols];
@@ -473,7 +469,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     // Mark independent components as computed
     for (int i = 0; i < nRows; i++) {
       int col = independentColumns.get(i);
-      result[col] = solv.get(i, 0);
+      result[col] = solv[i];
       computed[col] = true;
     }
 
