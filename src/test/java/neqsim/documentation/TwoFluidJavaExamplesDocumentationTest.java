@@ -25,10 +25,8 @@ import neqsim.NeqSimTest;
 
 /** Compiles and executes the maintained TwoFluid Java examples. */
 public class TwoFluidJavaExamplesDocumentationTest extends NeqSimTest {
-  private static final String COMPARISON =
-      "docs/examples/TwoFluidVsDriftFluxComparisonExample.java";
-  private static final String ACCUMULATION =
-      "docs/examples/TwoFluidPipelineLiquidAccumulationExample.java";
+  private static final String COMPARISON = "docs/examples/TwoFluidVsDriftFluxComparisonExample.java";
+  private static final String ACCUMULATION = "docs/examples/TwoFluidPipelineLiquidAccumulationExample.java";
 
   @TempDir
   Path temporaryDirectory;
@@ -70,25 +68,20 @@ public class TwoFluidJavaExamplesDocumentationTest extends NeqSimTest {
     Files.createDirectories(sourceDirectory);
 
     Path comparisonSource = sourceDirectory.resolve("TwoFluidVsDriftFluxComparisonExample.java");
-    Path accumulationSource =
-        sourceDirectory.resolve("TwoFluidPipelineLiquidAccumulationExample.java");
+    Path accumulationSource = sourceDirectory.resolve("TwoFluidPipelineLiquidAccumulationExample.java");
     Files.write(comparisonSource, readSource(COMPARISON).getBytes(StandardCharsets.UTF_8));
     Files.write(accumulationSource, readSource(ACCUMULATION).getBytes(StandardCharsets.UTF_8));
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
 
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(comparisonSource.toFile(), accumulationSource.toFile()))
-          .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler.getTask(null, manager, diagnostics, options, null,
+          manager.getJavaFileObjects(comparisonSource.toFile(), accumulationSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
@@ -102,16 +95,14 @@ public class TwoFluidJavaExamplesDocumentationTest extends NeqSimTest {
 
   private String readSource(String relativePath) throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    return new String(Files.readAllBytes(repositoryRoot.resolve(relativePath)),
-        StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(repositoryRoot.resolve(relativePath)), StandardCharsets.UTF_8);
   }
 
   private void runSmoke(ClassLoader loader, String className) throws Exception {
     Class<?> example = Class.forName(className, true, loader);
     assertTrue(example.desiredAssertionStatus());
     try {
-      example.getMethod("main", String[].class)
-          .invoke(null, (Object) new String[] {"--smoke"});
+      example.getMethod("main", String[].class).invoke(null, (Object) new String[] {"--smoke"});
     } catch (InvocationTargetException exception) {
       throw new AssertionError(className + " smoke case failed", exception.getCause());
     }
