@@ -19,7 +19,8 @@ by the executable example.
 
 ## Qualification status
 
-The implementation is on `master`, but scientific qualification remains incomplete.\nThe native seven/five burner demonstration
+The implementation is on `master`, but scientific qualification remains incomplete.
+The native seven/five burner demonstration
 now passes against workspace Java classes in hosted CI with the default 1e-6
 projection tolerance unchanged. The earlier native hydrogen-element rejection
 has not been reproduced in this hosted environment, including with the old
@@ -340,4 +341,6 @@ remain separate acceptance gates.
 - [Cantera steady combustor example](https://cantera.org/3.2/examples/python/reactors/combustor.html)
 - [Cantera extensible reactor example](https://cantera.org/3.2/examples/python/reactors/custom2.html)
 - [GRI-Mech 3.0 bundled mechanism](https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml)
-- [University of Galway combustion mechanisms](https://www.universityofgalway.ie/combustionchemistrycentre/mechanismdownloads/)\n- [Dagaut and Hadj Ali LPG JSR study](https://doi.org/10.1016/S0016-2361(02)00335-6)\n- [Sabia et al. propane JSFR study](https://doi.org/10.1016/j.expthermflusci.2018.01.008)
+- [University of Galway combustion mechanisms](https://www.universityofgalway.ie/combustionchemistrycentre/mechanismdownloads/)
+- [Dagaut and Hadj Ali LPG JSR study](https://doi.org/10.1016/S0016-2361(02)00335-6)
+- [Sabia et al. propane JSFR study](https://doi.org/10.1016/j.expthermflusci.2018.01.008)
