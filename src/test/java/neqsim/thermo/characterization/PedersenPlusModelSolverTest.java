@@ -45,21 +45,21 @@ class PedersenPlusModelSolverTest {
   }
 
   /**
-   * Verifies the coefficients for a typical C10+ fraction.
+   * Verifies the coefficients for a typical C10+ fraction within floating-point tolerance.
    */
   @Test
   void typicalPlusFractionCoefficientsAreUnchanged() {
     assertArrayEquals(new double[] {-3.479373356777761, -0.0855476997870545, 0.7282361992342693, 0.029020154394731944},
-        characterise(11.0, 0.290, 0.82), 0.0);
+        characterise(11.0, 0.290, 0.82), 1.0e-14);
   }
 
   /**
-   * Verifies the coefficients for a heavy, dense C10+ fraction.
+   * Verifies the coefficients for a heavy, dense C10+ fraction within floating-point tolerance.
    */
   @Test
   void heavyPlusFractionCoefficientsAreUnchanged() {
     assertArrayEquals(
         new double[] {-4.3450040345066885, -0.024758815553877978, 0.6014349180683386, 0.08672990444665372},
-        characterise(30.0, 0.500, 0.92), 0.0);
+        characterise(30.0, 0.500, 0.92), 1.0e-14);
   }
 }
