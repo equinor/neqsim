@@ -161,7 +161,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
 
       if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
         try {
-          ans = solveTransposed(fmatrix, bmatrix);
+          ans = ALGEBRA.solve(ALGEBRA.transpose(fmatrix), bmatrix);
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
         }
@@ -406,16 +406,5 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
    */
   public void setDmudn2(double[][][] dmudn2) {
     this.dmudn2 = dmudn2;
-  }
-
-  /**
-   * Solves the transposed system, replacing Jama's {@code Matrix.solveTranspose}.
-   *
-   * @param matrix square coefficient matrix F
-   * @param rhs right-hand side b
-   * @return x such that F<sup>T</sup> x = b
-   */
-  static double[] solveTransposed(double[][] matrix, double[] rhs) {
-    return ALGEBRA.solve(ALGEBRA.transpose(matrix), rhs);
   }
 }

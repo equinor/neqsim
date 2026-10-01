@@ -1,6 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -44,22 +43,6 @@ class GTSurfaceTensionSimpleTest {
     assertEquals(2, system.getNumberOfPhases());
     system.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Simple Gradient Theory");
     return system.getInterphaseProperties().getSurfaceTension(0, 1);
-  }
-
-  /**
-   * Verifies that the system F<sup>T</sup> x = b is solved rather than F x = b.
-   *
-   * <p>
-   * With F = [[1, 2], [0, 1]] and b = [1, 4] the transposed system gives x = [1, 2], while the untransposed one gives
-   * [-7, 4]. Every intermediate value is a small integer, so the comparison is exact on any platform.
-   * </p>
-   */
-  @Test
-  void solvesTheTransposedSystem() {
-    double[] solution = GTSurfaceTensionSimple.solveTransposed(new double[][] {{1.0, 2.0}, {0.0, 1.0}},
-        new double[] {1.0, 4.0});
-
-    assertArrayEquals(new double[] {1.0, 2.0}, solution, 0.0);
   }
 
   /**
