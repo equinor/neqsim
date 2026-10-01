@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ import java.util.Set;
  * @version 1.0
  */
 public final class DryGasSealMonitor implements Serializable {
+  /** Serialization version for persisted monitor state. */
   private static final long serialVersionUID = 1000L;
 
   /** Independently observable support-system faults, not unique root-cause diagnoses. */
@@ -43,6 +45,7 @@ public final class DryGasSealMonitor implements Serializable {
 
   /** Immutable limits; pressures are absolute except explicitly named differential pressures. */
   public static final class Limits implements Serializable {
+    /** Serialization version for caller-supplied limits. */
     private static final long serialVersionUID = 1000L;
     /** Minimum supply-process differential pressure in bar. */
     private final double minSupplyDifferentialBar;
@@ -96,6 +99,7 @@ public final class DryGasSealMonitor implements Serializable {
 
   /** Immutable, caller-normalized sensor scan. */
   public static final class Sample implements Serializable {
+    /** Serialization version for sensor scans. */
     private static final long serialVersionUID = 1000L;
     /** Seal supply absolute pressure in bara. */
     private final double supplyPressureBara;
@@ -146,9 +150,13 @@ public final class DryGasSealMonitor implements Serializable {
 
   /** Detached scan result, including current faults and latched confirmed recommendations. */
   public static final class Result implements Serializable {
+    /** Serialization version for detached scan evidence. */
     private static final long serialVersionUID = 1000L;
+    /** Immutable current faults at evaluation time. */
     private final Set<Fault> activeFaults;
+    /** Immutable latched recommendations at evaluation time. */
     private final Set<Fault> confirmedFaults;
+    /** Immutable continuous-fault durations at evaluation time. */
     private final Map<Fault, Double> elapsedSeconds;
 
     /**
@@ -167,28 +175,30 @@ public final class DryGasSealMonitor implements Serializable {
     /**
      * Gets simultaneous current faults.
      *
-     * @return immutable set
+     * @return immutable defensive copy in fault declaration order
      */
     public Set<Fault> getActiveFaults() {
-      return activeFaults;
+      return Collections.unmodifiableSet(new LinkedHashSet<Fault>(activeFaults));
     }
 
     /**
      * Gets confirmed fault recommendations retained until explicit reset.
      *
-     * @return immutable set
+     * @return immutable defensive copy in fault declaration order
      */
     public Set<Fault> getConfirmedFaults() {
-      return confirmedFaults;
+      return Collections.unmodifiableSet(new LinkedHashSet<Fault>(confirmedFaults));
     }
 
     /**
      * Gets continuous fault duration; invalid scans reset unconfirmed physical timers.
      *
-     * @return immutable map in seconds
+     * @return immutable defensive copy in seconds and fault declaration order
      */
     public Map<Fault, Double> getElapsedSeconds() {
-      return elapsedSeconds;
+      EnumMap<Fault, Double> snapshot = new EnumMap<>(Fault.class);
+      snapshot.putAll(elapsedSeconds);
+      return Collections.unmodifiableMap(snapshot);
     }
 
     /**
@@ -210,8 +220,11 @@ public final class DryGasSealMonitor implements Serializable {
     }
   }
 
+  /** Caller-supplied measurement thresholds and timing limits. */
   private final Limits limits;
+  /** Current continuous duration for each independently observed fault. */
   private final EnumMap<Fault, Double> elapsed = new EnumMap<>(Fault.class);
+  /** Confirmed recommendations retained until explicit reset. */
   private final EnumSet<Fault> confirmed = EnumSet.noneOf(Fault.class);
 
   /**

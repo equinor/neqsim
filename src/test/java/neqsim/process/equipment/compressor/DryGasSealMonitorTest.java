@@ -2,6 +2,8 @@ package neqsim.process.equipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.*;
+import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.DryGasSealMonitor.*;
 
@@ -48,6 +50,62 @@ class DryGasSealMonitorTest {
     monitor.reset();
     assertFalse(monitor.evaluate(scan(100), 1).isTripRecommended());
     assertThrows(UnsupportedOperationException.class, () -> confirmed.getActiveFaults().clear());
+  }
+
+  /** Verifies all result collections are immutable and detached from scans and resets. */
+  @Test
+  void resultCollectionsRemainDetached() {
+    DryGasSealMonitor monitor = new DryGasSealMonitor(limits());
+    Result result = monitor.evaluate(scan(101), 3);
+    Set<Fault> active = result.getActiveFaults();
+    Set<Fault> confirmed = result.getConfirmedFaults();
+    Map<Fault, Double> elapsed = result.getElapsedSeconds();
+    assertThrows(UnsupportedOperationException.class, () -> active.add(Fault.INVALID_DATA));
+    assertThrows(UnsupportedOperationException.class, () -> confirmed.clear());
+    assertThrows(UnsupportedOperationException.class, () -> elapsed.put(Fault.HIGH_PRIMARY_VENT_FLOW, 0.0));
+    assertThrows(UnsupportedOperationException.class, () -> active.iterator().remove());
+    assertThrows(UnsupportedOperationException.class, () -> elapsed.entrySet().iterator().next().setValue(0.0));
+    monitor.evaluate(null, 1);
+    monitor.reset();
+    Result healthy = monitor.evaluate(scan(100), 1);
+    assertEquals(1, active.size());
+    assertEquals(active, result.getActiveFaults());
+    assertEquals(active, confirmed);
+    assertEquals(confirmed, result.getConfirmedFaults());
+    assertEquals(3.0, elapsed.get(Fault.HIGH_PRIMARY_VENT_FLOW), 0.0);
+    assertEquals(elapsed, result.getElapsedSeconds());
+    assertTrue(result.isDataValid());
+    assertTrue(result.isTripRecommended());
+    assertTrue(healthy.getActiveFaults().isEmpty());
+    assertTrue(healthy.getConfirmedFaults().isEmpty());
+    assertFalse(healthy.isTripRecommended());
+  }
+
+  /**
+   * Verifies result serialization retains immutable snapshots after monitor state changes.
+   *
+   * @throws Exception on serialization failure
+   */
+  @Test
+  void serializedResultRetainsImmutableEvidence() throws Exception {
+    DryGasSealMonitor monitor = new DryGasSealMonitor(limits());
+    Result result = monitor.evaluate(scan(101), 3);
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    try (ObjectOutputStream out = new ObjectOutputStream(buffer)) {
+      out.writeObject(result);
+    }
+    Result copy;
+    try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(buffer.toByteArray()))) {
+      copy = (Result) in.readObject();
+    }
+    monitor.reset();
+    assertEquals(result.getActiveFaults(), copy.getActiveFaults());
+    assertEquals(result.getConfirmedFaults(), copy.getConfirmedFaults());
+    assertEquals(result.getElapsedSeconds(), copy.getElapsedSeconds());
+    assertTrue(copy.isTripRecommended());
+    assertThrows(UnsupportedOperationException.class, () -> copy.getActiveFaults().clear());
+    assertThrows(UnsupportedOperationException.class, () -> copy.getConfirmedFaults().clear());
+    assertThrows(UnsupportedOperationException.class, () -> copy.getElapsedSeconds().clear());
   }
 
   /** Verifies simultaneous faults use the correct pressure reference and gas circuits. */

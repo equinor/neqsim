@@ -43,7 +43,9 @@ The caller therefore receives unresolved-data evidence rather than an invented h
 Confirmed recommendations remain latched until `reset()`. Reset clears all timers and
 recommendations; an ongoing fault reappears on the next scan. Reset is an explicit simulator
 operation, not a plant reset permissive. Results are immutable detached snapshots, and
-serialization preserves the monitor timers/latches for replay.
+serialization preserves the monitor timers/latches for replay. Each collection getter
+returns an unmodifiable defensive copy in fault declaration order. Retained collections
+and serialized results remain unchanged by later scans or monitor resets.
 
 This initial monitor has one common confirmation delay and a single running/pressurized
 measurement basis. Mode-specific source/booster switching, alarm/trip threshold separation,

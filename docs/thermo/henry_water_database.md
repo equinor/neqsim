@@ -8,8 +8,8 @@ The Henry columns in `COMP.csv` are backed by 83 selected rows in
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
 `HenryWaterCoverage.csv` inventories all 389 rows: 83 imported correlations
-(79 distinct database identities plus four exact-identity aliases), 34 qualified
-reference-temperature-only points, 23 remaining literature candidates,
+(79 distinct database identities plus four exact-identity aliases), 35 qualified
+reference-temperature-only points, 22 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -108,6 +108,18 @@ ScholarsArchive record links institutional copyright terms rather than a permiss
 data license, so NeqSim reproduces numerical facts only from the CC BY 4.0 Sander
 compilation.
 
+The exact-identity `4-ethyltoluene` row adds one type-L point from Mackay and
+Shiu (1981), Sander reference 479. The Sander machine row reports
+`Hsbp = 0.20 mol kg^-1 atm^-1` at 298.15 K, equivalent to
+`Hm = 5.06625 bar kg mol^-1`. Independent vapor-pressure/aqueous-solubility
+rows span 0.16 to 0.20 mol kg^-1 atm^-1 at compilation precision. This spread
+is validation evidence, not a fitted uncertainty interval. Neither the machine
+row nor the compilation entry reports a total reference pressure; the catalog
+therefore stores that field as unavailable instead of assigning 0.1 MPa. The
+point remains exact-temperature-only and does not define a slope or derivative.
+Mackay and Shiu's review is publisher-copyrighted, so only numerical facts from
+the CC BY 4.0 Sander compilation are reproduced.
+
 Each catalog row can override original-reference citation, URL, rights,
 uncertainty, identity basis, and point conditions. Exact CAS and molecular identity
 are required. Four rows also match the Sander InChIKey exactly; the two cis-alkene
@@ -120,6 +132,9 @@ the exact NeqSim component name. A point stores source identity, convention, uni
 reference temperature and pressure, bibliography, license, uncertainty note and
 validity statement. Its temperature-taking getter succeeds only at exactly
 298.15 K; all other temperatures and every temperature derivative return `NaN`.
+When the source does not report a total reference pressure, the pressure getter
+also returns `NaN`; this does not alter the reported partial-pressure Henry
+convention.
 These points are intentionally not copied into `COMP.csv`, do not make
 `hasHenryCorrelation()` true, and do not enter GE, Pitzer or IAPWS dispatch. A
 single value therefore cannot silently become a constant polynomial with a fake

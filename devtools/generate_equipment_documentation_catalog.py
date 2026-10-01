@@ -54,7 +54,7 @@ PACKAGE_GUIDES: Mapping[str, Tuple[str, str]] = {
     "pipeline": ("[Pipelines](pipelines)", "Steady and transient single-, two-, and multiphase pipelines"),
     "powergeneration": ("[Power generation](power_generation)", "Turbines, fuel cells, renewables, and combined-cycle systems"),
     "pump": ("[Pumps](pumps)", "Centrifugal, ESP, jet, and sucker-rod pumps"),
-    "reactor": ("[Reactors](reactors)", "Equilibrium, kinetic, reforming, sulfur, and bioprocess reactors"),
+    "reactor": ("[Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)", "Chemical reactors and optional finite-rate gas-fired hot-oil equipment"),
     "reservoir": ("[Reservoirs and wells](reservoirs)", "Reservoir, inflow, surveillance, and well-system equipment"),
     "separator": ("[Separators](separators)", "Phase, solids, cryogenic, and extraction separators"),
     "solidhandling": ("[Solid handling](solid_handling)", "Biological feedstock preparation and solids handling"),

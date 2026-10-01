@@ -114,6 +114,9 @@ jobs:
       - name: Run focused safety-system-performance Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.SafetySystemPerformanceRunnerTest test -ntp
 
+      - name: Run focused open-drain-review Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.OpenDrainReviewRunnerTest test -ntp
+
       - name: Run focused reporting Java contracts
         run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
 
@@ -165,6 +168,9 @@ jobs:
 
       - name: Run focused real-MCP safety-system-performance qualification
         run: cd neqsim-mcp-server && python test_safety_system_performance_protocol.py
+
+      - name: Run focused real-MCP open-drain-review qualification
+        run: cd neqsim-mcp-server && python test_open_drain_review_protocol.py
 
       - name: Run focused real-MCP simulation-variable mutation qualification
         run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py

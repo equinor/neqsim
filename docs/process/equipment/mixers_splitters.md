@@ -14,9 +14,22 @@ thermodynamic state or composition. The public classes are in
 | `Mixer` | Combine two or more streams and calculate an outlet state |
 | `StaticMixer` | Backward-compatible class name for the standard `Mixer` implementation |
 | `Splitter` | Divide one stream by relative factors or specified outlet flow rates |
+| `ComponentSplitter` | Route a specified fraction of each feed component to the first of two outlets |
 
 The stream accessors return `StreamInterface`. Keep that interface type unless a downstream API
 specifically requires the concrete `Stream` class.
+
+For positive-flow `Splitter` branches, enthalpy and entropy are initialized after the split
+flash. Proportional splitting preserves molar enthalpy and entropy as well as the sum of
+enthalpy and entropy rates of flowing branches, including after reopening a closed branch.
+The thermodynamic getters of a zero-flow branch are not qualified; exclude those branches
+from caloric balances until the empty-state handling tracked in issue #4073 is resolved.
+
+`ComponentSplitter` changes outlet composition and equilibrates each positive-flow outlet at
+the feed temperature and pressure. It initializes enthalpy and entropy before publishing those
+outlets. Component inventories are conserved, but a composition-selective split at imposed T/P
+does not impose an adiabatic energy balance; evaluate the total outlet-minus-inlet enthalpy rate
+if an external heat requirement is needed. Zero-flow outlets have no defined molar enthalpy.
 
 ## Mixer
 

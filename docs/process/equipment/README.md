@@ -53,8 +53,10 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
-| Compressor Thermal Model | [Compressor thermal model and catalog](../../compressor_thermal_model) | Metal-node temperatures, catalog templates, steady and transient screening, and deposition inputs |
 | Seal Support-System Monitoring | [dry_gas_seal_monitoring.md](dry_gas_seal_monitoring) | Timed advisory supply/vent/buffer/separation monitoring |
+| Compressor Thermal Model | [Compressor thermal model and catalog](../../compressor_thermal_model) | Metal-node temperatures, catalog templates, steady and transient screening, and deposition inputs |
+| Compression Train Assessment | [compression_train_assessment.md](compression_train_assessment) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
+| Seal Condensation and Conditioning | [dry_gas_seal_conditioning.md](dry_gas_seal_conditioning) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
 | Compressor Curves | [compressor_curves.md](compressor_curves) | Performance maps, correction, interpolation, and envelopes |
 | Compressor Shaft | [compressor_shaft.md](compressor_shaft) | Multiple compressor bodies on a common-speed shaft |
 | Compressor Anti-Surge Control | [compressor_antisurge_control.md](compressor_antisurge_control) | Dynamic anti-surge recycle, speed/load control, and coordinated pressure-speed-recycle control philosophy |
@@ -73,6 +75,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Reactors (Overview) | [reactors.md](reactors) | All reactor types: PFR, CSTR, Gibbs, stoichiometric, ammonia, sulfur, bio-processing |
+| Multi-burner hot-oil heater | [multi_burner_fired_heater.md](multi_burner_fired_heater) | Optional finite-rate chemistry, burner switching, tube heat, refractory and oil balance |
 | Iron-Sulfide Wall Source | [iron_sulfide_wall_source.md](iron_sulfide_wall_source) | Stateful FeS/FeCO3 scale, oxygen ingress, S8 generation, and compressor deposition coupling |
 | Plug Flow Reactor | [plug_flow_reactor.md](plug_flow_reactor) | Kinetic PFR with power-law/LHHW/reversible kinetics, catalyst bed, Ergun ΔP, energy modes |
 | Electrolyzers | [electrolyzers.md](electrolyzers) | Water and CO₂ electrolysis |

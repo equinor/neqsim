@@ -6,7 +6,7 @@ running server's standards-conforming list operations; it does not infer publica
 manually maintained Java method list.
 
 All focused `test_*_protocol.py` harnesses freeze the same current inventory
-as the primary harness: version `1.48`, 48 contract-tested tools and 3 confirmed
+as the primary harness: version `1.49`, 49 contract-tested tools and 2 confirmed
 gaps. `test_phase0_documentation.py` checks these executable expectations before
 packaging, so a promotion cannot leave a later protocol step on an older baseline.
 Per-tool evidence counts and historical promotion records remain independent.
@@ -23,12 +23,12 @@ Per-tool evidence counts and historical promotion records remain independent.
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
-| MCP protocol scenarios | 100 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
+| MCP protocol scenarios | 101 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 48 bounded contract-tested software contracts + 3 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.48; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 49 bounded contract-tested software contracts + 2 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.49; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -94,7 +94,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
-`src/test/java/neqsim/mcp`, 100 named scenarios in the primary real-STDIO JSON-RPC harness
+`src/test/java/neqsim/mcp`, 101 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts. The dependency-free
@@ -153,8 +153,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 3 records remain
-`CONFIRMED_GAP`, forty-eight are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 2 records remain
+`CONFIRMED_GAP`, forty-nine are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -201,9 +201,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.48 with 20/48/3 coverage accounting while retaining
+now reconciles inventory 1.49 with 20/49/2 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its forty-eight bounded software contracts and requires 3 confirmed gaps. The read-only
+among its forty-nine bounded software contracts and requires 2 confirmed gaps. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -799,3 +799,14 @@ accuracy, convergence for arbitrary inputs, uncertainty, chemical dose, safe
 operating limits, standards or regulatory compliance, plant or control
 authority, certification, or accountable engineering approval. See
 `docs/evidence/CHEMISTRY_SCREENING_CONTRACT.md`.
+
+
+### Inventory 1.49 open-drain review promotion
+
+`runOpenDrainReview` is `CONTRACT_TESTED` for deterministic execution of the existing
+NORSOK S-001 Clause 9 review engine through the packaged MCP server. Evidence covers discovery,
+the normalized STID/P&ID catalog example, two-item `PASS_WITH_WARNINGS` report (zero failures
+and one missing-standards warning), standards/provenance fields,
+deterministic replay, fail-closed empty input, access enforcement, and the standard response
+envelope. It does not certify source/tag fidelity, completeness, hydraulic adequacy, standards
+conformance, plant authority, or accountable process-safety approval.
