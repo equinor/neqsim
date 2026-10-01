@@ -381,8 +381,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
    * <p>
    * The table contains normalized cumulative liquid-volume percent, contiguous TBP boundaries, and interval specific
    * gravities. Mass-basis assays are converted using ideal additive liquid volumes through
-   * {@link #getResolvedVolumeFractions()}. Every cut must have positive yield, a complete boiling range, a density, and a
-   * boundary shared with its neighbour. The returned arrays are defensive copies and can be passed back to
+   * {@link #getResolvedVolumeFractions()}. Every cut must have positive yield, a complete boiling range, a density, and
+   * a boundary shared with its neighbour. The returned arrays are defensive copies and can be passed back to
    * {@link #addTBPCutBoundariesKelvin(String, double[], double[], double[])}.
    * </p>
    *
@@ -405,7 +405,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         throw new IllegalStateException("TBP cut-table export requires positive yield for cut " + cut.getName());
       }
       if (!cut.hasBoilingRange()) {
-        throw new IllegalStateException("TBP cut-table export requires a complete boiling range for cut " + cut.getName());
+        throw new IllegalStateException(
+            "TBP cut-table export requires a complete boiling range for cut " + cut.getName());
       }
 
       double lowerBoundary = cut.getLowerBoilingPointKelvin();
@@ -413,8 +414,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       if (i == 0) {
         boilingPointKelvin[0] = lowerBoundary;
       } else if (Math.abs(lowerBoundary - boilingPointKelvin[i]) > BOILING_POINT_BOUNDARY_TOLERANCE_K) {
-        throw new IllegalStateException("TBP cut boiling ranges must be contiguous between "
-            + cuts.get(i - 1).getName() + " and " + cut.getName());
+        throw new IllegalStateException(
+            "TBP cut boiling ranges must be contiguous between " + cuts.get(i - 1).getName() + " and " + cut.getName());
       }
 
       cumulativeVolumePercent[i + 1] = cumulativeVolumePercent[i] + 100.0 * volumeFractions[i];
