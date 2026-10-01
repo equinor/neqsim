@@ -214,6 +214,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
         splitStream[i].setThermoSystem(thermoSystem);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
         thermoOps.TPflash();
+        // The composition changed; TPflash alone does not rebuild caloric properties.
+        splitStream[i].getThermoSystem().init(2);
       } else {
         splitStream[i].setThermoSystem(thermoSystem);
       }

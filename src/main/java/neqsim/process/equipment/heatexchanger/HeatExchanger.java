@@ -389,6 +389,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       specifiedOut.setTemperature(temperatureOut, temperatureOutUnit);
       ThermodynamicOperations specOps = new ThermodynamicOperations(specifiedOut);
       specOps.TPflash();
+      // Rebuild caloric properties before using the pinned side in the energy balance.
+      specifiedOut.init(2);
       outStream[outStreamSpecificationNumber]
           .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
       outStream[outStreamSpecificationNumber].setThermoSystem(specifiedOut);
