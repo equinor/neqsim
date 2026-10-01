@@ -23,6 +23,13 @@ an unsolvable Newton system with `LinearAlgebraException` instead of repeating t
 iteration. This experimental search is sensitive to initialization and floating-point
 arithmetic; use the established phase-envelope calculation for engineering extrema.
 
+The flash stability analysis solves its Newton steps through `LinearAlgebraOperations`
+but computes its residual norms with a private copy of the JAMA norm. Trace components
+can make the residual non-finite before any solve has checked it; JAMA returns NaN, the
+convergence test fails and the next substitution step recovers, whereas
+`LinearAlgebraOperations.euclideanNorm` throws and aborts the stability trial. Keep that
+NaN-tolerant norm when migrating further.
+
 ## Table of Contents
 
 - [Overview](#overview)
