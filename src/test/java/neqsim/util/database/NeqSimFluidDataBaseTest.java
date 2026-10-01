@@ -5,12 +5,15 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** Tests the legacy fluid database wrapper and its inherited connection lifecycle. */
 public class NeqSimFluidDataBaseTest {
+  private static final Logger logger = LogManager.getLogger(NeqSimFluidDataBaseTest.class);
   private static final String H2_URL = "jdbc:h2:mem:fluid_" + UUID.randomUUID().toString().replace("-", "");
 
   /** Verifies the fluid wrapper initializes inherited JDBC resources from a concrete connection implementation. */
@@ -46,14 +49,24 @@ public class NeqSimFluidDataBaseTest {
     }
   }
 
+  /** Embedded connection fixture for the legacy fluid database wrapper. */
+  private static class EmbeddedFluidDatabase extends NeqSimFluidDataBase {
+    /** {@inheritDoc} */
+    @Override
+    public Connection openConnection(String database) throws SQLException {
+      return DriverManager.getConnection(H2_URL, "sa", "");
+    }
+  }
+
   @Disabled("Requires a locally registered FluidDatabase source")
   @Test
   void testMain() throws Exception {
-    NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-    try (Connection connection = database.getConnection();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM comp where name='water'")) {
-      Assertions.assertTrue(connection.isValid(1));
-      Assertions.assertTrue(dataSet.next());
+    try (NeqSimFluidDataBase database = new NeqSimFluidDataBase()) {
+      try (Connection connection = database.getConnection();
+          ResultSet dataSet = database.getResultSet("SELECT * FROM comp where name='water'")) {
+        Assertions.assertTrue(connection.isValid(1));
+        Assertions.assertTrue(dataSet.next());
+      }
     }
   }
 }
