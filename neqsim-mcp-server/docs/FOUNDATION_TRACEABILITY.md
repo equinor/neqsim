@@ -272,7 +272,8 @@ Inventory 1.49 promotes `runOpenDrainReview` to `CONTRACT_TESTED` using the exis
 `OpenDrainReviewRunner` and `OpenDrainReviewEngine`, the `open-drain-review/norsok-s001-stid`
 catalog example, direct Java tests, comprehensive and focused packaged-MCP qualification, and
 the standard server access/envelope path. The deterministic example returns two reviewed items,
-a `PASS` verdict, NORSOK S-001 Clause 9 attribution, and provenance; empty input fails closed.
+a `PASS_WITH_WARNINGS` verdict (zero failures and one missing-standards warning), NORSOK S-001
+Clause 9 attribution, and provenance; empty input fails closed.
 
 This evidence qualifies bounded software behavior only. It does not establish direct STID or
 tagreader connectivity, source/tag fidelity, complete drain-area coverage, hydraulic or CFD

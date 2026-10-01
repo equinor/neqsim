@@ -11,10 +11,15 @@ The executable contract covers:
 
 - discovery text that identifies the NORSOK S-001 Clause 9 and caller-normalized evidence boundary;
 - the `open-drain-review/norsok-s001-stid` catalog example;
-- deterministic two-item `PASS` reporting with per-item results, standards attribution, and provenance;
+- deterministic two-item `PASS_WITH_WARNINGS` reporting with no failed items and one warning
+  item (missing documented design standards), per-item results, standards attribution, and provenance;
 - normal access enforcement and the standard MCP status, validation, quality-gate, data, warning, and provenance fields;
 - fail-closed empty input behavior; and
 - direct Java, comprehensive protocol, and focused packaged-MCP qualification.
+
+Replay compares all response fields except the provenance execution timestamp and computation
+time, which are checked for presence and validity on each execution. Engineering results,
+warnings, assumptions, limitations, and the remaining provenance must match exactly.
 
 ## Evidence
 

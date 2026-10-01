@@ -731,7 +731,8 @@ Inventory 1.49 records the existing `OpenDrainReviewRunner`, canonical
 `OpenDrainReviewEngine`, Java tests, server facade, catalog example, comprehensive protocol,
 focused packaged-MCP qualification, and evidence documentation for `runOpenDrainReview` as
 `CONTRACT_TESTED`. The `open-drain-review/norsok-s001-stid` example deterministically returns
-two reviewed items, a `PASS` verdict, NORSOK S-001 Clause 9 attribution, per-item results, and
+two reviewed items, a `PASS_WITH_WARNINGS` verdict (zero failures and one missing-standards
+warning), NORSOK S-001 Clause 9 attribution, per-item results, and
 provenance through the standard MCP response envelope. Empty input fails closed.
 
 The tool consumes caller-normalized STID/P&ID and optional tagreader/historian evidence; it does

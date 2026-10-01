@@ -2327,7 +2327,9 @@ def test_open_drain_review_contract():
           str(response))
     check("open-drain review report and provenance",
           data.get("reviewType") == "open_drain_review"
-          and data.get("overallVerdict") == "PASS"
+          and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 1
           and data.get("itemCount") == 2
           and len(data.get("results", [])) == 2
           and "NORSOK S-001:2020+AC:2021 Clause 9"

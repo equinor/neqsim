@@ -805,7 +805,8 @@ authority, certification, or accountable engineering approval. See
 
 `runOpenDrainReview` is `CONTRACT_TESTED` for deterministic execution of the existing
 NORSOK S-001 Clause 9 review engine through the packaged MCP server. Evidence covers discovery,
-the normalized STID/P&ID catalog example, two-item `PASS` report, standards/provenance fields,
+the normalized STID/P&ID catalog example, two-item `PASS_WITH_WARNINGS` report (zero failures
+and one missing-standards warning), standards/provenance fields,
 deterministic replay, fail-closed empty input, access enforcement, and the standard response
 envelope. It does not certify source/tag fidelity, completeness, hydraulic adequacy, standards
 conformance, plant authority, or accountable process-safety approval.

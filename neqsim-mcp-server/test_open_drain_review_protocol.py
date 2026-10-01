@@ -105,7 +105,9 @@ def test_catalog_report(client):
             and response.get("qualityGate", {}).get("verdict") == "passed",
             "open-drain response envelope failed", response)
     require(data.get("reviewType") == "open_drain_review"
-            and data.get("overallVerdict") == "PASS"
+            and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+            and data.get("failedItems") == 0
+            and data.get("warningItems") == 1
             and data.get("itemCount") == 2
             and len(data.get("results", [])) == 2
             and "NORSOK S-001:2020+AC:2021 Clause 9"
@@ -117,7 +119,17 @@ def test_catalog_report(client):
 
 def test_deterministic_replay(client):
     request = catalog_example(client)
-    require(run_review(client, request) == run_review(client, request),
+    first = run_review(client, request)
+    second = run_review(client, request)
+    for response in (first, second):
+        provenance = response.get("provenance", {})
+        require(provenance.get("timestamp")
+                and provenance.get("computationTimeMs", -1) >= 0,
+                "open-drain execution provenance missing", response)
+        # Execution time varies; all engineering results and other provenance must agree.
+        provenance.pop("timestamp", None)
+        provenance.pop("computationTimeMs", None)
+    require(first == second,
             "open-drain response is not deterministic")
 
 
