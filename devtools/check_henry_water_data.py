@@ -41,6 +41,12 @@ def main():
         for row in csv.DictReader(
             (data / "HenryWaterCoverage.csv").open(encoding="utf-8"))
     }
+    disposition_manifest = json.loads(
+        (data / "HenryWaterCandidateDispositions.json").read_text())
+    dispositions = {
+        row["name"]: row for row in disposition_manifest["rows"]}
+    assert len(dispositions) == len(disposition_manifest["rows"]), (
+        "Duplicate candidate disposition component")
     source_lines = None
     if len(sys.argv) > 1:
         with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -71,6 +77,61 @@ def main():
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
     component_rows = {row["NAME"]: row for row in rows}
+    expected_disposition_groups = {
+        "held_reactive_amine_joint_model_requalification": {
+            "MDEA", "MEA", "Piperazine",
+        },
+        "held_acid_base_intrinsic_definition_review": {
+            "acetic acid", "formic acid", "ammonia", "HNO2", "HCN",
+        },
+        "held_reactive_hydrolysis_speciation_review": {
+            "chlorine", "SO2", "NO2", "N2O3", "N2O4",
+        },
+        "held_reactive_uptake_definition_review": {
+            "CH2O", "C2H4O", "H2O2",
+        },
+        "held_solvent_role_mixed_solvent_validation": {
+            "MEG", "MEGPVTsim18", "MEGPVTsim19", "PG",
+        },
+        "held_spin_isomer_specific_identity_data": {
+            "para-hydrogen", "ortho-hydrogen",
+        },
+    }
+    expected_dispositions = set().union(
+        *expected_disposition_groups.values())
+    assert set(dispositions) == expected_dispositions, (
+        "Candidate disposition inventory mismatch")
+    assert disposition_manifest["status"] == (
+        "fail_closed_research_disposition")
+    assert disposition_manifest["solvent"] == "water"
+    assert disposition_manifest["compilation_license"] == "CC BY 4.0"
+    assert disposition_manifest["admission_rule"].strip()
+    assert disposition_manifest["uncertainty_and_range_rule"].strip()
+    for status, names in expected_disposition_groups.items():
+        for name in names:
+            disposition = dispositions[name]
+            component = component_rows[name]
+            assert name not in selected, (
+                f"Candidate unexpectedly dispatched as correlation: {name}")
+            assert name not in reference_points, (
+                f"Candidate unexpectedly dispatched as reference point: {name}")
+            assert coverage[name]["status"] == status, name
+            assert disposition["coverage_status"] == status, name
+            assert disposition["cas"] == component["CASnumber"], name
+            assert disposition["source_record_url"] == (
+                "https://www.henrys-law.org/henry/casrn/"
+                + disposition["cas"]), name
+            assert disposition["source_types"] == (
+                coverage[name]["Sander_source_types"]), name
+            for field in (
+                    "boundary", "identity_basis", "definition_assessment",
+                    "required_evidence"):
+                assert disposition[field].strip(), (
+                    f"Missing candidate {field}: {name}")
+    for alias_name in ("MEGPVTsim18", "MEGPVTsim19"):
+        assert dispositions[alias_name]["alias_of"] == "MEG", alias_name
+        assert component_rows[alias_name]["CASnumber"] == (
+            component_rows["MEG"]["CASnumber"]), alias_name
     reviewed_correlations = {"n-pentane", "i-pentane", "mercury"}
     for name in reviewed_correlations:
         provenance = selected[name]
@@ -203,6 +264,7 @@ def main():
     assert qualified == len(reference_points), "Coverage/reference manifest mismatch"
     print(f"PASS: {len(rows)} rows; {len(found)} sourced correlations; "
           f"{len(reference_points)} qualified reference points; "
+          f"{len(dispositions)} fail-closed candidate dispositions; "
           f"{len(rows) - len(found)} rows without dispatched correlations; "
           "no nonzero unattributed rows.")
 
