@@ -8,7 +8,6 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult.ConvergenceReason;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -34,8 +33,6 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
 
   double oldChiSquare = 1e100;
   double newChiSquare = 0;
-  Matrix parameterStdDevMatrix;
-  Matrix parameterUncertaintyMatrix;
   boolean solved = false;
   private int maxNumberOfIterations = 50;
   private LevenbergMarquardtResult result = LevenbergMarquardtResult.notRun();
@@ -74,8 +71,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   @Override
   public void solve() {
     setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
-    Matrix betaMatrix;
-    Matrix newParameters = null;
+    double[] newParameters = null;
     int n = 0;
     ConvergenceReason convergenceReason = ConvergenceReason.MAX_ITERATIONS_REACHED;
     oldChiSquare = 1e100;
@@ -83,8 +79,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     init();
     oldChiSquare = chiSquare;
     while (true) {
-      betaMatrix = new Matrix(beta, 1).transpose();
-      double gradientNorm = betaMatrix.norm2();
+      double gradientNorm = ALGEBRA.euclideanNorm(beta);
       if (n >= MINIMUM_NUMBER_OF_ITERATIONS && Math.abs(chiSquare) <= CHI_SQUARE_TOLERANCE) {
         convergenceReason = ConvergenceReason.CHI_SQUARE_TOLERANCE;
         break;
@@ -98,26 +93,24 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
       }
 
       n++;
-      Matrix alphaMatrix = new Matrix(alpha);
-      Matrix solvedMatrix;
+      double[] step;
       try {
-        solvedMatrix = alphaMatrix.solve(betaMatrix);
+        step = ALGEBRA.solve(alpha, beta);
       } catch (RuntimeException ex) {
         logger.warn("Levenberg-Marquardt stopped because the normal matrix could not be solved", ex);
         convergenceReason = ConvergenceReason.SINGULAR_MATRIX;
         break;
       }
 
-      Matrix oldParameters = new Matrix(sampleSet.getSample(0).getFunction().getFittingParams(), 1).copy();
-      newParameters = oldParameters.copy().plus(solvedMatrix.transpose());
-      // Matrix diffMat = newParameters.copy().minus(oldParameters);
+      double[] oldParameters = sampleSet.getSample(0).getFunction().getFittingParams().clone();
+      newParameters = ALGEBRA.add(oldParameters, step);
       this.checkBounds(newParameters);
-      this.setFittingParameters(newParameters.copy().getArray()[0]);
+      this.setFittingParameters(newParameters);
       newChiSquare = calcChiSquare();
       if (newChiSquare >= oldChiSquare || Double.isNaN(newChiSquare) || Double.isInfinite(newChiSquare)) {
         newChiSquare = oldChiSquare;
         multiFactor *= 10.0;
-        this.setFittingParameters(oldParameters.getArray()[0]);
+        this.setFittingParameters(oldParameters);
       } else {
         multiFactor /= 10.0;
         oldChiSquare = newChiSquare;
@@ -163,7 +156,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     if (beta == null) {
       return Double.NaN;
     }
-    return new Matrix(beta, 1).norm2();
+    return ALGEBRA.euclideanNorm(beta);
   }
 
   /**

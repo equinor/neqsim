@@ -16,7 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -121,22 +120,22 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   /**
    * checkBounds.
    *
-   * @param newParameters a {@link Jama.Matrix} object
+   * @param newParameters parameter values, clamped in place onto the declared bounds
    */
-  public void checkBounds(Matrix newParameters) {
+  public void checkBounds(double[] newParameters) {
     String okstring = "";
     int errors = 0;
     if (sampleSet.getSample(0).getFunction().getBounds() != null) {
-      for (int i = 0; i < newParameters.getColumnDimension(); i++) {
-        if (newParameters.get(0, i) < sampleSet.getSample(0).getFunction().getLowerBound(i)) {
-          okstring += "parameter " + i + " lower than bound: " + newParameters.get(0, i) + "\n";
+      for (int i = 0; i < newParameters.length; i++) {
+        if (newParameters[i] < sampleSet.getSample(0).getFunction().getLowerBound(i)) {
+          okstring += "parameter " + i + " lower than bound: " + newParameters[i] + "\n";
           errors++;
-          newParameters.set(0, i, sampleSet.getSample(0).getFunction().getLowerBound(i));
+          newParameters[i] = sampleSet.getSample(0).getFunction().getLowerBound(i);
         }
-        if (newParameters.get(0, i) > sampleSet.getSample(0).getFunction().getUpperBound(i)) {
-          okstring += "parameter " + i + " higher than bound: " + newParameters.get(0, i) + "\n";
+        if (newParameters[i] > sampleSet.getSample(0).getFunction().getUpperBound(i)) {
+          okstring += "parameter " + i + " higher than bound: " + newParameters[i] + "\n";
           errors++;
-          newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
+          newParameters[i] = sampleSet.getSample(0).getFunction().getUpperBound(i);
         }
       }
       logger.debug("bounds checked - errors: {}{}", errors, okstring.trim().isEmpty() ? "" : "\n" + okstring);

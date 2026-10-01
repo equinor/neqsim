@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
@@ -173,12 +172,12 @@ class StatisticsBaseClassTest {
   void checkBoundsClampsParametersToBounds() {
     LevenbergMarquardt optimizer = createOptimizer();
     optimizer.getSample(0).getFunction().setBounds(new double[][] {{0.0, 1.0}, {0.0, 1.0}});
-    Matrix parameters = new Matrix(new double[][] {{-0.5, 2.0}});
+    double[] parameters = {-0.5, 2.0};
 
     optimizer.checkBounds(parameters);
 
-    assertEquals(0.0, parameters.get(0, 0), 1.0e-12);
-    assertEquals(1.0, parameters.get(0, 1), 1.0e-12);
+    assertEquals(0.0, parameters[0], 1.0e-12);
+    assertEquals(1.0, parameters[1], 1.0e-12);
   }
 
   /**
@@ -187,12 +186,12 @@ class StatisticsBaseClassTest {
   @Test
   void checkBoundsIsNoOpWithoutBounds() {
     LevenbergMarquardt optimizer = createOptimizer();
-    Matrix parameters = new Matrix(new double[][] {{-0.5, 2.0}});
+    double[] parameters = {-0.5, 2.0};
 
     optimizer.checkBounds(parameters);
 
-    assertEquals(-0.5, parameters.get(0, 0), 1.0e-12);
-    assertEquals(2.0, parameters.get(0, 1), 1.0e-12);
+    assertEquals(-0.5, parameters[0], 1.0e-12);
+    assertEquals(2.0, parameters[1], 1.0e-12);
   }
 
   /**
