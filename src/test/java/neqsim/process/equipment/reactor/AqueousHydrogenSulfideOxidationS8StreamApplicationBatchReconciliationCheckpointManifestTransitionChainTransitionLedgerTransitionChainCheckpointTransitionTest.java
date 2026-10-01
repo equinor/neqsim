@@ -60,8 +60,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(candidate.getAddedEntryCount() - prior.getAddedEntryCount(), receipt.getAddedEntryCount());
     assertEquals(candidate.getAddedStrictAppendCount() - prior.getAddedStrictAppendCount(),
         receipt.getAddedStrictAppendCount());
-    assertEquals(candidate.getAddedUnchangedCount() - prior.getAddedUnchangedCount(),
-        receipt.getAddedUnchangedCount());
+    assertEquals(candidate.getAddedUnchangedCount() - prior.getAddedUnchangedCount(), receipt.getAddedUnchangedCount());
     assertEquals(prior.getFinalCandidateLedgerDigestHex(), receipt.getPriorFinalLedgerDigestHex());
     assertEquals(candidate.getFinalCandidateLedgerDigestHex(), receipt.getCandidateFinalLedgerDigestHex());
     assertTrue(
