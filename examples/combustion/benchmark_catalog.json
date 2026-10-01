@@ -60,6 +60,25 @@
         "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."
       },
       "validity": "Software integration demonstration only; not a C2/C3/C4 heater qualification mechanism."
+    },
+    {
+      "id": "creck-s-2.0.0-zenodo-22982859",
+      "role": "qualification-candidate",
+      "sourceUrl": "https://zenodo.org/records/22982859/files/CRECK-S_mechanism.yaml?download=1",
+      "releaseDoi": "10.5281/zenodo.22982859",
+      "releaseDate": "2026-09-26",
+      "expectedSha256": "8f8bf791ed7017ba7d506674f2629870f779678cee0fa6f08dd916b849ef270b",
+      "reportedSourceMd5": "2ec5b7bccec5df5496c72868f776a285",
+      "expectedSizeBytes": 495804,
+      "speciesCount": 209,
+      "reactionCount": 2816,
+      "license": {
+        "redistributionVerified": true,
+        "spdxId": "CC-BY-4.0",
+        "details": "The exact Zenodo v2.0.0 record and deposited files are published under CC BY 4.0. Preserve creator attribution and cite DOI 10.5281/zenodo.22982859."
+      },
+      "validity": "Candidate for C1-C4 finite-rate oxidation studies. The deposit describes validation over 800-1500 K, atmospheric pressure and equivalence ratios 0.5-2.0, but the companion paper is still in revision. This record does not establish heater or emissions qualification.",
+      "limitation": "A licensed, fingerprinted quantitative C2/C3-rich JSR or JSFR observation set with reported uncertainty is still required before quantitative qualification."
     }
   ]
 }

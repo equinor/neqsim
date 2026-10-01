@@ -169,6 +169,26 @@ def _validate_mechanism(mechanism):
     canonical = mechanism.get("reportedCanonicalSha256")
     if canonical is not None:
         _require(len(canonical) == 64, f"{mechanism_id} canonical SHA-256 is invalid")
+    source_md5 = mechanism.get("reportedSourceMd5")
+    if source_md5 is not None:
+        _require(len(source_md5) == 32, f"{mechanism_id} source MD5 is invalid")
+    expected_size = mechanism.get("expectedSizeBytes")
+    if expected_size is not None:
+        _positive(expected_size, f"{mechanism_id} expected size")
+    if mechanism.get("role") == "qualification-candidate":
+        _require(
+            mechanism["sourceUrl"].startswith("https://"),
+            f"{mechanism_id} qualification source must use HTTPS",
+        )
+        _require(fingerprint, f"{mechanism_id} qualification fingerprint is required")
+        _require(
+            license_record.get("redistributionVerified") is True,
+            f"{mechanism_id} qualification redistribution rights are unverified",
+        )
+        _require(
+            license_record.get("spdxId"),
+            f"{mechanism_id} qualification SPDX license is required",
+        )
 
 
 def validate_catalog(catalog):
@@ -229,6 +249,7 @@ def qualification_readiness(catalog):
         for mechanism in catalog["mechanisms"]
         if mechanism["role"] == "qualification-candidate"
         and mechanism["license"].get("redistributionVerified") is True
+        and mechanism["license"].get("spdxId")
         and mechanism.get("expectedSha256")
     ]
     gaps = []

@@ -24,13 +24,33 @@ class BenchmarkQualificationTest(unittest.TestCase):
         with CATALOG_PATH.open(encoding="utf-8") as catalog_file:
             self.catalog = json.load(catalog_file)
 
-    def test_public_catalog_is_valid_but_not_quantitatively_qualified(self):
+    def test_public_catalog_has_candidate_but_is_not_quantitatively_qualified(self):
         catalog = load_catalog(CATALOG_PATH)
         readiness = qualification_readiness(catalog)
         self.assertFalse(readiness["eligibleForQuantitativeQualification"])
         self.assertEqual(readiness["quantitativeBenchmarks"], [])
-        self.assertEqual(readiness["qualificationMechanisms"], [])
-        self.assertEqual(len(readiness["gaps"]), 2)
+        self.assertEqual(
+            readiness["qualificationMechanisms"],
+            ["creck-s-2.0.0-zenodo-22982859"],
+        )
+        self.assertEqual(
+            readiness["gaps"],
+            ["no licensed, fingerprinted quantitative experimental observations"],
+        )
+
+    def test_creck_s_candidate_has_source_locked_provenance(self):
+        catalog = load_catalog(CATALOG_PATH)
+        mechanism = next(
+            item
+            for item in catalog["mechanisms"]
+            if item["id"] == "creck-s-2.0.0-zenodo-22982859"
+        )
+        self.assertEqual(mechanism["releaseDoi"], "10.5281/zenodo.22982859")
+        self.assertEqual(mechanism["releaseDate"], "2026-09-26")
+        self.assertEqual(mechanism["expectedSizeBytes"], 495804)
+        self.assertEqual(mechanism["speciesCount"], 209)
+        self.assertEqual(mechanism["reactionCount"], 2816)
+        self.assertEqual(mechanism["license"]["spdxId"], "CC-BY-4.0")
 
     def test_conditions_only_record_cannot_smuggle_observations(self):
         catalog = copy.deepcopy(self.catalog)
