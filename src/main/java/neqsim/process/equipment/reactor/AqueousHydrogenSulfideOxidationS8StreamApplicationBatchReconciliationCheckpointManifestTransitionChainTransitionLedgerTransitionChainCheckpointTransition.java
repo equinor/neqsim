@@ -10,13 +10,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
- * Proves an unchanged or strict-append transition between two qualified S8 transition-chain
- * checkpoints.
+ * Proves an unchanged or strict-append transition between two qualified S8 transition-chain checkpoints.
  *
  * <p>
- * The receipt binds independently verified checkpoints to an exact ordered transition-chain
- * prefix. It does not replay the underlying ledgers, manifests, reconciliations, or stream
- * evidence.
+ * The receipt binds independently verified checkpoints to an exact ordered transition-chain prefix. It does not replay
+ * the underlying ledgers, manifests, reconciliations, or stream evidence.
  * </p>
  *
  * @author esol
@@ -41,8 +39,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @param candidateChain candidate qualified transition chain
    * @param candidateCheckpoint checkpoint that verifies the candidate chain
    * @return immutable checkpoint-transition receipt
-   * @throws IllegalArgumentException if a checkpoint, sequence, identity, prefix, endpoint, or
-   *         count gate fails
+   * @throws IllegalArgumentException if a checkpoint, sequence, identity, prefix, endpoint, or count gate fails
    */
   public static Result create(
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result priorChain,
@@ -108,8 +105,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       if (!priorChain.getFinalCandidateLedgerDigestHex().equals(firstAppended.getPriorLedgerDigestHex())) {
         throw new IllegalArgumentException("Candidate checkpoint chain does not continue the prior ledger endpoint");
       }
-      if (!priorChain.getFinalCandidateChainDigestHex()
-          .equals(firstAppended.getPriorFinalCandidateChainDigestHex())) {
+      if (!priorChain.getFinalCandidateChainDigestHex().equals(firstAppended.getPriorFinalCandidateChainDigestHex())) {
         throw new IllegalArgumentException("Candidate checkpoint chain does not continue the prior chain endpoint");
       }
       if (!priorChain.getFinalCandidateManifestDigestHex()
@@ -131,9 +127,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         candidateChain.getFinalCandidateLedgerDigestHex(), priorChain.getFinalCandidateChainDigestHex(),
         candidateChain.getFinalCandidateChainDigestHex(), priorChain.getFinalCandidateManifestDigestHex(),
         candidateChain.getFinalCandidateManifestDigestHex(), unchanged, strictAppend, addedReceiptCount,
-        addedLedgerReceiptCount, addedTransitionCount, addedStrictAppendTransitionCount,
-        addedUnchangedTransitionCount, addedReconciliationCount, addedEntryCount, addedStrictAppendCount,
-        addedUnchangedCount, transitionDigest);
+        addedLedgerReceiptCount, addedTransitionCount, addedStrictAppendTransitionCount, addedUnchangedTransitionCount,
+        addedReconciliationCount, addedEntryCount, addedStrictAppendCount, addedUnchangedCount, transitionDigest);
   }
 
   /**
@@ -353,10 +348,9 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result priorCheckpoint,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChain.Result candidateChain,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.Result candidateCheckpoint,
-      long sequenceDelta, boolean unchanged, boolean strictAppend, int addedReceiptCount,
-      int addedLedgerReceiptCount, int addedTransitionCount, int addedStrictAppendTransitionCount,
-      int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount,
-      int addedStrictAppendCount, int addedUnchangedCount) {
+      long sequenceDelta, boolean unchanged, boolean strictAppend, int addedReceiptCount, int addedLedgerReceiptCount,
+      int addedTransitionCount, int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount,
+      int addedReconciliationCount, int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
