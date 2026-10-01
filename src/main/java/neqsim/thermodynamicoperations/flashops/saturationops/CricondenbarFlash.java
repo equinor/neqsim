@@ -149,6 +149,10 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
         }
+        if (dx == null) {
+          logger.error("Failed to solve linear system for dx, skipping iteration.");
+          continue;
+        }
         double damping = iterations * 1.0 / (10.0 + iterations);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           double xlocal = system.getPhase(1).getComponent(i).getx() - damping * dx[i];
