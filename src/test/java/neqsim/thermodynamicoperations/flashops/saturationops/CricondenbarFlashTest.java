@@ -38,7 +38,7 @@ class CricondenbarFlashTest {
   /**
    * Verifies the temperature and pressure reached by the cricondenbar search.
    */
-  @EnabledIfSystemProperty(named = "os.arch", matches = ".aarch64")
+  @EnabledIfSystemProperty(named = "os.arch", matches = ".*aarch64")
   @Test
   void runReachesUnchangedState() {
     SystemInterface system = createFluid();
@@ -52,7 +52,7 @@ class CricondenbarFlashTest {
   /**
    * Verifies one Newton step built from the residual vector and Jacobian.
    */
-  @EnabledIfSystemProperty(named = "os.arch", matches = ".aarch64")
+  @EnabledIfSystemProperty(named = "os.arch", matches = ".*aarch64")
   @Test
   void newtonStepIsUnchanged() {
     SystemInterface system = createFluid();
