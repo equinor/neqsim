@@ -1,6 +1,5 @@
 package neqsim.chemicalreactions.chemicalreaction;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
@@ -11,14 +10,29 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * The expected values were captured from the implementation that used {@code Jama.Matrix} directly, before it was
- * migrated to {@code LinearAlgebraOperations}. Both paths run the same JAMA SVD rank and LU solve, so the values must
- * match exactly.
+ * migrated to {@code LinearAlgebraOperations}. The equilibrium constants come from {@code Math.log} and
+ * {@code Math.exp}, whose last bits differ between CPU architectures, so the comparison is relative.
  * </p>
  *
  * @author asmf
  * @version 1.0
  */
 class ChemicalReactionListReferencePotentialTest {
+  private static final double RELATIVE_TOLERANCE = 1e-6;
+
+  /**
+   * Asserts that every element matches its expected value within the relative tolerance.
+   *
+   * @param expected expected values
+   * @param actual actual values
+   */
+  private static void assertRelativelyEqual(double[] expected, double[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int i = 0; i < expected.length; i++) {
+      assertEquals(expected[i], actual[i], Math.abs(expected[i]) * RELATIVE_TOLERANCE, "index " + i);
+    }
+  }
+
   /**
    * Builds an initialised electrolyte CPA system with chemical reactions enabled.
    *
@@ -50,7 +64,7 @@ class ChemicalReactionListReferencePotentialTest {
         -128651.62787303378, -153372.98337851517};
 
     assertEquals(3, list.getChemicalReactionList().size());
-    assertArrayEquals(expected, list.calcReferencePotentials(), 0.0);
+    assertRelativelyEqual(expected, list.calcReferencePotentials());
   }
 
   /**
@@ -65,6 +79,6 @@ class ChemicalReactionListReferencePotentialTest {
         -128651.62787303378, -153372.98337851517, 119930.92354136503};
 
     assertEquals(4, list.getChemicalReactionList().size());
-    assertArrayEquals(expected, list.calcReferencePotentials(), 0.0);
+    assertRelativelyEqual(expected, list.calcReferencePotentials());
   }
 }
