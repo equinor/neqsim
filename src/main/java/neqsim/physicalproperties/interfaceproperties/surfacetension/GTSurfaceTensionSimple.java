@@ -165,6 +165,9 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         } catch (Exception ex) {
           logger.error(ex.getMessage(), ex);
         }
+        if (ans == null) {
+          throw new IllegalStateException("Failed to solve surface tension linear system: solution vector is null.");
+        }
       }
 
       int pp = 0;
