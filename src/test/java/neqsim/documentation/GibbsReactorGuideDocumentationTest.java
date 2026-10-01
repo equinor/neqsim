@@ -36,8 +36,7 @@ import neqsim.NeqSimTest;
  */
 public class GibbsReactorGuideDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/wiki/gibbs_reactor.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\s*(.*?)```", Pattern.DOTALL);
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\s*(.*?)```", Pattern.DOTALL)
 
   @TempDir
   Path temporaryDirectory;
@@ -83,24 +82,19 @@ public class GibbsReactorGuideDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"))
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
 
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(sourceFile.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(sourceFile.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName("examples.GibbsReactorGuideExample", true, loader);
       assertTrue(example.desiredAssertionStatus());
