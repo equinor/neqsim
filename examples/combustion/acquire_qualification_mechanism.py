@@ -17,7 +17,6 @@ from urllib.request import Request, urlopen
 from benchmark_qualification import (
     QualificationInputError,
     load_catalog,
-    mechanism_sha256,
     verify_mechanism,
 )
 
