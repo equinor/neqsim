@@ -233,8 +233,8 @@ engineering approval.
 `phase0EvidenceInventory` adds source-counted Java and real-protocol test inventories, eight MCP
 guide paths, acceptance fixtures and their bounded baseline contract, the campaign matrix, and a
 runtime reconciliation of `getBenchmarkTrust`. Its `complete` flag remains false: all 71 tools
-have coverage records, but only 20 have tool-specific trust pages; 49 generic-fallback tools have
-bounded `CONTRACT_TESTED` evidence and 2 remain `CONFIRMED_GAP`. Test presence is not test
+have coverage records, but only 20 have tool-specific trust pages; 50 generic-fallback tools have
+bounded `CONTRACT_TESTED` evidence and 1 remains `CONFIRMED_GAP`. Test presence is not test
 execution, and generic `TESTED` maturity is not a benchmark, accuracy,
 applicability, or no-limitations claim. The default 272 KiB transport response-size guard retains both
 `implementationInventory` and `phase0EvidenceInventory` when larger capability-catalog sections
@@ -741,3 +741,25 @@ fidelity or completeness, drainage/fire-water/leak-rate design-basis accuracy, h
 performance, segregation/backflow/seal/vent/utility adequacy, NORSOK S-001, NORSOK P-002, or
 ISO 13702 applicability or conformance, safe operating limits, plant authority, certification,
 or accountable process-safety approval.
+
+
+### runNorsokS001Clause10Review software contract
+
+Inventory 1.50 records the existing `NorsokS001Clause10ReviewRunner`,
+canonical `ProcessSafetySystemReviewEngine`, direct Java tests, server facade,
+catalog example, comprehensive protocol, focused packaged-MCP qualification,
+and evidence documentation for `runNorsokS001Clause10Review` as
+`CONTRACT_TESTED`. The
+`process-safety-review/norsok-s001-clause10` example deterministically returns
+four passing review items, NORSOK S-001 Clause 10 attribution, per-item
+findings, extraction templates, and provenance through the standard MCP
+response envelope. Empty input fails closed.
+
+The contract covers caller-normalized C&E, SRS, PSV, STID/P&ID, instrument, and
+tagreader evidence plus optional embedding of existing performance,
+operational-study, and dynamic runners. It does not establish live evidence
+connectivity, evidence completeness or fidelity, hazard/scenario completeness,
+SIL/PFD/SIF or lifecycle validity, PSV adequacy, controller/transient validity,
+independence or common cause, standards applicability or conformance, safe
+operating limits, plant or control authority, certification, or accountable
+engineering/process-safety approval.
