@@ -59,7 +59,7 @@ public class GibbsReactorGuideDocumentationTest extends NeqSimTest {
     assertTrue(programs.get(0).contains("IllegalStateException"));
     assertTrue(programs.get(0).contains("assert reactor.hasConverged()"));
     assertTrue(source.contains("Qualification boundary"));
-    assertTrue(source.contains("not kinetic, residence-time, catalyst, emissions"));
+    assertTrue(source.contains("not a kinetic, residence-time, catalyst, emissions"));
     assertTrue(source.contains("../process/gibbs-reactor-documentation.md"));
     assertFalse(source.contains("System.out"));
     assertFalse(source.contains("System.err"));
