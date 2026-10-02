@@ -140,6 +140,47 @@ These points are intentionally not copied into `COMP.csv`, do not make
 single value therefore cannot silently become a constant polynomial with a fake
 zero slope.
 
+## Fail-closed candidate dispositions
+
+`HenryWaterCandidateDispositions.json` records the component-specific decision for
+all 22 exact-CAS literature candidates that are not admitted as correlations or
+reference points. The file records water as solvent, source record and type
+inventory, identity assessment, Henry-definition risk, original-source rights
+boundary and the evidence required before admission. It contains no coefficient,
+reference value, fitted slope, pressure assumption or uncertainty estimate.
+
+The dispositions are deliberately more specific than a generic candidate label:
+
+- three reactive amines (`MDEA`, `MEA` and `Piperazine`) require joint
+  neutral-species Henry and reaction-standard-state qualification with unchanged
+  reactive-VLE benchmarks;
+- five acid/base species require intrinsic neutral-solute separation from
+  pH-dependent total analytical uptake;
+- five hydrolyzing or dimerizing inorganic species require species-resolved
+  equilibrium evidence. In particular, the Sander chlorine record identifies
+  prominent recommended values as effective
+  `([Cl2] + [HOCl]) / p(Cl2)` at 101325 Pa rather than an infinite-dilution
+  intrinsic `Cl2` constant;
+- formaldehyde, ethylene oxide and hydrogen peroxide require hydration,
+  hydrolysis or decomposition controls. The measured ethylene-oxide and
+  hydrogen-peroxide rows remain research leads, not dispatched data;
+- `MEG`, its two PVTsim aliases and `PG` require mixed-solvent validation.
+  Their pure-water solute records cannot be applied silently to glycol
+  solvent-role models, and the compiled MEG and PG values have material source
+  spread; and
+- `para-hydrogen` and `ortho-hydrogen` require spin-isomer-specific data.
+  The exact-CAS source record identifies ordinary `H2`, not a para/ortho
+  fraction or conversion equilibrium.
+
+The Sander v5.0.0 compilation is the CC BY 4.0 identity and source-inventory
+basis. Underlying publications retain their own rights and must be reviewed for
+species definition, units, pressure, temperature range and uncertainty before
+numerical facts are adopted. Every disposition remains fail-closed:
+`COMP.csv`, `HenryWaterSource.json`, `HenryWaterReferencePoints.json` and
+all model dispatch are unchanged. The audit checks that all 22 rows remain
+outside both correlation and reference-point catalogs and that the two MEG
+aliases provide no independent evidence.
+
 ## Units and equations
 
 The source reports $H_s^{bp}=m/p$ in mol/(kg atm), with slope $B$ in K:
