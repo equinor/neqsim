@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -20,6 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * (2023), Tables 4 and 5, doi:10.2516/stet/2023005, CC BY 4.0.
  */
 class CO2BrineHydrateReferenceAssessmentTest {
+  @Tag("slow")
   @Test
   void saturatedAndUndersaturatedMeasurementsHaveSeparateAssessments() throws Exception {
     String resource = "/data/chemistry_benchmarks/co2_brine_hydrate_phase_state_burgass2023.csv";

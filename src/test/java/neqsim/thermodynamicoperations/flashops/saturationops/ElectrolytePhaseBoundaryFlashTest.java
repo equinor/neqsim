@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhasePitzer;
 import neqsim.thermo.phase.PhaseType;
@@ -65,6 +66,7 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
     assertEquals(first.getUpperTopology(), restored.getUpperTopology());
   }
 
+  @Tag("slow")
   @Test
   void electrolyteCpaUsesSameVleBoundaryContract() throws Exception {
     SystemInterface system = createElectrolyteCpaSystem();

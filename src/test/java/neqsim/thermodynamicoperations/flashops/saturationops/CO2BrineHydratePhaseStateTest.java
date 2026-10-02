@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -49,6 +50,7 @@ class CO2BrineHydratePhaseStateTest {
     assertEndpoint(fluid, true);
   }
 
+  @Tag("slow")
   @ParameterizedTest
   @CsvSource({"40,10,10,true", "200,10,10,true", "100,5,2,true", "100,5,0.5,false", "100,5,1,false"})
   void independentInitializationsSelectTheSameState(double pressure, double salt, double co2, boolean saturated)
@@ -83,6 +85,7 @@ class CO2BrineHydratePhaseStateTest {
     }
   }
 
+  @Tag("slow")
   @ParameterizedTest
   @CsvSource({"20,5", "39,10", "41,10", "60,5", "100,9.5", "100,10.5", "190,10", "210,10"})
   void adjacentPressureAndSalinityCasesRemainConservative(double pressure, double salt) throws Exception {
@@ -141,6 +144,7 @@ class CO2BrineHydratePhaseStateTest {
     assertTrue(snapshot.isConverged(), "Subsequent mutations must not change the earlier snapshot");
   }
 
+  @Tag("slow")
   @Test
   void mixedInhibitorsAndReactiveFluidsRetainTheirOwnSolver() {
     SystemInterface mixed = brine(50.0, 5.0, 10.0);

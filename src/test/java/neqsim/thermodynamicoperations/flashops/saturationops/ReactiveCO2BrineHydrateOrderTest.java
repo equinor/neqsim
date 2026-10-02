@@ -1,7 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
@@ -42,6 +42,7 @@ class ReactiveCO2BrineHydrateOrderTest {
     return fluid;
   }
 
+  @Tag("slow")
   @Test
   void co2FirstReactiveCaseCompletesWithChemicalEquilibrium() {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
@@ -52,6 +53,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   @ParameterizedTest
+  @Tag("slow")
   @ValueSource(ints = {1, 2, 3})
   void otherOrdersHaveTheSameQualifiedEndpoint(int order) {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
@@ -62,6 +64,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   @ParameterizedTest
+  @Tag("slow")
   @CsvSource({"40,0.9", "60,1.1"})
   void adjacentStatesPreservePermutationInvariance(double pressure, double saltScale) {
     SystemInterface first = brine(0, pressure, saltScale, true);
@@ -74,6 +77,7 @@ class ReactiveCO2BrineHydrateOrderTest {
   }
 
   @Test
+  @Tag("slow")
   void repeatedAndClonedCalculationsPreserveSpeciationAndInventory() {
     assertTimeoutPreemptively(Duration.ofSeconds(60), () -> {
       SystemInterface fluid = brine(0, 50.0, 1.0, true);
