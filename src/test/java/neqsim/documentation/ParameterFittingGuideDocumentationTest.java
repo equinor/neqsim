@@ -36,8 +36,7 @@ import neqsim.NeqSimTest;
  */
 public class ParameterFittingGuideDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/statistics/parameter_fitting.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("```java\\s*(.*?)```", Pattern.DOTALL);
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\s*(.*?)```", Pattern.DOTALL);
   private static final String PROGRAM_CLASS = "public final class ParameterFittingDiagnosticsExample";
 
   @TempDir
@@ -78,42 +77,21 @@ public class ParameterFittingGuideDocumentationTest extends NeqSimTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            outputDirectory.toString());
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
 
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(sourceFile.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(sourceFile.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
-      Class<?> example =
-          Class.forName("examples.ParameterFittingDiagnosticsExample", true, loader);
+      Class<?> example = Class.forName("examples.ParameterFittingDiagnosticsExample", true, loader);
       assertTrue(example.desiredAssertionStatus());
       try {
         example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
@@ -131,8 +109,7 @@ public class ParameterFittingGuideDocumentationTest extends NeqSimTest {
    */
   private String readGuide() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    return new String(
-        Files.readAllBytes(repositoryRoot.resolve(GUIDE)), StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(repositoryRoot.resolve(GUIDE)), StandardCharsets.UTF_8);
   }
 
   /**
