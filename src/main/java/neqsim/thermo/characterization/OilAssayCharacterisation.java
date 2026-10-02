@@ -331,6 +331,30 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   /**
+   * Add every interval from an immutable TBP cut table to this assay.
+   *
+   * <p>
+   * The table is re-ingested on a liquid-volume basis through the same validation path as
+   * {@link #addTBPCutBoundariesKelvin(String, double[], double[], double[])}. A table returned by
+   * {@link #exportTbpCutTable()} or {@link TbpCutTable#relumpAdjacentCuts(int...)} can therefore be attached to another
+   * thermodynamic system and passed to {@link #apply()} without callers unpacking its arrays. During {@code apply()},
+   * NeqSim recalculates each pseudo-component from the retained boiling interval and specific gravity; it does not
+   * average or copy molecular weight, critical properties, or acentric factor from the source assay.
+   * </p>
+   *
+   * @param namePrefix component-name prefix; generated names are prefix + 1, prefix + 2, ...
+   * @param table immutable TBP cut table to add
+   * @throws IllegalArgumentException if the table is null or its contents cannot define a valid TBP cut table
+   */
+  public void addTBPCutTable(String namePrefix, TbpCutTable table) {
+    if (table == null) {
+      throw new IllegalArgumentException("TBP cut table cannot be null");
+    }
+    addTBPCutBoundariesKelvin(namePrefix, table.getCumulativeVolumePercent(), table.getBoilingPointKelvin(),
+        table.getSpecificGravity());
+  }
+
+  /**
    * Resolve the configured assay to mass fractions without mutating the thermodynamic system.
    *
    * @return mass fractions in the same order as {@link #getCuts()}

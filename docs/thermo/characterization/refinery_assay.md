@@ -157,6 +157,22 @@ so the implied mass $\sum_i v_iSG_i$ also closes exactly on the same ideal-addit
 
 This is deliberately conservative adjacent whole-cut merging. It does not split a cut, interpolate or smooth a boundary, build an arbitrary target grid, average molecular weight or critical properties, or define how pseudo-component properties should be regenerated. Empty, incomplete, excessive, zero, or negative partitions fail before a table is returned.
 
+### Recharacterizing an exported or re-lumped table
+
+`addTBPCutTable(...)` attaches an immutable exported or re-lumped table to another assay without requiring callers to unpack its arrays:
+
+```java
+SystemInterface targetFluid = new SystemSrkEos(298.15, 1.01325);
+OilAssayCharacterisation targetAssay = targetFluid.getOilAssayCharacterisation();
+targetAssay.setTotalAssayMass(100.0);
+targetAssay.addTBPCutTable("Coarse", coarseTable);
+targetAssay.apply();
+```
+
+Re-ingestion preserves the table's liquid-volume yields, retained boiling boundaries, interval specific gravities, and the configured total assay mass. Pseudo-component molecular weight and other correlated properties are recalculated through NeqSim's existing petroleum-characterization path from each retained boiling interval and specific gravity. They are not copied or averaged from source subcuts. This makes the model boundary explicit: `addTBPCutTable(...)` is a deterministic recharacterization API, not an assertion that fine- and coarse-cut phase behavior is identical.
+
+The method adds no correlation, coefficient, or external dataset. Null tables and invalid prefixes fail before the target assay is mutated. Existing component-name collision checks remain active when `apply()` is called.
+
 ## Volume-basis conversion
 
 For cut volume fractions `v_i` and cut densities `rho_i`, NeqSim first calculates the normalized mass fraction
