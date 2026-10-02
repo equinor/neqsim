@@ -17,10 +17,7 @@
         "fuelMoleFractions": {"C3H8": 0.362, "IC4H10": 0.248, "NC4H10": 0.39}
       },
       "measuredQuantities": ["fuel species", "CO", "CO2", "light intermediates"],
-      "uncertainty": {
-        "reported": false,
-        "details": "A machine-readable uncertainty record has not been obtained."
-      },
+      "uncertainty": {"reported": false, "details": "A machine-readable uncertainty record has not been obtained."},
       "dataAvailability": "conditions-only",
       "limitation": "The catalog records only conditions reported in the primary paper metadata. No plot points were digitized and no copyrighted numerical table is redistributed. Residence time and measurement uncertainties must be recovered from an authorized primary source before execution."
     },
@@ -40,12 +37,62 @@
         "fuelMoleFractions": {"C3H8": 1.0}
       },
       "measuredQuantities": ["C3H8", "O2", "CO", "CO2", "oxygenated intermediates"],
-      "uncertainty": {
-        "reported": false,
-        "details": "Species-specific numerical uncertainties have not been transcribed from an authorized source."
-      },
+      "uncertainty": {"reported": false, "details": "Species-specific numerical uncertainties have not been transcribed from an authorized source."},
       "dataAvailability": "conditions-only",
       "limitation": "The public record establishes the nominal pressure, temperature, residence time, equivalence ratios and dilution study. Numerical profiles, their basis and species-specific uncertainty remain unavailable for redistribution, so this record cannot qualify a mechanism."
+    },
+    {
+      "id": "cong-bedjanian-dagaut-2010-ethylene-jsr-phi-0.5",
+      "apparatus": "JSR",
+      "primarySource": {
+        "citation": "Cong, T. L., Bedjanian, E. and Dagaut, P. (2010), Oxidation of ethylene and propene in the presence of CO2 and H2O: Experimental and detailed kinetic modeling study, Combustion Science and Technology 182, 333-349.",
+        "doi": "10.1080/00102200903462433",
+        "url": "https://doi.org/10.1080/00102200903462433"
+      },
+      "conditions": {
+        "pressurePa": 101325.0,
+        "temperatureK": {"minimum": 950.0, "maximum": 1100.0},
+        "residenceTimeS": 0.12,
+        "reactorVolumeM3": 0.00003,
+        "equivalenceRatios": [0.5],
+        "fuelMoleFractions": {"C2H4": 1.0},
+        "inletMoleFractions": {"C2H4": 0.0017, "O2": 0.0102, "N2": 0.9881}
+      },
+      "measuredQuantities": ["C2H4", "CH4", "CO", "CO2"],
+      "quantityUnits": {"C2H4": "ppmv", "CH4": "ppmv", "CO": "ppmv", "CO2": "ppmv"},
+      "measurementBasis": "Molar ppm on the basis stored by ReSpecTh; no dry or reference-O2 correction is applied.",
+      "uncertainty": {
+        "available": true,
+        "reported": false,
+        "sourceType": "estimated",
+        "kind": "absolute evaluated standard deviation",
+        "details": "ReSpecTh labels these species-specific values as estimated standard deviations combining scatter and estimated uncertainty. They are not claimed as uncertainties reported by the primary paper."
+      },
+      "dataAvailability": "quantitative",
+      "dataSource": {
+        "url": "https://osf.io/download/bh96p/",
+        "repositoryDoi": "10.17605/OSF.IO/NBMZV",
+        "fileDoi": "10.24388/x00014002",
+        "archiveName": "ethylene_indirect_v2_4.zip",
+        "archiveSha256": "246876488dd39ce1830610191852a95b5e0b7950ed49a920d1e341ffac6605dc",
+        "extractedFile": "x00014002.xml",
+        "sha256": "e4546690562c936314416762cee143ccb03d0b3cd832d477d962e53d962d0f6e",
+        "licenseSpdxId": "CC-BY-4.0",
+        "redistributionVerified": true,
+        "attribution": "Chemical Kinetics Laboratory, Institute of Chemistry, Eotvos Lorand University, Budapest, Hungary; ReSpecTh file DOI 10.24388/x00014002.",
+        "modified": true,
+        "modification": "One ethylene JSR data group was transcribed from XML into this catalog; units and evaluated standard deviations were preserved."
+      },
+      "observations": [
+        {"temperatureK": 950.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1766.36, "CH4": 14.05152, "CO": 28.03738, "CO2": 28.03738}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 975.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1411.21, "CH4": 42.15457, "CO": 476.6355, "CO2": 46.72897}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1000.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1186.92, "CH4": 65.10539, "CO": 859.8131, "CO2": 65.42056}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1025.0, "equivalenceRatio": 0.5, "values": {"C2H4": 831.7757, "CH4": 90.16393, "CO": 1392.52, "CO2": 177.5701}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1050.0, "equivalenceRatio": 0.5, "values": {"C2H4": 196.2617, "CH4": 67.21311, "CO": 2028.04, "CO2": 934.5794}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1075.0, "equivalenceRatio": 0.5, "values": {"C2H4": 28.03738, "CH4": 6.088993, "CO": 1046.73, "CO2": 2420.56}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1100.0, "equivalenceRatio": 0.5, "values": {"C2H4": 18.69159, "CH4": 1.17096, "CO": 607.4766, "CO2": 2906.54}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}}
+      ],
+      "limitation": "This is one lean C2H4 JSR series. It does not qualify C3/C4 chemistry, fired-heater mixing or heat transfer, dry/reference-O2 emissions reporting, or plant behavior."
     }
   ],
   "mechanisms": [
@@ -54,11 +101,7 @@
       "role": "software-demonstration",
       "sourceUrl": "https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml",
       "reportedCanonicalSha256": "3cb2078af590038e2f9d3f33a8079ac882e6c1a4701c709a1b345905a80f53f8",
-      "license": {
-        "redistributionVerified": false,
-        "spdxId": null,
-        "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."
-      },
+      "license": {"redistributionVerified": false, "spdxId": null, "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."},
       "validity": "Software integration demonstration only; not a C2/C3/C4 heater qualification mechanism."
     },
     {
@@ -72,13 +115,9 @@
       "expectedSizeBytes": 495804,
       "speciesCount": 209,
       "reactionCount": 2816,
-      "license": {
-        "redistributionVerified": true,
-        "spdxId": "CC-BY-4.0",
-        "details": "The exact Zenodo v2.0.0 record and deposited files are published under CC BY 4.0. Preserve creator attribution and cite DOI 10.5281/zenodo.22982859."
-      },
+      "license": {"redistributionVerified": true, "spdxId": "CC-BY-4.0", "details": "The exact Zenodo v2.0.0 record and deposited files are published under CC BY 4.0. Preserve creator attribution and cite DOI 10.5281/zenodo.22982859."},
       "validity": "Candidate for C1-C4 finite-rate oxidation studies. The deposit describes validation over 800-1500 K, atmospheric pressure and equivalence ratios 0.5-2.0, but the companion paper is still in revision. This record does not establish heater or emissions qualification.",
-      "limitation": "A licensed, fingerprinted quantitative C2/C3-rich JSR or JSFR observation set with reported uncertainty is still required before quantitative qualification."
+      "limitation": "C2 evidence in this catalog is limited to one lean ethylene JSR series. Licensed C3/C4 observations with uncertainty remain required."
     }
   ]
 }

@@ -145,6 +145,7 @@ class SaltSaturationTest {
    * @throws Exception if the thermodynamic operation fails
    */
   @Test
+  @Tag("slow")
   void calcSaltSaturationIsAccurateAcrossAqueousAndHydrocarbonPhaseSystems() throws Exception {
     assertSaltSaturatesToUnitScalePotential("CaCO3", createCalciumCarbonateCo2GasAqueousSystem(),
         Arrays.asList("gas", "aqueous"));

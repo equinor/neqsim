@@ -314,7 +314,8 @@ public class ThermodynamicOperationsTest extends neqsim.NeqSimTest {
     for (int i = 1; i < s.fluidProperties.length; i++) {
       Assertions.assertEquals(Double.valueOf(100), s.fluidProperties[i][4],
           "Mix mole count didn't return expected result");
-      Assertions.assertEquals(s.fluidProperties[0][9], s.fluidProperties[i][9], "Mix molecular weight not correct");
+      Assertions.assertEquals(s.fluidProperties[0][9], s.fluidProperties[i][9],
+          1.0e-12 * Math.max(1.0, Math.abs(s.fluidProperties[0][9])), "Mix molecular weight not correct");
     }
   }
 

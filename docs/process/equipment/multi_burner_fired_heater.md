@@ -183,36 +183,59 @@ timestamps and phase state are excluded from that fingerprint.
 
 `examples/combustion/benchmark_catalog.json` is the durable public evidence index.
 `benchmark_qualification.py` validates it without Cantera and fails closed on incomplete
-provenance. A record marked `conditions-only` may define a reproducible apparatus,
-pressure, temperature range, residence time, equivalence ratios and fuel composition,
-but it cannot contain observations and never counts as quantitative qualification.
+provenance. A `conditions-only` record may define a reproducible apparatus, pressure,
+temperature range, residence time, equivalence ratios and fuel composition, but it
+cannot contain observations and never counts as quantitative input evidence.
 
 Promotion to `quantitative` requires redistributable machine-readable observations,
-an exact source URL and SHA-256, a verified SPDX license, and uncertainty for every
-reported value. A qualification mechanism separately requires the exact mechanism-file
-SHA-256, a verified SPDX redistribution license and the
-`qualification-candidate` role. A citation, an installed filename or a successful
-solver run cannot satisfy these gates.
+an exact source URL and SHA-256, a verified SPDX license, attribution and modification
+notices, a declared measurement basis and uncertainty coverage for every value.
+Uncertainty provenance is explicit: an evaluated estimate is not mislabeled as a value
+reported by the primary paper. A qualification mechanism separately requires the exact
+mechanism-file SHA-256, a verified SPDX redistribution license and the
+`qualification-candidate` role.
 
-The initial catalog records two primary experimental condition sets: the 2003 LPG
-JSR study of Dagaut and Hadj Ali (36.2% propane, 24.8% isobutane and 39.0% n-butane,
-1 atm, 950-1450 K) and the 2018 propane JSFR study of Sabia et al. (1.1 atm,
-720-1100 K, 0.5 s, equivalence ratios 0.5, 1.0 and 1.5). No plot points have been
-digitized or redistributed. The records therefore expose the missing residence time
-or species-specific uncertainty rather than silently filling it.
+The catalog now includes ReSpecTh file `x00014002.xml`, one lean ethylene JSR series
+from Cong, Bedjanian and Dagaut (2010): 1 atm, 950-1100 K, 0.12 s, 30 cm3,
+`C2H4/O2/N2 = 0.0017/0.0102/0.9881` and equivalence ratio 0.5. Its seven temperature
+points report C2H4, CH4, CO and CO2 in molar ppm. ReSpecTh labels the species-specific
+uncertainties as evaluated standard deviations estimated from scatter and estimated
+uncertainty; they are not claimed as primary-paper reported uncertainties. The source
+is the CC-BY-4.0 ReSpecTh OSF deposit (DOI `10.17605/OSF.IO/NBMZV`), archive SHA-256
+`246876488dd39ce1830610191852a95b5e0b7950ed49a920d1e341ffac6605dc`, and extracted
+XML SHA-256 `e4546690562c936314416762cee143ccb03d0b3cd832d477d962e53d962d0f6e`.
 
-GRI-Mech 3.0 remains a `software-demonstration` record. Its reported canonical
-backend fingerprint is distinct from a byte-level mechanism-file SHA-256 and cannot
-promote it to a C2/C3/C4 qualification mechanism. Check the current status with:
+CRECK-S 2.0.0 is acquired from Zenodo DOI `10.5281/zenodo.22982859` rather than
+vendored. The acquisition command requires HTTPS and verifies 495804 bytes, the
+source-reported MD5 and SHA-256 before atomically publishing the file:
+
+```bash
+tmp_dir="$(mktemp -d)"
+python examples/combustion/acquire_qualification_mechanism.py \
+  creck-s-2.0.0-zenodo-22982859 "$tmp_dir/CRECK-S_mechanism.yaml"
+python examples/combustion/run_jsr_qualification.py \
+  "$tmp_dir/CRECK-S_mechanism.yaml" --output "$tmp_dir/jsr-result.json"
+```
+
+With Cantera 3.2.0 and the exact CRECK-S bytes, the unadjusted isothermal
+constant-pressure JSR comparison converged in 10-16 residence cycles. Across seven
+temperatures, the largest absolute normalized residual was 1.686; species RMS
+normalized residuals were 0.819 (C2H4), 0.715 (CH4), 0.313 (CO) and 0.485 (CO2).
+No mechanism parameters, observations or direct emission factors were fitted.
+
+`--readiness` now means that licensed, fingerprinted inputs exist for an executable
+quantitative comparison. It is not a claim of heater qualification. This single lean
+C2 series does not qualify C3/C4 chemistry, spatial mixing, heat transfer, dry or
+reference-O2 emissions conversion, plant behavior, safety or design:
 
 ```bash
 python examples/combustion/benchmark_qualification.py \
   examples/combustion/benchmark_catalog.json --readiness
 ```
 
-The expected result remains ineligible until both a licensed quantitative dataset and
-a licensed, fingerprinted qualification mechanism are added. This is an explicit
-campaign blocker, not a reason to relax conservation or projection tolerances.
+The LPG and propane records remain conditions-only. Licensed C3/C4 observations with
+uncertainty, followed by declared acceptance criteria and cross-condition validation,
+remain the next chemistry dependency. GRI-Mech 3.0 remains a software demonstration.
 
 ## CO, fuel slip and other species
 
