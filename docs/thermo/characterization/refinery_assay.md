@@ -157,6 +157,21 @@ so the implied mass $\sum_i v_iSG_i$ also closes exactly on the same ideal-addit
 
 This is deliberately conservative adjacent whole-cut merging. It does not split a cut, interpolate or smooth a boundary, build an arbitrary target grid, average molecular weight or critical properties, or define how pseudo-component properties should be regenerated. Empty, incomplete, excessive, zero, or negative partitions fail before a table is returned.
 
+### Splitting a cut table at additional TBP boundaries
+
+`TbpCutTable.splitAtBoilingPointsKelvin(...)` and `splitAtBoilingPointsCelsius(...)` insert strictly increasing boundaries inside existing intervals. For a source interval bounded by $(T_L,V_L)$ and $(T_U,V_U)$, an inserted boundary at $T$ receives the transparent piecewise-linear cumulative liquid-volume yield
+
+$$V(T)=V_L+(V_U-V_L)\frac{T-T_L}{T_U-T_L}$$
+
+```java
+OilAssayCharacterisation.TbpCutTable finerTable =
+    table.splitAtBoilingPointsCelsius(150.0, 250.0, 350.0);
+```
+
+Each resulting subcut copies the source interval specific gravity. Consequently, total liquid-volume yield and implied mass remain closed on the same ideal-additive-volume basis used by export and adjacent re-lumping. Splitting and then re-lumping all subcuts from each source interval recovers the original table within floating-point precision.
+
+The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
+
 ### Recharacterizing an exported or re-lumped table
 
 `addTBPCutTable(...)` attaches an immutable exported or re-lumped table to another assay without requiring callers to unpack its arrays:

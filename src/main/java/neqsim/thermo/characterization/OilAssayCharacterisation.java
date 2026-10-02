@@ -920,6 +920,105 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Split source intervals at caller-supplied TBP boundaries in K.
+     *
+     * <p>
+     * Each split point must lie strictly inside one existing interval and the points must be supplied in strictly
+     * increasing order. Liquid-volume yield is interpolated linearly with boiling temperature inside that source
+     * interval, and the source interval specific gravity is copied to both resulting subcuts. The operation therefore
+     * preserves total liquid-volume yield and implied mass on the table's ideal-additive-volume basis. It does not
+     * infer an intrainterval distillation shape, interpolate density, or estimate any other pseudo-component property.
+     * </p>
+     *
+     * @param splitBoilingPointKelvin strictly increasing new interior TBP boundaries in K
+     * @return immutable finer TBP cut table
+     * @throws IllegalArgumentException if the points are null, empty, non-finite, unordered, outside the table, or
+     * coincide with an existing boundary
+     */
+    public TbpCutTable splitAtBoilingPointsKelvin(double... splitBoilingPointKelvin) {
+      validateSplitBoilingPoints(splitBoilingPointKelvin);
+
+      int outputCutCount = getCutCount() + splitBoilingPointKelvin.length;
+      double[] splitCumulativeVolumePercent = new double[outputCutCount + 1];
+      double[] splitBoundaryKelvin = new double[outputCutCount + 1];
+      double[] splitSpecificGravity = new double[outputCutCount];
+      splitCumulativeVolumePercent[0] = cumulativeVolumePercent[0];
+      splitBoundaryKelvin[0] = boilingPointKelvin[0];
+
+      int outputBoundaryIndex = 0;
+      int splitIndex = 0;
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerBoundary = boilingPointKelvin[sourceCutIndex];
+        double upperBoundary = boilingPointKelvin[sourceCutIndex + 1];
+        double lowerCumulativeVolume = cumulativeVolumePercent[sourceCutIndex];
+        double upperCumulativeVolume = cumulativeVolumePercent[sourceCutIndex + 1];
+
+        while (splitIndex < splitBoilingPointKelvin.length && splitBoilingPointKelvin[splitIndex] < upperBoundary) {
+          double splitBoundary = splitBoilingPointKelvin[splitIndex];
+          double intervalFraction = (splitBoundary - lowerBoundary) / (upperBoundary - lowerBoundary);
+          outputBoundaryIndex++;
+          splitBoundaryKelvin[outputBoundaryIndex] = splitBoundary;
+          splitCumulativeVolumePercent[outputBoundaryIndex] = lowerCumulativeVolume
+              + intervalFraction * (upperCumulativeVolume - lowerCumulativeVolume);
+          splitSpecificGravity[outputBoundaryIndex - 1] = specificGravity[sourceCutIndex];
+          splitIndex++;
+        }
+
+        outputBoundaryIndex++;
+        splitBoundaryKelvin[outputBoundaryIndex] = upperBoundary;
+        splitCumulativeVolumePercent[outputBoundaryIndex] = upperCumulativeVolume;
+        splitSpecificGravity[outputBoundaryIndex - 1] = specificGravity[sourceCutIndex];
+      }
+
+      return new TbpCutTable(splitCumulativeVolumePercent, splitBoundaryKelvin, splitSpecificGravity);
+    }
+
+    /**
+     * Split source intervals at caller-supplied TBP boundaries in degrees Celsius.
+     *
+     * @param splitBoilingPointCelsius strictly increasing new interior TBP boundaries in degrees Celsius
+     * @return immutable finer TBP cut table
+     * @throws IllegalArgumentException if the points cannot define valid new interior boundaries
+     * @see #splitAtBoilingPointsKelvin(double...)
+     */
+    public TbpCutTable splitAtBoilingPointsCelsius(double... splitBoilingPointCelsius) {
+      if (splitBoilingPointCelsius == null) {
+        throw new IllegalArgumentException("TBP split boundaries cannot be null");
+      }
+      double[] splitBoilingPointKelvin = new double[splitBoilingPointCelsius.length];
+      for (int i = 0; i < splitBoilingPointCelsius.length; i++) {
+        splitBoilingPointKelvin[i] = splitBoilingPointCelsius[i] + KELVIN_OFFSET;
+      }
+      return splitAtBoilingPointsKelvin(splitBoilingPointKelvin);
+    }
+
+    private void validateSplitBoilingPoints(double[] splitBoilingPointKelvin) {
+      if (splitBoilingPointKelvin == null || splitBoilingPointKelvin.length == 0) {
+        throw new IllegalArgumentException("At least one TBP split boundary is required");
+      }
+
+      double previousSplit = Double.NEGATIVE_INFINITY;
+      for (double splitBoundary : splitBoilingPointKelvin) {
+        if (!Double.isFinite(splitBoundary)) {
+          throw new IllegalArgumentException("TBP split boundaries must be finite");
+        }
+        if (!(splitBoundary > boilingPointKelvin[0]
+            && splitBoundary < boilingPointKelvin[boilingPointKelvin.length - 1])) {
+          throw new IllegalArgumentException("TBP split boundaries must lie strictly inside the cut table");
+        }
+        if (!(splitBoundary > previousSplit)) {
+          throw new IllegalArgumentException("TBP split boundaries must be strictly increasing");
+        }
+        for (double existingBoundary : boilingPointKelvin) {
+          if (Math.abs(splitBoundary - existingBoundary) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+            throw new IllegalArgumentException("TBP split boundary coincides with an existing boundary");
+          }
+        }
+        previousSplit = splitBoundary;
+      }
+    }
+
+    /**
      * Merge adjacent source cuts into a caller-defined sequence of coarser lumps.
      *
      * <p>
