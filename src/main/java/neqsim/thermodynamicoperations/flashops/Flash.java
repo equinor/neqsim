@@ -32,6 +32,26 @@ public abstract class Flash extends BaseOperation {
   private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   /**
+   * Euclidean norm for a stability trial, preserving the legacy non-finite recovery semantics.
+   *
+   * <p>
+   * Stability analysis inspects the residual before a solve has validated it. Trace-component trial states can produce
+   * a NaN residual; returning NaN keeps the convergence and worsening comparisons false so successive substitution can
+   * recover on the next iteration instead of aborting the flash through strict linear-algebra input validation.
+   * </p>
+   *
+   * @param vector residual vector to measure
+   * @return the overflow-safe Euclidean norm, or NaN when any entry is NaN
+   */
+  static double stabilityResidualNorm(double[] vector) {
+    double norm = 0.0;
+    for (double value : vector) {
+      norm = Math.hypot(norm, value);
+    }
+    return norm;
+  }
+
+  /**
    * Sum of absolute values, summed in index order like Jama's column-matrix norm1.
    *
    * @param vector values to sum
@@ -456,7 +476,7 @@ public abstract class Flash extends BaseOperation {
           f[i] = Math.sqrt(Wi[i])
               * (Math.log(Wi[i]) + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]);
         }
-        fNorm = ALGEBRA.euclideanNorm(f);
+        fNorm = stabilityResidualNorm(f);
         if (fNorm > fNormOld && iter > 3) {
           if (iter > 10) {
             break;
@@ -682,7 +702,7 @@ public abstract class Flash extends BaseOperation {
             f[i] = Math.sqrt(Wi[j][i])
                 * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]);
           }
-          fNorm = ALGEBRA.euclideanNorm(f);
+          fNorm = stabilityResidualNorm(f);
           if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % accelerateInterval != 0) {
             if (iterations > 10) {
               break;
