@@ -794,6 +794,18 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getx() {
+    double MIN_VALUE = 1.0e-50;
+
+    if (x == 0) {
+      return 0;
+    }
+
+    if (x < MIN_VALUE) {
+      return MIN_VALUE;
+    }
+    if (x > 5) {
+      return 5;
+    }
     return x;
   }
 
@@ -1179,12 +1191,15 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setx(double newx) {
     if (Double.isNaN(newx) || Double.isInfinite(newx)) {
+      logger.warn("Invalid mole fraction value: " + newx);
       return;
     }
     double MIN_VALUE = 1.0e-50;
 
-    // Ensure that the mole fraction x stays within the range [MIN_VALUE, 5]
-    if (newx < MIN_VALUE) {
+    // Preserve exact zero; clamp negative and trace-positive inputs for stable logarithms.
+    if (newx == 0.0) {
+      x = 0.0;
+    } else if (newx < 0) {
       x = MIN_VALUE;
     } else if (newx > 5) {
       x = 5;

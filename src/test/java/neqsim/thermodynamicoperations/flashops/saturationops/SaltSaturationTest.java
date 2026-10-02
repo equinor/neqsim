@@ -247,6 +247,8 @@ class SaltSaturationTest {
    */
   private SystemInterface createHighPressureCalciumCarbonateCo2GasAqueousSystem() throws Exception {
     SystemInterface system = createCalciumCarbonateCo2GasAqueousSystem();
+    system.addComponent("Ca++", -4.0e-5);
+    system.addComponent("Cl-", -8.0e-5);
     system.setPressure(50.0);
     return system;
   }
@@ -278,7 +280,6 @@ class SaltSaturationTest {
       List<String> expectedPhaseTypes) throws Exception {
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
     operations.calcSaltSaturation(saltName);
-    operations.TPflash();
     system.initProperties();
 
     for (String phaseType : expectedPhaseTypes) {
