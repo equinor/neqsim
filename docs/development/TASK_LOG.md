@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-02 — Source-locked quantitative C2 JSR comparison
+**Type:** G (Workflow)
+**Keywords:** combustion qualification, ReSpecTh, ethylene, JSR, CRECK-S, Cantera, CO, uncertainty, provenance
+**Solution:** `examples/combustion/run_jsr_qualification.py`, quantitative ReSpecTh record in `benchmark_catalog.json`, provenance validation/tests and the optional combustion workflow; guide `docs/process/equipment/multi_burner_fired_heater.md`.
+**Notes:** Added seven CC-BY-4.0 ReSpecTh observations for a lean ethylene JSR case with an exact archive and extracted-XML SHA-256, attribution, measurement basis and species-specific evaluated standard deviations. The runner verifies the exact CRECK-S 2.0.0 bytes, enforces exact mechanism species and executes an isothermal constant-pressure perfectly stirred reactor without parameter or emission-factor fitting. Cantera 3.2.0 produced a maximum absolute normalized residual of 1.686 across C2H4, CH4, CO and CO2. This is C2 reactor evidence only; C3/C4, heater heat transfer/mixing and plant qualification remain open.
+
 ### 2026-10-01 — Fail-closed combustion benchmark and mechanism qualification provenance
 **Type:** G (Workflow)
 **Keywords:** combustion qualification, JSR, JSFR, LPG, propane, butane, CO, mechanism license, SHA-256, uncertainty, Cantera
