@@ -24,6 +24,7 @@ SEARCH_SCRIPT = DOCS / "assets" / "js" / "search.js"
 SEARCH_PAGE = DOCS / "search.md"
 LANDING_PAGE = DOCS / "index.md"
 NON_CONTENT_HTML_DIRS = {"_includes", "_layouts"}
+NON_CONTENT_SOURCE_DIRS = {".jekyll-cache", "_site", "vendor"}
 NOTEBOOK_LINK_PATTERN = re.compile(
     r"""(?:\[[^\]]*\]\(\s*|href\s*=\s*["'])
     (?P<target>[^)\s"']+\.ipynb(?:[?#][^)\s"']*)?)""",
@@ -41,7 +42,13 @@ INCLUDE_RELATIVE_PATTERN = re.compile(
 
 def markdown_files() -> List[Path]:
     """Return every Markdown documentation source that Jekyll should index."""
-    return sorted(DOCS.rglob("*.md"))
+    return sorted(
+        path
+        for path in DOCS.rglob("*.md")
+        if not any(
+            part in NON_CONTENT_SOURCE_DIRS for part in path.relative_to(DOCS).parts
+        )
+    )
 
 
 def content_html_files() -> List[Path]:
@@ -49,7 +56,10 @@ def content_html_files() -> List[Path]:
     return sorted(
         path
         for path in DOCS.rglob("*.html")
-        if not any(part in NON_CONTENT_HTML_DIRS for part in path.relative_to(DOCS).parts)
+        if not any(
+            part in NON_CONTENT_HTML_DIRS | NON_CONTENT_SOURCE_DIRS
+            for part in path.relative_to(DOCS).parts
+        )
     )
 
 
