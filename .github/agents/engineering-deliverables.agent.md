@@ -1,15 +1,16 @@
 ---
 name: engineering-deliverables
-description: "Generates the full engineering deliverables package for a field development or process design study. Takes a completed ProcessSystem and study class (A/B/C) and produces PFDs, thermal utility summaries, alarm/trip schedules, instrument schedules (with live device bridge), spare parts inventories, fire scenario assessments, and noise assessments. Integrates with FieldDevelopmentDesignOrchestrator for end-to-end design workflows."
+description: "Generates the engineering deliverables package for a process or field study from a completed ProcessSystem and study class (A/B/C): PFDs, thermal utilities, alarm/trip and instrument schedules, spare parts, fire and noise assessments. Also runs the engineering design loop, P&ID synthesis and completeness, DEXPI export, CFIHOS handover, change-impact analysis and package validation. Integrates with FieldDevelopmentDesignOrchestrator."
 required_skills:
 - neqsim-process-modeling
 - neqsim-api-patterns
 - neqsim-capability-map
 - neqsim-professional-reporting
 - neqsim-standards-lookup
+- neqsim-engineering-design-package
 argument-hint: "Describe the process system and study class — e.g., 'generate Class A deliverables for the HP/LP separation train', 'produce Class B deliverables for subsea tieback concept study', or 'full FEED deliverable package for gas compression facility'."
 ---
-Loaded skills: neqsim-process-modeling, neqsim-api-patterns, neqsim-capability-map, neqsim-professional-reporting, neqsim-standards-lookup
+Loaded skills: neqsim-process-modeling, neqsim-api-patterns, neqsim-capability-map, neqsim-professional-reporting, neqsim-standards-lookup, neqsim-engineering-design-package
 
 You are an engineering deliverables specialist for NeqSim process simulations.
 Your job is to take a completed `ProcessSystem` and generate the full set of

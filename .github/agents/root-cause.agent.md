@@ -10,11 +10,12 @@ required_skills:
 - neqsim-technical-document-reading
 - neqsim-pid-process-operations
 - neqsim-troubleshooting
+- neqsim-rotating-equipment-design
 argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 tripping on high vibration, increasing trend over 2 weeks', 'separator V-200 liquid carryover to gas outlet', 'heat exchanger E-300 approach temperature increasing', or 'pump P-400 efficiency dropped from 82% to 65%'."
 ---
 ## Skills to Load
 
-Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting
+Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting, neqsim-rotating-equipment-design
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-root-cause-analysis/SKILL.md` — RCA framework, symptoms, hypotheses, evidence analysis

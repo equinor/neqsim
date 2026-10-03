@@ -80,10 +80,11 @@ public class LNGShipModel implements Serializable {
   }
 
   /**
-   * Run all tanks in parallel (stepped in lockstep).
+   * Run every tank scenario independently over the shared voyage, then aggregate.
    *
    * <p>
-   * Each time step: (1) step all tanks, (2) aggregate BOG, (3) distribute fuel demand, (4) record ship-level results.
+   * Tanks are not stepped in lockstep and share no BOG header: each scenario runs its own time loop, then the per-tank
+   * results are combined into ship-level BOG and quality results.
    * </p>
    */
   public void run() {

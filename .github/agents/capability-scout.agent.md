@@ -382,6 +382,27 @@ Use this taxonomy to systematically identify needs. Check each category:
 - [ ] Gas / gas-condensate vertical-well flow (`PipeGray` — Gray 1974)
 - [ ] Water cut estimation
 
+### K. Gas Processing & Refining
+- [ ] Claus sulfur recovery, tail gas, incinerator (`neqsim-sulfur-recovery`)
+- [ ] Amine sweetening, membrane, PSA, H2S scavenger (`neqsim-acid-gas-treating`)
+- [ ] Crude assay, blending, hydrotreating balances (`neqsim-refinery-crude-processing`)
+- [ ] Tray / packed / rate-based column hydraulics (`neqsim-column-internals-and-rate-based`)
+- [ ] Produced-water treatment, solids separation, filtration (`neqsim-produced-water-and-solids-separation`)
+
+### L. Networks, Energy & Capacity
+- [ ] Looped gas/oil networks, linepack, terminals, cargoes (`neqsim-pipeline-and-terminal-networks`)
+- [ ] Energy bus, electrification, wind/solar/GT dispatch (`neqsim-energy-systems-and-electrification`)
+- [ ] Integrated production model, tie-in host capacity, lifecycle (`neqsim-integrated-production-and-lifecycle`)
+- [ ] Capacity constraints, bottlenecks, utilization (`neqsim-capacity-and-utilization-analysis`)
+- [ ] Compressor/expander/pump charts and mechanical screening (`neqsim-rotating-equipment-design`)
+
+### M. Engineering Automation, Control & Safety Operations
+- [ ] Design loop, P&ID synthesis, DEXPI/CFIHOS (`neqsim-engineering-design-package`)
+- [ ] MPC, virtual flow meter, soft sensor, reconciliation (`neqsim-advanced-control-mpc-and-virtual-sensing`)
+- [ ] Process synthesis / superstructure (`neqsim-process-synthesis-research`)
+- [ ] Release source terms (`neqsim-release-source-terms`)
+- [ ] ESD test, dynamic scenarios, operational/portfolio risk, open drain, safety-system review (`neqsim-operational-risk-and-safety-validation`)
+
 ---
 
 ## Integration with Other Agents
