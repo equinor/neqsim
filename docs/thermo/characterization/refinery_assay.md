@@ -172,6 +172,35 @@ Each resulting subcut copies the source interval specific gravity. Consequently,
 
 The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
 
+### Direct recovery and cut-point queries
+
+An exported `TbpCutTable` can be queried without rebuilding or mutating the assay.
+`getCumulativeVolumePercentAtBoilingPointKelvin(...)` and its Celsius counterpart return
+cumulative liquid-volume recovery at a boiling point. The inverse
+`getBoilingPointKelvinAtCumulativeVolumePercent(...)` and Celsius counterpart return the
+cut point for a recovery. Interval yield is available from
+`getLiquidVolumePercentBetweenBoilingPointsKelvin(...)` or the Celsius counterpart:
+
+```java
+double recoveredAt400K =
+    table.getCumulativeVolumePercentAtBoilingPointKelvin(400.0);
+double temperatureAt50Percent =
+    table.getBoilingPointCelsiusAtCumulativeVolumePercent(50.0);
+double middleDistillateYield =
+    table.getLiquidVolumePercentBetweenBoilingPointsCelsius(150.0, 350.0);
+```
+
+The forward and inverse queries use the same piecewise-linear cumulative-recovery
+assumption as conservative target-grid resampling. Exact table nodes remain exact, and
+near-node temperatures snap within the existing boiling-boundary tolerance. Partitioned
+interval yields therefore close to the complete table's 100 liquid-volume percent.
+
+These are bounded table queries, not new distillation or property correlations. They do
+not extrapolate, smooth measured data, convert ASTM D86 or D1160 curves, interpolate
+density or other properties, generate pseudo-components, or claim phase-behavior
+equivalence. Non-finite, exterior, reversed, and zero-width requests fail before a value
+is returned.
+
 ### Conservative target-grid resampling
 
 `TbpCutTable.resampleAtBoilingPointsKelvin(...)` and

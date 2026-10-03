@@ -920,6 +920,93 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Return cumulative liquid-volume recovery at a TBP boiling point in K.
+     *
+     * <p>
+     * Recovery is interpolated linearly between the surrounding source-table nodes. Inputs within the qualified
+     * boundary tolerance snap to an exact source node. Extrapolation outside the complete table is rejected.
+     * </p>
+     *
+     * @param boilingPointKelvinValue boiling point in K
+     * @return cumulative liquid-volume recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeVolumePercentAtBoilingPointKelvin(double boilingPointKelvinValue) {
+      return interpolateCumulativeVolumePercent(normalizeBoilingPointQuery(boilingPointKelvinValue));
+    }
+
+    /**
+     * Return cumulative liquid-volume recovery at a TBP boiling point in degC.
+     *
+     * @param boilingPointCelsiusValue boiling point in degC
+     * @return cumulative liquid-volume recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeVolumePercentAtBoilingPointCelsius(double boilingPointCelsiusValue) {
+      return getCumulativeVolumePercentAtBoilingPointKelvin(boilingPointCelsiusValue + KELVIN_OFFSET);
+    }
+
+    /**
+     * Return the TBP boiling point in K at a cumulative liquid-volume recovery.
+     *
+     * <p>
+     * Boiling point is interpolated linearly between the surrounding source-table nodes. Inputs within the percent
+     * tolerance snap to an exact source recovery. Extrapolation outside the complete table is rejected.
+     * </p>
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return TBP boiling point in K
+     * @throws IllegalArgumentException if the recovery is non-finite or outside the table
+     */
+    public double getBoilingPointKelvinAtCumulativeVolumePercent(double cumulativeVolumePercentValue) {
+      return interpolateBoilingPointKelvin(normalizeCumulativeVolumeQuery(cumulativeVolumePercentValue));
+    }
+
+    /**
+     * Return the TBP boiling point in degC at a cumulative liquid-volume recovery.
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return TBP boiling point in degC
+     * @throws IllegalArgumentException if the recovery is non-finite or outside the table
+     */
+    public double getBoilingPointCelsiusAtCumulativeVolumePercent(double cumulativeVolumePercentValue) {
+      return getBoilingPointKelvinAtCumulativeVolumePercent(cumulativeVolumePercentValue) - KELVIN_OFFSET;
+    }
+
+    /**
+     * Return liquid-volume yield between two TBP boiling points in K.
+     *
+     * @param lowerBoilingPointKelvin lower boiling point in K
+     * @param upperBoilingPointKelvin upper boiling point in K
+     * @return liquid-volume yield between the boundaries in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getLiquidVolumePercentBetweenBoilingPointsKelvin(double lowerBoilingPointKelvin,
+        double upperBoilingPointKelvin) {
+      double normalizedLowerBoundary = normalizeBoilingPointQuery(lowerBoilingPointKelvin);
+      double normalizedUpperBoundary = normalizeBoilingPointQuery(upperBoilingPointKelvin);
+      if (!(normalizedUpperBoundary > normalizedLowerBoundary)) {
+        throw new IllegalArgumentException("TBP yield-query boundaries must define a positive interval");
+      }
+      return interpolateCumulativeVolumePercent(normalizedUpperBoundary)
+          - interpolateCumulativeVolumePercent(normalizedLowerBoundary);
+    }
+
+    /**
+     * Return liquid-volume yield between two TBP boiling points in degC.
+     *
+     * @param lowerBoilingPointCelsius lower boiling point in degC
+     * @param upperBoilingPointCelsius upper boiling point in degC
+     * @return liquid-volume yield between the boundaries in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getLiquidVolumePercentBetweenBoilingPointsCelsius(double lowerBoilingPointCelsius,
+        double upperBoilingPointCelsius) {
+      return getLiquidVolumePercentBetweenBoilingPointsKelvin(lowerBoilingPointCelsius + KELVIN_OFFSET,
+          upperBoilingPointCelsius + KELVIN_OFFSET);
+    }
+
+    /**
      * Split source intervals at caller-supplied TBP boundaries in K.
      *
      * <p>
@@ -1120,6 +1207,56 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       return normalizedTargetBoundaryKelvin;
     }
 
+    /**
+     * Validate one boiling-point query and snap values within tolerance to source nodes.
+     *
+     * @param boilingPointKelvinValue boiling point in K
+     * @return validated and normalized boiling point in K
+     */
+    private double normalizeBoilingPointQuery(double boilingPointKelvinValue) {
+      if (!Double.isFinite(boilingPointKelvinValue)) {
+        throw new IllegalArgumentException("TBP boiling-point query must be finite");
+      }
+      for (double sourceBoundaryKelvin : boilingPointKelvin) {
+        if (Math.abs(boilingPointKelvinValue - sourceBoundaryKelvin) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+          return sourceBoundaryKelvin;
+        }
+      }
+      if (boilingPointKelvinValue < boilingPointKelvin[0]
+          || boilingPointKelvinValue > boilingPointKelvin[boilingPointKelvin.length - 1]) {
+        throw new IllegalArgumentException("TBP boiling-point query must lie within the source table");
+      }
+      return boilingPointKelvinValue;
+    }
+
+    /**
+     * Validate one recovery query and snap values within tolerance to source nodes.
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return validated and normalized cumulative recovery in percent
+     */
+    private double normalizeCumulativeVolumeQuery(double cumulativeVolumePercentValue) {
+      if (!Double.isFinite(cumulativeVolumePercentValue)) {
+        throw new IllegalArgumentException("TBP cumulative-volume query must be finite");
+      }
+      for (double sourceRecoveryPercent : cumulativeVolumePercent) {
+        if (Math.abs(cumulativeVolumePercentValue - sourceRecoveryPercent) <= PERCENT_TOLERANCE) {
+          return sourceRecoveryPercent;
+        }
+      }
+      if (cumulativeVolumePercentValue < cumulativeVolumePercent[0]
+          || cumulativeVolumePercentValue > cumulativeVolumePercent[cumulativeVolumePercent.length - 1]) {
+        throw new IllegalArgumentException("TBP cumulative-volume query must lie within the source table");
+      }
+      return cumulativeVolumePercentValue;
+    }
+
+    /**
+     * Interpolate cumulative recovery on the validated piecewise-linear TBP table.
+     *
+     * @param targetBoundaryKelvin validated boiling point in K
+     * @return cumulative liquid-volume recovery in percent
+     */
     private double interpolateCumulativeVolumePercent(double targetBoundaryKelvin) {
       for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
         double lowerBoundary = boilingPointKelvin[sourceCutIndex];
@@ -1131,6 +1268,25 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         }
       }
       return cumulativeVolumePercent[cumulativeVolumePercent.length - 1];
+    }
+
+    /**
+     * Interpolate boiling point on the validated inverse piecewise-linear TBP table.
+     *
+     * @param targetCumulativeVolumePercent validated cumulative liquid-volume recovery in percent
+     * @return boiling point in K
+     */
+    private double interpolateBoilingPointKelvin(double targetCumulativeVolumePercent) {
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerRecovery = cumulativeVolumePercent[sourceCutIndex];
+        double upperRecovery = cumulativeVolumePercent[sourceCutIndex + 1];
+        if (targetCumulativeVolumePercent <= upperRecovery) {
+          double intervalFraction = (targetCumulativeVolumePercent - lowerRecovery) / (upperRecovery - lowerRecovery);
+          return boilingPointKelvin[sourceCutIndex]
+              + intervalFraction * (boilingPointKelvin[sourceCutIndex + 1] - boilingPointKelvin[sourceCutIndex]);
+        }
+      }
+      return boilingPointKelvin[boilingPointKelvin.length - 1];
     }
 
     /**
