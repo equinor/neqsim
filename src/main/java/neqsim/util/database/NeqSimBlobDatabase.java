@@ -192,9 +192,11 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     try {
-      if (dataBaseType.equals("mySQL")) {
+      if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
+        Class.forName("org.h2.Driver");
+      } else if (dataBaseType.equals("mySQL")) {
         Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-      } else {
+      } else if (dataBaseType.equals("MSAccess")) {
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
