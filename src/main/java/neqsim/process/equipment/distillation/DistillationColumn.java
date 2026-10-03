@@ -4339,9 +4339,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double currentFlow = productStream.getFlowRate(spec.getTargetUnit());
       return currentFlow - spec.getTargetValue();
     }
-    default:
-      return 0.0;
+    case REFLUX_RATIO: {
+      double actualRatio = evaluateTerminalRefluxRatio(spec.getLocation());
+      return actualRatio - spec.getTargetValue();
     }
+    case DUTY: {
+      double actualDuty;
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP) {
+        actualDuty = hasCondenser && getCondenser() != null ? getCondenser().getDuty() : Double.NaN;
+      } else {
+        actualDuty = hasReboiler && getReboiler() != null ? getReboiler().getDuty() : Double.NaN;
+      }
+      return actualDuty - spec.getTargetValue();
+    }
+    default:
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Evaluate the physically published reflux or boilup ratio at a terminal.
+   *
+   * <p>
+   * Top reflux ratio is liquid reflux divided by distillate flow (L/D). Bottom boilup ratio is vapor return divided by
+   * bottoms flow (V/B). Returning the configured setpoint here would make an unachieved direct specification appear
+   * converged by construction, so the ratio is calculated from the terminal material streams instead.
+   * </p>
+   *
+   * @param location controlled column end
+   * @return published terminal ratio, or NaN when the ratio cannot be evaluated
+   */
+  private double evaluateTerminalRefluxRatio(ColumnSpecification.ProductLocation location) {
+    StreamInterface numerator;
+    StreamInterface denominator;
+    if (location == ColumnSpecification.ProductLocation.TOP) {
+      if (!hasCondenser || getCondenser() == null) {
+        return Double.NaN;
+      }
+      numerator = getCondenser().getLiquidOutStream();
+      denominator = getCondenser().getGasOutStream();
+    } else {
+      if (!hasReboiler || getReboiler() == null) {
+        return Double.NaN;
+      }
+      numerator = getReboiler().getGasOutStream();
+      denominator = getReboiler().getLiquidOutStream();
+    }
+    if (numerator == null || denominator == null) {
+      return Double.NaN;
+    }
+
+    double numeratorFlow = numerator.getFlowRate("mol/hr");
+    double denominatorFlow = denominator.getFlowRate("mol/hr");
+    if (!Double.isFinite(numeratorFlow) || !Double.isFinite(denominatorFlow) || numeratorFlow < 0.0
+        || denominatorFlow < 0.0) {
+      return Double.NaN;
+    }
+    if (denominatorFlow <= 1.0e-20) {
+      return numeratorFlow <= 1.0e-20 ? Double.NaN : Double.POSITIVE_INFINITY;
+    }
+    return numeratorFlow / denominatorFlow;
   }
 
   /**
