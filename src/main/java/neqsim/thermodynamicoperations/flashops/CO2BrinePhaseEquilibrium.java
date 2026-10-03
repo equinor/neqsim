@@ -226,7 +226,7 @@ public final class CO2BrinePhaseEquilibrium {
       for (int component = 0; component < count; component++) {
         double x = Math.max(FLOOR, weights[component] / sum);
         change = Math.max(change, Math.abs(x - trial.getPhase(0).getComponent(component).getx()));
-        // Component.setx(0) retains the old value, so ion-free trials require an explicit positive floor.
+        // Keep ion-free trial compositions positive for logarithmic fugacity calculations.
         trial.getPhase(0).getComponent(component).setx(x);
       }
       distance = -Math.log(sum);

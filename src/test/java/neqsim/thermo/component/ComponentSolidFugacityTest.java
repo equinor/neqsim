@@ -58,6 +58,7 @@ class ComponentSolidFugacityTest extends neqsim.NeqSimTest {
     double expected = component.fugcoef2(phase);
     assertTrue(Double.isFinite(expected) && expected > 0.0);
     component.setx(0.0);
+    assertEquals(0.0, component.getx(), 0.0);
     assertEquals(expected, component.fugcoef2(phase), Math.abs(expected) * 1e-12);
     assertTrue(Double.isFinite(component.getFugacityCoefficient()));
   }
