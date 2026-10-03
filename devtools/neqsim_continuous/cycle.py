@@ -222,7 +222,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                 "now": now.isoformat(),
                 "started_at": previous.get("started_at") or _utc().isoformat(), "dry_run": dry_run,
                 "baseline_id": ctx.baseline.get("meta", {}).get("id"), "status": "running",
-                "stages": [], "versions": dict(previous.get("versions", {}),
+                "stages": [], "versions": dict(previous.get("versions") or {},
                                                 python=sys.version.split()[0]),
                 "resume_count": int(previous.get("resume_count", 0)) + (1 if previous else 0)}
     if previous:
