@@ -60,6 +60,21 @@ class DocumentationNotebookLinkAuditTest(unittest.TestCase):
 
 
 class DocumentationPageLinkAuditTest(unittest.TestCase):
+    def test_include_scan_reuses_the_audited_source_text(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            docs = Path(temporary_directory)
+            source = docs / "source.md"
+            target = docs / "included.md"
+            audited_text = "{% include_relative included.md %}\n"
+            source.write_text(audited_text, encoding="utf-8")
+            target.write_text("included\n", encoding="utf-8")
+            source.write_bytes(b"\xaa\x00")
+
+            self.assertEqual(
+                audit.included_markdown_sources([source], {source: audited_text}),
+                [target.resolve()],
+            )
+
     def test_generated_and_dependency_directories_are_not_document_sources(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             docs = Path(temporary_directory)
