@@ -1022,37 +1022,33 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Resample this cut table onto a caller-supplied complete TBP boundary grid in K.
      *
      * <p>
-     * The target grid must span the source table's first and last boundaries. Cumulative
-     * liquid-volume yield is retained at existing boundaries and interpolated linearly with
-     * boiling temperature inside each source interval. Target-interval specific gravity is the
-     * liquid-volume-weighted mean of the overlapping source-interval values. The operation
-     * therefore preserves total liquid-volume yield and implied mass on the table's
-     * ideal-additive-volume basis.
+     * The target grid must span the source table's first and last boundaries. Cumulative liquid-volume yield is
+     * retained at existing boundaries and interpolated linearly with boiling temperature inside each source interval.
+     * Target-interval specific gravity is the liquid-volume-weighted mean of the overlapping source-interval values.
+     * The operation therefore preserves total liquid-volume yield and implied mass on the table's ideal-additive-volume
+     * basis.
      * </p>
      *
      * <p>
-     * This method applies the same explicit piecewise-linear recovery and constant
-     * source-interval specific-gravity assumptions as cut splitting and adjacent re-lumping. It
-     * does not infer an intrainterval distillation shape, interpolate density with temperature,
-     * extrapolate, or estimate any other pseudo-component property.
+     * This method applies the same explicit piecewise-linear recovery and constant source-interval specific-gravity
+     * assumptions as cut splitting and adjacent re-lumping. It does not infer an intrainterval distillation shape,
+     * interpolate density with temperature, extrapolate, or estimate any other pseudo-component property.
      * </p>
      *
      * @param targetBoilingPointKelvin complete strictly increasing target TBP boundary grid in K
      * @return immutable TBP cut table on the requested grid
-     * @throws IllegalArgumentException if the grid is null, has fewer than two points, contains
-     * non-finite or unordered points, or does not span the source endpoints
+     * @throws IllegalArgumentException if the grid is null, has fewer than two points, contains non-finite or unordered
+     * points, or does not span the source endpoints
      */
     public TbpCutTable resampleAtBoilingPointsKelvin(double... targetBoilingPointKelvin) {
       double[] targetBoundaryKelvin = validateAndNormalizeTargetGrid(targetBoilingPointKelvin);
       double[] targetCumulativeVolumePercent = new double[targetBoundaryKelvin.length];
       for (int i = 0; i < targetBoundaryKelvin.length; i++) {
-        targetCumulativeVolumePercent[i] =
-            interpolateCumulativeVolumePercent(targetBoundaryKelvin[i]);
+        targetCumulativeVolumePercent[i] = interpolateCumulativeVolumePercent(targetBoundaryKelvin[i]);
       }
 
       double[] targetSpecificGravity = new double[targetBoundaryKelvin.length - 1];
-      for (int targetCutIndex = 0; targetCutIndex < targetSpecificGravity.length;
-          targetCutIndex++) {
+      for (int targetCutIndex = 0; targetCutIndex < targetSpecificGravity.length; targetCutIndex++) {
         double lowerTargetBoundary = targetBoundaryKelvin[targetCutIndex];
         double upperTargetBoundary = targetBoundaryKelvin[targetCutIndex + 1];
         double targetVolumePercent = targetCumulativeVolumePercent[targetCutIndex + 1]
@@ -1060,30 +1056,24 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         double targetImpliedMass = 0.0;
 
         for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
-          double overlapLowerBoundary =
-              Math.max(lowerTargetBoundary, boilingPointKelvin[sourceCutIndex]);
-          double overlapUpperBoundary =
-              Math.min(upperTargetBoundary, boilingPointKelvin[sourceCutIndex + 1]);
+          double overlapLowerBoundary = Math.max(lowerTargetBoundary, boilingPointKelvin[sourceCutIndex]);
+          double overlapUpperBoundary = Math.min(upperTargetBoundary, boilingPointKelvin[sourceCutIndex + 1]);
           if (overlapUpperBoundary > overlapLowerBoundary) {
-            double overlapVolumePercent =
-                interpolateCumulativeVolumePercent(overlapUpperBoundary)
-                    - interpolateCumulativeVolumePercent(overlapLowerBoundary);
+            double overlapVolumePercent = interpolateCumulativeVolumePercent(overlapUpperBoundary)
+                - interpolateCumulativeVolumePercent(overlapLowerBoundary);
             targetImpliedMass += overlapVolumePercent * specificGravity[sourceCutIndex];
           }
         }
         targetSpecificGravity[targetCutIndex] = targetImpliedMass / targetVolumePercent;
       }
 
-      return new TbpCutTable(targetCumulativeVolumePercent, targetBoundaryKelvin,
-          targetSpecificGravity);
+      return new TbpCutTable(targetCumulativeVolumePercent, targetBoundaryKelvin, targetSpecificGravity);
     }
 
     /**
-     * Resample this cut table onto a caller-supplied complete TBP boundary grid in degrees
-     * Celsius.
+     * Resample this cut table onto a caller-supplied complete TBP boundary grid in degrees Celsius.
      *
-     * @param targetBoilingPointCelsius complete strictly increasing target TBP boundary grid in
-     * degrees Celsius
+     * @param targetBoilingPointCelsius complete strictly increasing target TBP boundary grid in degrees Celsius
      * @return immutable TBP cut table on the requested grid
      * @throws IllegalArgumentException if the points cannot define a valid complete target grid
      * @see #resampleAtBoilingPointsKelvin(double...)
@@ -1105,32 +1095,27 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
 
       double[] normalizedTargetBoundaryKelvin = targetBoilingPointKelvin.clone();
-      for (int targetIndex = 0; targetIndex < normalizedTargetBoundaryKelvin.length;
-          targetIndex++) {
+      for (int targetIndex = 0; targetIndex < normalizedTargetBoundaryKelvin.length; targetIndex++) {
         double targetBoundary = normalizedTargetBoundaryKelvin[targetIndex];
         if (!Double.isFinite(targetBoundary)) {
           throw new IllegalArgumentException("TBP target-grid boundaries must be finite");
         }
         for (double sourceBoundary : boilingPointKelvin) {
-          if (Math.abs(targetBoundary - sourceBoundary)
-              <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+          if (Math.abs(targetBoundary - sourceBoundary) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
             normalizedTargetBoundaryKelvin[targetIndex] = sourceBoundary;
             break;
           }
         }
         if (targetIndex > 0
-            && !(normalizedTargetBoundaryKelvin[targetIndex]
-                > normalizedTargetBoundaryKelvin[targetIndex - 1])) {
-          throw new IllegalArgumentException(
-              "TBP target-grid boundaries must be strictly increasing");
+            && !(normalizedTargetBoundaryKelvin[targetIndex] > normalizedTargetBoundaryKelvin[targetIndex - 1])) {
+          throw new IllegalArgumentException("TBP target-grid boundaries must be strictly increasing");
         }
       }
 
       if (normalizedTargetBoundaryKelvin[0] != boilingPointKelvin[0]
-          || normalizedTargetBoundaryKelvin[normalizedTargetBoundaryKelvin.length - 1]
-              != boilingPointKelvin[boilingPointKelvin.length - 1]) {
-        throw new IllegalArgumentException(
-            "TBP target grid must span the source table endpoints");
+          || normalizedTargetBoundaryKelvin[normalizedTargetBoundaryKelvin.length
+              - 1] != boilingPointKelvin[boilingPointKelvin.length - 1]) {
+        throw new IllegalArgumentException("TBP target grid must span the source table endpoints");
       }
       return normalizedTargetBoundaryKelvin;
     }
@@ -1140,12 +1125,9 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         double lowerBoundary = boilingPointKelvin[sourceCutIndex];
         double upperBoundary = boilingPointKelvin[sourceCutIndex + 1];
         if (targetBoundaryKelvin <= upperBoundary) {
-          double intervalFraction =
-              (targetBoundaryKelvin - lowerBoundary) / (upperBoundary - lowerBoundary);
-          return cumulativeVolumePercent[sourceCutIndex]
-              + intervalFraction
-                  * (cumulativeVolumePercent[sourceCutIndex + 1]
-                      - cumulativeVolumePercent[sourceCutIndex]);
+          double intervalFraction = (targetBoundaryKelvin - lowerBoundary) / (upperBoundary - lowerBoundary);
+          return cumulativeVolumePercent[sourceCutIndex] + intervalFraction
+              * (cumulativeVolumePercent[sourceCutIndex + 1] - cumulativeVolumePercent[sourceCutIndex]);
         }
       }
       return cumulativeVolumePercent[cumulativeVolumePercent.length - 1];
