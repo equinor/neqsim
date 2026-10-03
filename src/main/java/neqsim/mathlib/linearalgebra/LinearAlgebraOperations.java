@@ -10,17 +10,19 @@ package neqsim.mathlib.linearalgebra;
  * </p>
  *
  * <p>
- * Matrices are row-major {@code double[][]}, where {@code matrix[row][column]} is the entry at that position and every
- * row has the same length. No library type ever appears in a signature; an implementation converts on entry and on
- * exit.
+ * Matrices are rectangular, row-major {@code double[][]} values, where {@code matrix[row][column]} is the entry at that
+ * position and every row has the same length. Vectors are {@code double[]} values. Each operation documents its
+ * dimension requirements; in particular, direct solves, inversion and determinants require square matrices, while
+ * least-squares solves require at least as many rows as columns and full column rank. No library type appears in a
+ * signature.
  * </p>
  *
  * <p>
- * Implementations must never modify their arguments, must return freshly allocated arrays, and must be stateless and
- * safe for concurrent use. Validation and detected solver failures are reported as a {@link LinearAlgebraException},
- * including inconsistent dimensions, non-finite input and detected singularity, so callers do not have to distinguish
- * the failure signalling of the individual backends. A finite solve or inverse result is not an accuracy guarantee;
- * numerical rank is checked explicitly by least squares, but not by LU solves or inversion.
+ * Implementations must not modify their arguments, must return newly allocated arrays, and must be stateless and safe
+ * for concurrent use. Invalid dimensions, non-finite inputs and detected solver failures are reported as a
+ * {@link LinearAlgebraException}, rather than through backend-specific failure signals. A finite solve or inverse
+ * result is not an accuracy guarantee: least squares checks numerical rank, but direct LU solves and inversion do not
+ * apply a rank or conditioning threshold.
  * </p>
  *
  * <p>
@@ -127,16 +129,6 @@ public interface LinearAlgebraOperations {
   double[][] add(double[][] matrixA, double[][] matrixB);
 
   /**
-   * Subtract one matrix from another of the same shape.
-   *
-   * @param matrixA matrix to subtract from
-   * @param matrixB matrix to subtract, with the same dimensions as {@code matrixA}
-   * @return the difference {@code matrixA - matrixB}
-   * @throws LinearAlgebraException if the shapes disagree or any entry is non-finite
-   */
-  double[][] subtract(double[][] matrixA, double[][] matrixB);
-
-  /**
    * Add two vectors of the same length.
    *
    * @param vectorA left operand
@@ -145,6 +137,16 @@ public interface LinearAlgebraOperations {
    * @throws LinearAlgebraException if the lengths disagree or any entry is non-finite
    */
   double[] add(double[] vectorA, double[] vectorB);
+
+  /**
+   * Subtract one matrix from another of the same shape.
+   *
+   * @param matrixA matrix to subtract from
+   * @param matrixB matrix to subtract, with the same dimensions as {@code matrixA}
+   * @return the difference {@code matrixA - matrixB}
+   * @throws LinearAlgebraException if the shapes disagree or any entry is non-finite
+   */
+  double[][] subtract(double[][] matrixA, double[][] matrixB);
 
   /**
    * Subtract one vector from another of the same length.
@@ -166,7 +168,7 @@ public interface LinearAlgebraOperations {
    *
    * @param matrix matrix to scale
    * @param factor scalar factor
-   * @return the scaled matrix
+   * @return the scaled matrix, same size as the input matrix
    * @throws LinearAlgebraException if any entry or the factor is non-finite
    */
   double[][] scale(double[][] matrix, double factor);
@@ -181,7 +183,7 @@ public interface LinearAlgebraOperations {
    *
    * @param vector vector to scale
    * @param factor scalar factor
-   * @return the scaled vector
+   * @return the scaled vector, same length as the input vector
    * @throws LinearAlgebraException if any entry or the factor is non-finite
    */
   double[] scale(double[] vector, double factor);

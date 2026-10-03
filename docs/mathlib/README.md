@@ -9,6 +9,27 @@ dependency. Each Java block below is independent: place the imports at the top
 of a file and the statements inside a method. The examples are compiled and
 executed directly from this page by `MathAndExpanderDocumentationTest`.
 
+Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
+operations are being routed through `LinearAlgebraOperations`, initially using
+`JamaLinearAlgebra`. This changes the integration boundary; it does not replace the
+JAMA backend or establish a performance improvement. Numerical integration tests allow
+small floating-point differences between CPU architectures, while small linear systems
+with exact solutions, and comparisons against a direct JAMA solve, verify the linear
+systems themselves.
+
+`CricondenbarFlash` and the OLGA water-table generators now store their matrices as
+`double[][]` instead of JAMA `Matrix`, so instances serialized by earlier versions
+cannot be deserialized. The cricondenbar search is sensitive to initialization and
+floating-point arithmetic; use the established phase-envelope calculation for
+engineering extrema.
+
+The flash stability analysis solves its Newton steps through `LinearAlgebraOperations`
+but computes its residual norms with a private copy of the JAMA norm. Trace components
+can make the residual non-finite before any solve has checked it; JAMA returns NaN, the
+convergence test fails and the next substitution step recovers, whereas
+`LinearAlgebraOperations.euclideanNorm` throws and aborts the stability trial. Keep that
+NaN-tolerant norm when migrating further.
+
 ## Table of Contents
 
 - [Overview](#overview)

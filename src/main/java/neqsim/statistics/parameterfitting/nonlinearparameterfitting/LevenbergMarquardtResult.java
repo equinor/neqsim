@@ -67,13 +67,14 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
    */
   public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
-      double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix, double[] parameterStandardErrors) {
+      double gradientNorm, double[][] covarianceMatrix, double[][] correlationMatrix,
+      double[] parameterStandardErrors) {
     this.convergenceReason = convergenceReason;
     this.iterations = iterations;
     this.finalChiSquare = finalChiSquare;
     this.gradientNorm = gradientNorm;
-    this.covarianceMatrix = matrixToArray(covarianceMatrix);
-    this.correlationMatrix = matrixToArray(correlationMatrix);
+    this.covarianceMatrix = copyMatrixArray(covarianceMatrix);
+    this.correlationMatrix = copyMatrixArray(correlationMatrix);
     this.parameterStandardErrors = copyArray(parameterStandardErrors);
   }
 

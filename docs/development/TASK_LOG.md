@@ -36,6 +36,18 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-03 — Source-locked quantitative C1 ignition-delay comparison
+**Type:** G (Workflow)
+**Keywords:** combustion qualification, ReSpecTh, methane, shock tube, ignition delay, CRECK-S, Cantera, uncertainty, provenance
+**Solution:** `examples/combustion/run_ignition_delay_qualification.py`, quantitative ReSpecTh record in `benchmark_catalog.json`, provenance validation/tests and the optional combustion workflow; guide `docs/process/equipment/multi_burner_fired_heater.md`.
+**Notes:** Added 16 CC-BY-4.0 ReSpecTh observations from Aul et al. mixture 4 with exact archive and XML SHA-256 values, attribution, pressure and temperature, a maximum-pressure-rise-rate ignition marker, and point-specific evaluated standard deviations. The runner verifies the exact CRECK-S 2.0.0 bytes and executes an adiabatic constant-volume reactor without fitting. Cantera 3.2.0 produced a maximum absolute normalized residual of 1.950 and a 115.661 microsecond RMSE; 1000/2000-interval refinement differed by at most 0.25% of an observation. All points are above the CRECK-S deposit's stated 800-1500 K range, so this is an explicit C1 extrapolation check, not an extension of mechanism validity or heater/emissions qualification. C3/C4 chemistry and heater heat-transfer/mixing evidence remain open.
+
+### 2026-10-02 — Source-locked quantitative C2 JSR comparison
+**Type:** G (Workflow)
+**Keywords:** combustion qualification, ReSpecTh, ethylene, JSR, CRECK-S, Cantera, CO, uncertainty, provenance
+**Solution:** `examples/combustion/run_jsr_qualification.py`, quantitative ReSpecTh record in `benchmark_catalog.json`, provenance validation/tests and the optional combustion workflow; guide `docs/process/equipment/multi_burner_fired_heater.md`.
+**Notes:** Added seven CC-BY-4.0 ReSpecTh observations for a lean ethylene JSR case with an exact archive and extracted-XML SHA-256, attribution, measurement basis and species-specific evaluated standard deviations. The runner verifies the exact CRECK-S 2.0.0 bytes, enforces exact mechanism species and executes an isothermal constant-pressure perfectly stirred reactor without parameter or emission-factor fitting. Cantera 3.2.0 produced a maximum absolute normalized residual of 1.686 across C2H4, CH4, CO and CO2. This is C2 reactor evidence only; C3/C4, heater heat transfer/mixing and plant qualification remain open.
+
 ### 2026-10-01 — Fail-closed combustion benchmark and mechanism qualification provenance
 **Type:** G (Workflow)
 **Keywords:** combustion qualification, JSR, JSFR, LPG, propane, butane, CO, mechanism license, SHA-256, uncertainty, Cantera

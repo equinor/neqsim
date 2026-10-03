@@ -17,10 +17,7 @@
         "fuelMoleFractions": {"C3H8": 0.362, "IC4H10": 0.248, "NC4H10": 0.39}
       },
       "measuredQuantities": ["fuel species", "CO", "CO2", "light intermediates"],
-      "uncertainty": {
-        "reported": false,
-        "details": "A machine-readable uncertainty record has not been obtained."
-      },
+      "uncertainty": {"reported": false, "details": "A machine-readable uncertainty record has not been obtained."},
       "dataAvailability": "conditions-only",
       "limitation": "The catalog records only conditions reported in the primary paper metadata. No plot points were digitized and no copyrighted numerical table is redistributed. Residence time and measurement uncertainties must be recovered from an authorized primary source before execution."
     },
@@ -40,12 +37,124 @@
         "fuelMoleFractions": {"C3H8": 1.0}
       },
       "measuredQuantities": ["C3H8", "O2", "CO", "CO2", "oxygenated intermediates"],
-      "uncertainty": {
-        "reported": false,
-        "details": "Species-specific numerical uncertainties have not been transcribed from an authorized source."
-      },
+      "uncertainty": {"reported": false, "details": "Species-specific numerical uncertainties have not been transcribed from an authorized source."},
       "dataAvailability": "conditions-only",
       "limitation": "The public record establishes the nominal pressure, temperature, residence time, equivalence ratios and dilution study. Numerical profiles, their basis and species-specific uncertainty remain unavailable for redistribution, so this record cannot qualify a mechanism."
+    },
+    {
+      "id": "cong-bedjanian-dagaut-2010-ethylene-jsr-phi-0.5",
+      "apparatus": "JSR",
+      "primarySource": {
+        "citation": "Cong, T. L., Bedjanian, E. and Dagaut, P. (2010), Oxidation of ethylene and propene in the presence of CO2 and H2O: Experimental and detailed kinetic modeling study, Combustion Science and Technology 182, 333-349.",
+        "doi": "10.1080/00102200903462433",
+        "url": "https://doi.org/10.1080/00102200903462433"
+      },
+      "conditions": {
+        "pressurePa": 101325.0,
+        "temperatureK": {"minimum": 950.0, "maximum": 1100.0},
+        "residenceTimeS": 0.12,
+        "reactorVolumeM3": 0.00003,
+        "equivalenceRatios": [0.5],
+        "fuelMoleFractions": {"C2H4": 1.0},
+        "inletMoleFractions": {"C2H4": 0.0017, "O2": 0.0102, "N2": 0.9881}
+      },
+      "measuredQuantities": ["C2H4", "CH4", "CO", "CO2"],
+      "quantityUnits": {"C2H4": "ppmv", "CH4": "ppmv", "CO": "ppmv", "CO2": "ppmv"},
+      "measurementBasis": "Molar ppm on the basis stored by ReSpecTh; no dry or reference-O2 correction is applied.",
+      "uncertainty": {
+        "available": true,
+        "reported": false,
+        "sourceType": "estimated",
+        "kind": "absolute evaluated standard deviation",
+        "details": "ReSpecTh labels these species-specific values as estimated standard deviations combining scatter and estimated uncertainty. They are not claimed as uncertainties reported by the primary paper."
+      },
+      "dataAvailability": "quantitative",
+      "dataSource": {
+        "url": "https://osf.io/download/bh96p/",
+        "repositoryDoi": "10.17605/OSF.IO/NBMZV",
+        "fileDoi": "10.24388/x00014002",
+        "archiveName": "ethylene_indirect_v2_4.zip",
+        "archiveSha256": "246876488dd39ce1830610191852a95b5e0b7950ed49a920d1e341ffac6605dc",
+        "extractedFile": "x00014002.xml",
+        "sha256": "e4546690562c936314416762cee143ccb03d0b3cd832d477d962e53d962d0f6e",
+        "licenseSpdxId": "CC-BY-4.0",
+        "redistributionVerified": true,
+        "attribution": "Chemical Kinetics Laboratory, Institute of Chemistry, Eotvos Lorand University, Budapest, Hungary; ReSpecTh file DOI 10.24388/x00014002.",
+        "modified": true,
+        "modification": "One ethylene JSR data group was transcribed from XML into this catalog; units and evaluated standard deviations were preserved."
+      },
+      "observations": [
+        {"temperatureK": 950.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1766.36, "CH4": 14.05152, "CO": 28.03738, "CO2": 28.03738}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 975.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1411.21, "CH4": 42.15457, "CO": 476.6355, "CO2": 46.72897}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1000.0, "equivalenceRatio": 0.5, "values": {"C2H4": 1186.92, "CH4": 65.10539, "CO": 859.8131, "CO2": 65.42056}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1025.0, "equivalenceRatio": 0.5, "values": {"C2H4": 831.7757, "CH4": 90.16393, "CO": 1392.52, "CO2": 177.5701}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1050.0, "equivalenceRatio": 0.5, "values": {"C2H4": 196.2617, "CH4": 67.21311, "CO": 2028.04, "CO2": 934.5794}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1075.0, "equivalenceRatio": 0.5, "values": {"C2H4": 28.03738, "CH4": 6.088993, "CO": 1046.73, "CO2": 2420.56}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}},
+        {"temperatureK": 1100.0, "equivalenceRatio": 0.5, "values": {"C2H4": 18.69159, "CH4": 1.17096, "CO": 607.4766, "CO2": 2906.54}, "uncertainties": {"C2H4": 156.3, "CH4": 10.5, "CO": 306.9, "CO2": 295.8}}
+      ],
+      "limitation": "This is one lean C2H4 JSR series. It does not qualify C3/C4 chemistry, fired-heater mixing or heat transfer, dry/reference-O2 emissions reporting, or plant behavior."
+    },
+    {
+      "id": "aul-et-al-2013-methane-shock-tube-mixture-4",
+      "apparatus": "SHOCK_TUBE",
+      "primarySource": {
+        "citation": "Aul, C. J., Metcalfe, W. K., Burke, S. M., Curran, H. J. and Petersen, E. L. (2013), Ignition and kinetic modeling of methane and ethane fuel blends with oxygen: A design of experiments approach, Combustion and Flame 160, 1153-1167.",
+        "doi": "10.1016/j.combustflame.2013.01.019",
+        "url": "https://doi.org/10.1016/j.combustflame.2013.01.019"
+      },
+      "conditions": {
+        "pressurePa": {"minimum": 114497.25, "maximum": 145908.0},
+        "temperatureK": {"minimum": 1686.0, "maximum": 2248.0},
+        "residenceTimeS": null,
+        "equivalenceRatios": [1.0],
+        "fuelMoleFractions": {"CH4": 1.0},
+        "inletMoleFractions": {"CH4": 0.006667, "O2": 0.013333, "AR": 0.98}
+      },
+      "ignitionDefinition": "Time from the post-shock initial state to the maximum pressure-rise rate, matching the ReSpecTh ignitionType target p and type d/dt max.",
+      "measuredQuantities": ["ignition delay"],
+      "quantityUnits": {"ignitionDelay": "us"},
+      "measurementBasis": "Reported shock-tube ignition delay in microseconds at each reported post-shock temperature and pressure; the comparison uses an adiabatic constant-volume reactor and the maximum pressure-rise rate without fitting.",
+      "uncertainty": {
+        "available": true,
+        "reported": false,
+        "sourceType": "estimated",
+        "kind": "relative evaluated standard deviation",
+        "details": "ReSpecTh stores an estimated relative evaluated standard deviation for every delay. Absolute microsecond uncertainties below are the reported delay multiplied by that relative value; they are not claimed as primary-paper reported uncertainties."
+      },
+      "dataAvailability": "quantitative",
+      "dataSource": {
+        "url": "https://osf.io/download/w9mh5/",
+        "repositoryDoi": "10.17605/OSF.IO/NBMZV",
+        "fileDoi": "10.24388/x10004030",
+        "archiveName": "methane_indirect_v2_3.zip",
+        "archiveSha256": "c9e36ca63050d352344f5101dd8eec18c8a8578051c1a989d03762216c504383",
+        "extractedFile": "x10004030.xml",
+        "sha256": "c196194b2d34696e6f62aab9e4eacc064a557820ba859fdabf6c85609d4b7e45",
+        "licenseSpdxId": "CC-BY-4.0",
+        "redistributionVerified": true,
+        "attribution": "Chemical Kinetics Laboratory, Institute of Chemistry, Eotvos Lorand University, Budapest, Hungary; ReSpecTh file DOI 10.24388/x10004030.",
+        "modified": true,
+        "modification": "Mixture 4 was transcribed from XML into this catalog; pressure was converted from atm to Pa and each relative evaluated standard deviation was also expressed as an absolute microsecond uncertainty."
+      },
+      "observations": [
+        {"temperatureK": 2248.0, "pressurePa": 114497.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 70.0}, "uncertainties": {"ignitionDelay": 7.0}, "relativeUncertainty": 0.1},
+        {"temperatureK": 2097.0, "pressurePa": 115510.5, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 138.0}, "uncertainties": {"ignitionDelay": 13.8}, "relativeUncertainty": 0.1},
+        {"temperatureK": 2013.0, "pressurePa": 135775.5, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 210.0}, "uncertainties": {"ignitionDelay": 21.0}, "relativeUncertainty": 0.1},
+        {"temperatureK": 1994.0, "pressurePa": 122603.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 229.0}, "uncertainties": {"ignitionDelay": 22.9}, "relativeUncertainty": 0.1},
+        {"temperatureK": 1988.0, "pressurePa": 120576.75, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 211.0}, "uncertainties": {"ignitionDelay": 21.1}, "relativeUncertainty": 0.1},
+        {"temperatureK": 1897.0, "pressurePa": 122603.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 476.0}, "uncertainties": {"ignitionDelay": 47.6}, "relativeUncertainty": 0.1},
+        {"temperatureK": 1801.0, "pressurePa": 128682.75, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 831.0}, "uncertainties": {"ignitionDelay": 87.255}, "relativeUncertainty": 0.105},
+        {"temperatureK": 1790.0, "pressurePa": 121590.0, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 911.0}, "uncertainties": {"ignitionDelay": 96.566}, "relativeUncertainty": 0.106},
+        {"temperatureK": 1773.0, "pressurePa": 137802.0, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 994.0}, "uncertainties": {"ignitionDelay": 105.364}, "relativeUncertainty": 0.106},
+        {"temperatureK": 1764.0, "pressurePa": 145908.0, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1043.0}, "uncertainties": {"ignitionDelay": 111.601}, "relativeUncertainty": 0.107},
+        {"temperatureK": 1750.0, "pressurePa": 139828.5, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1257.0}, "uncertainties": {"ignitionDelay": 135.756}, "relativeUncertainty": 0.108},
+        {"temperatureK": 1735.0, "pressurePa": 138815.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1249.0}, "uncertainties": {"ignitionDelay": 136.141}, "relativeUncertainty": 0.109},
+        {"temperatureK": 1726.0, "pressurePa": 126656.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1447.0}, "uncertainties": {"ignitionDelay": 157.723}, "relativeUncertainty": 0.109},
+        {"temperatureK": 1705.0, "pressurePa": 142868.25, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1611.0}, "uncertainties": {"ignitionDelay": 178.821}, "relativeUncertainty": 0.111},
+        {"temperatureK": 1689.0, "pressurePa": 137802.0, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1690.0}, "uncertainties": {"ignitionDelay": 189.28}, "relativeUncertainty": 0.112},
+        {"temperatureK": 1686.0, "pressurePa": 136788.75, "equivalenceRatio": 1.0, "values": {"ignitionDelay": 1714.0}, "uncertainties": {"ignitionDelay": 191.968}, "relativeUncertainty": 0.112}
+      ],
+      "limitation": "This high-temperature, dilute, near-atmospheric methane shock-tube series qualifies only the declared zero-dimensional ignition-delay comparison. Its 1686-2248 K range exceeds the 800-1500 K range described by the CRECK-S deposit, so it is explicit extrapolation evidence rather than validation inside that stated range. It does not qualify flame speed, C2/C3/C4 chemistry, fired-heater mixing or heat transfer, emissions reporting, or plant behavior."
     }
   ],
   "mechanisms": [
@@ -54,12 +163,23 @@
       "role": "software-demonstration",
       "sourceUrl": "https://github.com/Cantera/cantera/blob/v3.2.0/data/gri30.yaml",
       "reportedCanonicalSha256": "3cb2078af590038e2f9d3f33a8079ac882e6c1a4701c709a1b345905a80f53f8",
-      "license": {
-        "redistributionVerified": false,
-        "spdxId": null,
-        "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."
-      },
+      "license": {"redistributionVerified": false, "spdxId": null, "details": "Used from the installed Cantera distribution. This catalog does not assert redistribution rights for the underlying GRI mechanism."},
       "validity": "Software integration demonstration only; not a C2/C3/C4 heater qualification mechanism."
+    },
+    {
+      "id": "creck-s-2.0.0-zenodo-22982859",
+      "role": "qualification-candidate",
+      "sourceUrl": "https://zenodo.org/records/22982859/files/CRECK-S_mechanism.yaml?download=1",
+      "releaseDoi": "10.5281/zenodo.22982859",
+      "releaseDate": "2026-09-26",
+      "expectedSha256": "8f8bf791ed7017ba7d506674f2629870f779678cee0fa6f08dd916b849ef270b",
+      "reportedSourceMd5": "2ec5b7bccec5df5496c72868f776a285",
+      "expectedSizeBytes": 495804,
+      "speciesCount": 209,
+      "reactionCount": 2816,
+      "license": {"redistributionVerified": true, "spdxId": "CC-BY-4.0", "details": "The exact Zenodo v2.0.0 record and deposited files are published under CC BY 4.0. Preserve creator attribution and cite DOI 10.5281/zenodo.22982859."},
+      "validity": "Candidate for C1-C4 finite-rate oxidation studies. The deposit describes validation over 800-1500 K, atmospheric pressure and equivalence ratios 0.5-2.0, but the companion paper is still in revision. This record does not establish heater or emissions qualification.",
+      "limitation": "Evidence in this catalog is limited to one lean C2 ethylene JSR series and one high-temperature C1 methane ignition-delay series that lies above the deposit's stated temperature range. Licensed C3/C4 observations with uncertainty remain required."
     }
   ]
 }

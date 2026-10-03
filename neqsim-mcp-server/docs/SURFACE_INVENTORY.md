@@ -6,8 +6,8 @@ running server's standards-conforming list operations; it does not infer publica
 manually maintained Java method list.
 
 All focused `test_*_protocol.py` harnesses freeze the same current inventory
-as the primary harness: version `1.49`, 49 contract-tested tools and 2 confirmed
-gaps. `test_phase0_documentation.py` checks these executable expectations before
+as the primary harness: version `1.50`, 50 contract-tested tools and 1 confirmed
+gap. `test_phase0_documentation.py` checks these executable expectations before
 packaging, so a promotion cannot leave a later protocol step on an older baseline.
 Per-tool evidence counts and historical promotion records remain independent.
 
@@ -23,12 +23,12 @@ Per-tool evidence counts and historical promotion records remain independent.
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
-| MCP protocol scenarios | 101 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
+| MCP protocol scenarios | 102 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 49 bounded contract-tested software contracts + 2 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.49; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 50 bounded contract-tested software contracts + 1 confirmed gap | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.50; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -94,7 +94,7 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
-`src/test/java/neqsim/mcp`, 101 named scenarios in the primary real-STDIO JSON-RPC harness
+`src/test/java/neqsim/mcp`, 102 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts. The dependency-free
@@ -153,8 +153,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 2 records remain
-`CONFIRMED_GAP`, forty-nine are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 1 record remains
+`CONFIRMED_GAP`, fifty are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -201,9 +201,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.49 with 20/49/2 coverage accounting while retaining
+now reconciles inventory 1.50 with 20/50/1 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its forty-nine bounded software contracts and requires 2 confirmed gaps. The read-only
+among its fifty bounded software contracts and requires 1 confirmed gap. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -810,3 +810,28 @@ and one missing-standards warning), standards/provenance fields,
 deterministic replay, fail-closed empty input, access enforcement, and the standard response
 envelope. It does not certify source/tag fidelity, completeness, hydraulic adequacy, standards
 conformance, plant authority, or accountable process-safety approval.
+
+
+### Inventory 1.50 NORSOK S-001 Clause 10 review promotion
+
+Inventory 1.50 promotes `runNorsokS001Clause10Review` from `CONFIRMED_GAP` to
+`CONTRACT_TESTED`, moving current Phase 0 accounting from 20/49/2 to 20/50/1.
+The published facade continues to delegate to the existing
+`NorsokS001Clause10ReviewRunner`, which normalizes caller-supplied evidence for
+the canonical `ProcessSafetySystemReviewEngine`. Optional performance,
+operational-study, and dynamic evidence remains embedded through the existing
+runners; no parallel safety, process, or transient model is introduced.
+
+Direct runner and engine tests, the deterministic
+`process-safety-review/norsok-s001-clause10` catalog example, comprehensive
+protocol coverage, five focused packaged-STDIO scenarios, normal access
+enforcement, and the standard response envelope move with the machine-readable
+classification on the same exact head.
+
+This bounded software contract does not establish direct STID, tagreader, C&E,
+SRS, or PSV connectivity; source-document or tag completeness and fidelity;
+hazard or scenario completeness; SIL/PFD/SIF, proof-test, or lifecycle validity;
+PSV or relief adequacy; controller, transient, or dynamic validity;
+independence or common-cause claims; standards applicability or conformance;
+safe operating limits; plant or control authority; certification; or
+accountable engineering or process-safety approval.
