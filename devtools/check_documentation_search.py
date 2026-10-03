@@ -171,11 +171,12 @@ def included_markdown_sources(
 
     included = set()
     for path in paths:
-        text = (
-            source_texts[path]
-            if source_texts is not None and path in source_texts
-            else path.read_text(encoding="utf-8-sig")
-        )
+        if source_texts is not None:
+            if path not in source_texts:
+                continue
+            text = source_texts[path]
+        else:
+            text = path.read_text(encoding="utf-8-sig")
         for match in INCLUDE_RELATIVE_PATTERN.finditer(text):
             target = match.group("target").strip("\"'")
             included.add((path.parent / target).resolve())

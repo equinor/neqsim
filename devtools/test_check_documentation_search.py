@@ -75,6 +75,13 @@ class DocumentationPageLinkAuditTest(unittest.TestCase):
                 [target.resolve()],
             )
 
+    def test_include_scan_does_not_reread_a_source_that_failed_decoding(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            source = Path(temporary_directory) / "invalid.md"
+            source.write_bytes(b"\xaa\x00")
+
+            self.assertEqual(audit.included_markdown_sources([source], {}), [])
+
     def test_generated_and_dependency_directories_are_not_document_sources(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             docs = Path(temporary_directory)
