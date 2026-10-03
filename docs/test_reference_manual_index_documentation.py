@@ -60,7 +60,7 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
         for line in self.index.splitlines():
             if not line.startswith("|"):
                 continue
-            for source_path in re.findall(r"\\bdocs/[A-Za-z0-9_./-]+\\.md\\b", line):
+            for source_path in re.findall(r"\bdocs/[A-Za-z0-9_./-]+\.md\b", line):
                 checked += 1
                 linked_pattern = r"\[{}(?:#[^\]]+)?\]\(".format(
                     re.escape(source_path)
