@@ -142,9 +142,11 @@ public class NeqSimBlobDatabase extends NeqSimDatabaseBase {
     }
 
     try {
-      if (dataBaseType.equals("mySQL")) {
+      if ("H2".equals(dataBaseType) || "H2RT".equals(dataBaseType)) {
+        Class.forName("org.h2.Driver");
+      } else if ("mySQL".equals(dataBaseType)) {
         Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-      } else {
+      } else if (dataBaseType != null && !dataBaseType.isEmpty()) {
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
