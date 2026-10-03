@@ -1528,8 +1528,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 101 protocol scenarios",
-          tests.get("protocolScenarioCount") == 101,
+    check("evidence inventory freezes 102 protocol scenarios",
+          tests.get("protocolScenarioCount") == 102,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1598,13 +1598,14 @@ def test_capabilities():
         "runHazopScenario",
         "runSafetySystemPerformance",
         "runOpenDrainReview",
+        "runNorsokS001Clause10Review",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-eight bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.49"
-          and limitations.get("contractTestedToolCount") == 49
-          and limitations.get("confirmedGapToolCount") == 2
+    check("fifty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.50"
+          and limitations.get("contractTestedToolCount") == 50
+          and limitations.get("confirmedGapToolCount") == 1
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1941,7 +1942,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 2
+          and limitations.get("confirmedGapToolCount") == 1
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2304,6 +2305,38 @@ def test_safety_system_performance_contract():
           and "assessments" in data.get("performanceReport", {})
           and "NORSOK-S-001" in data.get("standardsTemplates", {})
           and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
+          str(response))
+
+
+# --- NORSOK S-001 Clause 10 review software contract ---
+
+def test_norsok_s001_clause10_review_contract():
+    """Exercise the catalog Clause 10 review through packaged MCP."""
+    print("\n=== NORSOK S-001 Clause 10 Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "process-safety-review",
+        "name": "norsok-s001-clause10",
+    })
+    response = call_tool("runNorsokS001Clause10Review", {
+        "clause10ReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("Clause 10 review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("Clause 10 review report and provenance",
+          data.get("reviewType") == "norsok_s001_clause10_review"
+          and data.get("overallVerdict") == "PASS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 0
+          and data.get("itemCount") == 5
+          and len(data.get("results", [])) == 5
+          and "NORSOK S-001:2020+AC:2021 Clause 10"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "NORSOK S-001 Clause 10 process safety system review",
           str(response))
 
 
@@ -2994,6 +3027,7 @@ if __name__ == "__main__":
         test_hazop_scenario_contract()
         test_safety_system_performance_contract()
         test_open_drain_review_contract()
+        test_norsok_s001_clause10_review_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()

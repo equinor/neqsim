@@ -13,7 +13,7 @@ The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and 
 | --- | --- | --- |
 | Pre-binned TBP fractions | `SystemInterface.addTBPfraction(...)` | Add a petroleum cut from moles, molar mass, and specific gravity |
 | Plus fraction | `SystemInterface.addPlusFraction(...)` + `Characterise` | Represent and split a C7+/C20+ heavy end |
-| Refinery assay | `OilAssayCharacterisation` | Convert assay data, export, split, re-lump, re-ingest and recharacterize an auditable TBP cut table |
+| Refinery assay | `OilAssayCharacterisation` | Convert assay data, export, split, re-lump, re-ingest and recharacterize an auditable TBP cut table, with invertible recovery/cut-point queries and conservative target-grid resampling |
 | Assay blend screening | `RefineryAssayBlend` | Combine whole-assay SG/API and optional sulfur/nitrogen on an explicit mass basis |
 | TBP property model selection | `Characterise.setTBPModel(...)` | Select Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing, and related models |
 | Lumping | `Characterise.configureLumping()` | Reduce a detailed heavy-end slate while preserving configured grouping rules |
@@ -49,6 +49,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - volume-to-mass conversion using cut density;
 - literature-qualified ASTM D86 reference-point conversion at 0, 10, 30, 50, 70, 90, and 95 vol% with an explicit caller-supplied 100 vol% TBP terminal boundary;
 - auditable TBP cut-table export with mass/volume-basis round-trip closure and fail-closed contiguous boundaries;
+- bounded, invertible TBP recovery/cut-point queries with unit-explicit interval-yield receipts;
 - conservative adjacent whole-cut re-lumping with exact liquid-volume and implied-mass closure;
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;
