@@ -268,20 +268,111 @@ def note_reopen(task_dir, manifest):
 
 
 def status(task_dir):
-    """A compact status dict for one living task."""
-    from .cycle import list_cycles, load_cycle
+    """Return a five-second status summary that is sufficient to resume work."""
+    from .cycle import interrupted_cycles, list_cycles, load_cycle
+    from .schedule import schedule_status
+
+    task_dir = os.path.abspath(str(task_dir))
     cycles = list_cycles(task_dir)
-    last = load_cycle(task_dir, cycles[-1]) if cycles else {}
+    manifests = [load_cycle(task_dir, cycle_id) or {} for cycle_id in cycles]
+    last = manifests[-1] if manifests else {}
+    completed = [m for m in manifests if m.get("status") == "complete"]
+    running = interrupted_cycles(task_dir)
+
     items = Ledger(os.path.join(continuous_dir(task_dir), "ledger", "events.jsonl")).current()
-    open_items = [k for k, v in items.items() if v.get("status") in ("proposed", "under_review", "accepted", "implemented")]
+    open_items = [k for k, v in items.items()
+                  if v.get("status") in ("proposed", "under_review", "accepted", "implemented")]
+    rejected = [{"id": key, "title": item.get("title"), "status": item.get("status")}
+                for key, item in sorted(items.items())
+                if item.get("status") in ("rejected", "superseded")]
+
     state = read_state(task_dir)
-    return {"task": os.path.basename(os.path.abspath(str(task_dir))),
-            "state": state.get("state"), "phase": state.get("phase"),
-            "baseline": load_baseline(task_dir)["meta"].get("id"),
-            "cycles": len(cycles), "last_cycle": last.get("cycle_id"),
-            "last_status": ("degraded" if last.get("degraded") else last.get("status")) if last else None,
-            "last_triggers": last.get("triggers", []) if last else [],
-            "open_ledger_items": len(open_items)}
+    goal = load_goal(task_dir) or {}
+    objective = goal.get("objective") or {}
+    baseline = load_baseline(task_dir)
+    baseline_meta = baseline.get("meta") or {}
+    baseline_kpis = baseline.get("kpis") or {}
+    metric = objective.get("metric")
+    history = state.get("history") or []
+    validated = [h for h in history
+                 if h.get("validated") and isinstance(h.get("value"), (int, float))]
+    best = None
+    if validated:
+        reverse = objective.get("direction", "maximize") != "minimize"
+        row = sorted(validated, key=lambda h: h.get("value"), reverse=reverse)[0]
+        best = {key: row.get(key) for key in
+                ("round", "cycle", "value", "confidence", "action")}
+
+    solve = (last.get("solve") or {}) if last else {}
+    details = state.get("details") or {}
+    standard = (last.get("standard_first") or {}) if last else {}
+    blockers = [str(x) for x in (solve.get("blockers") or []) if x]
+    blockers += [str(x) for x in (details.get("blockers") or []) if x]
+    blockers += ["standard_first:" + str(x) for x in (standard.get("hard_missing") or [])]
+    if state.get("state") == "blocked" and state.get("reason"):
+        blockers.append(str(state.get("reason")))
+    blockers = list(dict.fromkeys(blockers))
+
+    next_action = details.get("next_action")
+    if not next_action and running:
+        next_action = "Resume interrupted cycle {} with task-cycle.".format(
+            running[0].get("cycle_id"))
+    if not next_action and not goal.get("confirmed_by"):
+        next_action = "Confirm continuous/goal.yaml before the next solve loop."
+    if not next_action and state.get("phase") == "reopen_requested":
+        next_action = "Run task-solve to reassess the reopened task."
+    if not next_action and last.get("triggers"):
+        next_action = "Triage the latest cycle triggers before changing the baseline."
+    if not next_action:
+        next_action = "Run the next monitoring cycle."
+
+    latest_validation = None
+    if history:
+        latest_validation = {"validated": bool(history[-1].get("validated")),
+                             "confidence": history[-1].get("confidence"),
+                             "cycle": history[-1].get("cycle")}
+    changed = list(last.get("triggers", []) if last else [])
+    if last.get("resume_count"):
+        changed.append("resumed_interrupted_cycle")
+    schedule = schedule_status(task_dir)
+
+    return {
+        "schema_version": STATE_SCHEMA_VERSION,
+        "task": os.path.basename(task_dir),
+        "state": state.get("state"),
+        "phase": state.get("phase"),
+        "conclusion": state.get("reason"),
+        "goal": {"metric": metric, "direction": objective.get("direction", "maximize"),
+                 "target": objective.get("target"), "confirmed_by": goal.get("confirmed_by")},
+        "baseline": baseline_meta.get("id"),
+        "baseline_detail": {"id": baseline_meta.get("id"),
+                            "promoted_at": baseline_meta.get("promoted_at"),
+                            "promoted_by": baseline_meta.get("promoted_by"),
+                            "objective_value": baseline_kpis.get(metric) if metric else None},
+        "best_validated": best,
+        "attempts": len(history) if history else len(completed),
+        "rejected_hypotheses": rejected,
+        "blockers": blockers,
+        "evidence": {"baseline_references_sha256": baseline_meta.get("references_sha256"),
+                     "standard_first": standard.get("readiness"),
+                     "latest_validation": latest_validation},
+        "changed_since_last_run": changed,
+        "next_action": next_action,
+        "last_run": {"cycle": last.get("cycle_id"), "mode": last.get("mode"),
+                     "status": ("degraded" if last.get("degraded") else last.get("status")),
+                     "started_at": last.get("started_at"), "finished_at": last.get("finished_at"),
+                     "host": last.get("host")} if last else None,
+        "next_run": schedule.get("next_run"),
+        "schedule": schedule,
+        "interrupted_runs": [{"cycle": m.get("cycle_id"), "mode": m.get("mode"),
+                              "started_at": m.get("started_at"), "host": m.get("host"),
+                              "resume_count": m.get("resume_count", 0)} for m in running],
+        "cycles": len(cycles),
+        "last_cycle": last.get("cycle_id"),
+        "last_status": ("degraded" if last.get("degraded") else last.get("status")) if last else None,
+        "last_triggers": last.get("triggers", []) if last else [],
+        "open_ledger_items": len(open_items),
+    }
 
 
 def dumps(data):
