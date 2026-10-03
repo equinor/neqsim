@@ -332,7 +332,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
    */
   public void calcPhaseEnvelope() {
     try {
-      thermoOps.calcPTphaseEnvelopeNew();
+      thermoOps.calcPTphaseEnvelope();
       TCLOG = thermoSystem.getTC();
       PCLOG = thermoSystem.getPC() * 0.986923267; // convert to ATM
       TC = thermoSystem.getTC() - 273.15;

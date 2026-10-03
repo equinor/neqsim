@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.standards.oilquality.RiaziDaubertDistillationConversion;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -36,8 +37,9 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * The TBP cut-boundary helpers preserve cut yields and boiling ranges, then use the midpoint of each boiling interval
- * as the representative boiling point for the existing NeqSim petroleum correlation. They do not convert ASTM D86/D1160
- * or other laboratory distillation methods to TBP.
+ * as the representative boiling point for the existing NeqSim petroleum correlation. The qualified D86 helper converts
+ * only the seven published Riazi-Daubert reference points and requires a caller-supplied terminal TBP boundary. It does
+ * not interpolate intermediate recovery points or convert ASTM D1160 data.
  * </p>
  */
 public class OilAssayCharacterisation implements Cloneable, Serializable {
@@ -51,6 +53,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double CARBON_ATOMIC_WEIGHT_GRAM_PER_MOL = 12.011;
   private static final double HYDROGEN_ATOMIC_WEIGHT_GRAM_PER_MOL = 1.008;
   private static final double PIANO_PERCENT_CLOSURE_TOLERANCE = 0.1;
+  private static final double BOILING_POINT_BOUNDARY_TOLERANCE_K = 1e-8;
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0;
@@ -224,6 +227,59 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   /**
+   * Add source-qualified ASTM D86 reference-point cuts as atmospheric TBP boundaries.
+   *
+   * <p>
+   * Exactly seven D86 temperatures are required, ordered at the published 0, 10, 30, 50, 70, 90, and 95 liquid-volume
+   * recovery points. Each point is converted with {@link RiaziDaubertDistillationConversion}. Because the qualified
+   * correlation has no 100 vol% point, the final TBP boundary is supplied explicitly by the caller and must exceed the
+   * converted 95 vol% boundary. One specific gravity is required for each resulting interval.
+   * </p>
+   *
+   * <p>
+   * Conversion and terminal-boundary validation complete before any cut is added, so invalid input cannot partially
+   * mutate the assay. This method does not interpolate intermediate recovery points and does not support ASTM D1160.
+   * </p>
+   *
+   * @param namePrefix component-name prefix; generated names are prefix + 1, prefix + 2, ...
+   * @param d86TemperatureCelsius exactly seven D86 temperatures in degC at the qualified recovery points
+   * @param terminalTbpTemperatureCelsius caller-supplied 100 vol% terminal TBP boundary in degC
+   * @param specificGravity specific gravity for each of the seven resulting intervals
+   */
+  public void addD86ReferencePointCutBoundariesCelsius(String namePrefix, double[] d86TemperatureCelsius,
+      double terminalTbpTemperatureCelsius, double[] specificGravity) {
+    if (d86TemperatureCelsius == null) {
+      throw new IllegalArgumentException("D86 reference-point temperatures cannot be null");
+    }
+
+    double[][] referenceData = RiaziDaubertDistillationConversion.getReferenceData();
+    if (d86TemperatureCelsius.length != referenceData.length) {
+      throw new IllegalArgumentException(
+          "Exactly " + referenceData.length + " D86 reference-point temperatures are required");
+    }
+    if (!Double.isFinite(terminalTbpTemperatureCelsius)) {
+      throw new IllegalArgumentException("Terminal TBP boundary must be finite");
+    }
+
+    double[] cumulativeVolumePercent = new double[referenceData.length + 1];
+    double[] tbpTemperatureCelsius = new double[referenceData.length + 1];
+    for (int i = 0; i < referenceData.length; i++) {
+      cumulativeVolumePercent[i] = referenceData[i][0];
+      tbpTemperatureCelsius[i] = RiaziDaubertDistillationConversion.convertD86ToTbpC(d86TemperatureCelsius[i],
+          cumulativeVolumePercent[i]);
+    }
+
+    int terminalIndex = referenceData.length;
+    cumulativeVolumePercent[terminalIndex] = 100.0;
+    tbpTemperatureCelsius[terminalIndex] = terminalTbpTemperatureCelsius;
+    if (!(terminalTbpTemperatureCelsius > tbpTemperatureCelsius[terminalIndex - 1])) {
+      throw new IllegalArgumentException("Terminal TBP boundary must exceed the converted 95 vol% boundary");
+    }
+
+    addTBPCutBoundariesCelsius(namePrefix, cumulativeVolumePercent, tbpTemperatureCelsius, specificGravity);
+  }
+
+  /**
    * Add pre-binned true-boiling-point cuts from cumulative volume-percent boundaries.
    *
    * <p>
@@ -275,6 +331,30 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   }
 
   /**
+   * Add every interval from an immutable TBP cut table to this assay.
+   *
+   * <p>
+   * The table is re-ingested on a liquid-volume basis through the same validation path as
+   * {@link #addTBPCutBoundariesKelvin(String, double[], double[], double[])}. A table returned by
+   * {@link #exportTbpCutTable()} or {@link TbpCutTable#relumpAdjacentCuts(int...)} can therefore be attached to another
+   * thermodynamic system and passed to {@link #apply()} without callers unpacking its arrays. During {@code apply()},
+   * NeqSim recalculates each pseudo-component from the retained boiling interval and specific gravity; it does not
+   * average or copy molecular weight, critical properties, or acentric factor from the source assay.
+   * </p>
+   *
+   * @param namePrefix component-name prefix; generated names are prefix + 1, prefix + 2, ...
+   * @param table immutable TBP cut table to add
+   * @throws IllegalArgumentException if the table is null or its contents cannot define a valid TBP cut table
+   */
+  public void addTBPCutTable(String namePrefix, TbpCutTable table) {
+    if (table == null) {
+      throw new IllegalArgumentException("TBP cut table cannot be null");
+    }
+    addTBPCutBoundariesKelvin(namePrefix, table.getCumulativeVolumePercent(), table.getBoilingPointKelvin(),
+        table.getSpecificGravity());
+  }
+
+  /**
    * Resolve the configured assay to mass fractions without mutating the thermodynamic system.
    *
    * @return mass fractions in the same order as {@link #getCuts()}
@@ -282,6 +362,93 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   public double[] getResolvedMassFractions() {
     double[] fractions = resolveMassFractions();
     return fractions.clone();
+  }
+
+  /**
+   * Resolve the configured assay to liquid-volume fractions without mutating the thermodynamic system.
+   *
+   * <p>
+   * For mass-basis assays, ideal additive liquid volumes are calculated as {@code w_i / SG_i} and normalized by their
+   * sum. Volume-basis assays are recovered through the same mass-resolution path, providing one consistent round-trip
+   * calculation. No temperature correction, excess-volume, or blend-contraction model is applied.
+   * </p>
+   *
+   * @return normalized liquid-volume fractions in the same order as {@link #getCuts()}
+   * @throws IllegalStateException if the assay is incomplete, mixed-basis, or lacks a cut density
+   */
+  public double[] getResolvedVolumeFractions() {
+    double[] massFractions = resolveMassFractions();
+    double[] volumeFractions = new double[cuts.size()];
+    double totalRelativeVolume = 0.0;
+
+    for (int i = 0; i < cuts.size(); i++) {
+      double relativeVolume = massFractions[i] / cuts.get(i).resolveDensity();
+      if (!Double.isFinite(relativeVolume) || relativeVolume < 0.0) {
+        throw new IllegalStateException("Unable to derive volume fraction for assay cut " + cuts.get(i).getName());
+      }
+      volumeFractions[i] = relativeVolume;
+      totalRelativeVolume += relativeVolume;
+    }
+
+    if (cuts.size() > 0 && (!Double.isFinite(totalRelativeVolume) || !(totalRelativeVolume > 0.0))) {
+      throw new IllegalStateException("Unable to derive volume fractions from assay data");
+    }
+    for (int i = 0; i < volumeFractions.length; i++) {
+      volumeFractions[i] /= totalRelativeVolume;
+    }
+    return volumeFractions;
+  }
+
+  /**
+   * Export an immutable TBP cut table from the configured assay.
+   *
+   * <p>
+   * The table contains normalized cumulative liquid-volume percent, contiguous TBP boundaries, and interval specific
+   * gravities. Mass-basis assays are converted using ideal additive liquid volumes through
+   * {@link #getResolvedVolumeFractions()}. Every cut must have positive yield, a complete boiling range, a density, and
+   * a boundary shared with its neighbour. The returned arrays are defensive copies and can be passed back to
+   * {@link #addTBPCutBoundariesKelvin(String, double[], double[], double[])}.
+   * </p>
+   *
+   * @return immutable round-trip TBP cut table
+   * @throws IllegalStateException if the assay cannot define one complete, contiguous, positive-yield TBP table
+   */
+  public TbpCutTable exportTbpCutTable() {
+    if (cuts.isEmpty()) {
+      throw new IllegalStateException("No assay cuts supplied");
+    }
+
+    double[] volumeFractions = getResolvedVolumeFractions();
+    double[] cumulativeVolumePercent = new double[cuts.size() + 1];
+    double[] boilingPointKelvin = new double[cuts.size() + 1];
+    double[] specificGravity = new double[cuts.size()];
+
+    for (int i = 0; i < cuts.size(); i++) {
+      AssayCut cut = cuts.get(i);
+      if (!(volumeFractions[i] > 0.0)) {
+        throw new IllegalStateException("TBP cut-table export requires positive yield for cut " + cut.getName());
+      }
+      if (!cut.hasBoilingRange()) {
+        throw new IllegalStateException(
+            "TBP cut-table export requires a complete boiling range for cut " + cut.getName());
+      }
+
+      double lowerBoundary = cut.getLowerBoilingPointKelvin();
+      double upperBoundary = cut.getUpperBoilingPointKelvin();
+      if (i == 0) {
+        boilingPointKelvin[0] = lowerBoundary;
+      } else if (Math.abs(lowerBoundary - boilingPointKelvin[i]) > BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+        throw new IllegalStateException(
+            "TBP cut boiling ranges must be contiguous between " + cuts.get(i - 1).getName() + " and " + cut.getName());
+      }
+
+      cumulativeVolumePercent[i + 1] = cumulativeVolumePercent[i] + 100.0 * volumeFractions[i];
+      boilingPointKelvin[i + 1] = upperBoundary;
+      specificGravity[i] = cut.resolveDensity();
+    }
+
+    cumulativeVolumePercent[cumulativeVolumePercent.length - 1] = 100.0;
+    return new TbpCutTable(cumulativeVolumePercent, boilingPointKelvin, specificGravity);
   }
 
   /**
@@ -686,6 +853,501 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
   private enum FractionBasis {
     MASS, VOLUME
+  }
+
+  /**
+   * Immutable export of one complete, contiguous TBP cut table.
+   */
+  public static final class TbpCutTable implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double[] cumulativeVolumePercent;
+    private final double[] boilingPointKelvin;
+    private final double[] specificGravity;
+
+    private TbpCutTable(double[] cumulativeVolumePercent, double[] boilingPointKelvin, double[] specificGravity) {
+      this.cumulativeVolumePercent = cumulativeVolumePercent.clone();
+      this.boilingPointKelvin = boilingPointKelvin.clone();
+      this.specificGravity = specificGravity.clone();
+    }
+
+    /**
+     * Return the number of exported boiling intervals.
+     *
+     * @return number of TBP cuts
+     */
+    public int getCutCount() {
+      return specificGravity.length;
+    }
+
+    /**
+     * Return cumulative liquid-volume yield from 0 to 100 percent.
+     *
+     * @return defensive copy of cumulative liquid-volume percent
+     */
+    public double[] getCumulativeVolumePercent() {
+      return cumulativeVolumePercent.clone();
+    }
+
+    /**
+     * Return the TBP boundaries in K.
+     *
+     * @return defensive copy of TBP boundaries in K
+     */
+    public double[] getBoilingPointKelvin() {
+      return boilingPointKelvin.clone();
+    }
+
+    /**
+     * Return the TBP boundaries in degC.
+     *
+     * @return defensive copy of TBP boundaries in degC
+     */
+    public double[] getBoilingPointCelsius() {
+      double[] boilingPointCelsius = new double[boilingPointKelvin.length];
+      for (int i = 0; i < boilingPointKelvin.length; i++) {
+        boilingPointCelsius[i] = boilingPointKelvin[i] - KELVIN_OFFSET;
+      }
+      return boilingPointCelsius;
+    }
+
+    /**
+     * Return the interval specific gravities.
+     *
+     * @return defensive copy of dimensionless interval specific gravities
+     */
+    public double[] getSpecificGravity() {
+      return specificGravity.clone();
+    }
+
+    /**
+     * Return cumulative liquid-volume recovery at a TBP boiling point in K.
+     *
+     * <p>
+     * Recovery is interpolated linearly between the surrounding source-table nodes. Inputs within the qualified
+     * boundary tolerance snap to an exact source node. Extrapolation outside the complete table is rejected.
+     * </p>
+     *
+     * @param boilingPointKelvinValue boiling point in K
+     * @return cumulative liquid-volume recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeVolumePercentAtBoilingPointKelvin(double boilingPointKelvinValue) {
+      return interpolateCumulativeVolumePercent(normalizeBoilingPointQuery(boilingPointKelvinValue));
+    }
+
+    /**
+     * Return cumulative liquid-volume recovery at a TBP boiling point in degC.
+     *
+     * @param boilingPointCelsiusValue boiling point in degC
+     * @return cumulative liquid-volume recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeVolumePercentAtBoilingPointCelsius(double boilingPointCelsiusValue) {
+      return getCumulativeVolumePercentAtBoilingPointKelvin(boilingPointCelsiusValue + KELVIN_OFFSET);
+    }
+
+    /**
+     * Return the TBP boiling point in K at a cumulative liquid-volume recovery.
+     *
+     * <p>
+     * Boiling point is interpolated linearly between the surrounding source-table nodes. Inputs within the percent
+     * tolerance snap to an exact source recovery. Extrapolation outside the complete table is rejected.
+     * </p>
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return TBP boiling point in K
+     * @throws IllegalArgumentException if the recovery is non-finite or outside the table
+     */
+    public double getBoilingPointKelvinAtCumulativeVolumePercent(double cumulativeVolumePercentValue) {
+      return interpolateBoilingPointKelvin(normalizeCumulativeVolumeQuery(cumulativeVolumePercentValue));
+    }
+
+    /**
+     * Return the TBP boiling point in degC at a cumulative liquid-volume recovery.
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return TBP boiling point in degC
+     * @throws IllegalArgumentException if the recovery is non-finite or outside the table
+     */
+    public double getBoilingPointCelsiusAtCumulativeVolumePercent(double cumulativeVolumePercentValue) {
+      return getBoilingPointKelvinAtCumulativeVolumePercent(cumulativeVolumePercentValue) - KELVIN_OFFSET;
+    }
+
+    /**
+     * Return liquid-volume yield between two TBP boiling points in K.
+     *
+     * @param lowerBoilingPointKelvin lower boiling point in K
+     * @param upperBoilingPointKelvin upper boiling point in K
+     * @return liquid-volume yield between the boundaries in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getLiquidVolumePercentBetweenBoilingPointsKelvin(double lowerBoilingPointKelvin,
+        double upperBoilingPointKelvin) {
+      double normalizedLowerBoundary = normalizeBoilingPointQuery(lowerBoilingPointKelvin);
+      double normalizedUpperBoundary = normalizeBoilingPointQuery(upperBoilingPointKelvin);
+      if (!(normalizedUpperBoundary > normalizedLowerBoundary)) {
+        throw new IllegalArgumentException("TBP yield-query boundaries must define a positive interval");
+      }
+      return interpolateCumulativeVolumePercent(normalizedUpperBoundary)
+          - interpolateCumulativeVolumePercent(normalizedLowerBoundary);
+    }
+
+    /**
+     * Return liquid-volume yield between two TBP boiling points in degC.
+     *
+     * @param lowerBoilingPointCelsius lower boiling point in degC
+     * @param upperBoilingPointCelsius upper boiling point in degC
+     * @return liquid-volume yield between the boundaries in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getLiquidVolumePercentBetweenBoilingPointsCelsius(double lowerBoilingPointCelsius,
+        double upperBoilingPointCelsius) {
+      return getLiquidVolumePercentBetweenBoilingPointsKelvin(lowerBoilingPointCelsius + KELVIN_OFFSET,
+          upperBoilingPointCelsius + KELVIN_OFFSET);
+    }
+
+    /**
+     * Split source intervals at caller-supplied TBP boundaries in K.
+     *
+     * <p>
+     * Each split point must lie strictly inside one existing interval and the points must be supplied in strictly
+     * increasing order. Liquid-volume yield is interpolated linearly with boiling temperature inside that source
+     * interval, and the source interval specific gravity is copied to both resulting subcuts. The operation therefore
+     * preserves total liquid-volume yield and implied mass on the table's ideal-additive-volume basis. It does not
+     * infer an intrainterval distillation shape, interpolate density, or estimate any other pseudo-component property.
+     * </p>
+     *
+     * @param splitBoilingPointKelvin strictly increasing new interior TBP boundaries in K
+     * @return immutable finer TBP cut table
+     * @throws IllegalArgumentException if the points are null, empty, non-finite, unordered, outside the table, or
+     * coincide with an existing boundary
+     */
+    public TbpCutTable splitAtBoilingPointsKelvin(double... splitBoilingPointKelvin) {
+      validateSplitBoilingPoints(splitBoilingPointKelvin);
+
+      int outputCutCount = getCutCount() + splitBoilingPointKelvin.length;
+      double[] splitCumulativeVolumePercent = new double[outputCutCount + 1];
+      double[] splitBoundaryKelvin = new double[outputCutCount + 1];
+      double[] splitSpecificGravity = new double[outputCutCount];
+      splitCumulativeVolumePercent[0] = cumulativeVolumePercent[0];
+      splitBoundaryKelvin[0] = boilingPointKelvin[0];
+
+      int outputBoundaryIndex = 0;
+      int splitIndex = 0;
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerBoundary = boilingPointKelvin[sourceCutIndex];
+        double upperBoundary = boilingPointKelvin[sourceCutIndex + 1];
+        double lowerCumulativeVolume = cumulativeVolumePercent[sourceCutIndex];
+        double upperCumulativeVolume = cumulativeVolumePercent[sourceCutIndex + 1];
+
+        while (splitIndex < splitBoilingPointKelvin.length && splitBoilingPointKelvin[splitIndex] < upperBoundary) {
+          double splitBoundary = splitBoilingPointKelvin[splitIndex];
+          double intervalFraction = (splitBoundary - lowerBoundary) / (upperBoundary - lowerBoundary);
+          outputBoundaryIndex++;
+          splitBoundaryKelvin[outputBoundaryIndex] = splitBoundary;
+          splitCumulativeVolumePercent[outputBoundaryIndex] = lowerCumulativeVolume
+              + intervalFraction * (upperCumulativeVolume - lowerCumulativeVolume);
+          splitSpecificGravity[outputBoundaryIndex - 1] = specificGravity[sourceCutIndex];
+          splitIndex++;
+        }
+
+        outputBoundaryIndex++;
+        splitBoundaryKelvin[outputBoundaryIndex] = upperBoundary;
+        splitCumulativeVolumePercent[outputBoundaryIndex] = upperCumulativeVolume;
+        splitSpecificGravity[outputBoundaryIndex - 1] = specificGravity[sourceCutIndex];
+      }
+
+      return new TbpCutTable(splitCumulativeVolumePercent, splitBoundaryKelvin, splitSpecificGravity);
+    }
+
+    /**
+     * Split source intervals at caller-supplied TBP boundaries in degrees Celsius.
+     *
+     * @param splitBoilingPointCelsius strictly increasing new interior TBP boundaries in degrees Celsius
+     * @return immutable finer TBP cut table
+     * @throws IllegalArgumentException if the points cannot define valid new interior boundaries
+     * @see #splitAtBoilingPointsKelvin(double...)
+     */
+    public TbpCutTable splitAtBoilingPointsCelsius(double... splitBoilingPointCelsius) {
+      if (splitBoilingPointCelsius == null) {
+        throw new IllegalArgumentException("TBP split boundaries cannot be null");
+      }
+      double[] splitBoilingPointKelvin = new double[splitBoilingPointCelsius.length];
+      for (int i = 0; i < splitBoilingPointCelsius.length; i++) {
+        splitBoilingPointKelvin[i] = splitBoilingPointCelsius[i] + KELVIN_OFFSET;
+      }
+      return splitAtBoilingPointsKelvin(splitBoilingPointKelvin);
+    }
+
+    private void validateSplitBoilingPoints(double[] splitBoilingPointKelvin) {
+      if (splitBoilingPointKelvin == null || splitBoilingPointKelvin.length == 0) {
+        throw new IllegalArgumentException("At least one TBP split boundary is required");
+      }
+
+      double previousSplit = Double.NEGATIVE_INFINITY;
+      for (double splitBoundary : splitBoilingPointKelvin) {
+        if (!Double.isFinite(splitBoundary)) {
+          throw new IllegalArgumentException("TBP split boundaries must be finite");
+        }
+        if (!(splitBoundary > boilingPointKelvin[0]
+            && splitBoundary < boilingPointKelvin[boilingPointKelvin.length - 1])) {
+          throw new IllegalArgumentException("TBP split boundaries must lie strictly inside the cut table");
+        }
+        if (!(splitBoundary > previousSplit)) {
+          throw new IllegalArgumentException("TBP split boundaries must be strictly increasing");
+        }
+        for (double existingBoundary : boilingPointKelvin) {
+          if (Math.abs(splitBoundary - existingBoundary) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+            throw new IllegalArgumentException("TBP split boundary coincides with an existing boundary");
+          }
+        }
+        previousSplit = splitBoundary;
+      }
+    }
+
+    /**
+     * Resample this cut table onto a caller-supplied complete TBP boundary grid in K.
+     *
+     * <p>
+     * The target grid must span the source table's first and last boundaries. Cumulative liquid-volume yield is
+     * retained at existing boundaries and interpolated linearly with boiling temperature inside each source interval.
+     * Target-interval specific gravity is the liquid-volume-weighted mean of the overlapping source-interval values.
+     * The operation therefore preserves total liquid-volume yield and implied mass on the table's ideal-additive-volume
+     * basis.
+     * </p>
+     *
+     * <p>
+     * This method applies the same explicit piecewise-linear recovery and constant source-interval specific-gravity
+     * assumptions as cut splitting and adjacent re-lumping. It does not infer an intrainterval distillation shape,
+     * interpolate density with temperature, extrapolate, or estimate any other pseudo-component property.
+     * </p>
+     *
+     * @param targetBoilingPointKelvin complete strictly increasing target TBP boundary grid in K
+     * @return immutable TBP cut table on the requested grid
+     * @throws IllegalArgumentException if the grid is null, has fewer than two points, contains non-finite or unordered
+     * points, or does not span the source endpoints
+     */
+    public TbpCutTable resampleAtBoilingPointsKelvin(double... targetBoilingPointKelvin) {
+      double[] targetBoundaryKelvin = validateAndNormalizeTargetGrid(targetBoilingPointKelvin);
+      double[] targetCumulativeVolumePercent = new double[targetBoundaryKelvin.length];
+      for (int i = 0; i < targetBoundaryKelvin.length; i++) {
+        targetCumulativeVolumePercent[i] = interpolateCumulativeVolumePercent(targetBoundaryKelvin[i]);
+      }
+
+      double[] targetSpecificGravity = new double[targetBoundaryKelvin.length - 1];
+      for (int targetCutIndex = 0; targetCutIndex < targetSpecificGravity.length; targetCutIndex++) {
+        double lowerTargetBoundary = targetBoundaryKelvin[targetCutIndex];
+        double upperTargetBoundary = targetBoundaryKelvin[targetCutIndex + 1];
+        double targetVolumePercent = targetCumulativeVolumePercent[targetCutIndex + 1]
+            - targetCumulativeVolumePercent[targetCutIndex];
+        double targetImpliedMass = 0.0;
+
+        for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+          double overlapLowerBoundary = Math.max(lowerTargetBoundary, boilingPointKelvin[sourceCutIndex]);
+          double overlapUpperBoundary = Math.min(upperTargetBoundary, boilingPointKelvin[sourceCutIndex + 1]);
+          if (overlapUpperBoundary > overlapLowerBoundary) {
+            double overlapVolumePercent = interpolateCumulativeVolumePercent(overlapUpperBoundary)
+                - interpolateCumulativeVolumePercent(overlapLowerBoundary);
+            targetImpliedMass += overlapVolumePercent * specificGravity[sourceCutIndex];
+          }
+        }
+        targetSpecificGravity[targetCutIndex] = targetImpliedMass / targetVolumePercent;
+      }
+
+      return new TbpCutTable(targetCumulativeVolumePercent, targetBoundaryKelvin, targetSpecificGravity);
+    }
+
+    /**
+     * Resample this cut table onto a caller-supplied complete TBP boundary grid in degrees Celsius.
+     *
+     * @param targetBoilingPointCelsius complete strictly increasing target TBP boundary grid in degrees Celsius
+     * @return immutable TBP cut table on the requested grid
+     * @throws IllegalArgumentException if the points cannot define a valid complete target grid
+     * @see #resampleAtBoilingPointsKelvin(double...)
+     */
+    public TbpCutTable resampleAtBoilingPointsCelsius(double... targetBoilingPointCelsius) {
+      if (targetBoilingPointCelsius == null) {
+        throw new IllegalArgumentException("TBP target grid cannot be null");
+      }
+      double[] targetBoilingPointKelvin = new double[targetBoilingPointCelsius.length];
+      for (int i = 0; i < targetBoilingPointCelsius.length; i++) {
+        targetBoilingPointKelvin[i] = targetBoilingPointCelsius[i] + KELVIN_OFFSET;
+      }
+      return resampleAtBoilingPointsKelvin(targetBoilingPointKelvin);
+    }
+
+    private double[] validateAndNormalizeTargetGrid(double[] targetBoilingPointKelvin) {
+      if (targetBoilingPointKelvin == null || targetBoilingPointKelvin.length < 2) {
+        throw new IllegalArgumentException("A complete TBP target grid requires at least two boundaries");
+      }
+
+      double[] normalizedTargetBoundaryKelvin = targetBoilingPointKelvin.clone();
+      for (int targetIndex = 0; targetIndex < normalizedTargetBoundaryKelvin.length; targetIndex++) {
+        double targetBoundary = normalizedTargetBoundaryKelvin[targetIndex];
+        if (!Double.isFinite(targetBoundary)) {
+          throw new IllegalArgumentException("TBP target-grid boundaries must be finite");
+        }
+        for (double sourceBoundary : boilingPointKelvin) {
+          if (Math.abs(targetBoundary - sourceBoundary) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+            normalizedTargetBoundaryKelvin[targetIndex] = sourceBoundary;
+            break;
+          }
+        }
+        if (targetIndex > 0
+            && !(normalizedTargetBoundaryKelvin[targetIndex] > normalizedTargetBoundaryKelvin[targetIndex - 1])) {
+          throw new IllegalArgumentException("TBP target-grid boundaries must be strictly increasing");
+        }
+      }
+
+      if (normalizedTargetBoundaryKelvin[0] != boilingPointKelvin[0]
+          || normalizedTargetBoundaryKelvin[normalizedTargetBoundaryKelvin.length
+              - 1] != boilingPointKelvin[boilingPointKelvin.length - 1]) {
+        throw new IllegalArgumentException("TBP target grid must span the source table endpoints");
+      }
+      return normalizedTargetBoundaryKelvin;
+    }
+
+    /**
+     * Validate one boiling-point query and snap values within tolerance to source nodes.
+     *
+     * @param boilingPointKelvinValue boiling point in K
+     * @return validated and normalized boiling point in K
+     */
+    private double normalizeBoilingPointQuery(double boilingPointKelvinValue) {
+      if (!Double.isFinite(boilingPointKelvinValue)) {
+        throw new IllegalArgumentException("TBP boiling-point query must be finite");
+      }
+      for (double sourceBoundaryKelvin : boilingPointKelvin) {
+        if (Math.abs(boilingPointKelvinValue - sourceBoundaryKelvin) <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+          return sourceBoundaryKelvin;
+        }
+      }
+      if (boilingPointKelvinValue < boilingPointKelvin[0]
+          || boilingPointKelvinValue > boilingPointKelvin[boilingPointKelvin.length - 1]) {
+        throw new IllegalArgumentException("TBP boiling-point query must lie within the source table");
+      }
+      return boilingPointKelvinValue;
+    }
+
+    /**
+     * Validate one recovery query and snap values within tolerance to source nodes.
+     *
+     * @param cumulativeVolumePercentValue cumulative liquid-volume recovery in percent
+     * @return validated and normalized cumulative recovery in percent
+     */
+    private double normalizeCumulativeVolumeQuery(double cumulativeVolumePercentValue) {
+      if (!Double.isFinite(cumulativeVolumePercentValue)) {
+        throw new IllegalArgumentException("TBP cumulative-volume query must be finite");
+      }
+      for (double sourceRecoveryPercent : cumulativeVolumePercent) {
+        if (Math.abs(cumulativeVolumePercentValue - sourceRecoveryPercent) <= PERCENT_TOLERANCE) {
+          return sourceRecoveryPercent;
+        }
+      }
+      if (cumulativeVolumePercentValue < cumulativeVolumePercent[0]
+          || cumulativeVolumePercentValue > cumulativeVolumePercent[cumulativeVolumePercent.length - 1]) {
+        throw new IllegalArgumentException("TBP cumulative-volume query must lie within the source table");
+      }
+      return cumulativeVolumePercentValue;
+    }
+
+    /**
+     * Interpolate cumulative recovery on the validated piecewise-linear TBP table.
+     *
+     * @param targetBoundaryKelvin validated boiling point in K
+     * @return cumulative liquid-volume recovery in percent
+     */
+    private double interpolateCumulativeVolumePercent(double targetBoundaryKelvin) {
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerBoundary = boilingPointKelvin[sourceCutIndex];
+        double upperBoundary = boilingPointKelvin[sourceCutIndex + 1];
+        if (targetBoundaryKelvin <= upperBoundary) {
+          double intervalFraction = (targetBoundaryKelvin - lowerBoundary) / (upperBoundary - lowerBoundary);
+          return cumulativeVolumePercent[sourceCutIndex] + intervalFraction
+              * (cumulativeVolumePercent[sourceCutIndex + 1] - cumulativeVolumePercent[sourceCutIndex]);
+        }
+      }
+      return cumulativeVolumePercent[cumulativeVolumePercent.length - 1];
+    }
+
+    /**
+     * Interpolate boiling point on the validated inverse piecewise-linear TBP table.
+     *
+     * @param targetCumulativeVolumePercent validated cumulative liquid-volume recovery in percent
+     * @return boiling point in K
+     */
+    private double interpolateBoilingPointKelvin(double targetCumulativeVolumePercent) {
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerRecovery = cumulativeVolumePercent[sourceCutIndex];
+        double upperRecovery = cumulativeVolumePercent[sourceCutIndex + 1];
+        if (targetCumulativeVolumePercent <= upperRecovery) {
+          double intervalFraction = (targetCumulativeVolumePercent - lowerRecovery) / (upperRecovery - lowerRecovery);
+          return boilingPointKelvin[sourceCutIndex]
+              + intervalFraction * (boilingPointKelvin[sourceCutIndex + 1] - boilingPointKelvin[sourceCutIndex]);
+        }
+      }
+      return boilingPointKelvin[boilingPointKelvin.length - 1];
+    }
+
+    /**
+     * Merge adjacent source cuts into a caller-defined sequence of coarser lumps.
+     *
+     * <p>
+     * Each argument gives the number of consecutive source cuts in one output lump. Liquid-volume yield and retained
+     * TBP boundaries are copied exactly. The specific gravity of each output lump is the liquid-volume-weighted mean of
+     * its source intervals, preserving the implied mass under the same ideal-additive-volume assumption used by the
+     * assay export. This method never splits a source cut, interpolates a boundary, or estimates molecular weight or
+     * other pseudo-component properties.
+     * </p>
+     *
+     * @param sourceCutsPerLump positive number of adjacent source cuts in each output lump
+     * @return immutable coarser TBP cut table
+     * @throws IllegalArgumentException if the partition is null, empty, contains a non-positive count, or does not
+     * consume every source cut exactly once
+     */
+    public TbpCutTable relumpAdjacentCuts(int... sourceCutsPerLump) {
+      if (sourceCutsPerLump == null || sourceCutsPerLump.length == 0) {
+        throw new IllegalArgumentException("At least one adjacent-cut lump is required");
+      }
+
+      int consumedCutCount = 0;
+      for (int cutCount : sourceCutsPerLump) {
+        if (cutCount <= 0) {
+          throw new IllegalArgumentException("Each adjacent-cut lump must contain at least one source cut");
+        }
+        if (cutCount > getCutCount() - consumedCutCount) {
+          throw new IllegalArgumentException("Adjacent-cut partition exceeds the source cut count");
+        }
+        consumedCutCount += cutCount;
+      }
+      if (consumedCutCount != getCutCount()) {
+        throw new IllegalArgumentException("Adjacent-cut partition must consume every source cut exactly once");
+      }
+
+      double[] relumpedCumulativeVolumePercent = new double[sourceCutsPerLump.length + 1];
+      double[] relumpedBoilingPointKelvin = new double[sourceCutsPerLump.length + 1];
+      double[] relumpedSpecificGravity = new double[sourceCutsPerLump.length];
+      relumpedCumulativeVolumePercent[0] = cumulativeVolumePercent[0];
+      relumpedBoilingPointKelvin[0] = boilingPointKelvin[0];
+
+      int sourceCutIndex = 0;
+      for (int lumpIndex = 0; lumpIndex < sourceCutsPerLump.length; lumpIndex++) {
+        int sourceCutEnd = sourceCutIndex + sourceCutsPerLump[lumpIndex];
+        double lumpVolumePercent = cumulativeVolumePercent[sourceCutEnd] - cumulativeVolumePercent[sourceCutIndex];
+        double volumeWeightedSpecificGravity = 0.0;
+        for (int cutIndex = sourceCutIndex; cutIndex < sourceCutEnd; cutIndex++) {
+          double cutVolumePercent = cumulativeVolumePercent[cutIndex + 1] - cumulativeVolumePercent[cutIndex];
+          volumeWeightedSpecificGravity += cutVolumePercent * specificGravity[cutIndex];
+        }
+
+        relumpedCumulativeVolumePercent[lumpIndex + 1] = cumulativeVolumePercent[sourceCutEnd];
+        relumpedBoilingPointKelvin[lumpIndex + 1] = boilingPointKelvin[sourceCutEnd];
+        relumpedSpecificGravity[lumpIndex] = volumeWeightedSpecificGravity / lumpVolumePercent;
+        sourceCutIndex = sourceCutEnd;
+      }
+
+      return new TbpCutTable(relumpedCumulativeVolumePercent, relumpedBoilingPointKelvin, relumpedSpecificGravity);
+    }
   }
 
   private static final class ResolvedCut {

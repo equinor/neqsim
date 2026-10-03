@@ -32,13 +32,19 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
   private final String compilationLicense;
   private final String originalReference;
   private final String originalReferenceDoi;
+  private final String originalReferenceUrl;
+  private final String originalReferenceRights;
+  private final String sourceInchiKey;
+  private final String identityBasis;
   private final String uncertainty;
   private final String temperatureScope;
 
   HenryWaterReferencePoint(String componentName, String sourceSpeciesName, String casNumber,
       double solubilityMolalityPerAtm, double referenceTemperatureK, double referencePressureMPa, String referenceId,
       String status, String solvent, String convention, String source, String compilationDoi, String compilationLicense,
-      String originalReference, String originalReferenceDoi, String uncertainty, String temperatureScope) {
+      String originalReference, String originalReferenceDoi, String originalReferenceUrl,
+      String originalReferenceRights, String sourceInchiKey, String identityBasis, String uncertainty,
+      String temperatureScope) {
     this.componentName = componentName;
     this.sourceSpeciesName = sourceSpeciesName;
     this.casNumber = casNumber;
@@ -54,6 +60,10 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
     this.compilationLicense = compilationLicense;
     this.originalReference = originalReference;
     this.originalReferenceDoi = originalReferenceDoi;
+    this.originalReferenceUrl = originalReferenceUrl;
+    this.originalReferenceRights = originalReferenceRights;
+    this.sourceInchiKey = sourceInchiKey;
+    this.identityBasis = identityBasis;
     this.uncertainty = uncertainty;
     this.temperatureScope = temperatureScope;
   }
@@ -83,7 +93,7 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
     return referenceTemperatureK;
   }
 
-  /** @return reference pressure in MPa */
+  /** @return source reference pressure in MPa, or {@link Double#NaN} when not reported */
   public double getReferencePressureMPa() {
     return referencePressureMPa;
   }
@@ -131,6 +141,26 @@ public final class HenryWaterReferencePoint implements Serializable, Cloneable {
   /** @return DOI of the cited original source */
   public String getOriginalReferenceDoi() {
     return originalReferenceDoi;
+  }
+
+  /** @return stable URL for the cited original source */
+  public String getOriginalReferenceUrl() {
+    return originalReferenceUrl;
+  }
+
+  /** @return reuse-rights boundary for the cited original source */
+  public String getOriginalReferenceRights() {
+    return originalReferenceRights;
+  }
+
+  /** @return source InChIKey, or an empty string when not recorded in the legacy batch */
+  public String getSourceInchiKey() {
+    return sourceInchiKey;
+  }
+
+  /** @return documented component-to-source identity basis */
+  public String getIdentityBasis() {
+    return identityBasis;
   }
 
   /** @return explicit uncertainty limitation */

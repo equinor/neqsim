@@ -1885,8 +1885,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
       // Standard inversion for well-conditioned matrices
       SimpleMatrix inverseMatrix = ejmlMatrix.invert();
-      int nRows = inverseMatrix.numRows();
-      int nCols = inverseMatrix.numCols();
+      int nRows = inverseMatrix.getDDRM().getNumRows();
+      int nCols = inverseMatrix.getDDRM().getNumCols();
       double[][] result = new double[nRows][nCols];
       double[] data = inverseMatrix.getDDRM().getData();
       for (int i = 0; i < nRows; i++) {
@@ -1901,8 +1901,8 @@ public class GibbsReactor extends TwoPortEquipment {
       try {
         SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
         SimpleMatrix inverseMatrix = ejmlMatrix.pseudoInverse();
-        int nRows = inverseMatrix.numRows();
-        int nCols = inverseMatrix.numCols();
+        int nRows = inverseMatrix.getDDRM().getNumRows();
+        int nCols = inverseMatrix.getDDRM().getNumCols();
         double[][] result = new double[nRows][nCols];
         double[] data = inverseMatrix.getDDRM().getData();
         for (int i = 0; i < nRows; i++) {
@@ -1943,7 +1943,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // explicit inverse. See Nocedal & Wright, Numerical Optimization (2000), Ch. 3.
       SimpleMatrix deltaX = jMatrix.solve(fVector);
 
-      int nRows = deltaX.numRows();
+      int nRows = deltaX.getDDRM().getNumRows();
       double[] result = new double[nRows];
       double[] data = deltaX.getDDRM().getData();
       for (int i = 0; i < nRows; i++) {
@@ -1959,7 +1959,7 @@ public class GibbsReactor extends TwoPortEquipment {
         SimpleMatrix fVector = new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
         SimpleMatrix jInv = jMatrix.pseudoInverse();
         SimpleMatrix deltaX = jInv.mult(fVector).scale(-1.0);
-        int nRows = deltaX.numRows();
+        int nRows = deltaX.getDDRM().getNumRows();
         double[] result = new double[nRows];
         double[] data = deltaX.getDDRM().getData();
         for (int i = 0; i < nRows; i++) {
@@ -2227,7 +2227,7 @@ public class GibbsReactor extends TwoPortEquipment {
         SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
         SimpleMatrix objectiveVectorEJML = new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
         SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
-        int nRows = deltaXMatrix.numRows();
+        int nRows = deltaXMatrix.getDDRM().getNumRows();
         double[] fallbackResult = new double[nRows];
         double[] data = deltaXMatrix.getDDRM().getData();
         for (int i = 0; i < nRows; i++) {

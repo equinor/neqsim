@@ -2454,6 +2454,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Setter for property <code>beta</code>.
+   *
    * <p>
    * NB! Sets beta = b for first (heaviest) phase and 1-b for second (lightest) phase, not for multiphase systems.
    * </p>
@@ -2703,6 +2704,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Prepares the fluid for wax-equilibrium calculations using the selected solid-solution model.
+   *
+   * <p>
+   * If an unresolved plus fraction is present it is characterized first. The method then creates wax-forming
+   * pseudo-components, refreshes component database data, installs the wax phase, enables wax and multiphase checks,
+   * and initializes the system. The EOS and mixing rule are intentionally left unchanged.
+   * </p>
+   *
+   * @param modelName wax model name, for example {@code "Pedersen"}, {@code "Won"}, {@code "Wilson"}, or
+   * {@code "Coutinho"}
+   */
+  public default void enableWaxModel(String modelName) {
+    throw new UnsupportedOperationException("Wax model setup is not supported by this system implementation");
+  }
+
+  /**
    * Setter for property <code>numberOfPhases</code>.
    *
    * @param number Number of phases to use.
@@ -2948,6 +2965,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Disabling is safe and idempotent even when no solid phase has been allocated. It preserves the phase count,
    * composition and component inventories without reallocating phases or recalculating equilibrium.
    * </p>
+   *
    * <p>
    * Enabling allocates solid storage but does not change {@link #doMultiPhaseCheck()}. Enable fluid multiphase checking
    * separately when additional liquid phases are required.

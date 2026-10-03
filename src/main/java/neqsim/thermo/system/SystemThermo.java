@@ -5769,6 +5769,29 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public void enableWaxModel(String modelName) {
+    // Validate/select the model before constructing a wax phase because PhaseWax components are
+    // created using the selected solid-solution model.
+    setWaxModelType(modelName);
+
+    // A raw plus fraction must be split/lumped before wax formers are generated. Calling
+    // characterization only when one is still present keeps this convenience method safe for
+    // already-characterized fluids.
+    if (hasPlusFraction()) {
+      getCharacterization().characterisePlusFraction();
+    }
+
+    getWaxModel().addTBPWax();
+    createDatabase(true);
+    addSolidComplexPhase("wax");
+    setMultiphaseWaxCheck(true);
+    setMultiPhaseCheck(true);
+    init(0);
+    init(1);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setNumberOfPhases(int number) {
     this.numberOfPhases = number;
     if (numberOfPhases > getMaxNumberOfPhases()) {

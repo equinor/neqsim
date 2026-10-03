@@ -100,33 +100,53 @@ public interface StreamInterface extends ProcessEquipmentInterface {
   public double TVP(double referenceTemperature, String unit);
 
   /**
-   * Calculates the True Vapor Pressure (TVP) of the stream.
+   * Calculates EOS bubble-point TVP for the supplied composition at the specified temperature.
    *
-   * @param referenceTemperature a double
-   * @param unit a {@link java.lang.String} object
-   * @param returnUnit a {@link java.lang.String} object
-   * @return a double
+   * <p>
+   * No water removal or external water-saturation correction is performed. A declared water-contact approximation on an
+   * audited dry model adds the full independent water saturation pressure at this same temperature. TVP at 30 degrees
+   * Celsius is not interchangeable with VPCR4 or correlated RVPE at 37.8 degrees Celsius. See the
+   * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">water-basis guide</a>.
+   *
+   * @param referenceTemperature reference temperature within the fluid model's validity range
+   * @param unit temperature unit, for example "C" or "K"
+   * @param returnUnit pressure unit; use an absolute unit such as "bara" or "kPa" for reporting
+   * @return bubble-point pressure in the requested unit; the Stream implementation returns zero on flash exception
    */
   public double getTVP(double referenceTemperature, String unit, String returnUnit);
 
   /**
-   * Calculates the Reid Vapor Pressure (RVP) of the stream.
+   * Calculates raw VPCR4 (vapor/liquid volume ratio 4:1), not correlated RVPE.
    *
-   * @param referenceTemperature a double
-   * @param unit a {@link java.lang.String} object
-   * @param returnUnit a {@link java.lang.String} object
-   * @return a double
+   * <p>
+   * Despite the method name, this overload defaults to "VPCR4", not "RVP_ASTM_D6377". It uses the supplied composition
+   * without independent water-saturation addition. A positive value is not a convergence certificate or laboratory
+   * compliance result; verify the corrected volume ratio.
+   *
+   * @param referenceTemperature reference temperature, normally 37.8 degrees Celsius
+   * @param unit temperature unit, for example "C" or "K"
+   * @param returnUnit pressure unit; use an absolute unit such as "bara" or "kPa" for reporting
+   * @return raw VPCR4 in the requested unit, or zero if standard evaluation throws
+   * @see #getRVP(double, String, String, String)
    */
   public double getRVP(double referenceTemperature, String unit, String returnUnit);
 
   /**
-   * Calculates the Reid Vapor Pressure (RVP) of the stream.
+   * Calculates the explicitly selected vapor-pressure result.
    *
-   * @param referenceTemperature the reference temperature at which RVP is calculated
-   * @param unit the unit of the reference temperature
-   * @param returnUnit the unit in which the RVP should be returned
-   * @param rvpMethod the method used to calculate RVP
-   * @return the calculated RVP in the specified return unit
+   * <p>
+   * "RVP_ASTM_D6377" returns 0.834 times VPCR4 on the supplied composition. "VPCR4_no_water" returns raw dry VPCR4, not
+   * dry RVPE; audit all-phase characterization and retained BIPs before using that removal path. For a declared
+   * water-contact approximation, multiply the sum of audited dry VPCR4 and independent water saturation pressure by
+   * 0.834. Do not add the full water pressure to an already correlated RVPE. See the
+   * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">water-basis guide</a>.
+   *
+   * @param referenceTemperature reference temperature, normally 37.8 degrees Celsius
+   * @param unit temperature unit, for example "C" or "K"
+   * @param returnUnit pressure unit; use an absolute unit such as "bara" or "kPa" for reporting
+   * @param rvpMethod legacy method label from Standard_ASTM_D6377.RvpMethod; use its getLabel() value
+   * @return selected result in the requested unit; check validity and convergence before interpretation
+   * @see neqsim.standards.oilquality.Standard_ASTM_D6377
    */
   public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod);
 

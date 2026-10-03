@@ -26,6 +26,11 @@ NeqSim provides thermodynamics-based implementations of key ASTM standards used 
 
 All classes are in `neqsim.standards.oilquality`.
 
+For raw VPCR4 versus correlated RVPE, bubble-point TVP, and an explicitly declared
+dry-hydrocarbon plus water-saturation storage basis, see the
+[vapor-pressure water-basis guide](astm_d6377_rvp.md#water-contact-storage-a-declared-engineering-basis).
+This engineering approximation does not establish ASTM laboratory equivalence or product compliance.
+
 ---
 
 ## Quick Start

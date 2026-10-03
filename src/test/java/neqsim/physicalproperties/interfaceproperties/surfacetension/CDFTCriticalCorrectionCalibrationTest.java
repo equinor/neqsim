@@ -52,6 +52,7 @@ class CDFTCriticalCorrectionCalibrationTest {
   /**
    * Sweep lambda with critical correction applied, PR EOS.
    */
+  @Tag("slow")
   @Test
   void sweepLambdaWithCriticalCorrection() {
     logger.info("\n=== Sweep lambda WITH critical correction (PR) ===");
@@ -119,6 +120,7 @@ class CDFTCriticalCorrectionCalibrationTest {
   /**
    * Find per-component optimal lambda to check correlation with acentric factor.
    */
+  @Tag("slow")
   @Test
   void perComponentOptimalLambda() {
     logger.info("\n=== Per-component optimal lambda (PR, with correction) ===");

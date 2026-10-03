@@ -14,12 +14,13 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -33,6 +34,8 @@ import neqsim.thermo.system.SystemInterface;
 public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Dense linear algebra used by the element-balance calculation. */
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 
@@ -433,10 +436,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    * @return element inventories followed by the reactive charge needed for total electroneutrality
    */
   public double[] calcBVector() {
-    Matrix tempA = new Matrix(Amatrix);
-    Matrix tempB = new Matrix(nVector, 1);
-    Matrix tempN = tempA.times(tempB.transpose()).transpose();
-    double[] conservedQuantities = tempN.getArray()[0];
+    double[] conservedQuantities = ALGEBRA.multiply(Amatrix, nVector);
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0) {
       reactivePhase = 0;

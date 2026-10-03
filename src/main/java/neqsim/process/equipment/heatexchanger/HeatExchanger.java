@@ -31,8 +31,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider,
-    neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
+public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -390,6 +389,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       specifiedOut.setTemperature(temperatureOut, temperatureOutUnit);
       ThermodynamicOperations specOps = new ThermodynamicOperations(specifiedOut);
       specOps.TPflash();
+      // Rebuild caloric properties before using the pinned side in the energy balance.
+      specifiedOut.init(2);
       outStream[outStreamSpecificationNumber]
           .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
       outStream[outStreamSpecificationNumber].setThermoSystem(specifiedOut);
