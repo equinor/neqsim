@@ -1019,6 +1019,139 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Resample this cut table onto a caller-supplied complete TBP boundary grid in K.
+     *
+     * <p>
+     * The target grid must span the source table's first and last boundaries. Cumulative
+     * liquid-volume yield is retained at existing boundaries and interpolated linearly with
+     * boiling temperature inside each source interval. Target-interval specific gravity is the
+     * liquid-volume-weighted mean of the overlapping source-interval values. The operation
+     * therefore preserves total liquid-volume yield and implied mass on the table's
+     * ideal-additive-volume basis.
+     * </p>
+     *
+     * <p>
+     * This method applies the same explicit piecewise-linear recovery and constant
+     * source-interval specific-gravity assumptions as cut splitting and adjacent re-lumping. It
+     * does not infer an intrainterval distillation shape, interpolate density with temperature,
+     * extrapolate, or estimate any other pseudo-component property.
+     * </p>
+     *
+     * @param targetBoilingPointKelvin complete strictly increasing target TBP boundary grid in K
+     * @return immutable TBP cut table on the requested grid
+     * @throws IllegalArgumentException if the grid is null, has fewer than two points, contains
+     * non-finite or unordered points, or does not span the source endpoints
+     */
+    public TbpCutTable resampleAtBoilingPointsKelvin(double... targetBoilingPointKelvin) {
+      double[] targetBoundaryKelvin = validateAndNormalizeTargetGrid(targetBoilingPointKelvin);
+      double[] targetCumulativeVolumePercent = new double[targetBoundaryKelvin.length];
+      for (int i = 0; i < targetBoundaryKelvin.length; i++) {
+        targetCumulativeVolumePercent[i] =
+            interpolateCumulativeVolumePercent(targetBoundaryKelvin[i]);
+      }
+
+      double[] targetSpecificGravity = new double[targetBoundaryKelvin.length - 1];
+      for (int targetCutIndex = 0; targetCutIndex < targetSpecificGravity.length;
+          targetCutIndex++) {
+        double lowerTargetBoundary = targetBoundaryKelvin[targetCutIndex];
+        double upperTargetBoundary = targetBoundaryKelvin[targetCutIndex + 1];
+        double targetVolumePercent = targetCumulativeVolumePercent[targetCutIndex + 1]
+            - targetCumulativeVolumePercent[targetCutIndex];
+        double targetImpliedMass = 0.0;
+
+        for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+          double overlapLowerBoundary =
+              Math.max(lowerTargetBoundary, boilingPointKelvin[sourceCutIndex]);
+          double overlapUpperBoundary =
+              Math.min(upperTargetBoundary, boilingPointKelvin[sourceCutIndex + 1]);
+          if (overlapUpperBoundary > overlapLowerBoundary) {
+            double overlapVolumePercent =
+                interpolateCumulativeVolumePercent(overlapUpperBoundary)
+                    - interpolateCumulativeVolumePercent(overlapLowerBoundary);
+            targetImpliedMass += overlapVolumePercent * specificGravity[sourceCutIndex];
+          }
+        }
+        targetSpecificGravity[targetCutIndex] = targetImpliedMass / targetVolumePercent;
+      }
+
+      return new TbpCutTable(targetCumulativeVolumePercent, targetBoundaryKelvin,
+          targetSpecificGravity);
+    }
+
+    /**
+     * Resample this cut table onto a caller-supplied complete TBP boundary grid in degrees
+     * Celsius.
+     *
+     * @param targetBoilingPointCelsius complete strictly increasing target TBP boundary grid in
+     * degrees Celsius
+     * @return immutable TBP cut table on the requested grid
+     * @throws IllegalArgumentException if the points cannot define a valid complete target grid
+     * @see #resampleAtBoilingPointsKelvin(double...)
+     */
+    public TbpCutTable resampleAtBoilingPointsCelsius(double... targetBoilingPointCelsius) {
+      if (targetBoilingPointCelsius == null) {
+        throw new IllegalArgumentException("TBP target grid cannot be null");
+      }
+      double[] targetBoilingPointKelvin = new double[targetBoilingPointCelsius.length];
+      for (int i = 0; i < targetBoilingPointCelsius.length; i++) {
+        targetBoilingPointKelvin[i] = targetBoilingPointCelsius[i] + KELVIN_OFFSET;
+      }
+      return resampleAtBoilingPointsKelvin(targetBoilingPointKelvin);
+    }
+
+    private double[] validateAndNormalizeTargetGrid(double[] targetBoilingPointKelvin) {
+      if (targetBoilingPointKelvin == null || targetBoilingPointKelvin.length < 2) {
+        throw new IllegalArgumentException("A complete TBP target grid requires at least two boundaries");
+      }
+
+      double[] normalizedTargetBoundaryKelvin = targetBoilingPointKelvin.clone();
+      for (int targetIndex = 0; targetIndex < normalizedTargetBoundaryKelvin.length;
+          targetIndex++) {
+        double targetBoundary = normalizedTargetBoundaryKelvin[targetIndex];
+        if (!Double.isFinite(targetBoundary)) {
+          throw new IllegalArgumentException("TBP target-grid boundaries must be finite");
+        }
+        for (double sourceBoundary : boilingPointKelvin) {
+          if (Math.abs(targetBoundary - sourceBoundary)
+              <= BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+            normalizedTargetBoundaryKelvin[targetIndex] = sourceBoundary;
+            break;
+          }
+        }
+        if (targetIndex > 0
+            && !(normalizedTargetBoundaryKelvin[targetIndex]
+                > normalizedTargetBoundaryKelvin[targetIndex - 1])) {
+          throw new IllegalArgumentException(
+              "TBP target-grid boundaries must be strictly increasing");
+        }
+      }
+
+      if (normalizedTargetBoundaryKelvin[0] != boilingPointKelvin[0]
+          || normalizedTargetBoundaryKelvin[normalizedTargetBoundaryKelvin.length - 1]
+              != boilingPointKelvin[boilingPointKelvin.length - 1]) {
+        throw new IllegalArgumentException(
+            "TBP target grid must span the source table endpoints");
+      }
+      return normalizedTargetBoundaryKelvin;
+    }
+
+    private double interpolateCumulativeVolumePercent(double targetBoundaryKelvin) {
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double lowerBoundary = boilingPointKelvin[sourceCutIndex];
+        double upperBoundary = boilingPointKelvin[sourceCutIndex + 1];
+        if (targetBoundaryKelvin <= upperBoundary) {
+          double intervalFraction =
+              (targetBoundaryKelvin - lowerBoundary) / (upperBoundary - lowerBoundary);
+          return cumulativeVolumePercent[sourceCutIndex]
+              + intervalFraction
+                  * (cumulativeVolumePercent[sourceCutIndex + 1]
+                      - cumulativeVolumePercent[sourceCutIndex]);
+        }
+      }
+      return cumulativeVolumePercent[cumulativeVolumePercent.length - 1];
+    }
+
+    /**
      * Merge adjacent source cuts into a caller-defined sequence of coarser lumps.
      *
      * <p>
