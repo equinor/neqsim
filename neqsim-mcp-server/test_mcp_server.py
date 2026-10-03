@@ -1528,8 +1528,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 101 protocol scenarios",
-          tests.get("protocolScenarioCount") == 101,
+    check("evidence inventory freezes 102 protocol scenarios",
+          tests.get("protocolScenarioCount") == 102,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -2331,8 +2331,8 @@ def test_norsok_s001_clause10_review_contract():
           and data.get("overallVerdict") == "PASS"
           and data.get("failedItems") == 0
           and data.get("warningItems") == 0
-          and data.get("itemCount") == 4
-          and len(data.get("results", [])) == 4
+          and data.get("itemCount") == 5
+          and len(data.get("results", [])) == 5
           and "NORSOK S-001:2020+AC:2021 Clause 10"
           in data.get("standardsApplied", [])
           and response.get("provenance", {}).get("calculationType")

@@ -638,8 +638,7 @@ public final class McpEvidenceInventory {
           "src/test/java/neqsim/mcp/runners/NorsokS001Clause10ReviewRunnerTest.java",
           "src/test/java/neqsim/process/safety/processsafetysystem/ProcessSafetySystemReviewEngineTest.java",
           "neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java",
-          "neqsim-mcp-server/test_norsok_s001_clause10_review_protocol.py",
-          "neqsim-mcp-server/test_mcp_server.py",
+          "neqsim-mcp-server/test_norsok_s001_clause10_review_protocol.py", "neqsim-mcp-server/test_mcp_server.py",
           "neqsim-mcp-server/docs/evidence/NORSOK_S001_CLAUSE10_REVIEW_CONTRACT.md"};
       evidenceBoundary = "Catalog-example execution, deterministic NORSOK S-001 Clause 10 process-safety-system review reports, caller-supplied normalized C&E, SRS, PSV, STID/P&ID, instrument and tagreader evidence handling, optional embedding through existing safety-system-performance, operational-study and dynamic runners, report standards and provenance, fail-closed invalid input handling, normal MCP access enforcement, standard response evidence, and packaged transport are contract-tested; this does not establish direct STID, tagreader, C&E, SRS or PSV connectivity, source-document or tag fidelity, hazard or scenario completeness, SIL, PFD, SIF, proof-test or lifecycle validity, PSV or relief adequacy, controller, transient or dynamic validity, independence or common-cause claims, standards applicability or conformance, safe operating limits, plant or control authority, certification, or accountable engineering or process-safety approval";
       break;

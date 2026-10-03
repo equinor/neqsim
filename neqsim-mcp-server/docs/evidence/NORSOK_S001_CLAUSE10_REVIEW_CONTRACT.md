@@ -18,7 +18,7 @@ The deterministic
 `process-safety-review/norsok-s001-clause10` catalog example qualifies:
 
 - the standard MCP success envelope, validation, and quality gate;
-- four passing Clause 10 review items with zero failures and zero warnings;
+- five passing Clause 10 review items with zero failures and zero warnings;
 - NORSOK S-001:2020+AC:2021 Clause 10 attribution;
 - ordered per-item findings, extraction templates, and result provenance;
 - deterministic replay apart from execution timestamp and duration;

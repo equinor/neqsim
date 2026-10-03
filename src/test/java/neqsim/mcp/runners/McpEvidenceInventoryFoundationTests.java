@@ -1237,13 +1237,11 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(1, limitations.get("confirmedGapToolCount").getAsInt());
   }
 
-
   @Test
   void testNorsokClause10ReviewPromotionIsAppliedAtomically() {
     JsonObject inventory = McpEvidenceInventory.build();
     JsonObject limitations = inventory.getAsJsonObject("knownLimitations");
-    JsonObject coverage =
-        limitations.getAsJsonObject("coverageRecords").getAsJsonObject("runNorsokS001Clause10Review");
+    JsonObject coverage = limitations.getAsJsonObject("coverageRecords").getAsJsonObject("runNorsokS001Clause10Review");
 
     assertEquals("1.50", inventory.get("inventoryVersion").getAsString());
     assertEquals(0, limitations.get("contractPromotionCandidateCount").getAsInt());
@@ -1258,10 +1256,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
         .contains("test_norsok_s001_clause10_review_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("NORSOK S-001 Clause 10"));
-    assertTrue(coverage.get("evidenceBoundary").getAsString()
-        .contains("accountable engineering or process-safety approval"));
-    assertTrue(limitations.get("promotionBoundary").getAsString()
-        .contains("runNorsokS001Clause10Review"));
+    assertTrue(
+        coverage.get("evidenceBoundary").getAsString().contains("accountable engineering or process-safety approval"));
+    assertTrue(limitations.get("promotionBoundary").getAsString().contains("runNorsokS001Clause10Review"));
     assertEquals(50, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(1, limitations.get("confirmedGapToolCount").getAsInt());
   }

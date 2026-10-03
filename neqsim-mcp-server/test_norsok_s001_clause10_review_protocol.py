@@ -108,8 +108,8 @@ def test_catalog_report(client):
             and data.get("overallVerdict") == "PASS"
             and data.get("failedItems") == 0
             and data.get("warningItems") == 0
-            and data.get("itemCount") == 4
-            and len(data.get("results", [])) == 4
+            and data.get("itemCount") == 5
+            and len(data.get("results", [])) == 5
             and "NORSOK S-001:2020+AC:2021 Clause 10"
             in data.get("standardsApplied", [])
             and response.get("provenance", {}).get("calculationType")

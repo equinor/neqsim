@@ -751,7 +751,7 @@ catalog example, comprehensive protocol, focused packaged-MCP qualification,
 and evidence documentation for `runNorsokS001Clause10Review` as
 `CONTRACT_TESTED`. The
 `process-safety-review/norsok-s001-clause10` example deterministically returns
-four passing review items, NORSOK S-001 Clause 10 attribution, per-item
+five passing review items, NORSOK S-001 Clause 10 attribution, per-item
 findings, extraction templates, and provenance through the standard MCP
 response envelope. Empty input fails closed.
 
