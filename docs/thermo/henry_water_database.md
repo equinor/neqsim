@@ -3,13 +3,13 @@ title: Pure-water Henry database and missing-data contract
 description: Sourced Henry coefficients, molality and mole-fraction conventions, and qualification limits
 ---
 
-The Henry columns in `COMP.csv` are backed by 82 selected rows in
+The Henry columns in `COMP.csv` are backed by 83 selected rows in
 `src/main/resources/data/HenryWaterSource.json`. Each row records the component,
 CAS identity, source solubility constant, temperature slope and reference number.
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
-`HenryWaterCoverage.csv` inventories all 389 rows: 82 imported correlations
-(78 distinct database identities plus four exact-identity aliases), 28 qualified
-reference-temperature-only points, 30 remaining literature candidates,
+`HenryWaterCoverage.csv` inventories all 389 rows: 83 imported correlations
+(79 distinct database identities plus four exact-identity aliases), 35 qualified
+reference-temperature-only points, 22 remaining literature candidates,
 140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
@@ -66,6 +66,17 @@ the CC BY 4.0 Sander compilation. Both expressions remain local van't Hoff
 descriptions about 298.15 K (and 0.1 MPa where stated), not qualified finite
 extrapolation ranges or independent new regressions.
 
+Elemental `mercury` is an exact CAS, formula, neutral-charge and InChIKey match
+to Sander's water-solvent record. The selected type-L JPL Evaluation 19 row is
+`Hsbp = 0.13 mol kg^-1 atm^-1` with a 2600 K local slope at 298.15 K. The first
+independent measured row, Andersson et al. (2008), reports the same value and
+slope at compilation precision; Sanemasa (1975) reports 0.13 and 2500 K. This
+agreement is validation, not a refit or uncertainty interval. The Sander machine
+row reports no numerical uncertainty or finite experimental range, so the
+implemented expression remains a local van't Hoff approximation. Only numerical
+facts from the CC BY 4.0 compilation are reproduced; no JPL or publisher text is
+copied.
+
 The two-parameter expressions are **local van't Hoff approximations about
 298.15 K**, not newly fitted experimental data. Their individual experimental
 temperature ranges and uncertainty are not qualified by this import. Tests at
@@ -86,15 +97,89 @@ than inventing one. The set covers selected branched C6-C9 alkanes, C10-C14
 n-alkanes, cycloalkanes, pentenes/heptenes and alkylbenzenes. It excludes reactive
 species, ions, aliases and estimated (Q/E) rows.
 
+Six additional type-L points attributed by Sander to Brockbank (2013) cover
+4-methylheptane, cis-2-pentene, cis-2-heptene, heptylbenzene, octylbenzene
+and nonylbenzene. The selected raw `Hsbp` values are respectively 2.7e-4,
+4.5e-3, 2.4e-3, 2.7e-2, 1.9e-2 and 1.5e-2 mol kg^-1 atm^-1. Brockbank's
+public thesis describes critically evaluated recommended values and group-contribution
+methods at 298.15 K and 100 kPa; these six values are retained only as type-L
+reference points, not characterized as new measurements or NeqSim fits. The
+ScholarsArchive record links institutional copyright terms rather than a permissive
+data license, so NeqSim reproduces numerical facts only from the CC BY 4.0 Sander
+compilation.
+
+The exact-identity `4-ethyltoluene` row adds one type-L point from Mackay and
+Shiu (1981), Sander reference 479. The Sander machine row reports
+`Hsbp = 0.20 mol kg^-1 atm^-1` at 298.15 K, equivalent to
+`Hm = 5.06625 bar kg mol^-1`. Independent vapor-pressure/aqueous-solubility
+rows span 0.16 to 0.20 mol kg^-1 atm^-1 at compilation precision. This spread
+is validation evidence, not a fitted uncertainty interval. Neither the machine
+row nor the compilation entry reports a total reference pressure; the catalog
+therefore stores that field as unavailable instead of assigning 0.1 MPa. The
+point remains exact-temperature-only and does not define a slope or derivative.
+Mackay and Shiu's review is publisher-copyrighted, so only numerical facts from
+the CC BY 4.0 Sander compilation are reproduced.
+
+Each catalog row can override original-reference citation, URL, rights,
+uncertainty, identity basis, and point conditions. Exact CAS and molecular identity
+are required. Four rows also match the Sander InChIKey exactly; the two cis-alkene
+NeqSim rows have the same connectivity block and exact cis CAS/name but omit the
+stereochemical InChIKey layer. That limitation is explicit rather than silently
+treated as an exact key match. None of the six rows receives a temperature slope.
+
 `HenryWaterReferencePointCatalog` exposes immutable lookups by exact CAS number or
 the exact NeqSim component name. A point stores source identity, convention, units,
 reference temperature and pressure, bibliography, license, uncertainty note and
 validity statement. Its temperature-taking getter succeeds only at exactly
 298.15 K; all other temperatures and every temperature derivative return `NaN`.
+When the source does not report a total reference pressure, the pressure getter
+also returns `NaN`; this does not alter the reported partial-pressure Henry
+convention.
 These points are intentionally not copied into `COMP.csv`, do not make
 `hasHenryCorrelation()` true, and do not enter GE, Pitzer or IAPWS dispatch. A
 single value therefore cannot silently become a constant polynomial with a fake
 zero slope.
+
+## Fail-closed candidate dispositions
+
+`HenryWaterCandidateDispositions.json` records the component-specific decision for
+all 22 exact-CAS literature candidates that are not admitted as correlations or
+reference points. The file records water as solvent, source record and type
+inventory, identity assessment, Henry-definition risk, original-source rights
+boundary and the evidence required before admission. It contains no coefficient,
+reference value, fitted slope, pressure assumption or uncertainty estimate.
+
+The dispositions are deliberately more specific than a generic candidate label:
+
+- three reactive amines (`MDEA`, `MEA` and `Piperazine`) require joint
+  neutral-species Henry and reaction-standard-state qualification with unchanged
+  reactive-VLE benchmarks;
+- five acid/base species require intrinsic neutral-solute separation from
+  pH-dependent total analytical uptake;
+- five hydrolyzing or dimerizing inorganic species require species-resolved
+  equilibrium evidence. In particular, the Sander chlorine record identifies
+  prominent recommended values as effective
+  `([Cl2] + [HOCl]) / p(Cl2)` at 101325 Pa rather than an infinite-dilution
+  intrinsic `Cl2` constant;
+- formaldehyde, ethylene oxide and hydrogen peroxide require hydration,
+  hydrolysis or decomposition controls. The measured ethylene-oxide and
+  hydrogen-peroxide rows remain research leads, not dispatched data;
+- `MEG`, its two PVTsim aliases and `PG` require mixed-solvent validation.
+  Their pure-water solute records cannot be applied silently to glycol
+  solvent-role models, and the compiled MEG and PG values have material source
+  spread; and
+- `para-hydrogen` and `ortho-hydrogen` require spin-isomer-specific data.
+  The exact-CAS source record identifies ordinary `H2`, not a para/ortho
+  fraction or conversion equilibrium.
+
+The Sander v5.0.0 compilation is the CC BY 4.0 identity and source-inventory
+basis. Underlying publications retain their own rights and must be reviewed for
+species definition, units, pressure, temperature range and uncertainty before
+numerical facts are adopted. Every disposition remains fail-closed:
+`COMP.csv`, `HenryWaterSource.json`, `HenryWaterReferencePoints.json` and
+all model dispatch are unchanged. The audit checks that all 22 rows remain
+outside both correlation and reference-point catalogs and that the two MEG
+aliases provide no independent evidence.
 
 ## Units and equations
 

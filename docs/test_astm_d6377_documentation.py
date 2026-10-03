@@ -44,8 +44,11 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             r'^---\ntitle: "[^"]+"\ndescription: "[^"]+"\n---\n',
         )
         self.assertNotRegex(self.doc, r"(?m)^# ")
-        self.assertEqual(2, self.doc.count("```"))
-        self.assertEqual(1, self.doc.count("```java"))
+        # Both the base example and the audited dry-fluid example are Java blocks.
+        self.assertEqual(
+            ["```java", "```", "```java", "```"],
+            re.findall(r"(?m)^```[^\n]*$", self.doc),
+        )
 
         for target in re.findall(r"\[[^\]]+\]\(([^)#]+\.md)(?:#[^)]+)?\)", self.doc):
             resolved = (DOC.parent / target).resolve()

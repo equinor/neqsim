@@ -6,7 +6,6 @@
 
 package neqsim.chemicalreactions.chemicalreaction;
 
-import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -469,9 +468,9 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
    */
   public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
       double[] chemRefPot) {
-    Matrix tempAmatrix = new Matrix(Amatrix.length, names.length);
-    Matrix tempNmatrix = new Matrix(names.length, 1);
-    Matrix tempRefPotmatrix = new Matrix(names.length, 1);
+    double[][] tempAmatrix = new double[Amatrix.length][names.length];
+    double[] tempNmatrix = new double[names.length];
+    double[] tempRefPotmatrix = new double[names.length];
 
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < components.length; j++) {
@@ -479,10 +478,10 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
         // system.getPhases()[0].getComponent(j).getName());
         if (this.names[i].equals(components[j].getName())) {
           for (int k = 0; k < Amatrix.length; k++) {
-            tempAmatrix.set(k, i, Amatrix[k][j]);
+            tempAmatrix[k][i] = Amatrix[k][j];
           }
-          tempNmatrix.set(i, 0, components[j].getNumberOfMolesInPhase());
-          tempRefPotmatrix.set(i, 0, chemRefPot[j]);
+          tempNmatrix[i] = components[j].getNumberOfMolesInPhase();
+          tempRefPotmatrix[i] = chemRefPot[j];
         }
       }
     }
@@ -497,20 +496,20 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
 
     // set AprodMetrix and setAreacMatrix
 
-    Matrix tempAProdmatrix = new Matrix(Amatrix.length, productNames.length);
-    Matrix tempAReacmatrix = new Matrix(Amatrix.length, reactantNames.length);
+    double[][] tempAProdmatrix = new double[Amatrix.length][productNames.length];
+    double[][] tempAReacmatrix = new double[Amatrix.length][reactantNames.length];
     // Matrix tempNProdmatrix = new Matrix(Amatrix.length, 1);
     // Matrix tempNReacmatrix = new Matrix(Amatrix.length, 1);
 
     for (int i = 0; i < Amatrix.length; i++) {
       for (int k = 0; k < reactantNames.length; k++) {
-        tempAReacmatrix.set(i, k, tempAmatrix.get(i, k));
+        tempAReacmatrix[i][k] = tempAmatrix[i][k];
       }
     }
 
     for (int i = 0; i < Amatrix.length; i++) {
       for (int k = 0; k < productNames.length; k++) {
-        tempAProdmatrix.set(i, k, tempAmatrix.get(i, names.length - 1 - k));
+        tempAProdmatrix[i][k] = tempAmatrix[i][names.length - 1 - k];
       }
     }
 

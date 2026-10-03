@@ -1,14 +1,12 @@
 package neqsim.statistics.parameterfitting;
 
-import java.io.Serializable;
-
 /**
  * Parameter-space transform used by parameter fitting specifications.
  *
  * @author Even Solbraa
  * @version 1.0
  */
-public enum ParameterTransform implements Serializable {
+public enum ParameterTransform {
   /** Linear physical parameter space. */
   LINEAR,
   /** Natural-log transformed parameter space for positive parameters. */

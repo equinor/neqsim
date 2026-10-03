@@ -63,16 +63,18 @@ public final class HenryWaterReferencePointCatalog {
       Map<String, HenryWaterReferencePoint> byComponentName = new LinkedHashMap<>();
       for (JsonElement element : root.getAsJsonArray("rows")) {
         JsonObject row = element.getAsJsonObject();
-        HenryWaterReferencePoint point = new HenryWaterReferencePoint(text(row, "name"), text(row, "source_species"),
-            text(row, "cas"), row.get("Hsbp_mol_kg_atm").getAsDouble(),
-            root.get("reference_temperature_K").getAsDouble(), root.get("reference_pressure_MPa").getAsDouble(),
-            text(row, "reference"), text(root, "status"), text(root, "solvent"), text(root, "convention"),
-            text(root, "source"), text(root, "doi"), text(root, "compilation_license"),
-            text(root, "original_reference"), text(root, "original_reference_doi"), text(root, "uncertainty"),
-            text(root, "temperature_scope"));
+        HenryWaterReferencePoint point = new HenryWaterReferencePoint(text(row, root, "name"),
+            text(row, root, "source_species"), text(row, root, "cas"), row.get("Hsbp_mol_kg_atm").getAsDouble(),
+            number(row, root, "reference_temperature_K"), optionalNumber(row, root, "reference_pressure_MPa"),
+            text(row, root, "reference"), text(row, root, "status"), text(row, root, "solvent"),
+            text(row, root, "convention"), text(row, root, "source"), text(row, root, "doi"),
+            text(row, root, "compilation_license"), text(row, root, "original_reference"),
+            optionalText(row, root, "original_reference_doi"), text(row, root, "original_reference_url"),
+            text(row, root, "original_reference_rights"), optionalText(row, root, "source_inchikey"),
+            text(row, root, "identity_basis"), text(row, root, "uncertainty"), text(row, root, "temperature_scope"));
         requirePositiveFinite(point.getSolubilityMolalityPerAtm(), point.getComponentName());
         requirePositiveFinite(point.getReferenceTemperatureK(), point.getComponentName());
-        requirePositiveFinite(point.getReferencePressureMPa(), point.getComponentName());
+        requirePositiveFiniteOrUnavailable(point.getReferencePressureMPa(), point.getComponentName());
         if (byCasNumber.put(point.getCasNumber(), point) != null) {
           throw new IllegalStateException("Duplicate Henry reference-point CAS: " + point.getCasNumber());
         }
@@ -87,17 +89,55 @@ public final class HenryWaterReferencePointCatalog {
     }
   }
 
-  private static String text(JsonObject object, String member) {
-    String value = object.get(member).getAsString();
+  private static String text(JsonObject row, JsonObject defaults, String member) {
+    String value = optionalText(row, defaults, member);
     if (value.trim().isEmpty()) {
       throw new IllegalStateException("Empty Henry reference-point field: " + member);
     }
     return value;
   }
 
+  private static String optionalText(JsonObject row, JsonObject defaults, String member) {
+    JsonElement element = row.has(member) ? row.get(member) : defaults.get(member);
+    return element == null || element.isJsonNull() ? "" : element.getAsString();
+  }
+
+  private static double number(JsonObject row, JsonObject defaults, String member) {
+    JsonElement element = row.has(member) ? row.get(member) : defaults.get(member);
+    if (element == null || element.isJsonNull()) {
+      throw new IllegalStateException("Missing Henry reference-point field: " + member);
+    }
+    return element.getAsDouble();
+  }
+
+  /**
+   * Return a row-specific number, or {@link Double#NaN} when explicitly unavailable.
+   *
+   * @param row row-specific values
+   * @param defaults catalog defaults
+   * @param member JSON member name
+   * @return row or default value, or {@link Double#NaN}
+   */
+  private static double optionalNumber(JsonObject row, JsonObject defaults, String member) {
+    JsonElement element = row.has(member) ? row.get(member) : defaults.get(member);
+    return element == null || element.isJsonNull() ? Double.NaN : element.getAsDouble();
+  }
+
   private static void requirePositiveFinite(double value, String componentName) {
     if (!Double.isFinite(value) || value <= 0.0) {
       throw new IllegalStateException("Invalid Henry reference-point value for " + componentName);
+    }
+  }
+
+  /**
+   * Require a positive finite number when a source value is available.
+   *
+   * @param value source value, or {@link Double#NaN} when unavailable
+   * @param componentName component used in an error message
+   */
+  private static void requirePositiveFiniteOrUnavailable(double value, String componentName) {
+    if (!Double.isNaN(value)) {
+      requirePositiveFinite(value, componentName);
     }
   }
 

@@ -150,6 +150,10 @@ public class PackedColumnTest {
     assertTrue(json.contains("PackedColumn"), "JSON should contain PackedColumn type");
     assertTrue(json.contains("packingConfiguration"), "JSON should contain packing config");
     assertTrue(json.contains("hydraulicResults"), "JSON should contain hydraulic results");
+    assertTrue(json.contains("packingEquivalentTheoreticalStages"),
+        "JSON should identify packing-derived stage equivalence");
+    assertTrue(json.contains("solvedStageCount"), "JSON should identify the stage topology actually solved");
+    assertTrue(json.contains("hydraulicsCalculated"), "JSON should expose whether hydraulic results are current");
     assertTrue(json.contains("columnPerformance"), "JSON should contain performance");
   }
 

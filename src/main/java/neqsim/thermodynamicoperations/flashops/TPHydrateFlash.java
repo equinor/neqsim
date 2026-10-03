@@ -3,7 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -28,6 +29,8 @@ import neqsim.thermo.system.SystemInterface;
 public class TPHydrateFlash extends TPflash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Dense linear algebra used by the Newton fallback. */
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
   /** Maximum iterations in each bounded solve. */
   private static final int MAX_HYDRATE_ITERATIONS = 100;
   /** Log water-fugacity convergence tolerance. */
@@ -225,9 +228,9 @@ public class TPHydrateFlash extends TPflash {
       if (iteration >= 4) {
         int size = guests.size();
         double[][] jacobian = new double[size][size];
-        double[][] rhs = new double[size][1];
+        double[] rhs = new double[size];
         for (int row = 0; row < size; row++) {
-          rhs[row][0] = -trial.guestResiduals[guests.get(row)];
+          rhs[row] = -trial.guestResiduals[guests.get(row)];
         }
         for (int column = 0; column < size; column++) {
           int index = guests.get(column);
@@ -241,13 +244,13 @@ public class TPHydrateFlash extends TPflash {
           }
         }
         try {
-          Matrix direction = new Matrix(jacobian).solve(new Matrix(rhs));
+          double[] direction = ALGEBRA.solve(jacobian, rhs);
           boolean accepted = false;
           for (double damping = 1.0; damping >= 1.0 / 128.0; damping *= 0.5) {
             double[] candidate = remaining.clone();
             for (int row = 0; row < size; row++) {
               int index = guests.get(row);
-              double change = Math.max(-3.0, Math.min(3.0, direction.get(row, 0)));
+              double change = Math.max(-3.0, Math.min(3.0, direction[row]));
               candidate[index] = Math.min(z[index], remaining[index] * Math.exp(damping * change));
             }
             Trial next = evaluateComposition(feed, z, water, extent, candidate);

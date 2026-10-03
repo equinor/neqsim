@@ -729,6 +729,26 @@
       "temperature_scope": "local van-t-Hoff approximation; source range not qualified"
     },
     {
+      "name": "mercury",
+      "cas": "7439-97-6",
+      "Hsbp_mol_kg_atm": 0.13,
+      "B_K": 2600.0,
+      "reference": "3500",
+      "source": "Sander 2023 v5.0.0 Hsbp.f90; type L",
+      "source_species": "mercury",
+      "source_formula": "Hg",
+      "source_inchikey": "QSHDDOUJBYECFT-UHFFFAOYSA-N",
+      "identity_match_basis": "Exact CAS, elemental formula, neutral charge and InChIKey match.",
+      "solvent": "water",
+      "henry_definition": "neutral molecular Hsbp = molality / partial pressure",
+      "original_reference": "Burkholder et al. (2019), Chemical Kinetics and Photochemical Data for Use in Atmospheric Studies, Evaluation No. 19, JPL Publication 19-5",
+      "original_reference_access": "https://jpldataeval.jpl.nasa.gov/",
+      "original_reference_rights": "The JPL evaluation is publicly accessible; only numerical facts from the CC BY 4.0 Sander compilation are reproduced.",
+      "uncertainty": "No numerical uncertainty is encoded in the Sander machine row. The first independent type-M row, Andersson et al. (2008), reports the same 0.13 mol kg^-1 atm^-1 value and 2600 K local slope at compilation precision; Sanemasa (1975) reports 0.13 and 2500 K.",
+      "selection_rationale": "Use the first, highest-ranked Sander type-L row; agreement with the first independent measured row validates both the reference value and local slope at published precision.",
+      "temperature_scope": "local van-t-Hoff approximation about 298.15 K; no finite experimental validity interval is claimed"
+    },
+    {
       "name": "methanolPVTsim",
       "alias_of": "methanol",
       "identity_basis": "exact CAS, molecular formula and InChIKey match in COMP.csv",

@@ -1,13 +1,13 @@
 ---
 title: "Refinery Assay and TBP Cut Characterization"
-description: "Create mass- or volume-basis refinery assay cuts, ingest pre-binned TBP boundaries, and generate NeqSim pseudo-components with explicit units and mass closure."
+description: "Create refinery assay cuts from mass, volume, pre-binned TBP, or qualified D86 reference-point data with explicit units and mass closure."
 ---
 
 # Refinery Assay and TBP Cut Characterization
 
 `OilAssayCharacterisation` is the first refinery-specific assay entry point in NeqSim. It converts a pre-binned crude or petroleum-fraction assay into TBP pseudo-components that can be used by the existing thermodynamic and `ProcessSystem` APIs.
 
-This API is intentionally conservative. It handles **assay representation and pseudo-component generation**; it does not claim to replace a laboratory assay package or to convert ASTM D86/D1160 data to true boiling point (TBP).
+This API is intentionally conservative. It handles **assay representation and pseudo-component generation**. It can convert the seven literature-qualified ASTM D86 reference points to true boiling point (TBP) boundaries, but it does not replace a laboratory assay package, interpolate unqualified recovery points, or support ASTM D1160 conversion.
 
 ## Scope and unit contract
 
@@ -96,6 +96,159 @@ This creates `TBP1_PC` through `TBP4_PC`. Each `AssayCut` retains its lower and 
 When molecular weight is not supplied, the inverse petroleum correlation first produces a g/mol-sized value and `OilAssayCharacterisation` converts it to kg/mol before creating the pseudo-component. This unit conversion is part of the assay API contract; generated refinery cuts must not be passed to `addTBPfraction(...)` with g/mol interpreted as kg/mol.
 
 The input is required to span 0 to 100 liquid-volume percent with strictly increasing yield and temperature boundaries. This is deliberate: the method represents a complete, already-TBP cut table and does not invent unmeasured light or residue tails.
+
+## Qualified ASTM D86 reference-point boundaries
+
+`addD86ReferencePointCutBoundariesCelsius(...)` accepts exactly seven D86 temperatures at 0, 10, 30, 50, 70, 90, and 95 liquid-volume percent recovery. It delegates each point to `RiaziDaubertDistillationConversion`, which implements the published Riazi–Daubert atmospheric D86-to-TBP correlation and rejects temperatures outside each point's published applicability range.
+
+The source worked example produces the following rounded atmospheric TBP boundaries:
+
+| Recovery (vol%) | D86 (degC) | Published TBP (degC) |
+| ---: | ---: | ---: |
+| 0 | 36.5 | 14.1 |
+| 10 | 54.1 | 33.4 |
+| 30 | 76.9 | 68.9 |
+| 50 | 101.5 | 101.6 |
+| 70 | 131.0 | 135.1 |
+| 90 | 171.0 | 180.5 |
+| 95 | 186.5 | 194.1 |
+
+The qualified correlation does not provide a 100 vol% point. The caller must therefore supply the 100 vol% terminal TBP boundary explicitly; it must be finite and greater than the converted 95 vol% boundary. With one specific gravity for each interval, the resulting liquid-volume fractions are 0.10, 0.20, 0.20, 0.20, 0.20, 0.05, and 0.05. All conversion and validation completes before any assay cut is added.
+
+This path intentionally does not support ASTM D1160, intermediate recovery-point interpolation, an inferred 100 vol% conversion, or an ASTM laboratory-compliance claim. The correlation source is M. R. Riazi and T. E. Daubert, “Analytical correlations interconvert distillation-curve types,” *Oil & Gas Journal* 84(34), 1986; public bibliographic record: [OSTI 5212509](https://www.osti.gov/biblio/5212509). No coefficients beyond the existing source-qualified NeqSim implementation are introduced here.
+
+## Auditable TBP cut-table export
+
+`exportTbpCutTable()` creates an immutable round-trip table from a complete assay. The table returns defensive copies of:
+
+- cumulative liquid-volume yield from 0 to 100 percent;
+- contiguous TBP boundaries in K or degC; and
+- one dimensionless specific gravity for each boiling interval.
+
+`getResolvedVolumeFractions()` recovers the normalized declared yields of a volume-basis assay. For a mass-basis assay, NeqSim applies the ideal-additive-volume identity $v_i=(w_i/SG_i)/\sum_j(w_j/SG_j)$ before accumulating volume percent. This is a basis conversion, not a temperature correction, excess-volume model, blend-contraction model, or distillation-curve fit.
+
+```java
+OilAssayCharacterisation.TbpCutTable table = assay.exportTbpCutTable();
+
+OilAssayCharacterisation copy = anotherSystem.getOilAssayCharacterisation();
+copy.addTBPCutBoundariesKelvin(
+    "RoundTrip",
+    table.getCumulativeVolumePercent(),
+    table.getBoilingPointKelvin(),
+    table.getSpecificGravity());
+```
+
+Export fails closed unless the assay is non-empty and every interval has positive yield, a density, a complete boiling range, and an exactly shared boundary with its neighbour. Gaps and overlaps are not interpolated or repaired. This preserves the input cut topology and makes mass/volume closure auditable; it is not a re-lumping or resampling algorithm.
+
+### Conservative adjacent-cut re-lumping
+
+After export, `TbpCutTable.relumpAdjacentCuts(...)` can combine complete adjacent intervals into a coarser table. Each argument is the positive number of source cuts assigned to one output lump, and the arguments must consume every source cut exactly once:
+
+```java
+OilAssayCharacterisation.TbpCutTable coarseTable =
+    table.relumpAdjacentCuts(1, 2, 2, 2);
+```
+
+The operation keeps the first and last TBP boundaries plus each boundary between requested lumps. It preserves cumulative liquid-volume yield exactly. For source-interval liquid-volume yields $v_i$ and specific gravities $SG_i$, each lump uses the ideal-volume-weighted value
+
+$$SG_{lump}=\frac{\sum_i v_i SG_i}{\sum_i v_i}$$
+
+so the implied mass $\sum_i v_iSG_i$ also closes exactly on the same ideal-additive-volume basis as the cut-table export. The returned table remains immutable and can be passed directly to `addTBPCutBoundariesKelvin(...)`.
+
+This is deliberately conservative adjacent whole-cut merging. It does not split a cut, interpolate or smooth a boundary, build an arbitrary target grid, average molecular weight or critical properties, or define how pseudo-component properties should be regenerated. Empty, incomplete, excessive, zero, or negative partitions fail before a table is returned.
+
+### Splitting a cut table at additional TBP boundaries
+
+`TbpCutTable.splitAtBoilingPointsKelvin(...)` and `splitAtBoilingPointsCelsius(...)` insert strictly increasing boundaries inside existing intervals. For a source interval bounded by $(T_L,V_L)$ and $(T_U,V_U)$, an inserted boundary at $T$ receives the transparent piecewise-linear cumulative liquid-volume yield
+
+$$V(T)=V_L+(V_U-V_L)\frac{T-T_L}{T_U-T_L}$$
+
+```java
+OilAssayCharacterisation.TbpCutTable finerTable =
+    table.splitAtBoilingPointsCelsius(150.0, 250.0, 350.0);
+```
+
+Each resulting subcut copies the source interval specific gravity. Consequently, total liquid-volume yield and implied mass remain closed on the same ideal-additive-volume basis used by export and adjacent re-lumping. Splitting and then re-lumping all subcuts from each source interval recovers the original table within floating-point precision.
+
+The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
+
+### Direct recovery and cut-point queries
+
+An exported `TbpCutTable` can be queried without rebuilding or mutating the assay.
+`getCumulativeVolumePercentAtBoilingPointKelvin(...)` and its Celsius counterpart return
+cumulative liquid-volume recovery at a boiling point. The inverse
+`getBoilingPointKelvinAtCumulativeVolumePercent(...)` and Celsius counterpart return the
+cut point for a recovery. Interval yield is available from
+`getLiquidVolumePercentBetweenBoilingPointsKelvin(...)` or the Celsius counterpart:
+
+```java
+double recoveredAt400K =
+    table.getCumulativeVolumePercentAtBoilingPointKelvin(400.0);
+double temperatureAt50Percent =
+    table.getBoilingPointCelsiusAtCumulativeVolumePercent(50.0);
+double middleDistillateYield =
+    table.getLiquidVolumePercentBetweenBoilingPointsCelsius(150.0, 350.0);
+```
+
+The forward and inverse queries use the same piecewise-linear cumulative-recovery
+assumption as conservative target-grid resampling. Exact table nodes remain exact, and
+near-node temperatures snap within the existing boiling-boundary tolerance. Partitioned
+interval yields therefore close to the complete table's 100 liquid-volume percent.
+
+These are bounded table queries, not new distillation or property correlations. They do
+not extrapolate, smooth measured data, convert ASTM D86 or D1160 curves, interpolate
+density or other properties, generate pseudo-components, or claim phase-behavior
+equivalence. Non-finite, exterior, reversed, and zero-width requests fail before a value
+is returned.
+
+### Conservative target-grid resampling
+
+`TbpCutTable.resampleAtBoilingPointsKelvin(...)` and
+`resampleAtBoilingPointsCelsius(...)` replace the complete boundary grid while keeping
+the source endpoints. The target may refine source intervals, combine them, or do both in
+one operation:
+
+```java
+OilAssayCharacterisation.TbpCutTable targetGrid =
+    table.resampleAtBoilingPointsCelsius(26.85, 126.85, 326.85, 426.85);
+```
+
+At each target boundary, cumulative liquid-volume yield uses the same piecewise-linear
+recovery assumption documented for cut splitting. For target interval (j), each
+overlapping source interval (i) contributes liquid-volume yield
+(Delta V_{ij}), and the reported specific gravity is
+
+$SG_j=\frac{\sum_i \Delta V_{ij}SG_i}{\sum_i \Delta V_{ij}}$
+
+This gives exact endpoint and total liquid-volume closure and conserves the
+ideal-additive implied mass (sum_i Delta V_iSG_i). A source-grid request is an
+identity operation; a finer grid copies source-interval SG across its subintervals; and
+a coarser or mixed grid reports the liquid-volume-weighted SG of all overlaps. The
+source table remains immutable.
+
+The method is a conservative bookkeeping transform, not a new distillation or property
+correlation. It assumes piecewise-linear cumulative recovery and constant SG within
+each source interval. It does not infer measured intrainterval shape, interpolate
+density with temperature, smooth or extrapolate the curve, average molecular weight or
+critical properties, or assert phase-behavior equivalence after recharacterization.
+Null, incomplete, non-finite, unordered, exterior, and endpoint-mismatched target grids
+fail before a table is returned.
+
+### Recharacterizing an exported or re-lumped table
+
+`addTBPCutTable(...)` attaches an immutable exported or re-lumped table to another assay without requiring callers to unpack its arrays:
+
+```java
+SystemInterface targetFluid = new SystemSrkEos(298.15, 1.01325);
+OilAssayCharacterisation targetAssay = targetFluid.getOilAssayCharacterisation();
+targetAssay.setTotalAssayMass(100.0);
+targetAssay.addTBPCutTable("Coarse", coarseTable);
+targetAssay.apply();
+```
+
+Re-ingestion preserves the table's liquid-volume yields, retained boiling boundaries, interval specific gravities, and the configured total assay mass. Pseudo-component molecular weight and other correlated properties are recalculated through NeqSim's existing petroleum-characterization path from each retained boiling interval and specific gravity. They are not copied or averaged from source subcuts. This makes the model boundary explicit: `addTBPCutTable(...)` is a deterministic recharacterization API, not an assertion that fine- and coarse-cut phase behavior is identical.
+
+The method adds no correlation, coefficient, or external dataset. Null tables and invalid prefixes fail before the target assay is mutated. Existing component-name collision checks remain active when `apply()` is called.
 
 ## Volume-basis conversion
 

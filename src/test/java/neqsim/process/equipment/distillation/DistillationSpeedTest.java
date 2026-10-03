@@ -8,11 +8,11 @@ import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
-@Tag("slow")
 public class DistillationSpeedTest {
   private static final Logger logger = LogManager.getLogger(DistillationSpeedTest.class);
 
   @Test
+  @Tag("slow")
   public void compareSolvers() {
     int warmupRuns = 2;
     int benchmarkRuns = 5;

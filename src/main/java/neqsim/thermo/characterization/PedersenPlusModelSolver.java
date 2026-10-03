@@ -1,8 +1,10 @@
 package neqsim.thermo.characterization;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -16,15 +18,16 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(PedersenPlusModelSolver.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   int iter = 0;
-  Matrix JacAB;
-  Matrix JacCD;
-  Matrix fvecAB;
-  Matrix fvecCD;
-  Matrix solAB;
-  Matrix solCD;
-  Matrix dx;
+  double[][] JacAB;
+  double[][] JacCD;
+  double[] fvecAB;
+  double[] fvecCD;
+  double[] solAB;
+  double[] solCD;
+  double[] dx;
   int numberOfComponents = 0;
   PlusFractionModel.PedersenPlusModel characterizeClass;
   SystemInterface system = null;
@@ -46,17 +49,13 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     this.characterizeClass = characterizeClass;
     numberOfComponents = system.getPhase(0).getNumberOfComponents();
 
-    JacAB = new Matrix(2, 2);
-    fvecAB = new Matrix(2, 1);
-    solAB = new Matrix(2, 1);
-    solAB.set(0, 0, characterizeClass.getCoef(0));
-    solAB.set(1, 0, characterizeClass.getCoef(1));
+    JacAB = new double[2][2];
+    fvecAB = new double[2];
+    solAB = new double[] {characterizeClass.getCoef(0), characterizeClass.getCoef(1)};
 
-    JacCD = new Matrix(2, 2);
-    fvecCD = new Matrix(2, 1);
-    solCD = new Matrix(2, 1);
-    solCD.set(0, 0, characterizeClass.getCoef(2));
-    solCD.set(1, 0, characterizeClass.getCoef(3));
+    JacCD = new double[2][2];
+    fvecCD = new double[2];
+    solCD = new double[] {characterizeClass.getCoef(2), characterizeClass.getCoef(3)};
   }
 
   /**
@@ -75,16 +74,18 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     // double lengthPlus = characterizeClass.getLastPlusFractionNumber() -
     // characterizeClass.getFirstPlusFractionNumber();
 
-    fvecAB.set(0, 0, zSum - characterizeClass.getZPlus());
+    fvecAB[0] = zSum - characterizeClass.getZPlus();
 
-    fvecAB.set(1, 0, mSum / zSum - characterizeClass.getMPlus());
+    fvecAB[1] = mSum / zSum - characterizeClass.getMPlus();
   }
 
   /**
    * setJacAB.
    */
   public void setJacAB() {
-    JacAB.timesEquals(0.0);
+    for (double[] row : JacAB) {
+      Arrays.fill(row, 0.0);
+    }
 
     double tempJ = 0.0;
 
@@ -101,7 +102,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       } else if (j == 1) {
         tempJ = nTot2;
       }
-      JacAB.set(0, j, tempJ);
+      JacAB[0][j] = tempJ;
     }
 
     for (int j = 0; j < 2; j++) {
@@ -125,7 +126,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       } else if (j == 1) {
         tempJ = (mTot2 * zSum - mTot1 * zSum3) / zSum2;
       }
-      JacAB.set(1, j, tempJ);
+      JacAB[1][j] = tempJ;
     }
   }
 
@@ -136,11 +137,8 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     double densTBO = characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6];
     // 0.71;
     // //characterizeClass.getDensLastTBP();
-    fvecCD
-        .set(0, 0,
-            (characterizeClass.getCoef(2)
-                + characterizeClass.getCoef(3) * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1))
-                - densTBO);
+    fvecCD[0] = (characterizeClass.getCoef(2)
+        + characterizeClass.getCoef(3) * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1)) - densTBO;
     double temp = 0.0;
     double temp2 = 0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -151,17 +149,19 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
           * characterizeClass.PVTsimMolarMass[i - 6]
           / (characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i));
     }
-    fvecCD.set(1, 0, temp / temp2 - characterizeClass.getDensPlus());
+    fvecCD[1] = temp / temp2 - characterizeClass.getDensPlus();
   }
 
   /**
    * setJacCD.
    */
   public void setJacCD() {
-    JacCD.timesEquals(0.0);
+    for (double[] row : JacCD) {
+      Arrays.fill(row, 0.0);
+    }
 
-    JacCD.set(0, 0, 1);
-    JacCD.set(0, 1, Math.log(characterizeClass.getFirstPlusFractionNumber() - 1));
+    JacCD[0][0] = 1;
+    JacCD[0][1] = Math.log(characterizeClass.getFirstPlusFractionNumber() - 1);
 
     double temp = 0.0;
     double temp2 = 0;
@@ -190,7 +190,7 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     // double dAdD = temp3 * Math.log(1);
     // double ans2 = -temp / (temp2 * temp2);
 
-    JacCD.set(1, 0, ans);
+    JacCD[1][0] = ans;
     // JacCD.set(1, 1, ans2);
   }
 
@@ -203,13 +203,13 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       iter++;
       setfvecAB();
       setJacAB();
-      dx = JacAB.solve(fvecAB);
+      dx = ALGEBRA.solve(JacAB, fvecAB);
       // logger.info("dx: ");
       // dx.print(10, 3);
 
-      solAB.minusEquals(dx.times((iter) / (iter + 50.0)));
-      characterizeClass.setCoefs(solAB.transpose().copy().getArray()[0]);
-    } while (((fvecAB.norm2() > 1e-6 || iter < 3) && iter < 200));
+      solAB = ALGEBRA.subtract(solAB, ALGEBRA.scale(dx, (iter) / (iter + 50.0)));
+      characterizeClass.setCoefs(solAB);
+    } while (((ALGEBRA.euclideanNorm(fvecAB) > 1e-6 || iter < 3) && iter < 200));
     // logger.info("ok char: ");
     // solAB.print(10, 10);
 
@@ -218,14 +218,14 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
       iter++;
       setfvecCD();
       setJacCD();
-      dx = JacCD.solve(fvecCD);
+      dx = ALGEBRA.solve(JacCD, fvecCD);
       // logger.info("dxCD: ");
       // dx.print(10, 3);
 
-      solCD.minusEquals(dx.times((iter) / (iter + 5.0)));
-      characterizeClass.setCoefs(solCD.transpose().copy().getArray()[0][0], 2);
-      characterizeClass.setCoefs(solCD.transpose().copy().getArray()[0][1], 3);
-    } while (((fvecCD.norm2() > 1e-6 || iter < 3) && iter < 200));
+      solCD = ALGEBRA.subtract(solCD, ALGEBRA.scale(dx, (iter) / (iter + 5.0)));
+      characterizeClass.setCoefs(solCD[0], 2);
+      characterizeClass.setCoefs(solCD[1], 3);
+    } while (((ALGEBRA.euclideanNorm(fvecCD) > 1e-6 || iter < 3) && iter < 200));
     // solCD.print(10, 10);
   }
 }

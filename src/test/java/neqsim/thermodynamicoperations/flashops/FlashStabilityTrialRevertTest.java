@@ -24,6 +24,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class FlashStabilityTrialRevertTest {
 
   /**
+   * Verifies that a non-finite trial residual remains a recoverable stability-iteration signal.
+   */
+  @Test
+  public void testNaNStabilityResidualRemainsRecoverable() {
+    assertTrue(Double.isNaN(Flash.stabilityResidualNorm(new double[] {1.0, Double.NaN})),
+        "a NaN trial residual must not be rejected before successive substitution can recover");
+    assertEquals(5.0, Flash.stabilityResidualNorm(new double[] {3.0, 4.0}), 0.0,
+        "finite trial residuals must retain the legacy overflow-safe Euclidean norm");
+  }
+
+  /**
    * Build a typical natural-gas mixture near its cricondenbar where the supplementary stability trials are most likely
    * to fire.
    */

@@ -1,0 +1,106 @@
+name: Optional combustion physics
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "examples/combustion/**"
+      - "src/main/java/neqsim/process/equipment/reactor/FiniteRateCombustionReactor.java"
+      - "src/main/java/neqsim/process/equipment/reactor/MultiBurnerFiredHeater.java"
+      - "src/main/java/neqsim/process/util/combustion/**"
+      - ".github/workflows/combustion_physics.yml"
+  workflow_dispatch:
+
+jobs:
+  qualification-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Validate benchmark and mechanism provenance gates
+        run: |
+          python -m unittest discover -s examples/combustion -p 'test_benchmark_qualification.py' -v
+          python examples/combustion/benchmark_qualification.py \
+            examples/combustion/benchmark_catalog.json --readiness
+
+  chemistry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install optional mechanism solver
+        run: python -m pip install cantera==3.2.0
+      - name: Run analytical and detailed chemistry regressions
+        run: python -m unittest discover -s examples/combustion -p 'test_*.py' -v
+      - name: Run source-locked C2 JSR and C1 ignition comparisons
+        run: |
+          qualification_dir="$(mktemp -d)"
+          python examples/combustion/acquire_qualification_mechanism.py \
+            creck-s-2.0.0-zenodo-22982859 \
+            "$qualification_dir/CRECK-S_mechanism.yaml"
+          python examples/combustion/run_jsr_qualification.py \
+            "$qualification_dir/CRECK-S_mechanism.yaml" \
+            --output "$qualification_dir/jsr-result.json"
+          python examples/combustion/run_ignition_delay_qualification.py \
+            "$qualification_dir/CRECK-S_mechanism.yaml" \
+            --output "$qualification_dir/ignition-delay-result.json"
+
+  native-projection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Install optional native bridge
+        run: python -m pip install cantera==3.2.0 jpype1
+      - name: Compile workspace classes and resolve runtime classpath
+        run: mvn -B -ntp -DskipTests compile dependency:build-classpath -Dmdep.outputFile=target/combustion-classpath.txt
+      - name: Check native seven and five burner projection without relaxing tolerances
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "examples/combustion")
+          import json
+          from multi_burner_fired_heater import build_case, initialize_runtime, run_demonstration
+          from cantera_backend import CanteraBackend, DEFAULT_COMPONENT_TO_SPECIES
+          classpath = [str(Path("target/classes").resolve())]
+          classpath.extend(Path("target/combustion-classpath.txt").read_text().strip().split(os.pathsep))
+          java_class = initialize_runtime(".", classpath)
+          # Compare the historical mapping using the same compiled Java boundary.
+          legacy_mapping = dict(DEFAULT_COMPONENT_TO_SPECIES)
+          del legacy_mapping["ammonia"]
+          del legacy_mapping["methanol"]
+          legacy = CanteraBackend("gri30.yaml", component_to_species=legacy_mapping)
+          process, heater, *_ = build_case(java_class, legacy)
+          try:
+              process.run()
+          except Exception as error:
+              if "EOS projection does not conserve element H" not in str(error):
+                  raise
+              detailed = json.loads(str(heater.getKineticsResultJson()))
+              hydrogen = detailed["elementProjectionDiagnostics"]["H"]
+              assert hydrogen["omittedInletElementFraction"] > 1.0e-6
+              print("Original hydrogen omission reproduced:", hydrogen)
+          else:
+              detailed = json.loads(str(heater.getKineticsResultJson()))
+              print("Historical rejection not reproduced; legacy hydrogen diagnostics:",
+                    detailed["elementProjectionDiagnostics"]["H"])
+          print(run_demonstration(java_class, CanteraBackend("gri30.yaml")))
+          PY

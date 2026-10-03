@@ -26,8 +26,8 @@ The reconciliation is intentionally conservative:
 Every published tool has an explicit coverage record under `phase0EvidenceInventory.knownLimitations.coverageRecords`.
 
 - 20 tools have tool-specific `BenchmarkTrust` pages and remain `EXPLICIT_TRUST`.
-- Forty-seven bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `designUtilities`, `runChemistry`, `runFlareNetwork`, `runHazopScenario`, `diagnoseAutomation`, and `getAutomationLearningReport`.
-- 4 tools remain `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
+- Fifty bounded software contracts are `CONTRACT_TESTED`: `getCapabilities`, `getSchema`, `getExample`, `getBenchmarkTrust`, `checkToolAccess`, `manageIndustrialProfile`, `searchComponents`, `queryDataCatalog`, `getProgress`, `inspectApi`, `manageValidationProfile`, `manageModel`, `manageSession`, `manageSecurity`, `manageState`, `getAdjustableParameters`, `validateInput`, `validateResults`, `generateReport`, `bridgeTaskWorkflow`, `generateVisualization`, `runPlugin`, `runCapability`, `composeWorkflow`, `solveTask`, `streamSimulation`, `composeMultiServerWorkflow`, `runRiskMatrix`, `runLOPA`, `runSIL`, `runBarrierRegister`, `runRelief`, `runOperationalStudy`, `compareProcesses`, `listSimulationUnits`, `listUnitVariables`, `getSimulationVariable`, `setSimulationVariable`, `saveSimulationState`, `compareSimulationStates`, `runProcessLoop`, `designUtilities`, `runChemistry`, `runFlareNetwork`, `runHazopScenario`, `runSafetySystemPerformance`, `runOpenDrainReview`, `runNorsokS001Clause10Review`, `diagnoseAutomation`, and `getAutomationLearningReport`.
+- 1 tool remains `CONFIRMED_GAP` and must not inherit scientific validation from the generic `TESTED` compatibility fallback.
 
 The underlying `BenchmarkTrust` registry itself is intentionally unchanged at 20 explicit pages and 51 generic fallbacks. Contract-tested software-contract evidence is a separate Phase 0 classification and does not certify any thermodynamic, process, pipeline, dynamic, safety, or optimization calculation advertised by those surfaces. For `getSimulationVariable`, the qualified boundary is addressed read routing, requested-unit handling, standard envelope/provenance/validation/quality-gate preservation, fail-closed inputs, and packaged transport; the numerical value, model fidelity, convergence adequacy, and engineering applicability are not benchmark-validated by that classification. For `manageModel`, the qualified boundary is the reusable registry lifecycle, canonical routing, revision/delete invalidation, fail-closed inputs, and packaged transport; restart persistence, distributed coherence, numerical fidelity, convergence, mass/energy closure, facility fidelity, and plant authority remain outside that classification. For `manageSession`, the qualified boundary is canonical-process lifecycle, owner isolation, close/invalidation, fail-closed behavior and packaged transport; restart durability, distributed coherence, numerical fidelity, convergence, conservation, facility fidelity and plant authority remain outside that classification.
 
@@ -264,3 +264,34 @@ dose, safe operating limits, standards or regulatory compliance, plant or
 control authority, certification, or accountable engineering approval. No
 promotion candidate remains queued and
 `scientificValidationComplete=false`.
+
+
+### Open-drain review contract boundary
+
+Inventory 1.49 promotes `runOpenDrainReview` to `CONTRACT_TESTED` using the existing canonical
+`OpenDrainReviewRunner` and `OpenDrainReviewEngine`, the `open-drain-review/norsok-s001-stid`
+catalog example, direct Java tests, comprehensive and focused packaged-MCP qualification, and
+the standard server access/envelope path. The deterministic example returns two reviewed items,
+a `PASS_WITH_WARNINGS` verdict (zero failures and one missing-standards warning), NORSOK S-001
+Clause 9 attribution, and provenance; empty input fails closed.
+
+This evidence qualifies bounded software behavior only. It does not establish direct STID or
+tagreader connectivity, source/tag fidelity, complete drain-area coverage, hydraulic or CFD
+performance, drainage/fire-water/leak-rate design bases, segregation/backflow/seal/vent/utility
+adequacy, standards applicability or conformance, safe operating limits, plant authority,
+certification, or accountable process-safety approval.
+
+
+Inventory version `1.50` atomically promotes `runNorsokS001Clause10Review`
+from `CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+20/49/2 to 20/50/1. The existing MCP facade delegates to
+`NorsokS001Clause10ReviewRunner` and the canonical
+`ProcessSafetySystemReviewEngine`. Direct runner and engine tests, focused and
+comprehensive packaged-STDIO qualification, catalog execution, access
+enforcement, response evidence, and current-state documentation move with the
+machine-readable record on the same exact head. The evidence qualifies bounded
+software behavior only: evidence connectivity and fidelity, hazard/scenario
+completeness, SIL/PFD/SIF and lifecycle validity, PSV adequacy, controller or
+dynamic validity, independence/common cause, standards conformance, safe
+operating limits, plant authority, certification, and accountable engineering
+or process-safety approval remain outside the classification.

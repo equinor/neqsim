@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation - for example a multi-stage gas compression train with intercooling, an HP/LP separation train, or a gas treatment unit."
-last_verified: "2026-08-29"
+last_verified: "2026-10-01"
 ---
 
 # NeqSim Process Modeling Skill
@@ -23,16 +23,38 @@ specialists such as mechanical design, safety, plant data, and reporting.
 
 ## Core Workflow
 
-1. **Define the fluid** using the EOS and component sequence from
-   `neqsim-api-patterns`.
-2. **Create feed streams** with explicit temperature, pressure, and flow units.
-3. **Add equipment in topological order** to a `ProcessSystem`.
-4. **Connect by outlet stream objects**, for example separator gas outlet to
-   compressor inlet or valve outlet to downstream separator.
-5. **Run once after assembly** unless recycle initialization requires a staged solve.
-6. **Validate results** using conservation checks, phase sanity checks, equipment
-   limits, and applicable standards.
-7. **Report outputs with units** and include assumptions for missing design data.
+1. **Agree the model basis**: engineering question, battery limits, feed/assay,
+   units, product specifications, data provenance and required fidelity. Follow
+   [model-build-contract](references/model-build-contract.md) for every new or
+   revised flowsheet; use its handoff checklist when another agent consumes it.
+2. **Select the task pattern** from
+   [oil-and-gas-task-patterns](references/oil-and-gas-task-patterns.md). Load only
+   the relevant specialist skills. Discover additional capabilities rather than
+   treating an equipment class name as proof of a validated application.
+3. **Define fluids and feeds** with the EOS/component sequence in
+   `neqsim-api-patterns`. Verify the EOS and phase options for the composition,
+   pressure/temperature range and property being calculated.
+4. **Assemble a reusable builder** with named streams/equipment, live outlet
+   connections, explicit terminal products and one `ProcessSystem` per area.
+   Return the process/plant and stream/equipment registries, not just numbers.
+5. **Solve progressively**: establish the feed and once-through base case,
+   close physical recycles, then add adjusters and operating constraints. Use
+   `makeRecycles()` or `setAutoRecycles(true)` for supported mixer/manifold loops.
+   For coupled models, check the boolean from `runUntilConverged(n)` and retain
+   residual/iteration evidence. A returned `run()` call is not convergence proof.
+6. **Validate each accepted case**: external total/component balances, energy
+   closure where heat/work matters, phase identity, feasible equipment limits,
+   independent benchmark and repeat/nearby-point behavior. Missing evidence
+   stays incomplete; never insert zero as a closure result.
+7. **Deliver reusable outputs** with explicit units, inputs, version, assumptions,
+   data gaps, failed cases and validation evidence. Store notebooks/scripts in
+   the task folder; publish sanitized examples only when requested.
+
+Do not silently fill composition, heavy-end characterization, maps, geometry,
+Cv, design limits or protection settings from generic defaults. A synthetic
+screening case may use labeled assumptions; an asset-specific verdict must
+identify missing decision-critical data. A thermodynamic operating-point model
+can answer duties without establishing installed capacity or safe operation.
 
 ## Modeling Choices
 
@@ -218,11 +240,12 @@ plant.setAutoRecycles(True)             # or let run()/runUntilConverged() do it
   Verified: with the correct orientation, `getGasLoadFactor()` matches a hand
   Souders-Brown `v·sqrt(ρg/(ρl−ρg))`. `setInternalDiameter()` itself propagates
   correctly through `run()` — the trap is orientation, not diameter.
-- Every suction/export scrubber in a recompression/export-compression train has its
-  liquid knock-out (`scrubber.getLiquidOutStream()`) closed back to the separator
-  operating at the matching pressure — never leave it unconnected (it is silently
-  dropped, under-counting oil/condensate recovery). See `neqsim-platform-modeling`
-  Section 4 for the seed + TP-setter + `Recycle` pattern.
+- Every suction/interstage/export scrubber liquid outlet has a physical route to
+  an appropriate pressure section or a declared external drain/product. Include
+  required letdown/pumping and heat/work; a TP setter is not a physical pressure
+  lift. Preserve all returns in recovery and boundary balances. Consult
+  `neqsim-platform-modeling` for initialization patterns, with the routing and
+  validation requirements in the model-build contract.
 - **Overall mass balance MUST be verified before accepting any solution.** Sum the mass
   flow (`kg/hr`) of all feed streams and all product/export streams; the closure error
   must be `< 0.1 %` (`abs(sum_in - sum_out) / sum_in`). A larger imbalance means a stream
@@ -261,20 +284,16 @@ incomplete, and in an oil-and-gas setting it will not pass review. **More flow
 through a plant changes its relief demand, its blowdown inventory and its
 overpressure exposure.** Run these checks in the same study, not as a follow-on:
 
-1. **Overpressure protection per vessel.** For every vessel whose duty changes,
-   tabulate design pressure, PSV set pressure and the measured operating
-   pressure. Flag a set point above design (accumulation beyond the ASME VIII
-   110 % single-device allowance) and a set point far below design (it probably
-   protects a lower-rated downstream section — confirm which). Allow a rounding
-   tolerance of about 1 % before calling a set point above design a
-   non-conformance: design pressure and set pressure usually come from different
-   documents.
-2. **Relief adequacy against the governing case.** Size the relief with
-   `neqsim-relief-flare-network` (API 520 Part I critical gas flow) and compare
-   with the installed orifice. A PSV sized at a few percent of normal flow is
-   normal for a thermal or blocked-outlet case — it means the protection against
-   sustained gas blowby rests on the **shutdown system**, not the valve. Say so
-   explicitly rather than implying the PSV covers full flow.
+1. **Overpressure protection per affected pressure section.** Record design
+   pressure/MAWP, PSV set pressure, operating pressure, protected equipment and
+   source/reference conditions. Investigate discrepancies using the applicable
+   project/code basis; do not excuse them with an invented rounding allowance or
+   confuse set pressure with allowable accumulation.
+2. **Relief adequacy against credible governing cases.** Use
+   `neqsim-relief-flare-network` with documented scenarios, inflow and device data.
+   Compare required capacity with installed capacity including applicable backpressure.
+   A small relief load does not by itself establish adequate blowby protection or
+   credit a shutdown function. Missing protection evidence remains a gap.
 3. **Inflow bounding.** The maximum flow into each pressure step is set by the
    upstream chokes and control valves. Without a choke `Cv` the blowby and
    overpressure cases cannot be closed from first principles — record that as a

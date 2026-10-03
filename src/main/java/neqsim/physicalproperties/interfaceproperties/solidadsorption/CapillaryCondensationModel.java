@@ -1,6 +1,5 @@
 package neqsim.physicalproperties.interfaceproperties.solidadsorption;
 
-import java.io.Serializable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -27,7 +26,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  * @version 1.0
  */
-public class CapillaryCondensationModel implements Serializable, ThermodynamicConstantsInterface {
+public class CapillaryCondensationModel implements ThermodynamicConstantsInterface {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1004L;

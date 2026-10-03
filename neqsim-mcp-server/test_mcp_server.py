@@ -1528,8 +1528,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 99 protocol scenarios",
-          tests.get("protocolScenarioCount") == 99,
+    check("evidence inventory freezes 102 protocol scenarios",
+          tests.get("protocolScenarioCount") == 102,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1596,13 +1596,16 @@ def test_capabilities():
         "runChemistry",
         "runFlareNetwork",
         "runHazopScenario",
+        "runSafetySystemPerformance",
+        "runOpenDrainReview",
+        "runNorsokS001Clause10Review",
         "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("forty-seven bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.47"
-          and limitations.get("contractTestedToolCount") == 47
-          and limitations.get("confirmedGapToolCount") == 4
+    check("fifty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.50"
+          and limitations.get("contractTestedToolCount") == 50
+          and limitations.get("confirmedGapToolCount") == 1
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
@@ -1702,6 +1705,19 @@ def test_capabilities():
           and "Canonical ProcessSystem" in hazop_scenario.get("evidenceBoundary", "")
           and "hazard-identification" in hazop_scenario.get("evidenceBoundary", ""),
           str(hazop_scenario))
+
+    safety_performance = coverage_records.get("runSafetySystemPerformance", {})
+    check("safety-system performance has bounded transport evidence",
+          safety_performance.get("coverageStatus") == "CONTRACT_TESTED"
+          and safety_performance.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SAFETY_SYSTEM_PERFORMANCE_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_safety_system_performance_protocol.py"
+          in safety_performance.get("contractEvidenceSources", [])
+          and "standards applicability or conformance"
+          in safety_performance.get("evidenceBoundary", "")
+          and "accountable functional-safety"
+          in safety_performance.get("evidenceBoundary", ""),
+          str(safety_performance))
 
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
@@ -1926,7 +1942,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 4
+          and limitations.get("confirmedGapToolCount") == 1
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -2262,6 +2278,97 @@ def test_hazop_scenario_contract():
           and findings[0].get("parameter") == "TEMPERATURE"
           and findings[0].get("standardReference")
           and findings[0].get("limitBasis"),
+          str(response))
+
+
+# --- Safety-system performance software contract ---
+
+def test_safety_system_performance_contract():
+    """Exercise the catalog safety-system example through packaged MCP."""
+    print("\n=== Safety System Performance Contract ===")
+    example = call_tool("getExample", {
+        "category": "safety",
+        "name": "safety-system-performance",
+    })
+    response = call_tool("runSafetySystemPerformance", {
+        "safetySystemJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    summary = data.get("summary", {})
+    check("safety-system performance status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("safety-system performance report and templates",
+          summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and "assessments" in data.get("performanceReport", {})
+          and "NORSOK-S-001" in data.get("standardsTemplates", {})
+          and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
+          str(response))
+
+
+# --- NORSOK S-001 Clause 10 review software contract ---
+
+def test_norsok_s001_clause10_review_contract():
+    """Exercise the catalog Clause 10 review through packaged MCP."""
+    print("\n=== NORSOK S-001 Clause 10 Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "process-safety-review",
+        "name": "norsok-s001-clause10",
+    })
+    response = call_tool("runNorsokS001Clause10Review", {
+        "clause10ReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("Clause 10 review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("Clause 10 review report and provenance",
+          data.get("reviewType") == "norsok_s001_clause10_review"
+          and data.get("overallVerdict") == "PASS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 0
+          and data.get("itemCount") == 5
+          and len(data.get("results", [])) == 5
+          and "NORSOK S-001:2020+AC:2021 Clause 10"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "NORSOK S-001 Clause 10 process safety system review",
+          str(response))
+
+
+# --- Open-drain review software contract ---
+
+def test_open_drain_review_contract():
+    """Exercise the catalog open-drain example through packaged MCP."""
+    print("\n=== Open Drain Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "open-drain-review",
+        "name": "norsok-s001-stid",
+    })
+    response = call_tool("runOpenDrainReview", {
+        "openDrainReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("open-drain review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("open-drain review report and provenance",
+          data.get("reviewType") == "open_drain_review"
+          and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 1
+          and data.get("itemCount") == 2
+          and len(data.get("results", [])) == 2
+          and "NORSOK S-001:2020+AC:2021 Clause 9"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "open drain review",
           str(response))
 
 
@@ -2918,6 +3025,9 @@ if __name__ == "__main__":
         test_chemistry_contract()
         test_flare_radiation_contract()
         test_hazop_scenario_contract()
+        test_safety_system_performance_contract()
+        test_open_drain_review_contract()
+        test_norsok_s001_clause10_review_contract()
         test_compare_processes()
         test_validate_results()
         test_relief_screening_contract()

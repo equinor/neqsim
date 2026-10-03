@@ -1010,7 +1010,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return localSyst.getPressure();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Runs the bubble-point calculation on a state clone; no water-basis conversion is applied.
+   */
   @Override
   public double getTVP(double referenceTemperature, String unit, String returnUnit) {
     SystemInterface localSyst = getFluid().clone();
@@ -1029,10 +1034,10 @@ public class Stream extends ProcessEquipmentBaseClass
    * Returns a {@link Standard_ASTM_D6377} evaluated for the current fluid at the given reference temperature.
    *
    * <p>
-   * A single {@code calculate()} populates every RVP variant, and the result depends only on the fluid and the
-   * reference temperature (the standard overrides temperature and pressure itself). The evaluated standard is therefore
-   * cached and reused until the fluid instance, its composition or the reference temperature changes, which removes the
-   * repeated bubble-point and vapor-fraction flashes when several RVP variants are read from the same stream.
+   * A single {@code calculate()} populates the direct RVP variants; water-free variants are evaluated lazily. The
+   * standard overrides temperature and pressure itself. The evaluated standard is therefore cached and reused until the
+   * fluid instance, its composition or the reference temperature changes, which removes the repeated bubble-point and
+   * vapor-fraction flashes when several RVP variants are read from the same stream.
    * </p>
    *
    * @param referenceTemperature the reference temperature, e.g. 37.8
@@ -1069,7 +1074,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return standard;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Selects raw VPCR4 explicitly, even if an earlier call selected a correlated method.
+   */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit) {
     Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);
@@ -1080,7 +1090,12 @@ public class Stream extends ProcessEquipmentBaseClass
     return standard.getValue("RVP", returnUnit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Delegates the method label to the standard; no external water saturation pressure is added.
+   */
   @Override
   public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod) {
     Standard_ASTM_D6377 standard = getVapourPressureStandard(referenceTemperature, unit);

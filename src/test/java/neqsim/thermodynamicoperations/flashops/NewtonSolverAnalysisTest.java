@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Disabled;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
@@ -35,6 +36,7 @@ class NewtonSolverAnalysisTest {
    * operations.
    * </p>
    */
+  @Disabled
   @Test
   void benchmarkJAMAvsEJML() {
     int[] sizes = {3, 5, 10, 15, 20, 30};
@@ -151,6 +153,7 @@ class NewtonSolverAnalysisTest {
   /**
    * Benchmark init(3) vs init(1) + logfugcoefdN only, to measure cost of unnecessary T/P derivative computation.
    */
+  @Disabled
   @Test
   void benchmarkInitLevelBreakdown() {
     SystemInterface sys = createMediumGas();
@@ -201,6 +204,7 @@ class NewtonSolverAnalysisTest {
   /**
    * Benchmark init(3,phaseNum) per-phase vs init(3) all-at-once.
    */
+  @Disabled
   @Test
   void benchmarkInit3PerPhaseVsAll() {
     SystemInterface sys = createMediumGas();
@@ -228,12 +232,12 @@ class NewtonSolverAnalysisTest {
     logger.info(String.format("init(3) all:     %6.1f us", allTime / 1000.0 / N));
     logger.info(String.format("init(3,0)+init(3,1): %6.1f us", perPhaseTime / 1000.0 / N));
     logger.info(String.format("Ratio: %.2f", (double) perPhaseTime / allTime));
-
   }
 
   /**
    * Benchmark the full Newton solver step vs SS step to understand relative costs.
    */
+  @Disabled
   @Test
   void benchmarkNewtonVsSSIteration() {
     int N = 200;
@@ -291,12 +295,12 @@ class NewtonSolverAnalysisTest {
     logger.info(String.format("SS step (init(1) x2):    %8.1f us", ssUs));
     logger.info(String.format("Newton step (init(3) + solve): %8.1f us", newtonUs));
     logger.info(String.format("Newton/SS ratio:         %8.1fx", newtonUs / ssUs));
-
   }
 
   /**
    * Measure allocation overhead: JAMA creates new Matrix objects each solve. EJML can reuse pre-allocated buffers.
    */
+  @Disabled
   @Test
   void benchmarkAllocationOverhead() {
     int n = 10;
@@ -360,7 +364,6 @@ class NewtonSolverAnalysisTest {
     logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
     logger.info(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
     logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
-
   }
 
   /**

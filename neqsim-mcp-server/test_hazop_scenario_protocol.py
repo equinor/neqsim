@@ -154,9 +154,9 @@ def test_inventory_promotion(client):
     inventory = capabilities.get("phase0EvidenceInventory", {})
     limitations = inventory.get("knownLimitations", {})
     record = limitations.get("coverageRecords", {}).get("runHazopScenario", {})
-    require(inventory.get("inventoryVersion") == "1.47"
-            and limitations.get("contractTestedToolCount") == 47
-            and limitations.get("confirmedGapToolCount") == 4
+    require(inventory.get("inventoryVersion") == "1.50"
+            and limitations.get("contractTestedToolCount") == 50
+            and limitations.get("confirmedGapToolCount") == 1
             and limitations.get("contractPromotionCandidateCount") == 0
             and record.get("coverageStatus") == "CONTRACT_TESTED"
             and record.get("contractEvidenceCount") == 7
