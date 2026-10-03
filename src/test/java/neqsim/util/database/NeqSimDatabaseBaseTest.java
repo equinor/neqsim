@@ -13,20 +13,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests the shared JDBC lifecycle using real in-memory H2 connections.
+ * Tests the component database JDBC lifecycle using real in-memory H2 connections.
  *
  * @author asmf
  * @version 1.0
  */
 class NeqSimDatabaseBaseTest {
-  private static final Logger logger = LogManager.getLogger(NeqSimDatabaseBaseTest.class);
 
-  /** Tests lazy connection, SQL execution, close, and reconnect behavior. */
+  /** Tests lazy reconnect after close, SQL execution, and repeated resource release. */
   @Test
   void lazilyConnectsExecutesAndReopensAfterClose() throws Exception {
     TestDatabase database = new TestDatabase(false);
@@ -83,29 +80,27 @@ class NeqSimDatabaseBaseTest {
   }
 
   /** Concrete test wrapper that supplies an embedded H2 connection. */
-  private static class TestDatabase extends NeqSimDatabaseBase {
+  private static class TestDatabase extends NeqSimDataBase {
     private static final long serialVersionUID = 1L;
-    private final String connectionUrl;
 
-    /** Creates a uniquely named H2 database. */
-    TestDatabase(boolean initialize) {
-      connectionUrl = "jdbc:h2:mem:database_base_" + UUID.randomUUID().toString().replace("-", "")
-          + ";DB_CLOSE_DELAY=-1";
-      if (initialize) {
-        initializeDatabaseConnection();
+    /**
+     * Creates a database wrapper, optionally closing its eager connection before testing reconnect.
+     *
+     * @param initialize true to retain the eager connection
+     * @throws SQLException if the initial connection cannot be closed
+     */
+    TestDatabase(boolean initialize) throws SQLException {
+      if (!initialize) {
+        close();
       }
     }
 
     /** {@inheritDoc} */
     @Override
     public Connection openConnection() throws SQLException {
-      return DriverManager.getConnection(connectionUrl, "sa", "");
+      return DriverManager
+          .getConnection("jdbc:h2:mem:database_lifecycle_" + UUID.randomUUID().toString().replace("-", ""), "sa", "");
     }
 
-    /** {@inheritDoc} */
-    @Override
-    protected Logger getLogger() {
-      return logger;
-    }
   }
 }

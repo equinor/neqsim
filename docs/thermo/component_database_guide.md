@@ -30,6 +30,13 @@ This guide provides detailed documentation of the COMP database, which stores pu
 
 ## Database Overview
 
+The component, blob, experiment, and fluid database wrappers have separate
+connection lifecycles. Tests of a wrapper must use its current API: the legacy
+blob and experiment wrappers expose JDBC resources but do not implement
+`AutoCloseable`, so callers close their statements and connections explicitly.
+The blob wrapper loads the H2 driver for `H2` and `H2RT`; these configurations
+do not require the removed JDBC-ODBC bridge.
+
 The **COMP** table is the primary pure component property database in NeqSim. It contains over 150 parameters per component, organized into functional groups that support different thermodynamic models and property calculations.
 
 Key characteristics:
@@ -452,8 +459,8 @@ Complete parameter list with units and typical values:
 | Parameter | Unit | Example (methane) | Example (water) |
 |-----------|------|-------------------|-----------------|
 | `MOLARMASS` | g/mol | 16.043 | 18.015 |
-| `TC` | °C | -82.59 | 374.15 |
-| `PC` | bara | 45.99 | 220.89 |
+| `TC` | °C | -82.59 | 373.946 |
+| `PC` | bara | 45.99 | 220.64 |
 | `ACSFACT` | - | 0.0115 | 0.344 |
 | `CRITVOL` | cm³/mol | 99.0 | 56.0 |
 | `NORMBOIL` | °C | -161.55 | 100.0 |
