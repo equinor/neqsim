@@ -209,7 +209,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     previous = read_json(os.path.join(cycle_dir, "cycle.json"), {}) or {}
     done = {s["name"]: s for s in previous.get("stages", []) if s["status"] in ("ok", "warn")}
 
-    standard_status = None
+    standard_status = previous.get("standard_first") if previous else None
     ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
                        cycle_id, cycle_dir, state_dir, data_dir, dry_run, no_agent, next_action)
     ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
