@@ -460,9 +460,14 @@ neqsim task-solve <task> --until converged   # ignore the target, stop when gain
 neqsim task-solve <task> --reset             # forget earlier solve rounds
 ```
 
-Each cycle prints its digest. The cycle id is the UTC time and host
-(`2026-09-30T0500Z@myhost`); a rerun in the same minute gets `-r2`. A crashed
-cycle is resumed by running it again: completed stages are skipped.
+Each cycle prints its digest. The cycle id records the UTC start time and original host
+(`2026-09-30T0500Z@myhost`). An interrupted cycle is persisted with a versioned
+`cycle.json` plus `checkpoint.json`. Running `task-cycle` again resumes the newest
+interrupted cycle of the same mode even on a later day or another machine; completed stages
+are skipped and checkpointed context is restored. This makes the task folder, not the previous
+chat session, the source of truth. Use `--new-cycle` only when an engineer intentionally wants
+to start a fresh cycle instead of resuming the interrupted one. A schema version newer than the
+runner is rejected rather than guessed.
 
 ---
 
@@ -626,6 +631,12 @@ baseline, solve rounds, KPI trends (`report/kpi_trends.png`), trigger events,
 the ledger with pending decisions, the baseline history, backtests and the
 **next actions**. Never edit it; rebuild it with `neqsim task-report <task>`.
 
+For a five-second handover view, run `neqsim task-status <task>`. The JSON summary includes
+the goal and current conclusion, baseline and best validated result, attempts and rejected
+ledger items, blockers, evidence/validation state, changes since the last run, interrupted runs,
+the next recommended action, last run and the next recorded scheduled run. It is derived from
+persisted task files, so another supported agent or machine can use it without the previous chat.
+
 For all living tasks in a folder at once:
 
 ```powershell
@@ -744,7 +755,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 | Command | Purpose |
 |---------|---------|
 | `neqsim task-living <task> [--brief FILE]` | Make a task living (never overwrites) |
-| `neqsim task-cycle <task> [--mode monitor\|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]` | Run one cycle |
+| `neqsim task-cycle <task> [--mode monitor\|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--new-cycle]` | Resume an interrupted cycle by default, or deliberately start a fresh cycle |
 | `neqsim task-solve <task> [--until goal\|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed] [--reset]` | Solve loop |
 | `neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--name N] [--repeat]` | Replay archived data |
 | `neqsim task-schedule <task> [--daily HH:MM] [--install\|--remove\|--show]` | Schedule monitor cycles |

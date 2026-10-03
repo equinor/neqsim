@@ -260,3 +260,105 @@ def test_cli_defaults_to_the_task_root(tmp_path, monkeypatch, capsys):
     assert "reference_compressor_station" in capsys.readouterr().out
     with pytest.raises(SystemExit, match="also looked in the task root"):
         cli.main(["cycle", "no_such_task"])
+
+
+def test_interrupted_cycle_resumes_across_day_and_host(reference, tmp_path, monkeypatch):
+    task = _copy(reference, tmp_path, "resume_portable")
+    cycle_id = "2025-11-01T1200Z@laptop"
+    cycle_dir = os.path.join(task, "continuous", "cycles", cycle_id)
+    os.makedirs(cycle_dir)
+    with open(os.path.join(cycle_dir, "cycle.json"), "w", encoding="utf-8") as stream:
+        json.dump({
+            "schema_version": "1.0",
+            "cycle_id": cycle_id,
+            "task": os.path.basename(task),
+            "mode": "monitor",
+            "host": "laptop",
+            "started_at": "2025-11-01T12:00:00+00:00",
+            "status": "running",
+            "stages": [],
+            "versions": {"python": "test"},
+        }, stream)
+    with open(os.path.join(cycle_dir, "checkpoint.json"), "w", encoding="utf-8") as stream:
+        json.dump({
+            "schema_version": "1.0",
+            "cycle_id": cycle_id,
+            "stage": "sense",
+            "kpis": {"saved_value": 7.0},
+            "sources": {},
+            "triggers": ["saved_trigger"],
+            "proposals": [],
+            "new_proposals": [],
+            "versions": {"neqsim_commit": "saved"},
+            "summary": {},
+            "solve": {},
+            "stop_state": None,
+            "digest_text": "",
+            "notifications": [],
+            "agent_run": {},
+            "previous_kpis": {},
+        }, stream)
+
+    monkeypatch.setenv("NEQSIM_CONTINUOUS_HOST", "server")
+    resumed = run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc),
+                        stages=["digest"], no_agent=True)
+
+    assert resumed["cycle_id"] == cycle_id
+    assert resumed["origin_host"] == "laptop"
+    assert resumed["host"] == "server"
+    assert resumed["resumed_from_host"] == "laptop"
+    assert resumed["resume_count"] == 1
+    assert resumed["status"] == "complete"
+    assert resumed["triggers"] == ["saved_trigger"]
+    assert json.load(open(os.path.join(cycle_dir, "kpis.json")))["saved_value"] == 7.0
+
+
+def test_interrupted_cycle_rejects_unknown_schema(reference, tmp_path):
+    task = _copy(reference, tmp_path, "resume_schema")
+    cycle_id = "2025-11-01T1200Z@old"
+    cycle_dir = os.path.join(task, "continuous", "cycles", cycle_id)
+    os.makedirs(cycle_dir)
+    with open(os.path.join(cycle_dir, "cycle.json"), "w", encoding="utf-8") as stream:
+        json.dump({"schema_version": "9.0", "cycle_id": cycle_id, "mode": "monitor",
+                   "host": "old", "status": "running", "stages": []}, stream)
+
+    with pytest.raises(RuntimeError, match="schema 9.0"):
+        run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc),
+                  stages=["digest"], no_agent=True)
+
+
+def test_state_schema_is_backward_compatible_and_future_safe(reference, tmp_path):
+    from neqsim_continuous.living import read_state, write_state
+
+    task = _copy(reference, tmp_path, "state_schema")
+    state_path = os.path.join(task, "continuous", "state.json")
+    with open(state_path, "w", encoding="utf-8") as stream:
+        json.dump({"state": "solving", "phase": "solving"}, stream)
+    assert read_state(task)["schema_version"] == "1.0"
+
+    write_state(task, {"state": "monitoring", "phase": "monitoring"})
+    assert json.load(open(state_path))["schema_version"] == "1.0"
+
+    with open(state_path, "w", encoding="utf-8") as stream:
+        json.dump({"schema_version": "9.0", "state": "future"}, stream)
+    with pytest.raises(ValueError, match="schema 9.0"):
+        read_state(task)
+
+
+def test_five_second_status_includes_resume_and_schedule_contract(reference, tmp_path):
+    from neqsim_continuous.living import status
+
+    task = _copy(reference, tmp_path, "five_second_status")
+    schedule.record(task, "05:30", "monitor", {"status": "ok", "message": "installed"})
+    summary = status(task)
+
+    required = {
+        "goal", "baseline_detail", "best_validated", "attempts", "rejected_hypotheses",
+        "blockers", "evidence", "changed_since_last_run", "next_action", "last_run",
+        "next_run", "interrupted_runs",
+    }
+    assert required.issubset(summary)
+    assert summary["goal"]["metric"]
+    assert summary["next_action"]
+    assert summary["next_run"] is not None
+    assert summary["schedule"]["daily"] == "05:30"
