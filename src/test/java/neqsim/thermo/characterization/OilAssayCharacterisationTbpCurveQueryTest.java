@@ -64,16 +64,12 @@ class OilAssayCharacterisationTbpCurveQueryTest {
 
     assertThrows(IllegalArgumentException.class,
         () -> table.getCumulativeVolumePercentAtBoilingPointKelvin(Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getCumulativeVolumePercentAtBoilingPointKelvin(299.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getCumulativeVolumePercentAtBoilingPointKelvin(701.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getCumulativeVolumePercentAtBoilingPointKelvin(299.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getCumulativeVolumePercentAtBoilingPointKelvin(701.0));
     assertThrows(IllegalArgumentException.class,
         () -> table.getBoilingPointKelvinAtCumulativeVolumePercent(Double.POSITIVE_INFINITY));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingPointKelvinAtCumulativeVolumePercent(-1.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingPointKelvinAtCumulativeVolumePercent(101.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingPointKelvinAtCumulativeVolumePercent(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingPointKelvinAtCumulativeVolumePercent(101.0));
     assertThrows(IllegalArgumentException.class,
         () -> table.getLiquidVolumePercentBetweenBoilingPointsKelvin(500.0, 500.0));
     assertThrows(IllegalArgumentException.class,

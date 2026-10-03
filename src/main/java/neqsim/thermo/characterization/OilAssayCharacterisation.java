@@ -1282,8 +1282,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         double upperRecovery = cumulativeVolumePercent[sourceCutIndex + 1];
         if (targetCumulativeVolumePercent <= upperRecovery) {
           double intervalFraction = (targetCumulativeVolumePercent - lowerRecovery) / (upperRecovery - lowerRecovery);
-          return boilingPointKelvin[sourceCutIndex] + intervalFraction
-              * (boilingPointKelvin[sourceCutIndex + 1] - boilingPointKelvin[sourceCutIndex]);
+          return boilingPointKelvin[sourceCutIndex]
+              + intervalFraction * (boilingPointKelvin[sourceCutIndex + 1] - boilingPointKelvin[sourceCutIndex]);
         }
       }
       return boilingPointKelvin[boilingPointKelvin.length - 1];
