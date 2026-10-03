@@ -172,6 +172,39 @@ Each resulting subcut copies the source interval specific gravity. Consequently,
 
 The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
 
+### Conservative target-grid resampling
+
+`TbpCutTable.resampleAtBoilingPointsKelvin(...)` and
+`resampleAtBoilingPointsCelsius(...)` replace the complete boundary grid while keeping
+the source endpoints. The target may refine source intervals, combine them, or do both in
+one operation:
+
+```java
+OilAssayCharacterisation.TbpCutTable targetGrid =
+    table.resampleAtBoilingPointsCelsius(26.85, 126.85, 326.85, 426.85);
+```
+
+At each target boundary, cumulative liquid-volume yield uses the same piecewise-linear
+recovery assumption documented for cut splitting. For target interval (j), each
+overlapping source interval (i) contributes liquid-volume yield
+(Delta V_{ij}), and the reported specific gravity is
+
+$SG_j=\frac{\sum_i \Delta V_{ij}SG_i}{\sum_i \Delta V_{ij}}$
+
+This gives exact endpoint and total liquid-volume closure and conserves the
+ideal-additive implied mass (sum_i Delta V_iSG_i). A source-grid request is an
+identity operation; a finer grid copies source-interval SG across its subintervals; and
+a coarser or mixed grid reports the liquid-volume-weighted SG of all overlaps. The
+source table remains immutable.
+
+The method is a conservative bookkeeping transform, not a new distillation or property
+correlation. It assumes piecewise-linear cumulative recovery and constant SG within
+each source interval. It does not infer measured intrainterval shape, interpolate
+density with temperature, smooth or extrapolate the curve, average molecular weight or
+critical properties, or assert phase-behavior equivalence after recharacterization.
+Null, incomplete, non-finite, unordered, exterior, and endpoint-mismatched target grids
+fail before a table is returned.
+
 ### Recharacterizing an exported or re-lumped table
 
 `addTBPCutTable(...)` attaches an immutable exported or re-lumped table to another assay without requiring callers to unpack its arrays:
