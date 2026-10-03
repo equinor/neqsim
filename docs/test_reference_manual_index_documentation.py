@@ -62,7 +62,10 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
                 continue
             for source_path in re.findall(r"\\bdocs/[A-Za-z0-9_./-]+\\.md\\b", line):
                 checked += 1
-                if "[{}](".format(source_path) not in line:
+                linked_pattern = r"\[{}(?:#[^\]]+)?\]\(".format(
+                    re.escape(source_path)
+                )
+                if not re.search(linked_pattern, line):
                     unlinked.append("{}: {}".format(source_path, line))
         self.assertGreater(checked, 600)
         self.assertEqual([], unlinked)
