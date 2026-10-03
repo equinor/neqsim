@@ -21,14 +21,12 @@ public class NeqSimFluidDataBaseTest {
     NeqSimFluidDataBase.numb = 1;
     NeqSimFluidDataBase.useOnlineBase = false;
     try (NeqSimFluidDataBase database = new EmbeddedFluidDatabase()) {
-      try (Connection connection = database.getConnection()) {
-        Assertions.assertTrue(connection.isValid(1));
-        database.execute("CREATE TABLE fluid_test (property_value INTEGER)");
-        database.execute("INSERT INTO fluid_test VALUES (99)");
-        try (ResultSet result = database.getResultSet("SELECT property_value FROM fluid_test")) {
-          Assertions.assertTrue(result.next());
-          Assertions.assertEquals(99, result.getInt(1));
-        }
+      Assertions.assertTrue(database.getConnection().isValid(1));
+      database.execute("CREATE TABLE fluid_test (property_value INTEGER)");
+      database.execute("INSERT INTO fluid_test VALUES (99)");
+      try (ResultSet result = database.getResultSet("SELECT property_value FROM fluid_test")) {
+        Assertions.assertTrue(result.next());
+        Assertions.assertEquals(99, result.getInt(1));
       }
     } finally {
       NeqSimFluidDataBase.numb = previousNumber;
