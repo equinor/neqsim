@@ -98,7 +98,14 @@ Non-negotiables:
    for tooling gaps), commit and push each fix to the repo that owns it, and record it in
    `neqsim_improvements.md` and `results.json` `improvements` (or state that nothing was needed).
    Never commit task output or company data to a code repo.
-7. Close with a privacy-safe `docs/development/TASK_LOG.md` entry.
+7. **Offer to close the loop upstream.** When step 6 recorded a gap, ask the user once whether
+   to file it on `equinor/neqsim` now: `neqsim file-issue <task>` (`--list` to preview, `--pr` to
+   also propose opening a PR for an already-implemented gap). Every issue and PR is confirmed
+   interactively (or needs `--yes`) and `--dry-run` never calls `gh`/`git` — never file or push
+   without the user's explicit go-ahead. No `gh`/no local checkout (the common case for plugin
+   users) falls back to a pre-filled `github.com/.../issues/new` link opened in a browser —
+   never a dead end. Details: `neqsim-task-workflow` §6.4.
+8. Close with a privacy-safe `docs/development/TASK_LOG.md` entry.
 
 Quick tasks skip the ceremony: answer with units, assumptions and a validation note.
 

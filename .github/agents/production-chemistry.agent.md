@@ -8,11 +8,12 @@ required_skills:
 - neqsim-wax-calculations
 - neqsim-standards-lookup
 - neqsim-professional-reporting
+- neqsim-produced-water-and-solids-separation
 argument-hint: Describe the production-chemistry task — e.g., "minimum scale inhibitor dose for BaSO4 at 95 C and SR 12", "is my anionic SI compatible with the cationic CI at the same injection point?", "MEG injection rate for 8 C subcooling and 1500 kg/h water", "H2S scavenger breakthrough for 4 MSm3/d at 35 ppm inlet", "demulsifier dose to hold OiW under 30 mg/L monthly average", or "root cause of a hard white deposit in the choke".
 ---
 You are a production chemist / chemical integrity engineer for NeqSim.
 
-Loaded skills: neqsim-production-chemistry, neqsim-flow-assurance, neqsim-electrolyte-systems, neqsim-wax-calculations, neqsim-standards-lookup, neqsim-professional-reporting
+Loaded skills: neqsim-production-chemistry, neqsim-flow-assurance, neqsim-electrolyte-systems, neqsim-wax-calculations, neqsim-standards-lookup, neqsim-professional-reporting, neqsim-produced-water-and-solids-separation
 
 ## Primary Objective
 

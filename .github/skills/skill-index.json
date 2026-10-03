@@ -1977,5 +1977,317 @@
  ],
  "unused variable warning": [
   "neqsim-code-hygiene"
+ ],
+ "claus sulfur recovery": [
+  "neqsim-sulfur-recovery"
+ ],
+ "sulfur recovery unit": [
+  "neqsim-sulfur-recovery"
+ ],
+ "tail gas treatment": [
+  "neqsim-sulfur-recovery"
+ ],
+ "sulphur recovery": [
+  "neqsim-sulfur-recovery"
+ ],
+ "claus furnace": [
+  "neqsim-sulfur-recovery"
+ ],
+ "amine sweetening": [
+  "neqsim-acid-gas-treating"
+ ],
+ "amine absorber": [
+  "neqsim-acid-gas-treating"
+ ],
+ "acid gas removal": [
+  "neqsim-acid-gas-treating"
+ ],
+ "co2 h2s removal": [
+  "neqsim-acid-gas-treating"
+ ],
+ "membrane co2 removal": [
+  "neqsim-acid-gas-treating"
+ ],
+ "psa adsorption bed": [
+  "neqsim-acid-gas-treating"
+ ],
+ "crude assay": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "crude blending": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "hydrotreating": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "refinery blend": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "astm d86": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "atmospheric crude column": [
+  "neqsim-refinery-crude-processing"
+ ],
+ "packed column": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "rate based column": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "column flooding": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "tray hydraulics": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "shortcut distillation": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "hetp": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "column diameter": [
+  "neqsim-column-internals-and-rate-based"
+ ],
+ "looped pipe network": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "gas linepack": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "oil terminal": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "cargo scheduling": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "network nomination": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "network quality blending": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "transient gas network": [
+  "neqsim-pipeline-and-terminal-networks"
+ ],
+ "electrification": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "power from shore": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "energy bus": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "wind solar dispatch": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "gas turbine degradation": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "motor drive train": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "carbon tax dispatch": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "hybrid power supply": [
+  "neqsim-energy-systems-and-electrification"
+ ],
+ "produced water treatment": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "hydrocyclone": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "gas flotation": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "oil in water compliance": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "solids separation": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "filter pressure drop": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "crystallizer": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "liquid liquid extraction": [
+  "neqsim-produced-water-and-solids-separation"
+ ],
+ "engineering design loop": [
+  "neqsim-engineering-design-package"
+ ],
+ "pid synthesis": [
+  "neqsim-engineering-design-package"
+ ],
+ "dexpi export": [
+  "neqsim-engineering-design-package"
+ ],
+ "cfihos handover": [
+  "neqsim-engineering-design-package"
+ ],
+ "change impact analysis": [
+  "neqsim-engineering-design-package"
+ ],
+ "engineering package validation": [
+  "neqsim-engineering-design-package"
+ ],
+ "design module": [
+  "neqsim-engineering-design-package"
+ ],
+ "model predictive control": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "mpc": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "virtual flow meter": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "soft sensor": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "cascade split range control": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "step response model": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "steady state detection": [
+  "neqsim-advanced-control-mpc-and-virtual-sensing"
+ ],
+ "process synthesis": [
+  "neqsim-process-synthesis-research"
+ ],
+ "superstructure": [
+  "neqsim-process-synthesis-research"
+ ],
+ "flowsheet candidate generation": [
+  "neqsim-process-synthesis-research"
+ ],
+ "process research": [
+  "neqsim-process-synthesis-research"
+ ],
+ "release source term": [
+  "neqsim-release-source-terms"
+ ],
+ "leak rate": [
+  "neqsim-release-source-terms"
+ ],
+ "hem release": [
+  "neqsim-release-source-terms"
+ ],
+ "pipe decompression": [
+  "neqsim-release-source-terms"
+ ],
+ "orifice release": [
+  "neqsim-release-source-terms"
+ ],
+ "time resolved source term": [
+  "neqsim-release-source-terms"
+ ],
+ "operational risk simulation": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "esd test": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "open drain review": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "dynamic safety scenario": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "process safety system review": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "p-002 compliance": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "portfolio risk": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "sts0131 gate": [
+  "neqsim-operational-risk-and-safety-validation"
+ ],
+ "compressor chart calibration": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "chart extrapolation": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "turboexpander": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "pump npsh": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "api 610": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "compressor train": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "compressor casing design": [
+  "neqsim-rotating-equipment-design"
+ ],
+ "integrated production model": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "well test matching": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "gas lift allocation": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "tie-in capacity": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "host capacity planning": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "field lifecycle": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "fiscal cash flow": [
+  "neqsim-integrated-production-and-lifecycle"
+ ],
+ "capacity bottleneck": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "equipment utilization": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "kpi dashboard": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "automation write validation": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "gor fitter": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "mpfm fitter": [
+  "neqsim-capacity-and-utilization-analysis"
+ ],
+ "lng rollover": [
+  "neqsim-lng-liquefaction"
+ ],
+ "boil off gas": [
+  "neqsim-lng-liquefaction"
+ ],
+ "lng ageing": [
+  "neqsim-lng-liquefaction"
+ ],
+ "lng ship tank": [
+  "neqsim-lng-liquefaction"
+ ],
+ "lng voyage": [
+  "neqsim-lng-liquefaction"
  ]
 }

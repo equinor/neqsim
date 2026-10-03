@@ -293,6 +293,9 @@ public class IntegratedProductionModel implements Serializable {
       double rate = res.getFieldRate();
       profile.add(t, rate, res.getRevenue(), res.getEnergyKWhPerDay(), res.getEmissionsKgPerDay(),
           avgReservoirPressure());
+      if (step == nSteps) {
+        break;
+      }
       // Deplete each well's drive by the volume it produced over the step.
       for (WellUnit w : wells) {
         double producedVol = w.lastRate * dtDays;

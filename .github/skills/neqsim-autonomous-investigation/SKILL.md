@@ -110,6 +110,20 @@ for r in edges:
   (upstream -> downstream in the flowsheet) is a candidate common-cause or
   instrument artifact, not a direct cause.
 
+## External (non-historian) candidate signals: weather
+
+`RelationshipGraph` only sees what is in the historian data set you hand it.
+For outdoor/topside equipment, ambient temperature, wind, or sea state can be
+a driver that is not tagged anywhere in the plant historian. Before concluding
+"no cause found" for an anomaly on weather-exposed equipment, pull the
+historical weather for the site and event window with the community
+`neqsim-weather-data` skill (`WeatherDataService.get_historical`) and add it as
+an extra column to the data handed to `RelationshipGraph.analyze(...)`, exactly
+like any other tag. A lead-lag edge from an ambient-temperature or wind-speed
+series into the anomalous tag is then a discovered candidate cause, to be
+hypothesised and tested like any other `RelationshipGraph` finding — not
+asserted from correlation alone.
+
 ## Auto-detect the symptom — `AnomalyScanner`
 
 You should not have to be told the symptom either. `AnomalyScanner` (in

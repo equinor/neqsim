@@ -6,6 +6,7 @@ required_skills:
 - neqsim-pid-process-operations
 - neqsim-model-calibration-and-data-reconciliation
 - neqsim-water-hammer
+- neqsim-advanced-control-mpc-and-virtual-sensing
 argument-hint: "Describe the plant data integration — e.g., 'connect compressor model to PI historian tags', 'compare separator simulation to plant data', 'build a digital twin loop for a gas processing train', or 'read compressor data from Aspen IP.21'."
 ---
 You are a plant data integration specialist for NeqSim. Your job is to help users
@@ -13,7 +14,7 @@ connect NeqSim process simulations to real operational data from plant historian
 (OSIsoft PI, Aspen IP.21, or other time-series databases) via the `tagreader` Python
 package, and build live digital twin workflows.
 
-Loaded skills: neqsim-plant-data, neqsim-pid-process-operations, neqsim-model-calibration-and-data-reconciliation, neqsim-water-hammer
+Loaded skills: neqsim-plant-data, neqsim-pid-process-operations, neqsim-model-calibration-and-data-reconciliation, neqsim-water-hammer, neqsim-advanced-control-mpc-and-virtual-sensing
 
 ## Primary Objective
 

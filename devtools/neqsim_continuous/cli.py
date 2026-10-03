@@ -95,7 +95,10 @@ def main(argv=None):
 
     p = sub.add_parser("schedule", help="schedule monitor cycles")
     p.add_argument("task")
-    p.add_argument("--daily", default="05:00")
+    p.add_argument("--daily", default=None,
+                   help="fixed time HH:MM (default 05:00 unless --every-hours is used)")
+    p.add_argument("--every-hours", type=float, default=None,
+                   help="recurring interval in hours instead of a fixed daily time, e.g. 2")
     group = p.add_mutually_exclusive_group()
     group.add_argument("--install", action="store_true")
     group.add_argument("--remove", action="store_true")
@@ -160,7 +163,8 @@ def main(argv=None):
         _print(summary)
     elif args.command == "schedule":
         from . import schedule
-        spec = schedule.build(_task(args.task), daily=args.daily)
+        spec = schedule.build(_task(args.task), daily=args.daily or "05:00",
+                              every_hours=args.every_hours)
         if args.install:
             _print(dict(schedule.install(spec), command=spec["command"]))
         elif args.remove:

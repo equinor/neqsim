@@ -85,6 +85,10 @@ report:
   orientation: portrait  # portrait | landscape | template
   # A corporate Word template is often landscape because it was built for forms;
   # "template" keeps that, the default puts the report body on a readable measure.
+  template: ""         # Word template for this task only (.docx/.dotx; relative to the task folder), or none
+  # Overrides NEQSIM_REPORT_TEMPLATE and the saved `neqsim --set-report-template`;
+  # --template PATH on the command line still wins, --no-template ignores it.
+  # Empty keeps the saved/default template; "none" forces the built-in styling.
   include_paper: false
   work_record: auto    # auto | required | skip -> step3_report/WORK_RECORD.md
   # The work record is the method-and-provenance companion to the report: what was

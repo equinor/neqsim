@@ -8,9 +8,10 @@ required_skills:
 - neqsim-api-patterns
 - neqsim-java8-rules
 - neqsim-professional-reporting
+- neqsim-energy-systems-and-electrification
 argument-hint: "Describe the utility task — e.g., 'size a fired boiler for an 8 MW reboiler duty', 'design a propane chiller for 3 MW of gas chilling at -35 C', 'membrane N2 generator for 500 Nm3/h at 99.5%', 'HP/LP steam header balance', or 'optimize the interstage pressure of a two-stage instrument-air compressor'."
 ---
-Loaded skills: neqsim-utility-design, neqsim-utilities-specification, neqsim-heat-integration, neqsim-api-patterns, neqsim-java8-rules, neqsim-professional-reporting
+Loaded skills: neqsim-utility-design, neqsim-utilities-specification, neqsim-heat-integration, neqsim-api-patterns, neqsim-java8-rules, neqsim-professional-reporting, neqsim-energy-systems-and-electrification
 
 ## Skills to Load
 

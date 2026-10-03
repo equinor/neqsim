@@ -198,6 +198,20 @@ def test_schedule_build_uses_shared_python(reference):
     assert "--standard-first" in spec["command"]
     assert spec["windows"][spec["windows"].index("/ST") + 1] == "05:30"
     assert spec["cron"].startswith("30 5 * * *")
+    # /TR always points at a short wrapper script (schtasks caps /TR at 261 chars,
+    # which long OneDrive-style task paths can exceed).
+    assert spec["windows"][spec["windows"].index("/TR") + 1] == spec["wrapper_path"]
+    assert spec["command"] in spec["wrapper_script"]
+
+
+def test_schedule_build_every_hours(reference):
+    spec = schedule.build(reference, every_hours=2)
+    assert spec["windows"][spec["windows"].index("/SC") + 1] == "HOURLY"
+    assert spec["windows"][spec["windows"].index("/MO") + 1] == "2"
+    assert "/ST" not in spec["windows"]
+    assert spec["cron"] == "0 */2 * * * " + spec["command"]
+    with pytest.raises(ValueError):
+        schedule.build(reference, every_hours=0)
 
 
 def test_cycle_standard_first_marks_degraded(reference, tmp_path, monkeypatch):
