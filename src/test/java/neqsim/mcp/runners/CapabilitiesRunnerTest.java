@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.process.equipment.EquipmentFactory;
 
 /**
  * Tests for the CapabilitiesRunner.
@@ -141,11 +142,13 @@ class CapabilitiesRunnerTest {
 
     JsonArray equipmentTypes = inventory.getAsJsonArray("supportedEquipmentTypes");
     JsonArray contractEquipment = root.getAsJsonObject("processJsonContract").getAsJsonArray("supportedEquipmentTypes");
-    assertEquals(207, inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(EquipmentFactory.getSupportedEquipmentTypes().size(), inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(equipmentTypes.size(), inventory.get("equipmentTypeCount").getAsInt());
     assertEquals(contractEquipment, equipmentTypes);
     assertTrue(equipmentTypes.toString().contains("Compressor"));
     assertTrue(equipmentTypes.toString().contains("ThreePhaseSeparator"));
     assertTrue(equipmentTypes.toString().contains("ThrottlingValve"));
+    assertTrue(equipmentTypes.toString().contains("\"MountainCavern\""));
 
     JsonArray reportPaths = inventory.getAsJsonArray("reportPaths");
     assertEquals(2, inventory.get("reportPathCount").getAsInt());
