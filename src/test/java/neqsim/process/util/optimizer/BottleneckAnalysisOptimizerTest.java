@@ -974,7 +974,8 @@ public class BottleneckAnalysisOptimizerTest {
     for (int step = 50; step >= 0; step--) {
       double candidateRate = originalFlow * (0.9 + 0.005 * step);
       OptimizationConfig probeConfig = new OptimizationConfig(candidateRate, candidateRate).rateUnit("kg/hr")
-          .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .selectedPointReplays(4).utilizationMarginFraction(1.0e-4).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
       OptimizationResult probe = optimizer.optimize(processSystem, inletStream, probeConfig,
           Collections.singletonList(throughputObjective), Collections.emptyList());
       if (probe.isFeasible()) {
@@ -987,7 +988,8 @@ public class BottleneckAnalysisOptimizerTest {
         "The balanced compressor trains must have a verified feasible rate in the search range");
 
     OptimizationConfig stage2Config = new OptimizationConfig(feasibleLowerRate, upperRate).rateUnit("kg/hr")
-        .tolerance(originalFlow * 0.001).maxIterations(20).selectedPointReplays(4).defaultUtilizationLimit(1.0) // Strict
+        .tolerance(originalFlow * 0.001).maxIterations(20).selectedPointReplays(4).utilizationMarginFraction(1.0e-4)
+        .defaultUtilizationLimit(1.0) // Strict
         // 100%
         // limit
         .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
