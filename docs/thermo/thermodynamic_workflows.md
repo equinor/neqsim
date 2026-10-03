@@ -55,7 +55,8 @@ public final class ThermodynamicWorkflowExample {
     SystemInterface sweepCase = fluid.clone();
     sweepCase.setTemperature(280.0, "K");
     sweepCase.setPressure(10.0, "bara");
-    new ThermodynamicOperations(sweepCase).TPflash();
+    ThermodynamicOperations sweepOperations = new ThermodynamicOperations(sweepCase);
+    sweepOperations.TPflash();
     sweepCase.initProperties();
 
     assert sweepCase != fluid;
@@ -85,7 +86,7 @@ interpreted as kg/m3 and divided by 1000. Use `addPlusFraction(...)` for an unre
 fraction; a TBP cut and a plus fraction do not have the same characterization semantics.
 
 `createDatabase(true)` rebuilds NeqSim's temporary component and interaction tables for the
-current component list. It does not infer the molar mass or specific gravity of a TBP fraction.
+current component list. It does not infer the molar mass or density of a TBP fraction.
 
 ## Choose the thermodynamic model and mixing rule separately
 
@@ -95,8 +96,8 @@ rule (`EosMixingRuleType.CLASSIC`, legacy value 2).
 
 Prefer named mixing rules over raw legacy integers. The maintained
 [fluid-creation guide](fluid_creation_guide.md#8-mixing-rules) lists current names, compatibility
-values, and model-specific recommendations. Legacy value 1 is the no-interaction rule with binary
-interaction parameters set to zero; it is not the database-backed classic rule.
+values, and model-specific recommendations. Legacy value 1 is the no-interaction rule with all
+binary interaction parameters set to zero; it is not the database-backed classic rule.
 
 ## Select an equilibrium specification
 
@@ -125,9 +126,9 @@ general `ThermodynamicOperations.calcChemicalEquilibrium()` entry point. Start w
 ## Clone independent states for sweeps
 
 Clone a configured and flashed fluid before changing a sweep condition. The clone owns an
-independent thermodynamic state, as the executable assertions above demonstrate. Cloning is not
-JSON export. Select and validate a serialization format explicitly when state must be persisted or
-transferred.
+independent thermodynamic state, while the original remains at its prior temperature and pressure,
+as the executable assertions above demonstrate. Cloning is not JSON export. Select and validate a
+serialization format explicitly when state must be persisted or transferred.
 
 ## Read, diagnose, and validate results
 
@@ -140,6 +141,8 @@ transferred.
 - Validate against the quantities relevant to the experiment or process: density,
   compressibility, saturation pressure or temperature, CCE or differential-liberation volumes,
   phase amounts and compositions, and material or energy closure.
+
+Molar mass and Z-factor alone do not validate a characterized petroleum fluid.
 
 The source code does not benchmark a selected model for a particular reservoir fluid. Confirm
 model choice, characterized pseudo-components, and calculated properties against representative

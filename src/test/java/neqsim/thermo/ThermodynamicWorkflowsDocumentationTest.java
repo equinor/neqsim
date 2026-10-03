@@ -25,18 +25,18 @@ import org.junit.jupiter.api.io.TempDir;
 /** Compiles and executes the complete example in docs/thermo/thermodynamic_workflows.md. */
 public class ThermodynamicWorkflowsDocumentationTest {
   private static final String GUIDE = "docs/thermo/thermodynamic_workflows.md";
-  private static final Pattern EXECUTABLE_JAVA = Pattern.compile(
-      "(?ms)^## Build, flash, and branch a characterized fluid.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern EXECUTABLE_JAVA = Pattern
+      .compile("(?ms)^## Build, flash, and branch a characterized fluid.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern ALL_JAVA = Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS = Pattern
       .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   /** Verifies units, model boundaries, and the single-program contract. */
   @Test
-  void guideStatesUnitsAndEngineeringBoundaries() throws Exception {
+  void buildFlashAndReadExample() throws Exception {
     String guide = readGuide();
 
     assertTrue(guide.contains("Temperature is in K and pressure is absolute"));
@@ -55,7 +55,7 @@ public class ThermodynamicWorkflowsDocumentationTest {
 
   /** Compiles the exact Markdown fence for Java 8 and executes it with assertions enabled. */
   @Test
-  void publishedProgramCompilesAndRunsWithAssertions() throws Exception {
+  void cloneSweepKeepsOriginalState() throws Exception {
     Matcher fence = EXECUTABLE_JAVA.matcher(readGuide());
     assertTrue(fence.find(), "Executable thermodynamic workflow is missing");
     String source = fence.group(1);
@@ -65,6 +65,7 @@ public class ThermodynamicWorkflowsDocumentationTest {
     assertTrue(source.contains("fluid.createDatabase(true)"));
     assertTrue(source.contains("fluid.setMixingRule(\"classic\")"));
     assertTrue(source.contains("operations.TPflash()"));
+    assertTrue(source.contains("sweepOperations.TPflash()"));
     assertTrue(source.contains("fluid.initProperties()"));
     assertTrue(source.contains("fluid.getTotalNumberOfMoles() - 1.0"));
     assertTrue(source.contains("assert sweepCase != fluid"));
@@ -96,16 +97,12 @@ public class ThermodynamicWorkflowsDocumentationTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
-          .getTask(null, manager, diagnostics, options, null,
-              manager.getJavaFileObjects(javaSource.toFile()))
-          .call();
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
