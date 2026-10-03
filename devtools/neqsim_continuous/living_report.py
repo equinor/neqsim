@@ -16,6 +16,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from . import user_input
 from .ledger import Ledger
 from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json, replace_file
 
@@ -35,6 +36,16 @@ def _fmt(value):
     if isinstance(value, float):
         return "{:.4g}".format(value)
     return str(value)
+
+
+def _constraint_text(constraint):
+    if not isinstance(constraint, dict):
+        return str(constraint)
+    limit = constraint.get("limit")
+    return "{}: {} {} {}{}".format(
+        constraint.get("name") or constraint.get("kpi"), constraint.get("kpi"), constraint.get("op", "<="),
+        "NOT SET" if limit is None else _fmt(limit),
+        " (hard)" if constraint.get("hard", True) else "")
 
 
 def _table(headers, rows):
@@ -149,7 +160,7 @@ def build(task_dir):
             objective.get("direction", "maximize"), objective["metric"], _fmt(objective.get("target")),
             goal.get("confirmed_by") or "NOT CONFIRMED") if objective.get("metric")
          else "not set (edit continuous/goal.yaml)"),
-        ("Constraints", "; ".join(goal.get("constraints", [])) or "-"),
+        ("Constraints", "; ".join(_constraint_text(c) for c in goal.get("constraints", [])) or "-"),
         ("Cycles run", "{} ({} degraded)".format(len(cycles), sum(1 for c in cycles if c.get("degraded")))),
         ("Last cycle", "{} at {} ({})".format(last["cycle_id"], last.get("now", "")[:19], last.get("mode"))
          if last else "none yet"),
@@ -208,6 +219,13 @@ def build(task_dir):
             out += ["", "{} older events are in the cycle folders.".format(len(events) - MAX_EVENTS)]
     else:
         out += ["No trigger has fired."]
+
+    notes = [e for e in user_input.load(task_dir) if e.get("status", "active") == "active"]
+    if notes:
+        out += ["", "## Comments and restrictions in force", ""]
+        out += ["- " + user_input.describe(e) + (" (expires {})".format(e["expires"]) if e.get("expires") else "")
+                for e in notes]
+        out += ["", "Add or resolve with `neqsim task-note <task> ...`; they apply from the next cycle."]
 
     items = Ledger(os.path.join(cont, "ledger", "events.jsonl")).current()
     out += ["", "## Improvement ledger", ""]
