@@ -54,7 +54,7 @@ public class ParameterFittingGuideDocumentationTest extends NeqSimTest {
     assertTrue(program.contains("Double.isFinite"));
     assertTrue(program.contains("assert result.isConverged()"));
     assertTrue(program.contains("LogManager.getLogger"));
-    assertTrue(source.contains("defensive copies"));
+    assertTrue(source.matches("(?s).*defensive\\s+copies.*"));
     assertTrue(source.contains("getCovarianceMatrix()"));
     assertTrue(source.contains("getCorrelationMatrix()"));
     assertFalse(source.contains("result.getCovariance();"));
