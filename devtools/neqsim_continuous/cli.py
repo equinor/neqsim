@@ -76,6 +76,8 @@ def main(argv=None):
     p.add_argument("--now", help="override the cycle clock (ISO time)")
     p.add_argument("--standard-first", action="store_true",
                    help="verify/generate the initial Standard-task report basis before the cycle")
+    p.add_argument("--new-cycle", action="store_true",
+                   help="do not resume a persisted interrupted cycle")
 
     p = sub.add_parser("solve", help="solve until the goal is met or improvement is marginal")
     p.add_argument("task")
@@ -137,7 +139,7 @@ def main(argv=None):
         stages = args.stages.split(",") if args.stages else None
         manifest = run_cycle(_task(args.task), mode=args.mode, now=_parse_time(args.now),
                              stages=stages, dry_run=args.dry_run, no_agent=args.no_agent,
-                             standard_first=args.standard_first)
+                             standard_first=args.standard_first, resume=not args.new_cycle)
         if not args.dry_run:
             note_reopen(args.task, manifest)
         print(open(os.path.join(args.task, "continuous", "cycles", manifest["cycle_id"], "digest.md"),
@@ -162,11 +164,16 @@ def main(argv=None):
         from . import schedule
         spec = schedule.build(_task(args.task), daily=args.daily)
         if args.install:
-            _print(dict(schedule.install(spec), command=spec["command"]))
+            result = schedule.install(spec)
+            schedule.record(args.task, args.daily, "monitor", result)
+            _print(dict(result, command=spec["command"]))
         elif args.remove:
-            _print(schedule.remove(args.task))
+            result = schedule.remove(args.task)
+            if result.get("status") in ("ok", "manual", "not_scheduled"):
+                schedule.clear_record(args.task)
+            _print(result)
         elif args.show:
-            _print(schedule.show(args.task))
+            _print(dict(schedule.show(args.task), recorded=schedule.schedule_status(args.task)))
         else:
             _print(spec)
     elif args.command == "promote":
