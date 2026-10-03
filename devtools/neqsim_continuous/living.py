@@ -6,8 +6,9 @@ import shutil
 from datetime import datetime, timezone
 
 from .ledger import CATEGORIES, Ledger
-from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, read_json,
-                   write_json)
+from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, load_goal,
+                   read_json, write_json)
+from .state import STATE_SCHEMA_VERSION, read_state, write_state
 from .stages import neqsim_commit
 
 PLAN_TEMPLATE = """# Living-task cycle plan (neqsim_continuous schema 1.0). Every section is optional.
@@ -180,7 +181,7 @@ def make_living(task_dir, brief=None):
 
     _write(ledger_path, _ledger)
     _write(os.path.join(cont, "state.json"),
-           lambda p: write_json(p, {"state": "draft", "phase": "draft", "updated": _now()}))
+           lambda p: write_state(task_dir, {"state": "draft", "phase": "draft"}))
 
     config = os.path.join(task_dir, "study_config.yaml")
     if os.path.exists(config):
@@ -231,16 +232,6 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     from .living_report import update
     update(task_dir, event="promote")
     return meta
-
-
-def read_state(task_dir):
-    return read_json(os.path.join(continuous_dir(task_dir), "state.json"), {}) or {}
-
-
-def write_state(task_dir, state):
-    state = dict(state, updated=_now())
-    write_json(os.path.join(continuous_dir(task_dir), "state.json"), state)
-    return state
 
 
 def note_reopen(task_dir, manifest):
