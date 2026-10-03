@@ -53,6 +53,7 @@ is checked in CI, so a newly added equipment class cannot remain absent from thi
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
+| Seal Support-System Monitoring | [dry_gas_seal_monitoring.md](dry_gas_seal_monitoring) | Timed advisory supply/vent/buffer/separation monitoring |
 | Compressor Thermal Model | [Compressor thermal model and catalog](../../compressor_thermal_model) | Metal-node temperatures, catalog templates, steady and transient screening, and deposition inputs |
 | Compression Train Assessment | [compression_train_assessment.md](compression_train_assessment) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Seal Condensation and Conditioning | [dry_gas_seal_conditioning.md](dry_gas_seal_conditioning) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
