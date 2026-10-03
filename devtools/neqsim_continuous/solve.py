@@ -114,7 +114,8 @@ def solve(task_dir, until="goal", max_rounds=None, no_agent=False, allow_unconfi
     session = {
         "id": old_session.get("id") or "S-" + uuid.uuid4().hex[:12],
         "status": "running",
-        "started_at": old_session.get("started_at") or previous.get("updated") or _now(),
+        "started_at": old_session.get("started_at") or (
+            previous.get("updated") if resuming else _now()),
         "resumed_at": _now() if resuming else None,
         "resume_count": int(old_session.get("resume_count", 0) or 0) + (1 if resuming else 0),
         "last_host": host_id(),

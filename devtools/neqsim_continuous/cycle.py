@@ -99,25 +99,28 @@ def _new_cycle_id(cycles_dir, now, mode):
 
 
 def find_incomplete_cycle(task_dir, state_dir=None, mode=None):
-    """Return the newest persisted incomplete cycle, regardless of current clock or host."""
+    """Return the newest non-superseded incomplete cycle, across clock or host changes."""
     state_dir = state_dir or continuous_dir(task_dir)
     cycles_dir = os.path.join(state_dir, "cycles")
     if not os.path.isdir(cycles_dir):
         return None
-    found = []
+    records = []
     for name in os.listdir(cycles_dir):
         meta = read_json(os.path.join(cycles_dir, name, "cycle.json"), {}) or {}
-        if meta.get("status") not in ("running", "interrupted"):
-            continue
         if mode is not None and meta.get("mode") != mode:
             continue
         item = dict(meta)
         item.setdefault("cycle_id", name)
-        found.append(item)
-    if not found:
-        return None
-    return sorted(found, key=lambda item: (
-        item.get("started_at") or item.get("now") or "", item.get("cycle_id") or ""))[-1]
+        records.append(item)
+
+    def _key(item):
+        return (item.get("started_at") or item.get("now") or "", item.get("cycle_id") or "")
+
+    completed = [_key(item) for item in records if item.get("status") == "complete"]
+    latest_complete = max(completed) if completed else None
+    found = [item for item in records if item.get("status") in ("running", "interrupted")
+             and (latest_complete is None or _key(item) > latest_complete)]
+    return max(found, key=_key) if found else None
 
 
 def _append_kpi_history(state_dir, cycle_id, now, kpis):
@@ -159,17 +162,19 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
         previous = {}
     done = {record["name"]: record for record in previous.get("stages", [])
             if record.get("status") in ("ok", "warn")}
+    effective_dry_run = previous.get("dry_run", dry_run) if resumed else dry_run
 
     standard_status = previous.get("standard_first") if resumed else None
     ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
-                       cycle_id, cycle_dir, state_dir, data_dir, dry_run, no_agent, next_action)
+                       cycle_id, cycle_dir, state_dir, data_dir, effective_dry_run, no_agent,
+                       next_action)
     ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
     manifest = {"schema_version": SCHEMA_VERSION, "cycle_id": cycle_id,
                 "task": os.path.basename(task_dir), "mode": mode,
                 "host": previous.get("host", _host()) if resumed else _host(),
                 "now": now.isoformat(),
                 "started_at": previous.get("started_at", _utc().isoformat()),
-                "dry_run": previous.get("dry_run", dry_run) if resumed else dry_run,
+                "dry_run": effective_dry_run,
                 "baseline_id": previous.get("baseline_id", ctx.baseline.get("meta", {}).get("id")),
                 "status": "running", "stages": [],
                 "versions": dict(previous.get("versions") or {"python": sys.version.split()[0]})}
@@ -182,7 +187,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                                 "completed_stages": sorted(done)}
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
 
-    if standard_first and mode != "backtest" and not dry_run:
+    if standard_first and mode != "backtest" and not ctx.dry_run:
         from .standard_first import ensure
         standard_status = ensure(task_dir)
         if not standard_status.get("ready"):
@@ -228,8 +233,8 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
             ctx.stage_results[name] = result
             ctx.triggers += [t for t in result.triggers if t not in ctx.triggers]
             record = result.to_dict()
-            if ctx.solve and (name.startswith("script:") or saved.get("solve") if name in done else
-                              name.startswith("script:")):
+            has_saved_solve = name in done and bool(done[name].get("solve"))
+            if ctx.solve and (name.startswith("script:") or has_saved_solve):
                 record["solve"] = ctx.solve
             new_proposals = ctx.proposals[proposal_start:]
             if new_proposals:
@@ -253,10 +258,10 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     manifest["status"] = "complete"
     write_json(os.path.join(cycle_dir, "kpis.json"), ctx.kpis)
     write_json(os.path.join(cycle_dir, "triggers.json"), {"triggers": ctx.triggers})
-    if not dry_run:
+    if not ctx.dry_run:
         _append_kpi_history(state_dir, cycle_id, now, ctx.kpis)
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
-    if not dry_run and mode != "backtest" and os.path.abspath(state_dir) == os.path.abspath(
+    if not ctx.dry_run and mode != "backtest" and os.path.abspath(state_dir) == os.path.abspath(
             continuous_dir(task_dir)):
         from .living_report import update
         update(task_dir, event="cycle")

@@ -3,6 +3,7 @@
     neqsim task-living <task> [--brief FILE]
     neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--standard-first]
     neqsim task-solve <task> [--until goal|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed]
+    neqsim task-resume <task> [--max-rounds N] [--no-agent]
     neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
@@ -21,8 +22,8 @@ import json
 import os
 import sys
 
-COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger", "status",
-            "report", "reference-case")
+COMMANDS = ("living", "cycle", "solve", "resume", "backtest", "schedule", "promote", "ledger",
+            "status", "report", "reference-case")
 
 
 def _print(data):
@@ -84,6 +85,11 @@ def main(argv=None):
     p.add_argument("--no-agent", action="store_true")
     p.add_argument("--allow-unconfirmed", action="store_true")
     p.add_argument("--reset", action="store_true", help="start a fresh iteration history")
+
+    p = sub.add_parser("resume", help="resume interrupted work from persisted task state")
+    p.add_argument("task")
+    p.add_argument("--max-rounds", type=int)
+    p.add_argument("--no-agent", action="store_true")
 
     p = sub.add_parser("backtest", help="replay archived data with a simulated clock")
     p.add_argument("task")
@@ -150,6 +156,9 @@ def main(argv=None):
         state = solve(_task(args.task), until=args.until, max_rounds=args.max_rounds,
                       no_agent=args.no_agent, allow_unconfirmed=args.allow_unconfirmed, reset=args.reset)
         _print({k: state[k] for k in ("state", "reason", "rounds", "details", "paused_branches")})
+    elif args.command == "resume":
+        from .living import resume
+        _print(resume(_task(args.task), no_agent=args.no_agent, max_rounds=args.max_rounds))
     elif args.command == "backtest":
         from .backtest import run_backtest
         report = run_backtest(_task(args.task), _parse_time(args.start), _parse_time(args.end),

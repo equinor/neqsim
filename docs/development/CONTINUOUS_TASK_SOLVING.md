@@ -450,6 +450,39 @@ missed events, detection delay, false alarms per month and reproducibility. Tune
 
 ## 9. Run cycles by hand
 
+### 9.1 Stop today, resume tomorrow
+
+The **task folder is the hand-off**, not the chat session. Before stopping work, no special
+export is required: completed cycle stages, the improvement ledger, baselines and
+`continuous/state.json` are persisted as they are produced. On another day — or after
+copying/synchronising the task folder to another supported machine — start with:
+
+```powershell
+neqsim task-status <task>     # five-second view: conclusion, evidence, changes and next action
+neqsim task-resume <task>     # continue the interrupted solve/cycle, if there is one
+```
+
+`task-status` reports the goal, current conclusion, baseline/best validated result,
+attempts and rejected hypotheses, blockers, validation/evidence state, what changed since
+the last run, the recommended next action, and last/next-run information. It is derived
+from persisted task evidence and does not require conversation history.
+
+Persisted state uses an explicit schema. State written by the earlier 1.0 runner is migrated
+to schema 1.1 without dropping unknown fields. A task written by a newer incompatible schema
+fails closed with an upgrade message instead of being silently rewritten. State contains
+task-relative identity and writer provenance, not checkout-absolute paths, so moving a task
+between machines does not invalidate it.
+
+If a process stopped after a cycle had begun, `task-resume` reuses the same immutable cycle
+id and already-completed stages even when the wall clock or host has changed. If a solve
+cycle completed but the process died before `state.json` was checkpointed, the solve loop
+adopts that completed cycle before launching another attempt. An active `continuous/LOCK`
+still protects against two writers; do not delete a live lock merely to force a second run.
+
+The Living Report remains the detailed history/change view. The ordinary Task Solver report
+remains the clean current-best engineering report; resume/status state does not replace that
+canonical report pipeline.
+
 ```powershell
 neqsim task-cycle <task>                     # one monitor cycle, now
 neqsim task-cycle <task> --dry-run           # no watermarks, ledger or drift state written
@@ -746,6 +779,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `neqsim task-living <task> [--brief FILE]` | Make a task living (never overwrites) |
 | `neqsim task-cycle <task> [--mode monitor\|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]` | Run one cycle |
 | `neqsim task-solve <task> [--until goal\|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed] [--reset]` | Solve loop |
+| `neqsim task-resume <task> [--max-rounds N] [--no-agent]` | Resume interrupted cycle/solve from persisted task state |
 | `neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--name N] [--repeat]` | Replay archived data |
 | `neqsim task-schedule <task> [--daily HH:MM] [--install\|--remove\|--show]` | Schedule monitor cycles |
 | `neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]` | Promote a cycle to the baseline |

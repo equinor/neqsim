@@ -1,6 +1,6 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, be solved until the goal is met or gains are marginal, reopen on new plant data or a changed brief, turn a Word/Markdown brief into a checkable goal, or backtest monitoring against known fault dates."
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-status/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, be solved until the goal is met or gains are marginal, reopen on new plant data or a changed brief, turn a Word/Markdown brief into a checkable goal, or backtest monitoring against known fault dates."
 last_verified: "2026-09-25"
 ---
 
@@ -21,6 +21,7 @@ calls; agents run only when a trigger fires; people decide.
 |------|---------|
 | Keep a finished task up to date (daily, on a server or on demand) | `task-living` then `task-schedule --install` |
 | Solve until the goal is met, or until improvement is marginal | `task-solve --until goal` / `--until converged` |
+| Continue after closing VS Code, changing machine, or an interrupted run | `task-status <task>` then `task-resume <task>` |
 | Start from a Word/Markdown brief | `neqsim new-task "title" --prompt-file brief.docx` then `task-living` |
 | Prove a monitor finds the faults it should (and no others) | `task-backtest --start ... --end ...` |
 | Try everything without company data | `task-reference-case <folder>` |
@@ -54,7 +55,11 @@ All commands run through the shared interpreter:
 5. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
    `neqsim task-schedule <task> --daily 05:00 --install` (Windows Task Scheduler;
    the `cron` line is printed for Linux servers).
-6. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
+6. **Resume safely when work is interrupted** — treat the task folder, not chat history,
+   as authoritative. Run `neqsim task-status <task>` for the five-second view and
+   `neqsim task-resume <task>` to adopt an incomplete cycle or solve checkpoint. Legacy
+   state schema 1.0 is migrated; a newer incompatible schema fails closed.
+7. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
    view) and `cycles/<id>/digest.md`, decide ledger items
    (`task-ledger <task> set OPP-0002 accepted --by NAME`), then
    `neqsim task-promote <task> <cycle-id> --reviewer NAME`.
@@ -156,8 +161,9 @@ and a **degraded** cycle — never a crash.
 
 ## Gotchas
 
-- Cycle ids are UTC; a rerun in the same minute gets `-r2`. A crashed cycle is
-  resumed by rerunning (completed stages are skipped); a stale `LOCK` expires after 6 h.
+- Cycle ids are UTC; a fresh rerun in the same minute gets `-r2`. An interrupted cycle is
+  resumed by `task-resume` using its persisted cycle id even on a later day/host; completed
+  stages are skipped. A stale `LOCK` expires after 6 h.
 - Watermarks only move forward and only on `ok`/`partial` pulls — a failed pull
   is retried next cycle with the same window.
 - `--dry-run` writes the cycle folder but no watermarks, ledger or drift state.

@@ -1,6 +1,6 @@
 ---
 name: continuous-improvement
-description: "Keeps NeqSim engineering tasks improving after the first report: makes a task living, compiles a Word/Markdown brief into a checkable goal, runs and schedules monitor cycles (on demand or on a server), solves until the goal is met or improvement is marginal, backtests the monitoring against known events, triages triggered cycles, maintains the improvement ledger and prepares baseline promotion for human review. Works for any task type and without enterprise access."
+description: "Keeps NeqSim engineering tasks improving and resumable after the first report: makes a task living, compiles a Word/Markdown brief into a checkable goal, runs and schedules monitor cycles (on demand or on a server), solves until the goal is met or improvement is marginal, backtests the monitoring against known events, triages triggered cycles, maintains the improvement ledger and prepares baseline promotion for human review. Works for any task type and without enterprise access."
 required_skills:
 - neqsim-continuous-task-improvement
 - neqsim-professional-reporting
@@ -44,12 +44,17 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
    build the topology-aware model with design limits, and pass a
    representativeness check. Quote YAML values containing colons in
    `goal.yaml` / `cycle_plan.yaml`.
+9. **Persisted task state is authoritative:** never rely on prior chat to resume work.
+   Start with `task-status`; when it reports resumable work use `task-resume` before
+   launching a fresh solve/cycle. Do not bypass an active task lock.
 
 ## Workflow
 
 1. **Resolve the task** (`neqsim --show-task-root`), then `neqsim task-status <task>`
    and read `continuous/LIVING_REPORT.md` — the always-current view of state, goal
-   progress, trends, events, pending decisions and next actions. `<task>` may be a
+   progress, trends, events, pending decisions and next actions. If the five-second
+   status reports `resume.available: true`, run `neqsim task-resume <task>` before
+   starting new work. `<task>` may be a
    path or a folder name inside the task root; `task-status` and
    `task-reference-case` without a folder use the task root.
 2. **Make living** if needed: `neqsim task-living <task> [--brief FILE]`. Fill
