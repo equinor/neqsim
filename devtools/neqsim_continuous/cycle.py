@@ -94,11 +94,89 @@ def _new_cycle_id(cycles_dir, now, mode):
     base = "bt-{:%Y%m%d}".format(now) if mode == "backtest" else "{:%Y-%m-%dT%H%MZ}@{}".format(now, _host())
     cycle_id, rerun = base, 2
     while os.path.exists(os.path.join(cycles_dir, cycle_id, "cycle.json")):
-        meta = read_json(os.path.join(cycles_dir, cycle_id, "cycle.json"), {})
-        if meta.get("status") == "running":
-            return cycle_id
         cycle_id, rerun = "{}-r{}".format(base, rerun), rerun + 1
     return cycle_id
+
+
+def _running_cycles(cycles_dir, mode=None):
+    """Return persisted running-cycle manifests, newest first."""
+    if not os.path.isdir(cycles_dir):
+        return []
+    running = []
+    for name in os.listdir(cycles_dir):
+        meta = read_json(os.path.join(cycles_dir, name, "cycle.json"), {}) or {}
+        if meta.get("status") != "running":
+            continue
+        if mode and meta.get("mode") != mode:
+            continue
+        meta = dict(meta)
+        meta.setdefault("cycle_id", name)
+        running.append(meta)
+    return sorted(running, key=lambda x: (x.get("started_at") or x.get("now") or "",
+                                         x.get("cycle_id") or ""), reverse=True)
+
+
+def _resumable_cycle(cycles_dir, mode):
+    """Return the newest interrupted cycle that this runner can safely resume."""
+    running = _running_cycles(cycles_dir, mode=mode)
+    if not running:
+        return None
+    latest = running[0]
+    schema = str(latest.get("schema_version") or "")
+    if schema != SCHEMA_VERSION:
+        raise RuntimeError(
+            "Cannot resume cycle {} with schema {}; runner supports {}. "
+            "Migrate the task state or start a new cycle explicitly.".format(
+                latest.get("cycle_id"), schema or "<missing>", SCHEMA_VERSION))
+    return latest
+
+
+def _checkpoint(ctx, stage_name):
+    """Persist the JSON-safe runner context after one completed stage."""
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "cycle_id": ctx.cycle_id,
+        "stage": stage_name,
+        "kpis": ctx.kpis,
+        "sources": ctx.sources,
+        "triggers": ctx.triggers,
+        "proposals": ctx.proposals,
+        "new_proposals": ctx.new_proposals,
+        "versions": ctx.versions,
+        "summary": ctx.summary,
+        "solve": ctx.solve,
+        "stop_state": ctx.stop_state,
+        "digest_text": ctx.digest_text,
+        "notifications": ctx.notifications,
+        "agent_run": ctx.agent_run,
+        "previous_kpis": ctx.previous_kpis,
+    }
+
+
+def _restore_checkpoint(ctx):
+    """Restore persisted context from an interrupted cycle before continuing."""
+    checkpoint = read_json(os.path.join(ctx.cycle_dir, "checkpoint.json"), {}) or {}
+    if not checkpoint:
+        return
+    schema = str(checkpoint.get("schema_version") or "")
+    if schema != SCHEMA_VERSION:
+        raise RuntimeError(
+            "Cannot resume checkpoint for cycle {} with schema {}; runner supports {}.".format(
+                ctx.cycle_id, schema or "<missing>", SCHEMA_VERSION))
+    for name in ("kpis", "sources", "versions", "summary", "solve", "previous_kpis"):
+        value = checkpoint.get(name)
+        if isinstance(value, dict):
+            getattr(ctx, name).update(value)
+    for name in ("triggers", "proposals", "new_proposals", "notifications"):
+        value = checkpoint.get(name)
+        if isinstance(value, list):
+            setattr(ctx, name, list(value))
+    if checkpoint.get("stop_state") is not None:
+        ctx.stop_state = checkpoint.get("stop_state")
+    if checkpoint.get("digest_text") is not None:
+        ctx.digest_text = checkpoint.get("digest_text")
+    if isinstance(checkpoint.get("agent_run"), dict):
+        ctx.agent_run = dict(checkpoint.get("agent_run"))
 
 
 def _append_kpi_history(state_dir, cycle_id, now, kpis):
@@ -113,7 +191,7 @@ def _append_kpi_history(state_dir, cycle_id, now, kpis):
 
 
 def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no_agent=False,
-              state_dir=None, next_action=None, standard_first=False):
+              state_dir=None, next_action=None, standard_first=False, resume=True):
     """Run one cycle and return its manifest (the content of ``cycle.json``)."""
     task_dir = os.path.abspath(str(task_dir))
     plan = load_plan(task_dir)
@@ -122,21 +200,34 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     data_root = plan.get("data_root")
     data_dir = data_root if data_root and mode != "backtest" else os.path.join(state_dir, "data")
     cycles_dir = os.path.join(state_dir, "cycles")
-    cycle_id = _new_cycle_id(cycles_dir, now, mode)
+    resumable = None
+    if resume and not dry_run and mode != "backtest":
+        resumable = _resumable_cycle(cycles_dir, mode)
+    cycle_id = resumable.get("cycle_id") if resumable else _new_cycle_id(cycles_dir, now, mode)
     cycle_dir = os.path.join(cycles_dir, cycle_id)
     os.makedirs(cycle_dir, exist_ok=True)
-    previous = read_json(os.path.join(cycle_dir, "cycle.json"), {})
+    previous = read_json(os.path.join(cycle_dir, "cycle.json"), {}) or {}
     done = {s["name"]: s for s in previous.get("stages", []) if s["status"] in ("ok", "warn")}
 
     standard_status = None
     ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
                        cycle_id, cycle_dir, state_dir, data_dir, dry_run, no_agent, next_action)
     ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
+    if previous:
+        _restore_checkpoint(ctx)
+    current_host = _host()
     manifest = {"schema_version": SCHEMA_VERSION, "cycle_id": cycle_id,
-                "task": os.path.basename(task_dir), "mode": mode, "host": _host(),
-                "now": now.isoformat(), "started_at": _utc().isoformat(), "dry_run": dry_run,
+                "task": os.path.basename(task_dir), "mode": mode, "host": current_host,
+                "origin_host": previous.get("origin_host", previous.get("host", current_host)),
+                "now": now.isoformat(),
+                "started_at": previous.get("started_at") or _utc().isoformat(), "dry_run": dry_run,
                 "baseline_id": ctx.baseline.get("meta", {}).get("id"), "status": "running",
-                "stages": [], "versions": {"python": sys.version.split()[0]}}
+                "stages": [], "versions": dict(previous.get("versions", {}),
+                                                python=sys.version.split()[0]),
+                "resume_count": int(previous.get("resume_count", 0)) + (1 if previous else 0)}
+    if previous:
+        manifest["resumed_at"] = _utc().isoformat()
+        manifest["resumed_from_host"] = previous.get("host")
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
 
     if standard_first and mode != "backtest" and not dry_run:
@@ -182,6 +273,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
             record = result.to_dict()
             record["seconds"] = round(time.time() - started, 3)
             manifest["stages"].append(record)
+            write_json(os.path.join(cycle_dir, "checkpoint.json"), _checkpoint(ctx, name))
             write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
 
     manifest["versions"].update(ctx.versions)
@@ -207,6 +299,12 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
         from .living_report import update
         update(task_dir, event="cycle")
     return manifest
+
+
+def interrupted_cycles(task_dir, state_dir=None):
+    """Return persisted running cycles so recovery state is explicit to callers."""
+    state_dir = state_dir or continuous_dir(task_dir)
+    return _running_cycles(os.path.join(state_dir, "cycles"))
 
 
 def load_cycle(task_dir, cycle_id, state_dir=None):
