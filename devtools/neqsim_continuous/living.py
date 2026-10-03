@@ -6,8 +6,8 @@ import shutil
 from datetime import datetime, timezone
 
 from .ledger import CATEGORIES, Ledger
-from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, read_json,
-                   write_json)
+from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, load_goal,
+                   read_json, write_json)
 from .stages import neqsim_commit
 
 PLAN_TEMPLATE = """# Living-task cycle plan (neqsim_continuous schema 1.0). Every section is optional.
