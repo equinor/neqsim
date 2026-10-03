@@ -180,7 +180,8 @@ def make_living(task_dir, brief=None):
 
     _write(ledger_path, _ledger)
     _write(os.path.join(cont, "state.json"),
-           lambda p: write_json(p, {"state": "draft", "phase": "draft", "updated": _now()}))
+           lambda p: write_json(p, {"schema_version": "1.0", "state": "draft",
+                                    "phase": "draft", "updated": _now()}))
 
     config = os.path.join(task_dir, "study_config.yaml")
     if os.path.exists(config):
