@@ -2,9 +2,7 @@ package neqsim.util.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimExperimentDatabase extends NeqSimDatabaseBase {
   /**
    * createTemporaryTables.
    *
@@ -51,22 +49,18 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
   /** Constant <code>connectionString="jdbc:ucanaccess://C:/Users/esol/OneDriv"{trunked}</code>. */
   public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
-  private transient Statement statement = null;
-  protected transient Connection databaseConnection = null;
-
   /**
    * Constructor for NeqSimExperimentDatabase.
    */
   public NeqSimExperimentDatabase() {
     setDataBaseType(dataBaseType);
+    initializeDatabaseConnection();
+  }
 
-    try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
-    } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      throw new RuntimeException(ex);
-    }
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
   }
 
   /**
@@ -106,50 +100,6 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
-    }
-  }
-
-  /**
-   * getConnection.
-   *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String sqlString) {
-    try {
-      ResultSet result = getStatement().executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error loading NeqSimExperimentDatabase ", ex);
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
-   * execute.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   */
-  public void execute(String sqlString) {
-    try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
-      getStatement().execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
-      throw new RuntimeException(ex);
     }
   }
 
@@ -210,24 +160,6 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
       logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
-  }
-
-  /**
-   * Getter for the field <code>statement</code>.
-   *
-   * @return a Statement object
-   */
-  public Statement getStatement() {
-    return statement;
-  }
-
-  /**
-   * Setter for the field <code>statement</code>.
-   *
-   * @param statement a Statement object
-   */
-  public void setStatement(Statement statement) {
-    this.statement = statement;
   }
 
   /**

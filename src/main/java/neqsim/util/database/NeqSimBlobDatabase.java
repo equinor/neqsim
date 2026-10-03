@@ -2,9 +2,7 @@ package neqsim.util.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -14,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimBlobDatabase extends NeqSimDatabaseBase {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -28,9 +26,6 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
   private static String connectionString = "";
   private static String username = "";
   private static String password = "";
-
-  private transient Statement statement = null;
-  protected transient Connection databaseConnection = null;
 
   /**
    * createTemporaryTables.
@@ -55,14 +50,13 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
    */
   public NeqSimBlobDatabase() {
     setDataBaseType(dataBaseType);
+    initializeDatabaseConnection();
+  }
 
-    try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
-    } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      throw new RuntimeException(ex);
-    }
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
   }
 
   /**
@@ -117,50 +111,6 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
   }
 
   /**
-   * getConnection.
-   *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * getResultSet.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   * @return a ResultSet object
-   */
-  public ResultSet getResultSet(String sqlString) {
-    try {
-      ResultSet result = getStatement().executeQuery(sqlString);
-      return result;
-    } catch (Exception ex) {
-      logger.error("error loading NeqSimBlobDatabase ", ex);
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
-   * execute.
-   *
-   * @param sqlString a {@link java.lang.String} object
-   */
-  public void execute(String sqlString) {
-    try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
-      getStatement().execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      logger.error("The database must be rgistered on the local DBMS to work.");
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
    * Getter for the field <code>dataBaseType</code>.
    *
    * @return a {@link java.lang.String} object
@@ -192,33 +142,17 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
     }
 
     try {
-      if (dataBaseType.equals("mySQL")) {
+      if ("H2".equals(dataBaseType) || "H2RT".equals(dataBaseType)) {
+        Class.forName("org.h2.Driver");
+      } else if ("mySQL".equals(dataBaseType)) {
         Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
-      } else {
+      } else if (dataBaseType != null && !dataBaseType.isEmpty()) {
         Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
       }
     } catch (Exception ex) {
       logger.error("error loading database driver.. ", ex);
       throw new RuntimeException(ex);
     }
-  }
-
-  /**
-   * Getter for the field <code>statement</code>.
-   *
-   * @return a Statement object
-   */
-  public Statement getStatement() {
-    return statement;
-  }
-
-  /**
-   * Setter for the field <code>statement</code>.
-   *
-   * @param statement a Statement object
-   */
-  public void setStatement(Statement statement) {
-    this.statement = statement;
   }
 
   /**

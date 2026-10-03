@@ -20,16 +20,13 @@ public class NeqSimFluidDataBaseTest {
     boolean previousOnlineSetting = NeqSimFluidDataBase.useOnlineBase;
     NeqSimFluidDataBase.numb = 1;
     NeqSimFluidDataBase.useOnlineBase = false;
-    try {
-      NeqSimFluidDataBase database = new EmbeddedFluidDatabase();
-      try (Connection connection = database.getConnection()) {
-        Assertions.assertTrue(connection.isValid(1));
-        database.execute("CREATE TABLE fluid_test (property_value INTEGER)");
-        database.execute("INSERT INTO fluid_test VALUES (99)");
-        try (ResultSet result = database.getResultSet("SELECT property_value FROM fluid_test")) {
-          Assertions.assertTrue(result.next());
-          Assertions.assertEquals(99, result.getInt(1));
-        }
+    try (NeqSimFluidDataBase database = new EmbeddedFluidDatabase()) {
+      Assertions.assertTrue(database.getConnection().isValid(1));
+      database.execute("CREATE TABLE fluid_test (property_value INTEGER)");
+      database.execute("INSERT INTO fluid_test VALUES (99)");
+      try (ResultSet result = database.getResultSet("SELECT property_value FROM fluid_test")) {
+        Assertions.assertTrue(result.next());
+        Assertions.assertEquals(99, result.getInt(1));
       }
     } finally {
       NeqSimFluidDataBase.numb = previousNumber;
@@ -49,8 +46,8 @@ public class NeqSimFluidDataBaseTest {
   @Disabled("Requires a locally registered FluidDatabase source")
   @Test
   void testMain() throws Exception {
-    NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-    try (Connection connection = database.getConnection();
+    try (NeqSimFluidDataBase database = new NeqSimFluidDataBase();
+        Connection connection = database.getConnection();
         ResultSet dataSet = database.getResultSet("SELECT * FROM comp where name='water'")) {
       Assertions.assertTrue(connection.isValid(1));
       Assertions.assertTrue(dataSet.next());

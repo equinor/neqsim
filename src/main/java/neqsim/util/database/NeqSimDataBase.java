@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -19,7 +18,7 @@ import org.h2.jdbc.JdbcSQLSyntaxErrorException;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
+public class NeqSimDataBase extends NeqSimDatabaseBase {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -45,22 +44,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private transient Statement statement = null;
-  protected transient Connection databaseConnection = null;
-
   /**
    * Constructor for NeqSimDataBase.
    */
   public NeqSimDataBase() {
     setDataBaseType(dataBaseType);
+    initializeDatabaseConnection();
+  }
 
-    try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
-    } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      throw new RuntimeException(ex);
-    }
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
   }
 
   /**
@@ -70,6 +65,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
+  @Override
   public Connection openConnection() throws SQLException, ClassNotFoundException {
     javax.naming.InitialContext ctx = null;
     javax.sql.DataSource ds = null;
@@ -117,54 +113,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * getConnection.
-   *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * Getter for the field <code>statement</code>.
-   *
-   * @return a Statement object
-   */
-  public Statement getStatement() {
-    return statement;
-  }
-
-  /**
-   * Setter for the field <code>statement</code>.
-   *
-   * @param statement a Statement object
-   */
-  public void setStatement(Statement statement) {
-    this.statement = statement;
-  }
-
-  /**
-   * Execute query using execute.
-   *
-   * @param sqlString Query to execute.
-   * @return True if the first result is a ResultSet object; false if it is an update count or there are no results
-   */
-  public boolean execute(String sqlString) {
-    try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
-      return getStatement().execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      // TODO: should be checked against database type.
-      logger.error("The database must be registered on the local DBMS to work.");
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
    * Execute query using executeQuery but do not return anything.
    *
    * @param sqlString Query to execute.
@@ -190,6 +138,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @param sqlString Query to execute.
    * @return a ResultSet object
    */
+  @Override
   public ResultSet getResultSet(String sqlString) {
     try {
       if (databaseConnection == null) {
@@ -206,19 +155,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     } catch (Exception ex) {
       logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void close() throws SQLException {
-    if (databaseConnection != null) {
-      databaseConnection.close();
-      databaseConnection = null;
-    }
-    if (statement != null) {
-      statement.close();
-      statement = null;
     }
   }
 
