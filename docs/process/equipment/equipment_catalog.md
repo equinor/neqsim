@@ -8,7 +8,7 @@ non-abstract class that implements `ProcessEquipmentInterface`, directly or thro
 base class. Helper classes, result records, strategies, enums, and interfaces are intentionally
 excluded from the equipment count.
 
-**Current source inventory:** 239 concrete equipment classes in 33 packages.
+**Current source inventory:** 240 concrete equipment classes in 33 packages.
 
 Regenerate this page after adding or removing equipment:
 
