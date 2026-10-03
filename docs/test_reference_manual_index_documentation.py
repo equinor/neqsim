@@ -54,6 +54,19 @@ class ReferenceManualIndexDocumentationTest(unittest.TestCase):
                 failures.append("{} -> {}".format(target, resolved.relative_to(ROOT)))
         self.assertEqual([], failures)
 
+    def test_table_source_paths_are_markdown_links(self):
+        checked = 0
+        unlinked = []
+        for line in self.index.splitlines():
+            if not line.startswith("|"):
+                continue
+            for source_path in re.findall(r"\\bdocs/[A-Za-z0-9_./-]+\\.md\\b", line):
+                checked += 1
+                if "[{}](".format(source_path) not in line:
+                    unlinked.append("{}: {}".format(source_path, line))
+        self.assertGreater(checked, 600)
+        self.assertEqual([], unlinked)
+
     def test_maintenance_claims_are_generated_not_date_or_count_bound(self):
         self.assertIn("not a hand-counted inventory", self.index)
         self.assertIn("reports the audited Markdown", self.index)
