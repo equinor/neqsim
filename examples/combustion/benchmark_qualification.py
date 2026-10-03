@@ -9,6 +9,7 @@ and verified redistribution rights.
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -81,9 +82,18 @@ def _validate_fraction_map(fractions, label):
     _require(abs(sum(fractions.values()) - 1.0) <= 1.0e-12, f"{label} must sum to one")
 
 
+def _validate_scalar_or_range(value, label):
+    if isinstance(value, dict):
+        _positive(value.get("minimum"), f"{label} minimum")
+        _positive(value.get("maximum"), f"{label} maximum")
+        _require(value["minimum"] <= value["maximum"], f"{label} range is reversed")
+        return
+    _positive(value, label)
+
+
 def _validate_conditions(conditions, benchmark_id):
     _require(isinstance(conditions, dict), f"{benchmark_id} conditions are required")
-    _positive(conditions.get("pressurePa"), f"{benchmark_id} pressurePa")
+    _validate_scalar_or_range(conditions.get("pressurePa"), f"{benchmark_id} pressurePa")
     temperature = conditions.get("temperatureK", {})
     _positive(temperature.get("minimum"), f"{benchmark_id} minimum temperature")
     _positive(temperature.get("maximum"), f"{benchmark_id} maximum temperature")
@@ -138,13 +148,24 @@ def _validate_quantitative_benchmark(benchmark, benchmark_id, uncertainty):
     _require(units, f"{benchmark_id} quantity units are required")
     conditions = benchmark["conditions"]
     _require(
-        conditions.get("residenceTimeS") is not None,
-        f"{benchmark_id} quantitative residence time is required",
-    )
-    _require(
         conditions.get("inletMoleFractions"),
         f"{benchmark_id} quantitative inlet composition is required",
     )
+    apparatus = benchmark["apparatus"]
+    if apparatus in {"JSR", "PFR"}:
+        _require(
+            conditions.get("residenceTimeS") is not None,
+            f"{benchmark_id} quantitative residence time is required",
+        )
+    if apparatus == "SHOCK_TUBE":
+        _require(
+            benchmark.get("ignitionDefinition"),
+            f"{benchmark_id} ignition definition is required",
+        )
+        _require(
+            isinstance(conditions.get("pressurePa"), dict),
+            f"{benchmark_id} quantitative shock-tube pressure range is required",
+        )
 
     temperature_range = conditions["temperatureK"]
     equivalence_ratios = conditions["equivalenceRatios"]
@@ -162,6 +183,14 @@ def _validate_quantitative_benchmark(benchmark, benchmark_id, uncertainty):
             equivalence_ratio in equivalence_ratios,
             f"{benchmark_id} observation {index} equivalence ratio is undeclared",
         )
+        if apparatus == "SHOCK_TUBE":
+            pressure = observation.get("pressurePa")
+            _positive(pressure, f"{benchmark_id} observation {index} pressure")
+            pressure_range = conditions["pressurePa"]
+            _require(
+                pressure_range["minimum"] <= pressure <= pressure_range["maximum"],
+                f"{benchmark_id} observation {index} pressure is outside declared range",
+            )
         values = observation.get("values", {})
         uncertainties = observation.get("uncertainties", {})
         _require(values, f"{benchmark_id} observation {index} values are required")
@@ -186,13 +215,30 @@ def _validate_quantitative_benchmark(benchmark, benchmark_id, uncertainty):
                 uncertainties[species],
                 f"{benchmark_id} observation {index} {species} uncertainty",
             )
+        relative_uncertainty = observation.get("relativeUncertainty")
+        if relative_uncertainty is not None:
+            _positive(
+                relative_uncertainty,
+                f"{benchmark_id} observation {index} relative uncertainty",
+            )
+            for quantity, value in values.items():
+                _require(
+                    math.isclose(
+                        uncertainties[quantity],
+                        value * relative_uncertainty,
+                        rel_tol=1.0e-12,
+                        abs_tol=1.0e-12,
+                    ),
+                    f"{benchmark_id} observation {index} {quantity} "
+                    "relative and absolute uncertainties are inconsistent",
+                )
 
 
 def _validate_benchmark(benchmark):
     benchmark_id = benchmark.get("id", "<missing-id>")
     _require(benchmark.get("id"), "benchmark id is required")
     _require(
-        benchmark.get("apparatus") in {"JSR", "PFR"},
+        benchmark.get("apparatus") in {"JSR", "PFR", "SHOCK_TUBE"},
         f"{benchmark_id} apparatus is unsupported",
     )
     _validate_source(benchmark.get("primarySource"), benchmark_id)

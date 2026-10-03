@@ -215,6 +215,8 @@ python examples/combustion/acquire_qualification_mechanism.py \
   creck-s-2.0.0-zenodo-22982859 "$tmp_dir/CRECK-S_mechanism.yaml"
 python examples/combustion/run_jsr_qualification.py \
   "$tmp_dir/CRECK-S_mechanism.yaml" --output "$tmp_dir/jsr-result.json"
+python examples/combustion/run_ignition_delay_qualification.py \
+  "$tmp_dir/CRECK-S_mechanism.yaml" --output "$tmp_dir/ignition-delay-result.json"
 ```
 
 With Cantera 3.2.0 and the exact CRECK-S bytes, the unadjusted isothermal
@@ -223,10 +225,38 @@ temperatures, the largest absolute normalized residual was 1.686; species RMS
 normalized residuals were 0.819 (C2H4), 0.715 (CH4), 0.313 (CO) and 0.485 (CO2).
 No mechanism parameters, observations or direct emission factors were fitted.
 
+The catalog also includes ReSpecTh file `x10004030.xml`, the 16-point methane
+mixture-4 shock-tube series from Aul et al. (2013): 1686-2248 K, 1.13-1.44 atm,
+`CH4/O2/Ar = 0.006667/0.013333/0.980000` and nominal equivalence ratio 1.0.
+The measured ignition marker is the maximum pressure-rise rate. ReSpecTh stores
+point-specific relative evaluated standard deviations estimated from generic
+uncertainty; the catalog preserves those values and their absolute microsecond
+equivalents without claiming that the primary paper reported them. The CC-BY-4.0
+archive SHA-256 is
+`c9e36ca63050d352344f5101dd8eec18c8a8578051c1a989d03762216c504383` and the
+extracted XML SHA-256 is
+`c196194b2d34696e6f62aab9e4eacc064a557820ba859fdabf6c85609d4b7e45`.
+
+The source-matched comparison uses an adiabatic constant-volume ideal-gas reactor
+and locates the maximum pressure derivative on a uniform time grid. It repeats
+every point with 1000 and 2000 intervals and fails if their ignition delays differ
+by more than 1% of the observation. With exact CRECK-S and Cantera 3.2.0, all 16
+points passed that refinement gate: the maximum difference was 4.285 microseconds,
+or 0.25% of an observation. The maximum absolute normalized residual was 1.950,
+the RMS normalized residual was 1.165 and the delay RMSE was 115.661 microseconds.
+The observed delay sets only a five-times-long numerical search window; it does not
+alter the simulated state, kinetic mechanism or reported residual.
+
+This methane series is an explicit extrapolation check: all temperatures exceed
+the 800-1500 K range described by the CRECK-S deposit. Agreement therefore does
+not extend the mechanism's stated validity range and does not qualify flame speed,
+heater mixing, heat transfer or emissions.
+
 `--readiness` now means that licensed, fingerprinted inputs exist for an executable
-quantitative comparison. It is not a claim of heater qualification. This single lean
-C2 series does not qualify C3/C4 chemistry, spatial mixing, heat transfer, dry or
-reference-O2 emissions conversion, plant behavior, safety or design:
+quantitative comparison. It is not a claim of heater qualification. The lean C2 JSR
+series and extrapolative C1 ignition-delay series do not qualify C3/C4 chemistry,
+spatial mixing, heat transfer, dry or reference-O2 emissions conversion, plant
+behavior, safety or design:
 
 ```bash
 python examples/combustion/benchmark_qualification.py \
