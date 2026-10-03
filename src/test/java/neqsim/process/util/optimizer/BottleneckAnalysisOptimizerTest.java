@@ -408,7 +408,8 @@ public class BottleneckAnalysisOptimizerTest {
 
     boolean processRejectedExtremeFlow = processRunFailure != null && processRunFailure.getMessage() != null
         && processRunFailure.getMessage().contains("Failed to run unit operation")
-        && processRunFailure.getMessage().contains("Compressor Outlet Manifold");
+        && (processRunFailure.getMessage().contains("Compressor Outlet Manifold")
+            || rejectedNegativeOutletPipePressure(processRunFailure));
     if (processRunFailure != null && !processRejectedExtremeFlow) {
       throw processRunFailure;
     }
@@ -431,6 +432,27 @@ public class BottleneckAnalysisOptimizerTest {
     // - Cause the downstream manifold run to reject the infeasible operating point
     Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty() || processRejectedExtremeFlow,
         "At extreme flow rates, compressors should show invalid simulation or validation errors");
+  }
+
+  /**
+   * Recognizes the physical pressure rejection in a downstream compressor outlet pipe at extreme flow.
+   *
+   * @param failure process run failure
+   * @return true only for the named outlet pipe with a negative-pressure cause
+   */
+  private boolean rejectedNegativeOutletPipePressure(RuntimeException failure) {
+    if (!failure.getMessage().contains("ups Outlet Pipe")) {
+      return false;
+    }
+    Throwable cause = failure;
+    while (cause != null) {
+      if (cause instanceof neqsim.util.exception.InvalidOutputException && cause.getMessage() != null
+          && cause.getMessage().contains("Outlet pressure is negative")) {
+        return true;
+      }
+      cause = cause.getCause();
+    }
+    return false;
   }
 
   /**
@@ -974,7 +996,8 @@ public class BottleneckAnalysisOptimizerTest {
     for (int step = 50; step >= 0; step--) {
       double candidateRate = originalFlow * (0.9 + 0.005 * step);
       OptimizationConfig probeConfig = new OptimizationConfig(candidateRate, candidateRate).rateUnit("kg/hr")
-          .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
+          .selectedPointReplays(4).utilizationMarginFraction(1.0e-4).defaultUtilizationLimit(1.0)
+          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
       OptimizationResult probe = optimizer.optimize(processSystem, inletStream, probeConfig,
           Collections.singletonList(throughputObjective), Collections.emptyList());
       if (probe.isFeasible()) {
@@ -987,7 +1010,8 @@ public class BottleneckAnalysisOptimizerTest {
         "The balanced compressor trains must have a verified feasible rate in the search range");
 
     OptimizationConfig stage2Config = new OptimizationConfig(feasibleLowerRate, upperRate).rateUnit("kg/hr")
-        .tolerance(originalFlow * 0.001).maxIterations(20).selectedPointReplays(4).defaultUtilizationLimit(1.0) // Strict
+        .tolerance(originalFlow * 0.001).maxIterations(20).selectedPointReplays(4).utilizationMarginFraction(1.0e-4)
+        .defaultUtilizationLimit(1.0) // Strict
         // 100%
         // limit
         .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);

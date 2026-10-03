@@ -7,6 +7,7 @@
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
     neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
+    neqsim task-note <task> [TEXT] [--by NAME] [--expires DATE] [effect options] | --list | --resolve ID
     neqsim task-status [task-or-task-root]
     neqsim task-report <task> [--formal]
     neqsim task-reference-case [parent-folder]
@@ -22,7 +23,7 @@ import os
 import sys
 
 COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger", "status",
-            "report", "reference-case")
+            "report", "reference-case", "note")
 
 
 def _print(data):
@@ -66,6 +67,8 @@ def main(argv=None):
     p = sub.add_parser("living", help="make an existing task living (never overwrites)")
     p.add_argument("task")
     p.add_argument("--brief", help="Word or Markdown task brief")
+    p.add_argument("--template", choices=["production"],
+                   help="production: optimisation loop with gates, hard constraints and a proposal guard")
 
     p = sub.add_parser("cycle", help="run one cycle")
     p.add_argument("task")
@@ -121,6 +124,24 @@ def main(argv=None):
     p.add_argument("task")
     p.add_argument("--formal", action="store_true", help="also regenerate the Word/HTML report")
 
+    p = sub.add_parser("note", help="add, list or resolve engineer comments and restrictions (user_input.yaml)")
+    p.add_argument("task")
+    p.add_argument("text", nargs="?", default="", help="comment text")
+    p.add_argument("--by", default="")
+    p.add_argument("--expires", help="YYYY-MM-DD")
+    p.add_argument("--list", action="store_true", help="list the entries")
+    p.add_argument("--resolve", metavar="ID", help="mark an entry resolved")
+    p.add_argument("--lever", help="lever name for --lo/--hi")
+    p.add_argument("--lo", type=float)
+    p.add_argument("--hi", type=float)
+    p.add_argument("--freeze", metavar="LEVER", help="keep this lever at its current value")
+    p.add_argument("--constraint", metavar="NAME", help="set or add a goal constraint")
+    p.add_argument("--kpi")
+    p.add_argument("--op", choices=["<=", ">=", "<", ">"])
+    p.add_argument("--limit", type=float)
+    p.add_argument("--margin", type=float)
+    p.add_argument("--setting", action="append", metavar="KEY=VALUE", help="set a plan value, e.g. production.rvp_bias_bara=0.05")
+
     p = sub.add_parser("reference-case", help="create the public reference task")
     p.add_argument("parent", nargs="?", help="parent folder (default: the task root)")
 
@@ -130,7 +151,7 @@ def main(argv=None):
 
     if args.command == "living":
         from .living import make_living
-        _print(make_living(_task(args.task), brief=args.brief))
+        _print(make_living(_task(args.task), brief=args.brief, template=args.template))
     elif args.command == "cycle":
         from .cycle import run_cycle
         from .living import note_reopen
@@ -210,6 +231,42 @@ def main(argv=None):
         print(path or "ERROR: living report not written (is the task living?)")
         if args.formal:
             regenerate_formal(args.task)
+    elif args.command == "note":
+        from . import user_input
+        from .living_report import update
+        if args.list:
+            for e in user_input.load(args.task):
+                print("{:<8} {:<9} {}".format(e.get("id"), e.get("status", "active"), user_input.describe(e)))
+        elif args.resolve:
+            _print(user_input.resolve(args.task, args.resolve, args.by))
+            update(args.task, event="note")
+        else:
+            effects = []
+            if args.lever:
+                fx = {"kind": "lever_bound", "lever": args.lever}
+                for key in ("lo", "hi"):
+                    if getattr(args, key) is not None:
+                        fx[key] = getattr(args, key)
+                effects.append(fx)
+            if args.freeze:
+                effects.append({"kind": "lever_freeze", "lever": args.freeze})
+            if args.constraint:
+                fx = {"kind": "constraint", "name": args.constraint}
+                for key in ("kpi", "op", "limit", "margin"):
+                    if getattr(args, key) is not None:
+                        fx[key] = getattr(args, key)
+                effects.append(fx)
+            for item in args.setting or []:
+                key, _, raw = item.partition("=")
+                try:
+                    value = json.loads(raw)
+                except ValueError:
+                    value = raw
+                effects.append({"kind": "setting", "key": key.strip(), "value": value})
+            if not args.text and not effects:
+                raise SystemExit("usage: task-note <task> \"text\" [--lever NAME --lo X --hi Y | --freeze NAME | --constraint NAME --kpi K --limit X] [--setting K=V]")
+            _print(user_input.add(args.task, args.text, by=args.by, effects=effects, expires=args.expires))
+            update(args.task, event="note")
     elif args.command == "reference-case":
         from .reference_case import create_reference_task
         parent = os.path.abspath(args.parent) if args.parent else task_root()

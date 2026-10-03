@@ -310,6 +310,8 @@ stages: [sense, refresh, "script:station_model", kpis, drift, goal, diff, ledger
 | `digest` | Writes `digest.md` for the cycle |
 | `notify` | Sends the digest to the configured channels |
 | `agent` | Launches a headless agent when a trigger fired (section 11) |
+| `inputs` | Reads the engineers' comments and restrictions (`user_input.yaml`, section 17) |
+| `gates`, `constraints`, `guard`, `outcome` | Production loop: model-validity gates, constraint slack, proposal guard, realised-vs-predicted gain (section 17) |
 
 ### 6.6 Notifications
 
@@ -743,7 +745,8 @@ Never commit `continuous/data/` or plant data to a public repository.
 
 | Command | Purpose |
 |---------|---------|
-| `neqsim task-living <task> [--brief FILE]` | Make a task living (never overwrites) |
+| `neqsim task-living <task> [--brief FILE] [--template production]` | Make a task living (never overwrites); `production` adds gates, constraints, guard and `user_input.yaml` |
+| `neqsim task-note <task> [TEXT] [--lever N --lo X --hi Y \| --freeze N \| --constraint N --kpi K --limit X] [--setting K=V] [--by NAME] [--expires DATE] \| --list \| --resolve ID` | Add, list or resolve engineer comments and restrictions |
 | `neqsim task-cycle <task> [--mode monitor\|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]` | Run one cycle |
 | `neqsim task-solve <task> [--until goal\|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed] [--reset]` | Solve loop |
 | `neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--name N] [--repeat]` | Replay archived data |
@@ -756,6 +759,101 @@ Never commit `continuous/data/` or plant data to a public repository.
 
 `<task>` is a folder path, or the name of a folder inside the task root.
 
+## 17. Production optimisation: advisory loop with engineer input
+
+For a plant model that should be kept current and used to recommend operating changes, create the task with
+`neqsim task-living <task> --template production`. The cycle then runs:
+
+```text
+sense -> inputs -> script:model_update -> script:optimize -> kpis -> gates -> constraints -> guard
+      -> drift -> goal -> diff -> outcome -> ledger -> digest -> notify
+```
+
+The loop is **advisory**: nothing is written to the control system, and every accepted proposal is marked
+`requires_approval`. An engineer decides in the ledger (`task-ledger ... set ID accepted --by NAME`).
+
+### 17.1 What the stages decide
+
+| Stage | Rule |
+|-------|------|
+| `model_update` (your script) | Reads live data, updates and runs the model, returns KPIs and the residuals against the measurements |
+| `gates` | `gates:` in the plan (`{name, kpi, abs_max\|max\|min}`). A failed or missing KPI blocks all advice (`model_gate:<name>`) |
+| `constraints` | `constraints:` in `goal.yaml` (`{name, kpi, op, limit, margin, warn, hard, source}`). `margin` tightens the limit. A hard constraint with no `limit` is *unconfirmed* and blocks all advice |
+| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value` |
+| `guard` | Keeps a proposal only if it has setpoints, a gain above `production.min_gain`, and a predicted value that satisfies every hard constraint with margin. `guard.json` lists the reasons for every withheld proposal |
+| `outcome` | For ledger items in status `implemented`: realised gain against predicted gain (`outcome_confirmed:` / `outcome_miss:`) |
+
+`demonstrated_limit(values, quantile=0.99, design=...)` gives an equipment limit from operating experience: the
+larger of the design value and a high quantile of historian samples. Use it where equipment has been run above
+its design value before; record who accepted that.
+
+### 17.2 Levers: every operator-adjustable parameter
+
+Levers are listed under `production.levers` in the plan. A lever is any setting the operators can change:
+separator pressures, heater and cooler outlet temperatures, valve pressures, and **well choke opening**.
+The Snorre A reference task supports three kinds (see `continuous/stages/optimize.py` in that task):
+
+| Kind | Fields | Note |
+|------|--------|------|
+| `separator_pressure` | `separator, step_bar, lo_barg, hi_barg` | Also sets the let-down valves into that separator |
+| `well_rate` | `manifold, step_pct, lo_pct, hi_pct` | Choke opening, modelled as a rate scale on the manifold feed at constant GOR and water cut and unchanged arrival pressure. The proposal carries `needs_well_check` because the well's inflow and tubing limit are not in the model |
+| `equipment_setpoint` | `tag, setter, getter, unit, step, lo, hi` | Any unit-operation setter, e.g. an outlet temperature. Implemented but not yet run on a real model: check the getter and setter signatures (units) first |
+
+Bounds are the operating-experience envelope; widen them only with the operator's agreement (use a note, 17.3).
+Each lever is stepped both ways, then the positive moves are run **together** as one candidate, because
+separators and compressors share load and the gains do not add.
+
+### 17.3 Comments and restrictions from the engineers
+
+Write between cycles; the next cycle acts on it. Entries are in `continuous/user_input.yaml`:
+
+```yaml
+entries:
+  - id: U-001
+    date: 2026-10-03
+    by: NAME
+    status: active            # active | resolved
+    expires: 2026-11-01       # optional
+    text: "Vigdis HP wells: sand limit, do not open more than 5 %."
+    effects:
+      - {kind: lever_bound, lever: "Vigdis HP wells", hi: 5}
+      - {kind: lever_freeze, lever: "20D-VA60 3rd stage"}
+      - {kind: constraint, name: rvp_spec, kpi: export_rvp_bara, op: "<=", limit: 0.70, margin: 0.05}
+      - {kind: setting, key: production.rvp_bias_bara, value: 0.05}
+      - {kind: gate, name: separator_T_residual, abs_max: 4.0}
+```
+
+| Effect | Does |
+|--------|------|
+| `lever_bound` | Replaces the plan bounds of a lever (narrows or widens). Scripts call `lever_limits(ctx, name, lo, hi)` |
+| `lever_freeze` | Keeps the lever at its current value |
+| `constraint` | Sets or adds a goal constraint; setting the `limit` confirms an unset one |
+| `setting` | Sets a dotted plan key |
+| `gate` | Changes a model-validity gate |
+
+An entry without `effects` is free text: it is printed in the digest and the living report and goes to the agent
+with the digest. A new or changed entry raises `user_input:<id>` once; an expired one raises
+`user_input_expired:<id>`. Set `status: resolved` (or `neqsim task-note <task> --resolve U-001 --by NAME`) to stop
+its effects. Keep resolved entries: the file is the record of who restricted what and when.
+
+```text
+neqsim task-note <task> "Sand limit" --lever "Vigdis HP wells" --hi 5 --by NAME
+neqsim task-note <task> "Spec from lab" --constraint rvp_spec --kpi export_rvp_bara --limit 0.70 --margin 0.05
+neqsim task-note <task> --list
+```
+
+### 17.4 Process boundary conditions
+
+Boundary conditions that the operators do not control, such as the gas export or gas injection pressure, are read
+each cycle as KPIs from `production.gas_tags` (`{kpi_name: historian tag}`, 24 h means). They appear as
+`<name>_meas`; where the model has the equipment, `<name>_model` and `<name>_resid` show the difference, so a
+model that has drifted from its boundary shows up. Add a `constraint` on a boundary KPI to enforce a limit.
+
+### 17.5 What the loop does not know
+
+State these in the task README so the reviewer sees them: well-rate moves assume the wells can deliver; equipment
+limits are checked only where a constraint exists (`needs_equipment_check` otherwise); a calculated product spec
+such as RVP needs the lab bias; and a slow model limits how often the loop can run.
 ## Related documentation
 
 - [Task Solving Guide](TASK_SOLVING_GUIDE.md) — the one-off task workflow this builds on

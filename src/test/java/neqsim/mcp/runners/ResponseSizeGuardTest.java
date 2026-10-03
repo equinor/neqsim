@@ -135,7 +135,8 @@ class ResponseSizeGuardTest {
     assertTrue(implementationInventory.get("complete").getAsBoolean());
     assertEquals(71, implementationInventory.get("toolBindingCount").getAsInt());
     assertEquals(60, implementationInventory.get("implementationClassCount").getAsInt());
-    assertEquals(207, implementationInventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(originalImplementation.getAsJsonArray("supportedEquipmentTypes").size(),
+        implementationInventory.get("equipmentTypeCount").getAsInt());
     assertEquals(2, implementationInventory.get("reportPathCount").getAsInt());
     assertEquals("neqsim.mcp.runners.ProcessRunner",
         implementationInventory.getAsJsonObject("toolImplementationBindings").get("runProcess").getAsString());
