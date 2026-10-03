@@ -234,12 +234,22 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     return meta
 
 
+STATE_SCHEMA_VERSION = "1.0"
+
+
 def read_state(task_dir):
-    return read_json(os.path.join(continuous_dir(task_dir), "state.json"), {}) or {}
+    """Read persisted task state and validate its schema version."""
+    state = read_json(os.path.join(continuous_dir(task_dir), "state.json"), {}) or {}
+    schema = str(state.get("schema_version") or STATE_SCHEMA_VERSION)
+    if schema != STATE_SCHEMA_VERSION:
+        raise ValueError("Unsupported continuous task state schema {} (expected {})".format(
+            schema, STATE_SCHEMA_VERSION))
+    state.setdefault("schema_version", STATE_SCHEMA_VERSION)
+    return state
 
 
 def write_state(task_dir, state):
-    state = dict(state, updated=_now())
+    state = dict(state, schema_version=STATE_SCHEMA_VERSION, updated=_now())
     write_json(os.path.join(continuous_dir(task_dir), "state.json"), state)
     return state
 
