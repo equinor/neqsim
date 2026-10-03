@@ -2,12 +2,14 @@ package neqsim.util.database;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests experiment database connection and inherited JDBC operations with H2.
+ * Tests experiment database connection and JDBC operations with H2.
  *
  * @author asmf
  * @version 1.0
@@ -25,7 +27,8 @@ class NeqSimExperimentDatabaseTest {
     NeqSimExperimentDatabase.setUsername("sa");
     NeqSimExperimentDatabase.setPassword("");
 
-    try (NeqSimExperimentDatabase database = new NeqSimExperimentDatabase()) {
+    NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
+    try (Connection connection = database.getConnection(); Statement statement = database.getStatement()) {
       assertTrue(database.getConnection().isValid(1));
       database.execute("CREATE TABLE experiment_test (measurement DOUBLE)");
       database.execute("INSERT INTO experiment_test VALUES (12.5)");
