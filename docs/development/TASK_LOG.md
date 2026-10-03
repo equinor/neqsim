@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-03 — Source-locked quantitative C1 ignition-delay comparison
+**Type:** G (Workflow)
+**Keywords:** combustion qualification, ReSpecTh, methane, shock tube, ignition delay, CRECK-S, Cantera, uncertainty, provenance
+**Solution:** `examples/combustion/run_ignition_delay_qualification.py`, quantitative ReSpecTh record in `benchmark_catalog.json`, provenance validation/tests and the optional combustion workflow; guide `docs/process/equipment/multi_burner_fired_heater.md`.
+**Notes:** Added 16 CC-BY-4.0 ReSpecTh observations from Aul et al. mixture 4 with exact archive and XML SHA-256 values, attribution, pressure and temperature, a maximum-pressure-rise-rate ignition marker, and point-specific evaluated standard deviations. The runner verifies the exact CRECK-S 2.0.0 bytes and executes an adiabatic constant-volume reactor without fitting. Cantera 3.2.0 produced a maximum absolute normalized residual of 1.950 and a 115.661 microsecond RMSE; 1000/2000-interval refinement differed by at most 0.25% of an observation. All points are above the CRECK-S deposit's stated 800-1500 K range, so this is an explicit C1 extrapolation check, not an extension of mechanism validity or heater/emissions qualification. C3/C4 chemistry and heater heat-transfer/mixing evidence remain open.
+
 ### 2026-10-02 — Source-locked quantitative C2 JSR comparison
 **Type:** G (Workflow)
 **Keywords:** combustion qualification, ReSpecTh, ethylene, JSR, CRECK-S, Cantera, CO, uncertainty, provenance
