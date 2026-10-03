@@ -97,9 +97,9 @@ This capability does not:
   direct and component calculations, deterministic order, input modes and
   types, numeric and text bounds, non-finite values, aggregate range, stable
   errors, and the safety boundary.
-- `neqsim-mcp-server/test_sil_protocol.py` exercises discovery and the same
+- `neqsim-mcp-server/tests/protocol/test_sil_protocol.py` exercises discovery and the same
   contract through the packaged real-MCP STDIO transport.
-- `neqsim-mcp-server/test_mcp_server.py` protects the public discovery boundary
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py` protects the public discovery boundary
   and preserves the Phase 0 inventory classification.
 
 Merged #3664 established the direct Java and packaged-MCP qualification.

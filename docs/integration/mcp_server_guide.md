@@ -31,7 +31,7 @@ to compute answers with rigorous thermodynamic models.
 ```
 neqsim-mcp-server/                         # Separate Maven project (Java 21+)
 ├── pom.xml                                 # Quarkus 3.33.1 + MCP Server 1.12.0
-├── test_mcp_server.py                      # Comprehensive integration test suite
+├── tests/protocol/test_mcp_server.py                      # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
   ├── NeqSimTools.java                    # 63 @Tool MCP tools
     ├── NeqSimResources.java                # 7 @Resource + 6 @ResourceTemplate
@@ -750,7 +750,7 @@ The LLM uses `eos: "CPA"` which is the correct choice for associating fluids:
 
 ### Integration Test Suite
 
-The `test_mcp_server.py` script launches the server as a subprocess, communicates
+The `tests/protocol/test_mcp_server.py` script launches the server as a subprocess, communicates
 over STDIO, and validates protocol behavior, catalogs, core calculations,
 advanced tools, governance, and error handling:
 
@@ -770,7 +770,7 @@ advanced tools, governance, and error handling:
 
 ```bash
 cd neqsim-mcp-server
-python test_mcp_server.py
+python tests/protocol/test_mcp_server.py
 ```
 
 ### Unit Tests (Core Layer)

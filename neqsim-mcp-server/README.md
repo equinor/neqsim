@@ -834,7 +834,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":
 **4. Run the comprehensive test suite:**
 
 ```bash
-python test_mcp_server.py
+python tests/protocol/test_mcp_server.py
 ```
 
 **5. (Optional) Test with MCP Inspector:**
@@ -923,7 +923,7 @@ runFlash({
 ```
 neqsim-mcp-server/                        # Separate Maven project (Java 21+)
 ├── pom.xml                                # Quarkus 3.33.1 + quarkus-mcp-server 1.12.0
-├── test_mcp_server.py                     # Comprehensive integration test suite
+├── tests/protocol/test_mcp_server.py                     # Comprehensive integration test suite
 └── src/main/java/neqsim/mcp/server/
   ├── NeqSimTools.java                   # 71 @Tool-annotated MCP tools
     ├── NeqSimResources.java               # 7 @Resource + 6 @ResourceTemplate (13 endpoints)
@@ -1007,7 +1007,7 @@ setup templates, and validation behavior:
 
 ### Integration Tests (MCP Server)
 
-The `test_mcp_server.py` script launches the server, communicates over STDIO,
+The `tests/protocol/test_mcp_server.py` script launches the server, communicates over STDIO,
 and validates all 71 tools across all three tiers:
 
 | Category           | Checks | Description                                                                                                                        |
@@ -1041,7 +1041,7 @@ and validates all 71 tools across all three tiers:
 
 ```bash
 cd neqsim-mcp-server
-python test_mcp_server.py
+python tests/protocol/test_mcp_server.py
 ```
 
 ---

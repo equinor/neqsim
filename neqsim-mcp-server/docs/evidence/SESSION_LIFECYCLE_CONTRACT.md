@@ -14,7 +14,7 @@ The qualification exercises the existing implementation rather than introducing 
 - authenticated Java callers cannot inspect, list or close a session owned by a different authenticated principal;
 - the same owner can inspect and close its session after a denied cross-caller attempt.
 
-The focused Java contract is `SessionRunnerContractTest`. Existing `SessionRunnerTest` continues to qualify process-backed create, evaluate, batch reads/writes and adjustable-parameter access. The packaged STDIO protocol contract is `neqsim-mcp-server/test_session_protocol.py`, and the comprehensive `test_mcp_server.py` retains the independent create/list/close route.
+The focused Java contract is `SessionRunnerContractTest`. Existing `SessionRunnerTest` continues to qualify process-backed create, evaluate, batch reads/writes and adjustable-parameter access. The packaged STDIO protocol contract is `neqsim-mcp-server/tests/protocol/test_session_protocol.py`, and the comprehensive `tests/protocol/test_mcp_server.py` retains the independent create/list/close route.
 
 ## Bounds and ownership
 
@@ -37,4 +37,4 @@ Executed results remain governed by their own units, provenance, convergence, va
 
 ## Phase 0 accounting boundary
 
-Inventory `1.20` classifies `manageSession` as `CONTRACT_TESTED` and moves the Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 17 CONTRACT_TESTED + 34 CONFIRMED_GAP` to `20 + 18 + 33`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses and authoritative `test_mcp_server.py` accounting move together. This promotion establishes only the bounded lifecycle/ownership/transport contract described above; it does not imply scientific validation of calculations performed inside a session.
+Inventory `1.20` classifies `manageSession` as `CONTRACT_TESTED` and moves the Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 17 CONTRACT_TESTED + 34 CONFIRMED_GAP` to `20 + 18 + 33`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses and authoritative `tests/protocol/test_mcp_server.py` accounting move together. This promotion establishes only the bounded lifecycle/ownership/transport contract described above; it does not imply scientific validation of calculations performed inside a session.

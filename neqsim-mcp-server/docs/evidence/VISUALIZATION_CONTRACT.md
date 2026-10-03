@@ -45,9 +45,9 @@ outside this qualification.
 Direct evidence:
 
 - `src/test/java/neqsim/mcp/runners/VisualizationRunnerTest.java`;
-- `neqsim-mcp-server/test_visualization_protocol.py`;
+- `neqsim-mcp-server/tests/protocol/test_visualization_protocol.py`;
 - `.github/workflows/mcp_protocol_qualification.yml`;
-- `neqsim-mcp-server/test_mcp_server.py` as the comprehensive regression.
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py` as the comprehensive regression.
 
 The implementation remains `VisualizationRunner`, exposed through
 `NeqSimTools.generateVisualization`. Merged qualification #3510 supplies the

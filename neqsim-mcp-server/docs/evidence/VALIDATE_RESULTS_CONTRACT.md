@@ -42,9 +42,9 @@ component, total-mass, enthalpy or facility-wide closure from a canonical `Proce
 ## Acceptance evidence
 
 - `EngineeringValidatorTest` covers clean, warning-only, blocking, nested and malformed inputs.
-- `test_validate_results_protocol.py` repeats those boundaries through the real packaged STDIO server and proves that
+- `tests/protocol/test_validate_results_protocol.py` repeats those boundaries through the real packaged STDIO server and proves that
   inventory 1.42 records 20 explicit + 42 contract-tested + 9 confirmed gaps.
-- `test_mcp_server.py` retains the broad real-protocol `validateResults` call.
+- `tests/protocol/test_mcp_server.py` retains the broad real-protocol `validateResults` call.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP contracts before the comprehensive suite.
 
 The contract requires deterministic findings, fail-closed malformed JSON, standard envelope fields, no mutation, and
