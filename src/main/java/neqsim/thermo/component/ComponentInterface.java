@@ -948,7 +948,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getIdEntropy(double temperature);
 
   /**
-   * Setter for the mole fraction of Component in Phase <code>x</code>.
+   * Setter for the mole fraction of Component in Phase <code>x</code>. Exact zero and finite positive trace fractions
+   * are retained. Negative input is bounded to a positive numerical floor, values above 5 are capped, and non-finite
+   * input leaves the previous value unchanged.
    *
    * @param newx a double
    */

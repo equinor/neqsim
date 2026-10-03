@@ -794,18 +794,6 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getx() {
-    double MIN_VALUE = 1.0e-50;
-
-    if (x == 0) {
-      return 0;
-    }
-
-    if (x < MIN_VALUE) {
-      return MIN_VALUE;
-    }
-    if (x > 5) {
-      return 5;
-    }
     return x;
   }
 
@@ -1196,7 +1184,7 @@ public abstract class Component implements ComponentInterface {
     }
     double MIN_VALUE = 1.0e-50;
 
-    // Preserve exact zero; clamp negative and trace-positive inputs for stable logarithms.
+    // Preserve exact zero and all finite positive trace fractions; bound negative and excessive inputs.
     if (newx == 0.0) {
       x = 0.0;
     } else if (newx < 0) {
