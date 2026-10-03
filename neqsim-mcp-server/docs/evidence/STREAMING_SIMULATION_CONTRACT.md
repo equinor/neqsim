@@ -60,7 +60,7 @@ two-point SRK sweep lifecycle. Existing
 `McpPrincipalScopingTest` independently verifies that one principal cannot
 poll, cancel, or list another principal's operation.
 
-The packaged `neqsim-mcp-server/test_streaming_protocol.py` harness starts
+The packaged `neqsim-mcp-server/tests/protocol/test_streaming_protocol.py` harness starts
 the shaded server over STDIO and repeats eight transport-level scenarios. It
 checks discovery language, standard response evidence, fixed limit reporting,
 fail-closed requests, a canonical two-point NeqSim sweep, pagination metadata,
