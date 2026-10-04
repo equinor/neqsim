@@ -14,6 +14,24 @@ import org.junit.jupiter.api.Test;
  */
 public class AxialThrustScreeningTest {
 
+  /** Invalid evidence must not be reported as a null-thrust result or a safe margin. */
+  @Test
+  public void testRejectsNonFiniteAndUndefinedMargins() {
+    for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class,
+          () -> AxialThrustScreening.fitLinear(new double[] {0.0, invalid}, new double[] {1.0, -1.0}));
+      assertThrows(IllegalArgumentException.class,
+          () -> AxialThrustScreening.fitLinear(new double[] {0.0, 1.0}, new double[] {1.0, invalid}));
+      assertThrows(IllegalArgumentException.class,
+          () -> AxialThrustScreening.evaluate(new double[] {0.0, 1.0}, new double[] {1.0, -1.0}, invalid, 0.1));
+      assertThrows(IllegalArgumentException.class, () -> AxialThrustScreening.zeroCrossingFlow(invalid, 1.0));
+    }
+    assertThrows(IllegalArgumentException.class,
+        () -> AxialThrustScreening.evaluate(new double[] {0.0, 1.0}, new double[] {0.0, 1.0}, 0.0, 0.1));
+    assertThrows(IllegalArgumentException.class,
+        () -> AxialThrustScreening.evaluate(new double[] {0.0, 1.0}, new double[] {1.0, 2.0}, 1.0, 0.1));
+  }
+
   /** Exact linear data: thrust = 10 - 5*flow, zero crossing at flow = 2. */
   @Test
   public void testFitLinearAndZeroCrossing() {

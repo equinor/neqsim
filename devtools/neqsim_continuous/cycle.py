@@ -16,12 +16,15 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from . import stages as _builtin_stages  # noqa: F401 - registers the built-in stages
+from . import production as _production_stages  # noqa: F401 - registers gates/constraints/guard/outcome
+from . import user_input as _user_input_stage  # noqa: F401 - registers the inputs stage
 from . import notify as _builtin_notifiers  # noqa: F401 - registers the built-in notifiers
 from .contracts import StageResult, resolve
 from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json, write_json
 
 SCHEMA_VERSION = "1.0"
-NEEDS = {"drift": ["kpis"], "diff": ["kpis"], "goal": ["kpis"], "notify": ["digest"]}
+NEEDS = {"drift": ["kpis"], "diff": ["kpis"], "goal": ["kpis"], "notify": ["digest"],
+         "gates": ["kpis"], "constraints": ["kpis"], "guard": ["gates", "constraints"], "outcome": ["kpis"]}
 LOCK_HOURS = 6.0
 
 
@@ -53,6 +56,8 @@ class CycleContext(object):
         self.stage_results, self.versions, self.summary = {}, {}, {}
         self.solve, self.stop_state, self.digest_text = {}, None, ""
         self.notifications, self.agent_run, self.previous_kpis = [], {}, {}
+        self.guard_blocks, self.sections = [], []
+        self.user_levers = {}
 
 
 class _Lock(object):

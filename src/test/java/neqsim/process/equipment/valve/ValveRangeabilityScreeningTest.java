@@ -11,6 +11,18 @@ import org.junit.jupiter.api.Test;
 public class ValveRangeabilityScreeningTest {
   private static final double DELTA = 1.0e-3;
 
+  /** Non-finite inputs must not become apparently usable flow fractions. */
+  @Test
+  public void testRejectsNonFiniteInput() {
+    for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
+      assertThrows(IllegalArgumentException.class,
+          () -> ValveRangeabilityScreening.flowFraction(ValveTrimCharacteristic.LINEAR, invalid, 50.0));
+      assertThrows(IllegalArgumentException.class,
+          () -> ValveRangeabilityScreening.flowFraction(ValveTrimCharacteristic.LINEAR, 0.5, invalid));
+    }
+    assertThrows(IllegalArgumentException.class, () -> ValveRangeabilityScreening.flowFraction(null, 0.5, 50.0));
+  }
+
   @Test
   public void testEqualPercentageFlowRatio() {
     ValveRangeabilityScreening.Result result = ValveRangeabilityScreening

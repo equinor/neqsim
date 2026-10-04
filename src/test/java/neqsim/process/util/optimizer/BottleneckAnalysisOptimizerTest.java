@@ -408,7 +408,8 @@ public class BottleneckAnalysisOptimizerTest {
 
     boolean processRejectedExtremeFlow = processRunFailure != null && processRunFailure.getMessage() != null
         && processRunFailure.getMessage().contains("Failed to run unit operation")
-        && processRunFailure.getMessage().contains("Compressor Outlet Manifold");
+        && (processRunFailure.getMessage().contains("Compressor Outlet Manifold")
+            || rejectedNegativeOutletPipePressure(processRunFailure));
     if (processRunFailure != null && !processRejectedExtremeFlow) {
       throw processRunFailure;
     }
@@ -431,6 +432,27 @@ public class BottleneckAnalysisOptimizerTest {
     // - Cause the downstream manifold run to reject the infeasible operating point
     Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty() || processRejectedExtremeFlow,
         "At extreme flow rates, compressors should show invalid simulation or validation errors");
+  }
+
+  /**
+   * Recognizes the physical pressure rejection in a downstream compressor outlet pipe at extreme flow.
+   *
+   * @param failure process run failure
+   * @return true only for the named outlet pipe with a negative-pressure cause
+   */
+  private boolean rejectedNegativeOutletPipePressure(RuntimeException failure) {
+    if (!failure.getMessage().contains("ups Outlet Pipe")) {
+      return false;
+    }
+    Throwable cause = failure;
+    while (cause != null) {
+      if (cause instanceof neqsim.util.exception.InvalidOutputException && cause.getMessage() != null
+          && cause.getMessage().contains("Outlet pressure is negative")) {
+        return true;
+      }
+      cause = cause.getCause();
+    }
+    return false;
   }
 
   /**

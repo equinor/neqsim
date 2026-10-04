@@ -9,7 +9,22 @@
 
 ---
 
-## 2026-09-30 — `Compressor.getValidatedDistanceToSurge()` (PEPR 80302697, NIP)
+## 2026-10-04 — Agent coverage and workflow review (#4191)
+
+- Agent discovery includes gas-processing/refining and network/energy specialists.
+  External weather-skill ownership is declared for core-only installations.
+- Upstream task hand-offs prefer the connected GitHub capability and reuse existing
+  publication authorization. CLI `--dry-run --pr` does not execute subprocesses;
+  failed commits and detached branches stop publication, and selected-file commits
+  exclude unrelated staged content. Issue bodies no longer add private task paths.
+- Hourly scheduling preserves the old positional Python API and accepts only whole
+  hour intervals dividing 24, anchored at midnight. Invalid clock times and mixed
+  timing options are rejected; Windows wrapper paths are quoted and length-checked.
+- Thrust and valve screening reject non-finite inputs. Thrust relative margins
+  require a positive finite zero-crossing, avoiding invalid-data classifications
+  as safe margins or `NULL` thrust. See the rotating-equipment skill for limitations.
+
+## 2026-09-30 — `Compressor.getValidatedDistanceToSurge()`
 
 - New `neqsim.process.equipment.compressor.Compressor.getValidatedDistanceToSurge()`:
   returns `getDistanceToSurge()` as normal, but `Double.NaN` whenever
@@ -32,10 +47,7 @@
   `EXTRAPOLATED_LOW_FLOW` via `getChartFlowStatus()` — do not assume the design
   point is always "in range"; check `isChartExtrapolated()` directly instead of
   hardcoding which nominal point should pass.
-- Not opened as a PR to `equinor/neqsim` in this session (the local worktree
-  has substantial unrelated pending changes from other work); the diff is
-  isolated to `Compressor.java` + `CompressorTest.java` and is ready to branch
-  and PR on request.
+- Included with the agent coverage work in PR #4191.
 
 
 
@@ -49,12 +61,9 @@
   choppy/oscillating valve a control-authority artifact?" questions, before a
   full valve signature test or process simulation.
 - `ValveRangeabilityScreeningTest` (6 tests) passes; `spotless:apply` clean.
-- Motivated by and exercised in PEPR action 80298045 (Hammerfest LNG, system
-  24 CO2 recompression, anti-surge valve 24-UV-1031 forced to a 2.9% minimum
-  opening vs a desired 1.2%): equal-percentage trim gives only +0.2% extra
-  stage-5 compression power, while linear/quick-opening trim gives +1.6% —
-  and the same flow-ratio sensitivity explains why a valve held near-closed
-  on the wrong trim type shows "choppy"/oscillatory behavior.
+- Synthetic low-travel comparison: a 2.9% opening versus 1.2% illustrates
+  trim-dependent sensitivity at fixed pressure drop. Actual recycle flow,
+  compressor power and dynamic stability require a coupled process model.
 
 
 - `GibbsReactor` uses total component feed inventories across all inlet phases,

@@ -105,6 +105,9 @@ power_kw = train.getPower("kW")
 
 ## Gotchas
 
+- `AxialThrustScreening` rejects non-finite inputs/results and requires a positive fitted zero-crossing for a relative margin. An invalid case is not a safe margin or `NULL` thrust. Report the data range, extrapolation and OEM thrust sign convention.
+- `ValveRangeabilityScreening` rejects missing trim and non-finite travel/rangeability. Finite travel is clamped to 0–1; a zero reference flow gives an undefined ratio (`NaN`). Its flow ratio assumes unchanged fluid conditions and pressure drop, not an installed-system response.
+
 - Chart interpolation and extrapolation are not equivalent. `CompressorChartAlternativeMapLookupExtrapolate` explicitly permits extrapolation; outside available reference speeds, it can use a single nearest curve and scale head with speed. Treat that output as extrapolated, not vendor-supported operation.
 - A chart can return finite, plausible-looking values outside its calibrated flow range. `getChartFlowStatus()` may report extrapolation even at an auto-generated nominal point. Gate every sweep point; `getValidatedDistanceToSurge()` is `NaN` outside the reported valid flow range.
 - `getDistanceToSurge()` alone does not enforce the chart-range gate. Do not bisect or optimize on it without filtering extrapolated points and reporting the number excluded.

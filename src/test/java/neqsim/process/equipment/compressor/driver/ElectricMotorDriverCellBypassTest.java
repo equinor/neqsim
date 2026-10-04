@@ -10,9 +10,8 @@ import org.junit.jupiter.api.Test;
  * derating after one or more power cells are bypassed (e.g. Siemens SINAMICS GH150 / Perfect Harmony drives).
  *
  * <p>
- * Motivated by a live PEPR field incident (Njord A, action 80303156): a 3rd-stage recompression-train VFD tripped on a
- * bypass fault at restart after a failed power module ("cell 113") had been swapped in with its bypass engaged; the
- * drive was returned to service running permanently on one fewer power cell.
+ * Synthetic recompression-train example: after a failed power module is bypassed, the drive returns to service with one
+ * fewer power cell per phase.
  * </p>
  *
  * @author NeqSim Development Team

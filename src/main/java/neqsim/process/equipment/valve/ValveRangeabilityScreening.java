@@ -159,8 +159,12 @@ public final class ValveRangeabilityScreening {
    * @param rangeability rangeability (Cv_max / Cv_min), must be greater than 1
    * @return normalized flow fraction, in {@code [1/rangeability, 1]} for LINEAR and EQUAL_PERCENTAGE, or {@code [0, 1]}
    * for QUICK_OPENING
+   * @throws IllegalArgumentException if trim is null, inputs are non-finite, or rangeability is not greater than one
    */
   public static double flowFraction(ValveTrimCharacteristic trim, double travelFraction, double rangeability) {
+    if (trim == null || !Double.isFinite(travelFraction) || !Double.isFinite(rangeability)) {
+      throw new IllegalArgumentException("trim is required and travelFraction and rangeability must be finite");
+    }
     double x = Math.max(0.0, Math.min(1.0, travelFraction));
     if (rangeability <= 1.0) {
       throw new IllegalArgumentException("rangeability must be greater than 1.0");

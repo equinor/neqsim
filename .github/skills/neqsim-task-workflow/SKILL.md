@@ -2051,9 +2051,17 @@ flywheel: **task → gap → implementation → better next task**.
 
 Once a gap is recorded (§6.1–6.3), offer the user the option to close the loop
 on `equinor/neqsim` instead of letting the NIP sit only in the task folder.
-This is a **standard step for every task that records a NeqSim gap** — ask it
-once, every time — but it is opt-in per use: never file an issue or push a
-branch without the user's explicit go-ahead in that conversation.
+Honor authorization already given in the conversation or campaign; do not ask
+again when the user has requested issues or PRs. Otherwise show the proposed
+public content and ask once before publishing it.
+
+Use the connected GitHub capability first when available or required by the
+user. Inspect current source, search existing issues, then create or update the
+issue/PR and record its verified URL in the task. Neither a local checkout nor
+`gh` is required for that route. The CLI below is a fallback for environments
+without a connected GitHub capability. Keep private task paths, plant identifiers,
+internal document references and proprietary data out of public submissions;
+use a synthetic reproducer and review the exact body before publishing.
 
 ```bash
 neqsim file-issue <task>            # list gaps, prompt to file each as an issue
@@ -2071,14 +2079,20 @@ What it does, and the guardrails that make it safe to offer by default:
   --search`) so re-running a task never opens a duplicate.
 - **Always confirms before doing anything**: each issue and each PR gets its
   own `[y/N]` prompt (default No) unless `--yes` is passed; `--dry-run` never
-  calls `gh`/`git` at all, so it is safe to run with no GitHub CLI installed.
+  calls `gh`/`git` at all, including with `--pr`. A PR dry run describes the
+  workflow without inspecting local changes. Use `--yes` only under existing
+  publication authorization.
 - The PR half (`--pr`) only fires when this checkout actually has changed
   `.java` files under `src/main/java/neqsim/` or `src/test/java/neqsim/` (the
   gap was implemented per §6.3) — it will not open an empty PR for a NIP that
   was only documented. It runs `spotless:apply`, `spotless:check` and
   `checkstyle:check` first and aborts the PR if any of them fail, matching the
   same file-scope restriction as `create-neqsim-pr.yml` (only NeqSim `.java`
-  files under those two trees are ever staged/pushed).
+  files under those two trees are selected for the new commit). It stops on a
+  failed commit or an unknown/detached branch and excludes unrelated staged
+  files. Review existing branch commits too: pushing publishes branch history.
+  The helper does not run Java tests; execute relevant tests and assess
+  documentation impact before using `--pr`.
 - On success it writes the issue URL back into the NIP block (or the
   `results.json` entry), so a second run of the same task does not re-offer it.
 

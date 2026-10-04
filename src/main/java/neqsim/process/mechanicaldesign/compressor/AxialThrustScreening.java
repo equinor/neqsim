@@ -45,7 +45,7 @@ public class AxialThrustScreening implements Serializable {
    * @param thrust thrust load values at the same points (any consistent unit, e.g. MPa), same length as {@code flow}
    * @return array {@code {slope, intercept}}
    * @throws IllegalArgumentException if the arrays are null, of different length, have fewer than two points, or all
-   * flow values are equal (a vertical or undefined fit)
+   * flow values are equal, or the data or fitted coefficients are not finite
    */
   public static double[] fitLinear(double[] flow, double[] thrust) {
     if (flow == null || thrust == null || flow.length != thrust.length || flow.length < 2) {
@@ -56,6 +56,9 @@ public class AxialThrustScreening implements Serializable {
     double sumX = 0.0;
     double sumY = 0.0;
     for (int i = 0; i < n; i++) {
+      if (!Double.isFinite(flow[i]) || !Double.isFinite(thrust[i])) {
+        throw new IllegalArgumentException("flow and thrust values must be finite");
+      }
       sumX += flow[i];
       sumY += thrust[i];
     }
@@ -73,6 +76,9 @@ public class AxialThrustScreening implements Serializable {
     }
     double slope = sxy / sxx;
     double intercept = meanY - slope * meanX;
+    if (!Double.isFinite(slope) || !Double.isFinite(intercept)) {
+      throw new IllegalArgumentException("fitted coefficients must be finite; rescale the input data");
+    }
     return new double[] {slope, intercept};
   }
 
@@ -82,13 +88,17 @@ public class AxialThrustScreening implements Serializable {
    * @param slope slope of the fitted trend (thrust per unit flow)
    * @param intercept intercept of the fitted trend
    * @return the flow at which {@code slope * flow + intercept == 0}
-   * @throws IllegalArgumentException if slope is zero (the trend never crosses zero)
+   * @throws IllegalArgumentException if slope is zero or the inputs or crossing are not finite
    */
   public static double zeroCrossingFlow(double slope, double intercept) {
-    if (slope == 0.0) {
+    if (slope == 0.0 || !Double.isFinite(slope) || !Double.isFinite(intercept)) {
       throw new IllegalArgumentException("slope must be non-zero for a zero-crossing to exist");
     }
-    return -intercept / slope;
+    double crossing = -intercept / slope;
+    if (!Double.isFinite(crossing)) {
+      throw new IllegalArgumentException("zero-crossing flow must be finite");
+    }
+    return crossing;
   }
 
   /**
@@ -100,9 +110,13 @@ public class AxialThrustScreening implements Serializable {
    * @param marginThresholdFraction absolute margin fraction below which the operating flow is flagged as near the
    * null-thrust crossing (for example 0.10 for +/-10 %), must be positive
    * @return the screening result
-   * @throws IllegalArgumentException if the inputs are invalid or the threshold is not positive
+   * @throws IllegalArgumentException if inputs or results are non-finite, operating flow is negative, the threshold is
+   * not positive, or there is no positive crossing to normalize the margin
    */
   public static Result evaluate(double[] flow, double[] thrust, double operatingFlow, double marginThresholdFraction) {
+    if (!Double.isFinite(operatingFlow) || operatingFlow < 0.0) {
+      throw new IllegalArgumentException("operatingFlow must be non-negative and finite");
+    }
     if (!(marginThresholdFraction > 0.0) || Double.isInfinite(marginThresholdFraction)) {
       throw new IllegalArgumentException("marginThresholdFraction must be positive and finite");
     }
@@ -110,9 +124,14 @@ public class AxialThrustScreening implements Serializable {
     double slope = fit[0];
     double intercept = fit[1];
     double crossingFlow = zeroCrossingFlow(slope, intercept);
+    if (crossingFlow <= 0.0) {
+      throw new IllegalArgumentException("a positive zero-crossing flow is required for a relative margin");
+    }
     double predictedThrust = slope * operatingFlow + intercept;
-    double marginFraction = crossingFlow != 0.0 ? (operatingFlow - crossingFlow) / crossingFlow
-        : Double.POSITIVE_INFINITY;
+    double marginFraction = (operatingFlow - crossingFlow) / crossingFlow;
+    if (!Double.isFinite(predictedThrust) || !Double.isFinite(marginFraction)) {
+      throw new IllegalArgumentException("predicted thrust and margin must be finite; rescale the input data");
+    }
     boolean nearNullThrust = Math.abs(marginFraction) < marginThresholdFraction;
     String direction = predictedThrust > 0.0 ? "OUTBOARD" : predictedThrust < 0.0 ? "INBOARD" : "NULL";
     return new Result(slope, intercept, crossingFlow, operatingFlow, predictedThrust, marginFraction, nearNullThrust,
@@ -262,7 +281,7 @@ public class AxialThrustScreening implements Serializable {
       map.put("nearNullThrust", nearNullThrust);
       map.put("marginThresholdFraction", marginThresholdFraction);
       map.put("thrustDirection", thrustDirection);
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
+      return new GsonBuilder().setPrettyPrinting().create().toJson(map);
     }
   }
 }

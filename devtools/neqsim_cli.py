@@ -42,7 +42,7 @@ import sys
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
 CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "backtest", "schedule", "promote", "ledger",
-                       "status", "report", "reference-case")
+                       "status", "report", "reference-case", "note")
 
 COMMANDS = {
     "try": {

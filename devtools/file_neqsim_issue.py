@@ -213,8 +213,6 @@ def issue_body(item, task_dir, task_slug):
         "Filed automatically from the NeqSim task-solving workflow "
         "(`neqsim file-issue`).",
         "",
-        "**Task folder:** `{}`".format(task_dir),
-        "",
         "---",
         "",
         item["body"],
@@ -453,6 +451,9 @@ def create_pull_request(project_root, repo, branch, base, title, body, files, dr
     code, current_branch, _ = run_command(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=project_root)
     current_branch = current_branch.strip()
+    if code != 0 or not current_branch or current_branch == "HEAD":
+        print("  Cannot publish from an unknown or detached branch.")
+        return None
     if current_branch in (base, "master", "main"):
         code, _, err = run_command(["git", "checkout", "-b", branch], cwd=project_root)
         if code != 0:
@@ -466,9 +467,11 @@ def create_pull_request(project_root, repo, branch, base, title, body, files, dr
         print("  ERROR staging files: {}".format(err.strip()))
         return None
 
-    code, _, err = run_command(["git", "commit", "-m", title], cwd=project_root)
+    code, _, err = run_command(["git", "commit", "--only", "-m", title, "--"] + files,
+                                cwd=project_root)
     if code != 0:
         print("  Nothing to commit or commit failed: {}".format(err.strip()))
+        return None
 
     code, _, err = run_command(["git", "push", "-u", "origin", branch], cwd=project_root)
     if code != 0:
@@ -597,13 +600,17 @@ def main(argv=None):
         if url:
             record_issue_url(task_dir, item, url)
 
-        if args.pr:
+        if args.pr and gh_ready:
             _maybe_offer_pr(item, args, task_slug)
 
     return 0
 
 
 def _maybe_offer_pr(item, args, task_slug):
+    if args.dry_run:
+        print("  [dry-run] would inspect changed NeqSim Java files, run quality checks, "
+              "then offer to commit, push and open a PR; Git inspection is skipped.")
+        return
     files = changed_java_files(args.project_root)
     if not files:
         return

@@ -3038,6 +3038,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
 
   /**
+   * Set the scalar total-moles bookkeeping field directly, WITHOUT rescaling any per-component mole numbers (unlike
+   * {@link #setTotalNumberOfMoles(double)}). Intended for callers that mutate individual component/phase mole numbers
+   * themselves (e.g. via {@link neqsim.thermo.component.ComponentInterface#addMoles(double)} or
+   * {@link neqsim.thermo.component.ComponentInterface#addMolesChemReac(double)}) and then need to resynchronise this
+   * scalar with the true sum of the (already correct) component mole numbers, without the composition being forced back
+   * toward a stale, pre-mutation ratio.
+   *
+   * @param totalNumberOfMoles new total number of moles; negative values are clipped to zero
+   */
+  public void setTotalNumberOfMolesRaw(double totalNumberOfMoles);
+
+  /**
    * setUseTVasIndependentVariables.
    *
    * @param useTVasIndependentVariables a boolean
