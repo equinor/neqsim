@@ -4,12 +4,12 @@
   "denominator": "public top-level Java source types; not methods or engineering operations",
   "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification.",
   "summary": {
-    "publicTypes": 3340,
+    "publicTypes": 3341,
     "registeredCapabilities": 12,
     "registeredAnchors": 18,
     "withSkillMention": 1264,
     "withAgentMention": 1263,
-    "reviewRequired": 3242,
+    "reviewRequired": 3243,
     "domains": {
       "api": {
         "publicTypes": 1,
@@ -66,10 +66,10 @@
         "reviewRequired": 107
       },
       "process": {
-        "publicTypes": 2221,
+        "publicTypes": 2222,
         "registeredAnchors": 12,
         "withSkillMention": 1065,
-        "reviewRequired": 2209
+        "reviewRequired": 2210
       },
       "pvtsimulation": {
         "publicTypes": 83,
@@ -419,7 +419,7 @@
       }
     }
   ],
-  "catalogDigest": "1d25ece49ebcdb2a0fa8432ffed723e1c2869dd2913bdb9101060369effb8527",
+  "catalogDigest": "843ae2adb91bdb02277480a0b3573d53a0623535b282b6ca0a692e619c2841fa",
   "apis": [
     {"id":"neqsim.api.ioc.CalculationResult","kind":"class","source":"src/main/java/neqsim/api/ioc/CalculationResult.java","sourceDigest":"9e8bd61a763f407a08785db311578bbcc82114bbbc47644cb03862c3604af17f","domain":"api","skills":["neqsim-java8-rules"],"agents":["documentation","dynamic-equipment","mechanical-design","neqsim-test","optimize","process-model","reaction-engineering","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.blackoil.BlackOilConverter","kind":"class","source":"src/main/java/neqsim/blackoil/BlackOilConverter.java","sourceDigest":"7dfc65a57aec097df8fa898ebb120f4db6d8ee112030d47ce0b4076aa84739aa","domain":"blackoil","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -1703,6 +1703,7 @@
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpoint.java","sourceDigest":"37d97e6a4e66367e20ab19294b95d524f1811d9400c183b518af5d5e6212187f","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.java","sourceDigest":"c387e9bb3be5022f6f14275f77bb5dff462160f79835de0918443747e3e0c4b2","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.java","sourceDigest":"b24ad29371c8cb678e87749f1349a4251aba04a2340b117dabd3d14329c2b299","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.java","sourceDigest":"135c0f25bd761dfe4be686c7892422e79842bc6c7594ecf460fb6ff5dcdefc67","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationPreview","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.java","sourceDigest":"20325ec67b741b0745fe845858541a28ac17bbd5541938d4a3dae64082f9519a","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8Transfer","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8Transfer.java","sourceDigest":"fc8231dee84d82fc955047aed0f04a774cfa2b3f1bcb3dea6338a03eb85e682e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8TransferBatch","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8TransferBatch.java","sourceDigest":"eca662b1d83a2fc9d45f780be6af6058c97ec63eccba650d400462165f4b77bd","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
