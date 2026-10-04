@@ -3,8 +3,6 @@ title: "Mercury Removal Guard Beds"
 description: "Process equipment documentation for the MercuryRemovalBed unit operation. Covers chemisorption modelling with PuraSpec-type sorbents, transient bed loading, breakthrough detection, degradation effects, mechanical design, and cost estimation for LNG pre-treatment mercury guard beds."
 ---
 
-# Mercury Removal Guard Beds
-
 ## Overview
 
 The `MercuryRemovalBed` class (`neqsim.process.equipment.adsorber`) models fixed-bed chemisorption of elemental mercury (Hg$^0$) onto metal-sulphide sorbents — the standard mercury removal technology in LNG pre-treatment and gas processing plants.
@@ -178,13 +176,9 @@ screening approximation and does not predict competitive adsorption or contamina
 
 ### Construction
 
-```java
-// Name only (configure later)
-MercuryRemovalBed bed = new MercuryRemovalBed("Hg Guard");
-
-// Name + inlet stream
-MercuryRemovalBed bed = new MercuryRemovalBed("Hg Guard", feedStream);
-```
+Construct a bed with a name alone when the inlet will be configured later, or pass both a name
+and a `StreamInterface` to `MercuryRemovalBed`. The executable workflow below uses the
+name-and-inlet constructor so the complete setup is visible in one place.
 
 ### Bed Geometry
 
@@ -252,18 +246,10 @@ MercuryRemovalBed bed = new MercuryRemovalBed("Hg Guard", feedStream);
 
 ## Mechanical Design
 
-The `MercuryRemovalMechanicalDesign` class sizes the pressure vessel:
-
-```java
-MercuryRemovalMechanicalDesign design = bed.getMechanicalDesign();
-design.setMaxOperationPressure(60.0);       // bara
-design.setMaxOperationTemperature(353.15);  // K
-design.calcDesign();
-
-System.out.println("Wall thickness: " + design.getWallThickness() + " mm");
-System.out.println("Total weight:   " + design.getWeightTotal() + " kg");
-System.out.println(design.toJson());
-```
+The `MercuryRemovalMechanicalDesign` class sizes the pressure vessel. Set maximum operating
+pressure in absolute bara and maximum operating temperature in K before calling `calcDesign()`.
+The executable workflow below checks wall thickness in mm and vessel, sorbent, and skid weights
+in kg.
 
 ### Design Outputs
 
@@ -291,17 +277,10 @@ where $P_d$ is design pressure (110% of max operating), $D$ is inner diameter, $
 
 ## Cost Estimation
 
-The `MercuryRemovalCostEstimate` class provides CAPEX/OPEX:
-
-```java
-MercuryRemovalCostEstimate cost = design.getCostEstimate();
-cost.setSorbentUnitPrice(25.0);  // USD/kg for PuraSpec
-cost.calculateCostEstimate();
-
-System.out.println("Total module cost: " + cost.getTotalModuleCost());
-System.out.println("Sorbent replacement: " + cost.getSorbentReplacementCost());
-System.out.println(cost.toJson());
-```
+The `MercuryRemovalCostEstimate` class provides CAPEX/OPEX screening. Obtain it from a
+calculated mechanical design, set the sorbent price in USD/kg when a project-specific basis is
+available, and call `calculateCostEstimate()`. The executable workflow below checks that the
+purchased-equipment, total-module, and sorbent-replacement estimates are positive.
 
 ### Cost Structure
 
@@ -328,63 +307,127 @@ System.out.println(cost.toJson());
 
 ## Usage Examples
 
-### Steady-State Example (Java)
+## Executable steady and transient workflow
+
+This single program uses temperature in K, absolute pressure in bara, feed flow in kg/hr,
+pressure drop in Pa and bar, sorbent loading in mg/kg, elapsed time in hours, wall thickness in
+mm, equipment mass in kg, and cost in nominal USD. It first runs a steady screening case, then
+advances a separate transient bed for ten bounded 60 s steps. Run it with assertions enabled so
+invalid removal, hydraulic, loading, mechanical-design, or cost results stop the example.
 
 ```java
-SystemInterface gas = new SystemSrkEos(273.15 + 30.0, 60.0);
-gas.addComponent("methane", 0.85);
-gas.addComponent("ethane", 0.07);
-gas.addComponent("propane", 0.03);
-gas.addComponent("nitrogen", 0.04);
-gas.addComponent("mercury", 1.0e-9);
-gas.createDatabase(true);
-gas.setMixingRule(2);
-gas.init(0);
+import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.costestimation.adsorber.MercuryRemovalCostEstimate;
+import neqsim.process.equipment.adsorber.MercuryRemovalBed;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.adsorber.MercuryRemovalMechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-Stream feed = new Stream("feed", gas);
-feed.setFlowRate(50000.0, "kg/hr");
-feed.run();
+public final class MercuryRemovalGuideExample {
+  private static final Logger logger = LogManager.getLogger(MercuryRemovalGuideExample.class);
 
-MercuryRemovalBed bed = new MercuryRemovalBed("HgGuard", feed);
-bed.setBedDiameter(1.5);
-bed.setBedLength(4.0);
-bed.setSorbentType("PuraSpec");
-bed.run(UUID.randomUUID());
+  private MercuryRemovalGuideExample() {}
 
-System.out.println("Efficiency: " + bed.getRemovalEfficiency());
-System.out.println("Pressure drop: " + bed.getPressureDrop("bar") + " bar");
-```
+  public static void main(String[] args) {
+    double temperatureK = 303.15;
+    double pressureBara = 60.0;
+    double feedFlowKgPerHour = 50000.0;
 
-### Transient Breakthrough Example (Java)
+    SystemInterface gas = new SystemSrkEos(temperatureK, pressureBara);
+    gas.addComponent("methane", 0.85);
+    gas.addComponent("ethane", 0.07);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("nitrogen", 0.04);
+    gas.addComponent("mercury", 1.0e-9);
+    gas.createDatabase(true);
+    gas.setMixingRule(2);
+    gas.init(0);
 
-```java
-bed.setCalculateSteadyState(false);
-bed.setNumberOfCells(50);
-bed.initialiseTransientGrid();
+    Stream feed = new Stream("mercury guard feed", gas);
+    feed.setFlowRate(feedFlowKgPerHour, "kg/hr");
+    feed.run();
 
-UUID id = UUID.randomUUID();
-double dt = 3600.0; // 1-hour steps
+    MercuryRemovalBed steadyBed = configuredBed("steady mercury guard", feed);
+    steadyBed.run(UUID.randomUUID());
 
-for (int hour = 0; hour < 10000; hour++) {
-    bed.runTransient(dt, id);
-    if (bed.isBreakthroughOccurred()) {
-        System.out.println("Breakthrough at " + bed.getBreakthroughTimeHours() + " hours");
-        break;
+    double removalFraction = steadyBed.getRemovalEfficiency();
+    double pressureDropPa = steadyBed.getPressureDrop();
+    double pressureDropBar = steadyBed.getPressureDrop("bar");
+    double sorbentMassKg = steadyBed.getSorbentMass();
+    assert removalFraction > 0.30 && removalFraction <= 1.0;
+    assert pressureDropPa > 0.0 && pressureDropPa < 5.0e5;
+    assert Math.abs(pressureDropBar - pressureDropPa / 1.0e5) < 1.0e-10;
+    assert sorbentMassKg > 0.0;
+
+    MercuryRemovalMechanicalDesign design = steadyBed.getMechanicalDesign();
+    design.setMaxOperationPressure(pressureBara);
+    design.setMaxOperationTemperature(temperatureK);
+    design.calcDesign();
+    double wallThicknessMm = design.getWallThickness();
+    double vesselShellMassKg = design.getWeigthVesselShell();
+    double totalSkidMassKg = design.getWeightTotal();
+    assert wallThicknessMm > 0.0;
+    assert vesselShellMassKg > 0.0;
+    assert design.getSorbentChargeWeight() > 0.0;
+    assert totalSkidMassKg > vesselShellMassKg;
+    assert design.getOuterDiameter() > steadyBed.getBedDiameter();
+
+    MercuryRemovalCostEstimate cost = design.getCostEstimate();
+    cost.setSorbentUnitPrice(25.0);
+    cost.calculateCostEstimate();
+    double purchasedEquipmentCostUsd = cost.getPurchasedEquipmentCost();
+    double totalModuleCostUsd = cost.getTotalModuleCost();
+    double sorbentReplacementCostUsd = cost.getSorbentReplacementCost();
+    assert purchasedEquipmentCostUsd > 0.0;
+    assert totalModuleCostUsd > purchasedEquipmentCostUsd;
+    assert sorbentReplacementCostUsd > 0.0;
+
+    MercuryRemovalBed transientBed = configuredBed("transient mercury guard", feed);
+    transientBed.setCalculateSteadyState(false);
+    transientBed.setNumberOfCells(10);
+    transientBed.setCalculatePressureDrop(false);
+    UUID transientId = UUID.randomUUID();
+    for (int step = 0; step < 10; step++) {
+      transientBed.runTransient(60.0, transientId);
     }
+    double averageLoadingMgPerKg = transientBed.getAverageLoading();
+    double elapsedTimeHours = transientBed.getElapsedTimeHours();
+    assert averageLoadingMgPerKg > 0.0;
+    assert elapsedTimeHours > 0.0 && elapsedTimeHours <= 10.0 / 60.0 + 1.0e-12;
+
+    logger.info(
+        "Hg guard: removal={}, pressureDropPa={}, pressureDropBar={}, loadingMgPerKg={}",
+        removalFraction, pressureDropPa, pressureDropBar, averageLoadingMgPerKg);
+    logger.info(
+        "Design: wallThicknessMm={}, totalSkidMassKg={}, totalModuleCostUsd={}",
+        wallThicknessMm, totalSkidMassKg, totalModuleCostUsd);
+  }
+
+  private static MercuryRemovalBed configuredBed(String name, Stream feed) {
+    MercuryRemovalBed bed = new MercuryRemovalBed(name, feed);
+    bed.setBedDiameter(1.5);
+    bed.setBedLength(4.0);
+    bed.setVoidFraction(0.40);
+    bed.setSorbentType("PuraSpec");
+    bed.setSorbentBulkDensity(1100.0);
+    bed.setParticleDiameter(0.004);
+    bed.setMaxMercuryCapacity(100000.0);
+    bed.setReactionRateConstant(0.5);
+    return bed;
+  }
 }
-
-System.out.println("Average loading: " + bed.getAverageLoading() + " mg/kg");
-System.out.println("Utilisation: " + (bed.getBedUtilisation() * 100) + "%");
 ```
 
-### Python Example
-
-```python
-from neqsim import jneqsim
-
-MercuryRemovalBed = jneqsim.process.equipment.adsorber.MercuryRemovalBed
-# ... (see Jupyter notebook for full example)
-```
+The kinetics and contaminant-screening calculations are engineering approximations and require
+sorbent-specific validation. The simplified pressure-vessel calculation is not a substitute for
+code-compliant ASME design. Cost results use nominal USD factors, a fixed five-year sorbent
+annualisation basis, and 3% annual maintenance; they are screening estimates, not vendor quotes.
+The transient example demonstrates bounded state advancement, not a qualified breakthrough-life
+prediction. Use laboratory isotherms, vendor data, project design conditions, and an independent
+mechanical-design review before making design or operating decisions.
 
 ---
 
