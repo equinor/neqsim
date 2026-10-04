@@ -25,8 +25,9 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * Compiles and executes the complete example in docs/thermo/thermodynamic_workflows.md.
  *
- * <p>The extracted program covers {@code addTBPfraction("C10", 0.10, 0.134, 0.792)} and
- * {@code setMixingRule("classic")} directly.
+ * <p>
+ * The extracted program covers {@code addTBPfraction("C10", 0.10, 0.134, 0.792)} and {@code setMixingRule("classic")}
+ * directly.
  */
 public class ThermodynamicWorkflowsDocumentationTest {
   private static final String GUIDE = "docs/thermo/thermodynamic_workflows.md";
