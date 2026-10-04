@@ -619,6 +619,7 @@ public class TPflash extends Flash {
    */
   @Override
   public void run() {
+    validateCharacterizedFluidParameters();
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);
       return;
@@ -638,13 +639,96 @@ public class TPflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
     }
     try {
-      runInternal();
+      if (!flashStableWaterIonBrine()) {
+        runInternal();
+      }
       validateCharacterizedFluidPhaseInventories();
     } finally {
       multiphaseEndpointRescueSeed = null;
       if (disableWarmStart) {
         neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarmStart);
       }
+    }
+  }
+
+  /**
+   * Rejects petroleum fractions whose acentric factor implies saturation pressure above critical pressure.
+   *
+   * @throws IllegalStateException if a present TBP or plus fraction has a non-finite acentric factor or one at or below
+   * minus one
+   */
+  private void validateCharacterizedFluidParameters() {
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);
+      if ((component.isIsTBPfraction() || component.isIsPlusFraction()) && component.getNumberOfmoles() > 0.0) {
+        double acentricFactor = component.getAcentricFactor();
+        if (!Double.isFinite(acentricFactor) || acentricFactor <= -1.0) {
+          throw new IllegalStateException("TPflash cannot evaluate petroleum fraction " + component.getComponentName()
+              + ": acentric factor must be finite and greater than -1, got " + acentricFactor);
+        }
+      }
+    }
+  }
+
+  /**
+   * Solves a water-and-ion brine on its aqueous root when solvent vapor stability is satisfied.
+   *
+   * <p>
+   * Ions cannot enter a vapor phase. For a feed whose only neutral component is water, a gas phase is therefore
+   * excluded when aqueous water fugacity is below that of the pure-water vapor root. This avoids singular gas trials
+   * during reactive salt searches without accepting a metastable liquid above its boiling boundary. Any positive
+   * neutral solute, including a trace amount, retains the general multiphase algorithm. Caller phase options are
+   * preserved; reaction helpers are rebound after accepting the cloned aqueous state.
+   * </p>
+   *
+   * @return true when a stable aqueous endpoint was accepted
+   */
+  boolean flashStableWaterIonBrine() {
+    if (!(system instanceof neqsim.thermo.system.SystemElectrolyteCPAstatoil) || !system.hasIons()
+        || !system.isChemicalSystem() || system.isForcePhaseTypes() || solidCheck || system.doSolidPhaseCheck()
+        || system.getHydrateCheck() || system.isMultiphaseWaxCheck()) {
+      return false;
+    }
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);
+      if (!"water".equals(component.getComponentName()) && !component.isIsIon() && component.getIonicCharge() == 0.0
+          && component.getNumberOfmoles() > 0.0) {
+        return false;
+      }
+    }
+    try {
+      SystemInterface aqueousCandidate = system.clone();
+      aqueousCandidate.setForceSinglePhase(PhaseType.AQUEOUS);
+      aqueousCandidate.setBeta(0, 1.0);
+      aqueousCandidate.init(1);
+      aqueousCandidate.chemicalReactionInit();
+      if (!aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 0)
+          || !aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 1)) {
+        return false;
+      }
+      aqueousCandidate.init(1);
+      PhaseInterface aqueous = aqueousCandidate.getPhase(0);
+      int waterIndex = aqueous.getComponent("water").getComponentNumber();
+      SystemInterface vaporCandidate = aqueousCandidate.clone();
+      vaporCandidate.isChemicalSystem(false);
+      vaporCandidate.setEmptyFluid();
+      vaporCandidate.addComponent(waterIndex, aqueousCandidate.getTotalNumberOfMoles());
+      vaporCandidate.setForceSinglePhase(PhaseType.GAS);
+      vaporCandidate.init(1);
+      PhaseInterface vapor = vaporCandidate.getPhase(0);
+      double aqueousWaterFugacity = aqueous.getFugacity(waterIndex);
+      double vaporWaterFugacity = vapor.getFugacity(waterIndex);
+      if (!(aqueousWaterFugacity > 0.0) || !Double.isFinite(aqueousWaterFugacity) || !(vaporWaterFugacity > 0.0)
+          || !Double.isFinite(vaporWaterFugacity) || aqueousWaterFugacity > vaporWaterFugacity) {
+        return false;
+      }
+      system.setTotalNumberOfMoles(aqueousCandidate.getTotalNumberOfMoles());
+      copyFlashStateFrom(aqueousCandidate);
+      system.chemicalReactionInit();
+      return true;
+    } catch (RuntimeException ex) {
+      logger.debug("Aqueous brine endpoint trial failed: {}", ex.getMessage());
+      return false;
     }
   }
 
