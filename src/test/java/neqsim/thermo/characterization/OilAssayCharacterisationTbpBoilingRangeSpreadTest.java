@@ -23,23 +23,20 @@ class OilAssayCharacterisationTbpBoilingRangeSpreadTest {
     TbpCutTable table = sourceTable();
 
     TbpBoilingRangeProperties whole = table.getBoilingRangePropertiesKelvin(300.0, 700.0);
-    double expectedSecondMoment = intervalSecondMoment(20.0, 300.0, 400.0)
-        + intervalSecondMoment(50.0, 400.0, 500.0)
+    double expectedSecondMoment = intervalSecondMoment(20.0, 300.0, 400.0) + intervalSecondMoment(50.0, 400.0, 500.0)
         + intervalSecondMoment(30.0, 500.0, 700.0);
     double expectedVariance = expectedSecondMoment / 100.0 - 475.0 * 475.0;
-    assertEquals(expectedSecondMoment,
-        whole.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent(), 1.0e-8);
+    assertEquals(expectedSecondMoment, whole.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent(), 1.0e-8);
     assertEquals(expectedVariance, whole.getBoilingPointVarianceKelvinSquared(), 1.0e-10);
     assertEquals(Math.sqrt(expectedVariance), whole.getBoilingPointStandardDeviationKelvin(), 1.0e-12);
 
     TbpBoilingRangeProperties partial = table.getBoilingRangePropertiesKelvin(350.0, 550.0);
     double expectedPartialSecondMoment = intervalSecondMoment(10.0, 350.0, 400.0)
-        + intervalSecondMoment(50.0, 400.0, 500.0)
-        + intervalSecondMoment(7.5, 500.0, 550.0);
+        + intervalSecondMoment(50.0, 400.0, 500.0) + intervalSecondMoment(7.5, 500.0, 550.0);
     double expectedPartialVariance = expectedPartialSecondMoment / partial.getLiquidVolumePercent()
         - partial.getAverageBoilingPointKelvin() * partial.getAverageBoilingPointKelvin();
-    assertEquals(expectedPartialSecondMoment,
-        partial.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent(), 1.0e-8);
+    assertEquals(expectedPartialSecondMoment, partial.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent(),
+        1.0e-8);
     assertEquals(expectedPartialVariance, partial.getBoilingPointVarianceKelvinSquared(), 1.0e-10);
   }
 
@@ -52,24 +49,22 @@ class OilAssayCharacterisationTbpBoilingRangeSpreadTest {
 
     TbpBoilingRangeProperties kelvin = table.getBoilingRangePropertiesKelvin(350.0, 600.0);
     TbpBoilingRangeProperties celsius = table.getBoilingRangePropertiesCelsius(76.85, 326.85);
-    assertEquals(kelvin.getBoilingPointVarianceKelvinSquared(),
-        celsius.getBoilingPointVarianceKelvinSquared(), 1.0e-12);
-    assertEquals(kelvin.getBoilingPointStandardDeviationKelvin(),
-        celsius.getBoilingPointStandardDeviationKelvin(), 1.0e-12);
+    assertEquals(kelvin.getBoilingPointVarianceKelvinSquared(), celsius.getBoilingPointVarianceKelvinSquared(),
+        1.0e-12);
+    assertEquals(kelvin.getBoilingPointStandardDeviationKelvin(), celsius.getBoilingPointStandardDeviationKelvin(),
+        1.0e-12);
 
     TbpBoilingRangeProperties light = table.getBoilingRangePropertiesKelvin(300.0, 400.0);
     TbpBoilingRangeProperties middle = table.getBoilingRangePropertiesKelvin(400.0, 500.0);
     TbpBoilingRangeProperties heavy = table.getBoilingRangePropertiesKelvin(500.0, 700.0);
-    double partitionedSecondMoment =
-        light.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()
-            + middle.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()
-            + heavy.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent();
+    double partitionedSecondMoment = light.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()
+        + middle.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()
+        + heavy.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent();
     double wholeSecondMoment = table.getBoilingRangePropertiesKelvin(300.0, 700.0)
         .getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent();
     assertEquals(wholeSecondMoment, partitionedSecondMoment, 1.0e-8);
 
-    TbpBoilingRangeProperties snapped =
-        table.getBoilingRangePropertiesKelvin(300.0 + 5.0e-9, 400.0 - 5.0e-9);
+    TbpBoilingRangeProperties snapped = table.getBoilingRangePropertiesKelvin(300.0 + 5.0e-9, 400.0 - 5.0e-9);
     assertEquals(intervalSecondMoment(20.0, 300.0, 400.0),
         snapped.getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent(), 0.0);
     assertArrayEquals(sourceBoundaries, table.getBoilingPointKelvin(), 0.0);
@@ -81,20 +76,14 @@ class OilAssayCharacterisationTbpBoilingRangeSpreadTest {
   void rejectsInvalidSpreadRanges() {
     TbpCutTable table = sourceTable();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingRangePropertiesKelvin(Double.NaN, 400.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingRangePropertiesKelvin(299.0, 400.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingRangePropertiesKelvin(500.0, 500.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingRangePropertiesKelvin(600.0, 400.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingRangePropertiesKelvin(Double.NaN, 400.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingRangePropertiesKelvin(299.0, 400.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingRangePropertiesKelvin(500.0, 500.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingRangePropertiesKelvin(600.0, 400.0));
   }
 
-  private static double intervalSecondMoment(double liquidVolumePercent, double lowerKelvin,
-      double upperKelvin) {
-    return liquidVolumePercent
-        * (lowerKelvin * lowerKelvin + lowerKelvin * upperKelvin + upperKelvin * upperKelvin)
+  private static double intervalSecondMoment(double liquidVolumePercent, double lowerKelvin, double upperKelvin) {
+    return liquidVolumePercent * (lowerKelvin * lowerKelvin + lowerKelvin * upperKelvin + upperKelvin * upperKelvin)
         / 3.0;
   }
 

@@ -1044,8 +1044,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           liquidVolumeWeightedBoilingPointKelvinPercent += overlapLiquidVolumePercent * 0.5
               * (overlapLowerBoundary + overlapUpperBoundary);
           liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent += overlapLiquidVolumePercent
-              * (overlapLowerBoundary * overlapLowerBoundary
-                  + overlapLowerBoundary * overlapUpperBoundary
+              * (overlapLowerBoundary * overlapLowerBoundary + overlapLowerBoundary * overlapUpperBoundary
                   + overlapUpperBoundary * overlapUpperBoundary)
               / 3.0;
         }
@@ -1439,12 +1438,11 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       this.liquidVolumePercent = liquidVolumePercent;
       this.specificGravityWeightedLiquidVolumePercent = specificGravityWeightedLiquidVolumePercent;
       this.liquidVolumeWeightedBoilingPointKelvinPercent = liquidVolumeWeightedBoilingPointKelvinPercent;
-      this.liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent =
-          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent;
+      this.liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent = liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent;
       this.averageSpecificGravity = specificGravityWeightedLiquidVolumePercent / liquidVolumePercent;
       this.averageBoilingPointKelvin = liquidVolumeWeightedBoilingPointKelvinPercent / liquidVolumePercent;
-      double averageSquaredBoilingPointKelvinSquared =
-          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent / liquidVolumePercent;
+      double averageSquaredBoilingPointKelvinSquared = liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent
+          / liquidVolumePercent;
       this.boilingPointVarianceKelvinSquared = Math.max(0.0,
           averageSquaredBoilingPointKelvinSquared - averageBoilingPointKelvin * averageBoilingPointKelvin);
     }
