@@ -999,3 +999,25 @@ Update 3: living tasks use the general task root (`neqsim --show-task-root`): ev
 ### 2026-09-30 — Fired-heater zone conservation qualification (#4131, campaign #4151)
 
 Added fail-closed mass/every-element checks at burner inlet mixing/PSRs, common mixing including bypass air and post-flame PFR, retaining signed roundoff and exact mechanism inventories. Initial branch head `0c139de311e20b0f5b082f8a8f6c98575f422622`; validated against merge ref `ed75b0909f584d1e36540096a861f8b7612754e8` containing current master `529ea9c358ab1e15917c5244ae0ede2ff272cce5`. Nineteen Python tests and twelve focused Java tests passed; native seven/five burners and 10–40 MW scale examples executed from compiled workspace classes. Synthetic seven/five CO was 0.110188/0.103241 kg/h at equal total supply, with about 26.27 MW oil heat. Default projection bounds remain unchanged. Carbon-free hydrogen exposed absent-carbon integrator roundoff at scalar atol 1e-18/1e-22; selected 1e-28/1e-32 integration passed the same strict element bound. The historical EOS hydrogen rejection remains unreproduced. No plant calibration or experimental C2/C3 qualification claim; next dependency is benchmark provenance and the broader operating envelope. Evidence and blockers are tracked in #4151.
+
+
+### 2026-10-04 — Conservative condensate endpoint recovery (#4202, numerical roadmap #2937)
+
+Reproduced the SRK 353.15 K / 350 bara condensate on master
+`21ec52b309ab16a3129089ec1cf2b7bc18ace7e9`: the ordinary flash removed a phase
+and retained a composition with maximum component-balance error `3.45422e-5`.
+An invalid dry SRK/PR single-phase endpoint now triggers a cold multiphase
+stability flash on a clone, with conserved-feed Gibbs, normalization, component
+balance and fugacity acceptance gates. Failed recovery throws rather than
+returning an unbalanced fluid. The corrected ordinary path retains two phases;
+four repeats have balance error at most `2.0e-13` and log-fugacity residual below
+`5.5e-13`. Five regression tests cover the exact case, nearby conditions, reuse,
+warm starts, PR and all 750 phase-map points from NeqSim-Colab PR #187. The map's
+maximum balance error is `5.25e-12`, retaining its original `1e-7` acceptance
+tolerance. All 301 selected Java flash/stability, pump, separator and documentation
+tests and 12 engineering-coverage Python tests passed. Direct Spotless apply/check,
+both pre-commit stages, documentation search and flash-package Javadoc passed;
+the environment-only Javadoc launcher uses the installed JDK module. Updated the
+flash guide, initialization skill and generated engineering inventory. Numerical
+qualification does not establish experimental accuracy or global stability of
+every possible phase set.

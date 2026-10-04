@@ -250,6 +250,20 @@ for i in range(fluid.getNumberOfPhases()):
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
 3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
 
+For an ordinary SRK or PR flash of a dry hydrocarbon/inert mixture, a final
+single-phase result with component-balance error greater than `1e-10` is rechecked
+on a clone using a cold multiphase stability calculation. This addresses phase
+removal leaving the retained composition different from the overall feed
+(issue #4202). The recovered state must conserve the feed within `1e-10`, satisfy
+phase normalization and log-fugacity equality within `1e-8`, and have no higher
+Gibbs energy than the better homogeneous root at the conserved feed. A recovered
+two-phase split must strictly lower that Gibbs energy. A failed recovery throws
+an `IllegalStateException`; assigning the feed composition alone is not accepted
+as a stability repair. The user's multiphase setting is preserved. Balanced,
+phase-constrained, aqueous, reactive, ionic, solid, wax and specialized-model
+calculations retain their existing paths. These numerical checks do not establish
+experimental accuracy or prove global stability against every possible phase set.
+
 For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
 split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium
 when the overall water mole fraction is at least 5%. This also runs on the
