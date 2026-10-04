@@ -36,9 +36,7 @@ public class PhaseGEVanLaarAcid extends PhaseGE {
   private double excessGibbsEnergy = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseGEVanLaarAcid.
-   * </p>
    */
   public PhaseGEVanLaarAcid() {
     componentArray = new ComponentGEVanLaarAcid[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
