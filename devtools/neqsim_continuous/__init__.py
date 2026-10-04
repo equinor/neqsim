@@ -16,6 +16,8 @@ from .ledger import Ledger, LedgerError
 from .stop_rules import StopDecision, evaluate, should_reopen
 from .watermarks import Watermarks
 from .cycle import run_cycle
+from .production import demonstrated_limit, evaluate_constraints
+from .user_input import lever_limits
 from .living import make_living, promote, status
 from .solve import solve
 from .backtest import run_backtest
@@ -26,5 +28,5 @@ __all__ = [
     "SCHEMA_VERSION", "SourceResult", "StageResult", "available", "register", "resolve",
     "Ledger", "LedgerError", "StopDecision", "evaluate", "should_reopen", "Watermarks",
     "FileDropAdapter", "DriftMonitor", "run_cycle", "make_living", "promote", "status",
-    "solve", "run_backtest",
+    "solve", "run_backtest", "demonstrated_limit", "evaluate_constraints", "lever_limits",
 ]

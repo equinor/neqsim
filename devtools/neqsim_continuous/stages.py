@@ -190,7 +190,13 @@ def drift(ctx, spec):
     config = ctx.plan.get("drift", {})
     signals = config.get("signals", {})
     if isinstance(signals, list):
-        signals = {name: {"kpi": name} for name in signals}
+        listed = {}
+        for item in signals:
+            if isinstance(item, dict):
+                listed[item.get("name") or item.get("kpi")] = {k: v for k, v in item.items() if k != "name"}
+            else:
+                listed[item] = {"kpi": item}
+        signals = listed
     settings = dict(config.get("settings") or {})
     overrides = dict(settings.get("signals") or {})
     for name, signal in signals.items():
@@ -311,6 +317,7 @@ def digest(ctx, spec):
         lines += ["| {} | {} | {} |".format(k, _fmt(v), _fmt(base.get(k, "-"))) for k, v in sorted(ctx.kpis.items())]
         lines.append("")
     lines.append("Triggers: " + (", ".join(triggers) if triggers else "none"))
+    lines += ["", *["- " + s for s in ctx.sections]] if ctx.sections else []
     if ctx.new_proposals:
         lines.append("New ledger items: " + "; ".join(ctx.new_proposals))
     if ctx.stop_state:

@@ -21,6 +21,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.MountainCavern;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.PressureTransmitter;
@@ -48,6 +49,23 @@ public class DynamicCapabilityReportTest extends neqsim.NeqSimTest {
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, new Pump("pump", feed).getDynamicCapability());
     assertEquals(DynamicCapability.DYNAMIC_LUMPED, new ThrottlingValve("valve", feed).getDynamicCapability());
     assertEquals(DynamicCapability.BOUNDARY_DYNAMIC, new SimpleReservoir("reservoir").getDynamicCapability());
+  }
+
+  /** Cavern inventory and pressure relaxation are lumped state, with activation still awaiting qualification. */
+  @Test
+  public void mountainCavernReportsLumpedStateWithoutClaimingActivationQualification() {
+    MountainCavern cavern = new MountainCavern("cavern", createFeed("cavern feed"));
+    assertEquals(DynamicCapability.DYNAMIC_LUMPED, cavern.getDynamicCapability());
+    assertEquals(DynamicActivationStatus.UNVERIFIED, DynamicActivationResolver.resolve(cavern));
+
+    ProcessSystem process = new ProcessSystem("cavern storage");
+    process.add(cavern);
+    DynamicCapabilityReport report = DynamicCapabilityReport.from(process);
+
+    assertTrue(report.isFullyAudited());
+    assertEquals(1, report.getCapabilityCounts().get(DynamicCapability.DYNAMIC_LUMPED).intValue());
+    assertEquals(1, report.getUnverifiedActivationElements().size());
+    assertEquals("cavern", report.getUnverifiedActivationElements().get(0));
   }
 
   /** Distributed pipe models are distinguished from lumped process equipment. */
