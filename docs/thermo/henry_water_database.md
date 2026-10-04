@@ -181,6 +181,45 @@ all model dispatch are unchanged. The audit checks that all 22 rows remain
 outside both correlation and reference-point catalogs and that the two MEG
 aliases provide no independent evidence.
 
+## Fail-closed estimate and other-source dispositions
+
+`HenryWaterEstimateDispositions.json` records all 140 exact-CAS rows whose
+Sander inventory status is `estimate_or_other_source_requires_review`. These
+are research leads, not approved numerical data. The manifest carries each
+component name, CAS, formula, available InChIKey, source-record URL, source-type
+codes and a scientific admission boundary. It contains no Henry value, fitted
+slope, assumed pressure, uncertainty or validity range.
+
+The component-specific inventory is partitioned into four fail-closed groups:
+
+- 125 hydrocarbons have source-code inventories but no selected type-L local
+  expression or campaign-qualified measured/reference-only fact. Admission
+  requires a primary or redistributable measured dataset with explicit
+  intrinsic water convention, units, pressure and temperature conditions,
+  uncertainty and finite validity range;
+- `TEG` and `DEG` are held at the glycol solvent-role boundary. Solute-in-water
+  evidence cannot be transferred silently into mixed-solvent glycol models;
+- the row named `glycerol` is an identity conflict, not evidence for glycerol.
+  Its stored CAS 112-27-6, formula C6H14O4 and InChIKey identify `TEG`; and
+- 12 acids or reactive inorganic rows require species-resolved treatment of
+  dissociation, hydrolysis, reaction, decomposition or molecular/allotrope
+  identity before an intrinsic neutral-solute coefficient can be defined.
+
+Five duplicate-identity aliases are explicit: `glycerol`/`TEG`,
+`H2SO4`/`sulfuric acid`, `HNO3`/`nitric acid`, and the mojibake aliases for
+`NH2OH` and `N2H4`. Aliases provide no independent data. The audit requires
+all 140 rows to match `COMP.csv` and the coverage inventory exactly, remain
+neutral, stay outside both numerical catalogs, and carry no numerical Henry
+fields.
+
+Sander v5.0.0 supplies the CC BY 4.0 identity and source-type inventory.
+Underlying publications retain their own rights; source-type codes do not
+establish permission, intrinsic/effective convention, units, pressure basis,
+uncertainty or range. A single later-qualified value must use the existing
+reference-temperature-only semantics rather than an invented zero slope.
+`COMP.csv`, IAPWS paths, GE/Pitzer dispatch, and calibrated reactive models are
+unchanged by these dispositions.
+
 ## Units and equations
 
 The source reports $H_s^{bp}=m/p$ in mol/(kg atm), with slope $B$ in K:
