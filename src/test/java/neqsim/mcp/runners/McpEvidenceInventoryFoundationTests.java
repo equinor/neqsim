@@ -195,8 +195,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, apiInspection.get("contractEvidenceCount").getAsInt());
     assertEquals(5, apiInspection.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(apiInspection.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunner.java"));
-    assertTrue(
-        apiInspection.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
+    assertTrue(apiInspection.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_inspect_api_protocol.py"));
     assertTrue(apiInspection.get("evidenceBoundary").getAsString().contains("without executing"));
 
     JsonObject validationProfile = coverageRecords.getAsJsonObject("manageValidationProfile");
@@ -210,7 +210,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(validationProfile.getAsJsonArray("contractEvidenceSources").toString()
         .contains("ValidationProfileRunnerTest.java"));
     assertTrue(validationProfile.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_validation_profile_protocol.py"));
+        .contains("tests/protocol/test_validation_profile_protocol.py"));
     assertTrue(validationProfile.get("evidenceBoundary").getAsString().contains("legal applicability"));
 
     JsonObject modelRegistry = coverageRecords.getAsJsonObject("manageModel");
@@ -222,8 +222,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, modelRegistry.get("contractEvidenceCount").getAsInt());
     assertEquals(5, modelRegistry.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(modelRegistry.getAsJsonArray("contractEvidenceSources").toString().contains("ModelRegistryTest.java"));
-    assertTrue(
-        modelRegistry.getAsJsonArray("contractEvidenceSources").toString().contains("test_model_registry_protocol.py"));
+    assertTrue(modelRegistry.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_model_registry_protocol.py"));
     assertTrue(modelRegistry.get("evidenceBoundary").getAsString().contains("server restarts"));
     assertTrue(modelRegistry.get("evidenceBoundary").getAsString().contains("numerical model accuracy"));
 
@@ -237,8 +237,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, sessionLifecycle.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(sessionLifecycle.getAsJsonArray("contractEvidenceSources").toString()
         .contains("SessionRunnerContractTest.java"));
-    assertTrue(
-        sessionLifecycle.getAsJsonArray("contractEvidenceSources").toString().contains("test_session_protocol.py"));
+    assertTrue(sessionLifecycle.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_session_protocol.py"));
     assertTrue(sessionLifecycle.get("evidenceBoundary").getAsString().contains("restart durability"));
     assertTrue(sessionLifecycle.get("evidenceBoundary").getAsString().contains("component or energy closure"));
 
@@ -253,7 +253,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
         .contains("StatePersistenceRunnerTest.java"));
     assertTrue(statePersistence.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_state_persistence_protocol.py"));
+        .contains("tests/protocol/test_state_persistence_protocol.py"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("persistence lifecycle"));
     assertTrue(statePersistence.get("evidenceBoundary").getAsString().contains("numerical replay"));
 
@@ -268,7 +268,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(adjustableParameters.getAsJsonArray("contractEvidenceSources").toString()
         .contains("AutomationLoopRunnerTest.java"));
     assertTrue(adjustableParameters.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_adjustable_parameters_protocol.py"));
+        .contains("tests/protocol/test_adjustable_parameters_protocol.py"));
     assertTrue(adjustableParameters.get("evidenceBoundary").getAsString().contains("optional bounds"));
     assertTrue(adjustableParameters.get("evidenceBoundary").getAsString().contains("optimization quality"));
 
@@ -280,8 +280,8 @@ class McpEvidenceInventoryFoundationTests {
         validation.get("benchmarkApplicability").getAsString());
     assertEquals(4, validation.get("contractEvidenceCount").getAsInt());
     assertTrue(validation.getAsJsonArray("contractEvidenceSources").toString().contains("ValidatorTest.java"));
-    assertTrue(
-        validation.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_input_protocol.py"));
+    assertTrue(validation.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_validate_input_protocol.py"));
     assertTrue(validation.get("evidenceBoundary").getAsString().contains("does not execute a model"));
     assertTrue(validation.get("evidenceBoundary").getAsString().contains("conservation"));
 
@@ -295,7 +295,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(resultValidation.getAsJsonArray("contractEvidenceSources").toString()
         .contains("EngineeringValidatorTest.java"));
     assertTrue(resultValidation.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_validate_results_protocol.py"));
+        .contains("tests/protocol/test_validate_results_protocol.py"));
     assertTrue(resultValidation.get("evidenceBoundary").getAsString().contains("does not execute"));
     assertTrue(resultValidation.get("evidenceBoundary").getAsString().contains("facility-wide conservation"));
 
@@ -311,9 +311,8 @@ class McpEvidenceInventoryFoundationTests {
       assertTrue(
           automation.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationReadContractTest.java"),
           toolName);
-      assertTrue(
-          automation.getAsJsonArray("contractEvidenceSources").toString().contains("test_automation_read_protocol.py"),
-          toolName);
+      assertTrue(automation.getAsJsonArray("contractEvidenceSources").toString()
+          .contains("tests/protocol/test_automation_read_protocol.py"), toolName);
     }
     JsonObject variableRead = coverageRecords.getAsJsonObject("getSimulationVariable");
     assertEquals("NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_READ",
@@ -335,7 +334,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, progress.get("contractEvidenceCount").getAsInt());
     assertEquals(4, progress.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(progress.getAsJsonArray("contractEvidenceSources").toString().contains("ProgressTracker.java"));
-    assertTrue(progress.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+    assertTrue(
+        progress.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(progress.get("evidenceBoundary").getAsString().contains("real-protocol listActive"));
     assertTrue(progress.get("evidenceBoundary").getAsString().contains("does not validate"));
     assertEquals(50, limitations.get("contractTestedToolCount").getAsInt());
@@ -356,8 +356,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("Validator.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ValidatorTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_input_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_validate_input_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("issue severity/remediation"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("physical fidelity"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -379,8 +379,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("EngineeringValidator.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("EngineeringValidatorTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validate_results_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_validate_results_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("stable severity/remediation"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("plant authority"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -407,8 +407,10 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(security.getAsJsonArray("contractEvidenceSources").toString().contains("SecurityRunnerTest.java"));
     assertTrue(
         security.getAsJsonArray("contractEvidenceSources").toString().contains("McpSecurityEnforcementTest.java"));
-    assertTrue(security.getAsJsonArray("contractEvidenceSources").toString().contains("test_security_protocol.py"));
-    assertTrue(security.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+    assertTrue(security.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_security_protocol.py"));
+    assertTrue(
+        security.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(
         security.getAsJsonArray("contractEvidenceSources").toString().contains("SECURITY_MANAGEMENT_CONTRACT.md"));
     assertTrue(security.get("evidenceBoundary").getAsString().contains("process-local"));
@@ -437,7 +439,7 @@ class McpEvidenceInventoryFoundationTests {
         .contains("AutomationVariableWriteContractTest.java"));
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessAutomationTest.java"));
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_simulation_variable_write_protocol.py"));
+        .contains("tests/protocol/test_simulation_variable_write_protocol.py"));
     assertTrue(mutation.getAsJsonArray("contractEvidenceSources").toString()
         .contains("SIMULATION_VARIABLE_WRITE_CONTRACT.md"));
     assertTrue(mutation.get("evidenceBoundary").getAsString().contains("exact OUTPUT-only"));
@@ -469,7 +471,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(snapshot.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessSystemState.java"));
     assertTrue(snapshot.getAsJsonArray("contractEvidenceSources").toString().contains("McpRunnerContractTest.java"));
     assertTrue(comparison.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_simulation_state_snapshot_protocol.py"));
+        .contains("tests/protocol/test_simulation_state_snapshot_protocol.py"));
     assertTrue(snapshot.get("evidenceBoundary").getAsString().contains("replay or restoration"));
     assertTrue(comparison.get("evidenceBoundary").getAsString().contains("topology-difference detection"));
     assertTrue(comparison.get("evidenceBoundary").getAsString().contains("plant or control authority"));
@@ -494,8 +496,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, visualization.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(
         visualization.getAsJsonArray("contractEvidenceSources").toString().contains("VisualizationRunnerTest.java"));
-    assertTrue(
-        visualization.getAsJsonArray("contractEvidenceSources").toString().contains("test_visualization_protocol.py"));
+    assertTrue(visualization.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_visualization_protocol.py"));
     assertTrue(
         visualization.getAsJsonArray("contractEvidenceSources").toString().contains("VISUALIZATION_CONTRACT.md"));
     assertTrue(visualization.get("evidenceBoundary").getAsString().contains("browser fidelity"));
@@ -521,7 +523,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, plugin.get("contractEvidenceCount").getAsInt());
     assertEquals(6, plugin.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("PluginRegistryContractTest.java"));
-    assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("test_plugin_protocol.py"));
+    assertTrue(
+        plugin.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_plugin_protocol.py"));
     assertTrue(plugin.getAsJsonArray("contractEvidenceSources").toString().contains("PLUGIN_EXECUTION_CONTRACT.md"));
     assertTrue(plugin.get("evidenceBoundary").getAsString().contains("plugin provenance"));
     assertTrue(plugin.get("evidenceBoundary").getAsString().contains("plant or control authority"));
@@ -546,7 +549,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, capability.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(
         capability.getAsJsonArray("contractEvidenceSources").toString().contains("GeneralCapabilityRunnerTest.java"));
-    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString().contains("test_capability_protocol.py"));
+    assertTrue(capability.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_capability_protocol.py"));
     assertTrue(
         capability.getAsJsonArray("contractEvidenceSources").toString().contains("RUNTIME_CAPABILITY_CONTRACT.md"));
     assertTrue(capability.get("evidenceBoundary").getAsString().contains("scientific validity"));
@@ -571,7 +575,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, task.get("contractEvidenceCount").getAsInt());
     assertEquals(6, task.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(task.getAsJsonArray("contractEvidenceSources").toString().contains("TaskSolverRunnerTest.java"));
-    assertTrue(task.getAsJsonArray("contractEvidenceSources").toString().contains("test_solve_task_protocol.py"));
+    assertTrue(task.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_solve_task_protocol.py"));
     assertTrue(task.getAsJsonArray("contractEvidenceSources").toString().contains("TASK_SOLVER_CONTRACT.md"));
     assertTrue(task.get("evidenceBoundary").getAsString().contains("general natural-language understanding"));
     assertTrue(task.get("evidenceBoundary").getAsString().contains("plant or control authority"));
@@ -596,7 +601,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(7, streaming.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("StreamingRunnerTest.java"));
     assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("McpPrincipalScopingTest.java"));
-    assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString().contains("test_streaming_protocol.py"));
+    assertTrue(streaming.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_streaming_protocol.py"));
     assertTrue(
         streaming.getAsJsonArray("contractEvidenceSources").toString().contains("STREAMING_SIMULATION_CONTRACT.md"));
     assertTrue(streaming.get("evidenceBoundary").getAsString().contains("statistical or uncertainty validity"));
@@ -624,9 +630,10 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, composition.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("CompositionRunner.java"));
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("CompositionRunnerTest.java"));
+    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_composition_protocol.py"));
     assertTrue(
-        composition.getAsJsonArray("contractEvidenceSources").toString().contains("test_composition_protocol.py"));
-    assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+        composition.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(composition.getAsJsonArray("contractEvidenceSources").toString()
         .contains("MULTI_SERVER_COMPOSITION_CONTRACT.md"));
     assertTrue(
@@ -655,8 +662,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(riskMatrix.getAsJsonArray("contractEvidenceSources").toString().contains("RiskMatrixRunner.java"));
     assertTrue(riskMatrix.getAsJsonArray("contractEvidenceSources").toString().contains("RiskMatrix.java"));
     assertTrue(riskMatrix.getAsJsonArray("contractEvidenceSources").toString().contains("RiskMatrixRunnerTest.java"));
-    assertTrue(
-        riskMatrix.getAsJsonArray("contractEvidenceSources").toString().contains("test_risk_matrix_protocol.py"));
+    assertTrue(riskMatrix.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_risk_matrix_protocol.py"));
     assertTrue(
         riskMatrix.getAsJsonArray("contractEvidenceSources").toString().contains("RISK_MATRIX_SCREENING_CONTRACT.md"));
     assertTrue(riskMatrix.get("evidenceBoundary").getAsString().contains("does not identify hazards"));
@@ -685,7 +692,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(lopa.getAsJsonArray("contractEvidenceSources").toString().contains("LOPARunner.java"));
     assertTrue(lopa.getAsJsonArray("contractEvidenceSources").toString().contains("SafetyInstrumentedFunction.java"));
     assertTrue(lopa.getAsJsonArray("contractEvidenceSources").toString().contains("LOPARunnerTest.java"));
-    assertTrue(lopa.getAsJsonArray("contractEvidenceSources").toString().contains("test_lopa_protocol.py"));
+    assertTrue(
+        lopa.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_lopa_protocol.py"));
     assertTrue(lopa.getAsJsonArray("contractEvidenceSources").toString().contains("LOPA_SCREENING_CONTRACT.md"));
     assertTrue(lopa.get("evidenceBoundary").getAsString().contains("does not identify hazards"));
     assertTrue(lopa.get("evidenceBoundary").getAsString().contains("verify IPL independence"));
@@ -714,7 +722,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SafetyInstrumentedFunction.java"));
     assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILVerificationResult.java"));
     assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SILRunnerTest.java"));
-    assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("test_sil_protocol.py"));
+    assertTrue(
+        sil.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_sil_protocol.py"));
     assertTrue(sil.getAsJsonArray("contractEvidenceSources").toString().contains("SIL_SCREENING_CONTRACT.md"));
     assertTrue(sil.get("evidenceBoundary").getAsString().contains("does not establish SRS completeness"));
     assertTrue(sil.get("evidenceBoundary").getAsString().contains("select or approve SIL"));
@@ -739,8 +748,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, workflow.get("contractEvidenceCount").getAsInt());
     assertEquals(6, workflow.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString().contains("TaskSolverRunnerTest.java"));
-    assertTrue(
-        workflow.getAsJsonArray("contractEvidenceSources").toString().contains("test_compose_workflow_protocol.py"));
+    assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_compose_workflow_protocol.py"));
     assertTrue(workflow.getAsJsonArray("contractEvidenceSources").toString().contains("COMPOSE_WORKFLOW_CONTRACT.md"));
     assertTrue(workflow.get("evidenceBoundary").getAsString().contains("semantic compatibility"));
     assertTrue(workflow.get("evidenceBoundary").getAsString().contains("plant or control authority"));
@@ -764,7 +773,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, report.get("contractEvidenceCount").getAsInt());
     assertTrue(report.getAsJsonArray("contractEvidenceSources").toString().contains("ReportRunner.java"));
     assertTrue(report.getAsJsonArray("contractEvidenceSources").toString().contains("ReportRunnerTest.java"));
-    assertTrue(report.getAsJsonArray("contractEvidenceSources").toString().contains("test_reporting_protocol.py"));
+    assertTrue(report.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_reporting_protocol.py"));
     assertTrue(report.get("evidenceBoundary").getAsString().contains("report completeness"));
 
     assertEquals("CONTRACT_TESTED", bridge.get("coverageStatus").getAsString());
@@ -773,7 +783,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(4, bridge.get("contractEvidenceCount").getAsInt());
     assertTrue(bridge.getAsJsonArray("contractEvidenceSources").toString().contains("TaskWorkflowBridge.java"));
     assertTrue(bridge.getAsJsonArray("contractEvidenceSources").toString().contains("ReportRunnerTest.java"));
-    assertTrue(bridge.getAsJsonArray("contractEvidenceSources").toString().contains("test_reporting_protocol.py"));
+    assertTrue(bridge.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_reporting_protocol.py"));
     assertTrue(bridge.get("evidenceBoundary").getAsString().contains("does not execute or recompute a simulation"));
 
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -801,8 +812,9 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationRunner.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationLoopRunnerTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_adjustable_parameters_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+        .contains("tests/protocol/test_adjustable_parameters_protocol.py"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("direct-definition/model-handle equivalence"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("mass or energy conservation"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -828,12 +840,13 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, coverage.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunner.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ApiKnowledgeRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_inspect_api_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_inspect_api_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("fail-closed non-NeqSim rejection"));
     assertEquals(50, limitations.get("contractTestedToolCount").getAsInt());
     assertEquals(1, limitations.get("confirmedGapToolCount").getAsInt());
     assertEquals(3, tests.get("focusedApiProtocolScenarioCount").getAsInt());
-    assertEquals("neqsim-mcp-server/test_inspect_api_protocol.py",
+    assertEquals("neqsim-mcp-server/tests/protocol/test_inspect_api_protocol.py",
         tests.get("focusedApiProtocolHarness").getAsString());
   }
 
@@ -855,8 +868,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, coverage.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ValidationProfileRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_validation_profile_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_validation_profile_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("legal applicability"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("CONTRACT_TESTED"));
     assertEquals(50, limitations.get("contractTestedToolCount").getAsInt());
@@ -881,9 +894,10 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(5, coverage.getAsJsonArray("contractEvidenceSources").size());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ModelRegistry.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ModelRegistryTest.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_model_registry_protocol.py"));
     assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_model_registry_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("distributed cache coherence"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("mass or energy closure"));
     assertEquals(50, limitations.get("contractTestedToolCount").getAsInt());
@@ -909,8 +923,10 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("SessionRunner.java"));
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("SessionRunnerContractTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_session_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_session_protocol.py"));
+    assertTrue(
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("distributed coherence"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("causal troubleshooting"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -937,9 +953,10 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunner.java"));
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("StatePersistenceRunnerTest.java"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_state_persistence_protocol.py"));
     assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_state_persistence_protocol.py"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_mcp_server.py"));
+        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("tests/protocol/test_mcp_server.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("sandbox/path fail-closed"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("distributed durability"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("generateReport"));
@@ -961,8 +978,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessComparisonRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_process_comparison_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_process_comparison_protocol.py"));
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("PROCESS_COMPARISON_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical ProcessRunner"));
@@ -987,8 +1004,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(11, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("BarrierRegisterRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_barrier_register_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_barrier_register_protocol.py"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
         .contains("BARRIER_REGISTER_SCREENING_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim barrier model"));
@@ -1034,8 +1051,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OperationalStudyRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_operational_study_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_operational_study_protocol.py"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OPERATIONAL_STUDY_CONTRACT.md"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical JsonProcessBuilder"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("no-plant-write"));
@@ -1115,7 +1132,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ProcessAutomation.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("AutomationLoopRunnerTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_process_loop_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_process_loop_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("ProcessAutomation.evaluate"));
     assertTrue(
         coverage.get("evidenceBoundary").getAsString().contains("does not establish global or local optimization"));
@@ -1138,8 +1156,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(6, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("UtilityDesignRunner.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("UtilityComponentsTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_utility_design_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_utility_design_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim Boiler"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("design-basis completeness"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("designUtilities"));
@@ -1162,7 +1180,8 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ChemistryRunner.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ChemistryRunnerTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("ChemistryRunnerScaleTest.java"));
-    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_chemistry_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_chemistry_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("Canonical ChemistryRunner dispatch"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("thermodynamic"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runChemistry"));
@@ -1183,8 +1202,8 @@ class McpEvidenceInventoryFoundationTests {
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("FlareRadiationRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_flare_radiation_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_flare_radiation_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("canonical NeqSim Flare delegation"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("standards or regulatory compliance"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runFlareNetwork"));
@@ -1205,8 +1224,8 @@ class McpEvidenceInventoryFoundationTests {
         coverage.get("benchmarkApplicability").getAsString());
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString().contains("HazopScenarioRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_hazop_scenario_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_hazop_scenario_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("Canonical ProcessSystem"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("hazard-identification"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runHazopScenario"));
@@ -1228,8 +1247,8 @@ class McpEvidenceInventoryFoundationTests {
     assertEquals(7, coverage.get("contractEvidenceCount").getAsInt());
     assertTrue(
         coverage.getAsJsonArray("contractEvidenceSources").toString().contains("OpenDrainReviewRunnerTest.java"));
-    assertTrue(
-        coverage.getAsJsonArray("contractEvidenceSources").toString().contains("test_open_drain_review_protocol.py"));
+    assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
+        .contains("tests/protocol/test_open_drain_review_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("NORSOK S-001 Clause 9"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("direct STID or tagreader connectivity"));
     assertTrue(limitations.get("promotionBoundary").getAsString().contains("runOpenDrainReview"));
@@ -1254,7 +1273,7 @@ class McpEvidenceInventoryFoundationTests {
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
         .contains("ProcessSafetySystemReviewEngineTest.java"));
     assertTrue(coverage.getAsJsonArray("contractEvidenceSources").toString()
-        .contains("test_norsok_s001_clause10_review_protocol.py"));
+        .contains("tests/protocol/test_norsok_s001_clause10_review_protocol.py"));
     assertTrue(coverage.get("evidenceBoundary").getAsString().contains("NORSOK S-001 Clause 10"));
     assertTrue(
         coverage.get("evidenceBoundary").getAsString().contains("accountable engineering or process-safety approval"));

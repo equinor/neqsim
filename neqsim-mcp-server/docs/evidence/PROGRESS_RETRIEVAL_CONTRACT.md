@@ -6,7 +6,7 @@ This note records bounded Phase 0 evidence for the existing `getProgress` MCP to
 
 - `src/main/java/neqsim/mcp/runners/ProgressTracker.java` implements bounded in-memory progress state, active-operation listing, point retrieval, milestone retention, completion, failure state, and old-operation eviction.
 - `src/test/java/neqsim/mcp/runners/McpEvidenceInventoryFoundationTests.java` exercises a complete progress lifecycle: active discovery, a 50% update, milestone retrieval, completion at 100%, removal from the active list, and an explicit error for an unknown operation ID.
-- `neqsim-mcp-server/test_mcp_server.py` invokes `getProgress` through the real MCP JSON-RPC transport with `action=listActive` and freezes the promoted trust-coverage accounting on the same exact head.
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py` invokes `getProgress` through the real MCP JSON-RPC transport with `action=listActive` and freezes the promoted trust-coverage accounting on the same exact head.
 - Phase 0 evidence inventory version `1.12` classifies `getProgress` as `CONTRACT_TESTED`, with the exact source, regression, protocol, and evidence-note paths above.
 
 ## Trust boundary
