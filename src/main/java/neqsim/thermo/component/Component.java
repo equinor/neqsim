@@ -1179,16 +1179,16 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setx(double newx) {
     if (Double.isNaN(newx) || Double.isInfinite(newx)) {
-      logger.warn("Invalid mole fraction value: " + newx);
+      logger.warn("Invalid mole fraction value: {}", newx);
       return;
     }
-    double MIN_VALUE = 1.0e-50;
+    double minimumValue = 1.0e-50;
 
     // Preserve exact zero and all finite positive trace fractions; bound negative and excessive inputs.
     if (newx == 0.0) {
       x = 0.0;
     } else if (newx < 0) {
-      x = MIN_VALUE;
+      x = minimumValue;
     } else if (newx > 5) {
       x = 5;
     } else {

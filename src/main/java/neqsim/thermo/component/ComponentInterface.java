@@ -933,9 +933,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getNumberOfMolesInPhase();
 
   /**
-   * Setter for the number of moles of the component in the phase.
+   * Sets the component phase inventory to the supplied total phase moles times its stored mole fraction.
    *
-   * @param moles a double
+   * @param moles total number of moles in the phase
    */
   public void setNumberOfMolesInPhase(double moles);
 
