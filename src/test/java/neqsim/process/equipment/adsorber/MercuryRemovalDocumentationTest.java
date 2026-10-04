@@ -34,9 +34,9 @@ import org.junit.jupiter.api.io.TempDir;
 public class MercuryRemovalDocumentationTest {
   private static final String GUIDE = "docs/process/mercury_removal.md";
   private static final Pattern EXECUTABLE_JAVA = Pattern.compile(
-      "(?ms)^## Executable steady and transient workflow.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      "(?ms)^## Executable steady and transient workflow.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
@@ -61,7 +61,7 @@ public class MercuryRemovalDocumentationTest {
     assertTrue(guide.contains("screening estimates, not vendor quotes"));
     assertTrue(guide.contains("sorbent-specific validation"));
     assertFalse(guide.contains("System.out"));
-    assertFalse(guide.contains("\`\`\`python"));
+    assertFalse(guide.contains("```python"));
     assertFalse(guide.contains("# Mercury Removal Guard Beds"));
 
     Matcher fences = ALL_JAVA.matcher(guide);
