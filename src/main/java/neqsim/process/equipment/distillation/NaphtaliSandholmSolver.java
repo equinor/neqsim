@@ -204,6 +204,8 @@ public class NaphtaliSandholmSolver {
 
   /** Whether to initialize the MESH variables from the converged column tray state. */
   private boolean warmStartFromColumn = false;
+  /** Use the BP seed directly when correcting an unsatisfied terminal ratio. */
+  private boolean terminalRatioNewtonSeed;
 
   /**
    * Largest per-tray, per-component molar imbalance (relative to total feed) accepted by the early-exit branches.
@@ -559,6 +561,15 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Select the bubble-point seed for a guarded terminal-ratio correction.
+   *
+   * @param enabled whether to bypass the terminal-duty Sum-Rates initializer
+   */
+  void setTerminalRatioNewtonSeed(boolean enabled) {
+    terminalRatioNewtonSeed = enabled;
+  }
+
+  /**
    * Set the largest per-component tray imbalance an early-exit branch may accept.
    *
    * @param tolerance imbalance relative to total feed flow, must be finite and greater than zero
@@ -614,7 +625,21 @@ public class NaphtaliSandholmSolver {
     if (!componentImbalanceAcceptable(stageName)) {
       return false;
     }
-    if (!hasActiveSideDraws()) {
+    boolean activeRatio = false;
+    for (int terminal : new int[] {0, N - 1}) {
+      double ratioResidual = terminalRatioResidual(terminal);
+      if (hasTerminalRatioControl(terminal)) {
+        activeRatio = true;
+        double denominatorFlow = terminal == N - 1 ? V[terminal] : L[terminal];
+        if (!(denominatorFlow > 1.0e-20)) {
+          return false;
+        }
+        if (!Double.isFinite(ratioResidual) || Math.abs(ratioResidual) > tolerance) {
+          return false;
+        }
+      }
+    }
+    if (!hasActiveSideDraws() && !activeRatio) {
       return true;
     }
     double summationResidual = computeMaxSummationResidual();
@@ -755,7 +780,11 @@ public class NaphtaliSandholmSolver {
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
-      if (!warmStartFromColumn && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
+      // Sum-Rates uses terminal energy equations and cannot preserve active flow-ratio boundaries.
+      // Retain the Bubble-Point seed for the simultaneous ratio-constrained Newton equations.
+      if (!warmStartFromColumn
+          && (!terminalRatioNewtonSeed || !hasTerminalRatioControl(0) && !hasTerminalRatioControl(N - 1))
+          && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
         // Mass balance OK but energy not — use Sum-Rates method to correct T
         // The BP method determines T from bubble-point (sum Kx = 1), which
         // fails for wide-boiling / absorber columns. SR determines T from
@@ -1088,6 +1117,16 @@ public class NaphtaliSandholmSolver {
     }
 
     referenceSystem = firstFeed.getThermoSystem().clone();
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      for (StreamInterface feed : column.getInnerSolverFeedStreams(trayIndex)) {
+        for (int component = 0; component < feed.getThermoSystem().getNumberOfComponents(); component++) {
+          ComponentInterface source = feed.getThermoSystem().getComponent(component);
+          if (!referenceSystem.hasComponent(source.getComponentName())) {
+            referenceSystem.addComponent(source);
+          }
+        }
+      }
+    }
     // Disable multiPhaseCheck in the solver's reference system — the BP method
     // only handles two-phase VLE and 3-phase flashes produce wrong K-values
     // and feed splits.
@@ -1147,14 +1186,14 @@ public class NaphtaliSandholmSolver {
         P[j] = fallbackPressure;
       }
       internalVaporFraction[j] = 1.0 - tray.getGasSideDrawFraction();
-      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction();
+      internalLiquidFraction[j] = 1.0 - tray.getLiquidSideDrawFraction() - tray.getLiquidPumparoundDrawFraction();
     }
 
     // Process every external feed in the same deterministic tray/stream order used
     // when DistillationColumn captured originalFeedSystems and flow rates.
     // Use originalFeedSystems (cloned before init() corrupted them) if available.
     for (int trayIdx = 0; trayIdx < N; trayIdx++) {
-      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      List<StreamInterface> feeds = column.getInnerSolverFeedStreams(trayIdx);
       if (feeds.isEmpty()) {
         continue;
       }
@@ -1211,11 +1250,11 @@ public class NaphtaliSandholmSolver {
             feedSys.getTemperature() - 273.15, feedSys.getPressure(), feedSys.getEnthalpy());
 
         for (int i = 0; i < C; i++) {
-          double zi = feedSys.getPhase(0).getComponent(i).getx(); // overall composition
+          double zi = feedComponentFraction(feedSys, 0, i); // overall composition
           if (feedSys.getNumberOfPhases() > 1) {
             // Split feed into vapor and liquid portions
-            double yi = feedSys.getPhase(0).getComponent(i).getx();
-            double xi = feedSys.getPhase(1).getComponent(i).getx();
+            double yi = feedComponentFraction(feedSys, 0, i);
+            double xi = feedComponentFraction(feedSys, 1, i);
             feedVap[trayIdx][i] += feedMoles * beta * yi;
             feedLiq[trayIdx][i] += feedMoles * (1.0 - beta) * xi;
           } else {
@@ -1243,17 +1282,17 @@ public class NaphtaliSandholmSolver {
             // Extract vapor composition from the flash
             double[] yFeed = new double[C];
             for (int i = 0; i < C; i++) {
-              yFeed[i] = feedSys.getPhase(0).getComponent(i).getx();
+              yFeed[i] = feedComponentFraction(feedSys, 0, i);
             }
-            feedHV[trayIdx] = computeSinglePhaseEnthalpy(yFeed, feedTempK, feedPressBar, true);
+            feedHV[trayIdx] += nVap * computeSinglePhaseEnthalpy(yFeed, feedTempK, feedPressBar, true);
           }
           if (nLiq > 0) {
             // Extract liquid composition from the flash
             double[] xFeed = new double[C];
             for (int i = 0; i < C; i++) {
-              xFeed[i] = feedSys.getPhase(1).getComponent(i).getx();
+              xFeed[i] = feedComponentFraction(feedSys, 1, i);
             }
-            feedHL[trayIdx] = computeSinglePhaseEnthalpy(xFeed, feedTempK, feedPressBar, false);
+            feedHL[trayIdx] += nLiq * computeSinglePhaseEnthalpy(xFeed, feedTempK, feedPressBar, false);
           }
           feedVTotal[trayIdx] += nVap;
           feedLTotal[trayIdx] += nLiq;
@@ -1261,17 +1300,22 @@ public class NaphtaliSandholmSolver {
           // Single phase feed — route by actual phase type, NOT beta.
           double[] zFeed = new double[C];
           for (int i = 0; i < C; i++) {
-            zFeed[i] = feedSys.getPhase(0).getComponent(i).getx();
+            zFeed[i] = feedComponentFraction(feedSys, 0, i);
           }
           if (singlePhaseIsVapor) {
-            feedHV[trayIdx] = computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, true);
+            feedHV[trayIdx] += feedMoles * computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, true);
             feedVTotal[trayIdx] += feedMoles;
           } else {
-            feedHL[trayIdx] = computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, false);
+            feedHL[trayIdx] += feedMoles * computeSinglePhaseEnthalpy(zFeed, feedTempK, feedPressBar, false);
             feedLTotal[trayIdx] += feedMoles;
           }
         }
       }
+    }
+
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      feedHV[trayIndex] /= Math.max(feedVTotal[trayIndex], 1.0e-30);
+      feedHL[trayIndex] /= Math.max(feedLTotal[trayIndex], 1.0e-30);
     }
 
     // Initialize tray state from current column trays (use existing solution as
@@ -1339,6 +1383,12 @@ public class NaphtaliSandholmSolver {
       refluxRatio = cond.getRefluxRatio();
     }
 
+    for (int terminal : new int[] {0, N - 1}) {
+      if (hasTerminalRatioControl(terminal) && !Double.isNaN(fixedTemperature[terminal])) {
+        seedTemperature[terminal] = fixedTemperature[terminal];
+        fixedTemperature[terminal] = Double.NaN;
+      }
+    }
     totalFeedMolesField = totalFeedMoles;
     // Closure strategy: when the user pins reboiler T but does NOT also specify
     // a boilup ratio (boilupRatio is still the NeqSim default 0.1), the
@@ -1485,7 +1535,7 @@ public class NaphtaliSandholmSolver {
     double feedTemp = 0;
     double feedTempWeight = 0;
     for (int trayIdx = 0; trayIdx < N; trayIdx++) {
-      List<StreamInterface> feeds = column.getExternalFeedStreams(trayIdx);
+      List<StreamInterface> feeds = column.getInnerSolverFeedStreams(trayIdx);
       if (feeds.isEmpty()) {
         continue;
       }
@@ -2957,8 +3007,8 @@ public class NaphtaliSandholmSolver {
     double[] eErr = computeEnergyErrors();
     double maxRelErr = 0;
     for (int j = 0; j < N; j++) {
-      if (!Double.isNaN(fixedTemperature[j])) {
-        continue; // skip fixed-T trays (reboiler) — they have a duty
+      if (!Double.isNaN(fixedTemperature[j]) || hasTerminalRatioControl(j)) {
+        continue; // Terminal specifications determine a free duty.
       }
       double hOut = Math.abs(V[j] * hV[j] + L[j] * hL[j]);
       double hIn = 0;
@@ -3183,8 +3233,11 @@ public class NaphtaliSandholmSolver {
         F[base + i] = Mij / flowScale;
       }
 
-      // Energy balance (or fixed temperature specification)
-      if (!Double.isNaN(fixedTemperature[j])) {
+      // Terminal ratios replace the free terminal duty equation.
+      double ratioResidual = terminalRatioResidual(j);
+      if (hasTerminalRatioControl(j)) {
+        F[base + C] = ratioResidual;
+      } else if (!Double.isNaN(fixedTemperature[j])) {
         // Fixed temperature: residual is T_j - T_spec
         F[base + C] = (T[j] - fixedTemperature[j]) / tempScale;
       } else {
@@ -3406,6 +3459,52 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Map a feed phase composition onto the solver's named component basis.
+   *
+   * @param feed feed system
+   * @param phase phase index
+   * @param component reference component index
+   * @return phase mole fraction, or zero for a component absent from this feed
+   */
+  private double feedComponentFraction(SystemInterface feed, int phase, int component) {
+    String name = referenceSystem.getComponent(component).getComponentName();
+    return feed.getPhase(phase).hasComponent(name) ? feed.getPhase(phase).getComponent(name).getx() : 0.0;
+  }
+
+  /**
+   * Test whether the specified terminal replaces its duty equation by a ratio boundary.
+   *
+   * @param tray stage index
+   * @return true for an explicitly active supported ratio mode
+   */
+  private boolean hasTerminalRatioControl(int tray) {
+    if (tray == N - 1 && hasCondenser) {
+      Condenser condenser = column.getCondenser();
+      return condenser.isRefluxSet() && !condenser.isTotalCondenser() && !condenser.isSeparation_with_liquid_reflux();
+    }
+    return tray == 0 && hasReboiler && column.getReboiler().isRefluxSet();
+  }
+
+  /**
+   * Evaluate an active partial-condenser or reboiler ratio boundary equation.
+   *
+   * @param tray terminal tray index
+   * @return scaled flow equation, or NaN when no terminal ratio is active
+   */
+  private double terminalRatioResidual(int tray) {
+    if (tray == N - 1 && hasCondenser) {
+      Condenser condenser = column.getCondenser();
+      if (condenser.isRefluxSet() && !condenser.isTotalCondenser() && !condenser.isSeparation_with_liquid_reflux()) {
+        return (L[tray] - refluxRatio * V[tray]) / flowScale;
+      }
+    }
+    if (tray == 0 && hasReboiler && column.getReboiler().isRefluxSet()) {
+      return (V[tray] - boilupRatio * L[tray]) / flowScale;
+    }
+    return Double.NaN;
+  }
+
+  /**
    * Compute the residual equations for a single tray.
    *
    * @param j tray index
@@ -3431,8 +3530,11 @@ public class NaphtaliSandholmSolver {
       Fj[i] = Mij / flowScale;
     }
 
-    // Energy balance (or fixed temperature specification)
-    if (!Double.isNaN(fixedTemperature[j])) {
+    // Terminal ratios replace the free terminal duty equation.
+    double ratioResidual = terminalRatioResidual(j);
+    if (hasTerminalRatioControl(j)) {
+      Fj[C] = ratioResidual;
+    } else if (!Double.isNaN(fixedTemperature[j])) {
       Fj[C] = (T[j] - fixedTemperature[j]) / tempScale;
     } else {
       double Hj = Lj * hL[j] + V[j] * hV[j];
@@ -5083,10 +5185,16 @@ public class NaphtaliSandholmSolver {
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
 
         if (internalLiquidFraction[j] < 1.0) {
-          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], 1.0 - internalLiquidFraction[j],
+          SystemInterface liquidSideSystem = createAppliedPhaseSystem(j, liq[j], tray.getLiquidSideDrawFraction(),
               PhaseType.LIQUID);
           tray.setCachedLiquidSideDrawStream(
               new neqsim.process.equipment.stream.Stream("liq_side_" + j, liquidSideSystem));
+        }
+        if (tray.getLiquidPumparoundDrawFraction() > 0.0) {
+          SystemInterface drawSystem = createAppliedPhaseSystem(j, liq[j], tray.getLiquidPumparoundDrawFraction(),
+              PhaseType.LIQUID);
+          tray.setCachedLiquidPumparoundDrawStream(
+              new neqsim.process.equipment.stream.Stream("pa_draw_" + j, drawSystem));
         }
       } else {
         SystemInterface gasSystem = referenceSystem.clone();

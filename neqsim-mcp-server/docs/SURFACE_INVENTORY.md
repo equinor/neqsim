@@ -1,13 +1,13 @@
 # MCP published-surface inventory
 
 This inventory records the public MCP protocol surface on campaign issue #3153's Phase 0
-baseline. The focused protocol regression in `test_mcp_server.py` obtains every entry through the
+baseline. The focused protocol regression in `tests/protocol/test_mcp_server.py` obtains every entry through the
 running server's standards-conforming list operations; it does not infer publication from a
 manually maintained Java method list.
 
-All focused `test_*_protocol.py` harnesses freeze the same current inventory
+All focused `tests/protocol/test_*_protocol.py` harnesses freeze the same current inventory
 as the primary harness: version `1.50`, 50 contract-tested tools and 1 confirmed
-gap. `test_phase0_documentation.py` checks these executable expectations before
+gap. `tests/documentation/test_phase0_documentation.py` checks these executable expectations before
 packaging, so a promotion cannot leave a later protocol step on an older baseline.
 Per-tool evidence counts and historical promotion records remain independent.
 
@@ -23,8 +23,8 @@ Per-tool evidence counts and historical promotion records remain independent.
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
-| MCP protocol scenarios | 102 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
-| Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
+| MCP protocol scenarios | 102 | `getCapabilities.phase0EvidenceInventory` | `tests/protocol/test_mcp_server.py` |
+| Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `tests/protocol/test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
 | Trust coverage records | 71 = 20 explicit benchmark + 50 bounded contract-tested software contracts + 1 confirmed gap | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
@@ -95,10 +95,10 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
 `src/test/java/neqsim/mcp`, 102 named scenarios in the primary real-STDIO JSON-RPC harness
-`neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
-`neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
+`neqsim-mcp-server/tests/protocol/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
+`neqsim-mcp-server/tests/protocol/test_inspect_api_protocol.py`. The primary protocol regression independently
 recounts its source tree and fails if the manifest drifts. The dependency-free
-`test_phase0_documentation.py` check also reconciles the primary scenario count with the Java
+`tests/documentation/test_phase0_documentation.py` check also reconciles the primary scenario count with the Java
 inventory and this guide before packaging; the focused harnesses are separately
 executed by the read-only `MCP protocol qualification` workflow. The validation-profile and
 automation-advisory harnesses add bounded software-contract scenarios but do not alter the frozen
@@ -198,11 +198,11 @@ canonical `EquipmentFactory` aliases. `ApiKnowledgeRunnerTest` covers representa
 resolution, member filtering and source pointers, and rejects `java.lang.Runtime`; the MCP server
 facade preserves normal access enforcement and the standard response envelope.
 
-`test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
+`tests/protocol/test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
 now reconciles inventory 1.50 with 20/50/1 coverage accounting while retaining
-`inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
+`inspectApi=CONTRACT_TESTED`. The primary `tests/protocol/test_mcp_server.py` independently includes `inspectApi`
 among its fifty bounded software contracts and requires 1 confirmed gap. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
@@ -220,7 +220,7 @@ promotion-ready candidate from version 1.16 completed its atomic classification 
 structural preservation of validation metadata, isolated custom-profile create/activate/read/delete
 lifecycle with recovery to `generic`, equipment-standard retrieval, and fail-closed mutation
 errors. The focused protocol harness verifies the promoted coverage state through
-`getCapabilities`, while the primary `test_mcp_server.py` now includes
+`getCapabilities`, while the primary `tests/protocol/test_mcp_server.py` now includes
 `manageValidationProfile` in its thirty-four bounded software contracts and requires 17 confirmed
 gaps.
 
@@ -240,7 +240,7 @@ Inventory version 1.18 atomically promotes `listSimulationUnits`, `listUnitVaria
 Merged #3302 established direct Java and packaged-MCP evidence for the three discovery/read tools;
 merged #3309 established the same bounded evidence for diagnostic and learning-report retrieval.
 That promotion moved the five machine-readable coverage records, the focused
-`test_automation_read_protocol.py` assertions, and the authoritative `test_mcp_server.py`
+`tests/protocol/test_automation_read_protocol.py` assertions, and the authoritative `tests/protocol/test_mcp_server.py`
 accounting together on one exact head.
 
 All five routes resolve the supplied definition or model handle through the canonical solved
@@ -264,7 +264,7 @@ and packaged-MCP evidence for the reusable model-registry lifecycle. The contrac
 `ModelRegistry` foundation from #2875: registered handles resolve back into canonical NeqSim
 `ProcessSystem`/`ProcessModel` execution, with no MCP-only simulator or second flowsheet
 representation. Machine-readable coverage, focused Java/protocol expectations, and the authoritative
-`test_mcp_server.py` accounting move together from 20/16/35 to 20/17/34.
+`tests/protocol/test_mcp_server.py` accounting move together from 20/16/35 to 20/17/34.
 
 The qualified boundary covers registration and idempotency, get/list/inspect, canonical process and
 automation routing, revisioning, fail-closed malformed/unknown requests, deletion/invalidation,
@@ -280,8 +280,8 @@ Inventory version 1.20 atomically promotes `manageSession` after merged #3335 es
 Java and packaged-MCP evidence for the existing canonical-process lifecycle. `SessionRunner`
 continues to hold the normal NeqSim `ProcessSystem`; no MCP-only simulator or second process
 representation is introduced. Machine-readable coverage, focused Java assertions,
-`test_session_protocol.py`, all synchronized focused protocol expectations, and the authoritative
-`test_mcp_server.py` accounting move together from 20/17/34 to 20/18/33.
+`tests/protocol/test_session_protocol.py`, all synchronized focused protocol expectations, and the authoritative
+`tests/protocol/test_mcp_server.py` accounting move together from 20/17/34 to 20/18/33.
 
 The qualified boundary covers canonical process-backed creation, caller-visible list/state
 identity, authenticated owner isolation, fail-closed unknown actions, close/invalidation, existing
@@ -297,8 +297,8 @@ Inventory version 1.21 atomically promotes `manageState` after merged #3348 esta
 Java and real packaged-MCP evidence for the existing local persisted-state lifecycle. The saved
 payload retains the canonical process definition owned by `SessionRunner`; loading reconstructs a
 normal canonical NeqSim session rather than introducing an MCP-only simulator. Machine-readable
-coverage, focused Java assertions, `test_state_persistence_protocol.py`, synchronized protocol
-expectations, and the authoritative `test_mcp_server.py` accounting move together from 20/18/33
+coverage, focused Java assertions, `tests/protocol/test_state_persistence_protocol.py`, synchronized protocol
+expectations, and the authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/18/33
 to 20/19/32.
 
 The qualified boundary covers save without silent overwrite, list/info, definition comparison,
@@ -316,8 +316,8 @@ established direct Java and real packaged-MCP evidence for canonical adjustable-
 discovery. `AutomationRunner` resolves an explicit definition or reusable model handle to the same
 solved NeqSim `ProcessSystem` and delegates discovery to `ProcessAutomation`; no MCP-only simulator
 or second parameter registry is introduced. Machine-readable coverage, focused Java assertions,
-`test_adjustable_parameters_protocol.py`, synchronized protocol expectations, and authoritative
-`test_mcp_server.py` accounting move together from 20/19/32 to 20/20/31.
+`tests/protocol/test_adjustable_parameters_protocol.py`, synchronized protocol expectations, and authoritative
+`tests/protocol/test_mcp_server.py` accounting move together from 20/19/32 to 20/20/31.
 
 The qualified boundary covers deterministic parameter names and addresses, engineering units,
 optional bounds, target metadata, direct-definition/model-handle equivalence, fail-closed input,
@@ -333,8 +333,8 @@ Inventory version 1.23 atomically promotes `validateInput` after merged #3391 es
 Java and real packaged-MCP evidence for the existing pre-flight validator. `NeqSimTools` resolves
 reusable handles through `ModelRegistry` and delegates to `Validator`; no simulation is executed
 and no MCP-only model is introduced. Machine-readable coverage, focused Java assertions,
-`test_validate_input_protocol.py`, synchronized protocol expectations, and authoritative
-`test_mcp_server.py` accounting move together from 20/20/31 to 20/21/30.
+`tests/protocol/test_validate_input_protocol.py`, synchronized protocol expectations, and authoritative
+`tests/protocol/test_mcp_server.py` accounting move together from 20/20/31 to 20/21/30.
 
 The qualified boundary covers deterministic syntax, structure, explicit unit and range checks,
 component/equipment recognition, model-handle equivalence, issue severity/remediation, fail-closed
@@ -347,8 +347,8 @@ engineering approval. See `docs/evidence/VALIDATE_INPUT_CONTRACT.md`.
 Inventory version 1.24 atomically promotes `validateResults` after merged #3406 established direct Java and real
 packaged-MCP evidence for the existing advisory `EngineeringValidator`, and merged #3416/#3421 preserved complete
 inventory transport under the response-size guard. Machine-readable coverage, Java assertions,
-`test_validate_results_protocol.py`, synchronized focused protocol expectations, and authoritative
-`test_mcp_server.py` accounting move together from 20/21/30 to 20/22/29.
+`tests/protocol/test_validate_results_protocol.py`, synchronized focused protocol expectations, and authoritative
+`tests/protocol/test_mcp_server.py` accounting move together from 20/21/30 to 20/22/29.
 
 This software-contract classification covers deterministic engineering-rule findings, stable severity/remediation,
 fail-closed malformed inputs, and packaged transport. It does not execute or independently verify a model, recompute
@@ -360,8 +360,8 @@ or replace accountable engineering approval. The detailed evidence is in
 
 Inventory version 1.25 atomically promotes `generateReport` and `bridgeTaskWorkflow` after merged #3440 established
 direct Java and real packaged-MCP evidence for the paired transient reporting and task-workflow handoff contracts.
-Machine-readable coverage, Java assertions, `test_reporting_protocol.py`, synchronized focused protocol expectations,
-and authoritative `test_mcp_server.py` accounting move together from 20/22/29 to 20/24/27.
+Machine-readable coverage, Java assertions, `tests/protocol/test_reporting_protocol.py`, synchronized focused protocol expectations,
+and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/22/29 to 20/24/27.
 
 This software-contract classification covers requested report metadata, transient Markdown, bounded numeric tables,
 optional chart-ready arrays and embedded advisory validation, shallow counts, results-schema and supported-runner
@@ -375,7 +375,7 @@ persisted artifact, grant plant authority, or replace accountable engineering ap
 
 Inventory version 1.26 atomically promotes `manageSecurity` after merged #3470 established direct Java and real
 packaged-MCP evidence for the bounded application-security contract. Machine-readable coverage, Java assertions,
-`test_security_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py`
+`tests/protocol/test_security_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py`
 accounting move together from 20/24/27 to 20/25/26.
 
 This software-contract classification covers default-disabled desktop compatibility, bootstrap reachability,
@@ -387,20 +387,20 @@ accountable engineering approval. The detailed evidence is in
 
 ### Promoted simulation-variable mutation contract
 
-Inventory version 1.27 atomically promotes `setSimulationVariable` after merged #3478 established direct Java and real packaged-MCP evidence for the canonical mutation/rerun contract. Machine-readable coverage, Java assertions, `test_simulation_variable_write_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/25/26 to 20/26/25.
+Inventory version 1.27 atomically promotes `setSimulationVariable` after merged #3478 established direct Java and real packaged-MCP evidence for the canonical mutation/rerun contract. Machine-readable coverage, Java assertions, `tests/protocol/test_simulation_variable_write_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/25/26 to 20/26/25.
 
 This software-contract classification covers typed INPUT-address mutation, requested-unit handling, rerun/report sequencing, inline/model-handle equivalence, exact OUTPUT-only and physical-bound rejection, fail-closed missing inputs, fuzzy recovery, and packaged transport. It does not establish numerical accuracy, convergence, conservation, persistence, optimization quality, plant or control authority, certification, or accountable engineering approval. The detailed evidence is in `docs/evidence/SIMULATION_VARIABLE_WRITE_CONTRACT.md`.
 
 ### Promoted simulation-state snapshot contract
 
-Inventory version 1.28 atomically promotes `saveSimulationState` and `compareSimulationStates` after merged #3500 established direct Java and real packaged-MCP evidence for the paired canonical snapshot contract. Machine-readable coverage, Java assertions, `test_simulation_state_snapshot_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/26/25 to 20/28/23.
+Inventory version 1.28 atomically promotes `saveSimulationState` and `compareSimulationStates` after merged #3500 established direct Java and real packaged-MCP evidence for the paired canonical snapshot contract. Machine-readable coverage, Java assertions, `tests/protocol/test_simulation_state_snapshot_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/26/25 to 20/28/23.
 
 This software-contract classification covers bounded snapshot serialization, requested name/version, equipment and stream structural presence, inline/model-handle equivalence, identical and metadata-version comparison, fail-closed inputs, standard envelope evidence, and packaged transport. It does not establish complete process-state capture or diff semantics, replay/restoration, persistence or durability, numerical accuracy, convergence, conservation, isolation/security, causal diagnosis, optimization quality, plant/control authority, certification, or accountable engineering approval. The detailed evidence is in `docs/evidence/SIMULATION_STATE_SNAPSHOT_CONTRACT.md`.
 
 
 ### Promoted visualization-generation contract
 
-Inventory version 1.29 atomically promotes `generateVisualization` after merged #3510 established direct Java and real packaged-MCP evidence for the bounded visualization contract. Machine-readable coverage, Java assertions, `test_visualization_protocol.py`, synchronized focused protocol expectations, and authoritative `test_mcp_server.py` accounting move together from 20/28/23 to 20/29/22.
+Inventory version 1.29 atomically promotes `generateVisualization` after merged #3510 established direct Java and real packaged-MCP evidence for the bounded visualization contract. Machine-readable coverage, Java assertions, `tests/protocol/test_visualization_protocol.py`, synchronized focused protocol expectations, and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/28/23 to 20/29/22.
 
 This software-contract classification covers documented aliases, canonical response types, stable SVG, Mermaid and HTML media fields, XML/HTML escaping, fail-closed malformed and structurally invalid inputs, standard response evidence, and packaged transport. It does not establish browser fidelity, markup sandbox security, accessibility, complete topology, numerical or thermodynamic accuracy, convergence, conservation, facility validity, plant/control authority, certification, or accountable engineering approval. The detailed evidence is in `docs/evidence/VISUALIZATION_CONTRACT.md`.
 
@@ -408,8 +408,8 @@ This software-contract classification covers documented aliases, canonical respo
 
 Inventory version 1.30 atomically promotes `runPlugin` after merged #3534 established direct Java
 and real packaged-MCP evidence for its bounded process-local execution contract. Machine-readable
-coverage, Java assertions, `test_plugin_protocol.py`, synchronized focused protocol expectations,
-and authoritative `test_mcp_server.py` accounting move together from 20/29/22 to 20/30/21.
+coverage, Java assertions, `tests/protocol/test_plugin_protocol.py`, synchronized focused protocol expectations,
+and authoritative `tests/protocol/test_mcp_server.py` accounting move together from 20/29/22 to 20/30/21.
 
 This classification covers process-local registration/listing/metadata, exact invocation
 input/output, same-name replacement, cleanup, structured absent/empty/unknown-action/malformed-input
@@ -426,8 +426,8 @@ Inventory version 1.31 atomically promotes `runCapability` after merged #3554
 established direct Java and real packaged-MCP evidence for bounded discovery,
 explicit static/process/inspection routing, exact public-static invocation,
 and fail-closed unsafe or malformed requests. Machine-readable coverage, Java
-assertions, `test_capability_protocol.py`, synchronized focused protocol
-expectations, authoritative `test_mcp_server.py` accounting, and
+assertions, `tests/protocol/test_capability_protocol.py`, synchronized focused protocol
+expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and
 documentation move together from 20/30/21 to 20/31/20.
 
 This classification does not establish arbitrary-classloader completeness,
@@ -502,8 +502,8 @@ publication only and does not implement competing domain functionality.
 Inventory version 1.32 atomically promotes `composeWorkflow` after merged
 #3566 established direct Java and packaged-MCP evidence for a bounded,
 caller-authored orchestration contract. Machine-readable coverage, Java
-assertions, `test_compose_workflow_protocol.py`, synchronized focused
-protocol expectations, authoritative `test_mcp_server.py` accounting, and
+assertions, `tests/protocol/test_compose_workflow_protocol.py`, synchronized focused
+protocol expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and
 documentation move together from 20/31/20 to 20/32/19.
 
 The contract covers ordered curated-runner dispatch, one real shared-fluid
@@ -529,8 +529,8 @@ candidate remains queued.
 Inventory version 1.33 atomically promotes `solveTask` after merged #3575
 established direct Java and packaged-MCP evidence for a bounded task-orchestration
 contract. Machine-readable coverage, Java assertions,
-`test_solve_task_protocol.py`, synchronized focused protocol expectations,
-authoritative `test_mcp_server.py` accounting, and documentation move
+`tests/protocol/test_solve_task_protocol.py`, synchronized focused protocol expectations,
+authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move
 together from 20/32/19 to 20/33/18.
 
 The contract covers non-blank task enforcement, nine deterministic
@@ -555,8 +555,8 @@ remains queued.
 Inventory version 1.34 atomically promotes `streamSimulation` after merged
 #3589 established direct Java and packaged-MCP evidence for a bounded streaming
 lifecycle contract. Machine-readable coverage, Java assertions,
-`test_streaming_protocol.py`, synchronized focused protocol expectations,
-authoritative `test_mcp_server.py` accounting, and documentation move together
+`tests/protocol/test_streaming_protocol.py`, synchronized focused protocol expectations,
+authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move together
 from 20/33/18 to 20/34/17.
 
 The contract covers bounded sweep, dynamic, and Monte Carlo admission;
@@ -582,8 +582,8 @@ remains queued.
 Inventory version 1.35 atomically promotes `composeMultiServerWorkflow` after
 merged #3614 established direct Java and packaged-MCP evidence for bounded
 process-local composition metadata and planning. Machine-readable coverage,
-Java assertions, `test_composition_protocol.py`, synchronized focused protocol
-expectations, authoritative `test_mcp_server.py` accounting, and
+Java assertions, `tests/protocol/test_composition_protocol.py`, synchronized focused protocol
+expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and
 documentation move together from 20/34/17 to 20/35/16.
 
 The contract covers bounded metadata-only request admission; deterministic
@@ -635,7 +635,7 @@ defaults; emits stable fail-closed errors; and returns explicit screening and
 advisory metadata through the normal response and access-control paths.
 
 Inventory version 1.37 atomically promotes `runLOPA` to `CONTRACT_TESTED`.
-Machine-readable coverage, Java assertions, `test_lopa_protocol.py`, synchronized
+Machine-readable coverage, Java assertions, `tests/protocol/test_lopa_protocol.py`, synchronized
 focused protocol expectations, authoritative comprehensive accounting, and
 documentation move together from `20/36/15` to `20/37/14`. This is a bounded
 software and transport contract only. It does not identify hazards, establish
@@ -657,7 +657,7 @@ caller-assumption, and independent-assessment metadata.
 
 After merged #3664 established that direct evidence, inventory version 1.38
 atomically promotes `runSIL` to `CONTRACT_TESTED`. Machine-readable coverage,
-Java assertions, `test_sil_protocol.py`, synchronized focused protocol
+Java assertions, `tests/protocol/test_sil_protocol.py`, synchronized focused protocol
 expectations, authoritative comprehensive accounting, acceptance baselines, and
 documentation move together from `20/37/14` to `20/38/13`. This is a bounded
 software and transport contract only. It does not establish SRS completeness,

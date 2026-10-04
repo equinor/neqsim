@@ -16,7 +16,7 @@ The qualification exercises the existing Java implementation and one canonical m
 - delete removes each persisted file and the final list is empty;
 - unknown actions, traversal filenames and file paths outside the configured sandbox fail closed.
 
-The focused Java regression is `StatePersistenceRunnerTest`. The real packaged STDIO contract is `neqsim-mcp-server/test_state_persistence_protocol.py`. The latter drives `manageSession` and `manageState` through their public MCP envelopes and starts the server with an isolated Java user home so no user state is read or modified.
+The focused Java regression is `StatePersistenceRunnerTest`. The real packaged STDIO contract is `neqsim-mcp-server/tests/protocol/test_state_persistence_protocol.py`. The latter drives `manageSession` and `manageState` through their public MCP envelopes and starts the server with an isolated Java user home so no user state is read or modified.
 
 ## Inputs, outputs and compatibility
 
@@ -38,4 +38,4 @@ The saved process definition remains the reproducible input. Any executed result
 
 ## Phase 0 accounting boundary
 
-Inventory `1.21` classifies `manageState` as `CONTRACT_TESTED` and moves Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 18 CONTRACT_TESTED + 33 CONFIRMED_GAP` to `20 + 19 + 32`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses, and authoritative `test_mcp_server.py` accounting move together. This classification establishes only the bounded local lifecycle, path-safety, provenance, and transport contract described above; it does not imply scientific validation of persisted or restored calculations.
+Inventory `1.21` classifies `manageState` as `CONTRACT_TESTED` and moves Phase 0 accounting atomically from `20 EXPLICIT_TRUST + 18 CONTRACT_TESTED + 33 CONFIRMED_GAP` to `20 + 19 + 32`. The machine-readable record, focused Java assertions, focused packaged-STDIO expectation, synchronized protocol harnesses, and authoritative `tests/protocol/test_mcp_server.py` accounting move together. This classification establishes only the bounded local lifecycle, path-safety, provenance, and transport contract described above; it does not imply scientific validation of persisted or restored calculations.

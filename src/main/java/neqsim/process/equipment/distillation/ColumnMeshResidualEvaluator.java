@@ -64,7 +64,7 @@ final class ColumnMeshResidualEvaluator {
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + state.getExternalOutletComponentFlow(tray, comp);
         imbalance += Math.abs(outlet - inlet);
         throughput += Math.abs(inlet) + Math.abs(outlet);
       }
@@ -94,7 +94,7 @@ final class ColumnMeshResidualEvaluator {
         double vaporOut = state.getVaporComponentFlow(tray, comp);
         double liquidOut = state.getLiquidComponentFlow(tray, comp);
         double inlet = vaporIn + liquidIn + feedIn;
-        double outlet = vaporOut + liquidOut;
+        double outlet = vaporOut + liquidOut + state.getExternalOutletComponentFlow(tray, comp);
         double scale = Math.max(ColumnMeshState.getMinimumScale(), Math.abs(inlet) + Math.abs(outlet));
         builder.add((outlet - inlet) / scale, ColumnMeshEquationType.MATERIAL, tray, componentNames[comp]);
       }
@@ -272,24 +272,22 @@ final class ColumnMeshResidualEvaluator {
   private static void addSpecificationResiduals(DistillationColumn column, ResidualBuilder builder) {
     column.updateSpecificationResidualDiagnostics();
     if (column.getTopSpecification() != null) {
-      addFinite(column.getLastTopSpecificationResidual(), builder, "top");
+      addSpecificationResidual(column.getLastTopSpecificationResidual(), builder, "top");
     }
     if (column.getBottomSpecification() != null) {
-      addFinite(column.getLastBottomSpecificationResidual(), builder, "bottom");
+      addSpecificationResidual(column.getLastBottomSpecificationResidual(), builder, "bottom");
     }
   }
 
   /**
-   * Add a specification residual if it is finite.
+   * Retain a specification residual, including non-finite values that must reject convergence.
    *
    * @param value residual value
    * @param builder residual builder
    * @param label residual label
    */
-  private static void addFinite(double value, ResidualBuilder builder, String label) {
-    if (Double.isFinite(value)) {
-      builder.add(value, ColumnMeshEquationType.SPECIFICATION, -1, label);
-    }
+  private static void addSpecificationResidual(double value, ResidualBuilder builder, String label) {
+    builder.add(value, ColumnMeshEquationType.SPECIFICATION, -1, label);
   }
 
   /**

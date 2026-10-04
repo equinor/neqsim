@@ -53,9 +53,9 @@ integration outside this runner.
 - `SecurityRunnerTest` covers status and process-local operational views plus null-input rejection.
 - `McpSecurityEnforcementTest` covers disabled-mode admission, a transport-bound principal, anonymous denial,
   bootstrap reachability, administrator-gated key creation and fail-closed missing administrator configuration.
-- `test_security_protocol.py` repeats the public boundary through the real packaged STDIO server using synthetic
+- `tests/protocol/test_security_protocol.py` repeats the public boundary through the real packaged STDIO server using synthetic
   credentials and proves inventory 1.42 retains the promotion, evidence sources, and security/advisory boundary.
-- `test_mcp_server.py` retains the broad real-protocol call and 71-tool registration/accounting checks.
+- `tests/protocol/test_mcp_server.py` retains the broad real-protocol call and 71-tool registration/accounting checks.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP security contracts before the comprehensive
   protocol regression.
 

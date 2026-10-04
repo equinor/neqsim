@@ -78,8 +78,8 @@ authoritative.
 - `src/main/java/neqsim/process/safety/risk/RiskMatrix.java`
 - `src/test/java/neqsim/mcp/runners/RiskMatrixRunnerTest.java`
 - `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java`
-- `neqsim-mcp-server/test_risk_matrix_protocol.py`
-- `neqsim-mcp-server/test_mcp_server.py`
+- `neqsim-mcp-server/tests/protocol/test_risk_matrix_protocol.py`
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py`
 
 The focused Java suite freezes input validation, limits, threshold boundaries,
 error codes, deterministic names, input-basis evidence, and advisory fields.

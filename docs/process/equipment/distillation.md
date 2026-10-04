@@ -215,9 +215,20 @@ warm solves.
 Direct terminal specification residuals are evaluated from the published streams: condenser
 liquid reflux divided by distillate flow (L/D), or reboiler vapor return divided by bottoms
 flow (V/B), minus the target. Duty residuals are the published duty minus the target in W.
-An unavailable ratio reports `NaN`; it must not be interpreted as a satisfied specification.
-Product reconciliation can change these ratios after the tray solve, so inspect the residuals
-as well as the solve status before accepting a result.
+An unavailable ratio reports `NaN` and prevents acceptance. Direct controls participate in
+specification acceptance even though they do not need the outer temperature-specification loop.
+Product reconciliation can change a terminal ratio; the MESH solver then attempts an isolated
+simultaneous correction and accepts it only if the published specifications and residual gates pass.
+
+The simultaneous solver enforces partial-condenser `L - R D = 0` and reboiler
+`V - B L = 0` instead of a fixed terminal duty equation. A terminal temperature supplied with an
+active ratio is an initialization seed; the solved duty follows from the material-stream enthalpy
+balance. Both full residual evaluation and finite-difference Jacobian evaluation use the same
+boundary equations.
+For the guarded correction of unsatisfied ratios, Newton starts directly from the bubble-point seed; the
+Sum-Rates energy correction assumes terminal duty equations and can collapse a required
+liquid reflux stream. Explicit standalone Naphtali-Sandholm retains its established initialization
+sequence. Both paths enforce the same terminal equations and acceptance gates.
 
 Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
 condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler
@@ -342,7 +353,12 @@ substitution is not a robust choice for this fully coupled configuration. The me
 `isLastColumnTearConverged()` and
 `getLastColumnTearResidual()` report that convergence, and exact sequential-state reuse stays
 disabled while the nonlocal return is active. A changed external feed therefore re-solves both the
-terminal products and pumparound state on the same component basis.
+terminal products and pumparound state on the same component basis. Simultaneous MESH polishing
+maps heterogeneous and reordered feed components by name and combines phase enthalpy rates before
+forming the mean feed enthalpy. Each inner solve freezes the current pumparound return and includes
+its withdrawal separately from external side products; the outer tear still converges the recycle.
+Candidate copying preserves the frozen return and does not count copied recycle streams as new
+external feeds.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);
