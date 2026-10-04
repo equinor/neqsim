@@ -240,6 +240,51 @@ def test_exact_static_invocation(client):
     )
 
 
+def test_explicit_operation_contracts(client):
+    entries = []
+    for capability_id in ("sulfur-vapour-pressure", "engineering-unit-conversions"):
+        coverage_page = assert_success(
+            client.call_capability(
+                {"action": "coverage", "view": "capabilities", "query": capability_id,
+                 "offset": 0, "limit": 10}
+            )
+        )
+        matched = [entry for entry in coverage_page.get("entries", [])
+                   if entry.get("id") == capability_id]
+        require(len(matched) == 1, "operation contract capability was not exposed", coverage_page)
+        entries.extend(matched)
+
+    operations = [operation for entry in entries for operation in entry.get("operations", [])]
+    expected_ids = {
+        "sulfur-vapour-pressure-at-temperature", "pressure-conversion",
+        "temperature-conversion", "temperature-difference-conversion",
+        "length-conversion", "time-conversion", "power-conversion", "energy-conversion",
+    }
+    require({operation.get("id") for operation in operations} == expected_ids,
+            "explicit operation inventory drifted", operations)
+
+    for operation in operations:
+        require(operation.get("classification") == "supported",
+                "first operation-contract batch must remain supported", operation)
+        require(operation.get("units") and operation.get("applicability")
+                and operation.get("route") == "runCapability action=invoke"
+                and operation.get("evidenceSources"),
+                "operation contract metadata is incomplete", operation)
+        example = operation.get("example", {})
+        result = assert_success(
+            client.call_capability(
+                {"action": "invoke", "className": operation["api"],
+                 "methodName": operation["method"],
+                 "parameterTypes": example["parameterTypes"],
+                 "arguments": example["arguments"]}
+            )
+        )
+        require(result.get("signature") == operation.get("signature"),
+                "invoked signature drifted from its operation contract", result)
+        require(abs(result.get("result") - example["expected"]) <= example["absoluteTolerance"],
+                "operation example result drifted", {"operation": operation, "result": result})
+
+
 def test_external_class_fails_closed(client):
     assert_error(
         client.call_capability(
@@ -328,6 +373,7 @@ def main():
         ("static search route", test_static_search_route),
         ("stateful search route", test_stateful_search_route),
         ("exact static invocation", test_exact_static_invocation),
+        ("explicit operation contracts", test_explicit_operation_contracts),
         ("external class fails closed", test_external_class_fails_closed),
         ("instance method fails closed", test_instance_method_fails_closed),
         ("unknown action fails closed", test_unknown_action_fails_closed),
