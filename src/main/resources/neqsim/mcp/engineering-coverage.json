@@ -2,14 +2,14 @@
   "schemaVersion": "1.0",
   "complete": false,
   "denominator": "public top-level Java source types; not methods or engineering operations",
-  "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification.",
+  "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification. Explicit supported operations are bounded to their recorded signatures, units, applicability and examples.",
   "summary": {
     "publicTypes": 3341,
-    "registeredCapabilities": 12,
-    "registeredAnchors": 18,
+    "registeredCapabilities": 13,
+    "registeredAnchors": 24,
     "withSkillMention": 1264,
     "withAgentMention": 1263,
-    "reviewRequired": 3243,
+    "reviewRequired": 3237,
     "domains": {
       "api": {
         "publicTypes": 1,
@@ -103,11 +103,16 @@
       },
       "util": {
         "publicTypes": 60,
-        "registeredAnchors": 0,
+        "registeredAnchors": 6,
         "withSkillMention": 9,
-        "reviewRequired": 60
+        "reviewRequired": 54
       }
-    }
+    },
+    "classifiedOperations": 8,
+    "supportedOperations": 8,
+    "internalOperations": 0,
+    "experimentalOperations": 0,
+    "deprecatedOperations": 0
   },
   "capabilities": [
     {
@@ -179,6 +184,335 @@
         "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java"
       ],
       "limitations": "Parameter availability, minerals and validity ranges must be checked for each brine.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
+      "id": "engineering-unit-conversions",
+      "title": "Bounded engineering unit conversions",
+      "domain": "util",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.util.unit.PressureUnit",
+        "neqsim.util.unit.TemperatureUnit",
+        "neqsim.util.unit.LengthUnit",
+        "neqsim.util.unit.TimeUnit",
+        "neqsim.util.unit.PowerUnit",
+        "neqsim.util.unit.EnergyUnit"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+        "src/test/java/neqsim/util/unit/LengthUnitTest.java",
+        "src/test/java/neqsim/util/unit/TimeUnitTest.java",
+        "src/test/java/neqsim/util/unit/PowerUnitTest.java",
+        "src/test/java/neqsim/util/unit/EnergyUnitTest.java",
+        "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Only the listed pure static conversions are supported. Rate conversions that depend on fluid state, composition, or standard conditions remain outside this contract.",
+      "operations": [
+        {
+          "id": "pressure-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.PressureUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.PressureUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "pressure",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "bara",
+              "bar",
+              "barg",
+              "psi",
+              "psia",
+              "psig",
+              "Pa",
+              "kPa",
+              "MPa",
+              "atm"
+            ]
+          },
+          "applicability": "Absolute and gauge pressure conversions using the explicit source and target units; gauge conversions use NeqSim's fixed reference atmosphere.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "bar",
+              "kPa"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 100,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "temperature-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TemperatureUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.TemperatureUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "temperature",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "K",
+              "C",
+              "F",
+              "R"
+            ]
+          },
+          "applicability": "Absolute temperature conversions. Use convertDifference for temperature intervals.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0,
+              "C",
+              "K"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 273.15,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "temperature-difference-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TemperatureUnit",
+          "method": "convertDifference",
+          "signature": "double neqsim.util.unit.TemperatureUnit.convertDifference(double, String, String)",
+          "units": {
+            "quantity": "temperature difference",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "K",
+              "C",
+              "F",
+              "R"
+            ]
+          },
+          "applicability": "Temperature interval conversions without absolute-scale offsets.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              10,
+              "C",
+              "F"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 18,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "length-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.LengthUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.LengthUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "length",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "m",
+              "meter",
+              "metre",
+              "cm",
+              "mm",
+              "km",
+              "in",
+              "inch",
+              "ft",
+              "feet"
+            ]
+          },
+          "applicability": "Linear length conversions between the accepted unit symbols and aliases.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "m",
+              "cm"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 100,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/LengthUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "time-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TimeUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.TimeUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "time",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "s",
+              "sec",
+              "second",
+              "min",
+              "minute",
+              "h",
+              "hr",
+              "hour",
+              "d",
+              "day"
+            ]
+          },
+          "applicability": "Linear elapsed-time conversions between the accepted unit symbols and aliases.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "h",
+              "s"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 3600,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/TimeUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "power-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.PowerUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.PowerUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "power",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "W",
+              "kW",
+              "MW",
+              "hp",
+              "BTU/hr"
+            ]
+          },
+          "applicability": "Linear power conversions between the accepted engineering units.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "kW",
+              "W"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 1000,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/PowerUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "energy-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.EnergyUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.EnergyUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "energy",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "J",
+              "kJ",
+              "MJ",
+              "Wh",
+              "kWh",
+              "MWh",
+              "BTU",
+              "kcal"
+            ]
+          },
+          "applicability": "Linear energy conversions between the accepted engineering units.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "kWh",
+              "MJ"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 3.6,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/EnergyUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
       "evidence": {
         "route": "declared",
         "testSources": "present",
@@ -382,9 +716,44 @@
         "flow-assurance"
       ],
       "testSources": [
-        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java"
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
       ],
       "limitations": "Search for calculateVapourPressureBar and invoke its exact double signature; this does not qualify other methods.",
+      "operations": [
+        {
+          "id": "sulfur-vapour-pressure-at-temperature",
+          "classification": "supported",
+          "api": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+          "method": "calculateVapourPressureBar",
+          "signature": "double neqsim.thermo.util.sulfur.SulfurThermodynamics.calculateVapourPressureBar(double)",
+          "units": {
+            "inputs": {
+              "temperature": "K"
+            },
+            "outputs": {
+              "vapourPressure": "bar"
+            }
+          },
+          "applicability": "Pure sulfur vapour pressure for 312.15 K through 1308.15 K; values outside the correlation range are rejected.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              717.76
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 1.01325,
+            "absoluteTolerance": 1e-10
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
       "evidence": {
         "route": "declared",
         "testSources": "present",
@@ -419,7 +788,7 @@
       }
     }
   ],
-  "catalogDigest": "ccabf413e907aad8e5b1830aed1975623156780eea505991e28a78ea7c689359",
+  "catalogDigest": "ae63290b297d703533d853d543c4bd094f2e2f01202b3caf9e84296350ce918c",
   "apis": [
     {"id":"neqsim.api.ioc.CalculationResult","kind":"class","source":"src/main/java/neqsim/api/ioc/CalculationResult.java","sourceDigest":"9e8bd61a763f407a08785db311578bbcc82114bbbc47644cb03862c3604af17f","domain":"api","skills":["neqsim-java8-rules"],"agents":["documentation","dynamic-equipment","mechanical-design","neqsim-test","optimize","process-model","reaction-engineering","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.blackoil.BlackOilConverter","kind":"class","source":"src/main/java/neqsim/blackoil/BlackOilConverter.java","sourceDigest":"7dfc65a57aec097df8fa898ebb120f4db6d8ee112030d47ce0b4076aa84739aa","domain":"blackoil","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3741,15 +4110,15 @@
     {"id":"neqsim.util.serialization.SerializationManager","kind":"class","source":"src/main/java/neqsim/util/serialization/SerializationManager.java","sourceDigest":"659b5598deeda500eab5615c0f212db45166b0df5d8a3dea0f5334026fbfc4f7","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.util.unit.BaseUnit","kind":"class","source":"src/main/java/neqsim/util/unit/BaseUnit.java","sourceDigest":"3cf43a3bd20726905738e81eb4404d77a99a34b55ca71493e6350d136031d7ca","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.util.unit.BiasAdjustedUnit","kind":"interface","source":"src/main/java/neqsim/util/unit/BiasAdjustedUnit.java","sourceDigest":"6a9f9cbcdc5756d64a230eee8c534eeca0dbd350715f16fa9ecf40ce2ae80ebb","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.EnergyUnit","kind":"class","source":"src/main/java/neqsim/util/unit/EnergyUnit.java","sourceDigest":"20c2d9d1f6ac2e164ef899136f308a7382b37690c8a5a258361f60dab5e39a7e","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.LengthUnit","kind":"class","source":"src/main/java/neqsim/util/unit/LengthUnit.java","sourceDigest":"210117f0c7ae05b7d7dc7bcad3ba93346bd8becfffad60281b6aaec292550fab","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.util.unit.EnergyUnit","kind":"class","source":"src/main/java/neqsim/util/unit/EnergyUnit.java","sourceDigest":"20c2d9d1f6ac2e164ef899136f308a7382b37690c8a5a258361f60dab5e39a7e","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
+    {"id":"neqsim.util.unit.LengthUnit","kind":"class","source":"src/main/java/neqsim/util/unit/LengthUnit.java","sourceDigest":"210117f0c7ae05b7d7dc7bcad3ba93346bd8becfffad60281b6aaec292550fab","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
     {"id":"neqsim.util.unit.LinearScaleUnit","kind":"interface","source":"src/main/java/neqsim/util/unit/LinearScaleUnit.java","sourceDigest":"ee526db2a49e78b0b6b828c9be073532fb6aeea25a53d95bcf5feadeb82bf7b8","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.util.unit.NeqSimUnitSet","kind":"class","source":"src/main/java/neqsim/util/unit/NeqSimUnitSet.java","sourceDigest":"a2ce82a633f71549f7c840ebb9f26da68b6b6f107a69b16b6d1f840f3bb3ef98","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.PowerUnit","kind":"class","source":"src/main/java/neqsim/util/unit/PowerUnit.java","sourceDigest":"e63975a6133beb477c621c4e7893da6bde1db676aeaf0a2a48ed35ed8b94e11f","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.PressureUnit","kind":"class","source":"src/main/java/neqsim/util/unit/PressureUnit.java","sourceDigest":"024e5e187a0d64c00db61a0a504b9ac2a001009f3ab9fb6f3760613e74b13a91","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.util.unit.PowerUnit","kind":"class","source":"src/main/java/neqsim/util/unit/PowerUnit.java","sourceDigest":"e63975a6133beb477c621c4e7893da6bde1db676aeaf0a2a48ed35ed8b94e11f","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
+    {"id":"neqsim.util.unit.PressureUnit","kind":"class","source":"src/main/java/neqsim/util/unit/PressureUnit.java","sourceDigest":"024e5e187a0d64c00db61a0a504b9ac2a001009f3ab9fb6f3760613e74b13a91","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
     {"id":"neqsim.util.unit.RateUnit","kind":"class","source":"src/main/java/neqsim/util/unit/RateUnit.java","sourceDigest":"76f1b475979b0095bc4a0a61bbfc73f7bd9d29c3c8c2aecc39e92bd3cc0a73b7","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.TemperatureUnit","kind":"class","source":"src/main/java/neqsim/util/unit/TemperatureUnit.java","sourceDigest":"a9f1826936ab2af4885bd72f37c449c19846299c34ac77353b1183cb4118d068","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.util.unit.TimeUnit","kind":"class","source":"src/main/java/neqsim/util/unit/TimeUnit.java","sourceDigest":"c9478d655f6f3bb0a359d6deb51332370f01008b48e7d1e6ddc5c696d1aba43d","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.util.unit.TemperatureUnit","kind":"class","source":"src/main/java/neqsim/util/unit/TemperatureUnit.java","sourceDigest":"a9f1826936ab2af4885bd72f37c449c19846299c34ac77353b1183cb4118d068","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
+    {"id":"neqsim.util.unit.TimeUnit","kind":"class","source":"src/main/java/neqsim/util/unit/TimeUnit.java","sourceDigest":"c9478d655f6f3bb0a359d6deb51332370f01008b48e7d1e6ddc5c696d1aba43d","domain":"util","skills":[],"agents":[],"capabilities":["engineering-unit-conversions"],"disposition":"registered_anchor"},
     {"id":"neqsim.util.unit.Unit","kind":"interface","source":"src/main/java/neqsim/util/unit/Unit.java","sourceDigest":"820582e870e027d776577d51acf8bbfddd0e23fd9b7fb05d7b070735a770965c","domain":"util","skills":["design-flash-benchmark","design-reactor-benchmark","neqsim-agentic-process-optimization","neqsim-api-patterns","neqsim-dynamic-simulation","neqsim-electrolyte-systems","neqsim-equipment-cost-estimation","neqsim-model-calibration-and-data-reconciliation","neqsim-operational-risk-and-safety-validation","neqsim-process-extraction","neqsim-reaction-engineering","neqsim-release-source-terms","neqsim-standards-lookup","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-unisim-reader","paperlab-scientific-traceability-audit"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","plant-data","process-model","production-chemistry","pvt-simulation","reaction-engineering","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.util.unit.Units","kind":"class","source":"src/main/java/neqsim/util/unit/Units.java","sourceDigest":"a49b37fb65d204d7859d0780e9407a344e627b2dc310b46d42472c2ba96fd5b2","domain":"util","skills":["generate-publication-figures","neqsim-acid-gas-treating","neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-agent-handoff","neqsim-column-internals-and-rate-based","neqsim-electrolyte-systems","neqsim-engineering-design-package","neqsim-field-development","neqsim-in-writing","neqsim-process-extraction","neqsim-process-synthesis-research","neqsim-professional-reporting","neqsim-refinery-crude-processing","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","plant-data","production-chemistry","pvt-simulation","review","root-cause","rotating-equipment","safety-depressuring","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.util.util.DoubleCloneable","kind":"class","source":"src/main/java/neqsim/util/util/DoubleCloneable.java","sourceDigest":"3a475c97fca5bfa473c5400be92e73148540e89bdccf25801be2265d59009b77","domain":"util","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
