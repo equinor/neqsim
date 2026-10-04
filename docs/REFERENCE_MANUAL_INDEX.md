@@ -11,6 +11,8 @@ This curated index groups the principal NeqSim guides, tutorials, references, ex
 
 ## About NeqSim
 
+- [Agent and MCP engineering capability coverage](development/ENGINEERING_CAPABILITY_COVERAGE.md)
+
 NeqSim is an open-source library for calculation of fluid behavior, phase equilibrium, and process simulation. It is used for fluids such as oil and gas, carbon dioxide, refrigerants, hydrogen, ammonia, water, and chemicals.
 
 NeqSim is distributed under the Apache-2.0 license and can be used via:

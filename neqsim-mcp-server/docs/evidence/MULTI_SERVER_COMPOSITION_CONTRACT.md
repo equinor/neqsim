@@ -88,8 +88,8 @@ review before use.
 - `src/main/java/neqsim/mcp/runners/CompositionRunner.java`
 - `src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java`
 - `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java`
-- `neqsim-mcp-server/test_composition_protocol.py`
-- `neqsim-mcp-server/test_mcp_server.py`
+- `neqsim-mcp-server/tests/protocol/test_composition_protocol.py`
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py`
 - `neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md`
 
 The focused Java suite covers deterministic discovery, fixed workflows,

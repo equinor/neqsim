@@ -349,6 +349,7 @@ neqsim doctor            # check your environment is healthy (including a built 
 neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
+neqsim file-issue TASK   # offer to file a recorded NeqSim gap as an issue (and PR)
 neqsim new-skill NAME    # scaffold a new AI skill
 neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)
 neqsim agent CMD         # manage community/private agents (list/search/install/export/doctor/validate/schema)

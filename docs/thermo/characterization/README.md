@@ -50,7 +50,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - literature-qualified ASTM D86 reference-point conversion at 0, 10, 30, 50, 70, 90, and 95 vol% with an explicit caller-supplied 100 vol% TBP terminal boundary;
 - auditable TBP cut-table export with mass/volume-basis round-trip closure and fail-closed contiguous boundaries;
 - bounded, invertible TBP recovery/cut-point queries with unit-explicit interval-yield receipts;
-- immutable TBP boiling-range SG60/60, API-gravity, and density receipts with additive closure;
+- immutable TBP boiling-range temperature-moment, distribution-spread, SG60/60, API-gravity, density, and Watson-factor receipts with additive raw-moment closure;
 - conservative adjacent whole-cut re-lumping with exact liquid-volume and implied-mass closure;
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;

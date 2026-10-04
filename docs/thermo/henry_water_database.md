@@ -220,6 +220,48 @@ reference-temperature-only semantics rather than an invented zero slope.
 `COMP.csv`, IAPWS paths, GE/Pitzer dispatch, and calibrated reactive models are
 unchanged by these dispositions.
 
+## Fail-closed unmatched-identity dispositions
+
+`HenryWaterUnmatchedDispositions.json` records all 49 rows for which the
+reviewed Sander v5.0.0 source archive has no exact-CAS record. No source
+publication or numerical value is selected for these rows. The manifest carries
+the database identity, component role, exact archive-search result and the
+evidence boundary that would have to be crossed before any future admission.
+
+The inventory separates materially different reasons for staying fail-closed:
+
+- 32 identified hydrocarbons have database molecular identities but no exact-CAS
+  archive record. Name, formula, structural analogy or a neighboring homologue
+  is not evidence for transfer;
+- `ice` and `seawater` are a condensed water phase and a solvent mixture,
+  not neutral molecular solutes in water;
+- `default`, two placeholder-CAS cyclic components and `asphaltene` lack a
+  unique molecular identity suitable for a molecular Henry coefficient;
+- `DEA` and `H+PZCOO-` cross the reactive-amine/model-species boundary and
+  require joint species and reaction-standard-state qualification;
+- seven salts or reactive inorganic rows require electrolyte, dissociation,
+  solubility or solid-equilibrium treatment rather than a neutral formula-unit
+  Henry constant; and
+- `S8` and `sulfur(S8)` require allotrope- and species-resolved
+  phase/solubility evidence. The latter duplicates the former CAS and InChIKey
+  while carrying a non-molecular formula label, so it is not independent
+  evidence.
+
+A stored zero ionic charge does not turn a salt, reaction-model aggregate,
+condensed phase or pseudocomponent into an independently volatile neutral
+molecular solute. Future admission requires exact identity, water as solvent,
+an intrinsic Henry definition, traceable source rights, units, conditions,
+uncertainty and a finite validity range. A qualified single value must use the
+existing reference-temperature-only semantics; a temperature correlation
+requires suitable independent data, residuals and validation.
+
+The manifest contains no coefficient, fitted slope, reference value, pressure
+assumption or validity range. The audit requires all 49 rows to remain outside
+the correlation, reference-point and prior disposition catalogs, to match
+`COMP.csv` and the coverage inventory exactly, and to preserve their explicit
+component-role boundary. `COMP.csv`, IAPWS paths, GE/Pitzer dispatch and
+calibrated reactive models are unchanged.
+
 ## Units and equations
 
 The source reports $H_s^{bp}=m/p$ in mol/(kg atm), with slope $B$ in K:
@@ -246,6 +288,54 @@ breaks reactive VLE benchmarks. Their standard-state requalification is separate
 campaign work. The derivative getter returns $dH_m/dT$, not $d\ln H_m/dT$.
 
 ## API and compatibility
+
+### Integrated EOS gas/oil and GE liquid references
+
+The hybrid architecture assigns the gas and hydrocarbon liquid to EOS phases and
+the aqueous or polar liquid to its selected GE phase. Henry data describe a
+solute in a specified solvent; they are not a pure-fluid equation of state.
+For a water-free generic GE liquid with an applicable vapor-pressure correlation,
+the pure-liquid reference is used even if the database tags the component as a
+solute. Supercritical gas and dense hydrocarbon/CO2 cases use their model-owned
+EOS roles. A Pitzer liquid remains a water-solvent model: a pure methanol liquid
+requires a suitable liquid model rather than a water Henry coefficient.
+
+Dissolved hydrocarbons in water use a Henry solute reference even when their
+pure-fluid database row is tagged as a solvent. Molecular formulas retain this
+decision when phase initialization has replaced the hydrocarbon classification.
+Missing Henry data retain the explicit finite unsupported-solute limit; the
+fallback does not establish hydrocarbon solubility.
+
+For a generic aqueous GE solute, the implemented reference is
+
+$$\phi_i=(\gamma_i/\gamma_i^{\infty,w})H_{x,i}/P.$$
+
+The pure-water infinite-dilution calculation retains the owning phase's component
+indices and interaction parameters, including user-set NRTL parameters. Other
+species are reduced to numerical traces in an isolated clone. It does not reload
+a different binary model from the database or mutate the source composition.
+The corresponding temperature derivative includes the reference normalization:
+
+$$\frac{\partial\ln\phi_i}{\partial T}=\frac{\partial\ln\gamma_i}{\partial T}-\frac{\partial\ln\gamma_i^{\infty,w}}{\partial T}+\frac{\partial\ln H_{x,i}}{\partial T}.$$
+
+NRTL publishes its analytical activity derivative. Models without an analytical
+activity derivative use isolated fixed-composition differences for that activity
+term. Pitzer neutral species use their molality activity directly, so this
+symmetric-to-Henry normalization is not subtracted from their derivative.
+Desmukh-Mather and Kent-Eisenberg differentiate their existing empirical Henry
+references. Desmukh-Mather includes its water Poynting pressure and temperature
+terms; both amine models' constant ionic fugacity coefficients have zero
+pressure and temperature derivatives. These corrections do not change reaction
+constants, parameter qualification, or Henry data admission.
+
+`GeneralEosGeFluidTest` exercises pure-fluid and multicomponent phase roles;
+`SystemHybridEosGeFlashTest` covers phase restoration, reordering, reactive
+conservation and process composition. `GeHenryReferenceTopologyTest` and
+`ReactiveGeDerivativeConsistencyTest` compare dilute-reference and fugacity
+derivatives with independent analytical limits and fixed-composition differences.
+Numerical consistency does not replace experimental qualification of a GE
+parameter set, a mixed solvent, a reactive Henry definition, or pressure effects
+absent from the selected model.
 
 - `hasHenryCorrelation()` distinguishes available parameters from absence; it
   does not assert temperature-range or reaction-model qualification.

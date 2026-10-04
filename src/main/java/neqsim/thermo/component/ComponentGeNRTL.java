@@ -153,6 +153,7 @@ public class ComponentGeNRTL extends ComponentGE {
     }
 
     lngamma = A / B + F;
+    dlngammadt = dAdT / B - A * dBdT / (B * B) + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter;
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
 
     /*

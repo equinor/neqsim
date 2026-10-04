@@ -32,9 +32,9 @@ Direct evidence:
 - `src/main/java/neqsim/mcp/runners/McpRunnerPlugin.java`;
 - `src/test/java/neqsim/mcp/runners/PluginRegistryContractTest.java`;
 - `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java`;
-- `neqsim-mcp-server/test_plugin_protocol.py`;
+- `neqsim-mcp-server/tests/protocol/test_plugin_protocol.py`;
 - `.github/workflows/mcp_protocol_qualification.yml`;
-- `neqsim-mcp-server/test_mcp_server.py` as the comprehensive regression.
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py` as the comprehensive regression.
 
 The Java contract covers registration, metadata discovery, exact input
 forwarding, invocation output, same-name replacement, invalid registration,

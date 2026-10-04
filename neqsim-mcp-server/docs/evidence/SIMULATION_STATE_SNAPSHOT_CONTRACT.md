@@ -15,7 +15,7 @@ The focused Java regression and packaged STDIO harness exercise:
 - fail-closed blank process input and blank first or second comparison input;
 - current inventory `1.42 / 20 explicit + 42 contract-tested + 9 confirmed gaps`, with both records retaining applicability, evidence sources and limitations.
 
-The Java evidence is `McpRunnerContractTest`. The real packaged-MCP evidence is `neqsim-mcp-server/test_simulation_state_snapshot_protocol.py`. The read-only `MCP protocol qualification` workflow runs both before the comprehensive protocol regression. `ProcessSystemStateTest` retains the underlying canonical lifecycle-state coverage.
+The Java evidence is `McpRunnerContractTest`. The real packaged-MCP evidence is `neqsim-mcp-server/tests/protocol/test_simulation_state_snapshot_protocol.py`. The read-only `MCP protocol qualification` workflow runs both before the comprehensive protocol regression. `ProcessSystemStateTest` retains the underlying canonical lifecycle-state coverage.
 
 ## Inputs, outputs and units
 

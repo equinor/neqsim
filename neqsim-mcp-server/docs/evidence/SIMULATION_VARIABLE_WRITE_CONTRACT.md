@@ -45,10 +45,10 @@ snapshot-diff semantics are not qualified here.
 - `AutomationVariableWriteContractTest` checks a bounded Celsius write, rerun/report handoff, physical-bound rejection,
   non-writable output rejection, standard envelope fields, and missing-input failures against
   `ExampleCatalog.processSimpleSeparation()`.
-- `test_simulation_variable_write_protocol.py` obtains the same canonical fixture through packaged MCP, exercises inline
+- `tests/protocol/test_simulation_variable_write_protocol.py` obtains the same canonical fixture through packaged MCP, exercises inline
   and `manageModel`-handle routes, repeats rejection cases, and proves the Phase 0 promotion, evidence sources, and accounting remain atomic.
 - `McpRunnerContractTest` retains the broad standard-response check for the public mutation surface.
-- `test_mcp_server.py` remains the authoritative packaged-protocol registration and accounting regression.
+- `tests/protocol/test_mcp_server.py` remains the authoritative packaged-protocol registration and accounting regression.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP mutation contracts before the comprehensive
   protocol suite.
 

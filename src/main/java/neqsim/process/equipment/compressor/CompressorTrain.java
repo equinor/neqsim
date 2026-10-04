@@ -37,7 +37,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * train.getCompressor().setOutletPressure(85.0);
  * train.getCompressor().setPolytropicEfficiency(0.76);
  * train.getCompressor().setUsePolytropicCalc(true);
- * train.getCooler().setOutletTemperature(273.15 + 35.0);
+ * train.getAftercooler().setOutletTemperature(273.15 + 35.0);
  * train.run();
  *
  * double power = train.getPower("kW");

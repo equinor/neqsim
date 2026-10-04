@@ -9,6 +9,12 @@ request, classify it, and delegate to the most appropriate specialist agent(s).
 
 ## Routing Decision Table
 
+For a capability or exposure question, use `runCapability` with `action="coverage"`
+to find registered API/skill/agent/tool mappings and explicit evidence gaps.
+Inspect the returned tool schema before execution. Missing registrations require
+source/API investigation; they do not prove that NeqSim lacks the functionality.
+Never present a skill mention or declared route as engineering qualification.
+
 Analyze the request and match it to one or more agents:
 
 | Signal in Request | Primary Agent | Secondary Agent(s) |
@@ -34,6 +40,15 @@ Analyze the request and match it to one or more agents:
 | Hydrogen, H2 blending, electrolysis, green H2, blue H2, SMR, hydrogen pipeline | `@ccs-hydrogen` | `@gas-quality` for Wobbe impact |
 | Plant data, historian, tagreader, PI, IP.21, digital twin, live model, compare model to plant | `@plant-data` | `@process-model` for building the simulation |
 | Gas turbine, steam turbine, HRSG, combined cycle, power generation, waste heat | `@process-model` | loads power generation classes |
+| Claus / sulfur recovery, tail gas, amine sweetening, acid-gas removal, membrane or PSA, crude assay, crude blending, hydrotreating, packed or rate-based column, flooding / HETP, produced-water treatment, hydrocyclone, solids separation, filtration | `@gas-processing-refining` | `@process-model` for the surrounding flowsheet; `@mechanical-design` for vessel sizing |
+| Looped gas/oil network, linepack, network nominations and quality limits, terminal tanks, cargo scheduling, integrated production model, gas-lift allocation, tie-in host capacity, electrification, power-from-shore, wind/solar/GT dispatch, energy bus | `@network-energy-systems` | `@field-development` for concept economics; `@optimize` for the search; `@utility-design` for utility sizing |
+| Compressor chart calibration or extrapolation, compressor train, turboexpander map, pump NPSH, API 610, casing / thrust / rotor screening | `@rotating-equipment` | `@control-system` for anti-surge control; `@root-cause` for trips; `@mechanical-design` for detailed design |
+| Release rate, leak or rupture source term, HEM flashing release, pipe decompression, time-resolved source term | `@safety-depressuring` | `@consequence-analysis` for fire / dispersion; loads `neqsim-release-source-terms` |
+| ESD test, dynamic safety scenario, operational or portfolio risk simulation, open drain review, process-safety-system review | `@safety-depressuring` | `@standards-review` for P-002 / STS0131 gates; loads `neqsim-operational-risk-and-safety-validation` |
+| Engineering design loop, P&ID synthesis, DEXPI export, CFIHOS handover, change impact, package validation | `@engineering-deliverables` | `@process-model` for the base model; `@standards-review` for rule compliance; loads `neqsim-engineering-design-package` |
+| Model predictive control, step-response model, virtual flow meter, soft sensor, data reconciliation, cascade or split-range structure | `@control-system` | `@plant-data` for historian data; loads `neqsim-advanced-control-mpc-and-virtual-sensing` |
+| Process synthesis, superstructure, flowsheet candidate generation, route screening | `@optimize` | `@process-model` to evaluate the survivors; loads `neqsim-process-synthesis-research` |
+| LNG tank ageing, rollover, boil-off, LNG ship voyage | `@lng-value-chain` | `@process-model` for BOG handling flowsheet |
 | Electrolyte, brine, produced water, scale, MEG, ions, pH | `@thermo-fluid` | loads `neqsim-electrolyte-systems` skill |
 | JUnit test, unit test, regression test | `@neqsim-test` | — |
 | Jupyter notebook, example, demonstration | `@notebook-example` | — |

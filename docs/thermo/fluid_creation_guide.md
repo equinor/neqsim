@@ -403,6 +403,13 @@ activity-based scale-potential screening after reactive gas-aqueous or gas-oil-a
 saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
 supported by the hybrid strategy.
 
+Hybrid initialization preserves the EOS gas root, EOS oil root and GE liquid role
+through the inner phase-fraction iterations, including phase-specific
+initialization. An oil trial temporarily classified as gas by density does not
+change the EOS root used at the next iteration. Pure fluids use the supported
+remaining role; no water Henry coefficient is interpreted as a pure-fluid EOS.
+See [integrated reference conventions and derivative validation](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references).
+
 Neutral-gas dissolution also requires a qualified Henry-law reference and, for brines, separately qualified Pitzer
 neutral-ion interactions. See [Henry-law reference states and aqueous gas-solubility evidence](henry_law_reference.md)
 for the implemented temperature law, derivative contract, current coefficient audit, source matrix and adoption gates.
