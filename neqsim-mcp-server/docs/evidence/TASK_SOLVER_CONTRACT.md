@@ -47,7 +47,7 @@ The focused Java contract in
 - stop-on-required-failure behavior and explicit error status;
 - missing, blank, malformed, and unsupported task rejection.
 
-The packaged `neqsim-mcp-server/test_solve_task_protocol.py` harness starts
+The packaged `neqsim-mcp-server/tests/protocol/test_solve_task_protocol.py` harness starts
 the shaded server over STDIO and repeats seven transport-level scenarios,
 including discovery text, standard envelopes, the real PVT route, diagnostic
 preservation, and promoted-inventory continuity. The comprehensive MCP

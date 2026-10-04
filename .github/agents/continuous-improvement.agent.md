@@ -52,7 +52,7 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
    progress, trends, events, pending decisions and next actions. `<task>` may be a
    path or a folder name inside the task root; `task-status` and
    `task-reference-case` without a folder use the task root.
-2. **Make living** if needed: `neqsim task-living <task> [--brief FILE]`. Fill
+2. **Make living** if needed: `neqsim task-living <task> [--brief FILE] [--template production]` (`production` adds model gates, hard constraints, a proposal guard and `continuous/user_input.yaml`; engineers add comments and restrictions with `neqsim task-note`, applied from the next cycle). Fill
    `goal.yaml` objective/constraints from the brief sections and ask the user to
    confirm (they set `confirmed_by`).
 3. **Plan**: edit `continuous/cycle_plan.yaml` — sources and adapters, task-local

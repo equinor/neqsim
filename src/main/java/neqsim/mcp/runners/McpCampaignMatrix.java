@@ -105,7 +105,7 @@ public final class McpCampaignMatrix {
         "STDIO and Streamable HTTP end-to-end protocol tests", "Synchronize NeqSim agents/skills with MCP contracts"},
         new String[] {"PARTIAL_EVIDENCE", "MERGED_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE", "PARTIAL_EVIDENCE",
             "MERGED_EVIDENCE"},
-        evidence("CapabilitiesRunner/SchemaCatalog/test_mcp_server.py/tool-reference lint", 6));
+        evidence("CapabilitiesRunner/SchemaCatalog/tests/protocol/test_mcp_server.py/tool-reference lint", 6));
     add(rows, 9,
         new String[] {"Profile, identity, tenant, audit, approval and execution security",
             "Correlation IDs and structured observability", "Malformed/adversarial/resource-exhaustion tests",

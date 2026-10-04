@@ -44,7 +44,12 @@ fix it.
    `READY_WITH_WORKAROUNDS` / `NEEDS_NIP` / `BLOCKED`, see
    `neqsim-capability-map` §L). WARN if the verdict is missing;
    if the verdict is `NEEDS_NIP` or `BLOCKED`, confirm a matching
-   `neqsim_improvements.md` NIP exists — FAIL if it does not.
+   `neqsim_improvements.md` NIP exists — FAIL if it does not. When a NIP
+   exists, WARN (do not FAIL) if none of its entries carry a
+   `**GitHub issue:**` line — that marker means `neqsim file-issue` was run
+   and the user was actually offered the upstream-issue option (§6.4 of
+   `neqsim-task-workflow`); a NIP with no marker just means the user was
+   never asked, which is a reminder, not a defect.
 
 4. **Notebook execution.** For each `.ipynb` in `step2_analysis/`:
    - Verify cells have `execution_count` set (i.e. were actually run)

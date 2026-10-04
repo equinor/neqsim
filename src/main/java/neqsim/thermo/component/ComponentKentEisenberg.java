@@ -37,6 +37,33 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
   }
 
+  /**
+   * Differentiates this model's ideal activities and empirical Henry convention.
+   *
+   * @param phase owning Kent-Eisenberg phase
+   * @return d(ln phi)/dT in 1/K
+   */
+  @Override
+  public double fugcoefDiffTemp(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    dfugdt = referenceStateType.equals("solvent")
+        ? getAntoineVaporPressuredT(temperature) / getAntoineVaporPressure(temperature)
+        : ionicCharge == 0 ? getLnHenryCoefficientTemperatureDerivative(temperature) : 0.0;
+    return dfugdt;
+  }
+
+  /**
+   * Differentiates the explicit pressure denominator or the constant ionic fugacity coefficient.
+   *
+   * @param phase owning Kent-Eisenberg phase
+   * @return d(ln phi)/dP in 1/bar
+   */
+  @Override
+  public double fugcoefDiffPres(PhaseInterface phase) {
+    dfugdp = referenceStateType.equals("solvent") || ionicCharge == 0 ? -1.0 / phase.getPressure() : 0.0;
+    return dfugdp;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {

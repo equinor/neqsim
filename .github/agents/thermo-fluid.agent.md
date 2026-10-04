@@ -8,9 +8,10 @@ required_skills:
 - neqsim-troubleshooting
 - neqsim-eos-regression
 - neqsim-electrolyte-systems
+- neqsim-refinery-crude-processing
 argument-hint: Describe the fluid or phase-envelope task — e.g., "natural gas with 85% methane, 10% ethane, 5% propane at 60 bara", "plot the PT phase envelope and retrograde region", "fix a singular Michelsen Jacobian with a zero-fraction component", or "CO2-rich stream with water for CCS".
 ---
-Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression, neqsim-electrolyte-systems
+Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression, neqsim-electrolyte-systems, neqsim-refinery-crude-processing
 
 You are a thermodynamic fluid specialist for NeqSim.
 

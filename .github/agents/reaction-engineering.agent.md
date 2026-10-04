@@ -8,9 +8,10 @@ required_skills:
 - neqsim-java8-rules
 - neqsim-standards-lookup
 - neqsim-troubleshooting
+- neqsim-sulfur-recovery
 argument-hint: "Describe the reactor system — e.g., 'steam methane reforming at 850°C and 30 bar', 'ammonia synthesis reactor with Fe catalyst', 'Claus reactor for sulfur recovery', or 'water-gas shift reactor downstream of gasifier'."
 ---
-Loaded skills: neqsim-reaction-engineering, neqsim-self-heating-ignition, neqsim-api-patterns, neqsim-java8-rules, neqsim-standards-lookup, neqsim-troubleshooting
+Loaded skills: neqsim-reaction-engineering, neqsim-self-heating-ignition, neqsim-api-patterns, neqsim-java8-rules, neqsim-standards-lookup, neqsim-troubleshooting, neqsim-sulfur-recovery
 
 ## Skills to Load
 

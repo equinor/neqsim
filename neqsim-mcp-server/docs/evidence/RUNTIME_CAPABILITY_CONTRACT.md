@@ -19,7 +19,7 @@ inventory promotion. It is not a general claim about every NeqSim calculation.
 - Negative Java paths reject external classes, instance methods, MCP-internal
   runners, unsupported generic containers, unknown actions, malformed JSON,
   and oversized requests.
-- `test_capability_protocol.py` repeats the user-visible discovery,
+- `tests/protocol/test_capability_protocol.py` repeats the user-visible discovery,
   invocation, and rejection paths through the packaged server's real
   JSON-RPC/STDIO transport and standard response envelope.
 - `mcp_protocol_qualification.yml` runs both focused suites before the
@@ -77,8 +77,8 @@ Long-running and stateful simulations remain on curated process runners.
 Inventory version 1.31 atomically promotes `runCapability` to
 `CONTRACT_TESTED` after merged PR #3554 established the direct evidence
 above. Machine-readable coverage, Java assertions,
-`test_capability_protocol.py`, synchronized focused protocol expectations,
-authoritative `test_mcp_server.py` accounting, and documentation move
+`tests/protocol/test_capability_protocol.py`, synchronized focused protocol expectations,
+authoritative `tests/protocol/test_mcp_server.py` accounting, and documentation move
 together from 20/30/21 to 20/31/20.
 
 The focused packaged suite adds an inventory-promotion assertion and retains

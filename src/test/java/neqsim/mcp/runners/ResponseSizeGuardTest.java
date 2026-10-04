@@ -130,12 +130,15 @@ class ResponseSizeGuardTest {
     assertEquals(originalImplementation, response.getAsJsonObject("implementationInventory"));
     assertEquals(originalImplementation, response.getAsJsonObject("data").getAsJsonObject("implementationInventory"));
     assertEquals(originalEvidence, response.getAsJsonObject("phase0EvidenceInventory"));
+    assertTrue(response.has("engineeringCoverage"));
+    assertFalse(response.getAsJsonObject("engineeringCoverage").get("complete").getAsBoolean());
     assertEquals(originalEvidence, response.getAsJsonObject("data").getAsJsonObject("phase0EvidenceInventory"));
     JsonObject implementationInventory = response.getAsJsonObject("implementationInventory");
     assertTrue(implementationInventory.get("complete").getAsBoolean());
     assertEquals(71, implementationInventory.get("toolBindingCount").getAsInt());
     assertEquals(60, implementationInventory.get("implementationClassCount").getAsInt());
-    assertEquals(207, implementationInventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(originalImplementation.getAsJsonArray("supportedEquipmentTypes").size(),
+        implementationInventory.get("equipmentTypeCount").getAsInt());
     assertEquals(2, implementationInventory.get("reportPathCount").getAsInt());
     assertEquals("neqsim.mcp.runners.ProcessRunner",
         implementationInventory.getAsJsonObject("toolImplementationBindings").get("runProcess").getAsString());

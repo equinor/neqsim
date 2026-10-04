@@ -10,11 +10,12 @@ required_skills:
 - neqsim-technical-document-reading
 - neqsim-pid-process-operations
 - neqsim-troubleshooting
+- neqsim-rotating-equipment-design
 argument-hint: "Describe the equipment issue — e.g., 'compressor C-100 tripping on high vibration, increasing trend over 2 weeks', 'separator V-200 liquid carryover to gas outlet', 'heat exchanger E-300 approach temperature increasing', or 'pump P-400 efficiency dropped from 82% to 65%'."
 ---
 ## Skills to Load
 
-Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting
+Loaded skills: neqsim-root-cause-analysis, neqsim-flow-accelerated-corrosion, neqsim-plant-data, neqsim-process-safety, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pid-process-operations, neqsim-troubleshooting, neqsim-rotating-equipment-design
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-root-cause-analysis/SKILL.md` — RCA framework, symptoms, hypotheses, evidence analysis
@@ -30,6 +31,13 @@ H2S breakthrough, or a suspected chemical incompatibility between injected produ
 off to `@production-chemistry`. It owns `neqsim.process.chemistry.rca.RootCauseAnalyser`
 (explainable chemical candidate ranking), the compatibility rule base, and
 `ScaleRemediationAdvisor` for the dissolver/wash recommendation.
+
+When weather (ambient temperature, wind, sea state) may be a contributing factor — an
+air-cooler or gas-turbine margin loss on a hot day, a wind-affected flare/fire-water case,
+a storm-related trip, or a cold-snap hydrate/freeze event — pull historical conditions for
+the equipment's location and the event window from the community `neqsim-weather-data`
+skill (or the `installation-weather-agent`) before scoring weather as evidence; see the
+root-cause-analysis skill's "Weather as Evidence" section for the confidence bands.
 
 ## Operating Principles
 

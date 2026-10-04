@@ -30,12 +30,22 @@ This guide provides detailed documentation of the COMP database, which stores pu
 
 ## Database Overview
 
-The component, blob, experiment, and fluid database wrappers have separate
-connection lifecycles. Tests of a wrapper must use its current API: the legacy
-blob and experiment wrappers expose JDBC resources but do not implement
-`AutoCloseable`, so callers close their statements and connections explicitly.
-The blob wrapper loads the H2 driver for `H2` and `H2RT`; these configurations
-do not require the removed JDBC-ODBC bridge.
+The component, blob, experiment, and fluid database wrappers share JDBC lifecycle
+handling through `NeqSimDatabaseBase`. All four wrappers implement `AutoCloseable`
+and should be closed with Java try-with-resources. Each instance owns its statement
+and connection; repeated initialization reuses them. Closing attempts both resources,
+even if statement cleanup fails, and preserves additional SQL errors as suppressed
+exceptions. A subsequent query or execution can reopen a closed wrapper. Wrappers
+are not thread-safe and should not be shared between concurrent operations.
+
+Existing concrete APIs remain compatible: `NeqSimDataBase.execute(String)` returns
+a boolean, while blob, experiment, and fluid `execute(String)` methods return void.
+The fluid wrapper retains its legacy log-and-return error behavior and
+`getResultSet(String database, String sqlString)` overload; the database label does
+not change the active connection. Other wrappers propagate SQL failures with their
+original cause. The inherited `FileSystemSettings` constants remain available for
+existing callers. The blob wrapper loads the H2 driver for `H2` and `H2RT`, without
+the removed JDBC-ODBC bridge.
 
 The **COMP** table is the primary pure component property database in NeqSim. It contains over 150 parameters per component, organized into functional groups that support different thermodynamic models and property calculations.
 
@@ -459,8 +469,8 @@ Complete parameter list with units and typical values:
 | Parameter | Unit | Example (methane) | Example (water) |
 |-----------|------|-------------------|-----------------|
 | `MOLARMASS` | g/mol | 16.043 | 18.015 |
-| `TC` | °C | -82.59 | 373.946 |
-| `PC` | bara | 45.99 | 220.64 |
+| `TC` | °C | -82.59 | 374.15 (legacy model parameter) |
+| `PC` | bara | 45.99 | 220.89 (legacy model parameter) |
 | `ACSFACT` | - | 0.0115 | 0.344 |
 | `CRITVOL` | cm³/mol | 99.0 | 56.0 |
 | `NORMBOIL` | °C | -161.55 | 100.0 |
@@ -779,6 +789,28 @@ would invalidate electrolyte calculations; liquid-vapor applicability is instead
 rejected explicitly for ions by the property API.
 
 ---
+
+## Water reference constants and model compatibility
+
+`neqsim.thermo.WaterReferenceConstants` exposes the IAPWS-95 critical point of ordinary
+water: `CRITICAL_TEMPERATURE_K = 647.096`, `CRITICAL_PRESSURE_PA = 22064000`, and
+`CRITICAL_PRESSURE_BARA = 220.64`. These are physical reference values from the
+[IAPWS G5-01(2026) guideline, section 4.1](https://iapws.org/documents/release/fundam.download).
+The Henry-law and humid-air IAPWS correlations use this shared reference.
+These constants do not apply to isotopically substituted water.
+
+The `COMP` water row retains the established simulation parameters `TC = 374.15 °C`
+(`647.30 K`) and `PC = 220.89 bara`. `ComponentInterface.getTC()` and `getPC()` return
+these model parameters, including explicit user overrides, rather than replacing them
+with reference values. The legacy values are **not** the IAPWS physical critical point;
+no claim of experimental fitting provenance is made for them.
+
+Replacing the shared parameters changes cubic-EOS terms, CPA attraction functions,
+transport correlations and flash initialization. The direct substitution in #4128
+caused phase-count, chemical-closure, salt-saturation and hydrate-inventory regressions.
+Migration of these model parameters remains unqualified and must include model-specific
+assessment and physical validation, rather than changing expected test results alone.
+Issue #4091 therefore remains open for the model migration and viscosity-data concerns.
 
 ## Data Integrity Gates
 

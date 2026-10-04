@@ -46,8 +46,9 @@ def load_plan(task_dir):
     plan.setdefault("schema_version", "1.0")
     plan.setdefault("stages", list(DEFAULT_STAGES))
     for key in ("sources", "kpis", "scripts", "triggers", "notify", "agent", "solve",
-                "backtest", "drift", "report"):
+                "backtest", "drift", "report", "production"):
         plan.setdefault(key, {})
+    plan.setdefault("gates", [])
     if not isinstance(plan["stages"], list):
         raise ValueError("cycle_plan.yaml: 'stages' must be a list")
     return plan

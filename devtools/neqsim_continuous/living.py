@@ -47,6 +47,51 @@ backtest: {}
 report: {formal: never}                 # never | on_promote | every_cycle
 """
 
+PRODUCTION_PLAN_TEMPLATE = """# Production-optimisation cycle plan (neqsim_continuous schema 1.0).
+# Advisory loop: the cycle updates the model from live data, checks that it matches the plant,
+# checks the constraints, lets the optimiser propose setpoints, and withholds every proposal that
+# is not safe to show. An engineer approves; nothing is written to the control system.
+schema_version: "1.0"
+sources: {}
+#  historian:
+#    adapter: tagreader                 # community; ots / pdm adapters are enterprise
+#    options: {site: SNA, tags: {...}, time_column: timestamp}
+#    initial_lookback_days: 1
+#    stale_after_hours: 6
+kpis: {}
+#  export_oil_Sm3d: {source: model, column: export_oil_Sm3d}      # normally set by script:model_update
+scripts:
+  model_update: {file: continuous/stages/model_update.py, function: run}   # live data -> model state, run, residual KPIs
+  optimize: {file: continuous/stages/optimize.py, function: run}           # bounded search -> proposals
+gates: []
+#  - {name: sep_T_residual, kpi: max_sep_T_residual_K, abs_max: 3.0}      # no advice if the model is off
+#  - {name: mass_balance, kpi: mass_balance_pct, abs_max: 0.05}
+production: {min_gain: 0.0, outcome_tolerance: 0.5}
+drift:
+  signals: []
+  settings: {lambda: 0.2, L: 3.5, k: 0.5, h: 6.0, warmup: 30}
+triggers:
+  kpi_step: {}
+  criteria: {}
+stages: [sense, inputs, refresh, "script:model_update", "script:optimize", kpis, gates, constraints, guard,
+         drift, goal, diff, outcome, ledger, digest, notify, agent]
+notify:
+  channels: [file]
+agent: {enabled: false, agent: continuous-improvement, executable: copilot}
+solve: {}
+backtest: {}
+report: {formal: never}
+"""
+
+# Constraints are checked by the 'constraints' stage; a hard constraint without a limit withholds advice.
+PRODUCTION_CONSTRAINTS = [
+    {"name": "product_spec", "kpi": None, "op": "<=", "limit": None, "margin": 0.0, "warn": 0.0, "hard": True,
+     "source": "spec", "confirmed_by": None, "note": "set kpi, limit and margin (bias scatter) for the certified spec"},
+    {"name": "equipment_limit", "kpi": None, "op": "<=", "limit": None, "margin": 0.0, "hard": True,
+     "source": "demonstrated", "confirmed_by": None,
+     "note": "larger of design and demonstrated limit (neqsim_continuous.production.demonstrated_limit)"},
+]
+
 CATEGORY_HINTS = (
     ("model", ("re-fit", "refit", "calibrat", "model")),
     ("maintenance", ("wash", "monitor", "inspect", "maintenance", "clean")),
@@ -85,8 +130,13 @@ def _find_brief(task_dir, brief):
     return None
 
 
-def make_living(task_dir, brief=None):
-    """Scaffold ``continuous/`` for an existing task. Never overwrites existing files."""
+def make_living(task_dir, brief=None, template=None):
+    """Scaffold ``continuous/`` for an existing task. Never overwrites existing files.
+
+    ``template='production'`` writes the production-optimisation plan and goal constraints.
+    """
+    if template not in (None, "production"):
+        raise ValueError("Unknown template '{}'. Valid: production".format(template))
     task_dir = os.path.abspath(str(task_dir))
     cont = continuous_dir(task_dir)
     report = {"created": [], "kept": []}
@@ -102,7 +152,7 @@ def make_living(task_dir, brief=None):
 
     def _plan(path):
         with open(path, "w", encoding="utf-8") as f:
-            f.write(PLAN_TEMPLATE)
+            f.write(PRODUCTION_PLAN_TEMPLATE if template == "production" else PLAN_TEMPLATE)
 
     _write(os.path.join(cont, PLAN_FILE), _plan)
 
@@ -135,7 +185,7 @@ def make_living(task_dir, brief=None):
                 "brief_sections": sections, "confirmed_by": None,
                 "objective": {"metric": None, "direction": "maximize", "target": None,
                               "confidence_required": "medium", "source_section": None},
-                "secondary_metrics": [], "constraints": [],
+                "secondary_metrics": [], "constraints": [dict(c) for c in PRODUCTION_CONSTRAINTS] if template == "production" else [],
                 "stop": {"goal_met": {"validated": True},
                          "converged": {"window": 3, "relative": 0.02, "absolute": 0.0},
                          "budget": {"iterations": 12, "agent_sessions": 6},
@@ -149,6 +199,14 @@ def make_living(task_dir, brief=None):
             yaml.safe_dump(goal, f, sort_keys=False)
 
     _write(os.path.join(cont, GOAL_FILE), _goal)
+
+    def _user_input(path):
+        from .user_input import HEADER
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(HEADER + "entries: []\n")
+
+    if template == "production":
+        _write(os.path.join(cont, "user_input.yaml"), _user_input)
 
     results = read_json(os.path.join(task_dir, "results.json"), {}) or {}
     base = os.path.join(cont, "baseline")

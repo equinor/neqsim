@@ -48,7 +48,7 @@ class ReactiveCO2BrineHydrateOrderTest {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
       SystemInterface fluid = brine(0, 50.0, 1.0, true);
       solveAndVerify(fluid);
-      assertEquals(280.68284, fluid.getTemperature(), 2.0e-4);
+      assertEquals(280.65013, fluid.getTemperature(), 2.0e-4);
     });
   }
 
@@ -59,7 +59,7 @@ class ReactiveCO2BrineHydrateOrderTest {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
       SystemInterface fluid = brine(order, 50.0, 1.0, true);
       solveAndVerify(fluid);
-      assertEquals(280.68284, fluid.getTemperature(), 2.0e-4);
+      assertEquals(280.65013, fluid.getTemperature(), 2.0e-4);
     });
   }
 
@@ -101,7 +101,7 @@ class ReactiveCO2BrineHydrateOrderTest {
       SystemInterface second = brine(1, 50.0, 1.0, false);
       new ThermodynamicOperations(first).hydrateFormationTemperature();
       new ThermodynamicOperations(second).hydrateFormationTemperature();
-      assertEquals(280.71076, first.getTemperature(), 2.0e-4);
+      assertEquals(280.6780331, first.getTemperature(), 2.0e-4);
       assertEquivalent(first, second);
     });
   }

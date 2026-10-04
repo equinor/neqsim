@@ -107,6 +107,12 @@ public class PhaseGENRTL extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public double getLnActivityCoefficientTemperatureDerivative(int component) {
+    return ((ComponentGEInterface) getComponent(component)).getLnGammadt();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
       PhaseType pt) {
     GE = 0;
