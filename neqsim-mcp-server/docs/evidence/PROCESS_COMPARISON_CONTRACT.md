@@ -26,8 +26,8 @@ explicit?
 
 `ProcessComparisonRunnerTest` verifies complete execution, partial failure,
 malformed and oversized requests, collection limits, and name limits.
-`test_process_comparison_protocol.py` exercises seven packaged-server
-scenarios. `test_mcp_server.py` retains broad real-protocol coverage and
+`tests/protocol/test_process_comparison_protocol.py` exercises seven packaged-server
+scenarios. `tests/protocol/test_mcp_server.py` retains broad real-protocol coverage and
 verifies the atomic inventory record. `SchemaCatalog`, `ExampleCatalog`, and
 `NeqSimTools` expose synchronized discovery contracts.
 

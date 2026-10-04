@@ -49,7 +49,7 @@ jobs:
           python-version: '3.12'
 
       - name: Check Phase 0 documentation accounting
-        run: python neqsim-mcp-server/test_phase0_documentation.py
+        run: python neqsim-mcp-server/tests/documentation/test_phase0_documentation.py
 
       - name: Install exact NeqSim core without tests
         run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
@@ -134,106 +134,106 @@ jobs:
           mvn -B package -Dneqsim.version="$NEQSIM_VERSION" -DskipTests -Dmaven.javadoc.skip=true -ntp
 
       - name: Run focused real-MCP API-inspection qualification
-        run: cd neqsim-mcp-server && python test_inspect_api_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_inspect_api_protocol.py
 
       - name: Run focused real-MCP validation-profile qualification
-        run: cd neqsim-mcp-server && python test_validation_profile_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_validation_profile_protocol.py
 
       - name: Run focused real-MCP automation-read qualification
-        run: cd neqsim-mcp-server && python test_automation_read_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_automation_read_protocol.py
 
       - name: Run focused real-MCP model-registry qualification
-        run: cd neqsim-mcp-server && python test_model_registry_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_model_registry_protocol.py
 
       - name: Run focused real-MCP session-lifecycle qualification
-        run: cd neqsim-mcp-server && python test_session_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_session_protocol.py
 
       - name: Run focused real-MCP persisted-state qualification
-        run: cd neqsim-mcp-server && python test_state_persistence_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_state_persistence_protocol.py
 
       - name: Run focused real-MCP adjustable-parameter qualification
-        run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_adjustable_parameters_protocol.py
 
       - name: Run focused real-MCP process-loop qualification
-        run: cd neqsim-mcp-server && python test_process_loop_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_process_loop_protocol.py
 
       - name: Run focused real-MCP utility-design qualification
-        run: cd neqsim-mcp-server && python test_utility_design_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_utility_design_protocol.py
 
       - name: Run focused real-MCP chemistry qualification
-        run: cd neqsim-mcp-server && python test_chemistry_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_chemistry_protocol.py
 
       - name: Run focused real-MCP flare-radiation qualification
-        run: cd neqsim-mcp-server && python test_flare_radiation_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_flare_radiation_protocol.py
 
       - name: Run focused real-MCP HAZOP-scenario qualification
-        run: cd neqsim-mcp-server && python test_hazop_scenario_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_hazop_scenario_protocol.py
 
       - name: Run focused real-MCP safety-system-performance qualification
-        run: cd neqsim-mcp-server && python test_safety_system_performance_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_safety_system_performance_protocol.py
 
       - name: Run focused real-MCP open-drain-review qualification
-        run: cd neqsim-mcp-server && python test_open_drain_review_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_open_drain_review_protocol.py
 
       - name: Run focused real-MCP NORSOK S-001 Clause 10 review qualification
-        run: cd neqsim-mcp-server && python test_norsok_s001_clause10_review_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_norsok_s001_clause10_review_protocol.py
 
       - name: Run focused real-MCP simulation-variable mutation qualification
-        run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_simulation_variable_write_protocol.py
 
       - name: Run focused real-MCP simulation-state snapshot qualification
-        run: cd neqsim-mcp-server && python test_simulation_state_snapshot_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_simulation_state_snapshot_protocol.py
 
       - name: Run focused real-MCP visualization qualification
-        run: cd neqsim-mcp-server && python test_visualization_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_visualization_protocol.py
 
       - name: Run focused real-MCP process-local plugin qualification
-        run: cd neqsim-mcp-server && python test_plugin_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_plugin_protocol.py
 
       - name: Run focused real-MCP runtime-capability qualification
-        run: cd neqsim-mcp-server && python test_capability_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_capability_protocol.py
 
       - name: Run focused real-MCP composed-workflow qualification
-        run: cd neqsim-mcp-server && python test_compose_workflow_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_compose_workflow_protocol.py
 
       - name: Run focused real-MCP task-solver qualification
-        run: cd neqsim-mcp-server && python test_solve_task_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_solve_task_protocol.py
 
       - name: Run focused real-MCP bounded-streaming qualification
-        run: cd neqsim-mcp-server && python test_streaming_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_streaming_protocol.py
 
       - name: Run focused real-MCP multi-server composition qualification
-        run: cd neqsim-mcp-server && python test_composition_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_composition_protocol.py
 
       - name: Run focused real-MCP bounded risk-matrix qualification
-        run: cd neqsim-mcp-server && python test_risk_matrix_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_risk_matrix_protocol.py
 
       - name: Run focused real-MCP bounded LOPA qualification
-        run: cd neqsim-mcp-server && python test_lopa_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_lopa_protocol.py
 
       - name: Run focused real-MCP bounded SIL qualification
-        run: cd neqsim-mcp-server && python test_sil_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_sil_protocol.py
 
       - name: Run focused real-MCP process-comparison qualification
-        run: cd neqsim-mcp-server && python test_process_comparison_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_process_comparison_protocol.py
 
       - name: Run focused real-MCP barrier-register qualification
-        run: cd neqsim-mcp-server && python test_barrier_register_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_barrier_register_protocol.py
 
       - name: Run focused real-MCP operational-study qualification
-        run: cd neqsim-mcp-server && python test_operational_study_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_operational_study_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
-        run: cd neqsim-mcp-server && python test_validate_input_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_validate_input_protocol.py
 
       - name: Run focused real-MCP result-validation qualification
-        run: cd neqsim-mcp-server && python test_validate_results_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_validate_results_protocol.py
 
       - name: Run focused real-MCP reporting qualification
-        run: cd neqsim-mcp-server && python test_reporting_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_reporting_protocol.py
 
       - name: Run focused real-MCP security-management qualification
-        run: cd neqsim-mcp-server && python test_security_protocol.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_security_protocol.py
 
       - name: Run comprehensive real-MCP protocol regression
-        run: cd neqsim-mcp-server && python test_mcp_server.py
+        run: cd neqsim-mcp-server && python tests/protocol/test_mcp_server.py
