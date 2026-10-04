@@ -215,6 +215,7 @@ double dieselSpecificGravity = diesel.getAverageSpecificGravity();
 double dieselApiGravity = diesel.getApiGravity();
 double dieselDensityKgM3At60F = diesel.getDensityKgPerCubicMetreAt60F();
 double dieselMeanBoilingPointCelsius = diesel.getAverageBoilingPointCelsius();
+double dieselBoilingSpreadKelvin = diesel.getBoilingPointStandardDeviationKelvin();
 double dieselWatsonFactor = diesel.getWatsonCharacterizationFactor();
 ```
 
@@ -254,6 +255,20 @@ $$overline{T}_{V,range}=rac{M_{T,V}}{sum_iDelta V_i}$$
 
 and is available in K and degC. First moments, unlike means, close additively when a
 range is partitioned.
+
+The receipt also integrates the second raw moment exactly for every overlap:
+
+`M2 = sum[Delta V_i * (T_lower,i^2 + T_lower,i*T_upper,i + T_upper,i^2) / 3]`.
+
+`getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()` reports `M2`
+in K squared liquid-volume percent. `getBoilingPointVarianceKelvinSquared()`
+evaluates `M2 / sum(Delta V_i) - average(T)^2`, and
+`getBoilingPointStandardDeviationKelvin()` reports its square root in K. Raw second
+moments close additively across a partition; variances and standard deviations do not.
+
+These spread descriptors describe the qualified piecewise-linear TBP distribution.
+They are not ASTM distillation reproducibility or experimental uncertainty and do not
+add a measured intrainterval curve.
 
 `getWatsonCharacterizationFactor()` combines that mean TBP with the receipt's average
 SG60/60 using NeqSim's existing convention
