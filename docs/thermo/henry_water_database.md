@@ -220,6 +220,48 @@ reference-temperature-only semantics rather than an invented zero slope.
 `COMP.csv`, IAPWS paths, GE/Pitzer dispatch, and calibrated reactive models are
 unchanged by these dispositions.
 
+## Fail-closed unmatched-identity dispositions
+
+`HenryWaterUnmatchedDispositions.json` records all 49 rows for which the
+reviewed Sander v5.0.0 source archive has no exact-CAS record. No source
+publication or numerical value is selected for these rows. The manifest carries
+the database identity, component role, exact archive-search result and the
+evidence boundary that would have to be crossed before any future admission.
+
+The inventory separates materially different reasons for staying fail-closed:
+
+- 32 identified hydrocarbons have database molecular identities but no exact-CAS
+  archive record. Name, formula, structural analogy or a neighboring homologue
+  is not evidence for transfer;
+- `ice` and `seawater` are a condensed water phase and a solvent mixture,
+  not neutral molecular solutes in water;
+- `default`, two placeholder-CAS cyclic components and `asphaltene` lack a
+  unique molecular identity suitable for a molecular Henry coefficient;
+- `DEA` and `H+PZCOO-` cross the reactive-amine/model-species boundary and
+  require joint species and reaction-standard-state qualification;
+- seven salts or reactive inorganic rows require electrolyte, dissociation,
+  solubility or solid-equilibrium treatment rather than a neutral formula-unit
+  Henry constant; and
+- `S8` and `sulfur(S8)` require allotrope- and species-resolved
+  phase/solubility evidence. The latter duplicates the former CAS and InChIKey
+  while carrying a non-molecular formula label, so it is not independent
+  evidence.
+
+A stored zero ionic charge does not turn a salt, reaction-model aggregate,
+condensed phase or pseudocomponent into an independently volatile neutral
+molecular solute. Future admission requires exact identity, water as solvent,
+an intrinsic Henry definition, traceable source rights, units, conditions,
+uncertainty and a finite validity range. A qualified single value must use the
+existing reference-temperature-only semantics; a temperature correlation
+requires suitable independent data, residuals and validation.
+
+The manifest contains no coefficient, fitted slope, reference value, pressure
+assumption or validity range. The audit requires all 49 rows to remain outside
+the correlation, reference-point and prior disposition catalogs, to match
+`COMP.csv` and the coverage inventory exactly, and to preserve their explicit
+component-role boundary. `COMP.csv`, IAPWS paths, GE/Pitzer dispatch and
+calibrated reactive models are unchanged.
+
 ## Units and equations
 
 The source reports $H_s^{bp}=m/p$ in mol/(kg atm), with slope $B$ in K:
