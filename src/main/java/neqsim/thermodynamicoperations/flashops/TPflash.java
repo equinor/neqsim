@@ -295,9 +295,12 @@ public class TPflash extends Flash {
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
-        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        // Use the same numerical range as the ionic endpoint refinement. A zero or
+        // infinite ratio destroys the next composition iterate when setx preserves zero.
+        double Knew = Math.max(1.0e-50,
+            Math.min(1.0e50, comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff));
         comp0.setK(Knew);
-        if (Double.isNaN(Knew)) {
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
           comp0.setK(Kold);
           system.init(1);
           Knew = comp0.getK();

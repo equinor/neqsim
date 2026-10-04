@@ -151,7 +151,7 @@ class SaltSaturationTest {
         Arrays.asList("gas", "aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCO3", createHighPressureCalciumCarbonateCo2GasAqueousSystem(),
         Arrays.asList("gas", "aqueous"));
-    assertSaltSaturatesToUnitScalePotential("FeCO3", createWaterSystem(), Arrays.asList());
+    assertSaltSaturatesToUnitScalePotential("FeCO3", createWaterSystem(), Arrays.asList("aqueous"));
 
     assertSaltSaturatesToUnitScalePotential("CaCl2", createWaterSystem(), Arrays.asList("aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCl2", createGasAqueousSystem(), Arrays.asList("gas", "aqueous"));
@@ -247,8 +247,6 @@ class SaltSaturationTest {
    */
   private SystemInterface createHighPressureCalciumCarbonateCo2GasAqueousSystem() throws Exception {
     SystemInterface system = createCalciumCarbonateCo2GasAqueousSystem();
-    system.addComponent("Ca++", -4.0e-5);
-    system.addComponent("Cl-", -8.0e-5);
     system.setPressure(50.0);
     return system;
   }
@@ -279,7 +277,10 @@ class SaltSaturationTest {
   private void assertSaltSaturatesToUnitScalePotential(String saltName, SystemInterface system,
       List<String> expectedPhaseTypes) throws Exception {
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
-    operations.calcSaltSaturation(saltName);
+    SaltSaturationResult result = operations.calcSaltSaturationWithDiagnostics(saltName);
+    assertTrue(result.getInitialSaturationRatio() < 1.0, "The addition test must start undersaturated");
+    assertTrue(result.isConverged(), "Salt saturation must meet its own convergence criterion");
+    operations.TPflash();
     system.initProperties();
 
     for (String phaseType : expectedPhaseTypes) {
