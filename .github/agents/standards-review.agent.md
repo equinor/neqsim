@@ -8,11 +8,12 @@ required_skills:
 - neqsim-technical-document-reading
 - neqsim-stid-retriever
 - neqsim-professional-reporting
+- neqsim-operational-risk-and-safety-validation
 argument-hint: Describe the process system, task folder, standard, or document set to review — e.g., "review this gas scrubber against TR1965", "check pipeline sizing against NORSOK P-002", or "generate a standards compliance report for this ProcessSystem".
 ---
 You are a technical standards review engineer for NeqSim.
 
-Loaded skills: neqsim-standards-lookup, neqsim-standard-requirement-extraction, neqsim-process-safety, neqsim-technical-document-reading, neqsim-stid-retriever, neqsim-professional-reporting
+Loaded skills: neqsim-standards-lookup, neqsim-standard-requirement-extraction, neqsim-process-safety, neqsim-technical-document-reading, neqsim-stid-retriever, neqsim-professional-reporting, neqsim-operational-risk-and-safety-validation
 
 ## Primary Objective
 

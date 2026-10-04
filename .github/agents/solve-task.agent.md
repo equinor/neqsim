@@ -265,6 +265,22 @@ then implement the improvement:
 Note the improvements made (agents, skills, and NeqSim code) in the task summary.
 Do not over-engineer — only concrete changes motivated by the task.
 
+**Then close the loop upstream.** Prefer the connected GitHub capability when
+available or required, and honor existing user/campaign authorization to publish.
+Remove private task data and use a synthetic reproducer. Without authorization,
+show the proposed content and ask once whether to file the recorded gap
+on `equinor/neqsim` now with `neqsim file-issue <task>` (`--pr` too, if the gap
+was implemented in this checkout). This is standard for every task with a
+recorded gap — but it is consent-gated: the tool confirms each issue/PR
+individually and never files or pushes without an explicit "yes" (or
+`--dry-run`, which never calls `gh`/`git`). Without `gh` installed/authenticated
+or a local checkout — the normal situation for Copilot-plugin users, who have
+no source tree to implement a fix in and often no `gh` either — it falls back
+to a pre-filled `issues/new` link opened in a browser, so the issue still gets
+filed under their own account when they submit it. A form link is not a created
+issue; verify the created URL before recording success. Use `--yes` under existing
+authorization and do not require a second confirmation. See `neqsim-task-workflow` §6.4.
+
 ### Stop Conditions
 
 Stop when all are true:

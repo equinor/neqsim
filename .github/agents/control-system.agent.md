@@ -7,11 +7,12 @@ required_skills:
 - neqsim-api-patterns
 - neqsim-standards-lookup
 - neqsim-pid-process-operations
+- neqsim-advanced-control-mpc-and-virtual-sensing
 argument-hint: "Describe the control requirement — e.g., 'design level control for HP separator with 2m diameter', 'tune pressure controller for gas export compressor', 'cascade temperature control for heat exchanger', or 'generate control narrative for 3-stage separation'."
 ---
 ## Skills to Load
 
-Loaded skills: neqsim-dynamic-simulation, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations
+Loaded skills: neqsim-dynamic-simulation, neqsim-controllability-operability, neqsim-api-patterns, neqsim-standards-lookup, neqsim-pid-process-operations, neqsim-advanced-control-mpc-and-virtual-sensing
 
 ALWAYS read these skills before proceeding:
 - `.github/skills/neqsim-dynamic-simulation/SKILL.md` — Dynamic sim, controllers, transmitters
