@@ -1021,3 +1021,44 @@ the environment-only Javadoc launcher uses the installed JDK module. Updated the
 flash guide, initialization skill and generated engineering inventory. Numerical
 qualification does not establish experimental accuracy or global stability of
 every possible phase set.
+
+
+### 2026-10-04 — Minimize condensate recovery cost (#4202, PR #4205)
+
+Gated endpoint screening on a per-run final-phase-removal flag: ordinary results
+without cleanup add only a boolean reset/check, with no recovery component scan,
+clone or EOS initialization. The invalid endpoint first tries the multiphase
+stability/beta solver directly from the conserved homogeneous gas-root seed;
+a fresh-clone cold TP flash remains the fallback. Direct candidates are ordered
+by density before final initialization to preserve gas/oil identity. Eligible
+trace-phase cleanup preserves all feed moles. Both trials retain identical
+component, normalization, fugacity and Gibbs qualification. Added a regression
+for reuse of the same operation after cleanup, gas/oil identity and preservation
+of every component inventory over 128 repeats, plus a standalone complete-flash
+benchmark with elapsed/thread-CPU clocks covering seven workload families, cold
+recovery, unchanged conditions and alternating nearby conditions. All 337 selected Java tests and 12
+engineering-coverage Python tests passed; the 750-point map is retained.
+
+Paired benchmark against initial PR commit
+`24467a8ad9313c7dc7a5c5d85ec1510ee7d0b4d5`: two JVMs per version, one pinned CPU,
+Java 17, 256 MB heap, Serial GC and `-Xbatch`; 48 flashes per batch, five batches,
+128 warmups (4096 for the fast gas/two-phase cases). Median thread CPU time for
+fresh exact condensate recovery fell from 9.38 to 6.34 ms (32%), repeated
+unchanged condensate from 11.11 to 6.59 ms (41%), and changing condensate from
+10.42 to 8.36 ms (20%). Fresh-recovery elapsed time fell from 9.54 to 6.54 ms;
+elapsed times elsewhere show host scheduling variation. Fast ordinary workloads
+changed by at most about 1.8 microseconds of median thread CPU time in this sample;
+this is not a universal timing bound. All 140 optimized snapshots passed the
+existing benchmark's strict conservation/equilibrium screen. The 30 initial-fix
+failed snapshots (trace mass residual about 2.3e-12 against its 1e-12 screen)
+remain recorded, without tolerance relaxation; optimized mass/mole residuals
+were zero. Across initial/final snapshots the largest beta difference was
+2.30e-11 and composition difference 3.92e-12, with matching phase identities.
+
+Initial full CI found five failures in WellSystemTest and reactor mechanical
+design tests. Those endpoints reach recovery with unnormalized overall fractions
+(the well sum was 0.99908; reactor fractions exceeded one). Recovery eligibility
+now requires a finite, nonnegative normalized feed; these legacy states retain
+their prior path rather than entering a conserved-feed repair they cannot pass.
+Candidate acceptance tolerances are unchanged. The two complete affected test
+classes (34 tests) pass with this prerequisite.

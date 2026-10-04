@@ -250,8 +250,8 @@ for i in range(fluid.getNumberOfPhases()):
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
 3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
 
-For an ordinary SRK or PR flash of a dry hydrocarbon/inert mixture, a final
-single-phase result with component-balance error greater than `1e-10` is rechecked
+For an ordinary SRK or PR flash of a dry hydrocarbon/inert mixture with
+normalized, nonnegative overall mole fractions, a final single-phase result with component-balance error greater than `1e-10` is rechecked
 on a clone using a cold multiphase stability calculation. This addresses phase
 removal leaving the retained composition different from the overall feed
 (issue #4202). The recovered state must conserve the feed within `1e-10`, satisfy
@@ -263,6 +263,26 @@ as a stability repair. The user's multiphase setting is preserved. Balanced,
 phase-constrained, aqueous, reactive, ionic, solid, wax and specialized-model
 calculations retain their existing paths. These numerical checks do not establish
 experimental accuracy or prove global stability against every possible phase set.
+
+The recovery check is gated by actual removal of a negligible phase during that
+flash. Results without final phase removal skip all recovery component scans,
+cloning and extra EOS initialization; the added normal-path work is a reset and
+check of one boolean. Eligible dry-hydrocarbon cleanup removes the trace phase
+without subtracting its moles from the feed, preventing inventory drift across
+repeated recovery. Cleanup history is reset when the same flash operation is
+reused. The additional stability flash runs only when a collapsed endpoint fails
+the component-balance check. `TPflashEndpointRecoveryBenchmark` records warmed
+complete-flash elapsed and thread CPU timings, recovery counts and numerical
+snapshots for fresh recovery, unchanged and alternating nearby conditions; it retains invalid master results explicitly
+and makes no wall-clock assertions in CI.
+
+For an invalid collapsed endpoint, the first trial runs the multiphase stability
+and beta solver directly from the conserved homogeneous feed, avoiding another
+ordinary TP-flash iteration. A full cold TP flash remains the fallback if the
+direct trial fails the same conservation, normalization, fugacity and Gibbs
+acceptance gates. The direct result is ordered by density before final
+initialization to retain consistent gas/oil identity. Both trials run on a clone; timing improvements never relax
+the numerical tolerances.
 
 For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
 split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium

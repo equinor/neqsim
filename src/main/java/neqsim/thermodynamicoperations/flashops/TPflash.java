@@ -168,6 +168,8 @@ public class TPflash extends Flash {
   private PhaseType referenceSinglePhaseType = null;
   /** True after the bounded water-bearing ordinary-flash retry has been attempted in this run. */
   private boolean waterBearingRescueAttempted = false;
+  /** True only when this run removed a negligible phase during final cleanup. */
+  private boolean phaseRemovedDuringFlash = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
@@ -638,7 +640,9 @@ public class TPflash extends Flash {
     }
     try {
       runInternal();
-      recoverNonconservativeHydrocarbonCollapse();
+      if (phaseRemovedDuringFlash) {
+        recoverNonconservativeHydrocarbonCollapse();
+      }
       validateCharacterizedFluidPhaseInventories();
     } finally {
       multiphaseEndpointRescueSeed = null;
@@ -662,26 +666,18 @@ public class TPflash extends Flash {
    * </p>
    *
    * <p>
-   * Only an invalid, unconstrained, ordinary SRK/PR hydrocarbon/inert single-phase endpoint starts this recovery.
-   * Balanced endpoints, explicit multiphase checks, chemical, aqueous, solid, wax and specialized models retain their
-   * established paths. The existing thread-local guard prevents reciprocal recovery cycles.
+   * Only an invalid, unconstrained, ordinary SRK/PR hydrocarbon/inert single-phase endpoint with a normalized,
+   * nonnegative overall feed starts this recovery. Balanced endpoints, explicit multiphase checks, chemical, aqueous,
+   * solid, wax and specialized models retain their established paths. The caller uses a per-run phase-removal flag so
+   * results without final phase removal perform no component screening, cloning or extra EOS initialization. The
+   * existing thread-local guard prevents reciprocal recovery cycles.
    * </p>
    *
    * @throws IllegalStateException if the invalid endpoint cannot be replaced by a qualified conserved state
    */
   private void recoverNonconservativeHydrocarbonCollapse() {
-    if (system.getNumberOfPhases() != 1 || system.doMultiPhaseCheck() || system.isForcePhaseTypes()
-        || system.getMaxNumberOfPhases() < 2 || system.isChemicalSystem() || solidCheck || system.doSolidPhaseCheck()
-        || system.isMultiphaseWaxCheck() || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
-        || !("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))) {
+    if (system.getNumberOfPhases() != 1 || !isOrdinaryDryHydrocarbonRecoveryAllowed()) {
       return;
-    }
-    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
-      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
-      if (component.getz() > 1.0e-50 && (!component.isHydrocarbon() && !component.isInert()
-          || component.getIonicCharge() != 0 || component.isIsIon())) {
-        return;
-      }
     }
     double materialResidual = maximumComponentMaterialBalanceResidual(system);
     if (materialResidual <= COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE) {
@@ -705,21 +701,31 @@ public class TPflash extends Flash {
         homogeneousGibbs = Math.min(homogeneousGibbs, candidate.getGibbsEnergy());
       }
 
+      candidate.setMultiPhaseCheck(true);
+      candidate.setEnhancedMultiPhaseCheck(false);
+      // Start with the conserved homogeneous state: no duplicate ordinary flash is needed
+      // when the multiphase stability/beta solver already finds the qualified split.
+      try {
+        candidate.setPhaseType(0, PhaseType.GAS);
+        candidate.init(1, 0);
+        new TPmultiflash(candidate, false).run();
+        candidate.orderByDensity();
+        candidate.init(1);
+        if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
+          return;
+        }
+      } catch (Exception ex) {
+        logger.debug("Direct hydrocarbon endpoint stability recovery failed: {}", ex.getMessage());
+      }
+
+      candidate = system.clone();
       resetNeutralCandidateToFeed(candidate);
       candidate.setMultiPhaseCheck(true);
       candidate.setEnhancedMultiPhaseCheck(false);
       TPflash recoveryFlash = new TPflash(candidate, false);
       recoveryFlash.run();
       candidate.init(1);
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(homogeneousGibbs) * 1.0e-8);
-      boolean acceptableGibbs = Double.isFinite(homogeneousGibbs) && Double.isFinite(candidate.getGibbsEnergy())
-          && (candidate.getNumberOfPhases() == 1 ? candidate.getGibbsEnergy() <= homogeneousGibbs + gibbsTolerance
-              : isLowerGibbsMultiphaseCandidate(candidate, homogeneousGibbs));
-      if (isNeutralFluidCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
-          && maximumComponentMaterialBalanceResidual(candidate) <= COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE
-          && acceptableGibbs) {
-        copyConvergedNeutralFlashState(candidate);
-        recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint by multiphase stability flash");
+      if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
         return;
       }
     } catch (Exception ex) {
@@ -730,6 +736,56 @@ public class TPflash extends Flash {
     }
     throw new IllegalStateException(
         "TPflash rejected a nonconservative hydrocarbon endpoint; component balance " + "residual=" + materialResidual);
+  }
+
+  /**
+   * Screens the bounded dry SRK/PR path during negligible-phase cleanup, requiring a normalized nonnegative feed.
+   *
+   * @return true when neutral unconstrained hydrocarbon endpoint recovery is permitted
+   */
+  private boolean isOrdinaryDryHydrocarbonRecoveryAllowed() {
+    if (system.doMultiPhaseCheck() || system.isForcePhaseTypes() || system.getMaxNumberOfPhases() < 2
+        || system.isChemicalSystem() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || MULTIPHASE_RESCUE_ACTIVE.get().booleanValue()
+        || !("SRK-EOS".equals(system.getModelName()) || "PR-EOS".equals(system.getModelName()))) {
+      return false;
+    }
+    double feedSum = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getPhase(0).getNumberOfComponents(); componentIndex++) {
+      neqsim.thermo.component.ComponentInterface component = system.getPhase(0).getComponent(componentIndex);
+      double feedFraction = component.getz();
+      if (!Double.isFinite(feedFraction) || feedFraction < 0.0 || feedFraction > 1.0) {
+        return false;
+      }
+      feedSum += feedFraction;
+      if (feedFraction > 1.0e-50 && (!component.isHydrocarbon() && !component.isInert()
+          || component.getIonicCharge() != 0 || component.isIsIon())) {
+        return false;
+      }
+    }
+    return Math.abs(feedSum - 1.0) <= COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE;
+  }
+
+  /**
+   * Applies the same conserved-feed acceptance gates to direct and cold-flash recovery candidates.
+   *
+   * @param candidate proposed recovered endpoint
+   * @param homogeneousGibbs Gibbs energy in J of the better homogeneous root at the conserved feed
+   * @return true after copying a qualified endpoint to the live system
+   */
+  private boolean acceptConservativeHydrocarbonRecovery(SystemInterface candidate, double homogeneousGibbs) {
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(homogeneousGibbs) * 1.0e-8);
+    boolean acceptableGibbs = Double.isFinite(homogeneousGibbs) && Double.isFinite(candidate.getGibbsEnergy())
+        && (candidate.getNumberOfPhases() == 1 ? candidate.getGibbsEnergy() <= homogeneousGibbs + gibbsTolerance
+            : isLowerGibbsMultiphaseCandidate(candidate, homogeneousGibbs));
+    if (!isNeutralFluidCandidate(candidate) || !isBalancedEquilibriumCandidate(candidate)
+        || maximumComponentMaterialBalanceResidual(candidate) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE
+        || !acceptableGibbs) {
+      return false;
+    }
+    copyConvergedNeutralFlashState(candidate);
+    recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint by multiphase stability flash");
+    return true;
   }
 
   /**
@@ -806,6 +862,7 @@ public class TPflash extends Flash {
    */
   private void runInternal() {
     resetStabilityDiagnostics();
+    phaseRemovedDuringFlash = false;
     waterBearingRescueAttempted = false;
     HybridEosGeFlashModel hybridModel = getHybridEosGeFlashModel();
     if (hybridModel != null) {
@@ -1260,7 +1317,13 @@ public class TPflash extends Flash {
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
-        system.removePhase(i);
+        phaseRemovedDuringFlash = true;
+        if (system.getNumberOfPhases() == 2 && isOrdinaryDryHydrocarbonRecoveryAllowed()) {
+          // Topology cleanup must not subtract the discarded trace phase from the conserved feed.
+          system.removePhaseKeepTotalComposition(i);
+        } else {
+          system.removePhase(i);
+        }
         i--; // indices shift after removal — re-check the (new) phase at i
       }
     }

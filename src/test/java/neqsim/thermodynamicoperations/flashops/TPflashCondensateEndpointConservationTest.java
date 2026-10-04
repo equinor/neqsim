@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,6 +106,8 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
           "Component balance must close: " + maximumBalanceResidual(fluid));
       assertEquals(2, fluid.getNumberOfPhases(), "The feed must retain its distinct equilibrium phases");
       assertQualified(fluid);
+      assertTrue(fluid.hasPhaseType(PhaseType.GAS), "The lighter condensate phase must retain its gas identity");
+      assertTrue(fluid.hasPhaseType(PhaseType.OIL), "The denser condensate phase must retain its oil identity");
       assertTrue(fluid.getGibbsEnergy() < homogeneousGibbs(fluid) - 1.0e-6,
           "The recovered split must lower Gibbs energy at the conserved feed");
       SystemInterface stabilityTrial = fluid.clone();
@@ -145,6 +148,22 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
     }
   }
 
+  /** Checks that repeated recovery never subtracts trace-phase moles from the feed inventory. */
+  @Test
+  void repeatedRecoveryPreservesComponentInventory() {
+    SystemInterface fluid = createFluid(353.15, 350.0, false);
+    for (int repeat = 0; repeat < 128; repeat++) {
+      new TPflash(fluid).run();
+      assertEquals(1.0, fluid.getTotalNumberOfMoles(), 1.0e-12);
+      for (int component = 0; component < FEED.length; component++) {
+        assertEquals(FEED[component], fluid.getPhase(0).getComponent(component).getNumberOfmoles(), 1.0e-12);
+      }
+      assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+      assertTrue(fluid.hasPhaseType(PhaseType.OIL));
+      assertQualified(fluid);
+    }
+  }
+
   /** Checks the same state-reuse sequence with warm K-values enabled and restores the global setting. */
   @Test
   void warmStartedStateReuseRemainsConservative() {
@@ -156,6 +175,30 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
     } finally {
       ThermodynamicModelSettings.setUseWarmStartKValues(previousWarmStart);
     }
+  }
+
+  /** Checks that reusing the operation clears phase-removal history when the fluid becomes stable hot gas. */
+  @Test
+  void reusedOperationClearsPhaseRemovalHistory() {
+    SystemInterface fluid = createFluid(353.15, 350.0, false);
+    TPflash flash = new TPflash(fluid);
+    flash.run();
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertQualified(fluid);
+    assertTrue(flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint"));
+
+    fluid.setTemperature(800.0);
+    fluid.setPressure(10.0);
+    flash.run();
+    assertEquals(1, fluid.getNumberOfPhases());
+    assertQualified(fluid);
+    assertFalse(flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint"));
+
+    fluid.setTemperature(353.15);
+    fluid.setPressure(350.0);
+    flash.run();
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertQualified(fluid);
   }
 
   /** Checks that the PR sibling model also conserves this feed and agrees with explicit multiphase checking. */
