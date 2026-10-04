@@ -1505,9 +1505,16 @@ def test_capabilities():
     check("implementation inventory resolves 60 classes",
           implementation.get("implementationClassCount") == 60,
           str(implementation))
-    check("implementation inventory exposes 207 factory equipment types",
-          implementation.get("equipmentTypeCount") == 207,
+    equipment_types = implementation.get("supportedEquipmentTypes", [])
+    contract_equipment_types = r.get("processJsonContract", {}).get(
+        "supportedEquipmentTypes", [])
+    check("implementation inventory matches process JSON equipment contract",
+          implementation.get("equipmentTypeCount") == len(equipment_types)
+          and equipment_types == contract_equipment_types,
           str(implementation))
+    check("implementation inventory exposes MountainCavern",
+          "MountainCavern" in equipment_types,
+          str(equipment_types))
     report_paths = implementation.get("reportPaths", [])
     check("implementation inventory exposes two report paths",
           implementation.get("reportPathCount") == 2
@@ -1952,6 +1959,15 @@ def test_capabilities():
 def test_run_capability_search_and_invoke():
     """Discover and execute a runtime capability through the generic MCP route."""
     print("\n=== Generic Runtime Capability ===")
+
+    coverage = call_tool("runCapability", {
+        "capabilityJson": json.dumps({"action": "coverage", "view": "apis", "limit": 2})
+    })
+    check("coverage page succeeds", coverage.get("status") == "success", str(coverage))
+    check("coverage page is bounded", len(coverage.get("entries", [])) == 2, str(coverage))
+    check("coverage does not claim completion", coverage.get("complete") is False, str(coverage))
+    check("coverage has continuation", coverage.get("nextOffset") == 2
+          and bool(coverage.get("catalogDigest")), str(coverage))
 
     search = call_tool("runCapability", {
         "capabilityJson": json.dumps({

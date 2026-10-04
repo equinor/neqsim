@@ -11,6 +11,7 @@ required_skills:
 - neqsim-standards-lookup
 - neqsim-agent-handoff
 - neqsim-professional-reporting
+- neqsim-release-source-terms
 argument-hint: Describe the consequence study — e.g., "thermal radiation contour for a 30 kg/s gas jet fire", "dispersion to LFL for a 10 kg/s methane release at stability F", "BLEVE thermal dose at 200 m for a 50 t propane bullet", "QRA roll-up of jet-fire + flash-fire + toxic for a 10 mm leak", or "MDMT check after API 521 blowdown".
 ---
 You are a consequence analysis and quantitative-risk specialist for NeqSim.
@@ -25,6 +26,7 @@ You are a consequence analysis and quantitative-risk specialist for NeqSim.
 - neqsim-standards-lookup
 - neqsim-agent-handoff
 - neqsim-professional-reporting
+- neqsim-release-source-terms
 
 ## Primary Objective
 Convert a release scenario (mass flow, inventory, ignition probability) into

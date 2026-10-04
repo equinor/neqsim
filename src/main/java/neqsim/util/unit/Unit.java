@@ -60,18 +60,14 @@ public interface Unit {
   }
 
   /**
-   * <p>
    * Get the value in SI units.
-   * </p>
    *
    * @return a double
    */
   double getSIvalue();
 
   /**
-   * <p>
    * Get the SI unit symbol.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */

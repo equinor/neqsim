@@ -214,6 +214,8 @@ double dieselYieldVolumePercent = diesel.getLiquidVolumePercent();
 double dieselSpecificGravity = diesel.getAverageSpecificGravity();
 double dieselApiGravity = diesel.getApiGravity();
 double dieselDensityKgM3At60F = diesel.getDensityKgPerCubicMetreAt60F();
+double dieselMeanBoilingPointCelsius = diesel.getAverageBoilingPointCelsius();
+double dieselWatsonFactor = diesel.getWatsonCharacterizationFactor();
 ```
 
 For the requested interval, every overlapping source cut contributes liquid-volume
@@ -236,6 +238,30 @@ data, generate pseudo-components, infer molecular weight or critical properties,
 claim phase-behavior equivalence. Non-finite, exterior, reversed, and zero-width
 requests fail before a receipt is returned; near-node boundaries use the existing snap
 tolerance.
+
+### Bounded boiling-range temperature moments
+
+The same receipt exposes the auditable first boiling-temperature moment
+
+$$M_{T,V}=sum_iDelta V_ioverline{T}_i$$
+
+in K liquid-volume percent through
+`getLiquidVolumeWeightedBoilingPointKelvinPercent()`. With piecewise-linear cumulative
+recovery, liquid-volume density is uniform versus temperature inside each overlap, so
+$overline{T}_i=(T_{lower,i}+T_{upper,i})/2$. The liquid-volume-weighted mean is
+
+$$overline{T}_{V,range}=rac{M_{T,V}}{sum_iDelta V_i}$$
+
+and is available in K and degC. First moments, unlike means, close additively when a
+range is partitioned.
+
+`getWatsonCharacterizationFactor()` combines that mean TBP with the receipt's average
+SG60/60 using NeqSim's existing convention
+$K_W=(1.8overline{T}_{V,range})^{1/3}/SG_{range}$, where temperature is in K and the
+factor is dimensionless. This is a transparent descriptor under the table assumptions.
+It is not an ASTM mean-average or volumetric-average boiling point, and it does not
+integrate enthalpy or heat capacity, temperature-correct density, infer an
+intrainterval measured shape, or establish pseudo-component or phase equivalence.
 
 ### Conservative target-grid resampling
 

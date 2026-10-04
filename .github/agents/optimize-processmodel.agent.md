@@ -8,11 +8,12 @@ required_skills:
 - neqsim-api-patterns
 - neqsim-notebook-patterns
 - neqsim-professional-reporting
+- neqsim-capacity-and-utilization-analysis
 argument-hint: "Describe the full-plant optimization — e.g., 'minimise total compression power for the Oseberg train across 2033-2036 while keeping export-oil RVP <= 0.79 bara and every compressor >= 10% off surge', 'find the oil-heater and 4th-stage-pressure setpoints that meet the RVP spec at minimum recompression load', or 'sweep export-compressor discharge pressure and report the feasible operating envelope by year'."
 ---
 ## Loaded skills
 
-Loaded skills: neqsim-agentic-process-optimization, neqsim-optimization-and-doe, neqsim-platform-modeling, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting
+Loaded skills: neqsim-agentic-process-optimization, neqsim-optimization-and-doe, neqsim-platform-modeling, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-capacity-and-utilization-analysis
 
 ALWAYS read these skills before proceeding:
 

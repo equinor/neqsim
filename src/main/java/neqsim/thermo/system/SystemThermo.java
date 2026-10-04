@@ -6096,12 +6096,17 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. For internal bookkeeping
-   * where the caller has already updated the component moles.
+   * {@inheritDoc}
    *
-   * @param totalNumberOfMoles new total number of moles, negative values are clipped to zero
+   * <p>
+   * Sets the scalar total-moles field only, leaving the per-component mole numbers untouched. Also used internally
+   * where the caller (this class) has already updated the component moles consistently (e.g. {@code addComponent},
+   * {@code clearAll}, {@code phaseToSystem}, {@code removeComponent}/{@code removePhase}, {@code replacePhase},
+   * {@code initTotalNumberOfMoles}, {@code getEmptySystemClone}).
+   * </p>
    */
-  protected final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
+  @Override
+  public final void setTotalNumberOfMolesRaw(double totalNumberOfMoles) {
     this.totalNumberOfMoles = totalNumberOfMoles < 0 ? 0.0 : totalNumberOfMoles;
   }
 

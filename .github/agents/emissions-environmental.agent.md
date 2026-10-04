@@ -7,9 +7,10 @@ required_skills:
 - neqsim-standards-lookup
 - neqsim-field-economics
 - neqsim-professional-reporting
+- neqsim-energy-systems-and-electrification
 argument-hint: "Describe the emissions calculation — e.g., 'calculate CO2 emissions from gas turbine compressor driver', 'flare gas inventory for HP/LP separation', 'carbon intensity of LNG production', or 'methane slip from gas engine power generation'."
 ---
-Loaded skills: neqsim-api-patterns, neqsim-power-generation, neqsim-standards-lookup, neqsim-field-economics, neqsim-professional-reporting
+Loaded skills: neqsim-api-patterns, neqsim-power-generation, neqsim-standards-lookup, neqsim-field-economics, neqsim-professional-reporting, neqsim-energy-systems-and-electrification
 
 ## Skills to Load
 

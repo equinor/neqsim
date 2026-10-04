@@ -115,6 +115,56 @@ public class ComponentDesmukhMather extends ComponentGE {
     return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
   }
 
+  /**
+   * Differentiates the implemented empirical reference, including the water Poynting correction.
+   *
+   * @param phase owning Desmukh-Mather phase
+   * @return d(ln phi)/dT in 1/K
+   */
+  @Override
+  public double fugcoefDiffTemp(PhaseInterface phase) {
+    if (ionicCharge != 0) {
+      dfugdt = 0.0;
+      return dfugdt;
+    }
+    double temperature = phase.getTemperature();
+    dfugdt = getLnActivityTemperatureDerivative(phase);
+    if (componentName.equals("water") || referenceStateType.equals("solvent")) {
+      double vaporPressure = getAntoineVaporPressure(temperature);
+      double vaporPressureDerivative = getAntoineVaporPressuredT(temperature);
+      dfugdt += vaporPressureDerivative / vaporPressure;
+      if (componentName.equals("water")) {
+        double volumeFactor = getMolarMass() / 1000.0 * 1.0e5 / R;
+        dfugdt -= volumeFactor * ((phase.getPressure() - vaporPressure) / (temperature * temperature)
+            + vaporPressureDerivative / temperature);
+      }
+    } else {
+      dfugdt += getLnHenryCoefficientTemperatureDerivative(temperature);
+      if (phase.hasComponent("water")) {
+        dfugdt -= ((PhaseGE) phase).getLnActivityCoefficientInfDilWaterTemperatureDerivative(componentNumber,
+            phase.getComponent("water").getComponentNumber());
+      } else {
+        dfugdt -= ((PhaseGE) phase).getLnActivityCoefficientInfDilTemperatureDerivative(componentNumber);
+      }
+    }
+    return dfugdt;
+  }
+
+  /**
+   * Differentiates the explicit pressure denominator, water Poynting term, and constant ionic fugacity.
+   *
+   * @param phase owning Desmukh-Mather phase
+   * @return d(ln phi)/dP in 1/bar
+   */
+  @Override
+  public double fugcoefDiffPres(PhaseInterface phase) {
+    dfugdp = ionicCharge != 0 ? 0.0 : -1.0 / phase.getPressure();
+    if (componentName.equals("water")) {
+      dfugdp += getMolarMass() / 1000.0 * 1.0e5 / (R * phase.getTemperature());
+    }
+    return dfugdp;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {

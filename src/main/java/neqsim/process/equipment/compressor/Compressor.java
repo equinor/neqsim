@@ -2664,6 +2664,29 @@ public class Compressor extends TwoPortEquipment
         / applyInletGuideVaneSurgeFlow(getCompressorChart().getSurgeCurve().getSurgeFlow(getPolytropicFluidHead())) - 1;
   }
 
+  /**
+   * Distance to surge, guarded against silently trusting an extrapolated compressor chart.
+   *
+   * <p>
+   * {@link #getDistanceToSurge()} evaluates the chart's surge curve at the current operating point even when that point
+   * lies outside the chart's valid flow/speed range (e.g. an auto-generated single-design-point chart driven far
+   * off-design during a transient such as a driver-trip coastdown screening). In that region the returned margin can be
+   * numerically finite but is not physically meaningful, which is easy to miss in an automated sweep. This method
+   * returns {@link Double#NaN} instead whenever {@link #isChartExtrapolated()} is {@code true}, so callers can
+   * distinguish "outside the validated chart envelope" from a genuine surge-margin result without re-implementing the
+   * flow-range check themselves.
+   * </p>
+   *
+   * @return the surge margin from {@link #getDistanceToSurge()}, or {@link Double#NaN} when the current operating point
+   * is outside the compressor chart's validated flow/speed range
+   */
+  public double getValidatedDistanceToSurge() {
+    if (isChartExtrapolated()) {
+      return Double.NaN;
+    }
+    return getDistanceToSurge();
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getSurgeFlowRateMargin() {

@@ -694,6 +694,9 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
         double co2Removed = co2Moles * co2RemovalEfficiency;
         if (richAmineSystem.hasComponent("CO2")) {
           richAmineSystem.addComponent("CO2", co2Removed);
+        } else if (co2Removed > 0.0) {
+          logger.warn("Lean amine stream has no CO2 component; removed CO2 ({} mol/s) is not"
+              + " carried into the rich amine stream", co2Removed);
         }
       }
       if (sourGasInStream.getThermoSystem().hasComponent("H2S")) {
@@ -701,6 +704,9 @@ public class SimpleAmineAbsorber extends SimpleAbsorber {
         double h2sRemoved = h2sMoles * h2sRemovalEfficiency;
         if (richAmineSystem.hasComponent("H2S")) {
           richAmineSystem.addComponent("H2S", h2sRemoved);
+        } else if (h2sRemoved > 0.0) {
+          logger.warn("Lean amine stream has no H2S component; removed H2S ({} mol/s) is not"
+              + " carried into the rich amine stream", h2sRemoved);
         }
       }
       richAmineSystem.init(0);

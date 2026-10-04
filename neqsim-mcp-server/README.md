@@ -1007,6 +1007,13 @@ setup templates, and validation behavior:
 
 ### Integration Tests (MCP Server)
 
+Run protocol scripts from the `neqsim-mcp-server` directory so they can locate the
+packaged JAR under `target/`. The `tests/protocol/` directory contains the comprehensive
+harness and focused contract suites, `tests/documentation/` contains the dependency-free
+Phase 0 accounting check, and `tests/support/` contains shared assertion helpers.
+Keep Python tests under this hierarchy; the accounting check rejects root-level
+`test_*.py` files.
+
 The `tests/protocol/test_mcp_server.py` script launches the server, communicates over STDIO,
 and validates all 71 tools across all three tiers:
 

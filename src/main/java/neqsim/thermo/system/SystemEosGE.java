@@ -209,6 +209,45 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     return hybridEosGeTopologyConfigured && doMultiPhaseCheck();
   }
 
+  /**
+   * Initializes each active hybrid role using its model-owned EOS root and restores its semantic type.
+   *
+   * <p>
+   * EOS initialization can classify a dilute oil trial as gas. A subsequent inner beta iteration must still evaluate
+   * that same object using the oil root, rather than silently making the gas and oil equations identical. Ordinary
+   * two-phase GE systems retain the inherited initialization path.
+   * </p>
+   *
+   * @param initType initialization level
+   */
+  @Override
+  public void init(int initType) {
+    if (requiresHybridEosGeFlash()) {
+      restoreHybridEosGeActivePhaseTypes();
+    }
+    super.init(initType);
+    if (requiresHybridEosGeFlash()) {
+      restoreHybridEosGeActivePhaseTypes();
+    }
+  }
+
+  /**
+   * Preserves hybrid roots and semantic roles during phase-specific initialization.
+   *
+   * @param initType initialization level
+   * @param phaseNumber active phase number
+   */
+  @Override
+  public void init(int initType, int phaseNumber) {
+    if (requiresHybridEosGeFlash()) {
+      restoreHybridEosGeActivePhaseTypes();
+    }
+    super.init(initType, phaseNumber);
+    if (requiresHybridEosGeFlash()) {
+      restoreHybridEosGeActivePhaseTypes();
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void prepareHybridEosGeFlash() {
@@ -286,7 +325,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
       double feedFraction = Math.max(component.getz(), 1.0e-50);
       boolean ion = component.getIonicCharge() != 0 || component.isIsIon();
       boolean aqueousComponent = isAqueousComponent(component);
-      boolean heavyHydrocarbon = component.isHydrocarbon() && component.getMolarMass() > 0.045;
+      boolean heavyHydrocarbon = component.isHydrocarbon() && !prefersHybridGasSeed(component);
 
       double gasFraction;
       double oilFraction;
@@ -332,7 +371,7 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
       double feedFraction = Math.max(component.getz(), 0.0);
       if (isAqueousComponent(component)) {
         aqueousFeed += feedFraction;
-      } else if (component.isHydrocarbon() && component.getMolarMass() > 0.045) {
+      } else if (component.isHydrocarbon() && !prefersHybridGasSeed(component)) {
         oilFeed += feedFraction;
       } else {
         gasFeed += feedFraction;
@@ -347,6 +386,24 @@ public abstract class SystemEosGE extends SystemEos implements HybridEosGeFlashM
     setBeta(1, oilFeed / total);
     setBeta(2, aqueousFeed / total);
     normalizeBeta();
+  }
+
+  /**
+   * Uses the current Wilson volatility estimate to distinguish gas and oil seeds for hydrocarbons.
+   *
+   * <p>
+   * A fixed molar-mass cutoff makes volatile butane and heavier oil start with identical compositions and can assign
+   * almost no initial gas fraction. The same temperature/pressure-dependent estimate used to activate roles provides
+   * distinct, physically directed seeds. Components with unavailable critical data retain the historical fallback.
+   * </p>
+   *
+   * @param component hydrocarbon component
+   * @return {@code true} for a gas-directed seed
+   */
+  private boolean prefersHybridGasSeed(neqsim.thermo.component.ComponentInterface component) {
+    double wilsonK = component.getPC() / getPressure()
+        * Math.exp(5.373 * (1.0 + component.getAcentricFactor()) * (1.0 - component.getTC() / getTemperature()));
+    return Double.isFinite(wilsonK) && wilsonK > 0.0 ? wilsonK > 1.0 : component.getMolarMass() <= 0.045;
   }
 
   /**
