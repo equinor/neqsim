@@ -28,8 +28,14 @@ and is more authoritative than recall:
 
 ```bash
 neqsim --show-document-root       # may be unset - then there is no library
-neqsim documents "521"            # recursive, case-insensitive substring search
+neqsim documents "API 521"        # recursive; every word must appear in the path
 ```
+
+Words may be in any order and need not be adjacent (`"API 521"` finds
+`API STD 521 ...`), but a standard filed under another body's number (for
+example `DNV-ST-F101`) is only found by that exact designation. When several
+editions are present (for example two `TR3500` versions), cite the edition you
+actually read.
 
 Every task folder also carries the listing at
 `step1_scope_and_research/references/document_root_index.md` — read it, since a
