@@ -9,7 +9,7 @@ import build_engineering_coverage as coverage
 @pytest.fixture
 def source_tree(tmp_path):
     files = {
-        "src/main/java/neqsim/thermo/Example.java": "package neqsim.thermo; public class Example {}",
+        "src/main/java/neqsim/thermo/Example.java": "package neqsim.thermo; public class Example { public static double calculate(double value) { return value; } }",
         "src/main/java/neqsim/mcp/runners/McpImplementationInventory.java":
             'bind(implementations, "runFlash", "FlashRunner");',
         ".github/skills/example/SKILL.md": "Example and neqsim.thermo.Example",
@@ -75,6 +75,42 @@ def test_comments_literals_and_nested_types_do_not_inflate_inventory(source_tree
     path.write_text('package neqsim.thermo; /* public class Fake {} */ class Holder { '
                     'String text="public class Fake {}"; public class Fake {} }')
     assert len(coverage.java_types(source_tree)) == 1
+
+
+def example_operation():
+    return {"id": "example-calculation", "classification": "supported",
+            "api": "neqsim.thermo.Example", "method": "calculate",
+            "signature": "double neqsim.thermo.Example.calculate(double)",
+            "units": {"inputs": {"value": "dimensionless"}, "outputs": {"value": "dimensionless"}},
+            "applicability": "Fixture operation only", "route": "runCapability action=invoke",
+            "example": {"arguments": [2.0], "parameterTypes": ["double"],
+                        "expected": 2.0, "absoluteTolerance": 0.0},
+            "evidenceSources": ["src/test/java/ExampleTest.java"]}
+
+
+def test_supported_operation_contract_is_counted(source_tree):
+    path = source_tree / coverage.REGISTRY
+    data = json.loads(path.read_text())
+    data["capabilities"][0]["operations"] = [example_operation()]
+    path.write_text(json.dumps(data))
+    built = coverage.build(source_tree)
+    assert built["summary"]["classifiedOperations"] == 1
+    assert built["summary"]["supportedOperations"] == 1
+    assert built["capabilities"][0]["operations"][0]["signature"].endswith("calculate(double)")
+
+
+@pytest.mark.parametrize("field,value", [
+    ("classification", "guessed"), ("api", "neqsim.thermo.Missing"),
+    ("method", "missing"), ("evidenceSources", ["src/test/java/Missing.java"])])
+def test_invalid_operation_contract_is_rejected(source_tree, field, value):
+    path = source_tree / coverage.REGISTRY
+    data = json.loads(path.read_text())
+    operation = example_operation()
+    operation[field] = value
+    data["capabilities"][0]["operations"] = [operation]
+    path.write_text(json.dumps(data))
+    with pytest.raises(ValueError):
+        coverage.build(source_tree)
 
 
 def test_inventory_is_deterministic(source_tree):
