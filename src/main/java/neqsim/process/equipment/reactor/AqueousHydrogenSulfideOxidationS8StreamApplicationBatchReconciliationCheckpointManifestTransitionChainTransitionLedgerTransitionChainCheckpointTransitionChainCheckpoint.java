@@ -40,15 +40,16 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @return immutable checkpoint result
    * @throws IllegalArgumentException if the identity, sequence or upstream-chain gates fail
    */
-  public static Result create(String checkpointTransitionChainCheckpointIdentifier, long checkpointTransitionChainCheckpointSequence,
+  public static Result create(String checkpointTransitionChainCheckpointIdentifier,
+      long checkpointTransitionChainCheckpointSequence,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result chain) {
-    requireText(checkpointTransitionChainCheckpointIdentifier,
-        "Checkpoint-transition-chain checkpoint identifier");
+    requireText(checkpointTransitionChainCheckpointIdentifier, "Checkpoint-transition-chain checkpoint identifier");
     if (checkpointTransitionChainCheckpointSequence < 0L) {
       throw new IllegalArgumentException("Checkpoint-transition-chain checkpoint sequence cannot be negative");
     }
     validateChain(chain);
-    byte[] checkpointDigest = digest(checkpointTransitionChainCheckpointIdentifier, checkpointTransitionChainCheckpointSequence, chain);
+    byte[] checkpointDigest = digest(checkpointTransitionChainCheckpointIdentifier,
+        checkpointTransitionChainCheckpointSequence, chain);
     return new Result(checkpointTransitionChainCheckpointIdentifier, checkpointTransitionChainCheckpointSequence,
         chain.getCheckpointTransitionChainIdentifier(), chain.getCheckpointIdentifier(),
         chain.getTransitionChainIdentifier(), chain.getLedgerIdentifier(), chain.getChainIdentifier(),
@@ -60,11 +61,10 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
         chain.getFirstPriorChainDigestHex(), chain.getFinalCandidateChainDigestHex(),
         chain.getFirstPriorManifestDigestHex(), chain.getFinalCandidateManifestDigestHex(), chain.getTransitionCount(),
         chain.getStrictAppendReceiptCount(), chain.getUnchangedReceiptCount(), chain.getAddedReceiptCount(),
-        chain.getAddedLedgerReceiptCount(),
-        chain.getAddedTransitionCount(), chain.getAddedStrictAppendTransitionCount(),
-        chain.getAddedUnchangedTransitionCount(), chain.getAddedReconciliationCount(), chain.getAddedEntryCount(),
-        chain.getAddedStrictAppendCount(), chain.getAddedUnchangedCount(), chain.getChainDigestBytes(),
-        checkpointDigest);
+        chain.getAddedLedgerReceiptCount(), chain.getAddedTransitionCount(),
+        chain.getAddedStrictAppendTransitionCount(), chain.getAddedUnchangedTransitionCount(),
+        chain.getAddedReconciliationCount(), chain.getAddedEntryCount(), chain.getAddedStrictAppendCount(),
+        chain.getAddedUnchangedCount(), chain.getChainDigestBytes(), checkpointDigest);
   }
 
   /**
@@ -76,14 +76,17 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
    * @param result expected checkpoint result
    * @return true only when metadata, counts and raw digests match
    */
-  public static boolean verify(String checkpointTransitionChainCheckpointIdentifier, long checkpointTransitionChainCheckpointSequence,
+  public static boolean verify(String checkpointTransitionChainCheckpointIdentifier,
+      long checkpointTransitionChainCheckpointSequence,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result chain,
       Result result) {
     if (result == null) {
       throw new IllegalArgumentException("S8 checkpoint-transition-chain checkpoint is required");
     }
-    Result expected = create(checkpointTransitionChainCheckpointIdentifier, checkpointTransitionChainCheckpointSequence, chain);
-    return expected.checkpointTransitionChainCheckpointIdentifier.equals(result.checkpointTransitionChainCheckpointIdentifier)
+    Result expected = create(checkpointTransitionChainCheckpointIdentifier, checkpointTransitionChainCheckpointSequence,
+        chain);
+    return expected.checkpointTransitionChainCheckpointIdentifier
+        .equals(result.checkpointTransitionChainCheckpointIdentifier)
         && expected.checkpointTransitionChainCheckpointSequence == result.checkpointTransitionChainCheckpointSequence
         && expected.checkpointTransitionChainIdentifier.equals(result.checkpointTransitionChainIdentifier)
         && expected.checkpointIdentifier.equals(result.checkpointIdentifier)
@@ -191,7 +194,8 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   }
 
   /** Calculate the canonical checkpoint digest. */
-  private static byte[] digest(String checkpointTransitionChainCheckpointIdentifier, long checkpointTransitionChainCheckpointSequence,
+  private static byte[] digest(String checkpointTransitionChainCheckpointIdentifier,
+      long checkpointTransitionChainCheckpointSequence,
       AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.Result chain) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance(DIGEST_ALGORITHM);
@@ -332,18 +336,16 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
     /** Create one immutable checkpoint result. */
     private Result(String checkpointTransitionChainCheckpointIdentifier,
         long checkpointTransitionChainCheckpointSequence, String checkpointTransitionChainIdentifier,
-        String checkpointIdentifier, String transitionChainIdentifier, String ledgerIdentifier,
-        String chainIdentifier, String manifestIdentifier, long firstPriorCheckpointSequence,
-        long finalCandidateCheckpointSequence, long totalSequenceDelta, byte[] firstPriorCheckpointDigest,
-        byte[] finalCandidateCheckpointDigest, byte[] firstPriorTransitionChainDigest,
-        byte[] finalCandidateTransitionChainDigest, String firstPriorLedgerDigestHex,
-        String finalCandidateLedgerDigestHex, String firstPriorChainDigestHex, String finalCandidateChainDigestHex,
-        String firstPriorManifestDigestHex, String finalCandidateManifestDigestHex, int transitionCount,
-        int strictAppendReceiptCount, int unchangedReceiptCount, int addedReceiptCount,
-        int addedLedgerReceiptCount, int addedTransitionCount,
-        int addedStrictAppendTransitionCount, int addedUnchangedTransitionCount, int addedReconciliationCount,
-        int addedEntryCount, int addedStrictAppendCount, int addedUnchangedCount, byte[] chainDigest,
-        byte[] checkpointDigest) {
+        String checkpointIdentifier, String transitionChainIdentifier, String ledgerIdentifier, String chainIdentifier,
+        String manifestIdentifier, long firstPriorCheckpointSequence, long finalCandidateCheckpointSequence,
+        long totalSequenceDelta, byte[] firstPriorCheckpointDigest, byte[] finalCandidateCheckpointDigest,
+        byte[] firstPriorTransitionChainDigest, byte[] finalCandidateTransitionChainDigest,
+        String firstPriorLedgerDigestHex, String finalCandidateLedgerDigestHex, String firstPriorChainDigestHex,
+        String finalCandidateChainDigestHex, String firstPriorManifestDigestHex, String finalCandidateManifestDigestHex,
+        int transitionCount, int strictAppendReceiptCount, int unchangedReceiptCount, int addedReceiptCount,
+        int addedLedgerReceiptCount, int addedTransitionCount, int addedStrictAppendTransitionCount,
+        int addedUnchangedTransitionCount, int addedReconciliationCount, int addedEntryCount,
+        int addedStrictAppendCount, int addedUnchangedCount, byte[] chainDigest, byte[] checkpointDigest) {
       this.checkpointTransitionChainCheckpointIdentifier = checkpointTransitionChainCheckpointIdentifier;
       this.checkpointTransitionChainCheckpointSequence = checkpointTransitionChainCheckpointSequence;
       this.checkpointTransitionChainIdentifier = checkpointTransitionChainIdentifier;

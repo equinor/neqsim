@@ -31,4 +31,3 @@ class H2sOxygenS8StreamApplicationBatchReconciliationCheckpointManifestTransitio
     assertTrue(documentation.contains("no stream, fluid, process, pipeline, or injection mutation"));
   }
 }
-
