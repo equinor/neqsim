@@ -127,9 +127,9 @@ public final class CompiledProcessModelEvaluationPlanBenchmark {
   /** Creates the normalized 12-component rich-gas feed. */
   private static SystemInterface fluid() {
     SystemInterface fluid = new SystemSrkEos(313.15, 80.0);
-    String[] names = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane", "n-octane" };
-    double[] fractions = { 0.01, 0.02, 0.65, 0.10, 0.06, 0.02, 0.03, 0.015, 0.015, 0.03, 0.03, 0.02 };
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane"};
+    double[] fractions = {0.01, 0.02, 0.65, 0.10, 0.06, 0.02, 0.03, 0.015, 0.015, 0.03, 0.03, 0.02};
     for (int index = 0; index < names.length; index++) {
       fluid.addComponent(names[index], fractions[index]);
     }
@@ -210,7 +210,7 @@ public final class CompiledProcessModelEvaluationPlanBenchmark {
 
     long evaluationAllocatedBefore = allocatedBytes();
     long evaluationStart = System.nanoTime();
-    EvaluationResult result = plan.evaluate(new double[] { 12120.0 });
+    EvaluationResult result = plan.evaluate(new double[] {12120.0});
     long evaluationElapsed = System.nanoTime() - evaluationStart;
     long evaluationAllocatedAfter = allocatedBytes();
     String resultJson = result.toJson();
