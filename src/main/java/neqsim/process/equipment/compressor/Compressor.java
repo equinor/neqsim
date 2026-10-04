@@ -4399,6 +4399,59 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Gets the compressor capacity at the speed and power the driver curve can still deliver, using the chart maximum
+   * speed as the chart speed at the driver rated speed.
+   *
+   * @return the driver-limited envelope
+   * @throws IllegalStateException if no driver curve is set
+   * @see #getDriverLimitedEnvelope(double)
+   */
+  public DriverLimitedEnvelope getDriverLimitedEnvelope() {
+    double reference = compressorChart != null ? compressorChart.getMaxSpeedCurve() : 0.0;
+    return getDriverLimitedEnvelope(reference);
+  }
+
+  /**
+   * Gets the compressor capacity at the speed and power the driver curve can still deliver.
+   *
+   * <p>
+   * The driver speed fraction (driver maximum speed over driver rated speed) is applied to the chart speed that
+   * corresponds to the driver rated speed. A cell-bypass or ambient derating of the driver therefore reduces the
+   * reported head, flow range and power without a manual affinity-law calculation. Chart quantities are NaN when no
+   * chart curves are loaded.
+   * </p>
+   *
+   * @param chartSpeedAtDriverRatedSpeed chart speed in RPM that corresponds to 100 % of the driver rated speed
+   * @return the driver-limited envelope
+   * @throws IllegalStateException if no driver curve is set; call {@link #setDriverCurve} first
+   */
+  public DriverLimitedEnvelope getDriverLimitedEnvelope(double chartSpeedAtDriverRatedSpeed) {
+    if (driverCurve == null) {
+      throw new IllegalStateException("No driver curve set on compressor " + getName() + ". Call setDriverCurve(...)");
+    }
+    double ratedSpeed = driverCurve.getRatedSpeed();
+    double fraction = ratedSpeed > 0.0 ? driverCurve.getMaxSpeed() / ratedSpeed : 0.0;
+    double limitedSpeed = fraction * chartSpeedAtDriverRatedSpeed;
+    double power = driverCurve.getAvailablePower(driverCurve.getMaxSpeed());
+
+    double surge = Double.NaN;
+    double stonewall = Double.NaN;
+    double head = Double.NaN;
+    double referenceHead = Double.NaN;
+    if (compressorChart != null && chartSpeedAtDriverRatedSpeed > 0.0 && compressorChart.getMaxSpeedCurve() > 0.0) {
+      surge = compressorChart.getSurgeFlowAtSpeed(limitedSpeed);
+      stonewall = compressorChart.getStoneWallFlowAtSpeed(limitedSpeed);
+      if (!Double.isNaN(surge)) {
+        head = compressorChart.getPolytropicHead(surge, limitedSpeed);
+        referenceHead = compressorChart.getPolytropicHead(
+            compressorChart.getSurgeFlowAtSpeed(chartSpeedAtDriverRatedSpeed), chartSpeedAtDriverRatedSpeed);
+      }
+    }
+    return new DriverLimitedEnvelope(fraction, chartSpeedAtDriverRatedSpeed, limitedSpeed, power, surge, stonewall,
+        head, referenceHead);
+  }
+
+  /**
    * Get the operating history tracker.
    *
    * @return the operating history, or null if not enabled
