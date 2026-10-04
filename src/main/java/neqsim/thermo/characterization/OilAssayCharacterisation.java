@@ -1040,8 +1040,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           double overlapLiquidVolumePercent = interpolateCumulativeVolumePercent(overlapUpperBoundary)
               - interpolateCumulativeVolumePercent(overlapLowerBoundary);
           specificGravityWeightedLiquidVolumePercent += overlapLiquidVolumePercent * specificGravity[sourceCutIndex];
-          liquidVolumeWeightedBoilingPointKelvinPercent +=
-              overlapLiquidVolumePercent * 0.5 * (overlapLowerBoundary + overlapUpperBoundary);
+          liquidVolumeWeightedBoilingPointKelvinPercent += overlapLiquidVolumePercent * 0.5
+              * (overlapLowerBoundary + overlapUpperBoundary);
         }
       }
 
@@ -1476,8 +1476,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Return the liquid-volume-weighted first boiling-temperature moment.
      *
      * <p>
-     * This value is {@code sum(Delta V_i * Tbar_i)} with {@code Delta V_i} in liquid-volume percent and
-     * {@code Tbar_i} in K. Under the table's piecewise-linear cumulative-recovery assumption, each overlap has
+     * This value is {@code sum(Delta V_i * Tbar_i)} with {@code Delta V_i} in liquid-volume percent and {@code Tbar_i}
+     * in K. Under the table's piecewise-linear cumulative-recovery assumption, each overlap has
      * {@code Tbar_i = (T_lower,i + T_upper,i) / 2}.
      * </p>
      *
