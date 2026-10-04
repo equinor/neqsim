@@ -51,8 +51,7 @@ public abstract class NeqSimDatabaseBase
    */
   protected final void initializeDatabaseConnection() {
     try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
+      ensureConnection();
     } catch (Exception ex) {
       getLogger().error("SQLException ", ex);
       throw new RuntimeException(ex);
@@ -67,8 +66,21 @@ public abstract class NeqSimDatabaseBase
    */
   protected final void ensureConnection() throws SQLException, ClassNotFoundException {
     if (databaseConnection == null) {
-      databaseConnection = this.openConnection();
-      setStatement(databaseConnection.createStatement());
+      Connection connection = openConnection();
+      try {
+        Statement newStatement = connection.createStatement();
+        databaseConnection = connection;
+        statement = newStatement;
+      } catch (SQLException | RuntimeException ex) {
+        try {
+          connection.close();
+        } catch (SQLException closeFailure) {
+          ex.addSuppressed(closeFailure);
+        }
+        throw ex;
+      }
+    } else if (statement == null || statement.isClosed()) {
+      statement = databaseConnection.createStatement();
     }
   }
 
@@ -103,9 +115,10 @@ public abstract class NeqSimDatabaseBase
    * Executes an SQL statement.
    *
    * @param sqlString SQL statement
+   * @return true if execution produces a result set
    * @throws RuntimeException if SQL execution fails
    */
-  public boolean execute(String sqlString) {
+  protected final boolean executeSql(String sqlString) {
     try {
       ensureConnection();
       return getStatement().execute(sqlString);
@@ -140,13 +153,31 @@ public abstract class NeqSimDatabaseBase
    */
   @Override
   public void close() throws SQLException {
-    if (statement != null) {
-      statement.close();
-      statement = null;
+    Statement statementToClose = statement;
+    Connection connectionToClose = databaseConnection;
+    statement = null;
+    databaseConnection = null;
+    SQLException failure = null;
+    try {
+      if (statementToClose != null) {
+        statementToClose.close();
+      }
+    } catch (SQLException ex) {
+      failure = ex;
     }
-    if (databaseConnection != null) {
-      databaseConnection.close();
-      databaseConnection = null;
+    try {
+      if (connectionToClose != null) {
+        connectionToClose.close();
+      }
+    } catch (SQLException ex) {
+      if (failure == null) {
+        failure = ex;
+      } else if (failure != ex) {
+        failure.addSuppressed(ex);
+      }
+    }
+    if (failure != null) {
+      throw failure;
     }
   }
 }

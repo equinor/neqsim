@@ -2,6 +2,7 @@ package neqsim.util.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,5 +80,39 @@ public class NeqSimFluidDataBase extends NeqSimDatabaseBase {
           .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
     }
+  }
+
+  /**
+   * Executes SQL using this wrapper's managed connection. Legacy failures are logged without propagation.
+   *
+   * @param sqlString SQL statement
+   */
+  public void execute(String sqlString) {
+    try {
+      executeSql(sqlString);
+    } catch (RuntimeException ex) {
+      // Preserve the legacy fluid database's log-and-return contract.
+    }
+  }
+
+  /**
+   * Queries the current connection using the legacy two-argument API.
+   *
+   * @param database legacy database label; does not switch the active connection
+   * @param sqlString SQL query
+   * @return result set, or null after a logged SQL failure
+   */
+  public ResultSet getResultSet(String database, String sqlString) {
+    try {
+      return super.getResultSet(sqlString);
+    } catch (RuntimeException ex) {
+      return null;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ResultSet getResultSet(String sqlString) {
+    return getResultSet("FluidDatabase", sqlString);
   }
 }

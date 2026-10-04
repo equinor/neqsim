@@ -24,10 +24,12 @@ public class NeqSimFluidDataBaseTest {
       Assertions.assertTrue(database.getConnection().isValid(1));
       database.execute("CREATE TABLE fluid_test (property_value INTEGER)");
       database.execute("INSERT INTO fluid_test VALUES (99)");
-      try (ResultSet result = database.getResultSet("SELECT property_value FROM fluid_test")) {
+      try (ResultSet result = database.getResultSet("FluidDatabase", "SELECT property_value FROM fluid_test")) {
         Assertions.assertTrue(result.next());
         Assertions.assertEquals(99, result.getInt(1));
       }
+      Assertions.assertNull(database.getResultSet("INVALID SQL"));
+      Assertions.assertDoesNotThrow(() -> database.execute("INVALID SQL"));
     } finally {
       NeqSimFluidDataBase.numb = previousNumber;
       NeqSimFluidDataBase.useOnlineBase = previousOnlineSetting;

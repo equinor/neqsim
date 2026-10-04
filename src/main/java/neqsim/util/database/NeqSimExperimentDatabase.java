@@ -197,4 +197,14 @@ public class NeqSimExperimentDatabase extends NeqSimDatabaseBase {
   public static void setConnectionString(String aConnectionString) {
     connectionString = aConnectionString;
   }
+
+  /**
+   * Executes SQL using this wrapper's managed connection.
+   *
+   * @param sqlString SQL statement
+   * @throws RuntimeException if SQL execution fails
+   */
+  public void execute(String sqlString) {
+    executeSql(sqlString);
+  }
 }

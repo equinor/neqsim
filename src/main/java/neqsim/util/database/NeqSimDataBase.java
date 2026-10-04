@@ -119,10 +119,7 @@ public class NeqSimDataBase extends NeqSimDatabaseBase {
    */
   public void executeQuery(String sqlString) {
     try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
+      ensureConnection();
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
@@ -141,10 +138,7 @@ public class NeqSimDataBase extends NeqSimDatabaseBase {
   @Override
   public ResultSet getResultSet(String sqlString) {
     try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
+      ensureConnection();
       return getStatement().executeQuery(sqlString);
     } catch (JdbcSQLSyntaxErrorException ex) {
       if (ex.getMessage().startsWith("Table ") && ex.getMessage().contains(" not found;")) {
@@ -616,5 +610,16 @@ public class NeqSimDataBase extends NeqSimDatabaseBase {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+  }
+
+  /**
+   * Executes SQL using this wrapper's managed connection.
+   *
+   * @param sqlString SQL statement
+   * @return true if execution produces a result set
+   * @throws RuntimeException if SQL execution fails
+   */
+  public boolean execute(String sqlString) {
+    return executeSql(sqlString);
   }
 }
