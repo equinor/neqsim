@@ -55,12 +55,63 @@ def production_context():
     process, feed, comp = create_process()
     optimizer_class = jneqsim.process.util.optimizer.ProductionOptimizer
     config_class = optimizer_class.OptimizationConfig
+    separator = process.getUnit("HP Separator")
+    capacity_class = jneqsim.process.equipment.capacity.CapacityConstraint
+    installed_capacity = capacity_class(
+        "installed gas rate",
+        "kg/hr",
+        capacity_class.ConstraintType.HARD,
+    ).setDesignValue(20000.0).setMaxValue(22000.0).setDataSource(
+        "executable documentation fixture",
+    ).setConfidence(0.95).setValidityRange(
+        5000.0,
+        20000.0,
+    ).setValueSupplier(lambda: feed.getFlowRate("kg/hr"))
+    separator.clearCapacityConstraints()
+    separator.addCapacityConstraint(installed_capacity)
+    process_model = jneqsim.process.processmodel.ProcessModel()
+    process_model.add("Production", process)
+    simulation_evaluator = (
+        jneqsim.process.util.optimizer.ProcessModelSimulationEvaluator(process_model)
+    )
+    simulation_evaluator.setIncludeStrategyCapacityConstraints(False)
+    simulation_evaluator.addObjective(
+        "feed production",
+        lambda model: feed.getFlowRate("kg/hr"),
+        simulation_evaluator.ObjectiveDefinition.Direction.MAXIMIZE,
+    )
+    action = jneqsim.process.util.optimizer.ProcessModelOperatingAction.continuous(
+        "feed-rate",
+        "Feed rate",
+        "Production::Well Feed.flowRate",
+        5000.0,
+        15000.0,
+        "kg/hr",
+        "executable documentation fixture",
+    )
+    action_list = jpype.JClass("java.util.ArrayList")()
+    action_list.add(action)
+    transactional_evaluator = (
+        jneqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator(
+            "feed-action-set",
+            "Feed action set",
+            "executable documentation fixture",
+            simulation_evaluator,
+            action_list,
+        ).requireHydraulicConstraint(
+            jneqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole.GATHERING_HYDRAULICS,
+            "Production",
+            "HP Separator",
+            "installed gas rate",
+            "executable documentation fixture",
+        )
+    )
     return dict(
         jneqsim=jneqsim, jpype=jpype, process=process, feed=feed, comp=comp,
         OptConfig=config_class, ProductionOptimizer=optimizer_class,
         SearchMode=optimizer_class.SearchMode,
         config=config_class(1000.0, 20000.0).tolerance(10.0),
-        optimizer=optimizer_class(),
+        optimizer=optimizer_class(), transactional_evaluator=transactional_evaluator,
     )
 
 

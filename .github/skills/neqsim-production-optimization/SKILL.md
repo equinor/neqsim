@@ -484,6 +484,31 @@ Screening-grade: choke is a linear deliverability scale, the facility relief is 
 rigorous coupled network solve. Distinct from `GasLiftOptimizer` (lift gas + compression
 only) and `ReservoirToMarketOptimizer` (choke + one throughput cap only).
 
+**Naturally flowing wells, gas-limited plant stop (verified Snorre A, Oct 2026).** For a
+choke list with no lift gas (e.g. a gas-compression train out of service) use a flat
+curve and the PDM GOR; it reproduced a two-constraint LP to 0.06 % in oil and the same shut set:
+
+```python
+I = jneqsim.process.fielddevelopment.integrated
+curve = I.GasLiftPerformanceCurve([0.0, 1.0], [oil, oil])          # no lift response
+w = I.ChokeableGasLiftWell(name, curve)
+w.setMaxChokeFraction(1.0).setCurrentChokeFraction(1.0).setGor(gor).setWaterCut(wat / (oil + wat))
+if pre_decided_shut:
+    w.setForcedShut(True, "operator pre-decision")
+opt = I.ChokeAndGasLiftAllocationOptimizer().addWell(w)            # add all wells first
+opt.setGasHandlingLimit(gas_budget_sm3d)
+res = opt.optimize()                                               # res.getWells()[name].getOilRate()
+```
+
+Gotchas: (1) the gas limit must be on the **same basis as the GOR x oil you pass** - a compressor
+meter capacity (e.g. 2.75 MSm3/d) is not the PDM-allocated gas the wells report; measure the
+ratio in the same operating regime first (Snorre A: PDM gas = 0.79 x WAG meter with the Vigdis
+train off) or the list is ~30 % too generous; (2) the class has only gas, water and lift-gas
+ceilings - a second stage limit such as a recompressor's 2nd-stage gas must be checked after
+the solve (or solved as a small LP with `scipy.optimize.linprog`); (3) the allocator is greedy
+by GOR, so a pre-decided low-GOR shut-in (swing wells) costs its full oil and is not re-ranked -
+report that cost explicitly.
+
 ---
 
 ## Scenario Analysis
