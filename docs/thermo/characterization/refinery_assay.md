@@ -172,6 +172,71 @@ Each resulting subcut copies the source interval specific gravity. Consequently,
 
 The interpolation is an explicit discretization assumption, not a fitted distillation correlation: it assumes uniform liquid-volume recovery with boiling temperature inside each already binned interval and constant interval specific gravity. It does not infer the measured intrainterval curve shape, interpolate density, add a D86/D1160 conversion, smooth data, extrapolate outside the source table, or estimate molecular weight, critical properties, or phase behavior. Empty, non-finite, unordered, exterior, duplicate, and already-existing boundaries fail before a table is returned.
 
+### Direct recovery and cut-point queries
+
+An exported `TbpCutTable` can be queried without rebuilding or mutating the assay.
+`getCumulativeVolumePercentAtBoilingPointKelvin(...)` and its Celsius counterpart return
+cumulative liquid-volume recovery at a boiling point. The inverse
+`getBoilingPointKelvinAtCumulativeVolumePercent(...)` and Celsius counterpart return the
+cut point for a recovery. Interval yield is available from
+`getLiquidVolumePercentBetweenBoilingPointsKelvin(...)` or the Celsius counterpart:
+
+```java
+double recoveredAt400K =
+    table.getCumulativeVolumePercentAtBoilingPointKelvin(400.0);
+double temperatureAt50Percent =
+    table.getBoilingPointCelsiusAtCumulativeVolumePercent(50.0);
+double middleDistillateYield =
+    table.getLiquidVolumePercentBetweenBoilingPointsCelsius(150.0, 350.0);
+```
+
+The forward and inverse queries use the same piecewise-linear cumulative-recovery
+assumption as conservative target-grid resampling. Exact table nodes remain exact, and
+near-node temperatures snap within the existing boiling-boundary tolerance. Partitioned
+interval yields therefore close to the complete table's 100 liquid-volume percent.
+
+These are bounded table queries, not new distillation or property correlations. They do
+not extrapolate, smooth measured data, convert ASTM D86 or D1160 curves, interpolate
+density or other properties, generate pseudo-components, or claim phase-behavior
+equivalence. Non-finite, exterior, reversed, and zero-width requests fail before a value
+is returned.
+
+### Bounded boiling-range density and API receipts
+
+`TbpCutTable.getBoilingRangePropertiesKelvin(...)` and its Celsius counterpart return an
+immutable property receipt for any positive interval inside the exported table:
+
+```java
+OilAssayCharacterisation.TbpBoilingRangeProperties diesel =
+    table.getBoilingRangePropertiesCelsius(180.0, 360.0);
+
+double dieselYieldVolumePercent = diesel.getLiquidVolumePercent();
+double dieselSpecificGravity = diesel.getAverageSpecificGravity();
+double dieselApiGravity = diesel.getApiGravity();
+double dieselDensityKgM3At60F = diesel.getDensityKgPerCubicMetreAt60F();
+```
+
+For the requested interval, every overlapping source cut contributes liquid-volume
+yield $\Delta V_i$ under the same piecewise-linear cumulative-recovery assumption used
+by direct queries and target-grid resampling. The receipt reports
+
+$$SG_{range}=\frac{\sum_i \Delta V_iSG_i}{\sum_i \Delta V_i}$$
+
+as well as both the denominator and the auditable numerator
+`getSpecificGravityWeightedLiquidVolumePercent()`. The latter is
+$\sum_i\Delta V_iSG_i$ with $\Delta V_i$ in liquid-volume percent; it is an
+ideal-additive-volume bookkeeping term, not a physical mass percentage. Partitioned
+receipts therefore close independently in liquid-volume yield and SG-weighted volume.
+
+API gravity uses the existing NeqSim SG60/60 convention
+$API=141.5/SG_{range}-131.5$, and density at 60 degF uses the already qualified water
+density of 999.016 kg/m3. The receipt does not temperature-correct density, model excess
+volume or contraction, smooth or extrapolate the distillation curve, convert D86/D1160
+data, generate pseudo-components, infer molecular weight or critical properties, or
+claim phase-behavior equivalence. Non-finite, exterior, reversed, and zero-width
+requests fail before a receipt is returned; near-node boundaries use the existing snap
+tolerance.
+
 ### Conservative target-grid resampling
 
 `TbpCutTable.resampleAtBoilingPointsKelvin(...)` and
