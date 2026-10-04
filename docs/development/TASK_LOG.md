@@ -1089,3 +1089,24 @@ Javadoc pass; Javadoc uses the installed JDK module through an environment-only
 launcher. Full GitHub CI is pending on the repair commit.
 The remaining twelve side-draw tests pass as well: 259 distinct affected tests
 pass in total, without changing any existing test target, tolerance or budget.
+
+### 2026-10-04 — Gas-limited stop choke list from allocation data (PEPR 80302059)
+**Type:** B (Process / production optimisation)
+**Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
+**Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
+**Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well was shut in both; oil within -6.5/+8.2 %). GOR had moved by a factor 4-5 for two wells since the last stop. A simple stage model under-predicted recompressor load by 12-38 % but gave the right slope for RVP against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Tooling: PEPR skill now resolves the task root; PDM skill documents injection and basis; production-optimization skill has the natural-flow recipe.
+
+### 2026-10-04 — Converge exchanger regression before millikelvin assertions (PR #4205)
+
+The final fast-test failure reproduced at 14.1455588737 C with recycle tolerance
+1e-3. At sub-1 kg/s flow that tolerance is absolute kg/s. Tightening to 1e-4,
+1e-6 and 1e-8 gave 14.1482251294, 14.1485165096 and 14.1485165096 C;
+both recycle objects reported convergence. The regression now uses 1e-6 before
+checking exchanger performance, retaining its original expected temperatures and
+acceptance tolerances. Added recycle-convergence, duty-direction, positive-terminal-
+temperature and independently reconstructed UA checks against the existing 0.1%
+UA solver criterion. Production code and its runtime cost are unchanged.
+Integrated master 466cd0f333561fbe442156d47cfa0c9b358687f7, retaining both task-log
+histories and regenerating the engineering inventory. Documentation impact: none
+for the test-only correction; the recycle guide already documents the low-flow
+absolute tolerance and the exchanger guide documents the duty/LMTD relation.

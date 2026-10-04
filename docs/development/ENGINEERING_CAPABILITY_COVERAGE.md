@@ -75,6 +75,12 @@ This adds no reflection invocation permission and no second simulator. Stateful
 models retain their canonical process/model runners; eligible static methods
 retain their existing bounded execution policy.
 
+## Explicit operation contracts
+
+Package 2 starts with eight bounded, source-backed operations: sulfur vapour pressure and seven pure engineering-unit conversions. Each contract records its classification, exact Java signature, units, applicability, existing MCP route, executable example, tolerance, and evidence sources. The generated summary reports classification totals, and the packaged MCP qualification retrieves these records through `runCapability action=coverage` before replaying every supported example through `action=invoke`.
+
+A `supported` operation means only the recorded static signature is supported on the existing bounded runtime route. It does not qualify unlisted methods on the same class, create new reflection authority, or replace canonical stateful process/model runners. Pressure, temperature, temperature-difference, length, time, power, and energy conversions are included; state-dependent rate conversions are intentionally excluded.
+
 ## Completion work packages under #3153
 
 | Package | Deliverable and exit gate |
