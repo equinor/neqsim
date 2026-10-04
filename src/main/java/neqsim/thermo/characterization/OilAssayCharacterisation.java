@@ -1007,6 +1007,61 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Return the density and yield properties implied for a bounded TBP boiling range in K.
+     *
+     * <p>
+     * The calculation uses the table's piecewise-linear cumulative recovery and treats each source interval specific
+     * gravity as constant. For overlap liquid-volume yields {@code Delta V_i}, the range specific gravity is
+     * {@code sum(Delta V_i * SG_i) / sum(Delta V_i)}. No density-temperature correction, excess-volume model, or
+     * property correlation is applied.
+     * </p>
+     *
+     * @param lowerBoilingPointKelvin lower boiling point in K
+     * @param upperBoilingPointKelvin upper boiling point in K
+     * @return immutable boiling-range property receipt
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public TbpBoilingRangeProperties getBoilingRangePropertiesKelvin(double lowerBoilingPointKelvin,
+        double upperBoilingPointKelvin) {
+      double normalizedLowerBoundary = normalizeBoilingPointQuery(lowerBoilingPointKelvin);
+      double normalizedUpperBoundary = normalizeBoilingPointQuery(upperBoilingPointKelvin);
+      if (!(normalizedUpperBoundary > normalizedLowerBoundary)) {
+        throw new IllegalArgumentException("TBP property-query boundaries must define a positive interval");
+      }
+
+      double liquidVolumePercent = interpolateCumulativeVolumePercent(normalizedUpperBoundary)
+          - interpolateCumulativeVolumePercent(normalizedLowerBoundary);
+      double specificGravityWeightedLiquidVolumePercent = 0.0;
+      for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
+        double overlapLowerBoundary = Math.max(normalizedLowerBoundary, boilingPointKelvin[sourceCutIndex]);
+        double overlapUpperBoundary = Math.min(normalizedUpperBoundary, boilingPointKelvin[sourceCutIndex + 1]);
+        if (overlapUpperBoundary > overlapLowerBoundary) {
+          double overlapLiquidVolumePercent = interpolateCumulativeVolumePercent(overlapUpperBoundary)
+              - interpolateCumulativeVolumePercent(overlapLowerBoundary);
+          specificGravityWeightedLiquidVolumePercent += overlapLiquidVolumePercent * specificGravity[sourceCutIndex];
+        }
+      }
+
+      return new TbpBoilingRangeProperties(normalizedLowerBoundary, normalizedUpperBoundary, liquidVolumePercent,
+          specificGravityWeightedLiquidVolumePercent);
+    }
+
+    /**
+     * Return the density and yield properties implied for a bounded TBP boiling range in degC.
+     *
+     * @param lowerBoilingPointCelsius lower boiling point in degC
+     * @param upperBoilingPointCelsius upper boiling point in degC
+     * @return immutable boiling-range property receipt
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     * @see #getBoilingRangePropertiesKelvin(double, double)
+     */
+    public TbpBoilingRangeProperties getBoilingRangePropertiesCelsius(double lowerBoilingPointCelsius,
+        double upperBoilingPointCelsius) {
+      return getBoilingRangePropertiesKelvin(lowerBoilingPointCelsius + KELVIN_OFFSET,
+          upperBoilingPointCelsius + KELVIN_OFFSET);
+    }
+
+    /**
      * Split source intervals at caller-supplied TBP boundaries in K.
      *
      * <p>
@@ -1347,6 +1402,81 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       }
 
       return new TbpCutTable(relumpedCumulativeVolumePercent, relumpedBoilingPointKelvin, relumpedSpecificGravity);
+    }
+  }
+
+  /**
+   * Immutable density and yield receipt for one bounded TBP boiling range.
+   */
+  public static final class TbpBoilingRangeProperties implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final double lowerBoilingPointKelvin;
+    private final double upperBoilingPointKelvin;
+    private final double liquidVolumePercent;
+    private final double specificGravityWeightedLiquidVolumePercent;
+    private final double averageSpecificGravity;
+
+    private TbpBoilingRangeProperties(double lowerBoilingPointKelvin, double upperBoilingPointKelvin,
+        double liquidVolumePercent, double specificGravityWeightedLiquidVolumePercent) {
+      this.lowerBoilingPointKelvin = lowerBoilingPointKelvin;
+      this.upperBoilingPointKelvin = upperBoilingPointKelvin;
+      this.liquidVolumePercent = liquidVolumePercent;
+      this.specificGravityWeightedLiquidVolumePercent = specificGravityWeightedLiquidVolumePercent;
+      this.averageSpecificGravity = specificGravityWeightedLiquidVolumePercent / liquidVolumePercent;
+    }
+
+    /** @return normalized lower boiling boundary in K */
+    public double getLowerBoilingPointKelvin() {
+      return lowerBoilingPointKelvin;
+    }
+
+    /** @return normalized upper boiling boundary in K */
+    public double getUpperBoilingPointKelvin() {
+      return upperBoilingPointKelvin;
+    }
+
+    /** @return normalized lower boiling boundary in degC */
+    public double getLowerBoilingPointCelsius() {
+      return lowerBoilingPointKelvin - KELVIN_OFFSET;
+    }
+
+    /** @return normalized upper boiling boundary in degC */
+    public double getUpperBoilingPointCelsius() {
+      return upperBoilingPointKelvin - KELVIN_OFFSET;
+    }
+
+    /** @return liquid-volume yield in percent */
+    public double getLiquidVolumePercent() {
+      return liquidVolumePercent;
+    }
+
+    /**
+     * Return the SG60/60-weighted liquid-volume percentage.
+     *
+     * <p>
+     * This value is {@code sum(Delta V_i * SG_i)} with {@code Delta V_i} in liquid-volume percent. It is an auditable
+     * ideal-additive-volume bookkeeping term, not a physical mass percentage.
+     * </p>
+     *
+     * @return SG-weighted liquid-volume percentage
+     */
+    public double getSpecificGravityWeightedLiquidVolumePercent() {
+      return specificGravityWeightedLiquidVolumePercent;
+    }
+
+    /** @return liquid-volume-weighted average dimensionless SG60/60 */
+    public double getAverageSpecificGravity() {
+      return averageSpecificGravity;
+    }
+
+    /** @return API gravity corresponding to the average SG60/60 */
+    public double getApiGravity() {
+      return 141.5 / averageSpecificGravity - 131.5;
+    }
+
+    /** @return density at 60 degF in kg/m3 corresponding to the average SG60/60 */
+    public double getDensityKgPerCubicMetreAt60F() {
+      return averageSpecificGravity * WATER_DENSITY_60F_KG_M3;
     }
   }
 
