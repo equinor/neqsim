@@ -321,6 +321,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document          | Path                                                                                           | Description                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors.md)                         | Compressor models, drivers, speed-dependent power |
+| Seal Support-System Monitoring | [docs/process/equipment/dry_gas_seal_monitoring.md](process/equipment/dry_gas_seal_monitoring.md) | Timed advisory supply/vent/buffer/separation monitoring |
 | Compression Train Assessment | [docs/process/equipment/compression_train_assessment.md](process/equipment/compression_train_assessment.md) | Off-design acoustic coordinates, map queries and constrained net-export energy comparison |
 | Seal Condensation and Conditioning | [docs/process/equipment/dry_gas_seal_conditioning.md](process/equipment/dry_gas_seal_conditioning.md) | Sampled liquid-risk evidence, flow bases and separated-gas thermal duties |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md)             | Compressor performance curves                     |
