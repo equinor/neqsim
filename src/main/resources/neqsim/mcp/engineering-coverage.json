@@ -4,12 +4,12 @@
   "denominator": "public top-level Java source types; not methods or engineering operations",
   "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification.",
   "summary": {
-    "publicTypes": 3341,
+    "publicTypes": 3342,
     "registeredCapabilities": 12,
     "registeredAnchors": 18,
     "withSkillMention": 1264,
     "withAgentMention": 1263,
-    "reviewRequired": 3243,
+    "reviewRequired": 3244,
     "domains": {
       "api": {
         "publicTypes": 1,
@@ -66,10 +66,10 @@
         "reviewRequired": 107
       },
       "process": {
-        "publicTypes": 2222,
+        "publicTypes": 2223,
         "registeredAnchors": 12,
         "withSkillMention": 1065,
-        "reviewRequired": 2210
+        "reviewRequired": 2211
       },
       "pvtsimulation": {
         "publicTypes": 83,
@@ -419,7 +419,7 @@
       }
     }
   ],
-  "catalogDigest": "843ae2adb91bdb02277480a0b3573d53a0623535b282b6ca0a692e619c2841fa",
+  "catalogDigest": "6b089a0de3c3b2a9f3191b2253a37e58b03769caa4bb98e70a59c4aaafa8bcde",
   "apis": [
     {"id":"neqsim.api.ioc.CalculationResult","kind":"class","source":"src/main/java/neqsim/api/ioc/CalculationResult.java","sourceDigest":"9e8bd61a763f407a08785db311578bbcc82114bbbc47644cb03862c3604af17f","domain":"api","skills":["neqsim-java8-rules"],"agents":["documentation","dynamic-equipment","mechanical-design","neqsim-test","optimize","process-model","reaction-engineering","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.blackoil.BlackOilConverter","kind":"class","source":"src/main/java/neqsim/blackoil/BlackOilConverter.java","sourceDigest":"7dfc65a57aec097df8fa898ebb120f4db6d8ee112030d47ce0b4076aa84739aa","domain":"blackoil","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -2950,6 +2950,7 @@
     {"id":"neqsim.process.util.optimizer.ProcessConstraintEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessConstraintEvaluator.java","sourceDigest":"653482d76e8cb74be382ec1bc1b039f67810136d194cbc18a66bf803299cdbbb","domain":"process","skills":["neqsim-optimization-and-doe"],"agents":["optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelAllocationBottleneckAnalyzer","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelAllocationBottleneckAnalyzer.java","sourceDigest":"cc03a0885c6e326b820d85e3963a5a9d307ddf00fb7f9bcf84cdd7c3c12be4e6","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelAllocationOptimizer","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelAllocationOptimizer.java","sourceDigest":"ca7f35be077de83c71596bacba86d45329772a42d579de5878ff0a69681c8a98","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.util.optimizer.ProcessModelCompiledEvaluationPlan","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelCompiledEvaluationPlan.java","sourceDigest":"2041d106306281dc5ed91b32e0bfa7d3c7244a43705090ee935cd9448dbaf7d5","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelDebottleneckRanking","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelDebottleneckRanking.java","sourceDigest":"97a2e062f0631ae8c828adc5ad33dc012142605e7604b59a087061219e3330d0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelDebottleneckStudy","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelDebottleneckStudy.java","sourceDigest":"9d81a9e6a1ccf6bc0fecca96bd843d0a1614c673adaef099bfafeb4dbd7d5876","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingAction","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingAction.java","sourceDigest":"75b70fd0df57e49ba6339f1f1c5959156be74d4a5576c271edd5df053655a2a6","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
