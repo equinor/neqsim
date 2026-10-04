@@ -24,6 +24,10 @@ Do not call `init(2)` or `init(3)` merely to be safe. Before increasing a level,
 
 For fixed-T/P cubic-root selection and fugacity/Gibbs equilibrium checks, prefer `init(1)`. Temperature derivative caches such as `loc_AT` and `loc_ATT` support caloric properties; they are not by themselves evidence that a fixed-T/P flash-Gibbs comparison requires `init(2)`.
 
+When a caller consumes temperature derivatives after `TPflash`, initialize them on
+the resulting phase state with `init(2)`. Initializing before the flash is insufficient
+when it replaces phases; the legacy cricondenbar iteration is a regression example.
+
 After phase removal, verify component inventory as well as normalized compositions:
 `sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint
 only by assigning `x = z`; that can conceal a genuine phase instability. Compare

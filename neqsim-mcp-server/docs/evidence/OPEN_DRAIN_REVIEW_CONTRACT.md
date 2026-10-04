@@ -27,8 +27,8 @@ warnings, assumptions, limitations, and the remaining provenance must match exac
 - `src/main/java/neqsim/process/safety/opendrain/OpenDrainReviewEngine.java`
 - `src/test/java/neqsim/mcp/runners/OpenDrainReviewRunnerTest.java`
 - `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java`
-- `neqsim-mcp-server/test_open_drain_review_protocol.py`
-- `neqsim-mcp-server/test_mcp_server.py`
+- `neqsim-mcp-server/tests/protocol/test_open_drain_review_protocol.py`
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py`
 - this contract document
 
 ## Engineering and advisory boundary

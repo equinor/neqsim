@@ -1,0 +1,3098 @@
+"""
+Comprehensive MCP Server Tests for NeqSim
+==========================================
+Tests all 71 MCP tools through the real JSON-RPC protocol, verifying
+correctness against known values from the NeqSim JUnit test suite.
+
+Tier 1 — Trusted Core (24 tools):
+  - TP flash (single phase, two-phase, multi-component)
+  - Dew point / bubble point calculations
+  - Different EOS models (SRK, PR, CPA)
+  - Transport properties (viscosity, thermal conductivity)
+  - Process simulation (separator, compressor, cooler, heater, valve, trains)
+  - Input validation (error cases, typos, missing fields)
+  - Examples, schemas, component search, capabilities
+  - Batch calculations, property tables, phase envelopes
+  - Automation API (units, variables, state save/compare, diagnostics)
+  - Industrial profile, benchmark trust, tool access
+  - Reusable process model handles (manageModel)
+    - Version-matched Java API inspection (inspectApi)
+
+Tier 2 — Engineering Advanced (32 tools):
+  - PVT laboratory experiments
+  - Flow assurance (hydrate, corrosion, wax)
+  - Standards calculations (ISO 6976, AGA)
+  - Pipeline flow simulation
+    - Materials selection, corrosion, degradation, and integrity review
+  - Reservoir material balance
+  - Field development economics
+  - Dynamic transient simulation
+  - Bioprocess reactors
+  - Equipment sizing
+  - Process comparison
+  - Engineering validation
+  - Cross-model validation
+  - Parametric studies
+    - Relief, LOPA, SIL, risk matrix, flare, HAZOP, barrier register, safety performance
+
+Tier 3 — Experimental (15 tools):
+  - Session management
+  - Task solver, workflow composition
+  - Report generation, visualization
+  - Plugins, progress tracking, streaming
+  - Multi-server composition
+  - Security, state persistence
+  - Validation profiles, data catalog
+    - Generic runtime capability discovery and bounded static execution
+"""
+import subprocess
+import json
+import time
+import sys
+import math
+import re
+from pathlib import Path
+
+JAR = "target/neqsim-mcp-server-1.0.0-SNAPSHOT-runner.jar"
+
+# ---------------------------------------------------------------------------
+# MCP client helpers
+# ---------------------------------------------------------------------------
+proc = None
+msg_id = 0
+
+JSON_TOOL_ARGS = {
+    "runPVT": "pvtJson",
+    "runFlowAssurance": "flowAssuranceJson",
+    "calculateStandard": "standardJson",
+    "runPipeline": "pipelineJson",
+    "runReservoir": "reservoirJson",
+    "runFieldEconomics": "economicsJson",
+    "runDynamic": "dynamicJson",
+    "runBioprocess": "bioprocessJson",
+    "runRelief": "reliefJson",
+    "runFlareNetwork": "flareJson",
+    "runHazopScenario": "scenarioJson",
+    "sizeEquipment": "sizingJson",
+    "designUtilities": "utilityJson",
+    "compareProcesses": "comparisonJson",
+    "crossValidateModels": "crossValidationJson",
+    "runParametricStudy": "studyJson",
+    "manageSession": "sessionJson",
+    "solveTask": "taskJson",
+    "composeWorkflow": "workflowJson",
+    "generateReport": "reportJson",
+    "bridgeTaskWorkflow": "bridgeJson",
+    "runPlugin": "pluginJson",
+    "getProgress": "progressJson",
+    "streamSimulation": "streamJson",
+    "generateVisualization": "vizJson",
+    "composeMultiServerWorkflow": "compositionJson",
+    "manageSecurity": "securityJson",
+    "manageState": "persistJson",
+    "manageValidationProfile": "profileJson",
+    "queryDataCatalog": "catalogJson",
+    "runCapability": "capabilityJson",
+    "manageIndustrialProfile": "profileJson",
+    "getBenchmarkTrust": "trustJson",
+}
+
+
+def start_server():
+    global proc
+    proc = subprocess.Popen(
+        # This comprehensive harness asserts the complete discovery contract.
+        # Disable transport trimming only for this test process so the growing
+        # capability inventory cannot hide fields that the harness validates.
+        ["java", "-Dneqsim.mcp.maxResponseBytes=0", "-jar", JAR],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    # initialize
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-11-25",
+                "capabilities": {},
+                "clientInfo": {"name": "neqsim-test", "version": "1.0"},
+            },
+        }
+    )
+    recv()
+    send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+    time.sleep(0.3)
+
+
+def stop_server():
+    global proc
+    if proc:
+        proc.stdin.close()
+        proc.wait(timeout=10)
+        proc = None
+
+
+def next_id():
+    global msg_id
+    msg_id += 1
+    return msg_id
+
+
+def send(msg):
+    proc.stdin.write(json.dumps(msg) + "\n")
+    proc.stdin.flush()
+
+
+def recv():
+    line = proc.stdout.readline()
+    return json.loads(line) if line.strip() else None
+
+
+def call_tool(name, arguments):
+    arguments = normalize_tool_arguments(name, arguments)
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "tools/call",
+            "params": {"name": name, "arguments": arguments},
+        }
+    )
+    r = recv()
+    content = r.get("result", {}).get("content", [])
+    if content:
+        text = content[0].get("text", "{}")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            return {"status": "error", "message": text}
+    return {}
+
+
+def read_json_resource(uri):
+    """Read and decode a JSON MCP resource through the real protocol."""
+    send(
+        {
+            "jsonrpc": "2.0",
+            "id": next_id(),
+            "method": "resources/read",
+            "params": {"uri": uri},
+        }
+    )
+    response = recv()
+    contents = response.get("result", {}).get("contents", [])
+    if not contents:
+        return {"_protocolError": response}
+
+    resource = contents[0]
+    if resource.get("uri") != uri:
+        return {
+            "_protocolError": f"requested {uri}, received {resource.get('uri')}"
+        }
+
+    try:
+        return json.loads(resource.get("text", ""))
+    except json.JSONDecodeError as error:
+        return {"_protocolError": f"invalid JSON at {uri}: {error}"}
+
+
+def normalize_tool_arguments(name, arguments):
+    json_arg = JSON_TOOL_ARGS.get(name)
+    if not json_arg or json_arg in arguments:
+        return arguments
+    normalized = {}
+    for key, value in arguments.items():
+        if isinstance(value, str) and value[:1] in ("{", "["):
+            try:
+                normalized[key] = json.loads(value)
+                continue
+            except json.JSONDecodeError:
+                pass
+        normalized[key] = value
+    return {json_arg: json.dumps(normalized)}
+
+
+def run_flash(components, temp_c, press_bara, eos="SRK", flash_type="TP"):
+    return call_tool(
+        "runFlash",
+        {
+            "components": json.dumps(components),
+            "temperature": temp_c,
+            "temperatureUnit": "C",
+            "pressure": press_bara,
+            "pressureUnit": "bara",
+            "eos": eos,
+            "flashType": flash_type,
+        },
+    )
+
+
+def run_process(process_json):
+    return call_tool("runProcess", {"processJson": json.dumps(process_json)})
+
+
+# ---------------------------------------------------------------------------
+# Test tracking
+# ---------------------------------------------------------------------------
+passed = 0
+failed = 0
+errors_list = []
+
+
+def check(test_name, condition, detail=""):
+    global passed, failed
+    if condition:
+        passed += 1
+        print(f"  PASS: {test_name}")
+    else:
+        failed += 1
+        msg = f"  FAIL: {test_name}"
+        if detail:
+            msg += f" -- {detail}"
+        print(msg)
+        errors_list.append(test_name)
+
+
+def approx(actual, expected, rel_tol=0.02, abs_tol=1e-6):
+    """Check if actual is within rel_tol (2%) of expected, or abs_tol."""
+    if expected == 0:
+        return abs(actual) < abs_tol
+    return abs(actual - expected) / abs(expected) < rel_tol
+
+
+def get_phase_prop(result, phase, prop):
+    """Extract a property value from flash result."""
+    try:
+        props = result["fluid"]["properties"][phase]
+        val = props[prop]["value"]
+        return float(val)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def get_composition(result, phase, component):
+    """Extract composition from flash result."""
+    try:
+        comp = result["fluid"]["composition"][phase]
+        val = comp[component]["value"]
+        return float(val)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+# ===========================================================================
+# TESTS
+# ===========================================================================
+
+def test_protocol():
+    """Test the exact MCP publication surface through list operations."""
+    print("\n=== Protocol Tests ===")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "tools/list", "params": {}})
+    r = recv()
+    tools = r.get("result", {}).get("tools", [])
+    tool_names = sorted([t["name"] for t in tools])
+    check("71 tools registered", len(tools) == 71, f"got {len(tools)}: {tool_names}")
+
+    # Tier 1 — Trusted Core (24 tools)
+    tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
+             "getExample", "getSchema", "getPropertyTable", "getPhaseEnvelope",
+             "getCapabilities", "runBatch", "listSimulationUnits",
+             "listUnitVariables", "getSimulationVariable", "setSimulationVariable",
+             "saveSimulationState", "compareSimulationStates", "diagnoseAutomation",
+             "getAutomationLearningReport", "manageIndustrialProfile",
+             "getBenchmarkTrust", "checkToolAccess", "getAdjustableParameters",
+             "manageModel", "inspectApi"]
+    for name in tier1:
+        check(f"tier1 tool '{name}'", name in tool_names)
+
+    # Tier 2 — Engineering Advanced (32 tools)
+    tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
+             "runFlowAssurance", "calculateStandard", "runPipeline",
+             "runChemistry", "runMaterialsReview", "runOpenDrainReview",
+             "runNorsokS001Clause10Review", "runWaterHammer",
+             "runAgenticEngineering",
+             "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
+             "sizeEquipment", "compareProcesses", "validateResults",
+             "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
+             "runFlareNetwork", "runHAZOP", "runHazopScenario", "runBarrierRegister",
+             "runSafetySystemPerformance", "runOperationalStudy",
+             "runRootCauseAnalysis", "runProcessLoop", "designUtilities"]
+    for name in tier2:
+        check(f"tier2 tool '{name}'", name in tool_names)
+
+    lopa_tool = next((tool for tool in tools if tool.get("name") == "runLOPA"), {})
+    lopa_description = lopa_tool.get("description", "")
+    check("bounded LOPA discovery contract",
+          "16384 UTF-8 bytes" in lopa_description
+          and "100 layers" in lopa_description
+          and "does not identify hazards" in lopa_description
+          and "qualified process-safety review" in lopa_description,
+          lopa_description)
+
+    sil_tool = next((tool for tool in tools if tool.get("name") == "runSIL"), {})
+    sil_description = sil_tool.get("description", "")
+    check("bounded SIL discovery contract",
+          "16384 UTF-8 bytes" in sil_description
+          and "100 components" in sil_description
+          and "does not select or approve SIL" in sil_description
+          and "independent functional-safety assessment" in sil_description,
+          sil_description)
+
+    # Tier 3 — Experimental (15 tools)
+    tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
+             "runPlugin", "getProgress", "streamSimulation",
+             "generateVisualization", "composeMultiServerWorkflow",
+             "manageSecurity", "manageState", "manageValidationProfile",
+             "queryDataCatalog", "bridgeTaskWorkflow", "runCapability"]
+    for name in tier3:
+        check(f"tier3 tool '{name}'", name in tool_names)
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/list", "params": {}})
+    r = recv()
+    resources = r.get("result", {}).get("resources", [])
+    resource_uris = sorted(resource["uri"] for resource in resources)
+    expected_resource_uris = sorted([
+        "neqsim://components",
+        "neqsim://data-tables",
+        "neqsim://example-catalog",
+        "neqsim://models",
+        "neqsim://schema-catalog",
+        "neqsim://setup-templates",
+        "neqsim://standards",
+    ])
+    check("exact static resource inventory",
+          resource_uris == expected_resource_uris,
+          f"got {resource_uris}")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "resources/templates/list", "params": {}})
+    r = recv()
+    templates = r.get("result", {}).get("resourceTemplates", [])
+    template_uris = sorted(template["uriTemplate"] for template in templates)
+    expected_template_uris = sorted([
+        "neqsim://api/{className}",
+        "neqsim://components/{name}",
+        "neqsim://examples/{category}/{name}",
+        "neqsim://materials/{type}",
+        "neqsim://schemas/{tool}/{type}",
+        "neqsim://setup-templates/{id}",
+        "neqsim://standards/{code}",
+    ])
+    check("exact resource-template inventory",
+          template_uris == expected_template_uris,
+          f"got {template_uris}")
+
+    send({"jsonrpc": "2.0", "id": next_id(), "method": "prompts/list", "params": {}})
+    r = recv()
+    prompts = r.get("result", {}).get("prompts", [])
+    prompt_names = sorted(prompt["name"] for prompt in prompts)
+    expected_prompt_names = sorted([
+        "biorefinery_analysis",
+        "co2_ccs_chain",
+        "design_gas_processing",
+        "dynamic_simulation",
+        "field_development_screening",
+        "flow_assurance_screening",
+        "pipeline_sizing",
+        "pvt_study",
+        "teg_dehydration_design",
+    ])
+    check("exact guided-prompt inventory",
+          prompt_names == expected_prompt_names,
+          f"got {prompt_names}")
+
+
+def test_component_search():
+    """Test component database search."""
+    print("\n=== Component Search Tests ===")
+
+    r = call_tool("searchComponents", {"query": "methane"})
+    check("search methane", "methane" in r.get("components", []))
+
+    r = call_tool("searchComponents", {"query": "meth"})
+    comps = r.get("components", [])
+    check("partial search 'meth'", len(comps) >= 2, f"got {len(comps)}")
+    check("methane in partial results", "methane" in comps)
+    check("methanol in partial results", "methanol" in comps)
+
+    r = call_tool("searchComponents", {"query": "CO2"})
+    check("search CO2", "CO2" in r.get("components", []))
+
+    r = call_tool("searchComponents", {"query": "water"})
+    check("search water", "water" in r.get("components", []))
+
+    r = call_tool("searchComponents", {"query": "H2S"})
+    check("search H2S", "H2S" in r.get("components", []))
+
+    r = call_tool("searchComponents", {"query": ""})
+    check("empty search returns all", r.get("matchCount", 0) > 50)
+
+    r = call_tool("searchComponents", {"query": "unobtainium"})
+    check("no match returns 0", r.get("matchCount", 0) == 0)
+
+
+def test_examples_and_schemas():
+    """Test complete example/schema catalogs and representative tool retrieval."""
+    print("\n=== Examples & Schemas Tests ===")
+
+    schema_catalog = read_json_resource("neqsim://schema-catalog")
+    check("schema catalog is JSON", "_protocolError" not in schema_catalog,
+          schema_catalog.get("_protocolError", ""))
+    check("schema catalog has 71 tools", len(schema_catalog) == 71,
+          f"got {len(schema_catalog)}")
+
+    schema_uri_errors = []
+    schema_resource_errors = []
+    for tool_name, schema_refs in sorted(schema_catalog.items()):
+        if tool_name == "_protocolError":
+            continue
+        for schema_type in ("input", "output"):
+            ref_name = f"{schema_type}SchemaUri"
+            expected_uri = f"neqsim://schemas/{tool_name}/{schema_type}"
+            schema_uri = schema_refs.get(ref_name)
+            if schema_uri != expected_uri:
+                schema_uri_errors.append(
+                    f"{tool_name}/{schema_type}: {schema_uri!r} != {expected_uri!r}"
+                )
+                continue
+            schema = read_json_resource(schema_uri)
+            if ("_protocolError" in schema or schema.get("type") != "object"
+                    or not isinstance(schema.get("properties"), dict)):
+                schema_resource_errors.append(f"{tool_name}/{schema_type}")
+
+    check("all 142 catalog schema URIs are canonical", not schema_uri_errors,
+          "; ".join(schema_uri_errors))
+    check("all 142 catalog schemas resolve as JSON objects",
+          not schema_resource_errors,
+          f"invalid: {schema_resource_errors}")
+
+    example_catalog = read_json_resource("neqsim://example-catalog")
+    check("example catalog is JSON", "_protocolError" not in example_catalog,
+          example_catalog.get("_protocolError", ""))
+    check("example catalog has 24 categories", len(example_catalog) == 24,
+          f"got {len(example_catalog)}")
+    example_count = sum(
+        len(examples) for examples in example_catalog.values()
+        if isinstance(examples, dict)
+    )
+    check("example catalog has 114 entries", example_count == 114,
+          f"got {example_count}")
+
+    tool_examples = example_catalog.get("tool", {})
+    check("schema tools exactly match canonical tool examples",
+          set(tool_examples) == set(schema_catalog),
+          f"missing={sorted(set(schema_catalog) - set(tool_examples))}, "
+          f"extra={sorted(set(tool_examples) - set(schema_catalog))}")
+
+    example_resource_errors = []
+    for category, examples in sorted(example_catalog.items()):
+        if not isinstance(examples, dict):
+            example_resource_errors.append(f"{category}: not an object")
+            continue
+        for name in sorted(examples):
+            example = read_json_resource(f"neqsim://examples/{category}/{name}")
+            if "_protocolError" in example or not isinstance(example, dict):
+                example_resource_errors.append(f"{category}/{name}")
+    check("all 114 catalog examples resolve as JSON objects",
+          not example_resource_errors,
+          f"invalid: {example_resource_errors}")
+
+    r = call_tool("getExample", {"category": "flash", "name": "tp-simple-gas"})
+    check("flash example has model", "model" in r)
+    check("flash example has components", "components" in r)
+    check("flash example model=SRK", r.get("model") == "SRK")
+
+    r = call_tool("getExample", {"category": "flash", "name": "tp-two-phase"})
+    check("two-phase example exists", "components" in r)
+
+    r = call_tool("getExample", {"category": "process", "name": "simple-separation"})
+    check("process example has fluid", "fluid" in r)
+    check("process example has process", "process" in r)
+
+    r = call_tool("getExample", {"category": "process", "name": "compression-with-cooling"})
+    check("compression example exists", "fluid" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_flash", "schemaType": "input"})
+    check("flash input schema", "properties" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_flash", "schemaType": "output"})
+    check("flash output schema", "properties" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_process", "schemaType": "input"})
+    check("process input schema", "properties" in r)
+
+    # Batch schemas
+    r = call_tool("getSchema", {"toolName": "run_batch", "schemaType": "input"})
+    check("batch input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "run_batch", "schemaType": "output"})
+    check("batch output schema", "properties" in r)
+
+    # Property table schemas
+    r = call_tool("getSchema", {"toolName": "get_property_table", "schemaType": "input"})
+    check("prop table input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "get_property_table", "schemaType": "output"})
+    check("prop table output schema", "properties" in r)
+
+    # Phase envelope schemas
+    r = call_tool("getSchema", {"toolName": "get_phase_envelope", "schemaType": "input"})
+    check("phase env input schema", "properties" in r)
+    r = call_tool("getSchema", {"toolName": "get_phase_envelope", "schemaType": "output"})
+    check("phase env output schema", "properties" in r)
+
+    # Capabilities schema (output only)
+    r = call_tool("getSchema", {"toolName": "get_capabilities", "schemaType": "output"})
+    check("capabilities output schema", "properties" in r)
+
+    # New example categories
+    r = call_tool("getExample", {"category": "batch", "name": "temperature-sweep"})
+    check("batch temp-sweep example has components", "components" in r)
+    check("batch temp-sweep example has cases", "cases" in r)
+
+    r = call_tool("getExample", {"category": "batch", "name": "pressure-sweep"})
+    check("batch press-sweep example has cases", "cases" in r)
+
+    r = call_tool("getExample", {"category": "property-table", "name": "temperature-sweep"})
+    check("prop-table temp-sweep has sweep", "sweep" in r)
+
+    r = call_tool("getExample", {"category": "property-table", "name": "pressure-sweep"})
+    check("prop-table press-sweep has sweep", "sweep" in r)
+
+    r = call_tool("getExample", {"category": "phase-envelope", "name": "natural-gas"})
+    check("phase-env example has components", "components" in r)
+
+    r = call_tool("getExample", {"category": "materials-review", "name": "stid-register"})
+    check("materials-review example has register", "materialsRegister" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_materials_review", "schemaType": "input"})
+    check("materials-review input schema", "properties" in r)
+
+    r = call_tool("getSchema", {"toolName": "run_materials_review", "schemaType": "output"})
+    check("materials-review output schema", "properties" in r)
+
+
+# ---------------------------------------------------------------------------
+# FLASH CALCULATION TESTS
+# ---------------------------------------------------------------------------
+
+def test_tp_flash_simple_gas():
+    """SRK TP flash: simple natural gas at 25C, 50 bara (single phase)."""
+    print("\n=== TP Flash: Simple Gas (SRK, 25C, 50 bara) ===")
+
+    r = run_flash({"methane": 0.85, "ethane": 0.10, "propane": 0.05}, 25.0, 50.0)
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    flash = r.get("flash", {})
+    check("model=SRK", flash.get("model") == "SRK")
+    check("single phase", flash.get("numberOfPhases") == 1)
+    check("gas phase", "gas" in flash.get("phases", []))
+
+    density = get_phase_prop(r, "gas", "density")
+    check("gas density > 30 kg/m3", density is not None and density > 30, f"got {density}")
+    check("gas density < 60 kg/m3", density is not None and density < 60, f"got {density}")
+
+    z = get_phase_prop(r, "gas", "compressibilityFactor")
+    check("Z-factor 0.85-0.95", z is not None and 0.85 < z < 0.95, f"got {z}")
+
+    visc = get_phase_prop(r, "gas", "viscosity")
+    check("viscosity > 0", visc is not None and visc > 0, f"got {visc}")
+    check("viscosity order 1e-5", visc is not None and 1e-6 < visc < 1e-4, f"got {visc}")
+
+    tc = get_phase_prop(r, "gas", "thermalConductivity")
+    check("thermal cond > 0", tc is not None and tc > 0, f"got {tc}")
+
+    cp = get_phase_prop(r, "gas", "Cp")
+    check("Cp > 1500 J/kgK", cp is not None and cp > 1500, f"got {cp}")
+
+
+def test_tp_flash_pr_two_phase():
+    """PR EOS TP flash: natural gas at 25C, 10 bara (from SystemPrEoSTest)."""
+    print("\n=== TP Flash: PR Two-Phase (25C, 10 bara) ===")
+
+    r = run_flash(
+        {"nitrogen": 0.01, "CO2": 0.01, "methane": 0.68, "ethane": 0.10, "n-heptane": 0.20},
+        24.85, 10.0, eos="PR"
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    flash = r.get("flash", {})
+    check("model=PR", flash.get("model") == "PR")
+    nphases = flash.get("numberOfPhases", 0)
+    check("two phases", nphases == 2, f"got {nphases}")
+
+    # From SystemPrEoSTest: gas Z ~0.9708
+    z = get_phase_prop(r, "gas", "compressibilityFactor")
+    if z is not None:
+        check("gas Z ~0.97", approx(z, 0.9708, rel_tol=0.01), f"got {z}")
+
+
+def test_tp_flash_two_phase_ch4_c3():
+    """SRK TP flash: CH4/C3 at -20C, 10 bara should give two phases."""
+    print("\n=== TP Flash: CH4/C3 Two-Phase (-20C, 10 bara) ===")
+
+    r = run_flash({"methane": 0.50, "propane": 0.50}, -20.0, 10.0)
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    nphases = r.get("flash", {}).get("numberOfPhases", 0)
+    check("two phases", nphases >= 2, f"got {nphases}")
+
+    # Gas phase should exist with density << liquid
+    gas_d = get_phase_prop(r, "gas", "density")
+    liq_d = get_phase_prop(r, "liquid", "density") or get_phase_prop(r, "oil", "density")
+    if gas_d and liq_d:
+        check("gas density < liquid density", gas_d < liq_d,
+              f"gas={gas_d}, liq={liq_d}")
+
+
+def test_tp_flash_rich_gas():
+    """SRK TP flash: rich gas near cricondenbar (from TPFlashTest)."""
+    print("\n=== TP Flash: Rich Gas Near Cricondenbar (0C, 100 bara) ===")
+
+    r = run_flash(
+        {
+            "nitrogen": 3.43, "CO2": 0.34, "methane": 62.51, "ethane": 15.65,
+            "propane": 13.22, "i-butane": 1.61, "n-butane": 2.48,
+            "i-pentane": 0.35, "n-pentane": 0.29, "n-hexane": 0.12
+        },
+        0.0, 100.0
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    nphases = r.get("flash", {}).get("numberOfPhases", 0)
+    check("two phases at 0C/100bar", nphases >= 2, f"got {nphases}")
+
+
+def test_tp_flash_rich_gas_single_phase():
+    """SRK TP flash: same rich gas at 30C, 100 bara should be single phase."""
+    print("\n=== TP Flash: Rich Gas Single Phase (30C, 100 bara) ===")
+
+    r = run_flash(
+        {
+            "nitrogen": 3.43, "CO2": 0.34, "methane": 62.51, "ethane": 15.65,
+            "propane": 13.22, "i-butane": 1.61, "n-butane": 2.48,
+            "i-pentane": 0.35, "n-pentane": 0.29, "n-hexane": 0.12
+        },
+        30.0, 100.0
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    nphases = r.get("flash", {}).get("numberOfPhases", 0)
+    check("single phase at 30C/100bar", nphases == 1, f"got {nphases}")
+
+
+def test_tp_flash_pure_methane():
+    """SRK TP flash: pure methane at 25C, 50 bara."""
+    print("\n=== TP Flash: Pure Methane (25C, 50 bara) ===")
+
+    r = run_flash({"methane": 1.0}, 25.0, 50.0)
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("single phase", r.get("flash", {}).get("numberOfPhases") == 1)
+
+    z = get_phase_prop(r, "gas", "compressibilityFactor")
+    # Pure CH4 at 25C, 50 bara with SRK: Z ~ 0.92
+    check("Z ~0.92", z is not None and approx(z, 0.92, rel_tol=0.03), f"got {z}")
+
+
+def test_tp_flash_high_pressure():
+    """SRK TP flash: gas at high pressure 300 bara (dense phase)."""
+    print("\n=== TP Flash: High Pressure (25C, 300 bara) ===")
+
+    r = run_flash({"methane": 0.90, "ethane": 0.10}, 25.0, 300.0)
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    density = get_phase_prop(r, "gas", "density")
+    # At 300 bara, methane is very dense
+    check("high density > 150 kg/m3", density is not None and density > 150, f"got {density}")
+
+
+def test_tp_flash_low_temperature():
+    """SRK TP flash: natural gas at -40C, 50 bara (may condense)."""
+    print("\n=== TP Flash: Low Temperature (-40C, 50 bara) ===")
+
+    r = run_flash(
+        {"methane": 0.80, "ethane": 0.10, "propane": 0.05, "n-butane": 0.05},
+        -40.0, 50.0
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    nphases = r.get("flash", {}).get("numberOfPhases", 0)
+    check("phases >= 1", nphases >= 1, f"got {nphases}")
+
+
+def test_tp_flash_with_co2_h2s():
+    """SRK TP flash: sour gas with CO2 and H2S."""
+    print("\n=== TP Flash: Sour Gas with CO2/H2S (40C, 80 bara) ===")
+
+    r = run_flash(
+        {"methane": 0.75, "CO2": 0.10, "H2S": 0.05, "ethane": 0.05, "propane": 0.05},
+        40.0, 80.0
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("has gas phase", "gas" in r.get("flash", {}).get("phases", []))
+
+
+def test_tp_flash_with_water_cpa():
+    """CPA EOS TP flash: gas with water (tests CPA model)."""
+    print("\n=== TP Flash: CPA with Water (25C, 50 bara) ===")
+
+    r = run_flash(
+        {"methane": 0.85, "ethane": 0.10, "water": 0.05},
+        25.0, 50.0, eos="CPA"
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+    nphases = r.get("flash", {}).get("numberOfPhases", 0)
+    check("two phases (gas+aqueous)", nphases >= 2, f"got {nphases}")
+
+
+# ---------------------------------------------------------------------------
+# DEW POINT / BUBBLE POINT TESTS
+# ---------------------------------------------------------------------------
+
+def test_dew_point_temperature():
+    """Dew point temperature at 50 bara for natural gas."""
+    print("\n=== Dew Point Temperature (50 bara) ===")
+
+    r = run_flash(
+        {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
+        25.0, 50.0, flash_type="dewPointT"
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("flashType=dewPointT", r.get("flash", {}).get("flashType") == "dewPointT")
+
+
+def test_bubble_point_pressure():
+    """Bubble point pressure for CH4/C2/C3 mix at -50C."""
+    print("\n=== Bubble Point Pressure (-50C) ===")
+
+    r = run_flash(
+        {"methane": 0.50, "ethane": 0.30, "propane": 0.20},
+        -50.0, 30.0, flash_type="bubblePointP"
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("flashType=bubblePointP", r.get("flash", {}).get("flashType") == "bubblePointP")
+
+
+def test_dew_point_pressure():
+    """Dew point pressure at a temperature with a verified gas/oil saturation solution."""
+    print("\n=== Dew Point Pressure (-30C) ===")
+
+    r = run_flash(
+        {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
+        -30.0, 50.0, flash_type="dewPointP"
+    )
+    check("status=success", r.get("status") == "success", json.dumps(r.get("errors", [])))
+    check("flashType=dewPointP", r.get("flash", {}).get("flashType") == "dewPointP")
+
+
+def test_bubble_point_temperature():
+    """Bubble point temperature for liquid-rich mixture at 30 bara."""
+    print("\n=== Bubble Point Temperature (30 bara) ===")
+
+    r = run_flash(
+        {"methane": 0.30, "propane": 0.40, "n-butane": 0.30},
+        -20.0, 30.0, flash_type="bubblePointT"
+    )
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# PROCESS SIMULATION TESTS
+# ---------------------------------------------------------------------------
+
+def test_process_separator():
+    """Separator: HP separation of two-phase gas at 25C, 50 bara."""
+    print("\n=== Process: HP Separator ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "mixingRule": "classic",
+            "components": {"methane": 0.85, "ethane": 0.10, "propane": 0.05}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [10000.0, "kg/hr"]}},
+            {"type": "Separator", "name": "HP Sep", "inlet": "feed"}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("has report", "report" in r or "unitOperations" in r or "reportJson" in str(r.keys()))
+
+
+def test_process_compressor():
+    """Compressor: compress methane from 20 to 60 bara."""
+    print("\n=== Process: Compressor (20->60 bara) ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 20.0,
+            "components": {"methane": 0.90, "ethane": 0.10}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [5000.0, "kg/hr"]}},
+            {"type": "Compressor", "name": "Comp", "inlet": "feed",
+             "properties": {"outletPressure": [60.0, "bara"]}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_cooler():
+    """Cooler: cool gas from 80C to 30C."""
+    print("\n=== Process: Cooler (80C -> 30C) ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 353.15,
+            "pressure": 50.0,
+            "components": {"methane": 0.90, "ethane": 0.10}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [5000.0, "kg/hr"]}},
+            {"type": "Cooler", "name": "cooler1", "inlet": "feed",
+             "properties": {"outletTemperature": [303.15, "K"]}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_heater():
+    """Heater: heat gas from 25C to 80C."""
+    print("\n=== Process: Heater (25C -> 80C) ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "components": {"methane": 0.90, "ethane": 0.10}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [5000.0, "kg/hr"]}},
+            {"type": "Heater", "name": "heater1", "inlet": "feed",
+             "properties": {"outletTemperature": [353.15, "K"]}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_valve():
+    """Throttling valve: drop pressure from 50 to 20 bara."""
+    print("\n=== Process: Throttling Valve (50 -> 20 bara) ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "components": {"methane": 0.90, "ethane": 0.10}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [10000.0, "kg/hr"]}},
+            {"type": "valve", "name": "choke", "inlet": "feed",
+             "properties": {"outletPressure": 20.0}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_separator_and_compressor():
+    """Separator + compressor train: separate gas, then compress."""
+    print("\n=== Process: Separator + Compressor Train ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "mixingRule": "classic",
+            "components": {"methane": 0.85, "ethane": 0.10, "propane": 0.05}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [50000.0, "kg/hr"]}},
+            {"type": "Separator", "name": "HP Sep", "inlet": "feed"},
+            {"type": "Compressor", "name": "Comp", "inlet": "HP Sep.gasOut",
+             "properties": {"outletPressure": [80.0, "bara"]}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_compression_cooling_train():
+    """Compressor + cooler: compress then cool (from ExampleCatalog)."""
+    print("\n=== Process: Compression + Cooling Train ===")
+
+    r = call_tool("getExample", {"category": "process", "name": "compression-with-cooling"})
+    check("example retrieved", "fluid" in r)
+
+    if "fluid" in r:
+        result = run_process(r)
+        check("compression+cooling success", result.get("status") == "success",
+              result.get("message", ""))
+
+
+def test_process_two_phase_separator():
+    """Separator with two-phase feed (gas + liquid)."""
+    print("\n=== Process: Two-Phase Separator ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 253.15,
+            "pressure": 10.0,
+            "mixingRule": "classic",
+            "components": {"methane": 0.50, "propane": 0.50}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [20000.0, "kg/hr"]}},
+            {"type": "Separator", "name": "sep", "inlet": "feed"}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_valve_then_separator():
+    """Valve + separator: choke then separate (JT cooling effect)."""
+    print("\n=== Process: Valve + Separator (JT Effect) ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 80.0,
+            "components": {
+                "methane": 0.80, "ethane": 0.10, "propane": 0.05, "n-butane": 0.05
+            }
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [30000.0, "kg/hr"]}},
+            {"type": "valve", "name": "JT", "inlet": "feed",
+             "properties": {"outletPressure": 20.0}},
+            {"type": "Separator", "name": "LTS", "inlet": "JT"}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_multi_fluid():
+    """Process with multiple named fluids."""
+    print("\n=== Process: Multiple Named Fluids ===")
+
+    r = run_process({
+        "fluids": {
+            "gas": {
+                "model": "SRK",
+                "temperature": 298.15,
+                "pressure": 50.0,
+                "components": {"methane": 0.9, "ethane": 0.1}
+            },
+            "oil": {
+                "model": "PR",
+                "temperature": 350.0,
+                "pressure": 100.0,
+                "components": {"methane": 0.3, "nC10": 0.7}
+            }
+        },
+        "process": [
+            {"type": "Stream", "name": "gasFeed", "fluidRef": "gas",
+             "properties": {"flowRate": [10000.0, "kg/hr"]}},
+            {"type": "Stream", "name": "oilFeed", "fluidRef": "oil",
+             "properties": {"flowRate": [50000.0, "kg/hr"]}}
+        ]
+    })
+    check("status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_process_pr_model():
+    """Process using Peng-Robinson EOS."""
+    print("\n=== Process: PR EOS ===")
+
+    r = run_process({
+        "fluid": {
+            "model": "PR",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "components": {"methane": 0.85, "ethane": 0.15}
+        },
+        "process": [
+            {"type": "Stream", "name": "feed",
+             "properties": {"flowRate": [10000.0, "kg/hr"]}},
+            {"type": "Separator", "name": "sep", "inlet": "feed"}
+        ]
+    })
+    check("PR process success", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# VALIDATION & ERROR HANDLING TESTS
+# ---------------------------------------------------------------------------
+
+def test_validation_valid_flash():
+    """Validate a correct flash input."""
+    print("\n=== Validation: Valid Flash ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "model": "SRK",
+            "temperature": {"value": 25.0, "unit": "C"},
+            "pressure": {"value": 50.0, "unit": "bara"},
+            "flashType": "TP",
+            "components": {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
+            "mixingRule": "classic"
+        })
+    })
+    check("valid=true", r.get("valid") is True)
+    check("no issues", len(r.get("issues", [])) == 0, f"got {len(r.get('issues', []))}")
+
+
+def test_validation_unknown_component():
+    """Validate flash with misspelled component."""
+    print("\n=== Validation: Unknown Component ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "components": {"metane": 1.0}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    issues = r.get("issues", [])
+    codes = [i.get("code") for i in issues]
+    check("UNKNOWN_COMPONENT", "UNKNOWN_COMPONENT" in codes, f"got {codes}")
+    # Should suggest "methane"
+    for iss in issues:
+        if iss.get("code") == "UNKNOWN_COMPONENT":
+            check("suggests methane", "methane" in iss.get("message", ""))
+            break
+
+
+def test_validation_unknown_model():
+    """Validate flash with invalid EOS model."""
+    print("\n=== Validation: Unknown Model ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "model": "NONEXISTENT",
+            "components": {"methane": 1.0}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("UNKNOWN_MODEL", "UNKNOWN_MODEL" in codes, f"got {codes}")
+
+
+def test_validation_negative_fraction():
+    """Validate flash with negative mole fraction."""
+    print("\n=== Validation: Negative Fraction ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "components": {"methane": -0.5}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("NEGATIVE_FRACTION", "NEGATIVE_FRACTION" in codes, f"got {codes}")
+
+
+def test_validation_composition_sum_warning():
+    """Validate flash with non-unity composition sum (warning only)."""
+    print("\n=== Validation: Composition Sum Warning ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "components": {"methane": 0.5, "ethane": 0.3}
+        })
+    })
+    check("valid=true (warning)", r.get("valid") is True)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("COMPOSITION_SUM warning", "COMPOSITION_SUM" in codes, f"got {codes}")
+
+
+def test_validation_missing_enthalpy_ph():
+    """Validate PH flash without enthalpy spec."""
+    print("\n=== Validation: PH Flash Missing Enthalpy ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "flashType": "PH",
+            "components": {"methane": 1.0}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("MISSING_SPEC", "MISSING_SPEC" in codes, f"got {codes}")
+
+
+def test_validation_unknown_flash_type():
+    """Validate flash with invalid flash type."""
+    print("\n=== Validation: Unknown Flash Type ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "flashType": "XYZ",
+            "components": {"methane": 1.0}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("UNKNOWN_FLASH_TYPE", "UNKNOWN_FLASH_TYPE" in codes, f"got {codes}")
+
+
+def test_validation_extreme_temperature():
+    """Validate flash with extreme temperature (warning)."""
+    print("\n=== Validation: Extreme Temperature Warning ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "temperature": 50000.0,
+            "components": {"methane": 1.0}
+        })
+    })
+    check("valid=true (warning)", r.get("valid") is True)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("TEMPERATURE_RANGE", "TEMPERATURE_RANGE" in codes, f"got {codes}")
+
+
+def test_validation_process_missing_type():
+    """Validate process with unit missing type field."""
+    print("\n=== Validation: Process Unit Missing Type ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "fluid": {"components": {"methane": 1.0}},
+            "process": [{"name": "feed"}]
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("MISSING_TYPE", "MISSING_TYPE" in codes, f"got {codes}")
+
+
+def test_validation_process_duplicate_names():
+    """Validate process with duplicate equipment names."""
+    print("\n=== Validation: Duplicate Names ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "fluid": {"components": {"methane": 1.0}},
+            "process": [
+                {"type": "Stream", "name": "feed"},
+                {"type": "Stream", "name": "feed"}
+            ]
+        })
+    })
+    codes = [i.get("code") for i in r.get("issues", [])]
+    check("DUPLICATE_NAME", "DUPLICATE_NAME" in codes, f"got {codes}")
+
+
+def test_validation_multiple_errors():
+    """Validate input with multiple simultaneous errors."""
+    print("\n=== Validation: Multiple Errors ===")
+
+    r = call_tool("validateInput", {
+        "inputJson": json.dumps({
+            "model": "FAKEOS",
+            "flashType": "PH",
+            "components": {"fakey": 1.0}
+        })
+    })
+    check("valid=false", r.get("valid") is False)
+    issues = r.get("issues", [])
+    check("at least 3 issues", len(issues) >= 3, f"got {len(issues)}")
+
+
+def test_flash_error_unknown_component():
+    """Flash with unknown component returns error."""
+    print("\n=== Flash Error: Unknown Component ===")
+
+    r = run_flash({"metane": 1.0}, 25.0, 50.0)
+    check("status=error", r.get("status") == "error")
+
+
+def test_flash_error_unknown_model():
+    """Flash with unknown EOS returns error."""
+    print("\n=== Flash Error: Unknown Model ===")
+
+    r = run_flash({"methane": 1.0}, 25.0, 50.0, eos="FAKEOS")
+    check("status=error", r.get("status") == "error")
+
+
+# ---------------------------------------------------------------------------
+# RUN ALL EXAMPLES THROUGH FLASH/PROCESS
+# ---------------------------------------------------------------------------
+
+def test_run_all_flash_examples():
+    """Run every flash example from the catalog through FlashRunner."""
+    print("\n=== Run All Flash Examples ===")
+
+    for name in ["tp-simple-gas", "tp-two-phase", "dew-point-t", "bubble-point-p", "cpa-with-water"]:
+        example = call_tool("getExample", {"category": "flash", "name": name})
+        if "components" not in example:
+            check(f"example '{name}' retrieved", False, "no components")
+            continue
+
+        # Run the example directly through FlashRunner via runFlash
+        comps = example["components"]
+        temp = example.get("temperature", {})
+        pres = example.get("pressure", {})
+        model = example.get("model", "SRK")
+        ft = example.get("flashType", "TP")
+
+        temp_val = temp.get("value", 25.0) if isinstance(temp, dict) else temp
+        temp_unit = temp.get("unit", "C") if isinstance(temp, dict) else "K"
+        pres_val = pres.get("value", 50.0) if isinstance(pres, dict) else pres
+        pres_unit = pres.get("unit", "bara") if isinstance(pres, dict) else "bara"
+
+        result = call_tool("runFlash", {
+            "components": json.dumps(comps),
+            "temperature": temp_val,
+            "temperatureUnit": temp_unit,
+            "pressure": pres_val,
+            "pressureUnit": pres_unit,
+            "eos": model,
+            "flashType": ft,
+        })
+        check(f"flash example '{name}' runs", result.get("status") == "success",
+              result.get("message", ""))
+
+
+def test_run_all_process_examples():
+    """Run every process example from the catalog through ProcessRunner."""
+    print("\n=== Run All Process Examples ===")
+
+    for name in ["simple-separation", "compression-with-cooling"]:
+        example = call_tool("getExample", {"category": "process", "name": name})
+        if "fluid" not in example:
+            check(f"example '{name}' retrieved", False, "no fluid")
+            continue
+
+        result = run_process(example)
+        check(f"process example '{name}' runs", result.get("status") == "success",
+              result.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# BATCH CALCULATION TESTS
+# ---------------------------------------------------------------------------
+
+def test_batch_temperature_sweep():
+    """Run a batch of 3 TP flashes at different temperatures."""
+    print("\n=== Batch: Temperature Sweep ===")
+
+    r = call_tool("runBatch", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "eos": "SRK",
+        "flashType": "TP",
+        "cases": json.dumps([
+            {"temperature": {"value": -20.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+            {"temperature": {"value": 80.0, "unit": "C"}, "pressure": {"value": 50.0, "unit": "bara"}},
+        ]),
+    })
+    check("batch status=success", r.get("status") == "success", r.get("message", ""))
+    summary = r.get("summary", {})
+    check("batch totalCases=3", summary.get("totalCases") == 3)
+    check("batch succeeded=3", summary.get("succeeded") == 3)
+    check("batch failed=0", summary.get("failed") == 0)
+    results = r.get("results", [])
+    check("batch 3 results", len(results) == 3, f"got {len(results)}")
+    for i, res in enumerate(results):
+        check(f"batch case[{i}] status=success", res.get("status") == "success")
+
+
+def test_batch_pressure_sweep():
+    """Run a batch of 4 TP flashes at different pressures."""
+    print("\n=== Batch: Pressure Sweep ===")
+
+    r = call_tool("runBatch", {
+        "components": json.dumps({"methane": 0.70, "ethane": 0.15, "propane": 0.10, "n-butane": 0.05}),
+        "eos": "PR",
+        "flashType": "TP",
+        "cases": json.dumps([
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 10.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 30.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 60.0, "unit": "bara"}},
+            {"temperature": {"value": 25.0, "unit": "C"}, "pressure": {"value": 100.0, "unit": "bara"}},
+        ]),
+    })
+    check("batch PR status=success", r.get("status") == "success", r.get("message", ""))
+    summary = r.get("summary", {})
+    check("batch PR totalCases=4", summary.get("totalCases") == 4)
+    check("batch PR succeeded=4", summary.get("succeeded") == 4)
+
+
+def test_batch_example_from_catalog():
+    """Run the batch temperature-sweep example from the catalog."""
+    print("\n=== Batch: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "batch", "name": "temperature-sweep"})
+    check("batch example retrieved", "cases" in example)
+
+    r = call_tool("runBatch", {
+        "components": json.dumps(example.get("components", {})),
+        "eos": example.get("model", "SRK"),
+        "flashType": example.get("flashType", "TP"),
+        "cases": json.dumps(example.get("cases", [])),
+    })
+    check("batch example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# PROPERTY TABLE TESTS
+# ---------------------------------------------------------------------------
+
+def test_property_table_temperature_sweep():
+    """Sweep temperature from -20 to 60 C at 50 bara."""
+    print("\n=== Property Table: Temperature Sweep ===")
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "sweep": "temperature",
+        "sweepFrom": -20.0,
+        "sweepFromUnit": "C",
+        "sweepTo": 60.0,
+        "sweepToUnit": "C",
+        "fixedValue": 50.0,
+        "fixedUnit": "bara",
+        "points": 9,
+        "eos": "SRK",
+    })
+    check("prop table status=success", r.get("status") == "success", r.get("message", ""))
+    table = r.get("table", [])
+    check("prop table has rows", len(table) >= 9, f"got {len(table)} rows")
+    # Verify first row has expected properties
+    if table:
+        first_row = table[0]
+        check("row has temperature", "temperature_C" in first_row or "temperature" in first_row)
+        check("row has density", "density" in first_row)
+
+
+def test_property_table_pressure_sweep():
+    """Sweep pressure from 10 to 100 bara at 25 C."""
+    print("\n=== Property Table: Pressure Sweep ===")
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps({"methane": 0.90, "ethane": 0.07, "propane": 0.03}),
+        "sweep": "pressure",
+        "sweepFrom": 10.0,
+        "sweepFromUnit": "bara",
+        "sweepTo": 100.0,
+        "sweepToUnit": "bara",
+        "fixedValue": 25.0,
+        "fixedUnit": "C",
+        "points": 10,
+        "eos": "SRK",
+    })
+    check("prop table P status=success", r.get("status") == "success", r.get("message", ""))
+    table = r.get("table", [])
+    check("prop table P has rows", len(table) >= 10, f"got {len(table)} rows")
+
+
+def test_property_table_example_from_catalog():
+    """Run the property table temperature-sweep example from the catalog."""
+    print("\n=== Property Table: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "property-table", "name": "temperature-sweep"})
+    check("prop table example retrieved", "sweep" in example)
+
+    r = call_tool("getPropertyTable", {
+        "components": json.dumps(example.get("components", {})),
+        "sweep": example.get("sweep", "temperature"),
+        "sweepFrom": example["sweepFrom"]["value"],
+        "sweepFromUnit": example["sweepFrom"]["unit"],
+        "sweepTo": example["sweepTo"]["value"],
+        "sweepToUnit": example["sweepTo"]["unit"],
+        "fixedValue": example["fixedPressure"]["value"],
+        "fixedUnit": example["fixedPressure"]["unit"],
+        "points": example.get("points", 13),
+        "eos": example.get("model", "SRK"),
+    })
+    check("prop table example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# PHASE ENVELOPE TESTS
+# ---------------------------------------------------------------------------
+
+def test_phase_envelope_natural_gas():
+    """Calculate phase envelope for a 5-component natural gas."""
+    print("\n=== Phase Envelope: Natural Gas ===")
+
+    r = call_tool("getPhaseEnvelope", {
+        "components": json.dumps({
+            "methane": 0.80,
+            "ethane": 0.10,
+            "propane": 0.05,
+            "n-butane": 0.03,
+            "n-pentane": 0.02,
+        }),
+        "eos": "SRK",
+    })
+    check("phase env status=success", r.get("status") == "success", r.get("message", ""))
+    envelope = r.get("envelope", [])
+    check("phase env has points", len(envelope) > 5, f"got {len(envelope)} points")
+    if envelope:
+        pt = envelope[0]
+        check("env point has T", "temperature_K" in pt)
+        check("env point has P", "pressure_bara" in pt)
+
+
+def test_phase_envelope_example_from_catalog():
+    """Run the phase envelope natural-gas example from the catalog."""
+    print("\n=== Phase Envelope: Run Catalog Example ===")
+
+    example = call_tool("getExample", {"category": "phase-envelope", "name": "natural-gas"})
+    check("phase env example has components", "components" in example)
+
+    r = call_tool("getPhaseEnvelope", {
+        "components": json.dumps(example.get("components", {})),
+        "eos": example.get("model", "SRK"),
+    })
+    check("phase env example runs", r.get("status") == "success", r.get("message", ""))
+
+
+# ---------------------------------------------------------------------------
+# CAPABILITIES TESTS
+# ---------------------------------------------------------------------------
+
+def test_capabilities():
+    """Test the capabilities discovery tool."""
+    print("\n=== Capabilities Discovery ===")
+
+    r = call_tool("getCapabilities", {})
+    check("capabilities status=success", r.get("status") == "success", r.get("message", ""))
+    check("capabilities has engine", r.get("engine") == "NeqSim")
+    check("capabilities has thermo models", "thermodynamicModels" in r)
+    check("capabilities has equipment", "processEquipment" in r,
+          str(r.get("truncation", {})))
+    coverage = r.get("toolCatalogCoverage", {})
+    check("capability descriptors cover every published tool",
+          coverage.get("complete") is True,
+          str(coverage))
+    check("capability coverage reports 71 published tools",
+          coverage.get("publishedToolCount") == 71,
+          str(coverage))
+    check("capability coverage reports 71 described tools",
+          coverage.get("describedToolCount") == 71,
+          str(coverage))
+    check("capability coverage has no missing or undeclared descriptors",
+          not coverage.get("missingDescriptors")
+          and not coverage.get("undeclaredDescriptors"),
+          str(coverage))
+    implementation = r.get("implementationInventory", {})
+    bindings = implementation.get("toolImplementationBindings", {})
+    check("implementation inventory is complete",
+          implementation.get("complete") is True,
+          str(implementation))
+    check("implementation inventory binds 71 tools",
+          implementation.get("toolBindingCount") == 71 and len(bindings) == 71,
+          str(implementation))
+    check("implementation inventory resolves 60 classes",
+          implementation.get("implementationClassCount") == 60,
+          str(implementation))
+    equipment_types = implementation.get("supportedEquipmentTypes", [])
+    contract_equipment_types = r.get("processJsonContract", {}).get(
+        "supportedEquipmentTypes", [])
+    check("implementation inventory matches process JSON equipment contract",
+          implementation.get("equipmentTypeCount") == len(equipment_types)
+          and equipment_types == contract_equipment_types,
+          str(implementation))
+    check("implementation inventory exposes MountainCavern",
+          "MountainCavern" in equipment_types,
+          str(equipment_types))
+    report_paths = implementation.get("reportPaths", [])
+    check("implementation inventory exposes two report paths",
+          implementation.get("reportPathCount") == 2
+          and [path.get("tool") for path in report_paths]
+          == ["generateReport", "bridgeTaskWorkflow"],
+          str(report_paths))
+    check("canonical process and report implementations are explicit",
+          bindings.get("runProcess") == "neqsim.mcp.runners.ProcessRunner"
+          and bindings.get("generateReport") == "neqsim.mcp.runners.ReportRunner"
+          and bindings.get("bridgeTaskWorkflow")
+          == "neqsim.mcp.runners.TaskWorkflowBridge",
+          str(bindings))
+
+    evidence = r.get("phase0EvidenceInventory", {})
+    tests = evidence.get("tests", {})
+    guides = evidence.get("guides", {})
+    limitations = evidence.get("knownLimitations", {})
+    check("evidence inventory freezes 72 Java test classes",
+          tests.get("javaTestClassCount") == 72,
+          str(tests))
+    check("evidence inventory freezes 102 protocol scenarios",
+          tests.get("protocolScenarioCount") == 102,
+          str(tests))
+    check("evidence inventory lists eight MCP guides",
+          guides.get("guideCount") == 8
+          and len(guides.get("entries", [])) == 8,
+          str(guides))
+    baseline_contract = evidence.get("acceptanceBaselineContract", {})
+    check("acceptance baseline contract is bounded and non-qualifying",
+          baseline_contract.get("fixtureCount") == 4
+          and baseline_contract.get("repeatRunCount") == 2
+          and baseline_contract.get("executionMode")
+          == "ON_DEMAND_TEST_HARNESS"
+          and baseline_contract.get("performanceQualification") is False
+          and baseline_contract.get("scientificValidationComplete") is False,
+          str(baseline_contract))
+
+    repo_root = Path(__file__).resolve().parents[3]
+    java_test_root = repo_root / tests.get("javaTestRoot", "")
+    java_test_files = sorted(java_test_root.rglob("*Test.java"))
+    protocol_source = Path(__file__).read_text(encoding="utf-8")
+    protocol_scenarios = re.findall(r"^def test_", protocol_source, re.MULTILINE)
+    guide_paths = [repo_root / entry.get("path", "")
+                   for entry in guides.get("entries", [])]
+    check("Java test source count matches the evidence inventory",
+          len(java_test_files) == tests.get("javaTestClassCount"),
+          f"found {len(java_test_files)}")
+    check("protocol scenario count matches the evidence inventory",
+          len(protocol_scenarios) == tests.get("protocolScenarioCount"),
+          f"found {len(protocol_scenarios)}")
+    check("every inventoried MCP guide resolves on the exact source tree",
+          all(path.is_file() for path in guide_paths),
+          str(guide_paths))
+
+    trust_report = call_tool("getBenchmarkTrust", {"action": "getAll"})
+    explicit_trust = trust_report.get("tools", {})
+    limitation_count = sum(len(tool.get("knownLimitations", []))
+                           for tool in explicit_trust.values())
+    validation_case_count = sum(len(tool.get("validationCases", []))
+                                for tool in explicit_trust.values())
+    verified_case_count = sum(
+        1 for tool in explicit_trust.values()
+        for case in tool.get("validationCases", [])
+        if "verifiedBy" in case)
+    check("limitation inventory reconciles the runtime trust report",
+          set(explicit_trust) == set(limitations.get("explicitTrustTools", []))
+          and limitation_count == limitations.get("knownLimitationCount")
+          and validation_case_count == limitations.get("validationCaseCount")
+          and verified_case_count == limitations.get("verifiedValidationCaseCount"),
+          str(limitations))
+    contract_tools = {
+        "getCapabilities", "getSchema", "getExample", "getBenchmarkTrust",
+        "checkToolAccess", "manageIndustrialProfile", "searchComponents",
+        "queryDataCatalog", "getProgress", "inspectApi",
+        "manageValidationProfile", "manageModel", "manageSession", "manageSecurity", "manageState",
+        "getAdjustableParameters", "validateInput", "validateResults",
+        "generateReport", "bridgeTaskWorkflow",
+        "listSimulationUnits",
+        "listUnitVariables",
+        "getSimulationVariable", "setSimulationVariable",
+        "saveSimulationState", "compareSimulationStates", "generateVisualization",
+        "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
+        "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
+        "designUtilities",
+        "runChemistry",
+        "runFlareNetwork",
+        "runHazopScenario",
+        "runSafetySystemPerformance",
+        "runOpenDrainReview",
+        "runNorsokS001Clause10Review",
+        "diagnoseAutomation", "getAutomationLearningReport",
+    }
+    coverage_records = limitations.get("coverageRecords", {})
+    check("fifty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.50"
+          and limitations.get("contractTestedToolCount") == 50
+          and limitations.get("confirmedGapToolCount") == 1
+          and set(limitations.get("contractTestedTools", [])) == contract_tools
+          and all(coverage_records.get(tool, {}).get("coverageStatus")
+                  == "CONTRACT_TESTED" for tool in contract_tools),
+          str(limitations))
+    comparison = coverage_records.get("compareProcesses", {})
+    check("process comparison has bounded canonical execution evidence",
+          comparison.get("coverageStatus") == "CONTRACT_TESTED"
+          and comparison.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_process_comparison_protocol.py"
+          in comparison.get("contractEvidenceSources", [])
+          and "canonical ProcessRunner delegation"
+          in comparison.get("evidenceBoundary", "")
+          and "case comparability" in comparison.get("evidenceBoundary", ""),
+          str(comparison))
+    barrier_register = coverage_records.get("runBarrierRegister", {})
+    check("barrier-register screening has bounded canonical evidence",
+          barrier_register.get("coverageStatus") == "CONTRACT_TESTED"
+          and barrier_register.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_BARRIER_REGISTER_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_barrier_register_protocol.py"
+          in barrier_register.get("contractEvidenceSources", [])
+          and "canonical NeqSim barrier model"
+          in barrier_register.get("evidenceBoundary", "")
+          and "does not identify hazards"
+          in barrier_register.get("evidenceBoundary", ""),
+          str(barrier_register))
+    relief = coverage_records.get("runRelief", {})
+    check("pressure-relief sizing has bounded canonical evidence",
+          relief.get("coverageStatus") == "CONTRACT_TESTED"
+          and relief.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_PRESSURE_RELIEF_SIZING_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_mcp_server.py"
+          in relief.get("contractEvidenceSources", [])
+          and "canonical NeqSim ReliefValveSizing" in relief.get("evidenceBoundary", "")
+          and "relief-scenario completeness" in relief.get("evidenceBoundary", ""),
+          str(relief))
+    operational_study = coverage_records.get("runOperationalStudy", {})
+    check("operational-study orchestration has bounded canonical evidence",
+          operational_study.get("coverageStatus") == "CONTRACT_TESTED"
+          and operational_study.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_operational_study_protocol.py"
+          in operational_study.get("contractEvidenceSources", [])
+          and "canonical JsonProcessBuilder" in operational_study.get("evidenceBoundary", "")
+          and "no-plant-write" in operational_study.get("evidenceBoundary", ""),
+          str(operational_study))
+    process_loop = coverage_records.get("runProcessLoop", {})
+    check("process-loop orchestration has bounded canonical evidence",
+          process_loop.get("coverageStatus") == "CONTRACT_TESTED"
+          and process_loop.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_LOOP_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_process_loop_protocol.py"
+          in process_loop.get("contractEvidenceSources", [])
+          and "ProcessAutomation.evaluate" in process_loop.get("evidenceBoundary", "")
+          and "does not establish global or local optimization"
+          in process_loop.get("evidenceBoundary", ""),
+          str(process_loop))
+    utility_design = coverage_records.get("designUtilities", {})
+    check("utility design has canonical screening evidence",
+          utility_design.get("coverageStatus") == "CONTRACT_TESTED"
+          and utility_design.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_UTILITY_DESIGN_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_utility_design_protocol.py"
+          in utility_design.get("contractEvidenceSources", [])
+          and "canonical NeqSim Boiler" in utility_design.get("evidenceBoundary", "")
+          and "design-basis completeness" in utility_design.get("evidenceBoundary", ""),
+          str(utility_design))
+    chemistry = coverage_records.get("runChemistry", {})
+    check("chemistry has canonical dispatch evidence",
+          chemistry.get("coverageStatus") == "CONTRACT_TESTED"
+          and chemistry.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_CHEMISTRY_DISPATCH_AND_TRANSPORT_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_chemistry_protocol.py"
+          in chemistry.get("contractEvidenceSources", [])
+          and "Canonical ChemistryRunner dispatch" in chemistry.get("evidenceBoundary", "")
+          and "thermodynamic" in chemistry.get("evidenceBoundary", ""),
+          str(chemistry))
+    flare = coverage_records.get("runFlareNetwork", {})
+    check("flare radiation has bounded canonical screening evidence",
+          flare.get("coverageStatus") == "CONTRACT_TESTED"
+          and flare.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_flare_radiation_protocol.py"
+          in flare.get("contractEvidenceSources", [])
+          and "canonical NeqSim Flare delegation" in flare.get("evidenceBoundary", "")
+          and "standards or regulatory compliance" in flare.get("evidenceBoundary", ""),
+          str(flare))
+
+    hazop_scenario = coverage_records.get("runHazopScenario", {})
+    check("HAZOP scenario has focused simulation-backed contract evidence",
+          hazop_scenario.get("coverageStatus") == "CONTRACT_TESTED"
+          and hazop_scenario.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_SIMULATION_BACKED_HAZOP_SCENARIO_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_hazop_scenario_protocol.py"
+          in hazop_scenario.get("contractEvidenceSources", [])
+          and "Canonical ProcessSystem" in hazop_scenario.get("evidenceBoundary", "")
+          and "hazard-identification" in hazop_scenario.get("evidenceBoundary", ""),
+          str(hazop_scenario))
+
+    safety_performance = coverage_records.get("runSafetySystemPerformance", {})
+    check("safety-system performance has bounded transport evidence",
+          safety_performance.get("coverageStatus") == "CONTRACT_TESTED"
+          and safety_performance.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SAFETY_SYSTEM_PERFORMANCE_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/tests/protocol/test_safety_system_performance_protocol.py"
+          in safety_performance.get("contractEvidenceSources", [])
+          and "standards applicability or conformance"
+          in safety_performance.get("evidenceBoundary", "")
+          and "accountable functional-safety"
+          in safety_performance.get("evidenceBoundary", ""),
+          str(safety_performance))
+
+    adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
+    check("adjustable-parameter discovery has bounded contract evidence",
+          adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
+          and adjustable_parameters.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_AUTOMATION_PARAMETER_DISCOVERY"
+          and "neqsim-mcp-server/tests/protocol/test_adjustable_parameters_protocol.py"
+          in adjustable_parameters.get("contractEvidenceSources", [])
+          and "mass or energy conservation"
+          in adjustable_parameters.get("evidenceBoundary", ""),
+          str(adjustable_parameters))
+    input_validation = coverage_records.get("validateInput", {})
+    check("pre-flight input validation has bounded contract evidence",
+          input_validation.get("coverageStatus") == "CONTRACT_TESTED"
+          and input_validation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_PREFLIGHT_INPUT_VALIDATION"
+          and "neqsim-mcp-server/tests/protocol/test_validate_input_protocol.py"
+          in input_validation.get("contractEvidenceSources", [])
+          and "does not execute a model"
+          in input_validation.get("evidenceBoundary", ""),
+          str(input_validation))
+    result_validation = coverage_records.get("validateResults", {})
+    check("post-calculation result validation has bounded contract evidence",
+          result_validation.get("coverageStatus") == "CONTRACT_TESTED"
+          and result_validation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_RESULT_VALIDATION_ADVISORY"
+          and "neqsim-mcp-server/tests/protocol/test_validate_results_protocol.py"
+          in result_validation.get("contractEvidenceSources", [])
+          and "facility-wide conservation"
+          in result_validation.get("evidenceBoundary", ""),
+          str(result_validation))
+    security_management = coverage_records.get("manageSecurity", {})
+    check("security management has bounded contract evidence",
+          security_management.get("coverageStatus") == "CONTRACT_TESTED"
+          and security_management.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_APPLICATION_SECURITY_MANAGEMENT"
+          and "neqsim-mcp-server/tests/protocol/test_security_protocol.py"
+          in security_management.get("contractEvidenceSources", [])
+          and "does not establish transport"
+          in security_management.get("evidenceBoundary", ""),
+          str(security_management))
+    variable_write = coverage_records.get("setSimulationVariable", {})
+    check("simulation-variable mutation has bounded contract evidence",
+          variable_write.get("coverageStatus") == "CONTRACT_TESTED"
+          and variable_write.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_SOFTWARE_CONTRACT_AUTOMATION_VARIABLE_MUTATION"
+          and "neqsim-mcp-server/tests/protocol/test_simulation_variable_write_protocol.py"
+          in variable_write.get("contractEvidenceSources", [])
+          and "plant or control authority"
+          in variable_write.get("evidenceBoundary", ""),
+          str(variable_write))
+    report_generation = coverage_records.get("generateReport", {})
+    check("report generation has bounded contract evidence",
+          report_generation.get("coverageStatus") == "CONTRACT_TESTED"
+          and report_generation.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_REPORT_GENERATION"
+          and "neqsim-mcp-server/tests/protocol/test_reporting_protocol.py"
+          in report_generation.get("contractEvidenceSources", [])
+          and "report completeness" in report_generation.get("evidenceBoundary", ""),
+          str(report_generation))
+    workflow_handoff = coverage_records.get("bridgeTaskWorkflow", {})
+    check("task-workflow handoff has bounded contract evidence",
+          workflow_handoff.get("coverageStatus") == "CONTRACT_TESTED"
+          and workflow_handoff.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_TASK_WORKFLOW_HANDOFF"
+          and "neqsim-mcp-server/tests/protocol/test_reporting_protocol.py"
+          in workflow_handoff.get("contractEvidenceSources", [])
+          and "does not execute or recompute a simulation"
+          in workflow_handoff.get("evidenceBoundary", ""),
+          str(workflow_handoff))
+    visualization = coverage_records.get("generateVisualization", {})
+    check("visualization generation has bounded contract evidence",
+          visualization.get("coverageStatus") == "CONTRACT_TESTED"
+          and visualization.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_VISUALIZATION_GENERATION"
+          and "neqsim-mcp-server/tests/protocol/test_visualization_protocol.py"
+          in visualization.get("contractEvidenceSources", [])
+          and "browser fidelity" in visualization.get("evidenceBoundary", ""),
+          str(visualization))
+    plugin_execution = coverage_records.get("runPlugin", {})
+    check("process-local plugin execution has bounded contract evidence",
+          plugin_execution.get("coverageStatus") == "CONTRACT_TESTED"
+          and plugin_execution.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_PROCESS_LOCAL_PLUGIN_EXECUTION"
+          and "neqsim-mcp-server/tests/protocol/test_plugin_protocol.py"
+          in plugin_execution.get("contractEvidenceSources", [])
+          and "plugin provenance"
+          in plugin_execution.get("evidenceBoundary", ""),
+          str(plugin_execution))
+    runtime_capability = coverage_records.get("runCapability", {})
+    check("bounded runtime capability has direct contract evidence",
+          runtime_capability.get("coverageStatus") == "CONTRACT_TESTED"
+          and runtime_capability.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_RUNTIME_CAPABILITY_EXECUTION"
+          and "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          in runtime_capability.get("contractEvidenceSources", [])
+          and "scientific validity"
+          in runtime_capability.get("evidenceBoundary", "")
+          and "operating-system or process sandbox"
+          in runtime_capability.get("evidenceBoundary", ""),
+          str(runtime_capability))
+    composed_workflow = coverage_records.get("composeWorkflow", {})
+    check("composed workflow has bounded contract evidence",
+          composed_workflow.get("coverageStatus") == "CONTRACT_TESTED"
+          and composed_workflow.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_COMPOSED_WORKFLOW_ORCHESTRATION"
+          and "neqsim-mcp-server/tests/protocol/test_compose_workflow_protocol.py"
+          in composed_workflow.get("contractEvidenceSources", [])
+          and "semantic compatibility"
+          in composed_workflow.get("evidenceBoundary", "")
+          and "plant or control authority"
+          in composed_workflow.get("evidenceBoundary", ""),
+          str(composed_workflow))
+    streaming = coverage_records.get("streamSimulation", {})
+    check("bounded streaming simulation has direct contract evidence",
+          streaming.get("coverageStatus") == "CONTRACT_TESTED"
+          and streaming.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_STREAMING_SIMULATION"
+          and streaming.get("contractEvidenceCount") == 7
+          and "src/test/java/neqsim/mcp/runners/StreamingRunnerTest.java"
+          in streaming.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/McpPrincipalScopingTest.java"
+          in streaming.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/tests/protocol/test_streaming_protocol.py"
+          in streaming.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/STREAMING_SIMULATION_CONTRACT.md"
+          in streaming.get("contractEvidenceSources", [])
+          and "statistical or uncertainty validity"
+          in streaming.get("evidenceBoundary", "")
+          and "plant or control authority"
+          in streaming.get("evidenceBoundary", ""),
+          str(streaming))
+    multi_server_composition = coverage_records.get(
+        "composeMultiServerWorkflow", {})
+    check("bounded multi-server composition has direct contract evidence",
+          multi_server_composition.get("coverageStatus") == "CONTRACT_TESTED"
+          and multi_server_composition.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_NON_NUMERICAL_BOUNDED_MULTI_SERVER_COMPOSITION_METADATA"
+          and multi_server_composition.get("contractEvidenceCount") == 6
+          and "src/test/java/neqsim/mcp/runners/CompositionRunnerTest.java"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/tests/protocol/test_composition_protocol.py"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/MULTI_SERVER_COMPOSITION_CONTRACT.md"
+          in multi_server_composition.get("contractEvidenceSources", [])
+          and "does not establish external server connection"
+          in multi_server_composition.get("evidenceBoundary", "")
+          and "accountable engineering approval"
+          in multi_server_composition.get("evidenceBoundary", ""),
+          str(multi_server_composition))
+    risk_matrix = coverage_records.get("runRiskMatrix", {})
+    check("bounded risk-matrix screening has direct contract evidence",
+          risk_matrix.get("coverageStatus") == "CONTRACT_TESTED"
+          and risk_matrix.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_GENERIC_RISK_SCREENING_SOFTWARE_CONTRACT"
+          and risk_matrix.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/RiskMatrix.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/RiskMatrixRunnerTest.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/tests/protocol/test_risk_matrix_protocol.py"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "does not identify hazards"
+          in risk_matrix.get("evidenceBoundary", "")
+          and "qualified safety-engineering review"
+          in risk_matrix.get("evidenceBoundary", ""),
+          str(risk_matrix))
+    lopa = coverage_records.get("runLOPA", {})
+    check("bounded LOPA screening has direct contract evidence",
+          lopa.get("coverageStatus") == "CONTRACT_TESTED"
+          and lopa.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
+          and lopa.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/tests/protocol/test_lopa_protocol.py"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md"
+          in lopa.get("contractEvidenceSources", [])
+          and "does not identify hazards" in lopa.get("evidenceBoundary", "")
+          and "qualified process-safety review" in lopa.get("evidenceBoundary", ""),
+          str(lopa))
+    sil = coverage_records.get("runSIL", {})
+    check("bounded SIF PFD screening has direct contract evidence",
+          sil.get("coverageStatus") == "CONTRACT_TESTED"
+          and sil.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"
+          and sil.get("contractEvidenceCount") == 8
+          and "src/main/java/neqsim/mcp/runners/SILRunner.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SILVerificationResult.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/SILRunnerTest.java"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/tests/protocol/test_sil_protocol.py"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md"
+          in sil.get("contractEvidenceSources", [])
+          and "does not establish SRS completeness" in sil.get("evidenceBoundary", "")
+          and "independent functional-safety assessment" in sil.get("evidenceBoundary", ""),
+          str(sil))
+    contract_sources = [
+        source
+        for tool in contract_tools
+        for source in coverage_records.get(tool, {}).get(
+            "contractEvidenceSources", [])
+    ]
+    check("contract evidence paths resolve on the exact source tree",
+          all((repo_root / source).is_file() for source in contract_sources)
+          and all(len(coverage_records.get(tool, {}).get(
+              "contractEvidenceSources", []))
+              == coverage_records.get(tool, {}).get("contractEvidenceCount")
+              for tool in contract_tools),
+          str(contract_sources))
+    check("uncovered tool-specific trust remains an explicit Phase 0 gap",
+          limitations.get("publishedToolCount") == 71
+          and limitations.get("explicitTrustToolCount") == 20
+          and limitations.get("genericTrustToolCount") == 51
+          and limitations.get("confirmedGapToolCount") == 1
+          and limitations.get("unsupportedConditionCount") == 0
+          and limitations.get("complete") is False
+          and evidence.get("complete") is False,
+          str(limitations))
+
+
+def test_run_capability_search_and_invoke():
+    """Discover and execute a runtime capability through the generic MCP route."""
+    print("\n=== Generic Runtime Capability ===")
+
+    coverage = call_tool("runCapability", {
+        "capabilityJson": json.dumps({"action": "coverage", "view": "apis", "limit": 2})
+    })
+    check("coverage page succeeds", coverage.get("status") == "success", str(coverage))
+    check("coverage page is bounded", len(coverage.get("entries", [])) == 2, str(coverage))
+    check("coverage does not claim completion", coverage.get("complete") is False, str(coverage))
+    check("coverage has continuation", coverage.get("nextOffset") == 2
+          and bool(coverage.get("catalogDigest")), str(coverage))
+
+    search = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "search",
+            "query": "sulfur vapour pressure",
+            "limit": 25,
+        })
+    })
+    check("capability search status=success", search.get("status") == "success", search.get("message", ""))
+    matches = json.dumps(search.get("matches", []))
+    check("capability search finds static sulfur method", "calculateVapourPressureBar" in matches, matches)
+    check("capability search labels static execution", "static-json" in matches, matches)
+
+    invoke = call_tool("runCapability", {
+        "capabilityJson": json.dumps({
+            "action": "invoke",
+            "className": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+            "methodName": "calculateVapourPressureBar",
+            "parameterTypes": ["double"],
+            "arguments": [717.76],
+        })
+    })
+    check("capability invoke status=success", invoke.get("status") == "success", invoke.get("message", ""))
+    check("capability invoke result", abs(invoke.get("result", 0.0) - 1.01325) < 1.0e-10,
+          f"got {invoke.get('result')}")
+
+
+# ===========================================================================
+# TIER 2 TOOL TESTS — Engineering Advanced
+# ===========================================================================
+
+# --- PVT tools ---
+
+def test_pvt_saturation_pressure():
+    """Run a PVT saturation pressure experiment."""
+    print("\n=== PVT: Saturation Pressure ===")
+    r = call_tool("runPVT", {
+        "components": json.dumps({"methane": 0.6, "ethane": 0.1, "propane": 0.1, "n-heptane": 0.2}),
+        "model": "SRK",
+        "temperature_C": 80.0,
+        "pressure_bara": 200.0,
+        "experiment": "saturationPressure",
+    })
+    check("pvt satP status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Flow assurance tools ---
+
+def test_flow_assurance_hydrate():
+    """Run a hydrate risk map analysis."""
+    print("\n=== Flow Assurance: Hydrate Risk Map ===")
+    r = call_tool("runFlowAssurance", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.08, "propane": 0.04, "water": 0.03}),
+        "model": "CPA",
+        "temperature_C": 4.0,
+        "pressure_bara": 100.0,
+        "analysis": "hydrateRiskMap",
+    })
+    check("hydrate status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Standards tools ---
+
+def test_calculate_standard_iso6976():
+    """Calculate gas quality per ISO 6976."""
+    print("\n=== Standards: ISO 6976 ===")
+    r = call_tool("calculateStandard", {
+        "components": json.dumps({"methane": 0.90, "ethane": 0.06, "propane": 0.03, "nitrogen": 0.01}),
+        "model": "SRK",
+        "temperature_C": 15.0,
+        "pressure_bara": 1.01325,
+        "standard": "ISO6976",
+    })
+    check("ISO6976 status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Pipeline tools ---
+
+def test_pipeline_single_phase_gas():
+    """Simulate a single-phase gas pipeline."""
+    print("\n=== Pipeline: Single Phase Gas ===")
+    r = call_tool("runPipeline", {
+        "components": json.dumps({"methane": 0.95, "ethane": 0.05}),
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 100.0,
+        "flowRate": json.dumps({"value": 5000.0, "unit": "kg/hr"}),
+        "pipe": json.dumps({"diameter_m": 0.2, "length_m": 10000.0,
+                            "elevation_m": 0.0, "roughness_m": 0.00005,
+                            "numberOfIncrements": 10}),
+    })
+    check("pipeline status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Materials review tools ---
+
+def test_materials_review_stid_register():
+    """Run a STID/material-register-backed materials review."""
+    print("\n=== Materials Review: STID Register ===")
+    payload = {
+        "projectName": "Synthetic MCP materials review",
+        "designLifeYears": 25,
+        "materialsRegister": [
+            {
+                "tag": "DEMO-LINE-001",
+                "equipmentType": "Pipeline",
+                "existingMaterial": "Carbon Steel API 5L X65",
+                "sourceReferences": ["synthetic STID line-list row 1"],
+                "service": {
+                    "temperature_C": 85.0,
+                    "pressure_bara": 95.0,
+                    "co2_mole_fraction": 0.04,
+                    "h2s_mole_fraction": 0.0008,
+                    "free_water": True,
+                    "chloride_mg_per_l": 55000.0,
+                    "pH": 5.2,
+                    "flow_velocity_m_per_s": 7.5,
+                },
+            }
+        ],
+    }
+    r = call_tool("runMaterialsReview", {"materialsReviewJson": json.dumps(payload)})
+    check("materials review status=success", r.get("status") == "success", r.get("message", ""))
+    check("materials review item count", r.get("itemCount") == 1)
+    check("materials review has recommendation", "recommendation" in r.get("items", [{}])[0])
+    check("materials review has standards", "NORSOK M-001" in r.get("standardsApplied", []))
+
+
+# --- Reservoir tools ---
+
+def test_reservoir_simple_tank():
+    """Simulate a gas reservoir material balance."""
+    print("\n=== Reservoir: Simple Tank Model ===")
+    r = call_tool("runReservoir", {
+        "components": json.dumps({"methane": 0.85, "ethane": 0.10, "propane": 0.05}),
+        "model": "SRK",
+        "reservoirTemperature_C": 100.0,
+        "reservoirPressure_bara": 200.0,
+        "gasVolume_Sm3": 1e9,
+        "oilVolume_Sm3": 0.0,
+        "waterVolume_Sm3": 0.0,
+        "producers": json.dumps([{"name": "well1", "flowRate": {"value": 100000.0, "unit": "Sm3/day"}}]),
+    })
+    check("reservoir status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Field economics tools ---
+
+def test_field_economics_production_profile():
+    """Generate a production decline profile."""
+    print("\n=== Field Economics: Production Profile ===")
+    r = call_tool("runFieldEconomics", {
+        "mode": "productionProfile",
+        "declineType": "EXPONENTIAL",
+        "initialRate_bblPerDay": 10000.0,
+        "annualDeclineRate": 0.15,
+        "startYear": 2025,
+        "totalYears": 20,
+    })
+    check("econ profile status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Dynamic simulation tools ---
+
+def test_dynamic_separator():
+    """Run a short dynamic simulation on a separator."""
+    print("\n=== Dynamic: Separator Transient ===")
+    process_json = {
+        "fluid": {
+            "components": {"methane": 0.7, "propane": 0.2, "nC10": 0.1},
+            "model": "SRK",
+            "temperature_C": 25.0,
+            "pressure_bara": 50.0,
+        },
+        "process": {
+            "equipment": [
+                {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                {"type": "separator", "name": "sep", "inlet": "feed"},
+            ]
+        },
+    }
+    r = call_tool("runDynamic", {
+        "processJson": json.dumps(process_json),
+        "duration_seconds": 10.0,
+        "timeStep_seconds": 1.0,
+    })
+    check("dynamic status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Bioprocess tools ---
+
+def test_bioprocess_anaerobic_digester():
+    """Run an anaerobic digester simulation."""
+    print("\n=== Bioprocess: Anaerobic Digester ===")
+    r = call_tool("runBioprocess", {
+        "reactorType": "anaerobicDigester",
+        "substrateType": "FOOD_WASTE",
+        "feedRate_kgPerHr": 100.0,
+        "totalSolidsFraction": 0.15,
+        "temperature_C": 37.0,
+    })
+    check("bioprocess status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Equipment sizing tools ---
+
+def test_size_separator():
+    """Size a separator vessel."""
+    print("\n=== Equipment Sizing: Separator ===")
+    r = call_tool("sizeEquipment", {
+        "equipmentType": "separator",
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 50.0,
+        "components": json.dumps({"methane": 0.7, "propane": 0.2, "nC10": 0.1}),
+        "flowRate": json.dumps({"value": 10000.0, "unit": "kg/hr"}),
+        "orientation": "horizontal",
+        "liquidRetentionTime_min": 5.0,
+    })
+    check("size sep status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_size_compressor():
+    """Size a compressor."""
+    print("\n=== Equipment Sizing: Compressor ===")
+    r = call_tool("sizeEquipment", {
+        "equipmentType": "compressor",
+        "model": "SRK",
+        "temperature_C": 25.0,
+        "pressure_bara": 20.0,
+        "components": json.dumps({"methane": 0.95, "ethane": 0.05}),
+        "flowRate": json.dumps({"value": 5000.0, "unit": "kg/hr"}),
+        "outletPressure_bara": 80.0,
+        "polytropicEfficiency": 0.80,
+    })
+    check("size comp status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Chemistry tools ---
+
+def test_chemistry_contract():
+    """Exercise four fast canonical chemistry routes through packaged MCP."""
+    print("\n=== Chemistry Contract ===")
+    cases = [
+        {"analysis": "electrolyteScale", "temperature_C": 60.0, "pH": 7.5,
+         "pCO2_bar": 1.0, "ca_mgL": 600.0, "hco3_mgL": 300.0},
+        {"analysis": "mechanisticCorrosion", "temperature_C": 60.0,
+         "pressure_bara": 80.0, "co2_mol": 0.05, "velocity_ms": 2.0,
+         "diameter_m": 0.15, "dose_mgL": 50.0},
+        {"analysis": "langmuirInhibitor", "temperature_C": 60.0,
+         "dose_mgL": 50.0, "targetEfficiency": 0.5},
+        {"analysis": "packedBedScavenger", "diameter_m": 0.5,
+         "height_m": 2.0, "k_per_s": 8.0, "cInlet_molm3": 1.0,
+         "flow_m3s": 0.005, "nCells": 20, "nTimeSteps": 50,
+         "simTime_s": 864000.0},
+    ]
+    for case in cases:
+        r = call_tool("runChemistry", {"chemistryJson": json.dumps(case)})
+        check("chemistry " + case["analysis"] + " status=success",
+              r.get("status") == "success", r.get("message", str(r)))
+
+
+# --- Flare-radiation screening ---
+
+def test_flare_radiation_contract():
+    """Exercise bounded canonical flare-radiation screening through packaged MCP."""
+    print("\n=== Flare Radiation Contract ===")
+    r = call_tool("runFlareNetwork", {
+        "heatDuty_MW": 50.0,
+        "flameHeight_m": 40.0,
+        "radiantFraction": 0.2,
+        "distances_m": [20.0, 50.0, 100.0],
+    })
+    data = r.get("data", r)
+    check("flare radiation status=success", r.get("status") == "success", str(r))
+    check("flare radiation profile and contour",
+          len(data.get("radiationProfile", [])) == 3
+          and len(data.get("safeDistanceContour", [])) == 4,
+          str(r))
+    check("flare radiation advisory boundary",
+          data.get("screeningOnly") is True
+          and data.get("standardConformanceClaimed") is False
+          and data.get("engineeringReviewRequired") is True,
+          str(r))
+
+
+# --- Simulation-backed HAZOP scenario ---
+
+def test_hazop_scenario_contract():
+    """Exercise one focused simulation-backed HAZOP deviation through packaged MCP."""
+    print("\n=== HAZOP Scenario Contract ===")
+    definition = {
+        "nodeTag": "2nd Stage",
+        "guideWord": "MORE",
+        "parameter": "TEMPERATURE",
+        "limits": {
+            "maxDischargeTemperatureC": 150.0,
+            "maxDischargeTemperatureByUnit": {"2nd Stage": 170.0},
+        },
+        "process": {
+            "fluid": {
+                "model": "SRK",
+                "temperature": 298.15,
+                "pressure": 10.0,
+                "mixingRule": "classic",
+                "components": {"methane": 0.90, "ethane": 0.07, "propane": 0.03},
+            },
+            "process": [
+                {"type": "Stream", "name": "feed",
+                 "properties": {"flowRate": [5000.0, "kg/hr"]}},
+                {"type": "Compressor", "name": "2nd Stage", "inlet": "feed",
+                 "properties": {"outletPressure": [80.0, "bara"]}},
+            ],
+        },
+    }
+    response = call_tool("runHazopScenario", {"scenarioJson": json.dumps(definition)})
+    data = response.get("data", response)
+    findings = data.get("findings", [])
+    check("HAZOP scenario status=success",
+          response.get("status") == "success" and data.get("status") == "ok", str(response))
+    check("HAZOP scenario returns auditable quantified finding",
+          data.get("matchCount", 0) >= 1 and findings
+          and findings[0].get("guideWord") == "MORE"
+          and findings[0].get("parameter") == "TEMPERATURE"
+          and findings[0].get("standardReference")
+          and findings[0].get("limitBasis"),
+          str(response))
+
+
+# --- Safety-system performance software contract ---
+
+def test_safety_system_performance_contract():
+    """Exercise the catalog safety-system example through packaged MCP."""
+    print("\n=== Safety System Performance Contract ===")
+    example = call_tool("getExample", {
+        "category": "safety",
+        "name": "safety-system-performance",
+    })
+    response = call_tool("runSafetySystemPerformance", {
+        "safetySystemJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    summary = data.get("summary", {})
+    check("safety-system performance status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("safety-system performance report and templates",
+          summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and "assessments" in data.get("performanceReport", {})
+          and "NORSOK-S-001" in data.get("standardsTemplates", {})
+          and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
+          str(response))
+
+
+# --- NORSOK S-001 Clause 10 review software contract ---
+
+def test_norsok_s001_clause10_review_contract():
+    """Exercise the catalog Clause 10 review through packaged MCP."""
+    print("\n=== NORSOK S-001 Clause 10 Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "process-safety-review",
+        "name": "norsok-s001-clause10",
+    })
+    response = call_tool("runNorsokS001Clause10Review", {
+        "clause10ReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("Clause 10 review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("Clause 10 review report and provenance",
+          data.get("reviewType") == "norsok_s001_clause10_review"
+          and data.get("overallVerdict") == "PASS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 0
+          and data.get("itemCount") == 5
+          and len(data.get("results", [])) == 5
+          and "NORSOK S-001:2020+AC:2021 Clause 10"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "NORSOK S-001 Clause 10 process safety system review",
+          str(response))
+
+
+# --- Open-drain review software contract ---
+
+def test_open_drain_review_contract():
+    """Exercise the catalog open-drain example through packaged MCP."""
+    print("\n=== Open Drain Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "open-drain-review",
+        "name": "norsok-s001-stid",
+    })
+    response = call_tool("runOpenDrainReview", {
+        "openDrainReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("open-drain review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("open-drain review report and provenance",
+          data.get("reviewType") == "open_drain_review"
+          and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 1
+          and data.get("itemCount") == 2
+          and len(data.get("results", [])) == 2
+          and "NORSOK S-001:2020+AC:2021 Clause 9"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "open drain review",
+          str(response))
+
+
+# --- Utility design tools ---
+
+def test_design_utilities():
+    """Screening-level utility-system design for the five utility types."""
+    print("\n=== Utility Design ===")
+
+    r = call_tool("designUtilities", {
+        "utilityType": "boiler",
+        "name": "HP Boiler",
+        "boilerEfficiency": 0.85,
+        "duties": json.dumps([{"name": "Reboiler", "dutyKW": 5000.0}]),
+    })
+    check("boiler status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "deaerator",
+        "name": "Feedwater Deaerator",
+        "feedwaterFlowKgh": 12000.0,
+        "feedwaterInletTempC": 85.0,
+        "operatingPressureBara": 1.2,
+    })
+    check("deaerator status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "refrigeration",
+        "name": "Propane Chiller",
+        "evaporatorTempC": -35.0,
+        "condenserTempC": 35.0,
+        "duties": json.dumps([{"name": "Gas Chilling", "dutyKW": 3000.0}]),
+    })
+    check("refrigeration status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "nitrogen",
+        "name": "N2 Generation",
+        "nitrogenDemandNm3h": 500.0,
+        "purityPercent": 99.5,
+        "generationMethod": "MEMBRANE",
+    })
+    check("nitrogen status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "steamNetwork",
+        "name": "Steam System",
+        "levels": json.dumps([
+            {"name": "HP", "pressureBara": 42.0, "saturationTempC": 253.0},
+            {"name": "LP", "pressureBara": 4.5, "saturationTempC": 148.0},
+        ]),
+        "demands": json.dumps([
+            {"level": "HP", "demandKgh": 8000.0},
+            {"level": "LP", "demandKgh": 5000.0},
+        ]),
+        "localGeneration": json.dumps([
+            {"level": "LP", "generationKgh": 2000.0},
+        ]),
+    })
+    check("steamNetwork status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Process comparison tools ---
+
+def test_compare_processes():
+    """Compare two canonical process cases with explicit completion accounting."""
+    print("\n=== Process Comparison ===")
+    case = {
+        "fluid": {
+            "components": {"methane": 0.9, "ethane": 0.1},
+            "model": "SRK",
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "mixingRule": "classic",
+        },
+        "process": [
+            {
+                "type": "Stream",
+                "name": "feed",
+                "properties": {"flowRate": [1000.0, "kg/hr"]},
+            },
+            {"type": "Separator", "name": "sep", "inlet": "feed"},
+        ],
+    }
+    r = call_tool("compareProcesses", {
+        "comparisonJson": json.dumps({
+            "cases": [
+                {"name": "Case-A", **case},
+                {"name": "Case-B", **case},
+            ]
+        }),
+    })
+    check("compare status=success", r.get("status") == "success", r.get("message", ""))
+    check("compare complete=true", r.get("complete") is True, str(r))
+    check("compare case accounting",
+          r.get("caseCount") == 2
+          and r.get("successfulCaseCount") == 2
+          and r.get("failedCaseCount") == 0,
+          str(r))
+    check("compare order preserved", r.get("caseNames") == ["Case-A", "Case-B"], str(r))
+    check("compare cases converged",
+          all(item.get("converged") is True
+              and item.get("result", {}).get("status") == "success"
+              for item in r.get("cases", [])),
+          str(r))
+
+
+# --- Validation tools ---
+
+def test_validate_results():
+    """Validate a flash result against engineering rules."""
+    print("\n=== Validate Results ===")
+    # First run a flash to get results
+    flash_r = run_flash({"methane": 0.9, "ethane": 0.1}, 25.0, 50.0)
+    r = call_tool("validateResults", {
+        "resultsJson": json.dumps(flash_r),
+        "context": "general",
+    })
+    check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_relief_screening_contract():
+    """Exercise the bounded pressure-relief screening contract."""
+    print("\n=== Relief Sizing Screening Contract ===")
+    r = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": 10.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+        "compressibility": 0.95,
+        "specificHeatRatio": 1.3,
+    })
+    check("relief screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("relief screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and "qualified pressure-relief" in r.get("advisoryBoundary", "")
+          and "not certification" in r.get("advisoryBoundary", ""),
+          str(r))
+    sizing = r.get("sizing", {})
+    check("relief sizing result is finite and conservative",
+          isinstance(sizing.get("requiredArea_mm2"), (int, float))
+          and math.isfinite(sizing.get("requiredArea_mm2"))
+          and sizing.get("requiredArea_mm2") > 0.0
+          and sizing.get("selectedArea_mm2", 0.0) >= sizing.get("requiredArea_mm2"),
+          str(sizing))
+    invalid = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": -1.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+    })
+    check("relief invalid input fails closed",
+          invalid.get("status") == "error"
+          and invalid.get("screeningOnly") is True,
+          str(invalid))
+
+
+def test_sil_screening_contract():
+    """Exercise bounded SIF PFD screening without changing inventory status."""
+    print("\n=== SIL Screening Contract ===")
+    r = call_tool("runSIL", {
+        "silJson": json.dumps({
+            "name": "Synthetic shutdown",
+            "claimedSIL": 2,
+            "architecture": "1oo1",
+            "proofTestInterval_hours": 8760,
+            "components": [
+                {"name": "PT", "type": "sensor", "pfd": 0.001},
+                {"name": "Logic", "type": "logic", "pfd": 0.0005},
+                {"name": "Valve", "type": "finalElement", "pfd": 0.005},
+            ],
+        }),
+    })
+    check("SIL screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("SIL screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and r.get("inputBasis") == "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE",
+          str(r))
+    screening = r.get("screening", {})
+    check("SIL canonical component sum is exposed",
+          screening.get("pfdAvg") == 0.0065
+          and screening.get("silBandIsIndicative") is True
+          and screening.get("architectureSuitabilityVerified") is False,
+          str(screening))
+    invalid = call_tool("runSIL", {"silJson": "[]"})
+    error_code = invalid.get("code")
+    if error_code is None and invalid.get("errors"):
+        error_code = invalid["errors"][0].get("code")
+    check("SIL malformed input fails closed",
+          invalid.get("status") == "error" and error_code == "INVALID_INPUT",
+          str(invalid))
+
+
+# --- Cross-validation tools ---
+
+def test_cross_validate_models():
+    """Cross-validate a process across multiple EOS models."""
+    print("\n=== Cross-Validate Models ===")
+    r = call_tool("crossValidateModels", {
+        "baseProcess": json.dumps({
+            "fluid": {
+                "components": {"methane": 0.9, "ethane": 0.1},
+                "model": "SRK",
+                "temperature_C": 25.0,
+                "pressure_bara": 50.0,
+            },
+            "process": {
+                "equipment": [
+                    {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                    {"type": "separator", "name": "sep", "inlet": "feed"},
+                ]
+            },
+        }),
+        "models": json.dumps(["SRK", "PR"]),
+        "compareVariables": json.dumps([
+            {"address": "sep.gasOutStream.temperature", "unit": "C"},
+        ]),
+    })
+    check("crossValidate status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Parametric study tools ---
+
+def test_parametric_study():
+    """Run a parametric pressure sweep."""
+    print("\n=== Parametric Study ===")
+    r = call_tool("runParametricStudy", {
+        "baseProcess": json.dumps({
+            "fluid": {
+                "components": {"methane": 0.9, "ethane": 0.1},
+                "model": "SRK",
+                "temperature_C": 25.0,
+                "pressure_bara": 50.0,
+            },
+            "process": {
+                "equipment": [
+                    {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
+                    {"type": "separator", "name": "sep", "inlet": "feed"},
+                ]
+            },
+        }),
+        "sweeps": json.dumps([
+            {"address": "feed.pressure", "unit": "bara", "from": 30.0, "to": 80.0, "steps": 3},
+        ]),
+        "outputs": json.dumps([
+            {"address": "sep.gasOutStream.temperature", "unit": "C"},
+        ]),
+        "mode": "one_at_a_time",
+    })
+    check("parametric status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# ===========================================================================
+# TIER 3 TOOL TESTS — Experimental
+# ===========================================================================
+
+# --- Session management tools ---
+
+def test_session_lifecycle():
+    """Create, list, and close a session."""
+    print("\n=== Session: Lifecycle ===")
+    # Create
+    r = call_tool("manageSession", {
+        "action": "create",
+        "fluid": json.dumps({"methane": 0.9, "ethane": 0.1}),
+    })
+    check("session create status=success", r.get("status") == "success", r.get("message", ""))
+    session_id = r.get("sessionId", "")
+
+    # List
+    r2 = call_tool("manageSession", {"action": "list"})
+    check("session list status=success", r2.get("status") == "success", r2.get("message", ""))
+
+    # Close
+    if session_id:
+        r3 = call_tool("manageSession", {
+            "action": "close",
+            "sessionId": session_id,
+        })
+        check("session close status=success", r3.get("status") == "success", r3.get("message", ""))
+
+
+# --- Task solver tools ---
+
+def test_solve_task():
+    """Route a supported PVT task through the bounded fixed-plan solver."""
+    print("\n=== Solve Task ===")
+    r = call_tool("solveTask", {
+        "task": "Run a PVT saturation pressure analysis",
+        "fluid": {
+            "model": "PR",
+            "components": {
+                "methane": 0.70,
+                "ethane": 0.10,
+                "propane": 0.05,
+                "n-heptane": 0.15,
+            },
+        },
+        "parameters": {"experiment": "saturationPressure"},
+        "validate": False,
+    })
+    check("solveTask status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Workflow composition tools ---
+
+def test_compose_workflow():
+    """Compose a simple two-step workflow."""
+    print("\n=== Compose Workflow ===")
+    r = call_tool("composeWorkflow", {
+        "workflow": "test-workflow",
+        "fluid": json.dumps({"methane": 0.9, "ethane": 0.1}),
+        "steps": json.dumps([
+            {"runner": "flash", "name": "step1",
+             "input": {"temperature_C": 25.0, "pressure_bara": 50.0}},
+        ]),
+    })
+    check("workflow status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Report generation tools ---
+
+def test_generate_report():
+    """Generate a process summary report."""
+    print("\n=== Generate Report ===")
+    flash_r = run_flash({"methane": 0.9, "ethane": 0.1}, 25.0, 50.0)
+    r = call_tool("generateReport", {
+        "reportType": "process_summary",
+        "title": "Test Report",
+        "data": json.dumps(flash_r),
+    })
+    check("report status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Task workflow bridge ---
+
+def test_bridge_task_workflow_schema():
+    """Get the results.json schema from the bridge."""
+    print("\n=== Bridge Task Workflow: Schema ===")
+    r = call_tool("bridgeTaskWorkflow", {"action": "getSchema"})
+    check("bridge schema status=success", r.get("status") == "success", r.get("message", ""))
+    check("bridge schema has schema", "schema" in r or "resultsJsonSchema" in str(r),
+          str(r)[:200])
+
+
+def test_bridge_task_workflow_convert():
+    """Convert a flash result to results.json format."""
+    print("\n=== Bridge Task Workflow: Convert ===")
+    flash_r = run_flash({"methane": 0.85, "ethane": 0.1, "propane": 0.05}, 25.0, 60.0)
+    r = call_tool("bridgeTaskWorkflow", {
+        "action": "toResultsJson",
+        "toolOutput": json.dumps(flash_r),
+        "toolName": "runFlash",
+        "taskTitle": "E2E Test Flash",
+    })
+    check("bridge convert status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Plugin tools ---
+
+def test_plugin_list():
+    """List available plugins."""
+    print("\n=== Plugin: List ===")
+    r = call_tool("runPlugin", {"action": "list"})
+    check("plugin list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Progress tracking tools ---
+
+def test_progress_list():
+    """List active operations."""
+    print("\n=== Progress: List Active ===")
+    r = call_tool("getProgress", {"action": "listActive"})
+    check("progress list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Streaming tools ---
+
+def test_streaming_list():
+    """List streaming operations."""
+    print("\n=== Streaming: List Operations ===")
+    r = call_tool("streamSimulation", {"action": "listOperations"})
+    check("streaming list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Visualization tools ---
+
+def test_visualization_bar_chart():
+    """Generate a bar chart visualization."""
+    print("\n=== Visualization: Bar Chart ===")
+    r = call_tool("generateVisualization", {
+        "type": "barChart",
+        "labels": json.dumps(["A", "B", "C"]),
+        "values": json.dumps([10.0, 20.0, 30.0]),
+    })
+    check("viz barChart status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Multi-server composition tools ---
+
+def test_multi_server_describe():
+    """Describe NeqSim capabilities to other servers."""
+    print("\n=== Multi-Server: Describe Capabilities ===")
+    r = call_tool("composeMultiServerWorkflow", {"action": "describeCapabilities"})
+    check("multiserver describe status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_multi_server_list():
+    """List registered external servers."""
+    print("\n=== Multi-Server: List Servers ===")
+    r = call_tool("composeMultiServerWorkflow", {"action": "listServers"})
+    check("multiserver list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Security tools ---
+
+def test_security_status():
+    """Get security status."""
+    print("\n=== Security: Status ===")
+    r = call_tool("manageSecurity", {"action": "getStatus"})
+    check("security status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- State persistence tools ---
+
+def test_state_list():
+    """List saved states."""
+    print("\n=== State: List ===")
+    r = call_tool("manageState", {"action": "list"})
+    check("state list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_state_info():
+    """Get state storage info."""
+    print("\n=== State: Info ===")
+    r = call_tool("manageState", {"action": "getInfo"})
+    check("state info status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Validation profile tools ---
+
+def test_validation_profile_list():
+    """List validation profiles."""
+    print("\n=== Validation Profiles: List ===")
+    r = call_tool("manageValidationProfile", {"action": "listProfiles"})
+    check("valprofile list status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_validation_profile_active():
+    """Get the active validation profile."""
+    print("\n=== Validation Profiles: Active ===")
+    r = call_tool("manageValidationProfile", {"action": "getActiveProfile"})
+    check("valprofile active status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# --- Data catalog tools ---
+
+def test_data_catalog_component_families():
+    """List component families."""
+    print("\n=== Data Catalog: Component Families ===")
+    r = call_tool("queryDataCatalog", {"action": "listComponentFamilies"})
+    check("catalog families status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_data_catalog_eos_models():
+    """List EOS models."""
+    print("\n=== Data Catalog: EOS Models ===")
+    r = call_tool("queryDataCatalog", {"action": "listEOSModels"})
+    check("catalog eos status=success", r.get("status") == "success", r.get("message", ""))
+
+
+# ===========================================================================
+# GOVERNANCE TOOL TESTS
+# ===========================================================================
+
+def test_industrial_profile_describe():
+    """Describe all industrial profiles."""
+    print("\n=== Industrial Profile: Describe ===")
+    r = call_tool("manageIndustrialProfile", {"action": "describe"})
+    check("profile describe status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_industrial_profile_active():
+    """Get active deployment mode."""
+    print("\n=== Industrial Profile: Active ===")
+    r = call_tool("manageIndustrialProfile", {"action": "getActive"})
+    check("profile active status=success", r.get("status") == "success", r.get("message", ""))
+    check("profile mode is DESKTOP_ENGINEER",
+          r.get("activeMode") == "DESKTOP_ENGINEER",
+          f"got {r.get('activeMode')}")
+
+
+def test_industrial_profile_classify():
+    """Classify a tool."""
+    print("\n=== Industrial Profile: Classify Tool ===")
+    r = call_tool("manageIndustrialProfile", {
+        "action": "classifyTool",
+        "toolName": "runFlash",
+    })
+    check("classify status=success", r.get("status") == "success", r.get("message", ""))
+    check("runFlash is TRUSTED_CORE",
+          r.get("category") == "TRUSTED_CORE",
+          f"got category={r.get('category')}")
+
+
+def test_benchmark_trust_all():
+    """Get the full trust report."""
+    print("\n=== Benchmark Trust: All ===")
+    r = call_tool("getBenchmarkTrust", {"action": "getAll"})
+    check("trust all status=success", r.get("status") == "success", r.get("message", ""))
+    check("trust has tools", "tools" in r,
+          f"keys: {list(r.keys())}")
+    # Check covered tools
+    tools = r.get("tools", {})
+    for t in ["runFlash", "runProcess", "runPVT"]:
+        check(f"trust covers {t}", t in tools)
+
+
+def test_benchmark_trust_single():
+    """Get trust page for a single tool."""
+    print("\n=== Benchmark Trust: Single Tool ===")
+    r = call_tool("getBenchmarkTrust", {
+        "action": "getTool",
+        "toolName": "runFlash",
+    })
+    check("trust single status=success", r.get("status") == "success", r.get("message", ""))
+    check("trust has trust object", "trust" in r)
+    trust = r.get("trust", {})
+    check("flash trust maturity=VALIDATED",
+          trust.get("maturityLevel") == "VALIDATED",
+          f"got {trust.get('maturityLevel')}")
+
+
+def test_check_tool_access():
+    """Check tool access for different tools."""
+    print("\n=== Check Tool Access ===")
+    r = call_tool("checkToolAccess", {"toolName": "runFlash"})
+    check("access runFlash status=success", r.get("status") == "success", r.get("message", ""))
+    check("runFlash is allowed", r.get("allowed") is True)
+
+    r2 = call_tool("checkToolAccess", {"toolName": "manageSecurity"})
+    check("access manageSecurity status=success", r2.get("status") == "success")
+    check("manageSecurity is allowed (DESKTOP_ENGINEER)", r2.get("allowed") is True)
+
+
+# ===========================================================================
+# MAIN
+# ===========================================================================
+
+if __name__ == "__main__":
+    print("=" * 60)
+    print("NeqSim MCP Server — Comprehensive Test Suite")
+    print("=" * 60)
+
+    start_server()
+
+    try:
+        # Protocol
+        test_protocol()
+
+        # Component search
+        test_component_search()
+
+        # Examples and schemas
+        test_examples_and_schemas()
+
+        # Flash calculations — different compositions and conditions
+        test_tp_flash_simple_gas()
+        test_tp_flash_pr_two_phase()
+        test_tp_flash_two_phase_ch4_c3()
+        test_tp_flash_rich_gas()
+        test_tp_flash_rich_gas_single_phase()
+        test_tp_flash_pure_methane()
+        test_tp_flash_high_pressure()
+        test_tp_flash_low_temperature()
+        test_tp_flash_with_co2_h2s()
+        test_tp_flash_with_water_cpa()
+
+        # Dew point / bubble point
+        test_dew_point_temperature()
+        test_bubble_point_pressure()
+        test_dew_point_pressure()
+        test_bubble_point_temperature()
+
+        # Process simulations
+        test_process_separator()
+        test_process_compressor()
+        test_process_cooler()
+        test_process_heater()
+        test_process_valve()
+        test_process_separator_and_compressor()
+        test_process_compression_cooling_train()
+        test_process_two_phase_separator()
+        test_process_valve_then_separator()
+        test_process_multi_fluid()
+        test_process_pr_model()
+
+        # Validation
+        test_validation_valid_flash()
+        test_validation_unknown_component()
+        test_validation_unknown_model()
+        test_validation_negative_fraction()
+        test_validation_composition_sum_warning()
+        test_validation_missing_enthalpy_ph()
+        test_validation_unknown_flash_type()
+        test_validation_extreme_temperature()
+        test_validation_process_missing_type()
+        test_validation_process_duplicate_names()
+        test_validation_multiple_errors()
+
+        # Flash error cases
+        test_flash_error_unknown_component()
+        test_flash_error_unknown_model()
+
+        # Run all catalog examples
+        test_run_all_flash_examples()
+        test_run_all_process_examples()
+
+        # Batch calculations
+        test_batch_temperature_sweep()
+        test_batch_pressure_sweep()
+        test_batch_example_from_catalog()
+
+        # Property table
+        test_property_table_temperature_sweep()
+        test_property_table_pressure_sweep()
+        test_property_table_example_from_catalog()
+
+        # Phase envelope
+        test_phase_envelope_natural_gas()
+        test_phase_envelope_example_from_catalog()
+
+        # Capabilities
+        test_capabilities()
+        test_run_capability_search_and_invoke()
+
+        # ── Tier 2: Engineering Advanced tools ──
+        test_pvt_saturation_pressure()
+        test_flow_assurance_hydrate()
+        test_calculate_standard_iso6976()
+        test_pipeline_single_phase_gas()
+        test_materials_review_stid_register()
+        test_reservoir_simple_tank()
+        test_field_economics_production_profile()
+        test_dynamic_separator()
+        test_bioprocess_anaerobic_digester()
+        test_size_separator()
+        test_size_compressor()
+        test_design_utilities()
+        test_chemistry_contract()
+        test_flare_radiation_contract()
+        test_hazop_scenario_contract()
+        test_safety_system_performance_contract()
+        test_open_drain_review_contract()
+        test_norsok_s001_clause10_review_contract()
+        test_compare_processes()
+        test_validate_results()
+        test_relief_screening_contract()
+        test_sil_screening_contract()
+        test_cross_validate_models()
+        test_parametric_study()
+
+        # ── Tier 3: Experimental tools ──
+        test_session_lifecycle()
+        test_solve_task()
+        test_compose_workflow()
+        test_generate_report()
+        test_bridge_task_workflow_schema()
+        test_bridge_task_workflow_convert()
+        test_plugin_list()
+        test_progress_list()
+        test_streaming_list()
+        test_visualization_bar_chart()
+        test_multi_server_describe()
+        test_multi_server_list()
+        test_security_status()
+        test_state_list()
+        test_state_info()
+        test_validation_profile_list()
+        test_validation_profile_active()
+        test_data_catalog_component_families()
+        test_data_catalog_eos_models()
+
+        # ── Governance tools ──
+        test_industrial_profile_describe()
+        test_industrial_profile_active()
+        test_industrial_profile_classify()
+        test_benchmark_trust_all()
+        test_benchmark_trust_single()
+        test_check_tool_access()
+
+    finally:
+        stop_server()
+
+    # Summary
+    total = passed + failed
+    print(f"\n{'=' * 60}")
+    print(f"RESULTS: {passed}/{total} passed, {failed} failed")
+    print(f"{'=' * 60}")
+    if errors_list:
+        print("\nFailed checks:")
+        for e in errors_list:
+            print(f"  - {e}")
+        sys.exit(1)
+    else:
+        print("\nALL CHECKS PASSED")
+        sys.exit(0)

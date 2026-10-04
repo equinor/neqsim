@@ -1062,3 +1062,30 @@ now requires a finite, nonnegative normalized feed; these legacy states retain
 their prior path rather than entering a conserved-feed repair they cannot pass.
 Candidate acceptance tolerances are unchanged. The two complete affected test
 classes (34 tests) pass with this prerequisite.
+
+### 2026-10-04 — Repair PR #4205 CI and master integration
+
+Reproduced the cricondenbar NaN and strict multistage side-draw failures from
+workflow 37215992029 on head `6c596a18b611338990259c2026623907d7c7500f`.
+The legacy cricondenbar loop now initializes temperature derivatives after TPflash
+with `init(2)`, replacing its stale pre-flash `init(3)`, and checks convergence
+before a possible zero-over-zero temperature correction. This repairs state
+initialization, not the accuracy qualification of the legacy pressure search.
+Trace-phase cleanup now preserves full feed inventory only for an eligible dry
+endpoint already failing the `1e-10` balance gate and requiring recovery.
+Balanced endpoints retain established cleanup; the recovery acceptance gates,
+ordinary no-cleanup path and all original regression tolerances are unchanged.
+Experimental distillation-controller changes and increased test budgets were
+rejected during validation and are not included. Synchronized with master
+`bc0ffeb416b3ea9a2404f3da373ba3f680249f41`, resolving the generated engineering
+inventory conflict by regeneration. Updated the flash guide and initialization
+skill for the changed behavior.
+
+Validation on Java 17.0.20: 244 flash/well/mechanical-design tests pass, including
+the seven condensate regressions and 750-point map. The unchanged high-flow
+side-draw regression and both critical-point tests also pass. Direct Spotless
+apply/check, both all-file pre-commit stages, documentation search and flash-package
+Javadoc pass; Javadoc uses the installed JDK module through an environment-only
+launcher. Full GitHub CI is pending on the repair commit.
+The remaining twelve side-draw tests pass as well: 259 distinct affected tests
+pass in total, without changing any existing test target, tolerance or budget.

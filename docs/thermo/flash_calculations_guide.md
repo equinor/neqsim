@@ -267,9 +267,10 @@ experimental accuracy or prove global stability against every possible phase set
 The recovery check is gated by actual removal of a negligible phase during that
 flash. Results without final phase removal skip all recovery component scans,
 cloning and extra EOS initialization; the added normal-path work is a reset and
-check of one boolean. Eligible dry-hydrocarbon cleanup removes the trace phase
-without subtracting its moles from the feed, preventing inventory drift across
-repeated recovery. Cleanup history is reset when the same flash operation is
+check of one boolean. Dry-hydrocarbon cleanup preserves the full feed inventory when the two-phase
+endpoint already fails the `1e-10` component-balance gate, preventing inventory
+drift across repeated recovery. Balanced endpoints retain the established trace-phase
+removal path, avoiding unnecessary numerical changes to ordinary calculations. Cleanup history is reset when the same flash operation is
 reused. The additional stability flash runs only when a collapsed endpoint fails
 the component-balance check. `TPflashEndpointRecoveryBenchmark` records warmed
 complete-flash elapsed and thread CPU timings, recovery counts and numerical
@@ -283,6 +284,13 @@ direct trial fails the same conservation, normalization, fugacity and Gibbs
 acceptance gates. The direct result is ordered by density before final
 initialization to retain consistent gas/oil identity. Both trials run on a clone; timing improvements never relax
 the numerical tolerances.
+
+The legacy `calcCricondenBar()` iteration refreshes temperature derivatives with
+`init(2)` after each TP flash, because the flash may replace the phase state.
+It checks its temperature residual before
+forming a temperature correction, so an exactly zero residual cannot produce a
+`0/0` update and corrupt the temperature. This numerical guard does not change the
+legacy pressure-search algorithm or establish its accuracy as a phase-envelope maximum.
 
 For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
 split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium

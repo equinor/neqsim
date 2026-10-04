@@ -81,9 +81,9 @@ This capability does not:
 - `src/test/java/neqsim/mcp/runners/LOPARunnerTest.java` exercises canonical
   calculations, deterministic order, input types and ranges, request/layer/text
   bounds, non-finite values, underflow, and stable errors.
-- `neqsim-mcp-server/test_lopa_protocol.py` exercises discovery and the same
+- `neqsim-mcp-server/tests/protocol/test_lopa_protocol.py` exercises discovery and the same
   contract through the packaged real-MCP STDIO transport.
-- `neqsim-mcp-server/test_mcp_server.py` protects the public tool inventory and
+- `neqsim-mcp-server/tests/protocol/test_mcp_server.py` protects the public tool inventory and
   direct discovery boundary within the comprehensive protocol regression.
 
 Merged #3655 established this direct source and packaged-MCP qualification.

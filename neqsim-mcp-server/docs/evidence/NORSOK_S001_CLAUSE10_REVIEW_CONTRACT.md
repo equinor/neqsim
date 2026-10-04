@@ -35,8 +35,8 @@ The machine-readable coverage record contains these eight sources:
 3. `NorsokS001Clause10ReviewRunnerTest.java`
 4. `ProcessSafetySystemReviewEngineTest.java`
 5. the `NeqSimTools` server facade
-6. `test_norsok_s001_clause10_review_protocol.py`
-7. `test_mcp_server.py`
+6. `tests/protocol/test_norsok_s001_clause10_review_protocol.py`
+7. `tests/protocol/test_mcp_server.py`
 8. this evidence note
 
 The focused protocol contributes five packaged-STDIO scenarios: discovery,

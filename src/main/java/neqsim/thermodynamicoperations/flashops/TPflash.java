@@ -1318,8 +1318,10 @@ public class TPflash extends Flash {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       if (system.getBeta(i) < phaseFractionMinimumLimit * 1.01) {
         phaseRemovedDuringFlash = true;
-        if (system.getNumberOfPhases() == 2 && isOrdinaryDryHydrocarbonRecoveryAllowed()) {
-          // Topology cleanup must not subtract the discarded trace phase from the conserved feed.
+        if (system.getNumberOfPhases() == 2 && isOrdinaryDryHydrocarbonRecoveryAllowed()
+            && maximumComponentMaterialBalanceResidual(system) > COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE) {
+          // Preserve the conserved feed for an invalid endpoint that needs recovery.
+          // Balanced endpoints retain the established trace-phase cleanup path.
           system.removePhaseKeepTotalComposition(i);
         } else {
           system.removePhase(i);
