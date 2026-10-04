@@ -27,6 +27,9 @@
   interpolators) must be `private transient` (SpotBugs SE_BAD_FIELD).
 - **Verify APIs before use:** find the class, read constructor/method signatures, never assume
   convenience overloads, enum locations or getter arguments.
+- **Agent/MCP coverage:** after Java formatting or agent/skill mapping changes, run
+  `python devtools/build_engineering_coverage.py` and commit the generated inventory.
+  Register new engineering operations with routes and evidence; source presence is not validation.
 - **Documentation code must be test-verified:** every Java/Python snippet in docs gets a JUnit
   test (e.g. `DocExamplesCompilationTest`) that is run and passes before the doc is done.
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.

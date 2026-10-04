@@ -1,0 +1,241 @@
+{
+  "schemaVersion": "1.0",
+  "capabilities": [
+    {
+      "id": "tp-flash",
+      "title": "TP flash of a defined fluid",
+      "domain": "thermodynamics",
+      "tool": "runFlash",
+      "apis": [
+        "neqsim.thermo.system.SystemSrkEos",
+        "neqsim.thermodynamicoperations.ThermodynamicOperations"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FlashRunnerTest.java"
+      ],
+      "limitations": "Only models and flash modes supported by run_flash schema; not every thermodynamic system or operation."
+    },
+    {
+      "id": "pvt-experiments",
+      "title": "CME and CVD experiments",
+      "domain": "pvt",
+      "tool": "runPVT",
+      "apis": [
+        "neqsim.pvtsimulation.simulation.ConstantMassExpansion",
+        "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PVTRunnerTest.java"
+      ],
+      "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
+    },
+    {
+      "id": "process-separation",
+      "title": "Build and solve a separation train",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessSystem",
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.stream.Stream"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Registration covers JSON builder support, not all equipment setters or every topology."
+    },
+    {
+      "id": "process-compression",
+      "title": "Compressor in a process model",
+      "domain": "rotating-equipment",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.equipment.compressor.Compressor"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
+    },
+    {
+      "id": "multi-area-process",
+      "title": "Compose a multi-area process",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessModel"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTypedTest.java"
+      ],
+      "limitations": "Only canonical process-JSON connections and preserved properties are supported."
+    },
+    {
+      "id": "pipeline-hydraulics",
+      "title": "Steady and two-fluid pipeline calculations",
+      "domain": "flow-assurance",
+      "tool": "runPipeline",
+      "apis": [
+        "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
+        "neqsim.process.equipment.pipeline.TwoFluidPipe"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PipelineRunnerTest.java"
+      ],
+      "limitations": "Select the applicable solver and closures; transient behavior needs case-specific validation."
+    },
+    {
+      "id": "electrolyte-scale",
+      "title": "Electrolyte scale screening",
+      "domain": "chemistry",
+      "tool": "runChemistry",
+      "apis": [
+        "neqsim.process.chemistry.scale.ElectrolyteScaleCalculator",
+        "neqsim.thermo.system.SystemPitzer"
+      ],
+      "skills": [
+        "neqsim-electrolyte-systems"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java"
+      ],
+      "limitations": "Parameter availability, minerals and validity ranges must be checked for each brine."
+    },
+    {
+      "id": "corrosion-screen",
+      "title": "Mechanistic corrosion screening",
+      "domain": "chemistry",
+      "tool": "runChemistry",
+      "apis": [
+        "neqsim.process.chemistry.corrosion.MechanisticCorrosionModel"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ChemistryRunnerTest.java"
+      ],
+      "limitations": "Screening does not establish plant integrity or inhibitor performance."
+    },
+    {
+      "id": "dynamic-process",
+      "title": "Bounded dynamic process study",
+      "domain": "dynamics",
+      "tool": "runDynamic",
+      "apis": [
+        "neqsim.process.util.DynamicProcessHelper"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/DynamicRunnerTest.java"
+      ],
+      "limitations": "Not all equipment provides a qualified transient model; preserve initial conditions and event assumptions."
+    },
+    {
+      "id": "equipment-sizing",
+      "title": "Separator and compressor sizing",
+      "domain": "engineering-design",
+      "tool": "sizeEquipment",
+      "apis": [
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.compressor.Compressor"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "mechanical-design"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/EquipmentSizingRunnerTest.java"
+      ],
+      "limitations": "Sizing support does not expose every mechanical-design API or certify a design."
+    },
+    {
+      "id": "field-economics",
+      "title": "Production profiles and cash flow",
+      "domain": "economics",
+      "tool": "runFieldEconomics",
+      "apis": [
+        "neqsim.process.fielddevelopment.economics.CashFlowEngine",
+        "neqsim.process.fielddevelopment.economics.ProductionProfileGenerator"
+      ],
+      "skills": [
+        "neqsim-field-economics"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FieldDevelopmentRunnerTest.java"
+      ],
+      "limitations": "Economic assumptions and fiscal-model applicability remain explicit caller inputs."
+    },
+    {
+      "id": "sulfur-vapour-pressure",
+      "title": "Static sulfur vapour pressure",
+      "domain": "thermodynamics",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.thermo.util.sulfur.SulfurThermodynamics"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java"
+      ],
+      "limitations": "Search for calculateVapourPressureBar and invoke its exact double signature; this does not qualify other methods."
+    }
+  ]
+}

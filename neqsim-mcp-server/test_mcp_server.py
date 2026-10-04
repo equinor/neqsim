@@ -1960,6 +1960,15 @@ def test_run_capability_search_and_invoke():
     """Discover and execute a runtime capability through the generic MCP route."""
     print("\n=== Generic Runtime Capability ===")
 
+    coverage = call_tool("runCapability", {
+        "capabilityJson": json.dumps({"action": "coverage", "view": "apis", "limit": 2})
+    })
+    check("coverage page succeeds", coverage.get("status") == "success", str(coverage))
+    check("coverage page is bounded", len(coverage.get("entries", [])) == 2, str(coverage))
+    check("coverage does not claim completion", coverage.get("complete") is False, str(coverage))
+    check("coverage has continuation", coverage.get("nextOffset") == 2
+          and bool(coverage.get("catalogDigest")), str(coverage))
+
     search = call_tool("runCapability", {
         "capabilityJson": json.dumps({
             "action": "search",
