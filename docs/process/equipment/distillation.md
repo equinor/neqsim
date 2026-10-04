@@ -212,6 +212,18 @@ condenser or reboiler are validation errors and fail during preflight.
 condenser ratio control is active. This makes retained/restarted models auditable before nearby-point
 warm solves.
 
+Direct terminal specification residuals are evaluated from the published streams: condenser
+liquid reflux divided by distillate flow (L/D), or reboiler vapor return divided by bottoms
+flow (V/B), minus the target. Duty residuals are the published duty minus the target in W.
+An unavailable ratio reports `NaN`; it must not be interpreted as a satisfied specification.
+Product reconciliation can change these ratios after the tray solve, so inspect the residuals
+as well as the solve status before accepting a result.
+
+Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
+condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler
+inlet can heat into it. Terminal outlet caches are invalidated on every run so changes in
+feed inventory are reflected in both returned phase streams.
+
 `setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
 `setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
 specification. Terminal ratios supplied through either the column API or the condenser/reboiler
