@@ -6,6 +6,11 @@
   "summary": {
     "publicTypes": 3341,
     "registeredCapabilities": 13,
+    "classifiedOperations": 8,
+    "supportedOperations": 8,
+    "internalOperations": 0,
+    "experimentalOperations": 0,
+    "deprecatedOperations": 0,
     "registeredAnchors": 24,
     "withSkillMention": 1264,
     "withAgentMention": 1263,
@@ -107,12 +112,7 @@
         "withSkillMention": 9,
         "reviewRequired": 54
       }
-    },
-    "classifiedOperations": 8,
-    "supportedOperations": 8,
-    "internalOperations": 0,
-    "experimentalOperations": 0,
-    "deprecatedOperations": 0
+    }
   },
   "capabilities": [
     {
