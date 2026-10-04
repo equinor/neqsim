@@ -1,7 +1,5 @@
 package neqsim.util.database;
 
-import java.sql.Connection;
-import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,11 +18,6 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   /** Constant <code>dataBasePath=""</code>. */
   public static String dataBasePath = "";
 
-  private static boolean createTemporaryTables = false;
-
-  private static String username = "remote";
-  private static String password = "remote";
-
   // Default databasetype
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimprocessdesigndatabase";
@@ -37,9 +30,6 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private transient Statement statement = null;
-  protected transient Connection databaseConnection = null;
-
   /**
    * Constructor for NeqSimDataBase.
    */
@@ -51,14 +41,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       }
     }
     setDataBaseType(dataBaseType);
-
-    try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
-    } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      throw new RuntimeException(ex);
-    }
+    initializeDatabaseConnection();
   }
 
   public static void updateTable(String tableName) {

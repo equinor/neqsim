@@ -48,6 +48,8 @@ jobs:
             devtools/test_generate_work_record.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
+            devtools/test_file_neqsim_issue.py \
+            devtools/test_task_publication_schedule.py \
             devtools/test_neqsim_continuous.py \
             devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \

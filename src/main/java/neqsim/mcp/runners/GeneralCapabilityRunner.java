@@ -102,6 +102,9 @@ public final class GeneralCapabilityRunner {
     try {
       JsonObject request = JsonParser.parseString(json).getAsJsonObject();
       String action = requiredString(request, "action");
+      if ("coverage".equalsIgnoreCase(action)) {
+        return EngineeringCoverageCatalog.query(request).toString();
+      }
       if ("search".equalsIgnoreCase(action)) {
         return search(requiredString(request, "query"), optionalInt(request, "limit", DEFAULT_RESULT_LIMIT));
       }

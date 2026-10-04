@@ -895,9 +895,13 @@ public final class SchemaCatalog {
         "Search runtime NeqSim methods or invoke a bounded static-json capability returned by search");
     schema.put("type", "object");
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
-    properties.put("action", enumProp("Capability action", Arrays.asList("search", "invoke")));
+    properties.put("action", enumProp("Capability action", Arrays.asList("search", "invoke", "coverage")));
+    properties.put("view", enumProp("Coverage view", Arrays.asList("capabilities", "apis")));
+    properties.put("domain", stringProp("Exact domain in the selected coverage view"));
+    properties.put("offset", intProp("Non-negative coverage page offset"));
+    properties.put("catalogDigest", stringProp("Optional coverage digest to pin pagination to one catalog"));
     properties.put("query", stringProp("Free-text functionality query for action search"));
-    properties.put("limit", intProp("Maximum search matches, clamped to 1-100"));
+    properties.put("limit", intProp("Search matches clamped to 1-100; coverage page size must be 1-50"));
     properties.put("className", stringProp("Exact neqsim.* className from a static-json search match"));
     properties.put("methodName", stringProp("Exact methodName from a static-json search match"));
     properties.put("parameterTypes", stringArraySchema("Optional exact parameter type names from the match"));
@@ -925,7 +929,11 @@ public final class SchemaCatalog {
     Map<String, Object> properties = new LinkedHashMap<String, Object>();
     addStandardOutputProperties(properties);
     properties.put("status", enumProp("Result status", Arrays.asList("success", "error")));
-    properties.put("action", enumProp("Completed action", Arrays.asList("search", "invoke")));
+    properties.put("action", enumProp("Completed action", Arrays.asList("search", "invoke", "coverage")));
+    properties.put("entries", typedArraySchema("Coverage source evidence, not execution or qualification claims"));
+    properties.put("catalogDigest", stringProp("Digest of the packaged coverage inventory"));
+    properties.put("total", intProp("Total matching coverage entries"));
+    properties.put("nextOffset", intProp("Next page offset, present only when more entries exist"));
     properties.put("matches", typedArraySchema("Ranked static-json, process-json, and inspect-only capabilities"));
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("description", "JSON-safe scalar, array, or object returned by a bounded static invocation");

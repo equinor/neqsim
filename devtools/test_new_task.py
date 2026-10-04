@@ -258,6 +258,19 @@ def test_find_documents_walks_subfolders(defaults, tmp_path):
     assert new_task.find_documents(limit=1) == [str(documents / "datasheet.pdf")]
 
 
+def test_find_documents_matches_words_in_any_order(defaults, tmp_path):
+    documents = tmp_path / "documents"
+    (documents / "API").mkdir(parents=True)
+    target = documents / "API" / "API STD 521 7th ed - Pressure-relieving systems.pdf"
+    target.write_text("a", encoding="utf-8")
+    (documents / "API" / "API STD 520 Part I.pdf").write_text("b", encoding="utf-8")
+    new_task.save_default_document_root(str(documents))
+
+    assert new_task.find_documents("API 521") == [str(target)]
+    assert new_task.find_documents("relieving api") == [str(target)]
+    assert new_task.find_documents("API 999") == []
+
+
 def test_document_root_cli_and_listing(defaults, tmp_path, monkeypatch, capsys):
     import neqsim_cli
 

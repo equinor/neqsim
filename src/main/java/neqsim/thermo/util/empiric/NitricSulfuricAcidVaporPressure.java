@@ -113,9 +113,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * System I (H2O-HNO3) temperature-dependent Van Laar parameter for water (A_I,1).
-   * </p>
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return the parameter A_I,1
@@ -125,9 +123,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * System I (H2O-HNO3) temperature-dependent Van Laar parameter for nitric acid (A_I,2).
-   * </p>
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return the parameter A_I,2
@@ -137,9 +133,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * System II (H2O-H2SO4) temperature-dependent Van Laar parameter for water (A_II,1).
-   * </p>
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return the parameter A_II,1
@@ -149,9 +143,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * System II (H2O-H2SO4) temperature-dependent Van Laar parameter for sulfuric acid (A_II,3).
-   * </p>
    *
    * @param temperature temperature in kelvin (valid roughly 190-298 K)
    * @return the parameter A_II,3
@@ -161,9 +153,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Pure-component saturation vapour pressure of liquid water.
-   * </p>
    *
    * <p>
    * Computed from log10(P0/mbar) = 8.42926609 - 1827.17843/T - 71208.271/T^2.
@@ -213,9 +203,7 @@ public class NitricSulfuricAcidVaporPressure {
   private static final double HNO3_ANTOINE_C = 43.0;
 
   /**
-   * <p>
    * Pure-component saturation vapour pressure of liquid nitric acid.
-   * </p>
    *
    * <p>
    * Computed from log10(P0/torr) = HNO3_ANTOINE_A - HNO3_ANTOINE_B / (T - HNO3_ANTOINE_C). The Antoine coefficients are
@@ -237,9 +225,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Pure-component saturation vapour pressure of liquid sulfuric acid.
-   * </p>
    *
    * <p>
    * Computed from ln(P0/atm) = -10156/T + 16.259.
@@ -258,10 +244,8 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Quantity T*log10(gamma) for water in the ternary mixture, i.e. the right-hand side of equation (10a) of Taleb et
    * al. (1996).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -280,10 +264,8 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Quantity T*log10(gamma) for nitric acid in the ternary mixture, i.e. the right-hand side of equation (10b) of Taleb
    * et al. (1996).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -303,10 +285,8 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Quantity T*log10(gamma) for sulfuric acid in the ternary mixture, i.e. the right-hand side of equation (10c) of
    * Taleb et al. (1996).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -350,10 +330,8 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Activity coefficient of water in the ternary (or binary, by setting one acid mole fraction to zero) mixture, from
    * equation (10a).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -368,9 +346,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Activity coefficient of nitric acid in the ternary (or binary) mixture, from equation (10b).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -385,9 +361,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Activity coefficient of sulfuric acid in the ternary (or binary) mixture, from equation (10c).
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -402,9 +376,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Equilibrium partial vapour pressure of water over the mixture, P1 = gamma1 * x1 * P0,1.
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -417,9 +389,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Equilibrium partial vapour pressure of nitric acid over the mixture, P2 = gamma2 * x2 * P0,2.
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -432,9 +402,7 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Equilibrium partial vapour pressure of sulfuric acid over the mixture, P3 = gamma3 * x3 * P0,3.
-   * </p>
    *
    * @param x1 mole fraction of water (H2O)
    * @param x2 mole fraction of nitric acid (HNO3)
@@ -447,10 +415,8 @@ public class NitricSulfuricAcidVaporPressure {
   }
 
   /**
-   * <p>
    * Convert component mass fractions (or weight percentages, which are normalised internally) to mole fractions for the
    * H2O-HNO3-H2SO4 system.
-   * </p>
    *
    * @param massWater mass fraction or weight percent of water (H2O)
    * @param massNitric mass fraction or weight percent of nitric acid (HNO3)

@@ -1,0 +1,599 @@
+{
+  "schemaVersion": "1.0",
+  "capabilities": [
+    {
+      "id": "tp-flash",
+      "title": "TP flash of a defined fluid",
+      "domain": "thermodynamics",
+      "tool": "runFlash",
+      "apis": [
+        "neqsim.thermo.system.SystemSrkEos",
+        "neqsim.thermodynamicoperations.ThermodynamicOperations"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FlashRunnerTest.java"
+      ],
+      "limitations": "Only models and flash modes supported by run_flash schema; not every thermodynamic system or operation."
+    },
+    {
+      "id": "pvt-experiments",
+      "title": "CME and CVD experiments",
+      "domain": "pvt",
+      "tool": "runPVT",
+      "apis": [
+        "neqsim.pvtsimulation.simulation.ConstantMassExpansion",
+        "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PVTRunnerTest.java"
+      ],
+      "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
+    },
+    {
+      "id": "process-separation",
+      "title": "Build and solve a separation train",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessSystem",
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.stream.Stream"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Registration covers JSON builder support, not all equipment setters or every topology."
+    },
+    {
+      "id": "process-compression",
+      "title": "Compressor in a process model",
+      "domain": "rotating-equipment",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.equipment.compressor.Compressor"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
+    },
+    {
+      "id": "multi-area-process",
+      "title": "Compose a multi-area process",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessModel"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTypedTest.java"
+      ],
+      "limitations": "Only canonical process-JSON connections and preserved properties are supported."
+    },
+    {
+      "id": "pipeline-hydraulics",
+      "title": "Steady and two-fluid pipeline calculations",
+      "domain": "flow-assurance",
+      "tool": "runPipeline",
+      "apis": [
+        "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
+        "neqsim.process.equipment.pipeline.TwoFluidPipe"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PipelineRunnerTest.java"
+      ],
+      "limitations": "Select the applicable solver and closures; transient behavior needs case-specific validation."
+    },
+    {
+      "id": "electrolyte-scale",
+      "title": "Electrolyte scale screening",
+      "domain": "chemistry",
+      "tool": "runChemistry",
+      "apis": [
+        "neqsim.process.chemistry.scale.ElectrolyteScaleCalculator",
+        "neqsim.thermo.system.SystemPitzer"
+      ],
+      "skills": [
+        "neqsim-electrolyte-systems"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java"
+      ],
+      "limitations": "Parameter availability, minerals and validity ranges must be checked for each brine."
+    },
+    {
+      "id": "corrosion-screen",
+      "title": "Mechanistic corrosion screening",
+      "domain": "chemistry",
+      "tool": "runChemistry",
+      "apis": [
+        "neqsim.process.chemistry.corrosion.MechanisticCorrosionModel"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ChemistryRunnerTest.java"
+      ],
+      "limitations": "Screening does not establish plant integrity or inhibitor performance."
+    },
+    {
+      "id": "dynamic-process",
+      "title": "Bounded dynamic process study",
+      "domain": "dynamics",
+      "tool": "runDynamic",
+      "apis": [
+        "neqsim.process.util.DynamicProcessHelper"
+      ],
+      "skills": [
+        "neqsim-dynamic-simulation"
+      ],
+      "agents": [
+        "control-system"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/DynamicRunnerTest.java"
+      ],
+      "limitations": "Not all equipment provides a qualified transient model; preserve initial conditions and event assumptions."
+    },
+    {
+      "id": "equipment-sizing",
+      "title": "Separator and compressor sizing",
+      "domain": "engineering-design",
+      "tool": "sizeEquipment",
+      "apis": [
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.compressor.Compressor"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "mechanical-design"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/EquipmentSizingRunnerTest.java"
+      ],
+      "limitations": "Sizing support does not expose every mechanical-design API or certify a design."
+    },
+    {
+      "id": "field-economics",
+      "title": "Production profiles and cash flow",
+      "domain": "economics",
+      "tool": "runFieldEconomics",
+      "apis": [
+        "neqsim.process.fielddevelopment.economics.CashFlowEngine",
+        "neqsim.process.fielddevelopment.economics.ProductionProfileGenerator"
+      ],
+      "skills": [
+        "neqsim-field-economics"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FieldDevelopmentRunnerTest.java"
+      ],
+      "limitations": "Economic assumptions and fiscal-model applicability remain explicit caller inputs."
+    },
+    {
+      "id": "sulfur-vapour-pressure",
+      "title": "Static sulfur vapour pressure",
+      "domain": "thermodynamics",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.thermo.util.sulfur.SulfurThermodynamics"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Search for calculateVapourPressureBar and invoke its exact double signature; this does not qualify other methods.",
+      "operations": [
+        {
+          "id": "sulfur-vapour-pressure-at-temperature",
+          "classification": "supported",
+          "api": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+          "method": "calculateVapourPressureBar",
+          "signature": "double neqsim.thermo.util.sulfur.SulfurThermodynamics.calculateVapourPressureBar(double)",
+          "units": {
+            "inputs": {
+              "temperature": "K"
+            },
+            "outputs": {
+              "vapourPressure": "bar"
+            }
+          },
+          "applicability": "Pure sulfur vapour pressure for 312.15 K through 1308.15 K; values outside the correlation range are rejected.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              717.76
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 1.01325,
+            "absoluteTolerance": 1e-10
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "engineering-unit-conversions",
+      "title": "Bounded engineering unit conversions",
+      "domain": "util",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.util.unit.PressureUnit",
+        "neqsim.util.unit.TemperatureUnit",
+        "neqsim.util.unit.LengthUnit",
+        "neqsim.util.unit.TimeUnit",
+        "neqsim.util.unit.PowerUnit",
+        "neqsim.util.unit.EnergyUnit"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+        "src/test/java/neqsim/util/unit/LengthUnitTest.java",
+        "src/test/java/neqsim/util/unit/TimeUnitTest.java",
+        "src/test/java/neqsim/util/unit/PowerUnitTest.java",
+        "src/test/java/neqsim/util/unit/EnergyUnitTest.java",
+        "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Only the listed pure static conversions are supported. Rate conversions that depend on fluid state, composition, or standard conditions remain outside this contract.",
+      "operations": [
+        {
+          "id": "pressure-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.PressureUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.PressureUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "pressure",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "bara",
+              "bar",
+              "barg",
+              "psi",
+              "psia",
+              "psig",
+              "Pa",
+              "kPa",
+              "MPa",
+              "atm"
+            ]
+          },
+          "applicability": "Absolute and gauge pressure conversions using the explicit source and target units; gauge conversions use NeqSim's fixed reference atmosphere.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "bar",
+              "kPa"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 100,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "temperature-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TemperatureUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.TemperatureUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "temperature",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "K",
+              "C",
+              "F",
+              "R"
+            ]
+          },
+          "applicability": "Absolute temperature conversions. Use convertDifference for temperature intervals.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0,
+              "C",
+              "K"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 273.15,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "temperature-difference-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TemperatureUnit",
+          "method": "convertDifference",
+          "signature": "double neqsim.util.unit.TemperatureUnit.convertDifference(double, String, String)",
+          "units": {
+            "quantity": "temperature difference",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "K",
+              "C",
+              "F",
+              "R"
+            ]
+          },
+          "applicability": "Temperature interval conversions without absolute-scale offsets.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              10,
+              "C",
+              "F"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 18,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "src/test/java/neqsim/util/unit/TemperatureUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "length-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.LengthUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.LengthUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "length",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "m",
+              "meter",
+              "metre",
+              "cm",
+              "mm",
+              "km",
+              "in",
+              "inch",
+              "ft",
+              "feet"
+            ]
+          },
+          "applicability": "Linear length conversions between the accepted unit symbols and aliases.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "m",
+              "cm"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 100,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/LengthUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "time-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.TimeUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.TimeUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "time",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "s",
+              "sec",
+              "second",
+              "min",
+              "minute",
+              "h",
+              "hr",
+              "hour",
+              "d",
+              "day"
+            ]
+          },
+          "applicability": "Linear elapsed-time conversions between the accepted unit symbols and aliases.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "h",
+              "s"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 3600,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/TimeUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "power-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.PowerUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.PowerUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "power",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "W",
+              "kW",
+              "MW",
+              "hp",
+              "BTU/hr"
+            ]
+          },
+          "applicability": "Linear power conversions between the accepted engineering units.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "kW",
+              "W"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 1000,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/PowerUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "energy-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.EnergyUnit",
+          "method": "convert",
+          "signature": "double neqsim.util.unit.EnergyUnit.convert(double, String, String)",
+          "units": {
+            "quantity": "energy",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "J",
+              "kJ",
+              "MJ",
+              "Wh",
+              "kWh",
+              "MWh",
+              "BTU",
+              "kcal"
+            ]
+          },
+          "applicability": "Linear energy conversions between the accepted engineering units.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1,
+              "kWh",
+              "MJ"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 3.6,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/EnergyUnitTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
+    }
+  ]
+}

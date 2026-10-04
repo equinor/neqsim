@@ -8,15 +8,16 @@ import java.util.List;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 
 /**
- * Samples one- or two-dimensional operating-envelope slices with the existing fail-closed
- * transactional action evaluator.
+ * Samples one- or two-dimensional operating-envelope slices with the existing fail-closed transactional action
+ * evaluator.
  *
- * <p>Every point is a complete action vector evaluated by
- * {@link ProcessModelOperatingActionSetEvaluator}. Infeasible candidates remain in the trace when
- * baseline recovery succeeds. Sampling stops immediately when restoration or restored-baseline
- * convergence fails. Leading-bottleneck transitions use only the evaluator's already ranked,
- * finite installed-equipment evidence; they are sampled identity changes, not proof of a continuous
- * boundary, an optimizer active set, or operating approval.</p>
+ * <p>
+ * Every point is a complete action vector evaluated by {@link ProcessModelOperatingActionSetEvaluator}. Infeasible
+ * candidates remain in the trace when baseline recovery succeeds. Sampling stops immediately when restoration or
+ * restored-baseline convergence fails. Leading-bottleneck transitions use only the evaluator's already ranked, finite
+ * installed-equipment evidence; they are sampled identity changes, not proof of a continuous boundary, an optimizer
+ * active set, or operating approval.
+ * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -96,8 +97,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param anchorValues full action vector for non-axis values
    * @return immutable slice result
    */
-  public SliceResult evaluateTwoDimensional(String firstActionId, double[] firstValues,
-      String secondActionId, double[] secondValues, double[] anchorValues) {
+  public SliceResult evaluateTwoDimensional(String firstActionId, double[] firstValues, String secondActionId,
+      double[] secondValues, double[] anchorValues) {
     return evaluate(new String[] {firstActionId, secondActionId},
         new double[][] {copy(firstValues), copy(secondValues)}, anchorValues);
   }
@@ -161,8 +162,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       diagnostics.add("All requested points completed with safe baseline recovery");
     }
     diagnostics.add("Transitions are sampled installed-equipment bottleneck changes only");
-    return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axes, anchor,
-        pointCount(axes), outcome, points, transitions, diagnostics);
+    return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axes, anchor, pointCount(axes), outcome,
+        points, transitions, diagnostics);
   }
 
   /**
@@ -175,8 +176,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param sequence sequence index
    * @return immutable point evidence
    */
-  private Point evaluatePoint(double[] anchor, int[] actionIndexes, double[][] axes,
-      int[] gridIndexes, int sequence) {
+  private Point evaluatePoint(double[] anchor, int[] actionIndexes, double[][] axes, int[] gridIndexes, int sequence) {
     double[] candidate = Arrays.copyOf(anchor, anchor.length);
     double[] coordinates = new double[actionIndexes.length];
     for (int axis = 0; axis < actionIndexes.length; axis++) {
@@ -194,8 +194,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @return true only for safe recovery
    */
   private static boolean safeRecovery(Point point) {
-    return point.getEvaluation().isBaselineRestored()
-        && point.getEvaluation().isBaselineSimulationConverged();
+    return point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged();
   }
 
   /**
@@ -222,17 +221,16 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param to destination point
    * @param axisPosition coordinate position
    */
-  private static void transition(List<Transition> transitions, String axisId, Point from, Point to,
-      int axisPosition) {
+  private static void transition(List<Transition> transitions, String axisId, Point from, Point to, int axisPosition) {
     InstalledEquipmentCapacityEvidence first = from.getLeadingInstalledConstraint();
     InstalledEquipmentCapacityEvidence second = to.getLeadingInstalledConstraint();
     if (first == null || second == null
         || first.getQualifiedConstraintName().equals(second.getQualifiedConstraintName())) {
       return;
     }
-    transitions.add(new Transition(axisId, from.getSequenceIndex(), to.getSequenceIndex(),
-        from.getAxisValues()[axisPosition], to.getAxisValues()[axisPosition],
-        first.getQualifiedConstraintName(), second.getQualifiedConstraintName()));
+    transitions
+        .add(new Transition(axisId, from.getSequenceIndex(), to.getSequenceIndex(), from.getAxisValues()[axisPosition],
+            to.getAxisValues()[axisPosition], first.getQualifiedConstraintName(), second.getQualifiedConstraintName()));
   }
 
   /**
@@ -263,10 +261,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param axes axis values
    * @return action indexes by axis
    */
-  private static int[] validateAxes(List<ProcessModelOperatingAction> actions, String[] axisIds,
-      double[][] axes) {
-    if (axisIds == null || axes == null || axisIds.length < 1 || axisIds.length > 2
-        || axisIds.length != axes.length) {
+  private static int[] validateAxes(List<ProcessModelOperatingAction> actions, String[] axisIds, double[][] axes) {
+    if (axisIds == null || axes == null || axisIds.length < 1 || axisIds.length > 2 || axisIds.length != axes.length) {
       throw new IllegalArgumentException("Operating-envelope slices require one or two matching axes");
     }
     int[] indexes = new int[axisIds.length];
@@ -374,8 +370,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param leadingInstalledConstraint leading installed evidence or null
      */
     private Point(int sequenceIndex, int[] gridIndexes, double[] axisValues, double[] candidateValues,
-        CandidateSetEvaluationResult evaluation,
-        InstalledEquipmentCapacityEvidence leadingInstalledConstraint) {
+        CandidateSetEvaluationResult evaluation, InstalledEquipmentCapacityEvidence leadingInstalledConstraint) {
       this.sequenceIndex = sequenceIndex;
       this.gridIndexes = Arrays.copyOf(gridIndexes, gridIndexes.length);
       this.axisValues = Arrays.copyOf(axisValues, axisValues.length);
@@ -447,8 +442,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param fromConstraint source qualified constraint identity
      * @param toConstraint destination qualified constraint identity
      */
-    private Transition(String axisActionId, int fromSequenceIndex, int toSequenceIndex,
-        double fromAxisValue, double toAxisValue, String fromConstraint, String toConstraint) {
+    private Transition(String axisActionId, int fromSequenceIndex, int toSequenceIndex, double fromAxisValue,
+        double toAxisValue, String fromConstraint, String toConstraint) {
       this.axisActionId = axisActionId;
       this.fromSequenceIndex = fromSequenceIndex;
       this.toSequenceIndex = toSequenceIndex;
@@ -531,9 +526,9 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param transitions sampled transitions
      * @param diagnostics study diagnostics
      */
-    private SliceResult(String id, String name, String provenance, String candidateEvaluatorId,
-        String[] axisActionIds, double[][] axisValues, double[] anchorValues, int requestedPointCount,
-        Outcome outcome, List<Point> points, List<Transition> transitions, List<String> diagnostics) {
+    private SliceResult(String id, String name, String provenance, String candidateEvaluatorId, String[] axisActionIds,
+        double[][] axisValues, double[] anchorValues, int requestedPointCount, Outcome outcome, List<Point> points,
+        List<Transition> transitions, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;

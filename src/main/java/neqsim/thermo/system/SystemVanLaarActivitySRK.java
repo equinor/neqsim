@@ -11,8 +11,8 @@ import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseGEVanLaarAcid;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseSrkEos;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -156,18 +156,14 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   private transient String carrierFugacityCacheAcid = null;
 
   /**
-   * <p>
    * Constructor for SystemVanLaarActivitySRK. Defaults to 298.15 K and 1.0 bara.
-   * </p>
    */
   public SystemVanLaarActivitySRK() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemVanLaarActivitySRK.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -177,9 +173,7 @@ public class SystemVanLaarActivitySRK extends SystemEosGE {
   }
 
   /**
-   * <p>
    * Constructor for SystemVanLaarActivitySRK.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

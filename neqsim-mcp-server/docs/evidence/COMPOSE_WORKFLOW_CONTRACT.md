@@ -32,7 +32,7 @@ reimplemented by the orchestration layer.
 - The Java contract verifies exact `UNKNOWN_RUNNER` diagnostics,
   stop-on-first-failure behavior, and rejection of missing or malformed step
   input.
-- `test_compose_workflow_protocol.py` repeats those visible contracts through
+- `tests/protocol/test_compose_workflow_protocol.py` repeats those visible contracts through
   the packaged server's JSON-RPC/STDIO transport and standard response
   evidence.
 - `mcp_protocol_qualification.yml` runs the focused Java and packaged suites
@@ -84,8 +84,8 @@ limitations, and obtaining qualified engineering review.
 Inventory version `1.32` atomically promoted `composeWorkflow` to
 `CONTRACT_TESTED` after merged PR #3566 established the direct evidence
 above. Machine-readable coverage, Java assertions,
-`test_compose_workflow_protocol.py`, synchronized focused protocol
-expectations, authoritative `test_mcp_server.py` accounting, and
+`tests/protocol/test_compose_workflow_protocol.py`, synchronized focused protocol
+expectations, authoritative `tests/protocol/test_mcp_server.py` accounting, and
 documentation moved together from `20/31/20` to `20/32/19`. Current
 inventory `1.42 / 20+41+10` retains that classification.
 

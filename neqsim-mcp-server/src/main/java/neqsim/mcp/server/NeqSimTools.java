@@ -2014,12 +2014,14 @@ public class NeqSimTools {
    */
   @Tool(description = "Discover calculation methods and process equipment from the running NeqSim artifact, "
       + "then invoke JSON-safe public static calculations without a domain-specific MCP tool. "
+      + "Use action='coverage' for paginated agent/skill/API mappings and explicit evidence gaps. "
       + "Use action='search' with a free-text query first. Matches labelled static-json can be passed back with "
       + "action='invoke'; matches labelled process-json must be configured and run through runProcess. "
       + "Execution is restricted to bounded neqsim.* methods and has a fixed timeout.")
   public String runCapability(
       @ToolArg(description = "JSON with action='search', query, optional limit; or action='invoke', exact "
-          + "className, methodName, optional parameterTypes, and arguments from a static-json search match") String capabilityJson) {
+          + "className, methodName, optional parameterTypes, and arguments from a static-json search match; "
+          + "or action='coverage', view='capabilities' or 'apis', optional query, domain, offset, limit (1-50), catalogDigest") String capabilityJson) {
     String policyBlocked = enforceToolAccess("runCapability");
     if (policyBlocked != null) {
       return policyBlocked;

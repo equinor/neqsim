@@ -201,6 +201,83 @@ density or other properties, generate pseudo-components, or claim phase-behavior
 equivalence. Non-finite, exterior, reversed, and zero-width requests fail before a value
 is returned.
 
+### Bounded boiling-range density and API receipts
+
+`TbpCutTable.getBoilingRangePropertiesKelvin(...)` and its Celsius counterpart return an
+immutable property receipt for any positive interval inside the exported table:
+
+```java
+OilAssayCharacterisation.TbpBoilingRangeProperties diesel =
+    table.getBoilingRangePropertiesCelsius(180.0, 360.0);
+
+double dieselYieldVolumePercent = diesel.getLiquidVolumePercent();
+double dieselSpecificGravity = diesel.getAverageSpecificGravity();
+double dieselApiGravity = diesel.getApiGravity();
+double dieselDensityKgM3At60F = diesel.getDensityKgPerCubicMetreAt60F();
+double dieselMeanBoilingPointCelsius = diesel.getAverageBoilingPointCelsius();
+double dieselBoilingSpreadKelvin = diesel.getBoilingPointStandardDeviationKelvin();
+double dieselWatsonFactor = diesel.getWatsonCharacterizationFactor();
+```
+
+For the requested interval, every overlapping source cut contributes liquid-volume
+yield $\Delta V_i$ under the same piecewise-linear cumulative-recovery assumption used
+by direct queries and target-grid resampling. The receipt reports
+
+$$SG_{range}=\frac{\sum_i \Delta V_iSG_i}{\sum_i \Delta V_i}$$
+
+as well as both the denominator and the auditable numerator
+`getSpecificGravityWeightedLiquidVolumePercent()`. The latter is
+$\sum_i\Delta V_iSG_i$ with $\Delta V_i$ in liquid-volume percent; it is an
+ideal-additive-volume bookkeeping term, not a physical mass percentage. Partitioned
+receipts therefore close independently in liquid-volume yield and SG-weighted volume.
+
+API gravity uses the existing NeqSim SG60/60 convention
+$API=141.5/SG_{range}-131.5$, and density at 60 degF uses the already qualified water
+density of 999.016 kg/m3. The receipt does not temperature-correct density, model excess
+volume or contraction, smooth or extrapolate the distillation curve, convert D86/D1160
+data, generate pseudo-components, infer molecular weight or critical properties, or
+claim phase-behavior equivalence. Non-finite, exterior, reversed, and zero-width
+requests fail before a receipt is returned; near-node boundaries use the existing snap
+tolerance.
+
+### Bounded boiling-range temperature moments
+
+The same receipt exposes the auditable first boiling-temperature moment
+
+$$M_{T,V}=sum_iDelta V_ioverline{T}_i$$
+
+in K liquid-volume percent through
+`getLiquidVolumeWeightedBoilingPointKelvinPercent()`. With piecewise-linear cumulative
+recovery, liquid-volume density is uniform versus temperature inside each overlap, so
+$overline{T}_i=(T_{lower,i}+T_{upper,i})/2$. The liquid-volume-weighted mean is
+
+$$overline{T}_{V,range}=rac{M_{T,V}}{sum_iDelta V_i}$$
+
+and is available in K and degC. First moments, unlike means, close additively when a
+range is partitioned.
+
+The receipt also integrates the second raw moment exactly for every overlap:
+
+`M2 = sum[Delta V_i * (T_lower,i^2 + T_lower,i*T_upper,i + T_upper,i^2) / 3]`.
+
+`getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent()` reports `M2`
+in K squared liquid-volume percent. `getBoilingPointVarianceKelvinSquared()`
+evaluates `M2 / sum(Delta V_i) - average(T)^2`, and
+`getBoilingPointStandardDeviationKelvin()` reports its square root in K. Raw second
+moments close additively across a partition; variances and standard deviations do not.
+
+These spread descriptors describe the qualified piecewise-linear TBP distribution.
+They are not ASTM distillation reproducibility or experimental uncertainty and do not
+add a measured intrainterval curve.
+
+`getWatsonCharacterizationFactor()` combines that mean TBP with the receipt's average
+SG60/60 using NeqSim's existing convention
+$K_W=(1.8overline{T}_{V,range})^{1/3}/SG_{range}$, where temperature is in K and the
+factor is dimensionless. This is a transparent descriptor under the table assumptions.
+It is not an ASTM mean-average or volumetric-average boiling point, and it does not
+integrate enthalpy or heat capacity, temperature-correct density, infer an
+intrainterval measured shape, or establish pseudo-component or phase equivalence.
+
 ### Conservative target-grid resampling
 
 `TbpCutTable.resampleAtBoilingPointsKelvin(...)` and

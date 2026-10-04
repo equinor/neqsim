@@ -26,6 +26,9 @@ public class PhysicalPropertyMixingRule
 
   public double[][] Gij;
 
+  /** Temperature decay coefficients for Gij in 1/K (column GIJVISCT of the INTER table). */
+  public double[][] GijDecay;
+
   /**
    * Constructor for PhysicalPropertyMixingRule.
    */
@@ -48,6 +51,13 @@ public class PhysicalPropertyMixingRule
       Gij2[i] = Gij2[i].clone();
     }
     mixRule.Gij = Gij2;
+    if (GijDecay != null) {
+      double[][] decay2 = GijDecay.clone();
+      for (int i = 0; i < decay2.length; i++) {
+        decay2[i] = decay2[i].clone();
+      }
+      mixRule.GijDecay = decay2;
+    }
     return mixRule;
   }
 
@@ -55,6 +65,15 @@ public class PhysicalPropertyMixingRule
   @Override
   public double getViscosityGij(int i, int j) {
     return Gij[i][j];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getViscosityGij(int i, int j, double temperature) {
+    if (GijDecay == null || GijDecay[i][j] == 0.0) {
+      return Gij[i][j];
+    }
+    return Gij[i][j] * Math.exp(-GijDecay[i][j] * (temperature - 298.15));
   }
 
   /** {@inheritDoc} */
@@ -77,6 +96,7 @@ public class PhysicalPropertyMixingRule
   public void initMixingRules(PhaseInterface phase) {
     // logger.info("reading mix Gij viscosity..");
     Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    GijDecay = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     for (int l = 0; l < phase.getNumberOfComponents(); l++) {
       if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
         continue;
@@ -87,15 +107,19 @@ public class PhysicalPropertyMixingRule
           continue;
         } else {
           try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-              java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
+              java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc, gijviscT FROM inter WHERE (COMP1='"
                   + component_name + "' AND COMP2='" + phase.getComponent(k).getComponentName() + "') OR (COMP1='"
                   + phase.getComponent(k).getComponentName() + "' AND COMP2='" + component_name + "')")) {
             if (dataSet.next()) {
               Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
+              String decay = dataSet.getString("gijviscT");
+              GijDecay[l][k] = decay == null || decay.trim().isEmpty() ? 0.0 : Double.parseDouble(decay);
             } else {
               Gij[l][k] = 0.0;
+              GijDecay[l][k] = 0.0;
             }
             Gij[k][l] = Gij[l][k];
+            GijDecay[k][l] = GijDecay[l][k];
           } catch (Exception ex) {
             logger.error("err in phys prop.....", ex);
           }

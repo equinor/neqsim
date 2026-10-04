@@ -48,7 +48,7 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
   @Override
   public double fugcoef(PhaseInterface phase) {
     logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
-    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
+    if (!usesHenryReference(phase)) {
       fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
@@ -152,6 +152,42 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     return getLnHenryCoefficientTemperatureDerivative(phase.getTemperature());
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHydrocarbon() {
+    return super.isHydrocarbon() || hasHydrocarbonFormula();
+  }
+
+  /**
+   * Check the database molecular formula for a pure hydrocarbon.
+   *
+   * <p>
+   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
+   * formula check keeps aqueous-reference and parameter-topology decisions independent of that initialization detail.
+   * </p>
+   *
+   * @return {@code true} when the formula contains carbon and hydrogen only
+   */
+  private boolean hasHydrocarbonFormula() {
+    String formula = getFormulae();
+    if (formula == null || formula.isEmpty()) {
+      return false;
+    }
+    boolean carbon = false;
+    boolean hydrogen = false;
+    for (int index = 0; index < formula.length(); index++) {
+      char character = formula.charAt(index);
+      if (character == 'C') {
+        carbon = true;
+      } else if (character == 'H') {
+        hydrogen = true;
+      } else if (!Character.isDigit(character)) {
+        return false;
+      }
+    }
+    return carbon && hydrogen;
+  }
+
   /**
    * Tests whether this component uses a Henry rather than a solvent vapor-pressure reference in a phase.
    *
@@ -159,13 +195,19 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
    * @return true for a solute Henry reference
    */
   protected boolean usesHenryReference(PhaseInterface phase) {
-    return !referenceStateType.equals("solvent") || usesIapwsAqueousReference(phase);
+    // Water correlations are not references for a water-free, subcritical pure liquid or organic solution.
+    // Keep the legacy finite unsupported limit for species without an applicable liquid-vapor correlation.
+    if (!isIsIon() && phase.getNumberOfComponents() > componentNumber && !phase.hasComponent("water")
+        && Double.isFinite(getAntoineVaporPressure(phase.getTemperature()))) {
+      return false;
+    }
+    return !referenceStateType.equals("solvent") || usesAqueousSoluteReference(phase);
   }
 
-  /** Tests whether IAPWS overrides a legacy solvent classification in an aqueous phase. */
-  private boolean usesIapwsAqueousReference(PhaseInterface phase) {
-    return !"water".equalsIgnoreCase(getComponentName()) && IapwsHenryLaw.isSupportedSpecies(getComponentName())
-        && phase.hasComponent("water");
+  /** Tests whether a dissolved gas or hydrocarbon overrides a legacy solvent classification. */
+  private boolean usesAqueousSoluteReference(PhaseInterface phase) {
+    return !"water".equalsIgnoreCase(getComponentName())
+        && (IapwsHenryLaw.isSupportedSpecies(getComponentName()) || isHydrocarbon()) && phase.hasComponent("water");
   }
 
   /** {@inheritDoc} */
@@ -208,13 +250,32 @@ public abstract class ComponentGE extends Component implements ComponentGEInterf
     // double pressure = phase.getPressure();
     // int numberOfComponents = phase.getNumberOfComponents();
 
-    if (referenceStateType.equals("solvent") && !usesIapwsAqueousReference(phase)) {
-      dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
+    if (!usesHenryReference(phase)) {
+      dfugdt = getLnActivityTemperatureDerivative(phase)
+          + getAntoineVaporPressuredT(temperature) / getAntoineVaporPressure(temperature);
       logger.info("check this dfug dt - antoine");
     } else {
-      dfugdt = dlngammadt + getLnHenryCoefficientTemperatureDerivative(phase);
+      dfugdt = getLnActivityTemperatureDerivative(phase) + getLnHenryCoefficientTemperatureDerivative(phase);
+      if (phase.hasComponent("water") && phase.getNumberOfComponents() > componentNumber) {
+        dfugdt -= ((PhaseGE) phase).getLnActivityCoefficientInfDilWaterTemperatureDerivative(componentNumber,
+            phase.getComponent("water").getComponentNumber());
+      } else if (phase.getNumberOfComponents() > componentNumber) {
+        dfugdt -= ((PhaseGE) phase).getLnActivityCoefficientInfDilTemperatureDerivative(componentNumber);
+      }
     }
     return dfugdt;
+  }
+
+  /**
+   * Obtains the derivative from the owning activity model, retaining standalone component evaluations.
+   *
+   * @param phase owning phase
+   * @return d(ln gamma)/dT in 1/K
+   */
+  protected double getLnActivityTemperatureDerivative(PhaseInterface phase) {
+    return phase.getNumberOfComponents() > componentNumber
+        ? ((PhaseGE) phase).getLnActivityCoefficientTemperatureDerivative(componentNumber)
+        : dlngammadt;
   }
 
   /** {@inheritDoc} */

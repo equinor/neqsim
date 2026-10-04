@@ -82,13 +82,11 @@ class ProcessModelOperatingEnvelopeStudyTest {
     Separator gatheringSink = new Separator("gathering sink", chokeA.getOutletStream());
 
     CapacityConstraint producerLimit = new CapacityConstraint("producer A rate", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(800.0).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource("synthetic producer choke envelope").setConfidence(0.95)
-        .setValidityRange(200.0, 1000.0).setValueSupplier(() -> producerA.getFlowRate("kg/hr"));
+        .setDesignValue(800.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic producer choke envelope")
+        .setConfidence(0.95).setValidityRange(200.0, 1000.0).setValueSupplier(() -> producerA.getFlowRate("kg/hr"));
     CapacityConstraint sharedLimit = new CapacityConstraint("shared gathering rate", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD)
-        .setDataSource("synthetic shared manifold basis").setConfidence(0.95)
-        .setValidityRange(400.0, 1600.0)
+        .setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic shared manifold basis")
+        .setConfidence(0.95).setValidityRange(400.0, 1600.0)
         .setValueSupplier(() -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"));
     gatheringSink.clearCapacityConstraints();
     gatheringSink.addCapacityConstraint(producerLimit);
@@ -121,12 +119,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
         model -> fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr"),
         ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
 
-    ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate",
-        "Producer A rate", "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr",
-        "synthetic producer A operating envelope");
-    ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate",
-        "Producer B rate", "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr",
-        "synthetic producer B operating envelope");
+    ProcessModelOperatingAction actionA = ProcessModelOperatingAction.continuous("producer-a-rate", "Producer A rate",
+        "wells::producer A.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer A operating envelope");
+    ProcessModelOperatingAction actionB = ProcessModelOperatingAction.continuous("producer-b-rate", "Producer B rate",
+        "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer B operating envelope");
 
     return new ProcessModelOperatingActionSetEvaluator("field-actions", "Field actions",
         "synthetic field-to-facility envelope basis", simulation, Arrays.asList(actionA, actionB))
@@ -137,8 +133,8 @@ class ProcessModelOperatingEnvelopeStudyTest {
   }
 
   /**
-   * Verifies a one-dimensional slice keeps infeasible points, detects bottleneck migration, and
-   * restores the original process baseline after every candidate.
+   * Verifies a one-dimensional slice keeps infeasible points, detects bottleneck migration, and restores the original
+   * process baseline after every candidate.
    *
    * @throws Exception if Java serialization unexpectedly fails
    */
@@ -148,8 +144,8 @@ class ProcessModelOperatingEnvelopeStudyTest {
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("well-a-slice",
         "Well A operating envelope", "synthetic field-to-facility acceptance", createEvaluator(fixture));
 
-    SliceResult result = study.evaluateOneDimensional("producer-a-rate",
-        new double[] {300.0, 500.0, 700.0, 900.0}, new double[] {600.0, 300.0});
+    SliceResult result = study.evaluateOneDimensional("producer-a-rate", new double[] {300.0, 500.0, 700.0, 900.0},
+        new double[] {600.0, 300.0});
 
     assertEquals(Outcome.COMPLETE, result.getOutcome());
     assertTrue(result.isComplete());
@@ -173,8 +169,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getFromConstraint());
     assertEquals("gathering::gathering sink/producer A rate", transition.getToConstraint());
 
-    assertArrayEquals(new double[] {900.0, 300.0},
-        result.getPoints().get(3).getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {900.0, 300.0}, result.getPoints().get(3).getCandidateValues(), 0.0);
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
     for (ProcessModelOperatingEnvelopeStudy.Point point : result.getPoints()) {
@@ -198,8 +193,8 @@ class ProcessModelOperatingEnvelopeStudyTest {
   }
 
   /**
-   * Verifies deterministic two-dimensional adjacency and that transitions do not connect the end
-   * of one row to the start of the next row.
+   * Verifies deterministic two-dimensional adjacency and that transitions do not connect the end of one row to the
+   * start of the next row.
    */
   @Test
   void twoDimensionalSliceUsesGridAdjacencyForBottleneckTransitions() {
@@ -207,8 +202,8 @@ class ProcessModelOperatingEnvelopeStudyTest {
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("allocation-grid",
         "Two-well operating envelope", "synthetic two-well grid", createEvaluator(fixture));
 
-    SliceResult result = study.evaluateTwoDimensional("producer-a-rate", new double[] {300.0, 900.0},
-        "producer-b-rate", new double[] {200.0, 600.0}, new double[] {600.0, 400.0});
+    SliceResult result = study.evaluateTwoDimensional("producer-a-rate", new double[] {300.0, 900.0}, "producer-b-rate",
+        new double[] {200.0, 600.0}, new double[] {600.0, 400.0});
 
     assertTrue(result.isComplete());
     assertEquals(4, result.getCompletedPointCount());
@@ -236,18 +231,16 @@ class ProcessModelOperatingEnvelopeStudyTest {
   @Test
   void rejectsInvalidAxesAndAnchorsBeforeEvaluation() {
     Fixture fixture = createFixture();
-    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("validation",
-        "Validation", "synthetic validation", createEvaluator(fixture));
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("validation", "Validation",
+        "synthetic validation", createEvaluator(fixture));
     int before = study.getCandidateEvaluator().getSimulationEvaluator().getEvaluationCount();
 
     assertThrows(IllegalArgumentException.class,
         () -> study.evaluateOneDimensional("missing", new double[] {500.0}, new double[] {600.0, 400.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> study.evaluateOneDimensional("producer-a-rate", new double[] {1200.0},
-            new double[] {600.0, 400.0}));
-    assertThrows(IllegalArgumentException.class,
-        () -> study.evaluateTwoDimensional("producer-a-rate", new double[] {500.0}, "producer-a-rate",
-            new double[] {600.0}, new double[] {600.0, 400.0}));
+        () -> study.evaluateOneDimensional("producer-a-rate", new double[] {1200.0}, new double[] {600.0, 400.0}));
+    assertThrows(IllegalArgumentException.class, () -> study.evaluateTwoDimensional("producer-a-rate",
+        new double[] {500.0}, "producer-a-rate", new double[] {600.0}, new double[] {600.0, 400.0}));
     assertThrows(IllegalArgumentException.class,
         () -> study.evaluateOneDimensional("producer-a-rate", new double[] {500.0}, new double[] {600.0}));
 

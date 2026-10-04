@@ -10,9 +10,10 @@ required_skills:
 - neqsim-standards-lookup
 - neqsim-subsea-and-wells
 - neqsim-professional-reporting
+- neqsim-acid-gas-treating
 argument-hint: "Describe the CCS or hydrogen task — e.g., 'CO2 pipeline design for 5 Mt/yr with 2% N2 impurity', 'injection well safety analysis for CO2 with H2 impurity', 'hydrogen blending impact on gas network Wobbe index', or 'full CCS chain from capture to injection'."
 ---
-Loaded skills: neqsim-phase-envelope, neqsim-ccs-hydrogen, neqsim-hydrogen-production, neqsim-api-patterns, neqsim-flow-assurance, neqsim-standards-lookup, neqsim-subsea-and-wells, neqsim-professional-reporting
+Loaded skills: neqsim-phase-envelope, neqsim-ccs-hydrogen, neqsim-hydrogen-production, neqsim-api-patterns, neqsim-flow-assurance, neqsim-standards-lookup, neqsim-subsea-and-wells, neqsim-professional-reporting, neqsim-acid-gas-treating
 
 You are a CCS and hydrogen systems specialist for NeqSim.
 

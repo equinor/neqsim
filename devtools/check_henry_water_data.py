@@ -47,6 +47,18 @@ def main():
         row["name"]: row for row in disposition_manifest["rows"]}
     assert len(dispositions) == len(disposition_manifest["rows"]), (
         "Duplicate candidate disposition component")
+    estimate_manifest = json.loads(
+        (data / "HenryWaterEstimateDispositions.json").read_text())
+    estimate_dispositions = {
+        row["name"]: row for row in estimate_manifest["rows"]}
+    assert len(estimate_dispositions) == len(estimate_manifest["rows"]), (
+        "Duplicate estimate/other disposition component")
+    unmatched_manifest = json.loads(
+        (data / "HenryWaterUnmatchedDispositions.json").read_text())
+    unmatched_dispositions = {
+        row["name"]: row for row in unmatched_manifest["rows"]}
+    assert len(unmatched_dispositions) == len(unmatched_manifest["rows"]), (
+        "Duplicate unmatched-identity disposition component")
     source_lines = None
     if len(sys.argv) > 1:
         with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -132,6 +144,207 @@ def main():
         assert dispositions[alias_name]["alias_of"] == "MEG", alias_name
         assert component_rows[alias_name]["CASnumber"] == (
             component_rows["MEG"]["CASnumber"]), alias_name
+    estimate_names = {
+        name for name, row in coverage.items()
+        if row["status"] == "estimate_or_other_source_requires_review"
+    }
+    assert len(estimate_names) == 140, "Estimate/other coverage count changed"
+    assert set(estimate_dispositions) == estimate_names, (
+        "Estimate/other disposition inventory mismatch")
+    assert estimate_manifest["status"] == (
+        "fail_closed_estimate_or_other_source_disposition")
+    assert estimate_manifest["solvent"] == "water"
+    assert estimate_manifest["compilation_license"] == "CC BY 4.0"
+    for field in (
+            "original_reference_rights", "source_type_notice", "identity_rule",
+            "admission_rule", "uncertainty_and_range_rule"):
+        assert estimate_manifest[field].strip(), (
+            f"Missing estimate/other manifest {field}")
+
+    expected_estimate_groups = {
+        "solvent_role_polyol_nonempirical": {"TEG", "DEG"},
+        "database_identity_alias_requires_correction": {"glycerol"},
+        "reactive_inorganic_or_acid_speciation": {
+            "hydrochloric acid", "sulfuric acid", "nitric acid", "N2O5",
+            "NHÃ¢â€šâ€šOH", "NÃ¢â€šâ€šHÃ¢â€šâ€ž", "S", "SO3", "NH2OH",
+            "N2H4", "HNO3", "H2SO4",
+        },
+    }
+    classified_estimates = set().union(*expected_estimate_groups.values())
+    expected_estimate_groups["unqualified_hydrocarbon_source_inventory"] = (
+        estimate_names - classified_estimates)
+    assert {
+        group: len(names) for group, names in expected_estimate_groups.items()
+    } == {
+        "solvent_role_polyol_nonempirical": 2,
+        "database_identity_alias_requires_correction": 1,
+        "reactive_inorganic_or_acid_speciation": 12,
+        "unqualified_hydrocarbon_source_inventory": 125,
+    }
+    boundary_definitions = estimate_manifest["boundary_definitions"]
+    assert set(boundary_definitions) == set(expected_estimate_groups), (
+        "Estimate/other boundary definition mismatch")
+    for boundary, definition in boundary_definitions.items():
+        for field in ("definition_assessment", "required_evidence"):
+            assert definition[field].strip(), (
+                f"Missing {boundary} boundary {field}")
+
+    forbidden_estimate_fields = {
+        "Hsbp_mol_kg_atm", "B_K", "reference_value", "temperature_K",
+        "pressure_Pa", "valid_temperature_range",
+    }
+    for boundary, names in expected_estimate_groups.items():
+        for name in names:
+            disposition = estimate_dispositions[name]
+            component = component_rows[name]
+            assert name not in selected, (
+                f"Estimate unexpectedly dispatched as correlation: {name}")
+            assert name not in reference_points, (
+                f"Estimate unexpectedly dispatched as reference point: {name}")
+            assert name not in dispositions, (
+                f"Estimate duplicated in candidate dispositions: {name}")
+            assert float(component["IONICCHARGE"]) == 0.0, name
+            assert disposition["coverage_status"] == (
+                "estimate_or_other_source_requires_review"), name
+            assert disposition["boundary"] == boundary, name
+            assert disposition["cas"] == component["CASnumber"], name
+            assert disposition["formula"] == component["FORMULA"], name
+            assert disposition["inchikey"] == component["InChIKey"], name
+            assert disposition["source_record_url"] == (
+                "https://www.henrys-law.org/henry/casrn/"
+                + disposition["cas"]), name
+            assert disposition["source_types"] == (
+                coverage[name]["Sander_source_types"]), name
+            assert not forbidden_estimate_fields.intersection(disposition), (
+                f"Numerical estimate field admitted: {name}")
+
+    expected_estimate_aliases = {
+        "glycerol": "TEG",
+        "H2SO4": "sulfuric acid",
+        "HNO3": "nitric acid",
+        "NHÃ¢â€šâ€šOH": "NH2OH",
+        "NÃ¢â€šâ€šHÃ¢â€šâ€ž": "N2H4",
+    }
+    actual_estimate_aliases = {
+        name: row["alias_of"]
+        for name, row in estimate_dispositions.items()
+        if "alias_of" in row
+    }
+    assert actual_estimate_aliases == expected_estimate_aliases
+    for alias_name, canonical_name in expected_estimate_aliases.items():
+        alias_row = component_rows[alias_name]
+        canonical_row = component_rows[canonical_name]
+        for field in ("CASnumber", "FORMULA", "InChIKey"):
+            assert alias_row[field] == canonical_row[field], (
+                f"Estimate alias identity mismatch: {alias_name}")
+    assert estimate_dispositions["glycerol"]["identity_conflict"].strip()
+    for name in expected_estimate_groups[
+            "reactive_inorganic_or_acid_speciation"]:
+        assert estimate_dispositions[name]["species_risk"].strip(), name
+
+    unmatched_names = {
+        name for name, row in coverage.items()
+        if row["status"] == "no_exact_CAS_match_in_source_archive"
+    }
+    assert len(unmatched_names) == 49, "Unmatched-identity coverage count changed"
+    assert set(unmatched_dispositions) == unmatched_names, (
+        "Unmatched-identity disposition inventory mismatch")
+    assert unmatched_manifest["status"] == (
+        "fail_closed_unmatched_identity_disposition")
+    assert unmatched_manifest["solvent"] == "water"
+    assert unmatched_manifest["compilation_license"] == "CC BY 4.0"
+    for field in (
+            "original_reference_rights", "archive_match_rule",
+            "admission_rule", "uncertainty_and_range_rule"):
+        assert unmatched_manifest[field].strip(), (
+            f"Missing unmatched-identity manifest {field}")
+
+    expected_unmatched_groups = {
+        "water_phase_or_mixture_not_solute": {"ice", "seawater"},
+        "placeholder_or_undefined_pseudocomponent": {
+            "default", "1.3-dDM-cyC5", "nC17-cy-C5", "asphaltene",
+        },
+        "reactive_amine_or_model_species": {"DEA", "H+PZCOO-"},
+        "salt_or_reactive_inorganic_not_neutral_molecular_solute": {
+            "CaCO3", "NaCl", "CaCl2", "NH4NO3", "NH4HSO4",
+            "NH2SO3H", "NaHSO4",
+        },
+        "sulfur_allotrope_condensed_species": {"S8", "sulfur(S8)"},
+    }
+    classified_unmatched = set().union(*expected_unmatched_groups.values())
+    expected_unmatched_groups["identified_hydrocarbon_no_archive_record"] = (
+        unmatched_names - classified_unmatched)
+    assert {
+        group: len(names) for group, names in expected_unmatched_groups.items()
+    } == {
+        "identified_hydrocarbon_no_archive_record": 32,
+        "water_phase_or_mixture_not_solute": 2,
+        "placeholder_or_undefined_pseudocomponent": 4,
+        "reactive_amine_or_model_species": 2,
+        "salt_or_reactive_inorganic_not_neutral_molecular_solute": 7,
+        "sulfur_allotrope_condensed_species": 2,
+    }
+    boundary_definitions = unmatched_manifest["boundary_definitions"]
+    assert set(boundary_definitions) == set(expected_unmatched_groups), (
+        "Unmatched-identity boundary definition mismatch")
+    for boundary, definition in boundary_definitions.items():
+        for field in ("definition_assessment", "required_evidence"):
+            assert definition[field].strip(), (
+                f"Missing {boundary} boundary {field}")
+
+    forbidden_unmatched_fields = {
+        "Hsbp_mol_kg_atm", "B_K", "reference_value", "temperature_K",
+        "pressure_Pa", "valid_temperature_range",
+    }
+    for boundary, names in expected_unmatched_groups.items():
+        for name in names:
+            disposition = unmatched_dispositions[name]
+            component = component_rows[name]
+            assert name not in selected, (
+                f"Unmatched identity unexpectedly dispatched: {name}")
+            assert name not in reference_points, (
+                f"Unmatched identity admitted as reference point: {name}")
+            assert name not in dispositions, (
+                f"Unmatched identity duplicated in candidate dispositions: {name}")
+            assert name not in estimate_dispositions, (
+                f"Unmatched identity duplicated in estimate dispositions: {name}")
+            assert disposition["coverage_status"] == (
+                "no_exact_CAS_match_in_source_archive"), name
+            assert disposition["archive_lookup"] == (
+                "no_exact_CAS_match_in_source_archive"), name
+            assert disposition["boundary"] == boundary, name
+            assert disposition["cas"] == component["CASnumber"], name
+            assert disposition["formula"] == component["FORMULA"], name
+            assert disposition["inchikey"] == component["InChIKey"], name
+            assert disposition["component_type"] == component["COMPTYPE"], name
+            assert float(disposition["ionic_charge"]) == float(
+                component["IONICCHARGE"]), name
+            assert disposition["source_types"] == (
+                coverage[name]["Sander_source_types"]) == "", name
+            assert disposition["identity_assessment"].strip(), name
+            assert not forbidden_unmatched_fields.intersection(disposition), (
+                f"Numerical unmatched field admitted: {name}")
+
+    for name in expected_unmatched_groups[
+            "identified_hydrocarbon_no_archive_record"]:
+        component = component_rows[name]
+        assert component["COMPTYPE"] in {"HC", "GEN"}, name
+        assert component["CASnumber"] != "0-0-0-0", name
+        assert component["FORMULA"].startswith("C"), name
+    for name in expected_unmatched_groups["water_phase_or_mixture_not_solute"]:
+        assert component_rows[name]["CASnumber"] == "7732-18-5", name
+    for name in {"default", "1.3-dDM-cyC5", "nC17-cy-C5"}:
+        assert component_rows[name]["CASnumber"] == "0-0-0-0", name
+    assert unmatched_dispositions["asphaltene"]["identity_assessment"].strip()
+    assert unmatched_dispositions["DEA"]["identity_assessment"].strip()
+    assert unmatched_dispositions["H+PZCOO-"]["identity_assessment"].strip()
+    assert unmatched_dispositions["NH2SO3H"]["identity_assessment"].strip()
+    assert component_rows["sulfur(S8)"]["CASnumber"] == (
+        component_rows["S8"]["CASnumber"])
+    assert component_rows["sulfur(S8)"]["InChIKey"] == (
+        component_rows["S8"]["InChIKey"])
+    assert unmatched_dispositions["sulfur(S8)"]["identity_relation"].strip()
+
     reviewed_correlations = {"n-pentane", "i-pentane", "mercury"}
     for name in reviewed_correlations:
         provenance = selected[name]
@@ -265,6 +478,8 @@ def main():
     print(f"PASS: {len(rows)} rows; {len(found)} sourced correlations; "
           f"{len(reference_points)} qualified reference points; "
           f"{len(dispositions)} fail-closed candidate dispositions; "
+          f"{len(estimate_dispositions)} fail-closed estimate/other dispositions; "
+          f"{len(unmatched_dispositions)} fail-closed unmatched dispositions; "
           f"{len(rows) - len(found)} rows without dispatched correlations; "
           "no nonzero unattributed rows.")
 

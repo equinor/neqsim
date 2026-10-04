@@ -14,8 +14,8 @@ evidence in:
 - `HazopScenarioRunner` and `HazopConsequenceAutoPopulator`;
 - `HazopScenarioRunnerTest`;
 - the `NeqSimTools` MCP facade;
-- `test_hazop_scenario_protocol.py` over the packaged STDIO server;
-- the comprehensive `test_mcp_server.py` regression; and
+- `tests/protocol/test_hazop_scenario_protocol.py` over the packaged STDIO server;
+- the comprehensive `tests/protocol/test_mcp_server.py` regression; and
 - this contract record.
 
 The focused protocol qualification checks tool discovery, the catalog-equivalent compressor
