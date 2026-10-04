@@ -489,6 +489,12 @@ This repairs stale logarithmic state without changing the NRTL equation, excess 
 or fugacity calculation. Regression coverage uses prescribed binary parameters to check the
 analytical equation; it does not establish experimental accuracy for a fitted mixture.
 
+`getLnGammadt()` also publishes the analytical NRTL temperature derivative for
+that evaluated state. The aqueous Henry reference uses the same interaction
+parameters at infinite dilution and subtracts its temperature derivative when
+forming `d(ln(phi))/dT`. See [integrated EOS/GE reference conventions](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references)
+for pure-fluid behavior and the distinct reactive-model conventions.
+
 ### 6.4 Other GE Models
 
 | Class | Description |
